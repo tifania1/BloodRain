@@ -7,6 +7,7 @@
 - 미리보기 주소: https://claude-dev.bloodrain-proto.pages.dev (claude/dev 기준, 밤사이 바뀐 것)
 - claude.ai 아티팩트: https://claude.ai/artifact/Aez6dR7ABbw9Z4RYK4paEg (비공개, 대화 안에서 보는 용)
 - 원본은 `template.html` 하나. 빌드 결과(`site/`, `.artifact/`)는 커밋하지 않는다.
+- 이펙트 시안 `web/lookdev/*.html` 도 같은 빌드로 `/lookdev/` 아래에 올라간다(예: https://bloodrain-proto.pages.dev/lookdev/samjae.html).
 
 ## 묶기와 올리기
 

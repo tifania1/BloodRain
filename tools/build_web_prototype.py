@@ -4,6 +4,7 @@ web/prototype/template.html 에 저장소 데이터 JSON과 인트로 컷 세 �
 
   web/prototype/site/        바깥 공개용(Cloudflare Pages). 완전한 HTML 문서 + 링크 미리보기 이미지
   web/prototype/.artifact/   claude.ai 아티팩트용 본문(문서 뼈대 없이). --artifact 를 줄 때만
+  site/lookdev/              이펙트 시안(web/lookdev/*.html)을 공개용 문서로 감싼 것
 
 둘 다 빌드 결과라 커밋하지 않는다(.gitignore). 밸런스 숫자를 바꾸면 이 스크립트만 다시 돌리면 된다.
 CI(.github/workflows/web-prototype.yml)가 같은 스크립트로 묶어 배포한다.
@@ -21,6 +22,7 @@ import base64
 import html
 import io
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -34,6 +36,7 @@ PROTO = ROOT / "web" / "prototype"
 SRC = PROTO / "template.html"
 SITE = PROTO / "site"
 ARTIFACT = PROTO / ".artifact"
+LOOKDEV = ROOT / "web" / "lookdev"
 
 SITE_URL = "https://bloodrain-proto.pages.dev"
 TITLE = "혈우강호 프로토타입"
@@ -124,18 +127,20 @@ def body() -> str:
     return text
 
 
-def site_document(page: str, site_url: str) -> str:
-    """아티팩트 본문을 바깥 공개용 완전한 HTML 문서로 감싼다."""
-    split = page.find('<div id="game">')
-    if split < 0:
-        sys.exit('template.html 에 <div id="game"> 가 없다')
-    head_part, body_part = page[:split], page[split:]
+def site_document(page: str, site_url: str, title: str = TITLE, desc: str = DESC, path: str = "") -> str:
+    """아티팩트 본문을 바깥 공개용 완전한 HTML 문서로 감싼다.
+    본문 맨 앞의 <title>·<link>·<style> 까지를 head로 옮기고 나머지를 body에 둔다."""
+    end = page.find("</style>")
+    if end < 0:
+        sys.exit("페이지 머리에 <style> 이 없다")
+    end += len("</style>")
+    head_part, body_part = page[:end], page[end:]
     # 아티팩트 전용 줄(제목, claude: 메타)은 빼고 새로 쓴다
     head_lines = [
         line for line in head_part.splitlines()
         if not line.lstrip().startswith(("<title>", '<meta name="claude:'))
     ]
-    t, d, u = html.escape(TITLE), html.escape(DESC), site_url.rstrip("/")
+    t, d, u = html.escape(title), html.escape(desc), site_url.rstrip("/")
     meta = f"""<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>{t}</title>
@@ -150,7 +155,7 @@ def site_document(page: str, site_url: str) -> str:
 <meta property="og:site_name" content="혈우강호">
 <meta property="og:title" content="{t}">
 <meta property="og:description" content="{d}">
-<meta property="og:url" content="{u}/">
+<meta property="og:url" content="{u}/{path}">
 <meta property="og:image" content="{u}/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -181,6 +186,16 @@ def main() -> int:
     )
     size = (SITE / "index.html").stat().st_size / 1024
     print(f"{(SITE / 'index.html').relative_to(ROOT)} {size:.0f}KB, og.jpg, _headers")
+
+    # 이펙트 시안(web/lookdev/*.html)도 같은 사이트의 /lookdev/ 아래에 올린다
+    for src in sorted(LOOKDEV.glob("*.html")):
+        text = src.read_text(encoding="utf-8")
+        m = re.search(r"<title>(.*?)</title>", text)
+        title = m.group(1) if m else src.stem
+        out = SITE / "lookdev" / src.name
+        out.parent.mkdir(exist_ok=True)
+        out.write_text(site_document(text, args.site_url, title, f"혈우강호 {title}", f"lookdev/{src.name}"), encoding="utf-8")
+        print(f"{out.relative_to(ROOT)}")
 
     if args.artifact:
         ARTIFACT.mkdir(parents=True, exist_ok=True)

@@ -13,6 +13,7 @@ on:
     branches: [main, claude/dev]
     paths:
       - web/prototype/**
+      - web/lookdev/**
       - unity/BloodRain/Assets/Resources/Data/**
       - unity/BloodRain/Assets/Art/Cutscenes/**
       - tools/build_web_prototype.py

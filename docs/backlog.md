@@ -20,6 +20,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] B-13 2026-10-28 — 인트로 컷 이미지 12장을 기획서 원본 19장 '컷 이미지'에 컷 순서대로 붙임
 - [ ] B-12 아트 시험 이미지 반영 확인(art_queue의 M0 항목 6개가 imported 되면 Sprite 설정 점검)
 - [x] P-01 2026-10-28 — 웹 프로토타입(`web/prototype/`, 1장 숭산 소림 + 원각). 데이터 JSON을 그대로 읽는다. 공개 주소 https://bloodrain-proto.pages.dev
+- [x] V-00 2026-10-28 — 무공 비주얼 시안(`web/lookdev/samjae.html`, 삼재검법 1단~절기)과 단계 규칙 `docs/design/vfx.md`
 - [ ] P-02 **사람 결정 대기** — 프로토타입에서만 쓴 값 5개(맞은 뒤 무적, 강시 뛰는 비율, 처치 진기, 원각 체력, 보스전 잡몹 수)를 데이터·기획서로 옮길지. `docs/feedback.md` 에 결정이 적히기 전엔 건너뛴다. 정해지면 JSON·gdd.md·테스트를 같이 고치고 `python tools/build_web_prototype.py`
 
 ## M1 코어 프로토타입 (11-30 ~ 2027-01-10)
