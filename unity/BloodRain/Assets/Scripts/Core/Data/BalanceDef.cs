@@ -97,6 +97,27 @@ namespace BloodRain.Core.Data
         public float PerElite = 15;
     }
 
+    public sealed class StatsDef
+    {
+        public float MagnetBase = 1.5f;
+        public float CooldownReductionCap = 0.6f;
+    }
+
+    /// <summary>연무장 한 항목. Stat은 Core.Build.StatKind 이름.</summary>
+    public sealed class TrainingItemDef
+    {
+        public string Stat = "";
+        public float PerLevel;
+        public int MaxLevel = 1;
+        public int BaseCost;
+    }
+
+    public sealed class TrainingDef
+    {
+        public float CostGrowthPerBought = 0.1f;
+        public List<TrainingItemDef> Items = new List<TrainingItemDef>();
+    }
+
     public sealed class BalanceDef
     {
         public XpCurveDef XpCurve = new XpCurveDef();
@@ -110,5 +131,7 @@ namespace BloodRain.Core.Data
         public ContactDef Contact = new ContactDef();
         public EnemyScalingDef EnemyScaling = new EnemyScalingDef();
         public SpawnTargetDef SpawnTarget = new SpawnTargetDef();
+        public StatsDef Stats = new StatsDef();
+        public TrainingDef Training = new TrainingDef();
     }
 }

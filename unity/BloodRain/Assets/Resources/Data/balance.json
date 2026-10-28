@@ -49,6 +49,33 @@
     "ringMinDiagonal": 0.6, "ringMaxDiagonal": 0.75, "recycleBeyondDiagonal": 1.5,
     "stopSpawningAtMinute": 19, "bossAtMinute": 20
   },
+  "stats": { "_note": "능력치 기본값 중 캐릭터에 없는 것. 기획서 '8. 전투 시스템' 능력치 표.", "magnetBase": 1.5, "cooldownReductionCap": 0.6 },
+  "training": {
+    "_note": "연무장(영구 강화). 기획서 '10. 성장·메타 시스템' 연무장 표와 같은 값. stat은 Core.Build.StatKind 이름. 비용 = baseCost x 다음 레벨 x (1 + costGrowthPerBought x 지금까지 산 총 레벨 수).",
+    "costGrowthPerBought": 0.1,
+    "items": [
+      { "stat": "Might",             "perLevel": 0.05,  "maxLevel": 5, "baseCost": 200 },
+      { "stat": "MaxHealth",         "perLevel": 0.10,  "maxLevel": 3, "baseCost": 200 },
+      { "stat": "Armor",             "perLevel": 1,     "maxLevel": 3, "baseCost": 600 },
+      { "stat": "Recovery",          "perLevel": 0.1,   "maxLevel": 5, "baseCost": 200 },
+      { "stat": "CooldownReduction", "perLevel": 0.025, "maxLevel": 2, "baseCost": 900 },
+      { "stat": "Area",              "perLevel": 0.05,  "maxLevel": 2, "baseCost": 300 },
+      { "stat": "ProjectileSpeed",   "perLevel": 0.10,  "maxLevel": 2, "baseCost": 300 },
+      { "stat": "Duration",          "perLevel": 0.15,  "maxLevel": 2, "baseCost": 300 },
+      { "stat": "Amount",            "perLevel": 1,     "maxLevel": 1, "baseCost": 5000 },
+      { "stat": "MoveSpeed",         "perLevel": 0.05,  "maxLevel": 2, "baseCost": 300 },
+      { "stat": "Magnet",            "perLevel": 0.25,  "maxLevel": 2, "baseCost": 300 },
+      { "stat": "Growth",            "perLevel": 0.03,  "maxLevel": 5, "baseCost": 900 },
+      { "stat": "Luck",              "perLevel": 10,    "maxLevel": 3, "baseCost": 600 },
+      { "stat": "Greed",             "perLevel": 0.10,  "maxLevel": 5, "baseCost": 200 },
+      { "stat": "UltimateCharge",    "perLevel": 0.05,  "maxLevel": 4, "baseCost": 400 },
+      { "stat": "DashCharges",       "perLevel": 1,     "maxLevel": 1, "baseCost": 3000 },
+      { "stat": "Revival",           "perLevel": 1,     "maxLevel": 1, "baseCost": 10000 },
+      { "stat": "Rerolls",           "perLevel": 1,     "maxLevel": 5, "baseCost": 500 },
+      { "stat": "Banishes",          "perLevel": 1,     "maxLevel": 3, "baseCost": 300 },
+      { "stat": "Skips",             "perLevel": 1,     "maxLevel": 3, "baseCost": 200 }
+    ]
+  },
   "limits": { "enemiesPc": 600, "enemiesMobile": 400, "projectiles": 1500, "orbs": 400, "damageNumbers": 80 },
   "orbs": { "small": 1, "medium": 5, "large": 25 }
 }
