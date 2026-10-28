@@ -15,6 +15,7 @@
 python tools/build_web_prototype.py              # site/ 에 공개용 문서 + 링크 미리보기 이미지(og.jpg)
 python tools/build_web_prototype.py --artifact   # .artifact/ 에 아티팩트용 본문도
 python tools/deploy_web_prototype.py             # PC에서 묶어서 정식 주소로 올리기(wrangler 로그인 필요)
+python tools/deploy_web_prototype.py --branch claude/dev   # 미리보기 주소로(claude-dev 라고 쓰면 주소 뒤에 글자가 붙는다)
 ```
 
 - 데이터 JSON이나 `template.html` 이 바뀌어 `main`·`claude/dev` 에 푸시되면 `.github/workflows/web-prototype.yml` 이 묶어서 올린다.
