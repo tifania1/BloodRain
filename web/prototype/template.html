@@ -201,6 +201,7 @@ button { touch-action: manipulation; }
       <div class="row">
         <button class="b" id="easybtn" type="button" aria-pressed="false">난이도 보통</button>
         <button class="b" id="mutebtn" type="button" aria-pressed="false">소리 켜짐</button>
+        <button class="b" id="fsbtn" type="button" hidden>전체 화면<small>주소창 숨기기</small></button>
       </div>
       <div class="keys">이동 <kbd>WASD</kbd>·<kbd>방향키</kbd> · 경공 <kbd>Space</kbd> · 오의 <kbd>E</kbd> · 정지 <kbd>Esc</kbd> · 고르기 <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
       <div class="subtle" id="best"></div>
@@ -1740,6 +1741,18 @@ $('again').addEventListener('click', () => startRun(G ? G.mode : 'quick'));
 $('totitle').addEventListener('click', toTitle);
 $('mutebtn').addEventListener('click', () => { audio.muted = !audio.muted; store.set('muted', audio.muted); syncMute(); });
 $('easybtn').addEventListener('click', () => { settings.easy = !settings.easy; store.set('easy', settings.easy); syncMute(); showBest(); });
+// 전체 화면: 되는 브라우저에서만 버튼을 보인다(아이폰 사파리는 안 됨). 거절돼도 게임은 그대로.
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+if (document.fullscreenEnabled || document.webkitFullscreenEnabled) $('fsbtn').hidden = false;
+$('fsbtn').addEventListener('click', () => {
+  try {
+    const el = document.documentElement;
+    const r = fsEl() ? (document.exitFullscreen || document.webkitExitFullscreen).call(document) : (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    if (r && r.catch) r.catch(() => {});
+  } catch (e) { /* 막힌 환경이면 아무 일도 없다 */ }
+});
+const syncFs = () => { $('fsbtn').innerHTML = fsEl() ? '전체 화면 끄기' : '전체 화면<small>주소창 숨기기</small>'; setTimeout(resize, 50); };
+document.addEventListener('fullscreenchange', syncFs); document.addEventListener('webkitfullscreenchange', syncFs);
 function syncMute() {
   const b = $('mutebtn'); b.textContent = audio.muted ? '소리 꺼짐' : '소리 켜짐'; b.setAttribute('aria-pressed', String(audio.muted));
   const e = $('easybtn'); e.innerHTML = settings.easy ? '난이도 편하게<small>받는 피해 절반</small>' : '난이도 보통<small>기획서 그대로</small>'; e.setAttribute('aria-pressed', String(settings.easy));

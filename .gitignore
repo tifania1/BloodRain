@@ -38,3 +38,7 @@ __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+
+# 웹 프로토타입 빌드 결과(CI·PC에서 tools/build_web_prototype.py 로 만든다)
+web/prototype/site/
+web/prototype/.artifact/

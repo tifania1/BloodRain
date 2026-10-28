@@ -1,0 +1,48 @@
+# 웹 프로토타입(web/prototype)을 묶어서 Cloudflare Pages(bloodrain-proto)에 올린다.
+#   main       → 정식 주소 https://bloodrain-proto.pages.dev
+#   claude/dev → 미리보기 주소 https://claude-dev.bloodrain-proto.pages.dev (밤사이 바뀐 것)
+#
+# 묶기는 비밀값 없이도 늘 돈다(빌드가 깨졌는지 확인용).
+# 올리기는 CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID 비밀값이 있어야 한다. WebGL 배포와 같은 값이다.
+# 비밀값이 없으면 PC에서 python tools/deploy_web_prototype.py 로 올린다(wrangler 로그인 필요).
+
+name: 웹 프로토타입 배포
+
+on:
+  push:
+    branches: [main, claude/dev]
+    paths:
+      - web/prototype/**
+      - unity/BloodRain/Assets/Resources/Data/**
+      - unity/BloodRain/Assets/Art/Cutscenes/**
+      - tools/build_web_prototype.py
+      - .github/workflows/web-prototype.yml
+  workflow_dispatch:
+
+concurrency:
+  group: web-prototype-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow
+      - name: 묶기
+        run: python tools/build_web_prototype.py
+      - name: 올리기
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::비밀값이 없어 올리기는 건너뜀 — 묶기는 통과"
+            exit 0
+          fi
+          npx --yes wrangler@3 pages project create bloodrain-proto --production-branch main 2>/dev/null || true
+          npx --yes wrangler@3 pages deploy web/prototype/site --project-name bloodrain-proto --branch "${GITHUB_REF_NAME}" --commit-dirty=true

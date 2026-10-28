@@ -3,17 +3,24 @@
 브라우저에서 바로 해 보는 혈우강호 1장(숭산 소림)이다. Unity 판이 나오기 전에 손맛과 숫자를 먼저 확인하려고 만들었다.
 캔버스 2D 한 장짜리 HTML이고, 무공·심법·절기·적·밸런스 숫자는 `unity/BloodRain/Assets/Resources/Data/*.json` 을 그대로 읽는다.
 
-- 올린 곳: https://claude.ai/artifact/Aez6dR7ABbw9Z4RYK4paEg (비공개. 남에게 보여 주려면 페이지의 공유 메뉴에서 연다)
-- 원본: `template.html` · 빌드 결과: `index.html` (데이터와 인트로 컷 세 장이 들어간 563KB 한 파일)
+- 공개 주소: https://bloodrain-proto.pages.dev (Cloudflare Pages, 누구나 열 수 있음. main 기준)
+- 미리보기 주소: https://claude-dev.bloodrain-proto.pages.dev (claude/dev 기준, 밤사이 바뀐 것)
+- claude.ai 아티팩트: https://claude.ai/artifact/Aez6dR7ABbw9Z4RYK4paEg (비공개, 대화 안에서 보는 용)
+- 원본은 `template.html` 하나. 빌드 결과(`site/`, `.artifact/`)는 커밋하지 않는다.
 
-## 다시 묶기
+## 묶기와 올리기
 
 ```
-python tools/build_web_prototype.py
+python tools/build_web_prototype.py              # site/ 에 공개용 문서 + 링크 미리보기 이미지(og.jpg)
+python tools/build_web_prototype.py --artifact   # .artifact/ 에 아티팩트용 본문도
+python tools/deploy_web_prototype.py             # PC에서 묶어서 정식 주소로 올리기(wrangler 로그인 필요)
 ```
 
-데이터 JSON이나 `template.html` 을 고쳤으면 다시 돌린다. 아티팩트로 다시 올릴 때는 위 주소에 덮어쓴다(새로 올리면 주소가 바뀐다).
-`index.html` 은 `<!doctype>` 없이 본문만 있는 아티팩트용 파일이다. 로컬에서 열어도 돌아가긴 한다.
+- 데이터 JSON이나 `template.html` 이 바뀌어 `main`·`claude/dev` 에 푸시되면 `.github/workflows/web-prototype.yml` 이 묶어서 올린다.
+  올리기에는 저장소 비밀값 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID` 가 있어야 한다(WebGL 배포와 같은 값). 없으면 묶기만 확인하고 넘어간다.
+- 비밀값이 없는 동안은 PC에서 `deploy_web_prototype.py` 로 올린다. PC의 wrangler 로그인을 그대로 써서 키를 따로 만들 필요가 없다.
+- 아티팩트를 다시 올릴 때는 위 아티팩트 주소에 덮어쓴다(새로 올리면 주소가 바뀐다).
+- 공개용 문서는 `<!doctype>`·charset·휴대폰 viewport·링크 미리보기(og) 태그를 붙인 완전한 HTML이고, 아티팩트용은 그 뼈대가 없는 본문이다.
 
 ## 들어 있는 것
 
