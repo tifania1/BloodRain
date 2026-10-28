@@ -11,16 +11,21 @@
   "realms": [
     { "id": "samryu",      "nameKo": "삼류",   "level": 1 },
     { "id": "iryu",        "nameKo": "이류",   "level": 10, "reward": "insight_choice,max_health_10" },
-    { "id": "ilryu",       "nameKo": "일류",   "level": 20, "reward": "insight_choice,dash_charge_1,evolution_unlocked" },
-    { "id": "jeoljeong",   "nameKo": "절정",   "level": 35, "reward": "insight_choice,ultimate_power_25" },
-    { "id": "chojeoljeong","nameKo": "초절정", "level": 50, "reward": "insight_choice,extra_slot" },
-    { "id": "hwagyeong",   "nameKo": "화경",   "level": 70, "reward": "insight_choice,damage_taken_minus10" },
-    { "id": "hyeongyeong", "nameKo": "현경",   "level": 90, "reward": "double_ultimate", "onlyIn": ["final", "bloodmoon"] }
+    { "id": "ilryu",       "nameKo": "일류",   "level": 20, "reward": "insight_choice,dash_charge_1" },
+    { "id": "jeoljeong",   "nameKo": "절정",   "level": 35, "reward": "insight_choice,ultimate_power_25,jeolgi_vessel" },
+    { "id": "chojeoljeong","nameKo": "초절정", "level": 50, "reward": "insight_choice,extra_slot,jeolgi_vessel" },
+    { "id": "hwagyeong",   "nameKo": "화경",   "level": 70, "reward": "insight_choice,damage_taken_minus10,jeolgi_vessel" },
+    { "id": "hyeongyeong", "nameKo": "현경",   "level": 90, "reward": "double_ultimate,jeolgi_vessel", "onlyIn": ["final", "bloodmoon"] }
   ],
   "slots": { "weapons": 6, "passives": 6, "extraSlotAtRealm": "chojeoljeong" },
   "levels": { "weaponMax": 8, "passiveMax": 5 },
   "levelUp": { "baseChoices": 3, "maxChoices": 4, "luckForFourthChoice": 50 },
-  "evolution": { "minPlayerLevel": 20, "requiresChest": true },
+  "evolution": {
+    "_note": "절기 그릇: 경지마다 몸에 담을 수 있는 절기 수(누적). 문턱(무공 Lv8 + 짝 심법 Lv3 이상)에 선 무공이 있고 그릇이 남았을 때, 그릇이 늘어나는 경지 돌파 순간이나 보갑을 열 때 절기로 깨어난다.",
+    "vessels": { "jeoljeong": 1, "chojeoljeong": 2, "hwagyeong": 3, "hyeongyeong": 4 },
+    "pairPassiveMinLevel": 3,
+    "triggers": ["breakthrough", "chest"]
+  },
   "yinyang": {
     "min": -100, "max": 100,
     "weaponPerLevel": 5, "passivePerLevel": 8,

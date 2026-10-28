@@ -47,6 +47,8 @@ namespace BloodRain.Core.Data
     {
         public string Id = "";
         public string NameKo = "";
+        /// <summary>각성 연출에 크게 쓰는 한자 이름(글자는 이미지에 굽지 않고 Unity에서 얹는다).</summary>
+        public string Hanja = "";
         public string Weapon = "";
         public string Passive = "";
         public string Summary = "";

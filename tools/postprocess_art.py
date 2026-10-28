@@ -35,6 +35,7 @@ KINDS = {
     "icon": ("Icons", 128, False),
     "tile": ("Tiles", 512, False),
     "storyboard": ("Cutscenes", 1536, False),
+    "map": ("Map", 2560, False),
     "portrait": ("Portraits", 1024, True),
 }
 
@@ -110,7 +111,7 @@ def process(row: dict, dry: bool) -> Path | None:
     if kind == "tile":
         img = make_seamless(img)
     img.thumbnail((size, size), Image.LANCZOS)
-    ext = ".jpg" if kind == "storyboard" else ".png"
+    ext = ".jpg" if kind in ("storyboard", "map") else ".png"
     dst = ART / folder / (row["id"] + ext)
     if dry:
         print(f"  (dry) {row['id']} → {dst.relative_to(ROOT)} {img.size}")

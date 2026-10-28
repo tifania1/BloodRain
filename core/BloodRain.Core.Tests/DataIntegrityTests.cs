@@ -43,6 +43,16 @@ namespace BloodRain.Core.Tests
             Assert.Equal(16, _d.Evolutions.Select(e => e.Weapon).Distinct().Count());
         }
 
+        [Fact] public void 절기마다_각성_연출에_쓸_한자_이름이_있다()
+        {
+            foreach (var e in _d.Evolutions)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(e.Hanja), $"{e.NameKo} 한자 이름 없음");
+                // 한글 이름에서 띄어쓰기를 뺀 글자 수와 한자 수가 같아야 한다(천지인 삼검 = 天地人三劍)
+                Assert.Equal(e.NameKo.Replace(" ", "").Length, e.Hanja.Length);
+            }
+        }
+
         [Fact] public void 처음부터_쓸_수_있는_무공은_8종이다()
         {
             Assert.Equal(8, _d.Weapons.Count(w => w.Unlock == "start"));

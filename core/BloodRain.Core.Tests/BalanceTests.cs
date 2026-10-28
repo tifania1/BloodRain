@@ -192,19 +192,63 @@ namespace BloodRain.Core.Tests
             Assert.Contains(l.Candidates(StartUnlocked), o => o.Kind == OfferKind.NewWeapon);
         }
 
-        [Fact] public void 절기는_Lv8_짝심법_레벨20이_모두_맞아야_열린다()
+        [Theory]
+        [InlineData(34, "normal", 0)]
+        [InlineData(35, "normal", 1)]   // 절정
+        [InlineData(50, "normal", 2)]   // 초절정
+        [InlineData(70, "normal", 3)]   // 화경
+        [InlineData(95, "normal", 3)]   // 일반 판에선 현경이 없다
+        [InlineData(95, "final", 4)]    // 종장·혈월에서만 현경
+        public void 절기_그릇은_절정1_초절정2_화경3_현경4(int level, string mode, int expected)
+        {
+            var l = new Loadout(_d, _d.Character("jin_sowoon"));
+            Assert.Equal(expected, l.Vessels(level, mode));
+        }
+
+        [Fact] public void 절기는_문턱과_그릇이_모두_맞아야_깨어난다()
         {
             var l = new Loadout(_d, _d.Character("jin_sowoon"));
             for (int i = 0; i < 7; i++) l.Apply(new Offer(OfferKind.UpgradeWeapon, "samjae_sword"));
             Assert.Equal(8, l.Weapons["samjae_sword"]);
-            Assert.Null(l.EvolvableOnChest(25));          // 짝 심법 없음
+            Assert.Null(l.AwakenOnChest(40));                       // 짝 심법 없음
             l.Apply(new Offer(OfferKind.NewPassive, "cheongmyeong"));
-            Assert.Null(l.EvolvableOnChest(19));          // 레벨 부족
-            var evo = l.EvolvableOnChest(20);
+            l.Apply(new Offer(OfferKind.UpgradePassive, "cheongmyeong"));
+            Assert.Empty(l.AtThreshold());                          // 짝 심법 Lv2: 아직 문턱 아님
+            l.Apply(new Offer(OfferKind.UpgradePassive, "cheongmyeong"));
+            Assert.Single(l.AtThreshold());                         // Lv3: 문턱
+            Assert.Null(l.AwakenOnChest(34));                       // 일류까지는 그릇이 없다
+            var evo = l.AwakenOnChest(35);
             Assert.NotNull(evo);
             Assert.Equal("천지인 삼검", evo!.NameKo);
             l.Evolve(evo);
-            Assert.Null(l.EvolvableOnChest(30));          // 이미 진화
+            Assert.Null(l.AwakenOnChest(40));                       // 이미 절기
+        }
+
+        [Fact] public void 그릇이_차면_둘째_절기는_초절정까지_기다린다()
+        {
+            var l = new Loadout(_d, _d.Character("jin_sowoon"));
+            for (int i = 0; i < 7; i++) l.Apply(new Offer(OfferKind.UpgradeWeapon, "samjae_sword"));
+            l.Apply(new Offer(OfferKind.NewWeapon, "nahan_fist"));
+            for (int i = 0; i < 7; i++) l.Apply(new Offer(OfferKind.UpgradeWeapon, "nahan_fist"));
+            foreach (var pid in new[] { "cheongmyeong", "geumgang" })
+            {
+                l.Apply(new Offer(OfferKind.NewPassive, pid));
+                l.Apply(new Offer(OfferKind.UpgradePassive, pid));
+                l.Apply(new Offer(OfferKind.UpgradePassive, pid));
+            }
+            Assert.Equal(2, l.AtThreshold().Count);
+
+            // 절정 돌파 순간: 그릇이 하나 생기고 문턱 둘 중 하나를 고른다
+            var pick = l.AwakenOnBreakthrough(34, 35);
+            Assert.Equal(2, pick.Count);
+            l.Evolve(pick[1]);
+            Assert.Equal("nahan_fist", pick[1].Weapon);
+
+            Assert.Null(l.AwakenOnChest(49));                       // 그릇 하나를 다 썼다
+            Assert.Empty(l.AwakenOnBreakthrough(40, 45));           // 그릇이 안 느는 구간
+            var second = l.AwakenOnBreakthrough(49, 50);            // 초절정
+            Assert.Single(second);
+            Assert.Equal("samjae_sword", second[0].Weapon);
         }
 
         [Fact] public void 모든_것이_최고_단계면_은자나_음식이_나온다()

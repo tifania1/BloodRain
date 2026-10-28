@@ -1,21 +1,21 @@
 {
-  "_note": "절기 16종. 조건: 무공 Lv8 + 짝 심법 보유(레벨 무관) + 플레이어 레벨이 balance.json evolution.minPlayerLevel 이상 + 정예 보갑을 열 때. 한 보갑에 하나씩만 바뀐다.",
+  "_note": "절기 16종. 깨어나는 조건은 balance.json evolution(절기 그릇)과 기획서 8장. 무공 Lv8 + 짝 심법 Lv3 이상이면 문턱에 서고, 그릇이 남았을 때 경지 돌파나 보갑에서 깨어난다. hanja는 각성 연출의 큰 글씨(Yuji Boku 글꼴로 Unity에서 얹는다).",
   "evolutions": [
-    { "id": "cheonjiin",     "nameKo": "천지인 삼검",   "weapon": "samjae_sword",    "passive": "cheongmyeong", "summary": "세 방향 거대 반원 베기, 3번째 공격마다 관통 검기. 피해 2배" },
-    { "id": "baekbo_fist",   "nameKo": "백보신권",      "weapon": "nahan_fist",      "passive": "geumgang",     "summary": "권경이 화면 끝까지 날아가며 관통, 3방향 동시" },
-    { "id": "muyeong_dagger","nameKo": "무영비도",      "weapon": "flying_dagger",   "passive": "cheonsu",      "summary": "보이지 않는 비도가 적 사이를 5번 튕김, 중독" },
-    { "id": "cheonroe_array","nameKo": "천뢰검진",      "weapon": "changcheon_qi",   "passive": "noejeong",     "summary": "검기 원 2겹 상시 유지, 닿은 적에게 낙뢰 연쇄" },
-    { "id": "pasan_palm",    "nameKo": "파산장",        "weapon": "palm_wind",       "passive": "pasan",        "summary": "거대한 장력이 지나간 자리마다 연쇄 폭발" },
-    { "id": "mancheon_star", "nameKo": "만천성지",      "weapon": "flash_finger",    "passive": "cheollian",    "summary": "초당 20발 지풍, 치명타 시 작은 폭발" },
-    { "id": "byeokryeok_fire","nameKo": "벽력천화",     "weapon": "thunder_bomb",    "passive": "hwaryong",     "summary": "폭발 3연쇄, 5초 불바다" },
-    { "id": "chilbo_mist",   "nameKo": "칠보단혼무",    "weapon": "poison_mist",     "passive": "mandok",       "summary": "독안개 반경 3배, 안에서 7초 버틴 일반 적 즉사(정예·보스 제외)" },
-    { "id": "taiji_liangyi", "nameKo": "태극양의검",    "weapon": "taiji_sword",     "passive": "yangui",       "summary": "흑백 검 8자루 상시 공전. 흰 검 넉백, 검은 검 둔화. 태극 구간이면 피해 +30%" },
-    { "id": "eight_immortals","nameKo": "팔선과해",     "weapon": "drunken_staff",   "passive": "juseon",       "summary": "봉 분신 8개가 사방을 휩쓸고 2초 기절" },
-    { "id": "black_dragon",  "nameKo": "흑룡탄",        "weapon": "chain_sickle",    "passive": "suryong",      "summary": "사슬이 주변 적을 한곳에 모은 뒤 폭발" },
-    { "id": "blood_demon_hand","nameKo": "혈마수",      "weapon": "blood_claw",      "passive": "hyeolhae",     "summary": "핏빛 손이 전방 부채꼴을 할퀴고 흡혈 4%. 극음이면 범위 2배" },
-    { "id": "patian_qin",    "nameKo": "파천금음",      "weapon": "sonic_qin",       "passive": "cheongsim",    "summary": "음파가 겹칠수록 피해 증폭(최대 3배), 기절 30%" },
-    { "id": "hundred_flowers","nameKo": "백화난무창",   "weapon": "pear_spear",      "passive": "unryong",      "summary": "경공 경로를 따라 창격 폭풍, 상시 5방향 찌르기" },
-    { "id": "five_thunders", "nameKo": "오뢰정법",      "weapon": "thunder_talisman","passive": "domun",        "summary": "화면 5곳 동시 대낙뢰, 맞은 적 주변으로 번개 전이" },
-    { "id": "plum_full_bloom","nameKo": "매화만개",     "weapon": "falling_petals",  "passive": "maehwa",       "summary": "화면 전체를 도는 매화 폭풍, 닿을 때마다 기혈 0.2 회복" }
+    { "id": "cheonjiin",     "nameKo": "천지인 삼검", "hanja": "天地人三劍",   "weapon": "samjae_sword",    "passive": "cheongmyeong", "summary": "세 방향 거대 반원 베기, 3번째 공격마다 관통 검기. 피해 2배" },
+    { "id": "baekbo_fist",   "nameKo": "백보신권", "hanja": "百步神拳",      "weapon": "nahan_fist",      "passive": "geumgang",     "summary": "권경이 화면 끝까지 날아가며 관통, 3방향 동시" },
+    { "id": "muyeong_dagger","nameKo": "무영비도", "hanja": "無影飛刀",      "weapon": "flying_dagger",   "passive": "cheonsu",      "summary": "보이지 않는 비도가 적 사이를 5번 튕김, 중독" },
+    { "id": "cheonroe_array","nameKo": "천뢰검진", "hanja": "天雷劍陣",      "weapon": "changcheon_qi",   "passive": "noejeong",     "summary": "검기 원 2겹 상시 유지, 닿은 적에게 낙뢰 연쇄" },
+    { "id": "pasan_palm",    "nameKo": "파산장", "hanja": "破山掌",        "weapon": "palm_wind",       "passive": "pasan",        "summary": "거대한 장력이 지나간 자리마다 연쇄 폭발" },
+    { "id": "mancheon_star", "nameKo": "만천성지", "hanja": "滿天星指",      "weapon": "flash_finger",    "passive": "cheollian",    "summary": "초당 20발 지풍, 치명타 시 작은 폭발" },
+    { "id": "byeokryeok_fire","nameKo": "벽력천화", "hanja": "霹靂天火",     "weapon": "thunder_bomb",    "passive": "hwaryong",     "summary": "폭발 3연쇄, 5초 불바다" },
+    { "id": "chilbo_mist",   "nameKo": "칠보단혼무", "hanja": "七步斷魂霧",    "weapon": "poison_mist",     "passive": "mandok",       "summary": "독안개 반경 3배, 안에서 7초 버틴 일반 적 즉사(정예·보스 제외)" },
+    { "id": "taiji_liangyi", "nameKo": "태극양의검", "hanja": "太極兩儀劍",    "weapon": "taiji_sword",     "passive": "yangui",       "summary": "흑백 검 8자루 상시 공전. 흰 검 넉백, 검은 검 둔화. 태극 구간이면 피해 +30%" },
+    { "id": "eight_immortals","nameKo": "팔선과해", "hanja": "八仙過海",     "weapon": "drunken_staff",   "passive": "juseon",       "summary": "봉 분신 8개가 사방을 휩쓸고 2초 기절" },
+    { "id": "black_dragon",  "nameKo": "흑룡탄", "hanja": "黑龍呑",        "weapon": "chain_sickle",    "passive": "suryong",      "summary": "사슬이 주변 적을 한곳에 모은 뒤 폭발" },
+    { "id": "blood_demon_hand","nameKo": "혈마수", "hanja": "血魔手",      "weapon": "blood_claw",      "passive": "hyeolhae",     "summary": "핏빛 손이 전방 부채꼴을 할퀴고 흡혈 4%. 극음이면 범위 2배" },
+    { "id": "patian_qin",    "nameKo": "파천금음", "hanja": "破天琴音",      "weapon": "sonic_qin",       "passive": "cheongsim",    "summary": "음파가 겹칠수록 피해 증폭(최대 3배), 기절 30%" },
+    { "id": "hundred_flowers","nameKo": "백화난무창", "hanja": "百花亂舞槍",   "weapon": "pear_spear",      "passive": "unryong",      "summary": "경공 경로를 따라 창격 폭풍, 상시 5방향 찌르기" },
+    { "id": "five_thunders", "nameKo": "오뢰정법", "hanja": "五雷正法",      "weapon": "thunder_talisman","passive": "domun",        "summary": "화면 5곳 동시 대낙뢰, 맞은 적 주변으로 번개 전이" },
+    { "id": "plum_full_bloom","nameKo": "매화만개", "hanja": "梅花滿開",     "weapon": "falling_petals",  "passive": "maehwa",       "summary": "화면 전체를 도는 매화 폭풍, 닿을 때마다 기혈 0.2 회복" }
   ]
 }

@@ -47,10 +47,15 @@ namespace BloodRain.Core.Data
         public float LuckForFourthChoice = 50;
     }
 
+    /// <summary>절기 규칙. 경지마다 담을 수 있는 절기 수(그릇)가 정해져 있고, 문턱에 선 무공만 깨어난다.</summary>
     public sealed class EvolutionRuleDef
     {
-        public int MinPlayerLevel = 20;
-        public bool RequiresChest = true;
+        /// <summary>경지 id → 그 경지까지 담을 수 있는 절기 수(누적). 없는 경지는 0.</summary>
+        public Dictionary<string, int> Vessels = new Dictionary<string, int>();
+        /// <summary>문턱 조건: 짝 심법 최소 레벨(무공은 최고 단계).</summary>
+        public int PairPassiveMinLevel = 3;
+        /// <summary>깨어나는 순간: breakthrough(그릇이 늘어나는 돌파), chest(보갑).</summary>
+        public List<string> Triggers = new List<string> { "breakthrough", "chest" };
     }
 
     public sealed class YinYangDef

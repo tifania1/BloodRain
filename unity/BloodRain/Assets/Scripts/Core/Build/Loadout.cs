@@ -119,18 +119,50 @@ namespace BloodRain.Core.Build
             return result;
         }
 
-        /// <summary>보갑을 열 때 절기로 바뀔 수 있는 무공. 무공 Lv8 + 짝 심법 보유 + 플레이어 레벨 조건.</summary>
-        public EvolutionDef? EvolvableOnChest(int playerLevel)
+        /// <summary>절기 그릇: 지금 경지에서 몸에 담을 수 있는 절기 수. 현경처럼 모드에 따라 막힌 경지는 세지 않는다.</summary>
+        public int Vessels(int playerLevel, string mode = "normal")
         {
-            if (playerLevel < _data.Balance.Evolution.MinPlayerLevel) return null;
+            var vessels = _data.Balance.Evolution.Vessels;
+            int n = 0;
+            foreach (var r in _data.Balance.Realms)
+            {
+                if (r.Level > playerLevel) continue;
+                if (r.OnlyIn != null && !r.OnlyIn.Contains(mode)) continue;
+                if (vessels.TryGetValue(r.Id, out var v) && v > n) n = v;
+            }
+            return n;
+        }
+
+        /// <summary>문턱에 선 무공: 최고 단계 + 짝 심법이 기준 레벨 이상 + 아직 절기가 아님. 절기 데이터 순서.</summary>
+        public List<EvolutionDef> AtThreshold()
+        {
+            int minPair = _data.Balance.Evolution.PairPassiveMinLevel;
+            var list = new List<EvolutionDef>();
             foreach (var evo in _data.Evolutions)
             {
                 if (_evolved.Contains(evo.Weapon)) continue;
                 if (!_weapons.TryGetValue(evo.Weapon, out var lv) || lv < WeaponMax) continue;
-                if (!_passives.ContainsKey(evo.Passive)) continue;
-                return evo;
+                if (!_passives.TryGetValue(evo.Passive, out var plv) || plv < minPair) continue;
+                list.Add(evo);
             }
-            return null;
+            return list;
+        }
+
+        /// <summary>지금 깨어날 수 있는 절기들. 그릇이 남아 있을 때만 문턱 목록을 돌려준다.
+        /// 돌파 순간에 여럿이면 플레이어가 하나를 고르고, 보갑은 첫 번째를 쓴다.</summary>
+        public List<EvolutionDef> Awakenable(int playerLevel, string mode = "normal")
+            => _evolved.Count < Vessels(playerLevel, mode) ? AtThreshold() : new List<EvolutionDef>();
+
+        /// <summary>보갑을 열 때 깨어나는 절기(없으면 null).</summary>
+        public EvolutionDef? AwakenOnChest(int playerLevel, string mode = "normal")
+            => _data.Balance.Evolution.Triggers.Contains("chest") ? Awakenable(playerLevel, mode).FirstOrDefault() : null;
+
+        /// <summary>fromLevel→toLevel 사이 돌파로 그릇이 늘었으면, 그 순간 깨어날 수 있는 절기 후보.</summary>
+        public List<EvolutionDef> AwakenOnBreakthrough(int fromLevel, int toLevel, string mode = "normal")
+        {
+            if (!_data.Balance.Evolution.Triggers.Contains("breakthrough")) return new List<EvolutionDef>();
+            if (Vessels(toLevel, mode) <= Vessels(fromLevel, mode)) return new List<EvolutionDef>();
+            return Awakenable(toLevel, mode);
         }
 
         public void Evolve(EvolutionDef evo) => _evolved.Add(evo.Weapon);
