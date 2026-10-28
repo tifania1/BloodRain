@@ -102,7 +102,7 @@ footer { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
       <canvas tabindex="0" aria-label="절기 천지인 삼검 시연"></canvas>
       <figcaption class="cap"><span class="tier">절기</span><span class="lv">삼재검법 LV8 + 청명심법</span>
         <h2>천지인 삼검</h2>
-        <ul><li>모양 자체가 바뀐다. 세 방향 거대 반원, 획 가운데 금빛 심지.</li><li>세 번째 공격마다 세 갈래 관통 검기가 날아간다.</li><li>그 순간만 화면의 먹과 종이가 뒤집히고, 天·地·人 세 글자와 절(絶) 낙관이 찍힌다.</li></ul>
+        <ul><li>모양 자체가 바뀐다. 세 방향 거대 반원, 획 가운데 금빛 심지.</li><li>세 번째 공격마다 세 갈래 관통 검기가 날아간다.</li><li>그 순간만 화면이 탁본처럼 먹과 종이가 뒤집히고, 天·地·人 세 글자와 절(絶) 낙관이 찍힌다.</li></ul>
       </figcaption>
     </figure>
   </div>
@@ -344,7 +344,7 @@ class Stage {
   }
   reset() {
     this.t = 0; this.enemies = []; this.fx = []; this.parts = []; this.ghosts = []; this.marks = []; this.queue = [];
-    this.cool = 0.5; this.freeze = 0; this.shake = 0; this.invert = 0; this.count = 0; this.spawnAcc = 0;
+    this.cool = 0.5; this.freeze = 0; this.stopCd = 0; this.shake = 0; this.invert = 0; this.count = 0; this.spawnAcc = 0;
     this.p = { x: 0, y: 0, face: 0, lunge: 0, lx: 0, ly: 0 };
     for (let i = 0; i < 14; i++) this.spawn(rand(2.8, 6));
     if (this.gctx) this.gctx.clearRect(0, 0, this.ground.width, this.ground.height);
@@ -388,7 +388,7 @@ class Stage {
   special(base) {
     const c = this.cfg, p = this.p, hw = this.W / this.ppm / 2 - 0.9, hh = this.H / this.ppm / 2 - 0.9;
     for (const d of c.dirs) this.fx.push({ kind: 'wave', ang: base + d, x: p.x, y: p.y, t: 0, hit: new Set() });
-    this.invert = 0.16; this.freeze = Math.max(this.freeze, 0.06); this.shake = 0.16;
+    this.invert = 0.16; this.freeze = Math.max(this.freeze, 0.06); this.stopCd = 0.3; this.shake = 0.16;
     ['天', '地', '人'].forEach((ch, i) => {
       const a = base + c.dirs[i];
       this.marks.push({ kind: 'char', ch, x: clamp(p.x + Math.cos(a) * 3.3, -hw, hw), y: clamp(p.y + Math.sin(a) * 3.3, -hh, hh), t: -i * 0.07 });
@@ -406,7 +406,8 @@ class Stage {
     const c = this.cfg;
     e.dying = { mode: c.split ? 'split' : 'crumble', t: 0, cut };
     this.stain(e.x, e.y, ang, c.splat * 1.1, 0.42);
-    if (c.stop) this.freeze = Math.max(this.freeze, c.stop);
+    // 멈춤은 0.3초에 한 번까지. 처치마다 멈추면 무리를 벨 때 화면이 계속 끊긴다.
+    if (c.stop && this.stopCd <= 0) { this.freeze = Math.max(this.freeze, c.stop); this.stopCd = 0.3; }
     if (c.split) for (let i = 0; i < 7; i++) {
       const side = i % 2 ? 1 : -1, a = cut + side * Math.PI / 2 + rand(-0.4, 0.4), sp = rand(1.2, 3.4);
       this.parts.push({ kind: 'drop', x: e.x, y: e.y - 0.6, vx: Math.cos(a) * sp + Math.cos(ang), vy: Math.sin(a) * sp + Math.sin(ang), t: 0, life: rand(0.3, 0.6), r: rand(0.03, 0.07) });
@@ -420,6 +421,8 @@ class Stage {
   update(dt) {
     // 바닥 먹 자국은 천천히 마른다
     const gg = this.gctx; gg.save(); gg.globalCompositeOperation = 'destination-out'; gg.globalAlpha = Math.min(1, dt * 0.16); gg.fillRect(0, 0, this.ground.width, this.ground.height); gg.restore();
+    // 뒤집기와 멈춤 쿨다운은 멈춘 동안에도 실제 시간으로 흐른다
+    this.invert = Math.max(0, this.invert - dt); this.stopCd -= dt;
     if (this.freeze > 0) { this.freeze -= dt; this.shake = Math.max(0, this.shake - dt * 0.2); return; }
     const c = this.cfg, p = this.p; this.t += dt;
     p.lunge = Math.max(0, p.lunge - dt * 5);
@@ -473,7 +476,7 @@ class Stage {
     this.ghosts = this.ghosts.filter(gh => gh.t < 0.32);
     for (const m of this.marks) m.t += dt;
     this.marks = this.marks.filter(m => m.t < (m.kind === 'seal' ? 1.35 : 1.05));
-    this.shake = Math.max(0, this.shake - dt * 0.7); this.invert = Math.max(0, this.invert - dt);
+    this.shake = Math.max(0, this.shake - dt * 0.7);
   }
   drawArc(f, washOnly) {
     const g = this.ctx, tex = f.tex, k = f.t, prog = easeOut(clamp(k / REVEAL)), half = tex.size / 2, sc = this.ppm / TEX;
@@ -585,7 +588,10 @@ class Stage {
     }
     if (this.invert > 0) {
       g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'difference'; g.globalAlpha = clamp(this.invert / 0.1);
-      g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, this.cv.width, this.cv.height); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+      g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, this.cv.width, this.cv.height);
+      // 색을 빼서 탁본처럼 검은 바탕에 흰 획만 남긴다(뒤집힌 금이 파랗게 보이지 않게)
+      g.globalCompositeOperation = 'saturation'; g.fillStyle = '#808080'; g.fillRect(0, 0, this.cv.width, this.cv.height);
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
     }
   }
 }
