@@ -939,23 +939,21 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 ### 폴더 구조
 
 ```
-BloodRain/
-  core/                 # 순수 C# 코어 (dotnet 프로젝트)
-    BloodRain.Core/
-    BloodRain.Core.Tests/
-  data/                 # 무공·심법·절기·적·장 JSON (Unity와 코어가 같이 읽음)
-  unity/BloodRain/      # Unity 프로젝트
+BloodRain/                          # github.com/tifania1/BloodRain, PC: E:\Unity\BloodRain
+  unity/BloodRain/                  # Unity 6000.3 프로젝트
     Assets/
-      Scripts/Presentation/
-      Scripts/Sim/
-      Scripts/Platform/
-      Art/Characters, Enemies, Bosses, Icons, Tiles, Cutscenes, FX/
+      Scripts/Core/                 # 게임 규칙, UnityEngine 금지 (asmdef noEngineReferences)
+      Scripts/Presentation, Sim, Platform/
+      Resources/Data/               # 무공·심법·절기·캐릭터·적·밸런스 JSON (Unity와 테스트가 같이 읽음)
+      Art/Characters, Enemies, Bosses, Icons, Tiles, Cutscenes/
       Audio/
-      Shaders/          # 먹물 디졸브, 피격 번쩍임, 혈우 화면 효과
-  art_queue/            # GPT 이미지 대기열과 프롬프트 기록
-  art_inbox/            # 받은 원본 이미지
-  tools/                # 후처리 스크립트, 데이터 검증, 밸런스 시뮬레이터
-  docs/                 # 기획서 마크다운, backlog, feedback, daily
+      Shaders/                      # 먹물 디졸브, 피격 번쩍임, 혈우 화면 효과
+  core/                             # dotnet: Scripts/Core 를 그대로 컴파일하는 라이브러리 + 테스트
+    BloodRain.Core/  BloodRain.Core.Tests/
+  art_queue/queue.jsonl             # GPT 이미지 대기열과 프롬프트 기록
+  art_inbox/                        # 받은 원본 이미지 (커밋 안 함, PC에만)
+  tools/                            # 이미지 후처리, 배포 확인, PC 루프(agent_loop)
+  docs/                             # gdd.md(이 기획서 사본), backlog, feedback, unity_tasks, daily
   CLAUDE.md
 ```
 
@@ -1092,7 +1090,7 @@ OpenAI 이용약관에는 서비스의 출력물을 자동·프로그램 방식�
 - 한 세션에 backlog 항목 1\~2개. 직전 커밋이 20분 안이면 건너뛰어 겹침을 막습니다. backlog가 바닥나면 일을 지어내지 않고 테스트·문서·밸런스 시뮬레이션만 합니다.
 - 작업은 항상 `claude/dev` 브랜치로 올리고, 테스트 실패 0 · 직전 WebGL 빌드 성공 · fast-forward 가능일 때만 `main`으로 자동 승격합니다.
 - 그날 첫 세션이 `docs/daily/날짜.md`에 '아침에 확인할 것' 3줄을 남기고, 노션 현황판을 하루 한 번 갱신합니다.
-- 시작 일정 제안: 평일 23:00과 03:00에 큰 세션, 06:30에 정리 세션, 주말 10:00·15:00·22:00. 첫 주 사용량을 보고 늘리거나 줄입니다.
+- 실제 일정(2026-10-28 등록): 평일 22:47과 02:47에 개발 세션, 06:21에 정리 세션(알림 있음), 주말 09:41·14:41·21:41. 첫 주 사용량을 보고 늘리거나 줄입니다.
 
 ### C. API 크레딧 루프(PC, Claude Console + Agent SDK)
 
@@ -1107,11 +1105,11 @@ OpenAI 이용약관에는 서비스의 출력물을 자동·프로그램 방식�
 | 시각 | 일어나는 일 |
 | --- | --- |
 | 낮 | 사람이 대화창에 피드백, 필요하면 ChatGPT 앱으로 이미지 몇 장 |
-| 23:00 | 예약 세션: 코어·데이터 작업 → claude/dev |
+| 22:47 | 예약 세션: 코어·데이터 작업 → claude/dev |
 | 01:00 | PC 루프: Unity 반영, 이미지 임포트, 스크린샷 |
-| 03:00 | 예약 세션: 다음 항목, 테스트 |
+| 02:47 | 예약 세션: 다음 항목, 테스트 |
 | 05:00 | PC 루프: 에디터 플레이 검수 |
-| 06:30 | 예약 세션: 정리, daily 작성, 현황판 갱신, 조건 맞으면 main 승격 → 웹 빌드 배포 |
+| 06:21 | 예약 세션: 정리, daily 작성, 현황판 갱신, 조건 맞으면 main 승격 → 웹 빌드 배포 |
 | 아침 | 사람이 휴대폰으로 웹 빌드와 현황판 확인 |
 
 ## 19. 스토리보드

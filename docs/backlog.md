@@ -6,7 +6,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 ## M0 프리프로덕션 (2026-11-02 ~ 11-29)
 
 - [x] 2026-10-28 — 저장소 골격, CLAUDE.md, 데이터 JSON 6종, 코어(경험치·경지·음양·적 증가·스폰 곡선·로드아웃·절기 판정), 테스트 42개
-- [ ] B-01 기획서 '15. 기술 설계'의 폴더 구조를 실제 저장소 구조로 고친다(데이터는 `Assets/Resources/Data`)
+- [x] B-01 2026-10-28 — 기획서 '15. 기술 설계' 폴더 구조와 '18. 자동화' 일정을 실제와 맞춤(원본 문서·gdd.md 둘 다)
 - [ ] B-02 `Core/Build/Stats.cs` — 능력치 14종(기혈·회복·호신·신법·공력·쾌속·기세·분광·지속·탄속·흡기·심득·기연·재기)을 심법 효과와 연무장 레벨에서 합산. passives.json의 `stat` 이름과 맞춘다. 테스트 포함
 - [ ] B-03 `Core/Progression/RunXp.cs` — 진기 구슬 흡수 → 레벨업 횟수 → 돌파 이벤트를 내보내는 한 판 진행기. 레벨 60까지 돌파 4번 테스트
 - [ ] B-04 `Core/Combat/UltimateCharge.cs` — 진기(오의) 게이지. 처치 0.4, 피격 3, 정예 15, 태극이면 +25%. 테스트
@@ -15,7 +15,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] B-07 `tools/sim_run.py` 또는 dotnet 콘솔 — 가상의 평균 빌드로 20분을 돌려 레벨 도달 시점이 목표(5분 Lv15 / 10분 Lv30 / 15분 Lv45 / 20분 Lv60)와 맞는지 표로 출력. 진기 드롭량 가정은 문서에 적는다
 - [ ] B-08 `chapters.json` — 서장·1장 시간대별 적 가중치표와 정예·보부상·금두꺼비 시점(기획서 '7. 스테이지' 1장 흐름 표 그대로)
 - [ ] B-09 `Core/Spawning/WaveTable.cs` — chapters.json을 읽어 분마다 어떤 적을 몇 비율로 뽑을지. 테스트
-- [ ] B-10 `[U]` Unity 프로젝트 기본 설정: 2D URP, Input System, Newtonsoft 패키지, 폴더 구조, 빈 씬 Boot/Run/Inn
+- [ ] B-10 `[U]` (프로젝트 생성은 2026-10-28 PC에서 끝남, 6000.3.10f1) Unity 프로젝트 기본 설정: 2D URP, Input System, Newtonsoft 패키지, 폴더 구조, 빈 씬 Boot/Run/Inn
 - [ ] B-11 `[U]` 데이터 로더: Resources/Data JSON → `GameData.FromJson`, 시작할 때 콘솔에 무공 16종 이름 출력으로 확인
 - [ ] B-12 아트 시험 이미지 반영 확인(art_queue의 M0 항목 6개가 imported 되면 Sprite 설정 점검)
 
