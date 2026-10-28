@@ -31,6 +31,7 @@
 - `unity/BloodRain/Assets/Resources/Data/*.json` — 무공·심법·절기·캐릭터·적·밸런스 데이터. Unity와 테스트가 같은 파일을 읽는다.
   값을 바꾸면 `docs/design/gdd.md` 의 같은 표도 고친다. 테스트(`BalanceTests`)가 기획서 숫자와 맞는지 확인한다.
 - Unity 에디터가 필요한 일(씬, 프리팹, 셰이더, 플레이 검수)은 직접 하려 하지 말고 `docs/unity_tasks.md` 에 `- [ ]` 한 줄로 적는다. PC 루프(tools/agent_loop)가 처리한다.
+- `web/prototype/` — 브라우저 프로토타입(한 장짜리 HTML). 데이터 JSON을 빌드 때 그대로 넣으므로 JSON을 바꾸면 `python tools/build_web_prototype.py` 를 다시 돌려 `index.html` 도 같이 커밋한다. 설명은 그 폴더 README.
 
 ## 이미지
 - 이미지를 직접 생성하지 않는다(클라우드에서는 이미지 서비스가 막혀 있다).

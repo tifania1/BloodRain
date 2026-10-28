@@ -12,13 +12,15 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] B-04 `Core/Combat/UltimateCharge.cs` — 진기(오의) 게이지. 처치 0.4, 피격 3, 정예 15, 태극이면 +25%. 테스트
 - [ ] B-05 `Core/Combat/Backlash.cs` — 기혈역류(극성 60초마다, 3초 둔화, 끝날 때 최대 기혈 5%, 1초 안 경공으로 끊으면 오의 +50). 테스트
 - [ ] B-06 `Core/Build/Insights.cs` — 돌파 깨달음 7종 데이터(`insights.json`)와 3택1 추첨. 진소운은 4개
-- [ ] B-07 `tools/sim_run.py` 또는 dotnet 콘솔 — 가상의 평균 빌드로 20분을 돌려 레벨 도달 시점이 목표(5분 Lv15 / 10분 Lv30 / 15분 Lv45 / 20분 Lv60)와 맞는지 표로 출력. 진기 드롭량 가정은 문서에 적는다
+- [ ] B-07 `tools/sim_run.py` 또는 dotnet 콘솔 — 가상의 평균 빌드로 20분을 돌려 레벨 도달 시점이 목표(5분 Lv15 / 10분 Lv30 / 15분 Lv45 / 20분 Lv60)와 맞는지 표로 출력. 진기 드롭량 가정은 문서에 적는다. 참고: 웹 프로토타입 자동 판에선 잘 풀린 빌드가 20분 Lv75~100까지 갔다(`web/prototype/README.md`)
 - [ ] B-08 `chapters.json` — 서장·1장 시간대별 적 가중치표와 정예·보부상·금두꺼비 시점(기획서 '7. 스테이지' 1장 흐름 표 그대로)
 - [ ] B-09 `Core/Spawning/WaveTable.cs` — chapters.json을 읽어 분마다 어떤 적을 몇 비율로 뽑을지. 테스트
 - [ ] B-10 `[U]` (프로젝트 생성·커밋은 2026-10-28 끝남, 6000.3.10f1) Unity 프로젝트 기본 설정: 2D URP, Input System, Newtonsoft 패키지, 폴더 구조, 빈 씬 Boot/Run/Inn
 - [ ] B-11 `[U]` 데이터 로더: Resources/Data JSON → `GameData.FromJson`, 시작할 때 콘솔에 무공 16종 이름 출력으로 확인
 - [x] B-13 2026-10-28 — 인트로 컷 이미지 12장을 기획서 원본 19장 '컷 이미지'에 컷 순서대로 붙임
 - [ ] B-12 아트 시험 이미지 반영 확인(art_queue의 M0 항목 6개가 imported 되면 Sprite 설정 점검)
+- [x] P-01 2026-10-28 — 웹 프로토타입(`web/prototype/`, 1장 숭산 소림 + 원각). 데이터 JSON을 그대로 읽는다
+- [ ] P-02 **사람 결정 대기** — 프로토타입에서만 쓴 값 5개(맞은 뒤 무적, 강시 뛰는 비율, 처치 진기, 원각 체력, 보스전 잡몹 수)를 데이터·기획서로 옮길지. `docs/feedback.md` 에 결정이 적히기 전엔 건너뛴다. 정해지면 JSON·gdd.md·테스트를 같이 고치고 `python tools/build_web_prototype.py`
 
 ## M1 코어 프로토타입 (11-30 ~ 2027-01-10)
 
