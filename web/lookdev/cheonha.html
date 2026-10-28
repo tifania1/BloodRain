@@ -1,0 +1,798 @@
+<title>천하 시안</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Noto+Serif+KR:wght@400;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Boku&display=block&text=%E4%B8%80%E4%B8%89%E4%B8%8B%E4%B8%90%E4%B8%96%E4%BA%8C%E5%8C%96%E5%8D%81%E5%8D%97%E5%94%90%E5%9D%A8%E5%A2%83%E5%A4%A7%E5%A4%A9%E5%AE%AE%E5%AE%B6%E5%B0%81%E5%B0%91%E5%B1%B1%E5%B4%91%E5%B4%99%E5%B5%A9%E5%B9%87%E6%95%8E%E6%9E%97%E6%AD%A6%E6%B0%B4%E6%B1%9F%E6%B5%81%E7%8E%84%E7%95%B6%E7%B5%B6%E7%B8%BD%E8%88%B5%E8%8F%AF%E8%90%AC%E8%B0%B7%E8%B6%85%E8%B7%AF%E8%BC%AA%E8%BF%B4%E9%8E%AD%E9%95%B7%E9%96%80%E9%9B%B2%E9%9D%91%E9%A0%82%E9%AD%94">
+<style>
+/* 천하 시안: 괴혼처럼 경지가 오를수록 시야와 걸음이 넓어지는 한 장짜리 강호. 선지·먹·주홍 한 가지 화풍이라 다크 테마를 따로 두지 않는다. */
+:root {
+  --paper: #EFE6D2; --paper-deep: #E2D6BC; --ink: #1A1A1A; --ink-soft: #4A4640; --wash: #8A8478;
+  --gold: #C9A227; --crimson: #B3261E; --teal: #2F6F6A;
+  --brush: "Nanum Brush Script", "Noto Serif KR", serif;
+  --serif: "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+  --num: ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--paper); color: var(--ink); font-family: var(--serif); overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; font: inherit; }
+#game { position: fixed; inset: 0; overflow: hidden; background: var(--paper); }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+#hud { position: absolute; inset: 0; pointer-events: none; }
+#hud[hidden] { display: none; }
+.hl { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); display: grid; gap: 5px; width: min(46vw, 260px); }
+.realm { font: 400 34px/1 var(--brush); color: var(--crimson); text-shadow: 0 0 6px var(--paper); display: flex; gap: 8px; align-items: baseline; }
+.realm small { font: 700 12px var(--num); color: var(--ink-soft); }
+.bar { height: 8px; border: 1.5px solid var(--ink); background: rgba(239,230,210,.7); }
+.bar i { display: block; height: 100%; width: 0; }
+.bar.xp i { background: var(--gold); }
+.bar.hp i { background: var(--teal); }
+.bar.hp.low i { background: var(--crimson); }
+.hr { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); text-align: right; font: 700 13px/1.6 var(--num); text-shadow: 0 1px 0 var(--paper); }
+.hr b { font: 400 24px/1 var(--brush); display: block; }
+.hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); font-size: 13px; color: var(--ink-soft); background: rgba(239,230,210,.82); padding: 6px 12px; border-radius: 3px; text-align: center; width: max-content; max-width: calc(100% - 140px); }
+.dash { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 74px; height: 74px; border-radius: 50%; border: 2px solid var(--ink); background: rgba(239,230,210,.88); font: 400 26px var(--brush); pointer-events: auto; display: grid; place-items: center; }
+@media (hover: hover) and (pointer: fine) { .dash { display: none; } .hint { max-width: calc(100% - 32px); } }
+
+.screen { position: absolute; inset: 0; display: flex; overflow-y: auto; padding: calc(20px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: rgba(239,230,210,.9); }
+.panel { margin: auto; width: min(100%, 640px); display: grid; gap: 14px; justify-items: center; text-align: center; }
+.big { font: 400 clamp(46px, 12vw, 76px)/1 var(--brush); }
+.hanja { font: 400 clamp(54px, 14vw, 96px)/1 "Yuji Boku", var(--serif); letter-spacing: .04em; }
+.lead { margin: 0; font-size: 14px; line-height: 1.8; max-width: 36em; color: var(--ink); }
+.subtle { font-size: 13px; color: var(--ink-soft); }
+.b { min-width: 140px; padding: 11px 18px; border: 2px solid var(--ink); border-radius: 3px; background: var(--paper); color: var(--ink); font: 700 15px/1.2 var(--serif); cursor: pointer; }
+.b.main { background: var(--ink); color: var(--paper); }
+.b:disabled { opacity: .4; cursor: default; }
+.b small { display: block; font-weight: 400; font-size: 11px; margin-top: 3px; opacity: .85; }
+.b:focus-visible, .card:focus-visible { outline: 3px solid var(--crimson); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+@media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+.card { display: grid; gap: 4px; justify-items: center; padding: 14px 10px; border: 2px solid var(--ink); border-radius: 3px; background: linear-gradient(var(--paper-deep), var(--paper) 40%); cursor: pointer; color: var(--ink); }
+.card .seal { width: 56px; height: 56px; display: grid; place-items: center; background: var(--crimson); color: #F3EAD7; font: 400 24px/1 "Yuji Boku", var(--serif); border-radius: 6px; transform: rotate(-5deg); box-shadow: inset 0 0 0 3px var(--crimson), inset 0 0 0 5px #F3EAD7; }
+.card h3 { margin: 4px 0 0; font-size: 17px; font-weight: 900; }
+.card p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+.card .bonus { color: #7A5A10; font-weight: 700; }
+.meta { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 420px) { .meta { grid-template-columns: 1fr; } }
+.meta button { padding: 9px 6px; border: 1.5px solid var(--ink); border-radius: 3px; background: var(--paper); cursor: pointer; text-align: center; color: var(--ink); }
+.meta button b { display: block; font-size: 14px; }
+.meta button span { font-size: 11.5px; color: var(--ink-soft); }
+.meta button:disabled { opacity: .45; cursor: default; }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%; }
+@media (max-width: 420px) { .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.facts b { display: block; font: 700 19px var(--num); }
+.facts span { font-size: 11.5px; color: var(--ink-soft); }
+.keys { font-size: 12px; line-height: 1.8; color: var(--ink-soft); }
+.keys kbd { font: 700 11px var(--num); border: 1px solid var(--ink-soft); border-radius: 3px; padding: 0 4px; background: var(--paper); }
+</style>
+
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div id="hud" hidden>
+    <div class="hl">
+      <div class="realm"><span id="realm">삼류</span><small id="lvl">1단</small></div>
+      <div class="bar xp"><i id="xp"></i></div>
+      <div class="bar hp" id="hpbar"><i id="hp"></i></div>
+    </div>
+    <div class="hr"><b id="sect">소림</b><div id="kills">처치 0</div><div id="qi">윤회의 기 0</div></div>
+    <div class="hint" id="hint"></div>
+    <button class="dash" id="dash" type="button" aria-label="경공">輕功</button>
+  </div>
+
+  <div class="screen" id="title">
+    <div class="panel">
+      <div class="hanja">天下</div>
+      <div class="big">천하 시안</div>
+      <p class="lead">한 번 죽으면 아무 문파의 제자로 다시 태어난다. 처음엔 문파 마당 몇 걸음만 보이지만, 경지가 오를수록 시야와 걸음이 넓어져 마을이 점이 되고 산맥이 발밑에 깔린다. 현경에 이르면 중원 전체가 한 화면이다. 괴혼식 시야 확장이 손맛이 있는지 보려는 놀이판이다.</p>
+      <div class="row"><button class="b main" id="start" type="button">윤회 시작<small>다음 생을 고른다</small></button><button class="b" id="fast" type="button" aria-pressed="false">보통 속도<small>눌러서 기 3배(빨리 훑어보기)</small></button></div>
+      <div class="keys">이동 <kbd>WASD</kbd>·<kbd>방향키</kbd> · 경공 <kbd>Space</kbd> · 정지 <kbd>Esc</kbd><br>휴대폰은 화면을 끌어서 이동, 오른쪽 아래 버튼으로 경공. 공격은 알아서 나간다</div>
+      <div class="subtle" id="best"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="rebirth" hidden>
+    <div class="panel">
+      <div class="hanja">輪迴</div>
+      <div class="subtle" id="rbsub">다음 생을 고르시오</div>
+      <div class="cards" id="rbcards"></div>
+      <div class="subtle" id="qileft">윤회의 기 0</div>
+      <div class="meta" id="meta"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="dead" hidden>
+    <div class="panel">
+      <div class="big" id="dtitle">쓰러졌다</div>
+      <p class="lead" id="dline"></p>
+      <div class="facts" id="dfacts"></div>
+      <div class="row"><button class="b main" id="again" type="button">윤회<small>기를 들고 다시 태어난다</small></button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ───────── 기본값 ─────────
+// 지역 위치는 unity/BloodRain/Assets/Resources/Data/worldmap.json 의 pos 를 그대로 옮겼다(지도 위 비율).
+const W = 4000, H = 2600;              // 강호 전체(세계 단위)
+const S = 2.25;                        // 경지 한 단계마다 세상이 이만큼 작아진다
+const VIEW0 = 36;                      // 삼류일 때 화면 대각선이 담는 세계 길이
+const TIERS = [
+  { name: '삼류', hanja: '三流', foe: '시강' }, { name: '이류', hanja: '二流', foe: '강시 패거리' },
+  { name: '일류', hanja: '一流', foe: '강시 떼' }, { name: '절정', hanja: '絶頂', foe: '강시 군단' },
+  { name: '초절정', hanja: '超絶頂', foe: '혈운 군세' }, { name: '화경', hanja: '化境', foe: '혈운 대군' },
+  { name: '현경', hanja: '玄境', foe: '혈마' },
+];
+const MAXT = TIERS.length - 1;
+const LV_PER_TIER = 8;
+const REG = {
+  cheongun: [0.66, 0.44, '靑雲鎭'], songshan: [0.60, 0.37, '嵩山'], danggata: [0.30, 0.56, '唐家坨'], janggang: [0.59, 0.62, '長江'],
+  wudangsan: [0.47, 0.49, '武當山'], huashan: [0.45, 0.34, '華山'], kunlun: [0.12, 0.30, '崑崙'], sipmandaesan: [0.42, 0.86, '十萬大山'],
+  bongmagok: [0.54, 0.45, '封魔谷'], namgung_manor: [0.76, 0.52, '南宮世家'], gaebang_hq: [0.55, 0.32, '丐幇總舵'],
+};
+// 환생할 수 있는 문파 9(기획서 20장 진전과 같은 9곳). 보너스는 이 시안에서만 쓰는 값.
+const SECTS = [
+  { id: 'shaolin', name: '소림', hanja: '少林', reg: 'songshan', robe: '#9A5B2E', bonus: '기혈 +30', mod: { hp: 30 } },
+  { id: 'wudang', name: '무당', hanja: '武當', reg: 'wudangsan', robe: '#5E6E78', bonus: '초당 기혈 회복 +1', mod: { regen: 1 } },
+  { id: 'huashan', name: '화산', hanja: '華山', reg: 'huashan', robe: '#A04A5A', bonus: '검기 빠르기 +25%', mod: { atk: 1.25 } },
+  { id: 'gaebang', name: '개방', hanja: '丐幇', reg: 'gaebang_hq', robe: '#7A6A4A', bonus: '걸음 +15%', mod: { speed: 1.15 } },
+  { id: 'tang', name: '당가', hanja: '唐門', reg: 'danggata', robe: '#3E5A3A', bonus: '검기 범위 +20%', mod: { area: 1.2 } },
+  { id: 'namgung', name: '남궁', hanja: '南宮', reg: 'namgung_manor', robe: '#2F3F63', bonus: '피해 +20%', mod: { might: 1.2 } },
+  { id: 'waterfort', name: '수로채', hanja: '水路', reg: 'janggang', robe: '#2F5A6A', bonus: '경공 충전 +1', mod: { dash: 1 } },
+  { id: 'kunlun', name: '곤륜', hanja: '崑崙', reg: 'kunlun', robe: '#D9D6CC', bonus: '가까운 적이 10% 느려짐', mod: { chill: 0.9 } },
+  { id: 'demonic', name: '마교', hanja: '魔敎', reg: 'sipmandaesan', robe: '#3A1E2A', bonus: '피해 +35%, 기혈 -25', mod: { might: 1.35, hp: -25 } },
+];
+const META = [
+  { id: 'might', name: '공력', per: '피해 +8%', max: 10 },
+  { id: 'hp', name: '기혈', per: '최대 기혈 +15', max: 10 },
+  { id: 'speed', name: '신법', per: '걸음 +5%', max: 6 },
+];
+const INK = '#1A1A1A', PAPER = '#EFE6D2', GOLD = '#C9A227', CRIMSON = '#B3261E';
+
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const sc = t => Math.pow(S, t);
+const easeInOut = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem('cheonha_' + k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem('cheonha_' + k, JSON.stringify(v)); } catch (e) { /* 저장이 막혀도 판은 돈다 */ } },
+};
+const meta = Object.assign({ qi: 0, might: 0, hp: 0, speed: 0, lives: 0, best: 0 }, store.get('meta') || {});
+const saveMeta = () => store.set('meta', meta);
+
+// 시드 있는 난수: 강호 지형은 매번 같아야 한다
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+// ───────── 강호 지형 ─────────
+const LAND = [[0.80,0.10],[0.88,0.16],[0.86,0.24],[0.80,0.26],[0.84,0.33],[0.80,0.40],[0.86,0.47],[0.88,0.56],[0.84,0.66],[0.80,0.74],[0.72,0.82],[0.62,0.88],[0.52,0.93],[0.44,0.96],[0.36,0.91],[0.30,0.85],[0.22,0.81],[0.12,0.75],[0.05,0.62],[0.03,0.48],[0.06,0.36],[0.04,0.24],[0.12,0.16],[0.24,0.12],[0.34,0.17],[0.44,0.13],[0.56,0.11],[0.66,0.06],[0.74,0.04]].map(([x, y]) => [x * W, y * H]);
+const RIVERS = [
+  [[0.16,0.30],[0.26,0.26],[0.35,0.22],[0.41,0.15],[0.47,0.19],[0.46,0.29],[0.52,0.33],[0.62,0.31],[0.72,0.29],[0.82,0.30]],
+  [[0.12,0.52],[0.21,0.55],[0.30,0.58],[0.40,0.60],[0.48,0.63],[0.56,0.61],[0.62,0.63],[0.70,0.58],[0.78,0.57],[0.87,0.56]],
+].map(r => r.map(([x, y]) => [x * W, y * H]));
+function inLand(x, y) {
+  let c = false;
+  for (let i = 0, j = LAND.length - 1; i < LAND.length; j = i++) {
+    const [xi, yi] = LAND[i], [xj, yj] = LAND[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+// 소품: 나무 3~5, 집 7, 탑 22, 산 90~320. 크기가 세계 단위로 고정이라 시야가 넓어질수록 작아진다.
+const props = [];
+(function buildProps() {
+  const r = rng(7);
+  const add = (kind, x, y, s) => { if (inLand(x, y)) props.push({ kind, x, y, s, v: Math.floor(r() * 3) }); };
+  for (const k in REG) {
+    const [nx, ny] = REG[k], cx = nx * W, cy = ny * H;
+    add('temple', cx, cy - 14, 22);
+    for (let i = 0; i < 14; i++) { const a = r() * TAU, d = 16 + r() * 34; add('house', cx + Math.cos(a) * d, cy + Math.sin(a) * d, 6 + r() * 2); }
+    for (let i = 0; i < 160; i++) { const a = r() * TAU, d = 8 + r() * 140; add('tree', cx + Math.cos(a) * d, cy + Math.sin(a) * d, 3 + r() * 2.5); }
+  }
+  for (let v = 0; v < 70; v++) {
+    const cx = r() * W, cy = r() * H; if (!inLand(cx, cy)) continue;
+    for (let i = 0; i < 6 + r() * 8; i++) { const a = r() * TAU, d = r() * 26; add('house', cx + Math.cos(a) * d, cy + Math.sin(a) * d, 6 + r() * 2); }
+  }
+  for (let i = 0; i < 6000; i++) add('tree', r() * W, r() * H, 3 + r() * 2.5);
+  const ranges = [[0.03, 0.22, 0.18, 0.62, 70], [0.30, 0.50, 0.78, 0.94, 40], [0.40, 0.52, 0.28, 0.50, 28], [0.28, 0.60, 0.10, 0.17, 26], [0.20, 0.34, 0.40, 0.52, 18]];
+  for (const [x0, x1, y0, y1, n] of ranges) for (let i = 0; i < n; i++) add('mount', lerp(x0, x1, r()) * W, lerp(y0, y1, r()) * H, 90 + r() * 230);
+  props.sort((a, b) => a.y - b.y);
+})();
+const PCELL = 200, pgrid = new Map();
+props.forEach((p, i) => { const k = Math.floor(p.x / PCELL) + ',' + Math.floor(p.y / PCELL); if (!pgrid.has(k)) pgrid.set(k, []); pgrid.get(k).push(i); });
+
+// ───────── 그림 재료 ─────────
+const cv = $('cv'), ctx = cv.getContext('2d');
+let VW = 0, VH = 0, DPR = 1;
+const off = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; };
+function figure(kind, px, robe) {
+  // 자리 표시용 먹선 인물(삼재검법 시안과 같은 그림). 오른쪽을 보는 모습.
+  const c = off(px, px), g = c.getContext('2d'), u = px / 100;
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  const line = w => { g.lineWidth = w * u; g.strokeStyle = INK; g.stroke(); };
+  const rect = (x, y, w, h, f, lw = 3) => { g.beginPath(); g.rect(x * u, y * u, w * u, h * u); g.fillStyle = f; g.fill(); if (lw) line(lw); };
+  const ell = (x, y, rx, ry, f, lw = 3) => { g.beginPath(); g.ellipse(x * u, y * u, rx * u, ry * u, 0, 0, TAU); g.fillStyle = f; g.fill(); if (lw) line(lw); };
+  const poly = (p, f, lw = 3) => { g.beginPath(); p.forEach((q, i) => i ? g.lineTo(q[0] * u, q[1] * u) : g.moveTo(q[0] * u, q[1] * u)); g.closePath(); g.fillStyle = f; g.fill(); if (lw) line(lw); };
+  g.globalAlpha = 0.2; ell(50, 92, 24, 5.5, INK, 0); g.globalAlpha = 1;
+  if (kind === 'jiangshi' || kind === 'blood') {
+    const cloth = kind === 'blood' ? '#6A2A26' : '#3F5A57';
+    rect(40, 80, 7, 10, INK, 2); rect(53, 80, 7, 10, INK, 2);
+    poly([[34, 40], [66, 40], [70, 84], [30, 84]], cloth); rect(56, 46, 32, 10, cloth); rect(84, 45, 6, 12, '#D9D2BF', 2);
+    ell(50, 30, 13, 13, '#D9D2BF'); rect(34, 12, 32, 9, INK, 2); rect(56, 20, 7, 20, '#D8B13A', 1.5);
+  } else {
+    rect(41, 80, 7, 10, INK, 2); rect(53, 80, 7, 10, INK, 2);
+    poly([[36, 42], [64, 42], [66, 82], [34, 82]], robe); rect(34, 60, 32, 6, '#E9E2D0', 2); rect(60, 48, 16, 8, robe, 2.5);
+    g.strokeStyle = '#6E7B86'; g.lineWidth = 3.4 * u; g.beginPath(); g.moveTo(74 * u, 52 * u); g.lineTo(96 * u, 30 * u); g.stroke();
+    ell(50, 30, 12, 12, '#E5D3B8'); ell(50, 16, 7, 6, INK, 0); ell(54, 30, 2, 2, INK, 0);
+  }
+  return c;
+}
+// 적 단위: 단계가 오를수록 한 덩어리에 강시가 더 많이 들어 있다(화면에선 늘 비슷한 크기로 보인다)
+const CLUSTER_N = [1, 4, 9, 16, 28, 44];
+const clusterSprites = [];
+function buildClusters() {
+  const one = figure('jiangshi', 64), bl = figure('blood', 64);
+  for (let t = 0; t < CLUSTER_N.length; t++) {
+    const variants = [];
+    for (let v = 0; v < 3; v++) {
+      const n = CLUSTER_N[t], P = 160, c = off(P, P), g = c.getContext('2d'), r = rng(t * 31 + v * 7 + 1);
+      const fig = Math.max(14, P * 0.95 / Math.sqrt(n) * 1.25), pts = [];
+      for (let i = 0; i < n; i++) { const a = i * 2.39996 + r() * 0.4, d = Math.sqrt((i + 0.5) / n) * (P / 2 - fig * 0.45); pts.push([P / 2 + Math.cos(a) * d, P / 2 + Math.sin(a) * d * 0.8]); }
+      pts.sort((a, b) => a[1] - b[1]);
+      if (t >= 3) { g.fillStyle = t >= 4 ? 'rgba(150,30,26,0.16)' : 'rgba(26,26,26,0.10)'; g.beginPath(); g.ellipse(P / 2, P / 2, P * 0.48, P * 0.4, 0, 0, TAU); g.fill(); }
+      for (const [x, y] of pts) g.drawImage(t >= 4 && r() < 0.6 ? bl : one, x - fig / 2, y - fig * 0.7, fig, fig);
+      if (t >= 3) { // 군단 깃발
+        g.strokeStyle = INK; g.lineWidth = 2; g.beginPath(); g.moveTo(P * 0.62, P * 0.16); g.lineTo(P * 0.62, P * 0.55); g.stroke();
+        g.fillStyle = CRIMSON; g.beginPath(); g.moveTo(P * 0.62, P * 0.16); g.lineTo(P * 0.8, P * 0.22); g.lineTo(P * 0.62, P * 0.3); g.fill();
+      }
+      variants.push(c);
+    }
+    clusterSprites.push(variants);
+  }
+}
+function demonSprite() {
+  const P = 320, c = off(P, P), g = c.getContext('2d');
+  g.fillStyle = 'rgba(120,20,20,0.25)'; g.beginPath(); g.ellipse(P / 2, P * 0.55, P * 0.46, P * 0.4, 0, 0, TAU); g.fill();
+  g.fillStyle = '#2A1416'; g.strokeStyle = INK; g.lineWidth = 6;
+  g.beginPath(); g.moveTo(P * 0.2, P * 0.9); g.quadraticCurveTo(P * 0.16, P * 0.45, P * 0.38, P * 0.3); g.quadraticCurveTo(P * 0.5, P * 0.12, P * 0.62, P * 0.3); g.quadraticCurveTo(P * 0.86, P * 0.45, P * 0.8, P * 0.9); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = CRIMSON; g.beginPath(); g.ellipse(P * 0.44, P * 0.32, 10, 6, -0.3, 0, TAU); g.ellipse(P * 0.56, P * 0.32, 10, 6, 0.3, 0, TAU); g.fill();
+  g.strokeStyle = 'rgba(179,38,30,0.7)'; g.lineWidth = 3; for (let i = 0; i < 9; i++) { const x = P * (0.25 + i * 0.06); g.beginPath(); g.moveTo(x, P * 0.6); g.lineTo(x - 6, P * 0.9); g.stroke(); }
+  return c;
+}
+function propSprite(kind, v) {
+  const P = kind === 'mount' ? 256 : 96, c = off(P, P), g = c.getContext('2d'), r = rng(kind.length * 13 + v * 5 + 3);
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  if (kind === 'tree') {
+    g.fillStyle = INK; g.fillRect(P * 0.47, P * 0.55, P * 0.06, P * 0.35);
+    for (let i = 0; i < 7; i++) { g.globalAlpha = 0.55 + r() * 0.3; g.fillStyle = i % 3 ? '#3E5A3A' : '#2F4630'; g.beginPath(); g.ellipse(P * (0.5 + (r() - 0.5) * 0.4), P * (0.38 + (r() - 0.5) * 0.3), P * (0.16 + r() * 0.1), P * (0.12 + r() * 0.08), 0, 0, TAU); g.fill(); }
+  } else if (kind === 'house') {
+    g.fillStyle = '#D9CDB0'; g.strokeStyle = INK; g.lineWidth = 3; g.fillRect(P * 0.2, P * 0.5, P * 0.6, P * 0.36); g.strokeRect(P * 0.2, P * 0.5, P * 0.6, P * 0.36);
+    g.fillStyle = '#3A3A3A'; g.beginPath(); g.moveTo(P * 0.08, P * 0.54); g.quadraticCurveTo(P * 0.5, P * 0.18, P * 0.92, P * 0.54); g.lineTo(P * 0.78, P * 0.5); g.lineTo(P * 0.22, P * 0.5); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = INK; g.fillRect(P * 0.44, P * 0.66, P * 0.12, P * 0.2);
+  } else if (kind === 'temple') {
+    g.strokeStyle = INK; g.lineWidth = 3;
+    for (let k = 0; k < 4; k++) { const y = P * (0.82 - k * 0.17), w = P * (0.7 - k * 0.12); g.fillStyle = k % 2 ? '#8A3A2E' : '#D9CDB0'; g.fillRect(P / 2 - w / 2, y - P * 0.1, w, P * 0.1); g.strokeRect(P / 2 - w / 2, y - P * 0.1, w, P * 0.1); g.fillStyle = '#2A2A2A'; g.beginPath(); g.moveTo(P / 2 - w / 2 - 8, y - P * 0.1); g.quadraticCurveTo(P / 2, y - P * 0.2, P / 2 + w / 2 + 8, y - P * 0.1); g.fill(); }
+  } else { // 산: 마른 붓 세 겹
+    for (let k = 0; k < 3; k++) {
+      const base = P * (0.95 - k * 0.04), peak = P * (0.12 + k * 0.14 + r() * 0.08), cx = P * (0.5 + (r() - 0.5) * 0.3), hw = P * (0.46 - k * 0.08);
+      g.fillStyle = `rgba(${40 + k * 30},${50 + k * 30},${48 + k * 28},${0.55 - k * 0.12})`;
+      g.beginPath(); g.moveTo(cx - hw, base);
+      for (let i = 0; i <= 12; i++) { const s = i / 12, x = cx - hw + s * hw * 2, y = base - (base - peak) * Math.pow(Math.sin(s * Math.PI), 1.4) * (0.85 + r() * 0.3); g.lineTo(x, y); }
+      g.lineTo(cx + hw, base); g.closePath(); g.fill();
+    }
+    g.strokeStyle = 'rgba(26,26,26,0.7)'; g.lineWidth = 3; g.beginPath(); g.moveTo(P * 0.2, P * 0.6); g.quadraticCurveTo(P * 0.45, P * 0.15, P * 0.62, P * 0.32); g.stroke();
+  }
+  return c;
+}
+const PROP_SPR = {};
+let groundTile = null, playerSpr = null, demon = null;
+function buildGround() {
+  const T = 256, c = off(T, T), g = c.getContext('2d'), r = rng(11);
+  g.fillStyle = '#E4D9BF'; g.fillRect(0, 0, T, T);
+  g.strokeStyle = 'rgba(90,80,60,0.18)'; g.lineWidth = 2;
+  for (let y = 0; y < T; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(T, y); g.stroke(); for (let x = (y / 64 % 2) * 32; x < T; x += 64) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 64); g.stroke(); } }
+  for (let i = 0; i < 70; i++) { g.strokeStyle = `rgba(62,90,58,${0.2 + r() * 0.3})`; g.lineWidth = 1.5; const x = r() * T, y = r() * T; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 3, y - 7); g.moveTo(x, y); g.lineTo(x + 3, y - 6); g.stroke(); }
+  for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(179,38,30,${0.05 + r() * 0.1})`; g.beginPath(); g.arc(r() * T, r() * T, 1 + r() * 3, 0, TAU); g.fill(); }
+  groundTile = c;
+}
+function buildArt() {
+  buildClusters(); buildGround(); demon = demonSprite();
+  for (const k of ['tree', 'house', 'temple', 'mount']) PROP_SPR[k] = [0, 1, 2].map(v => propSprite(k, v));
+}
+
+// ───────── 한 판(한 생)의 상태 ─────────
+let G = null, running = false, paused = false, overlay = 'title';
+function startLife(sect) {
+  const [nx, ny] = REG[sect.reg], mod = sect.mod;
+  const maxHp = 100 + (mod.hp || 0) + meta.hp * 15;
+  G = {
+    sect, t: 0, tier: 0, lv: 0, xp: 0, kills: 0, qiGain: 0, spawnAcc: 0, eliteAcc: 0, boss: null, won: false,
+    home: { x: nx * W, y: ny * H },
+    p: { x: nx * W, y: ny * H + 4, fx: 1, fy: 0, hp: maxHp, maxHp, iframe: 0, dashT: 0, dvx: 0, dvy: 0, dashN: 2 + (mod.dash || 0), dashMax: 2 + (mod.dash || 0), dashAcc: 0 },
+    mods: { might: (mod.might || 1) * (1 + 0.08 * meta.might), speed: (mod.speed || 1) * (1 + 0.05 * meta.speed), atk: mod.atk || 1, area: mod.area || 1, regen: 0.25 + (mod.regen || 0), chill: mod.chill || 1 },
+    foes: [], orbs: [], fx: [], cd: 0.3, orbitA: 0, waveCd: 2, view: VIEW0, brk: null, trauma: 0, hintT: 7,
+  };
+  setHint(`${sect.name}의 마당. ${TIERS[0].foe}를 베고 기를 모아 이류로 오르면 시야가 넓어진다`);
+}
+const prog = () => G.lv / LV_PER_TIER;                       // 지금 경지 안에서의 진행(0~1)
+const viewFor = (t, p) => VIEW0 * Math.pow(S, t + 0.35 * p);  // 경지 안에서도 조금씩 물러나다가 돌파 때 크게 물러난다
+const boundR = t => t >= MAXT ? Infinity : VIEW0 * sc(t) * 2.4; // 혈우 장막 반경
+const xpReq = lv => 9 + 3 * lv;
+let PPM = 1;
+
+function spawnFoe(e, elite) {
+  const p = G.p, diag = G.view, a = rand(0, TAU), d = diag * rand(0.55, 0.7);
+  const lvAt = G.lv;
+  const f = {
+    e, elite: !!elite, x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d,
+    r: 0.42 * sc(e) * (elite ? 1.8 : 1), hp: 32 * Math.pow(2.4, e) * (1 + 0.14 * lvAt) * (elite ? 10 : 1),
+    sp: rand(2.2, 3.0) * sc(e) * (elite ? 0.8 : 1), dmg: (elite ? 16 : 10) * (1 + 0.15 * e), hop: Math.random(), flash: 0, contact: 0, v: Math.floor(Math.random() * 3), kx: 0, ky: 0,
+  };
+  f.maxHp = f.hp; G.foes.push(f); return f;
+}
+function spawnBoss() {
+  const [nx, ny] = REG.bongmagok;
+  G.boss = { e: MAXT, boss: true, x: nx * W, y: ny * H, r: 0.42 * sc(MAXT) * 1.5, hp: 22 * Math.pow(2.4, MAXT) * 40, sp: 0.5 * sc(MAXT), dmg: 22, flash: 0, contact: 0, kx: 0, ky: 0, hop: 0 };
+  G.boss.maxHp = G.boss.hp; G.foes.push(G.boss);
+  setHint('봉마곡에서 혈마가 깨어났다. 화면 끝의 붉은 표시를 따라가라');
+}
+function hurt(f, dmg, kx, ky, kb) {
+  if (f.dead) return;
+  f.hp -= dmg; f.flash = 0.08;
+  if (kb && !f.boss) { f.kx += kx * kb; f.ky += ky * kb; }
+  if (f.hp <= 0) kill(f);
+}
+function kill(f, crushed) {
+  f.dead = true; G.kills++;
+  const v = f.e < G.tier ? 0.3 : f.elite ? 6 : 1;
+  G.fx.push({ k: crushed ? 'crush' : 'puff', x: f.x, y: f.y, r: f.r * 1.6, t: 0, life: crushed ? 0.35 : 0.5, red: f.e >= 4 });
+  if (f.boss) { G.won = true; G.qiGain += 500; setTimeout(() => endLife(true), 1400); return; }
+  G.orbs.push({ x: f.x, y: f.y, v, heal: f.elite ? 25 : 0 });
+  if (G.orbs.length > 320) { const o = G.orbs.splice(0, 60); const sum = o.reduce((a, b) => a + b.v, 0); G.orbs.push({ x: G.p.x, y: G.p.y, v: sum, heal: 0 }); }
+}
+function gainXp(v) {
+  G.xp += v * (G.fast ? 3 : 1); G.qiGain += v * (G.tier + 1) * 0.4;
+  while (!G.brk && G.xp >= xpReq(G.lv)) {
+    G.xp -= xpReq(G.lv); G.lv++;
+    if (G.lv >= LV_PER_TIER) { if (G.tier < MAXT) breakthrough(); else G.lv = LV_PER_TIER - 1; }
+  }
+}
+// 돌파: 시간이 거의 멈추고, 경지 글자가 찍히고, 카메라가 크게 물러나며, 아래 단계가 된 적들이 기세에 눌려 쓸려 간다
+function breakthrough() {
+  const from = G.view;
+  G.tier++; G.lv = 0; G.xp = 0;
+  G.brk = { t: 0, from, to: viewFor(G.tier, 0), oldR: boundR(G.tier - 1), crushed: false };
+  G.trauma = Math.min(1, G.trauma + 0.5);
+  if (G.tier === MAXT) spawnBoss();
+  else setHint(`${TIERS[G.tier].name}. 이제 ${TIERS[G.tier].foe}와 싸운다. ${TIERS[G.tier - 1].foe}는 닿기만 해도 쓰러진다`);
+}
+function setHint(s) { if (!G) return; G.hint = s; G.hintT = 7; $('hint').textContent = s; $('hint').hidden = false; }
+
+// ───────── 갱신 ─────────
+const input = { keys: new Set(), joy: null };
+function readMove() {
+  let x = 0, y = 0; const k = input.keys;
+  if (k.has('KeyA') || k.has('ArrowLeft')) x--; if (k.has('KeyD') || k.has('ArrowRight')) x++;
+  if (k.has('KeyW') || k.has('ArrowUp')) y--; if (k.has('KeyS') || k.has('ArrowDown')) y++;
+  if (input.joy) { x += input.joy.dx; y += input.joy.dy; }
+  if (G.auto) [x, y] = autopilot();
+  const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+  return [x, y, m > 0.05];
+}
+// 시험용 자동 조종: 가장 가까운 같은 단계 적을 검기 거리 안쪽으로 끌어들이고, 몰리면 빠지고, 장막 안쪽으로 돌아온다
+function autopilot() {
+  const p = G.p, s = sc(G.tier), range = 2.7 * s * G.mods.area;
+  let ax = 0, ay = 0, near = null, nd = Infinity, crowd = 0;
+  for (const f of G.foes) {
+    if (f.e < G.tier && !f.boss) continue;
+    const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy) - f.r;
+    if (d < nd) { nd = d; near = f; }
+    if (d < range * 1.1) { crowd++; ax -= dx / (d + f.r) * 0.6; ay -= dy / (d + f.r) * 0.6; }
+  }
+  if (near && (crowd < 4 && p.hp > p.maxHp * 0.35)) {
+    const dx = near.x - p.x, dy = near.y - p.y, d = Math.hypot(dx, dy) || 1;
+    if (nd > range * 0.7) { ax += dx / d; ay += dy / d; } else { ax -= dy / d * 0.8; ay += dx / d * 0.8; }   // 거리 안이면 옆으로 돈다
+  }
+  const hx = G.home.x - p.x, hy = G.home.y - p.y, hd = Math.hypot(hx, hy), br = boundR(G.tier);
+  if (br !== Infinity && hd > br * 0.75) { ax += hx / hd * 1.5; ay += hy / hd * 1.5; }
+  if (G.boss && !G.boss.dead) { const bx = G.boss.x - p.x, by = G.boss.y - p.y, bd = Math.hypot(bx, by); if (bd > G.boss.r * 2.5) { ax += bx / bd * 1.2; ay += by / bd * 1.2; } }
+  if (Math.hypot(ax, ay) < 0.2) { const a = G.t * 0.4; ax += Math.cos(a) * 0.6; ay += Math.sin(a) * 0.6; }
+  if (crowd >= 6 && p.dashN > 0) doDash();
+  return [ax, ay];
+}
+function doDash() {
+  const p = G.p; if (!G || p.dashN <= 0 || p.dashT > 0 || G.brk) return;
+  p.dashN--; p.dashT = 0.22; p.iframe = Math.max(p.iframe, 0.25);
+  const sp = 4.6 * sc(G.tier) * 4.2; p.dvx = p.fx * sp; p.dvy = p.fy * sp;
+  G.fx.push({ k: 'dash', x: p.x, y: p.y, a: Math.atan2(p.fy, p.fx), r: sc(G.tier), t: 0, life: 0.3 });
+}
+function update(rdt) {
+  const B = G.brk;
+  let dt = rdt;
+  if (B) {
+    B.t += rdt; const T = B.t;
+    dt = rdt * (T < 1.3 ? 0.08 : lerp(0.08, 1, clamp((T - 1.3) / 0.3, 0, 1)));
+    const k = easeInOut(clamp((T - 0.2) / 1.2, 0, 1));
+    G.view = Math.exp(lerp(Math.log(B.from), Math.log(B.to), k));
+    if (!B.crushed && T >= 0.6) {
+      B.crushed = true; G.trauma = 1;
+      const R = G.view * 0.6;
+      for (const f of G.foes) if (!f.dead && !f.boss && f.e < G.tier && Math.hypot(f.x - G.p.x, f.y - G.p.y) < R) kill(f, true);
+      G.fx.push({ k: 'wave', x: G.p.x, y: G.p.y, r: R, t: 0, life: 0.6 });
+    }
+    if (T >= 1.7) G.brk = null;
+  } else {
+    const target = viewFor(G.tier, prog());
+    G.view = Math.exp(lerp(Math.log(G.view), Math.log(target), 1 - Math.exp(-rdt * 2)));
+  }
+  G.t += dt;
+  G.trauma = Math.max(0, G.trauma - rdt * 1.4);
+  const p = G.p, s = sc(G.tier), M = G.mods;
+  p.r = 0.5 * s * (1 + 0.12 * prog());
+  // 이동
+  const [mx, my, moving] = readMove();
+  if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; }
+  const speed = 4.6 * s * (1 + 0.15 * prog()) * M.speed;
+  if (p.dashT > 0) { p.x += p.dvx * dt; p.y += p.dvy * dt; p.dashT -= dt; }
+  else { p.x += mx * speed * dt; p.y += my * speed * dt; }
+  if (p.dashN < p.dashMax) { p.dashAcc += dt; if (p.dashAcc >= 3.5) { p.dashAcc = 0; p.dashN++; } }
+  // 혈우 장막과 강호 끝
+  const br = B ? lerp(B.oldR, boundR(G.tier), easeOut(clamp((B.t - 0.5) / 1, 0, 1))) : boundR(G.tier);
+  G.bound = br;
+  if (br !== Infinity) { const dx = p.x - G.home.x, dy = p.y - G.home.y, d = Math.hypot(dx, dy); if (d > br - p.r) { p.x = G.home.x + dx / d * (br - p.r); p.y = G.home.y + dy / d * (br - p.r); } }
+  p.x = clamp(p.x, 0, W); p.y = clamp(p.y, 0, H);
+  p.iframe = Math.max(0, p.iframe - dt);
+  p.hp = Math.min(p.maxHp, p.hp + M.regen * dt);
+
+  // 생성: 지금 단계 75%, 바로 아래 단계 25%(쓸려 나가는 맛)
+  if (!B && !G.won) {
+    G.spawnAcc += dt;
+    const want = 30 + 7 * G.lv + G.tier * 5;
+    if (G.spawnAcc >= 0.5) {
+      G.spawnAcc = 0;
+      const alive = G.foes.filter(f => !f.dead && f.e >= G.tier - 1).length;
+      const n = Math.ceil(Math.max(0, want - alive) * 0.25);
+      const et = Math.min(G.tier, CLUSTER_N.length - 1);
+      for (let i = 0; i < n; i++) spawnFoe(G.tier > 0 && Math.random() < 0.25 ? Math.min(G.tier - 1, CLUSTER_N.length - 1) : et);
+    }
+    G.eliteAcc += dt;
+    if (G.eliteAcc >= 24) { G.eliteAcc = 0; spawnFoe(Math.min(G.tier, CLUSTER_N.length - 1), true); }
+  }
+  // 무공 1: 검기(가장 가까운 같은 단계 적 쪽 반원)
+  G.cd -= dt;
+  const range = 2.7 * s * (1 + 0.08 * prog()) * M.area, dmg = 18 * Math.pow(2.4, G.tier) * (1 + 0.12 * G.lv) * M.might;
+  if (G.cd <= 0) {
+    G.cd = 0.8 / M.atk;
+    let tg = null, best = range * 1.6;
+    for (const f of G.foes) { if (f.dead) continue; const d = Math.hypot(f.x - p.x, f.y - p.y) - f.r; if (d < best) { best = d; tg = f; } }
+    const a = tg ? Math.atan2(tg.y - p.y, tg.x - p.x) : Math.atan2(p.fy, p.fx);
+    const dirs = G.tier >= 1 ? [a, a + Math.PI] : [a];
+    for (const da of dirs) {
+      G.fx.push({ k: 'arc', x: p.x, y: p.y, a: da, r: range, t: 0, life: 0.25, gold: G.tier >= 3 });
+      for (const f of G.foes) {
+        if (f.dead) continue; const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy);
+        if (d > range + f.r) continue;
+        let ad = Math.atan2(dy, dx) - da; ad = Math.atan2(Math.sin(ad), Math.cos(ad));
+        if (Math.abs(ad) < 1.25 || d < f.r + p.r) hurt(f, dmg, dx / (d || 1), dy / (d || 1), 2 * s);
+      }
+    }
+  }
+  // 무공 2(일류부터): 몸 주위를 도는 검 / 무공 3(초절정부터): 먹 파동
+  if (G.tier >= 2) {
+    G.orbitA += dt * 3.2; const n = G.tier >= 4 ? 4 : 3, R = 1.9 * s;
+    for (let i = 0; i < n; i++) {
+      const a = G.orbitA + i * TAU / n, bx = p.x + Math.cos(a) * R, by = p.y + Math.sin(a) * R;
+      for (const f of G.foes) if (!f.dead && Math.hypot(f.x - bx, f.y - by) < f.r + 0.35 * s && (f.contact2 || 0) <= 0) { f.contact2 = 0.3; hurt(f, dmg * 0.5, 0, 0, 0); }
+    }
+  }
+  if (G.tier >= 4) {
+    G.waveCd -= dt;
+    if (G.waveCd <= 0) { G.waveCd = 2.6; const R = 6.5 * s; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * 1.4, 0, 0, 0); }
+  }
+  // 적
+  const aura = p.r * 1.7;
+  for (const f of G.foes) {
+    if (f.dead) continue;
+    f.flash = Math.max(0, f.flash - dt); f.contact = Math.max(0, f.contact - dt); if (f.contact2) f.contact2 -= dt;
+    const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy) || 1;
+    // 아래 단계 적은 기세에 눌려 쓰러진다
+    if (!f.boss && f.e < G.tier && d < aura + f.r) { kill(f, true); continue; }
+    f.hop = (f.hop + dt / 0.6) % 1;
+    const sp = f.sp * (f.hop < 0.72 ? 1 / 0.72 : 0.15) * (d < range * 1.5 ? M.chill : 1);
+    f.x += (dx / d * sp + f.kx) * dt; f.y += (dy / d * sp + f.ky) * dt;
+    f.kx *= Math.pow(0.03, dt); f.ky *= Math.pow(0.03, dt);
+    if (d > G.view * 1.4 && !f.boss) { f.x = p.x - dx / d * G.view * 0.62; f.y = p.y - dy / d * G.view * 0.62; }
+    if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier) { f.contact = 0.4; hitPlayer(f.dmg); }
+  }
+  // 밀어내기(대충): 같은 단계끼리만
+  const live = G.foes.filter(f => !f.dead);
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < Math.min(live.length, i + 10); j++) {
+    const a = live[i], b = live[j]; if (a.e !== b.e) continue; const dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r, d2 = dx * dx + dy * dy;
+    if (d2 < rr * rr && d2 > 1e-6) { const d = Math.sqrt(d2), push = (rr - d) * 0.5 / d; a.x -= dx * push; a.y -= dy * push; b.x += dx * push; b.y += dy * push; }
+  }
+  G.foes = live.filter(f => !f.dead);
+  // 기(진기 구슬)
+  const mag = 3.5 * s;
+  for (const o of G.orbs) {
+    const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
+    if (o.pull || d < mag) { o.pull = true; const v = 14 * s; o.x += dx / (d || 1) * v * dt; o.y += dy / (d || 1) * v * dt; }
+    if (d < p.r + 0.2 * s) { o.dead = true; gainXp(o.v); if (o.heal) p.hp = Math.min(p.maxHp, p.hp + o.heal); }
+  }
+  G.orbs = G.orbs.filter(o => !o.dead);
+  for (const e of G.fx) e.t += rdt;
+  G.fx = G.fx.filter(e => e.t < e.life);
+  if (G.hintT > 0) { G.hintT -= rdt; if (G.hintT <= 0) $('hint').hidden = true; }
+}
+function hitPlayer(dmg) {
+  const p = G.p; if (p.iframe > 0 || G.brk || G.won) return;
+  p.hp -= dmg; p.iframe = 0.45; G.trauma = Math.min(1, G.trauma + 0.15);
+  if (p.hp <= 0) { p.hp = 0; endLife(false); }
+}
+
+// ───────── 그리기 ─────────
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  VW = window.innerWidth; VH = window.innerHeight;
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+}
+let camX = 0, camY = 0;
+const sx = x => (x - camX) * PPM + VW / 2, sy = y => (y - camY) * PPM + VH / 2;
+function render() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = PAPER; ctx.fillRect(0, 0, VW, VH);
+  if (!G) return;
+  const p = G.p;
+  PPM = Math.hypot(VW, VH) / G.view;
+  camX = lerp(camX || p.x, p.x, 0.2); camY = lerp(camY || p.y, p.y, 0.2);
+  const now = performance.now() / 1000, tr = G.trauma * G.trauma;
+  const shx = tr * 16 * (Math.sin(now * 47.3) * 0.6 + Math.sin(now * 91.7 + 1.3) * 0.4), shy = tr * 16 * (Math.sin(now * 53.9) * 0.6 + Math.sin(now * 83.1 + 2.1) * 0.4);
+  ctx.save(); ctx.translate(shx, shy);
+  const lv = Math.log(G.view);
+  const aNear = 1 - clamp((lv - Math.log(80)) / (Math.log(260) - Math.log(80)), 0, 1);
+  const aFar = clamp((lv - Math.log(140)) / (Math.log(700) - Math.log(140)), 0, 1);
+  // 먼 그림: 땅, 물, 강(시야가 넓어질수록 떠오른다)
+  if (aFar < 1) { ctx.fillStyle = '#E6DBC2'; ctx.fillRect(0, 0, VW, VH); }
+  ctx.globalAlpha = 0.35 + aFar * 0.65;
+  ctx.fillStyle = '#D9E1DA'; ctx.fillRect(0, 0, VW, VH);   // 바다
+  ctx.beginPath(); LAND.forEach(([x, y], i) => i ? ctx.lineTo(sx(x), sy(y)) : ctx.moveTo(sx(x), sy(y))); ctx.closePath();
+  ctx.fillStyle = '#E8DEC6'; ctx.fill();
+  ctx.globalAlpha = aFar; ctx.strokeStyle = 'rgba(26,26,26,0.55)'; ctx.lineWidth = Math.max(1.2, 6 * PPM); ctx.stroke();
+  ctx.globalAlpha = 1;
+  // 가까운 그림: 마당 바닥
+  if (aNear > 0.01) {
+    ctx.globalAlpha = aNear; const T = 8 * PPM;
+    if (T > 4) {
+      const ox = ((-camX * PPM + VW / 2) % T + T) % T - T, oy = ((-camY * PPM + VH / 2) % T + T) % T - T;
+      for (let x = ox; x < VW; x += T) for (let y = oy; y < VH; y += T) ctx.drawImage(groundTile, x, y, T + 0.5, T + 0.5);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // 강
+  const aRiver = clamp((lv - Math.log(70)) / (Math.log(220) - Math.log(70)), 0, 1);   // 마당에선 강이 화면을 다 덮으므로 숨긴다
+  if (aRiver > 0.01) for (const r of RIVERS) {
+    ctx.globalAlpha = aRiver; ctx.beginPath(); r.forEach(([x, y], i) => i ? ctx.lineTo(sx(x), sy(y)) : ctx.moveTo(sx(x), sy(y)));
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(70,110,120,0.45)'; ctx.lineWidth = Math.max(1.5, 22 * PPM); ctx.stroke();
+    ctx.strokeStyle = 'rgba(26,26,26,0.25)'; ctx.lineWidth = Math.max(0.6, 3 * PPM); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // 소품: 화면에 2픽셀보다 작아지면 그리지 않는다
+  const halfW = VW / 2 / PPM + 400, halfH = VH / 2 / PPM + 400;
+  const cx0 = Math.floor((camX - halfW) / PCELL), cx1 = Math.floor((camX + halfW) / PCELL), cy0 = Math.floor((camY - halfH) / PCELL), cy1 = Math.floor((camY + halfH) / PCELL);
+  const vis = [];
+  if ((cx1 - cx0) * (cy1 - cy0) < 900) { for (let gx = cx0; gx <= cx1; gx++) for (let gy = cy0; gy <= cy1; gy++) { const a = pgrid.get(gx + ',' + gy); if (a) for (const i of a) vis.push(i); } }
+  else for (let i = 0; i < props.length; i++) if (props[i].kind === 'mount' || props[i].kind === 'temple') vis.push(i);
+  vis.sort((a, b) => a - b);
+  for (const i of vis) {
+    const pr = props[i], size = pr.s * PPM; if (size < 2) continue;
+    let alpha = 1;
+    if (pr.kind === 'mount') alpha = aFar * 0.6; else if (size < 6) alpha = (size - 2) / 4;
+    if (alpha <= 0.02) continue;
+    const X = sx(pr.x), Y = sy(pr.y); if (X < -size || X > VW + size || Y < -size || Y > VH + size) continue;
+    ctx.globalAlpha = alpha; ctx.drawImage(PROP_SPR[pr.kind][pr.v], X - size / 2, Y - size * 0.85, size, size);
+  }
+  ctx.globalAlpha = 1;
+  // 혈우 장막
+  if (G.bound !== Infinity) {
+    const hx = sx(G.home.x), hy = sy(G.home.y), R = G.bound * PPM;
+    ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(hx, hy, R, 0, TAU, true);
+    ctx.fillStyle = 'rgba(110,22,20,0.22)'; ctx.fill('evenodd'); ctx.restore();
+    ctx.strokeStyle = 'rgba(179,38,30,0.75)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.arc(hx, hy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(179,38,30,0.35)'; ctx.lineWidth = 1.2; ctx.beginPath();
+    for (let i = 0; i < 90; i++) { const a = i / 90 * TAU + now * 0.05, rr = R + ((i * 37) % 23); const x = hx + Math.cos(a) * rr, y = hy + Math.sin(a) * rr + ((now * 120 + i * 13) % 26); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 12); }
+    ctx.stroke();
+  }
+  // 지명(화면 크기 고정)
+  if (aFar > 0.05) {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const k in REG) {
+      const [nx, ny, hz] = REG[k], X = sx(nx * W), Y = sy(ny * H); if (X < -80 || X > VW + 80 || Y < -40 || Y > VH + 40) continue;
+      ctx.globalAlpha = aFar; ctx.font = `22px "Yuji Boku", "Noto Serif KR", serif`;
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(239,230,210,0.9)'; ctx.strokeText(hz, X, Y - 26); ctx.fillStyle = k === 'bongmagok' ? CRIMSON : INK; ctx.fillText(hz, X, Y - 26);
+    }
+    ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
+  }
+  // 기 구슬
+  for (const o of G.orbs) { const X = sx(o.x), Y = sy(o.y); if (X < -5 || X > VW + 5 || Y < -5 || Y > VH + 5) continue; ctx.fillStyle = o.heal ? CRIMSON : o.v < 1 ? '#7A8A9A' : '#3E6FA8'; ctx.beginPath(); ctx.arc(X, Y, o.v >= 5 ? 5 : 3.2, 0, TAU); ctx.fill(); }
+  // 적
+  const foes = G.foes.slice().sort((a, b) => a.y - b.y);
+  for (const f of foes) {
+    const X = sx(f.x), Y = sy(f.y), R = f.r * PPM; if (X < -R * 2 || X > VW + R * 2 || Y < -R * 2 || Y > VH + R * 2) continue;
+    if (f.boss) { const s2 = R * 2.6; ctx.drawImage(demon, X - s2 / 2, Y - s2 * 0.6, s2, s2); drawHpRing(X, Y, R, f); continue; }
+    const lift = f.hop < 0.72 ? Math.sin(f.hop / 0.72 * Math.PI) * R * 0.25 : 0;
+    const spr = clusterSprites[Math.min(f.e, clusterSprites.length - 1)][f.v || 0], s2 = R * 2.6;
+    ctx.globalAlpha = f.e < G.tier ? 0.55 : 1;
+    ctx.drawImage(spr, X - s2 / 2, Y - s2 * 0.62 - lift, s2, s2);
+    if (f.flash > 0) { ctx.globalAlpha = 0.35; ctx.fillStyle = '#FFF8EC'; ctx.beginPath(); ctx.arc(X, Y - lift, R * 1.1, 0, TAU); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    if (f.elite) { ctx.strokeStyle = CRIMSON; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X, Y, R * 1.25, 0, TAU); ctx.stroke(); drawHpRing(X, Y, R, f); }
+  }
+  // 플레이어
+  {
+    const X = sx(p.x), Y = sy(p.y), s2 = p.r * 3.4 * PPM;
+    ctx.globalAlpha = p.iframe > 0 && Math.floor(now * 20) % 2 ? 0.5 : 1;
+    if (!playerSpr || playerSpr.robe !== G.sect.robe) { playerSpr = figure('hero', 128, G.sect.robe); playerSpr.robe = G.sect.robe; }
+    ctx.save(); ctx.translate(X, Y); if (p.fx < 0) ctx.scale(-1, 1); ctx.drawImage(playerSpr, -s2 / 2, -s2 * 0.82, s2, s2); ctx.restore();
+    ctx.globalAlpha = 1;
+    if (G.tier >= 1) { ctx.strokeStyle = `rgba(201,162,39,${0.25 + 0.1 * G.tier})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 1.7 * PPM, 0, TAU); ctx.stroke(); }
+    if (G.tier >= 2) { const n = G.tier >= 4 ? 4 : 3, R = 1.9 * sc(G.tier) * PPM; ctx.strokeStyle = G.tier >= 3 ? GOLD : INK; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const a = G.orbitA + i * TAU / n, bx = X + Math.cos(a) * R, by = Y + Math.sin(a) * R; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); } }
+  }
+  // 효과
+  for (const e of G.fx) {
+    const k = e.t / e.life, X = sx(e.x), Y = sy(e.y), R = e.r * PPM;
+    if (e.k === 'arc') {
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 3; i++) { ctx.strokeStyle = e.gold && i === 1 ? `rgba(201,162,39,${1 - k})` : `rgba(26,26,26,${0.85 * (1 - k)})`; ctx.lineWidth = (12 - i * 3.5) * (1 - k * 0.5); ctx.beginPath(); ctx.arc(X, Y, R * (0.78 + i * 0.1), e.a - 1.25 + k * 0.4, e.a + 1.25 - k * 0.2); ctx.stroke(); }
+    } else if (e.k === 'puff' || e.k === 'crush') {
+      ctx.fillStyle = e.k === 'crush' ? `rgba(120,110,95,${0.35 * (1 - k)})` : e.red ? `rgba(150,30,26,${0.4 * (1 - k)})` : `rgba(26,26,26,${0.35 * (1 - k)})`;
+      ctx.beginPath(); ctx.arc(X, Y, R * (0.5 + k * 0.8), 0, TAU); ctx.fill();
+    } else if (e.k === 'wave') {
+      ctx.strokeStyle = `rgba(26,26,26,${0.8 * (1 - k)})`; ctx.lineWidth = 24 * (1 - k) + 2; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k), 0, TAU); ctx.stroke();
+      ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k) * 0.97, 0, TAU); ctx.stroke();
+    } else if (e.k === 'dash') {
+      ctx.strokeStyle = `rgba(26,26,26,${0.4 * (1 - k)})`; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(X, Y - 20); ctx.lineTo(X - Math.cos(e.a) * 70, Y - 20 - Math.sin(e.a) * 70); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  // 혈우(화면)
+  ctx.strokeStyle = 'rgba(179,38,30,0.2)'; ctx.lineWidth = 1.2; ctx.beginPath();
+  for (let i = 0; i < 60; i++) { const x = ((i * 97.13 + now * 30) % 1) * VW, y = ((i * 0.618 + now * 0.9) % 1) * VH; ctx.moveTo(x, y); ctx.lineTo(x - 4, y + 14); }
+  ctx.stroke();
+  // 혈마 위치 표시
+  if (G.boss && !G.boss.dead) {
+    const X = sx(G.boss.x), Y = sy(G.boss.y);
+    if (X < 0 || X > VW || Y < 0 || Y > VH) {
+      const a = Math.atan2(Y - VH / 2, X - VW / 2), ex = clamp(VW / 2 + Math.cos(a) * VW, 28, VW - 28), ey = clamp(VH / 2 + Math.sin(a) * VH, 90, VH - 28);
+      ctx.save(); ctx.translate(ex, ey); ctx.rotate(a); ctx.fillStyle = CRIMSON; ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-10, -11); ctx.lineTo(-10, 11); ctx.fill(); ctx.restore();
+    }
+  }
+  if (G.brk) drawBreak();
+}
+function drawHpRing(X, Y, R, f) {
+  ctx.strokeStyle = 'rgba(26,26,26,0.25)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(X, Y, R * 1.45, -Math.PI / 2, Math.PI * 1.5); ctx.stroke();
+  ctx.strokeStyle = CRIMSON; ctx.beginPath(); ctx.arc(X, Y, R * 1.45, -Math.PI / 2, -Math.PI / 2 + TAU * Math.max(0, f.hp / f.maxHp)); ctx.stroke();
+}
+// 돌파 덧그림: 흑백 → 경지 글자와 낙관 → 색이 돌아옴
+function drawBreak() {
+  const B = G.brk, T = B.t, mono = T < 1.1 ? clamp(T / 0.15, 0, 1) : 1 - clamp((T - 1.1) / 0.5, 0, 1);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (mono > 0) { ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.globalAlpha = mono; ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, VW, VH); ctx.restore(); }
+  const a = T < 0.15 ? T / 0.15 : T > 1.2 ? 1 - (T - 1.2) / 0.5 : 1; if (a <= 0) return;
+  const h = TIERS[G.tier].hanja, size = Math.min(VW * 0.7 / h.length, VH * 0.24, 170), sc2 = lerp(1.25, 1, easeOut(clamp(T / 0.25, 0, 1)));
+  ctx.save(); ctx.globalAlpha = clamp(a, 0, 1); ctx.translate(VW / 2, VH * 0.3); ctx.scale(sc2, sc2);
+  ctx.fillStyle = 'rgba(239,230,210,0.82)'; ctx.beginPath(); ctx.ellipse(0, 0, size * h.length * 0.62 + 30, size * 0.7, 0, 0, TAU); ctx.fill();
+  ctx.font = `${Math.round(size)}px "Yuji Boku", "Noto Serif KR", serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = INK; ctx.shadowColor = 'rgba(26,26,26,0.3)'; ctx.shadowBlur = 10; ctx.fillText(h, 0, 4);
+  ctx.shadowBlur = 0; ctx.font = `900 ${Math.round(Math.max(15, size * 0.18))}px "Noto Serif KR", serif`; ctx.fillStyle = '#7A5A10'; ctx.fillText(`${TIERS[G.tier].name} 돌파 · 시야가 넓어진다`, 0, size * 0.72);
+  ctx.restore();
+}
+
+// ───────── 화면과 흐름 ─────────
+function show(id) { for (const s of ['title', 'rebirth', 'dead']) $(s).hidden = s !== id; overlay = id; $('hud').hidden = !!id; }
+let candidates = [];
+function openRebirth() {
+  show('rebirth'); running = false;
+  const pool = SECTS.slice().sort(() => Math.random() - 0.5); candidates = pool.slice(0, 3);
+  $('rbsub').textContent = meta.lives ? `${meta.lives}번째 윤회 · 다음 생을 고르시오` : '첫 생 · 어느 문파의 제자로 태어날까';
+  const box = $('rbcards'); box.innerHTML = '';
+  candidates.forEach((s, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'card';
+    b.innerHTML = `<span class="seal">${s.hanja}</span><h3>${s.name} 제자</h3><p>${REG[s.reg][2]}에서 태어난다</p><p class="bonus">${s.bonus}</p>`;
+    b.onclick = () => beginLife(i); box.appendChild(b);
+  });
+  renderMeta();
+}
+function renderMeta() {
+  $('qileft').textContent = `윤회의 기 ${Math.floor(meta.qi)} · 여러 생에 걸쳐 쌓인다`;
+  const box = $('meta'); box.innerHTML = '';
+  for (const m of META) {
+    const lv = meta[m.id], cost = 15 * (lv + 1), b = document.createElement('button'); b.type = 'button';
+    b.disabled = lv >= m.max || meta.qi < cost;
+    b.innerHTML = `<b>${m.name} ${lv}/${m.max}</b><span>${m.per} · ${lv >= m.max ? '다 찍음' : '기 ' + cost}</span>`;
+    b.onclick = () => { if (meta.qi < cost || lv >= m.max) return; meta.qi -= cost; meta[m.id]++; saveMeta(); renderMeta(); };
+    box.appendChild(b);
+  }
+}
+function beginLife(i) {
+  startLife(candidates[i]); show(null); G.fast = fast;
+  $('sect').textContent = `${G.sect.name} 제자`;
+  running = true; last = performance.now(); camX = G.p.x; camY = G.p.y;
+}
+function endLife(won) {
+  if (!G || overlay === 'dead') return;
+  running = false;
+  const gain = Math.floor(G.qiGain); meta.qi += gain; meta.lives++; meta.best = Math.max(meta.best, G.tier); saveMeta();
+  $('dtitle').textContent = won ? '혈마를 봉했다' : '쓰러졌다';
+  $('dline').textContent = won ? '중원이 한 화면에 들어왔다. 이번 생의 기는 다음 윤회로 넘어간다.' : `${G.sect.name}의 제자는 ${TIERS[G.tier].name}에서 쓰러졌다. 모은 기를 들고 다른 문파의 몸으로 다시 태어난다.`;
+  $('dfacts').innerHTML = [[TIERS[G.tier].name, '오른 경지'], [G.kills.toLocaleString(), '처치'], [`+${gain}`, '윤회의 기'], [Math.floor(G.t / 60) + ':' + String(Math.floor(G.t % 60)).padStart(2, '0'), '버틴 시간']].map(f => `<div><b>${f[0]}</b><span>${f[1]}</span></div>`).join('');
+  show('dead');
+}
+function updateHud() {
+  const p = G.p;
+  $('realm').textContent = TIERS[G.tier].name; $('lvl').textContent = G.tier >= MAXT ? '' : `${G.lv + 1}단 / ${LV_PER_TIER}`;
+  $('xp').style.width = (G.tier >= MAXT ? 100 : clamp(G.xp / xpReq(G.lv), 0, 1) * 100).toFixed(1) + '%';
+  $('hp').style.width = (p.hp / p.maxHp * 100).toFixed(1) + '%'; $('hpbar').classList.toggle('low', p.hp / p.maxHp < 0.3);
+  $('kills').textContent = `처치 ${G.kills.toLocaleString()}`; $('qi').textContent = `윤회의 기 +${Math.floor(G.qiGain)}`;
+}
+let last = 0, hudAcc = 0;
+function frame(ts) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if (running && !paused) { update(dt); hudAcc += dt; if (hudAcc > 0.1) { hudAcc = 0; updateHud(); } }
+  render();
+}
+
+// ───────── 입력 ─────────
+window.addEventListener('keydown', e => {
+  input.keys.add(e.code);
+  if (overlay === 'title' && e.code === 'Enter') { openRebirth(); return; }
+  if (overlay === 'rebirth') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 3) beginLife(n - 1); return; }
+  if (overlay === 'dead' && e.code === 'Enter') { openRebirth(); return; }
+  if (!running) return;
+  if (e.code === 'Space' || e.code.startsWith('Shift')) { e.preventDefault(); doDash(); }
+  if (e.code === 'Escape') paused = !paused;
+});
+window.addEventListener('keyup', e => input.keys.delete(e.code));
+window.addEventListener('blur', () => { input.keys.clear(); input.joy = null; });
+let joyId = null, ox = 0, oy = 0;
+cv.addEventListener('pointerdown', e => { if (!running) return; joyId = e.pointerId; ox = e.clientX; oy = e.clientY; input.joy = { dx: 0, dy: 0 }; try { cv.setPointerCapture(e.pointerId); } catch (err) { /* 캡처가 안 돼도 움직인다 */ } });
+cv.addEventListener('pointermove', e => {
+  if (e.pointerId !== joyId || !input.joy) return;
+  const dx = e.clientX - ox, dy = e.clientY - oy, m = Math.hypot(dx, dy), R = 56;
+  if (m < 6) { input.joy.dx = 0; input.joy.dy = 0; return; }
+  const s = Math.min(1, m / R); input.joy.dx = dx / m * s; input.joy.dy = dy / m * s;
+  if (m > R * 1.6) { ox = e.clientX - dx / m * R * 1.6; oy = e.clientY - dy / m * R * 1.6; }
+});
+const endJoy = e => { if (e.pointerId === joyId) { joyId = null; input.joy = null; } };
+cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
+$('dash').addEventListener('pointerdown', e => { e.preventDefault(); doDash(); });
+$('start').addEventListener('click', openRebirth);
+let fast = store.get('fast') === true;
+const syncFast = () => { $('fast').innerHTML = fast ? '빨리 훑어보기<small>기 3배 · 눌러서 보통으로</small>' : '보통 속도<small>눌러서 기 3배(빨리 훑어보기)</small>'; $('fast').setAttribute('aria-pressed', String(fast)); };
+$('fast').addEventListener('click', () => { fast = !fast; store.set('fast', fast); syncFast(); }); syncFast();
+$('again').addEventListener('click', openRebirth);
+document.addEventListener('visibilitychange', () => { if (document.hidden) paused = true; });
+cv.addEventListener('click', () => { if (paused) paused = false; });
+
+// 시험용: 자동 판, 경지 바로 올리기
+window.__ch = {
+  state: () => G,
+  start(i) { candidates = [SECTS[i || 0]]; beginLife(0); },
+  setTier(t) { while (G.tier < t) { G.lv = LV_PER_TIER - 1; G.xp = 0; gainXp(xpReq(G.lv)); while (G.brk) update(1 / 30); } },
+  step: (dt) => update(dt), render,
+  sim(seconds, auto) {
+    running = false; G.auto = auto !== false; const out = [];
+    for (let t = 0, next = 30; t < seconds && overlay !== 'dead' && !G.won; t += 1 / 30) { update(1 / 30); if (t >= next) { next += 30; out.push(`${Math.round(t)}초 ${TIERS[G.tier].name} ${G.lv}단 적${G.foes.length} 기혈${Math.round(G.p.hp)} 처치${G.kills}`); } }
+    return { out, tier: G.tier, t: G.t, dead: overlay === 'dead', won: G.won };
+  },
+};
+
+window.addEventListener('resize', resize);
+resize(); buildArt();
+$('best').textContent = meta.lives ? `윤회 ${meta.lives}번 · 가장 높이 오른 경지 ${TIERS[meta.best].name} · 남은 기 ${Math.floor(meta.qi)}` : '';
+requestAnimationFrame(t => { last = t; frame(t); });
+</script>
