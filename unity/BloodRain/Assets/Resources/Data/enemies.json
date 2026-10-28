@@ -1,0 +1,28 @@
+{
+  "_note": "기혈·피해는 1장 0분 기준값. 실제 값은 balance.json enemyScaling 식으로 시간·장 배율을 곱한다. speed는 플레이어 기본 이동속도를 100으로 둔 상대값(0이면 순간이동형).",
+  "enemies": [
+    { "id": "sigang",          "nameKo": "시강",       "family": "jiangshi", "health": 8,   "speed": 60,  "contactDamage": 5,  "behavior": "hop_chase", "firstSeen": "prologue" },
+    { "id": "hyeolin",         "nameKo": "혈인",       "family": "bloodman", "health": 12,  "speed": 95,  "contactDamage": 6,  "behavior": "line_charge", "firstSeen": "prologue" },
+    { "id": "hyeol_gangsi",    "nameKo": "혈강시",     "family": "jiangshi", "health": 20,  "speed": 85,  "contactDamage": 8,  "behavior": "hop_chase", "firstSeen": "chapter1" },
+    { "id": "hyeol_musa",      "nameKo": "혈무사",     "family": "bloodman", "health": 40,  "speed": 75,  "contactDamage": 10, "behavior": "telegraph_dash", "telegraph": 0.6, "firstSeen": "chapter1" },
+    { "id": "donggap",         "nameKo": "동갑시",     "family": "jiangshi", "health": 90,  "speed": 50,  "contactDamage": 12, "behavior": "hop_chase", "knockbackResist": 0.7, "firstSeen": "chapter1" },
+    { "id": "bigang",          "nameKo": "비강",       "family": "jiangshi", "health": 15,  "speed": 110, "contactDamage": 6,  "behavior": "fly_curve", "ignoresTerrain": true, "firstSeen": "chapter2" },
+    { "id": "hyeol_gungsu",    "nameKo": "혈궁수",     "family": "bloodman", "health": 25,  "speed": 60,  "contactDamage": 0,  "projectileDamage": 8, "behavior": "kite_shoot", "firstSeen": "chapter2" },
+    { "id": "hyeolyeong_assassin","nameKo": "혈영자객", "family": "bloodshadow", "health": 35, "speed": 0, "contactDamage": 14, "behavior": "mark_teleport", "telegraph": 1.0, "firstSeen": "chapter3" },
+    { "id": "hyeol_sulsa",     "nameKo": "혈술사",     "family": "bloodshadow", "health": 50, "speed": 50, "contactDamage": 0, "zoneDamagePerSecond": 6, "behavior": "blood_pool", "firstSeen": "chapter4" },
+    { "id": "gisu",            "nameKo": "기수",       "family": "bloodshadow", "health": 80, "speed": 55, "contactDamage": 8, "behavior": "buff_aura", "auraRadius": 5, "auraBonus": 0.2, "firstSeen": "chapter5" },
+    { "id": "golden_toad",     "nameKo": "금두꺼비",   "family": "event",    "health": 300, "speed": 120, "contactDamage": 0,  "behavior": "flee", "reward": { "silver": 100, "orbBurst": true }, "firstSeen": "any" },
+    { "id": "mogin_nahan",     "nameKo": "목인나한",   "family": "local",    "health": 120, "speed": 40,  "contactDamage": 10, "behavior": "hop_chase", "onDeath": "splinter_burst", "chapter": "chapter1" },
+    { "id": "poison_toad",     "nameKo": "독두꺼비",   "family": "local",    "health": 30,  "speed": 55,  "contactDamage": 7,  "behavior": "hop_chase", "onDeath": "poison_pool", "chapter": "chapter2" },
+    { "id": "golden_centipede","nameKo": "금선지네",   "family": "local",    "health": 18,  "speed": 105, "contactDamage": 6,  "behavior": "snake_line", "chapter": "chapter2" },
+    { "id": "dogin",           "nameKo": "독인",       "family": "local",    "health": 45,  "speed": 60,  "contactDamage": 9,  "behavior": "poison_aura", "chapter": "chapter2" }
+  ],
+  "elites": {
+    "prologue": ["gangsi_axeman"],
+    "chapter1": ["dongin", "gyeyul_monk", "acting_abbot"]
+  },
+  "bosses": [
+    { "id": "jang_sam",   "nameKo": "강시 포쾌 장삼", "chapter": "prologue", "health": 6000,  "targetKillSeconds": 40, "patterns": ["rope_throw", "whistle_summon", "triple_slam"] },
+    { "id": "wongak",     "nameKo": "혈나한 원각",   "chapter": "chapter1", "health": 90000, "targetKillSeconds": 60, "patterns": ["vajra_cone", "eighteen_arhat_ring", "bell_drop_x3"], "phase2At": 0.3, "phase2Patterns": ["rotating_blood_beams"] }
+  ]
+}

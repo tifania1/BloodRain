@@ -1,0 +1,23 @@
+{
+  "_note": "플레이어 캐릭터 8명. moveSpeed는 기본 대비 배율. yinyangStart는 태극 게이지 시작값. 기획서 '5. 플레이어 캐릭터'와 같은 값이어야 한다.",
+  "characters": [
+    { "id": "jin_sowoon",  "nameKo": "진소운", "startWeapon": "samjae_sword",  "maxHealth": 100, "moveSpeed": 1.00, "yinyangStart": 0,   "ultimate": "il_geom",        "trait": "reroll_plus2_insight4", "unlock": "start" },
+    { "id": "namgung_hyeon","nameKo": "남궁현", "startWeapon": "changcheon_qi", "maxHealth": 100, "moveSpeed": 1.00, "yinyangStart": 10,  "ultimate": "cheonroe_rak",   "trait": "might25_above_half_hp", "unlock": "prologue_clear_buy_1000" },
+    { "id": "hyegong",     "nameKo": "혜공",   "startWeapon": "nahan_fist",    "maxHealth": 120, "moveSpeed": 0.90, "yinyangStart": 10,  "ultimate": "saja_hu",        "trait": "flat_damage_reduction2", "unlock": "chapter1_clear" },
+    { "id": "dang_yeonhwa","nameKo": "당연화", "startWeapon": "flying_dagger", "maxHealth": 85,  "moveSpeed": 1.10, "yinyangStart": -10, "ultimate": "mancheon_hwau",  "trait": "poison_immune_poisoned_dmg20", "unlock": "chapter2_clear" },
+    { "id": "ha_yeon",     "nameKo": "하연",   "startWeapon": "chain_sickle",  "maxHealth": 95,  "moveSpeed": 1.15, "yinyangStart": -5,  "ultimate": "yeokryu",        "trait": "moving_evade15_water_ignore", "unlock": "chapter3_clear" },
+    { "id": "unhwa",       "nameKo": "운화",   "startWeapon": "taiji_sword",   "maxHealth": 100, "moveSpeed": 1.00, "yinyangStart": 0,   "ultimate": "taiji_muryang",  "trait": "harmony_range40_bonus_x2", "harmonyRange": 40, "unlock": "chapter4_clear" },
+    { "id": "machil",      "nameKo": "마칠",   "startWeapon": "drunken_staff", "maxHealth": 110, "moveSpeed": 0.95, "yinyangStart": 5,   "ultimate": "palbang_pungu",  "trait": "silver30_food_heal50", "unlock": "eat_food_20_one_run" },
+    { "id": "baekya",      "nameKo": "백야",   "startWeapon": "blood_claw",    "maxHealth": 90,  "moveSpeed": 1.05, "yinyangStart": -15, "ultimate": "cheonma_haeche", "trait": "low_hp_attack_speed_heal_half", "unlock": "chapter7_clear_and_boss_kill_below_10pct_hp" }
+  ],
+  "ultimates": [
+    { "id": "il_geom",        "nameKo": "일검",     "mightMultiplier": 30, "summary": "바라보는 방향 화면 끝까지 일직선 참격, 관통 무한" },
+    { "id": "cheonroe_rak",   "nameKo": "천뢰낙",   "mightMultiplier": 8,  "summary": "화면 안 무작위 12곳 낙뢰, 1초 감전" },
+    { "id": "saja_hu",        "nameKo": "사자후",   "mightMultiplier": 10, "summary": "반경 6m 원형 음파, 3초 기절" },
+    { "id": "mancheon_hwau",  "nameKo": "만천화우", "mightMultiplier": 6,  "summary": "3초 동안 화면 전체 암기 비(초당), 중독" },
+    { "id": "yeokryu",        "nameKo": "역류",     "mightMultiplier": 12, "summary": "물살이 적을 한쪽 끝으로 쓸어 모음" },
+    { "id": "taiji_muryang",  "nameKo": "태극무량", "mightMultiplier": 0,  "summary": "5초 동안 원 안 적 탄 반사, 받는 피해 무효" },
+    { "id": "palbang_pungu",  "nameKo": "팔방풍우", "mightMultiplier": 7,  "summary": "8방향 장풍 3연타, 큰 넉백" },
+    { "id": "cheonma_haeche", "nameKo": "천마해체", "mightMultiplier": 0,  "summary": "8초 동안 초당 기혈 2% 소모, 모든 피해 2배, 흡혈 10%" }
+  ]
+}

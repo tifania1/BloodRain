@@ -1,0 +1,106 @@
+# 푸시되면 WebGL을 빌드해서 Cloudflare Pages에 올린다(PlanetRacer 워크플로를 옮겨 옴).
+# 아침에 Unity를 켜지 않고 휴대폰으로 확인하기 위한 것이다.
+#
+# 이 저장소에 비밀값 5개를 넣어야 돈다 (Settings > Secrets and variables > Actions).
+# PlanetRacer 저장소에 넣었던 것과 같은 값이면 된다:
+#   UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# 비밀값이 없거나 Unity 프로젝트(unity/BloodRain/ProjectSettings)가 아직 없으면 조용히 건너뛴다.
+
+name: WebGL 빌드와 배포
+
+on:
+  push:
+    branches: [main, claude/dev]
+  workflow_dispatch:
+
+concurrency:
+  group: webgl-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        env:
+          HAS_LICENSE: ${{ secrets.UNITY_LICENSE != '' }}
+          HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        run: |
+          if [ "$HAS_LICENSE" = "true" ] && [ "$HAS_CF" = "true" ] && [ -f unity/BloodRain/ProjectSettings/ProjectVersion.txt ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::WebGL 빌드 건너뜀 — 비밀값 또는 Unity 프로젝트가 아직 없다"
+          fi
+
+  build:
+    needs: gate
+    if: needs.gate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/cache@v4
+        with:
+          path: unity/BloodRain/Library
+          key: Library-WebGL-${{ hashFiles('unity/BloodRain/Assets/**','unity/BloodRain/Packages/**','unity/BloodRain/ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+      # GitHub 러너에는 이미 /swapfile 이 켜져 있어 거기에 fallocate 하면 죽는다. /mnt에 따로 만든다.
+      - name: 스왑 추가 (IL2CPP 메모리 부족 대비)
+        continue-on-error: true
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile
+          sudo fallocate -l 12G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=12288
+          sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile && sudo swapon /mnt/swapfile
+          free -h
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity/BloodRain
+          targetPlatform: WebGL
+          buildName: BloodRain
+          allowDirtyBuild: true
+      # game-ci는 도커 안에서 root로 빌드해서 결과가 root 소유로 남는다.
+      - name: 빌드 결과 권한 정리
+        run: sudo chown -R $(id -u):$(id -g) build
+      - name: 헤더 파일 넣기
+        run: cp web/_headers build/WebGL/BloodRain/_headers
+      - name: 파일 크기 확인 (Cloudflare Pages 25MiB 제한)
+        run: |
+          big=$(find build/WebGL/BloodRain -type f -size +25M)
+          if [ -n "$big" ]; then echo "::error::25MiB를 넘는 파일:"; echo "$big" | xargs -r ls -lh; exit 1; fi
+          du -sh build/WebGL/BloodRain
+      - name: Pages 프로젝트 준비
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create bloodrain --production-branch=main
+      - name: Cloudflare Pages 배포
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/WebGL/BloodRain --project-name=bloodrain --branch=${{ github.ref_name == 'main' && 'main' || 'dev' }} --commit-dirty=true
+      - name: 배포 확인
+        run: |
+          url="${{ steps.deploy.outputs.deployment-url || steps.deploy.outputs.pages-deployment-alias-url }}"
+          for try in 1 2 3 4 5; do
+            sleep 10
+            if node tools/check_web_deploy.js "$url"; then exit 0; fi
+            echo "재시도 $try"
+          done
+          echo "::error::배포된 페이지가 브라우저에서 열리지 않는다"
+          exit 1

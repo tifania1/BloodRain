@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 소스는 Unity 프로젝트 안 Core 폴더 하나뿐이다. 여기서는 그 파일들을 그대로 가져와 컴파일만 한다.
+       Unity(C# 9, .NET Standard 2.1)와 같은 조건으로 맞춰 두어야 에디터에서도 그대로 컴파일된다. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RootNamespace>BloodRain.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../unity/BloodRain/Assets/Scripts/Core/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,49 @@
+{
+  "_note": "밸런스 기본값. 기획서 '11. 밸런스 기본값'과 같은 값이어야 하고, 바꾸면 기획서도 같이 고친다. 테스트(core/BloodRain.Core.Tests)가 이 파일을 직접 읽어 목표치와 맞는지 확인한다.",
+  "xpCurve": {
+    "segments": [
+      { "fromLevel": 1,  "toLevel": 20,  "base": 5,   "step": 10, "anchor": 1 },
+      { "fromLevel": 21, "toLevel": 40,  "base": 195, "step": 13, "anchor": 20 },
+      { "fromLevel": 41, "toLevel": 999, "base": 455, "step": 16, "anchor": 40 }
+    ],
+    "targets": { "level15AtMinute": 5, "level30AtMinute": 10, "level45AtMinute": 15, "level60AtMinute": 20 }
+  },
+  "realms": [
+    { "id": "samryu",      "nameKo": "삼류",   "level": 1 },
+    { "id": "iryu",        "nameKo": "이류",   "level": 10, "reward": "insight_choice,max_health_10" },
+    { "id": "ilryu",       "nameKo": "일류",   "level": 20, "reward": "insight_choice,dash_charge_1,evolution_unlocked" },
+    { "id": "jeoljeong",   "nameKo": "절정",   "level": 35, "reward": "insight_choice,ultimate_power_25" },
+    { "id": "chojeoljeong","nameKo": "초절정", "level": 50, "reward": "insight_choice,extra_slot" },
+    { "id": "hwagyeong",   "nameKo": "화경",   "level": 70, "reward": "insight_choice,damage_taken_minus10" },
+    { "id": "hyeongyeong", "nameKo": "현경",   "level": 90, "reward": "double_ultimate", "onlyIn": ["final", "bloodmoon"] }
+  ],
+  "slots": { "weapons": 6, "passives": 6, "extraSlotAtRealm": "chojeoljeong" },
+  "levels": { "weaponMax": 8, "passiveMax": 5 },
+  "levelUp": { "baseChoices": 3, "maxChoices": 4, "luckForFourthChoice": 50 },
+  "evolution": { "minPlayerLevel": 20, "requiresChest": true },
+  "yinyang": {
+    "min": -100, "max": 100,
+    "weaponPerLevel": 5, "passivePerLevel": 8,
+    "harmonyRange": 25, "extremeFrom": 70,
+    "harmony": { "cooldownReduction": 0.10, "ultimateChargeBonus": 0.25 },
+    "bias": { "aspectDamageBonus": 0.15 },
+    "extreme": { "aspectDamageBonus": 0.40, "backlashIntervalSeconds": 60, "backlashSeconds": 3, "backlashSlow": 0.5, "backlashDamageMaxHealthRatio": 0.05, "dashCancelWindowSeconds": 1.0, "dashCancelUltimateCharge": 50 }
+  },
+  "ultimateCharge": { "max": 100, "perKill": 0.4, "perHit": 3, "perElite": 15 },
+  "dash": { "distance": 4.0, "duration": 0.25, "iframes": 0.2, "charges": 2, "rechargeSeconds": 4 },
+  "contact": { "sameEnemyIntervalSeconds": 0.35, "minDamage": 1 },
+  "enemyScaling": {
+    "healthPerMinute": 0.08,
+    "damagePerMinute": 0.03,
+    "chapterMultiplier": { "prologue": 0.8, "chapter1": 1.0, "chapter2": 1.3, "chapter3": 1.7, "chapter4": 2.2, "chapter5": 2.8, "chapter6": 3.5, "chapter7": 4.3 }
+  },
+  "spawnTarget": {
+    "_note": "1장 기준 화면 위 목표 적 수(분 → 마리). 사이 값은 선형 보간. 19분에 생성 중지, 20분 보스.",
+    "points": [ [0,15],[1,25],[2,40],[3,55],[4,68],[5,80],[6,97],[7,113],[8,130],[9,155],[10,180],[11,200],[12,220],[13,247],[14,273],[15,300],[16,333],[17,367],[18,400],[19,400],[20,120] ],
+    "spawnFractionPerSecond": 0.3,
+    "ringMinDiagonal": 0.6, "ringMaxDiagonal": 0.75, "recycleBeyondDiagonal": 1.5,
+    "stopSpawningAtMinute": 19, "bossAtMinute": 20
+  },
+  "limits": { "enemiesPc": 600, "enemiesMobile": 400, "projectiles": 1500, "orbs": 400, "damageNumbers": 80 },
+  "orbs": { "small": 1, "medium": 5, "large": 25 }
+}

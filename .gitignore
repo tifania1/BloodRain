@@ -1,0 +1,40 @@
+# Unity
+unity/BloodRain/[Ll]ibrary/
+unity/BloodRain/[Tt]emp/
+unity/BloodRain/[Oo]bj/
+unity/BloodRain/[Bb]uild/
+unity/BloodRain/[Bb]uilds/
+unity/BloodRain/[Ll]ogs/
+unity/BloodRain/[Uu]ser[Ss]ettings/
+unity/BloodRain/[Mm]emoryCaptures/
+unity/BloodRain/.vsconfig
+*.csproj.user
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+unity/BloodRain/*.sln
+unity/BloodRain/*.csproj
+.vs/
+.idea/
+
+# dotnet
+core/**/bin/
+core/**/obj/
+TestResults/
+
+# 원본 이미지(용량이 커서 PC에만 둔다. 게임용으로 다듬은 것은 Assets/Art 에 커밋)
+art_inbox/
+
+# PC 루프 비밀값과 기록
+tools/agent_loop/config.json
+tools/agent_loop/state.json
+tools/agent_loop/logs/
+
+# 기타
+build/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

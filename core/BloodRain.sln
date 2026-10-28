@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloodRain.Core", "BloodRain.Core\BloodRain.Core.csproj", "{EE48811C-BCF4-4DEB-BC30-026E775944A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloodRain.Core.Tests", "BloodRain.Core.Tests\BloodRain.Core.Tests.csproj", "{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE48811C-BCF4-4DEB-BC30-026E775944A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE48811C-BCF4-4DEB-BC30-026E775944A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE48811C-BCF4-4DEB-BC30-026E775944A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE48811C-BCF4-4DEB-BC30-026E775944A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

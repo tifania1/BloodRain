@@ -1,0 +1,23 @@
+# Unity WebGL은 Brotli로 미리 압축된 파일을 내보낸다. 서버가 Content-Encoding을 내려 줘야 브라우저가 푼다.
+# 규칙끼리 겹치면 안 된다(PlanetRacer 2026-09-11: 겹친 규칙이 "Content-Encoding: br, br"을 만들어 로딩이 죽었다).
+# 확장자별로 딱 하나씩만 걸리게 쓰고, 포괄 규칙(/Build/*.br)은 두지 않는다.
+
+/Build/*.wasm.br
+  Content-Type: application/wasm
+  Content-Encoding: br
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+
+/Build/*.js.br
+  Content-Type: application/javascript
+  Content-Encoding: br
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+
+/Build/*.data.br
+  Content-Type: application/octet-stream
+  Content-Encoding: br
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+
+/Build/*.json.br
+  Content-Type: application/octet-stream
+  Content-Encoding: br
+  Cache-Control: public, max-age=31536000, immutable, no-transform

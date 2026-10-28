@@ -1,0 +1,26 @@
+# 코어 규칙과 데이터 테스트. 푸시마다 돈다. 예약 세션이 main 승격을 판단할 때 이 결과를 본다.
+name: 코어 테스트
+
+on:
+  push:
+    branches: [main, claude/dev]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: 데이터 JSON 문법 확인
+        run: |
+          for f in unity/BloodRain/Assets/Resources/Data/*.json; do
+            python3 -c "import json,sys; json.load(open(sys.argv[1], encoding='utf-8'))" "$f" || { echo "::error file=$f::JSON 문법 오류"; exit 1; }
+          done
+          python3 -c "import json; [json.loads(l) for l in open('art_queue/queue.jsonl', encoding='utf-8') if l.strip()]" || { echo "::error file=art_queue/queue.jsonl::대기열 문법 오류"; exit 1; }
+      - name: 테스트
+        run: dotnet test core/BloodRain.sln --nologo

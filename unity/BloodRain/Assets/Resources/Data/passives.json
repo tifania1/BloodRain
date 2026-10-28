@@ -1,0 +1,21 @@
+{
+  "_note": "심법 16종, 전부 Lv1~5. stat은 Core.Build.StatKind 이름, perLevel은 레벨당 더하는 값(비율은 0.06 = 6%). yinyang 영향은 balance.json의 yinyang 규칙을 따르고, yinyangPerLevelOverride가 있으면 그 값을 쓴다.",
+  "passives": [
+    { "id": "cheongmyeong", "nameKo": "청명심법", "yinyang": "neutral", "effects": [ { "stat": "CooldownReduction", "perLevel": 0.06 } ], "pairWeapon": "samjae_sword" },
+    { "id": "geumgang",     "nameKo": "금강체",   "yinyang": "yang",    "effects": [ { "stat": "Armor", "perLevel": 1 } ], "maxBonus": "넉백 면역", "pairWeapon": "nahan_fist" },
+    { "id": "cheonsu",      "nameKo": "천수공",   "yinyang": "yin",     "effects": [ { "stat": "Amount", "perLevel": 0, "atLevels": { "1": 1, "3": 1, "5": 1 } } ], "pairWeapon": "flying_dagger" },
+    { "id": "noejeong",     "nameKo": "뇌정심법", "yinyang": "yang",    "effects": [ { "stat": "Might", "perLevel": 0.08 } ], "pairWeapon": "changcheon_qi" },
+    { "id": "pasan",        "nameKo": "파산공",   "yinyang": "yang",    "effects": [ { "stat": "Knockback", "perLevel": 0.15 }, { "stat": "EliteDamage", "perLevel": 0.06 } ], "pairWeapon": "palm_wind" },
+    { "id": "cheollian",    "nameKo": "천리안",   "yinyang": "neutral", "effects": [ { "stat": "CritChance", "perLevel": 0.04 } ], "pairWeapon": "flash_finger" },
+    { "id": "hwaryong",     "nameKo": "화룡심법", "yinyang": "yang",    "effects": [ { "stat": "BurnDamage", "perLevel": 0.12 }, { "stat": "ExplosionArea", "perLevel": 0.05 } ], "pairWeapon": "thunder_bomb" },
+    { "id": "mandok",       "nameKo": "만독심법", "yinyang": "yin",     "effects": [ { "stat": "DotDamage", "perLevel": 0.12 } ], "maxBonus": "독 면역", "pairWeapon": "poison_mist" },
+    { "id": "yangui",       "nameKo": "양의심법", "yinyang": "neutral", "effects": [ { "stat": "Area", "perLevel": 0.08 } ], "pairWeapon": "taiji_sword" },
+    { "id": "juseon",       "nameKo": "주선공",   "yinyang": "yang",    "effects": [ { "stat": "Duration", "perLevel": 0.08 }, { "stat": "FoodHeal", "perLevel": 0.20 } ], "pairWeapon": "drunken_staff" },
+    { "id": "suryong",      "nameKo": "수룡심법", "yinyang": "yin",     "effects": [ { "stat": "ProjectileSpeed", "perLevel": 0.10 }, { "stat": "Magnet", "perLevel": 0.10 } ], "pairWeapon": "chain_sickle" },
+    { "id": "hyeolhae",     "nameKo": "혈해심법", "yinyang": "yin",     "yinyangPerLevelOverride": 12, "effects": [ { "stat": "MaxHealth", "perLevel": 0.10 }, { "stat": "Lifesteal", "perLevel": 0.004 } ], "pairWeapon": "blood_claw" },
+    { "id": "cheongsim",    "nameKo": "청심공",   "yinyang": "yin",     "effects": [ { "stat": "Growth", "perLevel": 0.06 } ], "pairWeapon": "sonic_qin" },
+    { "id": "unryong",      "nameKo": "운룡보",   "yinyang": "neutral", "effects": [ { "stat": "MoveSpeed", "perLevel": 0.08 } ], "maxBonus": "경공 충전 +1", "pairWeapon": "pear_spear" },
+    { "id": "domun",        "nameKo": "도문심법", "yinyang": "neutral", "effects": [ { "stat": "Luck", "perLevel": 10 } ], "pairWeapon": "thunder_talisman" },
+    { "id": "maehwa",       "nameKo": "매화심법", "yinyang": "yin",     "effects": [ { "stat": "Recovery", "perLevel": 0.15 } ], "pairWeapon": "falling_petals" }
+  ]
+}
