@@ -17,6 +17,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] B-09 `Core/Spawning/WaveTable.cs` — chapters.json을 읽어 분마다 어떤 적을 몇 비율로 뽑을지. 테스트
 - [ ] B-10 `[U]` (프로젝트 생성은 2026-10-28 PC에서 끝남, 6000.3.10f1) Unity 프로젝트 기본 설정: 2D URP, Input System, Newtonsoft 패키지, 폴더 구조, 빈 씬 Boot/Run/Inn
 - [ ] B-11 `[U]` 데이터 로더: Resources/Data JSON → `GameData.FromJson`, 시작할 때 콘솔에 무공 16종 이름 출력으로 확인
+- [ ] B-13 인트로 컷 이미지 12장(`Assets/Art/Cutscenes/sb_intro_*.jpg`)이 저장소에 올라오면 기획서 원본(Claude Docs) 19장 '컷 이미지'에 컷 순서대로 붙인다. 문서 도구나 업로드 도구가 없는 세션이면 daily에 한 줄 남기고 넘어간다
 - [ ] B-12 아트 시험 이미지 반영 확인(art_queue의 M0 항목 6개가 imported 되면 Sprite 설정 점검)
 
 ## M1 코어 프로토타입 (11-30 ~ 2027-01-10)
