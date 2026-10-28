@@ -21,6 +21,12 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] B-12 아트 시험 이미지 반영 확인(art_queue의 M0 항목 6개가 imported 되면 Sprite 설정 점검)
 - [x] P-01 2026-10-28 — 웹 프로토타입(`web/prototype/`, 1장 숭산 소림 + 원각). 데이터 JSON을 그대로 읽는다. 공개 주소 https://bloodrain-proto.pages.dev
 - [x] V-00 2026-10-28 — 무공 비주얼 시안(`web/lookdev/samjae.html`, 삼재검법 1단~절기)과 단계 규칙 `docs/design/vfx.md`
+- [x] S-00 2026-10-28 — 시너지 설계(기획서 20장)와 `synergies.json`(연환 16·진전 9문파·비전 8·기연 8), 무결성 테스트 5개
+- [ ] S-01 `Core/Build/Synergy.cs` — synergies.json 을 GameData로 읽고, 로드아웃으로 켜진 연환(둘 다 minLevel 이상)과 문파별 진전 개수(삼재검법 Lv8 만능 +1, 유해 보너스 포함), 다음 단계까지 남은 개수를 계산. 테스트
+- [ ] S-02 `Core/Build/Secrets.cs` — 비전 8종 조건 판정. 판 기록(정신부 사용 수, 음식 수, 역류 연속 끊기, 음양 0 유지 시간 등)을 받는 구조로. 테스트
+- [ ] S-03 `Core/Spawning/Encounters.cs` — 기연 사건 추첨(기본 확률 + 기연×0.005)과 장별 등장 규칙. 테스트
+- [ ] S-04 `[U]` 레벨업 카드 연환 띠·문파 인장, HUD 진전 인장, 발견 연출(탁본 뒤집기 + 秘傳 낙관), 장경각 도감 화면
+- [ ] S-05 밸런스 — 연환·진전이 다 켜진 빌드의 화력이 기획서 '11. 밸런스 기본값' 목표의 130%를 넘지 않는지 자동 판으로 확인
 - [ ] P-02 **사람 결정 대기** — 프로토타입에서만 쓴 값 5개(맞은 뒤 무적, 강시 뛰는 비율, 처치 진기, 원각 체력, 보스전 잡몹 수)를 데이터·기획서로 옮길지. `docs/feedback.md` 에 결정이 적히기 전엔 건너뛴다. 정해지면 JSON·gdd.md·테스트를 같이 고치고 `python tools/build_web_prototype.py`
 
 ## M1 코어 프로토타입 (11-30 ~ 2027-01-10)
