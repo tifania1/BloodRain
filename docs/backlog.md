@@ -8,8 +8,8 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] 2026-10-28 — 저장소 골격, CLAUDE.md, 데이터 JSON 6종, 코어(경험치·경지·음양·적 증가·스폰 곡선·로드아웃·절기 판정), 테스트 42개
 - [x] B-01 2026-10-28 — 기획서 '15. 기술 설계' 폴더 구조와 '18. 자동화' 일정을 실제와 맞춤(원본 문서·gdd.md 둘 다)
 - [x] B-02 2026-10-28 — `Core/Build/Stats.cs`: StatKind(14종 + 심법 부가 8 + 연무장 전용 6), 심법·연무장 합산, 쾌속 60% 상한, 연무장 비용 공식. 연무장 표는 balance.json `training` 으로 옮기고 기획서 표와 같은지 테스트
-- [ ] B-03 `Core/Progression/RunXp.cs` — 진기 구슬 흡수 → 레벨업 횟수 → 돌파 이벤트를 내보내는 한 판 진행기. 레벨 60까지 돌파 4번 테스트
-- [ ] B-04 `Core/Combat/UltimateCharge.cs` — 진기(오의) 게이지. 처치 0.4, 피격 3, 정예 15, 태극이면 +25%. 테스트
+- [x] B-03 2026-10-29 — `RunXp.cs`: 흡수 → 레벨업 횟수·돌파 목록(AbsorbResult), 심득 배율, 남은 진기 이월. 녹색 구슬로 Lv60까지 돌파 4번 테스트
+- [x] B-04 2026-10-29 — `UltimateCharge.cs`: 처치·피격·정예에 (1+연무장)×태극1.25 배율, 정진 20(balance.json `perSkip`)·역류 끊기는 배율 없이. yinyang.harmony 를 BalanceDef로 읽게 함
 - [ ] B-05 `Core/Combat/Backlash.cs` — 기혈역류(극성 60초마다, 3초 둔화, 끝날 때 최대 기혈 5%, 1초 안 경공으로 끊으면 오의 +50). 테스트
 - [ ] B-06 `Core/Build/Insights.cs` — 돌파 깨달음 7종 데이터(`insights.json`)와 3택1 추첨. 진소운은 4개
 - [ ] B-07 `tools/sim_run.py` 또는 dotnet 콘솔 — 가상의 평균 빌드로 20분을 돌려 레벨 도달 시점이 목표(5분 Lv15 / 10분 Lv30 / 15분 Lv45 / 20분 Lv60)와 맞는지 표로 출력. 진기 드롭량 가정은 문서에 적는다. 참고: 웹 프로토타입 자동 판에선 잘 풀린 빌드가 20분 Lv75~100까지 갔다(`web/prototype/README.md`)

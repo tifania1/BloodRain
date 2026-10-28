@@ -66,6 +66,14 @@ namespace BloodRain.Core.Data
         public int PassivePerLevel = 8;
         public int HarmonyRange = 25;
         public int ExtremeFrom = 70;
+        public YinYangHarmonyDef Harmony = new YinYangHarmonyDef();
+    }
+
+    /// <summary>태극(조화) 구간 보너스.</summary>
+    public sealed class YinYangHarmonyDef
+    {
+        public float CooldownReduction = 0.10f;
+        public float UltimateChargeBonus = 0.25f;
     }
 
     public sealed class EnemyScalingDef
@@ -95,6 +103,8 @@ namespace BloodRain.Core.Data
         public float PerKill = 0.4f;
         public float PerHit = 3;
         public float PerElite = 15;
+        /// <summary>레벨업 화면 '정진(건너뛰기)'으로 얻는 양. 배율을 받지 않는다.</summary>
+        public float PerSkip = 20;
     }
 
     public sealed class StatsDef

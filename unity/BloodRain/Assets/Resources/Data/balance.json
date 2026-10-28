@@ -34,7 +34,7 @@
     "bias": { "aspectDamageBonus": 0.15 },
     "extreme": { "aspectDamageBonus": 0.40, "backlashIntervalSeconds": 60, "backlashSeconds": 3, "backlashSlow": 0.5, "backlashDamageMaxHealthRatio": 0.05, "dashCancelWindowSeconds": 1.0, "dashCancelUltimateCharge": 50 }
   },
-  "ultimateCharge": { "max": 100, "perKill": 0.4, "perHit": 3, "perElite": 15 },
+  "ultimateCharge": { "max": 100, "perKill": 0.4, "perHit": 3, "perElite": 15, "perSkip": 20 },
   "dash": { "distance": 4.0, "duration": 0.25, "iframes": 0.2, "charges": 2, "rechargeSeconds": 4 },
   "contact": { "sameEnemyIntervalSeconds": 0.35, "minDamage": 1 },
   "enemyScaling": {
