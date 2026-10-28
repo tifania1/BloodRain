@@ -391,7 +391,7 @@ class Stage {
     this.invert = 0.16; this.freeze = Math.max(this.freeze, 0.06); this.stopCd = 0.3; this.shake = 0.16;
     ['天', '地', '人'].forEach((ch, i) => {
       const a = base + c.dirs[i];
-      this.marks.push({ kind: 'char', ch, x: clamp(p.x + Math.cos(a) * 3.3, -hw, hw), y: clamp(p.y + Math.sin(a) * 3.3, -hh, hh), t: -i * 0.07 });
+      this.marks.push({ kind: 'char', ch, x: clamp(p.x + Math.cos(a) * 2.1, -hw, hw), y: clamp(p.y + Math.sin(a) * 2.1, -hh, hh), t: -i * 0.07 });
     });
     this.marks.push({ kind: 'seal', t: -0.24 });
   }
