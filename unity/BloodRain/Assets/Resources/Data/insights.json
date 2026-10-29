@@ -1,0 +1,25 @@
+{
+  "_note": "돌파 깨달음 7종(기획서 '3. 무공 체계' 깨달음 예시). 경지 돌파 보상에 insight_choice 가 있으면 아직 안 가진 것 중에서 choices 만큼 뽑아 보여 주고 하나를 고른다. textKo 와 params 숫자는 기획서 문장과 같아야 하고 테스트(InsightTests)가 확인한다. glyph 는 카드에 크게 쓰는 한 글자로 hanja 안의 글자를 쓴다. 비율은 0.4 = 40%.",
+  "choices": {
+    "base": 3,
+    "byTrait": { "reroll_plus2_insight4": 4 },
+    "realmReward": "insight_choice"
+  },
+  "insights": [
+    { "id": "ilgeom",   "nameKo": "일검파만", "hanja": "一劍破萬", "glyph": "一", "textKo": "첫 번째 공격 무공의 피해 +40%",
+      "effect": "first_weapon_damage", "params": { "damageBonus": 0.4 } },
+    { "id": "ungi",     "nameKo": "운기조식", "hanja": "運氣調息", "glyph": "息", "textKo": "5초간 움직이지 않으면 기혈 초당 2% 회복",
+      "effect": "still_regen", "params": { "stillSeconds": 5, "maxHealthPerSecond": 0.02 } },
+    { "id": "igi",      "nameKo": "이기어검", "hanja": "以氣御劍", "glyph": "御", "textKo": "근접 무공의 사거리 +50%",
+      "effect": "melee_range", "params": { "rangeBonus": 0.5 },
+      "weaponBehaviors": ["front_arc", "melee_combo", "forward_claws", "random_arc", "pierce_thrust"] },
+    { "id": "geumjong", "nameKo": "금종조",   "hanja": "金鐘罩",   "glyph": "鐘", "textKo": "10초마다 피해 1회 무효화",
+      "effect": "periodic_block", "params": { "intervalSeconds": 10, "blocks": 1 } },
+    { "id": "cheolli",  "nameKo": "천리추종", "hanja": "千里追蹤", "glyph": "追", "textKo": "진기 구슬 흡수 범위 2배",
+      "effect": "magnet_multiplier", "params": { "multiplier": 2 } },
+    { "id": "yeokgeun", "nameKo": "역근",     "hanja": "易筋",     "glyph": "筋", "textKo": "음양 게이지를 0으로 되돌리고 이후 기울기 속도 절반",
+      "effect": "yinyang_reset", "params": { "resetTo": 0, "tiltMultiplier": 0.5 } },
+    { "id": "salgi",    "nameKo": "살기충천", "hanja": "殺氣衝天", "glyph": "殺", "textKo": "처치 수 100마다 공력 +1% (최대 +30%)",
+      "effect": "kill_stack_might", "params": { "killsPerStack": 100, "mightPerStack": 0.01, "mightMax": 0.3 } }
+  ]
+}
