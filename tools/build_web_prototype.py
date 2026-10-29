@@ -4,7 +4,8 @@ web/prototype/template.html 에 저장소 데이터 JSON과 인트로 컷 세 �
 
   web/prototype/site/        바깥 공개용(Cloudflare Pages). 완전한 HTML 문서 + 링크 미리보기 이미지
   web/prototype/.artifact/   claude.ai 아티팩트용 본문(문서 뼈대 없이). --artifact 를 줄 때만
-  site/lookdev/              이펙트 시안(web/lookdev/*.html)을 공개용 문서로 감싼 것
+  site/lookdev/              이펙트 시안(web/lookdev/*.html)을 공개용 문서로 감싼 것.
+                             시안에 데이터 자리(/*__DATA__*/null)가 있으면 LOOKDEV_DATA 의 묶음을 넣는다
 
 둘 다 빌드 결과라 커밋하지 않는다(.gitignore). 밸런스 숫자를 바꾸면 이 스크립트만 다시 돌리면 된다.
 CI(.github/workflows/web-prototype.yml)가 같은 스크립트로 묶어 배포한다.
@@ -84,8 +85,43 @@ def data_blob() -> str:
         "synergies": {k: v for k, v in load("synergies").items() if not k.startswith("_")},
         "balance": {k: v for k, v in load("balance").items() if not k.startswith("_")},
     }
+    return to_js(blob)
+
+
+def to_js(blob) -> str:
     # </script> 가 끼어들 일은 없지만 혹시 몰라 막아 둔다
     return json.dumps(blob, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+
+
+def drop_notes(v):
+    """'_note' 처럼 밑줄로 시작하는 설명 키를 빼서 묶음을 줄인다."""
+    if isinstance(v, dict):
+        return {k: drop_notes(x) for k, x in v.items() if not k.startswith("_")}
+    if isinstance(v, list):
+        return [drop_notes(x) for x in v]
+    return v
+
+
+def cheonha_blob() -> str:
+    """천하 시안(web/lookdev/cheonha.html)이 읽는 묶음. 문파·지역·성질·윤회의 기는 cheonha.json,
+    이름은 characters·weapons·enemies, 경지 문턱·진기 곡선·연무장은 balance.json 에서 그대로 가져온다."""
+    chars = load("characters")
+    bal = load("balance")
+    return to_js({
+        "cheonha": drop_notes(load("cheonha")),
+        "characters": [{"id": c["id"], "nameKo": c["nameKo"]} for c in chars["characters"]],
+        "ultimates": [{"id": u["id"], "nameKo": u["nameKo"]} for u in chars["ultimates"]],
+        "weapons": [{"id": w["id"], "nameKo": w["nameKo"]} for w in load("weapons")["weapons"]],
+        "bosses": [
+            {k: b[k] for k in ("id", "nameKo", "health", "targetKillSeconds", "phases") if k in b}
+            for b in load("enemies")["bosses"]
+        ],
+        "balance": drop_notes({k: bal[k] for k in ("realms", "xpCurve", "training", "stats", "spawnTarget", "dash", "limits")}),
+    })
+
+
+# 시안 파일 이름(확장자 빼고) → 데이터 묶음
+LOOKDEV_DATA = {"cheonha": cheonha_blob}
 
 
 def jpeg_bytes(img: Image.Image, quality: int = 78) -> bytes:
@@ -191,6 +227,10 @@ def main() -> int:
     # 이펙트 시안(web/lookdev/*.html)도 같은 사이트의 /lookdev/ 아래에 올린다
     for src in sorted(LOOKDEV.glob("*.html")):
         text = src.read_text(encoding="utf-8")
+        if "/*__DATA__*/null" in text:
+            if src.stem not in LOOKDEV_DATA:
+                sys.exit(f"{src.name} 에 데이터 자리가 있는데 LOOKDEV_DATA 에 묶음이 없다")
+            text = text.replace("/*__DATA__*/null", LOOKDEV_DATA[src.stem](), 1)
         m = re.search(r"<title>(.*?)</title>", text)
         title = m.group(1) if m else src.stem
         out = SITE / "lookdev" / src.name
