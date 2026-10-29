@@ -132,6 +132,8 @@ namespace BloodRain.Core.Data
         public float MaxHealth = 100;
         public float MoveSpeed = 1;
         public int YinyangStart;
+        /// <summary>태극 구간 반폭. 무당(음양조화)만 40이고 나머지는 balance.json 기본값(null).</summary>
+        public int? HarmonyRange;
         /// <summary>"start" 또는 "boss:&lt;지역 id&gt;"(그 땅의 주인 첫 처치).</summary>
         public string Unlock = "start";
 
