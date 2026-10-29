@@ -33,7 +33,7 @@ dotnet run --project core/BloodRain.Sim -c Release -- --report docs/design/sim/l
 0.1초마다 아래를 한 번씩 한다.
 
 1. 사건: 혈인 돌진(3.5·8.5·9.5·15.5·16.6·17.7분), 정예(5·10·15분), 동갑시 포위(13.5분), 금두꺼비(10.3~11.6분). 웹 프로토타입 `makeEvents` 그대로.
-2. 1초마다 적 생성: Core `SpawnCurve.SpawnThisSecond`(목표 − 지금 수의 30%). 종류는 시간대별 비율표(프로토 `pickType`), 기혈은 Core `EnemyScaling`.
+2. 1초마다 적 생성: Core `SpawnCurve.SpawnThisSecond`(목표 − 지금 수의 30%, 한 생 곡선이라 19~20분에도 멈추지 않는다). 종류는 시간대별 비율표(프로토 `pickType`), 기혈은 Core `EnemyScaling`.
 3. 무리 갱신: 생긴 지 7초가 지난 적만 플레이어 곁 '무리'에 들어와 맞을 수 있다. 정예·금두꺼비가 맨 앞, 나머지는 먼저 온 순서.
 4. 무공 발동: 쿨다운(쾌속·태극 -10% 반영)마다 동작별 계산으로 몇 마리를 몇 번 때리는지 정한다(아래 표).
 5. 오의: 게이지(Core `UltimateCharge`, 처치 0.4·정예 15, 태극이면 1.25배)가 차면 일검.
@@ -103,7 +103,7 @@ dotnet run --project core/BloodRain.Sim -c Release -- --report docs/design/sim/l
 | 생기는 것 | 바꿀 곳 |
 |---|---|
 | P-02 처치 진기 결정(`enemies.json` `xp`) | `Assumptions.KillXp` 대신 데이터를 읽게 |
-| B-08 `chapters.json` | `Assumptions.EnemyMix`·`Events` 대신 데이터를 읽게 |
+| `chapters.json` 한 생 흐름(T-01에서 생김), T-17 | `Assumptions.EnemyMix`·`Events` 대신 `WaveTable`(`life`)과 `RegionSpawns`(숭산 고유 적·정예)를 읽게 |
 | B-06 깨달음, J-01 각성 수치, S-01 연환·진전 | 지금은 빠져 있거나 Assumptions 값. 들어오면 시뮬레이터에도 얹는다 |
 
 ## 한계

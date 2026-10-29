@@ -366,6 +366,8 @@ const B = DATA.balance;
 const START_WEAPONS = DATA.weapons.filter(w => w.unlock === 'start').map(w => w.id);
 // 프로토타입에서만 쓰는 값. 해 보고 괜찮으면 balance.json·기획서로 옮긴다.
 const HIT_IFRAMES = 0.5, HOP_DUTY = 0.72, BOSS_HP = { full: 20000, quick: 12000 }, BOSS_TRASH = 60;
+// 옛 1장 흐름(20분 원각) 그대로 19분에 생성을 멈춘다. 천하 한 생에는 생성 중지가 없어 balance.json 에서 빠졌다.
+const STOP_SPAWN_AT = 19;
 const ULT_MULT =((DATA.ultimates || []).find(u => u.id === 'il_geom') || { mightMultiplier: 30 }).mightMultiplier;
 const GLYPH = {
   samjae_sword: '劍', nahan_fist: '拳', flying_dagger: '刀', changcheon_qi: '氣', palm_wind: '掌', flash_finger: '指', thunder_bomb: '雷', poison_mist: '毒',
@@ -798,7 +800,7 @@ function newRun(mode) {
 }
 
 function makeEvents() {
-  // 1장 시간대별 흐름 (기획서 7장 표). 시각은 게임 분.
+  // 옛 1장 시간대별 흐름(천하 구조 전 기획서 7장 표). 시각은 게임 분. 지금 흐름은 chapters.json life(기획서 7장 '한 생의 시간대별 흐름').
   return [
     { at: 3.5, kind: 'charge', n: 14 }, { at: 5, kind: 'elite', type: 'dongin' },
     { at: 8.5, kind: 'charge', n: 20 }, { at: 9.5, kind: 'charge', n: 22 }, { at: 10, kind: 'elite', type: 'gyeyul' },
@@ -1284,7 +1286,7 @@ function update(dt) {
 
   // 사건과 생성
   while (G.events.length && G.gm >= G.events[0].at) runEvent(G.events.shift());
-  const stopped = G.gm >= B.spawnTarget.stopSpawningAtMinute && !G.won;
+  const stopped = G.gm >= STOP_SPAWN_AT && !G.won;
   G.spawnAcc += dt; if (G.spawnHold > 0) { G.spawnHold -= dt; G.spawnAcc = 0; }
   if (G.spawnAcc >= 1) {
     G.spawnAcc -= 1;

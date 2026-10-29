@@ -11,7 +11,7 @@ namespace BloodRain.Sim
 
         /// <summary>계산 간격(초). 섬광지가 초당 9발 넘게 쏘므로 0.1초면 충분하다.</summary>
         public const double TickSeconds = 0.1;
-        /// <summary>1장 한 판 길이(분). 20분에 보스가 나오기 직전까지만 돌린다.</summary>
+        /// <summary>돌리는 길이(분). 숭산에서 원각에게 덤비기 전 20분까지만 돌린다(땅의 주인 싸움은 없다).</summary>
         public const double RunMinutes = 20;
 
         // ───────── 무리(공간) 모형 [가정] ─────────
@@ -53,8 +53,9 @@ namespace BloodRain.Sim
         /// <summary>떨어진 구슬 중 실제로 줍는 비율. 400개가 넘으면 합쳐져 곁에 떨어지므로 다 줍는다고 본다(낙관적인 쪽).</summary>
         public const double PickupRate = 1.0;
 
-        // ───────── 1장 적 구성 [프로토] pickType ─────────
-        // 기획서 7장 '1장 시간대별 흐름'을 웹 프로토타입이 표로 옮긴 것. B-08(chapters.json)이 생기면 그쪽을 읽게 바꾼다.
+        // ───────── 옛 1장 적 구성 [프로토] pickType ─────────
+        // 천하 구조 전 기획서 7장 '1장 시간대별 흐름'을 웹 프로토타입이 표로 옮긴 것(목인나한이 섞여 있다).
+        // 지금 흐름은 chapters.json life(지역 고유 적은 RegionSpawns·localShare)이고, 이쪽을 읽게 바꾸는 건 T-17(천하 한 생 시뮬레이터)에서 한다.
 
         public static readonly (double FromMinute, (string Id, double Weight)[] Mix)[] EnemyMix =
         {

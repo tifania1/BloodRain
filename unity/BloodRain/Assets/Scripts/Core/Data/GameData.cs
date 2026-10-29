@@ -20,7 +20,7 @@ namespace BloodRain.Core.Data
         public IReadOnlyList<BossDef> Bosses { get; private set; } = Array.Empty<BossDef>();
         public BalanceDef Balance { get; private set; } = new BalanceDef();
         public SynergyDefs Synergies { get; private set; } = new SynergyDefs();
-        /// <summary>장 id → 5·10·15분 정예 id(시각 순서). enemies.json elites.</summary>
+        /// <summary>장 이름(cheonha.json regions[].chapter) → 첫째·둘째·셋째 정예 id. enemies.json elites. 지역으로 찾을 때는 Spawning.RegionSpawns.</summary>
         public IReadOnlyDictionary<string, List<string>> Elites { get; private set; } = new Dictionary<string, List<string>>();
         public IReadOnlyList<InsightDef> Insights { get; private set; } = Array.Empty<InsightDef>();
         public InsightChoicesDef InsightChoices { get; private set; } = new InsightChoicesDef();

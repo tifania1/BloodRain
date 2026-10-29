@@ -86,9 +86,8 @@ namespace BloodRain.Core.Data
         public float ContactDamage;
         public string Behavior = "";
         public float KnockbackResist;
-        /// <summary>공통 적이 처음 나오는 장(prologue, chapter1 …). 금두꺼비는 any.</summary>
-        public string FirstSeen = "";
-        /// <summary>장 고유 적이면 그 장 id. 공통 적은 null.</summary>
+        /// <summary>지역 고유 적이면 그 지역의 장 이름(cheonha.json regions[].chapter: chapter1 …). 공통 적은 null.
+        /// 공통 적이 처음 나오는 시각은 chapters.json 흐름의 가중치표가 정한다.</summary>
         public string? Chapter;
     }
 
