@@ -1,4 +1,6 @@
 // 경지(삼류~현경). 레벨이 경지 문턱을 넘는 순간이 '돌파' 이벤트다.
+// 천하 구조(기획서 3·7장)에선 모든 생에서 현경까지 오른다. mode 인자는 balance.json realms 의 onlyIn
+// (특정 모드에서만 열리는 경지)을 거르려고 남겨 둔 것이고, 지금 데이터엔 onlyIn 이 붙은 경지가 없어 어떤 값을 줘도 같다.
 using System.Collections.Generic;
 using System.Linq;
 using BloodRain.Core.Data;
@@ -14,7 +16,7 @@ namespace BloodRain.Core.Progression
             _ordered = realms.OrderBy(r => r.Level).ToList();
         }
 
-        /// <summary>모드에 따라 현경처럼 특정 모드에서만 열리는 경지를 뺀다.</summary>
+        /// <summary>레벨이 닿은 가장 높은 경지. onlyIn 이 붙은 경지는 그 모드에서만 센다(지금 데이터엔 없음).</summary>
         public RealmDef For(int level, string mode = "normal")
         {
             RealmDef current = _ordered[0];

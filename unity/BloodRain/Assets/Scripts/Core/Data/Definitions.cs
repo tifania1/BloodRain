@@ -19,9 +19,12 @@ namespace BloodRain.Core.Data
         public float DamageLv8;
         public float Cooldown;
         public string PairPassive = "";
+        /// <summary>레벨업 풀에 들어오는 조건. "start", "boss:&lt;지역 id&gt;"(그 땅의 주인 첫 처치), 그 밖은 도전 과제 토큰.</summary>
         public string Unlock = "start";
 
         public YinYang Aspect => YinYangParse.From(Yinyang);
+        /// <summary>땅의 주인 첫 처치로 열리면 그 지역 id, 아니면 null.</summary>
+        public string? UnlockBossRegion => UnlockToken.BossRegion(Unlock);
     }
 
     public sealed class PassiveEffect
@@ -65,7 +68,20 @@ namespace BloodRain.Core.Data
         public int? HarmonyRange;
         public string Ultimate = "";
         public string Trait = "";
+        /// <summary>이 몸으로 태어날 수 있게 되는 조건. cheonha.json sects[].unlock 과 같다("start" 또는 "boss:&lt;지역 id&gt;").</summary>
         public string Unlock = "start";
+
+        public string? UnlockBossRegion => UnlockToken.BossRegion(Unlock);
+    }
+
+    /// <summary>해금 토큰 읽기. "boss:&lt;지역 id&gt;" 는 그 지역 땅의 주인 첫 처치.</summary>
+    public static class UnlockToken
+    {
+        public const string Start = "start";
+        public const string BossPrefix = "boss:";
+
+        public static string? BossRegion(string token) =>
+            token.StartsWith(BossPrefix, System.StringComparison.Ordinal) ? token.Substring(BossPrefix.Length) : null;
     }
 
     public sealed class UltimateDef

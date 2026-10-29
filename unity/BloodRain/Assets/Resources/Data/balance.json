@@ -15,7 +15,7 @@
     { "id": "jeoljeong",   "nameKo": "절정",   "level": 35, "reward": "insight_choice,ultimate_power_25,jeolgi_vessel" },
     { "id": "chojeoljeong","nameKo": "초절정", "level": 50, "reward": "insight_choice,extra_slot,jeolgi_vessel" },
     { "id": "hwagyeong",   "nameKo": "화경",   "level": 70, "reward": "insight_choice,damage_taken_minus10,jeolgi_vessel" },
-    { "id": "hyeongyeong", "nameKo": "현경",   "level": 90, "reward": "double_ultimate,jeolgi_vessel", "onlyIn": ["final", "bloodmoon"] }
+    { "id": "hyeongyeong", "nameKo": "현경",   "level": 90, "reward": "double_ultimate,jeolgi_vessel" }
   ],
   "slots": { "weapons": 6, "passives": 6, "extraSlotAtRealm": "chojeoljeong" },
   "levels": { "weaponMax": 8, "passiveMax": 5 },

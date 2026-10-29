@@ -69,13 +69,16 @@ namespace BloodRain.Core.Tests
             Assert.Equal(15, run.Total, 6);
         }
 
-        [Fact] public void 현경은_혈월에서만_돌파한다()
+        [Fact] public void 어느_생이든_레벨90에서_현경으로_돌파한다()
         {
             long to95 = new XpCurve(_d.Balance.XpCurve).CumulativeTo(95);
-            var normal = NewRun();
-            Assert.DoesNotContain("현경", normal.Absorb(to95).Breakthroughs.Select(b => b.NameKo));
-            var blood = NewRun(mode: "bloodmoon");
-            Assert.Equal("현경", blood.Absorb(to95).Breakthroughs.Last().NameKo);
+            foreach (var mode in new[] { "normal", "bloodmoon" })
+            {
+                var run = NewRun(mode: mode);
+                var names = run.Absorb(to95).Breakthroughs.Select(b => b.NameKo).ToArray();
+                Assert.Equal(new[] { "이류", "일류", "절정", "초절정", "화경", "현경" }, names);
+                Assert.Equal("현경", run.Realm.NameKo);
+            }
         }
 
         // ---- UltimateCharge ----

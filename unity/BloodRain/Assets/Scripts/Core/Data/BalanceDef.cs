@@ -24,6 +24,7 @@ namespace BloodRain.Core.Data
         public string NameKo = "";
         public int Level;
         public string? Reward;
+        /// <summary>이 경지가 열리는 모드. null 이면 모든 생. 천하 구조에선 현경도 모든 생에서 열려 지금은 쓰는 경지가 없다.</summary>
         public List<string>? OnlyIn;
     }
 
