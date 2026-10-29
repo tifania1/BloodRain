@@ -29,6 +29,8 @@ namespace BloodRain.Core.Data
         public CheonhaDef Cheonha { get; private set; } = new CheonhaDef();
         /// <summary>보스 id → 땅의 주인 패턴 시간표(bosspatterns.json, 기획서 6장).</summary>
         public IReadOnlyDictionary<string, BossPatternSetDef> BossPatterns { get; private set; } = new Dictionary<string, BossPatternSetDef>();
+        /// <summary>지역 기믹 수치(gimmicks.json, 기획서 7장).</summary>
+        public GimmicksDef Gimmicks { get; private set; } = new GimmicksDef();
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -74,10 +76,11 @@ namespace BloodRain.Core.Data
                 Chapters = Read<ChapterFile>("chapters").Chapters,
                 Cheonha = Read<CheonhaDef>("cheonha"),
                 BossPatterns = Read<BossPatternFile>("bosspatterns").Bosses,
+                Gimmicks = Read<GimmicksDef>("gimmicks"),
             };
         }
 
-        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha", "bosspatterns" };
+        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha", "bosspatterns", "gimmicks" };
 
         public WeaponDef Weapon(string id) => Weapons.First(w => w.Id == id);
         public PassiveDef Passive(string id) => Passives.First(p => p.Id == id);

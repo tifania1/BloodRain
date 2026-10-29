@@ -1,0 +1,71 @@
+{
+  "_note": "지역 기믹 첫 묶음(기획서 7장 '지역과 혈운 농도' 표의 지형 기믹 칸, '지형 기믹 수치'). 각 항목의 id 가 cheonha.json regions[].gimmicks 에 쓰는 이름이다. 길이·반경은 화면 기준 m(축척 배율 1, 7장 '세상이 작아지는 규칙')이고, 세상에 놓을 때는 그 기믹이 생긴 경지의 축척 배율을 곱한다(Core/World/Gimmicks 는 배율을 인자로 받기만 한다). 시간은 세상 시간 초. 그 자리에 깔린 것(탑림·독안개·물)은 플레이어와 적에게 똑같이 작용하고, 손을 대야 움직이는 것(범종·우물·태극 바닥)은 플레이어만 쓴다. 남은 기믹(낙석·매화 더미·눈보라 등)은 T-16.",
+
+  "bell": {
+    "id": "bell",
+    "nameKo": "범종",
+    "_note": "플레이어가 닿으면 울려 둘레 적을 기절시킨다. 정예도 같은 시간, 보스는 짧게. 기절한 보스는 패턴 시계도 멈춘다(bosspatterns.json). 반경 8·닿는 거리 1.4·보스 0.6초는 웹 프로토타입 template.html 의 범종(G.bells) 값. 원각의 범종 낙하가 남기는 종도 이 값으로 울리되 수명·횟수는 bosspatterns.json leaveSeconds·leaveUses.",
+    "touchRadius": 1.4,
+    "stunRadius": 8,
+    "stunSeconds": 2,
+    "bossStunSeconds": 0.6,
+    "cooldownSeconds": 60
+  },
+
+  "pagodaForest": {
+    "id": "pagoda_forest",
+    "nameKo": "탑림",
+    "_note": "돌탑 사이 좁은 길. 무더기 하나(patchRadius 원 안)에 돌탑을 spacing 간격 격자로 놓고 가로·세로 ±jitter 만큼 흔든다. 자리마다 skipChance 로 비우고, 이미 놓인 탑과 가장자리 사이가 minGap 보다 좁아지는 탑도 뺀다. 보통 길 폭은 spacing - 2 x pagodaRadius = 1.6m(플레이어 몸 폭 0.8m, 동갑시 1m). 걷는 것은 플레이어든 적이든 막고, 나는 적(ignoresTerrain)과 무공 투사체는 지나간다.",
+    "patchRadius": 12,
+    "spacing": 3.0,
+    "pagodaRadius": 0.7,
+    "jitter": 0.35,
+    "minGap": 1.1,
+    "skipChance": 0.15,
+    "blocksFlying": false,
+    "blocksProjectiles": false
+  },
+
+  "well": {
+    "id": "well",
+    "nameKo": "우물",
+    "_note": "플레이어가 다가가면 한 번 회복. 오리구이(기혈 50) 한 개쯤이 되도록 최대 기혈의 절반으로 정했다.",
+    "touchRadius": 1.5,
+    "healMaxHealthRatio": 0.5,
+    "uses": 1
+  },
+
+  "poisonFog": {
+    "id": "poison_fog",
+    "nameKo": "독안개",
+    "_note": "한 생 시계로 firstSpreadSeconds 에 처음, 그 뒤 periodSeconds 마다 샘에서 퍼진다: spreadSeconds 동안 반경 0 → radius, holdSeconds 동안 그대로, fadeSeconds 동안 걷힌다. 안에 있는 동안 초당 최대 기혈 x healthLossPerSecond 를 잃는다(플레이어·적 모두, 보스는 bossImmune). 플레이어가 안에 있는 동안 얻는 진기는 qiMultiplier 배. 당가 성질(독에 면역)이면 기혈은 잃지 않는다.",
+    "firstSpreadSeconds": 90,
+    "periodSeconds": 90,
+    "spreadSeconds": 4,
+    "holdSeconds": 20,
+    "fadeSeconds": 4,
+    "radius": 10,
+    "healthLossPerSecond": 0.01,
+    "qiMultiplier": 2,
+    "bossImmune": true
+  },
+
+  "water": {
+    "id": "water",
+    "nameKo": "물",
+    "_note": "물 안에선 이동속도 x moveSpeedMultiplier(플레이어·적 모두). 나는 적(flyingIgnores), 물에 사는 적(수귀), 수로채 성질은 느려지지 않는다. 플레이어는 경공을 쓰고 waterWalkSeconds 동안 수상비로 느려지지 않는다.",
+    "moveSpeedMultiplier": 0.7,
+    "waterWalkSeconds": 3,
+    "flyingIgnores": true
+  },
+
+  "taijiFloor": {
+    "id": "taiji_floor",
+    "nameKo": "태극 바닥",
+    "_note": "플레이어가 밟으면 durationSeconds 동안 밟을 때 음양 게이지와 반대 속성(게이지 + 면 음, - 면 양) 무공 피해 +oppositeAspectDamageBonus. 게이지가 0이면 아무 일도 없고 바닥도 쓰이지 않는다. 바닥 하나는 cooldownSeconds 에 한 번. 다시 밟으면 시간과 속성을 새로 건다. 적은 음양이 없어 받지 않는다.",
+    "touchRadius": 2,
+    "durationSeconds": 30,
+    "oppositeAspectDamageBonus": 0.3,
+    "cooldownSeconds": 60
+  }
+}
