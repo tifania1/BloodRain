@@ -1,0 +1,157 @@
+{
+  "_note": "천하(天下) 한 장과 환혼(還魂). 기획서 7장(경지와 축척, 지역, 땅의 주인), 10장(윤회의 기, 환혼 강화), 21장(환혼, 타고난 성질, 한 번 깨친 길, 회귀)과 같은 값이어야 한다. 길이는 모두 삼류 축척의 m. 위치(pos)는 지도 그림 위 비율(왼쪽 위 0,0 / 오른쪽 아래 1,1).",
+
+  "world": {
+    "_note": "화면 대각선 = view0Meters x scalePerRealm^(경지 순번 + viewInRealmShare x 경지 안 진행). 혈우 장막 반경 = 그 경지 첫 화면 대각선 x boundaryViewMultiple. 현경(noBoundaryFrom)부터 장막 없음.",
+    "widthMeters": 4000,
+    "heightMeters": 2600,
+    "scalePerRealm": 2.25,
+    "view0Meters": 36,
+    "viewInRealmShare": 0.35,
+    "boundaryViewMultiple": 2.4,
+    "noBoundaryFrom": "hyeongyeong"
+  },
+
+  "realmScale": [
+    { "realm": "samryu",       "clusterSize": 1,  "foeKo": "시강",  "screenKo": "문파 마당과 전각 몇 채" },
+    { "realm": "iryu",         "clusterSize": 4,  "foeKo": "패거리", "screenKo": "산문과 아랫마을" },
+    { "realm": "ilryu",        "clusterSize": 9,  "foeKo": "떼",    "screenKo": "고을 하나" },
+    { "realm": "jeoljeong",    "clusterSize": 16, "foeKo": "군단",  "screenKo": "그 지역 전체(숭산 일대)" },
+    { "realm": "chojeoljeong", "clusterSize": 28, "foeKo": "군세",  "screenKo": "이웃 지역 몇 곳" },
+    { "realm": "hwagyeong",    "clusterSize": 44, "foeKo": "대군",  "screenKo": "중원의 절반" },
+    { "realm": "hyeongyeong",  "clusterSize": 64, "foeKo": "천군",  "screenKo": "천하 전체" }
+  ],
+
+  "cluster": {
+    "_note": "적 한 덩이(7장). 덩이 하나가 기혈 하나를 나눠 쓰고, 그리는 사람 수 = ceil(clusterSize x 남은 기혈 비율). 쓰러뜨리면 진기는 적 하나 값, 처치 수는 덩이 속 사람 수.",
+    "xpPerCluster": "one",
+    "killCount": "members",
+    "drawMembers": "ceil_by_health"
+  },
+
+  "crush": {
+    "_note": "아래 경지에서 생긴 적은 닿으면 쓰러지고 피해를 주지 않는다. 돌파 때 화면 대각선 sweepViewMultiple 배 안의 아래 경지 적이 쓸린다.",
+    "xpPerCrushed": 0.3,
+    "sweepViewMultiple": 0.6,
+    "sweepAtSeconds": 0.8
+  },
+
+  "breakthrough": {
+    "_note": "돌파 연출(7장). 세상 시간 timeScale 배, zoomFrom~zoomTo 초 동안 새 축척으로 물러남. 그 뒤 깨달음.",
+    "timeScale": 0.05,
+    "zoomFromSeconds": 0.2,
+    "zoomToSeconds": 1.4,
+    "spawnHoldSeconds": 1.4
+  },
+
+  "density": {
+    "_note": "지역 사이 혈운 농도: 가장 가까운 두 지역 값을 거리로 섞는다. v = (v1 x d2 + v2 x d1) / (d1 + d2).",
+    "blend": "nearest_two"
+  },
+
+  "regions": [
+    { "id": "cheongun",      "nameKo": "청운진",     "hanja": "靑雲鎭",   "pos": [0.66, 0.44], "density": 0.8, "sect": null,        "boss": null,                 "sealStone": null,     "chapter": "prologue", "gimmicks": ["well", "breakables"] },
+    { "id": "songshan",      "nameKo": "숭산",       "hanja": "嵩山",     "pos": [0.60, 0.37], "density": 1.0, "sect": "shaolin",   "boss": "wongak",             "sealStone": "천추석", "chapter": "chapter1", "gimmicks": ["bell", "pagoda_forest"] },
+    { "id": "gaebang_hq",    "nameKo": "개방 총타",  "hanja": "丐幇總舵", "pos": [0.55, 0.32], "density": 1.0, "sect": "gaebang",   "boss": null,                 "sealStone": null,     "chapter": null,       "gimmicks": ["wine_jars"] },
+    { "id": "namgung_manor", "nameKo": "남궁세가",   "hanja": "南宮世家", "pos": [0.76, 0.52], "density": 1.0, "sect": "namgung",   "boss": null,                 "sealStone": null,     "chapter": null,       "gimmicks": ["sword_racks"] },
+    { "id": "danggata",      "nameKo": "당가타",     "hanja": "唐家坨",   "pos": [0.30, 0.56], "density": 1.3, "sect": "tang",      "boss": "dang_sohye",         "sealStone": "천선석", "chapter": "chapter2", "gimmicks": ["poison_fog", "bamboo_thicket"] },
+    { "id": "janggang",      "nameKo": "장강 수로",  "hanja": "長江水路", "pos": [0.59, 0.62], "density": 1.7, "sect": "waterfort", "boss": "ma_cheonpae",        "sealStone": "천기석", "chapter": "chapter3", "gimmicks": ["water", "drifting_boats", "reverse_wave"] },
+    { "id": "wudangsan",     "nameKo": "무당산",     "hanja": "武當山",   "pos": [0.47, 0.49], "density": 2.2, "sect": "wudang",    "boss": "hyeolheo",           "sealStone": "천권석", "chapter": "chapter4", "gimmicks": ["taiji_floor", "cloud_sea"] },
+    { "id": "huashan",       "nameKo": "화산",       "hanja": "華山",     "pos": [0.45, 0.34], "density": 2.8, "sect": "huashan",   "boss": "huashan_sword_soul", "sealStone": "옥형석", "chapter": "chapter5", "gimmicks": ["cliff_path", "falling_rocks", "plum_heaps"] },
+    { "id": "kunlun",        "nameKo": "곤륜 설원",  "hanja": "崑崙",     "pos": [0.12, 0.30], "density": 3.5, "sect": "kunlun",    "boss": "seol_muhyang",       "sealStone": "개양석", "chapter": "chapter6", "gimmicks": ["blizzard", "ice_floor", "campfire"] },
+    { "id": "sipmandaesan",  "nameKo": "십만대산",   "hanja": "十萬大山", "pos": [0.42, 0.86], "density": 4.3, "sect": "demonic",   "boss": "hyeokryeon_hwi",     "sealStone": "요광석", "chapter": "chapter7", "gimmicks": ["blood_altars", "red_moon"] },
+    { "id": "bongmagok",     "nameKo": "봉마곡 혈지","hanja": "封魔谷",   "pos": [0.54, 0.45], "density": 5.0, "sect": null,        "boss": "danmok_hyeon",       "sealStone": null,     "chapter": "final",    "gimmicks": ["rising_blood"], "final": true, "hiddenUntilSealStones": 7 }
+  ],
+
+  "bosses": {
+    "_note": "땅의 주인(7장). 절정(awakenFrom)부터 장막 안 보스 지역이 깨어나고, 지역 한가운데(화면 대각선 x engageViewMultiple 안)에 들어서면 싸움. 기혈 = enemies.json 기준 체력 x (1 + healthPerMinute x 분) / normalizeAt20. 봉마곡은 봉인석 7과 현경이 있어야 열린다.",
+    "awakenFrom": "jeoljeong",
+    "engageViewMultiple": 0.5,
+    "spawnTargetScale": 0.4,
+    "healthPerMinute": 0.08,
+    "normalizeAt20": 2.6,
+    "firstKill": { "rebirthQi": 300, "sealStone": true, "unlockSect": true },
+    "repeatKill": { "rebirthQi": 100, "bloodCrystal": 5 },
+    "finalRequires": { "sealStones": 7, "realm": "hyeongyeong" }
+  },
+
+  "sects": [
+    { "id": "shaolin",   "nameKo": "소림",   "region": "songshan",      "leader": "hyegong",       "startWeapon": "nahan_fist",       "ultimate": "saja_hu",        "trait": "flat_damage_reduction2",         "maxHealth": 120, "moveSpeed": 0.9,  "yinyangStart": 10,  "unlock": "start" },
+    { "id": "gaebang",   "nameKo": "개방",   "region": "gaebang_hq",    "leader": "machil",        "startWeapon": "drunken_staff",    "ultimate": "palbang_pungu",  "trait": "silver30_food_heal50",           "maxHealth": 110, "moveSpeed": 0.95, "yinyangStart": 5,   "unlock": "start" },
+    { "id": "namgung",   "nameKo": "남궁",   "region": "namgung_manor", "leader": "namgung_hyeon", "startWeapon": "changcheon_qi",    "ultimate": "cheonroe_rak",   "trait": "might25_above_half_hp",          "maxHealth": 100, "moveSpeed": 1.0,  "yinyangStart": 10,  "unlock": "start" },
+    { "id": "tang",      "nameKo": "당가",   "region": "danggata",      "leader": "dang_yeonhwa",  "startWeapon": "flying_dagger",    "ultimate": "mancheon_hwau",  "trait": "poison_immune_poisoned_dmg20",   "maxHealth": 85,  "moveSpeed": 1.1,  "yinyangStart": -10, "unlock": "boss:danggata" },
+    { "id": "waterfort", "nameKo": "수로채", "region": "janggang",      "leader": "ha_yeon",       "startWeapon": "chain_sickle",     "ultimate": "yeokryu",        "trait": "moving_evade15_water_ignore",    "maxHealth": 95,  "moveSpeed": 1.15, "yinyangStart": -5,  "unlock": "boss:janggang" },
+    { "id": "wudang",    "nameKo": "무당",   "region": "wudangsan",     "leader": "unhwa",         "startWeapon": "taiji_sword",      "ultimate": "taiji_muryang",  "trait": "harmony_range40_bonus_x2",       "maxHealth": 100, "moveSpeed": 1.0,  "yinyangStart": 0,   "unlock": "boss:wudangsan" },
+    { "id": "huashan",   "nameKo": "화산",   "region": "huashan",       "leader": null,            "startWeapon": "falling_petals",   "ultimate": "il_geom",        "trait": "crit_chance10",                  "maxHealth": 95,  "moveSpeed": 1.05, "yinyangStart": -5,  "unlock": "boss:huashan" },
+    { "id": "kunlun",    "nameKo": "곤륜",   "region": "kunlun",        "leader": null,            "startWeapon": "thunder_talisman", "ultimate": "cheonseol_bu",   "trait": "near_slow10",                    "maxHealth": 105, "moveSpeed": 0.95, "yinyangStart": 5,   "unlock": "boss:kunlun" },
+    { "id": "demonic",   "nameKo": "마교",   "region": "sipmandaesan",  "leader": "baekya",        "startWeapon": "blood_claw",       "ultimate": "cheonma_haeche", "trait": "low_hp_attack_speed_heal_half",  "maxHealth": 90,  "moveSpeed": 1.05, "yinyangStart": -15, "unlock": "boss:sipmandaesan" }
+  ],
+
+  "prologueBody": { "_note": "서장(첫 생)은 진소운 제 몸. characters.json jin_sowoon 을 그대로 쓴다.", "character": "jin_sowoon", "region": "cheongun" },
+
+  "birthTraits": {
+    "_note": "타고난 성질(21장). stats 는 Core.Build.StatKind 이름과 값(비율은 0.15 = 15%). yinyangStart·rebirthQi 는 능력치가 아니라 따로 더한다. 후보마다 성질 수는 countWeights(0개·1개·2개) 비율로 뽑고, excludes 쌍은 같이 붙지 않는다.",
+    "countWeights": [0.2, 0.6, 0.2],
+    "excludes": [["eumche", "yangche"], ["yakgol", "ganggol"]],
+    "list": [
+      { "id": "cheonsaeng", "nameKo": "천생신력", "hanja": "天生神力", "stats": { "Might": 0.15, "CooldownReduction": -0.05 } },
+      { "id": "yakgol",     "nameKo": "약골",     "hanja": "弱骨",     "stats": { "MaxHealth": -0.25, "Growth": 0.20 } },
+      { "id": "ganggol",    "nameKo": "강골",     "hanja": "强骨",     "stats": { "MaxHealth": 0.25, "MoveSpeed": -0.10 } },
+      { "id": "dunjae",     "nameKo": "둔재",     "hanja": "鈍才",     "stats": { "Growth": -0.15 }, "rebirthQi": 0.30 },
+      { "id": "bokdeok",    "nameKo": "복덕",     "hanja": "福德",     "stats": { "Luck": 30, "Greed": 0.20 } },
+      { "id": "gyeongsin",  "nameKo": "경신",     "hanja": "輕身",     "stats": { "DashCharges": 1, "Armor": -1 } },
+      { "id": "eumche",     "nameKo": "음체",     "hanja": "陰體",     "stats": { "Recovery": 0.3 }, "yinyangStart": -30 },
+      { "id": "yangche",    "nameKo": "양체",     "hanja": "陽體",     "stats": { "Might": 0.05 }, "yinyangStart": 30 },
+      { "id": "daesik",     "nameKo": "대식",     "hanja": "大食",     "stats": { "FoodHeal": 1.0, "MoveSpeed": -0.05 } },
+      { "id": "danmyeong",  "nameKo": "단명",     "hanja": "短命",     "stats": { "MaxHealth": -0.40, "Might": 0.25 }, "rebirthQi": 0.20 },
+      { "id": "myeongan",   "nameKo": "명안",     "hanja": "明眼",   "stats": { "Magnet": 0.50 } }
+    ]
+  },
+
+  "rebirth": {
+    "_note": "환혼(21장). 해금한 문파에서 겹치지 않게 candidates 명. 해금한 문파가 모자라면 같은 문파가 성질만 달리해 나올 수 있다. 첫 환혼은 firstRebirth 고정, 성질 없음. 태어난 문파 진전 +homeSchoolTiers 단계.",
+    "candidates": 3,
+    "firstRebirth": ["shaolin", "gaebang", "namgung"],
+    "firstRebirthTraits": false,
+    "homeSchoolTiers": 1,
+    "upgrades": [
+      { "id": "fourth_body", "nameKo": "넷째 몸",   "effect": "candidates+1",  "maxLevel": 1, "baseCost": 2000, "costPerLevel": false },
+      { "id": "reroll",      "nameKo": "다시 고르기", "effect": "rerolls+1",    "maxLevel": 3, "baseCost": 400,  "costPerLevel": true }
+    ]
+  },
+
+  "rebirthQi": {
+    "_note": "윤회의 기(10장) = (1 + 성질 보너스) x (perOrbValue x 합(진기 구슬 값 x 그 자리 혈운 농도) + 보너스 + leftoverSilverRate x 남은 은자). 진기 구슬 값은 심득 배율 전. targets 는 혈운 농도 1, 평균 빌드 기준 기획 목표(분 → 보너스 빼고 진기만으로 남는 양).",
+    "perOrbValue": 0.04,
+    "leftoverSilverRate": 0.5,
+    "bossFirstKill": 300,
+    "bossRepeatKill": 100,
+    "firstVisitRegion": 50,
+    "firstReachRealm": 100,
+    "targets": [ { "minute": 5, "level": 15, "qi": 40 }, { "minute": 10, "level": 30, "qi": 170 }, { "minute": 20, "level": 60, "qi": 800 }, { "minute": 30, "level": 90, "qi": 2000 } ]
+  },
+
+  "mastery": {
+    "_note": "한 번 깨친 길(21장). 계정 전체로 센다.",
+    "revisitInsightChoicesBonus": 1,
+    "shortBreakthroughWhenRevisited": true,
+    "longAwakeningFirstTime": true
+  },
+
+  "lifeEnd": {
+    "_note": "생이 끝나는 세 가지(7장). 좌화는 쓰러짐과 같은 정산. 현경 뒤 봉인석이 모자라면 shadowFromMinute 부터 혈마의 그림자가 shadowStepMinutes 마다 강해진다.",
+    "ways": ["fallen", "zuohwa", "sealed"],
+    "shadowFromMinute": 30,
+    "shadowStepMinutes": 5
+  },
+
+  "cycle": {
+    "_note": "회귀(혈월 천하, 21장). 봉인 엔딩 뒤. 봉인석만 처음으로.",
+    "resets": ["sealStones"],
+    "keeps": ["training", "unlockedSects", "unlocks", "codex", "visitedRegions", "mastery"],
+    "bloodmoon": { "enemyHealth": 1.5, "enemySpeed": 1.15, "rewards": 1.5, "manuscriptsOnlyHere": true },
+    "endingsFirst": ["seal"],
+    "endingsSecond": ["seal", "inherit", "true"],
+    "trueEndingDistinctSects": 4
+  }
+}

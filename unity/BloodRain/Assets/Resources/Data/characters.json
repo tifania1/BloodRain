@@ -1,5 +1,5 @@
 {
-  "_note": "플레이어 캐릭터 8명. moveSpeed는 기본 대비 배율. yinyangStart는 태극 게이지 시작값. 기획서 '5. 플레이어 캐릭터'와 같은 값이어야 한다.",
+  "_note": "서장의 진소운과 문파 대표 인물 7명(천하 구조에서는 cheonha.json sects 가 몸의 바탕이고, 대표 인물이 있는 문파는 여기 값과 같아야 한다). moveSpeed는 기본 대비 배율. yinyangStart는 태극 게이지 시작값. 기획서 '5. 문파와 대표 인물'과 같은 값이어야 한다.",
   "characters": [
     { "id": "jin_sowoon",  "nameKo": "진소운", "startWeapon": "samjae_sword",  "maxHealth": 100, "moveSpeed": 1.00, "yinyangStart": 0,   "ultimate": "il_geom",        "trait": "reroll_plus2_insight4", "unlock": "start" },
     { "id": "namgung_hyeon","nameKo": "남궁현", "startWeapon": "changcheon_qi", "maxHealth": 100, "moveSpeed": 1.00, "yinyangStart": 10,  "ultimate": "cheonroe_rak",   "trait": "might25_above_half_hp", "unlock": "prologue_clear_buy_1000" },
@@ -18,6 +18,7 @@
     { "id": "yeokryu",        "nameKo": "역류",     "mightMultiplier": 12, "summary": "물살이 적을 한쪽 끝으로 쓸어 모음" },
     { "id": "taiji_muryang",  "nameKo": "태극무량", "mightMultiplier": 0,  "summary": "5초 동안 원 안 적 탄 반사, 받는 피해 무효" },
     { "id": "palbang_pungu",  "nameKo": "팔방풍우", "mightMultiplier": 7,  "summary": "8방향 장풍 3연타, 큰 넉백" },
+    { "id": "cheonseol_bu",   "nameKo": "천설부",   "mightMultiplier": 8,  "summary": "화면 안 모든 적 3초 얼림, 강시 계열에 공력 x8 피해" },
     { "id": "cheonma_haeche", "nameKo": "천마해체", "mightMultiplier": 0,  "summary": "8초 동안 초당 기혈 2% 소모, 모든 피해 2배, 흡혈 10%" }
   ]
 }

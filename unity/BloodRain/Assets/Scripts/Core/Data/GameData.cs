@@ -25,6 +25,8 @@ namespace BloodRain.Core.Data
         public IReadOnlyList<InsightDef> Insights { get; private set; } = Array.Empty<InsightDef>();
         public InsightChoicesDef InsightChoices { get; private set; } = new InsightChoicesDef();
         public IReadOnlyList<ChapterDef> Chapters { get; private set; } = Array.Empty<ChapterDef>();
+        /// <summary>천하 한 장과 환혼(cheonha.json, 기획서 7·10·21장).</summary>
+        public CheonhaDef Cheonha { get; private set; } = new CheonhaDef();
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -68,10 +70,11 @@ namespace BloodRain.Core.Data
                 Insights = insights.Insights,
                 InsightChoices = insights.Choices,
                 Chapters = Read<ChapterFile>("chapters").Chapters,
+                Cheonha = Read<CheonhaDef>("cheonha"),
             };
         }
 
-        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters" };
+        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha" };
 
         public WeaponDef Weapon(string id) => Weapons.First(w => w.Id == id);
         public PassiveDef Passive(string id) => Passives.First(p => p.Id == id);

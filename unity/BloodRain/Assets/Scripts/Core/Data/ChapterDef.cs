@@ -78,7 +78,7 @@ namespace BloodRain.Core.Data
     public sealed class ChapterDef
     {
         public string Id = "";
-        /// <summary>worldmap.json 지역 id.</summary>
+        /// <summary>cheonha.json 지역 id.</summary>
         public string Region = "";
         public string NameKo = "";
         public string TitleKo = "";

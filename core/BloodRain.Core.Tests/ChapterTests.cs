@@ -42,7 +42,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 장은_서장과_1장이고_지도의_지역과_맞는다()
         {
             Assert.Equal(new[] { "prologue", "chapter1" }, All.Select(c => c.Id));
-            var map = JObject.Parse(File.ReadAllText(Path.Combine(TestData.DataDir, "worldmap.json")));
+            var map = JObject.Parse(File.ReadAllText(Path.Combine(TestData.DataDir, "cheonha.json")));
             foreach (var c in All)
             {
                 var region = map["regions"]!.Children<JObject>().Single(r => (string)r["id"]! == c.Region);

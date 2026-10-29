@@ -73,7 +73,7 @@ namespace BloodRain.Core.Build
         int? _lastGauge;
 
         public string CharacterId { get; }
-        /// <summary>판 밖 기록: 이 판 전까지 깬 장(worldmap.json chapter 값).</summary>
+        /// <summary>판 밖 기록: 이 판 전까지 깬 장(cheonha.json chapter 값).</summary>
         public IReadOnlyCollection<string> ClearedChapters => _cleared;
         public RunCounters Counters => _c;
         public IReadOnlyList<RunEvent> Events => _events;

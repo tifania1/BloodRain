@@ -16,12 +16,12 @@ namespace BloodRain.Core.Tests
         readonly GameData _d = TestData.Load();
         SynergyDefs S => _d.Synergies;
 
-        /// <summary>worldmap.json 은 아직 Core 타입이 없어서(backlog M-01) 장 이름과 문파만 직접 읽는다.</summary>
+        /// <summary>cheonha.json 지역에서 장 이름과 문파만 직접 읽는다(Core 타입은 backlog T-02).</summary>
         static List<JObject> Regions() =>
-            JObject.Parse(File.ReadAllText(Path.Combine(TestData.DataDir, "worldmap.json")))["regions"]!.Children<JObject>().ToList();
+            JObject.Parse(File.ReadAllText(Path.Combine(TestData.DataDir, "cheonha.json")))["regions"]!.Children<JObject>().ToList();
 
         static HashSet<string> ChapterIds() =>
-            Regions().Where(r => (string)r["kind"]! == "chapter").Select(r => (string)r["chapter"]!).ToHashSet();
+            Regions().Where(r => r["chapter"]!.Type == JTokenType.String).Select(r => (string)r["chapter"]!).ToHashSet();
 
         [Fact] public void 연환은_16개이고_무공마다_정확히_두_번_나온다()
         {
@@ -157,7 +157,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 고수의_유해가_줄_문파는_지도의_장마다_20장_문파이거나_없다()
         {
             Assert.True(S.Encounter("relic").NeedsChapterSchool);
-            foreach (var r in Regions().Where(r => (string)r["kind"]! == "chapter"))
+            foreach (var r in Regions().Where(r => r["chapter"]!.Type == JTokenType.String))
             {
                 var sect = (string?)r["sect"];
                 if (sect != null) Assert.Contains(S.Schools, s => s.Id == sect);

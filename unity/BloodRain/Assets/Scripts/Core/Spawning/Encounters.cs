@@ -14,9 +14,9 @@ namespace BloodRain.Core.Spawning
     /// <summary>지금 판의 형편. 굴릴 때마다 새로 채워 넘긴다.</summary>
     public sealed class EncounterContext
     {
-        /// <summary>지금 장(worldmap.json chapter 값: prologue, chapter1 … final). 외전처럼 장이 아니면 null.</summary>
+        /// <summary>지금 장(cheonha.json chapter 값: prologue, chapter1 … final). 외전처럼 장이 아니면 null.</summary>
         public string? Chapter;
-        /// <summary>그 땅의 문파(worldmap.json regions[].sect). 없으면 null. 고수의 유해가 이 문파 진전을 하나 더 준다.</summary>
+        /// <summary>그 땅의 문파(cheonha.json regions[].sect). 없으면 null. 고수의 유해가 이 문파 진전을 하나 더 준다.</summary>
         public string? ChapterSchool;
         /// <summary>게임 시간(분).</summary>
         public float Minute;

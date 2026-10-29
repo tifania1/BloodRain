@@ -63,7 +63,7 @@ namespace BloodRain.Core.Data
     {
         /// <summary>이 캐릭터로 해야 한다(없으면 누구든).</summary>
         public string? Character;
-        /// <summary>판 밖 기록: 이 장들을 깬 적이 있어야 한다(worldmap.json chapter 값).</summary>
+        /// <summary>판 밖 기록: 이 장들을 깬 적이 있어야 한다(cheonha.json chapter 값).</summary>
         public List<string> Cleared = new List<string>();
         /// <summary>무공·심법 id → 최소 레벨. 1이면 지니고만 있으면 된다. 절기가 된 무공은 최고 단계로 친다.</summary>
         public Dictionary<string, int> Levels = new Dictionary<string, int>();
@@ -116,7 +116,7 @@ namespace BloodRain.Core.Data
         /// <summary>한 판에서 한 번이라도 나올 기본 확률.</summary>
         public double Chance;
         public bool Proto;
-        /// <summary>나올 수 있는 장(worldmap.json chapter 값). 없으면 어느 장이든.</summary>
+        /// <summary>나올 수 있는 장(cheonha.json chapter 값). 없으면 어느 장이든.</summary>
         public List<string>? Chapters;
         /// <summary>이 게임 시간(분)부터 나온다.</summary>
         public float MinMinute;

@@ -22,7 +22,14 @@
     "chapter1": ["dongin", "gyeyul_monk", "acting_abbot"]
   },
   "bosses": [
-    { "id": "jang_sam",   "nameKo": "강시 포쾌 장삼", "chapter": "prologue", "health": 6000,  "targetKillSeconds": 40, "patterns": ["rope_throw", "whistle_summon", "triple_slam"] },
-    { "id": "wongak",     "nameKo": "혈나한 원각",   "chapter": "chapter1", "health": 90000, "targetKillSeconds": 60, "patterns": ["vajra_cone", "eighteen_arhat_ring", "bell_drop_x3"], "phase2At": 0.3, "phase2Patterns": ["rotating_blood_beams"] }
+    {"id": "jang_sam", "nameKo": "강시 포쾌 장삼", "chapter": "prologue", "health": 6000, "targetKillSeconds": 40, "patterns": ["rope_throw", "whistle_summon", "triple_slam"]},
+    {"id": "wongak", "nameKo": "혈나한 원각", "chapter": "chapter1", "health": 90000, "targetKillSeconds": 60, "patterns": ["vajra_cone", "eighteen_arhat_ring", "bell_drop_x3"], "phase2At": 0.3, "phase2Patterns": ["rotating_blood_beams"]},
+    {"id": "dang_sohye", "nameKo": "독후 당소혜", "chapter": "chapter2", "health": 130000, "targetKillSeconds": 65, "patterns": ["half_map_poison_fog", "dart_fan_x3", "summon_golden_centipede"], "phase2At": 0.3, "phase2Patterns": ["split_into_three"]},
+    {"id": "ma_cheonpae", "nameKo": "혈귀 마천패", "chapter": "chapter3", "health": 180000, "targetKillSeconds": 70, "patterns": ["chain_hook_pull", "water_pillar", "summon_water_ghost"], "phase2At": 0.3, "phase2Patterns": ["crimson_reverse_wave"]},
+    {"id": "hyeolheo", "nameKo": "혈허진인", "chapter": "chapter4", "health": 240000, "targetKillSeconds": 70, "patterns": ["yin_yang_split_field", "taiji_inhale_exhale", "seven_star_sword_drop"], "phase2At": 0.3, "phase2Patterns": ["rotating_yin_yang_border"]},
+    {"id": "huashan_sword_soul", "nameKo": "매화검존의 검혼", "chapter": "chapter5", "health": 300000, "targetKillSeconds": 75, "patterns": ["petal_spiral", "screen_slash", "summon_plum_sword_ghost"], "phase2At": 0.3, "phase2Patterns": ["twenty_four_petal_burst"]},
+    {"id": "seol_muhyang", "nameKo": "빙혈 설무향", "chapter": "chapter6", "health": 360000, "targetKillSeconds": 75, "patterns": ["blizzard_narrow_view", "ice_clones_x4", "ice_spike_chain"], "phase2At": 0.3, "phase2Patterns": ["freezing_edges"]},
+    {"id": "hyeokryeon_hwi", "nameKo": "혈영회주 혁련휘", "chapter": "chapter7", "health": 450000, "targetKillSeconds": 80, "patterns": ["blink_x4_slam", "giant_blood_palm", "mirror_clone"], "phase2At": 0.3, "phase2Patterns": ["blood_moon_empower"]},
+    {"id": "danmok_hyeon", "nameKo": "혈마 단목현", "chapter": "final", "health": 400000, "targetKillSeconds": 90, "patterns": ["blood_needle_barrage", "pulse_ring", "plague_cloud"], "phases": [400000, 600000, 800000], "_note": "종장. 땅의 주인 일곱의 혈영(체력 40%판) 뒤 3단계(혈의·혈해·진혈마). health 는 1단계 값"}
   ]
 }
