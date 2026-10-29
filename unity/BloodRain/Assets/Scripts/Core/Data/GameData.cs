@@ -19,6 +19,7 @@ namespace BloodRain.Core.Data
         public IReadOnlyList<EnemyDef> Enemies { get; private set; } = Array.Empty<EnemyDef>();
         public IReadOnlyList<BossDef> Bosses { get; private set; } = Array.Empty<BossDef>();
         public BalanceDef Balance { get; private set; } = new BalanceDef();
+        public SynergyDefs Synergies { get; private set; } = new SynergyDefs();
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -32,7 +33,7 @@ namespace BloodRain.Core.Data
         sealed class CharacterFile { public List<CharacterDef> Characters = new List<CharacterDef>(); public List<UltimateDef> Ultimates = new List<UltimateDef>(); }
         sealed class EnemyFile { public List<EnemyDef> Enemies = new List<EnemyDef>(); public List<BossDef> Bosses = new List<BossDef>(); }
 
-        /// <summary>파일 이름(확장자 없이) → JSON 문자열. weapons, passives, evolutions, characters, enemies, balance.</summary>
+        /// <summary>파일 이름(확장자 없이) → JSON 문자열. 받아야 하는 파일은 FileNames.</summary>
         public static GameData FromJson(IReadOnlyDictionary<string, string> files)
         {
             T Read<T>(string name) where T : new()
@@ -54,10 +55,11 @@ namespace BloodRain.Core.Data
                 Enemies = enemies.Enemies,
                 Bosses = enemies.Bosses,
                 Balance = Read<BalanceDef>("balance"),
+                Synergies = Read<SynergyDefs>("synergies"),
             };
         }
 
-        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance" };
+        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies" };
 
         public WeaponDef Weapon(string id) => Weapons.First(w => w.Id == id);
         public PassiveDef Passive(string id) => Passives.First(p => p.Id == id);

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using BloodRain.Core.Build;
 using BloodRain.Core.Data;
 
 namespace BloodRain.Core.Tests
@@ -21,13 +23,31 @@ namespace BloodRain.Core.Tests
             }
         }
 
-        public static GameData Load()
+        public static GameData Load() => _cached ??= GameData.FromJson(ReadFiles());
+
+        /// <summary>GameData.FileNames 에 적힌 파일을 모두 읽는다. 하나라도 없으면 여기서 터진다.</summary>
+        public static Dictionary<string, string> ReadFiles()
         {
-            if (_cached != null) return _cached;
             var files = new Dictionary<string, string>();
             foreach (var name in GameData.FileNames)
                 files[name] = File.ReadAllText(Path.Combine(DataDir, name + ".json"));
-            return _cached = GameData.FromJson(files);
+            return files;
+        }
+
+        /// <summary>캐릭터로 판을 시작해 (id, 레벨)대로 무공·심법을 올린 로드아웃. 무공인지 심법인지는 데이터로 가린다.</summary>
+        public static Loadout Build(string character, params (string id, int level)[] items)
+        {
+            var d = Load();
+            var l = new Loadout(d, d.Character(character));
+            foreach (var (id, level) in items)
+            {
+                bool weapon = d.Weapons.Any(w => w.Id == id);
+                var owned = weapon ? l.Weapons : l.Passives;
+                int cur = owned.TryGetValue(id, out var lv) ? lv : 0;
+                if (cur == 0) { l.Apply(new Offer(weapon ? OfferKind.NewWeapon : OfferKind.NewPassive, id)); cur = 1; }
+                for (; cur < level; cur++) l.Apply(new Offer(weapon ? OfferKind.UpgradeWeapon : OfferKind.UpgradePassive, id));
+            }
+            return l;
         }
     }
 }
