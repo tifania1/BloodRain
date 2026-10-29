@@ -9,7 +9,7 @@ namespace BloodRain.Core.Tests
     {
         static GameData? _cached;
 
-        public static string DataDir
+        public static string RepoRoot
         {
             get
             {
@@ -17,9 +17,18 @@ namespace BloodRain.Core.Tests
                 while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "unity")))
                     dir = dir.Parent;
                 if (dir == null) throw new DirectoryNotFoundException("저장소 루트(unity 폴더)를 찾지 못했습니다");
-                return Path.Combine(dir.FullName, "unity", "BloodRain", "Assets", "Resources", "Data");
+                return dir.FullName;
             }
         }
+
+        public static string DataDir => Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Resources", "Data");
+
+        /// <summary>저장소 안 다른 파일(기획서, 웹 프로토타입)을 읽는다. 경로는 저장소 루트 기준.</summary>
+        public static string ReadRepoFile(params string[] parts) =>
+            File.ReadAllText(Path.Combine(RepoRoot, Path.Combine(parts)));
+
+        /// <summary>기획서·프로토타입 글과 비교할 때 쓰는 숫자 표기. 15, 0.04, 1.5 처럼 쓸데없는 0을 뺀다.</summary>
+        public static string Num(float v) => System.Math.Round(v, 4).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
         public static GameData Load()
         {

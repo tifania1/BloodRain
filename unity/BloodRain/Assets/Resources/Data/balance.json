@@ -26,6 +26,18 @@
     "pairPassiveMinLevel": 3,
     "triggers": ["breakthrough", "chest"]
   },
+  "awakening": {
+    "_note": "절기 각성 연출과 파동 판정. 기획서 8장 '절기 그릇과 각성'의 각성 연출 표, docs/design/vfx.md 와 같은 값이고 웹 프로토타입 AW·awakenShock 도 이 숫자를 쓴다. long·short 의 시각은 연출 시작부터 실제 시간(초), null 은 그 연출에 없는 장면. 긴 연출은 그 절기를 계정에서 처음 깨울 때, 그다음부터 짧은 연출(설정으로 바꿀 수 있음). 세상 시간은 처음 timeScaleInSeconds 동안 worldTimeScale 까지 느려졌다가 파동 뒤 timeScaleOutSeconds 동안 1로 돌아온다. 파동 반경은 화면 대각선 x shockRadiusViewDiagonal. 반경 안 잡몹은 처치, 정예·보스는 최대 기혈의 비율만큼 깎고, 적 탄은 모두 지운다. 여운·적 생성 멈춤·무적(연출 길이 + invulnerableExtraSeconds)은 세상 시간으로 줄어든다.",
+    "long":  { "durationSeconds": 3.5, "glyphSeconds": 0.45, "crackSeconds": 0.95, "nameSeconds": 1.15, "stampSeconds": 1.8,  "shockSeconds": 2.3 },
+    "short": { "durationSeconds": 1.5, "glyphSeconds": null, "crackSeconds": null, "nameSeconds": 0.1,  "stampSeconds": 0.42, "shockSeconds": 0.64 },
+    "worldTimeScale": 0.04, "timeScaleInSeconds": 0.18, "timeScaleOutSeconds": 0.25,
+    "shockRadiusViewDiagonal": 0.62,
+    "eliteMaxHealthRatio": 0.15, "bossMaxHealthRatio": 0.04, "eliteKnockback": 8,
+    "clearEnemyProjectiles": true, "resetCooldownOnShock": true,
+    "spawnPauseSeconds": 2.5,
+    "afterglowSeconds": 8, "afterglowDamageMultiplier": 1.5,
+    "invulnerableExtraSeconds": 0.8
+  },
   "yinyang": {
     "min": -100, "max": 100,
     "weaponPerLevel": 5, "passivePerLevel": 8,
