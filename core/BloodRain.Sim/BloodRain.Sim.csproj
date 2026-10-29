@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 밸런스 시뮬레이터(B-07). 화면 없이 1장 20분을 돌려 레벨 곡선을 본다.
+       게임 규칙은 BloodRain.Core 것을 그대로 쓰고, 데이터에 없는 가정은 Assumptions.cs 한 곳에 모은다.
+       Unity에는 들어가지 않는다. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>BloodRain.Sim</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../BloodRain.Core/BloodRain.Core.csproj" />
+  </ItemGroup>
+</Project>

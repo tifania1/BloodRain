@@ -12,5 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../BloodRain.Core/BloodRain.Core.csproj" />
+    <ProjectReference Include="../BloodRain.Sim/BloodRain.Sim.csproj" />
   </ItemGroup>
 </Project>
