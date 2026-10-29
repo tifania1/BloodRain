@@ -67,6 +67,8 @@ namespace BloodRain.Core.Data
         public int HarmonyRange = 25;
         public int ExtremeFrom = 70;
         public YinYangHarmonyDef Harmony = new YinYangHarmonyDef();
+        public YinYangBiasDef Bias = new YinYangBiasDef();
+        public YinYangExtremeDef Extreme = new YinYangExtremeDef();
     }
 
     /// <summary>태극(조화) 구간 보너스.</summary>
@@ -74,6 +76,82 @@ namespace BloodRain.Core.Data
     {
         public float CooldownReduction = 0.10f;
         public float UltimateChargeBonus = 0.25f;
+    }
+
+    /// <summary>편향 구간: 기운 쪽 속성 무공 피해 보너스.</summary>
+    public sealed class YinYangBiasDef
+    {
+        public float AspectDamageBonus = 0.15f;
+    }
+
+    /// <summary>극성 구간: 피해 보너스가 커지는 대신 기혈역류가 온다(Combat.Backlash).</summary>
+    public sealed class YinYangExtremeDef
+    {
+        public float AspectDamageBonus = 0.40f;
+        /// <summary>극성에 머문 시간이 이만큼 쌓일 때마다 역류가 온다(초).</summary>
+        public float BacklashIntervalSeconds = 60;
+        /// <summary>역류가 이어지는 시간(초).</summary>
+        public float BacklashSeconds = 3;
+        /// <summary>역류 동안 이동속도에서 빼는 비율. 0.5면 -50%.</summary>
+        public float BacklashSlow = 0.5f;
+        /// <summary>끝까지 버텼을 때 받는 피해(최대 기혈 대비).</summary>
+        public float BacklashDamageMaxHealthRatio = 0.05f;
+        /// <summary>역류가 시작된 뒤 이 시간 안에 경공을 쓰면 끊긴다(초).</summary>
+        public float DashCancelWindowSeconds = 1.0f;
+        /// <summary>끊었을 때 오의 게이지에 그대로 더하는 양(배율 없음).</summary>
+        public float DashCancelUltimateCharge = 50;
+    }
+
+    /// <summary>각성 연출 한 벌(긴 것 / 짧은 것)의 장면 시각. 연출 시작부터 실제 시간(초), 그 연출에 없는 장면은 null.</summary>
+    public sealed class AwakeningTimelineDef
+    {
+        public float DurationSeconds;
+        /// <summary>문턱: 무공 칸 글자가 날아와 몸에 스민다.</summary>
+        public float? GlyphSeconds;
+        /// <summary>균열: 금빛 균열이 위아래로 화면을 가른다.</summary>
+        public float? CrackSeconds;
+        /// <summary>이름: 한자 이름 붓질이 시작된다.</summary>
+        public float NameSeconds;
+        /// <summary>낙관: 絶 낙관이 찍히고 무공 칸이 절기로 바뀐다.</summary>
+        public float StampSeconds;
+        /// <summary>파동: 판정(잡몹 처치, 정예·보스 깎기, 적 탄 지우기)이 이 순간 일어난다.</summary>
+        public float ShockSeconds;
+    }
+
+    /// <summary>절기 각성(Combat.Awakening). 기획서 8장 '절기 그릇과 각성'의 각성 연출 표, docs/design/vfx.md.</summary>
+    public sealed class AwakeningDef
+    {
+        public AwakeningTimelineDef Long = new AwakeningTimelineDef
+        {
+            DurationSeconds = 3.5f, GlyphSeconds = 0.45f, CrackSeconds = 0.95f, NameSeconds = 1.15f, StampSeconds = 1.8f, ShockSeconds = 2.3f,
+        };
+        public AwakeningTimelineDef Short = new AwakeningTimelineDef
+        {
+            DurationSeconds = 1.5f, NameSeconds = 0.1f, StampSeconds = 0.42f, ShockSeconds = 0.64f,
+        };
+        /// <summary>파동 전까지 세상 시간 배율.</summary>
+        public float WorldTimeScale = 0.04f;
+        /// <summary>연출 시작부터 이 시간 동안 1 → WorldTimeScale 로 느려진다(실제 시간).</summary>
+        public float TimeScaleInSeconds = 0.18f;
+        /// <summary>파동 뒤 이 시간 동안 WorldTimeScale → 1 로 돌아온다(실제 시간).</summary>
+        public float TimeScaleOutSeconds = 0.25f;
+        /// <summary>파동 반경 = 화면 대각선(월드 단위) × 이 값.</summary>
+        public float ShockRadiusViewDiagonal = 0.62f;
+        public float EliteMaxHealthRatio = 0.15f;
+        public float BossMaxHealthRatio = 0.04f;
+        /// <summary>정예를 밀어내는 힘(프로토타입 단위). 보스는 밀리지 않는다.</summary>
+        public float EliteKnockback = 8f;
+        public bool ClearEnemyProjectiles = true;
+        /// <summary>파동 때 깨어난 절기의 재사용 대기를 0으로.</summary>
+        public bool ResetCooldownOnShock = true;
+        /// <summary>파동 뒤 적이 새로 몰려오지 않는 시간(세상 시간).</summary>
+        public float SpawnPauseSeconds = 2.5f;
+        /// <summary>파동 뒤 금빛 여운 시간(세상 시간).</summary>
+        public float AfterglowSeconds = 8f;
+        /// <summary>여운 동안 그 절기 피해 배율.</summary>
+        public float AfterglowDamageMultiplier = 1.5f;
+        /// <summary>무적 = 연출 길이 + 이 값. 시작할 때 걸고 세상 시간으로 줄어든다(프로토타입과 같다).</summary>
+        public float InvulnerableExtraSeconds = 0.8f;
     }
 
     public sealed class EnemyScalingDef
@@ -136,6 +214,7 @@ namespace BloodRain.Core.Data
         public LevelsDef Levels = new LevelsDef();
         public LevelUpDef LevelUp = new LevelUpDef();
         public EvolutionRuleDef Evolution = new EvolutionRuleDef();
+        public AwakeningDef Awakening = new AwakeningDef();
         public YinYangDef Yinyang = new YinYangDef();
         public UltimateChargeDef UltimateCharge = new UltimateChargeDef();
         public ContactDef Contact = new ContactDef();
