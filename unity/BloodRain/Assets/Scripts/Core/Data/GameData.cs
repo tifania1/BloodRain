@@ -20,6 +20,11 @@ namespace BloodRain.Core.Data
         public IReadOnlyList<BossDef> Bosses { get; private set; } = Array.Empty<BossDef>();
         public BalanceDef Balance { get; private set; } = new BalanceDef();
         public SynergyDefs Synergies { get; private set; } = new SynergyDefs();
+        /// <summary>장 id → 5·10·15분 정예 id(시각 순서). enemies.json elites.</summary>
+        public IReadOnlyDictionary<string, List<string>> Elites { get; private set; } = new Dictionary<string, List<string>>();
+        public IReadOnlyList<InsightDef> Insights { get; private set; } = Array.Empty<InsightDef>();
+        public InsightChoicesDef InsightChoices { get; private set; } = new InsightChoicesDef();
+        public IReadOnlyList<ChapterDef> Chapters { get; private set; } = Array.Empty<ChapterDef>();
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -31,7 +36,9 @@ namespace BloodRain.Core.Data
         sealed class PassiveFile { public List<PassiveDef> Passives = new List<PassiveDef>(); }
         sealed class EvolutionFile { public List<EvolutionDef> Evolutions = new List<EvolutionDef>(); }
         sealed class CharacterFile { public List<CharacterDef> Characters = new List<CharacterDef>(); public List<UltimateDef> Ultimates = new List<UltimateDef>(); }
-        sealed class EnemyFile { public List<EnemyDef> Enemies = new List<EnemyDef>(); public List<BossDef> Bosses = new List<BossDef>(); }
+        sealed class EnemyFile { public List<EnemyDef> Enemies = new List<EnemyDef>(); public Dictionary<string, List<string>> Elites = new Dictionary<string, List<string>>(); public List<BossDef> Bosses = new List<BossDef>(); }
+        sealed class InsightFile { public InsightChoicesDef Choices = new InsightChoicesDef(); public List<InsightDef> Insights = new List<InsightDef>(); }
+        sealed class ChapterFile { public List<ChapterDef> Chapters = new List<ChapterDef>(); }
 
         /// <summary>파일 이름(확장자 없이) → JSON 문자열. 받아야 하는 파일은 FileNames.</summary>
         public static GameData FromJson(IReadOnlyDictionary<string, string> files)
@@ -45,6 +52,7 @@ namespace BloodRain.Core.Data
 
             var characters = Read<CharacterFile>("characters");
             var enemies = Read<EnemyFile>("enemies");
+            var insights = Read<InsightFile>("insights");
             return new GameData
             {
                 Weapons = Read<WeaponFile>("weapons").Weapons,
@@ -54,16 +62,22 @@ namespace BloodRain.Core.Data
                 Ultimates = characters.Ultimates,
                 Enemies = enemies.Enemies,
                 Bosses = enemies.Bosses,
+                Elites = enemies.Elites,
                 Balance = Read<BalanceDef>("balance"),
                 Synergies = Read<SynergyDefs>("synergies"),
+                Insights = insights.Insights,
+                InsightChoices = insights.Choices,
+                Chapters = Read<ChapterFile>("chapters").Chapters,
             };
         }
 
-        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies" };
+        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters" };
 
         public WeaponDef Weapon(string id) => Weapons.First(w => w.Id == id);
         public PassiveDef Passive(string id) => Passives.First(p => p.Id == id);
         public EnemyDef Enemy(string id) => Enemies.First(e => e.Id == id);
         public CharacterDef Character(string id) => Characters.First(c => c.Id == id);
+        public ChapterDef Chapter(string id) => Chapters.First(c => c.Id == id);
+        public InsightDef Insight(string id) => Insights.First(i => i.Id == id);
     }
 }
