@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloodRain.Core", "BloodRain
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloodRain.Core.Tests", "BloodRain.Core.Tests\BloodRain.Core.Tests.csproj", "{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloodRain.Sim", "BloodRain.Sim\BloodRain.Sim.csproj", "{C05389BF-C87C-4E7D-BC5C-98299826E873}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC87BAC8-21CA-40B8-9B7B-61CA8B7482BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C05389BF-C87C-4E7D-BC5C-98299826E873}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C05389BF-C87C-4E7D-BC5C-98299826E873}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C05389BF-C87C-4E7D-BC5C-98299826E873}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C05389BF-C87C-4E7D-BC5C-98299826E873}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

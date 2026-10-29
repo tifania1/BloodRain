@@ -1,0 +1,78 @@
+// 사용법(저장소 루트에서):
+//   dotnet run --project core/BloodRain.Sim -- --policy average --seed 1        한 판을 돌려 분당 표를 찍는다
+//   dotnet run --project core/BloodRain.Sim -- --policy greedy --seeds 30       여러 판 요약(5·10·15·20분 레벨)
+//   dotnet run --project core/BloodRain.Sim -- --report docs/design/sim/level-curve.md   보고서 전체를 다시 쓴다
+// 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
+using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+namespace BloodRain.Sim
+{
+    public static class Program
+    {
+        public static int Main(string[] args)
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+            string policy = "average", report = "", scenario = "baseline";
+            string? dataDir = null;
+            int seed = 1, seeds = 0;
+            double minutes = Assumptions.RunMinutes;
+            double? crowdRadius = null, maxDensity = null, arrival = null;
+            for (int i = 0; i < args.Length; i++)
+            {
+                string Next() => i + 1 < args.Length ? args[++i] : throw new ArgumentException($"{args[i]} 뒤에 값이 없습니다");
+                switch (args[i])
+                {
+                    case "--policy": policy = Next(); break;
+                    case "--seed": seed = int.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "--seeds": seeds = int.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "--minutes": minutes = double.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "--data": dataDir = Next(); break;
+                    case "--report": report = Next(); break;
+                    case "--scenario": scenario = Next(); break;
+                    case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "-h":
+                    case "--help":
+                        Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--report 경로] [--data 폴더] [--minutes 분]");
+                        return 0;
+                    default:
+                        Console.Error.WriteLine($"모르는 인자입니다: {args[i]} (--help)");
+                        return 2;
+                }
+            }
+
+            var sc = Scenarios.Find(scenario);
+            var data = sc.LoadData(dataDir);
+            if (report.Length > 0)
+            {
+                string text = Report.Build(dataDir);
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(report))!);
+                File.WriteAllText(report, text, new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {report}");
+                return 0;
+            }
+
+            var opt = sc.ApplyOptions(new SimOptions
+            {
+                Policy = policy, Seed = seed, Minutes = minutes,
+                CrowdRadius = crowdRadius, MaxDensity = maxDensity, ArrivalSeconds = arrival,
+            });
+            if (seeds > 0)
+            {
+                var runs = Enumerable.Range(1, seeds).Select(s => RunSimulator.Run(data, opt.With(o => o.Seed = s))).ToList();
+                Console.WriteLine(Report.Summary(runs));
+                return 0;
+            }
+
+            var result = RunSimulator.Run(data, opt);
+            Console.WriteLine(Report.SingleRun(result));
+            return 0;
+        }
+    }
+}
