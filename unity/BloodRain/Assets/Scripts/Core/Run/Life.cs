@@ -1,7 +1,7 @@
 // 한 생을 묶는 입구(기획서 7장 '한 생의 흐름', 21장 환혼과 윤회).
 // 환생으로 몸을 받으면 Life 를 만들고, 매 프레임 Tick(실제 시간, 플레이어 위치, 화면 위 적 수)을 부른다.
 // Life 가 하는 일: 세상 시간(돌파·각성 연출 중엔 느려짐), 서 있는 지역과 처음 밟은 땅, 진기 흡수 → 레벨·돌파(축척) → 땅의 주인 깨어남,
-// 땅의 주인 싸움 시작·처치, 매초 적 생성(LifeDirector), 기혈역류, 생의 끝(쓰러짐·좌화·봉인)과 정산 기록.
+// 땅의 주인 싸움 시작·처치, 매초 적 생성(LifeDirector), 기혈역류와 오의 게이지(Charge), 생의 끝(쓰러짐·좌화·봉인)과 정산 기록.
 // 전투(맞히기·피해)는 Unity 쪽 Sim 이 하고 결과만 여기로 알려 준다(Absorb, DefeatBoss, End).
 #nullable enable
 using System;
@@ -68,7 +68,9 @@ namespace BloodRain.Core.Run
             Scale = new Scale(_data);
             Breakthrough = new Breakthrough(Scale, _data.Cheonha.Breakthrough, _data.Cheonha.Crush);
             Awakening = new Awakening(_data.Balance.Awakening);
-            Backlash = new Backlash(_data.Balance.Yinyang.Extreme);
+            Charge = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony, StartChargeBonus(soul, body));
+            // 역류를 경공으로 끊으면 오의 게이지 +50 이 이 게이지로 들어간다.
+            Backlash = new Backlash(_data.Balance.Yinyang.Extreme, Charge);
             Director = new LifeDirector(_data, rng);
             Bosses = new BossAwakening(_data, body.Region.Id, new BossRecord(soul.BossesKilled, soul.SealStoneCount));
             if (body.Sect?.BloodArt is { } art) BloodArt = new BloodArt(art, Loadout.Gauge, body.YinyangStart);
@@ -85,6 +87,9 @@ namespace BloodRain.Core.Run
         public Breakthrough Breakthrough { get; }
         public Awakening Awakening { get; }
         public Backlash Backlash { get; }
+        /// <summary>진기(오의) 게이지. 처치·피격은 Unity 쪽 Sim 이 Charge.OnKill(Loadout.Gauge.Band) 처럼 알린다.
+        /// 시작 충전 보너스는 연무장 + 몸의 성질. 심법을 올리면 부른 쪽이 ChargeBonus 를 다시 넣는다.</summary>
+        public UltimateCharge Charge { get; }
         public LifeDirector Director { get; }
         public BossAwakening Bosses { get; }
         /// <summary>마교 몸의 혈공(5장). 다른 몸은 null.</summary>
@@ -186,6 +191,13 @@ namespace BloodRain.Core.Run
             }
             Log.KillBoss(kill.RegionId);
             return kill;
+        }
+
+        static float StartChargeBonus(Soul soul, RebirthBody body)
+        {
+            var b = soul.TrainingBonus();
+            b.Add(body.TraitStats);
+            return b[StatKind.UltimateCharge];
         }
 
         /// <summary>생이 끝났다(쓰러짐·좌화·봉인). 정산 기록을 만든다. 혼에 옮기는 일은 부른 쪽이 Soul.EndLife 로.</summary>
