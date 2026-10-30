@@ -15,8 +15,8 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] B-07 2026-10-29 — `core/BloodRain.Sim` 시뮬레이터와 보고서 `docs/design/sim/level-curve.md`. 지금 데이터(프로토 처치 진기)면 5·10·15·20분 Lv16·38·64·89로 목표보다 높다(천하 이관 뒤 다시 잼). 처치 진기를 enemies.json `xp` 로 낮추는 안이 가장 작은 변경(P-02와 같이 결정)
 - [x] B-08 2026-10-29 — `chapters.json` 서장·1장: 시간대별 가중치표, 정예 5·10·15분, 돌진·무리·포위, 보부상 12분, 금두꺼비 10~12분 창, 은빛 등롱
 - [x] B-09 2026-10-29 — `WaveTable.cs`: 분에 맞는 적 뽑기, 한 판 사건 일정(창·확률은 시드로), 장별 생성 중지·보스 시각을 끼운 SpawnCurve
-- [ ] B-10 `[U]` (프로젝트 생성·커밋은 2026-10-28 끝남, 6000.3.10f1) Unity 프로젝트 기본 설정: 2D URP, Input System, Newtonsoft 패키지, 폴더 구조, 빈 씬 Boot/Run/Inn
-- [ ] B-11 `[U]` 데이터 로더: Resources/Data JSON 12개 → `GameData.FromJson`, 시작할 때 콘솔에 무공 16종 이름 출력으로 확인
+- [x] B-10 `[U]` 2026-10-30 — PC Unity 세션: 패키지 넷 확인, Boot·Run·Inn 씬(Bootstrap 메뉴), Sim·Platform·Presentation·Editor asmdef, 입력 처리 Both
+- [x] B-11 `[U]` 2026-10-30 — PC Unity 세션: `Presentation/DataBoot.cs`, Boot 씬 플레이 때 파일 12개·무공 16종 확인. 뒤따라 Prologue·Life·FinalFight 의 CS8632 경고 6개를 `#nullable enable` 로 없애고 CI에 nullable 끈 빌드 단계를 넣음
 - [x] B-13 2026-10-28 — 인트로 컷 이미지 12장을 기획서 원본 19장 '컷 이미지'에 컷 순서대로 붙임
 - [ ] B-12 아트 시험 이미지 반영 확인(art_queue의 M0 항목 6개가 imported 되면 Sprite 설정 점검)
 - [x] P-01 2026-10-28 — 웹 프로토타입(`web/prototype/`, 1장 숭산 소림 + 원각). 데이터 JSON을 그대로 읽는다. 공개 주소 https://bloodrain-proto.pages.dev

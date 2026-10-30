@@ -2,6 +2,7 @@
 // 땅의 주인 일곱의 혈영(기준 체력 × 0.4, 패턴은 그 보스 것)을 차례로 넘긴 뒤 혈의 → 혈해 → 진혈마.
 // 진엔딩 조건을 채웠으면 진혈마 기혈이 10%에 닿을 때 목 노인 컷신으로 넘어간다.
 // 기혈은 기준값이다. 실제 기혈은 싸움을 건 분으로 BossAwakening.Health 와 같은 식을 곱한다.
+#nullable enable
 using System;
 using System.Linq;
 using BloodRain.Core.Data;

@@ -29,6 +29,7 @@
 
 ## 코드 구조
 - `unity/BloodRain/Assets/Scripts/Core/` — 게임 규칙. **UnityEngine 금지**(asmdef noEngineReferences). C# 9, .NET Standard 2.1 범위 안에서만 쓴다.
+  Unity 는 nullable 을 켜지 않으니 참조형에 `?` 를 쓰는 파일은 맨 위에 `#nullable enable` 을 둔다(CI가 nullable 끈 빌드로 확인).
   `core/BloodRain.Core` 가 이 폴더를 그대로 컴파일하고 `core/BloodRain.Core.Tests` 가 테스트한다. 클라우드에는 Unity가 없으니 규칙은 전부 여기서 만들고 검증한다.
 - `unity/BloodRain/Assets/Resources/Data/*.json` — weapons·passives·evolutions(무공·심법·절기), characters(서장 진소운·대표 인물), enemies(적·정예·땅의 주인), balance, synergies, insights(깨달음), chapters(서장·한 생 흐름), cheonha(천하 한 장: 축척·지역·문파·타고난 성질·환혼·윤회의 기). 목록은 `GameData.FileNames`. Unity와 테스트가 같은 파일을 읽는다.
   값을 바꾸면 `docs/design/gdd.md` 의 같은 표도 고친다. 테스트(`BalanceTests`, `CheonhaDataTests` 등)가 기획서 숫자와 맞는지 확인한다.

@@ -3,6 +3,7 @@
 // Life 가 하는 일: 세상 시간(돌파·각성 연출 중엔 느려짐), 서 있는 지역과 처음 밟은 땅, 진기 흡수 → 레벨·돌파(축척) → 땅의 주인 깨어남,
 // 땅의 주인 싸움 시작·처치, 매초 적 생성(LifeDirector), 기혈역류, 생의 끝(쓰러짐·좌화·봉인)과 정산 기록.
 // 전투(맞히기·피해)는 Unity 쪽 Sim 이 하고 결과만 여기로 알려 준다(Absorb, DefeatBoss, End).
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;

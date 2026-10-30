@@ -24,3 +24,6 @@ jobs:
           python3 -c "import json; [json.loads(l) for l in open('art_queue/queue.jsonl', encoding='utf-8') if l.strip()]" || { echo "::error file=art_queue/queue.jsonl::대기열 문법 오류"; exit 1; }
       - name: 테스트
         run: dotnet test core/BloodRain.sln --nologo
+      - name: Unity 조건 빌드(nullable 꺼짐)
+        # Unity 는 프로젝트 단위 nullable 을 켜지 않는다. ? 를 쓰는 파일은 맨 위에 #nullable enable 이 있어야 CS8632 경고가 안 난다.
+        run: dotnet build core/BloodRain.Core/BloodRain.Core.csproj --nologo -p:Nullable=disable -p:TreatWarningsAsErrors=false -warnaserror:CS8632 -o /tmp/unity-like

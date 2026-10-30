@@ -2,6 +2,7 @@
 // 장삼전에서 기혈이 바닥나면 천지인 삼검이 고정으로 깨어나고(늘 긴 연출), 장삼을 쓰러뜨리면
 // 진소운의 몸이 다하는 컷과 목 노인이 회혼침을 꽂는 컷을 지나 첫 환혼으로 간다.
 // 화면·연출은 Unity가 하고 여기는 '지금 무엇을 할 차례인가'만 정한다. 값은 cheonha.json prologueBody.
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
