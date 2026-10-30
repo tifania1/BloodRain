@@ -363,8 +363,8 @@ const P_BY_ID = Object.fromEntries(DATA.passives.map(p => [p.id, p]));
 const E_BY_ID = Object.fromEntries(DATA.enemies.map(e => [e.id, e]));
 const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
-// 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟). 천하 구조에서 처음부터 열린 취선봉(random_arc)은 아직 동작이 없어 뺀다.
-const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura']);
+// 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟 + 취선봉 random_arc, T-36).
+const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura', 'random_arc']);
 const START_WEAPONS = DATA.weapons.filter(w => w.unlock === 'start' && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
 // 프로토타입에서만 쓰는 값. 해 보고 괜찮으면 balance.json·기획서로 옮긴다.
 const HIT_IFRAMES = 0.5, HOP_DUTY = 0.72, BOSS_HP = { full: 20000, quick: 12000 }, BOSS_TRASH = 60;
@@ -1141,6 +1141,28 @@ function fireWeapon(w) {
         const burn = lerp(4, 10, t) * S.burn * S.dot;
         G.zones.push({ delay: 0.6, mark: { x: bx, y: by, r: R, own: true }, apply: () => bomb(bx, by, R, dmg, burn, w, w.evolved ? 3 : 1) });
       }
+      break;
+    }
+    case 'random_arc': {
+      // 취선봉(9장): 무작위 방향 큰 원호, 큰 넉백. 레벨 따라 휘두르기 1→3회, 범위 +30%.
+      // 절기 팔선과해: 봉 분신 여덟이 사방을 한꺼번에 휩쓸고 맞은 적은 2초 기절(보스 0.6초).
+      const R = def.range * lerp(1, 1.3, t) * S.area * igi;
+      const swings = w.evolved ? 1 : Math.round(lerp(1, 3, t));
+      for (let s = 0; s < swings; s++) G.zones.push({ delay: s * 0.18, apply: () => {
+        const dirs = w.evolved ? Array.from({ length: 8 }, (_, i) => i * TAU / 8) : [rand(0, TAU)];
+        for (const a of dirs) {
+          addEffect('arc', p.x, p.y, { a, r: R, life: 0.26, gold: w.evolved, follow: true });
+          const ca = Math.cos(a), sa = Math.sin(a);
+          forNear(p.x, p.y, R, e => {
+            const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
+            if (d <= R + e.r && (dx * ca + dy * sa) >= -0.1 * d) {
+              hurtEnemy(e, dmg, w, dx / d, dy / d, 7);
+              if (w.evolved) e.stun = Math.max(e.stun || 0, e.boss ? 0.6 : 2);
+            }
+          });
+          hitLanterns(p.x, p.y, R);
+        }
+      } });
       break;
     }
     case 'aura': {
