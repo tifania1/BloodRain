@@ -27,7 +27,8 @@ namespace BloodRain.Core.Build
 
         public IReadOnlyList<InsightDef> All => _all;
 
-        public InsightDef Get(string id) => _all.First(i => i.Id == id);
+        public InsightDef Get(string id) =>
+            _all.FirstOrDefault(i => i.Id == id) ?? throw new KeyNotFoundException($"insights.json 에 없는 깨달음입니다: {id}");
 
         /// <summary>이 캐릭터가 돌파 때 보는 후보 수.</summary>
         public int ChoiceCount(CharacterDef character) =>
