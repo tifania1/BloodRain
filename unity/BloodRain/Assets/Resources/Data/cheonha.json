@@ -88,7 +88,12 @@
     { "id": "demonic",   "nameKo": "마교",   "region": "sipmandaesan",  "leader": "baekya",        "startWeapon": "blood_claw",       "ultimate": "cheonma_haeche", "trait": "low_hp_attack_speed_heal_half",  "maxHealth": 90,  "moveSpeed": 1.05, "yinyangStart": -15, "unlock": "boss:sipmandaesan" }
   ],
 
-  "prologueBody": { "_note": "서장(첫 생)은 진소운 제 몸. characters.json jin_sowoon 을 그대로 쓴다.", "character": "jin_sowoon", "region": "cheongun" },
+  "prologueBody": {
+    "_note": "서장(첫 생)은 진소운 제 몸. characters.json jin_sowoon 을 그대로 쓴다. 나머지는 서장 끝 순서(21장 '서장의 절기 맛보기와 첫 환혼', Core/Run/Prologue.cs): 장삼전에서 기혈이 바닥나거나 장삼 기혈이 bossHealthFloor 에 닿으면 fixedAwakening 을 긴 연출로 깨운다. 각성 뒤에는 진소운이 쓰러지지 않는다(기혈 1). 장삼 전에 쓰러지면 서장을 처음부터. 장삼을 쓰러뜨리면 endCuts 컷을 차례로 보여 주고 첫 환혼.",
+    "character": "jin_sowoon", "region": "cheongun",
+    "boss": "jang_sam", "fixedAwakening": "cheonjiin", "bossHealthFloor": 0.1,
+    "awakenCut": "sb_prologue_awaken", "endCuts": ["sb_prologue_burnout", "sb_prologue_needle"]
+  },
 
   "birthTraits": {
     "_note": "타고난 성질(21장). stats 는 Core.Build.StatKind 이름과 값(비율은 0.15 = 15%). yinyangStart·rebirthQi 는 능력치가 아니라 따로 더한다. 후보마다 성질 수는 countWeights(0개·1개·2개) 비율로 뽑고, excludes 쌍은 같이 붙지 않는다.",

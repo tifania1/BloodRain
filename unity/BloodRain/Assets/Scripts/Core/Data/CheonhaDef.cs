@@ -142,7 +142,21 @@ namespace BloodRain.Core.Data
         public string? UnlockBossRegion => Unlock.StartsWith("boss:") ? Unlock.Substring(5) : null;
     }
 
-    public sealed class PrologueBodyDef { public string Character = ""; public string Region = ""; }
+    public sealed class PrologueBodyDef
+    {
+        public string Character = "";
+        public string Region = "";
+        /// <summary>서장 보스(enemies.json id).</summary>
+        public string Boss = "";
+        /// <summary>장삼전 고정 각성(evolutions.json id).</summary>
+        public string FixedAwakening = "";
+        /// <summary>각성 전에는 보스 기혈이 최대의 이 비율 아래로 안 내려간다. 닿으면 각성.</summary>
+        public float BossHealthFloor = 0.1f;
+        /// <summary>각성 순간 컷(art_queue id).</summary>
+        public string AwakenCut = "";
+        /// <summary>보스 처치 뒤 차례로 보여 줄 컷(art_queue id).</summary>
+        public List<string> EndCuts = new List<string>();
+    }
 
     public sealed class BirthTraitsDef
     {
