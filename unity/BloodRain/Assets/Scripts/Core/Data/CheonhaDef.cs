@@ -43,6 +43,10 @@ namespace BloodRain.Core.Data
         public float ViewInRealmShare;
         /// <summary>혈우 장막 반경 = 그 경지 첫 화면 대각선 × 이 값.</summary>
         public float BoundaryViewMultiple;
+        /// <summary>장막 안쪽 밀림 띠 너비 = 그 경지 첫 화면 대각선 × 이 값(0.25).</summary>
+        public float PushBandViewMultiple = 0.25f;
+        /// <summary>장막 위에서 미는 속도 = 플레이어 이동 속도 × 이 값(1.25). 띠 시작에서는 0.</summary>
+        public float PushMoveShare = 1.25f;
         /// <summary>이 경지부터 장막이 없다(현경).</summary>
         public string NoBoundaryFrom = "";
     }

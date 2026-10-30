@@ -10,7 +10,9 @@
 //
 // Unity 쪽 흐름:
 //   - 카메라는 화면 대각선이 ViewDiagonal(레벨) 세계 m 가 되게 맞춘다. 돌파 중에는 Breakthrough.ViewDiagonal.
-//   - 플레이어 위치는 매 프레임 KeepInside(위치, 출생지 중심, 경지)로 장막 안에 되돌린다. 현경부터는 그대로 둔다.
+//   - 플레이어 이동 속도(세계 m/s)에 PushVelocity(위치, 출생지, 경지, 이동 속도)를 더한다. 장막 안쪽 띠에서 출생지 쪽으로 민다.
+//     화면 가장자리 붉은 번짐은 PushStrength(0~1)를 그대로 쓰면 된다.
+//   - 그다음 매 프레임 KeepInside(위치, 출생지 중심, 경지)로 장막 안에 되돌린다(경공 대시로 띠를 뚫어도 장막은 못 넘는다). 현경부터는 그대로 둔다.
 //   - 적이 닿으면 Crushes(적이 생긴 경지, 지금 경지)를 본다. 참이면 피해 없이 쓰러뜨리고 진기 CrushXp 를 떨군다.
 //   - 덩이는 DrawMembers(생긴 경지, 남은 기혈 비율)명만큼 적 한 장을 겹쳐 그리고, 쓰러지면 처치 수를 KillCount(생긴 경지)로 센다.
 using System;
@@ -144,6 +146,43 @@ namespace BloodRain.Core.World
         {
             var r = BoundaryRadius(realm);
             return r == null ? position : KeepInside(position, birthplace, r.Value);
+        }
+
+        /// <summary>밀림 띠 너비(세계 m) = 그 경지 첫 화면 대각선 × 0.25. 장막이 없는 경지는 0.</summary>
+        public float PushBand(int realm) =>
+            HasBoundary(realm) ? ViewDiagonalAtRealm(realm) * Math.Max(0f, _world.PushBandViewMultiple) : 0f;
+
+        /// <summary>밀리는 세기 0~1. 띠 시작(장막 반경 - 띠 너비)과 그 안쪽은 0, 장막 위와 그 밖은 1, 사이는 곧게 오른다.</summary>
+        public float PushStrength(Vector2 position, Vector2 birthplace, int realm)
+        {
+            var r = BoundaryRadius(realm);
+            if (r == null) return 0f;
+            float band = PushBand(realm);
+            float d = Vector2.Distance(position, birthplace);
+            if (band <= 0f) return d >= r.Value ? 1f : 0f;
+            return Clamp01((d - (r.Value - band)) / band);
+        }
+
+        /// <summary>장막이 미는 속도(세계 m/s, 출생지 쪽). 크기 = 세기 × 이동 속도 × 1.25.
+        /// 이동 속도는 플레이어의 지금 속도를 세계 m/s 로 넘긴다(ToWorld). 밖으로 걸어 나가면 띠의 80% 자리에서 멈춰 선다.
+        /// 출생지와 같은 자리거나 장막이 없으면 0.</summary>
+        public Vector2 PushVelocity(Vector2 position, Vector2 birthplace, int realm, float moveSpeedWorld)
+        {
+            float k = PushStrength(position, birthplace, realm);
+            if (k <= 0f || moveSpeedWorld <= 0f) return Vector2.Zero;
+            var toCenter = birthplace - position;
+            float len = toCenter.Length();
+            if (len <= 0f) return Vector2.Zero;
+            return toCenter / len * (k * moveSpeedWorld * _world.PushMoveShare);
+        }
+
+        /// <summary>밖으로 곧장 걸을 때 멈춰 서는 자리의 출생지 거리(세계 m). 미는 몫이 1 이하면 장막 위까지 간다. 장막이 없으면 null.</summary>
+        public float? StallDistance(int realm)
+        {
+            var r = BoundaryRadius(realm);
+            if (r == null) return null;
+            if (_world.PushMoveShare <= 1f) return r.Value;
+            return r.Value - PushBand(realm) * (1f - 1f / _world.PushMoveShare);
         }
 
         public static Vector2 KeepInside(Vector2 position, Vector2 center, float radius)
