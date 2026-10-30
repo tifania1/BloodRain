@@ -71,7 +71,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] T-34 2026-10-30 — 13장 '용도별 틀'에 환생 카드(세로 2:3)·화면 배경 틀 추가, 지도 틀을 3:2로 고침. art_queue card·background·map 줄이 틀의 고정 문장을 다 담는지 테스트(ArtFrameTests). 곤륜 카드의 붉은 진눈깨비는 틀의 칸 안 변형으로 둠
 - [x] T-35 2026-10-30 — 지도 줄은 대화 세션이 끝냄. 남은 둘 추가: `char_mok_sheet`(목 노인 시트, chat '목 노인', 회혼침 컷의 노인과 같은 외형), `props_cheonha_terrain`(나무·집·탑·산·마을 다섯 소품 한 장, chat '지형 소품'). postprocess_art.py 에 props 종류(배경 제거)
 - [x] T-36 2026-10-30 — template.html 에 취선봉 `random_arc`(무작위 방향 큰 원호, 휘두르기 1→3회, 범위 +30%, 넉백 7, 절기 팔선과해는 여덟 방향 + 2초 기절)를 넣고 시작 풀에 되돌림. Lv8 취선봉만 들고 90초 자동 판: 60번 휘둘러 피해 15,415, 콘솔 에러 0
-- [ ] T-37 대표 인물 '사매' 대사 한 벌(몸이 여자 제자일 때). 사람 확인 2026-10-30. 규칙은 기획서 21장에 적어 둠: 후보마다 성별 반반, 소림은 남자만, 능력치는 같고 호칭·대사 몇 줄만 바뀐다. 할 일: `docs/story/leaders.md` 마당 대사 사매판, `sects.md` 몸 묘사에 여자 몸, cheonha.json `rebirth` 에 성별 값(여자 비율 0.5, 남자만인 문파 [shaolin])과 CheonhaDef·Rebirth.cs 후보 추첨, 테스트. art_queue 에 문파 카드 여자 몸판 8줄(소림 빼고, 같은 문파 카드와 같은 chat)
+- [x] T-37 2026-10-30 — cheonha.json `rebirth.femaleRatio` 0.5·`maleOnlySects` [shaolin], 후보·몸에 Female(성질 뒤에 굴려 난수 순서 유지), 테스트 4개. `leaders.md` 사매판(남녀 말이 갈리는 여섯 줄만), `sects.md` 여덟 문파 여자 몸 묘사 24줄. art_queue 여자 몸 카드 8줄은 넣지 않음: 산문 카드에 사람이 안 나와(No people) 같은 그림을 쓰면 된다고 판단, 사람 확인 필요
 - [ ] T-38 마교 몸의 성장 '혈공'(기획서 5장): 진기 × 혈운 농도, 더 받은 진기 300마다 음양 -1, 천마해체로 음양 시작값 복귀, 돌파 깨달음 셋 중 하나는 마공(insights.json 마교 전용 4~6종). cheonha.json 문파 `demonic` 에 값, Core 반영, 테스트. 사람 확인 2026-10-30.
 - [ ] T-39 종장 혈마 세 단계의 패턴 수치(bosspatterns.json `final.stages[].patterns` 는 이름만 있음)와 혈마의 그림자 한 단계의 세기(LifeDirector.ShadowStep 은 단계 수만 낸다). 6장 종장 절에 표. 먼저: T-14
 
