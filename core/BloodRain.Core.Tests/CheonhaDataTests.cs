@@ -151,7 +151,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 모든_출생지에서_절정_장막_안에_땅의_주인이_있고_화경이면_일곱이_다_든다()
         {
             int peak = RealmIndex("jeoljeong"), hwa = RealmIndex("hwagyeong");
-            Assert.Equal((string)_c["bosses"]!["awakenFrom"]!, "jeoljeong");
+            Assert.Equal("jeoljeong", (string)_c["bosses"]!["awakenFrom"]!);
             foreach (var s in Sects)
             {
                 var home = Region((string)s["region"]!);
