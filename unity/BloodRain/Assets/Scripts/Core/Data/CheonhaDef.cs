@@ -106,6 +106,8 @@ namespace BloodRain.Core.Data
     {
         public string AwakenFrom = "";
         public float EngageViewMultiple;
+        /// <summary>깨어날 때 이미 싸움 원 안이면 이만큼 경고한 뒤 싸움(그사이 나가면 미룸).</summary>
+        public float AwakenGraceSeconds;
         public float SpawnTargetScale;
         public float HealthPerMinute;
         public float NormalizeAt20;
@@ -114,7 +116,7 @@ namespace BloodRain.Core.Data
         public FinalRequiresDef FinalRequires = new FinalRequiresDef();
     }
 
-    public sealed class BossFirstKillDef { public int RebirthQi; public bool SealStone; public bool UnlockSect; }
+    public sealed class BossFirstKillDef { public int RebirthQi; public int BloodCrystal; public bool SealStone; public bool UnlockSect; }
     public sealed class BossRepeatKillDef { public int RebirthQi; public int BloodCrystal; }
     public sealed class FinalRequiresDef { public int SealStones; public string Realm = ""; }
 

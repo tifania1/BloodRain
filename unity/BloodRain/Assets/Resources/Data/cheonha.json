@@ -64,13 +64,14 @@
   ],
 
   "bosses": {
-    "_note": "땅의 주인(7장). 절정(awakenFrom)부터 장막 안 보스 지역이 깨어나고, 지역 한가운데(화면 대각선 x engageViewMultiple 안)에 들어서면 싸움. 기혈 = enemies.json 기준 체력 x (1 + healthPerMinute x 분) / normalizeAt20. 봉마곡은 봉인석 7과 현경이 있어야 열린다.",
+    "_note": "땅의 주인(7장). 절정(awakenFrom)부터 장막 안 보스 지역이 깨어나고, 지역 한가운데 혈운 기둥에 다가서면(화면 대각선 x engageViewMultiple 안) 싸움. 깨어날 때 이미 그 안이면 awakenGraceSeconds 초 경고 뒤 싸움(그사이 나가면 미룸). 기혈 = enemies.json 기준 체력 x (1 + healthPerMinute x 분) / normalizeAt20. 봉마곡은 봉인석 7과 현경이 있어야 열린다.",
     "awakenFrom": "jeoljeong",
-    "engageViewMultiple": 0.5,
+    "engageViewMultiple": 0.15,
+    "awakenGraceSeconds": 5,
     "spawnTargetScale": 0.4,
     "healthPerMinute": 0.08,
     "normalizeAt20": 2.6,
-    "firstKill": { "rebirthQi": 300, "sealStone": true, "unlockSect": true },
+    "firstKill": { "rebirthQi": 300, "bloodCrystal": 5, "sealStone": true, "unlockSect": true },
     "repeatKill": { "rebirthQi": 100, "bloodCrystal": 5 },
     "finalRequires": { "sealStones": 7, "realm": "hyeongyeong" }
   },

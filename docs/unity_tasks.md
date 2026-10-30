@@ -1,6 +1,6 @@
-# Unity 작업 (PC 루프 담당)
+# Unity 작업 (PC Unity 세션 담당)
 
-Unity 에디터가 있어야 하는 일만 적는다. PC 루프(tools/agent_loop/run_loop.py)가 위에서부터 1~2개씩 처리한다.
+Unity 에디터가 있어야 하는 일만 적는다. 밤마다(20:37·22:37·00:37·02:37·04:37) PC Unity 세션이 PC의 Unity(unityMCP)로 위에서부터 처리한다. PC가 꺼져 있거나 다른 프로젝트 Unity가 떠 있으면 그 차례는 건너뛴다.
 끝내면 `- [x]` 와 한 줄 결과, 막히면 그대로 두고 아래에 `막힘:` 한 줄.
 
 - [ ] B-00 기본 템플릿이 넣은 안 쓰는 패키지 정리: com.unity.ads, com.unity.analytics, com.unity.purchasing, com.unity.xr.legacyinputhelpers, com.unity.multiplayer.center, com.unity.collab-proxy 제거 후 콘솔 오류 0 확인 (WebGL 용량 때문)
