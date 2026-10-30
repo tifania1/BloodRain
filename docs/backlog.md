@@ -72,7 +72,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] T-35 2026-10-30 — 지도 줄은 대화 세션이 끝냄. 남은 둘 추가: `char_mok_sheet`(목 노인 시트, chat '목 노인', 회혼침 컷의 노인과 같은 외형), `props_cheonha_terrain`(나무·집·탑·산·마을 다섯 소품 한 장, chat '지형 소품'). postprocess_art.py 에 props 종류(배경 제거)
 - [x] T-36 2026-10-30 — template.html 에 취선봉 `random_arc`(무작위 방향 큰 원호, 휘두르기 1→3회, 범위 +30%, 넉백 7, 절기 팔선과해는 여덟 방향 + 2초 기절)를 넣고 시작 풀에 되돌림. Lv8 취선봉만 들고 90초 자동 판: 60번 휘둘러 피해 15,415, 콘솔 에러 0
 - [x] T-37 2026-10-30 — cheonha.json `rebirth.femaleRatio` 0.5·`maleOnlySects` [shaolin], 후보·몸에 Female(성질 뒤에 굴려 난수 순서 유지), 테스트 4개. `leaders.md` 사매판(남녀 말이 갈리는 여섯 줄만), `sects.md` 여덟 문파 여자 몸 묘사 24줄. art_queue 여자 몸 카드 8줄은 넣지 않음: 산문 카드에 사람이 안 나와(No people) 같은 그림을 쓰면 된다고 판단, 사람 확인 필요
-- [ ] T-38 마교 몸의 성장 '혈공'(기획서 5장): 진기 × 혈운 농도, 더 받은 진기 300마다 음양 -1, 천마해체로 음양 시작값 복귀, 돌파 깨달음 셋 중 하나는 마공(insights.json 마교 전용 4~6종). cheonha.json 문파 `demonic` 에 값, Core 반영, 테스트. 사람 확인 2026-10-30. (진행: 2026-10-30 cheonha.json `sects[demonic].bloodArt` 값과 `Core/Progression/BloodArt.cs`(진기 × 농도, 더 받은 진기 300마다 음 -1, 천마해체로 시작값), YinYangGauge.Shift·ResetTo, 테스트 4개까지. 남은 것: insights.json 마교 전용 마공 4~6종과 3장 표, Insights.Roll 이 마교 몸이면 셋 중 하나를 마공으로, Life 에 BloodArt 연결)
+- [x] T-38 2026-10-30 — 혈공: cheonha.json `sects[demonic].bloodArt`, `Core/Progression/BloodArt.cs`(진기 × 농도, 더 받은 진기 300마다 음 -1, 천마해체로 시작값), Life 연결(윤회의 기는 구슬 값 그대로), insights.json `demonicInsights` 마공 넷(기획서 예시 둘 + 혈광폭주·심마환영)과 `Insights.RollWithDemonic`(셋 중 하나), 5장 마공 표, 테스트 8개. 마공 효과를 실제 능력치에 붙이는 일은 Unity 쪽 Sim
 - [ ] T-39 종장 혈마 세 단계의 패턴 수치(bosspatterns.json `final.stages[].patterns` 는 이름만 있음)와 혈마의 그림자 한 단계의 세기(LifeDirector.ShadowStep 은 단계 수만 낸다). 6장 종장 절에 표. 먼저: T-14
 
 ### 확인과 밸런스

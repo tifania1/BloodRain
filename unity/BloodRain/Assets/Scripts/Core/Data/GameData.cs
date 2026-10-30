@@ -23,6 +23,8 @@ namespace BloodRain.Core.Data
         /// <summary>장 이름(cheonha.json regions[].chapter) → 첫째·둘째·셋째 정예 id. enemies.json elites. 지역으로 찾을 때는 Spawning.RegionSpawns.</summary>
         public IReadOnlyDictionary<string, List<string>> Elites { get; private set; } = new Dictionary<string, List<string>>();
         public IReadOnlyList<InsightDef> Insights { get; private set; } = Array.Empty<InsightDef>();
+        /// <summary>마교 몸 전용 마공 깨달음(insights.json demonicInsights, 5장 혈공).</summary>
+        public IReadOnlyList<InsightDef> DemonicInsights { get; private set; } = Array.Empty<InsightDef>();
         public InsightChoicesDef InsightChoices { get; private set; } = new InsightChoicesDef();
         public IReadOnlyList<ChapterDef> Chapters { get; private set; } = Array.Empty<ChapterDef>();
         /// <summary>천하 한 장과 환혼(cheonha.json, 기획서 7·10·21장).</summary>
@@ -45,7 +47,7 @@ namespace BloodRain.Core.Data
         sealed class EvolutionFile { public List<EvolutionDef> Evolutions = new List<EvolutionDef>(); }
         sealed class CharacterFile { public List<CharacterDef> Characters = new List<CharacterDef>(); public List<UltimateDef> Ultimates = new List<UltimateDef>(); }
         sealed class EnemyFile { public List<EnemyDef> Enemies = new List<EnemyDef>(); public Dictionary<string, List<string>> Elites = new Dictionary<string, List<string>>(); public List<BossDef> Bosses = new List<BossDef>(); }
-        sealed class InsightFile { public InsightChoicesDef Choices = new InsightChoicesDef(); public List<InsightDef> Insights = new List<InsightDef>(); }
+        sealed class InsightFile { public InsightChoicesDef Choices = new InsightChoicesDef(); public List<InsightDef> Insights = new List<InsightDef>(); public List<InsightDef> DemonicInsights = new List<InsightDef>(); }
         sealed class ChapterFile { public List<ChapterDef> Chapters = new List<ChapterDef>(); }
 
         /// <summary>파일 이름(확장자 없이) → JSON 문자열. 받아야 하는 파일은 FileNames.</summary>
@@ -75,6 +77,7 @@ namespace BloodRain.Core.Data
                 Balance = Read<BalanceDef>("balance"),
                 Synergies = Read<SynergyDefs>("synergies"),
                 Insights = insights.Insights,
+                DemonicInsights = insights.DemonicInsights,
                 InsightChoices = insights.Choices,
                 Chapters = Read<ChapterFile>("chapters").Chapters,
                 Cheonha = Read<CheonhaDef>("cheonha"),

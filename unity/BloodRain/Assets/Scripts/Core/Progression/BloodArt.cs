@@ -2,7 +2,7 @@
 //   - 진기 구슬에서 받는 진기 × 그 자리 혈운 농도(다른 문파는 1배). 윤회의 기는 구슬 값 그대로 센다(이 규칙으로 늘지 않음).
 //   - 농도 덕에 더 받은 진기가 300 쌓일 때마다 음양 게이지가 음 쪽으로 1 기운다(심마).
 //   - 천마해체를 쓰면 게이지가 몸의 시작값으로 돌아온다. 돌파 때는 그대로.
-// 마공 깨달음(돌파 셋 중 하나)은 insights.json 마교 전용 목록이 들어온 뒤 Insights 쪽에서 붙인다(T-38 진행 중).
+// 마공 깨달음(돌파 셋 중 하나)은 insights.json demonicInsights 와 Insights.RollWithDemonic. Run/Life 가 마교 몸이면 이 클래스를 만든다.
 using System;
 using BloodRain.Core.Data;
 

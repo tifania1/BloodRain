@@ -70,6 +70,7 @@ namespace BloodRain.Core.Run
             Backlash = new Backlash(_data.Balance.Yinyang.Extreme);
             Director = new LifeDirector(_data, rng);
             Bosses = new BossAwakening(_data, body.Region.Id, new BossRecord(soul.BossesKilled, soul.SealStoneCount));
+            if (body.Sect?.BloodArt is { } art) BloodArt = new BloodArt(art, Loadout.Gauge, body.YinyangStart);
             RegionId = body.Region.Id;
             Position = Regions.Center(body.Region);
         }
@@ -85,6 +86,8 @@ namespace BloodRain.Core.Run
         public Backlash Backlash { get; }
         public LifeDirector Director { get; }
         public BossAwakening Bosses { get; }
+        /// <summary>마교 몸의 혈공(5장). 다른 몸은 null.</summary>
+        public BloodArt? BloodArt { get; }
 
         /// <summary>세상 시간으로 흐른 분.</summary>
         public float Minutes { get; private set; }
@@ -141,8 +144,9 @@ namespace BloodRain.Core.Run
         public LifeAbsorb Absorb(double orbXp, int orbs = 1)
         {
             if (Record != null) throw new InvalidOperationException("끝난 생입니다");
-            Log.AbsorbOrb(orbXp, Regions.Density(Position, _soul.SealStoneCount), orbs);
-            var r = Xp.Absorb(orbXp);
+            float density = Regions.Density(Position, _soul.SealStoneCount);
+            Log.AbsorbOrb(orbXp, density, orbs); // 윤회의 기는 구슬 값 그대로(혈공으로 늘지 않음)
+            var r = Xp.Absorb(BloodArt?.OrbXp(orbXp, density) ?? orbXp);
             var infos = new List<BreakthroughInfo>();
             var woken = new List<RegionDef>();
             if (r.Breakthroughs.Count > 0)

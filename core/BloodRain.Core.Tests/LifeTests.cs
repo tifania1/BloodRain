@@ -145,6 +145,19 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1, life.ShadowStep);
         }
 
+        [Fact] public void 마교_몸은_진기가_농도배이고_다른_몸은_그대로()
+        {
+            var (_, demon) = NewLife("demonic");
+            Assert.NotNull(demon.BloodArt);
+            float density = demon.Regions.Density(demon.Position, 0);
+            demon.Absorb(10);
+            Assert.Equal(10 * density, demon.Xp.Total, 2);
+            var (_, monk) = NewLife("shaolin");
+            Assert.Null(monk.BloodArt);
+            monk.Absorb(10);
+            Assert.Equal(10, monk.Xp.Total, 3);
+        }
+
         [Fact] public void 모르는_끝은_예외()
         {
             var (_, life) = NewLife();

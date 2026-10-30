@@ -54,6 +54,21 @@ namespace BloodRain.Core.Build
 
         public IReadOnlyList<InsightDef> Roll(IEnumerable<string> taken, CharacterDef character, Random rng) =>
             Roll(taken, ChoiceCount(character), rng);
+
+        /// <summary>
+        /// 마교 몸(혈공)의 돌파: count 가운데 demonicCount 자리는 마공 목록에서, 나머지는 보통 목록에서 뽑는다.
+        /// 마공이 다 떨어지면 그 자리도 보통 목록으로 채운다. 마공이 앞자리에 온다.
+        /// </summary>
+        public static IReadOnlyList<InsightDef> RollWithDemonic(Insights common, IReadOnlyList<InsightDef> demonic, IEnumerable<string> taken,
+            int count, int demonicCount, Random rng)
+        {
+            var takenSet = new HashSet<string>(taken);
+            var dem = new Insights(demonic, new InsightChoicesDef()).Roll(takenSet, Math.Min(demonicCount, count), rng);
+            var rest = common.Roll(takenSet, count - dem.Count, rng);
+            var list = new List<InsightDef>(dem);
+            list.AddRange(rest);
+            return list;
+        }
     }
 
     /// <summary>한 판에서 얻은 깨달음. 돌파 때 Offer 로 후보를 받고, 그중 하나를 Choose 한다.</summary>
