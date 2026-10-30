@@ -200,6 +200,7 @@ namespace BloodRain.Core.Build
         bool Holds(SecretRequireDef req, BuildLevels levels)
         {
             if (req.Character != null && req.Character != _record.CharacterId) return false;
+            if (req.Sect != null && req.Sect != _record.CharacterId) return false;
             foreach (var ch in req.Cleared)
                 if (!_record.ClearedChapters.Contains(ch)) return false;
             if (req.OnlyWeapon != null && (levels.Weapons.Count != 1 || !levels.Weapons.ContainsKey(req.OnlyWeapon))) return false;

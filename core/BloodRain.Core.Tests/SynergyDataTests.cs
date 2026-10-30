@@ -129,6 +129,7 @@ namespace BloodRain.Core.Tests
                     if (kv.Value > 1) Assert.True(s.Condition.Contains($"Lv{kv.Value}"), $"{s.NameKo}: 조건 글에 Lv{kv.Value} 가 없음");
                 }
                 if (s.Require.Character != null) Assert.Contains(_d.Character(s.Require.Character).NameKo, s.Condition);
+                if (s.Require.Sect != null) Assert.Contains(_d.Cheonha.Sect(s.Require.Sect).NameKo + " 제자로 태어나", s.Condition);
             }
         }
 

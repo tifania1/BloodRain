@@ -63,6 +63,8 @@ namespace BloodRain.Core.Data
     {
         /// <summary>이 캐릭터로 해야 한다(없으면 누구든).</summary>
         public string? Character;
+        /// <summary>이 문파 몸으로 태어나야 한다(없으면 누구든). 환생한 몸의 CharacterDef Id 가 문파 id 다(Meta.Rebirth.CharacterOf).</summary>
+        public string? Sect;
         /// <summary>판 밖 기록: 이 장들을 깬 적이 있어야 한다(cheonha.json chapter 값).</summary>
         public List<string> Cleared = new List<string>();
         /// <summary>무공·심법 id → 최소 레벨. 1이면 지니고만 있으면 된다. 절기가 된 무공은 최고 단계로 친다.</summary>

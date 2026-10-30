@@ -51,25 +51,27 @@ namespace BloodRain.Core.Tests
             Assert.Contains("maehwa_samnong", c.Unlocked);
         }
 
-        [Fact] public void 낙매검선의_피는_진소운이_5장을_깬_적이_있어야_열린다()
+        [Fact] public void 낙매검선의_피는_화산_제자로_태어나_5장을_깬_적이_있어야_열린다()
         {
+            // 환생한 몸의 기록 id 는 문파 id 다(Rebirth.CharacterOf). 무공 레벨만 보는 Loadout 은 아무 몸으로 만들어도 된다.
             var build = new[] { ("falling_petals", 8), ("maehwa", 5) };
-            Assert.Empty(New("jin_sowoon").c.Check(L("jin_sowoon", build)));
-            Assert.Empty(New("jin_sowoon", new[] { "chapter4" }).c.Check(L("jin_sowoon", build)));
-            Assert.Empty(New("dang_yeonhwa", new[] { "chapter5" }).c.Check(L("dang_yeonhwa", build)));
-            Assert.Equal(new[] { "nakmae_geomseon" }, Ids(New("jin_sowoon", new[] { "chapter5" }).c.Check(L("jin_sowoon", build))));
+            Assert.Empty(New("huashan").c.Check(L("jin_sowoon", build)));
+            Assert.Empty(New("huashan", new[] { "chapter4" }).c.Check(L("jin_sowoon", build)));
+            Assert.Empty(New("jin_sowoon", new[] { "chapter5" }).c.Check(L("jin_sowoon", build))); // 서장의 진소운은 아니다
+            Assert.Empty(New("tang", new[] { "chapter5" }).c.Check(L("jin_sowoon", build)));
+            Assert.Equal(new[] { "nakmae_geomseon" }, Ids(New("huashan", new[] { "chapter5" }).c.Check(L("jin_sowoon", build))));
         }
 
         [Fact] public void 낙매검선의_피는_낙화검우가_절기가_되어도_열린다()
         {
             var l = L("jin_sowoon", ("falling_petals", 8), ("maehwa", 5));
             l.Evolve(_d.Evolutions.First(e => e.Weapon == "falling_petals"));
-            Assert.Contains("nakmae_geomseon", Ids(New("jin_sowoon", new[] { "chapter5" }).c.Check(l)));
+            Assert.Contains("nakmae_geomseon", Ids(New("huashan", new[] { "chapter5" }).c.Check(l)));
         }
 
         [Fact] public void 여러_비전이_한꺼번에_열리면_데이터_순서로()
         {
-            var (c, _) = New("jin_sowoon", new[] { "chapter5" });
+            var (c, _) = New("huashan", new[] { "chapter5" });
             var l = L("jin_sowoon", ("falling_petals", 8), ("maehwa", 5), ("sonic_qin", 5));
             Assert.Equal(new[] { "nakmae_geomseon", "maehwa_samnong" }, Ids(c.Check(l)));
         }

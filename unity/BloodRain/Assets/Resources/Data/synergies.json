@@ -104,10 +104,10 @@
     "desc": "삼재검법이 Lv8이면 가장 많이 모은 문파의 진전을 하나 더 채워 준다. 모든 무학은 기본에서 갈라져 나왔다." },
   "secrets": [
     { "id": "nakmae_geomseon", "nameKo": "낙매검선의 피", "hanja": "落梅劍仙之血",
-      "condition": "진소운으로 낙화검우 Lv8, 매화심법 Lv5를 갖추고, 5장(화산)을 깬 적이 있다",
+      "condition": "화산 제자로 태어나 낙화검우 Lv8, 매화심법 Lv5를 갖추고, 5장(화산)을 깬 적이 있다",
       "reward": "낙화검우가 비전 '낙매일검(落梅一劍)'으로 바뀌고, 오의 일검이 매화 가지처럼 세 번 꺾여 나간다",
       "hint": ["같은 성을 쓴 이가 절벽에 검을 묻었다", "매화가 다시 필 때 그 검이 운다"],
-      "require": { "character": "jin_sowoon", "levels": { "falling_petals": 8, "maehwa": 5 }, "cleared": ["chapter5"] } },
+      "require": { "sect": "huashan", "levels": { "falling_petals": 8, "maehwa": 5 }, "cleared": ["chapter5"] } },
     { "id": "eogang", "nameKo": "어강술", "hanja": "御僵術",
       "condition": "뇌부, 쇄겸술, 도문심법을 지닌 채 한 판에서 정신부를 세 장 이상 쓴다",
       "reward": "정신부에 멈춘 강시를 사슬로 끌어오면 이마의 부적을 고쳐 붙여 30초 동안 내 편으로 부린다(최대 열 마리)",
