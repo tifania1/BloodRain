@@ -1,7 +1,7 @@
 # 밸런스 시뮬레이터 (B-07)
 
 화면 없이 1장 한 판(20분)을 돌려서, 레벨·경지·절기가 기획서 목표(11장 '밸런스 기본값', 8장 '절기 그릇')대로 나오는지 본다.
-코드는 `core/BloodRain.Sim/`, 결과 보고서는 [level-curve.md](level-curve.md).
+코드는 `core/BloodRain.Sim/`, 결과 보고서는 [level-curve.md](level-curve.md). 천하 한 생(지역 이동·땅의 주인·윤회의 기)은 [cheonha.md](cheonha.md)(`CheonhaSim.cs`, Core `Life` 를 그대로 돌린다).
 
 게임 규칙은 Core 것을 그대로 쓴다. 경험치 곡선(`XpCurve`), 진기 흡수와 돌파(`RunXp`·`Realms`), 적 생성(`SpawnCurve`), 적 기혈 증가(`EnemyScaling`),
 레벨업 추첨·절기 그릇·각성(`Loadout`), 능력치 합산(`Stats`), 음양(`YinYangGauge`), 오의 게이지(`UltimateCharge`), 무공 피해 보간(`WeaponMath`).
@@ -16,6 +16,7 @@ dotnet run --project core/BloodRain.Sim -- --policy average --seed 1      # 한 
 dotnet run --project core/BloodRain.Sim -- --policy greedy --seeds 30     # 30판 요약(5·10·15·20분 레벨, 경지, 절기)
 dotnet run --project core/BloodRain.Sim -- --scenario kill-xp+pair2 --seeds 30   # 조정 시험을 얹어서
 dotnet run --project core/BloodRain.Sim -c Release -- --report docs/design/sim/level-curve.md   # 보고서 전체를 다시 쓴다(10초쯤)
+dotnet run --project core/BloodRain.Sim -- --cheonha docs/design/sim/cheonha.md --seeds 5     # 천하 한 생 30분, 문파 아홉(T-17)
 ```
 
 | 인자 | 뜻 |
