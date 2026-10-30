@@ -1,7 +1,7 @@
 {
     "name": "BloodRain.Editor",
     "rootNamespace": "BloodRain.Editor",
-    "references": ["BloodRain.Core", "BloodRain.Sim", "BloodRain.Platform", "BloodRain.Presentation"],
+    "references": ["BloodRain.Core", "BloodRain.Sim", "BloodRain.Platform", "BloodRain.Presentation", "Unity.TextMeshPro", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Universal.2D.Runtime", "Unity.RenderPipelines.Core.Runtime"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

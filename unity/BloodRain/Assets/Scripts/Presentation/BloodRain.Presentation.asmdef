@@ -1,7 +1,7 @@
 {
     "name": "BloodRain.Presentation",
     "rootNamespace": "BloodRain.Presentation",
-    "references": ["BloodRain.Core", "BloodRain.Sim", "BloodRain.Platform", "Unity.InputSystem"],
+    "references": ["BloodRain.Core", "BloodRain.Sim", "BloodRain.Platform", "Unity.InputSystem", "Unity.TextMeshPro"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
