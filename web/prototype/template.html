@@ -363,7 +363,9 @@ const P_BY_ID = Object.fromEntries(DATA.passives.map(p => [p.id, p]));
 const E_BY_ID = Object.fromEntries(DATA.enemies.map(e => [e.id, e]));
 const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
-const START_WEAPONS = DATA.weapons.filter(w => w.unlock === 'start').map(w => w.id);
+// 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟). 천하 구조에서 처음부터 열린 취선봉(random_arc)은 아직 동작이 없어 뺀다.
+const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura']);
+const START_WEAPONS = DATA.weapons.filter(w => w.unlock === 'start' && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
 // 프로토타입에서만 쓰는 값. 해 보고 괜찮으면 balance.json·기획서로 옮긴다.
 const HIT_IFRAMES = 0.5, HOP_DUTY = 0.72, BOSS_HP = { full: 20000, quick: 12000 }, BOSS_TRASH = 60;
 // 옛 1장 흐름(20분 원각) 그대로 19분에 생성을 멈춘다. 천하 한 생에는 생성 중지가 없어 balance.json 에서 빠졌다.
