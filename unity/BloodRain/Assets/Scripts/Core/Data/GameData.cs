@@ -27,6 +27,10 @@ namespace BloodRain.Core.Data
         public IReadOnlyList<ChapterDef> Chapters { get; private set; } = Array.Empty<ChapterDef>();
         /// <summary>천하 한 장과 환혼(cheonha.json, 기획서 7·10·21장).</summary>
         public CheonhaDef Cheonha { get; private set; } = new CheonhaDef();
+        /// <summary>보스 id → 땅의 주인 패턴 시간표(bosspatterns.json, 기획서 6장).</summary>
+        public IReadOnlyDictionary<string, BossPatternSetDef> BossPatterns { get; private set; } = new Dictionary<string, BossPatternSetDef>();
+        /// <summary>지역 기믹 수치(gimmicks.json, 기획서 7장).</summary>
+        public GimmicksDef Gimmicks { get; private set; } = new GimmicksDef();
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -71,10 +75,12 @@ namespace BloodRain.Core.Data
                 InsightChoices = insights.Choices,
                 Chapters = Read<ChapterFile>("chapters").Chapters,
                 Cheonha = Read<CheonhaDef>("cheonha"),
+                BossPatterns = Read<BossPatternFile>("bosspatterns").Bosses,
+                Gimmicks = Read<GimmicksDef>("gimmicks"),
             };
         }
 
-        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha" };
+        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha", "bosspatterns", "gimmicks" };
 
         public WeaponDef Weapon(string id) => Weapons.First(w => w.Id == id);
         public PassiveDef Passive(string id) => Passives.First(p => p.Id == id);
@@ -82,5 +88,7 @@ namespace BloodRain.Core.Data
         public CharacterDef Character(string id) => Characters.First(c => c.Id == id);
         public ChapterDef Chapter(string id) => Chapters.First(c => c.Id == id);
         public InsightDef Insight(string id) => Insights.First(i => i.Id == id);
+        public BossPatternSetDef BossPatternSet(string bossId) =>
+            BossPatterns.TryGetValue(bossId, out var set) ? set : throw new KeyNotFoundException($"패턴이 없는 보스입니다: {bossId}");
     }
 }
