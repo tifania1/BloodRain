@@ -122,6 +122,9 @@
     "firstRebirth": ["shaolin", "gaebang", "namgung"],
     "firstRebirthTraits": false,
     "homeSchoolTiers": 1,
+    "_noteGender": "몸 성별(21장, 사람 확인 2026-10-30). 후보마다 femaleRatio 로 여자 몸, maleOnlySects 문파는 늘 남자. 능력치는 같고 대표 인물의 호칭(사형/사매)과 대사 몇 줄만 바뀐다. 성별은 후보의 성질을 다 굴린 뒤에 굴린다.",
+    "femaleRatio": 0.5,
+    "maleOnlySects": ["shaolin"],
     "upgrades": [
       { "id": "fourth_body", "nameKo": "넷째 몸",   "effect": "candidates+1",  "maxLevel": 1, "baseCost": 2000, "costPerLevel": false },
       { "id": "reroll",      "nameKo": "다시 고르기", "effect": "rerolls+1",    "maxLevel": 3, "baseCost": 400,  "costPerLevel": true }

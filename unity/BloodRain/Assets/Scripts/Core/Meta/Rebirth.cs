@@ -24,11 +24,15 @@ namespace BloodRain.Core.Meta
         /// <summary>타고난 성질(데이터 순서). 없으면 빈 목록.</summary>
         public IReadOnlyList<BirthTraitDef> Traits { get; }
 
-        public RebirthCandidate(SectDef sect, RegionDef region, IReadOnlyList<BirthTraitDef> traits)
+        /// <summary>여자 몸인가. 능력치는 같고 대표 인물이 '사매'로 부르는 대사가 따로 있다(21장, docs/story/leaders.md).</summary>
+        public bool Female { get; }
+
+        public RebirthCandidate(SectDef sect, RegionDef region, IReadOnlyList<BirthTraitDef> traits, bool female = false)
         {
             Sect = sect;
             Region = region;
             Traits = traits;
+            Female = female;
         }
 
         public float Density => Region.Density;
@@ -73,6 +77,8 @@ namespace BloodRain.Core.Meta
         }
 
         public bool IsPrologue => Sect == null;
+        /// <summary>여자 몸인가(후보에서 그대로). 서장 진소운은 남자.</summary>
+        public bool Female { get; internal set; }
 
         /// <summary>이 몸으로 시작하는 로드아웃(시작 무공 Lv1, 음양 게이지는 이 몸의 시작값과 태극 구간).</summary>
         public Loadout NewLoadout(GameData data) => new Loadout(data, Character);
@@ -173,8 +179,18 @@ namespace BloodRain.Core.Meta
                     break;
                 }
             }
-            return result;
+            return WithGender(c, result, rng);
         }
+
+        /// <summary>몸 성별을 굴린다. 성질을 다 굴린 뒤에 후보 차례대로(난수 순서를 지키려고 따로 둔다).</summary>
+        public static bool RollFemale(RebirthDef def, SectDef sect, Random rng)
+        {
+            if (def.MaleOnlySects.Contains(sect.Id)) return false;
+            return rng.NextDouble() < def.FemaleRatio;
+        }
+
+        static List<RebirthCandidate> WithGender(CheonhaDef c, List<RebirthCandidate> list, Random rng) =>
+            list.Select(x => new RebirthCandidate(x.Sect, x.Region, x.Traits, RollFemale(c.Rebirth, x.Sect, rng))).ToList();
 
         /// <summary>첫 환혼(서장 직후): firstRebirth 문파를 데이터 순서대로. 성질은 firstRebirthTraits 가 참일 때만 굴린다.</summary>
         public static List<RebirthCandidate> First(CheonhaDef c, Random rng)
@@ -186,7 +202,7 @@ namespace BloodRain.Core.Meta
                 var traits = c.Rebirth.FirstRebirthTraits ? RollTraits(c.BirthTraits, rng) : new List<BirthTraitDef>();
                 result.Add(new RebirthCandidate(sect, c.Region(sect.Region), traits));
             }
-            return result;
+            return WithGender(c, result, rng);
         }
 
         /// <summary>문파 바탕으로 만든 몸(Loadout·Stats 가 받는 CharacterDef 어댑터). Id 는 문파 id 다.</summary>
@@ -221,7 +237,7 @@ namespace BloodRain.Core.Meta
             float qi = traits.Sum(t => t.RebirthQi);
             var school = new Dictionary<string, int>();
             if (c.Rebirth.HomeSchoolTiers != 0) school[cand.Sect.Id] = c.Rebirth.HomeSchoolTiers;
-            return new RebirthBody(cand.Sect, cand.Region, CharacterOf(cand.Sect, yinyang), traits, TraitStats(traits), qi, school);
+            return new RebirthBody(cand.Sect, cand.Region, CharacterOf(cand.Sect, yinyang), traits, TraitStats(traits), qi, school) { Female = cand.Female };
         }
 
         /// <summary>서장(첫 생)의 몸: 진소운 제 몸(cheonha.json prologueBody). 성질·문파 진전 보너스 없음.</summary>

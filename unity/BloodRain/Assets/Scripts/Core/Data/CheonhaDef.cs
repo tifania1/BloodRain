@@ -188,6 +188,10 @@ namespace BloodRain.Core.Data
         public List<string> FirstRebirth = new List<string>();
         public bool FirstRebirthTraits;
         public int HomeSchoolTiers = 1;
+        /// <summary>후보가 여자 몸일 비율(21장).</summary>
+        public float FemaleRatio;
+        /// <summary>늘 남자 몸인 문파(소림).</summary>
+        public List<string> MaleOnlySects = new List<string>();
         public List<RebirthUpgradeDef> Upgrades = new List<RebirthUpgradeDef>();
     }
 
