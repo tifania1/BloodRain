@@ -117,6 +117,11 @@ def cheonha_blob() -> str:
             for b in load("enemies")["bosses"]
         ],
         "balance": drop_notes({k: bal[k] for k in ("realms", "xpCurve", "training", "stats", "spawnTarget", "dash", "limits")}),
+        # 땅의 주인 패턴 시간표(T-21). 시안은 cone·summon_ring·circles·rotating_beams 모양만 그린다
+        "bossPatterns": drop_notes(load("bosspatterns")["bosses"]),
+        # 레벨업 카드(T-21): 심법 이름과 능력치 효과, 레벨 상한
+        "passives": [{k: x[k] for k in ("id", "nameKo", "yinyang", "effects") if k in x} for x in load("passives")["passives"]],
+        "levels": bal["levels"],
     })
 
 
