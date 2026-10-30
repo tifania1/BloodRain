@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 namespace BloodRain.Presentation
 {
     // 축척 시험 씬(TU-01). 경지를 키 하나로 올려 삼류~현경 일곱 화면을 본다.
-    //   B  다음 경지로 돌파 연출(TU-02)   R  다음 경지(바로)   F  앞 경지   L / K  레벨 +1 / -1   1~7  그 경지로 바로   WASD  이동(경지 m/s 를 세계 m/s 로)
+    //   B  다음 경지로 돌파 연출(TU-02, 연출 중에 또 누르면 한 경지 더 이어 받기 TU-15)   R  다음 경지(바로)   F  앞 경지   L / K  레벨 +1 / -1   1~7  그 경지로 바로   WASD  이동(경지 m/s 를 세계 m/s 로)
     // 그림은 임시 도형이다. 경지마다 색이 다른 허수아비를 그 경지 첫 화면 안에 뿌려 두어,
     // 경지가 오르면 아래 경지 것들이 작아져 바닥 무늬처럼 되는지 본다. 붉은 원은 그 경지 혈우 장막 반경(씬에 BloodCurtain 이 있으면 그 셰이더로 그린다).
     public sealed class ScaleTestDriver : MonoBehaviour
@@ -148,11 +148,8 @@ namespace BloodRain.Presentation
             var br = _ws.Scale.BoundaryRadius(_ws.Realm);
             if (_fx.IsPlaying)
             {
-                // 장막 반경은 줌과 같은 진행값으로 밀려난다(빗줄기 갈라짐은 BloodCurtain)
-                var bt = _fx.Core;
-                br = bt.ToBoundaryRadius.HasValue && bt.FromBoundaryRadius.HasValue
-                    ? Mathf.Lerp(bt.FromBoundaryRadius.Value, bt.ToBoundaryRadius.Value, bt.ZoomProgress)
-                    : bt.ToBoundaryRadius;
+                // 장막 반경은 줌과 같은 진행값으로 밀려난다(이어 받기까지 BreakthroughFx 가 셈한다)
+                br = _fx.CurtainAlpha > 0f ? _fx.CurtainRadius : null;
             }
             _boundary.enabled = br.HasValue && _curtain == null;
             if (br.HasValue) SetRing(_boundary, _birth, br.Value, line * 2f);

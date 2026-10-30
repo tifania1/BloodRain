@@ -8,7 +8,7 @@ namespace BloodRain.Presentation.Fx
     //
     // 돌파 때(BreakthroughFx 가 돌 때): 반경을 줌과 같은 진행값(ZoomProgress)으로 새 경지 반경까지 밀어내고,
     // 진행값 가운데쯤 가장 크게 빗줄기 벽이 부채꼴로 갈라졌다가 다시 닫힌다(sin(π × 진행값)).
-    // 새 경지에 장막이 없으면(현경) 밀려나면서 옅어져 걷힌다.
+    // 새 경지에 장막이 없으면(현경) 밀려나면서 옅어져 걷힌다. 이 값들은 BreakthroughFx.Curtain* 가 셈한다.
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class BloodCurtain : MonoBehaviour
     {
@@ -26,8 +26,6 @@ namespace BloodRain.Presentation.Fx
         public BreakthroughFx breakthrough;
         [Tooltip("갈라짐이 가장 클 때 값(0~1).")]
         [Range(0f, 1f)] public float splitPeak = 1f;
-        [Tooltip("현경으로 걷힐 때 반경이 이 배수까지 밀려나며 사라진다.")]
-        public float liftScale = 1.6f;
 
         MeshRenderer _mr;
         MaterialPropertyBlock _mpb;
@@ -56,22 +54,10 @@ namespace BloodRain.Presentation.Fx
             var fx = breakthrough;
             if (fx != null && fx.IsPlaying)
             {
-                var bt = fx.Core;
-                float p = bt.ZoomProgress;
-                var from = bt.FromBoundaryRadius;
-                var to = bt.ToBoundaryRadius;
-                if (from.HasValue && to.HasValue)
-                {
-                    radius = Mathf.Lerp(from.Value, to.Value, p);
-                    alpha = 1f;
-                }
-                else if (from.HasValue)
-                {
-                    // 현경: 걷힌다
-                    radius = from.Value * Mathf.Lerp(1f, liftScale, p);
-                    alpha = 1f - p;
-                }
-                split = splitPeak * Mathf.Sin(Mathf.PI * Mathf.Clamp01(p));
+                // 반경·진하기·갈라짐은 돌파 연출이 정한다(이어 받기 때도 튀지 않게 BreakthroughFx 가 맞춘다)
+                radius = fx.CurtainRadius ?? 0f;
+                alpha = fx.CurtainRadius.HasValue ? fx.CurtainAlpha : 0f;
+                split = splitPeak * fx.CurtainSplit;
             }
             else
             {
