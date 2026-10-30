@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 
 namespace BloodRain.Editor
 {
-    // TU-01 축척 시험 씬. 다시 만들 수 있게 메뉴로 짓는다.
+    // TU-01 축척 시험 씬(TU-02 돌파, TU-03 밟힘도 여기서 본다). 다시 만들 수 있게 메뉴로 짓는다.
     public static class ScaleBootstrap
     {
         const string TestScenePath = "Assets/Scenes/Test/ScaleTest.unity";
@@ -34,7 +34,9 @@ namespace BloodRain.Editor
 
             var boot = new GameObject("DataBoot");
             boot.AddComponent<DataBoot>();
-            new GameObject("ScaleTestDriver").AddComponent<ScaleTestDriver>();
+            var driver = new GameObject("ScaleTestDriver");
+            driver.AddComponent<ScaleTestDriver>();
+            driver.AddComponent<CrushTestField>(); // TU-03 밟힘과 쓸림 (E 적 무리, T 바닥 물건)
 
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[ScaleBootstrap] {TestScenePath} 만듦");

@@ -37,6 +37,12 @@ namespace BloodRain.Presentation
         BreakthroughFx _fx;
 
         public BreakthroughFx Fx => _fx;
+        public Transform Player => _player;
+        public WorldScale World => _ws;
+        public Sprite Circle => _circle;
+        public Material Mat => _mat;
+        /// <summary>플레이어 반지름(세계 m).</summary>
+        public float PlayerRadius => _ws.Length(playerRealmMeters) * 0.5f;
 
         void Awake()
         {
@@ -154,7 +160,7 @@ namespace BloodRain.Presentation
                 $"{_ws.RealmName}  레벨 {_ws.Level:0}  화면 대각선 {_ws.ViewDiagonal:0.0}m  배율 ×{_ws.RealmFactor:0.##}   [B 돌파  R/F 경지  L/K 레벨  1~7  WASD]");
         }
 
-        Transform MakeDisc(string name, Color color, float size, float z)
+        public Transform MakeDisc(string name, Color color, float size, float z)
         {
             var go = new GameObject(name);
             var sr = go.AddComponent<SpriteRenderer>();
