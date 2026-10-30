@@ -4,6 +4,7 @@
 //   dotnet run --project core/BloodRain.Sim -- --report docs/design/sim/level-curve.md   보고서 전체를 다시 쓴다
 //   dotnet run --project core/BloodRain.Sim -- --synergy docs/design/sim/synergy.md     연환·진전 화력 상한(S-05)
 //   dotnet run --project core/BloodRain.Sim -- --cheonha docs/design/sim/cheonha.md     천하 한 생 30분(T-17)
+//   dotnet run --project core/BloodRain.Sim -- --meta docs/design/sim/meta.md           생을 이어 메타 곡선(T-18)
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
 using System.Globalization;
@@ -19,7 +20,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -38,6 +39,7 @@ namespace BloodRain.Sim
                     case "--scenario": scenario = Next(); break;
                     case "--synergy": synergy = Next(); break;
                     case "--cheonha": cheonha = Next(); break;
+                    case "--meta": meta = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -53,6 +55,13 @@ namespace BloodRain.Sim
 
             var sc = Scenarios.Find(scenario);
             var data = sc.LoadData(dataDir);
+            if (meta.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(meta))!);
+                File.WriteAllText(meta, MetaSim.Report(data), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {meta}");
+                return 0;
+            }
             if (cheonha.Length > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(cheonha))!);

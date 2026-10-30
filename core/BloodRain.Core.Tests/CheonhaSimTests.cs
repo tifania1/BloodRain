@@ -32,3 +32,25 @@ namespace BloodRain.Core.Tests
         }
     }
 }
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>T-18 메타 곡선: 혼 하나로 생을 이어 돌리며 연무장을 산다.</summary>
+    public class MetaSimTests
+    {
+        [Fact] public void 생을_이으면_연무장이_늘고_버티는_시간도_는다()
+        {
+            var rows = BloodRain.Sim.MetaSim.Run(BloodRain.Sim.SimData.Load(TestData.DataDir), 8, null, maxLives: 4);
+            Assert.Equal(4, rows.Count);
+            Assert.Equal("소림", rows[0].Sect); // 첫 환혼 후보(소림·개방·남궁) 중 땅의 주인이 있는 숭산
+            Assert.Equal(8, rows[0].Minutes);
+            for (int i = 1; i < rows.Count; i++)
+            {
+                Assert.True(rows[i].TrainingLevels >= rows[i - 1].TrainingLevels);
+                Assert.True(rows[i].Minutes >= rows[i - 1].Minutes);
+                Assert.True(rows[i].Hours > rows[i - 1].Hours);
+            }
+            Assert.True(rows[0].TrainingLevels > 0);
+        }
+    }
+}

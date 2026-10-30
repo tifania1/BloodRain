@@ -54,10 +54,35 @@ namespace BloodRain.Sim
             var g = data.Game;
             var c = g.Cheonha;
             var sect = c.Sect(sectId);
-            var birth = c.Region(sect.Region);
+            var soul = new Soul(g);
+            soul.EndLife(soul.BeginLife(Rebirth.Prologue(g)).Finish(LifeEndWay.Fallen, 0));
+            var cand = new RebirthCandidate(sect, c.Region(sect.Region), Array.Empty<BirthTraitDef>());
+            return Run(data, soul, cand, seed, o => o.With(x => x.Policy = policy));
+        }
+
+        /// <summary>혼 하나의 다음 생. minutes 까지 돌리고 쓰러진 것으로 정산한다(혼에 옮기는 일은 부른 쪽이 EndLife 로).</summary>
+        public static (CheonhaLifeResult result, LifeRecord record) RunLife(SimData data, Soul soul, RebirthCandidate cand, int seed,
+            Func<SimOptions, SimOptions>? apply = null, double minutes = Minutes)
+        {
+            var r = RunCore(data, soul, cand, seed, apply, minutes);
+            return (r.Item1, r.Item2);
+        }
+
+        static CheonhaLifeResult Run(SimData data, Soul soul, RebirthCandidate cand, int seed, Func<SimOptions, SimOptions>? apply) =>
+            RunCore(data, soul, cand, seed, apply, Minutes).Item1;
+
+        static (CheonhaLifeResult, LifeRecord) RunCore(SimData data, Soul soul, RebirthCandidate cand, int seed,
+            Func<SimOptions, SimOptions>? apply, double minutes)
+        {
+            var g = data.Game;
+            var c = g.Cheonha;
+            var sect = cand.Sect;
+            var birth = cand.Region;
             string chapter = string.IsNullOrEmpty(birth.Chapter) || birth.Chapter == "prologue" ? "chapter1" : birth.Chapter!;
 
-            var run = RunSimulator.Run(data, new SimOptions { Policy = policy, Seed = seed, Minutes = Minutes, Chapter = chapter });
+            var opt = new SimOptions { Seed = seed, Minutes = Math.Max(1, Math.Ceiling(minutes)), Chapter = chapter, Training = soul.Training };
+            if (apply != null) opt = apply(opt);
+            var run = RunSimulator.Run(data, opt);
             var snaps = run.Minutes.OrderBy(m => m.Minute).ToList();
             double XpAt(double minute)
             {
@@ -74,9 +99,6 @@ namespace BloodRain.Sim
                 return Math.Max(1, s.SingleDps);
             }
 
-            var soul = new Soul(g);
-            soul.EndLife(soul.BeginLife(Rebirth.Prologue(g)).Finish(LifeEndWay.Fallen, 0));
-            var cand = new RebirthCandidate(sect, birth, Array.Empty<BirthTraitDef>());
             var life = new Life(soul, Rebirth.Body(c, cand), new Random(seed));
 
             var res = new CheonhaLifeResult { Sect = sect.NameKo, Birth = birth.NameKo, Seed = seed };
@@ -87,7 +109,7 @@ namespace BloodRain.Sim
             Vector2 pos = life.Position;
 
             int guard = 0;
-            while (life.Minutes < Minutes && guard++ < 1_000_000)
+            while (life.Minutes < minutes && guard++ < 1_000_000)
             {
                 // 걷기: 깨어난 곳 중 가장 가까운 곳
                 if (fighting == null)
@@ -150,7 +172,7 @@ namespace BloodRain.Sim
             res.Qi = record.RebirthQi;
             res.Visited = record.VisitedRegions.ToList();
             res.Bosses = lines.Values.OrderBy(l => l.WokeAt).ToList();
-            return res;
+            return (res, record);
         }
 
         static string M(double minute)

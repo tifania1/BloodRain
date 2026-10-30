@@ -29,6 +29,8 @@ namespace BloodRain.Sim
         public double? EliteXp;
         /// <summary>민감도 시험용. 없으면 Assumptions 값.</summary>
         public double? CrowdRadius, MaxDensity, ArrivalSeconds;
+        /// <summary>연무장 레벨(StatKind 이름 → 레벨). 메타 시뮬레이션(T-18)이 혼의 연무장을 넘긴다. 없으면 연무장 없음.</summary>
+        public IReadOnlyDictionary<string, int>? Training;
 
         public SimOptions With(Action<SimOptions> change)
         {
@@ -459,7 +461,7 @@ namespace BloodRain.Sim
 
         BuildStats MakeStats(IReadOnlyDictionary<string, int> passives)
         {
-            var sheet = Stats.Compute(_g, _character, passives, NoTraining);
+            var sheet = Stats.Compute(_g, _character, passives, _opt.Training ?? NoTraining);
             var gauge = _loadout.Gauge;
             double harmony = gauge.Band == YinYangBand.Harmony ? _g.Balance.Yinyang.Harmony.CooldownReduction : 0;
             return new BuildStats
