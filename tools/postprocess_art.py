@@ -39,6 +39,7 @@ KINDS = {
     "portrait": ("Portraits", 1024, True),
     "card": ("Cards", 1536, False),
     "background": ("Backgrounds", 1536, False),
+    "props": ("Props", 2048, True),
 }
 
 
