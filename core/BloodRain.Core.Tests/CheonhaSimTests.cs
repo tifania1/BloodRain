@@ -54,3 +54,18 @@ namespace BloodRain.Core.Tests
         }
     }
 }
+
+namespace BloodRain.Core.Tests
+{
+    public class CheonhaLevelMarksTests
+    {
+        [Fact] public void 다섯_분마다_레벨을_남기고_늘기만_한다()
+        {
+            var r = BloodRain.Sim.CheonhaSim.Run(BloodRain.Sim.SimData.Load(TestData.DataDir), "shaolin", 1);
+            Assert.Equal(new[] { 5, 10, 15, 20, 25, 30 }, r.LevelByMinute.Keys.OrderBy(x => x));
+            var lv = r.LevelByMinute.OrderBy(kv => kv.Key).Select(kv => kv.Value).ToList();
+            Assert.Equal(lv.OrderBy(x => x), lv);
+            Assert.Equal(r.FinalLevel, lv.Last());
+        }
+    }
+}

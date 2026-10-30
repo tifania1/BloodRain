@@ -37,6 +37,8 @@ namespace BloodRain.Sim
         public List<CheonhaBossLine> Bosses = new List<CheonhaBossLine>();
         public List<string> Visited = new List<string>();
         public int FinalLevel;
+        /// <summary>5분마다(5·10·…·30) 레벨.</summary>
+        public Dictionary<int, int> LevelByMinute = new Dictionary<int, int>();
         public RebirthQiResult Qi = null!;
     }
 
@@ -126,8 +128,11 @@ namespace BloodRain.Sim
                     }
                 }
 
+                float before = life.Minutes;
                 life.Tick(Dt, pos, 100);
                 if (life.Record != null) break;
+                int mark = (int)Math.Floor(life.Minutes / 5) * 5;
+                if (mark > 0 && before < mark) res.LevelByMinute[mark] = life.Level;
 
                 double need = XpAt(life.Minutes) - fed;
                 if (need > 0)
@@ -169,10 +174,51 @@ namespace BloodRain.Sim
 
             var record = life.Record ?? life.End(LifeEndWay.Fallen, 0);
             res.FinalLevel = life.Level;
+            int last = (int)Math.Round(life.Minutes);
+            if (last % 5 == 0 && last > 0) res.LevelByMinute[last] = life.Level;
             res.Qi = record.RebirthQi;
             res.Visited = record.VisitedRegions.ToList();
             res.Bosses = lines.Values.OrderBy(l => l.WokeAt).ToList();
             return (res, record);
+        }
+
+        /// <summary>T-19: 덩이 하나 = 적 하나 값(진기·기혈)인 천하에서 조정 시험별 레벨 속도. 숭산 소림 출생, 시드 1~seeds 가운데값.</summary>
+        public static string ClusterXpReport(string? dataDir, int seeds = 5)
+        {
+            var ids = new[] { "baseline", "kill-xp", "kill-xp+health", "refill+kill-xp", "curve" };
+            var marks = new[] { 5, 10, 15, 20, 25, 30 };
+            var sb = new StringBuilder();
+            sb.AppendLine("# 덩이와 처치 진기 점검(T-19)");
+            sb.AppendLine();
+            sb.AppendLine("`dotnet run --project core/BloodRain.Sim -- --cluster-xp docs/design/sim/cluster-xp.md` 로 다시 만든다.");
+            sb.AppendLine();
+            sb.AppendLine("천하에서는 경지가 오를수록 적 하나가 덩이(4·9·16·28·44·64명)로 나오지만 덩이 하나의 기혈과 진기는 적 하나 값이다(cheonha.json cluster). 그래서 화면 위 개체 수·기혈·진기는 1장 무리 모형과 같고, 다른 점은 지역 혈운 농도(적 기혈·마교 혈공)와 30분 길이다. 아래는 숭산 소림으로 태어나 30분을 돌린 Core `Life` 의 레벨이다(CheonhaSim, 땅의 주인 싸움 포함).");
+            sb.AppendLine();
+            sb.AppendLine("목표(11장): 5분 Lv15, 10분 Lv30, 15분 Lv45, 20분 Lv60, 30분 Lv90(현경). 조정 시험의 뜻은 `Scenarios.cs` 와 level-curve.md.");
+            sb.AppendLine();
+            sb.AppendLine("| 조정 시험 | " + string.Join(" | ", marks.Select(m => $"{m}분")) + " | 현경 도달 |");
+            sb.AppendLine("| --- | " + string.Join(" | ", marks.Select(_ => "---")) + " | --- |");
+            foreach (var id in ids)
+            {
+                var sc = Scenarios.Find(id);
+                var data = sc.LoadData(dataDir);
+                var g = data.Game;
+                var sect = g.Cheonha.Sect("shaolin");
+                var runs = Enumerable.Range(1, seeds).Select(seed =>
+                {
+                    var soul = new Soul(g);
+                    soul.EndLife(soul.BeginLife(Rebirth.Prologue(g)).Finish(LifeEndWay.Fallen, 0));
+                    var cand = new RebirthCandidate(sect, g.Cheonha.Region(sect.Region), Array.Empty<BirthTraitDef>());
+                    return RunLife(data, soul, cand, seed, sc.ApplyOptions).result;
+                }).ToList();
+                string Lv(int m) { var a = runs.Select(r => r.LevelByMinute.TryGetValue(m, out var v) ? v : 0).OrderBy(x => x).ToList(); return a[a.Count / 2].ToString(); }
+                var top = g.Balance.Realms.OrderBy(r => r.Level).Last().Id;
+                var hy = runs.Select(r => r.RealmMinute.TryGetValue(top, out var v) ? v : double.NaN).OrderBy(x => double.IsNaN(x) ? 1e9 : x).ToList();
+                sb.AppendLine($"| {sc.NameKo} | " + string.Join(" | ", marks.Select(Lv)) + $" | {M(hy[hy.Count / 2])} |");
+            }
+            sb.AppendLine();
+            sb.AppendLine("'—'는 30분 안에 못 닿음. 처치 진기를 줄이는 안은 P-02 결정 대기라 데이터에는 넣지 않았다. 땅의 주인 처치 시간(T-40)도 이 레벨 곡선을 따라 같이 바뀐다.");
+            return sb.ToString();
         }
 
         static string M(double minute)
