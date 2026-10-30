@@ -33,7 +33,7 @@ tools/agent_loop/state.json
 tools/agent_loop/logs/
 
 # 기타
-build/
+/build/
 __pycache__/
 *.pyc
 .DS_Store
