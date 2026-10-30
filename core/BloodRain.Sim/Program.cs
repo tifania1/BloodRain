@@ -2,6 +2,7 @@
 //   dotnet run --project core/BloodRain.Sim -- --policy average --seed 1        한 판을 돌려 분당 표를 찍는다
 //   dotnet run --project core/BloodRain.Sim -- --policy greedy --seeds 30       여러 판 요약(5·10·15·20분 레벨)
 //   dotnet run --project core/BloodRain.Sim -- --report docs/design/sim/level-curve.md   보고서 전체를 다시 쓴다
+//   dotnet run --project core/BloodRain.Sim -- --synergy docs/design/sim/synergy.md     연환·진전 화력 상한(S-05)
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
 using System.Globalization;
@@ -17,7 +18,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline";
+            string policy = "average", report = "", scenario = "baseline", synergy = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -34,6 +35,7 @@ namespace BloodRain.Sim
                     case "--data": dataDir = Next(); break;
                     case "--report": report = Next(); break;
                     case "--scenario": scenario = Next(); break;
+                    case "--synergy": synergy = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -49,6 +51,13 @@ namespace BloodRain.Sim
 
             var sc = Scenarios.Find(scenario);
             var data = sc.LoadData(dataDir);
+            if (synergy.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(synergy))!);
+                File.WriteAllText(synergy, SynergyCheck.Report(data), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {synergy}");
+                return 0;
+            }
             if (report.Length > 0)
             {
                 string text = Report.Build(dataDir);
