@@ -39,6 +39,8 @@ namespace BloodRain.Sim
         public int FinalLevel;
         /// <summary>5분마다(5·10·…·30) 레벨.</summary>
         public Dictionary<int, int> LevelByMinute = new Dictionary<int, int>();
+        /// <summary>분마다 서 있던 지역 id. [0] 은 태어난 순간, [k] 는 k분째(기연 시뮬레이션이 쓴다).</summary>
+        public List<string> RegionByMinute = new List<string>();
         public RebirthQiResult Qi = null!;
     }
 
@@ -110,6 +112,7 @@ namespace BloodRain.Sim
             float diag0 = life.Scale.ViewDiagonalAtRealm(0);
             Vector2 pos = life.Position;
 
+            res.RegionByMinute.Add(life.RegionId);
             int guard = 0;
             while (life.Minutes < minutes && guard++ < 1_000_000)
             {
@@ -133,6 +136,7 @@ namespace BloodRain.Sim
                 if (life.Record != null) break;
                 int mark = (int)Math.Floor(life.Minutes / 5) * 5;
                 if (mark > 0 && before < mark) res.LevelByMinute[mark] = life.Level;
+                while (res.RegionByMinute.Count <= Math.Floor(life.Minutes)) res.RegionByMinute.Add(life.RegionId);
 
                 double need = XpAt(life.Minutes) - fed;
                 if (need > 0)

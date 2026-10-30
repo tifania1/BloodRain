@@ -6,6 +6,7 @@
 //   dotnet run --project core/BloodRain.Sim -- --cheonha docs/design/sim/cheonha.md     천하 한 생 30분(T-17)
 //   dotnet run --project core/BloodRain.Sim -- --meta docs/design/sim/meta.md           생을 이어 메타 곡선(T-18)
 //   dotnet run --project core/BloodRain.Sim -- --cluster-xp docs/design/sim/cluster-xp.md  천하에서 조정 시험별 레벨 속도(T-19)
+//   dotnet run --project core/BloodRain.Sim -- --encounters docs/design/sim/encounters.md  천하 한 생의 기연 사건 출현율과 도감 채우기
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
 using System.Globalization;
@@ -21,7 +22,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -42,6 +43,7 @@ namespace BloodRain.Sim
                     case "--cheonha": cheonha = Next(); break;
                     case "--meta": meta = Next(); break;
                     case "--cluster-xp": clusterXp = Next(); break;
+                    case "--encounters": encounters = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -57,6 +59,13 @@ namespace BloodRain.Sim
 
             var sc = Scenarios.Find(scenario);
             var data = sc.LoadData(dataDir);
+            if (encounters.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(encounters))!);
+                File.WriteAllText(encounters, EncounterSim.Report(data, seeds > 0 ? seeds : 3), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {encounters}");
+                return 0;
+            }
             if (clusterXp.Length > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(clusterXp))!);

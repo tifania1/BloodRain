@@ -1,7 +1,7 @@
 # 밸런스 시뮬레이터 (B-07)
 
 화면 없이 1장 한 판(20분)을 돌려서, 레벨·경지·절기가 기획서 목표(11장 '밸런스 기본값', 8장 '절기 그릇')대로 나오는지 본다.
-코드는 `core/BloodRain.Sim/`, 결과 보고서는 [level-curve.md](level-curve.md). 천하 한 생(지역 이동·땅의 주인·윤회의 기)은 [cheonha.md](cheonha.md)(`CheonhaSim.cs`, Core `Life` 를 그대로 돌린다), 생을 이은 메타 곡선은 [meta.md](meta.md)(`MetaSim.cs`), 천하에서 처치 진기 조정 시험은 [cluster-xp.md](cluster-xp.md), 연환·진전 화력 상한은 [synergy.md](synergy.md)(`SynergyCheck.cs`).
+코드는 `core/BloodRain.Sim/`, 결과 보고서는 [level-curve.md](level-curve.md). 천하 한 생(지역 이동·땅의 주인·윤회의 기)은 [cheonha.md](cheonha.md)(`CheonhaSim.cs`, Core `Life` 를 그대로 돌린다), 생을 이은 메타 곡선은 [meta.md](meta.md)(`MetaSim.cs`), 천하에서 처치 진기 조정 시험은 [cluster-xp.md](cluster-xp.md), 연환·진전 화력 상한은 [synergy.md](synergy.md)(`SynergyCheck.cs`), 천하 한 생의 기연 사건 출현율과 도감 채우기는 [encounters.md](encounters.md)(`EncounterSim.cs`).
 
 게임 규칙은 Core 것을 그대로 쓴다. 경험치 곡선(`XpCurve`), 진기 흡수와 돌파(`RunXp`·`Realms`), 적 생성(`SpawnCurve`), 적 기혈 증가(`EnemyScaling`),
 레벨업 추첨·절기 그릇·각성(`Loadout`), 능력치 합산(`Stats`), 음양(`YinYangGauge`), 오의 게이지(`UltimateCharge`), 무공 피해 보간(`WeaponMath`).
@@ -20,6 +20,7 @@ dotnet run --project core/BloodRain.Sim -- --cheonha docs/design/sim/cheonha.md 
 dotnet run --project core/BloodRain.Sim -- --meta docs/design/sim/meta.md                     # 혼 하나로 생을 이어 메타 곡선(T-18, 10초쯤)
 dotnet run --project core/BloodRain.Sim -- --cluster-xp docs/design/sim/cluster-xp.md         # 천하 30분에서 조정 시험별 레벨(T-19, P-02 표)
 dotnet run --project core/BloodRain.Sim -- --synergy docs/design/sim/synergy.md               # 무공 6칸 조합 전부의 연환·진전 화력 배수(S-05, S-06 표)
+dotnet run --project core/BloodRain.Sim -c Release -- --encounters docs/design/sim/encounters.md # 기연 사건 8종이 한 생에 나오는 비율, 도감 채우기(15초쯤)
 ```
 
 | 인자 | 뜻 |
