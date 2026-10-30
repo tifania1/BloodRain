@@ -89,5 +89,34 @@ namespace BloodRain.Core.Tests
             b.Tick(-1f);
             Assert.Equal(0.5f, b.Elapsed, 4);
         }
+
+        // ---- 연출 도중 또 넘은 경지(Extend) ----
+
+        [Fact] public void 연출_도중_또_넘으면_화면은_튀지_않고_끝은_새_경지다()
+        {
+            var s = new Scale(_d);
+            var b = new Breakthrough(_d);
+            b.Start(9, 10);
+            b.Tick(0.6f);
+            float before = b.ViewDiagonal;
+            b.Extend(20);
+            Assert.Equal(before, b.ViewDiagonal, 2);
+            Assert.Equal(2, b.ToRealm);
+            Assert.Equal(0, b.FromRealm);
+            Assert.True(b.IsActive);
+            Assert.Equal(BreakthroughCue.Sweep | BreakthroughCue.End, b.Tick(5f));
+            Assert.Equal(s.ViewDiagonal(20), b.ViewDiagonal, 2);
+        }
+
+        [Fact] public void 낮은_레벨로_Extend_하면_그대로고_끝난_연출엔_못_한다()
+        {
+            var b = new Breakthrough(_d);
+            b.Start(19, 20);
+            b.Tick(0.3f);
+            b.Extend(15);
+            Assert.Equal(20f, b.ToLevel);
+            b.Tick(5f);
+            Assert.Throws<InvalidOperationException>(() => b.Extend(35));
+        }
     }
 }

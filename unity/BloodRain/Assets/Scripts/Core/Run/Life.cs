@@ -156,7 +156,9 @@ namespace BloodRain.Core.Run
             {
                 foreach (var realm in r.Breakthroughs) infos.Add(Log.Breakthrough(realm.Id));
                 bool revisit = infos.All(i => !i.LongCinematic);
-                Breakthrough.Start(r.FromLevel, r.ToLevel, revisit);
+                // 연출 도중 또 넘었으면(큰 구슬·쓸림 진기) 돌던 연출의 끝만 새 경지로 옮긴다.
+                if (Breakthrough.IsActive) Breakthrough.Extend(r.ToLevel);
+                else Breakthrough.Start(r.FromLevel, r.ToLevel, revisit);
                 Director.OnBreakthrough(revisit);
                 woken = Bosses.UpdateRealm(Xp.Level);
             }

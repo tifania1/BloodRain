@@ -99,6 +99,22 @@ namespace BloodRain.Core.World
             IsActive = true;
         }
 
+        /// <summary>
+        /// 연출 도중 또 한 경지를 넘었다(큰 구슬·쓸림 진기). 시계와 속도는 그대로 두고 물러날 끝만 새 경지로 옮긴다.
+        /// 지금 화면 대각선이 튀지 않게 출발점을 다시 맞춘다. 장면 신호는 다시 오지 않는다(새 경지 글자는 ToRealm 을 읽어 바꾼다).
+        /// </summary>
+        public void Extend(float toLevel)
+        {
+            if (!IsActive) throw new InvalidOperationException("진행 중인 돌파 연출이 없습니다");
+            if (toLevel <= ToLevel) return;
+            float p = ZoomProgressAt(_t);
+            float cur = _fromExponent + (_toExponent - _fromExponent) * p;
+            _toExponent = _scale.ViewExponent(toLevel);
+            if (p < 1f) _fromExponent = (cur - _toExponent * p) / (1f - p);
+            ToLevel = toLevel;
+            ToRealm = _scale.RealmIndex((int)Math.Floor(toLevel));
+        }
+
         /// <summary>연출 시계를 실제 시간으로 민다. 이번에 지나간 장면 신호를 돌려준다.</summary>
         public BreakthroughCue Tick(float unscaledDt)
         {

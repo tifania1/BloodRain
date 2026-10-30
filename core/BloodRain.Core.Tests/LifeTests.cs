@@ -92,6 +92,22 @@ namespace BloodRain.Core.Tests
             Assert.Equal(before + 0.5f * _d.Cheonha.Breakthrough.TimeScale / 60f, life.Minutes, 5);
         }
 
+        [Fact] public void 돌파_연출_도중_또_돌파해도_멈추지_않고_끝만_옮긴다()
+        {
+            var (_, life) = NewLife();
+            var curve = new XpCurve(_d.Balance.XpCurve);
+            life.Absorb(curve.CumulativeTo(10));
+            life.Tick(0.3f, life.Position, 0);
+            Assert.True(life.Breakthrough.IsActive);
+            var a = life.Absorb(curve.CumulativeTo(20) - curve.CumulativeTo(10));
+            Assert.Single(a.Breakthroughs);
+            Assert.Equal(2, life.Breakthrough.ToRealm);
+            Assert.Equal(0, life.Breakthrough.FromRealm);
+            for (int i = 0; i < 20; i++) life.Tick(0.1f, life.Position, 0);
+            Assert.False(life.Breakthrough.IsActive);
+            Assert.Equal(2, life.Realm);
+        }
+
         [Fact] public void 다른_지역으로_가면_처음_밟은_땅으로_적힌다()
         {
             var (_, life) = NewLife();
