@@ -80,6 +80,20 @@ namespace BloodRain.Core.Data
         public int LeaveUses;
         /// <summary>2막 패턴처럼 켜지면 끝까지 이어지는가.</summary>
         public bool Continuous;
+        /// <summary>탄·사슬·파도가 나아가는 속도(플레이어 기본 이동속도 100 기준).</summary>
+        public float ProjectileSpeed;
+        /// <summary>한 번 시전에 몇 파(암기 3파). 0이면 1.</summary>
+        public int Waves;
+        /// <summary>파와 파 사이(초). 2막 파도처럼 이어지는 패턴은 파도마다의 간격.</summary>
+        public float WaveIntervalSeconds;
+        /// <summary>사슬에 걸리면 보스 앞까지 끌려가는 시간(초). 경공으로 끊긴다.</summary>
+        public float PullSeconds;
+        /// <summary>분열: 분열체 하나가 받는 남은 기혈의 몫.</summary>
+        public float HealthShare;
+        /// <summary>분열: 첫 분열체가 쓰러진 뒤 이 시간 안에 다 쓰러지지 않으면 쓰러진 분열체가 되살아난다.</summary>
+        public float RejoinSeconds;
+        /// <summary>반쪽 장판: 시전마다 왼쪽·오른쪽을 번갈아 덮는다.</summary>
+        public bool Alternate;
     }
 
     sealed class BossPatternFile

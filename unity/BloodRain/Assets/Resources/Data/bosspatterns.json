@@ -69,6 +69,137 @@
           "continuous": true
         }
       ]
+    },
+    "dang_sohye": {
+      "_note": "독후 당소혜(당가타, T-12). 프로토타입에 없는 보스라 숫자는 2026-10-30 예약 세션이 원각을 기준으로 정했다. 피해는 원각과 비슷한 무게(한 방 10~20, 장판은 0.5초마다 4)로 두고, 기혈이 원각의 1.4배라 간격을 조금 줄였다. 분열한 동안은 패턴 시계를 멈춘다(Tick 을 안 부른다, 기절과 같은 규칙).",
+      "firstCastSeconds": 2.5,
+      "intervalSeconds": 4.0,
+      "phase2IntervalSeconds": 3.0,
+      "phase2At": 0.3,
+      "contactDamage": 17.5,
+      "moveSpeed": 55,
+      "order": ["half_map_poison_fog", "dart_fan_x3", "summon_golden_centipede"],
+      "patterns": [
+        {
+          "id": "half_map_poison_fog",
+          "nameKo": "독안개",
+          "shape": "half_field",
+          "_note": "보스를 지나는 세로줄로 싸움터를 둘로 나눠 한쪽을 독안개로 덮는다. 첫 시전은 플레이어가 선 쪽, 그다음부터 번갈아. 예고 동안 안개가 옅게 깔리고, 판정부터 leaveSeconds 동안 hitIntervalSeconds 마다 피해.",
+          "telegraphSeconds": 1.5,
+          "aim": "player_side_first",
+          "alternate": true,
+          "leaveSeconds": 6,
+          "hitIntervalSeconds": 0.5,
+          "baseDamage": 4
+        },
+        {
+          "id": "dart_fan_x3",
+          "nameKo": "부채꼴 암기",
+          "shape": "projectile_fan",
+          "_note": "예고를 시작할 때 플레이어 쪽으로 방향을 잡고 멈춰 선다. 한 파에 암기 7개를 60도 부채꼴로, 0.35초 간격 세 파. 파마다 반 칸씩 엇갈려 틈이 바뀐다.",
+          "telegraphSeconds": 0.6,
+          "count": 7,
+          "angleDegrees": 60,
+          "waves": 3,
+          "waveIntervalSeconds": 0.35,
+          "projectileSpeed": 220,
+          "length": 14,
+          "baseDamage": 10,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        },
+        {
+          "id": "summon_golden_centipede",
+          "nameKo": "금선지네 소환",
+          "shape": "summon",
+          "_note": "보스 둘레 scatter 안 네 곳에서 금선지네가 기어 나온다.",
+          "telegraphSeconds": 1.0,
+          "count": 4,
+          "scatter": 4,
+          "summon": "golden_centipede",
+          "center": "boss",
+          "baseDamage": 0
+        }
+      ],
+      "phase2": [
+        {
+          "id": "split_into_three",
+          "nameKo": "분열",
+          "shape": "split",
+          "_note": "2막이 되면 쓰러지는 몸짓(예고) 뒤 작은 독인 셋으로 갈라져 scatter 만큼 흩어진다. 셋은 남은 기혈을 1/3씩 나눠 갖고 몸에 닿는 피해는 보스와 같다. 첫 분열체가 쓰러지고 rejoinSeconds 안에 셋이 다 쓰러지지 않으면 쓰러진 것이 남은 분열체 가운데 가장 많은 기혈로 되살아난다.",
+          "telegraphSeconds": 1.0,
+          "count": 3,
+          "scatter": 3,
+          "healthShare": 0.3333,
+          "rejoinSeconds": 4,
+          "baseDamage": 0,
+          "continuous": true
+        }
+      ]
+    },
+    "ma_cheonpae": {
+      "_note": "혈귀 마천패(장강 수로, T-12). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 수귀(water_ghost)는 아직 enemies.json 에 없다(T-33에서 넣는다).",
+      "firstCastSeconds": 2.5,
+      "intervalSeconds": 4.0,
+      "phase2IntervalSeconds": 3.0,
+      "phase2At": 0.3,
+      "contactDamage": 20,
+      "moveSpeed": 50,
+      "order": ["chain_hook_pull", "water_pillar", "summon_water_ghost"],
+      "patterns": [
+        {
+          "id": "chain_hook_pull",
+          "nameKo": "갈고리 사슬",
+          "shape": "pull_line",
+          "_note": "예고선이 플레이어 쪽으로 뻗고 멈춰 선 보스가 사슬을 던진다. 맞으면 피해와 함께 pullSeconds 동안 보스 앞까지 끌려간다. 끌려가는 중 경공을 쓰면 사슬이 끊긴다.",
+          "telegraphSeconds": 0.7,
+          "length": 12,
+          "width": 0.8,
+          "projectileSpeed": 400,
+          "pullSeconds": 0.6,
+          "baseDamage": 8,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        },
+        {
+          "id": "water_pillar",
+          "nameKo": "물기둥",
+          "shape": "circles",
+          "_note": "예고를 시작할 때 플레이어 둘레 가로·세로 ±scatter 안 네 곳에 물이 끓고, 판정 때 물기둥이 솟는다.",
+          "telegraphSeconds": 1.2,
+          "count": 4,
+          "radius": 2,
+          "scatter": 4,
+          "baseDamage": 20,
+          "aim": "player_at_telegraph"
+        },
+        {
+          "id": "summon_water_ghost",
+          "nameKo": "수귀 소환",
+          "shape": "summon",
+          "_note": "플레이어 둘레 scatter 안 다섯 곳 물속에서 수귀가 올라온다(판정 순간 플레이어 자리 기준).",
+          "telegraphSeconds": 1.0,
+          "count": 5,
+          "scatter": 6,
+          "summon": "water_ghost",
+          "center": "player_at_resolve",
+          "baseDamage": 0
+        }
+      ],
+      "phase2": [
+        {
+          "id": "crimson_reverse_wave",
+          "nameKo": "역류 파도",
+          "shape": "sweep_wave",
+          "_note": "2막이 되면 강물이 붉어지고(예고) waveIntervalSeconds 마다 폭 width 의 파도가 화면 한쪽 끝에서 반대쪽 끝까지 지나간다. 방향은 강 하류에서 상류로. 배 위에 있으면 맞지 않는다(배는 장강 지형 기믹으로 따로 정한다).",
+          "telegraphSeconds": 1.5,
+          "width": 3,
+          "projectileSpeed": 300,
+          "waveIntervalSeconds": 6,
+          "baseDamage": 15,
+          "continuous": true
+        }
+      ]
     }
   }
 }
