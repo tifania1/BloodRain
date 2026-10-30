@@ -87,7 +87,8 @@
     { "id": "wudang",    "nameKo": "무당",   "region": "wudangsan",     "leader": "unhwa",         "startWeapon": "taiji_sword",      "ultimate": "taiji_muryang",  "trait": "harmony_range40_bonus_x2",       "maxHealth": 100, "moveSpeed": 1.0,  "yinyangStart": 0,   "harmonyRange": 40, "unlock": "boss:wudangsan" },
     { "id": "huashan",   "nameKo": "화산",   "region": "huashan",       "leader": null,            "startWeapon": "falling_petals",   "ultimate": "il_geom",        "trait": "crit_chance10",                  "maxHealth": 95,  "moveSpeed": 1.05, "yinyangStart": -5,  "unlock": "boss:huashan" },
     { "id": "kunlun",    "nameKo": "곤륜",   "region": "kunlun",        "leader": null,            "startWeapon": "thunder_talisman", "ultimate": "cheonseol_bu",   "trait": "near_slow10",                    "maxHealth": 105, "moveSpeed": 0.95, "yinyangStart": 5,   "unlock": "boss:kunlun" },
-    { "id": "demonic",   "nameKo": "마교",   "region": "sipmandaesan",  "leader": "baekya",        "startWeapon": "blood_claw",       "ultimate": "cheonma_haeche", "trait": "low_hp_attack_speed_heal_half",  "maxHealth": 90,  "moveSpeed": 1.05, "yinyangStart": -15, "unlock": "boss:sipmandaesan" }
+    { "id": "demonic",   "nameKo": "마교",   "region": "sipmandaesan",  "leader": "baekya",        "startWeapon": "blood_claw",       "ultimate": "cheonma_haeche", "trait": "low_hp_attack_speed_heal_half",  "maxHealth": 90,  "moveSpeed": 1.05, "yinyangStart": -15, "unlock": "boss:sipmandaesan",
+      "bloodArt": { "_note": "혈공(5장, 사람 확인 2026-10-30). 진기 x 그 자리 혈운 농도, 더 받은 진기 300마다 음양 -1, 천마해체로 시작값 복귀, 돌파 깨달음 셋 중 하나는 마공. 윤회의 기는 구슬 값 그대로.", "xpTimesDensity": true, "extraXpPerStep": 300, "yinPerStep": 1, "resetUltimate": "cheonma_haeche", "demonicInsightsPerBreakthrough": 1 } }
   ],
 
   "prologueBody": {

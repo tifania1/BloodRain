@@ -142,8 +142,24 @@ namespace BloodRain.Core.Data
         public int? HarmonyRange;
         /// <summary>"start" 또는 "boss:&lt;지역 id&gt;"(그 땅의 주인 첫 처치).</summary>
         public string Unlock = "start";
+        /// <summary>마교 몸의 성장 '혈공'(5장). 다른 문파는 null.</summary>
+        public BloodArtDef? BloodArt;
 
         public string? UnlockBossRegion => Unlock.StartsWith("boss:") ? Unlock.Substring(5) : null;
+    }
+
+    /// <summary>혈공(기획서 5장 '마교 몸의 성장').</summary>
+    public sealed class BloodArtDef
+    {
+        /// <summary>진기 구슬에서 받는 진기에 그 자리 혈운 농도를 곱한다.</summary>
+        public bool XpTimesDensity = true;
+        /// <summary>농도 덕에 더 받은 진기가 이만큼 쌓일 때마다 음양 게이지가 음 쪽으로 YinPerStep 기운다.</summary>
+        public float ExtraXpPerStep = 300;
+        public int YinPerStep = 1;
+        /// <summary>이 오의를 쓰면 음양 게이지가 시작값으로 돌아온다.</summary>
+        public string ResetUltimate = "";
+        /// <summary>돌파 깨달음 가운데 마공 몫.</summary>
+        public int DemonicInsightsPerBreakthrough = 1;
     }
 
     public sealed class PrologueBodyDef

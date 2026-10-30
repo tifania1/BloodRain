@@ -37,6 +37,10 @@ namespace BloodRain.Core.Progression
 
         /// <summary>깨달음 '역근': 게이지를 0으로.</summary>
         public void Reset() => Value = 0;
+        /// <summary>게이지를 그만큼 옮긴다(+ 양, - 음). 마교 혈공의 심마가 쓴다.</summary>
+        public void Shift(int delta) => Value = Clamp(Value + delta);
+        /// <summary>게이지를 그 값으로 되돌린다(천마해체: 시작값으로).</summary>
+        public void ResetTo(int value) => Value = Clamp(value);
 
         public YinYangBand Band
         {
