@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BloodRain.Presentation.Fx;
 using BloodRain.Sim;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -6,7 +7,7 @@ using UnityEngine.InputSystem;
 namespace BloodRain.Presentation
 {
     // 축척 시험 씬(TU-01). 경지를 키 하나로 올려 삼류~현경 일곱 화면을 본다.
-    //   R  다음 경지   F  앞 경지   L / K  레벨 +1 / -1   1~7  그 경지로 바로   WASD  이동(경지 m/s 를 세계 m/s 로)
+    //   B  다음 경지로 돌파 연출(TU-02)   R  다음 경지(바로)   F  앞 경지   L / K  레벨 +1 / -1   1~7  그 경지로 바로   WASD  이동(경지 m/s 를 세계 m/s 로)
     // 그림은 임시 도형이다. 경지마다 색이 다른 허수아비를 그 경지 첫 화면 안에 뿌려 두어,
     // 경지가 오르면 아래 경지 것들이 작아져 바닥 무늬처럼 되는지 본다. 붉은 원은 그 경지 혈우 장막 반경.
     public sealed class ScaleTestDriver : MonoBehaviour
@@ -33,6 +34,9 @@ namespace BloodRain.Presentation
         Material _mat;
         Sprite _circle;
         Vector2 _birth;
+        BreakthroughFx _fx;
+
+        public BreakthroughFx Fx => _fx;
 
         void Awake()
         {
@@ -66,6 +70,11 @@ namespace BloodRain.Presentation
             _boundary = MakeRing("혈우 장막", new Color(0.70f, 0.15f, 0.12f, 0.9f));
             _birth = Vector2.zero;
 
+            _fx = gameObject.AddComponent<BreakthroughFx>();
+            _fx.RealmFactorChanged += f => Debug.Log($"[돌파] 공간 해시 격자 다시 짓기 자리: 배율 ×{f:0.##}");
+            _fx.Swept += bt => Debug.Log($"[돌파] 쓸림 {bt.Elapsed:0.00}초, 반경 {bt.SweepRadius:0.0}m");
+            _fx.Ended += bt => Debug.Log($"[돌파] 끝 {bt.Elapsed:0.00}초 → {_ws.RealmName}. 깨달음 3택1 자리");
+
             var cam = Camera.main != null ? Camera.main.GetComponent<ScaleCamera>() : null;
             if (cam != null) cam.target = _player;
         }
@@ -77,8 +86,17 @@ namespace BloodRain.Presentation
         }
 
         /// <summary>그 경지 첫 레벨로. snap 이면 보간 없이 바로 그 화면.</summary>
+        /// <summary>다음 경지로 돌파 연출. 이미 연출 중이거나 현경이면 무시.</summary>
+        public bool BreakToNext(bool revisit = false)
+        {
+            int next = _ws.Realm + 1;
+            if (next > _ws.Scale.TopRealm) return false;
+            return _fx.Play(_ws, _ws.Level, _ws.Scale.Realms[next].Level, _player, revisit);
+        }
+
         public void JumpToRealm(int realm, bool snap = false)
         {
+            if (_fx != null && _fx.IsPlaying) return;
             realm = Mathf.Clamp(realm, 0, _ws.Scale.TopRealm);
             _ws.SetLevel(_ws.Scale.Realms[realm].Level, snap);
         }
@@ -88,6 +106,7 @@ namespace BloodRain.Presentation
             var kb = Keyboard.current;
             if (kb != null)
             {
+                if (kb.bKey.wasPressedThisFrame) BreakToNext();
                 if (kb.rKey.wasPressedThisFrame) JumpToRealm(_ws.Realm + 1);
                 if (kb.fKey.wasPressedThisFrame) JumpToRealm(_ws.Realm - 1);
                 if (kb.lKey.wasPressedThisFrame) _ws.SetLevel(_ws.Level + 1);
@@ -116,6 +135,14 @@ namespace BloodRain.Presentation
             // 사거리 고리는 플레이어 자식이라 반경만 플레이어 크기로 나눠 둔다(선 굵기는 스케일을 안 받는다)
             SetRing(_range, Vector2.zero, _ws.Length(weaponRangeRealmMeters) / playerSize, line);
             var br = _ws.Scale.BoundaryRadius(_ws.Realm);
+            if (_fx.IsPlaying)
+            {
+                // 장막 반경은 줌과 같은 진행값으로 밀려난다(빗줄기 갈라짐은 TU-05)
+                var bt = _fx.Core;
+                br = bt.ToBoundaryRadius.HasValue && bt.FromBoundaryRadius.HasValue
+                    ? Mathf.Lerp(bt.FromBoundaryRadius.Value, bt.ToBoundaryRadius.Value, bt.ZoomProgress)
+                    : bt.ToBoundaryRadius;
+            }
             _boundary.enabled = br.HasValue;
             if (br.HasValue) SetRing(_boundary, _birth, br.Value, line * 2f);
         }
@@ -124,7 +151,7 @@ namespace BloodRain.Presentation
         {
             GUI.color = new Color(0.15f, 0.1f, 0.08f);
             GUI.Label(new Rect(12, 8, 900, 24),
-                $"{_ws.RealmName}  레벨 {_ws.Level:0}  화면 대각선 {_ws.ViewDiagonal:0.0}m  배율 ×{_ws.RealmFactor:0.##}   [R/F 경지  L/K 레벨  1~7  WASD]");
+                $"{_ws.RealmName}  레벨 {_ws.Level:0}  화면 대각선 {_ws.ViewDiagonal:0.0}m  배율 ×{_ws.RealmFactor:0.##}   [B 돌파  R/F 경지  L/K 레벨  1~7  WASD]");
         }
 
         Transform MakeDisc(string name, Color color, float size, float z)

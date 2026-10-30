@@ -41,8 +41,11 @@ namespace BloodRain.Sim
         /// <summary>지금 경지 순번(0 = 삼류).</summary>
         public int Realm => Scale.RealmIndex((int)Math.Floor(_level));
         public string RealmName => Scale.Realms[Realm].NameKo;
-        /// <summary>지금 경지 1m 가 세계 몇 m 인가(2.25^n).</summary>
-        public float RealmFactor => Scale.Factor(Realm);
+        /// <summary>지금 경지 1m 가 세계 몇 m 인가(2.25^n). 돌파 연출 중에는 RealmFactorOverride 가 앞선다.</summary>
+        public float RealmFactor => RealmFactorOverride ?? Scale.Factor(Realm);
+
+        /// <summary>값이 있으면 지금 경지 배율을 이 값으로 쓴다. 돌파 연출이 화면과 함께 천천히 넘긴다.</summary>
+        public float? RealmFactorOverride;
 
         public float TargetExponent => Scale.ViewExponent(_level);
         public float ShownExponent => _shownExponent;
