@@ -73,7 +73,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] T-36 2026-10-30 — template.html 에 취선봉 `random_arc`(무작위 방향 큰 원호, 휘두르기 1→3회, 범위 +30%, 넉백 7, 절기 팔선과해는 여덟 방향 + 2초 기절)를 넣고 시작 풀에 되돌림. Lv8 취선봉만 들고 90초 자동 판: 60번 휘둘러 피해 15,415, 콘솔 에러 0
 - [x] T-37 2026-10-30 — cheonha.json `rebirth.femaleRatio` 0.5·`maleOnlySects` [shaolin], 후보·몸에 Female(성질 뒤에 굴려 난수 순서 유지), 테스트 4개. `leaders.md` 사매판(남녀 말이 갈리는 여섯 줄만), `sects.md` 여덟 문파 여자 몸 묘사 24줄. art_queue 여자 몸 카드 8줄은 넣지 않음: 산문 카드에 사람이 안 나와(No people) 같은 그림을 쓰면 된다고 판단, 사람 확인 필요
 - [x] T-38 2026-10-30 — 혈공: cheonha.json `sects[demonic].bloodArt`, `Core/Progression/BloodArt.cs`(진기 × 농도, 더 받은 진기 300마다 음 -1, 천마해체로 시작값), Life 연결(윤회의 기는 구슬 값 그대로), insights.json `demonicInsights` 마공 넷(기획서 예시 둘 + 혈광폭주·심마환영)과 `Insights.RollWithDemonic`(셋 중 하나), 5장 마공 표, 테스트 8개. 마공 효과를 실제 능력치에 붙이는 일은 Unity 쪽 Sim
-- [ ] T-39 종장 혈마 세 단계의 패턴 수치(bosspatterns.json `final.stages[].patterns` 는 이름만 있음)와 혈마의 그림자 한 단계의 세기(LifeDirector.ShadowStep 은 단계 수만 낸다). 6장 종장 절에 표. 먼저: T-14
+- [x] T-39 2026-10-30 — 혈마 세 단계 패턴 수치를 bosspatterns.json `final.stages[].set`(땅의 주인과 같은 틀)에: 혈의(혈침 탄막·맥 짚는 손·역병 구름), 혈해(시작부터 피바다 섬 다섯, 혈영 솟음은 shadows 차례로 기혈 10%), 진혈마(혈우 탄막, 30% 아래 간격 3초). 혈마의 그림자 세기는 cheonha.json `lifeEnd.shadow` 와 `World/BloodShadow.cs`(접촉 30 ×1.25, 속도 85 +8 → 125, 적 피해 +0.1배씩, 3단계부터 플레이어보다 빠름), `Life.Shadow`. 6·7장 표, 테스트 11개. 숫자는 예약 세션이 혁련휘 기준으로 정함
 
 ### 확인과 밸런스
 - [ ] T-17 시뮬레이터 확장: `core/BloodRain.Sim` 에 천하 한 생(30분, 지역 이동, 땅의 주인)을 넣어 경지 도달 시각, 윤회의 기, 출생지별 보스 처치 시간을 표로. 보고서 `docs/design/sim/cheonha.md`. 먼저: T-03~T-07

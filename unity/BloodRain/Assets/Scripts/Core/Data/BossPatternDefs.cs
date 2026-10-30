@@ -72,6 +72,8 @@ namespace BloodRain.Core.Data
         public string Summon = "";
         /// <summary>소환한 적의 이동속도(플레이어 100 기준). 0이면 그 적의 기본값.</summary>
         public float SummonSpeed;
+        /// <summary>종장 혈영 솟음: 솟는 혈영의 기혈 = 그 땅의 주인 기준 체력 × 이 값.</summary>
+        public float SummonHealthRatio;
         /// <summary>판정 뒤 그 자리에 남기는 기믹 id(gimmicks.json). 비어 있으면 없음.</summary>
         public string LeaveGimmick = "";
         /// <summary>남긴 기믹이 사라질 때까지(초).</summary>
@@ -133,8 +135,10 @@ namespace BloodRain.Core.Data
         public string NameKo = "";
         public string Hanja = "";
         public float Health;
-        /// <summary>이 단계의 패턴 id(수치는 아직 없음, 뼈대).</summary>
+        /// <summary>이 단계의 패턴 id. Set 의 Order 와 Phase2 를 모은 것(순서는 기획서 문장 순).</summary>
         public List<string> Patterns = new List<string>();
+        /// <summary>이 단계의 패턴 시간표(땅의 주인과 같은 틀, T-39). BossPatterns 에 그대로 넣는다.</summary>
+        public BossPatternSetDef Set = new BossPatternSetDef();
         /// <summary>진엔딩 조건을 채웠으면 기혈이 이 비율에 닿을 때 컷신으로 넘어간다. 0이면 없음.</summary>
         public float TrueEndingCutAt;
     }

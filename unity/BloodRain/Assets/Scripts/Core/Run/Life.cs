@@ -101,6 +101,8 @@ namespace BloodRain.Core.Run
         public LifeRecord? Record { get; private set; }
         /// <summary>혈마의 그림자 단계(0이면 없음).</summary>
         public int ShadowStep => Director.ShadowStep(Minutes, Level, _soul.SealStoneCount);
+        /// <summary>지금 혈마의 그림자 세기(단계 0이면 Active 가 false).</summary>
+        public BloodShadowStrength Shadow => BloodShadow.Strength(_data.Cheonha.LifeEnd.Shadow, ShadowStep);
         /// <summary>지금 세상 시간 배율(돌파·각성 연출 중엔 느리다). Unity 의 Time.timeScale 에 넣는다.</summary>
         public float WorldTimeScale => Math.Min(Breakthrough.WorldTimeScale, Awakening.IsActive ? Awakening.WorldTimeScale : 1f);
 

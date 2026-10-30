@@ -456,14 +456,57 @@
   },
 
   "final": {
-    "_note": "종장 혈마 단목현(6장 '종장 보스', T-14 뼈대). 봉마곡 혈지에서 땅의 주인 일곱의 혈영을 shadows 차례로 넘긴 뒤 stages 셋. 혈영 기혈 = 그 보스 기준 체력 x shadowHealthRatio(패턴은 그 보스 것 그대로). 단계 패턴은 이름만 있고 수치는 아직 없다. 진엔딩 조건(21장)을 채웠으면 진혈마 기혈이 trueEndingCutAt 에 닿을 때 목 노인 컷신으로 넘어간다.",
+    "_note": "종장 혈마 단목현(6장 '종장 보스', T-14 뼈대). 봉마곡 혈지에서 땅의 주인 일곱의 혈영을 shadows 차례로 넘긴 뒤 stages 셋. 혈영 기혈 = 그 보스 기준 체력 x shadowHealthRatio(패턴은 그 보스 것 그대로). 단계 패턴 수치는 stages[].set(땅의 주인과 같은 틀, T-39). stages[].patterns 는 set 의 order 와 phase2 id 를 모은 것(순서는 기획서 문장 순). 진엔딩 조건(21장)을 채웠으면 진혈마 기혈이 trueEndingCutAt 에 닿을 때 목 노인 컷신으로 넘어간다.",
     "boss": "danmok_hyeon",
     "shadowHealthRatio": 0.4,
     "shadows": ["wongak", "dang_sohye", "ma_cheonpae", "hyeolheo", "huashan_sword_soul", "seol_muhyang", "hyeokryeon_hwi"],
     "stages": [
-      { "id": "hyeoleui",   "nameKo": "혈의",   "hanja": "血醫",   "health": 400000, "patterns": ["blood_needle_barrage", "pulse_ring", "plague_cloud"] },
-      { "id": "hyeolhae",   "nameKo": "혈해",   "hanja": "血海",   "health": 600000, "patterns": ["rising_blood_sea", "shadow_rise"] },
-      { "id": "jinhyeolma", "nameKo": "진혈마", "hanja": "眞血魔", "health": 800000, "patterns": ["blood_rain_barrage"], "trueEndingCutAt": 0.1 }
+      { "id": "hyeoleui",   "nameKo": "혈의",   "hanja": "血醫",   "health": 400000, "patterns": ["blood_needle_barrage", "pulse_ring", "plague_cloud"],
+        "set": {
+          "_note": "사람 모습의 의원. 2026-10-30 예약 세션이 혁련휘(접촉 25, 간격 4.5)보다 한 걸음 세게 정했다. 2막은 없다(단계가 곧 막).",
+          "firstCastSeconds": 2.5, "intervalSeconds": 4.0, "phase2IntervalSeconds": 4.0, "phase2At": 0, "contactDamage": 28, "moveSpeed": 60,
+          "order": ["blood_needle_barrage", "pulse_ring", "plague_cloud"],
+          "patterns": [
+            { "id": "blood_needle_barrage", "nameKo": "혈침 탄막", "shape": "projectile_fan",
+              "_note": "침술 바늘. 예고 때 플레이어 쪽을 잡고 부채꼴로 count 개씩 waves 파를 쏜다. 바늘 사이 틈으로 빠져나가게 각도를 넓게 잡았다.",
+              "telegraphSeconds": 0.8, "count": 9, "angleDegrees": 80, "waves": 3, "waveIntervalSeconds": 0.35, "projectileSpeed": 180, "baseDamage": 12, "aim": "player_at_telegraph", "bossHolds": true },
+            { "id": "pulse_ring", "nameKo": "맥 짚는 손", "shape": "closing_ring",
+              "_note": "예고를 시작할 때 플레이어 자리를 가운데로 반경 radius 의 붉은 고리가 생기고, 판정부터 shrinkPerSecond 로 minRadius 까지 조여 든다. 고리(폭 width)에 닿으면 피해. 안에 남으면 끝에 맞으니 경공 무적(0.2초)으로 고리를 뚫고 나가야 한다.",
+              "telegraphSeconds": 1.0, "radius": 9, "width": 1.2, "minRadius": 1.5, "shrinkPerSecond": 3.75, "baseDamage": 26, "hitIntervalSeconds": 0.5, "aim": "player_at_telegraph" },
+            { "id": "plague_cloud", "nameKo": "역병 구름", "shape": "drifting_clouds",
+              "_note": "플레이어 둘레 scatter 안 count 곳에 구름이 피어 projectileSpeed 로 플레이어 쪽으로 천천히 떠다닌다. 안에 있으면 hitIntervalSeconds 마다 피해. leaveSeconds 뒤 흩어진다.",
+              "telegraphSeconds": 1.0, "count": 3, "scatter": 10, "radius": 3.5, "projectileSpeed": 25, "baseDamage": 5, "hitIntervalSeconds": 0.5, "leaveSeconds": 12 }
+          ],
+          "phase2": []
+        } },
+      { "id": "hyeolhae",   "nameKo": "혈해",   "hanja": "血海",   "health": 600000, "patterns": ["rising_blood_sea", "shadow_rise"],
+        "set": {
+          "_note": "피바다. phase2At 1 이라 싸움이 시작되자마자 '2막 패턴'인 피바다가 차오른다(2막 연출 없이 단계 시작 연출로 쓴다). 차례 패턴은 혈영 솟음 하나.",
+          "firstCastSeconds": 3.0, "intervalSeconds": 6.0, "phase2IntervalSeconds": 6.0, "phase2At": 1, "contactDamage": 30, "moveSpeed": 55,
+          "order": ["shadow_rise"],
+          "patterns": [
+            { "id": "shadow_rise", "nameKo": "혈영 솟음", "shape": "summon_shadow",
+              "_note": "피바다에서 땅의 주인 혈영 하나가 솟는다. 누구인지는 final.shadows 차례대로 돈다. 기혈은 그 보스 기준 체력 x summonHealthRatio, 패턴 없이 몸으로만 덤비고(접촉 피해는 그 보스 값) leaveSeconds 뒤 피로 녹는다.",
+              "telegraphSeconds": 1.2, "count": 1, "center": "boss", "summonHealthRatio": 0.1, "leaveSeconds": 20, "baseDamage": 0 }
+          ],
+          "phase2": [
+            { "id": "rising_blood_sea", "nameKo": "차오르는 피바다", "shape": "shrinking_islands",
+              "_note": "싸움터 바닥이 피로 덮이고 count 개의 섬만 남는다(싸움터 안에 고루 흩어 놓기). 섬 반경은 radius 에서 shrinkPerSecond 로 minRadius 까지 줄어 약 90초에 바닥. 피 위에 서 있으면 hitIntervalSeconds 마다 피해. 혈영은 피 위에서도 다친다.",
+              "telegraphSeconds": 2.0, "count": 5, "radius": 7, "minRadius": 2.5, "shrinkPerSecond": 0.05, "baseDamage": 6, "hitIntervalSeconds": 0.5, "continuous": true }
+          ]
+        } },
+      { "id": "jinhyeolma", "nameKo": "진혈마", "hanja": "眞血魔", "health": 800000, "patterns": ["blood_rain_barrage"], "trueEndingCutAt": 0.1,
+        "set": {
+          "_note": "하늘을 가린 형체. 몸이 화면 밖이라 접촉 피해는 0이고 움직이지 않는다. 빗줄기 탄막 하나를 짧은 간격으로 계속 쏟는다. 30% 아래에선 간격이 짧아진다.",
+          "firstCastSeconds": 2.0, "intervalSeconds": 4.0, "phase2IntervalSeconds": 3.0, "phase2At": 0.3, "contactDamage": 0, "moveSpeed": 0,
+          "order": ["blood_rain_barrage"],
+          "patterns": [
+            { "id": "blood_rain_barrage", "nameKo": "혈우 탄막", "shape": "rain_drops",
+              "_note": "플레이어 둘레 scatter 안에 핏방울 count 개가 waves 파로 떨어진다. 방울마다 telegraphSeconds 동안 바닥에 그림자가 먼저 진다. 파마다 플레이어 자리로 다시 잡는다.",
+              "telegraphSeconds": 0.6, "count": 14, "scatter": 12, "radius": 0.9, "waves": 5, "waveIntervalSeconds": 0.5, "baseDamage": 14, "center": "player_at_resolve" }
+          ],
+          "phase2": []
+        } }
     ]
   }
 }

@@ -247,6 +247,24 @@ namespace BloodRain.Core.Data
         public List<string> Ways = new List<string>();
         public float ShadowFromMinute;
         public float ShadowStepMinutes;
+        /// <summary>혈마의 그림자 한 단계의 세기(World/BloodShadow).</summary>
+        public BloodShadowDef Shadow = new BloodShadowDef();
+    }
+
+    public sealed class BloodShadowDef
+    {
+        /// <summary>1단계 접촉 피해(0분·혈운 농도 1 값이 아니라 그대로 쓰는 값).</summary>
+        public float ContactDamage;
+        /// <summary>단계가 하나 오를 때 접촉 피해에 곱하는 값.</summary>
+        public float DamageGrowth;
+        /// <summary>1단계 이동속도(플레이어 기본 100 기준).</summary>
+        public float MoveSpeed;
+        public float SpeedPerStep;
+        public float MaxSpeed;
+        /// <summary>계속 닿아 있을 때 다시 맞는 간격(초).</summary>
+        public float HitIntervalSeconds;
+        /// <summary>단계가 하나 오를 때 화면 위 모든 적 피해에 더하는 배율.</summary>
+        public float EnemyDamagePerStep;
     }
 
     public sealed class CycleDef
