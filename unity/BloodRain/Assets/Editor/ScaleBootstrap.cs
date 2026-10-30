@@ -1,5 +1,6 @@
 using System.IO;
 using BloodRain.Presentation;
+using BloodRain.Presentation.Fx;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -38,8 +39,28 @@ namespace BloodRain.Editor
             driver.AddComponent<ScaleTestDriver>();
             driver.AddComponent<CrushTestField>(); // TU-03 밟힘과 쓸림 (E 적 무리, T 바닥 물건)
 
+            // TU-05 혈우 장막. 돌파 연출(BreakthroughFx)은 드라이버가 실행 때 붙이니 드라이버 자식으로 둔다.
+            var curtain = new GameObject("혈우 장막");
+            curtain.transform.SetParent(driver.transform, false);
+            curtain.AddComponent<MeshFilter>();
+            curtain.AddComponent<MeshRenderer>().sharedMaterial = EnsureCurtainMaterial();
+            curtain.AddComponent<BloodCurtain>();
+
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[ScaleBootstrap] {TestScenePath} 만듦");
+        }
+
+        const string CurtainMatPath = "Assets/Art/Materials/BloodCurtain.mat";
+
+        public static Material EnsureCurtainMaterial()
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(CurtainMatPath);
+            if (mat != null) return mat;
+            Directory.CreateDirectory("Assets/Art/Materials");
+            mat = new Material(Shader.Find("BloodRain/BloodCurtain")) { name = "BloodCurtain" };
+            AssetDatabase.CreateAsset(mat, CurtainMatPath);
+            AssetDatabase.SaveAssets();
+            return mat;
         }
     }
 }
