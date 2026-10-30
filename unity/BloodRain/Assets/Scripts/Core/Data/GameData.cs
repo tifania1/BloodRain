@@ -29,6 +29,8 @@ namespace BloodRain.Core.Data
         public CheonhaDef Cheonha { get; private set; } = new CheonhaDef();
         /// <summary>보스 id → 땅의 주인 패턴 시간표(bosspatterns.json, 기획서 6장).</summary>
         public IReadOnlyDictionary<string, BossPatternSetDef> BossPatterns { get; private set; } = new Dictionary<string, BossPatternSetDef>();
+        /// <summary>종장 혈마의 혈영 차례와 3단계(bosspatterns.json final).</summary>
+        public FinalBossDef FinalBoss { get; private set; } = new FinalBossDef();
         /// <summary>지역 기믹 수치(gimmicks.json, 기획서 7장).</summary>
         public GimmicksDef Gimmicks { get; private set; } = new GimmicksDef();
 
@@ -59,6 +61,7 @@ namespace BloodRain.Core.Data
             var characters = Read<CharacterFile>("characters");
             var enemies = Read<EnemyFile>("enemies");
             var insights = Read<InsightFile>("insights");
+            var bossPatterns = Read<BossPatternFile>("bosspatterns");
             return new GameData
             {
                 Weapons = Read<WeaponFile>("weapons").Weapons,
@@ -75,7 +78,8 @@ namespace BloodRain.Core.Data
                 InsightChoices = insights.Choices,
                 Chapters = Read<ChapterFile>("chapters").Chapters,
                 Cheonha = Read<CheonhaDef>("cheonha"),
-                BossPatterns = Read<BossPatternFile>("bosspatterns").Bosses,
+                BossPatterns = bossPatterns.Bosses,
+                FinalBoss = bossPatterns.Final,
                 Gimmicks = Read<GimmicksDef>("gimmicks"),
             };
         }

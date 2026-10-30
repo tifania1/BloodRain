@@ -102,10 +102,46 @@ namespace BloodRain.Core.Data
         public string Arrangement = "";
         /// <summary>시전 뒤 보스가 굳어 있는 시간(일섬 뒤 2초 경직). 공격 기회.</summary>
         public float RecoverySeconds;
+        /// <summary>시야 배율(눈보라: 화면 대각선이 이만큼 좁아진 것처럼 어둡게 가린다).</summary>
+        public float ViewScale;
+        /// <summary>줄어드는 싸움터: 가장 작은 반경(m).</summary>
+        public float MinRadius;
+        /// <summary>줄어드는 싸움터: 초당 줄어드는 반경(m).</summary>
+        public float ShrinkPerSecond;
+        /// <summary>이 기믹(gimmicks.json id) 가까이면 줄어드는 속도에 SlowedNearMultiplier 를 곱한다.</summary>
+        public string SlowedNear = "";
+        public float SlowedNearMultiplier;
+        /// <summary>모든 적 강화(혈월): 피해·이동속도 배율.</summary>
+        public float EnemyDamageMultiplier;
+        public float EnemySpeedMultiplier;
+    }
+
+    /// <summary>종장 혈마 단목현(기획서 6장 '종장 보스'). 땅의 주인 일곱의 혈영을 차례로 넘긴 뒤 3단계.</summary>
+    public sealed class FinalBossDef
+    {
+        public string Boss = "";
+        /// <summary>혈영 기혈 = 그 땅의 주인 기준 체력 × 이 값.</summary>
+        public float ShadowHealthRatio;
+        /// <summary>혈영으로 나오는 땅의 주인(보스 id) 차례.</summary>
+        public List<string> Shadows = new List<string>();
+        public List<FinalStageDef> Stages = new List<FinalStageDef>();
+    }
+
+    public sealed class FinalStageDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        public string Hanja = "";
+        public float Health;
+        /// <summary>이 단계의 패턴 id(수치는 아직 없음, 뼈대).</summary>
+        public List<string> Patterns = new List<string>();
+        /// <summary>진엔딩 조건을 채웠으면 기혈이 이 비율에 닿을 때 컷신으로 넘어간다. 0이면 없음.</summary>
+        public float TrueEndingCutAt;
     }
 
     sealed class BossPatternFile
     {
+        public FinalBossDef Final = new FinalBossDef();
         public Dictionary<string, BossPatternSetDef> Bosses = new Dictionary<string, BossPatternSetDef>();
     }
 }

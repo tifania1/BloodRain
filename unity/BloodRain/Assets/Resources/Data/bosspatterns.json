@@ -327,6 +327,143 @@
           "continuous": true
         }
       ]
+    },
+    "seol_muhyang": {
+      "_note": "빙혈 설무향(곤륜 설원, T-14). 2026-10-30 예약 세션이 원각을 기준으로 정했다.",
+      "firstCastSeconds": 2.5,
+      "intervalSeconds": 4.5,
+      "phase2IntervalSeconds": 3.5,
+      "phase2At": 0.3,
+      "contactDamage": 22,
+      "moveSpeed": 55,
+      "order": ["blizzard_narrow_view", "ice_clones_x4", "ice_spike_chain"],
+      "patterns": [
+        {
+          "id": "blizzard_narrow_view",
+          "nameKo": "눈보라",
+          "shape": "view_shrink",
+          "_note": "leaveSeconds 동안 화면 가장자리부터 눈보라가 덮어 보이는 범위가 viewScale 배로 좁아진다(카메라는 그대로, 덮개만). 피해는 없다.",
+          "telegraphSeconds": 1.0,
+          "leaveSeconds": 6,
+          "viewScale": 0.6,
+          "baseDamage": 0
+        },
+        {
+          "id": "ice_clones_x4",
+          "nameKo": "빙분신",
+          "shape": "clones",
+          "_note": "설무향이 넷으로 갈라져 scatter 안에 선다. 넷 가운데 진짜 하나만 바닥 그림자가 있다. 분신은 한 대 맞으면 깨지고, leaveSeconds 가 지나면 남은 분신이 사라진다. 분신은 패턴을 쓰지 않고 몸에 닿는 피해만 있다.",
+          "telegraphSeconds": 0.8,
+          "count": 4,
+          "scatter": 6,
+          "leaveSeconds": 8,
+          "baseDamage": 0
+        },
+        {
+          "id": "ice_spike_chain",
+          "nameKo": "얼음 가시",
+          "shape": "chain_circles",
+          "_note": "예고를 시작할 때 플레이어 쪽으로 방향을 잡고, 판정부터 보스 발밑에서 플레이어 쪽으로 길이 length 를 따라 가시 count 개가 waveIntervalSeconds 간격으로 차례로 솟는다.",
+          "telegraphSeconds": 0.8,
+          "count": 8,
+          "radius": 1.2,
+          "length": 12,
+          "waveIntervalSeconds": 0.12,
+          "baseDamage": 16,
+          "aim": "player_at_telegraph"
+        }
+      ],
+      "phase2": [
+        {
+          "id": "freezing_edges",
+          "nameKo": "이동 범위 축소",
+          "shape": "shrinking_arena",
+          "_note": "2막이 되면 보스를 가운데 둔 반경 radius 원 바깥이 얼어붙고, 원이 초당 shrinkPerSecond 씩 minRadius 까지 줄어든다. 얼음 위에 서 있으면 hitIntervalSeconds 마다 피해. 모닥불(gimmicks bonfire) 가까이에서 싸우면 줄어드는 속도가 slowedNearMultiplier 배.",
+          "telegraphSeconds": 1.5,
+          "radius": 20,
+          "minRadius": 8,
+          "shrinkPerSecond": 0.25,
+          "slowedNear": "bonfire",
+          "slowedNearMultiplier": 0.5,
+          "hitIntervalSeconds": 0.5,
+          "baseDamage": 6,
+          "continuous": true
+        }
+      ]
+    },
+    "hyeokryeon_hwi": {
+      "_note": "혈영회주 혁련휘(십만대산, T-14). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 혈영 분신(blood_shadow_clone)은 아직 enemies.json 에 없다(T-33에서 넣는다).",
+      "firstCastSeconds": 2.5,
+      "intervalSeconds": 4.5,
+      "phase2IntervalSeconds": 3.5,
+      "phase2At": 0.3,
+      "contactDamage": 25,
+      "moveSpeed": 65,
+      "order": ["blink_x4_slam", "giant_blood_palm", "mirror_clone"],
+      "patterns": [
+        {
+          "id": "blink_x4_slam",
+          "nameKo": "순간이동",
+          "shape": "blink_slam",
+          "_note": "플레이어 둘레 scatter 안으로 count 번 순간이동한다(waveIntervalSeconds 간격, 이동마다 잔상만 남고 피해 없음). 마지막 자리에서 예고 telegraphSeconds 뒤 반경 radius 를 내려찍는다.",
+          "telegraphSeconds": 0.6,
+          "count": 4,
+          "scatter": 5,
+          "waveIntervalSeconds": 0.4,
+          "radius": 3.5,
+          "baseDamage": 24,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        },
+        {
+          "id": "giant_blood_palm",
+          "nameKo": "붉은 손바닥",
+          "shape": "circles",
+          "_note": "예고를 시작할 때 플레이어 자리에 거대한 손바닥 그림자가 드리우고 판정 때 떨어진다.",
+          "telegraphSeconds": 1.5,
+          "count": 1,
+          "radius": 5,
+          "baseDamage": 35,
+          "aim": "player_at_telegraph"
+        },
+        {
+          "id": "mirror_clone",
+          "nameKo": "혈영 분신",
+          "shape": "summon",
+          "_note": "플레이어 모습을 한 혈영 분신 하나가 보스 옆에 선다. 플레이어가 가진 무공을 같은 레벨로 쓰되 피해는 절반이고, leaveSeconds 뒤 사라진다. 플레이어 빌드의 약점(빈 방향·느린 쿨)을 그대로 가진다.",
+          "telegraphSeconds": 1.0,
+          "count": 1,
+          "summon": "blood_shadow_clone",
+          "center": "boss",
+          "leaveSeconds": 12,
+          "baseDamage": 0
+        }
+      ],
+      "phase2": [
+        {
+          "id": "blood_moon_empower",
+          "nameKo": "혈월",
+          "shape": "empower",
+          "_note": "2막이 되면 하늘에 붉은 달이 뜨고(예고) 끝까지 화면 위 모든 적의 피해가 enemyDamageMultiplier 배, 이동속도가 enemySpeedMultiplier 배. 보스 자신도 포함.",
+          "telegraphSeconds": 1.5,
+          "enemyDamageMultiplier": 1.3,
+          "enemySpeedMultiplier": 1.2,
+          "baseDamage": 0,
+          "continuous": true
+        }
+      ]
     }
+  },
+
+  "final": {
+    "_note": "종장 혈마 단목현(6장 '종장 보스', T-14 뼈대). 봉마곡 혈지에서 땅의 주인 일곱의 혈영을 shadows 차례로 넘긴 뒤 stages 셋. 혈영 기혈 = 그 보스 기준 체력 x shadowHealthRatio(패턴은 그 보스 것 그대로). 단계 패턴은 이름만 있고 수치는 아직 없다. 진엔딩 조건(21장)을 채웠으면 진혈마 기혈이 trueEndingCutAt 에 닿을 때 목 노인 컷신으로 넘어간다.",
+    "boss": "danmok_hyeon",
+    "shadowHealthRatio": 0.4,
+    "shadows": ["wongak", "dang_sohye", "ma_cheonpae", "hyeolheo", "huashan_sword_soul", "seol_muhyang", "hyeokryeon_hwi"],
+    "stages": [
+      { "id": "hyeoleui",   "nameKo": "혈의",   "hanja": "血醫",   "health": 400000, "patterns": ["blood_needle_barrage", "pulse_ring", "plague_cloud"] },
+      { "id": "hyeolhae",   "nameKo": "혈해",   "hanja": "血海",   "health": 600000, "patterns": ["rising_blood_sea", "shadow_rise"] },
+      { "id": "jinhyeolma", "nameKo": "진혈마", "hanja": "眞血魔", "health": 800000, "patterns": ["blood_rain_barrage"], "trueEndingCutAt": 0.1 }
+    ]
   }
 }

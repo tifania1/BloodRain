@@ -18,9 +18,9 @@ namespace BloodRain.Core.Tests
         float At20(float baseDamage) => BossPatterns.ScaleDamage(baseDamage, 20f, 1f, Dpm);
 
         /// <summary>아직 enemies.json 에 없는 소환 적. T-33에서 넣으면 여기서 뺀다.</summary>
-        static readonly HashSet<string> PendingSummons = new HashSet<string> { "water_ghost", "plum_sword_ghost" };
+        static readonly HashSet<string> PendingSummons = new HashSet<string> { "water_ghost", "plum_sword_ghost", "blood_shadow_clone" };
 
-        public static IEnumerable<object[]> Bosses => new[] { "dang_sohye", "ma_cheonpae", "hyeolheo", "huashan_sword_soul" }.Select(x => new object[] { x });
+        public static IEnumerable<object[]> Bosses => new[] { "dang_sohye", "ma_cheonpae", "hyeolheo", "huashan_sword_soul", "seol_muhyang", "hyeokryeon_hwi" }.Select(x => new object[] { x });
 
         [Theory, MemberData(nameof(Bosses))]
         public void 패턴_순서와_2막이_enemies_json과_같다(string id)
@@ -162,6 +162,17 @@ namespace BloodRain.Core.Tests
             Assert.Equal(24, burst.Count);
             var spiral = w.Pattern("petal_spiral");
             Assert.True(spiral.TelegraphSeconds + spiral.LeaveSeconds < w.IntervalSeconds);
+        }
+        [Fact] public void 설무향_싸움터는_모닥불_곁에서_천천히_줄고_혁련휘_혈월은_모든_적을_강화한다()
+        {
+            var s = _d.BossPatternSet("seol_muhyang").Phase2.Single();
+            Assert.True(s.MinRadius < s.Radius && s.ShrinkPerSecond > 0);
+            Assert.Equal("bonfire", s.SlowedNear);
+            Assert.InRange(s.SlowedNearMultiplier, 0.01f, 0.99f);
+            var clones = _d.BossPatternSet("seol_muhyang").Pattern("ice_clones_x4");
+            Assert.Equal(4, clones.Count);
+            var moon = _d.BossPatternSet("hyeokryeon_hwi").Phase2.Single();
+            Assert.True(moon.EnemyDamageMultiplier > 1 && moon.EnemySpeedMultiplier > 1);
         }
     }
 }

@@ -58,7 +58,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] T-11 2026-10-29 — `bosspatterns.json`(원각, 프로토 값 옮김)과 `Core/Combat/BossPatterns.cs`(Plan·Tick, 2막). 6장 '땅의 주인 패턴 수치' 새 절
 - [x] T-12 2026-10-30 — bosspatterns.json 에 당소혜(독안개 좌우 번갈아·암기 3파·금선지네·2막 분열)와 마천패(갈고리 사슬·물기둥·수귀·2막 역류 파도). 새 칸(waves·pullSeconds·healthShare·rejoinSeconds·alternate 등), 6장 수치 절 둘, 테스트 15개. 숫자는 원각 기준으로 정함. 수귀는 T-33 대기
 - [x] T-13 2026-10-30 — bosspatterns.json 에 혈허진인(흑백 구역 피해 2배·태극권·칠성검진 북두칠성·2막 경계 회전)과 낙매검선의 검혼(꽃잎 나선·일섬 뒤 2초 경직·매화검귀·2막 스물네 갈래). 새 칸 damageTakenMultiplier·burstRadius·arrangement·recoverySeconds, 6장 수치 절 둘, 테스트 14개 더. 매화검귀는 T-33 대기
-- [ ] T-14 땅의 주인 패턴: 설무향·혁련휘, 종장 혈마 3단계 뼈대
+- [x] T-14 2026-10-30 — 설무향(눈보라 시야 0.6배·빙분신 넷·얼음 가시 연쇄·2막 싸움터 축소, 모닥불 곁 절반)과 혁련휘(순간이동 네 번 뒤 내려찍기·붉은 손바닥·혈영 분신·2막 혈월 피해 1.3배)를 bosspatterns.json·6장에. 종장 뼈대 `final`(혈영 일곱 40%·혈의·혈해·진혈마, 진엔딩 컷 10%)과 `Core/Combat/FinalFight.cs`. 혈마 단계 패턴 수치·혈마의 그림자 세기는 아직(아래 T-39)
 - [x] T-15 2026-10-29 — `gimmicks.json`·`Core/World/Gimmicks.cs`: 범종·탑림·우물·독안개·물·태극 바닥. 7장 '지형 기믹 수치' 새 절
 - [ ] T-16 지역 기믹 둘째 묶음: 낙석·매화 더미·눈보라·빙판·모닥불·혈제단·붉은 달·술독·검각 시렁
 
@@ -67,12 +67,13 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] T-30 비전 '낙매검선의 피' 조건을 천하 구조에 맞게: '진소운으로' → '화산 제자로 태어나'(진소운은 서장에만 나옴). synergies.json `require` 에 sect 조건, Secrets.cs 판정, 20장 표 문장을 같이
 - [ ] T-31 정예 조회 하나로: `Core/World/Regions.cs` 와 `Core/Spawning/RegionSpawns.cs` 에 정예·고유 적 조회가 두 벌 생겼다. 하나로 합치고 다른 쪽은 그걸 부르게. 테스트는 그대로 통과해야 함
 - [ ] T-32 정예 18종 데이터: enemies.json 에 이름만 있는 chapter2~7 정예(6장 정예 표)의 기혈·속도·피해·행동 id 를 정한다. 기준은 숭산 정예(동인·계율원 강시 승려·강시 방장 대리)와 11장 장 배율. 6장 표에 수치 칸 추가
-- [ ] T-33 (마천패가 `water_ghost`, 검혼이 `plum_sword_ghost` 를 소환한다. 넣으면 BossPatternsMoreTests 의 PendingSummons 에서 뺀다) 지역 고유 적 데이터: 장강(수귀·수적)·무당(흑백 쌍강시)·화산(매화검귀)·곤륜(빙강시·설랑 떼·설인)·십만대산(마교도·혈영 분신·혈사자)을 enemies.json 에 넣는다(기혈·속도·피해·행동, chapter 필드). 6장 '지역별 고유 적' 표에 수치 칸. 지금은 이 다섯 땅이 고유 적 없이 돈다
+- [ ] T-33 (마천패가 `water_ghost`, 검혼이 `plum_sword_ghost`, 혁련휘가 `blood_shadow_clone` 을 소환한다. 넣으면 BossPatternsMoreTests 의 PendingSummons 에서 뺀다) 지역 고유 적 데이터: 장강(수귀·수적)·무당(흑백 쌍강시)·화산(매화검귀)·곤륜(빙강시·설랑 떼·설인)·십만대산(마교도·혈영 분신·혈사자)을 enemies.json 에 넣는다(기혈·속도·피해·행동, chapter 필드). 6장 '지역별 고유 적' 표에 수치 칸. 지금은 이 다섯 땅이 고유 적 없이 돈다
 - [ ] T-34 기획서 13장에 '환생 카드(세로 2:3)'·'화면 배경' 용도별 틀을 올린다(T-23에서 컷신 틀을 고쳐 쓴 것). art_queue 의 해당 줄 프롬프트와 맞춘다
 - [ ] T-35 art_queue: `map_central_plains` 를 3:2(세계 4,000×2,600m)로 바꾸고 프롬프트의 지형 배치를 cheonha.json 지역 위치에 맞춰 다시 쓴다(십만대산은 남쪽 가운데 등). 목 노인 캐릭터 시트 1줄, 천하 지형 소품(나무·집·탑·산·마을) 묶음 줄 추가(chat 규칙 지키기) (진행: 2026-10-30 대화 세션이 지도 줄을 3:2·지역 배치로 고치고 ChatGPT에서 다시 뽑음. 목 노인 시트·지형 소품 줄이 남음)
 - [ ] T-36 웹 프로토타입 본편(template.html)에 취선봉 동작(`random_arc`)을 넣는다. 지금은 동작이 없어 시작 풀에서 빼 두었다(PROTO_BEHAVIORS)
 - [ ] T-37 대표 인물 '사매' 대사 한 벌(몸이 여자 제자일 때). 사람 확인 2026-10-30. 규칙은 기획서 21장에 적어 둠: 후보마다 성별 반반, 소림은 남자만, 능력치는 같고 호칭·대사 몇 줄만 바뀐다. 할 일: `docs/story/leaders.md` 마당 대사 사매판, `sects.md` 몸 묘사에 여자 몸, cheonha.json `rebirth` 에 성별 값(여자 비율 0.5, 남자만인 문파 [shaolin])과 CheonhaDef·Rebirth.cs 후보 추첨, 테스트. art_queue 에 문파 카드 여자 몸판 8줄(소림 빼고, 같은 문파 카드와 같은 chat)
 - [ ] T-38 마교 몸의 성장 '혈공'(기획서 5장): 진기 × 혈운 농도, 더 받은 진기 300마다 음양 -1, 천마해체로 음양 시작값 복귀, 돌파 깨달음 셋 중 하나는 마공(insights.json 마교 전용 4~6종). cheonha.json 문파 `demonic` 에 값, Core 반영, 테스트. 사람 확인 2026-10-30.
+- [ ] T-39 종장 혈마 세 단계의 패턴 수치(bosspatterns.json `final.stages[].patterns` 는 이름만 있음)와 혈마의 그림자 한 단계의 세기(LifeDirector.ShadowStep 은 단계 수만 낸다). 6장 종장 절에 표. 먼저: T-14
 
 ### 확인과 밸런스
 - [ ] T-17 시뮬레이터 확장: `core/BloodRain.Sim` 에 천하 한 생(30분, 지역 이동, 땅의 주인)을 넣어 경지 도달 시각, 윤회의 기, 출생지별 보스 처치 시간을 표로. 보고서 `docs/design/sim/cheonha.md`. 먼저: T-03~T-07
