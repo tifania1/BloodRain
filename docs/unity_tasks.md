@@ -5,7 +5,7 @@ Unity 에디터가 있어야 하는 일만 적는다. 밤마다(20:37·22:37·00
 
 - [ ] B-00 기본 템플릿이 넣은 안 쓰는 패키지 정리: com.unity.ads, com.unity.analytics, com.unity.purchasing, com.unity.xr.legacyinputhelpers, com.unity.multiplayer.center, com.unity.collab-proxy 제거 후 콘솔 오류 0 확인 (WebGL 용량 때문)
 - [ ] B-10 Unity 프로젝트 기본 설정: Packages에 2D URP·Input System·com.unity.nuget.newtonsoft-json·Test Framework 확인, Assets/Scenes에 Boot·Run·Inn 빈 씬, Assets/Scripts/Presentation·Sim·Platform 폴더와 asmdef(BloodRain.Core 참조)
-- [ ] B-11 데이터 로더: Resources/Data의 JSON(`GameData.FileNames` 에 적힌 것 전부, 지금 10개)을 TextAsset으로 읽어 GameData.FromJson에 넘기는 `Presentation/DataBoot.cs`. Boot 씬 플레이 시 콘솔에 무공 16종 이름이 찍히는지 확인
+- [ ] B-11 데이터 로더: Resources/Data의 JSON(`GameData.FileNames` 에 적힌 것 전부, 지금 12개)을 TextAsset으로 읽어 GameData.FromJson에 넘기는 `Presentation/DataBoot.cs`. Boot 씬 플레이 시 콘솔에 무공 16종 이름이 찍히는지 확인
 - [ ] S-04 시너지 표시: 레벨업 카드 연환 띠·문파 인장, HUD 진전 인장, 비전·기연 발견 연출, 장경각 도감 화면(기획서 20장, 웹 프로토타입 동작 참고)
 - [ ] J-01U 절기 각성 연출: `docs/design/vfx.md` '절기 각성 연출' 표대로 Fullscreen Pass(흑백 구멍), 카메라 확대·흔들림(언스케일), 이름 붓질(TextMeshPro + Yuji Boku SDF), 낙관, 파동 링. 웹 프로토타입 `#awaken` 과 나란히 놓고 비교. 판정은 Core J-01이 끝난 뒤 연결
 - [x] M-03 강호 지도 화면: 혈운 셰이더·먹 길·깃발(기획서 21장). 배경 이미지(art_queue `map_central_plains`)가 들어온 뒤에 시작 — 천하 구조로 바뀌어 안 함(2026-10-29). 지도는 침방 벽 지도(TU-12)로 옮김
@@ -28,3 +28,18 @@ Unity 에디터가 있어야 하는 일만 적는다. 밤마다(20:37·22:37·00
 - [ ] TU-12 침방 화면 2, 벽의 중원 지도: 배경 벽 빈자리에 `map_central_plains` 를 건다. 밟은 땅은 먹으로, 못 가 본 땅은 붉은 구름 아래 지명만 흐릿하게, 봉인석을 가져온 땅은 혈운이 걷히고 문파 깃발. 후보 카드에 커서가 가면 그 문파 자리에 붉은 점과 절정·초절정 장막 원을 먹선으로 그리고, 원 안에 드는 땅의 주인을 표시. 지명·깃발·원은 모두 Unity에서 얹는다(21장 '침방의 중원 지도'). Core 입구: `Core/Meta/Soul.cs`(밟은 땅·봉인석), `Core/World/Scale.cs`(장막 반경), `Regions.cs`(지역 위치). 먼저: TU-11
 - [ ] TU-13 정산 화면: 생존 시간, 오른 경지, 밟은 땅, 처치 수(덩이 속 사람 수로 셈), 무공별 피해 비중 막대, 혈정, 윤회의 기 내역(진기 × 혈운 농도, 땅의 주인, 처음 밟은 땅, 처음 오른 경지, 남은 은자 절반, 성질 배율)을 한 줄씩 차오르게. 쓰러짐과 좌화는 같은 화면이고 끝나면 객잔으로. Core 입구: `Core/Meta/RebirthQi.cs`(항목별 내역), `Core/Meta/Soul.cs`(잔고에 더하기). 먼저: B-11
 - [ ] TU-14 연무장 화면: 윤회의 기 잔고와 10장 연무장 20항목(레벨, 다음 비용, 효과), 사기와 전부 환불. 같은 구매 칸으로 침방 아래에 환혼 강화 두 줄(넷째 몸, 다시 고르기)도 붙인다. Core 입구: `Core/Meta/Soul.cs`(잔고·연무장 레벨·환혼 강화), `Core/Build/Stats.cs`(연무장 비용 공식, balance.json `training`). 먼저: B-11
+
+## M1 코어 프로토타입 (backlog C-01~C-10 에서 옮김, 2026-10-30)
+
+천하 놀이판(위 TU)보다 뒤에 한다. 숫자는 balance.json·weapons.json 과 Core 에서 읽고, 움직임은 웹 프로토타입(`web/prototype/template.html`)과 나란히 놓고 비교한다.
+
+- [ ] C-01 플레이어 이동(WASD·패드), 카메라 추적, 경공 대시(0.25초 4m, 무적 0.2초, 2회 충전. balance.json `dash`). 먼저: B-10, B-11
+- [ ] C-02 적 시뮬레이션: 구조체 배열 + Burst 잡(추적 + 밀어내기), 강시 콩콩 박자 이동, 오브젝트 풀, 적 300마리 60fps 확인. 먼저: C-01
+- [ ] C-03 격자 공간 해시 충돌(원 대 원), 접촉 피해 0.35초 간격. 먼저: C-02
+- [ ] C-04 무공 실행기: behavior별 컴포넌트(front_arc, homing_dagger, orbit_slash, aura …) 처음 8종. Core 입구: `WeaponMath`(Core/Combat/EnemyScaling.cs 안)·`Loadout`. 먼저: C-03
+- [ ] C-05 진기 구슬 드롭·흡수, 400개 넘으면 합치기. Core 입구: `Core/Progression/RunXp.cs`. 먼저: C-03
+- [ ] C-06 레벨업 화면(비급 책장 카드 3~4장, 다시 고르기·파기·정진). Core 입구: `Loadout`, `Synergy.cs`(카드 미리보기). 먼저: C-04, C-05
+- [ ] C-07 경지 돌파 연출(흑백 심상 2초) + 깨달음 3택1. Core 입구: `Insights.cs`, `World/Breakthrough.cs`. 먼저: C-06
+- [ ] C-08 음양 태극 문양 HUD, 기혈역류 연출. Core 입구: `YinYangGauge`, `Backlash.cs`. 먼저: C-06
+- [ ] C-09 오의 버튼(진소운 일검), 보갑, 절기 그릇과 각성 연출(J-01U·vfx.md), 절기 4종. Core 입구: `UltimateCharge.cs`, `Awakening.cs`. 먼저: C-07
+- [ ] C-10 서장 10분 통과: 스폰 디렉터 + 강시 포쾌 장삼 보스. Core 입구: `Run/Prologue.cs`, `Spawning/LifeDirector.cs`. 먼저: C-01~C-09
