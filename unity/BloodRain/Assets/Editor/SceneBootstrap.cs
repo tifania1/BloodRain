@@ -41,5 +41,19 @@ namespace BloodRain.Editor
             EditorSceneManager.OpenScene($"{SceneDir}/Boot.unity");
             AssetDatabase.SaveAssets();
         }
+
+        [MenuItem("BloodRain/Bootstrap/Boot 씬에 DataBoot 붙이기")]
+        public static void AddDataBootToBoot()
+        {
+            var path = $"{SceneDir}/Boot.unity";
+            var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+            if (Object.FindFirstObjectByType<BloodRain.Presentation.DataBoot>() == null)
+            {
+                new GameObject("DataBoot").AddComponent<BloodRain.Presentation.DataBoot>();
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+                Debug.Log("[Bootstrap] Boot 씬에 DataBoot 붙임");
+            }
+        }
     }
 }
