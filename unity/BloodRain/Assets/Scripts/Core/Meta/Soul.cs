@@ -445,6 +445,8 @@ namespace BloodRain.Core.Meta
         {
             ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
             MissingMemberHandling = MissingMemberHandling.Ignore,
+            // 손으로 고친 저장에 null 이 섞여 있으면 그 칸은 기본값(빈 목록)으로 둔다
+            NullValueHandling = NullValueHandling.Ignore,
             Formatting = Formatting.Indented,
         };
 

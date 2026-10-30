@@ -439,5 +439,24 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1, empty.Cycle);
             Assert.Throws<NotSupportedException>(() => Soul.FromJson(_d, "{\"version\": 99}"));
         }
+    
+        [Fact] public void 저장에_null_칸이_있어도_빈_것으로_읽는다()
+        {
+            // 손으로 고친 저장이나 옛 도구가 쓴 저장에 null 이 섞여도 혼은 읽혀야 한다.
+            var json = "{\"version\":1,\"rebirthQi\":120,\"training\":null,\"rebirthUpgrades\":null,\"unlocks\":null," +
+                       "\"bossesKilled\":null,\"sealStones\":null,\"visitedRegions\":null,\"reachedRealms\":null," +
+                       "\"awakenedEvolutions\":null,\"livesBySect\":null,\"finalClearsBySect\":null,\"cycle\":0}";
+            var s = Soul.FromJson(_d, json);
+            Assert.Equal(120, s.RebirthQi);
+            Assert.Empty(s.Training);
+            Assert.Empty(s.SealStones);
+            Assert.Equal(1, s.Cycle);
+            Assert.Equal(s.ToJson(), Soul.FromJson(_d, s.ToJson()).ToJson());
+        }
+
+        [Fact] public void 저장_문자열이_null_이면_형식_오류다()
+        {
+            Assert.Throws<FormatException>(() => Soul.FromJson(_d, "null"));
+        }
     }
 }
