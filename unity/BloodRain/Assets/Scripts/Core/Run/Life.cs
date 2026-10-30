@@ -100,6 +100,8 @@ namespace BloodRain.Core.Run
         public int Level => Xp.Level;
         public int Realm => Scale.RealmIndex(Xp.Level);
         public Vector2 Position { get; private set; }
+        /// <summary>지금 자리의 혈운 농도. 적 기혈·피해는 EnemyScaling.HealthAt·DamageAt 에 이 값을 넘긴다.</summary>
+        public float Density => Regions.Density(Position, _soul.SealStoneCount);
         /// <summary>서 있는 지역(가장 가까운 지역 중심).</summary>
         public string RegionId { get; private set; }
         public LifePhase Phase => Record != null ? LifePhase.Ended : Bosses.InFight ? LifePhase.BossFight : LifePhase.Roaming;
@@ -152,7 +154,7 @@ namespace BloodRain.Core.Run
         public LifeAbsorb Absorb(double orbXp, int orbs = 1)
         {
             if (Record != null) throw new InvalidOperationException("끝난 생입니다");
-            float density = Regions.Density(Position, _soul.SealStoneCount);
+            float density = Density;
             Log.AbsorbOrb(orbXp, density, orbs); // 윤회의 기는 구슬 값 그대로(혈공으로 늘지 않음)
             var r = Xp.Absorb(BloodArt?.OrbXp(orbXp, density) ?? orbXp);
             var infos = new List<BreakthroughInfo>();
