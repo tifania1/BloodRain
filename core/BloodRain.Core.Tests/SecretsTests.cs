@@ -51,27 +51,27 @@ namespace BloodRain.Core.Tests
             Assert.Contains("maehwa_samnong", c.Unlocked);
         }
 
-        [Fact] public void 매화검존의_피는_진소운이_5장을_깬_적이_있어야_열린다()
+        [Fact] public void 낙매검선의_피는_진소운이_5장을_깬_적이_있어야_열린다()
         {
             var build = new[] { ("falling_petals", 8), ("maehwa", 5) };
             Assert.Empty(New("jin_sowoon").c.Check(L("jin_sowoon", build)));
             Assert.Empty(New("jin_sowoon", new[] { "chapter4" }).c.Check(L("jin_sowoon", build)));
             Assert.Empty(New("dang_yeonhwa", new[] { "chapter5" }).c.Check(L("dang_yeonhwa", build)));
-            Assert.Equal(new[] { "maehwa_geomjon" }, Ids(New("jin_sowoon", new[] { "chapter5" }).c.Check(L("jin_sowoon", build))));
+            Assert.Equal(new[] { "nakmae_geomseon" }, Ids(New("jin_sowoon", new[] { "chapter5" }).c.Check(L("jin_sowoon", build))));
         }
 
-        [Fact] public void 매화검존의_피는_낙화검우가_절기가_되어도_열린다()
+        [Fact] public void 낙매검선의_피는_낙화검우가_절기가_되어도_열린다()
         {
             var l = L("jin_sowoon", ("falling_petals", 8), ("maehwa", 5));
             l.Evolve(_d.Evolutions.First(e => e.Weapon == "falling_petals"));
-            Assert.Contains("maehwa_geomjon", Ids(New("jin_sowoon", new[] { "chapter5" }).c.Check(l)));
+            Assert.Contains("nakmae_geomseon", Ids(New("jin_sowoon", new[] { "chapter5" }).c.Check(l)));
         }
 
         [Fact] public void 여러_비전이_한꺼번에_열리면_데이터_순서로()
         {
             var (c, _) = New("jin_sowoon", new[] { "chapter5" });
             var l = L("jin_sowoon", ("falling_petals", 8), ("maehwa", 5), ("sonic_qin", 5));
-            Assert.Equal(new[] { "maehwa_geomjon", "maehwa_samnong" }, Ids(c.Check(l)));
+            Assert.Equal(new[] { "nakmae_geomseon", "maehwa_samnong" }, Ids(c.Check(l)));
         }
 
         [Fact] public void 어강술은_세_가지를_지닌_채로_정신부를_세_장_써야_열린다()
