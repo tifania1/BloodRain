@@ -39,6 +39,7 @@ namespace BloodRain.Core.Progression
         /// <summary>심득 배율. 판 도중 심법·깨달음으로 바뀔 수 있다.</summary>
         public float Growth { get; set; }
 
+        /// <param name="mode">Realms 에 그대로 넘긴다. 천하에선 모든 생에서 현경까지 가므로 지금은 결과를 바꾸지 않는다.</param>
         public RunXp(XpCurve curve, Realms realms, string mode = "normal", float growth = 1f)
         {
             _curve = curve;

@@ -43,17 +43,24 @@ namespace BloodRain.Core.Tests
         [InlineData(10, "이류")]
         [InlineData(35, "절정")]
         [InlineData(60, "초절정")]
-        [InlineData(95, "화경")]
-        public void 일반_모드_경지(int level, string expected)
+        [InlineData(89, "화경")]
+        [InlineData(90, "현경")]
+        [InlineData(95, "현경")]
+        public void 레벨별_경지(int level, string expected)
         {
             Assert.Equal(expected, new Realms(_d.Balance.Realms).For(level).NameKo);
         }
 
-        [Fact] public void 현경은_종장과_혈월에서만_열린다()
+        [Fact] public void 현경은_모든_생에서_열린다()
         {
-            var r = new Realms(_d.Balance.Realms);
-            Assert.Equal("화경", r.For(95, "normal").NameKo);
-            Assert.Equal("현경", r.For(95, "bloodmoon").NameKo);
+            // 천하 구조(기획서 3장 경지표, 7장 경지와 축척): 어느 생이든 레벨 90이면 현경. 모드 인자는 결과를 바꾸지 않는다.
+            Assert.All(_d.Balance.Realms, r => Assert.Null(r.OnlyIn));
+            var realms = new Realms(_d.Balance.Realms);
+            foreach (var mode in new[] { "normal", "final", "bloodmoon" })
+            {
+                Assert.Equal("현경", realms.For(95, mode).NameKo);
+                Assert.Equal("현경", realms.Breakthroughs(89, 90, mode).Single().NameKo);
+            }
         }
 
         [Fact] public void 레벨_1에서_60까지_돌파는_네_번()
@@ -236,8 +243,9 @@ namespace BloodRain.Core.Tests
         [InlineData(35, "normal", 1)]   // 절정
         [InlineData(50, "normal", 2)]   // 초절정
         [InlineData(70, "normal", 3)]   // 화경
-        [InlineData(95, "normal", 3)]   // 일반 판에선 현경이 없다
-        [InlineData(95, "final", 4)]    // 종장·혈월에서만 현경
+        [InlineData(89, "normal", 3)]
+        [InlineData(90, "normal", 4)]   // 현경: 천하에선 모든 생에서 열린다
+        [InlineData(95, "bloodmoon", 4)]
         public void 절기_그릇은_절정1_초절정2_화경3_현경4(int level, string mode, int expected)
         {
             var l = new Loadout(_d, _d.Character("jin_sowoon"));

@@ -119,7 +119,8 @@ namespace BloodRain.Core.Build
             return result;
         }
 
-        /// <summary>절기 그릇: 지금 경지에서 몸에 담을 수 있는 절기 수. 현경처럼 모드에 따라 막힌 경지는 세지 않는다.</summary>
+        /// <summary>절기 그릇: 지금 경지에서 몸에 담을 수 있는 절기 수(절정1·초절정2·화경3·현경4). 천하에선 모든 생에서 현경까지 가므로
+        /// mode 는 결과를 바꾸지 않는다. balance.json realms 에 onlyIn 이 붙은 경지가 생기면 그 모드에서만 센다.</summary>
         public int Vessels(int playerLevel, string mode = "normal")
         {
             var vessels = _data.Balance.Evolution.Vessels;
