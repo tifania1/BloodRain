@@ -181,6 +181,16 @@ namespace BloodRain.Core.Run
             return info;
         }
 
+        /// <summary>오의를 쓴다. 게이지가 가득 찼을 때만 비우고 true. 마교 몸이면 천마해체로 음양 게이지가 시작값으로 돌아온다(혈공).
+        /// Unity 쪽은 Charge.TryUse 를 따로 부르지 말고 이걸 부른다.</summary>
+        public bool UseUltimate()
+        {
+            if (Record != null) throw new InvalidOperationException("끝난 생입니다");
+            if (!Charge.TryUse()) return false;
+            BloodArt?.OnUltimate(Body.Character.Ultimate);
+            return true;
+        }
+
         /// <summary>싸우던 땅의 주인을 쓰러뜨렸다. 종장(봉마곡)이면 봉인으로 생이 끝난다.</summary>
         public BossKill DefeatBoss(int leftoverSilverIfFinal = 0)
         {

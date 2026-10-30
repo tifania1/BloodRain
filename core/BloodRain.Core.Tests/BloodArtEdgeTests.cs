@@ -115,3 +115,64 @@ namespace BloodRain.Core.Tests
         }
     }
 }
+
+namespace BloodRain.Core.Tests
+{
+    using System;
+    using BloodRain.Core.Data;
+    using BloodRain.Core.Meta;
+    using BloodRain.Core.Run;
+    using Xunit;
+
+    /// <summary>Life.UseUltimate: 게이지를 비우고, 마교 몸이면 천마해체로 음양을 되돌린다.</summary>
+    public class LifeUltimateTests
+    {
+        readonly GameData _d = TestData.Load();
+
+        Life NewLife(string sect)
+        {
+            var soul = new Soul(_d);
+            soul.EndLife(soul.BeginLife(Rebirth.Prologue(_d)).Finish(LifeEndWay.Fallen, 0));
+            var c = _d.Cheonha;
+            var cand = new RebirthCandidate(c.Sect(sect), c.Region(c.Sect(sect).Region), Array.Empty<BirthTraitDef>());
+            return new Life(soul, Rebirth.Body(c, cand), new Random(1));
+        }
+
+        [Fact] public void 덜_찼으면_쓰지_못하고_게이지도_그대로()
+        {
+            var life = NewLife("shaolin");
+            life.Charge.AddFlat(99);
+            Assert.False(life.UseUltimate());
+            Assert.Equal(99f, life.Charge.Value);
+        }
+
+        [Fact] public void 가득_찼으면_비우고_다른_문파는_음양이_그대로()
+        {
+            var life = NewLife("shaolin");
+            life.Loadout.Gauge.ResetTo(70);
+            life.Charge.AddFlat(100);
+            Assert.True(life.UseUltimate());
+            Assert.Equal(0f, life.Charge.Value);
+            Assert.Equal(70, life.Loadout.Gauge.Value);
+        }
+
+        [Fact] public void 마교_몸은_천마해체로_음양이_시작값으로()
+        {
+            var life = NewLife("demonic");
+            int start = life.Loadout.Gauge.Value;
+            for (int i = 0; i < 20; i++) life.Absorb(200);
+            Assert.True(life.Loadout.Gauge.Value < start);
+            life.Charge.AddFlat(100);
+            Assert.True(life.UseUltimate());
+            Assert.Equal(start, life.Loadout.Gauge.Value);
+        }
+
+        [Fact] public void 끝난_생에서는_쓰지_못한다()
+        {
+            var life = NewLife("shaolin");
+            life.Charge.AddFlat(100);
+            life.End(LifeEndWay.Fallen, 0);
+            Assert.Throws<InvalidOperationException>(() => life.UseUltimate());
+        }
+    }
+}
