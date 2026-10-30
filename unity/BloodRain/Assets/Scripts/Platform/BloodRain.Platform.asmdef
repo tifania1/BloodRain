@@ -1,0 +1,14 @@
+{
+    "name": "BloodRain.Platform",
+    "rootNamespace": "BloodRain.Platform",
+    "references": ["BloodRain.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

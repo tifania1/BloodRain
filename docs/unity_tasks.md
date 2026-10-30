@@ -4,7 +4,7 @@ Unity 에디터가 있어야 하는 일만 적는다. 밤마다(20:37·22:37·00
 끝내면 `- [x]` 와 한 줄 결과, 막히면 그대로 두고 아래에 `막힘:` 한 줄.
 
 - [x] B-00 기본 템플릿이 넣은 안 쓰는 패키지 정리: com.unity.ads, com.unity.analytics, com.unity.purchasing, com.unity.xr.legacyinputhelpers, com.unity.multiplayer.center, com.unity.collab-proxy 제거 후 콘솔 오류 0 확인 (WebGL 용량 때문) → 2026-10-30 여섯 개 지움. 패키지 46개, 콘솔 오류 0. ads가 띄우던 Mobile Dependency Resolver 창도 이제 안 뜬다
-- [ ] B-10 Unity 프로젝트 기본 설정: Packages에 2D URP·Input System·com.unity.nuget.newtonsoft-json·Test Framework 확인, Assets/Scenes에 Boot·Run·Inn 빈 씬, Assets/Scripts/Presentation·Sim·Platform 폴더와 asmdef(BloodRain.Core 참조)
+- [x] B-10 Unity 프로젝트 기본 설정: Packages에 2D URP·Input System·com.unity.nuget.newtonsoft-json·Test Framework 확인, Assets/Scenes에 Boot·Run·Inn 빈 씬, Assets/Scripts/Presentation·Sim·Platform 폴더와 asmdef(BloodRain.Core 참조) → 2026-10-30 패키지 넷 확인. `BloodRain/Bootstrap/기본 씬 만들기` 메뉴(Assets/Editor/SceneBootstrap.cs)로 Boot·Run·Inn 씬과 빌드 목록(Boot 0번). Sim·Platform·Presentation·Editor asmdef. 입력 처리는 Both(Input System 백엔드 켬)
 - [ ] B-11 데이터 로더: Resources/Data의 JSON(`GameData.FileNames` 에 적힌 것 전부, 지금 12개)을 TextAsset으로 읽어 GameData.FromJson에 넘기는 `Presentation/DataBoot.cs`. Boot 씬 플레이 시 콘솔에 무공 16종 이름이 찍히는지 확인
 - [ ] S-04 시너지 표시: 레벨업 카드 연환 띠·문파 인장, HUD 진전 인장, 비전·기연 발견 연출, 장경각 도감 화면(기획서 20장, 웹 프로토타입 동작 참고)
 - [ ] J-01U 절기 각성 연출: `docs/design/vfx.md` '절기 각성 연출' 표대로 Fullscreen Pass(흑백 구멍), 카메라 확대·흔들림(언스케일), 이름 붓질(TextMeshPro + Yuji Boku SDF), 낙관, 파동 링. 웹 프로토타입 `#awaken` 과 나란히 놓고 비교. 판정은 Core J-01이 끝난 뒤 연결
