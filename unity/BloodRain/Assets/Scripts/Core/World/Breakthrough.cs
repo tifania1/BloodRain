@@ -83,9 +83,10 @@ namespace BloodRain.Core.World
         /// <param name="revisit">이미 올라 본 경지면 true: 같은 순서를 revisitSeconds 로 줄여 보여 준다(연출 시계가 그만큼 빨리 간다).</param>
         public void Start(float fromLevel, float toLevel, bool revisit = false)
         {
+            // 진행 중이면 아무것도 바꾸기 전에 막는다(돌던 연출의 시계 속도가 바뀌면 안 된다).
+            if (IsActive) throw new InvalidOperationException("돌파 연출이 이미 진행 중입니다");
             _speed = revisit && _def.RevisitSeconds > 0f ? _def.ZoomToSeconds / _def.RevisitSeconds : 1f;
             IsRevisit = revisit && _speed != 1f;
-            if (IsActive) throw new InvalidOperationException("돌파 연출이 이미 진행 중입니다");
             FromLevel = fromLevel;
             ToLevel = toLevel;
             FromRealm = _scale.RealmIndex((int)Math.Floor(fromLevel));
