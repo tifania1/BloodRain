@@ -10,7 +10,7 @@ using static BloodRain.Core.Tests.TestData;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>땅의 주인 패턴 둘째 묶음(T-12: 당소혜·마천패). 원각(BossPatternsTests)과 같은 틀을 보스마다 확인한다.</summary>
+    /// <summary>땅의 주인 패턴 둘째·셋째 묶음(T-12: 당소혜·마천패, T-13: 혈허진인·낙매검선의 검혼). 원각(BossPatternsTests)과 같은 틀을 보스마다 확인한다.</summary>
     public class BossPatternsMoreTests
     {
         readonly GameData _d = Load();
@@ -18,9 +18,9 @@ namespace BloodRain.Core.Tests
         float At20(float baseDamage) => BossPatterns.ScaleDamage(baseDamage, 20f, 1f, Dpm);
 
         /// <summary>아직 enemies.json 에 없는 소환 적. T-33에서 넣으면 여기서 뺀다.</summary>
-        static readonly HashSet<string> PendingSummons = new HashSet<string> { "water_ghost" };
+        static readonly HashSet<string> PendingSummons = new HashSet<string> { "water_ghost", "plum_sword_ghost" };
 
-        public static IEnumerable<object[]> Bosses => new[] { new object[] { "dang_sohye" }, new object[] { "ma_cheonpae" } };
+        public static IEnumerable<object[]> Bosses => new[] { "dang_sohye", "ma_cheonpae", "hyeolheo", "huashan_sword_soul" }.Select(x => new object[] { x });
 
         [Theory, MemberData(nameof(Bosses))]
         public void 패턴_순서와_2막이_enemies_json과_같다(string id)
@@ -137,6 +137,31 @@ namespace BloodRain.Core.Tests
             var wave = w.Phase2.Single();
             Assert.True(wave.WaveIntervalSeconds > 0);
             Assert.True(wave.Continuous);
+        }
+        [Fact] public void 혈허진인_흑백은_반대_색에서_피해_2배이고_2막에서_돈다()
+        {
+            var w = _d.BossPatternSet("hyeolheo");
+            Assert.Equal(2f, w.Pattern("yin_yang_split_field").DamageTakenMultiplier);
+            var p2 = w.Phase2.Single();
+            Assert.Equal(2f, p2.DamageTakenMultiplier);
+            Assert.True(p2.TurnDegreesPerSecond > 0);
+            var dipper = w.Pattern("seven_star_sword_drop");
+            Assert.Equal("big_dipper", dipper.Arrangement);
+            Assert.Equal(7, dipper.Count);
+            var taiji = w.Pattern("taiji_inhale_exhale");
+            Assert.True(taiji.BurstRadius < taiji.Radius);
+        }
+
+        [Fact] public void 검혼_일섬_뒤_2초_경직이_다음_패턴_전에_끝난다()
+        {
+            var w = _d.BossPatternSet("huashan_sword_soul");
+            var slash = w.Pattern("screen_slash");
+            Assert.Equal(2f, slash.RecoverySeconds);
+            Assert.True(slash.TelegraphSeconds + slash.RecoverySeconds < w.Phase2IntervalSeconds);
+            var burst = w.Phase2.Single();
+            Assert.Equal(24, burst.Count);
+            var spiral = w.Pattern("petal_spiral");
+            Assert.True(spiral.TelegraphSeconds + spiral.LeaveSeconds < w.IntervalSeconds);
         }
     }
 }

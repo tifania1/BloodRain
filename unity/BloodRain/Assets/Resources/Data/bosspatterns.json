@@ -200,6 +200,133 @@
           "continuous": true
         }
       ]
+    },
+    "hyeolheo": {
+      "_note": "혈허진인(무당산, T-13). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 흑백 구역은 음양 게이지와 함께 본다: 태극 구간이면 양쪽 다 안전, 양으로 기울면 흰 구역, 음이면 검은 구역이 내 색이다.",
+      "firstCastSeconds": 2.5,
+      "intervalSeconds": 4.0,
+      "phase2IntervalSeconds": 3.0,
+      "phase2At": 0.3,
+      "contactDamage": 20,
+      "moveSpeed": 50,
+      "order": ["yin_yang_split_field", "taiji_inhale_exhale", "seven_star_sword_drop"],
+      "patterns": [
+        {
+          "id": "yin_yang_split_field",
+          "nameKo": "흑백",
+          "shape": "split_field",
+          "_note": "보스를 지나는 줄로 화면을 흑과 백으로 가른다(줄 방향은 예고를 시작할 때 플레이어 쪽과 수직). leaveSeconds 동안 내 음양과 반대 색 구역에 서 있으면 받는 피해가 damageTakenMultiplier 배. 이것 자체의 피해는 없다.",
+          "telegraphSeconds": 1.5,
+          "aim": "player_at_telegraph",
+          "leaveSeconds": 10,
+          "damageTakenMultiplier": 2,
+          "baseDamage": 0
+        },
+        {
+          "id": "taiji_inhale_exhale",
+          "nameKo": "태극권",
+          "shape": "inhale_exhale",
+          "_note": "예고 뒤 pullSeconds 동안 반경 radius 안을 보스 쪽으로 빨아들이고(플레이어 이동속도의 절반만큼 끌림), 끝에 반경 burstRadius 를 내뿜는다. 내뿜는 원 안이면 피해. 빨아들이는 동안 보스는 멈춰 선다.",
+          "telegraphSeconds": 1.0,
+          "radius": 10,
+          "pullSeconds": 1.5,
+          "burstRadius": 4,
+          "baseDamage": 18,
+          "bossHolds": true
+        },
+        {
+          "id": "seven_star_sword_drop",
+          "nameKo": "칠성검진",
+          "shape": "circles",
+          "_note": "예고를 시작할 때 플레이어를 국자 끝에 둔 북두칠성 모양으로 일곱 곳을 잡고(전체 길이 length), 판정 때 검이 꽂힌다.",
+          "telegraphSeconds": 1.2,
+          "count": 7,
+          "radius": 1.5,
+          "length": 10,
+          "arrangement": "big_dipper",
+          "baseDamage": 20,
+          "aim": "player_at_telegraph"
+        }
+      ],
+      "phase2": [
+        {
+          "id": "rotating_yin_yang_border",
+          "nameKo": "흑백 경계",
+          "shape": "split_field",
+          "_note": "2막이 되면 흑백 구역이 다시 깔려 끝까지 남고, 경계가 보스를 축으로 초당 turnDegreesPerSecond 도로 돈다. 피해 배율은 흑백과 같다.",
+          "telegraphSeconds": 1.0,
+          "turnDegreesPerSecond": 20,
+          "damageTakenMultiplier": 2,
+          "baseDamage": 0,
+          "continuous": true
+        }
+      ]
+    },
+    "huashan_sword_soul": {
+      "_note": "낙매검선의 검혼(화산, T-13). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 매화검귀(plum_sword_ghost)는 아직 enemies.json 에 없다(T-33에서 넣는다).",
+      "firstCastSeconds": 2.5,
+      "intervalSeconds": 4.5,
+      "phase2IntervalSeconds": 3.5,
+      "phase2At": 0.3,
+      "contactDamage": 22,
+      "moveSpeed": 60,
+      "order": ["petal_spiral", "screen_slash", "summon_plum_sword_ghost"],
+      "patterns": [
+        {
+          "id": "petal_spiral",
+          "nameKo": "꽃잎 나선",
+          "shape": "spiral_bullets",
+          "_note": "보스 몸에서 꽃잎 탄이 count 갈래 나선으로 leaveSeconds 동안 hitIntervalSeconds 마다 한 발씩 갈래마다 나간다. 나선은 초당 turnDegreesPerSecond 도 돈다.",
+          "telegraphSeconds": 0.5,
+          "count": 3,
+          "turnDegreesPerSecond": 120,
+          "projectileSpeed": 150,
+          "leaveSeconds": 2.5,
+          "hitIntervalSeconds": 0.1,
+          "length": 16,
+          "baseDamage": 8
+        },
+        {
+          "id": "screen_slash",
+          "nameKo": "일섬",
+          "shape": "line",
+          "_note": "예고선이 플레이어를 지나 화면 끝까지 그어지고, 판정 때 한 줄로 벤다. 그 뒤 recoverySeconds 동안 검혼이 굳어 있다(공격 기회).",
+          "telegraphSeconds": 1.2,
+          "length": 40,
+          "width": 1.2,
+          "recoverySeconds": 2,
+          "baseDamage": 30,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        },
+        {
+          "id": "summon_plum_sword_ghost",
+          "nameKo": "매화검귀 소환",
+          "shape": "summon",
+          "_note": "보스 둘레 scatter 안 네 곳에 매화검귀가 내려선다.",
+          "telegraphSeconds": 1.0,
+          "count": 4,
+          "scatter": 5,
+          "summon": "plum_sword_ghost",
+          "center": "boss",
+          "baseDamage": 0
+        }
+      ],
+      "phase2": [
+        {
+          "id": "twenty_four_petal_burst",
+          "nameKo": "매화검기 방사",
+          "shape": "radial_burst",
+          "_note": "2막이 되면 waveIntervalSeconds 마다 보스 몸에서 스물네 갈래 검기가 고르게 뻗는다. 갈래마다 7.5도라 사이로 빠져나갈 수 있다. 파마다 3.75도씩 엇갈린다.",
+          "telegraphSeconds": 1.0,
+          "count": 24,
+          "projectileSpeed": 250,
+          "length": 16,
+          "waveIntervalSeconds": 5,
+          "baseDamage": 12,
+          "continuous": true
+        }
+      ]
     }
   }
 }

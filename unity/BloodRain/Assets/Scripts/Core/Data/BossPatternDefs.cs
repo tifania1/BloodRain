@@ -94,6 +94,14 @@ namespace BloodRain.Core.Data
         public float RejoinSeconds;
         /// <summary>반쪽 장판: 시전마다 왼쪽·오른쪽을 번갈아 덮는다.</summary>
         public bool Alternate;
+        /// <summary>그 구역에서 받는 피해 배율(혈허진인의 흑백: 내 음양과 반대 색이면 2배).</summary>
+        public float DamageTakenMultiplier;
+        /// <summary>빨아들인 뒤 내뿜는 원의 반경(태극권).</summary>
+        public float BurstRadius;
+        /// <summary>여러 곳의 배치 이름(big_dipper: 북두칠성 모양). 비면 흩어 놓기(scatter).</summary>
+        public string Arrangement = "";
+        /// <summary>시전 뒤 보스가 굳어 있는 시간(일섬 뒤 2초 경직). 공격 기회.</summary>
+        public float RecoverySeconds;
     }
 
     sealed class BossPatternFile
