@@ -1,5 +1,5 @@
 {
-  "_note": "장 데이터. 서장은 기획서 '4. 메인 스토리' 서장 상세 흐름 표, 1장은 '7. 스테이지' 1장 시간대별 흐름 표를 따른다. 적이 처음 나오는 시각은 '6. 적과 보스' 공통 적 표와 맞춘다. 시각은 모두 게임 분. bands 는 [fromMinute, toMinute) 동안 쓰는 가중치표이고 목록 순서가 추첨 순서다(가중치 합 1). 몇 마리를 만들지는 balance.json spawnTarget 이 정하고 여기서는 종류만 정한다. events 의 at 은 정해진 시각, window 는 한 판마다 그 안에서 무작위로 정하는 시각, chance 는 그 사건이 한 판에 일어날 확률(없으면 1). 돌진·무리·포위 마리 수(count)는 기획서에 없어 웹 프로토타입 값을 옮겼다. 보스가 나오는 시각은 boss 사건의 at 이다.",
+  "_note": "흐름 데이터. 서장(prologue)은 기획서 '4. 메인 스토리' 서장 상세 흐름 표, 한 생(life)은 '7. 스테이지' 한 생의 시간대별 흐름 표를 따른다. 적이 처음 나오는 시각은 '6. 적과 보스' 공통 적 표와 맞춘다. 시각은 모두 게임 분. bands 는 [fromMinute, toMinute) 동안 쓰는 가중치표이고 목록 순서가 추첨 순서다(가중치 합 1). 마지막 표가 끝난 뒤로는 마지막 표를 계속 쓴다. 몇 마리를 만들지는 balance.json spawnTarget 이 정하고 여기서는 종류만 정한다. events 의 at 은 정해진 시각, window 는 한 생마다 그 안에서 무작위로 정하는 시각, chance 는 그 사건이 한 생에 일어날 확률(없으면 1). 돌진·무리·포위 마리 수(count)는 기획서에 없어 웹 프로토타입 값을 옮겼고, 20분 넘어 새로 생긴 돌진 둘(36·40)은 앞 돌진이 느는 폭을 따라 정했다. 가중치표의 비율도 기획서에 없는 값이다. 0~11분은 옛 1장 표 그대로이고, 11분 뒤 새로 나오는 공통 적(비강·혈궁수·혈영자객·혈술사·기수)의 몫은 한 생으로 옮기며 새로 정했다. 옛 1장 표에 있던 목인나한 몫은 localShare 로 옮겼다.",
   "chapters": [
     {
       "id": "prologue",
@@ -7,52 +7,66 @@
       "nameKo": "서장 청운진",
       "titleKo": "백중의 비",
       "durationMinutes": 10,
+      "_noteStop": "9:00 장삼 경고 전 30초 동안 새 적을 만들지 않는다. 보스전이 시작되면 다시 돈다.",
       "stopSpawningAtMinute": 8.5,
-      "map": { "type": "bounded", "widthMeters": 60, "heightMeters": 60, "gimmicks": ["well", "breakables"] },
       "bands": [
         { "fromMinute": 0, "toMinute": 10, "spawns": [ { "enemy": "sigang", "weight": 1 } ] }
       ],
       "events": [
         { "at": 3.5, "kind": "charge", "enemy": "hyeolin", "count": 10, "_note": "3:30 혈인 떼 일직선 돌진. 경공 회피를 가르친다" },
-        { "at": 5,   "kind": "elite",  "enemy": "gangsi_axeman", "_note": "5:00 정예 강시 도부수, 처치하면 보갑" },
+        { "at": 5,   "kind": "elite",  "enemy": "gangsi_axeman", "_note": "5:00 정예 강시 도부수, 처치하면 보갑. 서장 정예는 지역 표가 아니라 이 한 마리로 정해져 있다" },
         { "at": 9,   "kind": "boss",   "enemy": "jang_sam", "_note": "9:00 보스 경고, 강시 포쾌 장삼. 기혈이 바닥나면 천지인 삼검 고정 각성" }
       ]
     },
     {
-      "id": "chapter1",
-      "region": "songshan",
-      "nameKo": "1장 숭산 소림",
-      "titleKo": "무너진 천년고찰",
-      "durationMinutes": 20,
-      "stopSpawningAtMinute": 19,
-      "map": { "type": "endless", "gimmicks": ["bell", "pagoda_forest"] },
+      "id": "life",
+      "nameKo": "한 생",
+      "_noteRegion": "region 이 없다. 한 생은 태어난 문파와 상관없이 같은 시간 뼈대를 쓰고, 고유 적·정예·기믹은 그때 서 있는 지역(cheonha.json regions)에서 가져온다.",
+      "_noteDuration": "한 생은 끝이 정해져 있지 않다(쓰러짐·좌화·봉인으로 끝남, 7장 '생이 끝나는 세 가지'). durationMinutes 30은 표가 다루는 길이로, 평균 빌드가 현경에 닿는 시각이다. openEnded 라서 30분 뒤에도 생은 이어지고 마지막 가중치표와 spawnTarget 마지막 값(400)을 그대로 쓴다. 현경 뒤 혈마의 그림자(30분부터 5분마다 강해짐)는 봉인석 수에 따라 갈리는 규칙이라 사건으로 넣지 않고 cheonha.json lifeEnd 에 둔다.",
+      "durationMinutes": 30,
+      "openEnded": true,
+      "_noteLocal": "지역 고유 적(enemies.json 에서 chapter 가 있는 적)은 가중치표에 넣지 않는다. 서 있는 지역에 고유 적이 있으면 생성마다 localShare 확률로 그 지역 고유 적(여럿이면 같은 비율)을, 아니면 가중치표에서 뽑는다. 7장 '지역과 혈운 농도': 5분부터 10%, 15분부터 15%.",
+      "localShare": [
+        { "fromMinute": 5,  "share": 0.10 },
+        { "fromMinute": 15, "share": 0.15 }
+      ],
+      "_noteElites": "정예 사건은 enemy 대신 nth(이 생에서 몇 번째 정예인지)를 적는다. 서 있는 지역의 장 이름(cheonha.json regions[].chapter)으로 enemies.json elites 표를 찾아 min(nth, 표 길이)번째를 쓴다. 지역 정예가 없는 땅은 fallbackRegion 의 표를 쓴다(6장 '정예(5분마다)').",
+      "eliteFallback": { "region": "songshan", "regions": ["cheongun", "gaebang_hq", "namgung_manor"] },
       "bands": [
         { "fromMinute": 0,  "toMinute": 3,  "spawns": [ { "enemy": "sigang", "weight": 1 } ] },
         { "fromMinute": 3,  "toMinute": 5,  "spawns": [ { "enemy": "sigang", "weight": 0.7 }, { "enemy": "hyeol_gangsi", "weight": 0.3 } ] },
         { "fromMinute": 5,  "toMinute": 6,  "spawns": [ { "enemy": "sigang", "weight": 0.4 }, { "enemy": "hyeol_gangsi", "weight": 0.6 } ] },
         { "fromMinute": 6,  "toMinute": 8,  "spawns": [ { "enemy": "sigang", "weight": 0.3 }, { "enemy": "hyeol_gangsi", "weight": 0.45 }, { "enemy": "hyeol_musa", "weight": 0.25 } ] },
         { "fromMinute": 8,  "toMinute": 10, "spawns": [ { "enemy": "hyeol_gangsi", "weight": 0.35 }, { "enemy": "hyeol_musa", "weight": 0.4 }, { "enemy": "donggap", "weight": 0.25 } ] },
-        { "fromMinute": 10, "toMinute": 12, "spawns": [ { "enemy": "hyeol_gangsi", "weight": 0.45 }, { "enemy": "donggap", "weight": 0.3 }, { "enemy": "hyeol_musa", "weight": 0.25 } ] },
-        { "fromMinute": 12, "toMinute": 15, "spawns": [ { "enemy": "sigang", "weight": 0.2 }, { "enemy": "hyeol_gangsi", "weight": 0.35 }, { "enemy": "hyeol_musa", "weight": 0.2 }, { "enemy": "donggap", "weight": 0.17 }, { "enemy": "mogin_nahan", "weight": 0.08 } ] },
-        { "fromMinute": 15, "toMinute": 20, "spawns": [ { "enemy": "sigang", "weight": 0.2 }, { "enemy": "hyeol_gangsi", "weight": 0.35 }, { "enemy": "hyeol_musa", "weight": 0.2 }, { "enemy": "donggap", "weight": 0.17 }, { "enemy": "mogin_nahan", "weight": 0.08 } ] }
+        { "fromMinute": 10, "toMinute": 11, "spawns": [ { "enemy": "hyeol_gangsi", "weight": 0.45 }, { "enemy": "donggap", "weight": 0.3 }, { "enemy": "hyeol_musa", "weight": 0.25 } ] },
+        { "fromMinute": 11, "toMinute": 12, "spawns": [ { "enemy": "hyeol_gangsi", "weight": 0.4 }, { "enemy": "donggap", "weight": 0.3 }, { "enemy": "hyeol_musa", "weight": 0.15 }, { "enemy": "bigang", "weight": 0.15 } ] },
+        { "fromMinute": 12, "toMinute": 13, "spawns": [ { "enemy": "sigang", "weight": 0.2 }, { "enemy": "hyeol_gangsi", "weight": 0.3 }, { "enemy": "hyeol_musa", "weight": 0.2 }, { "enemy": "donggap", "weight": 0.2 }, { "enemy": "bigang", "weight": 0.1 } ] },
+        { "fromMinute": 13, "toMinute": 16, "spawns": [ { "enemy": "sigang", "weight": 0.15 }, { "enemy": "hyeol_gangsi", "weight": 0.25 }, { "enemy": "hyeol_musa", "weight": 0.2 }, { "enemy": "donggap", "weight": 0.2 }, { "enemy": "bigang", "weight": 0.1 }, { "enemy": "hyeol_gungsu", "weight": 0.1 } ] },
+        { "fromMinute": 16, "toMinute": 19, "spawns": [ { "enemy": "sigang", "weight": 0.1 }, { "enemy": "hyeol_gangsi", "weight": 0.25 }, { "enemy": "hyeol_musa", "weight": 0.18 }, { "enemy": "donggap", "weight": 0.2 }, { "enemy": "bigang", "weight": 0.1 }, { "enemy": "hyeol_gungsu", "weight": 0.1 }, { "enemy": "hyeolyeong_assassin", "weight": 0.07 } ] },
+        { "fromMinute": 19, "toMinute": 22, "spawns": [ { "enemy": "sigang", "weight": 0.1 }, { "enemy": "hyeol_gangsi", "weight": 0.22 }, { "enemy": "hyeol_musa", "weight": 0.16 }, { "enemy": "donggap", "weight": 0.2 }, { "enemy": "bigang", "weight": 0.1 }, { "enemy": "hyeol_gungsu", "weight": 0.1 }, { "enemy": "hyeolyeong_assassin", "weight": 0.07 }, { "enemy": "hyeol_sulsa", "weight": 0.05 } ] },
+        { "fromMinute": 22, "toMinute": 30, "spawns": [ { "enemy": "sigang", "weight": 0.1 }, { "enemy": "hyeol_gangsi", "weight": 0.2 }, { "enemy": "hyeol_musa", "weight": 0.15 }, { "enemy": "donggap", "weight": 0.2 }, { "enemy": "bigang", "weight": 0.1 }, { "enemy": "hyeol_gungsu", "weight": 0.1 }, { "enemy": "hyeolyeong_assassin", "weight": 0.07 }, { "enemy": "hyeol_sulsa", "weight": 0.05 }, { "enemy": "gisu", "weight": 0.03 } ] }
       ],
       "events": [
         { "at": 3.5,  "kind": "charge", "enemy": "hyeolin", "count": 14, "_note": "3~5분 혈인 돌진 1회" },
-        { "at": 5,    "kind": "elite",  "enemy": "dongin", "_note": "정예 동인, 첫 보갑" },
-        { "at": 6.5,  "kind": "group",  "enemy": "mogin_nahan", "count": 10, "_note": "5~8분 목인나한 무리" },
+        { "at": 5,    "kind": "elite",  "nth": 1, "_note": "정예 → 첫 보갑" },
+        { "at": 6.5,  "kind": "group",  "local": true, "enemy": "hyeol_gangsi", "count": 10, "_note": "5~8분 무리. 서 있는 지역 고유 적(숭산이면 목인나한), 고유 적이 없는 땅이면 enemy(혈강시)" },
         { "at": 8.5,  "kind": "charge", "enemy": "hyeolin", "count": 20, "_note": "8~10분 혈인 돌진 2회 중 첫째" },
         { "at": 9.5,  "kind": "charge", "enemy": "hyeolin", "count": 22 },
-        { "at": 10,   "kind": "elite",  "enemy": "gyeyul_monk", "_note": "정예 계율원 강시 승려" },
-        { "window": [10, 12], "kind": "toad", "enemy": "golden_toad", "_note": "10~12분 금두꺼비 등장 가능" },
+        { "at": 10,   "kind": "elite",  "nth": 2 },
+        { "window": [10, 12], "kind": "toad", "enemy": "golden_toad", "_note": "10~12분 사이 한 번 무작위" },
         { "at": 12,   "kind": "merchant", "_note": "보부상" },
         { "at": 13.5, "kind": "ring",   "enemy": "donggap", "count": 24, "_note": "12~15분 동갑시 포위 웨이브" },
-        { "at": 15,   "kind": "elite",  "enemy": "acting_abbot", "_note": "정예 강시 방장 대리" },
-        { "window": [15, 17], "kind": "silver_lantern", "_note": "은빛 등롱은 15분 이후 한 판에 한두 개" },
-        { "at": 15.5, "kind": "charge", "enemy": "hyeolin", "count": 28, "_note": "15~19분 혈인 대규모 돌진 3회" },
+        { "at": 15,   "kind": "elite",  "nth": 3 },
+        { "window": [15, 17], "kind": "silver_lantern", "_note": "은빛 등롱은 15분 이후 한 생에 한두 개" },
+        { "at": 15.5, "kind": "charge", "enemy": "hyeolin", "count": 28, "_note": "15~20분 혈인 대규모 돌진 3회" },
         { "at": 16.6, "kind": "charge", "enemy": "hyeolin", "count": 30 },
         { "window": [17, 19], "kind": "silver_lantern", "chance": 0.5 },
         { "at": 17.7, "kind": "charge", "enemy": "hyeolin", "count": 34 },
-        { "at": 20,   "kind": "boss",   "enemy": "wongak", "_note": "보스 경고 → 혈나한 원각" }
+        { "at": 20,   "kind": "elite",  "nth": 4, "_note": "넷째부터는 지역 표의 셋째가 다시 나온다" },
+        { "at": 21.5, "kind": "charge", "enemy": "hyeolin", "count": 36, "_note": "20~25분 혈인 대규모 돌진 2회. 23분 20초 화경 돌파를 피해 앞뒤로 둔다" },
+        { "at": 24,   "kind": "merchant", "_note": "보부상" },
+        { "at": 24.5, "kind": "charge", "enemy": "hyeolin", "count": 40 },
+        { "at": 25,   "kind": "elite",  "nth": 5 }
       ]
     }
   ]

@@ -1,4 +1,4 @@
-// 1장 한 판(20분)을 화면 없이 돌린다. 0.1초마다:
+// 숭산 20분(옛 1장 한 판)을 화면 없이 돌린다. 0.1초마다:
 //   사건(정예·혈인 돌진·동갑시 포위·금두꺼비) → 1초마다 적 생성(Core SpawnCurve) → 무리 갱신 → 무공 발동 → 오의
 //   → 처치 진기 흡수(Core RunXp) → 레벨업 카드(Core Loadout + 정책) → 경지 돌파·절기 각성(Core Loadout 그릇 규칙) → 보갑
 // 규칙은 Core 것을 그대로 쓰고, 데이터에 없는 값은 Assumptions 에서 가져온다.
@@ -20,6 +20,8 @@ namespace BloodRain.Sim
         public int Seed = 1;
         public double Minutes = RunMinutes;
         public string Character = "jin_sowoon";
+        /// <summary>적 기혈 배율을 찾는 지역의 장 이름(balance.json enemyScaling.chapterMultiplier, cheonha.json regions[].chapter). chapter1 은 숭산.
+        /// chapters.json 의 흐름 id(prologue, life)가 아니다.</summary>
         public string Chapter = "chapter1";
         /// <summary>처치 진기를 바꿔 볼 때(조정 시험). 없으면 Assumptions.KillXp.</summary>
         public IReadOnlyDictionary<string, double>? KillXp;
@@ -238,8 +240,8 @@ namespace BloodRain.Sim
             int alive = 0;
             foreach (var e in _enemies) if (!e.Dead) alive++;
             int n = _spawn.SpawnThisSecond((float)m, alive);
-            double mixAt = Math.Min(m, _g.Balance.SpawnTarget.StopSpawningAtMinute);
-            for (int i = 0; i < n; i++) AddEnemy(PickType(mixAt), m);
+            // 한 생 곡선에는 생성 중지가 없다(18분 뒤 400 유지). 19~20분에도 그대로 만든다.
+            for (int i = 0; i < n; i++) AddEnemy(PickType(m), m);
         }
 
         string PickType(double m)

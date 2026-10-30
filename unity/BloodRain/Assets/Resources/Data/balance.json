@@ -55,11 +55,10 @@
     "chapterMultiplier": { "prologue": 0.8, "chapter1": 1.0, "chapter2": 1.3, "chapter3": 1.7, "chapter4": 2.2, "chapter5": 2.8, "chapter6": 3.5, "chapter7": 4.3 }
   },
   "spawnTarget": {
-    "_note": "1장 기준 화면 위 목표 적 수(분 → 마리). 사이 값은 선형 보간. 19분에 생성 중지, 20분 보스.",
-    "points": [ [0,15],[1,25],[2,40],[3,55],[4,68],[5,80],[6,97],[7,113],[8,130],[9,155],[10,180],[11,200],[12,220],[13,247],[14,273],[15,300],[16,333],[17,367],[18,400],[19,400],[20,120] ],
+    "_note": "한 생 기준 화면 위 목표 적 수(분 → 마리). 사이 값은 선형 보간, 마지막 점 뒤로는 마지막 값. 18분에 400에 닿고 그 뒤로는 400을 지킨다(30분은 현경, 그 뒤도 같다). 생성 중지 구간은 흐름마다 chapters.json stopSpawningAtMinute(서장만). 땅의 주인과 싸우는 동안은 cheonha.json bosses.spawnTargetScale 을 곱한다.",
+    "points": [ [0,15],[1,25],[2,40],[3,55],[4,68],[5,80],[6,97],[7,113],[8,130],[9,155],[10,180],[11,200],[12,220],[13,247],[14,273],[15,300],[16,333],[17,367],[18,400],[30,400] ],
     "spawnFractionPerSecond": 0.3,
-    "ringMinDiagonal": 0.6, "ringMaxDiagonal": 0.75, "recycleBeyondDiagonal": 1.5,
-    "stopSpawningAtMinute": 19, "bossAtMinute": 20
+    "ringMinDiagonal": 0.6, "ringMaxDiagonal": 0.75, "recycleBeyondDiagonal": 1.5
   },
   "stats": { "_note": "능력치 기본값 중 캐릭터에 없는 것. 기획서 '8. 전투 시스템' 능력치 표.", "magnetBase": 1.5, "cooldownReductionCap": 0.6 },
   "training": {

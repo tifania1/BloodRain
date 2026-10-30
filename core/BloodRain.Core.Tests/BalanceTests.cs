@@ -79,19 +79,58 @@ namespace BloodRain.Core.Tests
         [InlineData(0, 15)]
         [InlineData(10, 180)]
         [InlineData(18, 400)]
-        [InlineData(20, 120)]
+        [InlineData(20, 400)]
+        [InlineData(30, 400)]
+        [InlineData(45, 400)]
         [InlineData(4.5f, 74)]
         public void 화면_위_목표_적_수(float minute, float expected)
         {
             Assert.Equal(expected, new SpawnCurve(_d.Balance.SpawnTarget).TargetAt(minute), 1);
         }
 
-        [Fact] public void 생성은_19분에_멈추고_20분_보스전에_다시_돈다()
+        [Fact] public void 한_생_곡선은_멈추지_않는다()
         {
             var c = new SpawnCurve(_d.Balance.SpawnTarget);
-            Assert.Equal(0, c.SpawnThisSecond(19.5f, 0));
-            Assert.True(c.SpawnThisSecond(20f, 0) > 0);
+            for (float m = 0; m <= 40; m += 0.25f) Assert.False(c.SpawningStopped(m), $"{m}분에 멈춤");
+            Assert.Equal(120, c.SpawnThisSecond(19.5f, 0)); // 400 × 0.3
             Assert.Equal(54, c.SpawnThisSecond(10f, 0)); // 180 × 0.3
+            Assert.Equal(0, c.SpawnThisSecond(25f, 400));
+        }
+
+        [Fact] public void 생성_멈춤_구간을_주면_그_안에서만_멈춘다()
+        {
+            var c = new SpawnCurve(_d.Balance.SpawnTarget, 8.5f, 9f);
+            Assert.True(c.SpawnThisSecond(8.4f, 0) > 0);
+            Assert.Equal(0, c.SpawnThisSecond(8.5f, 0));
+            Assert.Equal(0, c.SpawnThisSecond(8.99f, 0));
+            Assert.True(c.SpawnThisSecond(9f, 0) > 0);
+            Assert.Throws<ArgumentException>(() => new SpawnCurve(_d.Balance.SpawnTarget, 9f, 8f));
+        }
+
+        /// <summary>11장 '화면 위 적 수 목표' 문단: 15분 이후 가장 가파르게 늘어 18분에 정점 400, 그 뒤로는 400.
+        /// 생성 규칙: 부족분의 30%, 화면 대각선 0.6~0.75배 고리, 1.5배 넘게 멀어지면 옮김.</summary>
+        [Fact] public void 화면_위_적_수_곡선과_생성_규칙이_기획서_11장과_같다()
+        {
+            var sec = TestData.GddSection("화면 위 적 수 목표");
+            var t = _d.Balance.SpawnTarget;
+            var c = new SpawnCurve(t);
+            var peak = System.Text.RegularExpressions.Regex.Match(sec, @"(\d+)분에 정점\((\d+)\)을 찍고 그 뒤로는 \2을 지킵니다");
+            Assert.True(peak.Success, "11장 정점 문장 모양이 바뀜");
+            float peakAt = float.Parse(peak.Groups[1].Value), peakN = float.Parse(peak.Groups[2].Value);
+            Assert.Equal(peakN, t.Points.Max(p => p[1]));
+            Assert.True(c.TargetAt(peakAt - 0.5f) < peakN);
+            for (float m = peakAt; m <= 30; m += 0.5f) Assert.Equal(peakN, c.TargetAt(m));
+            Assert.Equal(30f, t.Points[^1][0]); // 현경(30분)까지 점이 있다
+
+            // 15분 이후가 가장 가파르다: 15분~정점 사이 분당 증가가 그 앞 어느 1분보다 크다.
+            Assert.Contains("15분 이후 가장 가파르게", sec);
+            float late = (c.TargetAt(peakAt) - c.TargetAt(15)) / (peakAt - 15);
+            for (int m = 0; m < 15; m++) Assert.True(c.TargetAt(m + 1) - c.TargetAt(m) < late, $"{m}~{m + 1}분이 15분 뒤보다 가파름");
+
+            Assert.Contains($"부족분의 {TestData.Num(t.SpawnFractionPerSecond * 100)}%", sec);
+            Assert.Contains($"화면 대각선의 {TestData.Num(t.RingMinDiagonal)}~{TestData.Num(t.RingMaxDiagonal)}배", sec);
+            Assert.Contains($"대각선 {TestData.Num(t.RecycleBeyondDiagonal)}배 넘게", sec);
+            Assert.Contains("한 생의 시간대별 가중치표와 서 있는 지역의 고유 적에서 뽑습니다", sec);
         }
 
         [Fact] public void 무공_피해_보간()

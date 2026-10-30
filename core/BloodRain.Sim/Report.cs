@@ -21,12 +21,12 @@ namespace BloodRain.Sim
 
         /// <summary>기획서 11장 '플레이어 화력 목표' 1장 열. 데이터 파일에는 없는 숫자다.</summary>
         static readonly (int Minute, double Dps)[] DpsTargets = { (5, 80), (10, 300), (15, 800), (20, 1500) };
-        /// <summary>기획서 11장 경지 도달 시점(분)과 8장 절기 시점.</summary>
+        /// <summary>기획서 11장 경지 도달 시점(분: 이류 3분 20초 … 초절정 16분 40초)과 8장 절기 시점. 화경(23분 20초)은 20분까지만 돌려 목표를 비운다.</summary>
         static readonly (string Id, string NameKo, double Minute)[] RealmTargets =
         {
-            ("iryu", "이류", 3.5), ("ilryu", "일류", 7), ("jeoljeong", "절정", 11.5), ("chojeoljeong", "초절정", 16.5), ("hwagyeong", "화경", double.NaN),
+            ("iryu", "이류", 10 / 3.0), ("ilryu", "일류", 20 / 3.0), ("jeoljeong", "절정", 35 / 3.0), ("chojeoljeong", "초절정", 50 / 3.0), ("hwagyeong", "화경", double.NaN),
         };
-        static readonly double[] AwakenTargets = { 11.5, 16.5, double.NaN };
+        static readonly double[] AwakenTargets = { 35 / 3.0, 50 / 3.0, double.NaN };
 
         static readonly (string NameKo, Func<SimOptions, SimOptions> Change)[] Sensitivity =
         {
@@ -118,7 +118,9 @@ namespace BloodRain.Sim
             L();
             L("> 이 문서는 `core/BloodRain.Sim` 이 만든다. 손으로 고치지 말고 데이터나 가정을 바꾼 뒤 다시 만든다.");
             L("> `dotnet run --project core/BloodRain.Sim -c Release -- --report docs/design/sim/level-curve.md`");
-            L($"> 진소운, 1장, 처음 열린 무공 8종, 연무장 없음. 정책마다 {seeds}판(시드 1~{seeds}), 조정 시험은 {scenarioSeeds}판, 민감도는 {sensitivitySeeds}판의 중앙값.");
+            L($"> 진소운, 숭산 20분, 처음 열린 무공 8종, 연무장 없음. 정책마다 {seeds}판(시드 1~{seeds}), 조정 시험은 {scenarioSeeds}판, 민감도는 {sensitivitySeeds}판의 중앙값.");
+            L("> 적 구성과 사건은 아직 웹 프로토타입의 옛 1장 표(`Assumptions.EnemyMix`·`Events`)를 쓴다. 생성 곡선은 한 생 곡선(18분 뒤 400, 생성 중지 없음)이다. " +
+              "`chapters.json` 한 생 흐름과 축척·덩이는 T-17에서 얹는다.");
             L("> 돌리는 법과 모형 설명: [README.md](README.md). 가정 값의 원본: `core/BloodRain.Sim/Assumptions.cs`.");
             L();
 
@@ -142,9 +144,11 @@ namespace BloodRain.Sim
                 L($"- 그래서 적 기혈 증가를 0.08 → 0.2로 올려도 20분 레벨은 거의 그대로다(Lv{MedianLevel(avg, 20)} → Lv{MedianLevel(hp, 20)}).");
             double kps19 = Median(avg.Select(r => (r.At(19).Kills - r.At(18).Kills) / 60.0));
             float frac = g.Balance.SpawnTarget.SpawnFractionPerSecond;
+            // 분당 표는 그 초의 생성 직후에 잰다. 생성 직전 수는 목표 − K÷채움 비율이고, 직후는 거기에 그 초에 만든 K마리가 더해진다.
             L(string.Format(Inv, "- 19분 화면 위 적은 중앙 {0:N0}마리다(생성 목표 {1:N0}). 생성은 매초 '목표 − 지금 수'의 {2:0}%만 채우므로, " +
-                "초당 K마리를 잡으면 화면 적은 목표보다 약 K÷{3:0.0#}마리 적은 데서 멈춘다. 평균 빌드는 18~19분에 초당 {4:0}마리를 잡는다({1:0} − {4:0}÷{3:0.0#} ≈ {5:0}).",
-                Median(avg.Select(r => (double)r.At(19).Alive)), spawn.TargetAt(19), frac * 100, frac, kps19, spawn.TargetAt(19) - kps19 / frac));
+                "초당 K마리를 잡으면 생성 직전 화면 적은 목표보다 약 K÷{3:0.0#}마리 적은 데서 멈추고, 분당 표가 재는 생성 직후에는 K마리가 더해진다. " +
+                "평균 빌드는 18~19분에 초당 {4:0}마리를 잡는다({1:0} − {4:0}÷{3:0.0#} + {4:0} ≈ {5:0}).",
+                Median(avg.Select(r => (double)r.At(19).Alive)), spawn.TargetAt(19), frac * 100, frac, kps19, spawn.TargetAt(19) - kps19 / frac + kps19));
             L($"- 검산: 웹 프로토타입 자동 판 기록(`web/prototype/README.md`: 5분 Lv15 안팎, 원각까지 간 판은 20분 Lv75~100)과 " +
               $"지금 데이터 결과(5분 Lv{MedianLevel(avg, 5)}, 20분 Lv{MinLevel(avg, 20)}~{MaxLevel(avg, 20)})가 비슷하다. 화면을 그리지 않는 모형치고 크게 빗나가지 않는다.");
             L($"- 처치 진기를 새로 정하고(P-02) 짝 심법 기준을 Lv3 → Lv2로 내리면 기획서 목표에 붙는다. " +
@@ -214,7 +218,7 @@ namespace BloodRain.Sim
                 {
                     int lv = (int)Math.Round(Median(runs.Select(r => (double)r.At(m).Level)), MidpointRounding.AwayFromZero);
                     double alive = Median(runs.Select(r => (double)r.At(m).Alive));
-                    string fill = spawn.SpawningStopped(m) || m >= g.Balance.SpawnTarget.BossAtMinute ? "-" : (alive / spawn.TargetAt(m)).ToString("P0", Inv).Replace(" ", "");
+                    string fill = (alive / spawn.TargetAt(m)).ToString("P0", Inv).Replace(" ", "");
                     L(string.Format(Inv, "| {0} | {1} | {2} | {3:N0} | {4} | {5:N0} | {6:N0} | {7:N0} | {8:N0} | {9:0.#} |",
                         m, lv, realms.For(lv).NameKo, Median(runs.Select(r => (double)r.At(m).Kills)), fill, alive,
                         Median(runs.Select(r => (double)r.At(m).InCrowd)), Median(runs.Select(r => r.At(m).SingleDps)),

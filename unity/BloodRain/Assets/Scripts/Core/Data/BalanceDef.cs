@@ -161,12 +161,17 @@ namespace BloodRain.Core.Data
         public Dictionary<string, float> ChapterMultiplier = new Dictionary<string, float>();
     }
 
+    /// <summary>화면 위 목표 적 수. 생성을 멈추는 구간은 흐름(chapters.json)마다 따로 정한다.</summary>
     public sealed class SpawnTargetDef
     {
+        /// <summary>[분, 마리]. 마지막 점 뒤로는 마지막 값.</summary>
         public List<float[]> Points = new List<float[]>();
         public float SpawnFractionPerSecond = 0.3f;
-        public float StopSpawningAtMinute = 19;
-        public float BossAtMinute = 20;
+        /// <summary>생성 고리(화면 대각선 배수). 화면 기준이라 축척이 바뀌어도 그대로다.</summary>
+        public float RingMinDiagonal = 0.6f;
+        public float RingMaxDiagonal = 0.75f;
+        /// <summary>플레이어에게서 이만큼(대각선 배수) 넘게 멀어진 적은 진행 방향 반대편으로 옮긴다.</summary>
+        public float RecycleBeyondDiagonal = 1.5f;
     }
 
     public sealed class ContactDef
