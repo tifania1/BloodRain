@@ -118,7 +118,7 @@ namespace BloodRain.Core.Run
 
             MoveTo(position);
 
-            if (!Bosses.InFight) Bosses.TryEngage(Position, Level, Minutes);
+            Bosses.Tick(dt, Position, Level, Minutes);
             Director.BossFight = Bosses.InFight;
 
             _secondAcc += dt;
@@ -148,8 +148,9 @@ namespace BloodRain.Core.Run
             if (r.Breakthroughs.Count > 0)
             {
                 foreach (var realm in r.Breakthroughs) infos.Add(Log.Breakthrough(realm.Id));
-                Breakthrough.Start(r.FromLevel, r.ToLevel);
-                Director.OnBreakthrough();
+                bool revisit = infos.All(i => !i.LongCinematic);
+                Breakthrough.Start(r.FromLevel, r.ToLevel, revisit);
+                Director.OnBreakthrough(revisit);
                 woken = Bosses.UpdateRealm(Xp.Level);
             }
             return new LifeAbsorb(r, infos, woken);

@@ -107,9 +107,14 @@ namespace BloodRain.Core.Tests
             var curve = new XpCurve(_d.Balance.XpCurve);
             life.Absorb(curve.CumulativeTo(35));
             Assert.Equal(BossRegionState.Awake, life.Bosses.State("songshan"));
+            // 태어난 숭산 한가운데서 절정에 올라 이미 혈운 기둥 원 안이다: 5초 경고 뒤 싸움(T-29)
             life.Tick(0.1f, life.Regions.Center("songshan"), 0);
+            Assert.Equal(LifePhase.Roaming, life.Phase);
+            Assert.Equal("songshan", life.Bosses.GraceRegionId);
+            for (int i = 0; i < 400 && life.Phase != LifePhase.BossFight; i++) life.Tick(0.1f, life.Regions.Center("songshan"), 0);
             Assert.Equal(LifePhase.BossFight, life.Phase);
             Assert.True(life.Director.BossFight);
+            Assert.Null(life.Bosses.GraceRegionId);
 
             var kill = life.DefeatBoss();
             Assert.Equal("songshan", kill.RegionId);

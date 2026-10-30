@@ -78,8 +78,9 @@ namespace BloodRain.Core.Spawning
         /// <summary>남은 생성 멈춤(초, 세상 시간).</summary>
         public float HoldRemaining => _hold;
 
-        /// <summary>돌파 연출이 시작됐다. spawnHoldSeconds 동안 만들지 않는다.</summary>
-        public void OnBreakthrough() => Hold(_c.Breakthrough.SpawnHoldSeconds);
+        /// <summary>돌파 연출이 시작됐다. spawnHoldSeconds(다시 오른 경지면 revisitSeconds) 동안 만들지 않는다.</summary>
+        public void OnBreakthrough(bool revisit = false) =>
+            Hold(revisit && _c.Breakthrough.RevisitSeconds > 0f ? _c.Breakthrough.RevisitSeconds : _c.Breakthrough.SpawnHoldSeconds);
 
         /// <summary>생성을 이만큼 멈춘다(각성 파동 등). 이미 더 길게 멈춰 있으면 그대로.</summary>
         public void Hold(float seconds) => _hold = Math.Max(_hold, seconds);

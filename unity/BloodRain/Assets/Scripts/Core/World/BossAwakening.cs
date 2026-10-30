@@ -195,6 +195,7 @@ namespace BloodRain.Core.World
                 if (_state[r.Id] != BossRegionState.Dormant) continue;
                 if (!ShouldBeAwake(r, Realm, _record.SealStones)) continue;
                 _state[r.Id] = BossRegionState.Awake;
+                _justWoke.Add(r.Id);
                 woke.Add(r);
             }
             return woke;
@@ -206,10 +207,10 @@ namespace BloodRain.Core.World
         public float Health(BossDef boss, float minute) =>
             boss.Health * (1f + _rules.HealthPerMinute * Math.Max(0f, minute)) / _rules.NormalizeAt20;
 
-        /// <summary>싸움이 시작되는 반경(세계 m) = 지금 화면 대각선 × 0.5.</summary>
+        /// <summary>싸움이 시작되는 반경(세계 m) = 지금 화면 대각선 × engageViewMultiple(0.15, 혈운 기둥 원).</summary>
         public float EngageRadius(float level) => _scale.ViewDiagonal(level) * _rules.EngageViewMultiple;
 
-        /// <summary>깨어난 지역 한가운데(화면 대각선 0.5배 안)에 들어섰으면 싸움을 시작한다. 여럿이면 가장 가까운 곳.
+        /// <summary>깨어난 지역 한가운데(혈운 기둥 원 안)에 들어섰으면 싸움을 시작한다. 여럿이면 가장 가까운 곳.
         /// 이미 싸우는 중이거나 들어선 곳이 없으면 null.</summary>
         public BossFight? TryEngage(Vector2 player, float level, float minute)
         {
@@ -224,6 +225,52 @@ namespace BloodRain.Core.World
                 if (d <= radius && d < bestD) { best = r; bestD = d; }
             }
             return best == null ? null : Begin(best, level, minute);
+        }
+
+        // ---- 깨어날 때 이미 원 안이면 경고 시간(T-29) ----
+
+        readonly HashSet<string> _justWoke = new HashSet<string>();
+
+        /// <summary>경고가 흐르는 지역(깨어날 때 이미 원 안이었던 곳). 없으면 null.</summary>
+        public string? GraceRegionId { get; private set; }
+        /// <summary>남은 경고 시간(초, 세상 시간).</summary>
+        public float GraceRemaining { get; private set; }
+
+        /// <summary>
+        /// 매 프레임 부른다(TryEngage 대신). 깨어난 지역 원에 들어서면 바로 싸움을 시작한다.
+        /// 다만 그 지역이 깨어나던 순간 이미 원 안에 있었으면 awakenGraceSeconds 경고가 흐르고, 그사이 원 밖으로 나가면 싸움을 미룬다
+        /// (나중에 다시 들어서면 보통처럼 바로 시작). 경고가 다 흐르면 싸움을 시작해 돌려준다.
+        /// </summary>
+        public BossFight? Tick(float dt, Vector2 player, float level, float minute)
+        {
+            if (InFight) return null;
+            float radius = EngageRadius(level);
+            bool Inside(RegionDef r) => Vector2.Distance(player, _regions.Center(r)) <= radius;
+
+            if (GraceRegionId != null)
+            {
+                var g = _regions.Region(GraceRegionId);
+                if (!Inside(g) || _state[g.Id] != BossRegionState.Awake) { GraceRegionId = null; GraceRemaining = 0f; }
+                else
+                {
+                    GraceRemaining -= dt;
+                    if (GraceRemaining > 0f) return null;
+                    GraceRegionId = null;
+                    GraceRemaining = 0f;
+                    return Begin(g, level, minute);
+                }
+            }
+
+            // 막 깨어난 곳: 이미 안이면 경고를 걸고, 밖이면 보통 규칙으로 돌린다.
+            foreach (var id in _justWoke)
+            {
+                var r = _regions.Region(id);
+                if (GraceRegionId == null && Inside(r)) { GraceRegionId = id; GraceRemaining = _rules.AwakenGraceSeconds; }
+            }
+            _justWoke.Clear();
+            if (GraceRegionId != null) return null;
+
+            return TryEngage(player, level, minute);
         }
 
         /// <summary>깨어난 지역의 보스전을 바로 시작한다(연출·시험용). 깨어나 있지 않으면 예외.</summary>
@@ -267,6 +314,7 @@ namespace BloodRain.Core.World
             }
             kill.First = true;
             kill.RebirthQi = _rules.FirstKill.RebirthQi;
+            kill.BloodCrystal = _rules.FirstKill.BloodCrystal;
             if (_rules.FirstKill.SealStone) kill.SealStone = region.SealStone;
             if (_rules.FirstKill.UnlockSect)
                 kill.UnlockSect = _data.Cheonha.Sects.FirstOrDefault(s => s.UnlockBossRegion == region.Id)?.Id;

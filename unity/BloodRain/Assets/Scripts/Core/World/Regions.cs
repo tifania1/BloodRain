@@ -94,7 +94,8 @@ namespace BloodRain.Core.World
         }
 
         /// <summary>혈운 농도: 가장 가까운 두 지역 값을 거리로 섞는다. v = (v1 × d2 + v2 × d1) / (d1 + d2).
-        /// 지역 한가운데면 그 지역 값 그대로, 두 지역 한가운데 점이면 둘의 평균.</summary>
+        /// 지역 한가운데면 그 지역 값 그대로, 두 지역 한가운데 점이면 둘의 평균.
+        /// 숨은 지역(봉마곡)은 봉인석이 다 모이기 전엔 섞지 않는다(7장): 게임에서는 늘 혼의 봉인석 수를 넘긴다(null 은 모두 보이는 시험용).</summary>
         public float Density(Vector2 world, int? sealStones = null)
         {
             RegionDef? a = null, b = null;

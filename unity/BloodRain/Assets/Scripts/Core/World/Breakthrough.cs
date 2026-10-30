@@ -42,6 +42,7 @@ namespace BloodRain.Core.World
         readonly BreakthroughDef _def;
         readonly CrushDef _crush;
         float _t;
+        float _speed = 1f;
         bool _started;
         BreakthroughCue _fired;
         float _fromExponent;
@@ -72,13 +73,18 @@ namespace BloodRain.Core.World
         public bool SweepDone => (_fired & BreakthroughCue.Sweep) != 0;
 
         /// <summary>연출이 끝나는 시각(물러나기가 끝나는 때).</summary>
-        public float DurationSeconds => _def.ZoomToSeconds;
+        public float DurationSeconds => _def.ZoomToSeconds / _speed;
+        /// <summary>다시 오른 경지라 줄인 연출인가.</summary>
+        public bool IsRevisit { get; private set; }
 
         /// <summary>돌파 연출을 시작한다. 한 번에 여러 경지를 넘었으면 마지막 경지까지 한 번에 물러난다.</summary>
         /// <param name="fromLevel">흡수 전 레벨(소수면 진기 비율까지).</param>
         /// <param name="toLevel">흡수 뒤 레벨.</param>
-        public void Start(float fromLevel, float toLevel)
+        /// <param name="revisit">이미 올라 본 경지면 true: 같은 순서를 revisitSeconds 로 줄여 보여 준다(연출 시계가 그만큼 빨리 간다).</param>
+        public void Start(float fromLevel, float toLevel, bool revisit = false)
         {
+            _speed = revisit && _def.RevisitSeconds > 0f ? _def.ZoomToSeconds / _def.RevisitSeconds : 1f;
+            IsRevisit = revisit && _speed != 1f;
             if (IsActive) throw new InvalidOperationException("돌파 연출이 이미 진행 중입니다");
             FromLevel = fromLevel;
             ToLevel = toLevel;
@@ -96,7 +102,7 @@ namespace BloodRain.Core.World
         public BreakthroughCue Tick(float unscaledDt)
         {
             if (!_started) return BreakthroughCue.None;
-            if (unscaledDt > 0f) _t += unscaledDt;
+            if (unscaledDt > 0f) _t += unscaledDt * _speed;
             if (!IsActive) return BreakthroughCue.None;
 
             var cues = Pass(BreakthroughCue.Stamp, 0f)

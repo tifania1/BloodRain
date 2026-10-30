@@ -173,7 +173,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal("천선석", kill.SealStone);
             Assert.Equal("tang", kill.UnlockedSect);
             Assert.Equal(300, kill.RebirthQi);
-            Assert.Equal(0, kill.BloodCrystal);
+            Assert.Equal(_d.Cheonha.Bosses.FirstKill.BloodCrystal, kill.BloodCrystal); // 첫 처치에도 혈정 5(T-29)
             // 혼은 생이 끝날 때까지 그대로
             Assert.DoesNotContain("tang", s.UnlockedSects);
 

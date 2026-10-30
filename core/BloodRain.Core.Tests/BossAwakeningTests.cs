@@ -144,7 +144,7 @@ namespace BloodRain.Core.Tests
                 Assert.NotNull(kill.SealStone);
                 Assert.Equal(rules.FirstKill.RebirthQi, kill.RebirthQi);
                 Assert.Equal(300, kill.RebirthQi);
-                Assert.Equal(0, kill.BloodCrystal);
+                Assert.Equal(5, kill.BloodCrystal); // 첫 처치에도 혈정 5(T-29)
                 Assert.True(kill.Chest);
                 var sect = _d.Cheonha.Sect(region.Sect!);
                 Assert.Equal(sect.Unlock == "start" ? null : sect.Id, kill.UnlockSect);

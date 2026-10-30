@@ -14,7 +14,7 @@ namespace BloodRain.Core.Meta
     public enum RebirthQiBonusKind { BossFirstKill, BossRepeatKill, FirstVisitRegion, FirstReachRealm }
 
     /// <summary>정산 화면 줄. 위에서부터 이 순서로 보여 준다.</summary>
-    public enum RebirthQiLineKind { Orbs, BossFirstKill, BossRepeatKill, FirstVisitRegion, FirstReachRealm, Silver, Traits }
+    public enum RebirthQiLineKind { Orbs, BossFirstKill, BossRepeatKill, FirstVisitRegion, FirstReachRealm, Silver, Traits, BloodMoon }
 
     /// <summary>보너스 하나(무엇 때문에, 얼마).</summary>
     public readonly struct RebirthQiBonusEntry
@@ -52,14 +52,19 @@ namespace BloodRain.Core.Meta
         public float TraitBonus { get; }
         /// <summary>성질 보너스로 더해진 몫: Subtotal × 성질 보너스, 반올림.</summary>
         public int FromTraits { get; }
-        public int Total => Subtotal + FromTraits;
+        /// <summary>혈월 천하(회귀 뒤) 보상 배율로 더해진 몫: (Subtotal + FromTraits) × (배율 - 1), 반올림.</summary>
+        public int FromBloodMoon { get; }
+        public float RewardMultiplier { get; }
+        public int Total => Subtotal + FromTraits + FromBloodMoon;
         /// <summary>흡수한 구슬 수와 구슬 값 합(심득 전, 농도 곱하기 전). 정산 화면 설명용.</summary>
         public long OrbCount { get; }
         public double OrbValue { get; }
 
         public RebirthQiResult(int fromOrbs, IReadOnlyList<RebirthQiBonusEntry> bonuses, int fromSilver, int leftoverSilver,
-            float traitBonus, int fromTraits, long orbCount, double orbValue)
+            float traitBonus, int fromTraits, long orbCount, double orbValue, float rewardMultiplier = 1f, int fromBloodMoon = 0)
         {
+            RewardMultiplier = rewardMultiplier;
+            FromBloodMoon = fromBloodMoon;
             FromOrbs = fromOrbs;
             Bonuses = bonuses;
             FromSilver = fromSilver;
@@ -86,6 +91,7 @@ namespace BloodRain.Core.Meta
                 }
                 lines.Add(new RebirthQiLine(RebirthQiLineKind.Silver, LeftoverSilver, FromSilver));
                 if (TraitBonus != 0) lines.Add(new RebirthQiLine(RebirthQiLineKind.Traits, 0, FromTraits));
+                if (FromBloodMoon != 0) lines.Add(new RebirthQiLine(RebirthQiLineKind.BloodMoon, 0, FromBloodMoon));
                 return lines;
             }
         }
@@ -109,13 +115,16 @@ namespace BloodRain.Core.Meta
         long _orbs;
 
         /// <param name="traitBonus">타고난 성질의 윤회의 기 보너스 합(RebirthBody.RebirthQiBonus).</param>
-        public RebirthQiLedger(RebirthQiDef def, float traitBonus = 0f)
+        /// <param name="rewardMultiplier">혈월 천하면 cheonha.json cycle.bloodmoon.rewards(1.5), 아니면 1.</param>
+        public RebirthQiLedger(RebirthQiDef def, float traitBonus = 0f, float rewardMultiplier = 1f)
         {
             _def = def;
             TraitBonus = traitBonus;
+            RewardMultiplier = rewardMultiplier;
         }
 
         public float TraitBonus { get; }
+        public float RewardMultiplier { get; }
         /// <summary>Σ(구슬 값 × 농도).</summary>
         public double WeightedOrbValue => _weighted;
         public double OrbValue => _raw;
@@ -157,7 +166,8 @@ namespace BloodRain.Core.Meta
             int fromSilver = Round(_def.LeftoverSilverRate * silver);
             int subtotal = fromOrbs + _bonuses.Sum(b => b.Amount) + fromSilver;
             int fromTraits = Round(subtotal * (double)TraitBonus);
-            return new RebirthQiResult(fromOrbs, _bonuses.ToList(), fromSilver, silver, TraitBonus, fromTraits, _orbs, _raw);
+            int fromMoon = Round((subtotal + fromTraits) * ((double)RewardMultiplier - 1));
+            return new RebirthQiResult(fromOrbs, _bonuses.ToList(), fromSilver, silver, TraitBonus, fromTraits, _orbs, _raw, RewardMultiplier, fromMoon);
         }
 
         static int Round(double v) => (int)Math.Round(v, MidpointRounding.AwayFromZero);

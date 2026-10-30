@@ -168,6 +168,9 @@ namespace BloodRain.Core.World
         /// <summary>닿았을 때 플레이어가 피해를 받는가.</summary>
         public bool DealsContactDamage(int bornRealm, int playerRealm, bool boss = false) => !Crushes(bornRealm, playerRealm, boss);
 
+        /// <summary>밟혀 쓰러진 적이 보갑을 떨구는가. 아래 경지 정예는 밟혀도 떨군다(cheonha.json crush.eliteChestWhenCrushed).</summary>
+        public bool CrushedDropsChest(bool elite) => elite && _crush.EliteChestWhenCrushed;
+
         /// <summary>돌파 쓸림 대상: 반경(세계 m, 경계 포함) 안의 새 경지보다 아래에서 생긴 적. 넘긴 목록의 순번을 순서대로.</summary>
         public List<int> SelectSweep(IReadOnlyList<ScaledFoe> foes, int newRealm, float radius)
         {

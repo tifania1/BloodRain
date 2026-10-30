@@ -30,18 +30,20 @@
   },
 
   "crush": {
-    "_note": "아래 경지에서 생긴 적은 닿으면 쓰러지고 피해를 주지 않는다. 돌파 때 화면 대각선 sweepViewMultiple 배 안의 아래 경지 적이 쓸린다.",
+    "_note": "아래 경지에서 생긴 적은 닿으면 쓰러지고 피해를 주지 않는다. 돌파 때 화면 대각선 sweepViewMultiple 배 안의 아래 경지 적이 쓸린다. 아래 경지 정예는 밟혀도 보갑을 떨군다(eliteChestWhenCrushed).",
     "xpPerCrushed": 0.3,
     "sweepViewMultiple": 0.6,
-    "sweepAtSeconds": 0.8
+    "sweepAtSeconds": 0.8,
+    "eliteChestWhenCrushed": true
   },
 
   "breakthrough": {
-    "_note": "돌파 연출(7장). 세상 시간 timeScale 배, zoomFrom~zoomTo 초 동안 새 축척으로 물러남. 그 뒤 깨달음.",
+    "_note": "돌파 연출(7장). 연출 내내(zoomTo 초) 세상 시간 timeScale 배, zoomFrom~zoomTo 초 동안 새 축척으로 물러남. 그 뒤 깨달음. 이미 올라 본 경지로 다시 돌파하면 같은 순서를 revisitSeconds 로 줄인다(생성 멈춤도 같이 줄어든다).",
     "timeScale": 0.05,
     "zoomFromSeconds": 0.2,
     "zoomToSeconds": 1.4,
-    "spawnHoldSeconds": 1.4
+    "spawnHoldSeconds": 1.4,
+    "revisitSeconds": 0.7
   },
 
   "density": {

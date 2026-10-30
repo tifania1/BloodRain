@@ -68,6 +68,8 @@ namespace BloodRain.Core.Data
         public float XpPerCrushed;
         public float SweepViewMultiple;
         public float SweepAtSeconds;
+        /// <summary>아래 경지에서 생긴 정예는 밟혀도 보갑을 떨군다.</summary>
+        public bool EliteChestWhenCrushed;
     }
 
     public sealed class BreakthroughDef
@@ -76,6 +78,8 @@ namespace BloodRain.Core.Data
         public float ZoomFromSeconds;
         public float ZoomToSeconds;
         public float SpawnHoldSeconds;
+        /// <summary>이미 올라 본 경지로 다시 돌파할 때 같은 순서를 이 길이로 줄인다(21장 한 번 깨친 길).</summary>
+        public float RevisitSeconds;
     }
 
     public sealed class DensityDef

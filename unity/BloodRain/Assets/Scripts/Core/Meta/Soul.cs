@@ -525,6 +525,8 @@ namespace BloodRain.Core.Meta
         /// <summary>이번 생의 윤회의 기 장부(성질 배율은 몸에서).</summary>
         public RebirthQiLedger Qi { get; }
         public int Manuscripts { get; private set; }
+        /// <summary>혈월 천하(회귀 뒤)면 1.5: 윤회의 기·혈정·은자에 곱한다(은자는 줍는 쪽이 이 값을 곱한다).</summary>
+        public float RewardMultiplier { get; }
 
         public LifeLog(Soul soul, RebirthBody body)
         {
@@ -537,7 +539,8 @@ namespace BloodRain.Core.Meta
             _bossesKnown = new HashSet<string>(soul.BossesKilled);
             _stonesKnown = new HashSet<string>(soul.SealStones);
             Body = body;
-            Qi = new RebirthQiLedger(_c.RebirthQi, body.RebirthQiBonus);
+            RewardMultiplier = soul.IsBloodMoon ? _c.Cycle.Bloodmoon.Rewards : 1f;
+            Qi = new RebirthQiLedger(_c.RebirthQi, body.RebirthQiBonus, RewardMultiplier);
             Enter(body.Region.Id);
         }
 
@@ -590,7 +593,8 @@ namespace BloodRain.Core.Meta
             string? stone = firstInCycle && _c.Bosses.FirstKill.SealStone ? r.SealStone : null;
             string? sect = firstOnAccount && _c.Bosses.FirstKill.UnlockSect ? _c.Sects.FirstOrDefault(s => s.UnlockBossRegion == region)?.Id : null;
             int qi = Qi.AddBonus(firstInCycle ? RebirthQiBonusKind.BossFirstKill : RebirthQiBonusKind.BossRepeatKill, region);
-            int crystal = firstInCycle ? 0 : _c.Bosses.RepeatKill.BloodCrystal;
+            int crystalBase = firstInCycle ? _c.Bosses.FirstKill.BloodCrystal : _c.Bosses.RepeatKill.BloodCrystal;
+            int crystal = (int)Math.Round(crystalBase * RewardMultiplier, MidpointRounding.AwayFromZero);
             return new BossKillInfo(region, firstInCycle, firstOnAccount, stone, sect, qi, crystal);
         }
 
