@@ -14,9 +14,18 @@
     { "id": "golden_toad",     "nameKo": "금두꺼비",   "family": "event",    "health": 300, "speed": 120, "contactDamage": 0,  "behavior": "flee", "reward": { "silver": 100, "orbBurst": true } },
     { "id": "mogin_nahan",     "nameKo": "목인나한",   "family": "local",    "health": 120, "speed": 40,  "contactDamage": 10, "behavior": "hop_chase", "onDeath": "splinter_burst", "chapter": "chapter1" },
     { "id": "poison_toad",     "nameKo": "독두꺼비",   "family": "local",    "health": 30,  "speed": 55,  "contactDamage": 7,  "behavior": "hop_chase", "onDeath": "poison_pool", "chapter": "chapter2" },
+    { "id": "water_ghost", "nameKo": "수귀", "family": "local", "health": 35, "speed": 70, "contactDamage": 8, "behavior": "water_pull", "onlyInWater": true, "chapter": "chapter3" },
+    { "id": "water_bandit", "nameKo": "수적", "family": "local", "health": 40, "speed": 75, "contactDamage": 9, "behavior": "hook_bind", "chapter": "chapter3" },
+    { "id": "twin_gangsi", "nameKo": "흑백 쌍강시", "family": "local", "health": 60, "speed": 55, "contactDamage": 10, "behavior": "twin_revive", "reviveSeconds": 10, "chapter": "chapter4" },
+    { "id": "plum_sword_ghost", "nameKo": "매화검귀", "family": "local", "health": 50, "speed": 70, "contactDamage": 10, "behavior": "petal_shot", "chapter": "chapter5" },
+    { "id": "ice_gangsi", "nameKo": "빙강시", "family": "ice", "health": 55, "speed": 50, "contactDamage": 10, "behavior": "hop_chase", "onHitSlowSeconds": 2, "chapter": "chapter6" },
+    { "id": "snow_wolf", "nameKo": "설랑", "family": "local", "health": 22, "speed": 115, "contactDamage": 7, "behavior": "flank_pack", "chapter": "chapter6" },
+    { "id": "yeti", "nameKo": "설인", "family": "local", "health": 150, "speed": 40, "contactDamage": 14, "behavior": "ice_throw", "knockbackResist": 0.7, "chapter": "chapter6" },
+    { "id": "demon_cultist", "nameKo": "마교도", "family": "local", "health": 45, "speed": 70, "contactDamage": 10, "behavior": "spear_line", "chapter": "chapter7" },
+    { "id": "blood_shadow_clone", "nameKo": "혈영 분신", "family": "local", "health": 60, "speed": 80, "contactDamage": 12, "behavior": "mimic", "chapter": "chapter7" },
+    { "id": "blood_lion", "nameKo": "혈사자", "family": "local", "health": 90, "speed": 85, "contactDamage": 13, "behavior": "charge_roar", "chapter": "chapter7" },
     { "id": "golden_centipede","nameKo": "금선지네",   "family": "local",    "health": 18,  "speed": 105, "contactDamage": 6,  "behavior": "snake_line", "chapter": "chapter2" },
-    { "id": "dogin",           "nameKo": "독인",       "family": "local",    "health": 45,  "speed": 60,  "contactDamage": 9,  "behavior": "poison_aura", "chapter": "chapter2" }
-,
+    { "id": "dogin",           "nameKo": "독인",       "family": "local",    "health": 45,  "speed": 60,  "contactDamage": 9,  "behavior": "poison_aura", "chapter": "chapter2" },
     { "id": "gangsi_axeman", "nameKo": "강시 도부수", "family": "elite", "health": 500, "speed": 50, "contactDamage": 14, "behavior": "axe_swing", "knockbackResist": 0.85 },
     { "id": "dongin", "nameKo": "동인", "family": "elite", "health": 700, "speed": 55, "contactDamage": 16, "behavior": "slam_combo", "knockbackResist": 0.85 },
     { "id": "gyeyul_monk", "nameKo": "계율원 강시 승려", "family": "elite", "health": 1500, "speed": 50, "contactDamage": 18, "behavior": "palm_shot", "knockbackResist": 0.85 },
@@ -40,6 +49,7 @@
     { "id": "four_guardian_gangsi", "nameKo": "마교 사대호법 강시", "family": "elite", "health": 1600, "speed": 45, "contactDamage": 22, "behavior": "guardian_slam", "knockbackResist": 0.85 },
     { "id": "hyeolyeong_captain", "nameKo": "혈영회 대주", "family": "elite", "health": 2500, "speed": 70, "contactDamage": 22, "behavior": "mark_teleport_x3", "knockbackResist": 0.85 }
   ],
+  "_noteLocal": "지역 고유 적(6장 '지역별 고유 적'). 숭산·당가타 넷 말고는 2026-10-30 예약 세션이 그 넷과 공통 적에 맞춰 정했다(T-33). 빙강시만 family ice: 모닥불(gimmicks campfire)이 이 계열을 느리게 한다.",
   "_noteElites": "정예(6장 '정예'). 기혈·피해는 다른 적처럼 0분·혈운 농도 1 값이고 지역 농도가 곱해진다. 숭산 셋(동인·계율원 강시 승려·강시 방장 대리)과 knockbackResist 0.85 는 웹 프로토타입 ELITES·spawnElite 값, 나머지는 2026-10-30 예약 세션이 숭산 차례별 값(첫째 약 700~900, 둘째 1,300~1,600, 셋째 2,400~2,800)에 맞춰 정했다. 땅마다 세기 차이는 혈운 농도로 난다.",
   "elites": {
     "prologue": ["gangsi_axeman"],

@@ -53,5 +53,26 @@ namespace BloodRain.Core.Tests
                 for (int i = 1; i < list.Count; i++)
                     Assert.True(_d.Enemy(list[i]).Health > _d.Enemy(list[i - 1]).Health, $"{ch}: {list[i]}");
         }
+        [Fact] public void 지역별_고유_적_표의_모든_줄에_데이터가_있고_수치가_같다()
+        {
+            var rows = GddTable(GddSection("지역별 고유 적"));
+            foreach (var r in rows)
+            {
+                var region = _d.Cheonha.Regions.Single(g => g.NameKo == r[0]);
+                var e = _d.Enemies.Single(x => x.Chapter == region.Chapter && r[1].StartsWith(x.NameKo));
+                Assert.Equal(Num(e.Health), r[3]);
+                Assert.Equal(Num(e.Speed), r[4]);
+                Assert.Equal(Num(e.ContactDamage), r[5]);
+            }
+            Assert.Equal(_d.Enemies.Count(e => e.Chapter != null), rows.Count);
+        }
+
+        [Fact] public void 땅의_주인이_있는_일곱_땅_모두_고유_적이_있다()
+        {
+            var regions = new BloodRain.Core.World.Regions(_d);
+            foreach (var r in _d.Cheonha.BossRegions) Assert.NotEmpty(regions.LocalEnemies(r.Id));
+            Assert.Equal("ice", _d.Enemy("ice_gangsi").Family);
+            Assert.Equal(_d.Gimmicks.Campfire.SlowedFamily, _d.Enemy("ice_gangsi").Family);
+        }
     }
 }

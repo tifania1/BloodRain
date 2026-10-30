@@ -18,7 +18,7 @@ namespace BloodRain.Core.Tests
         float At20(float baseDamage) => BossPatterns.ScaleDamage(baseDamage, 20f, 1f, Dpm);
 
         /// <summary>아직 enemies.json 에 없는 소환 적. T-33에서 넣으면 여기서 뺀다.</summary>
-        static readonly HashSet<string> PendingSummons = new HashSet<string> { "water_ghost", "plum_sword_ghost", "blood_shadow_clone" };
+        static readonly HashSet<string> PendingSummons = new HashSet<string>();
 
         public static IEnumerable<object[]> Bosses => new[] { "dang_sohye", "ma_cheonpae", "hyeolheo", "huashan_sword_soul", "seol_muhyang", "hyeokryeon_hwi" }.Select(x => new object[] { x });
 
