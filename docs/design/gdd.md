@@ -1118,8 +1118,16 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 {STYLE} Cinematic storyboard frame, wide 3:2. {장면 설명}. {카메라: wide shot / close-up / overhead}. Dramatic ink composition, empty space used like a scroll painting.
 
 [지도 배경]
-{STYLE} Top-down ink-wash map of {지역} painted on aged rice paper, wide 16:9. {지형}. Leave open paper around places so map markers can sit on top. No text, no labels, no borders, no compass, no seals, no roads.
+{STYLE} Top-down ink-wash map of {지역} painted on aged rice paper, wide 3:2 landscape. {지형: 장소마다 종이 위 위치를 적는다}. Leave open paper around each place so map markers can sit on top. No text, no labels, no borders, no compass, no seals, no roads, no grid.
+
+[환생 카드(세로 2:3)]
+{STYLE} Vertical card illustration, tall 2:3. {장소 설명: 밤, 붉은 비. 보통 "Thin blood-red rain streaks slant across the whole scene." 곤륜처럼 땅에 맞게 붉은 진눈깨비로 바꿔도 된다}. {카메라: low angle from … looking up 등}. Dramatic ink composition, empty space used like a hanging scroll painting. One clear landmark silhouette that still reads at small card size; the lower third fades into mist and open paper so card text can sit on top. No people. Every plaque and banner is blank.
+
+[화면 배경]
+{STYLE} Game screen background, wide 3:2. {장소 설명}. {UI가 올라갈 빈 자리: 예) The back wall in the upper middle is a wide, bare, evenly lit plaster surface with nothing on it}. {카메라: eye-level, straight-on 등}. Dramatic ink composition, empty space used like a scroll painting. No people. Keep anything important away from the top and bottom edges.
 ```
+
+환생 카드는 아래 3분의 1을 안개와 빈 종이로 비워 문파 이름·성질 글자를 얹고, 화면 배경은 UI가 올라갈 자리를 프롬프트에 적어 비워 둡니다. 둘 다 사람을 그리지 않습니다(몸은 생마다 바뀌므로).
 
 ### 일관성 지키는 법
 
