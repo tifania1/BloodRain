@@ -36,10 +36,12 @@ namespace BloodRain.Core.Tests
             {
                 ["bell"] = "songshan", ["pagoda_forest"] = "songshan", ["well"] = "cheongun",
                 ["poison_fog"] = "danggata", ["water"] = "janggang", ["taiji_floor"] = "wudangsan",
+                ["wine_jars"] = "gaebang_hq", ["sword_racks"] = "namgung_manor", ["falling_rocks"] = "huashan", ["plum_heaps"] = "huashan",
+                ["blizzard"] = "kunlun", ["ice_floor"] = "kunlun", ["campfire"] = "kunlun", ["blood_altars"] = "sipmandaesan", ["red_moon"] = "sipmandaesan",
             };
             Assert.Equal(where.Keys.OrderBy(x => x), G.All.Select(g => g.Id).OrderBy(x => x));
             foreach (var (id, region) in where) Assert.Contains(id, _d.Cheonha.Region(region).Gimmicks);
-            Assert.Null(G.Find("falling_rocks")); // 둘째 묶음(T-16)
+            Assert.Null(G.Find("bamboo_thicket")); // 아직 수치 없음
         }
 
         [Fact] public void 지역표의_기믹_칸이_데이터와_같다()

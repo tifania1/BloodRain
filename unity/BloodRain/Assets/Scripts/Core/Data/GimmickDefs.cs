@@ -92,6 +92,88 @@ namespace BloodRain.Core.Data
         public float CooldownSeconds;
     }
 
+    // ---- 둘째 묶음(T-16) ----
+
+    /// <summary>부술 수 있는 것(술독·검각 시렁). 무공에 hitsToBreak 번 맞으면 깨져 떨군다.</summary>
+    public sealed class BreakableGimmickDef : GimmickDef
+    {
+        public int HitsToBreak = 1;
+        /// <summary>food 또는 silver.</summary>
+        public string Drop = "";
+        public float DropChance = 1;
+        /// <summary>음식이면 회복(최대 기혈 비율).</summary>
+        public float HealMaxHealthRatio;
+        /// <summary>은자면 떨구는 양(최소~최대).</summary>
+        public int SilverMin;
+        public int SilverMax;
+    }
+
+    /// <summary>낙석: periodSeconds 마다 플레이어 둘레 ±scatter 안 count 곳에 그림자가 지고 telegraphSeconds 뒤 떨어진다.</summary>
+    public sealed class FallingRocksGimmickDef : GimmickDef
+    {
+        public float PeriodSeconds;
+        public int Count;
+        public float Scatter;
+        public float TelegraphSeconds;
+        public float Radius;
+        /// <summary>플레이어 피해(최대 기혈 비율).</summary>
+        public float PlayerDamageMaxHealthRatio;
+        /// <summary>정예·보스 피해(최대 기혈 비율). 잡몹은 맞으면 쓰러진다.</summary>
+        public float EliteDamageMaxHealthRatio;
+    }
+
+    /// <summary>매화 더미: 닿으면 회복, 다시 피는 데 regrowSeconds.</summary>
+    public sealed class PlumHeapGimmickDef : GimmickDef
+    {
+        public float TouchRadius;
+        public float HealMaxHealthRatio;
+        public float RegrowSeconds;
+    }
+
+    /// <summary>주기 날씨(눈보라·붉은 달): 한 생 시계로 firstSeconds 에 처음, 그 뒤 periodSeconds 마다 durationSeconds 동안.</summary>
+    public sealed class WeatherGimmickDef : GimmickDef
+    {
+        public float FirstSeconds;
+        public float PeriodSeconds;
+        public float DurationSeconds;
+        /// <summary>보이는 범위 배율(눈보라). 0이면 그대로.</summary>
+        public float ViewScale;
+        /// <summary>플레이어 이동속도 배율. 0이면 그대로.</summary>
+        public float PlayerMoveSpeedMultiplier;
+        /// <summary>적 이동속도 배율. 0이면 그대로.</summary>
+        public float EnemyMoveSpeedMultiplier;
+    }
+
+    /// <summary>빙판: 속도가 바뀌는 데 inertiaSeconds 가 걸린다(관성). 나는 적은 빼고.</summary>
+    public sealed class IceFloorGimmickDef : GimmickDef
+    {
+        public float InertiaSeconds;
+        public bool FlyingIgnores;
+    }
+
+    /// <summary>모닥불: 반경 안 플레이어는 초당 회복, 빙강시 계열(family)은 느려진다.</summary>
+    public sealed class CampfireGimmickDef : GimmickDef
+    {
+        public float Radius;
+        public float HealPerSecondMaxHealthRatio;
+        public string SlowedFamily = "";
+        public float SlowedMoveSpeedMultiplier = 1;
+    }
+
+    /// <summary>혈제단: 지역에 count 개. 한 생 시계로 firstLightSeconds 에 하나, 그 뒤 lightEverySeconds 마다 하나씩 켜진다.
+    /// 켜진 제단 반경 안 적은 피해·속도가 오르고, 부수면(기혈 health, 적 기혈 식을 따름) 보갑.</summary>
+    public sealed class BloodAltarGimmickDef : GimmickDef
+    {
+        public int Count;
+        public float FirstLightSeconds;
+        public float LightEverySeconds;
+        public float BuffRadius;
+        public float EnemyDamageMultiplier = 1;
+        public float EnemyMoveSpeedMultiplier = 1;
+        public float Health;
+        public bool ChestOnBreak;
+    }
+
     public sealed class GimmicksDef
     {
         public BellGimmickDef Bell = new BellGimmickDef();
@@ -101,7 +183,21 @@ namespace BloodRain.Core.Data
         public WaterGimmickDef Water = new WaterGimmickDef();
         public TaijiFloorGimmickDef TaijiFloor = new TaijiFloorGimmickDef();
 
-        public IEnumerable<GimmickDef> All => new GimmickDef[] { Bell, PagodaForest, Well, PoisonFog, Water, TaijiFloor };
+        public BreakableGimmickDef WineJars = new BreakableGimmickDef();
+        public BreakableGimmickDef SwordRacks = new BreakableGimmickDef();
+        public FallingRocksGimmickDef FallingRocks = new FallingRocksGimmickDef();
+        public PlumHeapGimmickDef PlumHeaps = new PlumHeapGimmickDef();
+        public WeatherGimmickDef Blizzard = new WeatherGimmickDef();
+        public IceFloorGimmickDef IceFloor = new IceFloorGimmickDef();
+        public CampfireGimmickDef Campfire = new CampfireGimmickDef();
+        public BloodAltarGimmickDef BloodAltars = new BloodAltarGimmickDef();
+        public WeatherGimmickDef RedMoon = new WeatherGimmickDef();
+
+        public IEnumerable<GimmickDef> All => new GimmickDef[]
+        {
+            Bell, PagodaForest, Well, PoisonFog, Water, TaijiFloor,
+            WineJars, SwordRacks, FallingRocks, PlumHeaps, Blizzard, IceFloor, Campfire, BloodAltars, RedMoon,
+        };
 
         /// <summary>cheonha.json 의 기믹 이름으로 찾는다. 아직 수치가 없는 기믹이면 null.</summary>
         public GimmickDef? Find(string id) => All.FirstOrDefault(g => g.Id == id);

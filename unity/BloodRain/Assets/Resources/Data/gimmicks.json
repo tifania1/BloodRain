@@ -1,5 +1,5 @@
 {
-  "_note": "지역 기믹 첫 묶음(기획서 7장 '지역과 혈운 농도' 표의 지형 기믹 칸, '지형 기믹 수치'). 각 항목의 id 가 cheonha.json regions[].gimmicks 에 쓰는 이름이다. 길이·반경은 화면 기준 m(축척 배율 1, 7장 '세상이 작아지는 규칙')이고, 세상에 놓을 때는 그 기믹이 생긴 경지의 축척 배율을 곱한다(Core/World/Gimmicks 는 배율을 인자로 받기만 한다). 시간은 세상 시간 초. 그 자리에 깔린 것(탑림·독안개·물)은 플레이어와 적에게 똑같이 작용하고, 손을 대야 움직이는 것(범종·우물·태극 바닥)은 플레이어만 쓴다. 남은 기믹(낙석·매화 더미·눈보라 등)은 T-16.",
+  "_note": "지역 기믹 첫 묶음(기획서 7장 '지역과 혈운 농도' 표의 지형 기믹 칸, '지형 기믹 수치'). 각 항목의 id 가 cheonha.json regions[].gimmicks 에 쓰는 이름이다. 길이·반경은 화면 기준 m(축척 배율 1, 7장 '세상이 작아지는 규칙')이고, 세상에 놓을 때는 그 기믹이 생긴 경지의 축척 배율을 곱한다(Core/World/Gimmicks 는 배율을 인자로 받기만 한다). 시간은 세상 시간 초. 그 자리에 깔린 것(탑림·독안개·물)은 플레이어와 적에게 똑같이 작용하고, 손을 대야 움직이는 것(범종·우물·태극 바닥)은 플레이어만 쓴다. 둘째 묶음(술독·검각 시렁·낙석·매화 더미·눈보라·빙판·모닥불·혈제단·붉은 달)은 2026-10-30 예약 세션이 정했다(T-16). 아직 없는 것: 부술 수 있는 것(breakables)·대숲·운해·잔도·떠내려가는 배·역류 파도·차오르는 피.",
 
   "bell": {
     "id": "bell",
@@ -67,5 +67,102 @@
     "durationSeconds": 30,
     "oppositeAspectDamageBonus": 0.3,
     "cooldownSeconds": 60
+  },
+
+  "wineJars": {
+    "id": "wine_jars",
+    "nameKo": "술독",
+    "_note": "개방 총타. 무공에 한 번 맞으면 깨지고 60%로 음식(최대 기혈 20% 회복)을 떨군다.",
+    "hitsToBreak": 1,
+    "drop": "food",
+    "dropChance": 0.6,
+    "healMaxHealthRatio": 0.2
+  },
+
+  "swordRacks": {
+    "id": "sword_racks",
+    "nameKo": "검각 시렁",
+    "_note": "남궁세가. 무공에 세 번 맞으면 무너지고 은자 5~10을 떨군다.",
+    "hitsToBreak": 3,
+    "drop": "silver",
+    "dropChance": 1,
+    "silverMin": 5,
+    "silverMax": 10
+  },
+
+  "fallingRocks": {
+    "id": "falling_rocks",
+    "nameKo": "낙석",
+    "_note": "화산. 8초마다 플레이어 둘레 ±8m 안 세 곳에 그림자가 지고 1초 뒤 바위가 떨어진다. 플레이어는 최대 기혈 10%, 잡몹은 쓰러지고 정예·보스는 최대 기혈 5%.",
+    "periodSeconds": 8,
+    "count": 3,
+    "scatter": 8,
+    "telegraphSeconds": 1,
+    "radius": 1.8,
+    "playerDamageMaxHealthRatio": 0.1,
+    "eliteDamageMaxHealthRatio": 0.05
+  },
+
+  "plumHeaps": {
+    "id": "plum_heaps",
+    "nameKo": "매화 더미",
+    "_note": "화산. 닿으면 꽃잎이 흩어지며 최대 기혈 15% 회복, 90초 뒤 다시 핀다.",
+    "touchRadius": 1.2,
+    "healMaxHealthRatio": 0.15,
+    "regrowSeconds": 90
+  },
+
+  "blizzard": {
+    "id": "blizzard",
+    "nameKo": "눈보라",
+    "_note": "곤륜 설원. 한 생 시계로 60초에 처음, 그 뒤 120초마다 20초 동안. 보이는 범위 0.7배, 플레이어와 적 모두 이동속도 0.9배.",
+    "firstSeconds": 60,
+    "periodSeconds": 120,
+    "durationSeconds": 20,
+    "viewScale": 0.7,
+    "playerMoveSpeedMultiplier": 0.9,
+    "enemyMoveSpeedMultiplier": 0.9
+  },
+
+  "iceFloor": {
+    "id": "ice_floor",
+    "nameKo": "빙판",
+    "_note": "곤륜 설원. 빙판 위에선 속도가 바라는 속도로 바뀌는 데 0.6초가 걸린다(멈출 때도 미끄러짐). 걷는 적도 같고 나는 적은 빼고.",
+    "inertiaSeconds": 0.6,
+    "flyingIgnores": true
+  },
+
+  "campfire": {
+    "id": "campfire",
+    "nameKo": "모닥불",
+    "_note": "곤륜 설원. 반경 4m 안 플레이어는 초당 최대 기혈 1% 회복, 빙강시 계열(family ice)은 이동속도 0.5배. 설무향 2막의 얼음 축소도 곁에선 절반 빠르기(bosspatterns.json).",
+    "radius": 4,
+    "healPerSecondMaxHealthRatio": 0.01,
+    "slowedFamily": "ice",
+    "slowedMoveSpeedMultiplier": 0.5
+  },
+
+  "bloodAltars": {
+    "id": "blood_altars",
+    "nameKo": "혈제단",
+    "_note": "십만대산에 네 개. 한 생 시계로 120초에 하나, 그 뒤 120초마다 하나씩 켜진다. 켜진 제단 반경 8m 안 적은 피해 1.25배, 이동속도 1.15배. 제단 기혈 1,500(0분·혈운 농도 1, 적 기혈 식을 따름)을 깎아 부수면 보갑.",
+    "count": 4,
+    "firstLightSeconds": 120,
+    "lightEverySeconds": 120,
+    "buffRadius": 8,
+    "enemyDamageMultiplier": 1.25,
+    "enemyMoveSpeedMultiplier": 1.15,
+    "health": 1500,
+    "chestOnBreak": true
+  },
+
+  "redMoon": {
+    "id": "red_moon",
+    "nameKo": "붉은 달",
+    "_note": "십만대산. 3분마다 30초 동안 적 이동속도 1.2배(한 생 시계로 180초에 처음).",
+    "firstSeconds": 180,
+    "periodSeconds": 180,
+    "durationSeconds": 30,
+    "enemyMoveSpeedMultiplier": 1.2
   }
 }

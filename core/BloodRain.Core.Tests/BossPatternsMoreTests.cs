@@ -167,7 +167,7 @@ namespace BloodRain.Core.Tests
         {
             var s = _d.BossPatternSet("seol_muhyang").Phase2.Single();
             Assert.True(s.MinRadius < s.Radius && s.ShrinkPerSecond > 0);
-            Assert.Equal("bonfire", s.SlowedNear);
+            Assert.Equal("campfire", s.SlowedNear);
             Assert.InRange(s.SlowedNearMultiplier, 0.01f, 0.99f);
             var clones = _d.BossPatternSet("seol_muhyang").Pattern("ice_clones_x4");
             Assert.Equal(4, clones.Count);
