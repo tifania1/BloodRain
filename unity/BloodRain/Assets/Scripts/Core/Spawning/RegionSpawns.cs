@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BloodRain.Core.Data;
+using BloodRain.Core.World;
 
 namespace BloodRain.Core.Spawning
 {
@@ -22,17 +23,14 @@ namespace BloodRain.Core.Spawning
         {
             var flow = data.Chapters.FirstOrDefault(c => c.Id == flowId)
                 ?? throw new KeyNotFoundException($"chapters.json 에 없는 흐름입니다: {flowId}");
+            // 고유 적과 지역 정예 표는 World.Regions 한 곳에서 찾는다(T-31). 여기는 흐름의 '대신 쓰는 땅'만 얹는다.
+            var regions = new Regions(data);
 
             foreach (var r in data.Cheonha.Regions)
             {
                 _regions[r.Id] = r;
-                _local[r.Id] = r.Chapter == null
-                    ? (IReadOnlyList<string>)Array.Empty<string>()
-                    : data.Enemies.Where(e => e.Chapter == r.Chapter).Select(e => e.Id).ToList();
+                _local[r.Id] = regions.LocalEnemies(r.Id).Select(e => e.Id).ToList();
             }
-
-            IReadOnlyList<string>? OwnTable(RegionDef r) =>
-                r.Chapter != null && data.Elites.TryGetValue(r.Chapter, out var t) && t.Count > 0 ? t : null;
 
             var fb = flow.EliteFallback;
             IReadOnlyList<string>? fallback = null;
@@ -40,12 +38,12 @@ namespace BloodRain.Core.Spawning
             {
                 if (!_regions.TryGetValue(fb.Region, out var fr))
                     throw new InvalidOperationException($"chapters.json {flowId}: eliteFallback.region '{fb.Region}' 이 cheonha.json 에 없음");
-                fallback = OwnTable(fr) ?? throw new InvalidOperationException($"chapters.json {flowId}: eliteFallback 지역 {fr.NameKo} 에 정예 표가 없음");
+                fallback = regions.OwnElites(fr.Id) ?? throw new InvalidOperationException($"chapters.json {flowId}: eliteFallback 지역 {fr.NameKo} 에 정예 표가 없음");
             }
             foreach (var r in _regions.Values)
             {
                 bool useFallback = fb != null && fb.Regions.Contains(r.Id);
-                var table = useFallback ? fallback : OwnTable(r);
+                var table = useFallback ? fallback : regions.OwnElites(r.Id);
                 if (table != null) _elites[r.Id] = table;
             }
         }

@@ -65,7 +65,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 ### 이어서(2026-10-30, 에이전트 보고에서 나온 것)
 - [x] T-29 2026-10-30 — 결정 반영: BossAwakening.Tick(깨어날 때 원 안이면 5초 경고, 나가면 미룸, Life 가 씀), 첫 처치 혈정 5, 밟힌 아래 경지 정예 보갑(Scale.CrushedDropsChest), 혈월 보상 1.5배(정산 '혈월' 줄·혈정), 다시 오른 경지 돌파 0.7초(cheonha.json revisitSeconds, 생성 멈춤도 0.7초). 원 0.15배·1.4초 내내 0.05배·숨은 봉마곡 제외·구슬 주운 자리 농도는 이미 맞아 테스트만. 테스트 9개
 - [x] T-30 2026-10-30 — '낙매검선의 피' 조건을 '화산 제자로 태어나'로: synergies.json `require.sect`(새 칸), Secrets 판정(몸 기록 id = 문파 id), 20장 표 문장, 테스트(서장 진소운은 안 열림)
-- [ ] T-31 정예 조회 하나로: `Core/World/Regions.cs` 와 `Core/Spawning/RegionSpawns.cs` 에 정예·고유 적 조회가 두 벌 생겼다. 하나로 합치고 다른 쪽은 그걸 부르게. 테스트는 그대로 통과해야 함
+- [x] T-31 2026-10-30 — 정예 표·고유 적 찾기를 `Regions.OwnElites`·`Regions.LocalEnemies` 한 곳으로. RegionSpawns 는 그걸 불러 흐름의 '대신 쓰는 땅'만 얹는다. 테스트 그대로 통과
 - [ ] T-32 정예 18종 데이터: enemies.json 에 이름만 있는 chapter2~7 정예(6장 정예 표)의 기혈·속도·피해·행동 id 를 정한다. 기준은 숭산 정예(동인·계율원 강시 승려·강시 방장 대리)와 11장 장 배율. 6장 표에 수치 칸 추가
 - [ ] T-33 (마천패가 `water_ghost`, 검혼이 `plum_sword_ghost`, 혁련휘가 `blood_shadow_clone` 을 소환한다. 넣으면 BossPatternsMoreTests 의 PendingSummons 에서 뺀다) 지역 고유 적 데이터: 장강(수귀·수적)·무당(흑백 쌍강시)·화산(매화검귀)·곤륜(빙강시·설랑 떼·설인)·십만대산(마교도·혈영 분신·혈사자)을 enemies.json 에 넣는다(기혈·속도·피해·행동, chapter 필드). 6장 '지역별 고유 적' 표에 수치 칸. 지금은 이 다섯 땅이 고유 적 없이 돈다
 - [ ] T-34 기획서 13장에 '환생 카드(세로 2:3)'·'화면 배경' 용도별 틀을 올린다(T-23에서 컷신 틀을 고쳐 쓴 것). art_queue 의 해당 줄 프롬프트와 맞춘다

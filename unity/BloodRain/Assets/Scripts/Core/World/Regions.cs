@@ -132,10 +132,17 @@ namespace BloodRain.Core.World
         /// 청운진의 표(서장)는 서장 생에서만 쓰고, 다른 생에서 청운진에 서 있으면 숭산 표를 쓴다.</summary>
         public IReadOnlyList<string> Elites(string regionId, bool prologueLife = false)
         {
-            var own = EliteKey(Region(regionId), prologueLife);
-            if (own != null && _elites.TryGetValue(own, out var list) && list.Count > 0) return list;
-            var fallback = Region(EliteFallbackRegion).Chapter;
-            return fallback != null && _elites.TryGetValue(fallback, out var f) ? f : (IReadOnlyList<string>)Array.Empty<string>();
+            var r = Region(regionId);
+            if (!(r.Chapter == PrologueChapter && !prologueLife) && OwnElites(regionId) is { } own) return own;
+            return OwnElites(EliteFallbackRegion) ?? (IReadOnlyList<string>)Array.Empty<string>();
+        }
+
+        /// <summary>그 지역 장(chapter)에 적힌 정예 표 그대로(대신 쓰는 표 없이). 없거나 비었으면 null.
+        /// 정예 표를 찾는 곳은 여기 하나다. Spawning.RegionSpawns 도 이걸 부른다.</summary>
+        public IReadOnlyList<string>? OwnElites(string regionId)
+        {
+            var chapter = Region(regionId).Chapter;
+            return chapter != null && _elites.TryGetValue(chapter, out var t) && t.Count > 0 ? t : null;
         }
 
         /// <summary>그 생에서 nth 번째(0부터: 5분 0, 10분 1, 15분 2 …)로 나오는 정예 id. 셋째 뒤로는 마지막 정예가 다시 나온다.</summary>
@@ -146,10 +153,5 @@ namespace BloodRain.Core.World
             return list[Math.Min(nth, list.Count - 1)];
         }
 
-        static string? EliteKey(RegionDef region, bool prologueLife)
-        {
-            if (region.Chapter == PrologueChapter && !prologueLife) return null;
-            return region.Chapter;
-        }
     }
 }
