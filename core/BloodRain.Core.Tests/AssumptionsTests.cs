@@ -14,7 +14,7 @@ namespace BloodRain.Core.Tests
         /// <summary>시뮬레이터 걸음(천하 동선·피하기 보고서)이 balance.json stats.moveBase 와 같다.</summary>
         [Fact] public void 시뮬레이터_걸음이_데이터_기본_걸음과_같다()
         {
-            Assert.Equal(G.Balance.Stats.MoveBase, (float)CheonhaSim.WalkMetersPerSecond, 4);
+            Assert.Equal((float)CheonhaSim.WalkMetersPerSecond, G.Balance.Stats.MoveBase, 4);
             Assert.Equal(CheonhaSim.WalkMetersPerSecond, DodgeSim.WalkMps);
         }
 

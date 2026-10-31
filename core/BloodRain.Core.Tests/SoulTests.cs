@@ -458,5 +458,22 @@ namespace BloodRain.Core.Tests
         {
             Assert.Throws<FormatException>(() => Soul.FromJson(_d, "null"));
         }
+
+        [Fact] public void 땅의_주인_해금_토큰은_그_지역을_쓰러뜨려야_열린다()
+        {
+            var s = AfterPrologue();
+            Assert.True(s.IsUnlocked(UnlockToken.Start));
+            Assert.False(s.IsUnlocked("boss:danggata"));
+            var life = s.BeginLife(Body("shaolin"));
+            life.KillBoss("danggata");
+            s.EndLife(life.Finish("fallen", 0));
+            Assert.True(s.IsUnlocked("boss:danggata"));
+            Assert.False(s.IsUnlocked("boss:huashan"));
+            Assert.False(s.IsUnlocked("Boss:danggata")); // 대소문자가 다르면 땅의 주인 토큰이 아니다
+            // 당가 몸·시작 무공이 함께 열린다
+            Assert.Contains("tang", s.UnlockedSects);
+            var tangWeapon = C.Sect("tang").StartWeapon;
+            if (_d.Weapon(tangWeapon).Unlock != UnlockToken.Start) Assert.Contains(tangWeapon, s.UnlockedWeapons());
+        }
     }
 }
