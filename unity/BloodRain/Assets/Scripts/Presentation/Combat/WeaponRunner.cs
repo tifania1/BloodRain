@@ -9,12 +9,13 @@ using UnityEngine.InputSystem;
 
 namespace BloodRain.Presentation.Combat
 {
-    // 무공 실행기(C-04, 진행 중). weapons.json behavior 마다 웹 프로토타입 fireWeapon 과 같은 규칙으로 판정한다.
-    //   피해 = Core WeaponMath.DamageAt(무공, 레벨). 사거리·넉백은 경지 m → WorldScale 세계 m.
-    //   쿨다운은 weapons.json cooldown(aura 는 웹처럼 0.5초마다 한 번, 초당 피해의 절반).
+    // 무공 실행기(C-04). weapons.json behavior 마다 웹 프로토타입 fireWeapon 과 같은 규칙으로 판정한다.
+    //   피해 = Core WeaponMath.DamageAt(무공, 레벨). 사거리·속도·넉백은 경지 m → WorldScale 세계 m.
+    //   쿨다운은 weapons.json cooldown(aura 는 웹처럼 0.5초마다 한 번, 초당 피해의 절반, random_rapid 는 초당 4→9발).
     //   능력치(범위·쿨감·투사체 수 등)는 Loadout/Stats 가 붙을 때(C-06) 곱한다. 지금은 모두 1.
-    // 지금 되는 갈래: front_arc(삼재검법), melee_combo(나한권), orbit_slash(창천검기), aura(독무).
-    // 남은 갈래(homing_dagger·slow_projectile·random_rapid·random_bomb)는 투사체 풀과 함께 다음 세션.
+    // 처음 8갈래: front_arc(삼재검법), melee_combo(나한권), orbit_slash(창천검기), aura(독무),
+    //   homing_dagger(비도술), slow_projectile(장풍), random_rapid(섬광지), random_bomb(벽력탄).
+    // 아직 없는 것: 절기(evolved) 모양, 중독·화상·느려짐 같은 적 상태, 넉백 저항.
     public sealed class WeaponRunner : MonoBehaviour
     {
         [Serializable]
@@ -33,7 +34,10 @@ namespace BloodRain.Presentation.Combat
         public List<Slot> slots = new List<Slot>();
         public bool showStats = true;
 
-        static readonly string[] TestOrder = { "samjae_sword", "nahan_fist", "changcheon_qi", "poison_mist" };
+        static readonly string[] TestOrder =
+        {
+            "samjae_sword", "nahan_fist", "changcheon_qi", "poison_mist", "flying_dagger", "palm_wind", "flash_finger", "thunder_bomb",
+        };
 
         struct Pending { public float Delay; public Action Apply; }
         struct Fx
@@ -46,6 +50,8 @@ namespace BloodRain.Presentation.Combat
             public float Damage;
             public HashSet<int> Hit;
             public float Prev;      // 지난 프레임까지 돈 각
+            public bool Fixed;      // 땅에 박힌 이펙트(벽력탄). 아니면 플레이어를 따라간다
+            public Vector2 Center;
         }
 
         readonly List<Pending> _pending = new List<Pending>();
@@ -107,6 +113,10 @@ namespace BloodRain.Presentation.Combat
                 if (kb.digit2Key.wasPressedThisFrame) Learn(TestOrder[1]);
                 if (kb.digit3Key.wasPressedThisFrame) Learn(TestOrder[2]);
                 if (kb.digit4Key.wasPressedThisFrame) Learn(TestOrder[3]);
+                if (kb.digit5Key.wasPressedThisFrame) Learn(TestOrder[4]);
+                if (kb.digit6Key.wasPressedThisFrame) Learn(TestOrder[5]);
+                if (kb.digit7Key.wasPressedThisFrame) Learn(TestOrder[6]);
+                if (kb.digit8Key.wasPressedThisFrame) Learn(TestOrder[7]);
             }
 
             float dt = Time.deltaTime;
@@ -115,7 +125,9 @@ namespace BloodRain.Presentation.Combat
                 s.Cooldown -= dt;
                 if (s.Cooldown > 0f) continue;
                 Fire(s);
-                float cd = s.Def.Behavior == "aura" ? 0.5f : Mathf.Max(0.05f, s.Def.Cooldown);
+                float cd = s.Def.Behavior == "aura" ? 0.5f
+                         : s.Def.Behavior == "random_rapid" ? 1f / Mathf.Lerp(4f, 9f, T(s)) // weapons.json shotsPerSecond [4, 9]
+                         : Mathf.Max(0.05f, s.Def.Cooldown);
                 s.Cooldown += cd;
                 if (s.Cooldown < -1f) s.Cooldown = 0f;
             }
@@ -127,6 +139,8 @@ namespace BloodRain.Presentation.Combat
                 if (p.Delay <= 0f) { _pending.RemoveAt(i); p.Apply(); }
                 else _pending[i] = p;
             }
+
+            StepProjectiles(dt);
 
             for (int i = _fx.Count - 1; i >= 0; i--)
             {
@@ -206,9 +220,153 @@ namespace BloodRain.Presentation.Combat
                     Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, 0f));
                     break;
                 }
+                case "homing_dagger":
+                {
+                    // 비도: 가까운 적 n 명에게, 초속 12m, 관통 1→3, 1.2초, 따라가기 6(웹 값)
+                    int n = Mathf.RoundToInt(Mathf.Lerp(1, 4, T(s)));
+                    int pierce = Mathf.RoundToInt(Mathf.Lerp(1, 3, T(s)));
+                    NearestN(ws.Length(s.Def.Range * 1.4f), n, _targets);
+                    for (int k = 0; k < n; k++)
+                    {
+                        int tg = _targets.Count > 0 ? _targets[k % _targets.Count] : -1;
+                        var agents = enemies.Sim.Agents;
+                        float a = tg >= 0 ? Mathf.Atan2(agents[tg].Pos.y - P.y, agents[tg].Pos.x - P.x)
+                                          : Mathf.Atan2(player.Facing.y, player.Facing.x) + (k - n / 2f) * 0.25f;
+                        a += UnityEngine.Random.Range(-0.08f, 0.08f);
+                        Shoot(s, a, ws.Speed(12f), ws.Length(0.25f), dmg, pierce, 1.2f, tg >= 0 ? agents[tg].Id : 0, 6f, 0f,
+                              new Color(0.80f, 0.82f, 0.88f, 1f));
+                    }
+                    break;
+                }
+                case "slow_projectile":
+                {
+                    // 장풍: 바라보는 쪽으로 초속 5m, 반경 0.55→0.88m, 다 뚫고, 2.6초, 넉백 5. Lv6 2연발
+                    int shots = s.level >= 6 ? 2 : 1;
+                    for (int k = 0; k < shots; k++)
+                        Later(k * 0.15f, () =>
+                        {
+                            float r = ws.Length(0.55f * Mathf.Lerp(1f, 1.6f, T(s)));
+                            Shoot(s, Mathf.Atan2(player.Facing.y, player.Facing.x), ws.Speed(5f), r, dmg, 999, 2.6f, 0, 0f, ws.Speed(5f),
+                                  new Color(0.95f, 0.85f, 0.55f, 0.55f));
+                        });
+                    break;
+                }
+                case "random_rapid":
+                {
+                    // 섬광지: 사거리 안 가까운 12명 가운데 하나에게 초속 18m, 안 뚫음, 0.6초. 쿨다운은 초당 4→9발
+                    NearestN(ws.Length(s.Def.Range), 12, _targets);
+                    if (_targets.Count == 0) break;
+                    var e = enemies.Sim.Agents[_targets[UnityEngine.Random.Range(0, _targets.Count)]];
+                    Shoot(s, Mathf.Atan2(e.Pos.y - P.y, e.Pos.x - P.x), ws.Speed(18f), ws.Length(0.16f), dmg, 0, 0.6f, 0, 0f, 0f,
+                          new Color(1f, 0.95f, 0.6f, 1f));
+                    break;
+                }
+                case "random_bomb":
+                {
+                    // 벽력탄: 7m 안 가까운 20명 가운데 무작위 자리(없으면 둘레 4m)에 0.6초 뒤 터짐, 반경 2→3m, 넉백 3.
+                    // 화상(burnPerSecond)은 적 상태 칸이 붙을 때(C-04 남은 것)
+                    int n = Mathf.RoundToInt(Mathf.Lerp(1, 3, T(s)));
+                    NearestN(ws.Length(7f), 20, _targets);
+                    float R = ws.Length(s.Def.Range * Mathf.Lerp(1f, 1.5f, T(s)));
+                    for (int k = 0; k < n; k++)
+                    {
+                        Vector2 at;
+                        if (_targets.Count > 0) { var e = enemies.Sim.Agents[_targets[UnityEngine.Random.Range(0, _targets.Count)]]; at = new Vector2(e.Pos.x, e.Pos.y); }
+                        else at = P + new Vector2(UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-4f, 4f)) * ws.Length(1f);
+                        AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.6f, new Color(0.70f, 0.15f, 0.12f, 0.18f)); // 떨어질 자리 표시
+                        Later(0.6f, () =>
+                        {
+                            AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
+                            enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+                            Deal(s, dmg, enemies.Damage(_near, dmg, at, ws.Speed(3f)));
+                        });
+                    }
+                    break;
+                }
                 default:
                     break; // 아직 없는 갈래
             }
+        }
+
+        // ── 투사체 ──────────────────────────────────────────────
+        struct Proj
+        {
+            public Vector2 Pos, Vel;
+            public float Radius, Damage, Life, Homing, Knock;
+            public int Pierce, Target;
+            public Slot Weapon;
+            public Color Color;
+            public HashSet<int> Hit;
+        }
+
+        readonly List<Proj> _projs = new List<Proj>();
+        readonly List<int> _targets = new List<int>();
+        readonly List<int> _one1 = new List<int>(1);
+
+        void Shoot(Slot s, float angle, float speed, float radius, float dmg, int pierce, float life, int targetId, float homing, float knock, Color c)
+        {
+            if (_projs.Count >= DataBoot.Data.Balance.Limits.Projectiles) return;
+            _projs.Add(new Proj
+            {
+                Pos = P, Vel = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed, Radius = radius, Damage = dmg, Life = life,
+                Homing = homing, Knock = knock, Pierce = pierce, Target = targetId, Weapon = s, Color = c, Hit = new HashSet<int>(),
+            });
+        }
+
+        void StepProjectiles(float dt)
+        {
+            var sim = enemies.Sim;
+            for (int i = _projs.Count - 1; i >= 0; i--)
+            {
+                var p = _projs[i];
+                p.Life -= dt;
+                if (p.Target != 0 && p.Homing > 0f)
+                {
+                    int ti = IndexOf(p.Target);
+                    if (ti >= 0)
+                    {
+                        var e = sim.Agents[ti];
+                        var want = (new Vector2(e.Pos.x, e.Pos.y) - p.Pos).normalized * p.Vel.magnitude;
+                        p.Vel = Vector2.Lerp(p.Vel, want, Mathf.Clamp01(p.Homing * dt));
+                    }
+                    else p.Target = 0;
+                }
+                p.Pos += p.Vel * dt;
+                sim.QueryCircle(new float2(p.Pos.x, p.Pos.y), p.Radius, _near);
+                bool dead = p.Life <= 0f;
+                foreach (int j in _near)
+                {
+                    if (dead) break;
+                    int id = sim.Agents[j].Id;
+                    if (p.Hit.Contains(id)) continue;
+                    p.Hit.Add(id);
+                    _one1.Clear();
+                    _one1.Add(j);
+                    Deal(p.Weapon, p.Damage, enemies.Damage(_one1, p.Damage, p.Pos, p.Knock));
+                    if (p.Pierce-- <= 0) dead = true;
+                    break; // 한 프레임에 하나(쓰러짐으로 자리 번호가 바뀌니 다음 프레임에 다시 찾는다)
+                }
+                if (dead) _projs.RemoveAt(i);
+                else _projs[i] = p;
+            }
+        }
+
+        int IndexOf(int id)
+        {
+            var a = enemies.Sim.Agents;
+            for (int i = 0; i < enemies.Sim.Count; i++) if (a[i].Id == id) return i;
+            return -1;
+        }
+
+        void NearestN(float within, int n, List<int> outIdx)
+        {
+            outIdx.Clear();
+            enemies.Sim.QueryCircle(new float2(P.x, P.y), within, _near);
+            var a = enemies.Sim.Agents;
+            var p = P;
+            _near.Sort((x, y) => math.distancesq(a[x].Pos, new float2(p.x, p.y)).CompareTo(math.distancesq(a[y].Pos, new float2(p.x, p.y))));
+            int last = -1;
+            foreach (int i in _near) { if (i == last || outIdx.Contains(i)) continue; last = i; outIdx.Add(i); if (outIdx.Count >= n) break; }
         }
 
         // orbit_slash: 칼날이 한 바퀴 도는 동안 지나간 부채꼴 안의 적을 한 바퀴에 한 번씩
@@ -275,25 +433,36 @@ namespace BloodRain.Presentation.Combat
         void AddFx(float angle, float span, float radius, float life, Color c) =>
             _fx.Add(new Fx { Angle = angle, Span = span, Radius = radius, Life = life, Color = c });
 
+        void AddFxAt(Vector2 at, float angle, float span, float radius, float life, Color c) =>
+            _fx.Add(new Fx { Angle = angle, Span = span, Radius = radius, Life = life, Color = c, Fixed = true, Center = at });
+
         void LateUpdate()
         {
-            if (_mat == null || player == null || _fx.Count == 0) return;
+            if (_mat == null || player == null || (_fx.Count == 0 && _projs.Count == 0)) return;
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             foreach (var f in _fx)
             {
                 float k = f.Age / f.Life;
                 float angle = f.Sweep ? f.Angle + f.Prev : f.Angle;
-                var mesh = Sector(f.Span);
-                _one[0] = Matrix4x4.TRS(new Vector3(P.x, P.y, -0.25f), Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), new Vector3(f.Radius, f.Radius, 1f));
+                var c = f.Fixed ? f.Center : P;
                 var col = f.Color;
                 if (!f.Sweep) col.a *= 1f - k;
-                _tint[0] = col;
-                _dis[0] = 0f;
-                _mpb.Clear();
-                _mpb.SetVectorArray(IdTint, _tint);
-                _mpb.SetFloatArray(IdDissolve, _dis);
-                Graphics.RenderMeshInstanced(rp, mesh, 0, _one, 1);
+                Draw(rp, Sector(f.Span), new Vector3(c.x, c.y, -0.25f), angle, f.Radius, col);
             }
+            var disc = Sector(Mathf.PI * 2f);
+            foreach (var p in _projs)
+                Draw(rp, disc, new Vector3(p.Pos.x, p.Pos.y, -0.26f), 0f, p.Radius, p.Color);
+        }
+
+        void Draw(RenderParams rp, Mesh mesh, Vector3 pos, float angle, float radius, Color col)
+        {
+            _one[0] = Matrix4x4.TRS(pos, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), new Vector3(radius, radius, 1f));
+            _tint[0] = col;
+            _dis[0] = 0f;
+            _mpb.Clear();
+            _mpb.SetVectorArray(IdTint, _tint);
+            _mpb.SetFloatArray(IdDissolve, _dis);
+            Graphics.RenderMeshInstanced(rp, mesh, 0, _one, 1);
         }
 
         /// <summary>반지름 1, +x 축을 가운데로 span 만큼 벌어진 부채꼴.</summary>
