@@ -108,7 +108,7 @@ namespace BloodRain.Core.Build
                 float v = e.PerLevel * level;
                 if (e.AtLevels != null)
                     foreach (var kv in e.AtLevels)
-                        if (int.Parse(kv.Key) <= level) v += kv.Value;
+                        if (int.Parse(kv.Key, System.Globalization.CultureInfo.InvariantCulture) <= level) v += kv.Value;
                 b.Add(kind, v);
             }
             return b;
