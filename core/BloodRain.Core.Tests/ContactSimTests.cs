@@ -44,9 +44,8 @@ namespace BloodRain.Core.Tests
         [Fact] public void 경지_보상_비율을_읽는다()
         {
             Assert.Equal(10f, ContactSim.IryuHealthFlat(G));
-            Assert.Equal(0.1f, ContactSim.RewardRatio(G, "hwagyeong", "damage_taken_minus"), 3);
-            Assert.Equal(0f, ContactSim.RewardRatio(G, "samryu", "max_health_"));
-            Assert.Equal(0f, ContactSim.RewardRatio(G, "없는경지", "max_health_"));
+            Assert.Equal(0.1f, ContactSim.HwagyeongCut(G), 3);
+            Assert.Equal(G.Balance.Dash.Charges + 1, ShadowSim.BaseCharges(G));
         }
 
         [Fact] public void 닿는_적은_접촉_피해가_있는_적만()

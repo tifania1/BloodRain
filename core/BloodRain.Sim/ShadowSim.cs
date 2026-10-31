@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
+using BloodRain.Core.Progression;
 using BloodRain.Core.World;
 
 namespace BloodRain.Sim
@@ -48,17 +49,9 @@ namespace BloodRain.Sim
             return new[] { ("맨몸", 0f, 0), ("연무장 신법", training, 0), ("운룡보 Lv5", passive, 1), ("둘 다", training + passive, 1) };
         }
 
-        /// <summary>현경까지 오른 몸의 기본 경공 충전: 데이터 기본 + 일류 보상(dash_charge_N).</summary>
-        public static int BaseCharges(GameData g)
-        {
-            int n = g.Balance.Dash.Charges;
-            foreach (var r in g.Balance.Realms)
-                foreach (var tok in (r.Reward ?? "").Split(','))
-                    if (tok.StartsWith("dash_charge_", StringComparison.Ordinal) &&
-                        int.TryParse(tok.Substring("dash_charge_".Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out int v))
-                        n += v;
-            return n;
-        }
+        /// <summary>현경까지 오른 몸의 기본 경공 충전: 데이터 기본 + 돌파 보상(Core RealmRewards, Life.DashMaxCharges 에서 연무장·성질을 뺀 것).</summary>
+        public static int BaseCharges(GameData g) =>
+            g.Balance.Dash.Charges + RealmRewards.Upto(g.Balance.Realms, int.MaxValue).DashCharges;
 
         /// <summary>그 분의 그림자 단계(LifeDirector.ShadowStep 에서 봉인석·경지 조건을 뺀 식).</summary>
         public static int StepAt(LifeEndDef end, double minute)
@@ -133,7 +126,7 @@ namespace BloodRain.Sim
         public static ShadowRun RunSect(GameData g, BloodShadowDef shadow, double teleportGap, SectDef sect, (string Ko, float Bonus, int ExtraCharges) speedCase, bool maxDefense)
         {
             float iryu = ContactSim.IryuHealthFlat(g);
-            float cut = ContactSim.RewardRatio(g, "hwagyeong", "damage_taken_minus");
+            float cut = ContactSim.HwagyeongCut(g);
             float traitArmor = sect.Trait == "flat_damage_reduction2" ? 2f : 0f;
             float hpBonus = maxDefense ? ContactSim.MaxHealthBuild(g) : 0f;
             float armor = maxDefense ? ContactSim.ArmorCases(g).Last().Armor : traitArmor;

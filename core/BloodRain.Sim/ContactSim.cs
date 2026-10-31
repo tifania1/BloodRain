@@ -63,17 +63,9 @@ namespace BloodRain.Sim
         public static float IryuHealthFlat(GameData g) =>
             RealmRewards.Of(g.Balance.Realms.First(r => r.Id == "iryu")).MaxHealthFlat;
 
-        /// <summary>경지 보상 문자열에서 '접두어 + 숫자'(damage_taken_minus10 같은)를 찾아 비율로 돌려준다.</summary>
-        public static float RewardRatio(GameData g, string realmId, string prefix)
-        {
-            var r = g.Balance.Realms.FirstOrDefault(x => x.Id == realmId);
-            if (r?.Reward == null) return 0;
-            foreach (var tok in r.Reward.Split(','))
-                if (tok.StartsWith(prefix, StringComparison.Ordinal) &&
-                    int.TryParse(tok.Substring(prefix.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out int v))
-                    return v / 100f;
-            return 0;
-        }
+        /// <summary>화경 돌파 받는 피해 감소 비율(0.1 = -10%). Core RealmRewards 그대로(Life.DamageTakenMultiplier 와 같다).</summary>
+        public static float HwagyeongCut(GameData g) =>
+            1f - RealmRewards.Of(g.Balance.Realms.First(r => r.Id == "hwagyeong")).DamageTakenMultiplier;
 
         /// <summary>그 분, 그 지역에서 닿는 적의 기준 접촉 피해(가중 평균)와 가장 센 적. 접촉 피해 0인 적은 뺀다.</summary>
         public static (double Avg, double Max, string MaxId) BaseContact(GameData g, WaveTable wt, RegionSpawns rs, string regionId, float minute)
@@ -122,7 +114,7 @@ namespace BloodRain.Sim
             var armors = ArmorCases(g);
             float hpBuild = MaxHealthBuild(g), recMax = RecoveryMax(g);
             float iryuHp = IryuHealthFlat(g);
-            float hwaCut = RewardRatio(g, "hwagyeong", "damage_taken_minus");
+            float hwaCut = HwagyeongCut(g);
             var regions = g.Cheonha.Regions.Where(r => r.Id != "cheongun").ToList();
             float interval = g.Balance.Contact.SameEnemyIntervalSeconds;
             string F0(double x) => x.ToString("0", CultureInfo.InvariantCulture);
