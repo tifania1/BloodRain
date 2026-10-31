@@ -59,6 +59,8 @@ namespace BloodRain.Sim
         public int Evolved;
         public double TotalXp;
         public string Build = "";
+        /// <summary>음양 게이지(-100~100). 시뮬레이터 캐릭터의 시작값에서 무공·심법 레벨업으로만 움직인다.</summary>
+        public int Gauge;
     }
 
     public sealed class AwakenRecord
@@ -78,6 +80,14 @@ namespace BloodRain.Sim
         /// <summary>경지 id → 처음 닿은 시각(분).</summary>
         public Dictionary<string, double> RealmMinute = new Dictionary<string, double>();
         public int Ultimates;
+        /// <summary>음양 구간(YinYangBand 순서: 태극·편향·극성)에 머문 초.</summary>
+        public double[] BandSeconds = new double[3];
+        /// <summary>처음 극성에 든 시각(분). 한 번도 안 들면 NaN.</summary>
+        public double FirstExtremeMinute = double.NaN;
+        /// <summary>처음 태극 구간을 벗어난 시각(분). 한 번도 안 벗어나면 NaN.</summary>
+        public double FirstOffHarmonyMinute = double.NaN;
+        /// <summary>기혈역류가 시작된 시각(분). Core Backlash 그대로, 경공으로 끊지 않는다고 본다.</summary>
+        public List<double> BacklashMinutes = new List<double>();
 
         public MinuteSnapshot At(int minute) => Minutes.First(m => m.Minute == minute);
         public int LevelAt(int minute) => At(minute).Level;
@@ -116,6 +126,7 @@ namespace BloodRain.Sim
         readonly SpawnCurve _spawn;
         readonly EnemyScaling _scaling;
         readonly UltimateCharge _ult;
+        readonly Backlash _backlash;
         readonly ISet<string> _unlocked;
         readonly PolicyContext _ctx;
         readonly IReadOnlyDictionary<string, double> _killXp;
@@ -150,6 +161,7 @@ namespace BloodRain.Sim
             _spawn = new SpawnCurve(_g.Balance.SpawnTarget);
             _scaling = new EnemyScaling(_g.Balance.EnemyScaling);
             _ult = new UltimateCharge(_g.Balance.UltimateCharge, _g.Balance.Yinyang.Harmony);
+            _backlash = new Backlash(_g.Balance.Yinyang.Extreme);
             _unlocked = new HashSet<string>(_g.Weapons.Where(w => w.Unlock == "start").Select(w => w.Id));
             _killXp = opt.KillXp ?? KillXp;
             _eliteXp = opt.EliteXp ?? EliteXp;
@@ -184,6 +196,7 @@ namespace BloodRain.Sim
                 for (int w = 0; w < _weapons.Count; w++) TickWeapon(_weapons[w]);
                 if (_ult.IsFull && _crowd.Count > 0) FireUltimate();
                 Settle();
+                TrackYinYang(m);
                 _enemies.RemoveAll(e => e.Dead);
                 if (i % perMinute == 0) Snapshot(i / perMinute);
             }
@@ -192,6 +205,17 @@ namespace BloodRain.Sim
         }
 
         int _ultUses;
+
+        /// <summary>음양 구간에 머문 시간과 기혈역류(보고서 yinyang.md). 판 흐름에는 영향을 주지 않는다.</summary>
+        void TrackYinYang(double m)
+        {
+            var band = _loadout.Gauge.Band;
+            _result.BandSeconds[(int)band] += TickSeconds;
+            bool extreme = band == YinYangBand.Extreme;
+            if (band != YinYangBand.Harmony && double.IsNaN(_result.FirstOffHarmonyMinute)) _result.FirstOffHarmonyMinute = m;
+            if (extreme && double.IsNaN(_result.FirstExtremeMinute)) _result.FirstExtremeMinute = m;
+            if ((_backlash.Tick((float)TickSeconds, extreme) & BacklashEvents.Started) != 0) _result.BacklashMinutes.Add(m);
+        }
 
         // ───────── 사건과 생성 ─────────
 
@@ -553,6 +577,7 @@ namespace BloodRain.Sim
                 Evolved = _loadout.Evolved.Count,
                 TotalXp = _xp.Total,
                 Build = BuildText(),
+                Gauge = _loadout.Gauge.Value,
             });
             _dealtThisMinute = 0;
         }

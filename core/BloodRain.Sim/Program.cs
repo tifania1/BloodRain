@@ -8,6 +8,7 @@
 //   dotnet run --project core/BloodRain.Sim -- --cluster-xp docs/design/sim/cluster-xp.md  천하에서 조정 시험별 레벨 속도(T-19)
 //   dotnet run --project core/BloodRain.Sim -- --encounters docs/design/sim/encounters.md  천하 한 생의 기연 사건 출현율과 도감 채우기
 //   dotnet run --project core/BloodRain.Sim -- --contact docs/design/sim/contact.md        맞는 쪽 셈(한 번 피해, 둘러싸여 버티는 초, 회복)
+//   dotnet run --project core/BloodRain.Sim -c Release -- --yinyang docs/design/sim/yinyang.md  음양 게이지가 머무는 구간, 기혈역류 횟수
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
 using System.Globalization;
@@ -23,7 +24,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -46,6 +47,7 @@ namespace BloodRain.Sim
                     case "--cluster-xp": clusterXp = Next(); break;
                     case "--encounters": encounters = Next(); break;
                     case "--contact": contact = Next(); break;
+                    case "--yinyang": yinyang = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -61,6 +63,13 @@ namespace BloodRain.Sim
 
             var sc = Scenarios.Find(scenario);
             var data = sc.LoadData(dataDir);
+            if (yinyang.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(yinyang))!);
+                File.WriteAllText(yinyang, YinYangSim.Report(data, seeds > 0 ? seeds : 10), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {yinyang}");
+                return 0;
+            }
             if (contact.Length > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(contact))!);
