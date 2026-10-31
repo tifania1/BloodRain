@@ -46,7 +46,7 @@ namespace BloodRain.Sim
 
     public static class CheonhaSim
     {
-        /// <summary>플레이어 기본 이동속도 100의 초속(m, 삼류 화면 기준). Assumptions 의 적 걸음 환산(4.6m/100)과 같다.</summary>
+        /// <summary>플레이어 기본 이동속도 100의 초속(m, 삼류 화면 기준). Assumptions 의 적 걸음 환산(4.6m/100)과 같다. balance.json stats.moveBase 와 같아야 한다(AssumptionsTests).</summary>
         public const double WalkMetersPerSecond = 4.6;
         /// <summary>보스전에서 실제로 치는 시간 비율(패턴 피하기). [가정]</summary>
         public const double BossUptime = 0.7;

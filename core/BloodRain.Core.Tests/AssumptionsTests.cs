@@ -11,6 +11,13 @@ namespace BloodRain.Core.Tests
     {
         static GameData G => TestData.Load();
 
+        /// <summary>시뮬레이터 걸음(천하 동선·피하기 보고서)이 balance.json stats.moveBase 와 같다.</summary>
+        [Fact] public void 시뮬레이터_걸음이_데이터_기본_걸음과_같다()
+        {
+            Assert.Equal(G.Balance.Stats.MoveBase, (float)CheonhaSim.WalkMetersPerSecond, 4);
+            Assert.Equal(CheonhaSim.WalkMetersPerSecond, DodgeSim.WalkMps);
+        }
+
         [Fact] public void 처치_진기_표와_적_구성의_적은_모두_enemies에_있다()
         {
             var ids = G.Enemies.Select(e => e.Id).ToHashSet();
