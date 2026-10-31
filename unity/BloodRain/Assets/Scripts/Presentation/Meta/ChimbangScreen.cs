@@ -86,7 +86,34 @@ namespace BloodRain.Presentation.Meta
                 : $"{soul.Lives + 1}번째 생 · 목 노인이 그날 밤 숨진 제자 {CountKo(Draw.Count)}을 보여 준다";
             _done = false;
             _map.SetSoul(soul);
+            BuildUpgrades(soul);
             Refresh();
+        }
+
+        readonly List<MetaShopRow> _upgradeRows = new List<MetaShopRow>();
+        RectTransform _upgrades;
+
+        /// <summary>지도 아래 환혼 강화 두 줄(TU-14, 연무장과 같은 칸). 산 효과는 다음 환혼부터.</summary>
+        void BuildUpgrades(Soul soul)
+        {
+            if (_upgrades != null) Destroy(_upgrades.gameObject);
+            _upgradeRows.Clear();
+            _upgrades = new GameObject("환혼 강화", typeof(RectTransform)).GetComponent<RectTransform>();
+            _upgrades.SetParent(_map.Frame.parent, false);
+            _upgrades.anchorMin = _upgrades.anchorMax = new Vector2(1f, 0f);
+            _upgrades.anchoredPosition = new Vector2(-360, 215);
+            _upgrades.sizeDelta = new Vector2(640, 120);
+            var head = Text("환혼 강화 제목", _upgrades, $"환혼 강화 <size=75%><alpha=#88>윤회의 기 {soul.RebirthQi:N0}<alpha=#FF></size>", 22, FontStyles.Bold);
+            Place(head.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, 0), new Vector2(640, 32));
+            float y = -40;
+            foreach (var up in _data.Cheonha.Rebirth.Upgrades)
+            {
+                var row = MetaShopRow.Upgrade(_upgrades, font, soul, up, () => { foreach (var r in _upgradeRows) r.Refresh(); head.text = $"환혼 강화 <size=75%><alpha=#88>윤회의 기 {soul.RebirthQi:N0}<alpha=#FF></size>"; }, 640);
+                row.Rect.anchorMin = row.Rect.anchorMax = new Vector2(0.5f, 1f);
+                row.Rect.anchoredPosition = new Vector2(0, y);
+                _upgradeRows.Add(row);
+                y -= 44;
+            }
         }
 
         /// <summary>셋·넷(웹 시안 "제자 셋을"). 받침 있는 말만 와서 조사는 '을'로 둔다.</summary>

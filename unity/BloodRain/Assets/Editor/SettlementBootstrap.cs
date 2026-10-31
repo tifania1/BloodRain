@@ -35,5 +35,26 @@ namespace BloodRain.Editor
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[SettlementBootstrap] {TestScenePath} 만듦");
         }
+
+        // TU-14 연무장 시험 씬. 윤회의 기 6,000 을 가진 혼으로 연다.
+        [MenuItem("BloodRain/Test/연무장 시험 씬 만들기")]
+        public static void CreateTrainingScene()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
+            var cam = camGo.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.91f, 0.87f, 0.78f);
+            camGo.transform.position = new Vector3(0, 0, -10);
+            camGo.AddComponent<UniversalAdditionalCameraData>();
+            new GameObject("DataBoot").AddComponent<DataBoot>();
+            var screen = new GameObject("연무장 화면").AddComponent<TrainingScreen>();
+            screen.font = HudBootstrap.EnsureBodyFont();
+            screen.demoQi = 6000;
+            EditorSceneManager.SaveScene(scene, "Assets/Scenes/Test/TrainingTest.unity");
+            Debug.Log("[SettlementBootstrap] Assets/Scenes/Test/TrainingTest.unity 만듦");
+        }
     }
 }
