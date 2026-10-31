@@ -28,6 +28,9 @@ namespace BloodRain.Sim
         public float Health;
         public float MaxHealth;
         public float Life;        // 생긴 뒤 흐른 시간
+        public float ContactDamage;
+        public float Contact;     // 같은 적에게 다시 맞기까지 남은 시간(balance.json contact.sameEnemyIntervalSeconds)
+        public int BornRealm;     // 이 덩이가 생긴 경지. 플레이어보다 아래면 접촉 피해 없음(Scale.DealsContactDamage)
         public int Kind;          // 적 종류 순번(EnemyField 의 표)
         public int Id;            // 풀에서 꺼낼 때마다 새 번호
         public byte Move;
@@ -122,6 +125,81 @@ namespace BloodRain.Sim
 
             for (int i = _count - 1; i >= 0; i--)
                 if (_a[i].Dead != 0) RemoveAt(i);
+
+            RebuildGrid(cell);
+        }
+
+        // ── 충돌(C-03) ─────────────────────────────────────────────
+        // Step 이 끝나면 격자를 최종 위치로 다시 짓는다. 무공·구슬·접촉은 모두 이 격자로 원 대 원을 찾는다.
+        // 칸 크기는 Step 에 넘긴 cell. 칸보다 큰 적(정예·보스)은 MaxRadius 만큼 둘레 칸을 더 본다.
+
+        float _cell = 1f;
+        float _maxRadius;
+
+        /// <summary>지금 격자에 든 적 가운데 가장 큰 반경(세계 m).</summary>
+        public float MaxRadius => _maxRadius;
+
+        /// <summary>위치를 바꾼 뒤(넉백·순간이동 등) 격자를 다시 지을 때.</summary>
+        public void RebuildGrid(float cell)
+        {
+            _cell = math.max(1e-4f, cell);
+            _grid.Clear();
+            _maxRadius = 0f;
+            if (_count == 0) return;
+            if (_grid.Capacity < _count) _grid.Capacity = _count;
+            new HashJob { Agents = _a, InvCell = 1f / _cell, Grid = _grid.AsParallelWriter() }.Schedule(_count, 128).Complete();
+            for (int i = 0; i < _count; i++) _maxRadius = math.max(_maxRadius, _a[i].Radius);
+        }
+
+        /// <summary>center 둘레 radius 원에 겹치는 적의 자리(index)를 results 에 담는다(원 대 원: 거리 &lt; radius + 적 반경).</summary>
+        public int QueryCircle(float2 center, float radius, System.Collections.Generic.List<int> results)
+        {
+            results.Clear();
+            if (_count == 0) return 0;
+            float reach = radius + _maxRadius;
+            int2 lo = (int2)math.floor((center - reach) / _cell);
+            int2 hi = (int2)math.floor((center + reach) / _cell);
+            for (int y = lo.y; y <= hi.y; y++)
+            for (int x = lo.x; x <= hi.x; x++)
+            {
+                if (!_grid.TryGetFirstValue(Key(new int2(x, y)), out int j, out var it)) continue;
+                do
+                {
+                    var e = _a[j];
+                    float rr = radius + e.Radius;
+                    if (math.lengthsq(e.Pos - center) < rr * rr) results.Add(j);
+                } while (_grid.TryGetNextValue(out j, ref it));
+            }
+            return results.Count;
+        }
+
+        /// <summary>한 번 맞은 적.</summary>
+        public struct ContactHit
+        {
+            public int Index;
+            public int Id;
+            public float Damage;
+        }
+
+        readonly System.Collections.Generic.List<int> _near = new System.Collections.Generic.List<int>();
+
+        /// <summary>플레이어 원(center, radius)에 닿은 적 가운데 쿨다운이 끝난 적을 hits 에 담고 쿨다운을 interval 로 되돌린다.
+        /// playerRealm 보다 아래 경지에서 생긴 적은 밟히는 쪽이라 피해를 주지 않는다(TU-03 CrushField 가 따로 처리).</summary>
+        public int Contacts(float2 center, float radius, float interval, int playerRealm,
+                            Func<int, int, bool> dealsDamage, System.Collections.Generic.List<ContactHit> hits)
+        {
+            hits.Clear();
+            QueryCircle(center, radius, _near);
+            foreach (int i in _near)
+            {
+                var e = _a[i];
+                if (e.Contact > 0f || e.ContactDamage <= 0f) continue;
+                if (dealsDamage != null && !dealsDamage(e.BornRealm, playerRealm)) continue;
+                e.Contact = interval;
+                _a[i] = e;
+                hits.Add(new ContactHit { Index = i, Id = e.Id, Damage = e.ContactDamage });
+            }
+            return hits.Count;
         }
 
         static int Key(int2 c) => (c.x * 73856093) ^ (c.y * 19349663);
@@ -141,6 +219,7 @@ namespace BloodRain.Sim
             {
                 var e = Agents[i];
                 e.Life += Dt;
+                e.Contact = math.max(0f, e.Contact - Dt);
                 float2 to = Player - e.Pos;
                 float d = math.length(to);
                 float2 dir = d > 1e-5f ? to / d : new float2(1, 0);

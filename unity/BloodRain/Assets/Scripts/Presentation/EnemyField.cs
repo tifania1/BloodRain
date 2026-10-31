@@ -24,7 +24,12 @@ namespace BloodRain.Presentation
         public int spawnPerFrame = 60;
         public Transform player;
         public ClusterRenderer clusters;
+        [Tooltip("접촉 피해를 받을 쪽. 비우면 player 에서 찾는다")]
+        public PlayerVitals vitals;
         public bool showStats = true;
+
+        float _playerBody = 0.8f;
+        readonly List<EnemySim.ContactHit> _hits = new List<EnemySim.ContactHit>();
 
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
@@ -74,6 +79,12 @@ namespace BloodRain.Presentation
                 _totalWeight += w;
             }
             _sim = new EnemySim(capacity);
+            if (player != null)
+            {
+                if (vitals == null) vitals = player.GetComponent<PlayerVitals>();
+                var pc = player.GetComponent<PlayerController>();
+                if (pc != null) _playerBody = pc.bodyRealmMeters;
+            }
             if (clusters != null)
             {
                 clusters.hopPeriod = EnemySim.HopPeriod;
@@ -134,6 +145,8 @@ namespace BloodRain.Presentation
                 Hop = (float)_rng.NextDouble(),
                 Health = def.Health * _healthMul,
                 MaxHealth = def.Health * _healthMul,
+                ContactDamage = def.ContactDamage, // 시간에 따른 배율(enemyScaling.damagePerMinute)은 C-10 디렉터가 곱한다
+                BornRealm = realm,
                 Move = (byte)move,
             };
             int kindIndex = _kinds.FindIndex(k => k.Def == def);
@@ -189,6 +202,15 @@ namespace BloodRain.Presentation
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
             _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RingMaxDiagonal);
+            // 접촉 피해(C-03): 플레이어 원에 닿은 적, 같은 적은 contact.sameEnemyIntervalSeconds 마다 한 번
+            if (vitals != null)
+            {
+                float pr = ws.Length(_playerBody) * 0.5f;
+                var scale = ws.Scale;
+                _sim.Contacts(new float2(p.x, p.y), pr, DataBoot.Data.Balance.Contact.SameEnemyIntervalSeconds, ws.Realm,
+                              (born, pr2) => scale.DealsContactDamage(born, pr2), _hits);
+                foreach (var h in _hits) vitals.Hit(h.Damage);
+            }
             _watch.Stop();
             _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
             _fps = Mathf.Lerp(_fps, dt > 0 ? 1f / Time.unscaledDeltaTime : 0f, 0.05f);

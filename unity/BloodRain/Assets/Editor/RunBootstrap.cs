@@ -38,6 +38,7 @@ namespace BloodRain.Editor
             sr.color = new Color(0.70f, 0.15f, 0.12f);
             sr.sortingOrder = 20;
             player.AddComponent<PlayerController>();
+            player.AddComponent<PlayerVitals>();
 
             // 혈우 장막(출생지 = Unity 0,0)
             var curtain = new GameObject("혈우 장막");
