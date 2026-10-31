@@ -55,6 +55,16 @@ namespace BloodRain.Core.Tests
             Assert.InRange(share, 0.5 * r.DurationSeconds / r.PeriodSeconds, r.DurationSeconds / r.PeriodSeconds + 1e-6);
         }
 
+        [Fact] public void 범종은_쿨다운마다_울리고_태극_바닥은_길이_나누기_쿨다운만큼_걸린다()
+        {
+            var b = G.Gimmicks.Bell;
+            var (rings, share) = GimmickSim.BellUse(G);
+            Assert.Equal((int)Math.Ceiling(1800 / b.CooldownSeconds), rings);
+            Assert.Equal(rings * b.StunSeconds / 1800.0, share, 2);
+            var t = G.Gimmicks.TaijiFloor;
+            Assert.Equal(Math.Min(1.0, t.DurationSeconds / t.CooldownSeconds), GimmickSim.TaijiUptime(G), 2);
+        }
+
         [Fact] public void 보고서는_지금_데이터와_같다()
         {
             var path = Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "gimmicks.md");

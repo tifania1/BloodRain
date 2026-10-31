@@ -99,6 +99,37 @@ namespace BloodRain.Sim
             return (double)on / n;
         }
 
+        /// <summary>범종을 울릴 수 있을 때마다 울리면 30분 동안 울린 횟수와 잡몹이 기절해 있는 시간 몫.</summary>
+        public static (int Rings, double StunShare) BellUse(GameData g, float minutes = 30f)
+        {
+            var bell = new BellGimmick(g.Gimmicks.Bell);
+            int rings = 0; double stunned = 0, left = 0;
+            const float dt = 0.1f;
+            for (float t = 0; t < minutes * 60f - 1e-3f; t += dt)
+            {
+                if (bell.TryRing(0f)) { rings++; left = bell.StunSeconds(GimmickTargetKind.Normal, 0f); }
+                if (left > 0) { stunned += dt; left -= dt; }
+                bell.Tick(dt);
+            }
+            return (rings, stunned / (minutes * 60.0));
+        }
+
+        /// <summary>태극 바닥을 밟을 수 있을 때마다 밟으면(게이지는 0이 아니라고 본다) 반대 속성 기운이 걸려 있는 시간 몫.</summary>
+        public static double TaijiUptime(GameData g, float minutes = 30f)
+        {
+            var floor = new TaijiFloorGimmick(g.Gimmicks.TaijiFloor);
+            var bless = new TaijiBlessing(g.Gimmicks.TaijiFloor);
+            int on = 0, n = 0;
+            const float dt = 0.1f;
+            for (float t = 0; t < minutes * 60f - 1e-3f; t += dt, n++)
+            {
+                floor.TryStep(0f, 1, bless);
+                if (bless.Active) on++;
+                floor.Tick(dt); bless.Tick(dt);
+            }
+            return (double)on / n;
+        }
+
         public static string Report(SimData data)
         {
             var g = data.Game;
@@ -177,6 +208,16 @@ namespace BloodRain.Sim
                 double inHit = HitAt(g, wt, rs, "sipmandaesan", m, BloodAltarGimmick.EnemyDamage(alt, true));
                 sb.AppendLine($"| {m:0} | {lit} | {F1(outHit)} | {F1(inHit)} | {F1(BodyHealth / outHit)} / {F1(BodyHealth / inHit)} |");
             }
+            sb.AppendLine();
+
+            var bell = BellUse(g);
+            double taiji = TaijiUptime(g);
+            double bellHits = ContactSim.SurroundCount / g.Balance.Contact.SameEnemyIntervalSeconds * gm.Bell.StunSeconds;
+            double surv = BodyHealth / ContactSim.SurroundedDps(g, HitAt(g, wt, rs, "songshan", 30));
+            sb.AppendLine("## 숨 돌리는 기믹");
+            sb.AppendLine();
+            sb.AppendLine($"- 범종({RegionKo("songshan")}): 반경 {gm.Bell.StunRadius:0}m 잡몹·정예 {gm.Bell.StunSeconds:0}초(보스 {gm.Bell.BossStunSeconds:0.0}초) 기절, {gm.Bell.CooldownSeconds:0}초마다. 울릴 수 있을 때마다 울리면 30분에 {bell.Rings}번, 잡몹이 멈춰 있는 시간은 {P(bell.StunShare)}다. 둘러싸인 채 울리면 {gm.Bell.StunSeconds:0}초 동안 받을 {bellHits:0}대(6마리 × 0.35초마다)를 안 받는다. 숭산 30분 맨몸으로 둘러싸여 버티는 {F1(surv)}초(몸 기혈 {BodyHealth:0})의 {gm.Bell.StunSeconds / surv:0}배이니, 포위를 풀고 빠져나갈 틈으로 넉넉하다.");
+            sb.AppendLine($"- 태극 바닥({RegionKo("wudangsan")}): 밟으면 {gm.TaijiFloor.DurationSeconds:0}초 동안 게이지와 반대 속성 무공 피해 +{P(gm.TaijiFloor.OppositeAspectDamageBonus)}, {gm.TaijiFloor.CooldownSeconds:0}초마다. 밟을 수 있을 때마다 밟으면 걸려 있는 몫은 {P(taiji)}다. [yinyang.md](yinyang.md) 대로 게이지가 대개 양으로 기우니 오르는 쪽은 주로 음 무공이다.");
             sb.AppendLine();
 
             double redShare = WeatherShare(gm.RedMoon), snowShare = WeatherShare(gm.Blizzard);
