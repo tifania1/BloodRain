@@ -34,6 +34,7 @@ namespace BloodRain.Editor
             var screen = new GameObject("침방 화면").AddComponent<ChimbangScreen>();
             screen.font = HudBootstrap.EnsureBodyFont();
             screen.background = FindSprite("Assets/Art/Backgrounds/bg_chimbang");
+            screen.wallMap = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg"); // TU-12
             screen.allSects = true;   // 시험: 모든 문파에서 뽑아 카드를 두루 본다
             screen.extraRerolls = 2;
             foreach (var s in DataBoot.Load().Cheonha.Sects)

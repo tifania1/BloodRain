@@ -29,6 +29,8 @@ namespace BloodRain.Presentation.Meta
         public Sprite background;
         [Tooltip("art_queue card_sect_<문파 id>. 없는 문파는 단색 카드")]
         public List<SectArt> sectArt = new List<SectArt>();
+        [Tooltip("벽에 거는 중원 지도(art_queue map_central_plains). 없으면 빈 종이")]
+        public Texture wallMap;
         [Tooltip("시험용: 해금 문파 대신 모든 문파에서 뽑는다")]
         public bool allSects;
         [Tooltip("시험용: 후보 수에 더한다(넷째 몸을 산 것처럼 1)")]
@@ -61,6 +63,7 @@ namespace BloodRain.Presentation.Meta
         RectTransform _cards;
         TextMeshProUGUI _sub, _rerollLabel;
         Button _reroll;
+        ChimbangMap _map;
         bool _done;
 
         void Start()
@@ -82,6 +85,7 @@ namespace BloodRain.Presentation.Meta
                 ? $"첫 환혼 · {string.Join("·", c.Rebirth.FirstRebirth.Select(id => c.Sect(id).NameKo))} 가운데 하나"
                 : $"{soul.Lives + 1}번째 생 · 목 노인이 그날 밤 숨진 제자 {CountKo(Draw.Count)}을 보여 준다";
             _done = false;
+            _map.SetSoul(soul);
             Refresh();
         }
 
@@ -153,10 +157,16 @@ namespace BloodRain.Presentation.Meta
             Place(elder.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -165), new Vector2(600, 32));
 
             _cards = Rect("후보 카드", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
-            _cards.sizeDelta = new Vector2(1800, 640);
-            _cards.anchoredPosition = new Vector2(0, -30);
+            // 왼쪽은 후보 카드, 오른쪽 벽에는 중원 지도(TU-12)
+            _cards.sizeDelta = new Vector2(1200, 640);
+            _cards.anchoredPosition = new Vector2(-330, -30);
+            _map = gameObject.AddComponent<ChimbangMap>();
+            _map.Build(root, font, wallMap, _data, new Vector2(640, 416));
+            var frame = _map.Frame;
+            frame.anchorMin = frame.anchorMax = new Vector2(1f, 0.5f);
+            frame.anchoredPosition = new Vector2(-360, -30);
             var h = _cards.gameObject.AddComponent<HorizontalLayoutGroup>();
-            h.spacing = 36; h.childAlignment = TextAnchor.MiddleCenter;
+            h.spacing = 24; h.childAlignment = TextAnchor.MiddleCenter;
             h.childControlWidth = h.childControlHeight = false;
             h.childForceExpandWidth = h.childForceExpandHeight = false;
 
@@ -171,9 +181,13 @@ namespace BloodRain.Presentation.Meta
             var btn = MakeButton($"{index + 1} {sect.NameKo}", _cards, SectColor(sect.Id), out var label, 1, Ink);
             Destroy(label.gameObject);
             var rt = (RectTransform)btn.transform;
-            rt.sizeDelta = new Vector2(380, 600);
+            rt.sizeDelta = new Vector2(280, 600);
             int i = index;
             btn.onClick.AddListener(() => Choose(i));
+            // 커서가 가면 벽 지도에 그 문파 자리와 장막 원(TU-12)
+            var trig = btn.gameObject.AddComponent<EventTrigger>();
+            AddTrigger(trig, EventTriggerType.PointerEnter, () => _map.Show(cand));
+            AddTrigger(trig, EventTriggerType.PointerExit, () => _map.Show(null));
 
             // 산문 그림(위 절반). 없으면 단색 카드 그대로
             var art = sectArt.FirstOrDefault(a => a.sectId == sect.Id).art;
@@ -187,17 +201,18 @@ namespace BloodRain.Presentation.Meta
             paper.raycastTarget = false;
 
             var name = Text("이름", rt, $"{sect.NameKo} 제자{(cand.Female ? " <size=70%>(여)</size>" : "")}", 40, FontStyles.Bold);
-            Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -60), new Vector2(340, 56));
+            Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -60), new Vector2(250, 56));
+            name.enableAutoSizing = true; name.fontSizeMin = 26; name.fontSizeMax = 38;
             var key = Text("번호", rt, $"<alpha=#88>{index + 1}<alpha=#FF>", 24, FontStyles.Normal);
             Place(key.rectTransform, new Vector2(1f, 1f), new Vector2(-26, -26), new Vector2(40, 40));
 
-            var body = Text("내용", rt, CardBody(cand), 22, FontStyles.Normal);
+            var body = Text("내용", rt, CardBody(cand), 19, FontStyles.Normal);
             body.alignment = TextAlignmentOptions.TopLeft;
             body.textWrappingMode = TextWrappingModes.Normal;
             body.lineSpacing = 6;
             var brt = body.rectTransform;
             brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, art != null ? 0.5f : 0.62f);
-            brt.offsetMin = new Vector2(24, 18); brt.offsetMax = new Vector2(-24, -16);
+            brt.offsetMin = new Vector2(18, 16); brt.offsetMax = new Vector2(-18, -14);
         }
 
         string CardBody(RebirthCandidate cand)
@@ -293,6 +308,16 @@ namespace BloodRain.Presentation.Meta
             var lrt = label.rectTransform; lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one; lrt.offsetMin = lrt.offsetMax = Vector2.zero;
             return b;
         }
+
+        static void AddTrigger(EventTrigger t, EventTriggerType type, System.Action a)
+        {
+            var e = new EventTrigger.Entry { eventID = type };
+            e.callback.AddListener(_ => a());
+            t.triggers.Add(e);
+        }
+
+        /// <summary>그 후보에 커서를 둔 것처럼 지도를 보인다(시험·패드용). -1 이면 지운다.</summary>
+        public void Hover(int index) => _map.Show(Draw != null && index >= 0 && index < Draw.Candidates.Count ? Draw.Candidates[index] : null);
 
         static void EnsureEventSystem()
         {
