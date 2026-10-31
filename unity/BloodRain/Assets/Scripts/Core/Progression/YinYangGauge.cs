@@ -13,6 +13,7 @@ namespace BloodRain.Core.Progression
     {
         readonly YinYangDef _def;
         readonly int _harmonyRange;
+        double _carry; // 기울기 배율 때문에 남은 소수 몫(2.5 → 2, 다음에 3)
 
         public int Value { get; private set; }
 
@@ -27,20 +28,41 @@ namespace BloodRain.Core.Progression
 
         static int Sign(YinYang aspect) => aspect == YinYang.Yang ? 1 : aspect == YinYang.Yin ? -1 : 0;
 
-        public void OnWeaponLevelUp(WeaponDef w) => Value = Clamp(Value + Sign(w.Aspect) * _def.WeaponPerLevel);
+        /// <summary>무공·심법을 올릴 때 기우는 양에 곱하는 값. 깨달음 '역근'이면 0.5. 심마(Shift)에는 안 곱한다.</summary>
+        public float TiltMultiplier { get; private set; } = 1f;
+
+        public void SetTiltMultiplier(float multiplier)
+        {
+            TiltMultiplier = multiplier;
+            _carry = 0;
+        }
+
+        void Tilt(int amount)
+        {
+            double exact = amount * (double)TiltMultiplier + _carry;
+            int whole = (int)Math.Truncate(exact);
+            _carry = exact - whole;
+            Value = Clamp(Value + whole);
+        }
+
+        public void OnWeaponLevelUp(WeaponDef w) => Tilt(Sign(w.Aspect) * _def.WeaponPerLevel);
 
         public void OnPassiveLevelUp(PassiveDef p)
         {
             int amount = p.YinyangPerLevelOverride ?? _def.PassivePerLevel;
-            Value = Clamp(Value + Sign(p.Aspect) * amount);
+            Tilt(Sign(p.Aspect) * amount);
         }
 
-        /// <summary>깨달음 '역근': 게이지를 0으로.</summary>
-        public void Reset() => Value = 0;
+        /// <summary>게이지를 0으로.</summary>
+        public void Reset() => ResetTo(0);
         /// <summary>게이지를 그만큼 옮긴다(+ 양, - 음). 마교 혈공의 심마가 쓴다.</summary>
         public void Shift(int delta) => Value = Clamp(Value + delta);
-        /// <summary>게이지를 그 값으로 되돌린다(천마해체: 시작값으로).</summary>
-        public void ResetTo(int value) => Value = Clamp(value);
+        /// <summary>게이지를 그 값으로 되돌린다(천마해체: 시작값으로, 깨달음 '역근': 0으로).</summary>
+        public void ResetTo(int value)
+        {
+            Value = Clamp(value);
+            _carry = 0;
+        }
 
         public YinYangBand Band
         {
