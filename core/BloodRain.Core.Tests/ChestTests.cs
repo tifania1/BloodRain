@@ -87,5 +87,25 @@ namespace BloodRain.Core.Tests
             Assert.Throws<InvalidOperationException>(() => Chest.RollUpgradeCount(new ChestDef { UpgradeCountWeights = { -1 } }, new Random(1)));
             Assert.Throws<ArgumentOutOfRangeException>(() => Chest.Open(_d, Jin(), 1, new Random(1), -1));
         }
+
+        [Fact] public void 장강수로채_4단계면_하나_더()
+        {
+            var three = TestData.Build("jin_sowoon", ("samjae_sword", 1), ("chain_sickle", 1), ("pear_spear", 1), ("suryong", 1));
+            Assert.Equal(0, Chest.ExtraUpgrades(Synergy.Compute(_d, three)));
+            var four = TestData.Build("jin_sowoon", ("samjae_sword", 1), ("chain_sickle", 1), ("pear_spear", 1), ("suryong", 1), ("cheollian", 1));
+            var syn = Synergy.Compute(_d, four);
+            Assert.Equal(4, syn.TierOf("waterfort"));
+            Assert.Equal(1, Chest.ExtraUpgrades(syn));
+        }
+
+        [Fact] public void 보갑_덧셈을_주는_진전은_수로채_4단계_하나뿐이고_설명과_맞는다()
+        {
+            var tiers = _d.Synergies.Schools.SelectMany(s => s.Tiers.Select(t => (s.Id, t))).Where(x => x.t.ChestUpgrades > 0).ToList();
+            Assert.Single(tiers);
+            Assert.Equal("waterfort", tiers[0].Id);
+            Assert.Equal(4, tiers[0].t.Count);
+            Assert.Contains("보갑", tiers[0].t.Desc);
+            Assert.Contains("정예 보갑에서 무공 강화가 하나 더", TestData.Gdd);
+        }
     }
 }

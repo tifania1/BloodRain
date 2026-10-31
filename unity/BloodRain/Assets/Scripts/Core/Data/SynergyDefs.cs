@@ -30,6 +30,8 @@ namespace BloodRain.Core.Data
         public int Count;
         public string Desc = "";
         public bool Proto;
+        /// <summary>이 단계에 닿으면 보갑 강화가 이만큼 더(장강수로채 4단계 1). Build.Chest.ExtraUpgrades 가 더한다.</summary>
+        public int ChestUpgrades;
     }
 
     /// <summary>진전: 같은 문파 무공·심법을 몇 개 모았는지로 단계가 정해진다.</summary>

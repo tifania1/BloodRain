@@ -2,7 +2,7 @@
 // 정예가 떨군 보갑(寶匣)을 열 때(기획서 8장 '절기 그릇과 각성', 보상 표).
 // 1) 그릇이 남았고 문턱에 선 무공이 있으면 보갑이 곧 절기 각성이다(강화는 주지 않는다).
 // 2) 아니면 가진 무공·심법 강화 n개. n 은 balance.json chest.upgradeCountWeights(1개·2개·3개… 가중치)로 뽑고,
-//    장강수로채 진전 4단계 같은 덧셈은 extraUpgrades 로 더한다. 강화할 것이 없으면 그 몫은 은자·음식(Fallback).
+//    장강수로채 진전 4단계 같은 덧셈은 extraUpgrades 로 더한다(ExtraUpgrades(synergy) 가 synergies.json 에서 센다). 강화할 것이 없으면 그 몫은 은자·음식(Fallback).
 // 각성 연출은 Combat.Awakening, 그릇 수는 Loadout.Vessels 가 맡는다.
 using System;
 using System.Collections.Generic;
@@ -56,6 +56,16 @@ namespace BloodRain.Core.Build
                 result.Upgrades.Add(pick);
             }
             return result;
+        }
+
+        /// <summary>진전 단계가 주는 보갑 강화 덧셈(synergies.json 단계의 chestUpgrades, 닿은 단계까지 모두).</summary>
+        public static int ExtraUpgrades(SynergyState synergy)
+        {
+            int n = 0;
+            foreach (var s in synergy.Schools)
+                foreach (var t in s.School.Tiers)
+                    if (t.Count <= s.TierCount) n += t.ChestUpgrades;
+            return n;
         }
 
         static readonly HashSet<string> EmptySet = new HashSet<string>();

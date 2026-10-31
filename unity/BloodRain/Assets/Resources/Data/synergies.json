@@ -89,7 +89,7 @@
       "tiers": [
         { "count": 2, "desc": "은자 +30%", "proto": true },
         { "count": 3, "desc": "경공 거리 +50%, 경공으로 지나간 적을 끌고 간다", "proto": true },
-        { "count": 4, "desc": "정예 보갑에서 무공 강화가 하나 더 나온다" } ] },
+        { "count": 4, "desc": "정예 보갑에서 무공 강화가 하나 더 나온다", "chestUpgrades": 1, "proto": true } ] },
     { "id": "kunlun", "nameKo": "곤륜", "hanja": "崑崙", "motto": "부적", "character": null,
       "members": ["thunder_talisman", "domun", "hwaryong"],
       "tiers": [
