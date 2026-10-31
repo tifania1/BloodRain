@@ -1,7 +1,7 @@
 # 밸런스 시뮬레이터 (B-07)
 
 화면 없이 1장 한 판(20분)을 돌려서, 레벨·경지·절기가 기획서 목표(11장 '밸런스 기본값', 8장 '절기 그릇')대로 나오는지 본다.
-코드는 `core/BloodRain.Sim/`, 결과 보고서는 [level-curve.md](level-curve.md). 천하 한 생(지역 이동·땅의 주인·윤회의 기)은 [cheonha.md](cheonha.md)(`CheonhaSim.cs`, Core `Life` 를 그대로 돌린다), 생을 이은 메타 곡선은 [meta.md](meta.md)(`MetaSim.cs`), 천하에서 처치 진기 조정 시험은 [cluster-xp.md](cluster-xp.md), 연환·진전 화력 상한은 [synergy.md](synergy.md)(`SynergyCheck.cs`), 천하 한 생의 기연 사건 출현율과 도감 채우기는 [encounters.md](encounters.md)(`EncounterSim.cs`). 맞는 쪽(한 번 피해, 둘러싸여 버티는 초, 회복)은 [contact.md](contact.md)(`ContactSim.cs`). 음양 게이지가 한 판 동안 머무는 구간과 기혈역류 횟수는 [yinyang.md](yinyang.md)(`YinYangSim.cs`). 마교 몸의 혈공(땅의 적 기혈 배율 + 진기 × 농도 + 심마·천마해체)은 [blood-art.md](blood-art.md)(`BloodArtSim.cs`).
+코드는 `core/BloodRain.Sim/`, 결과 보고서는 [level-curve.md](level-curve.md). 천하 한 생(지역 이동·땅의 주인·윤회의 기)은 [cheonha.md](cheonha.md)(`CheonhaSim.cs`, Core `Life` 를 그대로 돌린다), 생을 이은 메타 곡선은 [meta.md](meta.md)(`MetaSim.cs`), 천하에서 처치 진기 조정 시험은 [cluster-xp.md](cluster-xp.md), 연환·진전 화력 상한은 [synergy.md](synergy.md)(`SynergyCheck.cs`), 천하 한 생의 기연 사건 출현율과 도감 채우기는 [encounters.md](encounters.md)(`EncounterSim.cs`). 맞는 쪽(한 번 피해, 둘러싸여 버티는 초, 회복)은 [contact.md](contact.md)(`ContactSim.cs`). 음양 게이지가 한 판 동안 머무는 구간과 기혈역류 횟수는 [yinyang.md](yinyang.md)(`YinYangSim.cs`). 마교 몸의 혈공(땅의 적 기혈 배율 + 진기 × 농도 + 심마·천마해체)은 [blood-art.md](blood-art.md)(`BloodArtSim.cs`). 침방 환생 후보 분포와 구파윤회까지 걸리는 환혼 수는 [rebirth.md](rebirth.md)(`RebirthSim.cs`).
 
 게임 규칙은 Core 것을 그대로 쓴다. 경험치 곡선(`XpCurve`), 진기 흡수와 돌파(`RunXp`·`Realms`), 적 생성(`SpawnCurve`), 적 기혈 증가(`EnemyScaling`),
 레벨업 추첨·절기 그릇·각성(`Loadout`), 능력치 합산(`Stats`), 음양(`YinYangGauge`), 오의 게이지(`UltimateCharge`), 무공 피해 보간(`WeaponMath`).
