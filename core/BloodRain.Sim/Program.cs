@@ -15,6 +15,7 @@
 //   dotnet run --project core/BloodRain.Sim -c Release -- --rebirth docs/design/sim/rebirth.md      침방 환생 후보 분포, 구파윤회까지 환혼 수
 //   dotnet run --project core/BloodRain.Sim -- --gimmicks docs/design/sim/gimmicks.md                지역 기믹의 기혈 수지(회복·독안개·낙석·혈제단)
 //   dotnet run --project core/BloodRain.Sim -- --dodge docs/design/sim/dodge.md                      땅의 주인 패턴을 걸어서·경공으로 피할 수 있는가
+//   dotnet run --project core/BloodRain.Sim -c Release -- --shadow docs/design/sim/shadow.md        혈마의 그림자에 붙잡히는 분, 그림자만으로 쓰러지는 분
 //   dotnet run --project core/BloodRain.Sim -c Release -- --secrets docs/design/sim/secrets.md      비전의 무공 구성이 갖춰지는 분, 무극·무명검이 열리는 비율
 //   dotnet run --project core/BloodRain.Sim -c Release -- --awakenings docs/design/sim/awakenings.md 캐릭터 여덟 명의 절기 각성 시각
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
@@ -32,7 +33,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", insights = "", decisions = "", secrets = "", awakenings = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -62,6 +63,7 @@ namespace BloodRain.Sim
                     case "--rebirth": rebirth = Next(); break;
                     case "--gimmicks": gimmicks = Next(); break;
                     case "--dodge": dodge = Next(); break;
+                    case "--shadow": shadow = Next(); break;
                     case "--secrets": secrets = Next(); break;
                     case "--awakenings": awakenings = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -71,7 +73,7 @@ namespace BloodRain.Sim
                     case "--help":
                         Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--scenario id] [--data 폴더] [--minutes 분]");
                         Console.WriteLine("  무리 가정: [--crowd-radius m] [--max-density 마리/㎡] [--arrival 초]");
-                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --secrets --awakenings");
+                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings");
                         Console.WriteLine($"  조정 시험 id: {string.Join(", ", Scenarios.All.Select(s => s.Id))}");
                         return 0;
                     default:
@@ -82,6 +84,13 @@ namespace BloodRain.Sim
 
             var sc = Scenarios.Find(scenario);
             var data = sc.LoadData(dataDir);
+            if (shadow.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(shadow))!);
+                File.WriteAllText(shadow, ShadowSim.Report(data), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {shadow}");
+                return 0;
+            }
             if (dodge.Length > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(dodge))!);
