@@ -7,7 +7,8 @@ namespace BloodRain.Presentation.Fx
     // 지형 단계 1, 소품 층 그리기(TU-07). 자리는 Sim.PropField, 그리는 규칙은 웹 시안 cheonha.html 과 같다.
     //   - 화면에서 2픽셀보다 작으면 안 그림, 2~6픽셀은 옅게 들어옴
     //   - 화면 짧은 변의 0.4배보다 커진 소품(마당의 전각 등)은 옅게(최소 0.25)
-    //   - 산은 화면 대각선 140m→700m 사이에서 0→0.6 으로 떠오름
+    //   - 산은 화면 대각선 140m→700m 사이에서 0→0.6 으로 떠오름(수묵 지도 그림이 있으면 산은 그림에 맡기고 안 그림)
+    //   - 화면 대각선에 비해 너무 작아진 소품은 수묵 지도로 넘김(TU-08, MapLayer.FadeFor)
     // 소품 그림이 아직 없어 웹 시안의 도형 소품(나무·집·전각·산 세 벌씩)을 코드로 그린 임시 텍스처를 쓴다.
     // 종류·벌마다 재질 하나, Graphics.RenderMeshInstanced 로 그린다. 그리는 순서는 먼 것(지도 위쪽) 먼저.
     public sealed class PropLayer : MonoBehaviour
@@ -85,9 +86,12 @@ namespace BloodRain.Presentation.Fx
                 float size = p.S * pxPerM;
                 if (size < 2f) continue;
                 float alpha = 1f;
-                if (p.Kind == PropKind.Mount) alpha = aFar * 0.6f;
+                // 산은 수묵 지도 그림에 이미 그려져 있으니 그림이 들어온 뒤엔 도형 산을 겹치지 않는다
+                if (p.Kind == PropKind.Mount) { if (MapLayer.HasPaintedMap) continue; alpha = aFar * 0.6f; }
                 else if (size < 6f) alpha = (size - 2f) / 4f;
                 else if (size > bigProp) alpha = Mathf.Clamp(1f - (size - bigProp) / bigProp, 0.25f, 1f);
+                // TU-08 화면에 비해 너무 작아진 소품은 수묵 지도로 넘긴다(산은 지도와 함께 남는다)
+                if (p.Kind != PropKind.Mount) alpha *= MapLayer.FadeFor(p.S, viewDiag);
                 if (alpha <= 0.02f) continue;
 
                 var u = WorldCoords.ToUnity(p.Pos);

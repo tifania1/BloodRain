@@ -57,6 +57,10 @@ namespace BloodRain.Editor
             var pl = props.AddComponent<PropLayer>();
             pl.material = ClusterBootstrap.EnsureMaterial();
             pl.originRegion = "cheongun";
+            // TU-08 수묵 지도와 마당 바닥
+            var ml = props.AddComponent<MapLayer>();
+            ml.material = ClusterBootstrap.EnsureMaterial();
+            ml.map = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg");
 
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[ScaleBootstrap] {TestScenePath} 만듦");
