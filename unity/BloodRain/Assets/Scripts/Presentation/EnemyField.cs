@@ -57,6 +57,36 @@ namespace BloodRain.Presentation
         readonly Stopwatch _watch = new Stopwatch();
         float _simMs, _fps;
 
+        /// <summary>적이 쓰러질 때(위치 세계 m, 그 적 상태). 진기 구슬(OrbLayer)이 여기서 떨어진다.</summary>
+        public event System.Action<Vector2, EnemyAgent> Killed;
+
+        /// <summary>index 자리 적을 쓰러뜨린다(무공 C-04 가 기혈을 0으로 만들면 이걸 부른다).</summary>
+        public void Kill(int index)
+        {
+            var a = _sim.Get(index);
+            _sim.RemoveAt(index);
+            Killed?.Invoke(new Vector2(a.Pos.x, a.Pos.y), a);
+        }
+
+        readonly List<int> _near = new List<int>();
+
+        /// <summary>시험용: center 둘레 radius(세계 m) 안 적을 모두 쓰러뜨린다. 자리 번호가 바뀌니 뒤에서부터.</summary>
+        public int KillInside(Vector2 center, float radius)
+        {
+            _sim.QueryCircle(new float2(center.x, center.y), radius, _near);
+            _near.Sort();
+            int n = 0, last = -1;
+            for (int k = _near.Count - 1; k >= 0; k--)
+            {
+                if (_near[k] == last) continue; // 해시가 겹친 칸에서 같은 적이 두 번 나올 수 있다
+                last = _near[k];
+                Kill(last);
+                n++;
+            }
+            _sim.RebuildGrid(Mathf.Max(0.01f, RadiusOf(World.Realm) * 2.2f));
+            return n;
+        }
+
         public EnemySim Sim => _sim;
         public int Count => _sim?.Count ?? 0;
         public float LastSimMs => _simMs;
@@ -173,6 +203,8 @@ namespace BloodRain.Presentation
                 if (kb.rightBracketKey.wasPressedThisFrame) targetCount = Mathf.Min(capacity, targetCount * 2);
                 if (kb.leftBracketKey.wasPressedThisFrame) targetCount = Mathf.Max(1, targetCount / 2);
                 if (kb.cKey.wasPressedThisFrame) _sim.Clear();
+                if (kb.kKey.wasPressedThisFrame && player != null && World != null)
+                    KillInside(player.position, World.ViewDiagonal * 0.15f); // 시험용 일격(무공이 오기 전)
             }
             if (player == null || World == null) return;
 

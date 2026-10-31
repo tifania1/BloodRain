@@ -63,6 +63,12 @@ namespace BloodRain.Editor
             ef.player = player.transform;
             ef.clusters = cr;
 
+            // 진기 구슬(C-05)
+            var orbs = new GameObject("진기 구슬").AddComponent<OrbLayer>();
+            orbs.material = ClusterBootstrap.EnsureMaterial();
+            orbs.enemies = ef;
+            orbs.player = player.transform;
+
             var hud = HudBootstrap.CreateHud();
             hud.target = player.transform;
 

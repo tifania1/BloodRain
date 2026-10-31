@@ -106,8 +106,7 @@ namespace BloodRain.Sim
         /// recycleBeyond 를 넘게 멀어진 적은 플레이어 둘레 recycleTo 거리, 플레이어가 가는 쪽으로 옮긴다.</summary>
         public void Step(float dt, float2 player, float2 playerHeading, float cell, float recycleBeyond, float recycleTo, float speedScale = 1f)
         {
-            Removed.Clear();
-            if (_count == 0 || dt <= 0f) return;
+            if (_count == 0 || dt <= 0f) return; // Removed 는 그리는 쪽이 읽고 비운다
 
             var move = new MoveJob
             {

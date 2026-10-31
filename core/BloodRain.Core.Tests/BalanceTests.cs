@@ -125,6 +125,15 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"플레이어 기본 이동속도(초당 {TestData.Num(move)}m)를 100으로 둔 상대값", TestData.Gdd);
         }
 
+        /// <summary>13장 떨어지는 물건 표 '진기 구슬 청 / 녹 / 적' 줄: 값 1 / 5 / 25, 400개를 넘으면 합침.
+        /// Unity OrbLayer(C-05)가 balance.json orbs·limits.orbs 를 이 이름으로 읽는다.</summary>
+        [Fact] public void 진기_구슬_값과_합치는_수가_기획서와_같다()
+        {
+            var o = _d.Balance.Orbs;
+            Assert.Contains($"| 진기 {TestData.Num(o.Small)} / {TestData.Num(o.Medium)} / {TestData.Num(o.Large)} |", TestData.Gdd);
+            Assert.Contains($"화면 위 구슬이 {_d.Balance.Limits.Orbs}개를 넘으면 오래된 것부터 하나로 합쳐짐", TestData.Gdd);
+        }
+
         /// <summary>11장 '화면 위 적 수 목표' 문단: 15분 이후 가장 가파르게 늘어 18분에 정점 400, 그 뒤로는 400.
         /// 생성 규칙: 부족분의 30%, 화면 대각선 0.6~0.75배 고리, 1.5배 넘게 멀어지면 옮김.</summary>
         [Fact] public void 화면_위_적_수_곡선과_생성_규칙이_기획서_11장과_같다()

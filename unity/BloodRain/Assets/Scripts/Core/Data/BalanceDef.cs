@@ -225,8 +225,29 @@ namespace BloodRain.Core.Data
         public List<TrainingItemDef> Items = new List<TrainingItemDef>();
     }
 
+    /// <summary>한 화면에 두는 수의 상한(balance.json limits).</summary>
+    public sealed class LimitsDef
+    {
+        public int EnemiesPc = 600;
+        public int EnemiesMobile = 400;
+        public int Projectiles = 1500;
+        /// <summary>바닥 진기 구슬. 넘으면 오래된 것부터 하나로 합친다.</summary>
+        public int Orbs = 400;
+        public int DamageNumbers = 80;
+    }
+
+    /// <summary>진기 구슬 크기별 값(balance.json orbs).</summary>
+    public sealed class OrbValuesDef
+    {
+        public float Small = 1;
+        public float Medium = 5;
+        public float Large = 25;
+    }
+
     public sealed class BalanceDef
     {
+        public LimitsDef Limits = new LimitsDef();
+        public OrbValuesDef Orbs = new OrbValuesDef();
         public XpCurveDef XpCurve = new XpCurveDef();
         public List<RealmDef> Realms = new List<RealmDef>();
         public SlotsDef Slots = new SlotsDef();
