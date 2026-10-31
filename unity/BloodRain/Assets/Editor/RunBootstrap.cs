@@ -69,6 +69,12 @@ namespace BloodRain.Editor
             orbs.enemies = ef;
             orbs.player = player.transform;
 
+            // 무공(C-04 진행 중). 비어 있으면 몸의 시작 무공 하나
+            var wr = new GameObject("무공").AddComponent<BloodRain.Presentation.Combat.WeaponRunner>();
+            wr.enemies = ef;
+            wr.player = player.GetComponent<PlayerController>();
+            wr.material = ClusterBootstrap.EnsureMaterial();
+
             var hud = HudBootstrap.CreateHud();
             hud.target = player.transform;
 

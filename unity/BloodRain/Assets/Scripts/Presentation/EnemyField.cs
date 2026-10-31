@@ -87,6 +87,38 @@ namespace BloodRain.Presentation
             return n;
         }
 
+        readonly List<int> _dead = new List<int>();
+
+        /// <summary>무공 한 번(C-04). indices 자리 적에게 dmg 를 주고, from 에서 바깥쪽으로 knock(세계 m/s) 넉백.
+        /// filter 가 있으면 그 적만. 기혈이 0 아래로 가면 쓰러뜨린다(자리 번호가 바뀌니 맨 끝에 뒤에서부터). 맞은 수를 돌려준다.</summary>
+        public int Damage(List<int> indices, float dmg, Vector2 from, float knock, System.Func<EnemyAgent, bool> filter = null)
+        {
+            _dead.Clear();
+            int hit = 0, last = -1;
+            indices.Sort();
+            foreach (int i in indices)
+            {
+                if (i == last) continue;
+                last = i;
+                var a = _sim.Get(i);
+                if (a.Health <= 0f) continue;
+                if (filter != null && !filter(a)) continue;
+                a.Health -= dmg;
+                if (knock > 0f)
+                {
+                    var d = new Vector2(a.Pos.x - from.x, a.Pos.y - from.y);
+                    float m = d.magnitude;
+                    if (m > 1e-5f) a.Knock += new float2(d.x / m, d.y / m) * knock;
+                }
+                _sim.Set(i, a);
+                hit++;
+                if (a.Health <= 0f) _dead.Add(i);
+            }
+            for (int k = _dead.Count - 1; k >= 0; k--) Kill(_dead[k]);
+            if (_dead.Count > 0) _sim.RebuildGrid(Mathf.Max(0.01f, RadiusOf(World.Realm) * 2.2f));
+            return hit;
+        }
+
         public EnemySim Sim => _sim;
         public int Count => _sim?.Count ?? 0;
         public float LastSimMs => _simMs;
