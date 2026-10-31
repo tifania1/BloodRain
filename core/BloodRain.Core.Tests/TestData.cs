@@ -27,7 +27,7 @@ namespace BloodRain.Core.Tests
 
         /// <summary>저장소 안 다른 파일(기획서, 웹 프로토타입)을 읽는다. 경로는 저장소 루트 기준.</summary>
         public static string ReadRepoFile(params string[] parts) =>
-            File.ReadAllText(Path.Combine(RepoRoot, Path.Combine(parts)));
+            ReadText(Path.Combine(RepoRoot, Path.Combine(parts)));
 
         /// <summary>기획서·프로토타입 글과 비교할 때 쓰는 숫자 표기. 15, 0.04, 1.5 처럼 쓸데없는 0을 뺀다.</summary>
         public static string Num(float v) => System.Math.Round(v, 4).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
