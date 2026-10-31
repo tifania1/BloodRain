@@ -123,7 +123,7 @@ namespace BloodRain.Sim
             string F0(double x) => x.ToString("0", CultureInfo.InvariantCulture);
             string F1(double x) => x.ToString("0.0", CultureInfo.InvariantCulture);
             string F2(double x) => x.ToString("0.00", CultureInfo.InvariantCulture);
-            string M(double m) => double.IsNaN(m) ? "—" : $"{(int)m}:{(int)Math.Round((m - (int)m) * 60):00}";
+            string M(double m) { if (double.IsNaN(m)) return "—"; int sec = (int)Math.Round(m * 60); return $"{sec / 60}:{sec % 60:00}"; }
 
             var sb = new StringBuilder();
             sb.AppendLine("# 맞는 쪽 셈(접촉 피해)");
@@ -200,9 +200,11 @@ namespace BloodRain.Sim
             sb.AppendLine("| 문파(몸 기혈) | 현경 | " + string.Join(" | ", marks.Select(m => $"{m}분")) + " |");
             sb.AppendLine("| --- | --- | " + string.Join(" | ", marks.Select(_ => "---")) + " |");
             var hitsAt30 = new List<double>();
+            var lives = new Dictionary<string, CheonhaLifeResult>();
             foreach (var s in g.Cheonha.Sects)
             {
                 var life = CheonhaSim.Run(data, s.Id, 1);
+                lives[s.Id] = life;
                 bool Reached(string realm, int m) => life.RealmMinute.TryGetValue(realm, out var at) && at <= m;
                 var cells = marks.Select(m =>
                 {
@@ -220,7 +222,42 @@ namespace BloodRain.Sim
             }
             sb.AppendLine();
 
-            // 4. 회복
+            // 4. 땅의 주인
+            sb.AppendLine("## 땅의 주인 패턴(시드 1)");
+            sb.AppendLine();
+            sb.AppendLine("그 땅에서 태어난 문파가 처음 싸움을 건 분(없으면 아홉 문파 가운데 가장 이른 분)의 피해. bosspatterns.json baseDamage 를 Core `BossPatterns.ScaleDamage` 로 키웠다. "
+                + "칸은 '맨몸 한 번 피해 · 그 문파 몸 기혈(이류 보상 포함)로 몇 대'. 0.35초·0.5초마다 치는 장판은 한 번 피해로 셌다.");
+            sb.AppendLine();
+            sb.AppendLine("| 땅의 주인(지역, 농도) | 싸움 건 분 | 몸 | 패턴 |");
+            sb.AppendLine("| --- | --- | --- | --- |");
+            var bossHits = new List<(string Boss, string Ko, double Hits)>();
+            foreach (var reg in g.Cheonha.Regions.Where(r => r.Boss != null && g.BossPatterns.ContainsKey(r.Boss!)))
+            {
+                var set = g.BossPatterns[reg.Boss!];
+                var home = g.Cheonha.Sects.FirstOrDefault(x => x.Region == reg.Id);
+                double engaged = double.NaN; CheonhaBossLine? line = null;
+                if (home != null) line = lives[home.Id].Bosses.FirstOrDefault(b => b.RegionId == reg.Id && !double.IsNaN(b.EngagedAt) && b.EngagedAt > 0);
+                if (line == null)
+                    line = lives.Values.SelectMany(l => l.Bosses).Where(b => b.RegionId == reg.Id && !double.IsNaN(b.EngagedAt) && b.EngagedAt > 0)
+                        .OrderBy(b => b.EngagedAt).FirstOrDefault();
+                if (line != null) engaged = line.EngagedAt;
+                var body = home ?? g.Cheonha.Sects.First();
+                string bossKo = line?.BossKo ?? reg.Boss!;
+                double hp = body.MaxHealth * (1 + iryuHp);
+                float fm = double.IsNaN(engaged) ? 30f : (float)engaged;
+                string Hit(string ko, float baseDmg)
+                {
+                    double d = Damage.Taken(BossPatterns.ScaleDamage(baseDmg, fm, reg.Density, g.Balance.EnemyScaling.DamagePerMinute), 0, g.Balance.Contact.MinDamage);
+                    if (ko != "몸") bossHits.Add((bossKo, ko, hp / d));
+                    return $"{ko} {F0(d)} · {F1(hp / d)}";
+                }
+                var parts = new List<string> { Hit("몸", set.ContactDamage) };
+                foreach (var pt in set.Patterns.Concat(set.Phase2).Where(x => x.BaseDamage > 0)) parts.Add(Hit(pt.NameKo, pt.BaseDamage));
+                sb.AppendLine($"| {bossKo}({reg.NameKo}, {F1(reg.Density)}) | {(double.IsNaN(engaged) ? "30:00(안 싸움)" : M(engaged))} | {body.NameKo} {F0(body.MaxHealth)} | {string.Join(", ", parts)} |");
+            }
+            sb.AppendLine();
+
+            // 5. 회복
             var song = g.Cheonha.Region("songshan");
             var bong = regions.OrderByDescending(r => r.Density).First();
             var (a0, _, _) = BaseContact(g, wt, rs, song.Id, 5);
@@ -244,6 +281,10 @@ namespace BloodRain.Sim
             sb.AppendLine($"- 호신은 초반에만 크다. {song.NameKo} 0분 평균 적은 최대 호신이면 {F1(early)} → {F1(earlyArmored)}({F0((1 - earlyArmored / early) * 100)}% 줄어듦)이지만, {bong.NameKo} 30분에는 {F1(lateBare)} → {F1(lateArmored)}({F0((1 - lateArmored / lateBare) * 100)}% 줄어듦)이다. 뺄셈 호신이라 적 피해가 √농도와 분으로 커지면 몫이 작아진다.");
             sb.AppendLine($"- 회복은 30분 고농도 땅에선 거의 의미가 없다(붙은 적 {F2(RecoveryCovers(g, h30, recMax))}마리분). 회복을 살리려면 비율 회복(최대 기혈의 몇 %)이나 처치 흡혈 쪽이 필요하다. 지금은 손대지 않고 플레이 결과를 본다.");
             sb.AppendLine($"- 30분 자리에서 맨몸으로 몇 대 맞으면 쓰러지나: 문파 아홉 가운데값 {F1(Median(hitsAt30))}대. 몸 기혈은 경지로 거의 안 오르고(이류 +{F0(iryuHp * 100)}%뿐) 적 피해만 오르니, 경지가 오를수록 '덜 맞는 실력'이 더 중요해진다.");
+            var twoHit = bossHits.Where(x => x.Hits < 2).OrderBy(x => x.Hits).ToList();
+            sb.AppendLine($"- 땅의 주인 패턴은 처음 싸움에서 한 방이 그 땅 문파 몸 기혈의 {F0(100 / bossHits.Max(x => x.Hits))}~{F0(100 / bossHits.Min(x => x.Hits))}%다. "
+                + (twoHit.Count > 0 ? $"두 대 안에 쓰러지는 패턴은 {string.Join(", ", twoHit.Select(x => $"{x.Boss} {x.Ko}({F1(x.Hits)}대)"))}. 예고가 있는 패턴이라 피하라는 뜻이지만, 몸 기혈이 낮은 문파가 첫 싸움에서 그 땅 주인과 맞붙으면 한 번 실수가 곧 죽음이다." : "두 대 안에 쓰러지는 패턴은 없다.")
+                + " 패턴 피해는 싸움을 건 분으로 정해지니, 땅의 주인을 일찍 건드릴수록 덜 아프다.");
             sb.AppendLine("- 덩이 접촉 피해가 기획서에 없다. 화경 군세(44명)에 닿아도 한 사람 피해라면 고경지 잡몹이 너무 약해 보일 수 있고, 사람 수만큼이면 바로 쓰러진다. Unity 적 시뮬레이션(C-02) 전에 정할 일이다.");
             return sb.ToString();
         }

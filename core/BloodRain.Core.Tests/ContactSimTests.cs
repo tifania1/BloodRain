@@ -79,6 +79,21 @@ namespace BloodRain.Core.Tests
             Assert.Contains("0.25초 동안 4m 대시, 시작 0.2초 무적. 기본 2회 충전, 1회 회복에 4초", gdd);
         }
 
+        [Fact] public void 원각_금강장은_20분에_프로토타입_26()
+        {
+            // bosspatterns.json wongak _note: 프로토타입 20분 값 26 을 20분 배율 1.6 으로 나눠 0분 값으로 적었다.
+            var p = G.BossPatterns["wongak"].Pattern("vajra_cone");
+            float d = Core.Combat.BossPatterns.ScaleDamage(p.BaseDamage, 20, 1, G.Balance.EnemyScaling.DamagePerMinute);
+            Assert.Equal(26f, d, 3);
+        }
+
+        [Fact] public void 보고서에_땅의_주인_일곱이_다_있다()
+        {
+            var text = File.ReadAllText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "contact.md"));
+            var rows = Regex.Matches(text, @"^\| [^|]+\([^,|]+, [0-9.]+\) \| [0-9]+:[0-5][0-9]", RegexOptions.Multiline);
+            Assert.Equal(G.BossPatterns.Count, rows.Count);
+        }
+
         [Fact] public void 보고서는_지금_데이터와_같다()
         {
             var path = Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "contact.md");
