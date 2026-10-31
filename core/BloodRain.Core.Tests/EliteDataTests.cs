@@ -36,12 +36,13 @@ namespace BloodRain.Core.Tests
             }
         }
 
-        [Fact] public void 숭산_정예는_웹_프로토타입_값과_같다()
+        [Fact] public void 숭산_정예는_웹_프로토타입이_데이터에서_읽는다()
         {
+            // 2026-11-01 부터 프로토타입은 숫자를 박지 않고 enemies.json 의 정예 id 를 가리킨다.
             var html = ReadRepoFile("web", "prototype", "template.html");
-            Assert.Contains("dongin: { name: '동인', hp: 700, speed: 55, dmg: 16", html);
-            Assert.Contains("gyeyul: { name: '계율원 강시 승려', hp: 1500, speed: 50, dmg: 18", html);
-            Assert.Contains("abbot: { name: '강시 방장 대리', hp: 2600, speed: 45, dmg: 22", html);
+            Assert.Contains("['dongin', 'dongin', 'slam'], ['gyeyul', 'gyeyul_monk', 'palm'], ['abbot', 'acting_abbot', 'bell']", html);
+            Assert.DoesNotContain("hp: 700, speed: 55", html);
+            Assert.Equal(new[] { "dongin", "gyeyul_monk", "acting_abbot" }, _d.Elites["chapter1"]);
             Assert.Equal(700, _d.Enemy("dongin").Health);
             Assert.Equal(1500, _d.Enemy("gyeyul_monk").Health);
             Assert.Equal(2600, _d.Enemy("acting_abbot").Health);
