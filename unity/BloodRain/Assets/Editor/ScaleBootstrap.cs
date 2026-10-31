@@ -62,6 +62,11 @@ namespace BloodRain.Editor
             ml.material = ClusterBootstrap.EnsureMaterial();
             ml.map = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg");
 
+            // TU-10 화면 가장자리 표시(장막 번짐, 땅의 주인 화살표, 혈운 기둥)
+            var edge = new GameObject("화면 가장자리 표시").AddComponent<EdgeIndicators>();
+            edge.material = ClusterBootstrap.EnsureMaterial();
+            edge.birthRegion = "cheongun";
+
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[ScaleBootstrap] {TestScenePath} 만듦");
         }
