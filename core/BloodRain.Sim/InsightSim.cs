@@ -2,7 +2,7 @@
 //
 // 후보: Core Insights.Roll 그대로. 노리는 깨달음이 보이면 바로 고르고, 안 보이면 나머지 가운데 아무거나 고른다고 본다.
 // 돌파 시각: RunSimulator(숭산 무리 모형) 30분, 캐릭터 8명 × 시드. 깨달음을 고르는 경지는 balance.json 보상에 insight_choice 가 붙은 것.
-// 값어치: Core 는 깨달음 효과를 아직 능력치로 바꾸지 않는다(Insights 는 고르기만). 그래서 판 흐름은 깨달음 없이 돌리고,
+// 값어치: RunSimulator 는 깨달음 효과를 판에 얹지 않는다(효과 숫자는 Core InsightEffects 에 있다). 그래서 판 흐름은 깨달음 없이 돌리고,
 //   기록된 피해·처치 수에 효과를 얹어서 '이만큼 늘었을 것'을 셈한다. 고른 뒤 판이 빨라져서 생기는 되먹임은 빠진다.
 //   일검파만: 시작 무공(첫 칸)이 넣은 피해 몫 × 40%. 오의는 시작 무공 피해를 쓰지만 무공이 아니라서 뺀다.
 //   살기충천: 이류를 돌파한 뒤의 처치 수로 공력을 쌓는다(그전 처치는 안 센다). 공력은 모든 피해에 곱한다고 본다.
@@ -79,11 +79,12 @@ namespace BloodRain.Sim
         public static List<string> MeleeBehaviors(GameData g) =>
             g.Insights.FirstOrDefault(i => i.Effect == "melee_range")?.WeaponBehaviors ?? new List<string>();
 
+        /// <summary>이류에서 살기충천을 고른 뒤 처치 수만큼의 공력. Core InsightEffects 그대로.</summary>
         public static double SalgiMight(GameData g, int killsSinceTaken)
         {
-            var d = g.Insights.First(i => i.Effect == "kill_stack_might");
-            int per = (int)d.Param("killsPerStack");
-            return Math.Min(d.Param("mightMax"), Math.Max(0, killsSinceTaken) / per * d.Param("mightPerStack"));
+            var fx = new InsightEffects("");
+            fx.Take(g.Insights.First(i => i.Effect == "kill_stack_might"), new Core.Progression.YinYangGauge(g.Balance.Yinyang));
+            return fx.Bonus(Math.Max(0, killsSinceTaken))[StatKind.Might];
         }
 
         public static IReadOnlyList<RealmDef> InsightRealms(GameData g)
@@ -152,7 +153,7 @@ namespace BloodRain.Sim
             sb.AppendLine();
             sb.AppendLine("`dotnet run --project core/BloodRain.Sim -c Release -- --insights docs/design/sim/insights.md` 로 다시 쓴다. 코드 `core/BloodRain.Sim/InsightSim.cs`.");
             sb.AppendLine($"후보 추첨은 Core `Insights.Roll` 그대로, 돌파 시각과 피해·처치 기록은 RunSimulator(숭산 무리 모형, 평균 정책) 30분 × 캐릭터 {g.Characters.Count}명 × 시드 {seeds}.");
-            sb.AppendLine("Core 는 아직 깨달음 효과를 능력치로 바꾸지 않아서 판은 깨달음 없이 돌리고, 기록에 효과를 얹어 셈했다. 고른 뒤 판이 빨라지는 되먹임은 빠졌다.");
+            sb.AppendLine("RunSimulator 는 깨달음 효과를 판에 얹지 않아서(효과 숫자는 Core `InsightEffects`) 판은 깨달음 없이 돌리고, 기록에 효과를 얹어 셈했다. 고른 뒤 판이 빨라지는 되먹임은 빠졌다.");
             sb.AppendLine();
 
             sb.AppendLine("## 1. 노리는 깨달음이 보일 확률");

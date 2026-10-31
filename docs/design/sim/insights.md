@@ -2,7 +2,7 @@
 
 `dotnet run --project core/BloodRain.Sim -c Release -- --insights docs/design/sim/insights.md` 로 다시 쓴다. 코드 `core/BloodRain.Sim/InsightSim.cs`.
 후보 추첨은 Core `Insights.Roll` 그대로, 돌파 시각과 피해·처치 기록은 RunSimulator(숭산 무리 모형, 평균 정책) 30분 × 캐릭터 8명 × 시드 5.
-Core 는 아직 깨달음 효과를 능력치로 바꾸지 않아서 판은 깨달음 없이 돌리고, 기록에 효과를 얹어 셈했다. 고른 뒤 판이 빨라지는 되먹임은 빠졌다.
+RunSimulator 는 깨달음 효과를 판에 얹지 않아서(효과 숫자는 Core `InsightEffects`) 판은 깨달음 없이 돌리고, 기록에 효과를 얹어 셈했다. 고른 뒤 판이 빨라지는 되먹임은 빠졌다.
 
 ## 1. 노리는 깨달음이 보일 확률
 

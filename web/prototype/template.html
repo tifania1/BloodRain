@@ -807,7 +807,7 @@ function newRun(mode) {
     enemies: [], projs: [], effects: [], orbs: [], drops: [], lanterns: [], splats: [], nums: [], zones: [],
     bells: [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
     spawnAcc: 0, lanternAcc: 0, events: makeEvents(), elitesDone: 0, boss: null, bossSpawned: false, won: false,
-    freeze: 0, cam: { x: 0, y: 0, shake: 0, trauma: 0 }, stats: null, fps: 60, salgiBonus: 0, pendingLevels: 0,
+    freeze: 0, cam: { x: 0, y: 0, shake: 0, trauma: 0 }, stats: null, fps: 60, salgiBonus: 0, salgiBase: 0, pendingLevels: 0,
     syn: newSyn(), enc: newEnc(), awaken: null, glow: null, evoLog: [], demo: false,
   };
   grid = new Map();
@@ -1024,7 +1024,7 @@ function killEnemy(e) {
   // 당가 진전 3: 중독된 적이 쓰러지면 독이 번진다
   if (sch('tang', 3) && e.poison > 0) { addEffect('burst', e.x, e.y, { r: 2, color: '#5E7F4A' }); forNear(e.x, e.y, 2, o => { if (o !== e && !o.dead) { o.poison = 2; o.burn = Math.max(o.burn || 0, 2); o.burnDps = Math.max(o.burnDps || 0, 5 * G.stats.dot); } }); }
   addUlt(e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill);
-  if (G.insights.includes('salgi')) { const sp = IP.salgi, nb = Math.min(sp.mightMax, Math.floor(G.kills / sp.killsPerStack) * sp.mightPerStack); if (nb !== G.salgiBonus) { G.salgiBonus = nb; recomputeStats(); } }
+  if (G.insights.includes('salgi')) { const sp = IP.salgi, nb = Math.min(sp.mightMax, Math.floor((G.kills - G.salgiBase) / sp.killsPerStack) * sp.mightPerStack); if (nb !== G.salgiBonus) { G.salgiBonus = nb; recomputeStats(); } }
   if (G.splats.length > 140) G.splats.shift();
   G.splats.push({ x: e.x, y: e.y, r: e.r * rand(1.4, 2.2), t: 0, red: e.sprite.startsWith('hyeol') || e.boss });
   sfx('kill');
@@ -1736,6 +1736,7 @@ function chooseInsight(i) {
   if (overlay !== 'brk' || !currentOffers[i] || tooSoon()) return;
   const o = currentOffers[i]; G.insights.push(o.id);
   if (o.id === 'yeokgeun') { G.yy = IP.yeokgeun.resetTo; G.yyHalf = true; }
+  if (o.id === 'salgi') G.salgiBase = G.kills; // 고른 뒤 처치만 센다(Core InsightEffects)
   recomputeStats(); renderSlots();
   $('cv').classList.remove('mono'); closeOverlay('brk');
 }

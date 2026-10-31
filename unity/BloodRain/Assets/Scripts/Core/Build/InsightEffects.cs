@@ -7,7 +7,7 @@
 //   금종조    periodic_block       맞을 때 막을 수 있으면 막고 intervalSeconds 동안 다시 못 막는다(첫 피해는 바로 막는다)
 //   천리추종  magnet_multiplier    흡기 범위 × multiplier
 //   역근      yinyang_reset        고를 때 게이지를 resetTo 로, 이후 무공·심법이 기울이는 양 × tiltMultiplier
-//   살기충천  kill_stack_might     처치 killsPerStack 마다 공력 + mightPerStack (최대 mightMax)
+//   살기충천  kill_stack_might     고른 뒤 처치 killsPerStack 마다 공력 + mightPerStack (최대 mightMax)
 //   혈해공    might_for_health     공력 + mightBonus, 최대 기혈 - maxHealthPenalty (비율 덧셈)
 //   흡혈대법  lifesteal_no_heal    흡혈 + lifesteal, 흡혈 말고 다른 회복 × 0 (운기조식 포함)
 //   혈광      low_health_frenzy    기혈 비율 < healthThreshold 이면 쾌속 + cooldownReduction, 받는 피해 × (1 + damageTaken)
@@ -27,6 +27,7 @@ namespace BloodRain.Core.Build
         float _still;
         float _blockCooldown;
         int _simmaBaseline;
+        int _killsAtSalgi;
 
         /// <param name="firstWeaponId">일검파만이 걸리는 무공. 몸이 들고 시작한 무공(CharacterDef.StartWeapon).</param>
         public InsightEffects(string firstWeaponId)
@@ -41,7 +42,8 @@ namespace BloodRain.Core.Build
         public bool Has(string effect) => Find(effect) != null;
 
         /// <summary>깨달음 하나를 얻는다. 역근처럼 고른 순간 걸리는 효과는 여기서 건다.</summary>
-        public void Take(InsightDef insight, YinYangGauge gauge)
+        /// <param name="killsNow">고른 때의 처치 수. 살기충천은 이 뒤 처치만 센다.</param>
+        public void Take(InsightDef insight, YinYangGauge gauge, int killsNow = 0)
         {
             if (_taken.Any(i => i.Id == insight.Id))
                 throw new InvalidOperationException($"이미 얻은 깨달음입니다: {insight.Id}");
@@ -51,6 +53,7 @@ namespace BloodRain.Core.Build
                 gauge.ResetTo((int)Math.Round(insight.Param("resetTo")));
                 gauge.SetTiltMultiplier(insight.Param("tiltMultiplier"));
             }
+            if (insight.Effect == "kill_stack_might") _killsAtSalgi = killsNow;
         }
 
         /// <summary>그 무공 피해에 곱하는 값(일검파만).</summary>
@@ -87,6 +90,7 @@ namespace BloodRain.Core.Build
         /// 능력치 덧셈. Life.CurrentStats(extra) 의 extra 로 넘긴다.
         /// 처치 수·심마 횟수·기혈 비율이 바뀌면 다시 부른다.
         /// </summary>
+        /// <param name="kills">이 생의 처치 수(쌓인 그대로). 살기충천은 고른 뒤 몫만 센다.</param>
         /// <param name="simmaSteps">BloodArt.Steps(쌓인 그대로). 마지막 천마해체 뒤 몫만 센다.</param>
         public StatBonus Bonus(int kills, int simmaSteps = 0, float healthRatio = 1f)
         {
@@ -97,7 +101,7 @@ namespace BloodRain.Core.Build
                 {
                     case "kill_stack_might":
                         b.Add(StatKind.Might, Math.Min(i.Param("mightMax"),
-                            (float)Math.Floor(kills / i.Param("killsPerStack")) * i.Param("mightPerStack")));
+                            (float)Math.Floor(Math.Max(0, kills - _killsAtSalgi) / i.Param("killsPerStack")) * i.Param("mightPerStack")));
                         break;
                     case "might_for_health":
                         b.Add(StatKind.Might, i.Param("mightBonus"));

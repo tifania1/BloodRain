@@ -123,6 +123,17 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 살기충천은_고른_뒤_처치만_센다()
+        {
+            var s = Common("salgi");
+            var fx = new InsightEffects("samjae_sword");
+            fx.Take(s, Gauge(), killsNow: 950);
+            int per = (int)s.Param("killsPerStack");
+            Assert.Equal(0f, fx.Bonus(950 + per - 1)[StatKind.Might]);
+            Assert.Equal(s.Param("mightPerStack"), fx.Bonus(950 + per)[StatKind.Might], 5);
+        }
+
+        [Fact]
         public void 혈해공은_공력과_기혈을_맞바꾼다()
         {
             var h = Demonic("hyeolhae_gong");
