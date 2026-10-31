@@ -55,7 +55,8 @@ namespace BloodRain.Sim
 
         // ───────── 옛 1장 적 구성 [프로토] pickType ─────────
         // 천하 구조 전 기획서 7장 '1장 시간대별 흐름'을 웹 프로토타입이 표로 옮긴 것(목인나한이 섞여 있다).
-        // 지금 흐름은 chapters.json life(지역 고유 적은 RegionSpawns·localShare)이고, 이쪽을 읽게 바꾸는 건 T-17(천하 한 생 시뮬레이터)에서 한다.
+        // 지금 흐름은 chapters.json life(지역 고유 적은 RegionSpawns·localShare)다. T-17(CheonhaSim)은 이 시뮬레이터의 분당 진기·화력을
+        // 그대로 빌려 쓰므로 이 옛 표가 천하 보고서에도 들어간다. life 를 읽게 바꾸면 level-curve·cheonha·cluster-xp·meta·yinyang 보고서가 같이 움직인다.
 
         public static readonly (double FromMinute, (string Id, double Weight)[] Mix)[] EnemyMix =
         {

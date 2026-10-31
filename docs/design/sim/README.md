@@ -110,12 +110,12 @@ dotnet run --project core/BloodRain.Sim -c Release -- --yinyang docs/design/sim/
 | 생기는 것 | 바꿀 곳 |
 |---|---|
 | P-02 처치 진기 결정(`enemies.json` `xp`) | `Assumptions.KillXp` 대신 데이터를 읽게 |
-| `chapters.json` 한 생 흐름(T-01에서 생김), T-17 | `Assumptions.EnemyMix`·`Events` 대신 `WaveTable`(`life`)과 `RegionSpawns`(숭산 고유 적·정예)를 읽게 |
-| B-06 깨달음, J-01 각성 수치, S-01 연환·진전 | 지금은 빠져 있거나 Assumptions 값. 들어오면 시뮬레이터에도 얹는다 |
+| `chapters.json` 한 생 흐름(T-01, 들어옴) | `Assumptions.EnemyMix`·`Events` 대신 `WaveTable`(`life`)과 `RegionSpawns`(숭산 고유 적·정예)를 읽게. 아직 안 바꿈. `CheonhaSim` 도 이 시뮬레이터의 분당 진기를 빌려 쓰므로 바꾸면 천하 보고서들도 같이 움직인다(`ContactSim` 만 life 를 읽는다) |
+| B-06 깨달음, J-01 각성 수치, S-01 연환·진전 | 데이터·Core 는 들어왔다(`insights.json`·`Insights`, balance.json `awakening`·`Awakening`, `synergies.json`·`Synergy`). 한 판 시뮬레이터는 아직 깨달음·연환을 안 얹고, 각성 파동은 Assumptions 값을 쓴다(데이터와 같은지는 `AssumptionsTests` 가 본다). 연환 화력은 `SynergyCheck` 가 따로 잰다 |
 
 ## 한계
 
-- 플레이어가 죽지 않는다. 피격, 기혈역류 피해, 피격 오의 충전이 없다. 실제 판은 이보다 조금 느리다.
+- 플레이어가 죽지 않는다. 피격, 기혈역류 피해, 피격 오의 충전이 없다. 실제 판은 이보다 조금 느리다. 맞는 쪽은 [contact.md](contact.md), 역류 횟수는 [yinyang.md](yinyang.md) 가 따로 잰다.
 - 구슬을 다 줍는다고 본다(낙관적인 쪽).
 - 넉백·둔화·기절, 범종·등롱·부적, 보스전(20분부터)은 없다.
 - 좌표가 없으니 '몰아서 한 번에 쓸기' 같은 사람의 손맛은 안 들어간다. 그 차이는 웹 프로토타입 자동 판(`__hyeolu.sim`)과 견줘 본다.
