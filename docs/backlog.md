@@ -101,11 +101,11 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 
 ## M1 코어 프로토타입 (11-30 ~ 2027-01-10)
 
-- [ ] C-01 `[U]` (unity_tasks 로 옮김) 플레이어 이동(WASD·패드), 카메라 추적, 경공 대시(0.25초 4m, 무적 0.2초, 2회 충전)
-- [ ] C-02 `[U]` (unity_tasks 로 옮김) 적 시뮬레이션: 구조체 배열 + Burst 잡(추적 + 밀어내기), 강시 콩콩 박자 이동, 오브젝트 풀, 적 300마리 60fps 확인
-- [ ] C-03 `[U]` (unity_tasks 로 옮김) 격자 공간 해시 충돌(원 대 원), 접촉 피해 0.35초 간격
-- [ ] C-04 `[U]` (unity_tasks 로 옮김) 무공 실행기: behavior별 컴포넌트(front_arc, homing_dagger, orbit_slash, aura …) 처음 8종
-- [ ] C-05 `[U]` (unity_tasks 로 옮김) 진기 구슬 드롭·흡수, 400개 넘으면 합치기
+- [x] C-01 `[U]` 2026-10-31 PC Unity 세션(unity_tasks 에 결과) — 플레이어 이동(WASD·패드), 카메라 추적, 경공 대시(0.25초 4m, 무적 0.2초, 2회 충전)
+- [x] C-02 `[U]` 2026-11-01 PC Unity 세션(unity_tasks 에 결과) — 적 시뮬레이션: 구조체 배열 + Burst 잡(추적 + 밀어내기), 강시 콩콩 박자 이동, 오브젝트 풀, 적 300마리 60fps 확인
+- [x] C-03 `[U]` 2026-11-01 PC Unity 세션(unity_tasks 에 결과) — 격자 공간 해시 충돌(원 대 원), 접촉 피해 0.35초 간격
+- [x] C-04 `[U]` 2026-11-01 PC Unity 세션(unity_tasks 에 결과) — 무공 실행기: behavior별 컴포넌트(front_arc, homing_dagger, orbit_slash, aura …) 처음 8종
+- [x] C-05 `[U]` 2026-11-01 PC Unity 세션(unity_tasks 에 결과) — 진기 구슬 드롭·흡수, 400개 넘으면 합치기
 - [ ] C-06 `[U]` (unity_tasks 로 옮김) 레벨업 화면(비급 책장 카드 3~4장, 다시 고르기·파기·정진)
 - [ ] C-07 `[U]` (unity_tasks 로 옮김) 경지 돌파 연출(흑백 심상 2초) + 깨달음 3택1
 - [ ] C-08 `[U]` (unity_tasks 로 옮김) 음양 태극 문양 HUD, 기혈역류 연출
