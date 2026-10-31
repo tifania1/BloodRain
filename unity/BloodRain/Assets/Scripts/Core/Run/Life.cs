@@ -75,6 +75,7 @@ namespace BloodRain.Core.Run
             Director = new LifeDirector(_data, rng);
             Bosses = new BossAwakening(_data, body.Region.Id, new BossRecord(soul.BossesKilled, soul.SealStoneCount));
             if (body.Sect?.BloodArt is { } art) BloodArt = new BloodArt(art, Loadout.Gauge, body.YinyangStart);
+            InsightEffects = new InsightEffects(body.Character.StartWeapon);
             RegionId = body.Region.Id;
             Position = Regions.Center(body.Region);
         }
@@ -97,6 +98,12 @@ namespace BloodRain.Core.Run
         public BossAwakening Bosses { get; }
         /// <summary>마교 몸의 혈공(5장). 다른 몸은 null.</summary>
         public BloodArt? BloodArt { get; }
+        /// <summary>고른 깨달음이 붙이는 값. 고르면 InsightEffects.Take(def, Loadout.Gauge).</summary>
+        public InsightEffects InsightEffects { get; }
+
+        /// <summary>깨달음 능력치 덧셈. 심마 횟수는 혈공에서 가져온다. CurrentStats(extra) 에 넣는다.</summary>
+        public StatBonus InsightBonus(int kills, float healthRatio = 1f) =>
+            InsightEffects.Bonus(kills, BloodArt?.Steps ?? 0, healthRatio);
 
         /// <summary>세상 시간으로 흐른 분.</summary>
         public float Minutes { get; private set; }
@@ -213,7 +220,8 @@ namespace BloodRain.Core.Run
         {
             if (Record != null) throw new InvalidOperationException("끝난 생입니다");
             if (!Charge.TryUse()) return false;
-            BloodArt?.OnUltimate(Body.Character.Ultimate);
+            if (BloodArt != null && BloodArt.OnUltimate(Body.Character.Ultimate))
+                InsightEffects.OnDemonicReset(BloodArt.Steps); // 마공 깨달음 '심마' 공력도 사라진다
             return true;
         }
 

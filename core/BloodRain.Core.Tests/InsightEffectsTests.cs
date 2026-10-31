@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using BloodRain.Core.Build;
 using BloodRain.Core.Data;
+using BloodRain.Core.Meta;
+using BloodRain.Core.Run;
 using BloodRain.Core.Progression;
 using Xunit;
 
@@ -189,6 +191,49 @@ namespace BloodRain.Core.Tests
         {
             var fx = With(Common("ilgeom"));
             Assert.Throws<InvalidOperationException>(() => fx.Take(Common("ilgeom"), Gauge()));
+        }
+
+        Life NewLife(string sect)
+        {
+            var soul = new Soul(_d);
+            soul.EndLife(soul.BeginLife(Rebirth.Prologue(_d)).Finish(LifeEndWay.Fallen, 0));
+            var c = _d.Cheonha;
+            var cand = new RebirthCandidate(c.Sect(sect), c.Region(c.Sect(sect).Region), Array.Empty<BirthTraitDef>());
+            return new Life(soul, Rebirth.Body(c, cand), new Random(1));
+        }
+
+        [Fact]
+        public void 생의_일검파만은_그_몸이_들고_시작한_무공에()
+        {
+            var life = NewLife("huashan");
+            life.InsightEffects.Take(Common("ilgeom"), life.Loadout.Gauge);
+            string start = life.Body.Character.StartWeapon;
+            Assert.True(life.Loadout.Weapons.ContainsKey(start));
+            Assert.True(life.InsightEffects.WeaponDamageMultiplier(start) > 1f);
+        }
+
+        [Fact]
+        public void 생의_깨달음_덧셈이_능력치에_얹힌다()
+        {
+            var life = NewLife("shaolin");
+            float before = life.CurrentStats().Might;
+            life.InsightEffects.Take(Common("salgi"), life.Loadout.Gauge);
+            float after = life.CurrentStats(life.InsightBonus(kills: 1_000_000)).Might;
+            Assert.Equal(before + Common("salgi").Param("mightMax"), after, 4);
+        }
+
+        [Fact]
+        public void 마교_몸_심마_공력은_천마해체로_사라진다()
+        {
+            var life = NewLife("demonic");
+            life.InsightEffects.Take(Demonic("simma"), life.Loadout.Gauge);
+            for (int i = 0; i < 20; i++) life.Absorb(200);
+            int steps = life.BloodArt!.Steps;
+            Assert.True(steps > 0);
+            Assert.True(life.InsightBonus(0)[StatKind.Might] > 0f);
+            life.Charge.AddFlat(100);
+            Assert.True(life.UseUltimate());
+            Assert.Equal(0f, life.InsightBonus(0)[StatKind.Might]);
         }
     }
 }
