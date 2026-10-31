@@ -60,6 +60,33 @@ namespace BloodRain.Core.Tests
             Assert.Equal(100 + (d.Distance - walk * d.Duration) / d.RechargeSeconds / walk * 100, ShadowSim.SustainedSpeed(d, 100), 3);
         }
 
+        [Fact] public void 고칠_방향_첫_줄은_지금_데이터_그대로()
+        {
+            var opt = ShadowSim.Options(G)[0];
+            Assert.Same(G.Cheonha.LifeEnd.Shadow, opt.Shadow);
+            Assert.Equal(0, opt.Teleport);
+            var a = ShadowSim.Run(G, 100, 3, 110, 0, 0, 0);
+            var b = ShadowSim.Run(G, opt.Shadow, opt.Teleport, 100, 3, 110, 0, 0, 0);
+            Assert.Equal(a.CaughtMinute, b.CaughtMinute);
+            Assert.Equal(a.DeadMinute, b.DeadMinute);
+            Assert.Equal(a.Hits, b.Hits);
+        }
+
+        [Fact] public void 상한을_없애면_상한보다_빠른_몸도_잡히고_순간이동은_더_일찍_붙인다()
+        {
+            var opts = ShadowSim.Options(G);
+            var uncapped = opts.First(o => o.Shadow.MaxSpeed == float.MaxValue);
+            float max = G.Cheonha.LifeEnd.Shadow.MaxSpeed;
+            Assert.Null(ShadowSim.Run(G, max + 1, 3, 110, 0, 0, 0).CaughtMinute);
+            Assert.NotNull(ShadowSim.Run(G, uncapped.Shadow, 0, max + 1, 3, 110, 0, 0, 0).DeadMinute);
+
+            var tele = opts.First(o => o.Teleport > 0 && o.Shadow == G.Cheonha.LifeEnd.Shadow);
+            var plain = ShadowSim.Run(G, 100, 3, 110, 0, 0, 0);
+            var jumped = ShadowSim.Run(G, tele.Shadow, tele.Teleport, 100, 3, 110, 0, 0, 0);
+            Assert.True(jumped.CaughtMinute <= plain.CaughtMinute);
+            Assert.True(jumped.DeadMinute <= plain.DeadMinute);
+        }
+
         [Fact] public void 보고서는_지금_데이터로_만든_것과_같다()
         {
             string onDisk = TestData.ReadRepoFile("docs", "design", "sim", "shadow.md").Replace("\r\n", "\n");

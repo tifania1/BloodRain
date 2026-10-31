@@ -79,8 +79,13 @@ namespace BloodRain.Sim
         const double CheonhaSimWalk = CheonhaSim.WalkMetersPerSecond;
 
         public static ShadowRun Run(GameData g, double speed, int charges, float maxHealth, float armor, float recovery, float takenCut)
+            => Run(g, g.Cheonha.LifeEnd.Shadow, 0, speed, charges, maxHealth, armor, recovery, takenCut);
+
+        /// <summary>그림자 세기를 바꿔 끼워 돌린다(고칠 방향 비교용). teleportGap 이 0보다 크면 단계가 오를 때마다 그림자가 몸 뒤 그 거리로 순간이동한다(더 가까이 있으면 그대로).</summary>
+        public static ShadowRun Run(GameData g, BloodShadowDef shadow, double teleportGap, double speed, int charges, float maxHealth, float armor, float recovery, float takenCut)
         {
             var end = g.Cheonha.LifeEnd;
+            int lastStep = 0;
             var dash = new Dash(g.Balance.Dash);
             dash.SetMaxCharges(charges);
             double gap = StartGap, hp = maxHealth, hitCd = 0;
@@ -90,7 +95,13 @@ namespace BloodRain.Sim
             for (long i = 0; i < steps; i++)
             {
                 double minute = end.ShadowFromMinute + i * Dt / 60.0;
-                var s = BloodShadow.Strength(end.Shadow, StepAt(end, minute));
+                int step = StepAt(end, minute);
+                var s = BloodShadow.Strength(shadow, step);
+                if (step != lastStep)
+                {
+                    if (teleportGap > 0 && lastStep > 0 && gap > teleportGap) gap = teleportGap;
+                    lastStep = step;
+                }
                 if (gap < DashAtGap && !dash.IsDashing) dash.TryStart(1, 0);
                 bool dashing = dash.IsDashing;
                 var (dx, _) = dash.Tick((float)Dt);
@@ -117,6 +128,9 @@ namespace BloodRain.Sim
 
         /// <summary>문파 몸 하나, 신법 경우 하나, 방어 경우(맨몸·최대) 하나로 돌린다.</summary>
         public static ShadowRun RunSect(GameData g, SectDef sect, (string Ko, float Bonus, int ExtraCharges) speedCase, bool maxDefense)
+            => RunSect(g, g.Cheonha.LifeEnd.Shadow, 0, sect, speedCase, maxDefense);
+
+        public static ShadowRun RunSect(GameData g, BloodShadowDef shadow, double teleportGap, SectDef sect, (string Ko, float Bonus, int ExtraCharges) speedCase, bool maxDefense)
         {
             float iryu = ContactSim.RewardRatio(g, "iryu", "max_health_");
             float cut = ContactSim.RewardRatio(g, "hwagyeong", "damage_taken_minus");
@@ -125,7 +139,31 @@ namespace BloodRain.Sim
             float armor = maxDefense ? ContactSim.ArmorCases(g).Last().Armor : traitArmor;
             float recovery = maxDefense ? ContactSim.RecoveryMax(g) : 0f;
             double speed = sect.MoveSpeed * 100.0 * (1 + speedCase.Bonus);
-            return Run(g, speed, BaseCharges(g) + speedCase.ExtraCharges, sect.MaxHealth * (1 + hpBonus), armor, recovery, cut);
+            return Run(g, shadow, teleportGap, speed, BaseCharges(g) + speedCase.ExtraCharges, sect.MaxHealth * (1 + hpBonus), armor, recovery, cut);
+        }
+
+        /// <summary>[가정] '순간이동' 안에서 그림자가 내려앉는 거리(m). 붙기 바로 앞.</summary>
+        public const double TeleportGap = 1.0;
+
+        /// <summary>T-42 고칠 방향 비교: 이름, 바꾼 그림자 세기, 단계마다 순간이동 거리(0이면 안 함).</summary>
+        public static IReadOnlyList<(string Ko, BloodShadowDef Shadow, double Teleport)> Options(GameData g)
+        {
+            var now = g.Cheonha.LifeEnd.Shadow;
+            BloodShadowDef With(float max) => new BloodShadowDef
+            {
+                ContactDamage = now.ContactDamage, DamageGrowth = now.DamageGrowth, MoveSpeed = now.MoveSpeed,
+                SpeedPerStep = now.SpeedPerStep, MaxSpeed = max, HitIntervalSeconds = now.HitIntervalSeconds,
+                EnemyDamagePerStep = now.EnemyDamagePerStep,
+            };
+            return new[]
+            {
+                ($"지금(상한 {F0(now.MaxSpeed)})", now, 0.0),
+                ("(가) 상한 150", With(150), 0.0),
+                ("(가) 상한 175", With(175), 0.0),
+                ("(가) 상한 없음", With(float.MaxValue), 0.0),
+                ($"(나) 지금 + 단계마다 순간이동", now, TeleportGap),
+                ("(가)+(나) 상한 150 + 순간이동", With(150), TeleportGap),
+            };
         }
 
         public static string Report(SimData data)
@@ -203,6 +241,36 @@ namespace BloodRain.Sim
                     }
                 sb.AppendLine();
             }
+            sb.AppendLine();
+
+            sb.AppendLine("## 고칠 방향별 (T-42)");
+            sb.AppendLine();
+            sb.AppendLine($"backlog T-42 의 (가)·(나)를 같은 셈으로 돌렸다. 방어는 '보통'. 칸은 '아홉 몸이 그림자만으로 쓰러진 분(가장 이른~가장 늦은)', 괄호는 {F0(EndMinute)}분까지 안 쓰러진 몸 수. (나)는 단계가 오를 때마다(5분마다) 그림자가 몸 뒤 {F1(TeleportGap)}m 로 내려앉는다고 두었다. (다)는 지금 줄과 같다.");
+            sb.AppendLine();
+            sb.Append("| 방향 |");
+            foreach (var c in cases) sb.Append($" {c.Ko} |");
+            sb.AppendLine();
+            sb.Append("| --- |");
+            foreach (var _ in cases) sb.Append(" --- |");
+            sb.AppendLine();
+            foreach (var opt in Options(g))
+            {
+                sb.Append($"| {opt.Ko} |");
+                foreach (var c in cases)
+                {
+                    var dead = g.Cheonha.Sects.Select(sect => RunSect(g, opt.Shadow, opt.Teleport, sect, c, false).DeadMinute).ToList();
+                    var hit = dead.Where(x => x.HasValue).Select(x => x!.Value).ToList();
+                    int alive = dead.Count - hit.Count;
+                    string range = hit.Count == 0 ? "-" : hit.Count == 1 ? F1(hit[0]) : $"{F1(hit.Min())}~{F1(hit.Max())}";
+                    sb.Append($" {range}{(alive > 0 ? $" ({alive})" : "")} |");
+                }
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            sb.AppendLine("- 상한을 올리면 단계마다 +" + F0(end.Shadow.SpeedPerStep) + "씩 계속 빨라져 맨몸·연무장 신법은 모두 잡힌다. 운룡보를 든 몸은 상한을 없애도 " + F0(EndMinute) + "분 안에 다 잡히지는 않는데, 그림자보다 빨랐던 30~50분 동안 벌려 둔 거리를 그림자가 다 좁혀야 해서다. 신법을 갖춘 만큼 늦게 잡히는 순서는 그대로 남는다.");
+            sb.AppendLine("- 순간이동만 넣으면 그림자가 몸보다 느린 동안은 한두 대 맞고 경공으로 다시 떼어 낸다. 운룡보 몸은 여전히 안 쓰러진다. 대신 맨몸의 끝을 당겨 몸 사이 차이를 줄인다(가장 늦은 몸이 지금보다 이르다).");
+            sb.AppendLine("- 둘을 섞으면 벌려 둔 거리가 5분마다 없어지니 운룡보 몸도 그림자가 몸보다 빨라지는 단계에서 곧 잡히기 시작한다. 그래도 경공이 넷인 '둘 다'는 대부분 버틴다. 버틴 시간의 폭을 정하는 건 상한과 '몸보다 빨라지는 단계'다.");
+            sb.AppendLine("- 이 셈은 그림자가 몸에서 얼마나 멀리 떨어지든 그대로 쫓는다고 둔다. 실제로 그림자가 화면 밖 일정 거리 너머로 못 떨어지게(목줄) 하면 (나)와 같은 쪽으로 움직인다.");
             sb.AppendLine();
 
             sb.AppendLine("## 읽는 법");
