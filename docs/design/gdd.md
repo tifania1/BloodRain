@@ -1086,7 +1086,7 @@ Oct 28, 2026 · @Tifania
 ### 글꼴(상업 이용 가능한 오픈 라이선스)
 
 - 제목·연출: 나눔손글씨 붓 계열(SIL OFL)
-- 본문: 본명조(Noto Serif KR), 중국어는 Noto Serif SC·TC, 일본어는 Noto Serif JP
+- 본문: 본명조(Noto Serif KR), 중국어는 Noto Serif SC·TC, 일본어는 Noto Serif JP. 저장소에는 `Assets/Art/Fonts/NotoSerifKR-Regular.otf` 가 있고, 거기 없는 한자(丐·罩)는 Yuji Boku 로 대체한다
 - 숫자(피해 표시): 굵은 고딕 계열로 따로 지정해 가독성 확보
 - 절기 이름(한자 붓글씨): Yuji Boku(SIL OFL). 절기 16개 이름의 번체 한자가 모두 있다. Ma Shan Zheng 같은 중국 붓글씨 글꼴은 劍·無·飛 같은 번체가 빠져 쓸 수 없다
 
