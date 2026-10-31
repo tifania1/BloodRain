@@ -64,8 +64,8 @@ namespace BloodRain.Core.Data
         public Dictionary<string, int> Vessels = new Dictionary<string, int>();
         /// <summary>문턱 조건: 짝 심법 최소 레벨(무공은 최고 단계).</summary>
         public int PairPassiveMinLevel = 3;
-        /// <summary>깨어나는 순간: breakthrough(그릇이 늘어나는 돌파), chest(보갑).</summary>
-        public List<string> Triggers = new List<string> { "breakthrough", "chest" };
+        /// <summary>깨어나는 순간: breakthrough(그릇이 늘어나는 돌파), chest(보갑). 기본값은 비워 둔다. Newtonsoft 는 이미 든 목록 뒤에 JSON 값을 덧붙여 같은 낱말이 두 번 들어간다(DataDefaultsTests).</summary>
+        public List<string> Triggers = new List<string>();
     }
 
     public sealed class YinYangDef
