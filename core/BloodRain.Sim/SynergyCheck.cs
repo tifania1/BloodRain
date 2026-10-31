@@ -114,6 +114,8 @@ namespace BloodRain.Sim
                 bool common = have.Contains(syn.Common.Weapon);
 
                 Row? best = null;
+                // Eval 은 진전 수를 단계(Tier)로만 본다. 단계가 같은 배치는 화력도 같아서 먼저 나온 것만 셈한다(결과는 그대로, 열 배쯤 빠름).
+                var seen = new HashSet<int>();
                 foreach (var add in PassivePlans(syn, room, slotsP))
                 {
                     var bonusChoices = common ? DamageSchools.Append("").ToArray() : new[] { "" };
@@ -122,6 +124,9 @@ namespace BloodRain.Sim
                         var counts = new Dictionary<string, int>();
                         foreach (var s in syn.Schools)
                             counts[s.Id] = fromW[s.Id] + (add.TryGetValue(s.Id, out var a) ? a : 0) + (s.Id == bonus ? 1 : 0);
+                        int key = 0;
+                        foreach (var id in DamageSchools) key = key * 16 + Tier(syn, counts, id);
+                        if (!seen.Add(key)) continue;
                         var row = Eval(pick, have, links, counts, syn, ws, crit0);
                         row.Base = baseDps;
                         if (best == null || row.Gain > best.Gain || (row.Gain == best.Gain && row.CondGain > best.CondGain)) best = row;
@@ -133,11 +138,20 @@ namespace BloodRain.Sim
             return rows;
         }
 
+        // 문파별 단계 수(오름차순). Run 이 돌 때 한 번 채운다. Eval 안에서 수천만 번 불려서 LINQ 를 안 쓴다.
+        static SynergyDefs? _tierSyn;
+        static Dictionary<string, int[]> _tiers = new Dictionary<string, int[]>();
+
         static int Tier(SynergyDefs syn, Dictionary<string, int> counts, string school)
         {
-            var s = syn.Schools.First(x => x.Id == school);
-            int n = counts[school];
-            return s.Tiers.Where(t => t.Count <= n).Select(t => t.Count).DefaultIfEmpty(0).Max();
+            if (!ReferenceEquals(_tierSyn, syn))
+            {
+                _tiers = syn.Schools.ToDictionary(x => x.Id, x => x.Tiers.Select(t => t.Count).OrderBy(c => c).ToArray());
+                _tierSyn = syn;
+            }
+            int n = counts[school], best = 0;
+            foreach (var c in _tiers[school]) if (c <= n && c > best) best = c;
+            return best;
         }
 
         static Row Eval(W[] pick, HashSet<string> have, List<LinkDef> links, Dictionary<string, int> counts,
