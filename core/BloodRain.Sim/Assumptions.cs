@@ -109,8 +109,6 @@ namespace BloodRain.Sim
 
         /// <summary>일검이 지나가는 띠의 폭(m). [프로토] 가운데서 0.9 + 적 반지름, 양쪽.</summary>
         public const double UltLineWidth = 2 * (0.9 + EnemyRadius);
-        /// <summary>절정 돌파 보상 오의 위력 +25%. [기획] 3장 경지표.</summary>
-        public const double UltPowerAtJeoljeong = 1.25;
 
         // ───────── 일부러 뺀 것 ─────────
         // - 플레이어는 죽지 않는다(피격·회복·호신·기혈역류 피해 없음). 피격 오의 충전(+3)도 없다.

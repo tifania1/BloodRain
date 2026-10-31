@@ -145,7 +145,6 @@ namespace BloodRain.Sim
         readonly IReadOnlyDictionary<string, double> _killXp;
         readonly double _eliteXp, _crowdRadius, _maxDensity, _arrival, _crowdArea;
         readonly int _weaponMax;
-        readonly int _jeoljeongLevel;
 
         readonly List<Enemy> _enemies = new List<Enemy>();
         readonly List<Enemy> _crowd = new List<Enemy>();
@@ -183,7 +182,6 @@ namespace BloodRain.Sim
             _arrival = opt.ArrivalSeconds ?? ArrivalSeconds;
             _crowdArea = Math.PI * _crowdRadius * _crowdRadius;
             _weaponMax = _g.Balance.Levels.WeaponMax;
-            _jeoljeongLevel = _g.Balance.Realms.FirstOrDefault(r => r.Id == "jeoljeong")?.Level ?? int.MaxValue;
             _weapons.Add(new WeaponState { Id = _character.StartWeapon });
             _ctx = new PolicyContext { Data = _g, Loadout = _loadout, Rng = _rng, CrowdDpsAfter = CrowdDpsAfter };
             _result = new SimResult { Options = opt };
@@ -415,11 +413,14 @@ namespace BloodRain.Sim
             double baseDmg = _loadout.Weapons.TryGetValue(def.Id, out var lv)
                 ? WeaponModel.HitDamage(def, lv, _loadout.Evolved.Contains(def.Id), false, _b, _weaponMax)
                 : def.DamageLv1 * _b.Sheet.Might;
-            double power = _xp.Level >= _jeoljeongLevel ? UltPowerAtJeoljeong : 1;
+            // 돌파 보상(절정 오의 위력, 현경 2연속)은 Core RealmRewards 그대로(Life.UltimatePowerMultiplier·UltimateCasts 와 같다)
+            var reward = RealmRewards.Upto(_g.Balance.Realms, _xp.Level);
+            double power = 1 + reward.UltimatePower;
             double mult = _ultDef?.MightMultiplier ?? 0;
             if (mult <= 0) return;
             _source = "ultimate";
-            Apply(new Strike(area: UltLineWidth * _crowdRadius, random: true, damage: baseDmg * mult * power));
+            for (int i = 0, n = reward.DoubleUltimate ? 2 : 1; i < n; i++)
+                Apply(new Strike(area: UltLineWidth * _crowdRadius, random: true, damage: baseDmg * mult * power));
             _source = "";
         }
 

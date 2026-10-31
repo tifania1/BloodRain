@@ -52,7 +52,7 @@ dotnet run --project core/BloodRain.Sim -c Release -- --awakenings docs/design/s
 2. 1초마다 적 생성: Core `SpawnCurve.SpawnThisSecond`(목표 − 지금 수의 30%, 한 생 곡선이라 19~20분에도 멈추지 않는다). 종류는 시간대별 비율표(프로토 `pickType`), 기혈은 Core `EnemyScaling`.
 3. 무리 갱신: 생긴 지 7초가 지난 적만 플레이어 곁 '무리'에 들어와 맞을 수 있다. 정예·금두꺼비가 맨 앞, 나머지는 먼저 온 순서.
 4. 무공 발동: 쿨다운(쾌속·태극 -10% 반영)마다 동작별 계산으로 몇 마리를 몇 번 때리는지 정한다(아래 표).
-5. 오의: 게이지(Core `UltimateCharge`, 처치 0.4·정예 15, 태극이면 1.25배)가 차면 일검.
+5. 오의: 게이지(Core `UltimateCharge`, 처치 0.4·정예 15, 태극이면 1.25배)가 차면 일검. 피해는 시작 무공 한 방 × 30, 절정 뒤 1.25배·현경 뒤 두 번(Core `RealmRewards`, 기획서 8장 '오의 상세').
 6. 처치 진기 흡수(Core `RunXp`) → 오른 레벨마다 카드 한 장(Core `Loadout.RollLevelUp` + 정책) → 경지 돌파(초절정 7칸째, `AwakenOnBreakthrough`) → 보갑(`AwakenOnChest`, 아니면 강화 1~3개).
 7. 절기가 깨어나면 각성 파동: 무리 안 잡몹 전부 처치, 정예 기혈 15%, 생성 2.5초 멈춤, 그 절기 8초 1.5배.
 
