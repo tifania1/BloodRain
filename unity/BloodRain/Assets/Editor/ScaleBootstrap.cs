@@ -52,6 +52,12 @@ namespace BloodRain.Editor
             shadows.AddComponent<ClusterRenderer>().material = ClusterBootstrap.EnsureMaterial();
             shadows.AddComponent<CurtainShadows>();
 
+            // TU-07 소품 층. 청운진 한가운데를 출생지(Unity 0,0)로 둔다
+            var props = new GameObject("소품 층");
+            var pl = props.AddComponent<PropLayer>();
+            pl.material = ClusterBootstrap.EnsureMaterial();
+            pl.originRegion = "cheongun";
+
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[ScaleBootstrap] {TestScenePath} 만듦");
         }
