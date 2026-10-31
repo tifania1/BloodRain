@@ -87,7 +87,7 @@ namespace BloodRain.Sim
         /// <summary>판 하나. 반환: (구성 갖춘 분, 연 분, 새 무공을 억지로 받았나, 칸이 막혔나). 못 했으면 NaN.
         /// rerolls: 다시 고르기. 받고 싶은 카드가 하나도 없을 때(가장 나은 점수가 0 아래) 쓴다.</summary>
         public static (double Build, double Open, bool Forced, bool Blocked) RunOnce(GameData g, SecretDef s, string character,
-            IReadOnlyList<(double Minute, double Level)> curve, int seed, double minutes = Minutes, int rerolls = 0)
+            IReadOnlyList<(double Minute, double Level)> curve, int seed, double minutes = Minutes, int rerolls = 0, bool escape = false)
         {
             var rng = new Random(seed);
             var ch = g.Character(character);
@@ -130,6 +130,8 @@ namespace BloodRain.Sim
                     offers = loadout.RollLevelUp(rng, 0f, unlocked);
                     pick = Choose(g, s, loadout, offers, rng, hold, out best);
                 }
+                // escape: S-07 (가) 고를 것이 새 무공뿐이면 은자·음식 카드가 섞여 나온다(받아도 칸·레벨이 그대로)
+                if (escape && req.OnlyWeapon != null && pick.Kind == OfferKind.NewWeapon && best < 0) { Mark(now); continue; }
                 if (req.OnlyWeapon != null && pick.Kind == OfferKind.NewWeapon) forced = true;
                 loadout.Apply(pick);
                 Mark(now);
@@ -218,9 +220,9 @@ namespace BloodRain.Sim
             return list;
         }
 
-        public static SecretRow Measure(GameData g, SecretDef s, string character, IReadOnlyList<(double Minute, double Level)> curve, int runs, int rerolls = 0)
+        public static SecretRow Measure(GameData g, SecretDef s, string character, IReadOnlyList<(double Minute, double Level)> curve, int runs, int rerolls = 0, bool escape = false)
         {
-            var res = Enumerable.Range(1, runs).Select(seed => RunOnce(g, s, character, curve, seed, Minutes, rerolls)).ToList();
+            var res = Enumerable.Range(1, runs).Select(seed => RunOnce(g, s, character, curve, seed, Minutes, rerolls, escape)).ToList();
             return new SecretRow
             {
                 SecretId = s.Id, NameKo = s.NameKo, Character = character, CharacterKo = g.Character(character).NameKo, Runs = runs,
@@ -232,6 +234,39 @@ namespace BloodRain.Sim
                 BlockedRuns = res.Count(r => r.Blocked),
                 Rerolls = rerolls,
                 Partial = HasUnseen(s),
+            };
+        }
+
+        /// <summary>비전 하나를 '버틸 시간(counts.elapsedSeconds)'만 바꿔 복사한다(S-07 (나) 비교용).</summary>
+        public static SecretDef WithSeconds(SecretDef s, double seconds)
+        {
+            var r = s.Require;
+            var counts = new Dictionary<string, double>(r.Counts) { ["elapsedSeconds"] = seconds };
+            return new SecretDef
+            {
+                Id = s.Id, NameKo = s.NameKo, Hanja = s.Hanja, Proto = s.Proto, Condition = s.Condition, Reward = s.Reward, Hint = s.Hint,
+                Require = new SecretRequireDef
+                {
+                    Character = r.Character, Sect = r.Sect, Cleared = r.Cleared, Levels = r.Levels, OnlyWeapon = r.OnlyWeapon,
+                    Counts = counts, Event = r.Event, Hold = r.Hold,
+                },
+            };
+        }
+
+        /// <summary>S-07 무명검 고칠 방향: 이름, 버틸 초, 다시 고르기, 은자·음식 섞기.</summary>
+        public static IReadOnlyList<(string Ko, double Seconds, int Rerolls, bool Escape)> MumyeongOptions(SecretDef s, int maxRerolls)
+        {
+            double now = s.Require.Counts.TryGetValue("elapsedSeconds", out var v) ? v : 600;
+            return new[]
+            {
+                ($"지금({now / 60:0}분)", now, 0, false),
+                ($"지금 + 다시 고르기 {maxRerolls}", now, maxRerolls, false),
+                ("(가) 새 무공뿐이면 은자·음식", now, 0, true),
+                ("(나) 7분", 420.0, 0, false),
+                ("(나) 5분", 300.0, 0, false),
+                ($"(나) 5분 + 다시 고르기 {maxRerolls}", 300.0, maxRerolls, false),
+                ("(다) 파기·다시 고르기 15", now, 15, false),
+                ("(다) 파기·다시 고르기 30", now, 30, false),
             };
         }
 
@@ -300,6 +335,30 @@ namespace BloodRain.Sim
             SecretRow R(SecretRow r) => rerolled[rows.IndexOf(r)];
             var mumyeong = rows.Where(r => g.Synergies.Secrets.First(s => s.Id == r.SecretId).Require.OnlyWeapon != null).ToList();
             var mugeuk = rows.Where(r => g.Synergies.Secrets.First(s => s.Id == r.SecretId).Require.Hold != null).ToList();
+            foreach (var r in mumyeong)
+            {
+                var def = g.Synergies.Secrets.First(x => x.Id == r.SecretId);
+                sb.AppendLine($"## 2. {r.NameKo} 고칠 방향별 (S-07)");
+                sb.AppendLine();
+                sb.AppendLine($"backlog S-07 의 셋을 같은 시드 {runs}판으로 돌렸다({r.CharacterKo}). (가)는 카드 석 장이 모두 새 무공일 때 은자·음식 카드가 섞여 나와 그걸 받는다고 두었다(무공·심법은 그대로). (다)는 이 시뮬레이터에 파기가 없어서 '받고 싶은 카드가 없을 때 쓰는 다시 고르기'를 그만큼 준 것으로 갈음했다.");
+                sb.AppendLine();
+                var opts = new List<(string Ko, SecretRow Row)>();
+                sb.AppendLine("| 방향 | 열린 판 | 열린 분(가운데값) | 새 무공을 억지로 받은 판 |");
+                sb.AppendLine("|---|---|---|---|");
+                foreach (var o in MumyeongOptions(def, maxRerolls))
+                {
+                    var x = Measure(g, WithSeconds(def, o.Seconds), r.Character, Curve(r.Character), runs, o.Rerolls, o.Escape);
+                    sb.AppendLine($"| {o.Ko} | {x.OpenRuns}/{x.Runs} | {M(x.OpenMinute)} | {x.ForcedRuns}/{x.Runs} |");
+                    opts.Add((o.Ko, x));
+                }
+                sb.AppendLine();
+                var esc = opts.First(o => o.Ko.StartsWith("(가)")).Row;
+                var five = opts.First(o => o.Ko == "(나) 5분").Row;
+                var d30 = opts.Last(o => o.Ko.StartsWith("(다)")).Row;
+                sb.AppendLine($"- (가)만 판마다 연다({esc.OpenRuns}/{esc.Runs}, 가운데 {M(esc.OpenMinute)}분). 10분보다 늦는 건 삼재검법 Lv8 이 그때쯤 차서다. (나)는 5분으로 줄여도 {five.OpenRuns}/{five.Runs}: 삼재검법이 Lv8 에 닿기 전에 석 장이 모두 새 무공인 차례가 먼저 온다. (다)는 받고 싶지 않은 차례를 {MumyeongOptions(def, maxRerolls).Last().Rerolls}번 넘겨야 {d30.OpenRuns}/{d30.Runs}이고, 연 뒤엔 결국 새 무공을 받는다(보상은 그 뒤에도 남는다).");
+                sb.AppendLine();
+            }
+
             sb.AppendLine("## 읽는 법");
             sb.AppendLine();
             foreach (var r in mumyeong)

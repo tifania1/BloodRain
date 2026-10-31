@@ -107,5 +107,29 @@ namespace BloodRain.Core.Tests
                 }
             Assert.Equal(new[] { "unhwa" }, SecretSim.CharactersFor(G, Secret("mugeuk")));
         }
+
+        [Fact] public void 무명검_새_무공뿐일_때_은자_음식이_섞이면_억지로_받지_않고_열린다()
+        {
+            var s = Secret("mumyeong");
+            for (int seed = 1; seed <= 10; seed++)
+            {
+                var r = SecretSim.RunOnce(G, s, "jin_sowoon", Line, seed, SecretSim.Minutes, 0, escape: true);
+                Assert.False(r.Forced);
+                Assert.False(double.IsNaN(r.Open));
+                Assert.True(r.Open >= s.Require.Counts["elapsedSeconds"] / 60 - 1e-6);
+            }
+        }
+
+        [Fact] public void 버틸_시간만_바꾼_복사본은_원본을_건드리지_않는다()
+        {
+            var s = Secret("mumyeong");
+            double before = s.Require.Counts["elapsedSeconds"];
+            var c = SecretSim.WithSeconds(s, 300);
+            Assert.Equal(300, c.Require.Counts["elapsedSeconds"]);
+            Assert.Equal(before, s.Require.Counts["elapsedSeconds"]);
+            Assert.Equal(s.Require.OnlyWeapon, c.Require.OnlyWeapon);
+            Assert.Equal(s.Require.Levels, c.Require.Levels);
+            Assert.Equal(before, SecretSim.MumyeongOptions(s, 5)[0].Seconds);
+        }
     }
 }
