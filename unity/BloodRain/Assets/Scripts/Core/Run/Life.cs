@@ -102,6 +102,8 @@ namespace BloodRain.Core.Run
         public float Minutes { get; private set; }
         public int Level => Xp.Level;
         public int Realm => Scale.RealmIndex(Xp.Level);
+        /// <summary>지금까지 돌파한 경지들의 보상 합(경지표 '돌파 보상'). 효과를 얹는 일은 부른 쪽이 한다.</summary>
+        public RealmRewardSum RealmRewards => Progression.RealmRewards.Upto(_data.Balance.Realms, Xp.Level);
         public Vector2 Position { get; private set; }
         /// <summary>지금 자리의 혈운 농도. 적 기혈·피해는 EnemyScaling.HealthAt·DamageAt 에 이 값을 넘긴다.</summary>
         public float Density => Regions.Density(Position, _soul.SealStoneCount);

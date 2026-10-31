@@ -6,7 +6,7 @@ using Xunit;
 namespace BloodRain.Core.Tests
 {
     /// <summary>balance.json realms 의 reward 낱말이 기획서 3장 경지표 '돌파 보상' 칸과 한 칸씩 맞는지.
-    /// Core 는 지금 insight_choice 만 읽고 나머지 낱말은 Unity 돌파 화면(C-07)이 읽을 것이라, 낱말 오타를 여기서 잡는다.</summary>
+    /// 낱말을 숫자로 모으는 건 Core RealmRewards(RealmRewardSumTests), 효과를 얹는 건 Unity 돌파 화면(C-07) 몫이라 문구 대조를 여기서 한다.</summary>
     public class RealmRewardTests
     {
         readonly GameData _d = TestData.Load();

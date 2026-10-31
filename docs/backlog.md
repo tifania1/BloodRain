@@ -107,7 +107,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] C-04 `[U]` 2026-11-01 PC Unity 세션(unity_tasks 에 결과) — 무공 실행기: behavior별 컴포넌트(front_arc, homing_dagger, orbit_slash, aura …) 처음 8종
 - [x] C-05 `[U]` 2026-11-01 PC Unity 세션(unity_tasks 에 결과) — 진기 구슬 드롭·흡수, 400개 넘으면 합치기
 - [ ] C-06 `[U]` (unity_tasks 로 옮김) 레벨업 화면(비급 책장 카드 3~4장, 다시 고르기·파기·정진) (2026-11-01 Core 쪽 횟수 `LevelUpCharges` 준비함)
-- [ ] C-07 `[U]` (unity_tasks 로 옮김) 경지 돌파 연출(흑백 심상 2초) + 깨달음 3택1
+- [ ] C-07 `[U]` (unity_tasks 로 옮김) 경지 돌파 연출(흑백 심상 2초) + 깨달음 3택1 (2026-11-01 Core 쪽 돌파 보상 합 `RealmRewards` 준비함)
 - [ ] C-08 `[U]` (unity_tasks 로 옮김) 음양 태극 문양 HUD, 기혈역류 연출
 - [ ] C-09 `[U]` (unity_tasks 로 옮김) 오의 버튼(진소운 일검), 보갑, 절기 그릇과 각성 연출(J-01·vfx.md), 절기 4종
 - [ ] C-10 `[U]` (unity_tasks 로 옮김) 서장 10분 통과: 스폰 디렉터 + 강시 포쾌 장삼 보스
