@@ -104,6 +104,23 @@ namespace BloodRain.Core.Run
         public int Realm => Scale.RealmIndex(Xp.Level);
         /// <summary>지금까지 돌파한 경지들의 보상 합(경지표 '돌파 보상'). 효과를 얹는 일은 부른 쪽이 한다.</summary>
         public RealmRewardSum RealmRewards => Progression.RealmRewards.Upto(_data.Balance.Realms, Xp.Level);
+
+        /// <summary>지금 몸의 능력치: 몸 + 지금 심법 레벨 + 연무장 + 성질 + 경지 돌파 최대 기혈(이류 +10).
+        /// 깨달음·진전 같은 덧셈은 extra 로. 심법을 올리거나 경지를 넘으면 다시 부른다(값을 들고 있지 않는다).</summary>
+        public StatSheet CurrentStats(StatBonus? extra = null) =>
+            Body.ComputeStats(_data, Loadout.Passives, _soul.Training, extra, RealmRewards.MaxHealthFlat);
+
+        /// <summary>경공 최대 충전: balance.json dash 기본 + 연무장·성질 + 경지 돌파(일류 +1). 돌파 뒤 Dash.SetMaxCharges 에 넣는다.</summary>
+        public int DashMaxCharges(StatSheet stats) => _data.Balance.Dash.Charges + stats.DashCharges + RealmRewards.DashCharges;
+
+        /// <summary>오의 위력 배율(절정 돌파면 1.25).</summary>
+        public float UltimatePowerMultiplier => 1f + RealmRewards.UltimatePower;
+
+        /// <summary>받는 피해 배율(화경 돌파면 0.9). Damage.Taken(…, 호신) 뒤에 곱한다.</summary>
+        public float DamageTakenMultiplier => RealmRewards.DamageTakenMultiplier;
+
+        /// <summary>오의 한 번에 몇 번 나가나. 현경이면 2(오의 2연속). 게이지는 한 번만 비운다.</summary>
+        public int UltimateCasts => RealmRewards.DoubleUltimate ? 2 : 1;
         public Vector2 Position { get; private set; }
         /// <summary>지금 자리의 혈운 농도. 적 기혈·피해는 EnemyScaling.HealthAt·DamageAt 에 이 값을 넘긴다.</summary>
         public float Density => Regions.Density(Position, _soul.SealStoneCount);

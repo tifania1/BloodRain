@@ -9,7 +9,8 @@
 //   double_ultimate         오의 2연속 사용
 //   jeolgi_vessel           절기 그릇 하나(Loadout.Vessels 와 같은 수)
 // 모르는 낱말은 예외를 던진다. 데이터 오타가 조용히 보상 없음이 되지 않게.
-// 효과를 실제로 얹는 일(StatSheet·Dash·오의)은 돌파 화면(C-07)을 만들 때 부른 쪽이 이 합을 읽어서 한다.
+// 몸에 얹는 길은 Life 가 내준다: CurrentStats()(최대 기혈), DashMaxCharges, UltimatePowerMultiplier, DamageTakenMultiplier, UltimateCasts.
+// 깨달음 고르기·7칸째·절기 그릇은 돌파 화면(C-07)이 Insights·Loadout.AddExtraSlot·Loadout.Vessels 로 처리한다.
 using System;
 using System.Collections.Generic;
 using System.Globalization;

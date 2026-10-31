@@ -69,11 +69,14 @@ namespace BloodRain.Core.Build
         public float Growth { get; }
         public float Luck { get; }
         public int Revival { get; }
+        /// <summary>연무장·성질에서 온 경공 충전 덧셈(Dash 기본 충전 위에 더한다).</summary>
+        public int DashCharges { get; }
 
-        public StatSheet(CharacterDef character, StatsDef rules, StatBonus bonus)
+        /// <param name="maxHealthFlat">비율을 곱한 뒤 그대로 더하는 최대 기혈(경지 돌파 이류 +10 같은 것).</param>
+        public StatSheet(CharacterDef character, StatsDef rules, StatBonus bonus, float maxHealthFlat = 0f)
         {
             Bonus = bonus;
-            MaxHealth = character.MaxHealth * (1 + bonus[StatKind.MaxHealth]);
+            MaxHealth = character.MaxHealth * (1 + bonus[StatKind.MaxHealth]) + maxHealthFlat;
             Recovery = bonus[StatKind.Recovery];
             Armor = bonus[StatKind.Armor];
             MoveSpeed = character.MoveSpeed * (1 + bonus[StatKind.MoveSpeed]);
@@ -87,6 +90,7 @@ namespace BloodRain.Core.Build
             Growth = 1 + bonus[StatKind.Growth];
             Luck = bonus[StatKind.Luck];
             Revival = (int)Math.Round(bonus[StatKind.Revival]);
+            DashCharges = (int)Math.Round(bonus[StatKind.DashCharges]);
         }
     }
 
@@ -130,14 +134,14 @@ namespace BloodRain.Core.Build
         public static StatSheet Compute(GameData data, CharacterDef character,
             IReadOnlyDictionary<string, int> passiveLevels,
             IReadOnlyDictionary<string, int> trainingLevels,
-            StatBonus? extra = null)
+            StatBonus? extra = null, float maxHealthFlat = 0f)
         {
             var total = new StatBonus();
             foreach (var kv in passiveLevels)
                 total.Add(FromPassive(data.Passive(kv.Key), kv.Value));
             total.Add(FromTraining(data.Balance.Training, trainingLevels));
             if (extra != null) total.Add(extra);
-            return new StatSheet(character, data.Balance.Stats, total);
+            return new StatSheet(character, data.Balance.Stats, total, maxHealthFlat);
         }
 
         /// <summary>연무장 다음 레벨 값. 기본가 x 다음 레벨 x (1 + 0.1 x 지금까지 산 총 레벨 수). 이미 최대면 null.</summary>

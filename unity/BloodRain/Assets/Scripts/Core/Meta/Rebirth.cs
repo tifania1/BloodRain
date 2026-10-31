@@ -85,11 +85,11 @@ namespace BloodRain.Core.Meta
 
         /// <summary>이 몸의 능력치: 몸 + 심법 + 연무장 + 성질 (+ extra).</summary>
         public StatSheet ComputeStats(GameData data, IReadOnlyDictionary<string, int> passiveLevels,
-            IReadOnlyDictionary<string, int> trainingLevels, StatBonus? extra = null)
+            IReadOnlyDictionary<string, int> trainingLevels, StatBonus? extra = null, float maxHealthFlat = 0f)
         {
             var b = TraitStats;
             if (extra != null) b.Add(extra);
-            return Stats.Compute(data, Character, passiveLevels, trainingLevels, b);
+            return Stats.Compute(data, Character, passiveLevels, trainingLevels, b, maxHealthFlat);
         }
 
         /// <summary>Synergy.Compute 에 넘길 바깥 보너스: 태어난 문파 + more(고수의 유해, 혈마의 속삭임 …)를 더한 것.</summary>
