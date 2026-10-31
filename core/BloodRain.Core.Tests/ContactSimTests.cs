@@ -43,7 +43,7 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 경지_보상_비율을_읽는다()
         {
-            Assert.Equal(0.1f, ContactSim.RewardRatio(G, "iryu", "max_health_"), 3);
+            Assert.Equal(10f, ContactSim.IryuHealthFlat(G));
             Assert.Equal(0.1f, ContactSim.RewardRatio(G, "hwagyeong", "damage_taken_minus"), 3);
             Assert.Equal(0f, ContactSim.RewardRatio(G, "samryu", "max_health_"));
             Assert.Equal(0f, ContactSim.RewardRatio(G, "없는경지", "max_health_"));

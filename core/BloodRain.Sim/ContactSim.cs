@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
+using BloodRain.Core.Progression;
 using BloodRain.Core.Spawning;
 
 namespace BloodRain.Sim
@@ -58,7 +59,11 @@ namespace BloodRain.Sim
         /// <summary>몸에 맞닿아 둘러설 수 있는 적 수. 두 원 중심 사이 원둘레를 적 지름으로 나눈 내림.</summary>
         public static int SurroundCount => (int)Math.Floor(Math.PI * (PlayerRadius + Assumptions.EnemyRadius) / Assumptions.EnemyRadius);
 
-        /// <summary>경지 보상 문자열에서 '접두어 + 숫자'(max_health_10, damage_taken_minus10)를 찾아 비율로 돌려준다.</summary>
+        /// <summary>이류 돌파 최대 기혈 덧셈(Core RealmRewards, 기혈 비율을 곱한 뒤 그대로 더한다. Life.CurrentStats 와 같다).</summary>
+        public static float IryuHealthFlat(GameData g) =>
+            RealmRewards.Of(g.Balance.Realms.First(r => r.Id == "iryu")).MaxHealthFlat;
+
+        /// <summary>경지 보상 문자열에서 '접두어 + 숫자'(damage_taken_minus10 같은)를 찾아 비율로 돌려준다.</summary>
         public static float RewardRatio(GameData g, string realmId, string prefix)
         {
             var r = g.Balance.Realms.FirstOrDefault(x => x.Id == realmId);
@@ -116,7 +121,7 @@ namespace BloodRain.Sim
             var rs = new RegionSpawns(g);
             var armors = ArmorCases(g);
             float hpBuild = MaxHealthBuild(g), recMax = RecoveryMax(g);
-            float iryuHp = RewardRatio(g, "iryu", "max_health_");
+            float iryuHp = IryuHealthFlat(g);
             float hwaCut = RewardRatio(g, "hwagyeong", "damage_taken_minus");
             var regions = g.Cheonha.Regions.Where(r => r.Id != "cheongun").ToList();
             float interval = g.Balance.Contact.SameEnemyIntervalSeconds;
@@ -140,7 +145,7 @@ namespace BloodRain.Sim
             sb.AppendLine();
             sb.AppendLine($"- 둘러싸임: 몸 반지름 {F1(PlayerRadius)}m 둘레에 적(반지름 {F1(Assumptions.EnemyRadius)}m) **{SurroundCount}마리**가 붙는다. 같은 적은 {interval}초에 한 번 치니 초당 {F1(SurroundCount / interval)}대.");
             sb.AppendLine($"- 호신: {string.Join(", ", armors.Select(a => $"{a.Ko} {F0(a.Armor)}"))}. 최대는 연무장 호신 다 사고 금강체 Lv5에 소림 성질(받는 피해 −2)을 호신 2로 쳤다.");
-            sb.AppendLine($"- 기혈: 몸 기혈 × (1 + 보너스). 이류 보상 +{F0(iryuHp * 100)}%는 격자 표에선 5분 칸부터, 동선 표에선 이류에 닿은 뒤부터 넣었다. '기혈 빌드'는 연무장 기혈 다 사고 혈해심법 Lv5(+{F0(hpBuild * 100)}%).");
+            sb.AppendLine($"- 기혈: 몸 기혈 × (1 + 보너스) + 이류 덧셈. 이류 보상 +{F0(iryuHp)}(비율을 곱한 뒤 그대로 더함)은 격자 표에선 5분 칸부터, 동선 표에선 이류에 닿은 뒤부터 넣었다. '기혈 빌드'는 연무장 기혈 다 사고 혈해심법 Lv5(+{F0(hpBuild * 100)}%).");
             sb.AppendLine($"- 화경 보상 받는 피해 −{F0(hwaCut * 100)}%는 격자 표에선 30분 칸에만(목표 화경 23:20 뒤), 동선 표에선 그 생이 화경에 닿은 뒤부터 넣었다. 호신을 뺀 뒤에 곱했다(기획서에 순서가 없다).");
             sb.AppendLine("- 덩이(7장 '적 한 덩이')는 사람 수와 상관없이 적 하나 피해로 친다. 기획서에 덩이 접촉 피해가 따로 없어서다.");
             sb.AppendLine("- 아래 경지에서 생긴 적은 닿아도 피해가 없다(crush). 표는 모두 '지금 경지에서 생긴 적'에게 맞는 경우다.");
@@ -177,7 +182,7 @@ namespace BloodRain.Sim
             double Seconds(double avg, float m, float density, float armor, float bonus)
             {
                 float cut = m >= 30 ? hwaCut : 0;
-                double hp = 100 * (1 + bonus + (m >= 5 ? iryuHp : 0));
+                double hp = 100 * (1 + bonus) + (m >= 5 ? iryuHp : 0);
                 return hp / SurroundedDps(g, PerHit(g, avg, m, density, armor, cut));
             }
             foreach (var r in regions)
@@ -213,7 +218,7 @@ namespace BloodRain.Sim
                     var (avg, _, _) = BaseContact(g, wt, rs, rid, m);
                     float cut = Reached("hwagyeong", m) ? hwaCut : 0;
                     double hit = PerHit(g, avg, m, reg.Density, 0, cut);
-                    double hits = s.MaxHealth * (1 + (Reached("iryu", m) ? iryuHp : 0)) / hit;
+                    double hits = (s.MaxHealth + (Reached("iryu", m) ? iryuHp : 0)) / hit;
                     if (m == 30) hitsAt30.Add(hits);
                     return $"{F1(hit)} · {F1(hits)}";
                 });
@@ -243,7 +248,7 @@ namespace BloodRain.Sim
                 if (line != null) engaged = line.EngagedAt;
                 var body = home ?? g.Cheonha.Sects.First();
                 string bossKo = line?.BossKo ?? reg.Boss!;
-                double hp = body.MaxHealth * (1 + iryuHp);
+                double hp = body.MaxHealth + iryuHp;
                 float fm = double.IsNaN(engaged) ? 30f : (float)engaged;
                 string Hit(string ko, float baseDmg)
                 {
@@ -280,7 +285,7 @@ namespace BloodRain.Sim
             sb.AppendLine($"- 둘러싸이면 어디서든 몇 초 안에 쓰러진다. {song.NameKo} 0분 맨몸도 {F1(100 / SurroundedDps(g, early))}초다. 기획서 8장 '포위당하면 빠르게 녹는다' 그대로이고, 경공(무적 {F1(g.Balance.Dash.Iframes)}초)으로 빠져나가는 게임이라는 뜻이다.");
             sb.AppendLine($"- 호신은 초반에만 크다. {song.NameKo} 0분 평균 적은 최대 호신이면 {F1(early)} → {F1(earlyArmored)}({F0((1 - earlyArmored / early) * 100)}% 줄어듦)이지만, {bong.NameKo} 30분에는 {F1(lateBare)} → {F1(lateArmored)}({F0((1 - lateArmored / lateBare) * 100)}% 줄어듦)이다. 뺄셈 호신이라 적 피해가 √농도와 분으로 커지면 몫이 작아진다.");
             sb.AppendLine($"- 회복은 30분 고농도 땅에선 거의 의미가 없다(붙은 적 {F2(RecoveryCovers(g, h30, recMax))}마리분). 회복을 살리려면 비율 회복(최대 기혈의 몇 %)이나 처치 흡혈 쪽이 필요하다. 지금은 손대지 않고 플레이 결과를 본다.");
-            sb.AppendLine($"- 30분 자리에서 맨몸으로 몇 대 맞으면 쓰러지나: 문파 아홉 가운데값 {F1(Median(hitsAt30))}대. 몸 기혈은 경지로 거의 안 오르고(이류 +{F0(iryuHp * 100)}%뿐) 적 피해만 오르니, 경지가 오를수록 '덜 맞는 실력'이 더 중요해진다.");
+            sb.AppendLine($"- 30분 자리에서 맨몸으로 몇 대 맞으면 쓰러지나: 문파 아홉 가운데값 {F1(Median(hitsAt30))}대. 몸 기혈은 경지로 거의 안 오르고(이류 +{F0(iryuHp)}뿐) 적 피해만 오르니, 경지가 오를수록 '덜 맞는 실력'이 더 중요해진다.");
             var twoHit = bossHits.Where(x => x.Hits < 2).OrderBy(x => x.Hits).ToList();
             sb.AppendLine($"- 땅의 주인 패턴은 처음 싸움에서 한 방이 그 땅 문파 몸 기혈의 {F0(100 / bossHits.Max(x => x.Hits))}~{F0(100 / bossHits.Min(x => x.Hits))}%다. "
                 + (twoHit.Count > 0 ? $"두 대 안에 쓰러지는 패턴은 {string.Join(", ", twoHit.Select(x => $"{x.Boss} {x.Ko}({F1(x.Hits)}대)"))}. 예고가 있는 패턴이라 피하라는 뜻이지만, 몸 기혈이 낮은 문파가 첫 싸움에서 그 땅 주인과 맞붙으면 한 번 실수가 곧 죽음이다." : "두 대 안에 쓰러지는 패턴은 없다.")

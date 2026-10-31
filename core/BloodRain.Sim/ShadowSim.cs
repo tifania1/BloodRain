@@ -132,14 +132,14 @@ namespace BloodRain.Sim
 
         public static ShadowRun RunSect(GameData g, BloodShadowDef shadow, double teleportGap, SectDef sect, (string Ko, float Bonus, int ExtraCharges) speedCase, bool maxDefense)
         {
-            float iryu = ContactSim.RewardRatio(g, "iryu", "max_health_");
+            float iryu = ContactSim.IryuHealthFlat(g);
             float cut = ContactSim.RewardRatio(g, "hwagyeong", "damage_taken_minus");
             float traitArmor = sect.Trait == "flat_damage_reduction2" ? 2f : 0f;
-            float hpBonus = iryu + (maxDefense ? ContactSim.MaxHealthBuild(g) : 0f);
+            float hpBonus = maxDefense ? ContactSim.MaxHealthBuild(g) : 0f;
             float armor = maxDefense ? ContactSim.ArmorCases(g).Last().Armor : traitArmor;
             float recovery = maxDefense ? ContactSim.RecoveryMax(g) : 0f;
             double speed = sect.MoveSpeed * 100.0 * (1 + speedCase.Bonus);
-            return Run(g, shadow, teleportGap, speed, BaseCharges(g) + speedCase.ExtraCharges, sect.MaxHealth * (1 + hpBonus), armor, recovery, cut);
+            return Run(g, shadow, teleportGap, speed, BaseCharges(g) + speedCase.ExtraCharges, sect.MaxHealth * (1 + hpBonus) + iryu, armor, recovery, cut);
         }
 
         /// <summary>[가정] '순간이동' 안에서 그림자가 내려앉는 거리(m). 붙기 바로 앞.</summary>
@@ -220,7 +220,7 @@ namespace BloodRain.Sim
 
             sb.AppendLine("## 붙잡히는 분과 쓰러지는 분");
             sb.AppendLine();
-            sb.AppendLine("칸마다 '처음 붙잡힌 분 / 그림자만으로 쓰러진 분'. `-` 는 재는 끝까지 그런 일이 없었다는 뜻이다. 방어 '보통'은 기혈 = 몸 × 이류 +10%, 호신 0(소림 성질 2), 회복 0. '최대'는 contact.md 의 최대(연무장 기혈·호신·회복 다 사고 혈해심법·금강체·매화심법 Lv5)를 다 얹은 것. 둘 다 화경 받는 피해 -10%.");
+            sb.AppendLine($"칸마다 '처음 붙잡힌 분 / 그림자만으로 쓰러진 분'. `-` 는 재는 끝까지 그런 일이 없었다는 뜻이다. 방어 '보통'은 기혈 = 몸 + 이류 {F0(ContactSim.IryuHealthFlat(g))}, 호신 0(소림 성질 2), 회복 0. '최대'는 contact.md 의 최대(연무장 기혈·호신·회복 다 사고 혈해심법·금강체·매화심법 Lv5)를 다 얹은 것. 둘 다 화경 받는 피해 -10%.");
             sb.AppendLine();
             sb.Append("| 몸 |");
             foreach (var c in cases) sb.Append($" {c.Ko}·보통 | {c.Ko}·최대 |");
