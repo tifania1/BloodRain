@@ -98,6 +98,8 @@ namespace BloodRain.Sim
         /// <summary>혈공(SimOptions.BloodArtDensity)을 돌렸을 때 심마로 기운 횟수와 농도 덕에 더 받은 진기. 혈공이 없으면 0.</summary>
         public int BloodArtSteps;
         public double BloodArtExtraXp;
+        /// <summary>무공 id(오의는 "ultimate", 모인 나한 폭발은 "burst", 각성 파동은 "wave") → 판 동안 넣은 피해(보고서 insights.md). 판 흐름에는 영향을 주지 않는다.</summary>
+        public Dictionary<string, double> DamageBySource = new Dictionary<string, double>();
 
         public MinuteSnapshot At(int minute) => Minutes.First(m => m.Minute == minute);
         public int LevelAt(int minute) => At(minute).Level;
@@ -336,7 +338,9 @@ namespace BloodRain.Sim
                 var def = _g.Weapon(w.Id);
                 int lv = _loadout.Weapons[w.Id];
                 var ex = _data.Extras.TryGetValue(w.Id, out var x) ? x : null;
+                _source = w.Id;
                 foreach (var st in WeaponModel.Strikes(def, ex, lv, w.Evolved, _t < w.GlowUntil, _b, _weaponMax)) Apply(st);
+                _source = "";
                 w.Timer += WeaponModel.Interval(def, ex, lv, w.Evolved, _b.Cdr, _weaponMax);
             }
         }
@@ -365,7 +369,7 @@ namespace BloodRain.Sim
                 if (!e.Dead && st.AuraExecute && !e.Elite)
                 {
                     e.PoisonT += 0.5;
-                    if (e.PoisonT >= 7) { _dealtThisMinute += e.Hp; e.Hp = 0; Kill(e); }
+                    if (e.PoisonT >= 7) { Credit(e.Hp); e.Hp = 0; Kill(e); }
                 }
             }
         }
@@ -374,9 +378,18 @@ namespace BloodRain.Sim
         {
             if (e.Dead) return;
             double d = e.Elite ? dmg * (1 + _b.EliteDamage) : dmg;
-            _dealtThisMinute += Math.Min(d, e.Hp);
+            Credit(Math.Min(d, e.Hp));
             e.Hp -= d;
             if (e.Hp <= 0) Kill(e);
+        }
+
+        string _source = "";
+
+        void Credit(double amount)
+        {
+            _dealtThisMinute += amount;
+            string key = _source.Length > 0 ? _source : "other";
+            _result.DamageBySource[key] = (_result.DamageBySource.TryGetValue(key, out var v) ? v : 0) + amount;
         }
 
         void Kill(Enemy e)
@@ -405,7 +418,9 @@ namespace BloodRain.Sim
             double power = _xp.Level >= _jeoljeongLevel ? UltPowerAtJeoljeong : 1;
             double mult = _ultDef?.MightMultiplier ?? 0;
             if (mult <= 0) return;
+            _source = "ultimate";
             Apply(new Strike(area: UltLineWidth * _crowdRadius, random: true, damage: baseDmg * mult * power));
+            _source = "";
         }
 
         // ───────── 진기, 레벨업, 돌파, 보갑 ─────────
@@ -418,7 +433,9 @@ namespace BloodRain.Sim
                 {
                     _bursts.Dequeue();
                     double r = MoginBurstRadius + EnemyRadius;
+                    _source = "burst";
                     Apply(new Strike(area: Math.PI * r * r, random: true, damage: MoginBurstDamage));
+                    _source = "";
                     continue;
                 }
                 if (_pendingXp > 0)
@@ -493,11 +510,11 @@ namespace BloodRain.Sim
                     if (e.Elite)
                     {
                         double cut = Math.Min(e.Hp, e.MaxHp * WaveEliteRatio);
-                        _dealtThisMinute += cut;
+                        _source = "wave"; Credit(cut); _source = "";
                         e.Hp -= cut;
                         if (e.Hp <= 0) Kill(e);
                     }
-                    else { _dealtThisMinute += e.Hp; e.Hp = 0; Kill(e); }
+                    else { _source = "wave"; Credit(e.Hp); _source = ""; e.Hp = 0; Kill(e); }
                 }
             }
             _spawnPauseUntil = Math.Max(_spawnPauseUntil, _t + WaveSpawnPause);

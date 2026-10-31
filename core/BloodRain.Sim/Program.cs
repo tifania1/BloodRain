@@ -9,6 +9,7 @@
 //   dotnet run --project core/BloodRain.Sim -- --encounters docs/design/sim/encounters.md  천하 한 생의 기연 사건 출현율과 도감 채우기
 //   dotnet run --project core/BloodRain.Sim -- --contact docs/design/sim/contact.md        맞는 쪽 셈(한 번 피해, 둘러싸여 버티는 초, 회복)
 //   dotnet run --project core/BloodRain.Sim -c Release -- --yinyang docs/design/sim/yinyang.md  음양 게이지가 머무는 구간, 기혈역류 횟수
+//   dotnet run --project core/BloodRain.Sim -c Release -- --insights docs/design/sim/insights.md  돌파 깨달음이 보일 확률과 값어치
 //   dotnet run --project core/BloodRain.Sim -c Release -- --blood-art docs/design/sim/blood-art.md  마교 몸의 혈공: 경지 도달 시각, 심마와 천마해체
 //   dotnet run --project core/BloodRain.Sim -c Release -- --rebirth docs/design/sim/rebirth.md      침방 환생 후보 분포, 구파윤회까지 환혼 수
 //   dotnet run --project core/BloodRain.Sim -- --gimmicks docs/design/sim/gimmicks.md                지역 기믹의 기혈 수지(회복·독안개·낙석·혈제단)
@@ -27,7 +28,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", insights = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -51,6 +52,7 @@ namespace BloodRain.Sim
                     case "--encounters": encounters = Next(); break;
                     case "--contact": contact = Next(); break;
                     case "--yinyang": yinyang = Next(); break;
+                    case "--insights": insights = Next(); break;
                     case "--blood-art": bloodArt = Next(); break;
                     case "--rebirth": rebirth = Next(); break;
                     case "--gimmicks": gimmicks = Next(); break;
@@ -88,6 +90,13 @@ namespace BloodRain.Sim
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(bloodArt))!);
                 File.WriteAllText(bloodArt, BloodArtSim.Report(data, seeds > 0 ? seeds : 5), new UTF8Encoding(false));
                 Console.WriteLine($"보고서를 썼습니다: {bloodArt}");
+                return 0;
+            }
+            if (insights.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(insights))!);
+                File.WriteAllText(insights, InsightSim.Report(data, seeds > 0 ? seeds : 5), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {insights}");
                 return 0;
             }
             if (yinyang.Length > 0)
