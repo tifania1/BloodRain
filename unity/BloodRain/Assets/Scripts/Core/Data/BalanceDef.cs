@@ -181,6 +181,17 @@ namespace BloodRain.Core.Data
         public float MinDamage = 1;
     }
 
+    /// <summary>경공 대시(기획서 8장). 움직임은 Unity 쪽이고 Core 는 숫자만 들고 있다.</summary>
+    public sealed class DashDef
+    {
+        public float Distance = 4f;
+        public float Duration = 0.25f;
+        /// <summary>무적 시간(초).</summary>
+        public float Iframes = 0.2f;
+        public int Charges = 2;
+        public float RechargeSeconds = 4f;
+    }
+
     public sealed class UltimateChargeDef
     {
         public float Max = 100;
@@ -224,6 +235,7 @@ namespace BloodRain.Core.Data
         public YinYangDef Yinyang = new YinYangDef();
         public UltimateChargeDef UltimateCharge = new UltimateChargeDef();
         public ContactDef Contact = new ContactDef();
+        public DashDef Dash = new DashDef();
         public EnemyScalingDef EnemyScaling = new EnemyScalingDef();
         public SpawnTargetDef SpawnTarget = new SpawnTargetDef();
         public StatsDef Stats = new StatsDef();
