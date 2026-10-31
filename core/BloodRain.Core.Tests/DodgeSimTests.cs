@@ -88,6 +88,17 @@ namespace BloodRain.Core.Tests
             });
         }
 
+        [Fact] public void 더_빠른_적은_속도가_플레이어보다_크고_순간이동형은_빠진다()
+        {
+            var fast = DodgeSim.Faster(G, 100);
+            Assert.All(fast, e => Assert.True(e.Speed > 100));
+            Assert.DoesNotContain(fast, e => e.Speed == 0);
+            Assert.Equal(G.Enemies.Count(e => e.Speed > 100), fast.Count);
+            // 느려지면 더 많아지고, 적이 빨라져도 더 많아진다
+            Assert.True(DodgeSim.Faster(G, 50).Count >= fast.Count);
+            Assert.True(DodgeSim.Faster(G, 100, 1.2).Count >= fast.Count);
+        }
+
         [Fact] public void dodge_md_는_지금_데이터로_쓴_것과_같다()
         {
             string onDisk = TestData.ReadRepoFile("docs", "design", "sim", "dodge.md").Replace("\r\n", "\n");

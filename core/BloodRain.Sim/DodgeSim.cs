@@ -96,6 +96,10 @@ namespace BloodRain.Sim
         /// <summary>사방으로 고르게 퍼지는 탄 사이 틈(m). 탄 크기 0.</summary>
         public static double RadialGap(BossPatternDef p, float distance) => distance * 2 * Math.PI / Math.Max(1, p.Count);
 
+        /// <summary>플레이어 이동속도 playerSpeed 보다 빠른 적(순간이동형 speed 0 은 뺀다). enemyMultiplier 는 적 이동속도 배율(혈월 등).</summary>
+        public static List<EnemyDef> Faster(GameData g, double playerSpeed, double enemyMultiplier = 1) =>
+            g.Enemies.Where(e => e.Speed > 0 && e.Speed * enemyMultiplier > playerSpeed + 1e-6).OrderByDescending(e => e.Speed).ToList();
+
         public sealed class Row
         {
             public string Boss = "", Pattern = "", Note = "";
@@ -206,6 +210,22 @@ namespace BloodRain.Sim
             }
             sb.AppendLine();
             sb.AppendLine("셈하지 않은 패턴: " + string.Join(", ", extra) + ". 소환·시야·필드 나누기·강화는 빠져나갈 거리가 없고, 끌어당기기(태극권)는 당기는 힘이, 나선 탄(꽃잎 나선)은 탄 크기가 데이터에 없다.");
+            sb.AppendLine();
+
+            sb.AppendLine("## 걸어서 못 떼어 놓는 적");
+            sb.AppendLine();
+            float slow = g.Balance.Yinyang.Extreme.BacklashSlow;
+            double moon = g.BossPatterns.Values.SelectMany(v => v.Phase2).Where(p => p.EnemySpeedMultiplier > 0).Select(p => (double)p.EnemySpeedMultiplier).DefaultIfEmpty(1).Max();
+            sb.AppendLine($"enemies.json speed(플레이어 기본 100 기준)가 플레이어보다 큰 적. 순간이동형(speed 0)은 뺀다. 땅의 주인 이동속도는 {F0(g.BossPatterns.Values.Min(v => v.MoveSpeed))}~{F0(g.BossPatterns.Values.Max(v => v.MoveSpeed))}로 모두 플레이어보다 느리다.");
+            sb.AppendLine();
+            sb.AppendLine("| 경우 | 플레이어 속도 | 더 빠른 적 |");
+            sb.AppendLine("|---|---|---|");
+            string List(IEnumerable<EnemyDef> es) { var l = es.Select(e => $"{e.NameKo} {F0(e.Speed)}").ToList(); return l.Count == 0 ? "없음" : $"{l.Count}종: " + string.Join(", ", l); }
+            sb.AppendLine($"| 평소 | 100 | {List(Faster(g, 100))} |");
+            sb.AppendLine($"| 기혈역류 중(-{F0(slow * 100)}%) | {F0(100 * (1 - slow))} | {List(Faster(g, 100 * (1 - slow)))} |");
+            if (moon > 1) sb.AppendLine($"| 혈월(적 ×{F1(moon)}) | 100 | {List(Faster(g, 100, moon))} |");
+            sb.AppendLine();
+            sb.AppendLine($"역류 중엔 적 {Faster(g, 100 * (1 - slow)).Count}종이 플레이어보다 빨라진다(전체 {g.Enemies.Count(e => e.Speed > 0)}종 가운데). 역류를 경공으로 끊는 이유가 곧 이것이다.");
             sb.AppendLine();
 
             sb.AppendLine("## 읽는 법");
