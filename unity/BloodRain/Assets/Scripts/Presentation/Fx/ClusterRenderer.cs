@@ -12,6 +12,9 @@ namespace BloodRain.Presentation.Fx
         public float Health = 1f;
         public int Seed;
         public Color Tint = Color.white;
+        /// <summary>시뮬레이션이 주는 콩콩 박자(0~1, 앞 HopDuty 동안 공중). -1 이면 렌더러 시계로 계속 뛴다(TU-04 시험용), -2 면 안 뛴다.</summary>
+        public float HopBeat = -1f;
+        public float HopDuty = 0.72f;
 
         internal int Drawn = -1;          // 지난 프레임에 그린 사람 수
         internal int FadeFrom;            // 디졸브 중인 사람의 끝 순번(이 순번 아래, Drawn 이상이 사라지는 중)
@@ -139,8 +142,19 @@ namespace BloodRain.Presentation.Fx
                 for (int i = 0; i < upto; i++)
                 {
                     var m = lay[i];
-                    float beat = t / hopPeriod + m.z * hopPhaseSpread;
-                    float hop = Mathf.Abs(Mathf.Sin(beat * Mathf.PI)) * hopHeight;
+                    float hop;
+                    if (c.HopBeat >= 0f)
+                    {
+                        // 시뮬레이션 박자: 공중에 있는 동안만 포물선, 사람마다 조금 늦게 뛴다
+                        float f = Mathf.Repeat(c.HopBeat - m.z * hopPhaseSpread * 0.25f, 1f);
+                        hop = f < c.HopDuty ? Mathf.Sin(f / c.HopDuty * Mathf.PI) * hopHeight : 0f;
+                    }
+                    else if (c.HopBeat < -1.5f) hop = 0f; // 뛰지 않는 적(-2)
+                    else
+                    {
+                        float beat = t / hopPeriod + m.z * hopPhaseSpread;
+                        hop = Mathf.Abs(Mathf.Sin(beat * Mathf.PI)) * hopHeight;
+                    }
                     var pos = new Vector3(c.Position.x + m.x * size, c.Position.y + (m.y + hop) * size, -0.3f - m.y * 0.0001f);
                     _mats[_count] = Matrix4x4.TRS(pos, Quaternion.identity, new Vector3(size, size, 1f));
                     _tints[_count] = tint;

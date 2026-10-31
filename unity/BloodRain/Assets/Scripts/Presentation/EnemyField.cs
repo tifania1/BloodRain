@@ -1,0 +1,224 @@
+using System.Collections.Generic;
+using System.Diagnostics;
+using BloodRain.Core.Data;
+using BloodRain.Core.Run;
+using BloodRain.Presentation.Fx;
+using BloodRain.Sim;
+using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+namespace BloodRain.Presentation
+{
+    // 적 무리(C-02). EnemySim(Burst 잡)을 돌리고 결과를 덩이 렌더러(ClusterRenderer)에 넘긴다.
+    //   속도 = enemies.json speed / 100 × 기본 걸음(balance.json stats.moveBase) → WorldScale 로 세계 m/s, 혈월이면 Life.EnemySpeedMultiplier.
+    //   기혈 = enemies.json health × Life.EnemyHealthMultiplier(시간·혈운 농도 배율은 생성 디렉터 C-10 에서).
+    //   생성 고리·되돌리기 거리는 balance.json spawnTarget(화면 대각선 배수).
+    // 지금은 목표 수만큼 채워 두는 시험용 생성만 있다. 진짜 생성 흐름은 C-10(LifeDirector).
+    public sealed class EnemyField : MonoBehaviour
+    {
+        [Tooltip("채워 둘 적 수. [ ] 키로 반·두 배")]
+        public int targetCount = 300;
+        public int capacity = 4096;
+        [Tooltip("한 프레임에 새로 넣는 최대 수")]
+        public int spawnPerFrame = 60;
+        public Transform player;
+        public ClusterRenderer clusters;
+        public bool showStats = true;
+
+        // 시험용 생성표: (적 id, 가중치)
+        static readonly (string id, float w)[] Mix =
+        {
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f),
+        };
+
+        struct Kind
+        {
+            public EnemyDef Def;
+            public EnemyMove Move;
+            public Color Tint;
+            public float Weight;
+        }
+
+        EnemySim _sim;
+        readonly List<Kind> _kinds = new List<Kind>();
+        float _totalWeight;
+        readonly Dictionary<int, ClusterView> _views = new Dictionary<int, ClusterView>();
+        System.Random _rng = new System.Random(20261101);
+        float _moveBase = 4.6f;
+        float _healthMul = 1f, _speedMul = 1f;
+        Vector2 _lastPlayer;
+        Vector2 _heading;
+        readonly Stopwatch _watch = new Stopwatch();
+        float _simMs, _fps;
+
+        public EnemySim Sim => _sim;
+        public int Count => _sim?.Count ?? 0;
+        public float LastSimMs => _simMs;
+
+        /// <summary>혈월 천하(회귀)면 적 기혈·속도에 곱할 값을 Life 에서 받는다. 이미 나온 적에는 안 붙는다.</summary>
+        public void UseLife(Life life)
+        {
+            _healthMul = life.EnemyHealthMultiplier;
+            _speedMul = life.EnemySpeedMultiplier;
+        }
+
+        void Awake()
+        {
+            var data = DataBoot.Data;
+            _moveBase = data.Balance.Stats.MoveBase;
+            foreach (var (id, w) in Mix)
+            {
+                var def = data.Enemy(id);
+                _kinds.Add(new Kind { Def = def, Move = MoveOf(def.Behavior), Tint = TintOf(def.Family), Weight = w });
+                _totalWeight += w;
+            }
+            _sim = new EnemySim(capacity);
+            if (clusters != null)
+            {
+                clusters.hopPeriod = EnemySim.HopPeriod;
+                if (clusters.atlas == null) clusters.atlas = ClusterRenderer.MakePlaceholderAtlas(); // 적 아틀라스가 오기 전 임시
+            }
+        }
+
+        void OnDestroy() => _sim?.Dispose();
+
+        public static EnemyMove MoveOf(string behavior)
+        {
+            switch (behavior)
+            {
+                case "hop_chase": return EnemyMove.Hop;
+                case "flee": return EnemyMove.Flee;
+                case "line_charge": return EnemyMove.Line;
+                default: return EnemyMove.Chase; // telegraph_dash·fly_curve 등은 C-04 뒤 갈래를 붙이기 전까지 곧장 쫓는다
+            }
+        }
+
+        static Color TintOf(string family)
+        {
+            switch (family)
+            {
+                case "bloodman": return new Color(0.55f, 0.10f, 0.08f);
+                case "bloodshadow": return new Color(0.30f, 0.06f, 0.12f);
+                case "event": return new Color(0.85f, 0.65f, 0.15f);
+                default: return new Color(0.16f, 0.15f, 0.17f); // 강시 먹빛
+            }
+        }
+
+        WorldScale World => WorldScale.Current;
+
+        /// <summary>size(경지 m) 사람이 n 명인 덩이의 밀어내기 반경(세계 m).</summary>
+        float RadiusOf(int bornRealm)
+        {
+            var ws = World;
+            float member = clusters != null ? clusters.memberRealmMeters : 1f;
+            float spacing = clusters != null ? clusters.spacing : 0.9f;
+            int n = ws.Scale.ClusterSize(bornRealm);
+            float size = ws.Length(member, bornRealm);
+            return size * (n <= 1 ? 0.38f : 0.75f * spacing * Mathf.Sqrt(n));
+        }
+
+        public int SpawnAt(EnemyDef def, Vector2 pos)
+        {
+            var ws = World;
+            int realm = ws.Realm;
+            var move = MoveOf(def.Behavior);
+            var to = (Vector2)player.position - pos;
+            var a = new EnemyAgent
+            {
+                Pos = new float2(pos.x, pos.y),
+                LineDir = to.sqrMagnitude > 1e-6f ? (float2)(to.normalized) : new float2(1, 0),
+                Speed = ws.Speed(def.Speed / 100f * _moveBase, realm) * _speedMul,
+                Radius = RadiusOf(realm),
+                Weight = 1f,
+                Hop = (float)_rng.NextDouble(),
+                Health = def.Health * _healthMul,
+                MaxHealth = def.Health * _healthMul,
+                Move = (byte)move,
+            };
+            int kindIndex = _kinds.FindIndex(k => k.Def == def);
+            a.Kind = kindIndex;
+            int id = _sim.Spawn(a);
+            if (id < 0) return -1;
+            var tint = kindIndex >= 0 ? _kinds[kindIndex].Tint : TintOf(def.Family);
+            _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f };
+            return id;
+        }
+
+        EnemyDef PickDef()
+        {
+            double r = _rng.NextDouble() * _totalWeight;
+            foreach (var k in _kinds) { r -= k.Weight; if (r <= 0) return k.Def; }
+            return _kinds[0].Def;
+        }
+
+        void Update()
+        {
+            var kb = Keyboard.current;
+            if (kb != null)
+            {
+                if (kb.rightBracketKey.wasPressedThisFrame) targetCount = Mathf.Min(capacity, targetCount * 2);
+                if (kb.leftBracketKey.wasPressedThisFrame) targetCount = Mathf.Max(1, targetCount / 2);
+                if (kb.cKey.wasPressedThisFrame) _sim.Clear();
+            }
+            if (player == null || World == null) return;
+
+            var ws = World;
+            var st = DataBoot.Data.Balance.SpawnTarget;
+            float diag = ws.ViewDiagonal;
+            Vector2 p = player.position;
+            float dt = Time.deltaTime;
+            if (dt > 0f)
+            {
+                var v = (p - _lastPlayer) / dt;
+                _heading = Vector2.Lerp(_heading, v, 1f - Mathf.Exp(-dt * 4f));
+            }
+            _lastPlayer = p;
+
+            // 모자라면 생성 고리(대각선 0.6~0.75배)에 채운다. 넘치면 뒤에서부터 걷는다.
+            int spawn = Mathf.Min(spawnPerFrame, targetCount - _sim.Count);
+            for (int i = 0; i < spawn; i++)
+            {
+                float ang = (float)(_rng.NextDouble() * Mathf.PI * 2);
+                float rad = diag * Mathf.Lerp(st.RingMinDiagonal, st.RingMaxDiagonal, (float)_rng.NextDouble());
+                SpawnAt(PickDef(), p + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * rad);
+            }
+            while (_sim.Count > targetCount) _sim.RemoveAt(_sim.Count - 1);
+
+            _watch.Restart();
+            float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
+            _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
+                      diag * st.RecycleBeyondDiagonal, diag * st.RingMaxDiagonal);
+            _watch.Stop();
+            _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
+            _fps = Mathf.Lerp(_fps, dt > 0 ? 1f / Time.unscaledDeltaTime : 0f, 0.05f);
+
+            Sync();
+        }
+
+        void Sync()
+        {
+            foreach (var id in _sim.Removed) _views.Remove(id);
+            _sim.Removed.Clear();
+            if (clusters == null) return;
+            clusters.Clear();
+            var agents = _sim.Agents;
+            for (int i = 0; i < _sim.Count; i++)
+            {
+                var a = agents[i];
+                if (!_views.TryGetValue(a.Id, out var view)) continue;
+                view.Position = new Vector2(a.Pos.x, a.Pos.y);
+                view.Health = a.MaxHealth > 0 ? Mathf.Clamp01(a.Health / a.MaxHealth) : 1f;
+                if (a.Move == (byte)EnemyMove.Hop) view.HopBeat = a.Hop;
+                else view.HopBeat = -2f; // 0 아래면 콩콩 없음
+                clusters.Add(view);
+            }
+        }
+
+        void OnGUI()
+        {
+            if (!showStats) return;
+            GUI.Label(new Rect(12, 12, 520, 22), $"적 {Count}/{targetCount}  시뮬 {_simMs:0.00}ms  {_fps:0}fps   [ ] 수 조절, C 비우기");
+        }
+    }
+}

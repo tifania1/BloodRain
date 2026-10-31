@@ -1,7 +1,7 @@
 {
     "name": "BloodRain.Sim",
     "rootNamespace": "BloodRain.Sim",
-    "references": ["BloodRain.Core"],
+    "references": ["BloodRain.Core", "Unity.Burst", "Unity.Collections", "Unity.Mathematics"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

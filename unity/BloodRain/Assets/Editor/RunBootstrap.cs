@@ -54,6 +54,14 @@ namespace BloodRain.Editor
             ml.material = ClusterBootstrap.EnsureMaterial();
             ml.map = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg");
 
+            // 적 무리(C-02): Burst 시뮬레이션 + 덩이 렌더러
+            var enemies = new GameObject("적 무리");
+            var cr = enemies.AddComponent<ClusterRenderer>();
+            cr.material = ClusterBootstrap.EnsureMaterial();
+            var ef = enemies.AddComponent<EnemyField>();
+            ef.player = player.transform;
+            ef.clusters = cr;
+
             var hud = HudBootstrap.CreateHud();
             hud.target = player.transform;
 
