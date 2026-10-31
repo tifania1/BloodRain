@@ -266,8 +266,9 @@ namespace BloodRain.Core.Meta
         /// <summary>해금 토큰: "start" 는 늘 열림, "boss:&lt;지역&gt;" 은 그 땅의 주인 첫 처치, 나머지는 Unlock 으로 받은 것.</summary>
         public bool IsUnlocked(string token)
         {
-            if (token == "start") return true;
-            if (token.StartsWith("boss:")) return _bosses.Contains(token.Substring(5));
+            if (token == UnlockToken.Start) return true;
+            var bossRegion = UnlockToken.BossRegion(token);
+            if (bossRegion != null) return _bosses.Contains(bossRegion);
             return _unlocks.Contains(token);
         }
 

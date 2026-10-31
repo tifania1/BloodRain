@@ -149,7 +149,7 @@ namespace BloodRain.Core.Data
         /// <summary>마교 몸의 성장 '혈공'(5장). 다른 문파는 null.</summary>
         public BloodArtDef? BloodArt;
 
-        public string? UnlockBossRegion => Unlock.StartsWith("boss:") ? Unlock.Substring(5) : null;
+        public string? UnlockBossRegion => UnlockToken.BossRegion(Unlock);
     }
 
     /// <summary>혈공(기획서 5장 '마교 몸의 성장').</summary>
