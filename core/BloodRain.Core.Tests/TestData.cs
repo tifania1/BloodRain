@@ -35,7 +35,11 @@ namespace BloodRain.Core.Tests
 
         public static GameData Load() => _cached ??= GameData.FromJson(ReadFiles());
 
-        public static string Gdd => File.ReadAllText(Path.Combine(DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));
+        /// <summary>문서 파일을 읽고 줄바꿈을 \n 으로 맞춘다. PC(git autocrlf)에서 받은 사본은 \r\n 이라
+        /// 줄 단위 정규식이 엇나가던 것(2026-10-31 PC 세션, ArtFrameTests).</summary>
+        public static string ReadText(string path) => File.ReadAllText(path).Replace("\r\n", "\n");
+
+        public static string Gdd => ReadText(Path.Combine(DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));
 
         /// <summary>기획서에서 "### 제목" 부터 다음 제목 전까지. 마크다운 이스케이프(\~)는 풀어 둔다.</summary>
         public static string GddSection(string heading)

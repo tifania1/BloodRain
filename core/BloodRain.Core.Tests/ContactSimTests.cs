@@ -75,7 +75,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0.2f, d.Iframes);
             Assert.Equal(2, d.Charges);
             Assert.Equal(4f, d.RechargeSeconds);
-            var gdd = File.ReadAllText(Path.Combine(TestData.RepoRoot, "docs", "design", "gdd.md"));
+            var gdd = TestData.ReadText(Path.Combine(TestData.RepoRoot, "docs", "design", "gdd.md"));
             Assert.Contains("0.25초 동안 4m 대시, 시작 0.2초 무적. 기본 2회 충전, 1회 회복에 4초", gdd);
         }
 
@@ -89,7 +89,7 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 보고서에_땅의_주인_일곱이_다_있다()
         {
-            var text = File.ReadAllText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "contact.md"));
+            var text = TestData.ReadText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "contact.md"));
             var rows = Regex.Matches(text, @"^\| [^|]+\([^,|]+, [0-9.]+\) \| [0-9]+:[0-5][0-9]", RegexOptions.Multiline);
             Assert.Equal(G.BossPatterns.Count, rows.Count);
         }

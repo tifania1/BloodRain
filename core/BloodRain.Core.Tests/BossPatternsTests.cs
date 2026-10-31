@@ -124,9 +124,9 @@ namespace BloodRain.Core.Tests
                 Assert.True(m.Success, $"template.html 에서 /{pattern}/ 를 못 찾았습니다. 프로토타입 코드가 바뀌었으면 이 패턴도 같이 고친다");
                 return float.Parse(m.Groups[group].Value, CultureInfo.InvariantCulture);
             }
-            // 프로토타입은 이동속도 100을 초당 4.6m로 쓴다(speed: 0.45 * 4.6 = 45).
+            // 프로토타입은 이동속도 100을 balance.json stats.moveBase(MOVE)로 쓴다(speed: 0.45 * MOVE = 45).
             // spawnBoss
-            const string spawn = @"speed: ([\d.]+) \* 4\.6, dmg: ([\d.]+), r: KIND_SIZE\.boss[^\n]*\n\s*pattern: 'boss', timer: ([\d.]+)";
+            const string spawn = @"speed: ([\d.]+) \* MOVE, dmg: ([\d.]+), r: KIND_SIZE\.boss[^\n]*\n\s*pattern: 'boss', timer: ([\d.]+)";
             Assert.Equal(W.MoveSpeed / 100f, Grab(spawn, 1), 3);
             Assert.Equal(At20(W.ContactDamage), Grab(spawn, 2), 3);
             Assert.Equal(W.FirstCastSeconds, Grab(spawn, 3));
@@ -148,7 +148,7 @@ namespace BloodRain.Core.Tests
 
             // 십팔나한진
             var ring = W.Pattern("eighteen_arhat_ring");
-            const string ringSpawn = @"i < (\d+); i\+\+\) \{ const a = i / \d+ \* TAU; spawnEnemy\('mogin_nahan', p\.x \+ Math\.cos\(a\) \* ([\d.]+),[^\n]*speed: ([\d.]+) \* 4\.6";
+            const string ringSpawn = @"i < (\d+); i\+\+\) \{ const a = i / \d+ \* TAU; spawnEnemy\('mogin_nahan', p\.x \+ Math\.cos\(a\) \* ([\d.]+),[^\n]*speed: ([\d.]+) \* MOVE";
             Assert.Equal(ring.Count, (int)Grab(ringSpawn, 1));
             Assert.Equal(ring.Radius, Grab(ringSpawn, 2));
             Assert.Equal(ring.SummonSpeed / 100f, Grab(ringSpawn, 3), 3);

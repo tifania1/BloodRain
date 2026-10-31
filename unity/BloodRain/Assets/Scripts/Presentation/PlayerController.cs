@@ -8,12 +8,10 @@ using UnityEngine.InputSystem;
 namespace BloodRain.Presentation
 {
     // 플레이어 이동과 경공 대시(C-01). WASD·방향키·패드 왼쪽 스틱으로 걷고, Space·Shift·패드 A 로 대시.
-    //   걸음 = 기본 걸음(경지 m/s) × 몸의 걸음 배율, 대시 = Core Dash(balance.json dash). 둘 다 WorldScale 로 세계 m 로 바꾼다.
+    //   걸음 = 기본 걸음(balance.json stats.moveBase, 경지 m/s) × 몸의 걸음 배율, 대시 = Core Dash(balance.json dash). 둘 다 WorldScale 로 세계 m 로 바꾼다.
     //   혈우 장막: 걸음에 Core PushVelocity 를 더하고 KeepInside(TU-06 과 같음). 카메라는 ScaleCamera 가 이 Transform 을 따른다.
     public sealed class PlayerController : MonoBehaviour
     {
-        [Tooltip("기본 걸음(경지 m/s). 웹 프로토타입 4.6. balance.json 에 아직 없다")]
-        public float baseMoveRealmMetersPerSecond = 4.6f;
         [Tooltip("플레이어 지름(경지 m)")]
         public float bodyRealmMeters = 0.8f;
         [Tooltip("태어난 곳(Unity 좌표). 혈우 장막의 가운데")]
@@ -21,6 +19,7 @@ namespace BloodRain.Presentation
 
         WorldScale _ws;
         float _moveMultiplier = 1f;
+        float _baseMove = 4.6f;
         Vector2 _facing = Vector2.right;
 
         public Dash Dash { get; private set; }
@@ -39,6 +38,7 @@ namespace BloodRain.Presentation
             _ws = WorldScale.Current;
             var body = RebirthHandoff.Body ?? Rebirth.Prologue(data);
             _moveMultiplier = body.Character.MoveSpeed;
+            _baseMove = data.Balance.Stats.MoveBase;
             Dash = new Dash(data.Balance.Dash);
             var cam = Camera.main != null ? Camera.main.GetComponent<ScaleCamera>() : null;
             if (cam != null) cam.target = transform;
@@ -79,7 +79,7 @@ namespace BloodRain.Presentation
                 step = new Vector2(_ws.Length(ddx), _ws.Length(ddy)); // 대시 중엔 걸음 대신 미끄러짐(웹과 같다)
             else
             {
-                float speed = _ws.Speed(baseMoveRealmMetersPerSecond * _moveMultiplier);
+                float speed = _ws.Speed(_baseMove * _moveMultiplier);
                 var push = _ws.Scale.PushVelocity(pos, birth, _ws.Realm, speed);
                 step = (Vector2.ClampMagnitude(move, 1f) * speed + new Vector2(push.X, push.Y)) * dt;
             }

@@ -114,6 +114,17 @@ namespace BloodRain.Core.Tests
             Assert.Throws<ArgumentException>(() => new SpawnCurve(_d.Balance.SpawnTarget, 9f, 8f));
         }
 
+        /// <summary>8장 능력치 표 신법 칸과 6장 적 표 머리말의 '기본 이동속도(초당 Xm)'가 balance.json stats.moveBase 와 같다.
+        /// Unity PlayerController 와 웹 프로토타입이 이 값 하나로 플레이어 걸음과 적 속도(100 = 이 값)를 셈한다.</summary>
+        [Fact] public void 기본_걸음이_기획서_능력치표와_같다()
+        {
+            float move = _d.Balance.Stats.MoveBase;
+            Assert.True(move > 0);
+            var row = TestData.GddTable(TestData.GddSection("능력치")).Single(r => r[0] == "신법");
+            Assert.Equal($"100%(초당 {TestData.Num(move)}m)", row[2]);
+            Assert.Contains($"플레이어 기본 이동속도(초당 {TestData.Num(move)}m)를 100으로 둔 상대값", TestData.Gdd);
+        }
+
         /// <summary>11장 '화면 위 적 수 목표' 문단: 15분 이후 가장 가파르게 늘어 18분에 정점 400, 그 뒤로는 400.
         /// 생성 규칙: 부족분의 30%, 화면 대각선 0.6~0.75배 고리, 1.5배 넘게 멀어지면 옮김.</summary>
         [Fact] public void 화면_위_적_수_곡선과_생성_규칙이_기획서_11장과_같다()

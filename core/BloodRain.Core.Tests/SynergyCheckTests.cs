@@ -76,7 +76,7 @@ namespace BloodRain.Core.Tests
         {
             // 보고서 전체를 다시 쓰면 오래 걸려서(낮춰 본 안까지 두 번 돈다) 맨 위 결과 두 줄만 대조한다.
             var rows = Rows.Value;
-            var text = File.ReadAllText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "synergy.md"));
+            var text = TestData.ReadText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "synergy.md"));
             var m = Regex.Matches(text, @"가장 센 조합 (\d+\.\d\d)배[^\n]*?넘는 조합 ([\d,]+)개");
             Assert.True(m.Count >= 2, "synergy.md 결과 줄을 못 찾음");
             string F(double x) => x.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);

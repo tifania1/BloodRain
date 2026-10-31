@@ -52,7 +52,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 보고서_결론줄이_지금_데이터와_같다()
         {
             // 보고서는 시드 3. 같은 시드로 혈공 격차만 다시 재서 보고서 줄과 견준다(천하 쪽은 오래 걸려 뺀다)
-            var md = File.ReadAllText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "decisions.md"));
+            var md = TestData.ReadText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "decisions.md"));
             var g = Data.Value.Game;
             var top = g.Balance.Realms.OrderBy(r => r.Level).Last().Id;
             var home = g.Cheonha.Regions.First(r => r.Id == g.Cheonha.Sects.First(s => s.BloodArt != null).Region);

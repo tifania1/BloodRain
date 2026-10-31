@@ -60,7 +60,7 @@
     "spawnFractionPerSecond": 0.3,
     "ringMinDiagonal": 0.6, "ringMaxDiagonal": 0.75, "recycleBeyondDiagonal": 1.5
   },
-  "stats": { "_note": "능력치 기본값 중 캐릭터에 없는 것. 기획서 '8. 전투 시스템' 능력치 표.", "magnetBase": 1.5, "cooldownReductionCap": 0.6 },
+  "stats": { "_note": "능력치 기본값 중 캐릭터에 없는 것. 기획서 '8. 전투 시스템' 능력치 표.", "moveBase": 4.6, "magnetBase": 1.5, "cooldownReductionCap": 0.6 },
   "training": {
     "_note": "연무장(영구 강화). 기획서 '10. 성장·메타 시스템' 연무장 표와 같은 값. stat은 Core.Build.StatKind 이름. 비용 = baseCost x 다음 레벨 x (1 + costGrowthPerBought x 지금까지 산 총 레벨 수).",
     "costGrowthPerBought": 0.1,

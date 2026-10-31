@@ -858,7 +858,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2fe20d12c4f07f40a1ccb72d9477488, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.PlayerController
-  baseMoveRealmMetersPerSecond: 4.6
   bodyRealmMeters: 0.8
   birthplace: {x: 0, y: 0}
 --- !u!212 &1230432751

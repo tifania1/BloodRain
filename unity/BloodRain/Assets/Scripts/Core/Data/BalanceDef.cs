@@ -204,6 +204,8 @@ namespace BloodRain.Core.Data
 
     public sealed class StatsDef
     {
+        /// <summary>신법 100%일 때 걸음(지금 경지 축척의 m/s). 적 속도(기획서 9장, 플레이어 = 100)도 이 값에 곱한다.</summary>
+        public float MoveBase = 4.6f;
         public float MagnetBase = 1.5f;
         public float CooldownReductionCap = 0.6f;
     }

@@ -112,7 +112,7 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 연무장_표가_기획서와_같다()
         {
-            var gdd = File.ReadAllText(Path.Combine(TestData.DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));
+            var gdd = TestData.ReadText(Path.Combine(TestData.DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));
             int start = gdd.IndexOf("### 연무장(영구 강화)");
             Assert.True(start >= 0);
             var section = gdd.Substring(start, gdd.IndexOf("### ", start + 5) - start);

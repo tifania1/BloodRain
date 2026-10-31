@@ -363,6 +363,7 @@ const P_BY_ID = Object.fromEntries(DATA.passives.map(p => [p.id, p]));
 const E_BY_ID = Object.fromEntries(DATA.enemies.map(e => [e.id, e]));
 const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
+const MOVE = B.stats.moveBase; // 신법 100% 걸음 m/s, 적 속도 100 = 이 값
 // 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟 + 취선봉 random_arc, T-36).
 const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura', 'random_arc']);
 const START_WEAPONS = DATA.weapons.filter(w => w.unlock === 'start' && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
@@ -839,7 +840,7 @@ function recomputeStats() {
   const insightMagnet = G.insights.includes('cheolli') ? 2 : 1;
   G.stats = {
     maxHp: Math.round((100 + (has('iryu') ? 10 : 0)) * (1 + s.maxHealth)),
-    recovery: s.recovery, armor: s.armor, move: 4.6 * (1 + s.moveSpeed), might: 1 + s.might, cdr: s.cdr,
+    recovery: s.recovery, armor: s.armor, move: MOVE * (1 + s.moveSpeed), might: 1 + s.might, cdr: s.cdr,
     area: 1 + s.area, amount: s.amount, duration: 1 + s.duration, projSpeed: 1 + s.projSpeed,
     magnet: 1.5 * (1 + s.magnet) * insightMagnet, growth: 1 + s.growth, luck: s.luck, crit: s.crit,
     knockback: 1 + s.knockback, burn: 1 + s.burn, dot: 1 + s.dot, elite: 1 + s.elite, lifesteal: s.lifesteal,
@@ -914,7 +915,7 @@ function spawnEnemy(type, x, y, extra) {
   const hp = def.health * (1 + B.enemyScaling.healthPerMinute * gm) * mult;
   const e = {
     type, sprite: type === 'mogin_nahan' ? 'mogin' : type === 'golden_toad' ? 'toad' : type,
-    x, y, hp, maxHp: hp, speed: def.speed / 100 * 4.6, dmg: def.contactDamage * (1 + B.enemyScaling.damagePerMinute * gm),
+    x, y, hp, maxHp: hp, speed: def.speed / 100 * MOVE, dmg: def.contactDamage * (1 + B.enemyScaling.damagePerMinute * gm),
     r: KIND_SIZE[type === 'mogin_nahan' ? 'mogin' : type === 'golden_toad' ? 'toad' : type] * 0.32,
     behavior: def.behavior, hop: Math.random(), flash: 0, kbx: 0, kby: 0, contact: 0, stun: 0, slow: 0, poisonT: 0, burn: 0, burnDps: 0,
     // 처치 진기(구슬 값). enemies.json에 아직 없어 프로토타입 값으로 둔다. 잘 풀린 판은 20분에 Lv60을 넘는다(B-07에서 다시 맞출 것).
@@ -929,7 +930,7 @@ function spawnElite(key) {
   const d = ELITES[key], p = G.player, a = rand(0, TAU), R = viewDiag() * 0.62;
   const hp = d.hp * (1 + B.enemyScaling.healthPerMinute * G.gm);
   const e = spawnEnemy('sigang', p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, {
-    sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * 4.6, dmg: d.dmg * (1 + 0.03 * G.gm),
+    sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * (1 + 0.03 * G.gm),
     r: KIND_SIZE.elite * 0.3, kbRes: 0.85, xp: 25, pattern: d.pattern, timer: 3,
   });
   toast(d.name, '정예가 나타났다 · 쓰러뜨리면 보갑');
@@ -940,7 +941,7 @@ function spawnBoss() {
   // 프로토타입 보정: 기획서 기준 체력 90,000은 '평균 빌드 초당 1,500'을 가정한 값. 프로토타입 무공은 아직 약해서 낮춰 둔다.
   const hp = BOSS_HP[G.mode];
   const e = spawnEnemy('sigang', p.x, p.y - viewH() * 0.62, {
-    sprite: 'boss', boss: true, name: '혈나한 원각', hp, maxHp: hp, speed: 0.45 * 4.6, dmg: 28, r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0,
+    sprite: 'boss', boss: true, name: '혈나한 원각', hp, maxHp: hp, speed: 0.45 * MOVE, dmg: 28, r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0,
     pattern: 'boss', timer: 2.5, cycle: 0, phase2: false, beamA: 0,
   });
   G.boss = e; G.bossSpawned = true;
@@ -1487,7 +1488,7 @@ function update(dt) {
 function runEvent(ev) {
   const p = G.player, diag = viewDiag();
   if (ev.kind === 'charge') {
-    const side = Math.floor(rand(0, 4)), sp = E_BY_ID.hyeolin.speed / 100 * 4.6;
+    const side = Math.floor(rand(0, 4)), sp = E_BY_ID.hyeolin.speed / 100 * MOVE;
     const ax = [1, -1, 0, 0][side], ay = [0, 0, 1, -1][side];
     // 한 줄 벽이지만 어딘가에 빈틈(약 2.5m)이 하나 있다. 빈틈으로 빠지거나 경공으로 뚫는다.
     const gapAt = Math.floor(rand(ev.n * 0.25, ev.n * 0.75));
@@ -1561,7 +1562,7 @@ function bossAI(e, dt, dx, dy, d) {
     e.timer = e.phase2 ? 3.2 : 4.2;
     if (pat === 'cone') { e.cur = 'cone'; e.windup = 0.8; e.ca = Math.atan2(dy, dx); addEffect('cone', e.x, e.y, { a: e.ca, r: 9, life: 0.8 }); }
     else if (pat === 'arhat') {
-      for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; spawnEnemy('mogin_nahan', p.x + Math.cos(a) * 8, p.y + Math.sin(a) * 8, { behavior: 'chase', speed: 0.5 * 4.6 }); }
+      for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; spawnEnemy('mogin_nahan', p.x + Math.cos(a) * 8, p.y + Math.sin(a) * 8, { behavior: 'chase', speed: 0.5 * MOVE }); }
       toast('십팔나한진', '한 곳을 뚫고 나가라');
     } else {
       for (let i = 0; i < 3; i++) { const bx = p.x + rand(-2.5, 2.5), by = p.y + rand(-2.5, 2.5); G.zones.push({ delay: 1.2, mark: { x: bx, y: by, r: 1.8 }, apply: () => { if (e.dead) return; addEffect('boom', bx, by, { r: 1.8, life: 0.3 }); sfx('gong'); if (Math.hypot(G.player.x - bx, G.player.y - by) < 1.8) hurtPlayer(30); } }); }

@@ -167,7 +167,7 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 기획서_기연_표의_확률과_기연_능력치_값이_데이터와_같다()
         {
-            var gdd = File.ReadAllText(Path.Combine(TestData.DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));
+            var gdd = TestData.ReadText(Path.Combine(TestData.DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));
             int start = gdd.IndexOf("### 기연(奇緣) 사건");
             Assert.True(start >= 0);
             var section = gdd.Substring(start, gdd.IndexOf("### ", start + 5) - start);
