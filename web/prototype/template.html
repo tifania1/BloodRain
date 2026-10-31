@@ -851,14 +851,14 @@ function recomputeStats() {
   const rr = realmRewardSum(G.realm.level);
   const yb = yyBand();
   s.cdr += yb.band === 'harmony' ? B.yinyang.harmony.cooldownReduction : 0;
-  s.cdr = Math.min(0.6, s.cdr);
+  s.cdr = Math.min(B.stats.cooldownReductionCap, s.cdr);
   s.might += G.salgiBonus;
   const insightMagnet = G.insights.includes('cheolli') ? 2 : 1;
   G.stats = {
     maxHp: Math.round(100 * (1 + s.maxHealth) + rr.maxHealthFlat),   // Core 와 같이 비율을 곱한 뒤 이류 +10
     recovery: s.recovery, armor: s.armor, move: MOVE * (1 + s.moveSpeed), might: 1 + s.might, cdr: s.cdr,
     area: 1 + s.area, amount: s.amount, duration: 1 + s.duration, projSpeed: 1 + s.projSpeed,
-    magnet: 1.5 * (1 + s.magnet) * insightMagnet, growth: 1 + s.growth, luck: s.luck, crit: s.crit,
+    magnet: B.stats.magnetBase * (1 + s.magnet) * insightMagnet, growth: 1 + s.growth, luck: s.luck, crit: s.crit,
     knockback: 1 + s.knockback, burn: 1 + s.burn, dot: 1 + s.dot, elite: 1 + s.elite, lifesteal: s.lifesteal,
     foodHeal: 1 + s.foodHeal, explosionArea: 1 + s.explosionArea, damageTaken: rr.damageTaken,
     ultPower: 1 + rr.ultimatePower,
