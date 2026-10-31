@@ -48,16 +48,20 @@ namespace BloodRain.Sim
             return g.Characters.First(c => c.Ultimate == art.ResetUltimate).Id;
         }
 
-        public static BloodArtRow Measure(SimData data, string label, string character, RegionDef region, bool bloodArt, int seeds, double minutes = Minutes, bool reset = true)
+        public static BloodArtRow Measure(SimData data, string label, string character, RegionDef region, bool bloodArt, int seeds, double minutes = Minutes, bool reset = true,
+            Func<SimOptions, SimOptions>? apply = null, double? xpDensity = null)
         {
             string chapter = region.Chapter ?? "chapter1";
             var row = new BloodArtRow { Label = label, Character = character, Chapter = chapter, Density = region.Density, BloodArt = bloodArt };
             for (int s = 1; s <= seeds; s++)
-                row.Runs.Add(RunSimulator.Run(data, new SimOptions
+            {
+                var opt = new SimOptions
                 {
                     Character = character, Policy = Policy, Seed = s, Minutes = minutes, Chapter = chapter,
-                    BloodArtDensity = bloodArt ? region.Density : (double?)null, BloodArtReset = reset,
-                }));
+                    BloodArtDensity = bloodArt ? (xpDensity ?? region.Density) : (double?)null, BloodArtReset = reset,
+                };
+                row.Runs.Add(RunSimulator.Run(data, apply != null ? apply(opt) : opt));
+            }
             return row;
         }
 

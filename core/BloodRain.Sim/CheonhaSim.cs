@@ -53,7 +53,11 @@ namespace BloodRain.Sim
         public const double Minutes = 30;
         const float Dt = 0.1f;
 
-        public static CheonhaLifeResult Run(SimData data, string sectId, int seed, string policy = "average")
+        public static CheonhaLifeResult Run(SimData data, string sectId, int seed, string policy = "average") =>
+            Run(data, sectId, seed, o => o.With(x => x.Policy = policy));
+
+        /// <summary>처음 혼으로 그 문파 출생지에 태어난 한 생. apply 로 조정 시험(Scenarios)의 옵션을 얹는다.</summary>
+        public static CheonhaLifeResult Run(SimData data, string sectId, int seed, Func<SimOptions, SimOptions> apply)
         {
             var g = data.Game;
             var c = g.Cheonha;
@@ -61,7 +65,7 @@ namespace BloodRain.Sim
             var soul = new Soul(g);
             soul.EndLife(soul.BeginLife(Rebirth.Prologue(g)).Finish(LifeEndWay.Fallen, 0));
             var cand = new RebirthCandidate(sect, c.Region(sect.Region), Array.Empty<BirthTraitDef>());
-            return Run(data, soul, cand, seed, o => o.With(x => x.Policy = policy));
+            return Run(data, soul, cand, seed, apply);
         }
 
         /// <summary>혼 하나의 다음 생. minutes 까지 돌리고 쓰러진 것으로 정산한다(혼에 옮기는 일은 부른 쪽이 EndLife 로).</summary>
