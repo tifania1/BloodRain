@@ -46,6 +46,8 @@ namespace BloodRain.Core.Data
         public int BaseChoices = 3;
         public int MaxChoices = 4;
         public float LuckForFourthChoice = 50;
+        /// <summary>캐릭터 특성 → 한 판 다시 고르기 몫(진소운 reroll_plus2_insight4 는 2). 연무장 몫과 더한다.</summary>
+        public Dictionary<string, int> TraitRerolls = new Dictionary<string, int>();
     }
 
     /// <summary>절기 규칙. 경지마다 담을 수 있는 절기 수(그릇)가 정해져 있고, 문턱에 선 무공만 깨어난다.</summary>

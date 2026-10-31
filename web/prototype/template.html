@@ -363,6 +363,8 @@ const P_BY_ID = Object.fromEntries(DATA.passives.map(p => [p.id, p]));
 const E_BY_ID = Object.fromEntries(DATA.enemies.map(e => [e.id, e]));
 const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
+// 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
+const JIN_REROLLS = B.levelUp.traitRerolls?.[DATA.characters.find(c => c.id === 'jin_sowoon')?.trait] ?? 0;
 const MOVE = B.stats.moveBase; // 신법 100% 걸음 m/s, 적 속도 100 = 이 값
 // 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟 + 취선봉 random_arc, T-36).
 const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura', 'random_arc']);
@@ -790,7 +792,7 @@ function newRun(mode) {
     weapons: [{ id: 'samjae_sword', lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }],
     passives: [], insights: [], realm: REALMS[0], weaponSlots: B.slots.weapons, passiveSlots: B.slots.passives,
     yy: 0, yyHalf: false, backlashT: 0, backlash: null,
-    ult: 0, ultBonus: 1, rerolls: 2, banished: new Set(),
+    ult: 0, ultBonus: 1, rerolls: JIN_REROLLS, banished: new Set(),
     enemies: [], projs: [], effects: [], orbs: [], drops: [], lanterns: [], splats: [], nums: [], zones: [],
     bells: [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
     spawnAcc: 0, lanternAcc: 0, events: makeEvents(), elitesDone: 0, boss: null, bossSpawned: false, won: false,

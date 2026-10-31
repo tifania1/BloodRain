@@ -69,6 +69,7 @@ namespace BloodRain.Core.Run
             Breakthrough = new Breakthrough(Scale, _data.Cheonha.Breakthrough, _data.Cheonha.Crush);
             Awakening = new Awakening(_data.Balance.Awakening);
             Charge = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony, StartChargeBonus(soul, body));
+            Charges = LevelUpCharges.Start(_data.Balance.LevelUp, body.Character, StartBonus(soul, body));
             // 역류를 경공으로 끊으면 오의 게이지 +50 이 이 게이지로 들어간다.
             Backlash = new Backlash(_data.Balance.Yinyang.Extreme, Charge);
             Director = new LifeDirector(_data, rng);
@@ -90,6 +91,8 @@ namespace BloodRain.Core.Run
         /// <summary>진기(오의) 게이지. 처치·피격은 Unity 쪽 Sim 이 Charge.OnKill(Loadout.Gauge.Band) 처럼 알린다.
         /// 시작 충전 보너스는 연무장 + 몸의 성질. 심법을 올리면 부른 쪽이 ChargeBonus 를 다시 넣는다.</summary>
         public UltimateCharge Charge { get; }
+        /// <summary>레벨업 화면의 다시 고르기·파기·정진 남은 횟수(연무장 + 몸의 성질 + 캐릭터 특성).</summary>
+        public LevelUpCharges Charges { get; }
         public LifeDirector Director { get; }
         public BossAwakening Bosses { get; }
         /// <summary>마교 몸의 혈공(5장). 다른 몸은 null.</summary>
@@ -209,12 +212,14 @@ namespace BloodRain.Core.Run
             return kill;
         }
 
-        static float StartChargeBonus(Soul soul, RebirthBody body)
+        static StatBonus StartBonus(Soul soul, RebirthBody body)
         {
             var b = soul.TrainingBonus();
             b.Add(body.TraitStats);
-            return b[StatKind.UltimateCharge];
+            return b;
         }
+
+        static float StartChargeBonus(Soul soul, RebirthBody body) => StartBonus(soul, body)[StatKind.UltimateCharge];
 
         /// <summary>생이 끝났다(쓰러짐·좌화·봉인). 정산 기록을 만든다. 혼에 옮기는 일은 부른 쪽이 Soul.EndLife 로.</summary>
         public LifeRecord End(string way, int leftoverSilver)

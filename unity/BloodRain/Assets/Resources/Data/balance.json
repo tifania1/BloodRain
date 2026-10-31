@@ -19,7 +19,7 @@
   ],
   "slots": { "weapons": 6, "passives": 6, "extraSlotAtRealm": "chojeoljeong" },
   "levels": { "weaponMax": 8, "passiveMax": 5 },
-  "levelUp": { "baseChoices": 3, "maxChoices": 4, "luckForFourthChoice": 50 },
+  "levelUp": { "baseChoices": 3, "maxChoices": 4, "luckForFourthChoice": 50, "traitRerolls": { "reroll_plus2_insight4": 2 } },
   "evolution": {
     "_note": "절기 그릇: 경지마다 몸에 담을 수 있는 절기 수(누적). 문턱(무공 Lv8 + 짝 심법 Lv3 이상)에 선 무공이 있고 그릇이 남았을 때, 그릇이 늘어나는 경지 돌파 순간이나 보갑을 열 때 절기로 깨어난다.",
     "vessels": { "jeoljeong": 1, "chojeoljeong": 2, "hwagyeong": 3, "hyeongyeong": 4 },
