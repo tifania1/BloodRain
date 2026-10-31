@@ -28,6 +28,14 @@ namespace BloodRain.Sim
         }
         static Knobs K = new Knobs();
 
+        /// <summary>Eval 이 화력으로 바꾸는 연환. synergies.json links 에 새 연환이 생기면 둘 중 한쪽에 넣어야 한다(테스트가 본다).</summary>
+        public static readonly string[] DamageLinks = { "ssanggeom", "geomhwa", "gwonjang", "amgi", "punghwa", "jeomhyeol", "noehwa", "geommyeong", "chwijung" };
+        /// <summary>범위·제어·흡혈이라 보스 한 마리 화력엔 0으로 세는 연환.
+        /// 인뢰검(원 안 감전)과 혈창(3초 출혈)은 보스에게도 조금 들어가지만 식을 정하지 않아 0이다. 그래서 이 보고서의 배수는 조금 낮게 나온 값이다.</summary>
+        public static readonly string[] ZeroLinks = { "geumganghu", "dokbi", "inroe", "hyeoldok", "charyeok", "gyeonin", "hyeolchang" };
+        /// <summary>Eval 이 이름으로 바로 찾는 무공.</summary>
+        public static readonly string[] NamedWeapons = { "samjae_sword", "falling_petals", "nahan_fist", "palm_wind", "flash_finger", "flying_dagger", "pear_spear", "thunder_bomb", "thunder_talisman", "sonic_qin" };
+
         /// <summary>무공 하나의 Lv8 보스 상대 값.</summary>
         sealed class W
         {
