@@ -578,6 +578,21 @@ const INSIGHTS = [
   { id: 'yeokgeun', name: '역근', g: '逆', text: '음양 게이지를 0으로, 이후 기울기 절반' },
   { id: 'salgi', name: '살기충천', g: '殺', text: '처치 100마다 공력 +1% (최대 +30%)' },
 ];
+// 경지 돌파 보상 낱말(balance.json realms reward)을 숫자로 모은다. Core Progression/RealmRewards 와 같은 읽기.
+function realmRewardSum(level) {
+  const sum = { maxHealthFlat: 0, dashCharges: 0, ultimatePower: 0, damageTaken: 1 };
+  for (const r of REALMS) {
+    if (r.level > level) continue;
+    for (const t of (r.reward || '').split(',').map(x => x.trim()).filter(Boolean)) {
+      let m;
+      if ((m = /^max_health_(\d+(?:\.\d+)?)$/.exec(t))) sum.maxHealthFlat += +m[1];
+      else if ((m = /^dash_charge_(\d+)$/.exec(t))) sum.dashCharges += +m[1];
+      else if ((m = /^ultimate_power_(\d+(?:\.\d+)?)$/.exec(t))) sum.ultimatePower += m[1] / 100;
+      else if ((m = /^damage_taken_minus(\d+(?:\.\d+)?)$/.exec(t))) sum.damageTaken *= 1 - m[1] / 100;
+    }
+  }
+  return sum;
+}
 const REALM_REWARD = {
   iryu: '최대 기혈 +10', ilryu: '경공 충전 +1', jeoljeong: '오의 위력 +25%',
   chojeoljeong: '무공 칸 하나가 더 열린다', hwagyeong: '받는 피해 -10%',
@@ -833,26 +848,25 @@ function recomputeStats() {
   if (sch('huashan', 2)) s.crit += 0.05;
   if (sch('gaebang', 2)) s.foodHeal += 0.5;
   if (sch('tang', 2)) s.dot += 0.2;
-  const realmIdx = REALMS.indexOf(G.realm);
-  const has = id => REALMS.findIndex(r => r.id === id) <= realmIdx;
+  const rr = realmRewardSum(G.realm.level);
   const yb = yyBand();
   s.cdr += yb.band === 'harmony' ? B.yinyang.harmony.cooldownReduction : 0;
   s.cdr = Math.min(0.6, s.cdr);
   s.might += G.salgiBonus;
   const insightMagnet = G.insights.includes('cheolli') ? 2 : 1;
   G.stats = {
-    maxHp: Math.round((100 + (has('iryu') ? 10 : 0)) * (1 + s.maxHealth)),
+    maxHp: Math.round(100 * (1 + s.maxHealth) + rr.maxHealthFlat),   // Core 와 같이 비율을 곱한 뒤 이류 +10
     recovery: s.recovery, armor: s.armor, move: MOVE * (1 + s.moveSpeed), might: 1 + s.might, cdr: s.cdr,
     area: 1 + s.area, amount: s.amount, duration: 1 + s.duration, projSpeed: 1 + s.projSpeed,
     magnet: 1.5 * (1 + s.magnet) * insightMagnet, growth: 1 + s.growth, luck: s.luck, crit: s.crit,
     knockback: 1 + s.knockback, burn: 1 + s.burn, dot: 1 + s.dot, elite: 1 + s.elite, lifesteal: s.lifesteal,
-    foodHeal: 1 + s.foodHeal, explosionArea: 1 + s.explosionArea, damageTaken: has('hwagyeong') ? 0.9 : 1,
-    ultPower: has('jeoljeong') ? 1.25 : 1,
+    foodHeal: 1 + s.foodHeal, explosionArea: 1 + s.explosionArea, damageTaken: rr.damageTaken,
+    ultPower: 1 + rr.ultimatePower,
   };
   if (sch('demonic', 2)) { G.stats.lifesteal *= 2; G.stats.foodHeal *= 0.5; }
   const pl = G.player, before = pl.maxHp;
   pl.maxHp = G.stats.maxHp; if (pl.maxHp > before) pl.hp += pl.maxHp - before;
-  const dashMax = 2 + (has('ilryu') ? 1 : 0) + (G.passives.some(p => p.id === 'unryong' && p.lv >= 5) ? 1 : 0);
+  const dashMax = B.dash.charges + rr.dashCharges + (G.passives.some(p => p.id === 'unryong' && p.lv >= 5) ? 1 : 0);
   if (dashMax > pl.dashMax) pl.dashCharges += dashMax - pl.dashMax;
   pl.dashMax = dashMax;
 }
