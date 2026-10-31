@@ -50,6 +50,13 @@ namespace BloodRain.Core.Data
         public Dictionary<string, int> TraitRerolls = new Dictionary<string, int>();
     }
 
+    /// <summary>보갑(정예 확정 드롭) 강화 개수. 가중치 i 번째가 강화 i+1 개(기획서 8장 보상 표).</summary>
+    public sealed class ChestDef
+    {
+        /// <summary>기본값은 비워 둔다(Newtonsoft 가 기본 목록 뒤에 덧붙이므로). 비면 늘 1개.</summary>
+        public List<float> UpgradeCountWeights = new List<float>();
+    }
+
     /// <summary>절기 규칙. 경지마다 담을 수 있는 절기 수(그릇)가 정해져 있고, 문턱에 선 무공만 깨어난다.</summary>
     public sealed class EvolutionRuleDef
     {
@@ -256,6 +263,7 @@ namespace BloodRain.Core.Data
         public LevelsDef Levels = new LevelsDef();
         public LevelUpDef LevelUp = new LevelUpDef();
         public EvolutionRuleDef Evolution = new EvolutionRuleDef();
+        public ChestDef Chest = new ChestDef();
         public AwakeningDef Awakening = new AwakeningDef();
         public YinYangDef Yinyang = new YinYangDef();
         public UltimateChargeDef UltimateCharge = new UltimateChargeDef();
