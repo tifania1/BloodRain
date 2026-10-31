@@ -253,7 +253,10 @@ namespace BloodRain.Sim
             L($"| 방향 무공 효율 | {Assumptions.FacingEfficiency:0.#} | 장풍처럼 바라보는 쪽으로만 나가는 무공이 무리를 향하는 비율 |");
             L($"| 구슬 줍기 | {Assumptions.PickupRate * 100:0}% | 400개가 넘으면 합쳐져 곁에 떨어진다. 낙관적인 쪽 |");
             L($"| 각성 파동 | 무리 안 잡몹 전부 처치, 정예 {Assumptions.WaveEliteRatio * 100:0}%, 생성 {Assumptions.WaveSpawnPause:0.#}초 멈춤, 그 절기 {Assumptions.GlowSeconds:0}초 {Assumptions.GlowMultiplier:0.#}배 | 기획서 8장 |");
-            L($"| 보갑 | 강화 1개 {(1 - Assumptions.ChestThree - Assumptions.ChestTwo) * 100:0}%, 2개 {Assumptions.ChestTwo * 100:0}%, 3개 {Assumptions.ChestThree * 100:0}% | 웹 프로토타입 `openChest`(기획서는 1~5개) |");
+            {
+                var cw = g.Balance.Chest.UpgradeCountWeights; double cwSum = cw.Sum();
+                L($"| 보갑 | {string.Join(", ", cw.Select((w, i) => $"강화 {i + 1}개 {w / cwSum * 100:0}%"))} | balance.json `chest`(Core `Chest`, 기획서 8장), 진전 덧셈은 넣지 않음 |");
+            }
             L();
             L("빠진 것: 플레이어 사망·피격(피격 오의 충전 포함), 깨달음(B-06 전), 연환·진전, 연무장, 다시 고르기·파기·정진, 넉백·둔화·기절, 범종·등롱·부적, 20분 보스전.");
             L();

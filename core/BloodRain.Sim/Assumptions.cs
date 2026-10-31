@@ -92,11 +92,6 @@ namespace BloodRain.Sim
         /// <summary>목인나한이 쓰러질 때 나뭇조각 피해와 반경(m). [프로토] 30, 1.6.</summary>
         public const double MoginBurstDamage = 30, MoginBurstRadius = 1.6;
 
-        // ───────── 보갑 [프로토] openChest ─────────
-
-        /// <summary>보갑 강화 개수 확률. 3개 15%, 2개 34%(0.85 × 0.4), 나머지 1개. 기획서는 '1~5개'라 프로토 쪽이 짜다.</summary>
-        public const double ChestThree = 0.15, ChestTwo = 0.34;
-
         // ───────── 절기 [기획] 8장, [프로토] weaponDamage ─────────
 
         /// <summary>절기가 된 무공 피해 배율. [프로토] evolved → ×2(천지인 삼검 '피해 2배').</summary>

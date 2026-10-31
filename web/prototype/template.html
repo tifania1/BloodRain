@@ -1743,8 +1743,8 @@ function openChest() {
     $('chesttitle').textContent = '보갑을 열었다';
     // 강화 개수는 balance.json chest.upgradeCountWeights(Core Build/Chest.cs 와 같은 뽑기)
     const cw = (B.chest && B.chest.upgradeCountWeights) || [1];
-    let r = Math.random() * cw.reduce((a, b) => a + b, 0), n = cw.length;
-    for (let i = 0; i < cw.length; i++) { r -= cw[i]; if (r < 0) { n = i + 1; break; } }
+    let r = Math.random() * cw.reduce((a, b) => a + b, 0), n = 1;
+    for (let i = cw.length - 1; i >= 0; i--) { r -= cw[i]; if (r < 0) { n = i + 1; break; } }
     // 진전 단계의 chestUpgrades(장강수로채 4단계 +1)
     for (const sc of SYN.schools) for (const t of sc.tiers) if (t.chestUpgrades && sch(sc.id, t.count)) n += t.chestUpgrades;
     for (let i = 0; i < n; i++) {

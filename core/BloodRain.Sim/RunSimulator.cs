@@ -483,8 +483,7 @@ namespace BloodRain.Sim
         {
             var evo = _loadout.AwakenOnChest(_xp.Level);
             if (evo != null) { Awaken(evo, "보갑"); return; }
-            double r = _rng.NextDouble();
-            int n = r < ChestThree ? 3 : r < ChestThree + ChestTwo ? 2 : 1;
+            int n = Chest.RollUpgradeCount(_g.Balance.Chest, _rng);
             for (int i = 0; i < n; i++)
             {
                 var pool = _loadout.Candidates(_unlocked)

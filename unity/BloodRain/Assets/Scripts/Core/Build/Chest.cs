@@ -28,13 +28,14 @@ namespace BloodRain.Core.Build
             double total = 0;
             foreach (var x in w) { if (x < 0) throw new InvalidOperationException("보갑 가중치는 0 이상입니다"); total += x; }
             if (total <= 0) return 1;
+            // 많은 쪽부터 깎는다(웹 프로토타입·시뮬레이터가 처음부터 이 순서로 뽑아 와서 같은 시드면 같은 결과).
             double r = rng.NextDouble() * total;
-            for (int i = 0; i < w.Count; i++)
+            for (int i = w.Count - 1; i >= 0; i--)
             {
                 r -= w[i];
                 if (r < 0) return i + 1;
             }
-            return w.Count;
+            return 1;
         }
 
         /// <summary>보갑을 연다. 강화는 loadout 에 바로 적용한다.</summary>
