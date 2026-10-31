@@ -63,7 +63,10 @@ namespace BloodRain.Sim
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "-h":
                     case "--help":
-                        Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--report 경로] [--data 폴더] [--minutes 분]");
+                        Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--scenario id] [--data 폴더] [--minutes 분]");
+                        Console.WriteLine("  무리 가정: [--crowd-radius m] [--max-density 마리/㎡] [--arrival 초]");
+                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks");
+                        Console.WriteLine($"  조정 시험 id: {string.Join(", ", Scenarios.All.Select(s => s.Id))}");
                         return 0;
                     default:
                         Console.Error.WriteLine($"모르는 인자입니다: {args[i]} (--help)");
