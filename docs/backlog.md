@@ -110,5 +110,5 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] C-07 `[U]` (unity_tasks 로 옮김) 경지 돌파 연출(흑백 심상 2초) + 깨달음 3택1 (2026-11-01 Core 쪽 돌파 보상 합 `RealmRewards` 준비함)
 - [ ] C-08 `[U]` (unity_tasks 로 옮김) 음양 태극 문양 HUD, 기혈역류 연출
 - [ ] C-09 `[U]` (unity_tasks 로 옮김) 오의 버튼(진소운 일검), 보갑, 절기 그릇과 각성 연출(J-01·vfx.md), 절기 4종 (2026-11-01 Core 쪽 보갑 `Chest`, 오의 피해 `Ultimates` 준비함)
-- [ ] C-10 `[U]` (unity_tasks 로 옮김) 서장 10분 통과: 스폰 디렉터 + 강시 포쾌 장삼 보스
+- [ ] C-10 `[U]` (unity_tasks 로 옮김) 서장 10분 통과: 스폰 디렉터 + 강시 포쾌 장삼 보스 (2026-11-01 Core 쪽 서장 생성 `PrologueDirector` 준비함)
 - [ ] C-11 WebGL 빌드 배포 확인(비밀값 5개가 저장소에 들어가 있어야 함 — 사람 몫)
