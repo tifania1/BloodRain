@@ -10,6 +10,7 @@
 //   dotnet run --project core/BloodRain.Sim -- --contact docs/design/sim/contact.md        맞는 쪽 셈(한 번 피해, 둘러싸여 버티는 초, 회복)
 //   dotnet run --project core/BloodRain.Sim -c Release -- --yinyang docs/design/sim/yinyang.md  음양 게이지가 머무는 구간, 기혈역류 횟수
 //   dotnet run --project core/BloodRain.Sim -c Release -- --blood-art docs/design/sim/blood-art.md  마교 몸의 혈공: 경지 도달 시각, 심마와 천마해체
+//   dotnet run --project core/BloodRain.Sim -c Release -- --rebirth docs/design/sim/rebirth.md      침방 환생 후보 분포, 구파윤회까지 환혼 수
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
 using System.Globalization;
@@ -25,7 +26,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -50,6 +51,7 @@ namespace BloodRain.Sim
                     case "--contact": contact = Next(); break;
                     case "--yinyang": yinyang = Next(); break;
                     case "--blood-art": bloodArt = Next(); break;
+                    case "--rebirth": rebirth = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -65,6 +67,13 @@ namespace BloodRain.Sim
 
             var sc = Scenarios.Find(scenario);
             var data = sc.LoadData(dataDir);
+            if (rebirth.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(rebirth))!);
+                File.WriteAllText(rebirth, RebirthSim.Report(data), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {rebirth}");
+                return 0;
+            }
             if (bloodArt.Length > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(bloodArt))!);

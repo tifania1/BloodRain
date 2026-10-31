@@ -24,6 +24,7 @@ dotnet run --project core/BloodRain.Sim -c Release -- --encounters docs/design/s
 dotnet run --project core/BloodRain.Sim -- --contact docs/design/sim/contact.md                   # 접촉 피해: 지역·분마다 한 번 피해, 6마리 포위 버티는 초, 회복(Core 피해 식 그대로)
 dotnet run --project core/BloodRain.Sim -c Release -- --yinyang docs/design/sim/yinyang.md       # 캐릭터 8명 × 정책 셋, 음양 구간별 머문 시간·처음 기운 분·역류 횟수(20초쯤)
 dotnet run --project core/BloodRain.Sim -c Release -- --blood-art docs/design/sim/blood-art.md   # 백야 혈공: 숭산 진소운과 경지 도달 시각, 심마·천마해체, 머무는 땅별(10초쯤)
+dotnet run --project core/BloodRain.Sim -c Release -- --rebirth docs/design/sim/rebirth.md       # 환생 후보 분포(문파·성질·성별), 원하는 문파가 나올 확률, 구파윤회까지 환혼 수(20초쯤)
 ```
 
 | 인자 | 뜻 |
