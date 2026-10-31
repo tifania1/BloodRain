@@ -31,6 +31,11 @@ namespace BloodRain.Sim
         public double? CrowdRadius, MaxDensity, ArrivalSeconds;
         /// <summary>연무장 레벨(StatKind 이름 → 레벨). 메타 시뮬레이션(T-18)이 혼의 연무장을 넘긴다. 없으면 연무장 없음.</summary>
         public IReadOnlyDictionary<string, int>? Training;
+        /// <summary>마교 몸의 혈공(기획서 5장). 값이 있으면 이 혈운 농도로 Core BloodArt 를 돌린다: 진기 × 농도, 더 받은 진기로 심마(음 쪽),
+        /// 천마해체를 쓰면 시작값. 적 기혈 배율은 Chapter 가 따로 정하니 같은 땅의 값을 같이 넘긴다. 보고서 blood-art.md.</summary>
+        public double? BloodArtDensity;
+        /// <summary>false 면 천마해체를 써도 심마를 되돌리지 않는다(오의를 아끼는 사람, 되돌림이 없을 때 얼마나 기우는지 보기).</summary>
+        public bool BloodArtReset = true;
 
         public SimOptions With(Action<SimOptions> change)
         {
@@ -88,6 +93,11 @@ namespace BloodRain.Sim
         public double FirstOffHarmonyMinute = double.NaN;
         /// <summary>기혈역류가 시작된 시각(분). Core Backlash 그대로, 경공으로 끊지 않는다고 본다.</summary>
         public List<double> BacklashMinutes = new List<double>();
+        /// <summary>오의를 쓴 시각(분).</summary>
+        public List<double> UltimateMinutes = new List<double>();
+        /// <summary>혈공(SimOptions.BloodArtDensity)을 돌렸을 때 심마로 기운 횟수와 농도 덕에 더 받은 진기. 혈공이 없으면 0.</summary>
+        public int BloodArtSteps;
+        public double BloodArtExtraXp;
 
         public MinuteSnapshot At(int minute) => Minutes.First(m => m.Minute == minute);
         public int LevelAt(int minute) => At(minute).Level;
@@ -128,6 +138,7 @@ namespace BloodRain.Sim
         readonly UltimateCharge _ult;
         readonly Backlash _backlash;
         readonly ISet<string> _unlocked;
+        readonly BloodArt? _bloodArt;
         readonly PolicyContext _ctx;
         readonly IReadOnlyDictionary<string, double> _killXp;
         readonly double _eliteXp, _crowdRadius, _maxDensity, _arrival, _crowdArea;
@@ -174,6 +185,12 @@ namespace BloodRain.Sim
             _weapons.Add(new WeaponState { Id = _character.StartWeapon });
             _ctx = new PolicyContext { Data = _g, Loadout = _loadout, Rng = _rng, CrowdDpsAfter = CrowdDpsAfter };
             _result = new SimResult { Options = opt };
+            if (opt.BloodArtDensity.HasValue)
+            {
+                var art = _g.Cheonha.Sects.Select(x => x.BloodArt).FirstOrDefault(a => a != null)
+                          ?? throw new InvalidOperationException("cheonha.json 에 bloodArt 가 있는 문파가 없다");
+                _bloodArt = new BloodArt(art, _loadout.Gauge, _character.YinyangStart);
+            }
         }
 
         SimResult Execute()
@@ -201,6 +218,8 @@ namespace BloodRain.Sim
                 if (i % perMinute == 0) Snapshot(i / perMinute);
             }
             _result.Ultimates = _ultUses;
+            _result.BloodArtSteps = _bloodArt?.Steps ?? 0;
+            _result.BloodArtExtraXp = _bloodArt?.ExtraXp ?? 0;
             return _result;
         }
 
@@ -377,6 +396,8 @@ namespace BloodRain.Sim
         {
             if (!_ult.TryUse()) return;
             _ultUses++;
+            _result.UltimateMinutes.Add(_t / 60);
+            if (_opt.BloodArtReset) _bloodArt?.OnUltimate(_character.Ultimate);
             var def = _g.Weapon(_character.StartWeapon);
             double baseDmg = _loadout.Weapons.TryGetValue(def.Id, out var lv)
                 ? WeaponModel.HitDamage(def, lv, _loadout.Evolved.Contains(def.Id), false, _b, _weaponMax)
@@ -404,6 +425,7 @@ namespace BloodRain.Sim
                 {
                     double x = _pendingXp;
                     _pendingXp = 0;
+                    if (_bloodArt != null) x = _bloodArt.OrbXp(x, (float)_opt.BloodArtDensity!.Value);
                     var r = _xp.Absorb(x);
                     for (int lv = r.FromLevel + 1; lv <= r.ToLevel; lv++) LevelUp(lv);
                     continue;

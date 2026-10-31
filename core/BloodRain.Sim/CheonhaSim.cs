@@ -306,7 +306,7 @@ namespace BloodRain.Sim
             sum.AppendLine();
             var rm = all.Where(x => x.Sect != "마교").Select(x => x.RealmMinute.TryGetValue(realms.Last().Id, out var v) ? v : double.NaN).Where(v => !double.IsNaN(v)).OrderBy(v => v).ToList();
             if (rm.Count > 0)
-                sum.AppendLine($"- 현경 도달은 마교 빼고 가운데 {M(rm[rm.Count / 2])}(목표 30:00). 처치 진기가 많은 지금 데이터 탓이고 B-07·P-02 와 같은 이야기다. 마교는 혈공(진기 × 혈운 농도)이 겹쳐 더 빠르다.");
+                sum.AppendLine($"- 현경 도달은 마교 빼고 가운데 {M(rm[rm.Count / 2])}(목표 30:00). 처치 진기가 많은 지금 데이터 탓이고 B-07·P-02 와 같은 이야기다. 마교는 혈공(진기 × 혈운 농도)이 겹쳐 더 빠르다. 다만 이 표는 숭산 진기 흐름에 농도를 곱하기만 해서 적이 단단해지는 쪽이 빠졌다. 그쪽까지 넣은 값은 [blood-art.md](blood-art.md).");
             if (ratios.Count > 0)
             {
                 ratios.Sort();
