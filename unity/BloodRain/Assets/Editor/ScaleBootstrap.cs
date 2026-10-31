@@ -46,6 +46,12 @@ namespace BloodRain.Editor
             curtain.AddComponent<MeshRenderer>().sharedMaterial = EnsureCurtainMaterial();
             curtain.AddComponent<BloodCurtain>();
 
+            // TU-06 장막 너머 그림자(덩이 렌더러를 윗 경지 배율로)
+            var shadows = new GameObject("장막 너머 그림자");
+            shadows.transform.SetParent(driver.transform, false);
+            shadows.AddComponent<ClusterRenderer>().material = ClusterBootstrap.EnsureMaterial();
+            shadows.AddComponent<CurtainShadows>();
+
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[ScaleBootstrap] {TestScenePath} 만듦");
         }

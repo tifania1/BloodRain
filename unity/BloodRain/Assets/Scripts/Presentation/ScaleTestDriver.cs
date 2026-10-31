@@ -20,6 +20,8 @@ namespace BloodRain.Presentation
         [SerializeField] float weaponRangeRealmMeters = 3f;
         [SerializeField] float moveRealmMetersPerSecond = 5f;
         [SerializeField] int seed = 7;
+        [Tooltip("시험용 자동 이동 방향(WASD 에 더한다)")]
+        public Vector2 autoMove;
 
         static readonly Color[] RealmColors =
         {
@@ -44,6 +46,9 @@ namespace BloodRain.Presentation
         public Material Mat => _mat;
         /// <summary>플레이어 반지름(세계 m).</summary>
         public float PlayerRadius => _ws.Length(playerRealmMeters) * 0.5f;
+        /// <summary>장막이 미는 세기 0~1(Core PushStrength). TU-10 가장자리 붉은 번짐이 읽을 값.</summary>
+        public float PushStrength { get; private set; }
+        public Vector2 Birthplace => _birth;
 
         void Awake()
         {
@@ -85,6 +90,9 @@ namespace BloodRain.Presentation
             // TU-05 혈우 장막이 씬에 있으면 붉은 원 대신 그것으로 본다
             _curtain = GetComponentInChildren<BloodCurtain>();
             if (_curtain != null) { _curtain.birthplace = _birth; _curtain.breakthrough = _fx; }
+            // TU-06 장막 너머 그림자
+            var shadows = GetComponentInChildren<CurtainShadows>();
+            if (shadows != null) { shadows.birthplace = _birth; shadows.breakthrough = _fx; }
 
             var cam = Camera.main != null ? Camera.main.GetComponent<ScaleCamera>() : null;
             if (cam != null) cam.target = _player;
@@ -131,11 +139,19 @@ namespace BloodRain.Presentation
                 if (kb.sKey.isPressed) move.y -= 1;
                 if (kb.aKey.isPressed) move.x -= 1;
                 if (kb.dKey.isPressed) move.x += 1;
-                if (move != Vector2.zero)
+                move += autoMove; // 키 없이 확인할 때(에디터 코드로 넣는다)
+                // TU-06 장막 밀어내기: 걸음 속도(세계 m/s)에 Core PushVelocity 를 더하고, 그다음 KeepInside.
+                // 서 있어도 띠 안이면 안쪽으로 밀린다. 밖으로 곧장 걸으면 띠의 80% 자리(StallDistance)에서 멈춘다.
+                float speed = _ws.Speed(moveRealmMetersPerSecond);
+                var pos = new System.Numerics.Vector2(_player.position.x, _player.position.y);
+                var birth = new System.Numerics.Vector2(_birth.x, _birth.y);
+                var push = _ws.Scale.PushVelocity(pos, birth, _ws.Realm, speed);
+                PushStrength = _ws.Scale.PushStrength(pos, birth, _ws.Realm);
+                var vel = (move == Vector2.zero ? Vector2.zero : move.normalized * speed) + new Vector2(push.X, push.Y);
+                if (vel != Vector2.zero)
                 {
-                    var p = (Vector2)_player.position + move.normalized * _ws.Speed(moveRealmMetersPerSecond) * Time.deltaTime;
-                    var kept = _ws.Scale.KeepInside(new System.Numerics.Vector2(p.x, p.y),
-                        new System.Numerics.Vector2(_birth.x, _birth.y), _ws.Realm);
+                    var p = pos + new System.Numerics.Vector2(vel.x, vel.y) * Time.deltaTime;
+                    var kept = _ws.Scale.KeepInside(p, birth, _ws.Realm);
                     _player.position = new Vector3(kept.X, kept.Y, _player.position.z);
                 }
             }
@@ -159,7 +175,7 @@ namespace BloodRain.Presentation
         {
             GUI.color = new Color(0.15f, 0.1f, 0.08f);
             GUI.Label(new Rect(12, 8, 900, 24),
-                $"{_ws.RealmName}  레벨 {_ws.Level:0}  화면 대각선 {_ws.ViewDiagonal:0.0}m  배율 ×{_ws.RealmFactor:0.##}   [B 돌파  R/F 경지  L/K 레벨  1~7  WASD]");
+                $"{_ws.RealmName}  레벨 {_ws.Level:0}  화면 대각선 {_ws.ViewDiagonal:0.0}m  배율 ×{_ws.RealmFactor:0.##}  출생지 {Vector2.Distance(_player.position, _birth):0.0}m  밀림 {PushStrength:0.00}   [B 돌파  R/F 경지  L/K 레벨  1~7  WASD]");
         }
 
         public Transform MakeDisc(string name, Color color, float size, float z)
