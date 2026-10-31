@@ -569,16 +569,11 @@ function spawnTarget(min) {
 }
 const REALMS = B.realms.filter(r => !r.onlyIn);
 
-// 돌파 깨달음 7종 (기획서 3장)
-const INSIGHTS = [
-  { id: 'ilgeom', name: '일검파만', g: '一', text: '첫 번째 공격 무공의 피해 +40%' },
-  { id: 'ungi', name: '운기조식', g: '息', text: '5초간 멈춰 있으면 기혈을 초당 2% 회복' },
-  { id: 'igi', name: '이기어검', g: '御', text: '근접 무공(검법·권법)의 범위 +50%' },
-  { id: 'geumjong', name: '금종조', g: '鐘', text: '10초마다 피해 1회를 무효로' },
-  { id: 'cheolli', name: '천리추종', g: '追', text: '진기 구슬 흡수 범위 2배' },
-  { id: 'yeokgeun', name: '역근', g: '逆', text: '음양 게이지를 0으로, 이후 기울기 절반' },
-  { id: 'salgi', name: '살기충천', g: '殺', text: '처치 100마다 공력 +1% (최대 +30%)' },
-];
+// 돌파 깨달음 7종 (기획서 3장). 이름·글자·설명·수치는 insights.json 에서 읽는다(IP.<id>.<param>).
+const INSIGHTS = DATA.insights.insights.map(x => ({ id: x.id, name: x.nameKo, g: x.glyph, text: x.textKo }));
+const IP = Object.fromEntries(DATA.insights.insights.map(x => [x.id, x.params]));
+// 깨달음 후보 수: 진소운 특성(reroll_plus2_insight4)이면 4, 아니면 기본 3. insights.json choices.
+const INSIGHT_CHOICES = DATA.insights.choices.byTrait?.[JIN.trait] ?? DATA.insights.choices.base;
 // 경지 돌파 보상 낱말(balance.json realms reward)을 숫자로 모은다. Core Progression/RealmRewards 와 같은 읽기.
 function realmRewardSum(level) {
   const sum = { maxHealthFlat: 0, dashCharges: 0, ultimatePower: 0, damageTaken: 1 };
@@ -854,7 +849,7 @@ function recomputeStats() {
   s.cdr += yb.band === 'harmony' ? B.yinyang.harmony.cooldownReduction : 0;
   s.cdr = Math.min(B.stats.cooldownReductionCap, s.cdr);
   s.might += G.salgiBonus;
-  const insightMagnet = G.insights.includes('cheolli') ? 2 : 1;
+  const insightMagnet = G.insights.includes('cheolli') ? IP.cheolli.multiplier : 1;
   G.stats = {
     maxHp: Math.round(JIN.maxHealth * (1 + s.maxHealth) + rr.maxHealthFlat),   // Core 와 같이 비율을 곱한 뒤 이류 +10
     recovery: s.recovery, armor: s.armor, move: MOVE * JIN.moveSpeed * (1 + s.moveSpeed), might: 1 + s.might, cdr: s.cdr,
@@ -881,7 +876,7 @@ function yyBand() {
 }
 function yyShift(aspect, amount) {
   if (aspect === 'neutral') return;
-  const v = (aspect === 'yang' ? 1 : -1) * amount * (G.yyHalf ? 0.5 : 1);
+  const v = (aspect === 'yang' ? 1 : -1) * amount * (G.yyHalf ? IP.yeokgeun.tiltMultiplier : 1);
   G.yy = clamp(G.yy + v, B.yinyang.min, B.yinyang.max);
 }
 function aspectMult(aspect) {
@@ -921,11 +916,9 @@ function nearestEnemies(x, y, n, maxR, exclude) {
 }
 
 // ───────── 적 ─────────
-const ELITES = {
-  dongin: { name: '동인', hp: 700, speed: 55, dmg: 16, pattern: 'slam' },
-  gyeyul: { name: '계율원 강시 승려', hp: 1500, speed: 50, dmg: 18, pattern: 'palm' },
-  abbot: { name: '강시 방장 대리', hp: 2600, speed: 45, dmg: 22, pattern: 'bell' },
-};
+// 1장 정예 셋. 기혈·걸음·접촉 피해·넉백 저항은 enemies.json 에서, 공격 모양(pattern)만 프로토타입 몫.
+const ELITES = Object.fromEntries([['dongin', 'dongin', 'slam'], ['gyeyul', 'gyeyul_monk', 'palm'], ['abbot', 'acting_abbot', 'bell']]
+  .map(([key, id, pattern]) => { const d = E_BY_ID[id]; return [key, { name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, pattern }]; }));
 function spawnEnemy(type, x, y, extra) {
   const def = E_BY_ID[type];
   const gm = G.gm, mult = B.enemyScaling.chapterMultiplier.chapter1;
@@ -947,8 +940,8 @@ function spawnElite(key) {
   const d = ELITES[key], p = G.player, a = rand(0, TAU), R = viewDiag() * 0.62;
   const hp = d.hp * (1 + B.enemyScaling.healthPerMinute * G.gm);
   const e = spawnEnemy('sigang', p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, {
-    sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * (1 + 0.03 * G.gm),
-    r: KIND_SIZE.elite * 0.3, kbRes: 0.85, xp: 25, pattern: d.pattern, timer: 3,
+    sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * (1 + B.enemyScaling.damagePerMinute * G.gm),
+    r: KIND_SIZE.elite * 0.3, kbRes: d.kbRes, xp: 25, pattern: d.pattern, timer: 3,
   });
   toast(d.name, '정예가 나타났다 · 쓰러뜨리면 보갑');
   return e;
@@ -997,7 +990,7 @@ function weaponDamage(w) {
   d *= G.stats.might * aspectMult(def.yinyang);
   if (w.evolved) d *= 2;
   if (G.glow && G.glow.w === w) d *= 1.5;   // 각성 여운 8초
-  if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1.4;
+  if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
   if (sch('namgung', 2) && def.category === 'sword') d *= 1.12;
   if (sch('gaebang', 3) && G.player.hp < G.player.maxHp * 0.3) d *= 1.3;
   if (w.id === 'samjae_sword' && G.syn.secrets.has('mumyeong')) d *= 1.5;
@@ -1031,7 +1024,7 @@ function killEnemy(e) {
   // 당가 진전 3: 중독된 적이 쓰러지면 독이 번진다
   if (sch('tang', 3) && e.poison > 0) { addEffect('burst', e.x, e.y, { r: 2, color: '#5E7F4A' }); forNear(e.x, e.y, 2, o => { if (o !== e && !o.dead) { o.poison = 2; o.burn = Math.max(o.burn || 0, 2); o.burnDps = Math.max(o.burnDps || 0, 5 * G.stats.dot); } }); }
   addUlt(e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill);
-  if (G.insights.includes('salgi')) { const nb = Math.min(0.3, Math.floor(G.kills / 100) * 0.01); if (nb !== G.salgiBonus) { G.salgiBonus = nb; recomputeStats(); } }
+  if (G.insights.includes('salgi')) { const sp = IP.salgi, nb = Math.min(sp.mightMax, Math.floor(G.kills / sp.killsPerStack) * sp.mightPerStack); if (nb !== G.salgiBonus) { G.salgiBonus = nb; recomputeStats(); } }
   if (G.splats.length > 140) G.splats.shift();
   G.splats.push({ x: e.x, y: e.y, r: e.r * rand(1.4, 2.2), t: 0, red: e.sprite.startsWith('hyeol') || e.boss });
   sfx('kill');
@@ -1057,7 +1050,7 @@ function addUlt(v) {
 function hurtPlayer(dmg, src) {
   const p = G.player;
   if (p.iframe > 0 || G.won || G.demo) return;
-  if (G.insights.includes('geumjong') && p.block <= 0) { p.block = 10; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
+  if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
   // 무당 진전 3 사량발천근: 태극 구간이면 20% 덜 받고, 줄인 피해의 열 배를 부딪힌 적에게
   if (sch('wudang', 3) && yyBand().band === 'harmony') { const cut = taken * 0.2; taken -= cut; if (src && !src.dead) hurtEnemy(src, cut * 10, null, 0, 0, 0); }
@@ -1076,7 +1069,7 @@ function addProj(o) { if (G.projs.length > 1500) return; G.projs.push(Object.ass
 function fireWeapon(w) {
   const def = W_BY_ID[w.id], p = G.player, S = G.stats, t = (w.lv - 1) / 7;
   const dmg = weaponDamage(w);
-  const igi = G.insights.includes('igi') ? 1.5 : 1;
+  const igi = G.insights.includes('igi') ? 1 + IP.igi.rangeBonus : 1;
   const fx = p.fx, fy = p.fy;
   w.n++;
   switch (def.behavior) {
@@ -1312,7 +1305,7 @@ function update(dt) {
   if (p.dashCharges < p.dashMax) { p.dashRecharge += dt; if (p.dashRecharge >= B.dash.rechargeSeconds) { p.dashRecharge = 0; p.dashCharges++; } }
   // 회복
   let regen = S.recovery;
-  if (G.insights.includes('ungi') && p.still >= 5) regen += p.maxHp * 0.02;
+  if (G.insights.includes('ungi') && p.still >= IP.ungi.stillSeconds) regen += p.maxHp * IP.ungi.maxHealthPerSecond;
   p.hp = Math.min(p.maxHp, p.hp + regen * dt);
 
   // 음양 극성: 60초마다 기혈역류
@@ -1728,8 +1721,7 @@ function showInsightChoice(name, reward, label) {
   $('brklabel').textContent = label;
   $('brkname').textContent = name;
   $('brkreward').textContent = reward;
-  // 진소운 특성(characters.json trait reroll_plus2_insight4): 깨달음 후보가 3개가 아니라 4개
-  const opts = INSIGHTS.filter(x => !G.insights.includes(x.id)).sort(() => Math.random() - 0.5).slice(0, 4);
+  const opts = INSIGHTS.filter(x => !G.insights.includes(x.id)).sort(() => Math.random() - 0.5).slice(0, INSIGHT_CHOICES);
   const box = $('brkcards'); box.innerHTML = '';
   currentOffers = opts;
   opts.forEach((o, i) => {
@@ -1743,7 +1735,7 @@ function showInsightChoice(name, reward, label) {
 function chooseInsight(i) {
   if (overlay !== 'brk' || !currentOffers[i] || tooSoon()) return;
   const o = currentOffers[i]; G.insights.push(o.id);
-  if (o.id === 'yeokgeun') { G.yy = 0; G.yyHalf = true; }
+  if (o.id === 'yeokgeun') { G.yy = IP.yeokgeun.resetTo; G.yyHalf = true; }
   recomputeStats(); renderSlots();
   $('cv').classList.remove('mono'); closeOverlay('brk');
 }

@@ -82,6 +82,7 @@ def data_blob() -> str:
         "bosses": enemies.get("bosses"),
         "characters": chars["characters"],
         "ultimates": chars["ultimates"],
+        "insights": {k: v for k, v in load("insights").items() if not k.startswith("_")},
         "synergies": {k: v for k, v in load("synergies").items() if not k.startswith("_")},
         "balance": {k: v for k, v in load("balance").items() if not k.startswith("_")},
     }
