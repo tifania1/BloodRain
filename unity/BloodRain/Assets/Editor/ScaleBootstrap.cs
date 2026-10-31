@@ -67,6 +67,9 @@ namespace BloodRain.Editor
             edge.material = ClusterBootstrap.EnsureMaterial();
             edge.birthRegion = "cheongun";
 
+            // TU-09 위 가운데 경과 시간·지역·혈운 농도와 화면 혈우
+            HudBootstrap.CreateHud();
+
             EditorSceneManager.SaveScene(scene, TestScenePath);
             Debug.Log($"[ScaleBootstrap] {TestScenePath} 만듦");
         }
