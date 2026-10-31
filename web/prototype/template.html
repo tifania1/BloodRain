@@ -576,7 +576,7 @@ const IP = Object.fromEntries(DATA.insights.insights.map(x => [x.id, x.params]))
 const INSIGHT_CHOICES = DATA.insights.choices.byTrait?.[JIN.trait] ?? DATA.insights.choices.base;
 // 경지 돌파 보상 낱말(balance.json realms reward)을 숫자로 모은다. Core Progression/RealmRewards 와 같은 읽기.
 function realmRewardSum(level) {
-  const sum = { maxHealthFlat: 0, dashCharges: 0, ultimatePower: 0, damageTaken: 1 };
+  const sum = { maxHealthFlat: 0, dashCharges: 0, ultimatePower: 0, damageTaken: 1, doubleUltimate: false };
   for (const r of REALMS) {
     if (r.level > level) continue;
     for (const t of (r.reward || '').split(',').map(x => x.trim()).filter(Boolean)) {
@@ -585,13 +585,14 @@ function realmRewardSum(level) {
       else if ((m = /^dash_charge_(\d+)$/.exec(t))) sum.dashCharges += +m[1];
       else if ((m = /^ultimate_power_(\d+(?:\.\d+)?)$/.exec(t))) sum.ultimatePower += m[1] / 100;
       else if ((m = /^damage_taken_minus(\d+(?:\.\d+)?)$/.exec(t))) sum.damageTaken *= 1 - m[1] / 100;
+      else if (t === 'double_ultimate') sum.doubleUltimate = true;
     }
   }
   return sum;
 }
 const REALM_REWARD = {
   iryu: '최대 기혈 +10', ilryu: '경공 충전 +1', jeoljeong: '오의 위력 +25%',
-  chojeoljeong: '무공 칸 하나가 더 열린다', hwagyeong: '받는 피해 -10%',
+  chojeoljeong: '무공 칸 하나가 더 열린다', hwagyeong: '받는 피해 -10%', hyeongyeong: '오의 2연속',
 };
 
 // ───────── 소리 (첫 터치 뒤에만) ─────────
@@ -857,7 +858,7 @@ function recomputeStats() {
     magnet: B.stats.magnetBase * (1 + s.magnet) * insightMagnet, growth: 1 + s.growth, luck: s.luck, crit: s.crit,
     knockback: 1 + s.knockback, burn: 1 + s.burn, dot: 1 + s.dot, elite: 1 + s.elite, lifesteal: s.lifesteal,
     foodHeal: 1 + s.foodHeal, explosionArea: 1 + s.explosionArea, damageTaken: rr.damageTaken,
-    ultPower: 1 + rr.ultimatePower,
+    ultPower: 1 + rr.ultimatePower, ultCasts: rr.doubleUltimate ? 2 : 1,
   };
   if (sch('demonic', 2)) { G.stats.lifesteal *= 2; G.stats.foodHeal *= 0.5; }
   const pl = G.player, before = pl.maxHp;
@@ -1219,7 +1220,8 @@ function useUlt() {
   const dmg = (sword ? weaponDamage(sword) : 12 * G.stats.might) * mult * G.stats.ultPower;
   addEffect('slash', p.x, p.y, { a, len, life: 0.6 });
   G.cam.shake = 0.35;
-  for (const e of G.enemies) {
+  // 현경 '오의 2연속': 한 번 눌러 두 번 벤다(Core Life.UltimateCasts)
+  for (let c = 0; c < (G.stats.ultCasts || 1); c++) for (const e of G.enemies) {
     if (e.dead) continue;
     const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
     if (along > -0.5 && along < len && perp < 0.9 + e.r) hurtEnemy(e, dmg, null, ca, sa, 6);
