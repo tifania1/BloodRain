@@ -39,7 +39,7 @@ Unity 에디터가 있어야 하는 일만 적는다. 밤마다(20:37·22:37·00
 천하 놀이판(위 TU)보다 뒤에 한다. 숫자는 balance.json·weapons.json 과 Core 에서 읽고, 움직임은 웹 프로토타입(`web/prototype/template.html`)과 나란히 놓고 비교한다.
 
 - [x] C-01 플레이어 이동(WASD·패드), 카메라 추적, 경공 대시(0.25초 4m, 무적 0.2초, 2회 충전. balance.json `dash`). 먼저: B-10, B-11 → 2026-10-31 대시 규칙은 Core `Combat/Dash.cs`(웹 doDash 와 같게: 충전 소모, duration 동안 distance/duration 속도로 바라보는 쪽, 무적 iframes, 대시 중 재사용 불가, rechargeSeconds 마다 하나, 최대 충전 늘면 바로 채움) + `DashTests` 7개. `Presentation/PlayerController.cs`: WASD·방향키·패드 왼쪽 스틱 걷기, Space·왼쪽 Shift·패드 A 대시, 걸음 4.6 경지 m/s × 몸 걸음 배율(웹 값, balance.json 에 아직 없음), 걸음·대시 모두 WorldScale 로 세계 m, 장막 PushVelocity·KeepInside. 카메라는 ScaleCamera 가 따라감. `BloodRain/Bootstrap/Run 씬 짓기(플레이어·카메라)` 가 Run 씬(카메라·플레이어·혈우 장막·소품/지도·지역 HUD)을 지음. 플레이로 대시 4.00m·충전 2→1·카메라 추적, W 3.5초에 16m 확인. 스크린샷 `docs/unity_shots/C-01/`. 머리 위 경공 충전 점은 아직(HUD C-08 쪽에서), 기본 걸음 4.6 은 balance.json 으로 옮길 것(클라우드) → 2026-10-31 23시 클라우드 세션이 `stats.moveBase` 로 옮기고 PlayerController·Run 씬의 인스펙터 칸은 지움(Core `StatsDef.MoveBase`)
-- [ ] C-02 적 시뮬레이션: 구조체 배열 + Burst 잡(추적 + 밀어내기), 강시 콩콩 박자 이동, 오브젝트 풀, 적 300마리 60fps 확인. 먼저: C-01
+- [ ] C-02 적 시뮬레이션: 구조체 배열 + Burst 잡(추적 + 밀어내기), 강시 콩콩 박자 이동, 오브젝트 풀, 적 300마리 60fps 확인. 혈월 천하(회귀)면 적 기혈·속도에 `Life.EnemyHealthMultiplier`·`EnemySpeedMultiplier` 를 곱한다. 먼저: C-01
 - [ ] C-03 격자 공간 해시 충돌(원 대 원), 접촉 피해 0.35초 간격. 먼저: C-02
 - [ ] C-04 무공 실행기: behavior별 컴포넌트(front_arc, homing_dagger, orbit_slash, aura …) 처음 8종. Core 입구: `WeaponMath`(Core/Combat/EnemyScaling.cs 안)·`Loadout`. 먼저: C-03
 - [ ] C-05 진기 구슬 드롭·흡수, 400개 넘으면 합치기. Core 입구: `Core/Progression/RunXp.cs`. 먼저: C-03

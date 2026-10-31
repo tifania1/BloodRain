@@ -111,6 +111,10 @@ namespace BloodRain.Core.Run
         public int ShadowStep => Director.ShadowStep(Minutes, Level, _soul.SealStoneCount);
         /// <summary>지금 혈마의 그림자 세기(단계 0이면 Active 가 false).</summary>
         public BloodShadowStrength Shadow => BloodShadow.Strength(_data.Cheonha.LifeEnd.Shadow, ShadowStep);
+        /// <summary>혈월 천하(회귀, 21장)면 적 기혈 배율(cheonha.json cycle.bloodmoon.enemyHealth), 아니면 1. EnemyScaling.HealthAt 결과에 곱한다.</summary>
+        public float EnemyHealthMultiplier => _soul.IsBloodMoon ? _data.Cheonha.Cycle.Bloodmoon.EnemyHealth : 1f;
+        /// <summary>혈월 천하면 적 이동속도 배율(cycle.bloodmoon.enemySpeed), 아니면 1. 혈마의 그림자에는 곱하지 않는다(그림자 세기는 Shadow 그대로).</summary>
+        public float EnemySpeedMultiplier => _soul.IsBloodMoon ? _data.Cheonha.Cycle.Bloodmoon.EnemySpeed : 1f;
         /// <summary>지금 세상 시간 배율(돌파·각성 연출 중엔 느리다). Unity 의 Time.timeScale 에 넣는다.</summary>
         public float WorldTimeScale => Math.Min(Breakthrough.WorldTimeScale, Awakening.IsActive ? Awakening.WorldTimeScale : 1f);
 
