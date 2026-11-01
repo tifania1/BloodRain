@@ -40,9 +40,13 @@
   - `use`: 어디에 쓰는지
   - 하늘에서 내리치는 번개처럼 끝이 화면에 닿아야 맞는 재료는 `edgeOk: true`
 
-## 이미지 세션이 하는 일 (회사 PC 크롬)
+## 이미지 세션이 하는 일 (회사 PC 크롬, 예약 '혈우강호 이미지 생산' 밤 21:47·23:47·01:47)
 
-1. **잠금.** `docs/session_lock.md` 규칙은 개발 세션과 같다. 이미지 세션은 큐·`art_inbox`·`Assets/Art`·`docs/vfx_preview` 만 건드린다.
+1. **작업 폴더와 잠금.** 사람이 Unity 를 쓰는 `E:\Unity\BloodRain` 은 건드리지 않고, 따로 둔 작업 폴더 `E:\Unity\BloodRain-art`(`git worktree`, origin/claude/dev 에 detach)에서 한다.
+   - `docs/session_lock.md` 는 잡지 않는다. 개발 세션을 막지 않으려는 것이다.
+   - 이미지 세션은 큐·`Assets/Art`·`docs/vfx_preview`·daily 만 건드린다. `art_inbox` 는 PC 원래 폴더 것을 쓴다.
+   - 올리기 전에 `git fetch` + `git rebase origin/claude/dev`.
+   - `queue.jsonl` 이 충돌하면 origin 쪽을 받고, 이번 세션이 바꾼 줄의 status 만 다시 고친다.
 2. **연결 확인.** 크롬 확장이 연결돼 있는지(`list_connected_browsers`) 보고, chatgpt.com 에 로그인돼 있는지 확인한다. 아래 중 하나라도 해당하면 바로 멈추고 daily 에 한 줄 남긴다.
    - 확장이 연결돼 있지 않다.
    - 로그인 화면이 뜬다.
@@ -57,7 +61,7 @@
    - 받은 파일은 PC `C:\Users\BaxXR\Downloads` 에 ChatGPT 가 지은 한글 이름으로 떨어진다. 방금 받은 png 를 PowerShell 로 `art_inbox/<save_as>` 이름으로 옮긴다.
    - 옮겼으면 그 줄을 `generated` 로 바꾼다.
    - 받으려고 연 탭은 끝나면 닫는다.
-6. **기계 검수와 반영.** 사람이 Unity 를 쓰는 작업 폴더와 겹치지 않게, 이미지 세션은 따로 둔 작업 폴더(`git worktree`, `E:\Unity\BloodRain-art`)에서 한다.
+6. **기계 검수와 반영.** 작업 폴더 `E:\Unity\BloodRain-art` 에서 돌린다.
    - 이펙트 재료: `python tools/import_vfx_ai.py --inbox E:/Unity/BloodRain`. 바탕이 단색인지, 덮임 양, 가장자리 걸림, 먹에 색이 섞였는지를 본다. 통과하면 `Assets/Art/VFX/AI/<id>_stroke.png`(먹) 또는 `<id>_gold.png`·`<id>_core.png`(빛)와 `ai.json` 에 들어가고 미리보기 `docs/vfx_preview/ai_<날짜>.png` 가 나온다.
    - 원화: `postprocess_art.py`.
 7. **눈 검수.** 미리보기를 직접 열어 본다. 미리보기는 원본 | 게임 색 | 그어짐 50% | 흩어짐 40% 순서다. 아래 중 하나라도 해당하면 `import_vfx_ai.py --reject <id> "<이유>"` 로 떨어뜨린다.
