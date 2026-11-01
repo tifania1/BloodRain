@@ -136,6 +136,16 @@ namespace BloodRain.Sim
                     double r = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? ex?.EvoParam("rangeMultiplier", 1.3) ?? 1.3 : 1) + EnemyRadius;
                     int sweeps = WeaponGrowth.HasMilestone(def, level, "2회 회전") || evolved ? 2 : 1;
                     list.Add(new Strike(area: Disc(r), hits: sweeps, damage: dmg, singleHits: sweeps));
+                    // 절기 천뢰검진: 원에 닿은 적마다 lightningChance 로 낙뢰, 곁의 적으로 lightningChains 번 옮아가며 lightningFalloff 배씩.
+                    if (evolved)
+                    {
+                        double chance = ex?.EvoParam("lightningChance", 0.25) ?? 0.25, ld = ex?.EvoParam("lightningDamage", 1) ?? 1;
+                        int chains = (int)(ex?.EvoParam("lightningChains", 2) ?? 2);
+                        double fall = ex?.EvoParam("lightningFalloff", 0.8) ?? 0.8;
+                        for (int k = 0; k <= chains; k++)
+                            list.Add(new Strike(area: Disc(r) * chance, random: k > 0, hits: sweeps, damage: dmg * ld * Math.Pow(fall, k),
+                                singleHits: k == 0 ? sweeps * chance : 0));
+                    }
                     break;
                 }
                 case "slow_projectile":
@@ -154,14 +164,14 @@ namespace BloodRain.Sim
                 {
                     // 섬광지: 가까운 적 중 아무에게나 한 발.
                     list.Add(new Strike(targets: 1, random: true, damage: dmg, singleHits: 1));
-                    // 절기 만천성지: 25% 확률로 작은 폭발(반경 1.1m, 피해 절반).
-                    if (evolved) list.Add(new Strike(area: Disc((ex?.EvoParam("explodeRadius", 1.1) ?? 1.1) + EnemyRadius) * (ex?.EvoParam("explodeChance", 0.25) ?? 0.25), random: true,
+                    // 절기 만천성지: 치명타가 나면 작은 폭발(반경 1.1m, 피해 절반). 치명 확률만큼 곱한다.
+                    if (evolved && b.Crit > 0) list.Add(new Strike(area: Disc((ex?.EvoParam("explodeRadius", 1.1) ?? 1.1) + EnemyRadius) * Math.Min(b.Crit, 1), random: true,
                         damage: dmg * (ex?.EvoParam("explodeDamage", 0.5) ?? 0.5)));
                     break;
                 }
                 case "random_bomb":
                 {
-                    // 벽력탄: 가까운 적 근처에 폭탄 n개, 반경 2→3m, 맞은 적은 2초 화상. 절기는 +1개, 3연쇄(0.9배씩 작아짐).
+                    // 벽력탄: 가까운 적 근처에 폭탄 n개, 반경 2→3m, 맞은 적은 2초 화상. 절기는 +1개, 3연쇄(0.9배씩 작아짐), 마지막 자리에 5초 불바다.
                     int n = RoundJs(Range(ex?.Projectiles, t, 1, 3)) + s.Amount + (evolved ? (int)(ex?.EvoParam("extraProjectiles", 1) ?? 1) : 0);
                     double rr = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (1 + b.ExplosionArea);
                     double burn = Range(ex?.BurnPerSecond, t, 4, 10) * (1 + b.Burn) * (1 + b.Dot) * (def.BurnSeconds ?? 2) * s.Duration;
@@ -174,6 +184,11 @@ namespace BloodRain.Sim
                         double shrink = ex?.EvoParam("chainShrink", 0.9) ?? 0.9, fall = ex?.EvoParam("chainDamage", 0.8) ?? 0.8;
                         for (int k = 1; k < chain; k++)
                             list.Add(new Strike(area: Disc(rr * Math.Pow(shrink, k) + EnemyRadius), random: true, damage: dmg * Math.Pow(fall, k), dot: burn));
+                        // 마지막 폭발 자리에 불바다 fireSeconds 초: 안에 든 적은 그동안 계속 탄다(화상 2초를 늘린 몫만 더 센다).
+                        double fireSec = ex?.EvoParam("fireSeconds", 5) ?? 5, burnSec = (def.BurnSeconds ?? 2) * s.Duration;
+                        double extra = Range(ex?.BurnPerSecond, t, 4, 10) * (1 + b.Burn) * (1 + b.Dot) * Math.Max(0, fireSec - burnSec);
+                        double fr = rr * Math.Pow(shrink, chain - 1) * (ex?.EvoParam("fireRadiusMultiplier", 1) ?? 1);
+                        list.Add(new Strike(area: Disc(fr + EnemyRadius), random: true, hits: 0, dot: extra, singleDot: i == 0 ? extra : 0));
                     }
                     break;
                 }

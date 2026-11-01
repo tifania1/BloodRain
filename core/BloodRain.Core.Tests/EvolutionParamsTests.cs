@@ -6,7 +6,7 @@ using Xunit;
 namespace BloodRain.Core.Tests
 {
     /// <summary>evolutions.json params(웹 프로토타입 절기 수치)가 기획서 9장 '절기 16종' 효과 칸의 숫자와 같은지.
-    /// 기획서와 다른 곳은 아래 '다른 곳' 테스트에 적어 두고 backlog E-02 에서 사람이 정한다. 어느 쪽이든 맞추면 그 줄을 지운다.</summary>
+    /// (E-02 로 기획서와 다른 곳은 2026-11-01 모두 맞춤)</summary>
     public class EvolutionParamsTests
     {
         readonly GameData _d = TestData.Load();
@@ -63,10 +63,39 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"{Num(Of("flying_dagger").Param("bounceRange"))}m 안", rows[Of("flying_dagger").NameKo][6]);
             foreach (var id in new[] { "palm_wind", "flash_finger" })
                 Row(id, "-", $"{Num(Of(id).Param("explodeRadius"))}m", "-", $"{Num(Of(id).Param("explodeDamage"))}배");
-            Assert.Contains($"{Num(Of("flash_finger").Param("explodeChance") * 100)}% 확률", rows[Of("flash_finger").NameKo][6]);
+            Assert.Equal(1f, Of("flash_finger").Param("explodeOnCrit"));
+            Assert.Contains("치명타로 맞을 때만", rows[Of("flash_finger").NameKo][6]);
             var b = Of("thunder_bomb");
             Row("thunder_bomb", "-", $"{Num(b.Param("chainShrink"))}배씩", "-", $"{Num(b.Param("chainDamage"))}배씩");
             Assert.Contains($"{Num(b.Param("chainDelaySeconds"))}초 뒤", rows[b.NameKo][6]);
+            var fire = rows[b.NameKo + " 불바다"];
+            Assert.Equal($"마지막 폭발의 {Num(b.Param("fireRadiusMultiplier"))}배", fire[3]);
+            Assert.Equal($"{Num(b.Param("fireSeconds"))}초", fire[4]);
+            var c = Of("changcheon_qi");
+            var bolt = rows[c.NameKo + " 낙뢰"];
+            Assert.Equal($"{Num(c.Param("lightningRange"))}m 안 다음 적", bolt[3]);
+            Assert.Equal($"{Num(c.Param("lightningDamage"))}배, 옮을 때마다 {Num(c.Param("lightningFalloff"))}배", bolt[5]);
+            Assert.Contains($"{Num(c.Param("lightningChance") * 100)}% 확률, 곁의 적으로 {Num(c.Param("lightningChains"))}번", bolt[6]);
+        }
+
+        /// <summary>E-02: 기획서 효과 칸의 불바다·낙뢰 연쇄·치명타 폭발을 프로토타입이 그린다.</summary>
+        [Fact] public void 기획서_효과를_프로토타입이_그린다()
+        {
+            Assert.Contains("5초짜리 불바다", Effect("thunder_bomb"));
+            Assert.Contains("낙뢰 연쇄", Effect("changcheon_qi"));
+            Assert.Contains("치명타 시 작은 폭발", Effect("flash_finger"));
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            foreach (var used in new[] { "ep.fireSeconds", "lp.lightningChance", "lp.lightningChains", "pr.explode.explodeOnCrit" })
+                Assert.Contains(used, html);
+            Assert.DoesNotContain("explodeChance", html);
+        }
+
+        /// <summary>모든 절기 피해 2배는 기획서 9장 '절기 16종' 머리말과 balance.json 이 같다.</summary>
+        [Fact] public void 절기_피해_배율이_기획서와_같다()
+        {
+            Assert.Contains($"한 방 피해가 모두 {_d.Balance.Evolution.DamageMultiplier}배", TestData.GddSection("절기 16종"));
+            Assert.Contains("if (w.evolved) d *= B.evolution.damageMultiplier", TestData.ReadRepoFile("web", "prototype", "template.html"));
+            Assert.DoesNotContain("피해 2배", Effect("samjae_sword"));
         }
 
         [Fact] public void 프로토타입이_절기_숫자를_박아_두지_않는다()
@@ -77,22 +106,6 @@ namespace BloodRain.Core.Tests
                 Assert.DoesNotContain(old, html);
             foreach (var used in new[] { "ep.waveSpeed", "ep.projectileSpread", "pr.bounceRange", "X.explodeRadius", "ep.chainShrink" })
                 Assert.Contains(used, html);
-        }
-
-        /// <summary>기획서와 프로토타입이 다른 곳(backlog E-02). 한쪽을 고치면 여기가 실패하니 그 줄을 지우고 E-02 를 닫는다.</summary>
-        [Fact] public void 기획서와_다른_곳()
-        {
-            Assert.Contains("5초짜리 불바다", Effect("thunder_bomb"));
-            Assert.Throws<KeyNotFoundException>(() => Of("thunder_bomb").Param("fireSeconds")); // 불바다 없음
-            Assert.Contains("낙뢰 연쇄", Effect("changcheon_qi"));
-            Assert.Throws<KeyNotFoundException>(() => Of("changcheon_qi").Param("lightning")); // 두 바퀴 + 반경 1.3배뿐, 낙뢰 없음
-            Assert.Contains("치명타 시 작은 폭발", Effect("flash_finger"));
-            Assert.Equal(0.25f, Of("flash_finger").Param("explodeChance"));               // 치명타가 아니라 25% 확률
-            // (5) 프로토타입은 모든 절기 피해 2배인데 기획서 효과 칸은 천지인 삼검에만 '피해 2배'
-            Assert.Equal(2f, _d.Balance.Evolution.DamageMultiplier);
-            Assert.Contains("피해 2배", Effect("samjae_sword"));
-            Assert.DoesNotContain("피해 2배", Effect("nahan_fist"));
-            Assert.Contains("if (w.evolved) d *= B.evolution.damageMultiplier", TestData.ReadRepoFile("web", "prototype", "template.html"));
         }
     }
 }

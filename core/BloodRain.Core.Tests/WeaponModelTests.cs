@@ -141,9 +141,10 @@ namespace BloodRain.Core.Tests
             var plain = S("thunder_bomb", Max);
             var ev = S("thunder_bomb", Max, true);
             Assert.Equal(3, plain.Count);                // Lv8 3개
-            Assert.Equal(4 * 3, ev.Count);                // 절기 +1개, 3연쇄
-            Assert.Equal(1, ev.Count(s => s.SingleDot > 0));
+            Assert.Equal(4 * 4, ev.Count);                // 절기 +1개, 3연쇄 + 마지막 자리 불바다
+            Assert.Equal(2, ev.Count(s => s.SingleDot > 0)); // 첫 폭탄 화상 + 그 불바다가 늘린 몫
             Assert.True(ev[1].Area < ev[0].Area && ev[2].Area < ev[1].Area);
+            Assert.Equal(0, ev[3].Damage); Assert.True(ev[3].Dot > 0);  // 불바다는 지속 피해만
         }
 
         [Fact]
@@ -158,6 +159,18 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 천뢰검진은_낙뢰가_붙고_만천성지_폭발은_치명_확률만큼()
+        {
+            var plain = S("changcheon_qi", Max);
+            var ev = S("changcheon_qi", Max, true);
+            Assert.Single(plain);
+            Assert.Equal(1 + 3, ev.Count);                // 첫 낙뢰 + 두 번 옮아감
+            Assert.True(ev[2].Damage < ev[1].Damage && ev[3].Damage < ev[2].Damage);
+            Assert.Equal(ev[0].Area * 0.25, ev[1].Area, 6);
+            Assert.Single(S("flash_finger", Max, true));   // 치명 0 이면 폭발 없음
+        }
+
+        [Fact]
         public void 무공_16종_모두_단계와_절기에서_획이_있고_피해가_양수()
         {
             Assert.Equal(16, G.Weapons.Count);
@@ -167,7 +180,7 @@ namespace BloodRain.Core.Tests
                     {
                         var st = S(def.Id, lv, ev);
                         Assert.NotEmpty(st);
-                        Assert.All(st, s => Assert.True(s.Damage > 0, $"{def.Id} Lv{lv} 절기 {ev}"));
+                        Assert.All(st, s => Assert.True(s.Damage > 0 || s.Dot > 0, $"{def.Id} Lv{lv} 절기 {ev}"));
                         Assert.All(st, s => Assert.True(s.Area > 0 || s.Targets > 0, $"{def.Id} 맞는 적 0"));
                         double iv = WeaponModel.Interval(def, Ex(def.Id), lv, ev, 0, Max);
                         Assert.True(WeaponModel.SingleTargetDps(st, iv) > 0, def.Id);
