@@ -1106,7 +1106,7 @@ function fireWeapon(w) {
           for (const a of dirs) {
             addEffect('arc', p.x, p.y, { a, r: R, life: 0.22, gold: w.evolved || sg, follow: true });
             const ca = Math.cos(a), sa = Math.sin(a);
-            forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy); if (d <= R + e.r && (dx * ca + dy * sa) >= -0.1 * d) hurtEnemy(e, d2, w, ca, sa, 3); });
+            forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy); if (d <= R + e.r && (dx * ca + dy * sa) >= -0.1 * d) hurtEnemy(e, d2, w, ca, sa, def.knockback); });
             hitLanterns(p.x, p.y, R);
           }
         } });
@@ -1119,7 +1119,7 @@ function fireWeapon(w) {
       const R = def.range * S.area * igi, hits = Math.round(grow(def.hits, t));
       for (let i = 0; i < hits; i++) G.zones.push({ delay: i * 0.08, apply: () => {
         addEffect('fist', p.x + fx * R * 0.5, p.y + fy * R * 0.5, { r: R * 0.6, life: 0.12 });
-        forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d <= R + e.r) hurtEnemy(e, dmg, w, dx / d, dy / d, 4); });
+        forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d <= R + e.r) hurtEnemy(e, dmg, w, dx / d, dy / d, def.knockback); });
         hitLanterns(p.x, p.y, R);
         // 연환 권장합일: 마지막 주먹이 짧은 장풍을 쏜다
         if (i === hits - 1 && link('gwonjang')) { const pw = G.weapons.find(x => x.id === 'palm_wind'); if (pw) addProj({ x: p.x, y: p.y, vx: p.fx * 9, vy: p.fy * 9, r: 0.45, dmg: weaponDamage(pw) * 0.5, pierce: 999, life: 0.9, kind: 'palm', w: pw, kb: 3 }); }
@@ -1134,8 +1134,8 @@ function fireWeapon(w) {
         const tg = targets[i % Math.max(1, targets.length)];
         let a = tg ? Math.atan2(tg.y - p.y, tg.x - p.x) : Math.atan2(fy, fx) + (i - n / 2) * 0.25;
         a += rand(-0.08, 0.08);
-        const sp = 12 * S.projSpeed;
-        addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.25, dmg, pierce, life: 1.2, kind: 'dagger', w, target: tg, homing: 6, bounce: w.evolved ? ep.bounces : 0, poison: w.lv >= 6 || w.evolved || link('dokbi') });
+        const sh = def.shot, sp = sh.speed * S.projSpeed;
+        addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce, life: sh.lifeSeconds, kind: 'dagger', w, target: tg, homing: sh.homing, kb: def.knockback, bounce: w.evolved ? ep.bounces : 0, poison: w.lv >= 6 || w.evolved || link('dokbi') });
       }
       break;
     }
@@ -1148,8 +1148,8 @@ function fireWeapon(w) {
     case 'slow_projectile': {
       const shots = (w.lv >= 6 ? 2 : 1) + (w.evolved ? ep.extraShots : 0);
       for (let i = 0; i < shots; i++) G.zones.push({ delay: i * 0.15, apply: () => {
-        const sp = 5 * S.projSpeed, r = 0.55 * growArea(def, t) * S.area * (w.evolved ? ep.sizeMultiplier : 1);
-        addProj({ x: p.x, y: p.y, vx: p.fx * sp, vy: p.fy * sp, r, dmg, pierce: 999, life: 2.6 * S.duration, kind: 'palm', w, kb: 5, explode: w.evolved });
+        const sh = def.shot, sp = sh.speed * S.projSpeed, r = sh.radius * growArea(def, t) * S.area * (w.evolved ? ep.sizeMultiplier : 1);
+        addProj({ x: p.x, y: p.y, vx: p.fx * sp, vy: p.fy * sp, r, dmg, pierce: 999, life: sh.lifeSeconds * S.duration, kind: 'palm', w, kb: def.knockback, explode: w.evolved });
       } });
       break;
     }
@@ -1157,19 +1157,19 @@ function fireWeapon(w) {
       const targets = nearestEnemies(p.x, p.y, 12, def.range);
       if (!targets.length) break;
       const tg = targets[Math.floor(Math.random() * targets.length)];
-      const a = Math.atan2(tg.y - p.y, tg.x - p.x), sp = 18 * S.projSpeed;
-      addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.16, dmg, pierce: 0, life: 0.6, kind: 'finger', w, explode: w.evolved && Math.random() < ep.explodeChance });
+      const a = Math.atan2(tg.y - p.y, tg.x - p.x), sh = def.shot, sp = sh.speed * S.projSpeed;
+      addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce: 0, life: sh.lifeSeconds, kind: 'finger', w, kb: def.knockback, explode: w.evolved && Math.random() < ep.explodeChance });
       break;
     }
     case 'random_bomb': {
       const n = Math.round(grow(def.projectiles, t)) + S.amount + (w.evolved ? ep.extraProjectiles : 0);
-      const pool = nearestEnemies(p.x, p.y, 20, 7);
+      const pool = nearestEnemies(p.x, p.y, 20, def.seekRange);
       for (let i = 0; i < n; i++) {
         const tg = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
         const bx = tg ? tg.x : p.x + rand(-4, 4), by = tg ? tg.y : p.y + rand(-4, 4);
         const R = def.range * growArea(def, t) * S.area * S.explosionArea;
         const burn = grow(def.burnPerSecond, t, 0) * S.burn * S.dot;
-        G.zones.push({ delay: 0.6, mark: { x: bx, y: by, r: R, own: true }, apply: () => bomb(bx, by, R, dmg, burn, w, w.evolved ? ep.chain : 1) });
+        G.zones.push({ delay: def.fuseSeconds, mark: { x: bx, y: by, r: R, own: true }, apply: () => bomb(bx, by, R, dmg, burn, w, w.evolved ? ep.chain : 1) });
       }
       break;
     }
@@ -1186,7 +1186,7 @@ function fireWeapon(w) {
           forNear(p.x, p.y, R, e => {
             const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
             if (d <= R + e.r && (dx * ca + dy * sa) >= -0.1 * d) {
-              hurtEnemy(e, dmg, w, dx / d, dy / d, 7);
+              hurtEnemy(e, dmg, w, dx / d, dy / d, def.knockback);
               if (w.evolved) e.stun = Math.max(e.stun || 0, e.boss ? ep.bossStunSeconds : ep.stunSeconds);
             }
           });
@@ -1201,7 +1201,7 @@ function fireWeapon(w) {
       forNear(p.x, p.y, R, e => {
         const d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d <= R + e.r) {
-          hurtEnemy(e, dps * 0.5, w, 0, 0, 0); e.slow = Math.max(e.slow, slow); e.poison = Math.max(e.poison || 0, 1);
+          hurtEnemy(e, dps * 0.5, w, 0, 0, def.knockback); e.slow = Math.max(e.slow, slow); e.poison = Math.max(e.poison || 0, 1);
           if (w.evolved && !e.elite && !e.boss) { e.poisonT += 0.5; if (e.poisonT >= ep.executeSeconds && !e.dead) { e.hp = 0; killEnemy(e); } }
         }
       });
@@ -1213,7 +1213,7 @@ function fireWeapon(w) {
 }
 function bomb(x, y, R, dmg, burn, w, chain) {
   addEffect('boom', x, y, { r: R, life: 0.35 }); sfx('boom');
-  forNear(x, y, R, e => { const d = Math.hypot(e.x - x, e.y - y) || 1; if (d <= R + e.r) { hurtEnemy(e, dmg, w, (e.x - x) / d, (e.y - y) / d, 3); e.burn = 2 * G.stats.duration; e.burnDps = burn; e.burnW = w; e.fire = 2 * G.stats.duration; } });
+  forNear(x, y, R, e => { const d = Math.hypot(e.x - x, e.y - y) || 1; if (d <= R + e.r) { hurtEnemy(e, dmg, w, (e.x - x) / d, (e.y - y) / d, W_BY_ID[w.id].knockback); e.burn = 2 * G.stats.duration; e.burnDps = burn; e.burnW = w; e.fire = 2 * G.stats.duration; } });
   hitLanterns(x, y, R);
   if (chain > 1) { const a = rand(0, TAU); G.zones.push({ delay: 0.2, apply: () => bomb(x + Math.cos(a) * R, y + Math.sin(a) * R, R * 0.9, dmg * 0.8, burn, w, chain - 1) }); }
 }
@@ -1477,7 +1477,7 @@ function update(dt) {
         const dx = e.x - fx.x, dy = e.y - fx.y, d = Math.hypot(dx, dy); if (d > fx.r + e.r) return;
         const ea = ((Math.atan2(dy, dx) - fx.a0) % TAU + TAU) % TAU;
         let at = ea + rev * TAU; if (at > cur) at -= TAU;
-        if (at >= prev || d < 0.7) { fx.hit.add(e); hurtEnemy(e, fx.dmg, fx.w, dx / (d || 1), dy / (d || 1), 2.5); }
+        if (at >= prev || d < 0.7) { fx.hit.add(e); hurtEnemy(e, fx.dmg, fx.w, dx / (d || 1), dy / (d || 1), W_BY_ID[fx.w.id].knockback); }
       });
       hitLanterns(fx.x, fx.y, fx.r);
     }

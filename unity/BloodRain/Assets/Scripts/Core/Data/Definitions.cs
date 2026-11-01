@@ -45,9 +45,32 @@ namespace BloodRain.Core.Data
         /// <summary>그 레벨에 붙는 새 동작(레벨 → 이름). 기획서 '앞뒤 베기(Lv4)'.</summary>
         public Dictionary<string, string>? Milestones;
 
+        // 기획서 9장 '날아가는 것과 넉백'. 그 무공에 없으면 null.
+        /// <summary>날아가는 것(비도·장풍·지풍). 탄속은 연무장 탄속을 곱하기 전.</summary>
+        public WeaponShot? Shot;
+        /// <summary>맞은 적을 미는 세기. 적 넉백 저항·넉백 배율을 곱하기 전. 보스는 안 밀린다.</summary>
+        public float? Knockback;
+        /// <summary>벽력탄이 자리에 떨어지기까지 초.</summary>
+        public float? FuseSeconds;
+        /// <summary>벽력탄이 떨어질 자리를 고르는 거리(m). 이 안의 적이 없으면 몸 둘레에 떨어진다.</summary>
+        public float? SeekRange;
+
         public YinYang Aspect => YinYangParse.From(Yinyang);
         /// <summary>땅의 주인 첫 처치로 열리면 그 지역 id, 아니면 null.</summary>
         public string? UnlockBossRegion => UnlockToken.BossRegion(Unlock);
+    }
+
+    public sealed class WeaponShot
+    {
+        /// <summary>초속(m).</summary>
+        public float Speed;
+        /// <summary>맞는 반경(m). 장풍은 Lv8까지 areaLv8 배로 커진다.</summary>
+        public float Radius;
+        public float LifeSeconds;
+        /// <summary>과녁 쪽으로 꺾는 세기(초당). 0이면 곧게 간다.</summary>
+        public float Homing;
+        /// <summary>날아가는 거리 = 초속 x 수명.</summary>
+        public float Reach => Speed * LifeSeconds;
     }
 
     public sealed class PassiveEffect
