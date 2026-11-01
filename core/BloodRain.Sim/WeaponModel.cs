@@ -96,8 +96,8 @@ namespace BloodRain.Sim
                 {
                     // 삼재검법: 가까운 적 쪽 반원(넓이 0.5), Lv4 앞뒤(1), 절기는 세 방향(1.5, 겹침 포함). Lv7부터 3연 베기.
                     double r = def.Range * s.Area * (evolved ? ex?.EvoParam("rangeMultiplier", 1.6) ?? 1.6 : 1) + EnemyRadius;
-                    double cover = evolved ? 1.5 : level >= 4 ? 1.0 : 0.5;
-                    int strikes = level >= 7 ? 3 : 1;
+                    double cover = evolved ? 1.5 : WeaponGrowth.HasMilestone(def, level, "앞뒤 베기") ? 1.0 : 0.5;
+                    int strikes = WeaponGrowth.HasMilestone(def, level, "3연 베기") ? 3 : 1;
                     list.Add(new Strike(area: Disc(r) * cover, hits: strikes, damage: dmg, singleHits: strikes));
                     // 절기: 세 번째 공격마다 바라보는 쪽으로 관통 검기(피해 1.5배, 폭 0.7m). 세 번에 한 번을 넓이 1/3로 나눠 센다.
                     if (evolved)
@@ -123,7 +123,7 @@ namespace BloodRain.Sim
                     int n = RoundJs(Range(ex?.Projectiles, t, 1, 4)) + s.Amount + (evolved ? (int)(ex?.EvoParam("extraProjectiles", 2) ?? 2) : 0);
                     int pierce = RoundJs(Range(ex?.Pierce, t, 1, 3));
                     int per = pierce + 1 + (evolved ? (int)(ex?.EvoParam("bounces", 5) ?? 5) : 0);
-                    double dot = level >= 6 || evolved ? dmg * 0.25 * (1 + b.Dot) * 2 : 0;
+                    double dot = WeaponGrowth.HasMilestone(def, level, "중독") || evolved ? dmg * 0.25 * (1 + b.Dot) * 2 : 0;
                     list.Add(new Strike(targets: n * per, damage: dmg, dot: dot, singleHits: n, singleDot: dot));
                     break;
                 }
@@ -131,14 +131,14 @@ namespace BloodRain.Sim
                 {
                     // 창천검기: 몸 주위 원을 한 바퀴, Lv5부터 두 바퀴. 범위 Lv8 +40%(areaLv8). 절기는 반경 1.3배.
                     double r = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? ex?.EvoParam("rangeMultiplier", 1.3) ?? 1.3 : 1) + EnemyRadius;
-                    int sweeps = level >= 5 || evolved ? 2 : 1;
+                    int sweeps = WeaponGrowth.HasMilestone(def, level, "2회 회전") || evolved ? 2 : 1;
                     list.Add(new Strike(area: Disc(r), hits: sweeps, damage: dmg, singleHits: sweeps));
                     break;
                 }
                 case "slow_projectile":
                 {
                     // 장풍: 바라보는 쪽으로 느린 관통탄. 무리 안을 지나는 길이(최대 무리 반경) × 폭. Lv6부터 2연발(같은 길).
-                    int shots = (level >= 6 ? 2 : 1) + (evolved ? (int)(ex?.EvoParam("extraShots", 1) ?? 1) : 0);
+                    int shots = (WeaponGrowth.HasMilestone(def, level, "2연발") ? 2 : 1) + (evolved ? (int)(ex?.EvoParam("extraShots", 1) ?? 1) : 0);
                     double pr = 0.55 * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? ex?.EvoParam("sizeMultiplier", 1.4) ?? 1.4 : 1);
                     double length = Math.Min(5 * s.ProjectileSpeed * 2.6 * s.Duration, CrowdRadius);
                     double band = 2 * (pr + EnemyRadius) * length * FacingEfficiency;

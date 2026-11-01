@@ -355,6 +355,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // 무공 성장(기획서 9장 'Lv8까지 성장'): weapons.json 의 [Lv1, Lv8] 쌍을 잇는다. Core Combat/WeaponGrowth 와 같다.
 const grow = (pair, t, fb = 1) => pair ? lerp(pair[0], pair[1], t) : fb;
 const growArea = (def, t) => lerp(1, def.areaLv8 || 1, t);
+// 그 레벨이면 붙는 새 동작인지(weapons.json milestones, 이름으로). 이름이 데이터에 없으면 던진다(Core WeaponGrowth.HasMilestone 과 같다).
+const atMs = (w, name) => { const m = W_BY_ID[w.id].milestones || {}, lv = Object.keys(m).find(k => m[k] === name); if (lv == null) throw new Error(`${w.id} 에 '${name}' 동작이 없다`); return w.lv >= +lv; };
 const TAU = Math.PI * 2;
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem('hyeolu:' + k)); } catch (e) { return null; } },
@@ -1097,8 +1099,8 @@ function fireWeapon(w) {
       // 프로토타입 결정: 사거리 안에 적이 있으면 가장 가까운 적 쪽으로 벤다(휴대폰에서 도망치며 싸우기 쉽게). 없으면 바라보는 쪽.
       const near = nearestEnemies(p.x, p.y, 1, R * 1.25)[0];
       const base = near ? Math.atan2(near.y - p.y, near.x - p.x) : Math.atan2(fy, fx);
-      const dirs = w.evolved ? [base, base + TAU / 3, base - TAU / 3] : (w.lv >= 4 ? [base, base + Math.PI] : [base]);
-      const strikes = w.lv >= 7 ? 3 : 1;
+      const dirs = w.evolved ? [base, base + TAU / 3, base - TAU / 3] : (atMs(w, '앞뒤 베기') ? [base, base + Math.PI] : [base]);
+      const strikes = atMs(w, '3연 베기') ? 3 : 1;
       for (let s = 0; s < strikes; s++) {
         G.zones.push({ delay: s * 0.12, apply: () => {
           // 연환 쌍검합벽: 창천검기가 도는 중이면 이 획은 금빛, 피해 +60%
@@ -1135,18 +1137,18 @@ function fireWeapon(w) {
         let a = tg ? Math.atan2(tg.y - p.y, tg.x - p.x) : Math.atan2(fy, fx) + (i - n / 2) * 0.25;
         a += rand(-0.08, 0.08);
         const sh = def.shot, sp = sh.speed * S.projSpeed;
-        addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce, life: sh.lifeSeconds, kind: 'dagger', w, target: tg, homing: sh.homing, kb: def.knockback, bounce: w.evolved ? ep.bounces : 0, poison: w.lv >= 6 || w.evolved || link('dokbi') });
+        addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce, life: sh.lifeSeconds, kind: 'dagger', w, target: tg, homing: sh.homing, kb: def.knockback, bounce: w.evolved ? ep.bounces : 0, poison: atMs(w, '중독') || w.evolved || link('dokbi') });
       }
       break;
     }
     case 'orbit_slash': {
-      const R = def.range * growArea(def, t) * S.area * (w.evolved ? ep.rangeMultiplier : 1), sweeps = w.evolved ? ep.sweeps : w.lv >= 5 ? 2 : 1;
+      const R = def.range * growArea(def, t) * S.area * (w.evolved ? ep.rangeMultiplier : 1), sweeps = w.evolved ? ep.sweeps : atMs(w, '2회 회전') ? 2 : 1;
       addEffect('sweep', p.x, p.y, { r: R, life: 0.36 * sweeps, sweeps, a0: rand(0, TAU), follow: true, gold: w.evolved, w, dmg, hit: new Set(), prev: 0 });
       skySword(w);
       break;
     }
     case 'slow_projectile': {
-      const shots = (w.lv >= 6 ? 2 : 1) + (w.evolved ? ep.extraShots : 0);
+      const shots = (atMs(w, '2연발') ? 2 : 1) + (w.evolved ? ep.extraShots : 0);
       for (let i = 0; i < shots; i++) G.zones.push({ delay: i * 0.15, apply: () => {
         const sh = def.shot, sp = sh.speed * S.projSpeed, r = sh.radius * growArea(def, t) * S.area * (w.evolved ? ep.sizeMultiplier : 1);
         addProj({ x: p.x, y: p.y, vx: p.fx * sp, vy: p.fy * sp, r, dmg, pierce: 999, life: sh.lifeSeconds * S.duration, kind: 'palm', w, kb: def.knockback, explode: w.evolved });
