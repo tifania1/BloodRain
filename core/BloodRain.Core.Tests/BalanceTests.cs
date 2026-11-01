@@ -134,6 +134,16 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"화면 위 구슬이 {_d.Balance.Limits.Orbs}개를 넘으면 오래된 것부터 하나로 합쳐짐", TestData.Gdd);
         }
 
+        /// <summary>8장 '피격과 사망': 플레이어 몸 반지름. 시뮬레이터(DodgeSim·ContactSim)·웹 프로토타입이 같은 값을 쓴다.</summary>
+        [Fact] public void 플레이어_몸_반지름이_기획서_시뮬레이터_프로토타입과_같다()
+        {
+            float r = _d.Balance.Stats.PlayerBodyRadius;
+            Assert.Contains($"플레이어 몸은 반지름 {TestData.Num(r)}m 원입니다", TestData.GddSection("피격과 사망"));
+            Assert.Equal(r, BloodRain.Sim.DodgeSim.BodyRadius);
+            Assert.Equal((double)r, BloodRain.Sim.ContactSim.PlayerRadius, 4);
+            Assert.Contains("d < e.r + B.stats.playerBodyRadius", TestData.ReadRepoFile("web", "prototype", "template.html"));
+        }
+
         /// <summary>8장 드롭 표 아래 진기 구슬 문단과 balance.json orbPickup. 웹 프로토타입이 박아 두던 끌기·흡수·합치기 값을
         /// 2026-11-01 데이터로 옮겼다. 프로토타입이 숫자 대신 데이터를 읽는지도 본다(Unity OrbField 는 unity_tasks C-05b).</summary>
         [Fact] public void 진기_구슬_끌기와_합치기가_기획서_8장과_같고_프로토타입이_데이터를_읽는다()

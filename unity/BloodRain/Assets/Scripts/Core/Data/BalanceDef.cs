@@ -223,6 +223,8 @@ namespace BloodRain.Core.Data
         public float CooldownReductionCap = 0.6f;
         /// <summary>치명타 피해 배율. 기획서 9장 천리안 '치명 피해 2배'. 시뮬레이터는 (1 + 치명 확률)로 2배를 가정한다.</summary>
         public float CritDamageMultiplier = 2f;
+        /// <summary>플레이어 몸 반지름(경지 m). 적 몸과 이만큼 겹치면 접촉 피해, 보스 패턴 판정도 이 원으로 본다.</summary>
+        public float PlayerBodyRadius = 0.4f;
     }
 
     /// <summary>연무장 한 항목. Stat은 Core.Build.StatKind 이름.</summary>
