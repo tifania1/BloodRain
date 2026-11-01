@@ -112,4 +112,4 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] C-08 `[U]` (unity_tasks 로 옮김) 음양 태극 문양 HUD, 기혈역류 연출
 - [ ] C-09 `[U]` (unity_tasks 로 옮김) 오의 버튼(진소운 일검), 보갑, 절기 그릇과 각성 연출(J-01·vfx.md), 절기 4종 (2026-11-01 Core 쪽 보갑 `Chest`, 오의 피해 `Ultimates` 준비함)
 - [ ] C-10 `[U]` (unity_tasks 로 옮김) 서장 10분 통과: 스폰 디렉터 + 강시 포쾌 장삼 보스 (2026-11-01 Core 쪽 서장 생성 `PrologueDirector` 준비함)
-- [ ] C-11 WebGL 빌드 배포 확인(비밀값 5개가 저장소에 들어가 있어야 함 — 사람 몫)
+- [ ] C-11 WebGL 빌드 배포 확인(비밀값 5개가 저장소에 들어가 있어야 함 — 사람 몫) (진행: 2026-11-01 대화 세션이 PC Unity로 빌드해 Cloudflare Pages `bloodrain` 의 dev 에 올림 → https://dev.bloodrain.pages.dev , Run 씬부터 열림. 압축은 Brotli 로 바꿈(Gzip 은 Pages 가 두 번 감싸 로딩 실패). PC 명령은 `Assets/Editor/WebGLBuild.cs` 주석. CI 쪽은 Unity 비밀값 3개 대기)
