@@ -37,6 +37,7 @@
 | 먹·종이 뒤집기(탁본처럼 흑백) | URP 전체 화면 패스(Renderer Feature) 0.16초, 반전 후 채도 0 |
 | 天地人 글자, 낙관 | 글자는 Yuji Boku 글꼴(TextMeshPro SDF)로 얹고, 낙관 바탕만 텍스처. 글자를 이미지에 굽지 않는다 |
 | 히트스톱·흔들림 | 시간 배율 0 + Cinemachine Impulse |
+| 빛(번개·검기) | 더하기 섞기 금빛·흰빛 층 + 그 밑에 넓고 흐린 먹 받침 층(보통 섞기). 종이 바닥은 밝아서 빛만 더하면 묻힌다. 수묵화가 흰 것을 둘레 먹으로 살리는 것과 같은 수 |
 
 붓 획 굽기는 `python tools/bake_brush.py`(numpy·Pillow, 시드 고정이라 다시 구워도 같은 그림, `--check` 로 비교). 흰 획 + 알파 512px 를 층마다 따로 굽는다: `stroke`(본 획), `wash`(담채, 2단부터), `gold`(금빛 터럭, 3단부터). 색은 셰이더가 입힌다. 텍스처 가운데가 몸 위치이고 획은 +x 쪽에 걸리니 회전만 하면 된다. 한 변이 몇 m 인지는 같은 폴더 `samjae.json` 의 `sizeMeters`. 미리보기는 `docs/vfx_preview/brush_samjae.png`(삼재검법)와 `brush_start9.png`(시작 무공 아홉).
 

@@ -47,9 +47,9 @@ figcaption b { color: var(--ink); font-family: var(--serif); }
 // 셰이더와 같은 값(BrushStroke.shader): 층 색, 결 0.06, 흩어짐 잡음 uv x1.7, 가장자리 0.35 진하게
 const BASE = 'vfx/';
 const RES = 192, FEATHER = 0.06;
-const COLORS = { stroke: [20, 20, 20], wash: [79, 127, 122], gold: [201, 162, 39], core: [255, 255, 255] };
+const COLORS = { stroke: [20, 20, 20], wash: [79, 127, 122], gold: [201, 162, 39], core: [255, 255, 255], shade: [20, 20, 20] };
 const ADD = { gold: true, core: true };          // AI 빛 재료는 더하기(BrushStrokeAdd)
-const ORDER = ['wash', 'stroke', 'gold', 'core']; // 담채가 맨 아래
+const ORDER = ['shade', 'wash', 'stroke', 'gold', 'core']; // 빛 재료의 먹 받침·담채가 맨 아래
 const KIND = { arc: 0, line: 1, blot: 2, radial: 2, right: 1, down: 3, up: 4, left: 5 };
 const BRUSH = ['samjae', 'nahan', 'dagger', 'changcheon', 'palm', 'flash', 'bomb', 'mist', 'staff'];
 const NAMES = { samjae: '삼재검법', nahan: '나한권', dagger: '비도술', changcheon: '창천검기', palm: '장풍', flash: '섬광지', bomb: '벽력탄', mist: '독무', staff: '취선봉', common: '공용 먹', ai: 'AI 재료' };

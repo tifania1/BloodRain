@@ -96,6 +96,9 @@ namespace BloodRain.Core.Tests
                 Assert.Equal((string)o["progress"]!, (string)t["progress"]!);
                 Assert.Equal((string)o["use"]!, (string)t["use"]!);
                 Assert.Equal((string)o["kind"]! == "vfx_ink" ? "ai_ink" : "ai_glow", (string)t["kind"]!);
+                // 빛 재료는 밝은 종이 바닥에서 묻히지 않게 먹 받침(shade)을 같이 둔다(art_pipeline.md '적용')
+                if ((string)t["kind"]! == "ai_glow")
+                    Assert.Equal(new[] { "core", "gold", "shade" }, ((JArray)t["layers"]!).Select(l => (string)l!).OrderBy(s => s));
                 foreach (var layer in ((JArray)t["layers"]!).Select(l => (string)l!))
                     Assert.True(File.Exists(Path.Combine(dir, $"{t["name"]}_{layer}.png")), $"{t["name"]}: {layer} 층 파일이 없다");
             }

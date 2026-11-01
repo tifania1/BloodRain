@@ -47,7 +47,8 @@
       "sizeMeters": 4.0,
       "layers": [
         "gold",
-        "core"
+        "core",
+        "shade"
       ],
       "progress": "down",
       "use": "뇌부(thunder_talisman) 낙뢰, 위에서 아래로 그어짐"

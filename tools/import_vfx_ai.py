@@ -5,6 +5,8 @@ docs/design/art_pipeline.md 의 '기계 검수와 반영' 단계. 이미지가 �
   vfx_ink   흰 바탕 위 먹  → {id}_stroke.png (어두운 만큼 알파, 색은 셰이더가 먹으로)
   vfx_glow  검은 바탕 위 빛 → {id}_gold.png (밝은 만큼 알파, 셰이더가 금빛으로 더하기)
                               + {id}_core.png (하얗게 달아오른 가운데만, 셰이더가 흰빛으로 더하기)
+                              + {id}_shade.png (gold 를 넓히고 흐린 먹 받침. 보통 섞기로 빛 밑에 깔아
+                                밝은 종이 바닥에서도 빛이 묻히지 않게. 2026-11-02, vfx.md '빛 재료와 먹 받침')
 정사각 512px, 그림 가운데가 텍스처 가운데. 크기·그어짐 방향은 `Assets/Art/VFX/AI/ai.json`
 (sizeMeters 는 한 변이 게임에서 몇 m, progress 는 radial·down·up·right·left).
 
@@ -15,6 +17,7 @@ docs/design/art_pipeline.md 의 '기계 검수와 반영' 단계. 이미지가 �
   python tools/import_vfx_ai.py --inbox E:/Unity/BloodRain     # status generated 인 vfx 줄 전부
   python tools/import_vfx_ai.py --only fx_mist_ink
   python tools/import_vfx_ai.py --reject fx_mist_ink "글자가 들어감"
+  python tools/import_vfx_ai.py --reshade        # 이미 반영된 빛 재료의 shade 층을 gold 층에서 다시 만듦(원본 필요 없음)
 필요: numpy, Pillow
 """
 from __future__ import annotations
@@ -26,7 +29,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 QUEUE = ROOT / "art_queue" / "queue.jsonl"
@@ -103,6 +106,17 @@ def square(layers, main):
     return out
 
 
+SHADE_GROW, SHADE_BLUR, SHADE_ALPHA = 13, 9.0, 0.55
+
+
+def shade_from(gold):
+    """빛 밑에 깔 먹 받침: gold 덮임을 SHADE_GROW px 넓히고 SHADE_BLUR 로 흐린 뒤 SHADE_ALPHA 배.
+    512px 정사각 기준. 빛이 셀수록 받침도 짙되 가장 짙어도 0.55 라 종이가 비친다."""
+    im = Image.fromarray((np.clip(gold, 0, 1) * 255 + 0.5).astype(np.uint8))
+    im = im.filter(ImageFilter.MaxFilter(SHADE_GROW)).filter(ImageFilter.GaussianBlur(SHADE_BLUR))
+    return np.asarray(im, np.float32) / 255 * SHADE_ALPHA
+
+
 def white_alpha_png(a, path):
     rgba = np.zeros(a.shape + (4,), np.uint8)
     rgba[..., :3] = 255
@@ -156,7 +170,7 @@ def load_meta():
     if META.exists():
         return json.loads(META.read_text(encoding="utf-8"))
     return {"_note": "tools/import_vfx_ai.py 가 쓴다. 손으로 고치지 않는다. ChatGPT 로 뽑은 이펙트 재료. 층은 흰색 + 알파 512px "
-                     "(stroke 먹 · gold 금빛 더하기 · core 흰빛 더하기). sizeMeters 는 한 변이 몇 m, 텍스처 가운데가 기준점. "
+                     "(stroke 먹 · gold 금빛 더하기 · core 흰빛 더하기 · shade 빛 밑에 까는 먹 받침, 보통 섞기). sizeMeters 는 한 변이 몇 m, 텍스처 가운데가 기준점. "
                      "progress 는 그어지는 방향(radial 가운데서 바깥 · down 위→아래 · up · right 왼→오른 · left).",
             "textures": []}
 
@@ -166,6 +180,7 @@ def main(argv=None):
     ap.add_argument("--only")
     ap.add_argument("--inbox", help="art_inbox 가 들어 있는 폴더(기본: 저장소 루트)")
     ap.add_argument("--reject", nargs=2, metavar=("ID", "REASON"), help="눈 검수에서 떨어뜨림")
+    ap.add_argument("--reshade", action="store_true", help="반영된 빛 재료의 shade 층을 gold 층에서 다시 만듦")
     args = ap.parse_args(argv)
     inbox = Path(args.inbox) if args.inbox else ROOT
     rows = [json.loads(l) for l in QUEUE.read_text(encoding="utf-8").splitlines() if l.strip()]
@@ -189,6 +204,20 @@ def main(argv=None):
             (OUT / f"{rid}_{layer}.png.meta").unlink(missing_ok=True)
         save()
         print(f"떨어뜨림 {rid}: {reason}")
+        return 0
+
+    if args.reshade:
+        n = 0
+        for t in by_name.values():
+            if t["kind"] != "ai_glow" or (args.only and t["name"] != args.only):
+                continue
+            gold = np.asarray(Image.open(OUT / f"{t['name']}_gold.png").getchannel("A"), np.float32) / 255
+            white_alpha_png(shade_from(gold), OUT / f"{t['name']}_shade.png")
+            t["layers"] = ["gold", "core", "shade"]
+            n += 1
+            print(f"먹 받침 {t['name']}_shade.png")
+        save()
+        print(f"먹 받침 {n}장")
         return 0
 
     shown, done, bad = [], 0, 0
@@ -217,6 +246,8 @@ def main(argv=None):
             continue
         main_name = "stroke" if row["kind"] == "vfx_ink" else "gold"
         sq = square(layers, layers[main_name])
+        if row["kind"] == "vfx_glow":
+            sq["shade"] = shade_from(sq["gold"])
         OUT.mkdir(parents=True, exist_ok=True)
         for name, a in sq.items():
             white_alpha_png(a, OUT / f"{row['id']}_{name}.png")
