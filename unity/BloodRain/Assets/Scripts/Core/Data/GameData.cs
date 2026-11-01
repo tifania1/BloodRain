@@ -31,6 +31,8 @@ namespace BloodRain.Core.Data
         public CheonhaDef Cheonha { get; private set; } = new CheonhaDef();
         /// <summary>보스 id → 땅의 주인 패턴 시간표(bosspatterns.json, 기획서 6장).</summary>
         public IReadOnlyDictionary<string, BossPatternSetDef> BossPatterns { get; private set; } = new Dictionary<string, BossPatternSetDef>();
+        /// <summary>정예 id → 정예 패턴 시간표(bosspatterns.json elites). 보스와 같은 틀이고 2막이 없다. 아직 서장 강시 도부수만 있다.</summary>
+        public IReadOnlyDictionary<string, BossPatternSetDef> ElitePatterns { get; private set; } = new Dictionary<string, BossPatternSetDef>();
         /// <summary>종장 혈마의 혈영 차례와 3단계(bosspatterns.json final).</summary>
         public FinalBossDef FinalBoss { get; private set; } = new FinalBossDef();
         /// <summary>지역 기믹 수치(gimmicks.json, 기획서 7장).</summary>
@@ -82,6 +84,7 @@ namespace BloodRain.Core.Data
                 Chapters = Read<ChapterFile>("chapters").Chapters,
                 Cheonha = Read<CheonhaDef>("cheonha"),
                 BossPatterns = bossPatterns.Bosses,
+                ElitePatterns = bossPatterns.Elites,
                 FinalBoss = bossPatterns.Final,
                 Gimmicks = Read<GimmicksDef>("gimmicks"),
             };
@@ -97,5 +100,8 @@ namespace BloodRain.Core.Data
         public InsightDef Insight(string id) => Insights.First(i => i.Id == id);
         public BossPatternSetDef BossPatternSet(string bossId) =>
             BossPatterns.TryGetValue(bossId, out var set) ? set : throw new KeyNotFoundException($"패턴이 없는 보스입니다: {bossId}");
+
+        public BossPatternSetDef ElitePatternSet(string eliteId) =>
+            ElitePatterns.TryGetValue(eliteId, out var set) ? set : throw new KeyNotFoundException($"패턴이 없는 정예입니다: {eliteId}");
     }
 }

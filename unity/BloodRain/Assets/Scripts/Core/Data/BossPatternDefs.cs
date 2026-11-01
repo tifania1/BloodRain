@@ -149,5 +149,6 @@ namespace BloodRain.Core.Data
     {
         public FinalBossDef Final = new FinalBossDef();
         public Dictionary<string, BossPatternSetDef> Bosses = new Dictionary<string, BossPatternSetDef>();
+        public Dictionary<string, BossPatternSetDef> Elites = new Dictionary<string, BossPatternSetDef>();
     }
 }
