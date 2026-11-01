@@ -134,6 +134,7 @@ namespace BloodRain.Presentation
         {
             var data = DataBoot.Data;
             _moveBase = data.Balance.Stats.MoveBase;
+            _playerBody = data.Balance.Stats.PlayerBodyRadius * 2f; // 지름(경지 m)
             foreach (var (id, w) in Mix)
             {
                 var def = data.Enemy(id);
@@ -144,8 +145,6 @@ namespace BloodRain.Presentation
             if (player != null)
             {
                 if (vitals == null) vitals = player.GetComponent<PlayerVitals>();
-                var pc = player.GetComponent<PlayerController>();
-                if (pc != null) _playerBody = pc.bodyRealmMeters;
             }
             if (clusters != null)
             {
@@ -207,6 +206,7 @@ namespace BloodRain.Presentation
                 Hop = (float)_rng.NextDouble(),
                 Health = def.Health * _healthMul,
                 MaxHealth = def.Health * _healthMul,
+                MaxLife = def.LifeSeconds, // 혈인 14·금두꺼비 25(enemies.json lifeSeconds), 0 이면 끝까지
                 ContactDamage = def.ContactDamage, // 시간에 따른 배율(enemyScaling.damagePerMinute)은 C-10 디렉터가 곱한다
                 BornRealm = realm,
                 Move = (byte)move,
@@ -265,7 +265,8 @@ namespace BloodRain.Presentation
             _watch.Restart();
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
             _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
-                      diag * st.RecycleBeyondDiagonal, diag * st.RingMaxDiagonal);
+                      diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
+                      1f, DataBoot.Data.Balance.EnemyStatus.KnockbackKeepPerSecond);
             // 접촉 피해(C-03): 플레이어 원에 닿은 적, 같은 적은 contact.sameEnemyIntervalSeconds 마다 한 번
             if (vitals != null)
             {

@@ -17,23 +17,25 @@ namespace BloodRain.Sim
     // 진기 구슬(C-05). 웹 프로토타입 dropOrb·구슬 흡수와 같은 규칙:
     //   자석 반경(stats.magnetBase, 경지 m) 안에 들면 끌리기 시작하고, 끌리는 속도는 9 + 4 × 나이(경지 m/s).
     //   플레이어 0.5m(경지 m) 안이면 흡수. 바닥 구슬이 limits.orbs(400)를 넘으면 오래된 100개를 하나로 합쳐 플레이어 둘레 5m 에 둔다.
+    //   숫자는 balance.json orbPickup(Core Balance.OrbPickup) 에서 넣는 쪽(OrbLayer)이 읽는다.
     // 길이는 넣을 때 WorldScale 로 바꾼 세계 m 를 받는다(Step 인자). 400개라 잡 없이 메인 스레드로 충분하다.
     public sealed class OrbField
     {
-        public const int MergeBatch = 100;
-
         readonly List<Orb> _orbs = new List<Orb>();
         readonly System.Random _rng;
 
         public int Limit;
+        /// <summary>넘칠 때 한 번에 합치는 수(balance.json orbPickup.mergeBatch).</summary>
+        public int MergeBatch;
         public IReadOnlyList<Orb> Orbs => _orbs;
         public int Count => _orbs.Count;
         /// <summary>지금까지 합친 횟수(시험·디버그용).</summary>
         public int Merges { get; private set; }
 
-        public OrbField(int limit = 400, int seed = 1)
+        public OrbField(int limit = 400, int seed = 1, int mergeBatch = 100)
         {
             Limit = limit;
+            MergeBatch = Math.Max(1, mergeBatch);
             _rng = new System.Random(seed);
         }
 

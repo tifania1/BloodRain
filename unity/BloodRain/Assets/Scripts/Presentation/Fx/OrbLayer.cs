@@ -8,7 +8,7 @@ namespace BloodRain.Presentation.Fx
 {
     // 진기 구슬 떨어뜨리기·끌기·흡수·그리기(C-05). 규칙은 Sim/OrbField.
     //   적이 쓰러지면(EnemyField.Killed) 그 자리에 구슬. 구슬 값은 balance.json orbs.small(1). 적별 처치 진기는 아직 정하는 중(P-02)이라 모두 작은 구슬.
-    //   자석 반경 = stats.magnetBase(경지 m), 흡수 0.5m, 끌리는 속도 9 + 4 × 나이(경지 m/s) — 웹 값. 모두 WorldScale 로 세계 단위.
+    //   자석 반경 = stats.magnetBase(경지 m), 흡수·끌리는 속도·합치기는 balance.json orbPickup(0.5m, 9 + 4 × 나이, 100개 5m). 모두 WorldScale 로 세계 단위.
     //   흡수한 진기는 Absorbed 로 내보낸다. Life 가 붙기 전(C-10)까지는 시험용 RunXp 에 직접 넣어 레벨만 보여 준다.
     public sealed class OrbLayer : MonoBehaviour
     {
@@ -21,6 +21,7 @@ namespace BloodRain.Presentation.Fx
         public Transform player;
         [Tooltip("구슬 지름(경지 m)")]
         public float orbRealmMeters = 0.35f;
+        [Tooltip("아래 넷은 시작할 때 balance.json orbPickup 으로 덮어쓴다")]
         public float absorbRealmMeters = 0.5f;
         public float pullBase = 9f, pullPerSecond = 4f;
         public float mergeRealmMeters = 5f;
@@ -45,7 +46,12 @@ namespace BloodRain.Presentation.Fx
         void Awake()
         {
             var data = DataBoot.Data;
-            Field = new OrbField(data.Balance.Limits.Orbs, 1101);
+            var pick = data.Balance.OrbPickup;
+            Field = new OrbField(data.Balance.Limits.Orbs, 1101, pick.MergeBatch);
+            absorbRealmMeters = pick.AbsorbRadius;
+            pullBase = pick.PullSpeedBase;
+            pullPerSecond = pick.PullSpeedPerSecond;
+            mergeRealmMeters = pick.MergeDistance;
             _magnet = data.Balance.Stats.MagnetBase;
             _small = data.Balance.Orbs.Small;
             _medium = data.Balance.Orbs.Medium;

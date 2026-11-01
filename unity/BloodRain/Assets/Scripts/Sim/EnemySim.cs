@@ -12,14 +12,14 @@ namespace BloodRain.Sim
         Chase = 0,   // 곧장 쫓기
         Hop = 1,     // hop_chase: 강시 콩콩. 0.6초 박자 중 72% 동안만 뛴다(평균 속도는 데이터 그대로)
         Flee = 2,    // flee: 금두꺼비
-        Line = 3,    // line_charge: 처음 방향으로 곧장. 14초 뒤 사라짐
+        Line = 3,    // line_charge: 처음 방향으로 곧장. EnemyAgent.MaxLife(enemies.json lifeSeconds) 뒤 사라짐
     }
 
     /// <summary>적 한 덩이의 상태. 위치·속도·반경은 세계 m(WorldScale 로 바꾼 값).</summary>
     public struct EnemyAgent
     {
         public float2 Pos;
-        public float2 Knock;      // 넉백 속도. 초당 0.02배로 줄어든다(웹과 같다)
+        public float2 Knock;      // 넉백 속도. 초당 balance.json enemyStatus.knockbackKeepPerSecond(0.02)배로 줄어든다
         public float2 LineDir;
         public float Speed;       // 세계 m/s(혈월 배율까지 곱한 값)
         public float Radius;      // 세계 m
@@ -28,6 +28,7 @@ namespace BloodRain.Sim
         public float Health;
         public float MaxHealth;
         public float Life;        // 생긴 뒤 흐른 시간
+        public float MaxLife;     // 이 시간이 지나면 사라짐(enemies.json lifeSeconds: 혈인 14·금두꺼비 25). 0 이면 끝까지 남는다
         public float ContactDamage;
         public float Contact;     // 같은 적에게 다시 맞기까지 남은 시간(balance.json contact.sameEnemyIntervalSeconds)
         public int BornRealm;     // 이 덩이가 생긴 경지. 플레이어보다 아래면 접촉 피해 없음(Scale.DealsContactDamage)
@@ -44,7 +45,6 @@ namespace BloodRain.Sim
     {
         public const float HopPeriod = 0.6f;
         public const float HopDuty = 0.72f;
-        public const float LineLifeSeconds = 14f;
         const int MaxNeighbors = 12;
 
         NativeArray<EnemyAgent> _a;
@@ -103,8 +103,10 @@ namespace BloodRain.Sim
         }
 
         /// <summary>한 프레임 진행. player 는 세계 m. cell 은 격자 칸 크기(세계 m, 보통 적 지름의 2배 남짓).
-        /// recycleBeyond 를 넘게 멀어진 적은 플레이어 둘레 recycleTo 거리, 플레이어가 가는 쪽으로 옮긴다.</summary>
-        public void Step(float dt, float2 player, float2 playerHeading, float cell, float recycleBeyond, float recycleTo, float speedScale = 1f)
+        /// recycleBeyond 를 넘게 멀어진 적은 플레이어 둘레 recycleTo 거리, 플레이어가 가는 쪽으로 옮긴다.
+        /// knockKeepPerSecond 는 넉백 속도가 1초 뒤 남는 비율(balance.json enemyStatus.knockbackKeepPerSecond).</summary>
+        public void Step(float dt, float2 player, float2 playerHeading, float cell, float recycleBeyond, float recycleTo,
+                         float speedScale = 1f, float knockKeepPerSecond = 0.02f)
         {
             if (_count == 0 || dt <= 0f) return; // Removed 는 그리는 쪽이 읽고 비운다
 
@@ -112,6 +114,7 @@ namespace BloodRain.Sim
             {
                 Agents = _a, Dt = dt, Player = player, Heading = playerHeading,
                 RecycleBeyond = recycleBeyond, RecycleTo = recycleTo, SpeedScale = speedScale,
+                KnockKeep = math.pow(knockKeepPerSecond, dt),
             }.Schedule(_count, 64);
 
             _grid.Clear();
@@ -213,6 +216,7 @@ namespace BloodRain.Sim
             public float RecycleBeyond;
             public float RecycleTo;
             public float SpeedScale;
+            public float KnockKeep; // 이번 프레임 넉백이 남는 비율 = knockbackKeepPerSecond ^ Dt
 
             public void Execute(int i)
             {
@@ -235,14 +239,14 @@ namespace BloodRain.Sim
                         break;
                     case EnemyMove.Line:
                         v = e.LineDir * speed;
-                        if (e.Life > LineLifeSeconds) e.Dead = 1;
                         break;
                     default:
                         v = dir * speed;
                         break;
                 }
                 e.Pos += (v + e.Knock) * Dt;
-                e.Knock *= math.pow(0.02f, Dt);
+                e.Knock *= KnockKeep;
+                if (e.MaxLife > 0f && e.Life > e.MaxLife) e.Dead = 1;
 
                 // 멀리 떨어진 적은 플레이어가 가는 쪽(서 있으면 원래 쪽 반대편)으로 옮겨 다시 쓴다
                 if (d > RecycleBeyond && e.Move != (byte)EnemyMove.Line && e.Move != (byte)EnemyMove.Flee)

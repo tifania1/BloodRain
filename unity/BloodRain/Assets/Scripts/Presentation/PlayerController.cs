@@ -12,7 +12,7 @@ namespace BloodRain.Presentation
     //   혈우 장막: 걸음에 Core PushVelocity 를 더하고 KeepInside(TU-06 과 같음). 카메라는 ScaleCamera 가 이 Transform 을 따른다.
     public sealed class PlayerController : MonoBehaviour
     {
-        [Tooltip("플레이어 지름(경지 m)")]
+        [Tooltip("플레이어 지름(경지 m). 시작할 때 balance.json stats.playerBodyRadius x 2 로 덮어쓴다")]
         public float bodyRealmMeters = 0.8f;
         [Tooltip("태어난 곳(Unity 좌표). 혈우 장막의 가운데")]
         public Vector2 birthplace;
@@ -39,6 +39,7 @@ namespace BloodRain.Presentation
             var body = RebirthHandoff.Body ?? Rebirth.Prologue(data);
             _moveMultiplier = body.Character.MoveSpeed;
             _baseMove = data.Balance.Stats.MoveBase;
+            bodyRealmMeters = data.Balance.Stats.PlayerBodyRadius * 2f;
             Dash = new Dash(data.Balance.Dash);
             var cam = Camera.main != null ? Camera.main.GetComponent<ScaleCamera>() : null;
             if (cam != null) cam.target = transform;
