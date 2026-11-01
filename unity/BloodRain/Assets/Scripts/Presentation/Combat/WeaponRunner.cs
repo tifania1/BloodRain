@@ -43,13 +43,22 @@ namespace BloodRain.Presentation.Combat
         [Tooltip("호가 펼친 각(라디안), samjae.json span")]
         public float samjaeTier1Span = 2.3f;
 
+        [Header("뇌부 낙뢰(W-01). AI 재료 fx_lightning_glow: 먹 받침(보통 섞기) → 금빛·흰빛(더하기), 위에서 아래로 그어짐")]
+        public Material brushAddMaterial;
+        public Texture2D lightningShade, lightningGold, lightningCore;
+        [Tooltip("텍스처 한 변(경지 m), ai.json sizeMeters")]
+        public float lightningMeters = 4f;
+
+        // 낙뢰 시간: 0.08초에 위에서 내리꽂히고, 0.06초 머문 뒤 0.36초까지 흩어진다(기획서 9장 '0.4초 안쪽')
+        const float BoltDraw = 0.08f, BoltHold = 0.06f, BoltLife = 0.36f;
+
         // 획 시간(vfx.md: 0.4초 안에 흩어진다). 그어지기 → 잠깐 멈춤 → 흩어짐
         const float BrushDraw = 0.10f, BrushHold = 0.06f, BrushLife = 0.40f;
         static readonly Color StrokeInk = new Color(0.078f, 0.078f, 0.078f, 1f); // #141414
 
         static readonly string[] TestOrder =
         {
-            "samjae_sword", "nahan_fist", "changcheon_qi", "poison_mist", "flying_dagger", "palm_wind", "flash_finger", "thunder_bomb",
+            "samjae_sword", "nahan_fist", "changcheon_qi", "poison_mist", "flying_dagger", "palm_wind", "flash_finger", "thunder_bomb", "thunder_talisman",
         };
 
         struct Pending { public float Delay; public Action Apply; }
@@ -130,6 +139,7 @@ namespace BloodRain.Presentation.Combat
                 if (kb.digit6Key.wasPressedThisFrame) Learn(TestOrder[5]);
                 if (kb.digit7Key.wasPressedThisFrame) Learn(TestOrder[6]);
                 if (kb.digit8Key.wasPressedThisFrame) Learn(TestOrder[7]);
+                if (kb.digit9Key.wasPressedThisFrame) Learn(TestOrder[8]);
             }
 
             float dt = Time.deltaTime;
@@ -137,7 +147,8 @@ namespace BloodRain.Presentation.Combat
             {
                 s.Cooldown -= dt;
                 if (s.Cooldown > 0f) continue;
-                Fire(s);
+                // 겨눌 적이 없으면 쿨다운을 쓰지 않고 다음 프레임에 다시 본다(뇌부)
+                if (!Fire(s)) { s.Cooldown = 0f; continue; }
                 // 쿨다운 0(독무처럼 상시)이면 tickSeconds 마다 한 번, 섬광지는 1 / shotsPerSecond(WeaponGrowth.Cooldown)
                 float cd = s.Def.Cooldown <= 0f && s.Def.ShotsPerSecond == null ? Tick(s)
                          : Mathf.Max(0.05f, WeaponGrowth.Cooldown(s.Def, s.level));
@@ -181,7 +192,8 @@ namespace BloodRain.Presentation.Combat
             _dealt[s.id] = d + dmg * hit;
         }
 
-        void Fire(Slot s)
+        /// <summary>한 번 쓴다. 겨눌 적이 없어 쓰지 않았으면 false(쿨다운을 쓰지 않는다).</summary>
+        bool Fire(Slot s)
         {
             var ws = World;
             float dmg = Damage(s);
@@ -314,9 +326,49 @@ namespace BloodRain.Presentation.Combat
                     }
                     break;
                 }
+                case "random_lightning":
+                {
+                    // 뇌부(W-01, 기획서 9장 '날아가는 것과 넉백'): range(9m) 안 서로 다른 적 projectiles(2→5) 곳에 바닥 표식,
+                    // fuseSeconds(0.4초) 뒤 반경 strikeRadius(1.2m) 안을 친다. 넉백 0. 적이 없으면 쓰지 않는다(쿨다운도 안 씀).
+                    // Lv5 '감전'부터 맞은 적이 shockSeconds(0.5초) 멈춘다. 보스(땅의 주인)는 EnemyField 무리에 없으니 따로 막을 것이 없다 —
+                    // 보스가 무리에 들어오면 여기서 거른다. 연무장 개수·범위는 Life 가 붙을 때(C-06 남은 것)
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level);
+                    NearestN(ws.Length(s.Def.Range), 40, _targets);
+                    if (_targets.Count == 0) { s.Fired--; return false; }
+                    // 가까운 40 가운데 서로 다른 n 을 무작위로(부분 섞기)
+                    for (int k = 0; k < Mathf.Min(n, _targets.Count); k++)
+                    {
+                        int j = UnityEngine.Random.Range(k, _targets.Count);
+                        (_targets[k], _targets[j]) = (_targets[j], _targets[k]);
+                    }
+                    float R = ws.Length(s.Def.StrikeRadius ?? 1.2f);
+                    float fuse = s.Def.FuseSeconds ?? 0.4f, kb = ws.Speed(Knock(s));
+                    float shock = Has(s, "감전") ? s.Def.ShockSeconds ?? 0.5f : 0f;
+                    for (int k = 0; k < Mathf.Min(n, _targets.Count); k++)
+                    {
+                        var e = enemies.Sim.Agents[_targets[k]];
+                        var at = new Vector2(e.Pos.x, e.Pos.y);
+                        AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.79f, 0.64f, 0.15f, 0.22f)); // 떨어질 자리(금빛 표식)
+                        Later(fuse, () =>
+                        {
+                            if (!AddBolt(at)) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.25f, new Color(1f, 0.92f, 0.55f, 0.8f));
+                            enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+                            if (shock > 0f)
+                                foreach (int i in _near)
+                                {
+                                    var a = enemies.Sim.Get(i);
+                                    a.Stun = Mathf.Max(a.Stun, shock);
+                                    enemies.Sim.Set(i, a);
+                                }
+                            Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
+                        });
+                    }
+                    break;
+                }
                 default:
                     break; // 아직 없는 갈래
             }
+            return true;
         }
 
         // ── 투사체 ──────────────────────────────────────────────
@@ -524,6 +576,57 @@ namespace BloodRain.Presentation.Combat
             }
         }
 
+        // ── 낙뢰(W-01) ──────────────────────────────────────────
+        // AiFxLayers 와 같은 층 순서(shade 보통 섞기 → gold·core 더하기)를 RenderMesh 로 바로 그린다(낙뢰마다 GameObject 를 만들지 않으려고).
+        struct Bolt { public Vector2 At; public float Age; }
+        readonly List<Bolt> _bolts = new List<Bolt>();
+        static readonly Color BoltGold = new Color32(0xC9, 0xA2, 0x27, 0xFF);
+
+        bool AddBolt(Vector2 at)
+        {
+            if (brushMaterial == null || brushAddMaterial == null || lightningGold == null) return false;
+            _bolts.Add(new Bolt { At = at });
+            return true;
+        }
+
+        void DrawBolts(float dt)
+        {
+            for (int i = _bolts.Count - 1; i >= 0; i--)
+            {
+                var b = _bolts[i];
+                b.Age += dt;
+                if (b.Age >= BoltLife) _bolts.RemoveAt(i); else _bolts[i] = b;
+            }
+            if (_bolts.Count == 0) return;
+            if (_quad == null) _quad = MakeQuad();
+            if (_brushProps == null) _brushProps = new MaterialPropertyBlock();
+            float size = World.Length(lightningMeters);
+            foreach (var b in _bolts)
+            {
+                float progress = Mathf.Clamp01(b.Age / BoltDraw);
+                float dissolve = Mathf.Clamp01((b.Age - BoltDraw - BoltHold) / (BoltLife - BoltDraw - BoltHold));
+                // 번개 아래 끝이 친 자리에 오게 텍스처 가운데를 조금 위로 올린다
+                var m = Matrix4x4.TRS(new Vector3(b.At.x, b.At.y + size * 0.4f, -0.28f), Quaternion.identity, new Vector3(size, size, 1f));
+                Layer(brushMaterial, lightningShade, StrokeInk, progress, dissolve, m);
+                Layer(brushAddMaterial, lightningGold, BoltGold, progress, dissolve, m);
+                Layer(brushAddMaterial, lightningCore, Color.white, progress, dissolve, m);
+            }
+        }
+
+        void Layer(Material mat, Texture2D tex, Color col, float progress, float dissolve, Matrix4x4 m)
+        {
+            if (tex == null) return;
+            _brushProps.Clear();
+            _brushProps.SetTexture(IdMainTex, tex);
+            _brushProps.SetColor(IdColor, col);
+            _brushProps.SetFloat(IdProgress, progress);
+            _brushProps.SetFloat(IdDissolve, dissolve);
+            _brushProps.SetFloat(IdKind, 3f); // ai.json progress "down"
+            _brushProps.SetFloat(IdAlpha, 1f);
+            var rp = new RenderParams(mat) { matProps = _brushProps, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
+            Graphics.RenderMesh(rp, _quad, 0, m);
+        }
+
         static Mesh MakeQuad()
         {
             var m = new Mesh { name = "붓 획 사각형" };
@@ -544,6 +647,7 @@ namespace BloodRain.Presentation.Combat
         {
             if (player == null) return;
             DrawBrushes();
+            DrawBolts(Time.deltaTime);
             if (_mat == null || (_fx.Count == 0 && _projs.Count == 0)) return;
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             foreach (var f in _fx)
@@ -604,7 +708,7 @@ namespace BloodRain.Presentation.Combat
                 _dealt.TryGetValue(s.id, out float d);
                 sb.Append($"{s.Def?.NameKo} Lv{s.level} 피해 {d:0}  ");
             }
-            sb.Append(" (Ctrl+1~4 익히기)");
+            sb.Append(" (Ctrl+1~9 익히기, 9 뇌부)");
             GUI.Label(new Rect(12, 72, 900, 22), sb.ToString());
         }
     }

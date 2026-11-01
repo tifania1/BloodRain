@@ -49,6 +49,8 @@ namespace BloodRain.Sim
         // ShotLeft 가 0 이 되고 플레이어가 ShootRange 안이면 Fire = 1 — 탄은 EnemyField 가 만들고 Fire 를 지운다.
         public float KeepMin, KeepMax, ShootRange, ShootInterval, ShotLeft;
         public byte Fire;
+        // 감전(뇌부 Lv5 '감전', weapons.json shockSeconds) 같은 멈춤. 남은 초 동안 걷지도 쏘지도 않는다(넉백은 받는다).
+        public float Stun;
         public float2 DashDir;
         public byte Phase;        // DashPhase
         public byte Move;
@@ -245,6 +247,12 @@ namespace BloodRain.Sim
                 float2 dir = d > 1e-5f ? to / d : new float2(1, 0);
                 float speed = e.Speed * SpeedScale * (1f + e.Buff);
                 float2 v = float2.zero;
+                if (e.Stun > 0f)
+                {
+                    e.Stun = math.max(0f, e.Stun - Dt);
+                }
+                else
+                {
                 if (e.ShootInterval > 0f)
                 {
                     e.ShotLeft -= Dt;
@@ -298,6 +306,7 @@ namespace BloodRain.Sim
                         v = dir * speed;
                         break;
                 }
+                } // 감전 아님
                 e.Pos += (v + e.Knock) * Dt;
                 e.Knock *= KnockKeep;
                 if (e.MaxLife > 0f && e.Life > e.MaxLife) e.Dead = 1;

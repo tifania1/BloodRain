@@ -39,6 +39,12 @@ namespace BloodRain.Editor
                 };
                 wr.samjaeTier1Meters = SizeOf(BrushDir, "samjae_t1_1", 5.74f);
                 wr.samjaeTier1Span = 2.3f;
+                // 뇌부 낙뢰(W-01): AI 빛 재료 fx_lightning_glow(먹 받침 + 금빛 + 흰빛, 위에서 아래로)
+                wr.brushAddMaterial = EnsureAddMaterial();
+                wr.lightningShade = Load($"{AiDir}/fx_lightning_glow_shade.png");
+                wr.lightningGold = Load($"{AiDir}/fx_lightning_glow_gold.png");
+                wr.lightningCore = Load($"{AiDir}/fx_lightning_glow_core.png");
+                wr.lightningMeters = SizeOf(AiDir, "fx_lightning_glow", 4f);
                 EditorUtility.SetDirty(wr);
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
