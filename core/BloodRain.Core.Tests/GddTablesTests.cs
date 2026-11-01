@@ -213,6 +213,30 @@ namespace BloodRain.Core.Tests
             Assert.Equal(4, rows.Count);
         }
 
+        /// <summary>8장 능력치 표 '주로 올리는 곳' 칸: 적힌 심법이 그 능력치를 올리고, 연무장이 적혔으면 연무장 항목이 있고
+        /// 안 적혔으면 없다. 영약은 데이터가 아직 없어 보지 않는다.</summary>
+        [Fact] public void 능력치_표_올리는_곳이_심법_연무장과_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("능력치"));
+            Assert.NotEmpty(rows);
+            foreach (var r in rows)
+            {
+                Assert.True(TrainingLabel.TryGetValue(r[0], out var stat), $"모르는 능력치 '{r[0]}'");
+                var where = r[3].Split(',').Select(s => Regex.Replace(s.Trim(), @"\(.*\)$", "")).ToList();
+                bool training = _d.Balance.Training.Items.Any(i => i.Stat == stat);
+                Assert.True(training == where.Contains("연무장"), $"{r[0]}: 기획서 '{r[3]}', 연무장 항목 {(training ? "있음" : "없음")}");
+                foreach (var name in where.Where(w => w != "연무장" && w != "영약"))
+                {
+                    var p = _d.Passives.SingleOrDefault(x => x.NameKo == name);
+                    Assert.True(p != null, $"{r[0]}: '{name}' 은 심법이 아님");
+                    Assert.True(p!.Effects.Any(e => e.Stat == stat), $"{r[0]}: {name} 이 {stat} 를 안 올림");
+                }
+                // 이 능력치를 올리는 심법은 모두 칸에 적혀 있다
+                foreach (var p in _d.Passives.Where(x => x.Effects.Any(e => e.Stat == stat)))
+                    Assert.True(where.Contains(p.NameKo), $"{r[0]}: {p.NameKo} 가 칸에 없음");
+            }
+        }
+
         sealed class FloatEq : IEqualityComparer<float>
         {
             public bool Equals(float a, float b) => Math.Abs(a - b) < 1e-4;
