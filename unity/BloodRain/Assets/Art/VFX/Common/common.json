@@ -1,0 +1,7 @@
+{
+  "_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. 흰색 + 알파(색은 셰이더): seal_base 낙관 바탕(글자는 Unity 에서 얹음, 색은 낙관 주홍), ink_splat 먹 튐(+x 로 튐, 한 변 1.4m), ground_ink 바닥 먹 자국(한 변 3m). 회색: noise 소멸(_Dissolve)용 값 노이즈, 감아 이어 붙여도 이음매가 없다.",
+  "sizeMeters": {
+    "ink_splat": 1.4,
+    "ground_ink": 3.0
+  }
+}

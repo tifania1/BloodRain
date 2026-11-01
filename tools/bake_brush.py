@@ -29,6 +29,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "unity/BloodRain/Assets/Art/VFX/Brush"
+COMMON_DIR = ROOT / "unity/BloodRain/Assets/Art/VFX/Common"
+PREVIEW_COMMON = ROOT / "docs/vfx_preview/vfx_common.png"
 PREVIEW = ROOT / "docs/vfx_preview/brush_samjae.png"
 PREVIEW_START = ROOT / "docs/vfx_preview/brush_start9.png"
 SIZE = 512
@@ -323,6 +325,125 @@ def bake():
     return files, layers
 
 
+# ---- 공통 텍스처(V-03): Assets/Art/VFX/Common ----
+
+def splat(seed: int):
+    """시안 makeSplat: 가운데 얼룩 + 한쪽(+x)으로 튄 방울과 줄기. 텍스처 한 변 1.4m 기준."""
+    rng = random.Random(seed)
+    rand = lambda a, b: a + rng.random() * (b - a)
+    S = SIZE
+    cv = Canvas(S)
+    cx, cy = S * 0.38, S / 2
+    pts, r0 = 20, S * 0.1
+    rr = [r0 * rand(0.65, 1.3) for _ in range(pts)]
+    poly = []
+    for i in range(pts * 4):
+        a = i / (pts * 4) * 2 * math.pi
+        f = (i % 4) / 4
+        r = lerp(rr[(i // 4) % pts], rr[(i // 4 + 1) % pts], f * f * (3 - 2 * f))
+        poly.append((cx + math.cos(a) * r, cy + math.sin(a) * r))
+    m = Image.new("L", (S * 2, S * 2), 0)  # 두 배로 그려 줄이면 가장자리가 매끈하다
+    ImageDraw.Draw(m).polygon([(x * 2, y * 2) for x, y in poly], fill=int(255 * 0.88))
+    cv.a = np.asarray(m.resize((S, S), Image.LANCZOS), dtype=np.float32) / 255
+    for _ in range(14):
+        a = rand(-0.65, 0.65)
+        d = rand(0.14, 0.58) * S
+        r = rand(0.006, 0.03) * S * (1.1 - d / S)
+        cv.ellipse(cx + math.cos(a) * d, cy + math.sin(a) * d, r, r, 0, rand(0.6, 0.95))
+    for _ in range(4):
+        a = rand(-0.4, 0.4)
+        l = rand(0.18, 0.42) * S
+        w = rand(0.012, 0.025) * S
+        for i in range(10):
+            u0, u1 = i / 10, (i + 1) / 10
+            cv.line(cx + math.cos(a) * l * u0, cy + math.sin(a) * l * u0, cx + math.cos(a) * l * u1, cy + math.sin(a) * l * u1,
+                    max(0.8, 2 * w * (1 - u1)), 0.8)
+    return cv.a
+
+
+def value_noise(rng: random.Random, cells=((10, 0.62), (32, 0.38))) -> np.ndarray:
+    """시안 noiseField 짜임(값 노이즈 두 겹). 격자를 감아서 이어 붙여도 이음매가 없다."""
+    out = np.zeros((SIZE, SIZE), dtype=np.float32)
+    ys, xs = np.mgrid[0:SIZE, 0:SIZE].astype(np.float32)
+    for n, amp in cells:
+        g = np.array([[rng.random() for _ in range(n)] for _ in range(n)], dtype=np.float32)
+        gx, gy = xs / SIZE * n, ys / SIZE * n
+        ix, iy = np.floor(gx).astype(int), np.floor(gy).astype(int)
+        fx, fy = gx - ix, gy - iy
+        ux, uy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+        x0, x1, y0, y1 = ix % n, (ix + 1) % n, iy % n, (iy + 1) % n
+        top = g[y0, x0] * (1 - ux) + g[y0, x1] * ux
+        bot = g[y1, x0] * (1 - ux) + g[y1, x1] * ux
+        out += amp * (top * (1 - uy) + bot * uy)
+    return out
+
+
+def seal_base(seed: int):
+    """낙관 바탕(글자 없이): 둥근 네모 인주 자국, 가장자리는 갉히고 안에는 인주가 덜 묻은 자리."""
+    rng = random.Random(seed)
+    S = SIZE
+    m = Image.new("L", (S, S), 0)
+    pad = int(S * 0.12)
+    ImageDraw.Draw(m).rounded_rectangle([pad, pad, S - pad, S - pad], radius=int(S * 0.06), fill=255)
+    a = np.asarray(m, dtype=np.float32) / 255
+    n = value_noise(rng, ((16, 0.5), (64, 0.5)))
+    edge = np.asarray(m.resize((S // 8, S // 8), Image.BICUBIC).resize((S, S), Image.BICUBIC), dtype=np.float32) / 255
+    a = a * np.clip((n - (1 - edge) * 0.9 - 0.12) / 0.12, 0, 1)  # 가장자리일수록 잘 갉힌다
+    holes = value_noise(rng, ((24, 0.6), (64, 0.4)))
+    a = a * np.clip((holes - 0.12) / 0.12, 0.6, 1)  # 덜 묻은 자리
+    return a
+
+
+def ground_stain(seed: int):
+    """바닥 먹 자국: 옅게 번진 얼룩. 8초쯤 마르며 옅어지는 건 셰이더 몫."""
+    t = {"kind": "blot", "Rb": 1.0, "soft": True, "lobes": 9, "drops": 6, "softAlpha": 0.55}
+    a, _, _, _ = blot(t, seed)
+    return a
+
+
+def gray_png(a: np.ndarray) -> bytes:
+    buf = io.BytesIO()
+    Image.fromarray(np.uint8(np.round(np.clip(a, 0, 1) * 255)), "L").save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
+def bake_common():
+    files, sheet = {}, []
+    files["seal_base.png"] = white_png(seal_base(7001))
+    sheet.append(("낙관 바탕", files["seal_base.png"]))
+    for i in range(1, 7):
+        files[f"ink_splat_{i}.png"] = white_png(splat(7100 + i))
+    for i in range(1, 5):
+        files[f"ground_ink_{i}.png"] = white_png(ground_stain(7200 + i))
+    for i in range(1, 3):
+        n = value_noise(random.Random(7300 + i))
+        n = (n - n.min()) / (n.max() - n.min())
+        files[f"noise_{i}.png"] = gray_png(n)
+    meta = {"_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. 흰색 + 알파(색은 셰이더): seal_base 낙관 바탕(글자는 Unity 에서 얹음, 색은 낙관 주홍), ink_splat 먹 튐(+x 로 튐, 한 변 1.4m), ground_ink 바닥 먹 자국(한 변 3m). 회색: noise 소멸(_Dissolve)용 값 노이즈, 감아 이어 붙여도 이음매가 없다.",
+            "sizeMeters": {"ink_splat": 1.4, "ground_ink": 3.0}}
+    files["common.json"] = (json.dumps(meta, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    return files
+
+
+def common_preview(files) -> Image.Image:
+    names = ["seal_base.png"] + [f"ink_splat_{i}.png" for i in range(1, 7)] + [f"ground_ink_{i}.png" for i in range(1, 5)] + ["noise_1.png", "noise_2.png"]
+    cell, gap, cols = 200, 10, 5
+    rows = (len(names) + cols - 1) // cols
+    img = Image.new("RGB", (cols * (cell + gap) + gap, rows * (cell + gap) + gap + 40), PAPER)
+    d = ImageDraw.Draw(img)
+    d.text((gap, 8), "공통 텍스처(V-03): 낙관 바탕 · 먹 튐 6 · 바닥 먹 자국 4 · 노이즈 2", fill=INK, font=_font(20))
+    for k, n in enumerate(names):
+        x, y = gap + (k % cols) * (cell + gap), 40 + gap + (k // cols) * (cell + gap)
+        im = Image.open(io.BytesIO(files[n]))
+        if im.mode == "L":
+            img.paste(im.convert("RGB").resize((cell, cell)), (x, y))
+            continue
+        a = im.split()[3].resize((cell, cell), Image.LANCZOS)
+        color = (0xB3, 0x26, 0x1E) if n.startswith("seal") else INK
+        img.paste(Image.new("RGB", (cell, cell), color), (x, y), a)
+    return img
+
+
 def _font(size):
     for f in ["/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
               "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc", "/usr/share/fonts/opentype/noto/NotoSerifCJK-Bold.ttc"]:
@@ -382,12 +503,14 @@ def main(argv=None) -> int:
     ap.add_argument("--check", action="store_true", help="다시 구워서 저장소 파일과 바이트가 같은지만 본다")
     args = ap.parse_args(argv)
     files, layers = bake()
+    common = bake_common()
     if args.check:
         bad = [n for n, b in files.items() if not (OUT_DIR / n).exists() or (OUT_DIR / n).read_bytes() != b]
+        bad += [n for n, b in common.items() if not (COMMON_DIR / n).exists() or (COMMON_DIR / n).read_bytes() != b]
         if bad:
             print("다시 구운 것과 다른 파일:", ", ".join(bad))
             return 1
-        print(f"같음: {len(files)}개")
+        print(f"같음: {len(files) + len(common)}개")
         return 0
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for n, b in files.items():
@@ -395,6 +518,10 @@ def main(argv=None) -> int:
     PREVIEW.parent.mkdir(parents=True, exist_ok=True)
     one, nine = previews(layers)
     one.save(PREVIEW, optimize=True)
+    COMMON_DIR.mkdir(parents=True, exist_ok=True)
+    for n, b in common.items():
+        (COMMON_DIR / n).write_bytes(b)
+    common_preview(common).save(PREVIEW_COMMON, optimize=True)
     nine.save(PREVIEW_START, optimize=True)
     print(f"{len(files)}개를 {OUT_DIR.relative_to(ROOT)} 에, 미리보기 {PREVIEW.relative_to(ROOT)}")
     return 0

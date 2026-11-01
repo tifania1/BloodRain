@@ -43,8 +43,8 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 무공 이펙트는 이미지 생성이 아니라 코드로 만든다(`docs/design/vfx.md` '아트 애셋 나눠 맡기'). 그래서 클라우드 세션이 밤에 할 수 있다. 위에서부터 한다.
 - [x] V-01 2026-11-01 — `tools/bake_brush.py`(samjae.html brushArc 를 numpy·Pillow 로, 시드 고정, `--check`). 삼재검법 1·2·3단 × 3장을 층별(stroke·wash·gold) 흰 획 + 알파 512px 19장으로 `Assets/Art/VFX/Brush/`, 크기는 `samjae.json` sizeMeters. 미리보기 `docs/vfx_preview/brush_samjae.png`, 시안 페이지 캡처와 견줘 획 모양·마른 붓 끊김이 같음. 테스트 2개
 - [x] V-02 2026-11-01 — vfx.md '무공별 획 모양' 표(16종: 호·찌르기·원·점·번짐). bake_brush.py 에 찌르기·번짐을 더해 시작 무공 아홉 × 3단을 구움(삼재검법 3장, 나머지 2장씩, 모두 123장 + 무공별 json). 미리보기 `docs/vfx_preview/brush_start9.png`. 나머지 일곱은 표에 모양만
-- [ ] V-03 (하는 중: 대화 세션 11-01 20:30) 공통 텍스처: 낙관 바탕(글자 없이), 먹 튐 점 6종, 바닥 먹 자국 4종, 노이즈(Dissolve 용) 2종을 같은 도구로 `Assets/Art/VFX/Common/` 에. 미리보기 한 장. 먼저: V-01
-- [ ] V-04 `[U]` 붓 획 셰이더와 이펙트 틀: `_Progress`(각도 마스크로 획이 그어짐)·`_Dissolve`(노이즈 문턱으로 흩어짐) URP 2D 셰이더, 담채 번짐(흐린 복사본이 커지며 옅어짐), 먹 튐 파티클, 바닥 먹 자국 데칼 풀. unity_tasks 로 옮긴다. 먼저: V-01·V-03
+- [x] V-03 2026-11-01 — bake_brush.py 로 낙관 바탕·먹 튐 6·바닥 먹 자국 4·노이즈 2(이음매 없음)를 `Assets/Art/VFX/Common/` 에, `common.json`, 미리보기 `docs/vfx_preview/vfx_common.png`. 테스트 1개
+- [ ] V-04 `[U]` 붓 획 셰이더와 이펙트 틀: `_Progress`(각도 마스크로 획이 그어짐)·`_Dissolve`(노이즈 문턱으로 흩어짐) URP 2D 셰이더, 담채 번짐(흐린 복사본이 커지며 옅어짐), 먹 튐 파티클, 바닥 먹 자국 데칼 풀. unity_tasks 로 옮긴다. 먼저: V-01·V-03 (2026-11-01 unity_tasks 로 옮김)
 - [ ] V-05 `[U]` 시작 무공 9종에 이펙트 붙이기: WeaponRunner 가 때리는 자리에 V-04 틀 + V-02 텍스처, 1단 먹 → 2단 담채 → 3단 금빛·잔상(vfx.md 단계 규칙). 무공 하나 끝날 때마다 웹 빌드 화면 한 장. unity_tasks 로 옮긴다. 먼저: V-02·V-04
 - [ ] V-06 나머지 무공 7종과 절기 16종 이펙트(V-05 와 같은 방식). 먼저: V-05
 
