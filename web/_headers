@@ -22,23 +22,5 @@
   Content-Encoding: br
   Cache-Control: public, max-age=31536000, immutable, no-transform
 
-# 지금 프로젝트 설정은 Gzip(webGLCompressionFormat 1)이라 빌드가 .gz 로 나온다. 같은 방식으로 하나씩만 건다.
-/Build/*.wasm.gz
-  Content-Type: application/wasm
-  Content-Encoding: gzip
-  Cache-Control: public, max-age=31536000, immutable, no-transform
-
-/Build/*.js.gz
-  Content-Type: application/javascript
-  Content-Encoding: gzip
-  Cache-Control: public, max-age=31536000, immutable, no-transform
-
-/Build/*.data.gz
-  Content-Type: application/octet-stream
-  Content-Encoding: gzip
-  Cache-Control: public, max-age=31536000, immutable, no-transform
-
-/Build/*.json.gz
-  Content-Type: application/octet-stream
-  Content-Encoding: gzip
-  Cache-Control: public, max-age=31536000, immutable, no-transform
+# Gzip(.gz) 규칙은 두지 않는다. Cloudflare Pages 가 .gz 를 한 번 더 gzip 으로 감싸 보내서 브라우저가 한 겹만 풀고 로딩이 멈췄다(2026-11-01).
+# 그래서 프로젝트 압축 설정을 Brotli(webGLCompressionFormat 0)로 둔다.
