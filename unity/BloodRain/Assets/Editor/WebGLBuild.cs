@@ -16,7 +16,9 @@ namespace BloodRain.Editor
         [MenuItem("BloodRain/WebGL 빌드")]
         public static void Build()
         {
-            var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
+            // 아직 Boot → 객잔 → Run 장면 흐름(C-10)이 없어 Boot 로 열면 빈 종이만 보인다. 그때까지 웹 빌드는 Run 씬부터 연다.
+            var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path)
+                .OrderBy(p => p.EndsWith("/Run.unity") ? 0 : 1).ToArray();
             var outDir = Path.GetFullPath(Path.Combine(Application.dataPath, "../../../build/WebGL/BloodRain"));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
