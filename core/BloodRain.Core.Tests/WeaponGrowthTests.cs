@@ -167,6 +167,43 @@ namespace BloodRain.Core.Tests
             Assert.Throws<KeyNotFoundException>(() => WeaponGrowth.HasMilestone(sword, 8, "없는 동작"));
         }
 
+        /// <summary>WeaponGrowth 머리 주석의 약속: 개수 값(연타·비도·관통)은 어느 레벨에서도 반올림 경계(.5)에 걸리지 않는다.
+        /// 걸리면 Unity(C#)와 웹 프로토타입(JS Math.round)이 음수·부동소수 오차에 따라 다른 개수를 낼 수 있다.
+        /// 그리고 레벨이 오르면서 개수가 줄지 않는다.</summary>
+        [Fact] public void 개수_성장은_반올림_경계에_안_걸리고_줄지_않는다()
+        {
+            foreach (var w in _d.Weapons)
+                foreach (var (name, pair) in new[] { ("hits", w.Hits), ("projectiles", w.Projectiles), ("pierce", w.Pierce) })
+                {
+                    if (pair == null || pair.Count < 2) continue;
+                    int prev = int.MinValue;
+                    for (int lv = 1; lv <= WeaponGrowth.MaxLevel; lv++)
+                    {
+                        float v = WeaponGrowth.At(pair, lv);
+                        float frac = v - (float)Math.Floor(v);
+                        Assert.True(Math.Abs(frac - 0.5f) > 0.01f, $"{w.Id} {name} Lv{lv} = {v} 가 반올림 경계에 걸림");
+                        int n = WeaponGrowth.CountAt(pair, lv);
+                        Assert.True(n >= prev, $"{w.Id} {name} Lv{lv} 에서 개수가 줄어듦({prev} → {n})");
+                        prev = n;
+                    }
+                }
+        }
+
+        [Fact] public void 쿨다운은_어느_레벨에서도_양수이고_레벨이_오르면_길어지지_않는다()
+        {
+            foreach (var w in _d.Weapons)
+            {
+                float prev = float.MaxValue;
+                for (int lv = 1; lv <= WeaponGrowth.MaxLevel; lv++)
+                {
+                    float c = WeaponGrowth.Cooldown(w, lv);
+                    Assert.True(c >= 0f && !float.IsInfinity(c) && !float.IsNaN(c), $"{w.Id} Lv{lv} 쿨다운 {c}");
+                    Assert.True(c <= prev + 1e-5f, $"{w.Id} Lv{lv} 쿨다운이 길어짐({prev} → {c})");
+                    prev = c;
+                }
+            }
+        }
+
         /// <summary>무공 동작별로 쓰는 성장 값이 데이터에 다 있는지(Unity WeaponRunner·웹 프로토타입이 읽는 것).</summary>
         [Fact] public void 동작이_쓰는_성장_값이_데이터에_있다()
         {

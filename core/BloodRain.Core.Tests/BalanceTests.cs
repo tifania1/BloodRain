@@ -139,8 +139,8 @@ namespace BloodRain.Core.Tests
         {
             float r = _d.Balance.Stats.PlayerBodyRadius;
             Assert.Contains($"플레이어 몸은 반지름 {TestData.Num(r)}m 원입니다", TestData.GddSection("피격과 사망"));
-            Assert.Equal(r, BloodRain.Sim.DodgeSim.BodyRadius);
-            Assert.Equal((double)r, BloodRain.Sim.ContactSim.PlayerRadius, 4);
+            Assert.Equal(BloodRain.Sim.DodgeSim.BodyRadius, r);
+            Assert.Equal(BloodRain.Sim.ContactSim.PlayerRadius, (double)r, 4);
             Assert.Contains("d < e.r + B.stats.playerBodyRadius", TestData.ReadRepoFile("web", "prototype", "template.html"));
         }
 
