@@ -46,6 +46,10 @@ namespace BloodRain.Presentation.Hud
         bool _open, _banishMode, _firstDone, _firstOpen;
         ChapterDef _prologue;
         float _savedTimeScale = 1f;
+        // 복원한 비급(S-04, Soul.RestoredManuals). Synergy.Compute·Preview 에 늘 넘긴다 — null 을 넘기면 비급까지 다 켜진다.
+        IReadOnlyCollection<string> _restored = new List<string>();
+        RectTransform _sealRow;
+        string _sealKey = "";
 
         RectTransform _root, _cardRow;
         TextMeshProUGUI _title;
@@ -72,9 +76,15 @@ namespace BloodRain.Presentation.Hud
             if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();
             if (orbs != null && orbs.TestXp != null) _handledLevel = orbs.TestXp.Level;
             if (EventSystem.current == null) new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            if (Meta.RebirthHandoff.Soul != null) _restored = Meta.RebirthHandoff.Soul.RestoredManuals;
             Build();
+            BuildSeals();
             _root.gameObject.SetActive(false);
+            RefreshSeals();
         }
+
+        /// <summary>지금 로드아웃의 연환·진전(복원한 비급만 켜짐).</summary>
+        public SynergyState Synergy => BloodRain.Core.Build.Synergy.Compute(_data, _loadout, null, _restored);
 
         void Update()
         {
@@ -132,6 +142,7 @@ namespace BloodRain.Presentation.Hud
             _loadout.Apply(o);
             if ((o.Kind == OfferKind.NewWeapon || o.Kind == OfferKind.UpgradeWeapon) && weapons != null) weapons.Learn(o.Id);
             Close();
+            RefreshSeals();
         }
 
         void Reroll()
@@ -232,15 +243,118 @@ namespace BloodRain.Presentation.Hud
             n.textWrappingMode = TextWrappingModes.Normal;
             n.text = name;
             var l = MakeText(card.rectTransform, "단계", 32, Ink, TextAlignmentOptions.Center);
-            Place(l.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(8, -20), new Vector2(290, 50));
+            Place(l.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(8, 10), new Vector2(290, 50));
             l.text = level;
             var d = MakeText(card.rectTransform, "설명", 24, new Color(0.3f, 0.26f, 0.22f), TextAlignmentOptions.Center);
-            Place(d.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 110), new Vector2(290, 150));
+            Place(d.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 98), new Vector2(290, 110));
+            if (o.Kind != OfferKind.Fallback) DrawSynergy(card.rectTransform, o);
             d.textWrappingMode = TextWrappingModes.Normal;
             d.text = note;
             var key = MakeText(card.rectTransform, "키", 26, new Color(0.45f, 0.4f, 0.35f), TextAlignmentOptions.Center);
             Place(key.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 26), new Vector2(290, 36));
             key.text = (index + 1).ToString();
+        }
+
+        // ── 시너지 표시(S-04 첫 판, 기획서 20장, 웹 프로토타입 offerCard) ─────────────
+        //   카드 오른쪽 위 = 문파 인장: 문파 이름 두 자 + 고른 뒤 진전 수/다음 단계. 새 단계에 닿으면 핏빛 인장.
+        //   카드 가운데 아래 = 연환 띠: 이 카드로 켜지면 핏빛 띠 "연환 완성", 짝은 있는데 레벨이 모자라면 먹 띠,
+        //   비급이 잠긴 연환이면 '?' 띠(이름을 감춘다).
+
+        static readonly Color Gold = new Color(0.79f, 0.64f, 0.16f);
+        static readonly Color SealDim = new Color(0.55f, 0.10f, 0.08f, 0.35f);
+
+        void DrawSynergy(RectTransform card, Offer o)
+        {
+            var pv = BloodRain.Core.Build.Synergy.Preview(_data, _loadout, o, null, _restored);
+            if (pv.School != null)
+            {
+                bool reaches = false;
+                foreach (var r in pv.Reached) if (r.School.Id == pv.School.Id) reaches = true;
+                var st = BloodRain.Core.Build.Synergy.Compute(_data, _loadout, null, _restored).School(pv.School.Id);
+                int next = pv.School.MaxTierCount;
+                foreach (var t in pv.School.Tiers) if (t.Count > pv.SchoolCountAfter && t.Count < next) next = t.Count;
+                var seal = MakeImage(card, "문파 인장", reaches ? Blood : SealDim);
+                Place(seal.rectTransform, new Vector2(1f, 1f), new Vector2(-46, -46), new Vector2(72, 72));
+                var sealText = MakeText(seal.rectTransform, "글", 20, reaches ? PaperHot : Blood, TextAlignmentOptions.Center);
+                Stretch(sealText.rectTransform);
+                sealText.lineSpacing = -20;
+                sealText.text = $"{Short(pv.School.NameKo)}\n{pv.SchoolCountAfter}/{next}";
+                if (st.LockedTiers.Count > 0) sealText.text += "?";
+            }
+
+            if (pv.Links.Count == 0) return;
+            LinkHint best = pv.Links[0];
+            foreach (var h in pv.Links) if (h.Completes && !best.Completes) best = h;
+            bool done = best.Completes && !best.Locked;
+            var band = MakeImage(card, "연환 띠", best.Locked ? new Color(0.25f, 0.22f, 0.2f) : done ? Blood : Ink);
+            Place(band.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 180), new Vector2(300, 44));
+            var bt = MakeText(band.rectTransform, "글", 22, done ? Gold : Paper, TextAlignmentOptions.Center);
+            Stretch(bt.rectTransform);
+            bt.textWrappingMode = TextWrappingModes.NoWrap;
+            bt.enableAutoSizing = true; bt.fontSizeMin = 14; bt.fontSizeMax = 22;
+            bt.margin = new Vector4(8, 0, 8, 0);
+            string partner = _data.Weapon(best.Partner).NameKo;
+            bt.text = best.Locked ? (best.Completes ? "? 찢긴 비급의 연환" : "? 찢긴 비급")
+                : done ? $"연환 완성 · {best.Link.NameKo}"
+                : $"연환 {best.Link.NameKo} · {partner} {best.Link.MinLevel}단계까지";
+            if (pv.Links.Count > 1) bt.text += $" 외 {pv.Links.Count - 1}";
+        }
+
+        static string Short(string name) => name.Length <= 2 ? name : name.Substring(0, 2);
+
+        /// <summary>HUD 진전 인장: 화면 왼쪽 위에 단계가 켜진 문파 인장과 켜진 연환 수. 잠긴 단계·연환은 '?' 인장.</summary>
+        void BuildSeals()
+        {
+            var go = new GameObject("진전 인장", typeof(Canvas), typeof(CanvasScaler));
+            go.transform.SetParent(transform, false);
+            var canvas = go.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 40;
+            var sc = go.GetComponent<CanvasScaler>();
+            sc.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            sc.referenceResolution = new Vector2(1920, 1080);
+            sc.matchWidthOrHeight = 0.5f;
+            _sealRow = new GameObject("줄", typeof(RectTransform)).GetComponent<RectTransform>();
+            _sealRow.SetParent(go.transform, false);
+            _sealRow.anchorMin = _sealRow.anchorMax = _sealRow.pivot = new Vector2(0f, 1f);
+            _sealRow.anchoredPosition = new Vector2(24, -120); // 맨 위 줄은 시험용 글자 칸이 쓴다
+            _sealRow.sizeDelta = new Vector2(900, 64);
+            var h = _sealRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.spacing = 10; h.childAlignment = TextAnchor.UpperLeft;
+            h.childControlWidth = h.childControlHeight = false;
+            h.childForceExpandWidth = h.childForceExpandHeight = false;
+        }
+
+        void RefreshSeals()
+        {
+            if (_sealRow == null) return;
+            var syn = Synergy;
+            var key = new System.Text.StringBuilder();
+            foreach (var s in syn.Schools) key.Append(s.School.Id).Append(s.TierCount).Append(s.LockedTiers.Count).Append(',');
+            key.Append(syn.Links.Count).Append('/').Append(syn.LockedLinks.Count);
+            if (key.ToString() == _sealKey) return;
+            _sealKey = key.ToString();
+            // 시너지가 바뀌면 생 기록에 남긴다(LifeLog.NoteSynergy) — Life 가 Run 씬에 붙으면(C-10) 여기서 부른다.
+
+            for (int i = _sealRow.childCount - 1; i >= 0; i--) Destroy(_sealRow.GetChild(i).gameObject);
+            foreach (var s in syn.Schools)
+            {
+                if (s.Tier == null && s.LockedTiers.Count == 0) continue;
+                var seal = MakeImage(_sealRow, s.School.NameKo, s.Tier != null ? Blood : SealDim);
+                seal.rectTransform.sizeDelta = new Vector2(60, 60);
+                var t = MakeText(seal.rectTransform, "글", 18, PaperHot, TextAlignmentOptions.Center);
+                Stretch(t.rectTransform);
+                t.lineSpacing = -20;
+                t.text = s.Tier != null ? $"{Short(s.School.NameKo)}\n{s.TierCount}" : $"{Short(s.School.NameKo)}\n?";
+            }
+            if (syn.Links.Count + syn.LockedLinks.Count > 0)
+            {
+                var band = MakeImage(_sealRow, "연환", Ink);
+                band.rectTransform.sizeDelta = new Vector2(110, 60);
+                var t = MakeText(band.rectTransform, "글", 18, Gold, TextAlignmentOptions.Center);
+                Stretch(t.rectTransform);
+                t.text = syn.LockedLinks.Count > 0 ? $"연환 {syn.Links.Count}\n<color=#E8DEC7>? {syn.LockedLinks.Count}</color>" : $"연환 {syn.Links.Count}";
+            }
         }
 
         (string kind, string name, string level, string note) Describe(Offer o)

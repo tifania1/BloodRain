@@ -85,11 +85,13 @@ namespace BloodRain.Presentation.Meta
                 ? $"첫 환혼 · {string.Join("·", c.Rebirth.FirstRebirth.Select(id => c.Sect(id).NameKo))} 가운데 하나"
                 : $"{soul.Lives + 1}번째 생 · 목 노인이 그날 밤 숨진 제자 {CountKo(Draw.Count)}을 보여 준다";
             _done = false;
+            _soul = soul;
             _map.SetSoul(soul);
             BuildUpgrades(soul);
             Refresh();
         }
 
+        Soul _soul;
         readonly List<MetaShopRow> _upgradeRows = new List<MetaShopRow>();
         RectTransform _upgrades;
 
@@ -132,6 +134,7 @@ namespace BloodRain.Presentation.Meta
             _done = true;
             var body = Draw.Choose(index);
             RebirthHandoff.Body = body;
+            RebirthHandoff.Soul = _soul;
             Debug.Log($"[침방] {body.Sect?.NameKo} 제자로 환생 · {body.Region.NameKo}(혈운 {body.Region.Density:0.0}) · 성질 {string.Join(",", body.Traits.Select(t => t.NameKo))}");
             Chosen?.Invoke(body);
             if (loadRunScene) SceneManager.LoadScene("Run");
@@ -357,5 +360,7 @@ namespace BloodRain.Presentation.Meta
     public static class RebirthHandoff
     {
         public static RebirthBody Body;
+        /// <summary>그 몸을 고른 혼. 레벨업 카드가 복원한 비급(Soul.RestoredManuals)을 읽는다. 없으면(Run 씬을 바로 켬) 새 혼으로 친다.</summary>
+        public static Soul Soul;
     }
 }
