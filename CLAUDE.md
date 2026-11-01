@@ -20,8 +20,9 @@
 
 ## 브랜치와 푸시
 - 작업은 항상 `claude/dev` 로 올린다: `git push origin HEAD:claude/dev`. force push 금지.
-- 푸시 전에 `dotnet test core/BloodRain.sln` 이 통과해야 한다. dotnet 이 없으면:
+- 푸시 전에 `dotnet test core/BloodRain.sln` 이 통과해야 한다. 웹 프로토타입·기획서·데이터만 고쳤어도 마찬가지다(테스트가 template.html·gdd.md·JSON을 읽는다). dotnet 이 없으면:
   `curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/di.sh && bash /tmp/di.sh --channel 8.0 --install-dir ~/.dotnet && export PATH=~/.dotnet:$PATH`
+- 세션을 시작하면 클론한 저장소에서 `git config core.hooksPath tools/hooks` 를 한 번 한다. 그러면 푸시할 때마다 `tools/hooks/pre-push` 가 테스트(Core를 고쳤으면 Unity 조건 빌드, 웹·데이터를 고쳤으면 웹 빌드까지)를 돌리고 실패하면 푸시를 막는다. 잠금 파일·daily 만 바뀐 푸시는 바로 통과한다. `--no-verify` 로 건너뛰지 않는다. 실패한 커밋이 올라가면 Actions 가 실패하고 사람에게 메일이 간다.
 - `main` 승격은 정리 세션(평일 06:21, 주말 22:21)만 한다. 아래 셋이 모두 맞을 때만 `git push origin claude/dev:main`.
   1. 테스트 실패 0
   2. `gh run list --branch claude/dev --workflow core-tests.yml --limit 1 --json conclusion` 가 success

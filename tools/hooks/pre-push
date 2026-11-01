@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# 푸시하기 전에 테스트를 돌려서, 실패하는 커밋이 claude/dev 에 올라가지 않게 막는다.
+# (테스트를 빼먹고 올리면 GitHub Actions 가 실패하고 사람에게 실패 메일이 간다.)
+# 켜기: 저장소에서 한 번 `git config core.hooksPath tools/hooks`
+# 잠금 파일·daily 만 바뀐 푸시는 그냥 통과시킨다. --no-verify 로 건너뛰지 않는다.
+set -u
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+zero=0000000000000000000000000000000000000000
+changed=""
+while read -r _lref lsha _rref rsha; do
+  [ "$lsha" = "$zero" ] && continue                      # 브랜치 지우기는 볼 것 없음
+  base="$rsha"
+  if [ "$rsha" = "$zero" ]; then
+    base=$(git merge-base "$lsha" origin/main 2>/dev/null || true)
+  fi
+  if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+    changed+="$(git diff --name-only "$base" "$lsha")"$'\n'
+  else
+    changed+="(비교 대상 없음)"$'\n'                      # 모르면 전부 돌린다
+  fi
+done
+
+need=$(printf '%s\n' "$changed" | grep -v '^$' | grep -Ev '^docs/(session_lock\.md|daily/)' || true)
+[ -z "$need" ] && exit 0
+
+export PATH="$HOME/.dotnet:$PATH"
+if ! command -v dotnet >/dev/null 2>&1; then
+  echo "pre-push: dotnet 이 없다. CLAUDE.md 의 설치 줄을 먼저 돌린다." >&2
+  exit 1
+fi
+
+echo "pre-push: 테스트를 돌린다(바뀐 파일 $(printf '%s\n' "$need" | wc -l)개)" >&2
+if ! dotnet test core/BloodRain.sln --nologo -v q >&2; then
+  echo "pre-push: 테스트 실패. 고친 뒤 다시 푸시한다." >&2
+  exit 1
+fi
+
+if printf '%s\n' "$need" | grep -q '^unity/BloodRain/Assets/Scripts/Core/'; then
+  # CI 와 같은 Unity 조건 빌드(nullable 꺼짐)
+  if ! dotnet build core/BloodRain.Core/BloodRain.Core.csproj --nologo -v q -p:Nullable=disable \
+       -p:TreatWarningsAsErrors=false -warnaserror:CS8632 -o /tmp/unity-like-prepush >&2; then
+    echo "pre-push: Unity 조건 빌드 실패(? 를 쓰는 파일 맨 위에 #nullable enable)." >&2
+    exit 1
+  fi
+fi
+
+if printf '%s\n' "$need" | grep -Eq '^(web/|tools/build_web_prototype\.py|unity/BloodRain/Assets/Resources/Data/)'; then
+  if ! python3 tools/build_web_prototype.py >/dev/null; then
+    echo "pre-push: 웹 프로토타입 빌드 실패." >&2
+    exit 1
+  fi
+fi
+exit 0
