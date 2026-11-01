@@ -52,6 +52,17 @@ namespace BloodRain.Core.Tests
             Assert.Contains("3:20", text);
         }
 
+        [Fact] public void 조정_시험_표는_시험마다_한_줄이고_지금_데이터는_위_표와_같다()
+        {
+            var text = PrologueSim.Report(Data.Value, 1, TestData.DataDir, scenarios: true);
+            foreach (var sc in Scenarios.All) Assert.Contains($"| {sc.NameKo} |", text);
+            var now = PrologueSim.Measure(Data.Value, "average", 1);
+            Assert.Contains($"| 지금 데이터 | {PrologueSim.Clock(now.FirstLevelUp)} | {PrologueSim.Clock(now.FirstUltimate)} |", text);
+            // 시강 처치 진기는 줄이기 시험에서도 1 이라 서장 첫 레벨업은 그대로
+            var lean = PrologueSim.Measure(Data.Value, "average", 1, Scenarios.Find("kill-xp").ApplyOptions);
+            Assert.Equal(now.FirstLevelUp, lean.FirstLevelUp);
+        }
+
         [Fact] public void 시각_적기()
         {
             Assert.Equal("3:20", PrologueSim.Clock(10 / 3.0));

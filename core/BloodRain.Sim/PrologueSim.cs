@@ -38,10 +38,15 @@ namespace BloodRain.Sim
         public static SimResult RunOne(SimData data, int seed, string policy = "average") =>
             RunSimulator.Run(data, new SimOptions { Prologue = true, Seed = seed, Policy = policy, Minutes = BossMinute, Character = data.Game.Cheonha.PrologueBody.Character });
 
-        public static PrologueRow Measure(SimData data, string policy, int seeds)
+        public static PrologueRow Measure(SimData data, string policy, int seeds) => Measure(data, policy, seeds, o => o);
+
+        /// <summary>apply 로 조정 시험(Scenarios)의 옵션을 얹는다.</summary>
+        public static PrologueRow Measure(SimData data, string policy, int seeds, Func<SimOptions, SimOptions> apply)
         {
             var g = data.Game;
-            var runs = Enumerable.Range(1, seeds).Select(s => RunOne(data, s, policy)).ToList();
+            var runs = Enumerable.Range(1, seeds)
+                .Select(s => RunSimulator.Run(data, apply(new SimOptions { Prologue = true, Seed = s, Policy = policy, Minutes = BossMinute, Character = g.Cheonha.PrologueBody.Character })))
+                .ToList();
             double floor = g.Cheonha.PrologueBody.BossHealthFloor;
             var boss = g.Bosses.First(b => b.Id == g.Cheonha.PrologueBody.Boss);
             double toCut = Prologue.BossMaxHealth(boss) * (1 - floor);
@@ -90,7 +95,8 @@ namespace BloodRain.Sim
 
         static string F0(double x) => double.IsNaN(x) ? "-" : x.ToString("0", CultureInfo.InvariantCulture);
 
-        public static string Report(SimData data, int seeds = 30)
+        /// <summary>scenarios 면 조정 시험(Scenarios.All)마다 dataDir 에서 데이터를 새로 읽어 평균 정책으로 나란히 놓는다(dataDir null 이면 기본 데이터 폴더).</summary>
+        public static string Report(SimData data, int seeds = 30, string? dataDir = null, bool scenarios = false)
         {
             var g = data.Game;
             var rows = new[] { "average", "greedy", "slow" }.Select(p => Measure(data, p, seeds)).ToList();
@@ -127,6 +133,23 @@ namespace BloodRain.Sim
             foreach (var r in rows)
                 sb.AppendLine($"| {r.Policy} | {F0(r.Level9)} | {F0(r.SingleDps9)} | {F0(r.AwakenSeconds)} | {r.JeoljeongBefore9}/{r.Runs} |");
             sb.AppendLine();
+            if (scenarios)
+            {
+                sb.AppendLine("## 조정 시험을 얹으면(평균 정책)");
+                sb.AppendLine();
+                sb.AppendLine("level-curve.md·decisions.md 와 같은 조정 시험(`Scenarios.cs`). 서장 모양을 표에 맞추려면 어느 손잡이가 듣는지 보려고 붙였다. 처치 진기 줄이기는 시강·혈인을 1 그대로 두니 서장에는 거의 안 듣는다.");
+                sb.AppendLine();
+                sb.AppendLine("| 조정 시험 | 첫 레벨업 | 오의 | 이류 | 일류 | 9분 레벨 | 장삼 각성까지(초) |");
+                sb.AppendLine("|---|---|---|---|---|---|---|");
+                sb.AppendLine($"| 기획서 4장 | {Clock(TargetFirstLevelUp)} | {Clock(TargetUltimate)} | {Clock(TargetIryu)} | {Clock(TargetIlryu)} | - | 18 (화력 300) |");
+                foreach (var sc in Scenarios.All)
+                {
+                    var d = sc.LoadData(dataDir);
+                    var r = Measure(d, "average", seeds, sc.ApplyOptions);
+                    sb.AppendLine($"| {sc.NameKo} | {Clock(r.FirstLevelUp)} | {Clock(r.FirstUltimate)} | {Cell(r.Iryu, r.IryuReached, r.Runs)} | {Cell(r.Ilryu, r.IlryuReached, r.Runs)} | {F0(r.Level9)} | {F0(r.AwakenSeconds)} |");
+                }
+                sb.AppendLine();
+            }
             sb.AppendLine("## 읽는 법");
             sb.AppendLine();
             var avg = rows[0];
@@ -134,6 +157,8 @@ namespace BloodRain.Sim
             sb.AppendLine($"- 첫 레벨업 {Clock(avg.FirstLevelUp)}(기획서 0:40), 오의 게이지 {Clock(avg.FirstUltimate)}(2:00). 오의 게이지는 처치마다 차서 서장처럼 시강만 나오는 판에서는 처치 수가 곧 시각이다.");
             sb.AppendLine($"- 음양은 {avg.OffHarmonyRuns}/{avg.Runs}판에서 9분 안에 태극을 벗어났다(기획서 7:30에 '처음 기울며 짧은 설명'). 안 기운 판이 많으면 설명 문구는 시각이 아니라 '처음 기울 때'에 붙여야 한다.");
             sb.AppendLine($"- 장삼전 각성까지 평균 정책 {F0(avg.AwakenSeconds)}초. 서장 장삼은 처치 목표 {boss.TargetKillSeconds:0}초(enemies.json targetKillSeconds)인데, 각성 전 90%를 깎는 데 이만큼 걸리고 각성 뒤 남은 10%를 절기로 마저 친다.");
+            if (scenarios)
+                sb.AppendLine("- 조정 시험 가운데 서장 시각을 움직이는 것은 생성 채움 비율(0.3 → 0.1)뿐이다. 이류는 표와 맞지만(3:20 근처) 일류가 1분쯤 늦어지고 장삼 각성도 길어진다. 서장만 따로 바꾸려면 chapters.json prologue 에 채움 비율을 따로 두는 길이 있다(지금은 balance.json 하나를 같이 쓴다).");
             sb.AppendLine("- 빠진 것: 장삼전 동안 레벨업·잡몹 진기, 장삼 패턴(포승줄 묶임 1초·호루라기 시강 소환), 덩이(이류부터 4명)의 그림. 정책은 사람이 아니라 정해진 규칙으로 고른다.");
             return sb.ToString();
         }

@@ -131,7 +131,7 @@ namespace BloodRain.Sim
             if (prologue.Length > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(prologue))!);
-                File.WriteAllText(prologue, PrologueSim.Report(data, seeds > 0 ? seeds : 30), new UTF8Encoding(false));
+                File.WriteAllText(prologue, PrologueSim.Report(data, seeds > 0 ? seeds : 30, dataDir, scenarios: true), new UTF8Encoding(false));
                 Console.WriteLine($"보고서를 썼습니다: {prologue}");
                 return 0;
             }
