@@ -1,0 +1,1 @@
+Game VFX source texture. One isolated element painted with black sumi-e ink and expressive dry-brush strokes on a perfectly flat pure white (#FFFFFF) background. No paper texture, no shadow, no background gradient, no frame, generous empty margin, the whole element inside the image. No text, no letters, no seal stamp, no signature, no watermark.

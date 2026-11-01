@@ -40,9 +40,10 @@
 - `web/prototype/` — 브라우저 프로토타입. 원본은 `template.html` 하나이고 데이터 JSON을 빌드 때 그대로 넣는다. 빌드 결과는 커밋하지 않는다.
   푸시하면 CI(`web-prototype.yml`)가 묶어서 Cloudflare Pages에 올린다(claude/dev는 미리보기 주소, main은 공개 주소 https://bloodrain-proto.pages.dev). 설명은 그 폴더 README.
 
-## 이미지
-- 이미지를 직접 생성하지 않는다(클라우드에서는 이미지 서비스가 막혀 있다).
-- 필요한 이미지는 `art_queue/queue.jsonl` 에 `status: "todo"` 줄로 추가한다. 프롬프트는 `{STYLE}` 로 시작하고 기획서 '13. 아트 디렉션'의 틀을 따른다. 사람이 있을 때 ChatGPT 앱에서 뽑는다.
+## 이미지와 이펙트
+- 생산·검수·적용 순서는 `docs/design/art_pipeline.md`, 이펙트 모양 규칙은 `docs/design/vfx.md`. 이펙트는 셰이더와 아트를 함께 써서 최대한 예쁘게(2026-11-01 사람).
+- 클라우드 세션은 이미지를 생성하지 않는다(이미지 서비스가 막혀 있다). 필요한 이미지는 `art_queue/queue.jsonl` 에 `status: "todo"` 줄로 추가한다. 원화는 `{STYLE}`, 이펙트 재료는 `{VFX_INK}`(흰 바탕 먹)·`{VFX_GLOW}`(검은 바탕 빛)로 시작하고 기획서 '13. 아트 디렉션'의 틀을 따른다. ChatGPT 웹(회사 PC 크롬의 Claude 확장)으로 뽑는다.
+- 코드로 되는 이펙트 텍스처(붓 획·먹 튐·자국·노이즈)는 `tools/bake_brush.py` 로 굽는다.
 - 같은 캐릭터·같은 계열 적은 같은 `chat` 값을 준다(같은 대화방에서 뽑아야 그림체가 맞는다).
 - 이미지에 글자를 굽지 않는다. 모든 글자는 Unity에서 얹는다.
 

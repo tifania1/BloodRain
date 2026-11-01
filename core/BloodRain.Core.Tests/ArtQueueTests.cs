@@ -11,7 +11,7 @@ namespace BloodRain.Core.Tests
     /// <summary>art_queue/queue.jsonl 한 줄 한 줄이 CLAUDE.md '이미지' 규칙과 postprocess_art.py 가 기대하는 모양을 지키는지.</summary>
     public class ArtQueueTests
     {
-        static readonly string[] Statuses = { "todo", "picked", "imported" };
+        static readonly string[] Statuses = { "todo", "generated", "picked", "imported", "rejected" };
 
         static List<JObject> Rows() =>
             File.ReadAllLines(Path.Combine(RepoRoot, "art_queue", "queue.jsonl")).Where(l => l.Trim().Length > 0)
@@ -38,10 +38,36 @@ namespace BloodRain.Core.Tests
                 var id = (string)o["id"]!;
                 Assert.Contains((string)o["status"]!, Statuses);
                 Assert.True(kinds.ContainsKey((string)o["kind"]!), $"{id}: postprocess_art.py 가 모르는 종류 {o["kind"]}");
-                Assert.StartsWith("{STYLE}", (string)o["prompt"]!);
+                // 원화는 {STYLE}, 이펙트 재료는 바탕이 달라 {VFX_INK}(흰 바탕 먹)·{VFX_GLOW}(검은 바탕 빛)로 시작한다
+                var head = (string)o["kind"]! switch { "vfx_ink" => "{VFX_INK}", "vfx_glow" => "{VFX_GLOW}", _ => "{STYLE}" };
+                Assert.StartsWith(head, (string)o["prompt"]!);
                 Assert.False(string.IsNullOrWhiteSpace((string?)o["chat"]), $"{id}: chat 이 비었다");
                 Assert.StartsWith("art_inbox/", (string)o["save_as"]!);
                 Assert.Matches(@"^\d+:\d+$", (string)o["ratio"]!);
+            }
+        }
+
+        [Fact] public void 문구_앞머리_파일이_있다()
+        {
+            foreach (var f in new[] { "STYLE.txt", "VFX_INK.txt", "VFX_GLOW.txt" })
+                Assert.True(File.Exists(Path.Combine(RepoRoot, "art_queue", f)), $"art_queue/{f} 가 없다");
+        }
+
+        [Fact] public void 탈락한_줄은_이유를_적는다()
+        {
+            foreach (var o in Rows().Where(o => (string)o["status"]! == "rejected"))
+                Assert.False(string.IsNullOrWhiteSpace((string?)o["reason"]), $"{o["id"]}: rejected 인데 reason 이 없다");
+        }
+
+        [Fact] public void 이펙트_재료_줄은_방향과_크기가_있다()
+        {
+            // tools/import_vfx_ai.py 가 ai.json 에 옮겨 적고 셰이더가 그어짐 방향으로 쓴다(art_pipeline.md '문구')
+            var dirs = new[] { "radial", "down", "up", "right", "left" };
+            foreach (var o in Rows().Where(o => ((string)o["kind"]!).StartsWith("vfx_")))
+            {
+                Assert.Contains((string)o["progress"]!, dirs);
+                Assert.True((double)o["sizeM"]! > 0, $"{o["id"]}: sizeM");
+                Assert.False(string.IsNullOrWhiteSpace((string?)o["use"]), $"{o["id"]}: use(어디에 쓰는지)가 비었다");
             }
         }
 
@@ -62,7 +88,8 @@ namespace BloodRain.Core.Tests
             foreach (var o in Rows().Where(o => (string)o["status"]! == "imported"))
             {
                 var kind = (string)o["kind"]!;
-                var file = (string)o["id"]! + (jpg.Contains(kind) ? ".jpg" : ".png");
+                // 이펙트 재료는 층 이름이 붙는다(import_vfx_ai.py): 먹은 _stroke, 빛은 _gold(+_core)
+                var file = (string)o["id"]! + (kind == "vfx_ink" ? "_stroke.png" : kind == "vfx_glow" ? "_gold.png" : jpg.Contains(kind) ? ".jpg" : ".png");
                 var path = Path.Combine(new[] { RepoRoot, "unity", "BloodRain", "Assets", "Art" }
                     .Concat(kinds[kind].Split('/')).Append(file).ToArray());
                 Assert.True(File.Exists(path), $"{o["id"]}: imported 인데 {path} 가 없다");

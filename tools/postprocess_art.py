@@ -40,6 +40,8 @@ KINDS = {
     "card": ("Cards", 1536, False),
     "background": ("Backgrounds", 1536, False),
     "props": ("Props", 2048, True),
+    "vfx_ink": ("VFX/AI", 512, False),
+    "vfx_glow": ("VFX/AI", 512, False),
 }
 
 
@@ -102,6 +104,9 @@ def process(row: dict, dry: bool) -> Path | None:
     kind = row["kind"]
     if kind not in KINDS:
         print(f"  건너뜀 {row['id']}: 모르는 종류 {kind}")
+        return None
+    if kind.startswith("vfx_"):
+        print(f"  건너뜀 {row['id']}: 이펙트 재료는 tools/import_vfx_ai.py 가 맡는다")
         return None
     folder, size, cut_bg = KINDS[kind]
     src = ROOT / row["save_as"]
