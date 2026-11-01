@@ -1,6 +1,7 @@
 // 붓 획 이펙트(V-04, vfx.md '만드는 법'). tools/bake_brush.py 가 구운 흰 획 + 알파 텍스처에 색을 입혀 그린다.
 //   _Progress 0~1: 획이 그어지는 정도. 호(_Kind 0)는 텍스처 가운데를 중심으로 한 각도 마스크(-_Span/2 → +_Span/2, 가운데가 +x),
 //                 찌르기(_Kind 1)는 +x 방향으로 진행(uv.x 0 → 1).
+//                 AI 재료(Art/VFX/AI/ai.json progress)는 2 radial·3 down·4 up·1 right·5 left (VfxBootstrap.KindOf).
 //   _Dissolve 0~1: Common/noise_1 이 문턱보다 작은 곳부터 구멍이 나며 흩어진다. 가장자리는 조금 진하게.
 //   _Color: 층 색(stroke 먹 #141414, wash 청회 #4F7F7A, gold #C9A227). _Alpha 로 전체를 옅게(담채가 커지며 옅어질 때).
 // 머티리얼 하나를 MaterialPropertyBlock 으로 돌려 쓴다(WeaponRunner).
@@ -14,14 +15,16 @@ Shader "BloodRain/BrushStroke"
         _Progress ("Progress", Range(0, 1)) = 1
         _Dissolve ("Dissolve", Range(0, 1)) = 0
         _Span ("Arc span (rad)", Float) = 2.3
-        _Kind ("0 arc, 1 line", Float) = 0
+        _Kind ("0 arc, 1 line(right), 2 radial, 3 down, 4 up, 5 left", Float) = 0
         _Alpha ("Alpha", Range(0, 1)) = 1
         _Feather ("Mask feather", Range(0.001, 0.3)) = 0.06
+        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst blend (10 보통, 1 더하기)", Float) = 10
     }
     SubShader
     {
         Tags { "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True" }
-        Blend SrcAlpha OneMinusSrcAlpha
+        // 먹(stroke·wash)은 보통 섞기, AI 빛 재료(ai_glow 의 gold·core 층)는 _DstBlend = One 으로 더하기(BrushStrokeAdd.mat)
+        Blend SrcAlpha [_DstBlend]
         ZWrite Off Cull Off
 
         Pass
@@ -62,7 +65,11 @@ Shader "BloodRain/BrushStroke"
                     float ang = atan2(d.y, d.x);                // -pi ~ pi, 가운데가 +x
                     t = saturate(ang / max(_Span, 1e-3) + 0.5);
                 }
-                else t = i.uv.x;
+                else if (_Kind < 1.5) t = i.uv.x;                       // 찌르기·AI right: 왼 → 오른
+                else if (_Kind < 2.5) t = saturate(length(i.uv - 0.5) * 2.0); // AI radial: 가운데 → 바깥
+                else if (_Kind < 3.5) t = 1.0 - i.uv.y;                 // AI down: 위 → 아래
+                else if (_Kind < 4.5) t = i.uv.y;                       // AI up
+                else t = 1.0 - i.uv.x;                                  // AI left
                 float reveal = _Progress * (1.0 + _Feather);
                 a *= 1.0 - smoothstep(reveal - _Feather, reveal, t);
 

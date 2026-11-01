@@ -35,6 +35,7 @@ Material:
     m_Floats:
     - _Alpha: 1
     - _Dissolve: 0
+    - _DstBlend: 10
     - _Feather: 0.06
     - _Kind: 0
     - _Progress: 1

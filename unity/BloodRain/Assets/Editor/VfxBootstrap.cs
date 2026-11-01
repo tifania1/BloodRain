@@ -15,14 +15,17 @@ namespace BloodRain.Editor
     {
         const string BrushDir = "Assets/Art/VFX/Brush";
         const string CommonDir = "Assets/Art/VFX/Common";
+        const string AiDir = "Assets/Art/VFX/AI";
         const string MaterialPath = "Assets/Art/VFX/BrushStroke.mat";
+        const string AddMaterialPath = "Assets/Art/VFX/BrushStrokeAdd.mat";
         const string RunScenePath = "Assets/Scenes/Run.unity";
 
         [MenuItem("BloodRain/Bootstrap/붓 획 이펙트(텍스처 설정·머티리얼·삼재검법 1단)")]
         public static void Run()
         {
-            int n = ImportSettings(BrushDir) + ImportSettings(CommonDir);
+            int n = ImportSettings(BrushDir) + ImportSettings(CommonDir) + ImportSettings(AiDir);
             var mat = EnsureMaterial();
+            EnsureAddMaterial();
 
             var scene = EditorSceneManager.GetActiveScene();
             if (scene.path != RunScenePath) scene = EditorSceneManager.OpenScene(RunScenePath);
@@ -55,9 +58,40 @@ namespace BloodRain.Editor
             }
             mat.shader = Shader.Find("BloodRain/BrushStroke");
             mat.SetTexture("_NoiseTex", Load($"{CommonDir}/noise_1.png"));
+            mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             EditorUtility.SetDirty(mat);
             AssetDatabase.SaveAssets();
             return mat;
+        }
+
+        /// <summary>AI 빛 재료(ai_glow 의 gold·core 층)용: 같은 셰이더에 더하기 섞기(Blend SrcAlpha One).</summary>
+        public static Material EnsureAddMaterial()
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(AddMaterialPath);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("BloodRain/BrushStroke")) { name = "BrushStrokeAdd" };
+                AssetDatabase.CreateAsset(mat, AddMaterialPath);
+            }
+            mat.shader = Shader.Find("BloodRain/BrushStroke");
+            mat.SetTexture("_NoiseTex", Load($"{CommonDir}/noise_1.png"));
+            mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.One);
+            EditorUtility.SetDirty(mat);
+            AssetDatabase.SaveAssets();
+            return mat;
+        }
+
+        /// <summary>ai.json progress → 셰이더 _Kind(radial 2·down 3·up 4·right 1·left 5).</summary>
+        public static float KindOf(string progress)
+        {
+            switch (progress)
+            {
+                case "radial": return 2f;
+                case "down": return 3f;
+                case "up": return 4f;
+                case "left": return 5f;
+                default: return 1f; // right
+            }
         }
 
         /// <summary>폴더 json 들의 textures[].name → sizeMeters.</summary>
