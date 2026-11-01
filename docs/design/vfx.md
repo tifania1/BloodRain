@@ -38,6 +38,8 @@
 | 天地人 글자, 낙관 | 글자는 Yuji Boku 글꼴(TextMeshPro SDF)로 얹고, 낙관 바탕만 텍스처. 글자를 이미지에 굽지 않는다 |
 | 히트스톱·흔들림 | 시간 배율 0 + Cinemachine Impulse |
 
+붓 획 굽기는 `python tools/bake_brush.py`(numpy·Pillow, 시드 고정이라 다시 구워도 같은 그림, `--check` 로 비교). 흰 획 + 알파 512px 를 층마다 따로 굽는다: `stroke`(본 획), `wash`(담채, 2단부터), `gold`(금빛 터럭, 3단부터). 색은 셰이더가 입힌다. 텍스처 가운데가 몸 위치이고 획은 +x 쪽에 걸리니 회전만 하면 된다. 한 변이 몇 m 인지는 같은 폴더 `samjae.json` 의 `sizeMeters`. 미리보기는 `docs/vfx_preview/brush_samjae.png`.
+
 ## 절기 각성 연출
 
 절기를 얻는 순간은 한 판에 한두 번뿐이라 화면 전체를 멈춰 세운다. 시간표와 규칙은 기획서 8장 '절기 그릇과 각성' 표가 기준이다.
