@@ -237,6 +237,26 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        [Fact] public void 능력치_표_기본값이_balance_stats_와_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("능력치")).ToDictionary(r => r[0]);
+            var s = _d.Balance.Stats;
+            Assert.Equal($"{TestData.Num(s.MagnetBase)}m", rows["흡기"][2]);
+            Assert.Contains($"최대 -{TestData.Num(s.CooldownReductionCap * 100)}%", rows["쾌속"][3]);
+        }
+
+        [Fact] public void 용어_대응표_숫자가_balance_와_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("용어와 게임 규칙 대응표")).ToDictionary(r => r[0]);
+            var b = _d.Balance;
+            Assert.Equal($"청({TestData.Num(b.Orbs.Small)})·녹({TestData.Num(b.Orbs.Medium)})·적({TestData.Num(b.Orbs.Large)}) 세 크기", rows["진기(眞氣)"][2]);
+            Assert.Equal($"{TestData.Num(b.UltimateCharge.Max)}이 되면 오의 사용 가능", rows["단전"][2]);
+            Assert.Equal($"슬롯 {b.Slots.Weapons}칸", rows["외공 초식"][2]);
+            Assert.Equal($"슬롯 {b.Slots.Passives}칸", rows["심법(心法)"][2]);
+            Assert.Contains($"공격 무공 Lv{b.Levels.WeaponMax} + 짝 심법 Lv{b.Evolution.PairPassiveMinLevel}", rows["절기(絶技)"][1]);
+            Assert.Equal($"기본 {b.Dash.Charges}회 충전", rows["경공(輕功)"][2]);
+        }
+
         sealed class FloatEq : IEqualityComparer<float>
         {
             public bool Equals(float a, float b) => Math.Abs(a - b) < 1e-4;
