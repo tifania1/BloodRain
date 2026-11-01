@@ -190,6 +190,8 @@ namespace BloodRain.Core.Data
         public bool OnlyInWater;
         /// <summary>짝이 쓰러지면 남은 쪽이 이 초 뒤 되살린다(흑백 쌍강시). 0 이면 없음.</summary>
         public float ReviveSeconds;
+        /// <summary>쌍으로 나오는 적의 간격·되살 때 기혈(twin_revive). 없으면 null.</summary>
+        public EnemyTwin? Twin;
         /// <summary>닿으면 이 초 동안 둔화(빙강시). 0 이면 없음.</summary>
         public float OnHitSlowSeconds;
         /// <summary>둔화 동안 이동속도 배율(빙강시 0.65). 다시 닿으면 시간만 처음부터. 0 이면 1로 본다.</summary>
@@ -260,6 +262,15 @@ namespace BloodRain.Core.Data
     {
         public float DamageScale;
         public float CooldownScale;
+    }
+
+    /// <summary>twin_revive: 둘이 Gap m 떨어져 한 쌍으로 나와 같이 움직인다. 한쪽이 쓰러지면 그 자리에 눕고,
+    /// 남은 쪽이 ReviveSeconds 버티면 누운 쪽이 최대 기혈 × ReviveHealth 로 일어난다. 둘 다 누우면 끝.
+    /// 되살아난 몸은 다시 쓰러져도 진기 구슬을 떨구지 않는다(되살림으로 진기를 캐지 못하게). 정예 한 쌍은 보갑 하나.</summary>
+    public sealed class EnemyTwin
+    {
+        public float Gap;
+        public float ReviveHealth;
     }
 
     public sealed class EnemyCurve

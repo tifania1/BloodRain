@@ -145,6 +145,24 @@ namespace BloodRain.Core.Tests
             Assert.All(_d.Enemies.Where(e => e.OnDeath != null), e => { Assert.NotNull(e.Death); Assert.True(e.Death!.Radius > 0); });
             Assert.All(_d.Enemies.Where(e => e.Behavior == "fly_curve"), e => Assert.NotNull(e.Curve));
         }
+        /// <summary>C-02b: 흑백 쌍강시(잡몹·정예 대형) 간격·되살림 문단과 enemies.json.</summary>
+        [Fact] public void 쌍강시_되살림_숫자가_기획서_문단과_같다()
+        {
+            var sec = GddSection("지역별 고유 적");
+            var t = _d.Enemy("twin_gangsi");
+            Assert.Contains($"흑백 쌍강시는 {Num(t.Twin!.Gap)}m 떨어져 한 쌍으로", sec);
+            Assert.Contains($"남은 쪽이 {Num(t.ReviveSeconds)}초 버티면 누운 쪽이 최대 기혈의 {Num(t.Twin.ReviveHealth * 100)}%로 일어납니다", sec);
+            var g = _d.Enemy("twin_gangsi_great");
+            Assert.Contains($"흑백 쌍강시 대형은 {Num(g.Twin!.Gap)}m 간격으로 같은 규칙이고 기혈 {Num(g.Health)}은 한 몸 값", sec);
+            Assert.Equal(t.ReviveSeconds, g.ReviveSeconds);
+            Assert.Equal(t.Twin.ReviveHealth, g.Twin.ReviveHealth);
+            // twin_revive 는 모두 간격·되살 기혈·초가 있다
+            Assert.All(_d.Enemies.Where(e => e.Behavior == "twin_revive"), e =>
+            {
+                Assert.NotNull(e.Twin);
+                Assert.True(e.ReviveSeconds > 0 && e.Twin!.Gap > 0 && e.Twin.ReviveHealth > 0 && e.Twin.ReviveHealth <= 1);
+            });
+        }
         /// <summary>C-13: 지역 고유 적 나머지 행동 숫자 표(6장 '지역별 고유 적' 둘째 표)와 enemies.json.</summary>
         [Fact] public void 지역_고유_적_행동_숫자_표가_데이터와_같다()
         {
