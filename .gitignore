@@ -45,3 +45,8 @@ web/prototype/.artifact/
 
 # 에이전트 작업 폴더
 .claude/worktrees/
+
+# Unity 6.3 이 열 때마다 다시 만드는 솔루션 파일(바뀌면 PC Unity 세션이 '변경 남음'으로 건너뛴다)
+unity/BloodRain/*.slnx
+# wrangler 로컬 캐시
+.wrangler/

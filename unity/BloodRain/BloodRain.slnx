@@ -1,5 +1,0 @@
-﻿<Solution>
-  <Project Path="BloodRain.Core.csproj" />
-  <Project Path="BloodRain.Presentation.csproj" />
-  <Project Path="BloodRain.Editor.csproj" />
-</Solution>
