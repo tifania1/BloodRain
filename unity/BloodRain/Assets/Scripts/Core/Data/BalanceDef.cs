@@ -278,8 +278,18 @@ namespace BloodRain.Core.Data
         public List<LanternDropDef> Lantern = new List<LanternDropDef>();
     }
 
+    /// <summary>적 상태(balance.json enemyStatus, 기획서 9장 '날아가는 것과 넉백' 아래).</summary>
+    public sealed class EnemyStatusDef
+    {
+        /// <summary>화상·중독 지속 피해가 들어가는 간격 초. 한 번에 초당 피해 x 이 값.</summary>
+        public float BurnTickSeconds = 0.5f;
+        /// <summary>둔화가 풀리는 속도(초당 비율). 0.3 둔화는 0.5초에 풀린다.</summary>
+        public float SlowFadePerSecond = 0.6f;
+    }
+
     public sealed class BalanceDef
     {
+        public EnemyStatusDef EnemyStatus = new EnemyStatusDef();
         public DropsDef Drops = new DropsDef();
         public LimitsDef Limits = new LimitsDef();
         public OrbValuesDef Orbs = new OrbValuesDef();

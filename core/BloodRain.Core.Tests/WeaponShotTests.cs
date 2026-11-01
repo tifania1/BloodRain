@@ -93,6 +93,21 @@ namespace BloodRain.Core.Tests
             var dagger = _d.Weapons.Single(x => x.Id == "flying_dagger");
             Assert.Equal(float.Parse(poison.Groups[1].Value, CultureInfo.InvariantCulture), dagger.PoisonSeconds);
             Assert.Equal(float.Parse(poison.Groups[2].Value, CultureInfo.InvariantCulture) / 100f, dagger.PoisonDamage!.Value, 4);
+            var mist = Regex.Match(rows.Single(r => r[0] == "독무")[6], @"닿은 적 ([0-9.]+)초 중독");
+            Assert.True(mist.Success);
+            Assert.Equal(float.Parse(mist.Groups[1].Value, CultureInfo.InvariantCulture), _d.Weapons.Single(x => x.Id == "poison_mist").PoisonSeconds);
+            // 표 아래 문단: 지속 피해 간격, 둔화 풀림
+            var section = TestData.GddSection("날아가는 것과 넉백");
+            var tick = Regex.Match(section, @"화상·중독 피해는 ([0-9.]+)초마다");
+            var fade = Regex.Match(section, @"둔화는 초당 ([0-9.]+)씩 풀린다\(([0-9]+)% 둔화면 ([0-9.]+)초\)");
+            Assert.True(tick.Success && fade.Success);
+            var st = _d.Balance.EnemyStatus;
+            Assert.Equal(float.Parse(tick.Groups[1].Value, CultureInfo.InvariantCulture), st.BurnTickSeconds);
+            Assert.Equal(float.Parse(fade.Groups[1].Value, CultureInfo.InvariantCulture), st.SlowFadePerSecond);
+            Assert.Equal(float.Parse(fade.Groups[3].Value, CultureInfo.InvariantCulture), float.Parse(fade.Groups[2].Value) / 100f / st.SlowFadePerSecond, 3);
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            foreach (var used in new[] { "B.enemyStatus.burnTickSeconds", "B.enemyStatus.slowFadePerSecond", "e.poison || 0, def.poisonSeconds" })
+                Assert.Contains(used, html);
             // 화상 초당 피해가 있는 무공에는 화상 시간이 있어야 프로토타입이 0초로 태우지 않는다
             Assert.All(_d.Weapons.Where(x => x.BurnPerSecond != null), x => Assert.True(x.BurnSeconds > 0, x.NameKo));
             Assert.Contains("W_BY_ID[w.id].burnSeconds", TestData.ReadRepoFile("web", "prototype", "template.html"));

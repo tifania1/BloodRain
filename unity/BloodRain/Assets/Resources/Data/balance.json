@@ -108,5 +108,10 @@
       { "kind": "jeongsin_talisman", "weight": 0.12 },
       { "kind": "silver_bag", "weight": 0.13 }
     ]
+  },
+  "enemyStatus": {
+    "_note": "적 상태(기획서 9장 '날아가는 것과 넉백' 아래). 화상·중독 지속 피해는 burnTickSeconds 마다 초당 피해 x 그 초씩 들어간다. 둔화는 걸린 값에서 초당 slowFadePerSecond 씩 풀린다(독무 안에서는 닿을 때마다 다시 걸림). 웹 프로토타입 값.",
+    "burnTickSeconds": 0.5,
+    "slowFadePerSecond": 0.6
   }
 }

@@ -1204,7 +1204,7 @@ function fireWeapon(w) {
       forNear(p.x, p.y, R, e => {
         const d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d <= R + e.r) {
-          hurtEnemy(e, dps * def.tickSeconds, w, 0, 0, def.knockback); e.slow = Math.max(e.slow, slow); e.poison = Math.max(e.poison || 0, 1);
+          hurtEnemy(e, dps * def.tickSeconds, w, 0, 0, def.knockback); e.slow = Math.max(e.slow, slow); e.poison = Math.max(e.poison || 0, def.poisonSeconds);
           if (w.evolved && !e.elite && !e.boss) { e.poisonT += def.tickSeconds; if (e.poisonT >= ep.executeSeconds && !e.dead) { e.hp = 0; killEnemy(e); } }
         }
       });
@@ -1389,10 +1389,10 @@ function update(dt) {
     if (e.dead) continue;
     e.flash = Math.max(0, e.flash - dt); e.contact = Math.max(0, e.contact - dt); e.life += dt;
     if (e.poison > 0) e.poison -= dt; if (e.fire > 0) e.fire -= dt;
-    if (e.burn > 0) { e.burn -= dt; e.burnAcc = (e.burnAcc || 0) + dt; if (e.burnAcc >= 0.5) { e.burnAcc = 0; hurtEnemy(e, e.burnDps * 0.5, e.burnW, 0, 0, 0); if (e.dead) continue; } }
+    if (e.burn > 0) { e.burn -= dt; e.burnAcc = (e.burnAcc || 0) + dt; if (e.burnAcc >= B.enemyStatus.burnTickSeconds) { e.burnAcc = 0; hurtEnemy(e, e.burnDps * B.enemyStatus.burnTickSeconds, e.burnW, 0, 0, 0); if (e.dead) continue; } }
     if (e.stun > 0 || freezeOn) { e.stun -= dt; e.kbx *= 0.85; e.kby *= 0.85; continue; }
     let dx = p.x - e.x, dy = p.y - e.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
-    const slow = 1 - e.slow; e.slow = Math.max(0, e.slow - dt * 0.6);
+    const slow = 1 - e.slow; e.slow = Math.max(0, e.slow - dt * B.enemyStatus.slowFadePerSecond);
     let vx = 0, vy = 0;
     if (e.boss) bossAI(e, dt, dx, dy, d);
     else if (e.elite) eliteAI(e, dt, dx, dy, d);
