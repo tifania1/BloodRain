@@ -37,6 +37,16 @@ namespace BloodRain.Core.Data
         /// <summary>이 단계에 닿으면 더하는 능력치(StatKind 이름 → 값, 비율은 0.15 = 15%). 닿은 단계까지 모두 더한다.
         /// 조건이 붙거나 곱하는 효과(개방 3단계, 마교 2단계)는 여기 없고 desc 에만 있다.</summary>
         public Dictionary<string, float> Stats = new Dictionary<string, float>();
+        /// <summary>능력치 덧셈으로 안 되는 효과 이름(Build/SynergyEffects.cs 가 읽는다). 없으면 null.</summary>
+        public string? Effect;
+        public Dictionary<string, float> Params = new Dictionary<string, float>();
+
+        public float Param(string key)
+        {
+            if (!Params.TryGetValue(key, out var v))
+                throw new KeyNotFoundException($"진전 단계 '{Desc}' 에 {key} 값이 없습니다");
+            return v;
+        }
     }
 
     /// <summary>진전: 같은 문파 무공·심법을 몇 개 모았는지로 단계가 정해진다.</summary>

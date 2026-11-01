@@ -430,6 +430,11 @@ function synStats() {
   for (const sc of SYN.schools) for (const t of sc.tiers) if (t.stats && sch(sc.id, t.count)) for (const k in t.stats) out[k] = (out[k] || 0) + t.stats[k];
   return out;
 }
+// 닿은 진전 단계의 effect params(synergies.json, Core SynergyEffects 와 같다). 없으면 null
+function synEff(name) {
+  for (const sc of SYN.schools) for (const t of sc.tiers) if (t.effect === name && sch(sc.id, t.count)) return t.params;
+  return null;
+}
 function addSilver(v) { G.silver += Math.round(v * (1 + (synStats().Greed || 0))); }
 function showDiscovery(seal, hanja, name, desc) {
   overlay = 'find'; overlayAt = performance.now(); sfx('gong');
@@ -463,7 +468,7 @@ function synTick(dt) {
     }
   }
   // 수로채 진전 3: 경공으로 지나가며 적을 끌고 간다
-  if (sch('waterfort', 3) && p.dashT > 0) forNear(p.x, p.y, 1.0, e => { if (!e.boss && !e.elite) { e.x += p.dashVx * dt * 0.9; e.y += p.dashVy * dt * 0.9; } });
+  if (synEff('dash_drag') && p.dashT > 0) forNear(p.x, p.y, 1.0, e => { if (!e.boss && !e.elite) { e.x += p.dashVx * dt * 0.9; e.y += p.dashVy * dt * 0.9; } });
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
@@ -865,7 +870,7 @@ function recomputeStats() {
     foodHeal: 1 + s.foodHeal, explosionArea: 1 + s.explosionArea, damageTaken: rr.damageTaken,
     ultPower: 1 + rr.ultimatePower, ultCasts: rr.doubleUltimate ? 2 : 1,
   };
-  if (sch('demonic', 2)) { G.stats.lifesteal *= 2; G.stats.foodHeal *= 0.5; }
+  const btr = synEff('blood_trade'); if (btr) { G.stats.lifesteal *= btr.lifestealMultiplier; G.stats.foodHeal *= btr.foodHealMultiplier; }
   const pl = G.player, before = pl.maxHp;
   pl.maxHp = G.stats.maxHp; if (pl.maxHp > before) pl.hp += pl.maxHp - before;
   const dashMax = B.dash.charges + rr.dashCharges + (G.passives.some(p => p.id === 'unryong' && p.lv >= 5) ? 1 : 0);
@@ -997,15 +1002,15 @@ function weaponDamage(w) {
   if (w.evolved) d *= 2;
   if (G.glow && G.glow.w === w) d *= 1.5;   // 각성 여운 8초
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
-  if (sch('namgung', 2) && def.category === 'sword') d *= 1.12;
-  if (sch('gaebang', 3) && G.player.hp < G.player.maxHp * 0.3) d *= 1.3;
+  const swd = synEff('sword_damage'); if (swd && def.category === 'sword') d *= 1 + swd.damageBonus;
+  const lhm = synEff('low_health_might'); if (lhm && G.player.hp < G.player.maxHp * lhm.healthThreshold) d *= 1 + lhm.damageBonus;
   if (w.id === 'samjae_sword' && G.syn.secrets.has('mumyeong')) d *= 1.5;
   return d;
 }
 function hurtEnemy(e, dmg, w, kx, ky, kb) {
   if (e.dead) return;
   if (e.elite || e.boss) dmg *= G.stats.elite;
-  if (sch('kunlun', 3) && (E_BY_ID[e.type] || {}).family === 'jiangshi') dmg *= 1.25;
+  const jsd = synEff('jiangshi_damage'); if (jsd && (E_BY_ID[e.type] || {}).family === 'jiangshi') dmg *= 1 + jsd.damageBonus;
   let crit = false;
   if (Math.random() < G.stats.crit) { dmg *= 2; crit = true; }
   e.hp -= dmg; e.flash = 0.08;
@@ -1059,7 +1064,7 @@ function hurtPlayer(dmg, src) {
   if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
   // 무당 진전 3 사량발천근: 태극 구간이면 20% 덜 받고, 줄인 피해의 열 배를 부딪힌 적에게
-  if (sch('wudang', 3) && yyBand().band === 'harmony') { const cut = taken * 0.2; taken -= cut; if (src && !src.dead) hurtEnemy(src, cut * 10, null, 0, 0, 0); }
+  const hdf = synEff('harmony_deflect'); if (hdf && yyBand().band === 'harmony') { const cut = taken * hdf.damageCut; taken -= cut; if (src && !src.dead) hurtEnemy(src, cut * hdf.reflectMultiplier, null, 0, 0, 0); }
   // 프로토타입 값: 맞은 뒤 잠깐 무적. balance.json 에는 아직 없다(시험해 보고 기획서로 옮길지 정한다).
   p.hp -= taken * (G.easy ? 0.5 : 1); p.hurt = 0.25; p.iframe = Math.max(p.iframe, HIT_IFRAMES); G.cam.shake = Math.min(0.3, G.cam.shake + 0.08);
   addUlt(B.ultimateCharge.perHit);
@@ -1237,7 +1242,7 @@ function doDash() {
   const p = G.player;
   if (p.dashCharges <= 0 || p.dashT > 0) return;
   p.dashCharges--; p.dashT = B.dash.duration; p.iframe = B.dash.iframes;
-  const sp = B.dash.distance * (sch('waterfort', 3) ? 1.5 : 1) / B.dash.duration; p.dashVx = p.fx * sp; p.dashVy = p.fy * sp;
+  const sp = B.dash.distance * (1 + ((synEff('dash_drag') || {}).distanceBonus || 0)) / B.dash.duration; p.dashVx = p.fx * sp; p.dashVy = p.fy * sp;
   addEffect('dash', p.x, p.y, { a: Math.atan2(p.fy, p.fx), life: 0.3 });
   sfx('dash');
   // 기혈역류를 1초 안에 경공으로 끊으면 오의 +50
@@ -1592,7 +1597,7 @@ function pickup(dr) {
   if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + 20 * G.stats.foodHeal); toast('만두', '기혈 +20'); }
   else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + 50 * G.stats.foodHeal); toast('오리구이', '기혈 +50'); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
-  else if (dr.kind === 'freeze') { G.freeze = 5 * (sch('kunlun', 2) ? 2 : 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
+  else if (dr.kind === 'freeze') { G.freeze = 5 * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
   else if (dr.kind === 'silver') { addSilver(rand(10, 50)); }
   else if (dr.kind === 'chest') openChest();
 }

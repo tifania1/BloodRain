@@ -61,7 +61,8 @@
       "members": ["taiji_sword", "yangui", "unryong"],
       "tiers": [
         { "count": 2, "desc": "태극 구간이 ±25에서 ±35로 넓어진다", "proto": true, "harmonyRange": 35 },
-        { "count": 3, "desc": "사량발천근: 태극 구간에 있는 동안 받는 피해 -20%, 줄인 피해의 열 배를 부딪힌 적에게 되돌린다", "proto": true } ] },
+        { "count": 3, "desc": "사량발천근: 태극 구간에 있는 동안 받는 피해 -20%, 줄인 피해의 열 배를 부딪힌 적에게 되돌린다", "proto": true,
+          "effect": "harmony_deflect", "params": { "damageCut": 0.2, "reflectMultiplier": 10 } } ] },
     { "id": "huashan", "nameKo": "화산", "hanja": "華山", "motto": "매화", "character": null,
       "members": ["falling_petals", "maehwa", "flash_finger"],
       "tiers": [
@@ -71,7 +72,7 @@
       "members": ["drunken_staff", "juseon", "palm_wind", "pasan"],
       "tiers": [
         { "count": 2, "desc": "음식 회복 +50%", "proto": true, "stats": { "FoodHeal": 0.5 } },
-        { "count": 3, "desc": "기혈 30% 이하에서 공력 +30%", "proto": true },
+        { "count": 3, "desc": "기혈 30% 이하에서 공력 +30%", "proto": true, "effect": "low_health_might", "params": { "healthThreshold": 0.3, "damageBonus": 0.3 } },
         { "count": 4, "desc": "3분마다 개방 제자 셋이 나타나 10초 동안 함께 싸운다" } ] },
     { "id": "tang", "nameKo": "사천당가", "hanja": "四川唐家", "motto": "암기", "character": "dang_yeonhwa",
       "members": ["flying_dagger", "cheonsu", "poison_mist", "mandok", "thunder_bomb"],
@@ -82,23 +83,24 @@
     { "id": "namgung", "nameKo": "남궁세가", "hanja": "南宮世家", "motto": "창궁", "character": "namgung_hyeon",
       "members": ["changcheon_qi", "noejeong", "cheongmyeong"],
       "tiers": [
-        { "count": 2, "desc": "검 계열 무공 피해 +12%", "proto": true },
+        { "count": 2, "desc": "검 계열 무공 피해 +12%", "proto": true, "effect": "sword_damage", "params": { "damageBonus": 0.12 } },
         { "count": 3, "desc": "검 계열 무공의 세 번째 공격마다 하늘에서 검기 하나가 내리꽂힌다", "proto": true } ] },
     { "id": "waterfort", "nameKo": "장강수로채", "hanja": "長江水路寨", "motto": "수적", "character": "ha_yeon",
       "members": ["chain_sickle", "suryong", "pear_spear", "cheollian"],
       "tiers": [
         { "count": 2, "desc": "은자 +30%", "proto": true, "stats": { "Greed": 0.3 } },
-        { "count": 3, "desc": "경공 거리 +50%, 경공으로 지나간 적을 끌고 간다", "proto": true },
+        { "count": 3, "desc": "경공 거리 +50%, 경공으로 지나간 적을 끌고 간다", "proto": true, "effect": "dash_drag", "params": { "distanceBonus": 0.5 } },
         { "count": 4, "desc": "정예 보갑에서 무공 강화가 하나 더 나온다", "chestUpgrades": 1, "proto": true } ] },
     { "id": "kunlun", "nameKo": "곤륜", "hanja": "崑崙", "motto": "부적", "character": null,
       "members": ["thunder_talisman", "domun", "hwaryong"],
       "tiers": [
-        { "count": 2, "desc": "정신부로 멈춘 적이 두 배 오래 멈춘다", "proto": true },
-        { "count": 3, "desc": "강시 계열 적에게 피해 +25%", "proto": true } ] },
+        { "count": 2, "desc": "정신부로 멈춘 적이 두 배 오래 멈춘다", "proto": true, "effect": "talisman_freeze", "params": { "freezeMultiplier": 2 } },
+        { "count": 3, "desc": "강시 계열 적에게 피해 +25%", "proto": true, "effect": "jiangshi_damage", "params": { "damageBonus": 0.25 } } ] },
     { "id": "demonic", "nameKo": "마도", "hanja": "魔道", "motto": "혈", "character": "baekya",
       "members": ["blood_claw", "hyeolhae"],
       "tiers": [
-        { "count": 2, "desc": "흡혈 두 배, 대신 음식 회복 절반. '혈마의 속삭임'이 나타날 확률이 오른다", "proto": true } ] }
+        { "count": 2, "desc": "흡혈 두 배, 대신 음식 회복 절반. '혈마의 속삭임'이 나타날 확률이 오른다", "proto": true,
+          "effect": "blood_trade", "params": { "lifestealMultiplier": 2, "foodHealMultiplier": 0.5 } } ] }
   ],
   "common": { "weapon": "samjae_sword", "atLevel": 8, "target": "best", "nameKo": "기본의 극",
     "desc": "삼재검법이 Lv8이면 가장 많이 모은 문파의 진전을 하나 더 채워 준다. 모든 무학은 기본에서 갈라져 나왔다." },
