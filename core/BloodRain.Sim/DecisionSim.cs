@@ -5,7 +5,7 @@
 // 그래서 같은 시드로 '지금 데이터'와 '처치 진기 줄이기'를 나란히 돌려 세 표를 한 장에 놓는다.
 //
 // 새 가정은 없다. 천하 한 생은 CheonhaSim, 혈공은 BloodArtSim 그대로이고,
-// T-41 (가) '진기 배율을 √농도로'는 Core BloodArt 에 넘기는 농도만 √농도로 바꿔 흉내 낸다(적 기혈 배율은 그 땅 그대로).
+// T-41 혈공은 2026-11-01 결정대로 데이터(cheonha.json bloodArt: 진기 × 농도^지수, 심마 간격)를 그대로 돌린다.
 // 데이터는 건드리지 않는다.
 using System;
 using System.Collections.Generic;
@@ -24,7 +24,7 @@ namespace BloodRain.Sim
         public Dictionary<string, double> BossStart = new Dictionary<string, double>();
         public double TopMinuteMedian;
         public int TopReached, TopRuns;
-        public BloodArtRow Base = null!, Blood = null!, BloodSqrt = null!;
+        public BloodArtRow Base = null!, Blood = null!;
     }
 
     public static class DecisionSim
@@ -60,7 +60,6 @@ namespace BloodRain.Sim
             string baekya = BloodArtSim.DemonicCharacter(g);
             row.Base = BloodArtSim.Measure(data, "기준", BloodArtSim.Baseline, songshan, false, seeds, apply: sc.ApplyOptions);
             row.Blood = BloodArtSim.Measure(data, "혈공", baekya, home, true, seeds, apply: sc.ApplyOptions);
-            row.BloodSqrt = BloodArtSim.Measure(data, "혈공 √농도", baekya, home, true, seeds, apply: sc.ApplyOptions, xpDensity: Math.Sqrt(home.Density));
             return row;
         }
 
@@ -99,7 +98,6 @@ namespace BloodRain.Sim
             L($"| 천하 {top.NameKo} 도달(마교 뺀 여덟 문파, 가운데) | " + string.Join(" | ", rows.Select(r => $"{M(r.TopMinuteMedian)} ({r.TopReached}/{r.TopRuns}판 닿음)")) + " |");
             L("| 출생지 땅의 주인 첫 싸움 ÷ 목표 초(문파 가운데) | " + string.Join(" | ", rows.Select(r => N(YinYangSim.Median(r.BossRatio.Values), "0.0") + "배")) + " |");
             L($"| 혈공 {top.NameKo} − 기준 {top.NameKo} | " + string.Join(" | ", rows.Select(r => Diff(r.Blood, r.Base, top.Id))) + " |");
-            L($"| 혈공 √농도일 때 − 기준 | " + string.Join(" | ", rows.Select(r => Diff(r.BloodSqrt, r.Base, top.Id))) + " |");
             L();
             L($"기준은 진소운이 숭산에서 혈공 없이 도는 한 판, 혈공은 백야가 {home.NameKo}(농도 {N(home.Density, "0.0")})에 머무는 한 판(blood-art.md 와 같은 무리 모형). '—'는 30분 안에 못 닿음.");
             L();
@@ -117,10 +115,11 @@ namespace BloodRain.Sim
             L("## T-41 혈공(백야)");
             L();
             var realms = g.Balance.Realms.Skip(1).ToList();
+            var art = g.Cheonha.Sects.First(s => s.BloodArt != null).BloodArt!;
             L("| 시험 | 판 | " + string.Join(" | ", realms.Select(r => r.NameKo)) + " | 30분 레벨 | 심마 횟수 |");
             L("| --- | --- | " + string.Join(" | ", realms.Select(_ => "---")) + " | --- | --- |");
             foreach (var r in rows)
-                foreach (var (label, b) in new[] { ("기준(진소운·숭산)", r.Base), ($"혈공(진기 × {N(home.Density, "0.0")})", r.Blood), ($"(가) 혈공(진기 × √농도 {N(Math.Sqrt(home.Density), "0.00")})", r.BloodSqrt) })
+                foreach (var (label, b) in new[] { ("기준(진소운·숭산)", r.Base), ($"혈공(진기 × {N(home.Density, "0.0")}^{N(art.XpDensityExponent, "0.##")} = {N(Math.Pow(home.Density, art.XpDensityExponent), "0.00")})", r.Blood) })
                     L($"| {r.ScenarioKo} | {label} | " + string.Join(" | ", realms.Select(x => M(b.RealmMedian(x.Id)))) + $" | {N(b.LevelMedian(30))} | {N(b.StepsMean, "0.0")} |");
             L();
 
@@ -131,11 +130,10 @@ namespace BloodRain.Sim
             L($"- 처치 진기를 줄이면 천하 {top.NameKo} 도달이 {M(a.TopMinuteMedian)} → {M(k.TopMinuteMedian)}({k.TopReached}/{k.TopRuns}판만 30분 안에 닿음). 땅의 주인 첫 싸움은 {N(ra, "0.0")}배 → {N(rk, "0.0")}배" +
               (rk > ra ? "로 더 나빠진다. 기혈 배율이 11장 화력 목표를 따르므로, 처치 진기를 줄여 화력이 늦어지면 그만큼 땅의 주인이 길어진다. P-02 를 정할 때 화력 목표 표도 같이 봐야 한다." : "로 줄어든다."));
             L($"- 혈공은 지금 데이터에서 기준보다 {Diff(a.Blood, a.Base, top.Id)}, 처치 진기를 줄이면 {Diff(k.Blood, k.Base, top.Id)}. " +
-              $"√농도로 바꾸면 각각 {Diff(a.BloodSqrt, a.Base, top.Id)}, {Diff(k.BloodSqrt, k.Base, top.Id)}. " +
               (Gap(k.Blood, k.Base, top.Id) < Gap(a.Blood, a.Base, top.Id)
                 ? "처치 진기를 줄이면 기준 판이 혈공 판보다 더 많이 늦어져 격차가 오히려 벌어진다. T-41 은 P-02 를 정한 뒤 그 값으로 다시 재야 하는 이유다. "
                 : "처치 진기를 줄이면 격차가 줄어든다. ") +
-              "기획서 5장 '숭산 출생과 비슷하게'에 가까운 쪽을 고르면 된다.");
+              $"목표는 기준과 ±1분(T-41, 5장 '숭산 출생과 비슷하게'). 지금 데이터는 진기 × 농도^{N(art.XpDensityExponent, "0.##")}, 심마는 더 받은 진기 {N(art.ExtraXpPerStep)}마다.");
             L("- 세 결정을 한 번에 정할 때 이 표를 다시 만들면 된다. 다른 조합(예: 처치 진기 줄이기 + 적 기혈 증가)을 보려면 `DecisionSim.ScenarioIds` 에 Scenarios.cs id 를 더한다.");
             return sb.ToString();
         }

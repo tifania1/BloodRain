@@ -1,3 +1,4 @@
+using System;
 using BloodRain.Core.Data;
 using BloodRain.Core.Meta;
 using BloodRain.Core.Progression;
@@ -22,19 +23,21 @@ namespace BloodRain.Core.Tests
             foreach (var s in _d.Cheonha.Sects)
                 Assert.Equal(s.Id == "demonic", s.BloodArt != null);
             var b = _d.Cheonha.Sect("demonic").BloodArt!;
-            Assert.Equal(300, b.ExtraXpPerStep);
+            Assert.Equal(150, b.ExtraXpPerStep);
             Assert.Equal(1, b.YinPerStep);
             Assert.Equal(_d.Cheonha.Sect("demonic").Ultimate, b.ResetUltimate);
         }
 
-        [Fact] public void 진기는_농도배이고_더_받은_300마다_음으로_1()
+        [Fact] public void 진기는_농도의_네제곱근배이고_더_받은_150마다_음으로_1()
         {
             var (art, gauge) = New();
             int start = gauge.Value;
-            Assert.Equal(43, art.OrbXp(10, 4.3f), 3);
+            Assert.Equal(10 * Math.Pow(4.3, 0.25), art.OrbXp(10, 4.3f), 3);   // 4.3 의 네제곱근 1.44
             Assert.Equal(start, gauge.Value);
-            // 더 받은 진기 33씩: 10번째 구슬에서 330 → 한 번
-            for (int i = 0; i < 9; i++) art.OrbXp(10, 4.3f);
+            // 더 받은 진기 4.40씩: 34개째 149.6 → 아직, 35개째 154.0 → 한 번
+            for (int i = 0; i < 33; i++) art.OrbXp(10, 4.3f);
+            Assert.Equal(start, gauge.Value);
+            art.OrbXp(10, 4.3f);
             Assert.Equal(start - 1, gauge.Value);
             Assert.Equal(1, art.Steps);
         }
@@ -43,7 +46,7 @@ namespace BloodRain.Core.Tests
         {
             var (art, gauge) = New();
             int start = gauge.Value;
-            Assert.Equal(8, art.OrbXp(10, 0.8f), 3);
+            Assert.Equal(10 * Math.Pow(0.8, 0.25), art.OrbXp(10, 0.8f), 3);
             for (int i = 0; i < 100; i++) art.OrbXp(10, 1f);
             Assert.Equal(start, gauge.Value);
         }

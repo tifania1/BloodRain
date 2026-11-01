@@ -1,6 +1,6 @@
 // 마교 몸의 성장 '혈공(血功)'(기획서 5장). 값은 cheonha.json sects[demonic].bloodArt.
-//   - 진기 구슬에서 받는 진기 × 그 자리 혈운 농도(다른 문파는 1배). 윤회의 기는 구슬 값 그대로 센다(이 규칙으로 늘지 않음).
-//   - 농도 덕에 더 받은 진기가 300 쌓일 때마다 음양 게이지가 음 쪽으로 1 기운다(심마).
+//   - 진기 구슬에서 받는 진기 × 그 자리 혈운 농도^0.25(네제곱근, 다른 문파는 1배, 지수는 xpDensityExponent). 윤회의 기는 구슬 값 그대로 센다(이 규칙으로 늘지 않음).
+//   - 농도 덕에 더 받은 진기가 150 쌓일 때마다 음양 게이지가 음 쪽으로 1 기운다(심마).
 //   - 천마해체를 쓰면 게이지가 몸의 시작값으로 돌아온다. 돌파 때는 그대로.
 // 마공 깨달음(돌파 셋 중 하나)은 insights.json demonicInsights 와 Insights.RollWithDemonic. Run/Life 가 마교 몸이면 이 클래스를 만든다.
 using System;
@@ -27,11 +27,15 @@ namespace BloodRain.Core.Progression
         /// <summary>심마로 기운 횟수.</summary>
         public int Steps { get; private set; }
 
+        /// <summary>그 농도에서 진기 배율 = 농도^xpDensityExponent. 농도 4.3 이면 √4.3 ≈ 2.07.</summary>
+        public double XpMultiplier(float density) =>
+            _def.XpDensityExponent <= 0 ? 1 : Math.Pow(Math.Max(0f, density), _def.XpDensityExponent);
+
         /// <summary>구슬 하나. RunXp.Absorb 에 넘길 진기를 돌려주고, 심마로 게이지를 옮긴다.</summary>
         public double OrbXp(double orbValue, float density)
         {
-            if (!_def.XpTimesDensity) return orbValue;
-            double got = orbValue * density;
+            if (_def.XpDensityExponent <= 0) return orbValue;
+            double got = orbValue * XpMultiplier(density);
             double extra = got - orbValue; // 농도 1 아래(청운진 0.8)면 음수: 심마는 줄지 않는다
             if (extra > 0)
             {

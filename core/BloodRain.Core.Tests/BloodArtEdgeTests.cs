@@ -19,15 +19,15 @@ namespace BloodRain.Core.Tests
             return (new BloodArt(sect.BloodArt!, gauge, sect.YinyangStart), gauge);
         }
 
-        [Fact] public void 큰_구슬_하나로_300을_여러_번_넘으면_그만큼_한꺼번에_기운다()
+        [Fact] public void 큰_구슬_하나로_150을_여러_번_넘으면_그만큼_한꺼번에_기운다()
         {
             var (art, gauge) = New();
             int start = gauge.Value;
-            // 200 × 4.3 = 860, 더 받은 것 660 → 두 번
-            Assert.Equal(860, art.OrbXp(200, 4.3f), 3);
+            // 1000 × 4.3^0.25 = 1440, 더 받은 것 440 → 두 번(남은 140)
+            Assert.Equal(1000 * Math.Pow(4.3, 0.25), art.OrbXp(1000, 4.3f), 2);
             Assert.Equal(2, art.Steps);
             Assert.Equal(start - 2, gauge.Value);
-            // 남은 60 에 240 을 더 채우면 세 번째
+            // 100 × (3.4^0.25 − 1) = 35.8 를 더하면 150 을 넘어 세 번째
             art.OrbXp(100, 3.4f);
             Assert.Equal(3, art.Steps);
             Assert.Equal(start - 3, gauge.Value);
@@ -36,7 +36,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 옅은_땅에서_받은_손해는_심마를_되돌리지_않는다()
         {
             var (art, gauge) = New();
-            art.OrbXp(100, 4f); // 더 받은 300 → 한 번
+            art.OrbXp(150, 16f); // 16^0.25 = 2, 더 받은 150 → 한 번
             int after = gauge.Value;
             double extra = art.ExtraXp;
             for (int i = 0; i < 50; i++) art.OrbXp(100, 0.8f);
@@ -58,10 +58,10 @@ namespace BloodRain.Core.Tests
         [Fact] public void 천마해체_뒤에도_쌓인_진기는_이어서_센다()
         {
             var (art, gauge) = New();
-            art.OrbXp(100, 3.5f); // 250
+            art.OrbXp(125, 16f); // 16^0.25 = 2, 더 받은 125
             art.OnUltimate("cheonma_haeche");
             int start = gauge.Value;
-            art.OrbXp(100, 1.5f); // +50 → 300, 한 번
+            art.OrbXp(30, 16f); // +30 → 155, 한 번
             Assert.Equal(1, art.Steps);
             Assert.Equal(start - 1, gauge.Value);
         }
@@ -90,7 +90,7 @@ namespace BloodRain.Core.Tests
             float density = demonic.Density;
             Assert.True(density > 1, $"십만대산 농도 {density}");
             demonic.Absorb(5);
-            Assert.Equal(5 * density, demonic.Xp.Total, 3);
+            Assert.Equal(5 * Math.Pow(density, 0.25), demonic.Xp.Total, 3);
             Assert.Equal(5, demonic.Log.Qi.OrbValue, 6);
             Assert.Equal(5 * density, demonic.Log.Qi.WeightedOrbValue, 3);
 
@@ -108,7 +108,7 @@ namespace BloodRain.Core.Tests
             var life = NewLife("demonic");
             int start = life.Loadout.Gauge.Value;
             double perStep = _d.Cheonha.Sect("demonic").BloodArt!.ExtraXpPerStep;
-            double orb = Math.Ceiling(perStep / (life.Density - 1)) + 1;
+            double orb = Math.Ceiling(perStep / (Math.Pow(life.Density, 0.25) - 1)) + 1;
             life.Absorb(orb);
             Assert.Equal(1, life.BloodArt!.Steps);
             Assert.Equal(start - 1, life.Loadout.Gauge.Value);

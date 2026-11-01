@@ -155,10 +155,10 @@ namespace BloodRain.Core.Data
     /// <summary>혈공(기획서 5장 '마교 몸의 성장').</summary>
     public sealed class BloodArtDef
     {
-        /// <summary>진기 구슬에서 받는 진기에 그 자리 혈운 농도를 곱한다.</summary>
-        public bool XpTimesDensity = true;
+        /// <summary>진기 구슬에서 받는 진기에 그 자리 혈운 농도의 이 제곱을 곱한다(0.25 = 네제곱근, 0 이면 혈공 진기 없음).</summary>
+        public float XpDensityExponent = 0.25f;
         /// <summary>농도 덕에 더 받은 진기가 이만큼 쌓일 때마다 음양 게이지가 음 쪽으로 YinPerStep 기운다.</summary>
-        public float ExtraXpPerStep = 300;
+        public float ExtraXpPerStep = 150;
         public int YinPerStep = 1;
         /// <summary>이 오의를 쓰면 음양 게이지가 시작값으로 돌아온다.</summary>
         public string ResetUltimate = "";

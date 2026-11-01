@@ -1,11 +1,11 @@
 // 마교 몸의 혈공(기획서 5장 '마교 몸의 성장: 혈공')을 한 판 무리 모형으로 잰다. 보고서: docs/design/sim/blood-art.md
 //
 // RunSimulator 를 30분 돌리되, 그 땅의 적 기혈 배율(Chapter)과 혈공(BloodArtDensity, Core BloodArt 그대로)을 같이 얹는다.
-//   - 진기는 구슬 값 × 농도. 적이 농도만큼 단단하니 화력이 같으면 처치가 줄어 서로 얼마나 메워지는지가 이 보고서의 질문이다.
-//   - 심마(더 받은 진기 300마다 음 -1)는 무공·심법 레벨업으로 움직이는 게이지에 그대로 더해진다. 천마해체를 쓰면 시작값으로.
+//   - 진기는 구슬 값 × 농도^xpDensityExponent(0.25). 적이 농도만큼 단단하니 화력이 같으면 처치가 줄어 서로 얼마나 메워지는지가 이 보고서의 질문이다.
+//   - 심마(더 받은 진기 extraXpPerStep(150)마다 음 -1)는 무공·심법 레벨업으로 움직이는 게이지에 그대로 더해진다. 천마해체를 쓰면 시작값으로.
 //   - 기획서 5장은 "십만대산 출생의 경지 도달 시각이 숭산 출생과 비슷한지 맞춘다"고 적었다. 기준은 진소운이 숭산에서 혈공 없이 도는 판.
 // 빠진 것: 천마해체의 피해 2배·흡혈·기혈 소모(오의를 쓴 시각만 센다), 마공 깨달음, 적 피해(√농도), 지역 고유 적·기믹.
-// CheonhaSim(cheonha.md)은 숭산 진기 흐름에 농도를 곱하기만 해서 마교가 더 빠르게 나온다. 적이 단단해지는 쪽까지 넣은 값은 이 보고서다.
+// CheonhaSim(cheonha.md)은 숭산 진기 흐름에 혈공 배율을 곱하기만 해서 마교가 더 빠르게 나온다. 적이 단단해지는 쪽까지 넣은 값은 이 보고서다.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -105,13 +105,13 @@ namespace BloodRain.Sim
             L("> 자동 생성: `dotnet run --project core/BloodRain.Sim -c Release -- --blood-art docs/design/sim/blood-art.md`. 손으로 고치지 않는다.");
             L();
             L($"한 판 무리 모형(`RunSimulator`)을 {Minutes:0}분, 정책 {Policy}, 시드 1~{seeds}의 가운데값. 땅마다 적 기혈 배율(balance.json `chapterMultiplier`)을 얹고, " +
-              $"혈공 줄은 Core `BloodArt` 를 그대로 돌린다(cheonha.json `{demonicSect.Id}.bloodArt`: 진기 × 농도, 더 받은 진기 {N(art.ExtraXpPerStep)}마다 음 -{art.YinPerStep}, " +
+              $"혈공 줄은 Core `BloodArt` 를 그대로 돌린다(cheonha.json `{demonicSect.Id}.bloodArt`: 진기 × 농도^{N(art.XpDensityExponent, "0.##")}, 더 받은 진기 {N(art.ExtraXpPerStep)}마다 음 -{art.YinPerStep}, " +
               $"오의 {g.Ultimates.FirstOrDefault(u => u.Id == art.ResetUltimate)?.NameKo ?? art.ResetUltimate}를 쓰면 시작값 {G(bk.YinyangStart)}로).");
             L();
             L("빠진 것: 천마해체의 피해 2배·흡혈·기혈 소모(쓴 시각만 센다), 마공 깨달음, 적이 때리는 쪽(√농도배, contact.md), 지역 고유 적·기믹, 땅의 주인. " +
               "적 구성과 사건은 숭산 옛 1장 표 그대로이고 처치 진기도 지금 데이터(P-02 미정)라 레벨이 기획 목표보다 빠르다. 그래서 절대 시각보다 **기준 줄과의 차이**를 본다.");
             L();
-            L("[cheonha.md](cheonha.md) 의 마교 줄은 숭산 진기 흐름에 농도를 곱하기만 해서(적이 단단해지는 쪽이 없다) 다른 문파보다 훨씬 빠르게 나온다. 적 기혈까지 넣은 값은 이 표다.");
+            L("[cheonha.md](cheonha.md) 의 마교 줄은 숭산 진기 흐름에 혈공 배율을 곱하기만 해서(적이 단단해지는 쪽이 없다) 다른 문파보다 훨씬 빠르게 나온다. 적 기혈까지 넣은 값은 이 표다.");
             L();
 
             L("## 경지 도달 시각");
@@ -161,7 +161,7 @@ namespace BloodRain.Sim
               (double.IsNaN(diffTop) ? "." : $", 차이 {(diffTop >= 0 ? "+" : "-")}{M(Math.Abs(diffTop))}.") +
               $" 적이 {N(home.Density, "0.0")}배 단단해도 10분 처치는 기준 {N(baseRow.KillsMedian(10))}, 혈공 없음 {N(burden.KillsMedian(10))}로 " +
               $"기준의 {N(burden.KillsMedian(10) / baseRow.KillsMedian(10) * 100)}%로 줄 뿐이다(범위 무공이 무리를 한꺼번에 치고, 화력이 남는 지금 데이터라서). " +
-              $"그 위에 진기를 {N(home.Density, "0.0")}배로 받으니 레벨이 빨라지고, 빨라진 레벨이 화력을 키워 처치도 기준보다 많아진다(혈공 {N(real.KillsMedian(10))}).");
+              $"그 위에 진기를 {N(Math.Pow(home.Density, art.XpDensityExponent), "0.00")}배로 받으니 레벨이 빨라지고, 빨라진 레벨이 화력을 키워 처치도 기준보다 많아진다(혈공 {N(real.KillsMedian(10))}).");
             double perUlt = real.UltMean > 0 ? real.StepsMean / real.UltMean : double.NaN;
             L($"- 심마는 {home.NameKo} 30분에 평균 {N(real.StepsMean)}번(모두 더하면 음 쪽 {N(real.StepsMean * art.YinPerStep)}), 그사이 천마해체를 {N(real.UltMean, "0.0")}번 써서 한 번 쓸 때까지 {N(perUlt, "0.0")}만큼 기운다. " +
               $"30분 게이지 가운데값은 {G(real.GaugeMedian(30))}, 극성에 머문 시간 {N(real.ExtremeShare(Minutes) * 100)}%. " +

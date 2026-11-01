@@ -167,7 +167,7 @@ namespace BloodRain.Core.Tests
             Assert.NotNull(demon.BloodArt);
             float density = demon.Regions.Density(demon.Position, 0);
             demon.Absorb(10);
-            Assert.Equal(10 * density, demon.Xp.Total, 2);
+            Assert.Equal(10 * Math.Pow(density, 0.25), demon.Xp.Total, 2);
             var (_, monk) = NewLife("shaolin");
             Assert.Null(monk.BloodArt);
             monk.Absorb(10);

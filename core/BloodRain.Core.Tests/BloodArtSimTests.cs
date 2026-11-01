@@ -61,8 +61,9 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 되돌리지_않으면_게이지가_음_끝까지_간다()
         {
-            var r = Run("chapter7", 4.3, 20, reset: false);
-            Assert.True(r.At(12).Gauge <= -70, $"게이지 {r.At(12).Gauge}");
+            var r = Run("chapter7", 4.3, 30, reset: false);
+            int low = Enumerable.Range(1, 30).Min(m => r.At(m).Gauge);
+            Assert.True(low <= -70, $"가장 낮은 게이지 {low}");
             Assert.NotEmpty(r.BacklashMinutes);
         }
 
