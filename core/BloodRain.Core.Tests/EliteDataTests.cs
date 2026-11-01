@@ -38,9 +38,11 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 숭산_정예는_웹_프로토타입이_데이터에서_읽는다()
         {
-            // 2026-11-01 부터 프로토타입은 숫자를 박지 않고 enemies.json 의 정예 id 를 가리킨다.
+            // 2026-11-01 부터 프로토타입은 숫자를 박지 않고 enemies.json 의 정예 id 를 가리키고, 패턴은 bosspatterns.json elites 에서 읽는다.
             var html = ReadRepoFile("web", "prototype", "template.html");
-            Assert.Contains("['dongin', 'dongin', 'slam'], ['gyeyul', 'gyeyul_monk', 'palm'], ['abbot', 'acting_abbot', 'bell']", html);
+            Assert.Contains("['dongin', 'dongin'], ['gyeyul', 'gyeyul_monk'], ['abbot', 'acting_abbot']", html);
+            Assert.Contains("DATA.elitePatterns[id]", html);
+            foreach (var id in _d.Elites["chapter1"]) Assert.NotEmpty(_d.ElitePatternSet(id).Patterns);
             Assert.DoesNotContain("hp: 700, speed: 55", html);
             Assert.Equal(new[] { "dongin", "gyeyul_monk", "acting_abbot" }, _d.Elites["chapter1"]);
             Assert.Equal(700, _d.Enemy("dongin").Health);

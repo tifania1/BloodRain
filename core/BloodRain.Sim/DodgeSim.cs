@@ -121,14 +121,21 @@ namespace BloodRain.Sim
 
         static double Quantile(double[] sorted, double q) => sorted[Math.Min(sorted.Length - 1, (int)Math.Floor(q * (sorted.Length - 1) + 0.5))];
 
+        /// <summary>땅의 주인(서장 장삼 포함) 다음에 정예. 이름은 enemies.json.</summary>
+        public static IEnumerable<(string Name, BossPatternSetDef Set)> Sets(GameData g) =>
+            g.BossPatterns.Select(kv => (g.Bosses.FirstOrDefault(b => b.Id == kv.Key)?.NameKo ?? kv.Key, kv.Value))
+                .Concat(g.ElitePatterns.Select(kv => ("정예 " + (g.Enemies.FirstOrDefault(e => e.Id == kv.Key)?.NameKo ?? kv.Key), kv.Value)));
+
+        /// <summary>제 몸 둘레 원(방장 대리 범종)에서 보스와 이만큼 떨어져 서 있다고 본다(붙어 싸우는 거리).</summary>
+        public const float SelfRingStandoff = 1f;
+
         /// <summary>빠져나갈 거리를 셀 수 있는 패턴 전부.</summary>
         public static List<Row> Rows(GameData g)
         {
             var d = g.Balance.Dash;
             var rows = new List<Row>();
-            foreach (var (bossId, set) in g.BossPatterns.Select(kv => (kv.Key, kv.Value)))
+            foreach (var (boss, set) in Sets(g))
             {
-                string boss = g.Bosses.FirstOrDefault(b => b.Id == bossId)?.NameKo ?? bossId;
                 foreach (var p in set.Patterns.Concat(set.Phase2))
                 {
                     switch (p.Shape)
@@ -136,6 +143,9 @@ namespace BloodRain.Sim
                         case "cone":
                             var (at, worst) = ConeWorst(p);
                             rows.Add(Make(boss, p, p.TelegraphSeconds, new[] { worst }, d, $"보스에서 {F1(at)}m 떨어져 가운데 줄 위(가장 먼 자리)"));
+                            break;
+                        case "circles" when p.Aim == "self":
+                            rows.Add(Make(boss, p, p.TelegraphSeconds, new[] { (double)(p.Radius + BodyRadius - SelfRingStandoff) }, d, $"제 몸 둘레 원, 보스에서 {F1(SelfRingStandoff)}m(붙어 싸우는 거리)에서 바깥으로"));
                             break;
                         case "circles" when p.Arrangement == "":
                             rows.Add(Make(boss, p, p.TelegraphSeconds, CirclesEscape(p), d,
@@ -170,7 +180,7 @@ namespace BloodRain.Sim
             var g = data.Game;
             var d = g.Balance.Dash;
             var sb = new StringBuilder();
-            sb.AppendLine("# 땅의 주인 패턴 피하기");
+            sb.AppendLine("# 땅의 주인·정예 패턴 피하기");
             sb.AppendLine();
             sb.AppendLine("`dotnet run --project core/BloodRain.Sim -- --dodge docs/design/sim/dodge.md` 로 다시 쓴다. 코드는 `core/BloodRain.Sim/DodgeSim.cs`.");
             sb.AppendLine();
@@ -180,7 +190,7 @@ namespace BloodRain.Sim
             sb.AppendLine();
             sb.AppendLine("## 걸어서, 경공 한 번으로");
             sb.AppendLine();
-            sb.AppendLine("| 땅의 주인 | 패턴 | 예고(초) | 빠져나갈 거리 m(가운데값 / 90%) | 걸어서 닿는 m | 경공 섞어 닿는 m | 걸어서 피함 | 경공으로 피함 | 셈한 자리 |");
+            sb.AppendLine("| 땅의 주인·정예 | 패턴 | 예고(초) | 빠져나갈 거리 m(가운데값 / 90%) | 걸어서 닿는 m | 경공 섞어 닿는 m | 걸어서 피함 | 경공으로 피함 | 셈한 자리 |");
             sb.AppendLine("|---|---|---|---|---|---|---|---|---|");
             var rows = Rows(g);
             foreach (var r in rows)
@@ -189,12 +199,11 @@ namespace BloodRain.Sim
 
             sb.AppendLine("## 무적으로 버티기와 탄 틈");
             sb.AppendLine();
-            sb.AppendLine("| 땅의 주인 | 패턴 | 셈 | 값 |");
+            sb.AppendLine("| 땅의 주인·정예 | 패턴 | 셈 | 값 |");
             sb.AppendLine("|---|---|---|---|");
             var extra = new List<string>();
-            foreach (var (bossId, set) in g.BossPatterns.Select(kv => (kv.Key, kv.Value)))
+            foreach (var (boss, set) in Sets(g))
             {
-                string boss = g.Bosses.FirstOrDefault(b => b.Id == bossId)?.NameKo ?? bossId;
                 foreach (var p in set.Patterns.Concat(set.Phase2))
                 {
                     if (p.Shape == "sweep_wave")
@@ -254,18 +263,25 @@ namespace BloodRain.Sim
                     sb.AppendLine($"- {boss} {p.NameKo}는 서서 무적으로 버티면 띠가 몸을 지나는 {F2(WaveOverlapSeconds(p, d, false))}초가 무적 {F1(d.Iframes)}초보다 길어 맞는다. 띠 쪽으로 경공해야({F2(WaveOverlapSeconds(p, d, true))}초) 뚫린다. 판 전체를 쓰는 띠라면 피하는 길은 이것뿐이니 튜토리얼 문구나 예고 그림이 '파도 쪽으로'를 알려 줘야 한다.");
                 }
             var tight = new List<string>();
-            foreach (var p in g.BossPatterns.Values.SelectMany(v => v.Patterns.Concat(v.Phase2)))
+            foreach (var p in Sets(g).SelectMany(v => v.Set.Patterns.Concat(v.Set.Phase2)))
             {
                 Func<float, double>? gap = p.Shape == "projectile_fan" ? x => FanGap(p, x) : p.Shape == "radial_burst" ? x => RadialGap(p, x) : (Func<float, double>?)null;
                 if (gap == null) continue;
                 // 틈이 몸 너비와 같아지는 거리
                 float at = (float)(2 * BodyRadius / gap(1f));
-                tight.Add($"{p.NameKo}는 보스에서 {F1(at)}m 안");
+                tight.Add($"{p.NameKo}{Topic(p.NameKo)} 보스에서 {F1(at)}m 안");
             }
             sb.AppendLine($"- 탄 틈은 탄 크기를 0으로 본 값이라 실제는 더 좁다. {string.Join(", ", tight)}이면 틈이 몸 너비보다 좁아 사이로 못 빠진다. 탄 판정 크기를 데이터에 넣어야 다시 잴 수 있다.");
             sb.AppendLine("- 위 거리는 '노림 자리에 가만히 서 있다가 예고를 보고 움직인다'일 때다. 늘 움직이며 싸우면 대개 이보다 짧다. 반대로 적 무리에 막혀 길이 없으면 더 멀다.");
             sb.AppendLine("- 시뮬레이터 가정: 몸 반지름 0.4m, 이동속도 100 = 초속 4.6m, 예고 시작과 동시에 움직인다(반응 시간 0), 경공 무적을 판정 순간에 맞추는 길은 '무적으로 버티기' 표에만 셌다.");
             return sb.ToString();
+        }
+
+        /// <summary>받침이 있으면 '은', 없으면 '는'.</summary>
+        static string Topic(string word)
+        {
+            char c = word.Length == 0 ? 'a' : word[word.Length - 1];
+            return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 != 0 ? "은" : "는";
         }
 
         static string F0(double v) => v.ToString("0", CultureInfo.InvariantCulture);

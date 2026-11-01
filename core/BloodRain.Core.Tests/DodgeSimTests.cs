@@ -78,7 +78,7 @@ namespace BloodRain.Core.Tests
         {
             var rows = DodgeSim.Rows(G);
             Assert.NotEmpty(rows);
-            var names = G.BossPatterns.Values.SelectMany(v => v.Patterns.Concat(v.Phase2)).Select(p => p.NameKo).ToHashSet();
+            var names = G.BossPatterns.Values.Concat(G.ElitePatterns.Values).SelectMany(v => v.Patterns.Concat(v.Phase2)).Select(p => p.NameKo).ToHashSet();
             Assert.All(rows, r =>
             {
                 Assert.Contains(r.Pattern, names);
@@ -103,6 +103,17 @@ namespace BloodRain.Core.Tests
         {
             string onDisk = TestData.ReadRepoFile("docs", "design", "sim", "dodge.md").Replace("\r\n", "\n");
             Assert.Equal(DodgeSim.Report(Data.Value).Replace("\r\n", "\n"), onDisk);
+        }
+
+        [Fact] public void 정예_패턴도_표에_들어가고_방장_대리_범종은_걸어서_빠진다()
+        {
+            var rows = DodgeSim.Rows(G);
+            foreach (var id in G.ElitePatterns.Keys.Where(k => G.ElitePatterns[k].Patterns.Any(p => p.Shape != "projectile_fan")))
+                Assert.Contains(rows, r => r.Boss == "정예 " + G.Enemies.Single(e => e.Id == id).NameKo);
+            var bell = G.ElitePatternSet("acting_abbot").Pattern("bell_stun");
+            var row = rows.Single(r => r.Pattern == bell.NameKo);
+            Assert.Equal(bell.Radius + DodgeSim.BodyRadius - DodgeSim.SelfRingStandoff, row.EscapeMedian, 3);
+            Assert.Equal(1, row.WalkOk);
         }
     }
 }
