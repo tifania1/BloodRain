@@ -204,6 +204,27 @@ namespace BloodRain.Core.Data
         public EnemyMark? Mark;
         /// <summary>발밑 장판(혈술사 blood_pool). 초당 피해는 ZoneDamagePerSecond. 없으면 null.</summary>
         public EnemyPool? Pool;
+        /// <summary>곡선 비행(비강 fly_curve): 플레이어 쪽으로 가며 옆으로 Amplitude m 만큼 Period 초 주기로 흔들린다. 없으면 null.</summary>
+        public EnemyCurve? Curve;
+        /// <summary>OnDeath 의 크기·피해(splinter_burst·poison_pool). 없으면 null.</summary>
+        public EnemyDeath? Death;
+    }
+
+    public sealed class EnemyCurve
+    {
+        public float Amplitude;
+        public float Period;
+    }
+
+    /// <summary>쓰러질 때 남기는 것. splinter_burst: 반경 Radius m 안 다른 적에게 EnemyDamage, 플레이어에게 PlayerDamage 한 번.
+    /// poison_pool: 그 자리에 반경 Radius m 독 장판을 Seconds 초, 플레이어가 밟으면 초당 PerSecond(독 장판끼리 겹쳐도 한 번).</summary>
+    public sealed class EnemyDeath
+    {
+        public float Radius;
+        public float EnemyDamage;
+        public float PlayerDamage;
+        public float Seconds;
+        public float PerSecond;
     }
 
     /// <summary>kite_shoot: 플레이어와 [KeepMin, KeepMax] m 를 지키며(가까우면 물러나고 멀면 다가옴) Interval 초마다

@@ -131,5 +131,19 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"이 카드는 은자 {fc.Silver}과 기혈 회복 {Num(fc.Heal)}을 함께 줍니다", TestData.Gdd);
             Assert.Contains("B.levelUp.fallbackCard", System.IO.File.ReadAllText(System.IO.Path.Combine(RepoRoot, "web", "prototype", "template.html")));
         }
+
+        [Fact] public void 쓰러질_때_남기는_것과_곡선_비행_숫자가_기획서와_같다()
+        {
+            var sec = GddSection("지역별 고유 적");
+            var m = _d.Enemy("mogin_nahan").Death!;
+            Assert.Contains($"반경 {Num(m.Radius)}m 안의 다른 적에게 {Num(m.EnemyDamage)}, 플레이어에게 {Num(m.PlayerDamage)} 피해", sec);
+            var t = _d.Enemy("poison_toad").Death!;
+            Assert.Contains($"반경 {Num(t.Radius)}m 독 장판이 {Num(t.Seconds)}초 남고, 밟으면 초당 {Num(t.PerSecond)} 피해", sec);
+            var c = _d.Enemy("bigang").Curve!;
+            Assert.Contains($"옆으로 {Num(c.Amplitude)}m씩 {Num(c.Period)}초 주기로", sec);
+            // onDeath 가 있는 적은 모두 크기·피해가 있다
+            Assert.All(_d.Enemies.Where(e => e.OnDeath != null), e => { Assert.NotNull(e.Death); Assert.True(e.Death!.Radius > 0); });
+            Assert.All(_d.Enemies.Where(e => e.Behavior == "fly_curve"), e => Assert.NotNull(e.Curve));
+        }
     }
 }
