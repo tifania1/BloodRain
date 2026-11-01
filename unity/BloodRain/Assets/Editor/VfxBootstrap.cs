@@ -107,13 +107,16 @@ namespace BloodRain.Editor
             foreach (var json in Directory.GetFiles(dir, "*.json"))
             {
                 var root = JObject.Parse(File.ReadAllText(json));
-                if (root["textures"] is not JArray arr) continue;
-                foreach (var t in arr)
-                {
-                    var name = (string)t["name"];
-                    var size = t["sizeMeters"];
-                    if (name != null && size != null) map[name] = (float)size;
-                }
+                if (root["textures"] is JArray arr)
+                    foreach (var t in arr)
+                    {
+                        var name = (string)t["name"];
+                        var size = t["sizeMeters"];
+                        if (name != null && size != null) map[name] = (float)size;
+                    }
+                // Common/common.json 은 sizeMeters 가 {앞머리: m} 꼴이다(ink_splat_1 → ink_splat).
+                if (root["sizeMeters"] is JObject prefixes)
+                    foreach (var p in prefixes.Properties()) map[p.Name] = (float)p.Value;
             }
             return map;
         }
@@ -133,8 +136,10 @@ namespace BloodRain.Editor
                 // 이름 = <텍스처 이름>_<층>.png (층: stroke·wash·gold). 공통 텍스처는 json 이름 그대로일 수도 있다.
                 string stem = Path.GetFileNameWithoutExtension(path);
                 float size = 0f;
+                // 가장 긴 이름이 이긴다: fx_mist_ink_2_stroke 는 fx_mist_ink(3m)가 아니라 fx_mist_ink_2(3.5m).
+                int best = -1;
                 foreach (var kv in sizes)
-                    if (stem == kv.Key || stem.StartsWith(kv.Key + "_")) { size = kv.Value; break; }
+                    if ((stem == kv.Key || stem.StartsWith(kv.Key + "_")) && kv.Key.Length > best) { size = kv.Value; best = kv.Key.Length; }
                 imp.textureType = TextureImporterType.Sprite;
                 imp.spriteImportMode = SpriteImportMode.Single;
                 if (size > 0f) imp.spritePixelsPerUnit = 512f / size;
