@@ -22,6 +22,28 @@ namespace BloodRain.Core.Tests
                 Assert.True(Regex.IsMatch(line, $@"(?<![a-z]){n}(?![a-z])"), $"CLAUDE.md 데이터 목록에 {n} 이 없다");
         }
 
+        /// <summary>Core 가 나누는 데 쓰는 데이터 값(따로 0 막이가 없는 것)은 0보다 크다. 0이면 Infinity·NaN 이 화면까지 간다.</summary>
+        [Fact] public void 나눗셈에_쓰는_데이터_값은_0보다_크다()
+        {
+            var g = _d.Gimmicks;
+            var vals = new (string name, float v)[]
+            {
+                ("balance.ultimateCharge.max", _d.Balance.UltimateCharge.Max),
+                ("balance.levelUp.luckForFourthChoice", _d.Balance.LevelUp.LuckForFourthChoice),
+                ("cheonha.world.widthMeters", _d.Cheonha.World.WidthMeters),
+                ("cheonha.world.heightMeters", _d.Cheonha.World.HeightMeters),
+                ("cheonha.world.pushMoveShare", _d.Cheonha.World.PushMoveShare),
+                ("gimmicks.redMoon.periodSeconds", g.RedMoon.PeriodSeconds),
+                ("gimmicks.blizzard.periodSeconds", g.Blizzard.PeriodSeconds),
+                ("gimmicks.fallingRocks.periodSeconds", g.FallingRocks.PeriodSeconds),
+                ("gimmicks.poisonFog.periodSeconds", g.PoisonFog.PeriodSeconds),
+                ("gimmicks.iceFloor.inertiaSeconds", g.IceFloor.InertiaSeconds),
+                ("gimmicks.pagodaForest.spacing", g.PagodaForest.Spacing),
+                ("insights.salgi.killsPerStack", _d.Insight("salgi").Param("killsPerStack")),
+            };
+            foreach (var (name, v) in vals) Assert.True(v > 0f, $"{name} = {v}");
+        }
+
         [Fact] public void 무공_심법_절기는_각각_16종이다()
         {
             Assert.Equal(16, _d.Weapons.Count);
