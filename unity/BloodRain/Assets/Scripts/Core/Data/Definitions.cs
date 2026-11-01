@@ -188,6 +188,8 @@ namespace BloodRain.Core.Data
         public float ReviveSeconds;
         /// <summary>닿으면 이 초 동안 둔화(빙강시). 0 이면 없음.</summary>
         public float OnHitSlowSeconds;
+        /// <summary>둔화 동안 이동속도 배율(빙강시 0.65). 다시 닿으면 시간만 처음부터. 0 이면 1로 본다.</summary>
+        public float OnHitSlowMultiplier;
         /// <summary>쓰러질 때 남기는 것(splinter_burst 나뭇조각, poison_pool 독 장판).</summary>
         public string? OnDeath;
         /// <summary>잡으면 주는 것(금두꺼비).</summary>
@@ -196,6 +198,43 @@ namespace BloodRain.Core.Data
         public float LifeSeconds;
         /// <summary>예고 뒤 돌진(혈무사 telegraph_dash). 없으면 null.</summary>
         public EnemyDash? Dash;
+        /// <summary>거리를 두고 쏜다(혈궁수 kite_shoot). 없으면 null.</summary>
+        public EnemyShoot? Shoot;
+        /// <summary>표식 뒤 순간이동(혈영자객 mark_teleport). 예고 초는 Telegraph. 없으면 null.</summary>
+        public EnemyMark? Mark;
+        /// <summary>발밑 장판(혈술사 blood_pool). 초당 피해는 ZoneDamagePerSecond. 없으면 null.</summary>
+        public EnemyPool? Pool;
+    }
+
+    /// <summary>kite_shoot: 플레이어와 [KeepMin, KeepMax] m 를 지키며(가까우면 물러나고 멀면 다가옴) Interval 초마다
+    /// 플레이어 쪽으로 한 발. 탄은 초속 Speed m, Range m 날아가면 사라지고 반경 Radius m. 피해는 ProjectileDamage.
+    /// 2026-11-02 클라우드 세션이 정함(기획서 6장 표 아래).</summary>
+    public sealed class EnemyShoot
+    {
+        public float KeepMin;
+        public float KeepMax;
+        public float Interval;
+        public float Speed;
+        public float Range;
+        public float Radius;
+    }
+
+    /// <summary>mark_teleport: 플레이어 발밑에 반경 Radius m 붉은 표식을 찍고 Telegraph 초 뒤 그 자리로 순간이동해
+    /// 표식 안에 있으면 접촉 피해. 표식부터 다음 표식까지 Interval 초. 처음 나타나면 바로 첫 표식.</summary>
+    public sealed class EnemyMark
+    {
+        public float Radius;
+        public float Interval;
+    }
+
+    /// <summary>blood_pool: Interval 초마다 플레이어 발밑에 반경 Radius m 피 웅덩이를 깔고 Seconds 초 남긴다.
+    /// 한 혈술사가 깔아 둔 웅덩이는 Max 개까지(넘으면 오래된 것부터 지움). 겹쳐 밟아도 초당 피해는 한 번.</summary>
+    public sealed class EnemyPool
+    {
+        public float Radius;
+        public float Seconds;
+        public float Interval;
+        public int Max;
     }
 
     /// <summary>telegraph_dash 의 돌진(기획서 6장 '공통 적' 표 아래). 거리·속도는 경지 m, m/s.</summary>
@@ -217,6 +256,9 @@ namespace BloodRain.Core.Data
         public int Silver;
         /// <summary>진기 구슬을 한꺼번에 쏟는다.</summary>
         public bool OrbBurst;
+        /// <summary>쏟는 구슬 수와 한 알 진기(웹 프로토타입 12알 × 5). 둘레 1.5m 안에 흩뿌린다.</summary>
+        public int Orbs;
+        public float OrbXp;
     }
 
     public sealed class BossDef

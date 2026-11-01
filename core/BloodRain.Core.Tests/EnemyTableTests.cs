@@ -83,12 +83,53 @@ namespace BloodRain.Core.Tests
 
             Assert.Contains($"{Num(_d.Enemy("twin_gangsi").ReviveSeconds)}초 뒤 다른 쪽이 되살림", Row("twin_gangsi"));
             Assert.Contains($"닿으면 {Num(_d.Enemy("ice_gangsi").OnHitSlowSeconds)}초 둔화", Row("ice_gangsi"));
+            Assert.Contains($"이동속도 {Num(_d.Enemy("ice_gangsi").OnHitSlowMultiplier)}배", Row("ice_gangsi"));
+            Assert.InRange(_d.Enemy("ice_gangsi").OnHitSlowMultiplier, 0.3f, 0.95f);
             Assert.True(_d.Enemy("water_ghost").OnlyInWater);
             Assert.Contains("물 구역에서만", Row("water_ghost"));
             Assert.Equal("splinter_burst", _d.Enemy("mogin_nahan").OnDeath);
             Assert.Contains("나뭇조각이 터져", Row("mogin_nahan"));
             Assert.Equal("poison_pool", _d.Enemy("poison_toad").OnDeath);
             Assert.Contains("죽을 때 독 장판", Row("poison_toad"));
+        }
+
+        /// <summary>2026-11-02: PC 세션(C-02b)이 숫자가 없어 멈춘 행동 갈래. 표 아래 문단과 enemies.json 이 같은지.</summary>
+        [Fact] public void 화살_표식_웅덩이_구슬_숫자가_기획서_문단과_같다()
+        {
+            var sec = GddSection("공통 적");
+            var s = _d.Enemy("hyeol_gungsu").Shoot;
+            Assert.NotNull(s);
+            Assert.Contains($"혈궁수는 플레이어와 {Num(s!.KeepMin)}~{Num(s.KeepMax)}m를 지키며", sec);
+            Assert.Contains($"{Num(s.Interval)}초마다 화살 한 발", sec);
+            Assert.Contains($"화살은 초속 {Num(s.Speed)}m로 {Num(s.Range)}m 날아가고 반경 {Num(s.Radius)}m", sec);
+            Assert.True(s.KeepMin < s.KeepMax && s.KeepMax < s.Range, "지키는 거리보다 화살이 멀리 가야 맞는다");
+
+            var a = _d.Enemy("hyeolyeong_assassin");
+            Assert.NotNull(a.Mark);
+            Assert.Contains($"반경 {Num(a.Mark!.Radius)}m 표식을 찍고 {Num(a.Telegraph)}초 뒤", sec);
+            Assert.Contains($"표식부터 다음 표식까지 {Num(a.Mark.Interval)}초", sec);
+            Assert.True(a.Mark.Interval > a.Telegraph);
+
+            var p = _d.Enemy("hyeol_sulsa").Pool;
+            Assert.NotNull(p);
+            Assert.Contains($"{Num(p!.Interval)}초마다 플레이어 발밑에 반경 {Num(p.Radius)}m 피 웅덩이를 깔고 {Num(p.Seconds)}초 남깁니다", sec);
+            Assert.Contains($"웅덩이는 {p.Max}개까지", sec);
+            Assert.True(p.Seconds / p.Interval <= p.Max, "깔리는 빠르기에 비해 상한이 낮아 늘 지워진다");
+
+            var r = _d.Enemy("golden_toad").Reward!;
+            Assert.Contains($"진기 구슬 {r.Orbs}알(한 알 {Num(r.OrbXp)})", sec);
+
+            // 다른 적에는 붙지 않는다
+            Assert.All(_d.Enemies.Where(e => e.Shoot != null), e => Assert.Equal("kite_shoot", e.Behavior));
+            Assert.All(_d.Enemies.Where(e => e.Mark != null), e => Assert.StartsWith("mark_teleport", e.Behavior));
+            Assert.All(_d.Enemies.Where(e => e.Pool != null), e => Assert.StartsWith("blood_pool", e.Behavior));
+        }
+
+        [Fact] public void 덧붙는_레벨업_카드_몫이_기획서와_같다()
+        {
+            var fc = _d.Balance.LevelUp.FallbackCard;
+            Assert.Contains($"이 카드는 은자 {fc.Silver}과 기혈 회복 {Num(fc.Heal)}을 함께 줍니다", TestData.Gdd);
+            Assert.Contains("B.levelUp.fallbackCard", System.IO.File.ReadAllText(System.IO.Path.Combine(RepoRoot, "web", "prototype", "template.html")));
         }
     }
 }

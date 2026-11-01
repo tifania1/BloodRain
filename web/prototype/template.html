@@ -1051,7 +1051,7 @@ function killEnemy(e) {
   if (G.splats.length > 140) G.splats.shift();
   G.splats.push({ x: e.x, y: e.y, r: e.r * rand(1.4, 2.2), t: 0, red: e.sprite.startsWith('hyeol') || e.boss });
   sfx('kill');
-  if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < 12; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), 5); toast('금두꺼비', `은자 ${rw.silver}`); return; }
+  if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
   if (e.xp > 0) dropOrb(e.x, e.y, e.xp);
   if (e.type === 'mogin_nahan') { addEffect('burst', e.x, e.y, { r: 1.6, color: '#8B6A45' }); forNear(e.x, e.y, 1.6, o => { if (o !== e) hurtEnemy(o, 30, null, 0, 0, 0); }); }
@@ -1739,7 +1739,7 @@ function applyOffer(o) {
   else if (o.kind === 'uw') { const w = G.weapons.find(w => w.id === o.id); w.lv++; yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); }
   else if (o.kind === 'np') { G.passives.push({ id: o.id, lv: 1 }); const d = P_BY_ID[o.id]; yyShift(d.yinyang, d.yinyangPerLevelOverride || B.yinyang.passivePerLevel); }
   else if (o.kind === 'up') { const p = G.passives.find(p => p.id === o.id); p.lv++; const d = P_BY_ID[o.id]; yyShift(d.yinyang, d.yinyangPerLevelOverride || B.yinyang.passivePerLevel); }
-  else if (o.kind === 'gold') { addSilver(50); G.player.hp = Math.min(G.player.maxHp, G.player.hp + 30); }
+  else if (o.kind === 'gold') { const fc = B.levelUp.fallbackCard; addSilver(fc.silver); G.player.hp = Math.min(G.player.maxHp, G.player.hp + fc.heal); }
   recomputeStats(); renderSlots();
 }
 

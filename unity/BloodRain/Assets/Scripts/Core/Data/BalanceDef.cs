@@ -48,8 +48,16 @@ namespace BloodRain.Core.Data
         public float LuckForFourthChoice = 50;
         /// <summary>뽑힌 선택지가 모두 새 무공이면 은자·음식 카드를 한 장 더 붙인다(무명검처럼 무공 하나로 버티는 길, S-07 · 기획서 8장).</summary>
         public bool FallbackWhenAllNewWeapons;
+        /// <summary>그 덧붙는 카드 한 장의 몫: 은자와 기혈 회복을 함께 준다(웹 프로토타입 50·30). 회복은 음식 배율을 곱하지 않는다.</summary>
+        public FallbackCardDef FallbackCard = new FallbackCardDef();
         /// <summary>캐릭터 특성 → 한 판 다시 고르기 몫(진소운 reroll_plus2_insight4 는 2). 연무장 몫과 더한다.</summary>
         public Dictionary<string, int> TraitRerolls = new Dictionary<string, int>();
+    }
+
+    public sealed class FallbackCardDef
+    {
+        public int Silver = 50;
+        public float Heal = 30;
     }
 
     /// <summary>보갑(정예 확정 드롭) 강화 개수. 가중치 i 번째가 강화 i+1 개(기획서 8장 보상 표).</summary>
