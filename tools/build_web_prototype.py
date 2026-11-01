@@ -80,6 +80,7 @@ def data_blob() -> str:
         "enemies": enemies["enemies"],
         "elites": enemies.get("elites"),
         "bosses": enemies.get("bosses"),
+        "elitePatterns": drop_notes(load("bosspatterns")["elites"]),
         "characters": chars["characters"],
         "ultimates": chars["ultimates"],
         "insights": {k: v for k, v in load("insights").items() if not k.startswith("_")},

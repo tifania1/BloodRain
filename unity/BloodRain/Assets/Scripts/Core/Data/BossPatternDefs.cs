@@ -62,7 +62,7 @@ namespace BloodRain.Core.Data
         public float HitIntervalSeconds;
         /// <summary>판정 피해(0분·혈운 농도 1 값). 0이면 피해 없는 패턴(소환 등).</summary>
         public float BaseDamage;
-        /// <summary>player_at_telegraph: 예고를 시작할 때 플레이어 쪽(위치)을 잡는다.</summary>
+        /// <summary>player_at_telegraph: 예고를 시작할 때 플레이어 쪽(위치)을 잡는다. self: 제 몸 둘레(따라다닌다, 방장 대리 범종).</summary>
         public string Aim = "";
         /// <summary>player_at_resolve: 판정 순간 플레이어 자리를 가운데로 쓴다.</summary>
         public string Center = "";
@@ -92,6 +92,8 @@ namespace BloodRain.Core.Data
         public float PullSeconds;
         /// <summary>포승줄에 맞으면 걷지 못하는 시간(초). 경공으로 끊긴다(서장 장삼).</summary>
         public float RootSeconds;
+        /// <summary>맞으면 기절하는 시간(초). 걷지도 경공도 못 하고 무공은 그대로 나간다(강시 방장 대리).</summary>
+        public float StunSeconds;
         /// <summary>분열: 분열체 하나가 받는 남은 기혈의 몫.</summary>
         public float HealthShare;
         /// <summary>분열: 첫 분열체가 쓰러진 뒤 이 시간 안에 다 쓰러지지 않으면 쓰러진 분열체가 되살아난다.</summary>

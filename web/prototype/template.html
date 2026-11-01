@@ -929,9 +929,9 @@ function nearestEnemies(x, y, n, maxR, exclude) {
 }
 
 // ───────── 적 ─────────
-// 1장 정예 셋. 기혈·걸음·접촉 피해·넉백 저항은 enemies.json 에서, 공격 모양(pattern)만 프로토타입 몫.
-const ELITES = Object.fromEntries([['dongin', 'dongin', 'slam'], ['gyeyul', 'gyeyul_monk', 'palm'], ['abbot', 'acting_abbot', 'bell']]
-  .map(([key, id, pattern]) => { const d = E_BY_ID[id]; return [key, { name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, pattern }]; }));
+// 1장 정예 셋. 기혈·걸음·접촉 피해·넉백 저항은 enemies.json 에서, 공격(첫 시각·간격·패턴)은 bosspatterns.json elites 에서.
+const ELITES = Object.fromEntries([['dongin', 'dongin'], ['gyeyul', 'gyeyul_monk'], ['abbot', 'acting_abbot']]
+  .map(([key, id]) => { const d = E_BY_ID[id], ps = DATA.elitePatterns[id]; return [key, { name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] }]; }));
 function spawnEnemy(type, x, y, extra) {
   const def = E_BY_ID[type];
   const gm = G.gm, mult = B.enemyScaling.chapterMultiplier.chapter1;
@@ -954,7 +954,7 @@ function spawnElite(key) {
   const hp = d.hp * (1 + B.enemyScaling.healthPerMinute * G.gm);
   const e = spawnEnemy('sigang', p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, {
     sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * (1 + B.enemyScaling.damagePerMinute * G.gm),
-    r: KIND_SIZE.elite * 0.3, kbRes: d.kbRes, xp: 25, pattern: d.pattern, timer: 3,
+    r: KIND_SIZE.elite * 0.3, kbRes: d.kbRes, xp: 25, ps: d.ps, pat: d.pat, timer: d.ps.firstCastSeconds,
   });
   toast(d.name, '정예가 나타났다 · 쓰러뜨리면 보갑');
   return e;
@@ -1242,7 +1242,7 @@ function useUlt() {
 function doDash() {
   if (!G || paused || overlay) return;
   const p = G.player;
-  if (p.dashCharges <= 0 || p.dashT > 0) return;
+  if (p.dashCharges <= 0 || p.dashT > 0 || p.stunT > 0) return;
   p.dashCharges--; p.dashT = B.dash.duration; p.iframe = B.dash.iframes;
   const sp = B.dash.distance * (1 + ((synEff('dash_drag') || {}).distanceBonus || 0)) / B.dash.duration; p.dashVx = p.fx * sp; p.dashVy = p.fy * sp;
   addEffect('dash', p.x, p.y, { a: Math.atan2(p.fy, p.fx), life: 0.3 });
@@ -1313,6 +1313,8 @@ function update(dt) {
   p.moving = moving;
   if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; p.still = 0; } else p.still += dt;
   let speed = S.move * (G.backlash ? 0.5 : 1);
+  // 기절(방장 대리 범종): 걷지도 경공도 못 한다. 무공은 그대로 나간다.
+  if (p.stunT > 0) { p.stunT -= dt; speed = 0; }
   if (p.dashT > 0) { p.x += p.dashVx * dt; p.y += p.dashVy * dt; p.dashT -= dt; }
   else { p.x += mx * speed * dt; p.y += my * speed * dt; }
   p.iframe = Math.max(0, p.iframe - dt); p.block = Math.max(0, p.block - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt);
@@ -1530,29 +1532,44 @@ function runEvent(ev) {
   else if (ev.kind === 'boss') spawnBoss();
 }
 
-// 정예 셋: 동인(내려찍기), 계율원 승려(장풍 세 갈래), 방장 대리(금종 파동)
+// 정예 셋: 동인(몸통 박치기 3연타), 계율원 승려(장풍 세 갈래), 방장 대리(범종 기절). 수치는 bosspatterns.json elites.
+// 패턴 피해는 몸 피해처럼 분마다 커진다(baseDamage 는 0분 값).
 function eliteAI(e, dt, dx, dy, d) {
-  const p = G.player;
+  const p = G.player, P = e.pat, scale = 1 + B.enemyScaling.damagePerMinute * G.gm, dmg = P.baseDamage * scale;
   if (e.windup > 0) { e.windup -= dt; return; }
   e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1;
   e.timer -= dt;
   if (e.timer > 0) return;
-  e.timer = rand(3, 4.5);
-  if (e.pattern === 'slam') {
-    const tx = p.x, ty = p.y; e.windup = 0.9;
-    G.zones.push({ delay: 0.8, mark: { x: tx, y: ty, r: 2.6 }, apply: () => {
+  e.timer = e.ps.intervalSeconds;
+  if (P.shape === 'jump_slam') {
+    // 뛸 때마다 그 순간 플레이어 자리에 그림자, telegraphSeconds 뒤 착지
+    const step = P.telegraphSeconds + P.waveIntervalSeconds, R = P.radius;
+    e.windup = P.count * P.telegraphSeconds + (P.count - 1) * P.waveIntervalSeconds;
+    for (let k = 0; k < P.count; k++) G.zones.push({ delay: k * step, apply: () => {
       if (e.dead) return;
-      addEffect('boom', tx, ty, { r: 2.6, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.15);
-      if (Math.hypot(G.player.x - tx, G.player.y - ty) < 2.6) hurtPlayer(e.dmg * 1.4);
+      const tx = G.player.x, ty = G.player.y;
+      G.zones.push({ delay: P.telegraphSeconds, mark: { x: tx, y: ty, r: R }, apply: () => {
+        if (e.dead) return;
+        e.x = tx; e.y = ty;
+        addEffect('boom', tx, ty, { r: R, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.12);
+        if (Math.hypot(G.player.x - tx, G.player.y - ty) < R) hurtPlayer(dmg, e);
+      } });
     } });
-  } else if (e.pattern === 'palm') {
-    for (const da of [-0.3, 0, 0.3]) { const a = Math.atan2(dy, dx) + da; G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6, r: 0.5, dmg: e.dmg, life: 3, t: 0, kind: 'epalm' }); }
-  } else if (e.pattern === 'bell') {
-    e.windup = 1.1;
-    G.zones.push({ delay: 1.0, mark: { follow: e, r: 4.5 }, apply: () => {
+  } else if (P.shape === 'projectile_fan') {
+    const a0 = Math.atan2(dy, dx), half = P.angleDegrees / 2 * Math.PI / 180, sp = P.projectileSpeed / 100 * MOVE;
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
-      addEffect('ring', e.x, e.y, { r: 4.5, life: 0.5, color: '#B3261E' }); sfx('gong');
-      if (Math.hypot(G.player.x - e.x, G.player.y - e.y) < 4.5) hurtPlayer(e.dmg);
+      for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.5, dmg, life: P.length / sp, t: 0, kind: 'epalm' }); }
+    } });
+  } else if (P.shape === 'circles' && P.aim === 'self') {
+    if (P.bossHolds) e.windup = P.telegraphSeconds;
+    G.zones.push({ delay: P.telegraphSeconds, mark: { follow: e, r: P.radius }, apply: () => {
+      if (e.dead) return;
+      addEffect('ring', e.x, e.y, { r: P.radius, life: 0.5, color: '#B3261E' }); sfx('gong');
+      if (Math.hypot(G.player.x - e.x, G.player.y - e.y) < P.radius && G.player.iframe <= 0) {
+        hurtPlayer(dmg, e);
+        if (P.stunSeconds) { G.player.stunT = Math.max(G.player.stunT || 0, P.stunSeconds); toast('기절', '범종 소리에 몸이 굳었다'); }
+      }
     } });
   }
 }
