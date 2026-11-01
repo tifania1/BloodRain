@@ -130,6 +130,36 @@ namespace BloodRain.Core.Data
         /// <summary>지역 고유 적이면 그 지역의 장 이름(cheonha.json regions[].chapter: chapter1 …). 공통 적은 null.
         /// 공통 적이 처음 나오는 시각은 chapters.json 흐름의 가중치표가 정한다.</summary>
         public string? Chapter;
+
+        // 행동에 딸린 값(기획서 6장 '행동' 칸). 그 적에게 없으면 기본값.
+        /// <summary>예고 초(혈무사 창 찌르기 0.6, 혈영자객 표식 뒤 순간이동 1.0).</summary>
+        public float Telegraph;
+        /// <summary>쏘는 탄 한 발 피해(혈궁수 화살). 접촉 피해와 따로.</summary>
+        public float ProjectileDamage;
+        /// <summary>발밑 장판 초당 피해(혈술사 피 웅덩이).</summary>
+        public float ZoneDamagePerSecond;
+        /// <summary>둘레 적 강화 반경(m)과 이동·피해 배율 덧셈(기수 5m, +0.2).</summary>
+        public float AuraRadius;
+        public float AuraBonus;
+        /// <summary>지형을 무시하고 날아다닌다(비강).</summary>
+        public bool IgnoresTerrain;
+        /// <summary>물 구역에서만 솟아난다(수귀).</summary>
+        public bool OnlyInWater;
+        /// <summary>짝이 쓰러지면 남은 쪽이 이 초 뒤 되살린다(흑백 쌍강시). 0 이면 없음.</summary>
+        public float ReviveSeconds;
+        /// <summary>닿으면 이 초 동안 둔화(빙강시). 0 이면 없음.</summary>
+        public float OnHitSlowSeconds;
+        /// <summary>쓰러질 때 남기는 것(splinter_burst 나뭇조각, poison_pool 독 장판).</summary>
+        public string? OnDeath;
+        /// <summary>잡으면 주는 것(금두꺼비).</summary>
+        public EnemyReward? Reward;
+    }
+
+    public sealed class EnemyReward
+    {
+        public int Silver;
+        /// <summary>진기 구슬을 한꺼번에 쏟는다.</summary>
+        public bool OrbBurst;
     }
 
     public sealed class BossDef

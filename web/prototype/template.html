@@ -1046,7 +1046,7 @@ function killEnemy(e) {
   if (G.splats.length > 140) G.splats.shift();
   G.splats.push({ x: e.x, y: e.y, r: e.r * rand(1.4, 2.2), t: 0, red: e.sprite.startsWith('hyeol') || e.boss });
   sfx('kill');
-  if (e.type === 'golden_toad') { addSilver(100); for (let i = 0; i < 12; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), 5); toast('금두꺼비', '은자 100'); return; }
+  if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < 12; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), 5); toast('금두꺼비', `은자 ${rw.silver}`); return; }
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
   if (e.xp > 0) dropOrb(e.x, e.y, e.xp);
   if (e.type === 'mogin_nahan') { addEffect('burst', e.x, e.y, { r: 1.6, color: '#8B6A45' }); forNear(e.x, e.y, 1.6, o => { if (o !== e) hurtEnemy(o, 30, null, 0, 0, 0); }); }
@@ -1398,7 +1398,7 @@ function update(dt) {
       if (e.hop < HOP_DUTY) { const s = e.speed / HOP_DUTY; vx = dx * s; vy = dy * s; }
     } else if (e.behavior === 'line_charge') { vx = e.vx; vy = e.vy; if (e.life > 14) e.dead = true; }
     else if (e.behavior === 'telegraph_dash') {
-      if (e.state === 0) { vx = dx * e.speed; vy = dy * e.speed; e.timer -= dt; if (d < 5 && e.timer <= 0) { e.state = 1; e.timer = 0.6; e.ax = dx; e.ay = dy; } }
+      if (e.state === 0) { vx = dx * e.speed; vy = dy * e.speed; e.timer -= dt; if (d < 5 && e.timer <= 0) { e.state = 1; e.timer = E_BY_ID[e.type].telegraph || 0.6; e.ax = dx; e.ay = dy; } }
       else if (e.state === 1) { e.timer -= dt; if (e.timer <= 0) { e.state = 2; e.timer = 0.5; } }
       else { vx = e.ax * 9; vy = e.ay * 9; e.timer -= dt; if (e.timer <= 0) { e.state = 0; e.timer = rand(2, 3.5); } }
     } else if (e.behavior === 'flee') {
