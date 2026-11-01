@@ -43,6 +43,31 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"{staff.Param("stunSeconds")}초 기절", Effect("drunken_staff"));
         }
 
+        /// <summary>9장 '절기로 바뀐 뒤 날아가는 것' 표 = params. 프로토타입·시뮬레이터가 이 값을 읽는다.</summary>
+        [Fact] public void 절기로_바뀐_뒤_날아가는_것_표가_params_와_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("절기로 바뀐 뒤 날아가는 것")).ToDictionary(r => r[0], r => r);
+            string Num(float v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            void Row(string weapon, string speed, string radius, string life, string damage)
+            {
+                var r = rows[Of(weapon).NameKo];
+                Assert.Equal(speed, r[2]); Assert.Equal(radius, r[3]); Assert.Equal(life, r[4]); Assert.Equal(damage, r[5]);
+            }
+            var w = Of("samjae_sword");
+            Row("samjae_sword", $"{Num(w.Param("waveSpeed"))}m", $"{Num(w.Param("waveRadius"))}m", $"{Num(w.Param("waveLifeSeconds"))}초", $"{Num(w.Param("waveDamage"))}배");
+            Assert.Contains($"{Num(w.Param("waveEvery"))}번째 공격마다", rows[w.NameKo][6]);
+            var f = Of("nahan_fist");
+            Row("nahan_fist", $"{Num(f.Param("projectileSpeed"))}m", $"{Num(f.Param("projectileRadius"))}m", $"{Num(f.Param("projectileLifeSeconds"))}초", $"{Num(f.Param("projectileDamage"))}배");
+            Assert.Contains($"갈래 사이 {Num(f.Param("projectileSpread"))}라디안", rows[f.NameKo][6]);
+            Assert.Contains($"{Num(Of("flying_dagger").Param("bounceRange"))}m 안", rows[Of("flying_dagger").NameKo][6]);
+            foreach (var id in new[] { "palm_wind", "flash_finger" })
+                Row(id, "-", $"{Num(Of(id).Param("explodeRadius"))}m", "-", $"{Num(Of(id).Param("explodeDamage"))}배");
+            Assert.Contains($"{Num(Of("flash_finger").Param("explodeChance") * 100)}% 확률", rows[Of("flash_finger").NameKo][6]);
+            var b = Of("thunder_bomb");
+            Row("thunder_bomb", "-", $"{Num(b.Param("chainShrink"))}배씩", "-", $"{Num(b.Param("chainDamage"))}배씩");
+            Assert.Contains($"{Num(b.Param("chainDelaySeconds"))}초 뒤", rows[b.NameKo][6]);
+        }
+
         /// <summary>기획서와 프로토타입이 다른 곳(backlog E-02). 한쪽을 고치면 여기가 실패하니 그 줄을 지우고 E-02 를 닫는다.</summary>
         [Fact] public void 기획서와_다른_곳()
         {

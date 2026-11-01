@@ -101,8 +101,11 @@ namespace BloodRain.Sim
                     list.Add(new Strike(area: Disc(r) * cover, hits: strikes, damage: dmg, singleHits: strikes));
                     // 절기: 세 번째 공격마다 바라보는 쪽으로 관통 검기(피해 1.5배, 폭 0.7m). 세 번에 한 번을 넓이 1/3로 나눠 센다.
                     if (evolved)
-                        list.Add(new Strike(area: 2 * (0.7 + EnemyRadius) * CrowdRadius * FacingEfficiency / 3, random: true,
-                            damage: dmg * 1.5, singleHits: FacingEfficiency / 3));
+                    {
+                        double every = ex?.EvoParam("waveEvery", 3) ?? 3;
+                        list.Add(new Strike(area: 2 * ((ex?.EvoParam("waveRadius", 0.7) ?? 0.7) + EnemyRadius) * CrowdRadius * FacingEfficiency / every, random: true,
+                            damage: dmg * (ex?.EvoParam("waveDamage", 1.5) ?? 1.5), singleHits: FacingEfficiency / every));
+                    }
                     break;
                 }
                 case "melee_combo":
@@ -113,8 +116,8 @@ namespace BloodRain.Sim
                     list.Add(new Strike(area: Disc(r), hits: hits, damage: dmg, singleHits: hits));
                     // 절기 백보신권: 관통 권경 세 갈래(피해 2배, 폭 0.6m).
                     if (evolved)
-                        list.Add(new Strike(area: 3 * 2 * (0.6 + EnemyRadius) * CrowdRadius * FacingEfficiency, random: true,
-                            damage: dmg * 2, singleHits: FacingEfficiency));
+                        list.Add(new Strike(area: (ex?.EvoParam("projectiles", 3) ?? 3) * 2 * ((ex?.EvoParam("projectileRadius", 0.6) ?? 0.6) + EnemyRadius) * CrowdRadius * FacingEfficiency, random: true,
+                            damage: dmg * (ex?.EvoParam("projectileDamage", 2) ?? 2), singleHits: FacingEfficiency));
                     break;
                 }
                 case "homing_dagger":
@@ -152,7 +155,8 @@ namespace BloodRain.Sim
                     // 섬광지: 가까운 적 중 아무에게나 한 발.
                     list.Add(new Strike(targets: 1, random: true, damage: dmg, singleHits: 1));
                     // 절기 만천성지: 25% 확률로 작은 폭발(반경 1.1m, 피해 절반).
-                    if (evolved) list.Add(new Strike(area: Disc(1.1 + EnemyRadius) * (ex?.EvoParam("explodeChance", 0.25) ?? 0.25), random: true, damage: dmg * 0.5));
+                    if (evolved) list.Add(new Strike(area: Disc((ex?.EvoParam("explodeRadius", 1.1) ?? 1.1) + EnemyRadius) * (ex?.EvoParam("explodeChance", 0.25) ?? 0.25), random: true,
+                        damage: dmg * (ex?.EvoParam("explodeDamage", 0.5) ?? 0.5)));
                     break;
                 }
                 case "random_bomb":
@@ -166,8 +170,10 @@ namespace BloodRain.Sim
                         list.Add(new Strike(area: Disc(rr + EnemyRadius), random: true, damage: dmg, dot: burn,
                             singleHits: 1, singleDot: i == 0 ? burn : 0));
                         if (!evolved) continue;
-                        list.Add(new Strike(area: Disc(rr * 0.9 + EnemyRadius), random: true, damage: dmg * 0.8, dot: burn));
-                        list.Add(new Strike(area: Disc(rr * 0.81 + EnemyRadius), random: true, damage: dmg * 0.64, dot: burn));
+                        int chain = (int)(ex?.EvoParam("chain", 3) ?? 3);
+                        double shrink = ex?.EvoParam("chainShrink", 0.9) ?? 0.9, fall = ex?.EvoParam("chainDamage", 0.8) ?? 0.8;
+                        for (int k = 1; k < chain; k++)
+                            list.Add(new Strike(area: Disc(rr * Math.Pow(shrink, k) + EnemyRadius), random: true, damage: dmg * Math.Pow(fall, k), dot: burn));
                     }
                     break;
                 }
