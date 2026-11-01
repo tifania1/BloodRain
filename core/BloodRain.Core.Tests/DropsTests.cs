@@ -30,6 +30,14 @@ namespace BloodRain.Core.Tests
             Assert.Equal(double.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture) / 100, R.EnemySilverChance, 4);
         }
 
+        [Fact] public void 정신부_정지_시간은_기획서와_같다()
+        {
+            var m = Regex.Match(TestData.Gdd, @"정신부\([^)]*화면 안 적 (\d+)초 정지\)");
+            Assert.True(m.Success, "기획서 7장 부적 드롭에 정신부 정지 시간이 없다");
+            Assert.Equal(float.Parse(m.Groups[1].Value), R.JeongsinFreezeSeconds);
+            Assert.Contains("G.freeze = DR.jeongsinFreezeSeconds", TestData.ReadRepoFile("web", "prototype", "template.html"));
+        }
+
         [Fact] public void 정예_혈정은_기획서와_같다()
         {
             var m = Regex.Match(TestData.Gdd, @"\| 혈정 \| [^|]+\| 정예 (\d+)개, 보스 (\d+)개");

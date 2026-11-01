@@ -275,6 +275,8 @@ namespace BloodRain.Core.Data
         public float EnemySilverChance;
         /// <summary>정예 하나가 주는 혈정(땅의 주인 몫은 cheonha.json bosses).</summary>
         public int EliteBloodCrystal = 1;
+        /// <summary>정신부가 적을 멈추는 초(곤륜 진전 '정지 시간 2배' 같은 배율을 곱하기 전). 기획서 7장 부적 드롭.</summary>
+        public float JeongsinFreezeSeconds = 5;
         public List<LanternDropDef> Lantern = new List<LanternDropDef>();
     }
 

@@ -101,6 +101,7 @@
     "silverBag": [10, 50],
     "enemySilverChance": 0.012,
     "eliteBloodCrystal": 1,
+    "jeongsinFreezeSeconds": 5,
     "lantern": [
       { "kind": "bun", "weight": 0.45 },
       { "kind": "duck", "weight": 0.15 },

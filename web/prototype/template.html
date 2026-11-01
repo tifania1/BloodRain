@@ -1628,7 +1628,7 @@ function pickup(dr) {
   if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal); toast('만두', `기혈 +${DR.bunHeal}`); }
   else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal); toast('오리구이', `기혈 +${DR.duckHeal}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
-  else if (dr.kind === 'freeze') { G.freeze = 5 * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
+  else if (dr.kind === 'freeze') { G.freeze = DR.jeongsinFreezeSeconds * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
   else if (dr.kind === 'silver') { addSilver(DR.silverBag[0] + Math.floor(Math.random() * (DR.silverBag[1] - DR.silverBag[0] + 1))); }
   else if (dr.kind === 'chest') openChest();
 }
