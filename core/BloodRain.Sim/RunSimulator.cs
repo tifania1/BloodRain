@@ -36,6 +36,9 @@ namespace BloodRain.Sim
         public double? BloodArtDensity;
         /// <summary>false 면 천마해체를 써도 심마를 되돌리지 않는다(오의를 아끼는 사람, 되돌림이 없을 때 얼마나 기우는지 보기).</summary>
         public bool BloodArtReset = true;
+        /// <summary>서장(청운진 객잔 마당). 적 종류·수·사건을 Core PrologueDirector(chapters.json prologue)로 바꾸고,
+        /// 적 기혈은 청운진 혈운 농도(cheonha.json)로 셈한다. Chapter 는 쓰지 않는다. 보고서 prologue.md.</summary>
+        public bool Prologue;
 
         public SimOptions With(Action<SimOptions> change)
         {
@@ -98,6 +101,12 @@ namespace BloodRain.Sim
         /// <summary>혈공(SimOptions.BloodArtDensity)을 돌렸을 때 심마로 기운 횟수와 농도 덕에 더 받은 진기. 혈공이 없으면 0.</summary>
         public int BloodArtSteps;
         public double BloodArtExtraXp;
+        /// <summary>처음 레벨이 오른 시각(분). 안 오르면 NaN.</summary>
+        public double FirstLevelUpMinute = double.NaN;
+        /// <summary>처음 오의 게이지가 가득 찬 시각(분). 안 차면 NaN.</summary>
+        public double FirstUltimateFullMinute = double.NaN;
+        /// <summary>서장: 장삼 사건이 나온 시각(분), 정예(강시 도부수)를 쓰러뜨린 시각(분). 아니면 NaN.</summary>
+        public double BossMinute = double.NaN, EliteKilledMinute = double.NaN;
         /// <summary>무공 id(오의는 "ultimate", 모인 나한 폭발은 "burst", 각성 파동은 "wave") → 판 동안 넣은 피해(보고서 insights.md). 판 흐름에는 영향을 주지 않는다.</summary>
         public Dictionary<string, double> DamageBySource = new Dictionary<string, double>();
 
@@ -141,6 +150,8 @@ namespace BloodRain.Sim
         readonly Backlash _backlash;
         readonly ISet<string> _unlocked;
         readonly BloodArt? _bloodArt;
+        readonly PrologueDirector? _prologue;
+        readonly float _prologueDensity;
         readonly PolicyContext _ctx;
         readonly IReadOnlyDictionary<string, double> _killXp;
         readonly double _eliteXp, _crowdRadius, _maxDensity, _arrival, _crowdArea;
@@ -185,6 +196,11 @@ namespace BloodRain.Sim
             _weapons.Add(new WeaponState { Id = _character.StartWeapon });
             _ctx = new PolicyContext { Data = _g, Loadout = _loadout, Rng = _rng, CrowdDpsAfter = CrowdDpsAfter };
             _result = new SimResult { Options = opt };
+            if (opt.Prologue)
+            {
+                _prologue = new PrologueDirector(_g, _rng);
+                _prologueDensity = _g.Cheonha.Region(_g.Cheonha.PrologueBody.Region).Density;
+            }
             if (opt.BloodArtDensity.HasValue)
             {
                 var art = _g.Cheonha.Sects.Select(x => x.BloodArt).FirstOrDefault(a => a != null)
@@ -196,7 +212,7 @@ namespace BloodRain.Sim
         SimResult Execute()
         {
             RecomputeStats();
-            var events = BuildEvents();
+            var events = _prologue != null ? new List<(double Minute, EventKind Kind, int Count)>() : BuildEvents();
             int perSecond = (int)Math.Round(1 / TickSeconds);
             int perMinute = perSecond * 60;
             int total = (int)Math.Round(_opt.Minutes * 60 * perSecond);
@@ -208,9 +224,15 @@ namespace BloodRain.Sim
                 double m = _t / 60;
                 while (ev < events.Count && m >= events[ev].Minute - 1e-9) RunEvent(events[ev++], m);
                 // [프로토] 1초마다 생성. 보스(20분)부터는 이 시뮬레이터가 다루지 않는다.
-                if (i % perSecond == 0 && _t >= _spawnPauseUntil && m < _opt.Minutes - 1e-9) Spawn(m);
+                if (_prologue != null)
+                {
+                    _prologue.Tick((float)TickSeconds);
+                    if (i % perSecond == 0 && m < _opt.Minutes + 1e-9) PrologueSecond(m); // 마지막 초(9:00 장삼 사건)까지
+                }
+                else if (i % perSecond == 0 && _t >= _spawnPauseUntil && m < _opt.Minutes - 1e-9) Spawn(m);
                 BuildCrowd();
                 for (int w = 0; w < _weapons.Count; w++) TickWeapon(_weapons[w]);
+                if (_ult.IsFull && double.IsNaN(_result.FirstUltimateFullMinute)) _result.FirstUltimateFullMinute = m;
                 if (_ult.IsFull && _crowd.Count > 0) FireUltimate();
                 Settle();
                 TrackYinYang(m);
@@ -289,6 +311,35 @@ namespace BloodRain.Sim
             for (int i = 0; i < n; i++) AddEnemy(PickType(m), m);
         }
 
+        /// <summary>서장 1초: PrologueDirector 가 정한 사건과 적을 그대로 만든다. 덩이는 기혈 하나·진기 하나(기획서 7장)라 한 마리로 본다.</summary>
+        void PrologueSecond(double m)
+        {
+            int alive = 0;
+            foreach (var e in _enemies) if (!e.Dead) alive++;
+            var s = _prologue!.Second((float)m, _xp.Level, alive);
+            foreach (var ev in s.Events)
+            {
+                switch (ev.Wave.Kind)
+                {
+                    case WaveEventKind.Charge:
+                        for (int i = 0; i < ev.Wave.Count - ChargeGap; i++) AddEnemy(ev.Enemy, m);
+                        break;
+                    case WaveEventKind.Elite:
+                    {
+                        var d = _g.Enemy(ev.Enemy);
+                        double hp = _scaling.HealthAt(d.Health, (float)m, _prologueDensity);
+                        _enemies.Add(new Enemy { Id = "elite", Hp = hp, MaxHp = hp, Xp = _eliteXp, Born = _t, Elite = true, Priority = true });
+                        _spawned++;
+                        break;
+                    }
+                    case WaveEventKind.Boss:
+                        if (double.IsNaN(_result.BossMinute)) _result.BossMinute = m;
+                        break;
+                }
+            }
+            foreach (var sp in s.Spawns) AddEnemy(sp.Enemy, m);
+        }
+
         string PickType(double m)
         {
             var mix = EnemyMix[0].Mix;
@@ -305,7 +356,7 @@ namespace BloodRain.Sim
         Enemy AddEnemy(string id, double m)
         {
             var def = _g.Enemy(id);
-            double hp = _scaling.Health(def, (float)m, _opt.Chapter);
+            double hp = _prologue != null ? _scaling.HealthAt(def.Health, (float)m, _prologueDensity) : _scaling.Health(def, (float)m, _opt.Chapter);
             var e = new Enemy
             {
                 Id = id, Hp = hp, MaxHp = hp, Born = _t, Mogin = id == "mogin_nahan",
@@ -397,7 +448,7 @@ namespace BloodRain.Sim
             _kills++;
             _pendingXp += e.Xp * PickupRate;
             var band = _loadout.Gauge.Band;
-            if (e.Elite) { _ult.OnEliteKill(band); _pendingChests++; }
+            if (e.Elite) { _ult.OnEliteKill(band); _pendingChests++; if (double.IsNaN(_result.EliteKilledMinute)) _result.EliteKilledMinute = _t / 60; }
             else _ult.OnKill(band);
             if (e.Mogin) _bursts.Enqueue(e);
         }
@@ -460,6 +511,7 @@ namespace BloodRain.Sim
 
         void LevelUp(int level)
         {
+            if (double.IsNaN(_result.FirstLevelUpMinute)) _result.FirstLevelUpMinute = _t / 60;
             var offers = _loadout.RollLevelUp(_rng, (float)_b.Sheet.Luck, _unlocked);
             ApplyOffer(_policy.Choose(offers, _ctx));
             foreach (var realm in _realms.Breakthroughs(level - 1, level)) Breakthrough(realm, level);
@@ -475,6 +527,7 @@ namespace BloodRain.Sim
         void Breakthrough(RealmDef realm, int level)
         {
             if (!_result.RealmMinute.ContainsKey(realm.Id)) _result.RealmMinute[realm.Id] = _t / 60;
+            _prologue?.OnBreakthrough();
             if (realm.Id == _g.Balance.Slots.ExtraSlotAtRealm) _loadout.AddExtraSlot(_policy.ExtraSlotIsWeapon(_ctx));
             var ready = _loadout.AwakenOnBreakthrough(level - 1, level);
             if (ready.Count > 0) Awaken(_policy.PickAwaken(ready, _ctx), realm.NameKo + " 돌파");
@@ -518,6 +571,7 @@ namespace BloodRain.Sim
                 }
             }
             _spawnPauseUntil = Math.Max(_spawnPauseUntil, _t + WaveSpawnPause);
+            _prologue?.Hold((float)WaveSpawnPause);
         }
 
         // ───────── 능력치 ─────────
