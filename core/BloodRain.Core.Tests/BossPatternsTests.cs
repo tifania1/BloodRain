@@ -52,6 +52,13 @@ namespace BloodRain.Core.Tests
             foreach (var id in _d.BossPatterns.Keys) Assert.Contains(_d.Bosses, b => b.Id == id);
         }
 
+        [Fact] public void enemies_json의_보스는_모두_패턴_시간표가_있다()
+        {
+            // 종장 단목현은 bosspatterns.json final 이 따로 맡는다(FinalFight).
+            foreach (var b in _d.Bosses.Where(b => b.Chapter != "final"))
+                Assert.True(_d.BossPatterns.ContainsKey(b.Id), $"{b.NameKo}({b.Id}) 패턴 시간표가 bosspatterns.json 에 없습니다");
+        }
+
         [Fact] public void 소환하는_적이_enemies_json에_있다()
         {
             foreach (var p in W.Patterns.Concat(W.Phase2))
