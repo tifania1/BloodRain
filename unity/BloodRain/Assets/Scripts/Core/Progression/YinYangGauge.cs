@@ -1,5 +1,5 @@
 // 태극(음양) 게이지. 양 무공·심법을 올리면 +, 음이면 -.
-//   |g| ≤ harmony(기본 25, 운화 40)  → 태극(조화)
+//   |g| ≤ harmony(기본 25, 운화 40, 무당 진전 2단계면 35)  → 태극(조화)
 //   harmony < |g| < 70               → 편향
 //   |g| ≥ 70                         → 극성(기혈역류 위험)
 using System;
@@ -12,7 +12,8 @@ namespace BloodRain.Core.Progression
     public sealed class YinYangGauge
     {
         readonly YinYangDef _def;
-        readonly int _harmonyRange;
+        readonly int _baseHarmonyRange;
+        int? _synergyHarmonyRange;
         double _carry; // 기울기 배율 때문에 남은 소수 몫(2.5 → 2, 다음에 3)
 
         public int Value { get; private set; }
@@ -20,9 +21,15 @@ namespace BloodRain.Core.Progression
         public YinYangGauge(YinYangDef def, int start = 0, int? harmonyRangeOverride = null)
         {
             _def = def;
-            _harmonyRange = harmonyRangeOverride ?? def.HarmonyRange;
+            _baseHarmonyRange = harmonyRangeOverride ?? def.HarmonyRange;
             Value = Clamp(start);
         }
+
+        /// <summary>지금 태극 구간 반폭. 몸의 값과 진전이 넓힌 값 중 넓은 쪽(좁히지는 않는다).</summary>
+        public int HarmonyRange => _synergyHarmonyRange is int r && r > _baseHarmonyRange ? r : _baseHarmonyRange;
+
+        /// <summary>진전이 넓혀 주는 태극 구간(SynergyState.HarmonyRange). 단계를 잃으면 null 을 넘겨 되돌린다.</summary>
+        public void SetSynergyHarmonyRange(int? range) => _synergyHarmonyRange = range;
 
         int Clamp(int v) => Math.Max(_def.Min, Math.Min(_def.Max, v));
 
@@ -69,7 +76,7 @@ namespace BloodRain.Core.Progression
             get
             {
                 int a = Math.Abs(Value);
-                if (a <= _harmonyRange) return YinYangBand.Harmony;
+                if (a <= HarmonyRange) return YinYangBand.Harmony;
                 if (a >= _def.ExtremeFrom) return YinYangBand.Extreme;
                 return YinYangBand.Bias;
             }

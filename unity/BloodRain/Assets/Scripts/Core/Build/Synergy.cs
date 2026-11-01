@@ -107,6 +107,20 @@ namespace BloodRain.Core.Build
         public int TierOf(string schoolId) => School(schoolId).TierCount;
         /// <summary>단계가 하나라도 켜진 문파(HUD 인장).</summary>
         public IEnumerable<SchoolState> ActiveSchools => Schools.Where(s => s.Tier != null);
+
+        /// <summary>닿은 진전 단계가 넓혀 주는 태극 구간(synergies.json harmonyRange 중 가장 넓은 것). 없으면 null.
+        /// Unity 쪽은 시너지가 바뀔 때 loadout.Gauge.SetSynergyHarmonyRange(이 값)을 부른다.</summary>
+        public int? HarmonyRange
+        {
+            get
+            {
+                int? best = null;
+                foreach (var s in Schools)
+                    foreach (var t in s.School.Tiers)
+                        if (t.Count <= s.TierCount && t.HarmonyRange is int r && (best == null || r > best)) best = r;
+                return best;
+            }
+        }
     }
 
     /// <summary>레벨업 카드에 붙일 연환 안내: 이 무공이 들어간 연환 중 짝 무공을 이미 가진 것.</summary>

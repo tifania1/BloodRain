@@ -60,7 +60,7 @@
     { "id": "wudang", "nameKo": "무당", "hanja": "武當", "motto": "태극", "character": "unhwa",
       "members": ["taiji_sword", "yangui", "unryong"],
       "tiers": [
-        { "count": 2, "desc": "태극 구간이 ±25에서 ±35로 넓어진다", "proto": true },
+        { "count": 2, "desc": "태극 구간이 ±25에서 ±35로 넓어진다", "proto": true, "harmonyRange": 35 },
         { "count": 3, "desc": "사량발천근: 태극 구간에 있는 동안 받는 피해 -20%, 줄인 피해의 열 배를 부딪힌 적에게 되돌린다", "proto": true } ] },
     { "id": "huashan", "nameKo": "화산", "hanja": "華山", "motto": "매화", "character": null,
       "members": ["falling_petals", "maehwa", "flash_finger"],
