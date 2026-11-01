@@ -41,9 +41,9 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 
 ### 이펙트(2026-11-01 사람: "이펙트는 엄청 필요할 텐데 지금부터 조금씩 해 놔야")
 무공 이펙트는 이미지 생성이 아니라 코드로 만든다(`docs/design/vfx.md` '아트 애셋 나눠 맡기'). 그래서 클라우드 세션이 밤에 할 수 있다. 위에서부터 한다.
-- [ ] V-01 붓 획 텍스처 굽는 도구 `tools/bake_brush.py`: `web/lookdev/samjae.html` 의 `brushArc`(터럭을 한 올씩 긋는 획)·마른 붓 자국을 파이썬(numpy·Pillow)으로 옮긴다. 흰 획 + 알파 PNG 512px, 시드 고정(다시 구워도 같은 그림). 먼저 삼재검법 1·2·3단(먹·담채·금빛 테두리) 각 3장을 `unity/BloodRain/Assets/Art/VFX/Brush/` 에 굽고, 시안 페이지와 나란히 놓고 닮았는지 본다. 구운 것을 한 장에 모은 미리보기 `docs/vfx_preview/brush_samjae.png` 도 올린다(사람이 휴대폰으로 봄). 테스트: 파일 수·크기·알파가 있는지
+- [ ] V-01 (하는 중: 대화 세션 11-01 20:30) 붓 획 텍스처 굽는 도구 `tools/bake_brush.py`: `web/lookdev/samjae.html` 의 `brushArc`(터럭을 한 올씩 긋는 획)·마른 붓 자국을 파이썬(numpy·Pillow)으로 옮긴다. 흰 획 + 알파 PNG 512px, 시드 고정(다시 구워도 같은 그림). 먼저 삼재검법 1·2·3단(먹·담채·금빛 테두리) 각 3장을 `unity/BloodRain/Assets/Art/VFX/Brush/` 에 굽고, 시안 페이지와 나란히 놓고 닮았는지 본다. 구운 것을 한 장에 모은 미리보기 `docs/vfx_preview/brush_samjae.png` 도 올린다(사람이 휴대폰으로 봄). 테스트: 파일 수·크기·알파가 있는지
 - [ ] V-02 무공별 획 모양표: 무공 16종의 behavior(front_arc·melee_combo·orbit_slash·homing_dagger·random_bomb·aura …)마다 어떤 획(호·찌르기·원·점·번짐)을 몇 장 쓰는지 `vfx.md` 에 표로 적고, V-01 도구로 시작 무공 9종 × 3단을 굽는다. 미리보기 한 장. 먼저: V-01
-- [ ] V-03 공통 텍스처: 낙관 바탕(글자 없이), 먹 튐 점 6종, 바닥 먹 자국 4종, 노이즈(Dissolve 용) 2종을 같은 도구로 `Assets/Art/VFX/Common/` 에. 미리보기 한 장. 먼저: V-01
+- [ ] V-03 (하는 중: 대화 세션 11-01 20:30) 공통 텍스처: 낙관 바탕(글자 없이), 먹 튐 점 6종, 바닥 먹 자국 4종, 노이즈(Dissolve 용) 2종을 같은 도구로 `Assets/Art/VFX/Common/` 에. 미리보기 한 장. 먼저: V-01
 - [ ] V-04 `[U]` 붓 획 셰이더와 이펙트 틀: `_Progress`(각도 마스크로 획이 그어짐)·`_Dissolve`(노이즈 문턱으로 흩어짐) URP 2D 셰이더, 담채 번짐(흐린 복사본이 커지며 옅어짐), 먹 튐 파티클, 바닥 먹 자국 데칼 풀. unity_tasks 로 옮긴다. 먼저: V-01·V-03
 - [ ] V-05 `[U]` 시작 무공 9종에 이펙트 붙이기: WeaponRunner 가 때리는 자리에 V-04 틀 + V-02 텍스처, 1단 먹 → 2단 담채 → 3단 금빛·잔상(vfx.md 단계 규칙). 무공 하나 끝날 때마다 웹 빌드 화면 한 장. unity_tasks 로 옮긴다. 먼저: V-02·V-04
 - [ ] V-06 나머지 무공 7종과 절기 16종 이펙트(V-05 와 같은 방식). 먼저: V-05
