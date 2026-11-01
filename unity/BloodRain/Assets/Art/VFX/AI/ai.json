@@ -1,0 +1,26 @@
+{
+  "_note": "tools/import_vfx_ai.py 가 쓴다. 손으로 고치지 않는다. ChatGPT 로 뽑은 이펙트 재료. 층은 흰색 + 알파 512px (stroke 먹 · gold 금빛 더하기 · core 흰빛 더하기). sizeMeters 는 한 변이 몇 m, 텍스처 가운데가 기준점. progress 는 그어지는 방향(radial 가운데서 바깥 · down 위→아래 · up · right 왼→오른 · left).",
+  "textures": [
+    {
+      "name": "fx_lightning_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 4.0,
+      "layers": [
+        "gold",
+        "core"
+      ],
+      "progress": "down",
+      "use": "뇌부(thunder_talisman) 낙뢰, 위에서 아래로 그어짐"
+    },
+    {
+      "name": "fx_mist_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 3.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "독무(poison_mist) 안개 덩이, 흐름 셰이더로 일렁임"
+    }
+  ]
+}
