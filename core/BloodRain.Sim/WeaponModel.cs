@@ -79,7 +79,7 @@ namespace BloodRain.Sim
         {
             double t = T(level, maxLevel);
             double cd = def.Cooldown > 0 ? def.Cooldown : 0.5;
-            if (def.Behavior == "random_rapid") cd = 1 / (Range(ex?.ShotsPerSecond, t, 4, 9) * (evolved ? 2.2 : 1));
+            if (def.Behavior == "random_rapid") cd = 1 / (Range(ex?.ShotsPerSecond, t, 4, 9) * (evolved ? ex?.EvoParam("fireRateMultiplier", 2.2) ?? 2.2 : 1));
             if (def.Behavior == "aura") cd = 0.5;
             return Math.Max(0.05, cd * (1 - cdr));
         }
@@ -95,7 +95,7 @@ namespace BloodRain.Sim
                 case "front_arc":
                 {
                     // 삼재검법: 가까운 적 쪽 반원(넓이 0.5), Lv4 앞뒤(1), 절기는 세 방향(1.5, 겹침 포함). Lv7부터 3연 베기.
-                    double r = def.Range * s.Area * (evolved ? 1.6 : 1) + EnemyRadius;
+                    double r = def.Range * s.Area * (evolved ? ex?.EvoParam("rangeMultiplier", 1.6) ?? 1.6 : 1) + EnemyRadius;
                     double cover = evolved ? 1.5 : level >= 4 ? 1.0 : 0.5;
                     int strikes = level >= 7 ? 3 : 1;
                     list.Add(new Strike(area: Disc(r) * cover, hits: strikes, damage: dmg, singleHits: strikes));
@@ -120,9 +120,9 @@ namespace BloodRain.Sim
                 case "homing_dagger":
                 {
                     // 비도술: 가까운 적에게 n자루, 자루마다 관통+1 마리. Lv6부터 중독(2초, 피해의 25%/초). 절기는 +2자루, 5번 튕김.
-                    int n = RoundJs(Range(ex?.Projectiles, t, 1, 4)) + s.Amount + (evolved ? 2 : 0);
+                    int n = RoundJs(Range(ex?.Projectiles, t, 1, 4)) + s.Amount + (evolved ? (int)(ex?.EvoParam("extraProjectiles", 2) ?? 2) : 0);
                     int pierce = RoundJs(Range(ex?.Pierce, t, 1, 3));
-                    int per = pierce + 1 + (evolved ? 5 : 0);
+                    int per = pierce + 1 + (evolved ? (int)(ex?.EvoParam("bounces", 5) ?? 5) : 0);
                     double dot = level >= 6 || evolved ? dmg * 0.25 * (1 + b.Dot) * 2 : 0;
                     list.Add(new Strike(targets: n * per, damage: dmg, dot: dot, singleHits: n, singleDot: dot));
                     break;
@@ -130,7 +130,7 @@ namespace BloodRain.Sim
                 case "orbit_slash":
                 {
                     // 창천검기: 몸 주위 원을 한 바퀴, Lv5부터 두 바퀴. 범위 Lv8 +40%(areaLv8). 절기는 반경 1.3배.
-                    double r = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? 1.3 : 1) + EnemyRadius;
+                    double r = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? ex?.EvoParam("rangeMultiplier", 1.3) ?? 1.3 : 1) + EnemyRadius;
                     int sweeps = level >= 5 || evolved ? 2 : 1;
                     list.Add(new Strike(area: Disc(r), hits: sweeps, damage: dmg, singleHits: sweeps));
                     break;
@@ -138,8 +138,8 @@ namespace BloodRain.Sim
                 case "slow_projectile":
                 {
                     // 장풍: 바라보는 쪽으로 느린 관통탄. 무리 안을 지나는 길이(최대 무리 반경) × 폭. Lv6부터 2연발(같은 길).
-                    int shots = (level >= 6 ? 2 : 1) + (evolved ? 1 : 0);
-                    double pr = 0.55 * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? 1.4 : 1);
+                    int shots = (level >= 6 ? 2 : 1) + (evolved ? (int)(ex?.EvoParam("extraShots", 1) ?? 1) : 0);
+                    double pr = 0.55 * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? ex?.EvoParam("sizeMultiplier", 1.4) ?? 1.4 : 1);
                     double length = Math.Min(5 * s.ProjectileSpeed * 2.6 * s.Duration, CrowdRadius);
                     double band = 2 * (pr + EnemyRadius) * length * FacingEfficiency;
                     list.Add(new Strike(area: band, random: true, hits: shots, damage: dmg, singleHits: shots * FacingEfficiency));
@@ -152,13 +152,13 @@ namespace BloodRain.Sim
                     // 섬광지: 가까운 적 중 아무에게나 한 발.
                     list.Add(new Strike(targets: 1, random: true, damage: dmg, singleHits: 1));
                     // 절기 만천성지: 25% 확률로 작은 폭발(반경 1.1m, 피해 절반).
-                    if (evolved) list.Add(new Strike(area: Disc(1.1 + EnemyRadius) * 0.25, random: true, damage: dmg * 0.5));
+                    if (evolved) list.Add(new Strike(area: Disc(1.1 + EnemyRadius) * (ex?.EvoParam("explodeChance", 0.25) ?? 0.25), random: true, damage: dmg * 0.5));
                     break;
                 }
                 case "random_bomb":
                 {
                     // 벽력탄: 가까운 적 근처에 폭탄 n개, 반경 2→3m, 맞은 적은 2초 화상. 절기는 +1개, 3연쇄(0.9배씩 작아짐).
-                    int n = RoundJs(Range(ex?.Projectiles, t, 1, 3)) + s.Amount + (evolved ? 1 : 0);
+                    int n = RoundJs(Range(ex?.Projectiles, t, 1, 3)) + s.Amount + (evolved ? (int)(ex?.EvoParam("extraProjectiles", 1) ?? 1) : 0);
                     double rr = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (1 + b.ExplosionArea);
                     double burn = Range(ex?.BurnPerSecond, t, 4, 10) * (1 + b.Burn) * (1 + b.Dot) * 2 * s.Duration;
                     for (int i = 0; i < n; i++)
@@ -175,7 +175,7 @@ namespace BloodRain.Sim
                 {
                     // 독무: 발밑 원(반경 2→3.5m) 안을 0.5초마다 '초당 피해의 절반'씩. 절기는 반경 2배, 7초 버틴 잡몹 즉사.
                     double baseR = ex?.RangeLv8 is float r8 ? Lerp(def.Range, r8, t) : Lerp(def.Range, 3.5, t);
-                    double r = baseR * s.Area * (evolved ? 2 : 1) + EnemyRadius;
+                    double r = baseR * s.Area * (evolved ? ex?.EvoParam("rangeMultiplier", 2) ?? 2 : 1) + EnemyRadius;
                     double tick = dmg * (1 + b.Dot) * 0.5;
                     list.Add(new Strike(area: Disc(r), damage: tick, singleHits: 1, auraExecute: evolved));
                     break;

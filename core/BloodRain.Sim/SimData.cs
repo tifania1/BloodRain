@@ -1,3 +1,4 @@
+using System.Linq;
 // 시뮬레이터가 읽는 데이터. Core GameData 에 더해, weapons.json 에는 있지만 Core WeaponDef 에 아직 없는
 // 값(타수·투사체 수·관통·초당 발수 등)과 balance.json 음양 편향·극성 피해 보너스를 따로 읽는다.
 using System;
@@ -21,6 +22,11 @@ namespace BloodRain.Sim
         public float? RangeLv8;
         /// <summary>Lv8 범위·크기 배율(창천검기 1.4, 장풍 1.6, 벽력탄 1.5, 취선봉 1.3). 없으면 null.</summary>
         public float? AreaLv8;
+        /// <summary>그 무공 절기의 수치(evolutions.json params). 없으면 null.</summary>
+        public Dictionary<string, float>? Evo;
+
+        /// <summary>절기 수치. 데이터에 없으면 fallback.</summary>
+        public double EvoParam(string key, double fallback) => Evo != null && Evo.TryGetValue(key, out var v) ? v : fallback;
     }
 
     public sealed class SimData
@@ -63,6 +69,7 @@ namespace BloodRain.Sim
                     BurnPerSecond = Range(w["burnPerSecond"]),
                     RangeLv8 = (float?)w["rangeLv8"],
                     AreaLv8 = (float?)w["areaLv8"],
+                    Evo = game.Evolutions.FirstOrDefault(e => e.Weapon == id)?.Params,
                 };
             }
 
