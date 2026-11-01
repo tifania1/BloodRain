@@ -14,6 +14,7 @@ namespace BloodRain.Sim
         Flee = 2,    // flee: 금두꺼비
         Line = 3,    // line_charge: 처음 방향으로 곧장. EnemyAgent.MaxLife(enemies.json lifeSeconds) 뒤 사라짐
         Dash = 4,    // telegraph_dash: 혈무사. 쫓다가 DashRange 안이면 Telegraph 초 멈춰 예고 → DashSeconds 동안 DashSpeed 로 돌진 → Rest 초 쉬며 쫓기
+        Keep = 5,    // kite_shoot: 혈궁수. KeepMax 보다 멀면 다가오고 KeepMin 보다 가까우면 물러난다(그 사이에선 선다)
     }
 
     /// <summary>telegraph_dash 단계.</summary>
@@ -44,6 +45,10 @@ namespace BloodRain.Sim
         // buff_aura(기수, EnemyDef.AuraRadius·AuraBonus): AuraRadius(세계 m) 안 다른 적의 Buff 를 AuraBonus 로 올린다.
         // Buff 는 EnemyField 가 매 프레임 다시 매기고, 이동 속도·접촉 피해에 (1 + Buff) 로 곱한다.
         public float AuraRadius, AuraBonus, Buff;
+        // 쏘는 적(EnemyDef.Shoot: 혈궁수·매화검귀·설인). ShootInterval 0 이면 안 쏜다. 거리는 세계 m.
+        // ShotLeft 가 0 이 되고 플레이어가 ShootRange 안이면 Fire = 1 — 탄은 EnemyField 가 만들고 Fire 를 지운다.
+        public float KeepMin, KeepMax, ShootRange, ShootInterval, ShotLeft;
+        public byte Fire;
         public float2 DashDir;
         public byte Phase;        // DashPhase
         public byte Move;
@@ -240,8 +245,17 @@ namespace BloodRain.Sim
                 float2 dir = d > 1e-5f ? to / d : new float2(1, 0);
                 float speed = e.Speed * SpeedScale * (1f + e.Buff);
                 float2 v = float2.zero;
+                if (e.ShootInterval > 0f)
+                {
+                    e.ShotLeft -= Dt;
+                    if (e.ShotLeft <= 0f && d <= e.ShootRange) { e.Fire = 1; e.ShotLeft = e.ShootInterval; }
+                }
                 switch ((EnemyMove)e.Move)
                 {
+                    case EnemyMove.Keep:
+                        if (d > e.KeepMax) v = dir * speed;
+                        else if (d < e.KeepMin) v = -dir * speed;
+                        break;
                     case EnemyMove.Hop:
                         e.Hop = math.frac(e.Hop + Dt / HopPeriod);
                         if (e.Hop < HopDuty) v = dir * (speed / HopDuty);

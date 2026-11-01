@@ -36,7 +36,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f),
         };
 
         struct Kind
@@ -165,6 +165,7 @@ namespace BloodRain.Presentation
                 case "flee": return EnemyMove.Flee;
                 case "line_charge": return EnemyMove.Line;
                 case "telegraph_dash": return EnemyMove.Dash; // EnemyDef.Dash 가 없으면 SpawnAt 이 Chase 로 돌린다
+                case "kite_shoot": return EnemyMove.Keep;     // EnemyDef.Shoot 의 KeepMax 가 0 이면 SpawnAt 이 Chase 로 돌린다
                 default: return EnemyMove.Chase; // fly_curve 등은 갈래를 붙이기 전까지 곧장 쫓는다
             }
         }
@@ -199,6 +200,7 @@ namespace BloodRain.Presentation
             int realm = ws.Realm;
             var move = MoveOf(def.Behavior);
             if (move == EnemyMove.Dash && def.Dash == null) move = EnemyMove.Chase;
+            if (move == EnemyMove.Keep && (def.Shoot == null || def.Shoot.KeepMax <= 0f)) move = EnemyMove.Chase;
             var to = (Vector2)player.position - pos;
             var a = new EnemyAgent
             {
@@ -231,6 +233,16 @@ namespace BloodRain.Presentation
                 // 기수 깃발(enemies.json auraRadius·auraBonus, 기획서 6장 '반경 5m 적 이동속도·피해 +20%'): 경지 m → 세계 m
                 a.AuraRadius = ws.Length(def.AuraRadius, realm);
                 a.AuraBonus = def.AuraBonus;
+            }
+            if (def.Shoot != null && def.Shoot.Interval > 0f)
+            {
+                // 쏘는 적(enemies.json shoot, 기획서 6장 표 아래): 경지 m → 세계 m. 첫 발은 나온 뒤 0~Interval 사이
+                var sh = def.Shoot;
+                a.KeepMin = ws.Length(sh.KeepMin, realm);
+                a.KeepMax = ws.Length(sh.KeepMax, realm);
+                a.ShootRange = ws.Length(sh.Range, realm);
+                a.ShootInterval = sh.Interval;
+                a.ShotLeft = sh.Interval * (float)_rng.NextDouble();
             }
             int kindIndex = _kinds.FindIndex(k => k.Def == def);
             a.Kind = kindIndex;
@@ -298,11 +310,120 @@ namespace BloodRain.Presentation
                               (born, pr2) => scale.DealsContactDamage(born, pr2), _hits);
                 foreach (var h in _hits) vitals.Hit(h.Damage);
             }
+            FireShots();
+            StepShots(dt, p);
             _watch.Stop();
             _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
             _fps = Mathf.Lerp(_fps, dt > 0 ? 1f / Time.unscaledDeltaTime : 0f, 0.05f);
 
             Sync();
+        }
+
+        // ── 적의 탄(혈궁수 화살·매화검귀 꽃잎·설인 얼음) ─────────────────
+        //   EnemySim 이 Fire 를 세운 적마다 EnemyDef.Shoot 대로 플레이어 쪽으로 Count 발(Spread 도 사이에 고르게).
+        //   탄은 초속 Speed, Range 날아가면 사라지고, 플레이어 몸 원에 닿으면 ProjectileDamage(무적이면 그냥 지나간다). 탄은 세계 m.
+        //   그림은 이펙트가 오기 전 임시 점(종류 색).
+        struct Shot { public Vector2 Pos, Vel; public float Left, Radius, Damage; public Color Color; }
+        readonly List<Shot> _shots = new List<Shot>();
+        readonly List<SpriteRenderer> _shotViews = new List<SpriteRenderer>();
+        Sprite _dot;
+
+        /// <summary>시험용: 날아가는 적 탄 수.</summary>
+        public int ShotCount => _shots.Count;
+
+        void FireShots()
+        {
+            var agents = _sim.Agents;
+            var ws = World;
+            for (int i = 0; i < _sim.Count; i++)
+            {
+                var a = agents[i];
+                if (a.Fire == 0) continue;
+                a.Fire = 0;
+                agents[i] = a;
+                if (a.Kind < 0 || a.Kind >= _kinds.Count) continue;
+                var def = _kinds[a.Kind].Def;
+                var sh = def.Shoot;
+                if (sh == null) continue;
+                var from = new Vector2(a.Pos.x, a.Pos.y);
+                var to = (Vector2)player.position - from;
+                float baseAng = Mathf.Atan2(to.y, to.x);
+                int n = Mathf.Max(1, sh.Count);
+                float spread = sh.Spread * Mathf.Deg2Rad;
+                float speed = ws.Speed(sh.Speed, a.BornRealm);
+                for (int k = 0; k < n; k++)
+                {
+                    float ang = n == 1 ? baseAng : baseAng - spread * 0.5f + spread * k / (n - 1);
+                    if (_shots.Count >= DataBoot.Data.Balance.Limits.Projectiles) return;
+                    _shots.Add(new Shot
+                    {
+                        Pos = from, Vel = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * speed,
+                        Left = a.ShootRange, Radius = ws.Length(sh.Radius, a.BornRealm), Damage = def.ProjectileDamage * (1f + a.Buff),
+                        Color = _kinds[a.Kind].Tint,
+                    });
+                }
+            }
+        }
+
+        void StepShots(float dt, Vector2 p)
+        {
+            float pr = World.Length(_playerBody) * 0.5f;
+            for (int i = _shots.Count - 1; i >= 0; i--)
+            {
+                var s = _shots[i];
+                var step = s.Vel * dt;
+                s.Pos += step;
+                s.Left -= step.magnitude;
+                bool gone = s.Left <= 0f;
+                if (!gone && vitals != null && (s.Pos - p).sqrMagnitude <= (pr + s.Radius) * (pr + s.Radius) && !vitals.Invulnerable)
+                {
+                    vitals.Hit(s.Damage);
+                    gone = true;
+                }
+                if (gone) _shots.RemoveAt(i);
+                else _shots[i] = s;
+            }
+            DrawShots();
+        }
+
+        void DrawShots()
+        {
+            if (_dot == null)
+            {
+                const int N = 32;
+                var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { name = "적 탄 점" };
+                var px = new Color32[N * N];
+                for (int y = 0; y < N; y++)
+                    for (int x = 0; x < N; x++)
+                    {
+                        float dx = (x + 0.5f) / N * 2f - 1f, dy = (y + 0.5f) / N * 2f - 1f;
+                        byte al = (byte)(Mathf.Clamp01((1f - Mathf.Sqrt(dx * dx + dy * dy)) * 6f) * 255);
+                        px[y * N + x] = new Color32(255, 255, 255, al);
+                    }
+                tex.SetPixels32(px);
+                tex.Apply();
+                _dot = Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), N);
+            }
+            while (_shotViews.Count < _shots.Count)
+            {
+                var go = new GameObject("적 탄");
+                go.transform.SetParent(transform, false);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _dot;
+                sr.sortingOrder = 30;
+                _shotViews.Add(sr);
+            }
+            for (int i = 0; i < _shotViews.Count; i++)
+            {
+                var sr = _shotViews[i];
+                bool on = i < _shots.Count;
+                if (sr.enabled != on) sr.enabled = on;
+                if (!on) continue;
+                var s = _shots[i];
+                sr.transform.position = new Vector3(s.Pos.x, s.Pos.y, 0f);
+                sr.transform.localScale = Vector3.one * (s.Radius * 2f);
+                sr.color = Color.Lerp(s.Color, Color.black, 0.3f);
+            }
         }
 
         readonly List<int> _auraOwners = new List<int>();
