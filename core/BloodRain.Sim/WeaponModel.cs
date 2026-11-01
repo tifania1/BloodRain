@@ -129,8 +129,8 @@ namespace BloodRain.Sim
                 }
                 case "orbit_slash":
                 {
-                    // 창천검기: 몸 주위 원을 한 바퀴, Lv5부터 두 바퀴. 절기는 반경 1.3배.
-                    double r = def.Range * s.Area * (evolved ? 1.3 : 1) + EnemyRadius;
+                    // 창천검기: 몸 주위 원을 한 바퀴, Lv5부터 두 바퀴. 범위 Lv8 +40%(areaLv8). 절기는 반경 1.3배.
+                    double r = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? 1.3 : 1) + EnemyRadius;
                     int sweeps = level >= 5 || evolved ? 2 : 1;
                     list.Add(new Strike(area: Disc(r), hits: sweeps, damage: dmg, singleHits: sweeps));
                     break;
@@ -139,7 +139,7 @@ namespace BloodRain.Sim
                 {
                     // 장풍: 바라보는 쪽으로 느린 관통탄. 무리 안을 지나는 길이(최대 무리 반경) × 폭. Lv6부터 2연발(같은 길).
                     int shots = (level >= 6 ? 2 : 1) + (evolved ? 1 : 0);
-                    double pr = 0.55 * Lerp(1, 1.6, t) * s.Area * (evolved ? 1.4 : 1);
+                    double pr = 0.55 * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? 1.4 : 1);
                     double length = Math.Min(5 * s.ProjectileSpeed * 2.6 * s.Duration, CrowdRadius);
                     double band = 2 * (pr + EnemyRadius) * length * FacingEfficiency;
                     list.Add(new Strike(area: band, random: true, hits: shots, damage: dmg, singleHits: shots * FacingEfficiency));
@@ -159,7 +159,7 @@ namespace BloodRain.Sim
                 {
                     // 벽력탄: 가까운 적 근처에 폭탄 n개, 반경 2→3m, 맞은 적은 2초 화상. 절기는 +1개, 3연쇄(0.9배씩 작아짐).
                     int n = RoundJs(Range(ex?.Projectiles, t, 1, 3)) + s.Amount + (evolved ? 1 : 0);
-                    double rr = def.Range * Lerp(1, 1.5, t) * s.Area * (1 + b.ExplosionArea);
+                    double rr = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (1 + b.ExplosionArea);
                     double burn = Range(ex?.BurnPerSecond, t, 4, 10) * (1 + b.Burn) * (1 + b.Dot) * 2 * s.Duration;
                     for (int i = 0; i < n; i++)
                     {
@@ -182,8 +182,8 @@ namespace BloodRain.Sim
                 }
                 default:
                 {
-                    // 1장 첫 판엔 잠겨 있는 무공. 사거리 반원 한 획 × 투사체 수 × 타수로 대충 잡는다.
-                    double r = def.Range * s.Area + EnemyRadius;
+                    // 1장 첫 판엔 잠겨 있는 무공. 사거리 반원 한 획 × 투사체 수 × 타수로 대충 잡는다. 범위 성장(취선봉 +30%)도 곱한다.
+                    double r = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area + EnemyRadius;
                     int n = ex?.Projectiles != null ? RoundJs(Range(ex.Projectiles, t, 1, 1)) + s.Amount : 1;
                     int hits = ex?.Hits != null ? RoundJs(Range(ex.Hits, t, 1, 1)) : 1;
                     for (int i = 0; i < Math.Max(1, n); i++)

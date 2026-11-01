@@ -16,7 +16,8 @@ namespace BloodRain.Core.Tests
             var r = Shaolin.Value;
             Assert.Equal("songshan", r.RegionByMinute[0]);
             Assert.InRange(r.RegionByMinute.Count, 30, 31);
-            Assert.All(r.Visited, v => Assert.Contains(v, r.RegionByMinute));
+            // 분마다 찍은 지역은 모두 밟은 지역이다. 거꾸로는 아니다: 1분 안에 지나쳐 간 땅은 분 표에 안 남는다(2026-11-01 무공 범위 성장을 넣고 숭산 판이 개방 본타를 스쳐 감).
+            Assert.All(r.RegionByMinute, v => Assert.Contains(v, r.Visited));
         }
 
         [Fact] public void 땅을_가리는_사건은_그_땅을_안_밟으면_나오지_않는다()

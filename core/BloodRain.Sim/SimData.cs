@@ -19,6 +19,8 @@ namespace BloodRain.Sim
         public float[]? Duration;
         public float[]? BurnPerSecond;
         public float? RangeLv8;
+        /// <summary>Lv8 범위·크기 배율(창천검기 1.4, 장풍 1.6, 벽력탄 1.5, 취선봉 1.3). 없으면 null.</summary>
+        public float? AreaLv8;
     }
 
     public sealed class SimData
@@ -60,6 +62,7 @@ namespace BloodRain.Sim
                     Duration = Range(w["duration"]),
                     BurnPerSecond = Range(w["burnPerSecond"]),
                     RangeLv8 = (float?)w["rangeLv8"],
+                    AreaLv8 = (float?)w["areaLv8"],
                 };
             }
 
