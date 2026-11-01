@@ -105,13 +105,27 @@ class Canvas:
     def __init__(self, size: int):
         self.size = size
         self.a = np.zeros((size, size), dtype=np.float32)
+        self.hair = None
 
     def _over(self, x0, y0, x1, y1, cov, alpha):
         if x1 <= x0 or y1 <= y0:
             return
         src = cov * alpha
         dst = self.a[y0:y1, x0:x1]
+        if self.hair is not None:  # 한 올을 긋는 중: 겹치는 이음매가 두 번 쌓이지 않게 가장 진한 것만 남긴다
+            np.maximum(dst, src, out=dst)
+            return
         self.a[y0:y1, x0:x1] = src + dst * (1 - src)
+
+    def begin_hair(self):
+        """한 올을 따로 받아 둔다. end_hair 에서 1-(1-a)^2 로 진하기를 맞춰(이음매를 두 번 칠하던 시안과 비슷) 한 번에 얹는다.
+        V-10: 선분마다 따로 'over' 로 얹으면 이음매가 두 번 겹쳐 구슬 무늬가 생겼다."""
+        self.hair, self.a = self.a, np.zeros_like(self.a)
+
+    def end_hair(self):
+        h, self.a, self.hair = self.a, self.hair, None
+        h = 1 - (1 - h) ** 2
+        self.a = h + self.a * (1 - h)
 
     def line(self, ax, ay, bx, by, width, alpha):
         r = width / 2
@@ -191,6 +205,7 @@ def brush_arc(t: dict, seed: int):
             start_s = rand(0, 0.04)
             end_s = 1 - rand(0, 0.08) - abs(offs) * 0.16
             px = py = None
+            cv.begin_hair()
             for i in range(n_steps + 1):
                 s = i / n_steps
                 if s < start_s or s > end_s:
@@ -203,6 +218,7 @@ def brush_arc(t: dict, seed: int):
                 if px is not None and noise1(sd, s * 34 + 11) < ink + 0.12:
                     cv.line(px, py, x, y, max(0.7, w * (0.45 + 0.55 * press)), clamp(ink) * alpha_mul * (0.5 + 0.5 * press))
                 px, py = x, y
+            cv.end_hair()
 
     faint = round(bristles * 0.45)
     pass_(stroke, faint, -0.62, 0.62, 0.15, 2.4 * bristles / faint, 0.25)  # 종이에 스민 옅은 테두리
