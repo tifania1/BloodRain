@@ -54,6 +54,10 @@ namespace BloodRain.Core.Data
         public float? FuseSeconds;
         /// <summary>벽력탄이 떨어질 자리를 고르는 거리(m). 이 안의 적이 없으면 몸 둘레에 떨어진다.</summary>
         public float? SeekRange;
+        /// <summary>한 번 쏠 때 연달아 나가는 획·발 사이 초(삼재검법 3연 베기, 나한권 연타, 장풍 2연발, 취선봉 휘두르기).</summary>
+        public float? GapSeconds;
+        /// <summary>창천검기 검기가 한 바퀴 도는 초. 2회 회전이면 두 배 동안 돈다.</summary>
+        public float? SweepSeconds;
 
         public YinYang Aspect => YinYangParse.From(Yinyang);
         /// <summary>땅의 주인 첫 처치로 열리면 그 지역 id, 아니면 null.</summary>

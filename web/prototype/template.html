@@ -1102,7 +1102,7 @@ function fireWeapon(w) {
       const dirs = w.evolved ? [base, base + TAU / 3, base - TAU / 3] : (atMs(w, '앞뒤 베기') ? [base, base + Math.PI] : [base]);
       const strikes = atMs(w, '3연 베기') ? 3 : 1;
       for (let s = 0; s < strikes; s++) {
-        G.zones.push({ delay: s * 0.12, apply: () => {
+        G.zones.push({ delay: s * def.gapSeconds, apply: () => {
           // 연환 쌍검합벽: 창천검기가 도는 중이면 이 획은 금빛, 피해 +60%
           const sg = link('ssanggeom') && G.effects.some(f => f.kind === 'sweep'), d2 = dmg * (sg ? 1.6 : 1);
           for (const a of dirs) {
@@ -1119,7 +1119,7 @@ function fireWeapon(w) {
     }
     case 'melee_combo': {
       const R = def.range * S.area * igi, hits = Math.round(grow(def.hits, t));
-      for (let i = 0; i < hits; i++) G.zones.push({ delay: i * 0.08, apply: () => {
+      for (let i = 0; i < hits; i++) G.zones.push({ delay: i * def.gapSeconds, apply: () => {
         addEffect('fist', p.x + fx * R * 0.5, p.y + fy * R * 0.5, { r: R * 0.6, life: 0.12 });
         forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d <= R + e.r) hurtEnemy(e, dmg, w, dx / d, dy / d, def.knockback); });
         hitLanterns(p.x, p.y, R);
@@ -1143,13 +1143,13 @@ function fireWeapon(w) {
     }
     case 'orbit_slash': {
       const R = def.range * growArea(def, t) * S.area * (w.evolved ? ep.rangeMultiplier : 1), sweeps = w.evolved ? ep.sweeps : atMs(w, '2회 회전') ? 2 : 1;
-      addEffect('sweep', p.x, p.y, { r: R, life: 0.36 * sweeps, sweeps, a0: rand(0, TAU), follow: true, gold: w.evolved, w, dmg, hit: new Set(), prev: 0 });
+      addEffect('sweep', p.x, p.y, { r: R, life: def.sweepSeconds * sweeps, sweeps, a0: rand(0, TAU), follow: true, gold: w.evolved, w, dmg, hit: new Set(), prev: 0 });
       skySword(w);
       break;
     }
     case 'slow_projectile': {
       const shots = (atMs(w, '2연발') ? 2 : 1) + (w.evolved ? ep.extraShots : 0);
-      for (let i = 0; i < shots; i++) G.zones.push({ delay: i * 0.15, apply: () => {
+      for (let i = 0; i < shots; i++) G.zones.push({ delay: i * def.gapSeconds, apply: () => {
         const sh = def.shot, sp = sh.speed * S.projSpeed, r = sh.radius * growArea(def, t) * S.area * (w.evolved ? ep.sizeMultiplier : 1);
         addProj({ x: p.x, y: p.y, vx: p.fx * sp, vy: p.fy * sp, r, dmg, pierce: 999, life: sh.lifeSeconds * S.duration, kind: 'palm', w, kb: def.knockback, explode: w.evolved });
       } });
@@ -1180,7 +1180,7 @@ function fireWeapon(w) {
       // 절기 팔선과해: 봉 분신 여덟이 사방을 한꺼번에 휩쓸고 맞은 적은 2초 기절(보스 0.6초).
       const R = def.range * growArea(def, t) * S.area * igi;
       const swings = w.evolved ? 1 : Math.round(grow(def.hits, t));
-      for (let s = 0; s < swings; s++) G.zones.push({ delay: s * 0.18, apply: () => {
+      for (let s = 0; s < swings; s++) G.zones.push({ delay: s * def.gapSeconds, apply: () => {
         const dirs = w.evolved ? Array.from({ length: ep.directions }, (_, i) => i * TAU / ep.directions) : [rand(0, TAU)];
         for (const a of dirs) {
           addEffect('arc', p.x, p.y, { a, r: R, life: 0.26, gold: w.evolved, follow: true });

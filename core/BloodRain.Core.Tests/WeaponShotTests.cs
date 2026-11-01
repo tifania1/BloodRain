@@ -62,6 +62,22 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 연달아_치는_간격과_한_바퀴_시간이_표와_같다()
+        {
+            foreach (var r in TestData.GddTable(TestData.GddSection("날아가는 것과 넉백")))
+            {
+                var w = ByName(r[0]);
+                var gap = Regex.Match(r[6], @"([0-9.]+)초 간격");
+                var sweep = Regex.Match(r[6], @"한 바퀴 ([0-9.]+)초");
+                Assert.Equal(gap.Success ? float.Parse(gap.Groups[1].Value, CultureInfo.InvariantCulture) : (float?)null, w.GapSeconds);
+                Assert.Equal(sweep.Success ? float.Parse(sweep.Groups[1].Value, CultureInfo.InvariantCulture) : (float?)null, w.SweepSeconds);
+            }
+            // 연달아 치는 것이 있는 무공(연타·휘두르기·3연 베기·2연발)에는 간격이 있어야 프로토타입이 겹쳐 치지 않는다
+            foreach (var id in new[] { "samjae_sword", "nahan_fist", "palm_wind", "drunken_staff" })
+                Assert.True(_d.Weapons.Single(x => x.Id == id).GapSeconds > 0, id);
+        }
+
+        [Fact]
         public void 처음부터_쓰는_무공은_모두_넉백이_있다()
         {
             // 프로토타입이 def.knockback 을 바로 읽으니 빠지면 넉백이 사라진다(undefined → 0).
@@ -91,7 +107,8 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             foreach (var old in new[] { "sp = 12 * S.projSpeed", "sp = 5 * S.projSpeed", "sp = 18 * S.projSpeed", "nearestEnemies(p.x, p.y, 20, 7)",
-                                        "dy / d, 7);", "ca, sa, 3);", "dy / d, 4);", "(d || 1), 2.5);" })
+                                        "dy / d, 7);", "ca, sa, 3);", "dy / d, 4);", "(d || 1), 2.5);",
+                                        "delay: s * 0.12", "delay: i * 0.08", "delay: i * 0.15", "delay: s * 0.18", "0.36 * sweeps" })
                 Assert.DoesNotContain(old, html);
             foreach (var used in new[] { "def.shot", "def.knockback", "def.fuseSeconds", "def.seekRange" })
                 Assert.Contains(used, html);
