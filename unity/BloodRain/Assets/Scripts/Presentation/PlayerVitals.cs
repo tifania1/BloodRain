@@ -62,6 +62,15 @@ namespace BloodRain.Presentation
             return true;
         }
 
+        /// <summary>기혈을 채운다(최대를 넘지 않음). 실제로 찬 양.</summary>
+        public float Heal(float amount)
+        {
+            if (amount <= 0f || Health <= 0f) return 0f;
+            float before = Health;
+            Health = Mathf.Min(MaxHealth, Health + amount);
+            return Health - before;
+        }
+
         void Update()
         {
             float dt = Time.deltaTime;

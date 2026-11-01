@@ -17,7 +17,8 @@ namespace BloodRain.Presentation.Hud
     // 레벨업 화면(C-06 첫 판, 기획서 8장 레벨업 규칙). 레벨이 오르면 시간을 멈추고 비급 책장 카드 3~4장을 편다.
     //   카드 = Core Loadout.RollLevelUp(새 무공·무공 단계·새 심법·심법 단계, 다 새 무공이면 은자·음식 한 장 더).
     //   아래 버튼 셋 = Core LevelUpCharges: 다시 고르기(진소운 특성 +2), 파기(누른 뒤 카드를 고르면 이번 판에서 영영 뺌), 정진(진기 게이지 +20).
-    //   고른 무공은 WeaponRunner.Learn 으로 바로 쏜다. 심법 능력치·시너지 진전·은자·음식은 아직 몸에 안 얹는다(C-06 남은 것, S-04).
+    //   고른 무공은 WeaponRunner.Learn 으로 바로 쏜다. 행낭(은자·음식) 카드는 은자를 Silver 에 더하고 PlayerVitals.Heal.
+    //   심법 능력치·시너지 진전 능력치는 아직 몸에 안 얹는다(C-06 남은 것, Life 가 붙을 때). 카드의 연환 띠·문파 인장과 HUD 진전 인장은 S-04.
     //   레벨은 지금 OrbLayer 의 시험용 RunXp 를 본다. Life 가 붙으면(C-10) 그쪽 레벨로 바꾼다.
     //   서장(진소운 제 몸)의 첫 레벨업은 Loadout.RollFirstLevelUp(chapters.json prologue firstLevelUpChoices) — 새 무공 한 장만,
     //   다시 고르기·파기는 숨긴다(C-06b, 기획서 5장 서장 표). 그 뒤는 보통 RollLevelUp.
@@ -27,6 +28,9 @@ namespace BloodRain.Presentation.Hud
         public TMP_FontAsset font;
         public OrbLayer orbs;
         public WeaponRunner weapons;
+        public PlayerVitals vitals;
+        /// <summary>행낭 카드로 받은 은자(시험용 자리). Life 가 Run 씬에 붙으면(C-10) 그쪽 은자에 더한다.</summary>
+        public int Silver { get; private set; }
 
         static readonly Color Dim = new Color(0.05f, 0.04f, 0.04f, 0.72f);
         static readonly Color Paper = new Color(0.91f, 0.87f, 0.78f);
@@ -140,6 +144,14 @@ namespace BloodRain.Presentation.Hud
                 return;
             }
             _loadout.Apply(o);
+            if (o.Kind == OfferKind.Fallback)
+            {
+                // 행낭 카드: 은자와 기혈을 함께(balance.json levelUp.fallbackCard, 회복에 음식 배율은 안 곱함).
+                var fc = _data.Balance.LevelUp.FallbackCard;
+                Silver += fc.Silver;
+                if (vitals == null) vitals = FindFirstObjectByType<PlayerVitals>();
+                if (vitals != null) vitals.Heal(fc.Heal);
+            }
             if ((o.Kind == OfferKind.NewWeapon || o.Kind == OfferKind.UpgradeWeapon) && weapons != null) weapons.Learn(o.Id);
             Close();
             RefreshSeals();
@@ -384,7 +396,10 @@ namespace BloodRain.Presentation.Hud
                     return ("심법 정진", p.NameKo, $"{lv} → {lv + 1} 단계", Aspect(p.Yinyang));
                 }
                 default:
-                    return ("행낭", "은자 · 음식", "", "고를 비급이 없다");
+                {
+                    var fc = _data.Balance.LevelUp.FallbackCard;
+                    return ("행낭", "은자 · 음식", $"은자 {fc.Silver} · 기혈 +{fc.Heal:0}", "다른 비급 대신 행낭을 푼다");
+                }
             }
         }
 
