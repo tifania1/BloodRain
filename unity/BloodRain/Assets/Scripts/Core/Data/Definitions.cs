@@ -41,6 +41,8 @@ namespace BloodRain.Core.Data
         public string Yinyang = "neutral";
         public int? YinyangPerLevelOverride;
         public List<PassiveEffect> Effects = new List<PassiveEffect>();
+        /// <summary>Lv5에 덧붙는 말(넉백 면역, 독 면역, 경공 충전 +1). 기획서 9장 심법 표 '최대' 칸에 그대로 들어 있다.</summary>
+        public string? MaxBonus;
         public string PairWeapon = "";
 
         public YinYang Aspect => YinYangParse.From(Yinyang);
