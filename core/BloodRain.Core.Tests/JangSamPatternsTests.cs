@@ -103,6 +103,18 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"{Num(W.Pattern("rope_throw").RootSeconds)}초 동안 걷지 못한다", rows.Single(x => x[0] == "포승줄")[4]);
         }
 
+        [Fact] public void 장삼_기혈은_enemies_json_그대로이고_기획서와_같다()
+        {
+            var boss = _d.Bosses.Single(b => b.Id == "jang_sam");
+            Assert.Equal(boss.Health, BloodRain.Core.Run.Prologue.BossMaxHealth(boss));
+            var row = GddTable(GddSection("땅의 주인(지역 보스)")).Single(r => r[0] == boss.NameKo);
+            Assert.Equal(boss.Health.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture), row[2]);
+            Assert.Contains(boss.Health.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture) + " 그대로", GddSection(boss.NameKo));
+            // 10분 화력 목표 300으로 각성(기혈 10%)까지 18초
+            float floor = _d.Cheonha.PrologueBody.BossHealthFloor;
+            Assert.Contains($"각성까지 {Num(boss.Health * (1 - floor) / 300f)}초쯤", GddSection(boss.NameKo));
+        }
+
         [Fact] public void 패턴_이름이_보스_표의_설명과_대응한다()
         {
             var row = GddTable(GddSection("땅의 주인(지역 보스)")).Single(r => r[0] == "강시 포쾌 장삼");

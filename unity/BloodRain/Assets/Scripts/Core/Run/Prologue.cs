@@ -98,6 +98,10 @@ namespace BloodRain.Core.Run
             }
         }
 
+        /// <summary>장삼의 최대 기혈. 서장은 늘 9분·진소운이라 땅의 주인 기혈 식(BossAwakening.Health)을 쓰지 않고
+        /// enemies.json health 그대로다(기획서 6장 '강시 포쾌 장삼'). 혈운 농도도 곱하지 않는다.</summary>
+        public static float BossMaxHealth(BossDef jangSam) => jangSam.Health;
+
         /// <summary>
         /// 장삼에게 들어간 피해를 깎은 뒤의 기혈. 각성 전에는 최대 기혈 × bossHealthFloor 아래로 안 내려가고,
         /// 거기 닿으면 그 순간 각성을 시작한다(Step 이 Awakening 이 된다). 각성 뒤에는 그대로.
