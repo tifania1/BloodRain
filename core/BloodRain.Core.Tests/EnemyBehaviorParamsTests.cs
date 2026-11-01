@@ -92,4 +92,45 @@ namespace BloodRain.Core.Tests
             }
         }
     }
+    /// <summary>무공 쪽 같은 검사: WeaponRunner 가 돌리는(또는 바로 다음에 붙일) 갈래가 읽는 칸이 weapons.json 에 있는지.
+    /// 칸 이름은 Core `WeaponDef`. 아직 숫자를 정하지 않은 갈래(사슬낫·혈조·음공·관통 찌르기·꽃잎·태극검 궤도)는 여기 넣지 않는다.</summary>
+    public class WeaponBehaviorParamsTests
+    {
+        readonly GameData _d = Load();
+
+        static readonly Dictionary<string, (string 칸, Func<WeaponDef, bool> 있음)[]> Needs = new Dictionary<string, (string, Func<WeaponDef, bool>)[]>
+        {
+            ["front_arc"] = new (string, Func<WeaponDef, bool>)[] { ("gapSeconds", w => w.GapSeconds > 0), ("knockback", w => w.Knockback != null) },
+            ["melee_combo"] = new (string, Func<WeaponDef, bool>)[] { ("gapSeconds", w => w.GapSeconds > 0), ("knockback", w => w.Knockback != null) },
+            ["random_arc"] = new (string, Func<WeaponDef, bool>)[] { ("gapSeconds", w => w.GapSeconds > 0), ("knockback", w => w.Knockback != null) },
+            ["slow_projectile"] = new (string, Func<WeaponDef, bool>)[] { ("shot", w => w.Shot != null), ("gapSeconds", w => w.GapSeconds > 0), ("knockback", w => w.Knockback != null) },
+            ["homing_dagger"] = new (string, Func<WeaponDef, bool>)[] { ("shot", w => w.Shot != null), ("knockback", w => w.Knockback != null) },
+            ["random_rapid"] = new (string, Func<WeaponDef, bool>)[] { ("shot", w => w.Shot != null), ("knockback", w => w.Knockback != null) },
+            ["orbit_slash"] = new (string, Func<WeaponDef, bool>)[] { ("sweepSeconds", w => w.SweepSeconds > 0), ("knockback", w => w.Knockback != null) },
+            ["aura"] = new (string, Func<WeaponDef, bool>)[] { ("tickSeconds", w => w.TickSeconds > 0), ("poisonSeconds", w => w.PoisonSeconds > 0) },
+            ["random_bomb"] = new (string, Func<WeaponDef, bool>)[] { ("fuseSeconds", w => w.FuseSeconds > 0), ("seekRange", w => w.SeekRange > 0), ("burnSeconds", w => w.BurnSeconds > 0) },
+            ["random_lightning"] = new (string, Func<WeaponDef, bool>)[] { ("fuseSeconds", w => w.FuseSeconds > 0), ("strikeRadius", w => w.StrikeRadius > 0), ("shockSeconds", w => w.ShockSeconds > 0), ("knockback", w => w.Knockback != null) },
+        };
+
+        [Fact] public void 돌리는_갈래마다_필요한_숫자_칸이_있다()
+        {
+            var missing = new List<string>();
+            foreach (var w in _d.Weapons)
+                if (Needs.TryGetValue(w.Behavior, out var needs))
+                    foreach (var (칸, 있음) in needs)
+                        if (!있음(w)) missing.Add($"{w.Id}({w.Behavior}) {칸}");
+            Assert.True(missing.Count == 0, "빠진 칸: " + string.Join(", ", missing));
+        }
+
+        /// <summary>WeaponRunner 의 case 갈래는 모두 Needs 에 있다(새 갈래를 붙이면 칸 검사도 같이 적는다).</summary>
+        [Fact] public void WeaponRunner_갈래는_모두_칸_검사가_있다()
+        {
+            var src = ReadRepoFile("unity", "BloodRain", "Assets", "Scripts", "Presentation", "Combat", "WeaponRunner.cs");
+            var cases = System.Text.RegularExpressions.Regex.Matches(src, "case \"([a-z_]+)\"").Select(m => m.Groups[1].Value)
+                .Where(b => _d.Weapons.Any(w => w.Behavior == b)).Distinct().ToList();
+            Assert.NotEmpty(cases);
+            Assert.All(cases, b => Assert.True(Needs.ContainsKey(b), $"WeaponRunner 의 '{b}' 갈래에 칸 검사가 없다"));
+        }
+    }
 }
+
