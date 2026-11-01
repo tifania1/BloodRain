@@ -106,7 +106,9 @@ namespace BloodRain.Core.Tests
             Assert.Equal(float.Parse(fade.Groups[1].Value, CultureInfo.InvariantCulture), st.SlowFadePerSecond);
             Assert.Equal(float.Parse(fade.Groups[3].Value, CultureInfo.InvariantCulture), float.Parse(fade.Groups[2].Value) / 100f / st.SlowFadePerSecond, 3);
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
-            foreach (var used in new[] { "B.enemyStatus.burnTickSeconds", "B.enemyStatus.slowFadePerSecond", "e.poison || 0, def.poisonSeconds" })
+            Assert.Contains($"넉백으로 밀린 속도는 1초 뒤 {System.Math.Round(st.KnockbackKeepPerSecond * 100, 2).ToString(CultureInfo.InvariantCulture)}%만 남도록", section);
+            Assert.InRange(st.KnockbackKeepPerSecond, 0.0001f, 0.999f);
+            foreach (var used in new[] { "B.enemyStatus.burnTickSeconds", "B.enemyStatus.slowFadePerSecond", "e.poison || 0, def.poisonSeconds", "Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt)" })
                 Assert.Contains(used, html);
             // 화상 초당 피해가 있는 무공에는 화상 시간이 있어야 프로토타입이 0초로 태우지 않는다
             Assert.All(_d.Weapons.Where(x => x.BurnPerSecond != null), x => Assert.True(x.BurnSeconds > 0, x.NameKo));

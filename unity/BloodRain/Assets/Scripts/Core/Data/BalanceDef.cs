@@ -307,6 +307,8 @@ namespace BloodRain.Core.Data
         public float BurnTickSeconds = 0.5f;
         /// <summary>둔화가 풀리는 속도(초당 비율). 0.3 둔화는 0.5초에 풀린다.</summary>
         public float SlowFadePerSecond = 0.6f;
+        /// <summary>넉백으로 밀린 속도가 1초 뒤 남는 비율. 매 프레임 속도 x 이 값^dt.</summary>
+        public float KnockbackKeepPerSecond = 0.02f;
     }
 
     public sealed class BalanceDef

@@ -1412,7 +1412,7 @@ function update(dt) {
     } else { vx = dx * e.speed; vy = dy * e.speed; }
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
-    e.kbx *= Math.pow(0.02, dt); e.kby *= Math.pow(0.02, dt);
+    e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
     if (Math.abs(vx) > 0.05) e.dir = vx > 0 ? 1 : -1;
     // 떨어진 적은 반대편으로 옮겨 다시 쓴다
     if (d > diag * B.spawnTarget.recycleBeyondDiagonal && e.behavior !== 'line_charge' && !e.boss && !e.elite && e.behavior !== 'flee') {
