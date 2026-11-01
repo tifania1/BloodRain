@@ -39,3 +39,34 @@ namespace BloodRain.Core.Tests
         }
     }
 }
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>기획서 7장 '모든 생에 공통으로 있는 것' 목록의 시각·개수가 chapters.json 한 생 사건표와 같은지.</summary>
+    public class LifeCommonsTests
+    {
+        readonly Data.GameData _d = TestData.Load();
+
+        [Fact] public void 보부상_금두꺼비_은빛_등롱_시각이_사건표와_같다()
+        {
+            var sec = TestData.GddSection("모든 생에 공통으로 있는 것");
+            var ev = _d.Chapter(Core.Spawning.WaveTable.Life).Events;
+
+            var merchants = ev.Where(e => e.Kind == "merchant").Select(e => e.At).OrderBy(x => x).ToList();
+            Assert.Contains($"**보부상**: {string.Join("분과 ", merchants.Select(m => m.ToString(CultureInfo.InvariantCulture)))}분", sec);
+
+            var toad = ev.Single(e => e.Kind == "toad");
+            Assert.Equal("golden_toad", toad.Enemy);
+            Assert.Contains($"한 생에 한 번, {toad.Window![0]}~{toad.Window[1]}분 사이 무작위", sec);
+
+            // '15분 이후 한 생에 한두 개': 반드시 하나 + 확률로 하나 더
+            var lanterns = ev.Where(e => e.Kind == "silver_lantern").ToList();
+            Assert.Contains($"{lanterns.Min(e => e.Window![0])}분 이후 한 생에 한두 개", sec);
+            Assert.Equal(1, lanterns.Count(e => e.Chance >= 1));
+            Assert.Equal(2, lanterns.Count);
+
+            Assert.Contains($"남은 은자는 절반만 윤회의 기로", sec);
+            Assert.Equal(0.5f, _d.Cheonha.RebirthQi.LeftoverSilverRate);
+        }
+    }
+}
