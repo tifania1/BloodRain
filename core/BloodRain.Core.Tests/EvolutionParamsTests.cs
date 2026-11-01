@@ -38,6 +38,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("초당 20발", Effect("flash_finger"));
             Assert.Contains($"폭발이 {Of("thunder_bomb").Param("chain")}번 연쇄", Effect("thunder_bomb"));
             Assert.Contains($"안에서 {Of("poison_mist").Param("executeSeconds")}초를 버틴 일반 적 즉사", Effect("poison_mist"));
+            Assert.Contains($"독안개 반경 {Of("poison_mist").Param("rangeMultiplier")}배", Effect("poison_mist"));   // E-02: 기획서를 프로토타입 2배로
             var staff = Of("drunken_staff");
             Assert.Contains($"봉 분신 {staff.Param("directions")}개", Effect("drunken_staff"));
             Assert.Contains($"{staff.Param("stunSeconds")}초 기절", Effect("drunken_staff"));
@@ -81,8 +82,6 @@ namespace BloodRain.Core.Tests
         /// <summary>기획서와 프로토타입이 다른 곳(backlog E-02). 한쪽을 고치면 여기가 실패하니 그 줄을 지우고 E-02 를 닫는다.</summary>
         [Fact] public void 기획서와_다른_곳()
         {
-            Assert.Contains("독안개 반경 3배", Effect("poison_mist"));
-            Assert.Equal(2f, Of("poison_mist").Param("rangeMultiplier"));                 // 프로토타입·시뮬레이터 2배
             Assert.Contains("5초짜리 불바다", Effect("thunder_bomb"));
             Assert.Throws<KeyNotFoundException>(() => Of("thunder_bomb").Param("fireSeconds")); // 불바다 없음
             Assert.Contains("낙뢰 연쇄", Effect("changcheon_qi"));
