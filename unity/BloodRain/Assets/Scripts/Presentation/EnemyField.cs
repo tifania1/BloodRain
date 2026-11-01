@@ -29,6 +29,7 @@ namespace BloodRain.Presentation
         public bool showStats = true;
 
         float _playerBody = 0.8f;
+        PlayerController _playerMove;
         static readonly Color TelegraphTint = new Color(0.95f, 0.15f, 0.1f);
         static readonly Color BuffTint = new Color(0.75f, 0.12f, 0.10f);
         readonly List<EnemySim.ContactHit> _hits = new List<EnemySim.ContactHit>();
@@ -36,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f),
         };
 
         struct Kind
@@ -147,6 +148,7 @@ namespace BloodRain.Presentation
             if (player != null)
             {
                 if (vitals == null) vitals = player.GetComponent<PlayerVitals>();
+                _playerMove = player.GetComponent<PlayerController>();
             }
             if (clusters != null)
             {
@@ -308,7 +310,15 @@ namespace BloodRain.Presentation
                 var scale = ws.Scale;
                 _sim.Contacts(new float2(p.x, p.y), pr, DataBoot.Data.Balance.Contact.SameEnemyIntervalSeconds, ws.Realm,
                               (born, pr2) => scale.DealsContactDamage(born, pr2), _hits);
-                foreach (var h in _hits) vitals.Hit(h.Damage);
+                var agents = _sim.Agents;
+                foreach (var h in _hits)
+                {
+                    if (!vitals.Hit(h.Damage)) continue;
+                    // 빙강시: 닿으면 걸음 둔화(enemies.json onHitSlowSeconds 2·onHitSlowMultiplier 0.65)
+                    int kind = h.Index >= 0 && h.Index < _sim.Count ? agents[h.Index].Kind : -1;
+                    if (kind >= 0 && kind < _kinds.Count && _kinds[kind].Def.OnHitSlowSeconds > 0f && _playerMove != null)
+                        _playerMove.Slow(_kinds[kind].Def.OnHitSlowSeconds, _kinds[kind].Def.OnHitSlowMultiplier);
+                }
             }
             FireShots();
             StepShots(dt, p);

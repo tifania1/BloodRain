@@ -22,6 +22,20 @@ namespace BloodRain.Presentation
         float _baseMove = 4.6f;
         Vector2 _facing = Vector2.right;
 
+        float _slowLeft, _slowMul = 1f;
+
+        /// <summary>걸음 둔화(빙강시 닿음: enemies.json onHitSlowSeconds·onHitSlowMultiplier). 다시 걸리면 시간만 처음부터,
+        /// 배율은 더 느린 쪽. 대시에는 안 걸린다.</summary>
+        public void Slow(float seconds, float multiplier)
+        {
+            if (seconds <= 0f) return;
+            if (multiplier <= 0f) multiplier = 1f;
+            _slowMul = _slowLeft > 0f ? Mathf.Min(_slowMul, multiplier) : multiplier;
+            _slowLeft = seconds;
+        }
+
+        public float SlowLeft => _slowLeft;
+
         public Dash Dash { get; private set; }
         public Vector2 Facing => _facing;
         public bool Invulnerable => Dash != null && Dash.Invulnerable;
@@ -72,6 +86,7 @@ namespace BloodRain.Presentation
             if (DashPressed()) Dash.TryStart(_facing.x, _facing.y);
 
             float dt = Time.deltaTime;
+            if (_slowLeft > 0f) { _slowLeft -= dt; if (_slowLeft <= 0f) _slowMul = 1f; }
             var (ddx, ddy) = Dash.Tick(dt);
             var pos = new System.Numerics.Vector2(transform.position.x, transform.position.y);
             var birth = new System.Numerics.Vector2(birthplace.x, birthplace.y);
@@ -80,7 +95,7 @@ namespace BloodRain.Presentation
                 step = new Vector2(_ws.Length(ddx), _ws.Length(ddy)); // 대시 중엔 걸음 대신 미끄러짐(웹과 같다)
             else
             {
-                float speed = _ws.Speed(_baseMove * _moveMultiplier);
+                float speed = _ws.Speed(_baseMove * _moveMultiplier * _slowMul);
                 var push = _ws.Scale.PushVelocity(pos, birth, _ws.Realm, speed);
                 step = (Vector2.ClampMagnitude(move, 1f) * speed + new Vector2(push.X, push.Y)) * dt;
             }
