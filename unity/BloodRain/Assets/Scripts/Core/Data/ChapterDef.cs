@@ -96,6 +96,8 @@ namespace BloodRain.Core.Data
         public float DurationMinutes;
         /// <summary>참이면 DurationMinutes 뒤에도 이어진다(한 생: 쓰러짐·좌화·봉인으로만 끝남). 그 뒤로는 마지막 가중치표를 계속 쓴다.</summary>
         public bool OpenEnded;
+        /// <summary>이 흐름의 첫 레벨업에 내놓는 새 무공 카드 수(서장 1: 고르기만 하면 됨, 4장). 0 이면 보통 레벨업.</summary>
+        public int FirstLevelUpChoices;
         /// <summary>이 시각부터 보스 사건까지 새 적을 만들지 않는다. 없으면 멈추지 않는다.</summary>
         public float? StopSpawningAtMinute;
         public List<SpawnBandDef> Bands = new List<SpawnBandDef>();

@@ -511,8 +511,12 @@ namespace BloodRain.Sim
 
         void LevelUp(int level)
         {
-            if (double.IsNaN(_result.FirstLevelUpMinute)) _result.FirstLevelUpMinute = _t / 60;
-            var offers = _loadout.RollLevelUp(_rng, (float)_b.Sheet.Luck, _unlocked);
+            bool first = double.IsNaN(_result.FirstLevelUpMinute);
+            if (first) _result.FirstLevelUpMinute = _t / 60;
+            // 서장 첫 레벨업은 새 무공 한 장뿐(chapters.json prologue firstLevelUpChoices, 4장)
+            var offers = first && _prologue != null
+                ? _loadout.RollFirstLevelUp(_rng, (float)_b.Sheet.Luck, _unlocked, _g.Chapter("prologue"))
+                : _loadout.RollLevelUp(_rng, (float)_b.Sheet.Luck, _unlocked);
             ApplyOffer(_policy.Choose(offers, _ctx));
             foreach (var realm in _realms.Breakthroughs(level - 1, level)) Breakthrough(realm, level);
         }

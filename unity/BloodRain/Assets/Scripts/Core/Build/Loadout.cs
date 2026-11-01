@@ -121,6 +121,24 @@ namespace BloodRain.Core.Build
             return result;
         }
 
+        /// <summary>흐름의 첫 레벨업(chapters.json firstLevelUpChoices, 서장 1). 새 무공 카드만 그 수만큼, 은자·음식은 붙이지 않는다.
+        /// 0 이거나 새 무공이 없으면 보통 레벨업(RollLevelUp).</summary>
+        public List<Offer> RollFirstLevelUp(Random rng, float luck, ISet<string> unlocked, ChapterDef chapter)
+        {
+            int n = chapter.FirstLevelUpChoices;
+            if (n <= 0) return RollLevelUp(rng, luck, unlocked);
+            var pool = Candidates(unlocked).Where(o => o.Kind == OfferKind.NewWeapon).ToList();
+            if (pool.Count == 0) return RollLevelUp(rng, luck, unlocked);
+            var result = new List<Offer>();
+            while (result.Count < n && pool.Count > 0)
+            {
+                int i = rng.Next(pool.Count);
+                result.Add(pool[i]);
+                pool.RemoveAt(i);
+            }
+            return result;
+        }
+
         /// <summary>절기 그릇: 지금 경지에서 몸에 담을 수 있는 절기 수(절정1·초절정2·화경3·현경4). 천하에선 모든 생에서 현경까지 가므로
         /// mode 는 결과를 바꾸지 않는다. balance.json realms 에 onlyIn 이 붙은 경지가 생기면 그 모드에서만 센다.</summary>
         public int Vessels(int playerLevel, string mode = "normal")

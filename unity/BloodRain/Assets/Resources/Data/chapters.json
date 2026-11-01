@@ -9,6 +9,8 @@
       "durationMinutes": 10,
       "_noteStop": "9:00 장삼 경고 전 30초 동안 새 적을 만들지 않는다. 보스전이 시작되면 다시 돈다.",
       "stopSpawningAtMinute": 8.5,
+      "_noteFirstLevelUp": "첫 레벨업은 새 무공 카드 한 장뿐(4장 0:15, 고르기만 하면 됨). 은자·음식 카드도 붙이지 않는다. Core Loadout.RollFirstLevelUp.",
+      "firstLevelUpChoices": 1,
       "bands": [
         { "fromMinute": 0, "toMinute": 10, "spawns": [ { "enemy": "sigang", "weight": 1 } ] }
       ],
