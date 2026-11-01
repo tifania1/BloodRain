@@ -6,6 +6,7 @@ web/prototype/template.html 에 저장소 데이터 JSON과 인트로 컷 세 �
   web/prototype/.artifact/   claude.ai 아티팩트용 본문(문서 뼈대 없이). --artifact 를 줄 때만
   site/lookdev/              이펙트 시안(web/lookdev/*.html)을 공개용 문서로 감싼 것.
                              시안에 데이터 자리(/*__DATA__*/null)가 있으면 LOOKDEV_DATA 의 묶음을 넣는다
+  site/lookdev/vfx/          이펙트 갤러리가 읽는 Art/VFX 텍스처(Brush·Common·AI) 사본
 
 둘 다 빌드 결과라 커밋하지 않는다(.gitignore). 밸런스 숫자를 바꾸면 이 스크립트만 다시 돌리면 된다.
 CI(.github/workflows/web-prototype.yml)가 같은 스크립트로 묶어 배포한다.
@@ -38,6 +39,7 @@ SRC = PROTO / "template.html"
 SITE = PROTO / "site"
 ARTIFACT = PROTO / ".artifact"
 LOOKDEV = ROOT / "web" / "lookdev"
+VFX = ROOT / "unity" / "BloodRain" / "Assets" / "Art" / "VFX"
 
 SITE_URL = "https://bloodrain-proto.pages.dev"
 TITLE = "혈우강호 프로토타입"
@@ -244,6 +246,18 @@ def main() -> int:
         out.parent.mkdir(exist_ok=True)
         out.write_text(site_document(text, args.site_url, title, f"혈우강호 {title}", f"lookdev/{src.name}"), encoding="utf-8")
         print(f"{out.relative_to(ROOT)}")
+
+    # 이펙트 갤러리(lookdev/vfx_gallery.html)가 읽는 텍스처: Art/VFX 의 Brush·Common·AI 폴더 png·json 을 그대로(.meta 빼고)
+    vfx_out = SITE / "lookdev" / "vfx"
+    shutil.rmtree(vfx_out, ignore_errors=True)
+    n = 0
+    for sub in ("Brush", "Common", "AI"):
+        for f in sorted((VFX / sub).glob("*")):
+            if f.suffix in (".png", ".json"):
+                (vfx_out / sub).mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(f, vfx_out / sub / f.name)
+                n += 1
+    print(f"{vfx_out.relative_to(ROOT)} 텍스처·목록 {n}개")
 
     if args.artifact:
         ARTIFACT.mkdir(parents=True, exist_ok=True)

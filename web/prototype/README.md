@@ -8,6 +8,7 @@
 - claude.ai 아티팩트: https://claude.ai/artifact/Aez6dR7ABbw9Z4RYK4paEg (비공개, 대화 안에서 보는 용)
 - 원본은 `template.html` 하나. 빌드 결과(`site/`, `.artifact/`)는 커밋하지 않는다.
 - 이펙트 시안 `web/lookdev/*.html` 도 같은 빌드로 `/lookdev/` 아래에 올라간다(예: https://bloodrain-proto.pages.dev/lookdev/samjae.html).
+- 이펙트 갤러리(V-09): https://bloodrain-proto.pages.dev/lookdev/vfx_gallery.html. 원본 `web/lookdev/vfx_gallery.html`. 빌드가 `Assets/Art/VFX` 의 Brush·Common·AI png·json 을 `site/lookdev/vfx/` 로 복사하고, 갤러리가 그걸 읽어 `BrushStroke.shader` 와 같은 식(그어짐·흩어짐·담채·빛 더하기)으로 캔버스에 돌린다. 일렁임은 noise_2 로 uv 를 흔드는 시안(V-08 이 셰이더에 넣을 때 기준). 빌드한 사이트에서만 열린다(file:// 로는 텍스처를 못 읽음).
 - 천하 시안(기획서 7·10·21장의 천하 한 장 + 환혼 + 윤회의 기): https://bloodrain-proto.pages.dev/lookdev/cheonha.html. 원본 `web/lookdev/cheonha.html`. 아래 '천하 시안' 절 참고.
 
 ## 묶기와 올리기

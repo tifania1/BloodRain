@@ -1,0 +1,184 @@
+<title>이펙트 갤러리</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Noto+Serif+KR:wght@400;700&display=swap">
+<style>
+/* V-09 이펙트 갤러리. Brush·Common·AI 텍스처를 Unity BrushStroke 셰이더와 같은 식으로 캔버스에 돌린다.
+   종이·먹 단일 화풍이라 어두운 테마는 따로 두지 않는다(빛 재료만 '어두운 바닥' 단추로 본다). */
+:root {
+  --paper: #EFE6D2; --ink: #1A1A1A; --ink-soft: #4A4640; --line: rgba(26,26,26,.2);
+  --brush: "Nanum Brush Script", "Noto Serif KR", serif;
+  --serif: "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+  --num: ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+body { background: var(--paper); color: var(--ink); font-family: var(--serif); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 20px; }
+h1 { margin: 0; font: 400 clamp(40px, 8vw, 64px)/1 var(--brush); }
+.lead { margin: 0; max-width: 64ch; line-height: 1.75; font-size: 14px; color: var(--ink-soft); }
+.bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bar button { padding: 8px 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--paper); color: var(--ink); font: 700 13px/1 var(--serif); cursor: pointer; }
+.bar button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.bar label { font: 600 13px/1 var(--num); display: flex; gap: 6px; align-items: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 14px; }
+figure { margin: 0; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: #F5EFE2; }
+figure canvas { display: block; width: 100%; aspect-ratio: 1; }
+figcaption { padding: 8px 10px; font: 500 12px/1.5 var(--num); color: var(--ink-soft); }
+figcaption b { color: var(--ink); font-family: var(--serif); }
+.empty { font: 500 14px/1.6 var(--num); color: var(--ink-soft); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>이펙트 갤러리</h1>
+    <p class="lead">구운 붓 획(Brush)·공용 먹(Common)·ChatGPT 재료(AI)를 게임 셰이더와 같은 식으로 돌린다. 그어짐 → 머무름 → 흩어짐을 되풀이하고, 담채는 커지며 옅어지고, 빛 층은 더해진다. 휴대폰으로 보는 검수 화면이다.</p>
+  </header>
+  <div class="bar" id="tabs" role="group" aria-label="무공"></div>
+  <div class="bar">
+    <label>빠르기 <select id="speed"><option value="1">1배</option><option value="0.5">0.5배</option><option value="0.25">0.25배</option><option value="0.1">0.1배</option></select></label>
+    <label><input type="checkbox" id="flutter"> 일렁임</label>
+    <label><input type="checkbox" id="dark"> 어두운 바닥</label>
+    <label><input type="checkbox" id="hold"> 멈춤(다 그어진 모습)</label>
+  </div>
+  <div class="grid" id="grid"><p class="empty">텍스처를 불러오는 중…</p></div>
+</div>
+
+<script>
+// 셰이더와 같은 값(BrushStroke.shader): 층 색, 결 0.06, 흩어짐 잡음 uv x1.7, 가장자리 0.35 진하게
+const BASE = 'vfx/';
+const RES = 192, FEATHER = 0.06;
+const COLORS = { stroke: [20, 20, 20], wash: [79, 127, 122], gold: [201, 162, 39], core: [255, 255, 255] };
+const ADD = { gold: true, core: true };          // AI 빛 재료는 더하기(BrushStrokeAdd)
+const ORDER = ['wash', 'stroke', 'gold', 'core']; // 담채가 맨 아래
+const KIND = { arc: 0, line: 1, blot: 2, radial: 2, right: 1, down: 3, up: 4, left: 5 };
+const BRUSH = ['samjae', 'nahan', 'dagger', 'changcheon', 'palm', 'flash', 'bomb', 'mist', 'staff'];
+const NAMES = { samjae: '삼재검법', nahan: '나한권', dagger: '비도술', changcheon: '창천검기', palm: '장풍', flash: '섬광지', bomb: '벽력탄', mist: '독무', staff: '취선봉', common: '공용 먹', ai: 'AI 재료' };
+
+const $ = id => document.getElementById(id);
+const cache = new Map();
+function alphaOf(url) {
+  if (cache.has(url)) return cache.get(url);
+  const p = new Promise((ok, no) => {
+    const im = new Image(); im.onload = () => {
+      const c = document.createElement('canvas'); c.width = c.height = RES;
+      const g = c.getContext('2d'); g.drawImage(im, 0, 0, RES, RES);
+      const d = g.getImageData(0, 0, RES, RES).data, a = new Float32Array(RES * RES);
+      // 노이즈는 회색(값이 r), 나머지는 흰색 + 알파
+      const gray = url.includes('noise_');
+      for (let i = 0; i < a.length; i++) a[i] = (gray ? d[i * 4] : d[i * 4 + 3]) / 255;
+      ok(a);
+    }; im.onerror = () => no(new Error(url)); im.src = url;
+  });
+  cache.set(url, p); return p;
+}
+function sample(a, u, v) {
+  u = u - Math.floor(u); v = v - Math.floor(v);
+  return a[Math.min(RES - 1, (v * RES) | 0) * RES + Math.min(RES - 1, (u * RES) | 0)];
+}
+function sampleClamp(a, u, v) { return u < 0 || v < 0 || u >= 1 || v >= 1 ? 0 : a[((v * RES) | 0) * RES + ((u * RES) | 0)]; }
+const smooth = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+
+let noise1, noise2, cards = [];
+const state = { speed: 1, flutter: false, dark: false, hold: false };
+
+// 한 장의 시간표(초, 빠르기 1배): 0~0.35 그어짐, ~0.9 머무름, ~1.4 흩어짐, ~1.7 빔
+function phase(t) {
+  if (state.hold) return { prog: 1, dis: 0, wash: 0.4 };
+  const L = 1.7, x = t % L;
+  return { prog: Math.min(1, x / 0.35), dis: x < 0.9 ? 0 : Math.min(1, (x - 0.9) / 0.5), wash: Math.min(1, x / 1.4) };
+}
+
+function draw(card, time) {
+  const { ctx, img, tex } = card, d = img.data, ph = phase(time);
+  const bg = state.dark ? [24, 22, 20] : [239, 230, 210];
+  const kind = tex.kind, span = tex.span || 2.3, ft = time * 0.35;
+  for (let y = 0; y < RES; y++) for (let x = 0; x < RES; x++) {
+    let u = (x + 0.5) / RES, v = (y + 0.5) / RES;
+    if (state.flutter) { u += (sample(noise2, u * 1.3 + ft, v * 1.3) - 0.5) * 0.04; v += (sample(noise2, u * 1.3, v * 1.3 - ft) - 0.5) * 0.04; }
+    // 셰이더 Frag 의 t(그어지는 위치). 텍스처 v 는 위가 0 이라 Unity uv.y = 1 - v
+    const uy = 1 - v; let t;
+    if (kind === 0) t = Math.min(1, Math.max(0, Math.atan2(uy - 0.5, u - 0.5) / span + 0.5));
+    else if (kind === 1) t = u;
+    else if (kind === 2) t = Math.min(1, Math.hypot(u - 0.5, uy - 0.5) * 2);
+    else if (kind === 3) t = 1 - uy;
+    else if (kind === 4) t = uy;
+    else t = 1 - u;
+    const reveal = ph.prog * (1 + FEATHER), mask = 1 - smooth(reveal - FEATHER, reveal, t);
+    const n = sample(noise1, u * 1.7, v * 1.7);
+    const keep = ph.dis > 0 ? smooth(ph.dis, ph.dis + 0.08, n + 0.02 * (1 - ph.dis)) : 1;
+    const edge = ph.dis > 0 ? 1 - smooth(ph.dis, ph.dis + 0.12, n) : 0;
+    let r = bg[0], g = bg[1], b = bg[2];
+    for (const L of card.layers) {
+      let a;
+      if (L.name === 'wash') { const s = 1 + 0.3 * ph.wash; a = sampleClamp(L.a, 0.5 + (u - 0.5) / s, 0.5 + (v - 0.5) / s) * (1 - ph.wash); }
+      else a = sampleClamp(L.a, u, v);
+      a *= mask * keep; if (a <= 0.002) continue;
+      const c = COLORS[L.name] || COLORS.stroke, dk = 1 - 0.35 * edge;
+      if (ADD[L.name]) { r += c[0] * a; g += c[1] * a; b += c[2] * a; }
+      else { r = r * (1 - a) + c[0] * dk * a; g = g * (1 - a) + c[1] * dk * a; b = b * (1 - a) + c[2] * dk * a; }
+    }
+    const i = (y * RES + x) * 4; d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+async function loadGroup(key) {
+  if (key === 'common') {
+    const names = ['ink_splat_1', 'ink_splat_2', 'ink_splat_3', 'ink_splat_4', 'ink_splat_5', 'ink_splat_6', 'ground_ink_1', 'ground_ink_2', 'ground_ink_3', 'ground_ink_4', 'seal_base'];
+    return names.map(n => ({ dir: 'Common', name: n, kind: n.startsWith('ink_splat') ? 1 : 2, layers: [null], note: n.startsWith('ink_splat') ? '먹 튐, +x 로' : n.startsWith('ground') ? '바닥 먹 자국' : '낙관 바탕(색은 주홍)' }));
+  }
+  const dir = key === 'ai' ? 'AI' : 'Brush';
+  const j = await (await fetch(`${BASE}${dir}/${key === 'ai' ? 'ai' : key}.json`)).json();
+  return j.textures.map(t => ({ dir, name: t.name, kind: KIND[t.progress || t.kind] ?? 2, span: t.span, layers: t.layers, note: t.use || `${t.tier}단 · ${t.kind}${t.sizeMeters ? ` · ${t.sizeMeters}m` : ''}` }));
+}
+
+let token = 0;
+async function show(key) {
+  const my = ++token;
+  for (const b of $('tabs').children) b.setAttribute('aria-pressed', String(b.dataset.key === key));
+  const grid = $('grid'); grid.innerHTML = '<p class="empty">불러오는 중…</p>'; cards = [];
+  try {
+    const list = await loadGroup(key), out = [];
+    for (const t of list) {
+      const layers = [];
+      for (const L of ORDER.filter(l => t.layers.includes(l)).concat(t.layers.includes(null) ? [null] : [])) {
+        const url = L ? `${BASE}${t.dir}/${t.name}_${L}.png` : `${BASE}${t.dir}/${t.name}.png`;
+        layers.push({ name: L || 'stroke', a: await alphaOf(url) });
+      }
+      out.push({ tex: t, layers });
+    }
+    if (my !== token) return;
+    grid.innerHTML = '';
+    for (const c of out) {
+      const fig = document.createElement('figure'), cv = document.createElement('canvas'), cap = document.createElement('figcaption');
+      cv.width = cv.height = RES; fig.append(cv, cap);
+      cap.innerHTML = `<b>${c.tex.name}</b><br>${c.tex.note} · 층 ${c.layers.map(l => l.name).join('·')}`;
+      grid.append(fig);
+      const ctx = cv.getContext('2d');
+      cards.push(Object.assign(c, { ctx, img: ctx.createImageData(RES, RES), cv, seen: true }));
+    }
+    const io = new IntersectionObserver(es => { for (const e of es) { const c = cards.find(x => x.cv === e.target); if (c) c.seen = e.isIntersecting; } });
+    cards.forEach(c => io.observe(c.cv));
+  } catch (e) {
+    if (my === token) grid.innerHTML = `<p class="empty">텍스처를 못 불러왔다(${e.message}). 빌드한 사이트(/lookdev/)에서 열어야 한다.</p>`;
+  }
+}
+
+let clock = 0, last = performance.now();
+function frame(now) {
+  clock += Math.min(0.1, (now - last) / 1000) * state.speed; last = now;
+  cards.forEach((c, i) => { if (c.seen) draw(c, clock + i * 0.23); });
+  requestAnimationFrame(frame);
+}
+
+(async () => {
+  for (const k of BRUSH.concat(['common', 'ai'])) {
+    const b = document.createElement('button'); b.textContent = NAMES[k]; b.dataset.key = k; b.onclick = () => show(k); $('tabs').append(b);
+  }
+  $('speed').onchange = e => state.speed = +e.target.value;
+  for (const id of ['flutter', 'dark', 'hold']) $(id).onchange = e => state[id] = e.target.checked;
+  try { [noise1, noise2] = await Promise.all([alphaOf(BASE + 'Common/noise_1.png'), alphaOf(BASE + 'Common/noise_2.png')]); }
+  catch (e) { $('grid').innerHTML = '<p class="empty">노이즈 텍스처를 못 불러왔다. 빌드한 사이트(/lookdev/)에서 열어야 한다.</p>'; return; }
+  show(BRUSH[0]); requestAnimationFrame(frame);
+})();
+</script>
