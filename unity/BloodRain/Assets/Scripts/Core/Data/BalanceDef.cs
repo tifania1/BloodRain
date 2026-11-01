@@ -46,6 +46,8 @@ namespace BloodRain.Core.Data
         public int BaseChoices = 3;
         public int MaxChoices = 4;
         public float LuckForFourthChoice = 50;
+        /// <summary>뽑힌 선택지가 모두 새 무공이면 은자·음식 카드를 한 장 더 붙인다(무명검처럼 무공 하나로 버티는 길, S-07 · 기획서 8장).</summary>
+        public bool FallbackWhenAllNewWeapons;
         /// <summary>캐릭터 특성 → 한 판 다시 고르기 몫(진소운 reroll_plus2_insight4 는 2). 연무장 몫과 더한다.</summary>
         public Dictionary<string, int> TraitRerolls = new Dictionary<string, int>();
     }

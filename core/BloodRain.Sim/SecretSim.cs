@@ -220,9 +220,19 @@ namespace BloodRain.Sim
             return list;
         }
 
-        public static SecretRow Measure(GameData g, SecretDef s, string character, IReadOnlyList<(double Minute, double Level)> curve, int runs, int rerolls = 0, bool escape = false)
+        /// <param name="fallbackRule">레벨업 '모두 새 무공이면 은자·음식 한 장 더'(balance.json levelUp.fallbackWhenAllNewWeapons)를 이 값으로 바꿔 잰다. null 이면 데이터 그대로.</param>
+        public static SecretRow Measure(GameData g, SecretDef s, string character, IReadOnlyList<(double Minute, double Level)> curve, int runs, int rerolls = 0, bool escape = false,
+            bool? fallbackRule = null)
         {
-            var res = Enumerable.Range(1, runs).Select(seed => RunOnce(g, s, character, curve, seed, Minutes, rerolls, escape)).ToList();
+            var lu = g.Balance.LevelUp;
+            bool keep = lu.FallbackWhenAllNewWeapons;
+            List<(double Build, double Open, bool Forced, bool Blocked)> res;
+            try
+            {
+                if (fallbackRule is bool on) lu.FallbackWhenAllNewWeapons = on;
+                res = Enumerable.Range(1, runs).Select(seed => RunOnce(g, s, character, curve, seed, Minutes, rerolls, escape)).ToList();
+            }
+            finally { lu.FallbackWhenAllNewWeapons = keep; }
             return new SecretRow
             {
                 SecretId = s.Id, NameKo = s.NameKo, Character = character, CharacterKo = g.Character(character).NameKo, Runs = runs,
@@ -253,20 +263,21 @@ namespace BloodRain.Sim
             };
         }
 
-        /// <summary>S-07 무명검 고칠 방향: 이름, 버틸 초, 다시 고르기, 은자·음식 섞기.</summary>
-        public static IReadOnlyList<(string Ko, double Seconds, int Rerolls, bool Escape)> MumyeongOptions(SecretDef s, int maxRerolls)
+        /// <summary>S-07 무명검: 이름, 버틸 초, 다시 고르기, 레벨업 '모두 새 무공이면 은자·음식' 규칙을 켜나.
+        /// 첫 줄이 지금 데이터(2026-11-01 (가)로 정함), 나머지는 규칙이 없던 때 견줘 본 방향.</summary>
+        public static IReadOnlyList<(string Ko, double Seconds, int Rerolls, bool RuleOn)> MumyeongOptions(SecretDef s, int maxRerolls)
         {
             double now = s.Require.Counts.TryGetValue("elapsedSeconds", out var v) ? v : 600;
             return new[]
             {
-                ($"지금({now / 60:0}분)", now, 0, false),
-                ($"지금 + 다시 고르기 {maxRerolls}", now, maxRerolls, false),
-                ("(가) 새 무공뿐이면 은자·음식", now, 0, true),
-                ("(나) 7분", 420.0, 0, false),
-                ("(나) 5분", 300.0, 0, false),
-                ($"(나) 5분 + 다시 고르기 {maxRerolls}", 300.0, maxRerolls, false),
-                ("(다) 파기·다시 고르기 15", now, 15, false),
-                ("(다) 파기·다시 고르기 30", now, 30, false),
+                ($"지금 데이터: (가) 새 무공뿐이면 은자·음식({now / 60:0}분)", now, 0, true),
+                ($"규칙 없이({now / 60:0}분)", now, 0, false),
+                ($"규칙 없이 + 다시 고르기 {maxRerolls}", now, maxRerolls, false),
+                ("규칙 없이 (나) 7분", 420.0, 0, false),
+                ("규칙 없이 (나) 5분", 300.0, 0, false),
+                ($"규칙 없이 (나) 5분 + 다시 고르기 {maxRerolls}", 300.0, maxRerolls, false),
+                ("규칙 없이 (다) 파기·다시 고르기 15", now, 15, false),
+                ("규칙 없이 (다) 파기·다시 고르기 30", now, 30, false),
             };
         }
 
@@ -338,31 +349,31 @@ namespace BloodRain.Sim
             foreach (var r in mumyeong)
             {
                 var def = g.Synergies.Secrets.First(x => x.Id == r.SecretId);
-                sb.AppendLine($"## 2. {r.NameKo} 고칠 방향별 (S-07)");
+                sb.AppendLine($"## 2. {r.NameKo}: 은자·음식 규칙(S-07)");
                 sb.AppendLine();
-                sb.AppendLine($"backlog S-07 의 셋을 같은 시드 {runs}판으로 돌렸다({r.CharacterKo}). (가)는 카드 석 장이 모두 새 무공일 때 은자·음식 카드가 섞여 나와 그걸 받는다고 두었다(무공·심법은 그대로). (다)는 이 시뮬레이터에 파기가 없어서 '받고 싶은 카드가 없을 때 쓰는 다시 고르기'를 그만큼 준 것으로 갈음했다.");
+                sb.AppendLine($"2026-11-01 사람 결정 (가)로 레벨업 규칙을 바꿨다: 뜬 카드가 모두 새 무공이면 은자·음식 카드가 한 장 더 붙는다(balance.json levelUp.fallbackWhenAllNewWeapons, Core Loadout.RollLevelUp). 아래는 같은 시드 {runs}판({r.CharacterKo})에서 지금 데이터와, 이 규칙이 없을 때 견줘 본 방향들이다. (다)는 이 시뮬레이터에 파기가 없어서 '받고 싶은 카드가 없을 때 쓰는 다시 고르기'를 그만큼 준 것으로 갈음했다.");
                 sb.AppendLine();
                 var opts = new List<(string Ko, SecretRow Row)>();
                 sb.AppendLine("| 방향 | 열린 판 | 열린 분(가운데값) | 새 무공을 억지로 받은 판 |");
                 sb.AppendLine("|---|---|---|---|");
                 foreach (var o in MumyeongOptions(def, maxRerolls))
                 {
-                    var x = Measure(g, WithSeconds(def, o.Seconds), r.Character, Curve(r.Character), runs, o.Rerolls, o.Escape);
+                    var x = Measure(g, WithSeconds(def, o.Seconds), r.Character, Curve(r.Character), runs, o.Rerolls, false, o.RuleOn);
                     sb.AppendLine($"| {o.Ko} | {x.OpenRuns}/{x.Runs} | {M(x.OpenMinute)} | {x.ForcedRuns}/{x.Runs} |");
                     opts.Add((o.Ko, x));
                 }
                 sb.AppendLine();
-                var esc = opts.First(o => o.Ko.StartsWith("(가)")).Row;
-                var five = opts.First(o => o.Ko == "(나) 5분").Row;
-                var d30 = opts.Last(o => o.Ko.StartsWith("(다)")).Row;
-                sb.AppendLine($"- (가)만 판마다 연다({esc.OpenRuns}/{esc.Runs}, 가운데 {M(esc.OpenMinute)}분). 10분보다 늦는 건 삼재검법 Lv8 이 그때쯤 차서다. (나)는 5분으로 줄여도 {five.OpenRuns}/{five.Runs}: 삼재검법이 Lv8 에 닿기 전에 석 장이 모두 새 무공인 차례가 먼저 온다. (다)는 받고 싶지 않은 차례를 {MumyeongOptions(def, maxRerolls).Last().Rerolls}번 넘겨야 {d30.OpenRuns}/{d30.Runs}이고, 연 뒤엔 결국 새 무공을 받는다(보상은 그 뒤에도 남는다).");
+                var esc = opts[0].Row;
+                var five = opts.First(o => o.Ko == "규칙 없이 (나) 5분").Row;
+                var d30 = opts.Last(o => o.Ko.Contains("(다)")).Row;
+                sb.AppendLine($"- 지금 데이터는 {esc.OpenRuns}/{esc.Runs}판이 연다(가운데 {M(esc.OpenMinute)}분). 10분보다 늦는 건 삼재검법 Lv8 이 그때쯤 차서다. 규칙이 없으면 (나) 5분으로 줄여도 {five.OpenRuns}/{five.Runs}: 삼재검법이 Lv8 에 닿기 전에 석 장이 모두 새 무공인 차례가 먼저 온다. (다)는 받고 싶지 않은 차례를 {MumyeongOptions(def, maxRerolls).Last().Rerolls}번 넘겨야 {d30.OpenRuns}/{d30.Runs}이었다.");
                 sb.AppendLine();
             }
 
             sb.AppendLine("## 읽는 법");
             sb.AppendLine();
             foreach (var r in mumyeong)
-                sb.AppendLine($"- {r.NameKo}({r.CharacterKo}): 새 무공을 피해도 {r.ForcedRuns}/{r.Runs}판은 고를 것이 새 무공뿐인 차례가 와서 억지로 받았다. 열린 판 {r.OpenRuns}/{r.Runs}, 다시 고르기 {maxRerolls}번이어도 {R(r).OpenRuns}/{r.Runs}. 무공 칸이 비어 있는 동안 카드 석 장이 모두 새 무공인 차례가 자주 오고, 운이 좋아도 받을 수 있는 강화가 삼재검법 {g.Balance.Levels.WeaponMax - 1}번 + 심법 {g.Balance.Slots.Passives}칸 × {g.Balance.Levels.PassiveMax}단계 = {g.Balance.Levels.WeaponMax - 1 + g.Balance.Slots.Passives * g.Balance.Levels.PassiveMax}번뿐이라 레벨 {g.Balance.Levels.WeaponMax + g.Balance.Slots.Passives * g.Balance.Levels.PassiveMax}(진소운 곡선으로 {M(MinuteOfLevel(Curve(r.Character), g.Balance.Levels.WeaponMax + g.Balance.Slots.Passives * g.Balance.Levels.PassiveMax))}분)부터는 새 무공 말고 고를 것이 없다. 10분을 넘기려면 그 뒤로 남은 레벨업마다 파기나 다시 고르기가 있어야 한다. 조건(10분)이나 '새 무공 카드 대신 은자·음식' 같은 빠져나갈 길을 정하지 않으면 사실상 못 여는 비전이다.");
+                sb.AppendLine($"- {r.NameKo}({r.CharacterKo}): 열린 판 {r.OpenRuns}/{r.Runs}, 새 무공을 억지로 받은 판 {r.ForcedRuns}/{r.Runs}. 무공 칸이 비어 있는 동안 카드 석 장이 모두 새 무공인 차례가 자주 오고, 받을 수 있는 강화가 삼재검법 {g.Balance.Levels.WeaponMax - 1}번 + 심법 {g.Balance.Slots.Passives}칸 × {g.Balance.Levels.PassiveMax}단계 = {g.Balance.Levels.WeaponMax - 1 + g.Balance.Slots.Passives * g.Balance.Levels.PassiveMax}번뿐이라 레벨 {g.Balance.Levels.WeaponMax + g.Balance.Slots.Passives * g.Balance.Levels.PassiveMax}(진소운 곡선으로 {M(MinuteOfLevel(Curve(r.Character), g.Balance.Levels.WeaponMax + g.Balance.Slots.Passives * g.Balance.Levels.PassiveMax))}분)부터는 새 무공 말고 고를 것이 없다. 그런 차례마다 은자·음식 카드가 붙어서(S-07) 무공 하나로 10분을 넘길 수 있다.");
             foreach (var r in mugeuk)
                 sb.AppendLine($"- {r.NameKo}({r.CharacterKo}): 구성은 {M(r.BuildMinute)}분쯤 갖추지만 게이지가 0에 3분 머문 판은 {r.OpenRuns}/{r.Runs}. 게이지는 레벨업으로만 움직여서, 무공·심법이 다 차 레벨업이 멈춘 뒤 0에 서 있으면 열리고 아니면 안 열린다. 역근(게이지 0으로)을 넣으면 더 쉬워진다. 다시 고르기 {maxRerolls}번이면 {R(r).OpenRuns}/{r.Runs}.");
             sb.AppendLine("- 사건 조건이 붙은 비전(*)은 구성 분이 '여기서부터 사건을 기다릴 수 있다'는 뜻이다. 사건이 얼마나 자주 나는지(정신부·음식·보갑·의서)는 데이터에 개수가 없어 재지 않았다.");

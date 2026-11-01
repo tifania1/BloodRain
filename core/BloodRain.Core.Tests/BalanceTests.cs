@@ -276,6 +276,33 @@ namespace BloodRain.Core.Tests
             Assert.Equal(4, l.RollLevelUp(new Random(1), 50, StartUnlocked).Count);
         }
 
+        [Fact] public void 뽑힌_선택지가_모두_새_무공이면_은자_음식이_한_장_더_붙는다()
+        {
+            // S-07(무명검): 새 무공을 억지로 받지 않고 버틸 길. 기획서 8장 '레벨업 규칙'
+            Assert.True(_d.Balance.LevelUp.FallbackWhenAllNewWeapons);
+            Assert.Contains("뜬 선택지가 모두 새 무공이면 은자 주머니나 음식 카드가 한 장 더", TestData.Gdd);
+            int allNew = 0, mixed = 0;
+            for (int seed = 1; seed <= 300; seed++)
+            {
+                var l = new Loadout(_d, _d.Character("jin_sowoon"));
+                var offers = l.RollLevelUp(new Random(seed), 0, StartUnlocked);
+                var drawn = offers.Where(o => o.Kind != OfferKind.Fallback).ToList();
+                Assert.Equal(3, drawn.Count);
+                if (drawn.All(o => o.Kind == OfferKind.NewWeapon))
+                {
+                    allNew++;
+                    Assert.Equal(OfferKind.Fallback, offers.Last().Kind);
+                    Assert.Equal(4, offers.Count);
+                }
+                else
+                {
+                    mixed++;
+                    Assert.DoesNotContain(offers, o => o.Kind == OfferKind.Fallback);
+                }
+            }
+            Assert.True(allNew > 0 && mixed > 0, $"{allNew}/{mixed}");
+        }
+
         [Fact] public void 잠긴_무공은_선택지에_나오지_않는다()
         {
             var l = new Loadout(_d, _d.Character("jin_sowoon"));

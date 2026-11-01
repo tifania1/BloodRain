@@ -72,16 +72,13 @@ namespace BloodRain.Core.Tests
             }
         }
 
-        [Fact] public void 무명검은_다시_고르기가_없으면_새_무공을_억지로_받는다()
+        [Fact] public void 무명검은_은자_음식_규칙이_없으면_새_무공을_억지로_받는다()
         {
             var s = Secret("mumyeong");
             Assert.Contains("jin_sowoon", SecretSim.CharactersFor(G, s));
-            for (int seed = 1; seed <= 10; seed++)
-            {
-                var r = SecretSim.RunOnce(G, s, "jin_sowoon", Line, seed);
-                Assert.True(r.Forced);
-                Assert.True(double.IsNaN(r.Open));
-            }
+            var off = SecretSim.Measure(G, s, "jin_sowoon", Line, 10, fallbackRule: false);
+            Assert.Equal(10, off.ForcedRuns);
+            Assert.Equal(0, off.OpenRuns);
         }
 
         [Fact] public void 다시_고르기가_칸_막힘을_줄이고_같은_시드는_같은_결과()
@@ -118,6 +115,19 @@ namespace BloodRain.Core.Tests
                 Assert.False(double.IsNaN(r.Open));
                 Assert.True(r.Open >= s.Require.Counts["elapsedSeconds"] / 60 - 1e-6);
             }
+        }
+
+        [Fact] public void 무명검은_지금_데이터_레벨업_규칙만으로_억지로_받지_않고_열린다()
+        {
+            // S-07 (가): 카드가 모두 새 무공이면 은자·음식이 붙는다(balance.json levelUp.fallbackWhenAllNewWeapons)
+            var s = Secret("mumyeong");
+            Assert.True(G.Balance.LevelUp.FallbackWhenAllNewWeapons);
+            var on = SecretSim.Measure(G, s, "jin_sowoon", Line, 10);
+            Assert.Equal(10, on.OpenRuns);
+            Assert.Equal(0, on.ForcedRuns);
+            var off = SecretSim.Measure(G, s, "jin_sowoon", Line, 10, fallbackRule: false);
+            Assert.Equal(0, off.OpenRuns);
+            Assert.True(G.Balance.LevelUp.FallbackWhenAllNewWeapons); // 잰 뒤 되돌림
         }
 
         [Fact] public void 버틸_시간만_바꾼_복사본은_원본을_건드리지_않는다()

@@ -97,7 +97,8 @@ namespace BloodRain.Core.Tests
             {
                 var offers = l.RollLevelUp(new Random(seed), 100, StartUnlocked);
                 Assert.Equal(offers.Count, offers.Select(o => o.ToString()).Distinct().Count());
-                Assert.InRange(offers.Count, _d.Balance.LevelUp.BaseChoices, _d.Balance.LevelUp.MaxChoices);
+                // 모두 새 무공이면 은자·음식이 한 장 더 붙는다(S-07), 그 한 장은 빼고 센다
+                Assert.InRange(offers.Count(o => o.Kind != OfferKind.Fallback), _d.Balance.LevelUp.BaseChoices, _d.Balance.LevelUp.MaxChoices);
             }
         }
 

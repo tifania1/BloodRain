@@ -1659,7 +1659,8 @@ function rollOffers() {
     let r = Math.random() * sum, i = 0; for (; i < pool.length; i++) { r -= weights[i]; if (r <= 0) break; }
     out.push(pool.splice(Math.min(i, pool.length - 1), 1)[0]);
   }
-  if (!out.length) out.push({ kind: 'gold' });
+  // 모두 새 무공이면 은자·음식을 한 장 더(무명검처럼 무공 하나로 버티는 길). balance.json levelUp.fallbackWhenAllNewWeapons
+  if (!out.length || (B.levelUp.fallbackWhenAllNewWeapons && out.every(o => o.kind === 'nw'))) out.push({ kind: 'gold' });
   return out;
 }
 function offerCard(o, idx) {

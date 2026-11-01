@@ -100,7 +100,8 @@ namespace BloodRain.Core.Build
             return list;
         }
 
-        /// <summary>레벨업 선택지 3개(기연이 높으면 4개). 고를 것이 없으면 은자·음식(Fallback).</summary>
+        /// <summary>레벨업 선택지 3개(기연이 높으면 4개). 고를 것이 없으면 은자·음식(Fallback).
+        /// 뽑힌 것이 모두 새 무공이면 은자·음식을 한 장 더 붙인다(levelUp.fallbackWhenAllNewWeapons).</summary>
         public List<Offer> RollLevelUp(Random rng, float luck, ISet<string> unlocked)
         {
             var rule = _data.Balance.LevelUp;
@@ -115,7 +116,8 @@ namespace BloodRain.Core.Build
                 result.Add(pool[i]);
                 pool.RemoveAt(i);
             }
-            if (result.Count == 0) result.Add(new Offer(OfferKind.Fallback, "silver_or_food"));
+            if (result.Count == 0 || (rule.FallbackWhenAllNewWeapons && result.All(o => o.Kind == OfferKind.NewWeapon)))
+                result.Add(new Offer(OfferKind.Fallback, "silver_or_food"));
             return result;
         }
 
