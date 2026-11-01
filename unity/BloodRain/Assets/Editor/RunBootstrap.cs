@@ -78,6 +78,9 @@ namespace BloodRain.Editor
             var hud = HudBootstrap.CreateHud();
             hud.target = player.transform;
 
+            // 레벨업 화면(C-06)
+            LevelUpBootstrap.Attach();
+
             EditorSceneManager.SaveScene(scene, RunScenePath);
             Debug.Log($"[RunBootstrap] {RunScenePath} 지음");
         }
