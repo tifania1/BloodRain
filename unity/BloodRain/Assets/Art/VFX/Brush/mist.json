@@ -1,0 +1,78 @@
+{
+  "_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 텍스처 한 변이 게임에서 몇 m 인가. 텍스처 가운데가 기준점: 호(arc)는 몸 위치를 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 가운데를 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m).",
+  "weapon": "poison_mist",
+  "textures": [
+    {
+      "name": "mist_t1_1",
+      "tier": 1,
+      "seed": 701001,
+      "kind": "blot",
+      "sizeMeters": 4.2,
+      "Rb": 1.4,
+      "layers": [
+        "stroke"
+      ]
+    },
+    {
+      "name": "mist_t1_2",
+      "tier": 1,
+      "seed": 701002,
+      "kind": "blot",
+      "sizeMeters": 4.2,
+      "Rb": 1.4,
+      "layers": [
+        "stroke"
+      ]
+    },
+    {
+      "name": "mist_t2_1",
+      "tier": 2,
+      "seed": 702001,
+      "kind": "blot",
+      "sizeMeters": 4.662,
+      "Rb": 1.554,
+      "layers": [
+        "stroke",
+        "wash"
+      ]
+    },
+    {
+      "name": "mist_t2_2",
+      "tier": 2,
+      "seed": 702002,
+      "kind": "blot",
+      "sizeMeters": 4.662,
+      "Rb": 1.554,
+      "layers": [
+        "stroke",
+        "wash"
+      ]
+    },
+    {
+      "name": "mist_t3_1",
+      "tier": 3,
+      "seed": 703001,
+      "kind": "blot",
+      "sizeMeters": 5.166,
+      "Rb": 1.722,
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ]
+    },
+    {
+      "name": "mist_t3_2",
+      "tier": 3,
+      "seed": 703002,
+      "kind": "blot",
+      "sizeMeters": 5.166,
+      "Rb": 1.722,
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ]
+    }
+  ]
+}

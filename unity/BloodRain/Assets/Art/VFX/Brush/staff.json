@@ -1,0 +1,90 @@
+{
+  "_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 텍스처 한 변이 게임에서 몇 m 인가. 텍스처 가운데가 기준점: 호(arc)는 몸 위치를 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 가운데를 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m).",
+  "weapon": "drunken_staff",
+  "textures": [
+    {
+      "name": "staff_t1_1",
+      "tier": 1,
+      "seed": 801001,
+      "kind": "arc",
+      "sizeMeters": 4.484,
+      "R": 1.5,
+      "span": 2.0,
+      "thick": 0.38,
+      "layers": [
+        "stroke"
+      ]
+    },
+    {
+      "name": "staff_t1_2",
+      "tier": 1,
+      "seed": 801002,
+      "kind": "arc",
+      "sizeMeters": 4.484,
+      "R": 1.5,
+      "span": 2.0,
+      "thick": 0.38,
+      "layers": [
+        "stroke"
+      ]
+    },
+    {
+      "name": "staff_t2_1",
+      "tier": 2,
+      "seed": 802001,
+      "kind": "arc",
+      "sizeMeters": 5.0876,
+      "R": 1.665,
+      "span": 2.0,
+      "thick": 0.532,
+      "layers": [
+        "stroke",
+        "wash"
+      ]
+    },
+    {
+      "name": "staff_t2_2",
+      "tier": 2,
+      "seed": 802002,
+      "kind": "arc",
+      "sizeMeters": 5.0876,
+      "R": 1.665,
+      "span": 2.0,
+      "thick": 0.532,
+      "layers": [
+        "stroke",
+        "wash"
+      ]
+    },
+    {
+      "name": "staff_t3_1",
+      "tier": 3,
+      "seed": 803001,
+      "kind": "arc",
+      "sizeMeters": 5.633,
+      "R": 1.845,
+      "span": 2.0,
+      "thick": 0.635,
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ]
+    },
+    {
+      "name": "staff_t3_2",
+      "tier": 3,
+      "seed": 803002,
+      "kind": "arc",
+      "sizeMeters": 5.633,
+      "R": 1.845,
+      "span": 2.0,
+      "thick": 0.635,
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ]
+    }
+  ]
+}

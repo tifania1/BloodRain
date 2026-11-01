@@ -29,12 +29,28 @@ namespace BloodRain.Core.Tests
             foreach (int tier in new[] { 1, 2, 3 })
                 Assert.Equal(3, tex.Count(t => (int)t["tier"]! == tier));
             var expected = tex.SelectMany(t => t["layers"]!.Select(l => $"{t["name"]}_{l}.png")).OrderBy(x => x, StringComparer.Ordinal).ToList();
-            var actual = Directory.GetFiles(Dir, "samjae_*.png").Select(f => Path.GetFileName(f)!).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            var actual = Directory.GetFiles(Dir, "samjae_t*.png").Select(f => Path.GetFileName(f)!).OrderBy(x => x, StringComparer.Ordinal).ToList();
             Assert.Equal(expected, actual);
+            Assert.Equal("samjae_sword", (string)meta["weapon"]!);
             // 1단 먹, 2단 담채, 3단 금빛 테두리(vfx.md 단계 규칙)
             Assert.All(tex, t => Assert.Equal((int)t["tier"]! switch { 1 => "stroke", 2 => "stroke,wash", _ => "stroke,wash,gold" },
                 string.Join(",", t["layers"]!.Select(l => (string)l!))));
             Assert.All(tex, t => Assert.True((double)t["sizeMeters"]! > 2 * (double)t["R"]!));
+        }
+
+        [Fact] public void 시작_무공_아홉이_모두_3단까지_구워져_있다()
+        {
+            var weapons = TestData.Load().Weapons.Where(w => w.Unlock == "start").Select(w => w.Id).OrderBy(x => x).ToList();
+            var baked = Directory.GetFiles(Dir, "*.json").Select(f => JObject.Parse(File.ReadAllText(f))).ToList();
+            Assert.Equal(weapons, baked.Select(m => (string)m["weapon"]!).OrderBy(x => x).ToList());
+            foreach (var m in baked)
+            {
+                var tex = m["textures"]!.ToArray();
+                Assert.Equal(new[] { 1, 2, 3 }, tex.Select(t => (int)t["tier"]!).Distinct().OrderBy(x => x));
+                foreach (var t in tex)
+                    foreach (var l in t["layers"]!)
+                        Assert.True(File.Exists(Path.Combine(Dir, $"{t["name"]}_{l}.png")), $"{t["name"]}_{l}");
+            }
         }
 
         [Fact] public void 텍스처는_512px_알파가_있는_PNG다()
