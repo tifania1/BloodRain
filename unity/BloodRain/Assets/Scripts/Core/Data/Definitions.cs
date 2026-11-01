@@ -192,6 +192,24 @@ namespace BloodRain.Core.Data
         public string? OnDeath;
         /// <summary>잡으면 주는 것(금두꺼비).</summary>
         public EnemyReward? Reward;
+        /// <summary>나온 뒤 이 초가 지나면 사라진다(혈인 돌진 14, 금두꺼비 도망 25). 0 이면 끝까지 남는다.</summary>
+        public float LifeSeconds;
+        /// <summary>예고 뒤 돌진(혈무사 telegraph_dash). 없으면 null.</summary>
+        public EnemyDash? Dash;
+    }
+
+    /// <summary>telegraph_dash 의 돌진(기획서 6장 '공통 적' 표 아래). 거리·속도는 경지 m, m/s.</summary>
+    public sealed class EnemyDash
+    {
+        /// <summary>플레이어가 이 거리 안에 들면 예고(Telegraph 초)를 시작한다.</summary>
+        public float Range;
+        /// <summary>돌진하는 초와 그동안의 속도(적 속도와 따로).</summary>
+        public float Seconds;
+        public float Speed;
+        /// <summary>돌진 뒤 다시 쫓아오며 쉬는 초 [RestMin, RestMax] 사이 무작위.</summary>
+        public float RestMin;
+        public float RestMax;
+        public float Reach => Seconds * Speed;
     }
 
     public sealed class EnemyReward

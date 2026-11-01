@@ -54,11 +54,25 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"은자 {toad.Reward!.Silver}과 진기 구슬 다량", rows["golden_toad"]);
             Assert.True(toad.Reward.OrbBurst);
 
+            // 표 아래 문단: 사라지는 초와 혈무사 돌진(2026-11-01 프로토타입에서 옮김)
+            var sec = GddSection("공통 적");
+            Assert.Contains($"혈인은 나온 뒤 {Num(_d.Enemy("hyeolin").LifeSeconds)}초면 사라지고, 금두꺼비는 {Num(toad.LifeSeconds)}초 안에 못 잡으면 달아납니다", sec);
+            var dash = _d.Enemy("hyeol_musa").Dash;
+            Assert.NotNull(dash);
+            Assert.Contains($"혈무사는 {Num(dash!.Range)}m 안에 들면 예고선을 긋고, {Num(dash.Seconds)}초 동안 초당 {Num(dash.Speed)}m로 찌르며 돌진한 뒤 {Num(dash.RestMin)}~{Num(dash.RestMax)}초 쉬었다가", sec);
+            Assert.True(dash.Reach < dash.Range * 1.5f, "돌진이 예고 거리보다 너무 멀리 간다");
+            Assert.All(_d.Enemies.Where(e => e.Behavior == "telegraph_dash"), e => { Assert.NotNull(e.Dash); Assert.True(e.Telegraph > 0); });
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            foreach (var use in new[] { "e.life > E_BY_ID[e.type].lifeSeconds", "d < dash.range", "e.timer = dash.seconds", "e.ax * dash.speed", "rand(dash.restMin, dash.restMax)" })
+                Assert.Contains(use, html);
+
             // 행동 값이 없는 적은 기본값이다.
             var sigang = _d.Enemy("sigang");
             Assert.Equal(0f, sigang.Telegraph);
             Assert.Null(sigang.Reward);
             Assert.Null(sigang.OnDeath);
+            Assert.Equal(0f, sigang.LifeSeconds);
+            Assert.Null(sigang.Dash);
         }
 
         /// <summary>지역 고유 적 표의 '행동' 칸: 흑백 쌍강시 '10초 뒤 되살림', 빙강시 '2초 둔화', 수귀 '물 구역에서만', 쓰러질 때 남기는 것.</summary>

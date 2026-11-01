@@ -1401,13 +1401,14 @@ function update(dt) {
       // 콩콩 뛰는 박자: 0.6초 중 72%는 뛰고 나머지는 착지. 평균 속도는 enemies.json speed 그대로.
       e.hop = (e.hop + dt / 0.6) % 1;
       if (e.hop < HOP_DUTY) { const s = e.speed / HOP_DUTY; vx = dx * s; vy = dy * s; }
-    } else if (e.behavior === 'line_charge') { vx = e.vx; vy = e.vy; if (e.life > 14) e.dead = true; }
+    } else if (e.behavior === 'line_charge') { vx = e.vx; vy = e.vy; if (e.life > E_BY_ID[e.type].lifeSeconds) e.dead = true; }
     else if (e.behavior === 'telegraph_dash') {
-      if (e.state === 0) { vx = dx * e.speed; vy = dy * e.speed; e.timer -= dt; if (d < 5 && e.timer <= 0) { e.state = 1; e.timer = E_BY_ID[e.type].telegraph || 0.6; e.ax = dx; e.ay = dy; } }
-      else if (e.state === 1) { e.timer -= dt; if (e.timer <= 0) { e.state = 2; e.timer = 0.5; } }
-      else { vx = e.ax * 9; vy = e.ay * 9; e.timer -= dt; if (e.timer <= 0) { e.state = 0; e.timer = rand(2, 3.5); } }
+      const ed = E_BY_ID[e.type], dash = ed.dash; // 예고 뒤 돌진(enemies.json dash, 기획서 6장 공통 적 표 아래)
+      if (e.state === 0) { vx = dx * e.speed; vy = dy * e.speed; e.timer -= dt; if (d < dash.range && e.timer <= 0) { e.state = 1; e.timer = ed.telegraph; e.ax = dx; e.ay = dy; } }
+      else if (e.state === 1) { e.timer -= dt; if (e.timer <= 0) { e.state = 2; e.timer = dash.seconds; } }
+      else { vx = e.ax * dash.speed; vy = e.ay * dash.speed; e.timer -= dt; if (e.timer <= 0) { e.state = 0; e.timer = rand(dash.restMin, dash.restMax); } }
     } else if (e.behavior === 'flee') {
-      vx = -dx * e.speed; vy = -dy * e.speed; if (e.life > 25) e.dead = true;
+      vx = -dx * e.speed; vy = -dy * e.speed; if (e.life > E_BY_ID[e.type].lifeSeconds) e.dead = true;
     } else { vx = dx * e.speed; vy = dy * e.speed; }
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
