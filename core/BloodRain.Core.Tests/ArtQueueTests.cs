@@ -81,6 +81,26 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        [Fact] public void 이펙트_재료_imported_줄과_ai_json이_서로_맞다()
+        {
+            // import_vfx_ai.py 가 큐의 sizeM·progress·use 를 ai.json 에 옮겨 적는다. 손으로 한쪽만 고치면 셰이더 방향·크기가 어긋난다.
+            var dir = Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Art", "VFX", "AI");
+            var ai = JObject.Parse(File.ReadAllText(Path.Combine(dir, "ai.json")));
+            var tex = ((JArray)ai["textures"]!).Cast<JObject>().ToDictionary(t => (string)t["name"]!);
+            var rows = Rows().Where(o => ((string)o["kind"]!).StartsWith("vfx_") && (string)o["status"]! == "imported").ToList();
+            Assert.Equal(rows.Select(o => (string)o["id"]!).OrderBy(s => s), tex.Keys.OrderBy(s => s));
+            foreach (var o in rows)
+            {
+                var t = tex[(string)o["id"]!];
+                Assert.Equal((double)o["sizeM"]!, (double)t["sizeMeters"]!, 6);
+                Assert.Equal((string)o["progress"]!, (string)t["progress"]!);
+                Assert.Equal((string)o["use"]!, (string)t["use"]!);
+                Assert.Equal((string)o["kind"]! == "vfx_ink" ? "ai_ink" : "ai_glow", (string)t["kind"]!);
+                foreach (var layer in ((JArray)t["layers"]!).Select(l => (string)l!))
+                    Assert.True(File.Exists(Path.Combine(dir, $"{t["name"]}_{layer}.png")), $"{t["name"]}: {layer} 층 파일이 없다");
+            }
+        }
+
         [Fact] public void imported_줄은_Unity_Art_폴더에_파일이_있다()
         {
             var kinds = Kinds();
