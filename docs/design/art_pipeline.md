@@ -62,7 +62,7 @@
    - 옮겼으면 그 줄을 `generated` 로 바꾼다.
    - 받으려고 연 탭은 끝나면 닫는다.
 6. **기계 검수와 반영.** 작업 폴더 `E:\Unity\BloodRain-art` 에서 돌린다.
-   - 이펙트 재료: `python tools/import_vfx_ai.py --inbox E:/Unity/BloodRain`. 바탕이 단색인지, 덮임 양, 가장자리 걸림, 먹에 색이 섞였는지를 본다. 통과하면 `Assets/Art/VFX/AI/<id>_stroke.png`(먹) 또는 `<id>_gold.png`·`<id>_core.png`(빛)와 `ai.json` 에 들어가고 미리보기 `docs/vfx_preview/ai_<날짜>.png` 가 나온다.
+   - 이펙트 재료: `python tools/import_vfx_ai.py --inbox E:/Unity/BloodRain`. 바탕이 단색인지, 덮임 양, 가장자리 걸림, 먹에 색이 섞였는지를 본다. 통과하면 `Assets/Art/VFX/AI/<id>_stroke.png`(먹) 또는 `<id>_gold.png`·`<id>_core.png`·`<id>_shade.png`(빛과 그 밑 먹 받침)와 `ai.json` 에 들어가고 미리보기 `docs/vfx_preview/ai_<날짜>.png` 가 나온다.
    - 원화: `postprocess_art.py`.
 7. **눈 검수.** 미리보기를 직접 열어 본다. 미리보기는 원본 | 게임 색 | 그어짐 50% | 흩어짐 40% 순서다. 아래 중 하나라도 해당하면 `import_vfx_ai.py --reject <id> "<이유>"` 로 떨어뜨린다.
    - 글자나 낙관이 들어 있다.
