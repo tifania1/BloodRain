@@ -1203,8 +1203,8 @@ function fireWeapon(w) {
       forNear(p.x, p.y, R, e => {
         const d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d <= R + e.r) {
-          hurtEnemy(e, dps * 0.5, w, 0, 0, def.knockback); e.slow = Math.max(e.slow, slow); e.poison = Math.max(e.poison || 0, 1);
-          if (w.evolved && !e.elite && !e.boss) { e.poisonT += 0.5; if (e.poisonT >= ep.executeSeconds && !e.dead) { e.hp = 0; killEnemy(e); } }
+          hurtEnemy(e, dps * def.tickSeconds, w, 0, 0, def.knockback); e.slow = Math.max(e.slow, slow); e.poison = Math.max(e.poison || 0, 1);
+          if (w.evolved && !e.elite && !e.boss) { e.poisonT += def.tickSeconds; if (e.poisonT >= ep.executeSeconds && !e.dead) { e.hp = 0; killEnemy(e); } }
         }
       });
       hitLanterns(p.x, p.y, R);
@@ -1373,7 +1373,7 @@ function update(dt) {
       fireWeapon(w);
       let cd = def.cooldown || 0.5;
       if (def.behavior === 'random_rapid') cd = 1 / (grow(def.shotsPerSecond, (w.lv - 1) / 7) * (w.evolved ? EVO_BY_W[w.id].params.fireRateMultiplier : 1));
-      if (def.behavior === 'aura') cd = 0.5;
+      if (def.behavior === 'aura') cd = def.tickSeconds;
       w.cd += Math.max(0.05, cd * (1 - S.cdr));
       if (w.cd < -1) w.cd = 0;
     }

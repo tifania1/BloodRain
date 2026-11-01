@@ -80,7 +80,7 @@ namespace BloodRain.Sim
             double t = T(level, maxLevel);
             double cd = def.Cooldown > 0 ? def.Cooldown : 0.5;
             if (def.Behavior == "random_rapid") cd = 1 / (Range(ex?.ShotsPerSecond, t, 4, 9) * (evolved ? ex?.EvoParam("fireRateMultiplier", 2.2) ?? 2.2 : 1));
-            if (def.Behavior == "aura") cd = 0.5;
+            if (def.Behavior == "aura") cd = def.TickSeconds ?? 0.5;
             return Math.Max(0.05, cd * (1 - cdr));
         }
 
@@ -139,8 +139,8 @@ namespace BloodRain.Sim
                 {
                     // 장풍: 바라보는 쪽으로 느린 관통탄. 무리 안을 지나는 길이(최대 무리 반경) × 폭. Lv6부터 2연발(같은 길).
                     int shots = (WeaponGrowth.HasMilestone(def, level, "2연발") ? 2 : 1) + (evolved ? (int)(ex?.EvoParam("extraShots", 1) ?? 1) : 0);
-                    double pr = 0.55 * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? ex?.EvoParam("sizeMultiplier", 1.4) ?? 1.4 : 1);
-                    double length = Math.Min(5 * s.ProjectileSpeed * 2.6 * s.Duration, CrowdRadius);
+                    double pr = (def.Shot?.Radius ?? 0.55) * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (evolved ? ex?.EvoParam("sizeMultiplier", 1.4) ?? 1.4 : 1);
+                    double length = Math.Min((def.Shot?.Speed ?? 5) * s.ProjectileSpeed * (def.Shot?.LifeSeconds ?? 2.6) * s.Duration, CrowdRadius);
                     double band = 2 * (pr + EnemyRadius) * length * FacingEfficiency;
                     list.Add(new Strike(area: band, random: true, hits: shots, damage: dmg, singleHits: shots * FacingEfficiency));
                     // 절기 파산장: 맞을 때마다 작은 폭발(피해 절반). 같은 길을 한 번 더 긁는다고 본다.
@@ -176,7 +176,7 @@ namespace BloodRain.Sim
                     // 독무: 발밑 원(반경 2→3.5m) 안을 0.5초마다 '초당 피해의 절반'씩. 절기는 반경 2배, 7초 버틴 잡몹 즉사.
                     double baseR = ex?.RangeLv8 is float r8 ? Lerp(def.Range, r8, t) : Lerp(def.Range, 3.5, t);
                     double r = baseR * s.Area * (evolved ? ex?.EvoParam("rangeMultiplier", 2) ?? 2 : 1) + EnemyRadius;
-                    double tick = dmg * (1 + b.Dot) * 0.5;
+                    double tick = dmg * (1 + b.Dot) * (def.TickSeconds ?? 0.5);
                     list.Add(new Strike(area: Disc(r), damage: tick, singleHits: 1, auraExecute: evolved));
                     break;
                 }

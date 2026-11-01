@@ -72,6 +72,10 @@ namespace BloodRain.Core.Tests
                 Assert.Equal(gap.Success ? float.Parse(gap.Groups[1].Value, CultureInfo.InvariantCulture) : (float?)null, w.GapSeconds);
                 Assert.Equal(sweep.Success ? float.Parse(sweep.Groups[1].Value, CultureInfo.InvariantCulture) : (float?)null, w.SweepSeconds);
             }
+            var tick = Regex.Match(TestData.GddTable(TestData.GddSection("날아가는 것과 넉백")).Single(r => r[0] == "독무")[6], @"([0-9.]+)초마다 닿음");
+            Assert.True(tick.Success);
+            Assert.Equal(float.Parse(tick.Groups[1].Value, CultureInfo.InvariantCulture), _d.Weapons.Single(x => x.Id == "poison_mist").TickSeconds);
+            Assert.All(_d.Weapons.Where(x => x.Id != "poison_mist"), x => Assert.Null(x.TickSeconds));
             // 연달아 치는 것이 있는 무공(연타·휘두르기·3연 베기·2연발)에는 간격이 있어야 프로토타입이 겹쳐 치지 않는다
             foreach (var id in new[] { "samjae_sword", "nahan_fist", "palm_wind", "drunken_staff" })
                 Assert.True(_d.Weapons.Single(x => x.Id == id).GapSeconds > 0, id);
@@ -108,7 +112,8 @@ namespace BloodRain.Core.Tests
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             foreach (var old in new[] { "sp = 12 * S.projSpeed", "sp = 5 * S.projSpeed", "sp = 18 * S.projSpeed", "nearestEnemies(p.x, p.y, 20, 7)",
                                         "dy / d, 7);", "ca, sa, 3);", "dy / d, 4);", "(d || 1), 2.5);",
-                                        "delay: s * 0.12", "delay: i * 0.08", "delay: i * 0.15", "delay: s * 0.18", "0.36 * sweeps" })
+                                        "delay: s * 0.12", "delay: i * 0.08", "delay: i * 0.15", "delay: s * 0.18", "0.36 * sweeps",
+                                        "dps * 0.5", "poisonT += 0.5", "aura') cd = 0.5" })
                 Assert.DoesNotContain(old, html);
             foreach (var used in new[] { "def.shot", "def.knockback", "def.fuseSeconds", "def.seekRange" })
                 Assert.Contains(used, html);

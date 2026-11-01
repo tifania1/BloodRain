@@ -58,6 +58,8 @@ namespace BloodRain.Core.Data
         public float? GapSeconds;
         /// <summary>창천검기 검기가 한 바퀴 도는 초. 2회 회전이면 두 배 동안 돈다.</summary>
         public float? SweepSeconds;
+        /// <summary>독무가 닿는 간격 초. 쿨다운 0(상시)인 무공이 한 번 닿을 때 초당 피해 x 이 값.</summary>
+        public float? TickSeconds;
 
         public YinYang Aspect => YinYangParse.From(Yinyang);
         /// <summary>땅의 주인 첫 처치로 열리면 그 지역 id, 아니면 null.</summary>
