@@ -160,6 +160,59 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        string RealmKo(string id) => _d.Balance.Realms.Single(r => r.Id == id).NameKo;
+
+        [Fact] public void 레벨업_규칙_글이_balance_와_같다()
+        {
+            var sec = TestData.GddSection("레벨업 규칙");
+            var b = _d.Balance;
+            Assert.Contains($"레벨업마다 선택지 {b.LevelUp.BaseChoices}개, 기연이 높으면 {b.LevelUp.MaxChoices}개까지", sec);
+            Assert.Contains($"공격 무공 {b.Slots.Weapons}칸, 심법 {b.Slots.Passives}칸. {RealmKo(b.Slots.ExtraSlotAtRealm)} 돌파 때 둘 중 한쪽 {b.Slots.Weapons + 1}칸째", sec);
+            Assert.Equal(b.Slots.Weapons, b.Slots.Passives); // '한쪽 7칸째' 가 양쪽에 맞으려면
+            Assert.Contains($"공격 무공은 Lv1~{b.Levels.WeaponMax}, 심법은 Lv1~{b.Levels.PassiveMax}", sec);
+            Assert.Contains($"진기 게이지 {TestData.Num(b.UltimateCharge.PerSkip)}을 얻습니다", sec);
+            int jin = b.LevelUp.TraitRerolls[_d.Character("jin_sowoon").Trait];
+            Assert.Contains($"진소운은 다시 고르기를 {jin}회 더", sec);
+        }
+
+        [Fact] public void 절기_그릇_글이_balance_evolution_과_같다()
+        {
+            var sec = TestData.GddSection("절기 그릇과 각성");
+            var ev = _d.Balance.Evolution;
+            Assert.Contains($"공격 무공 Lv{_d.Balance.Levels.WeaponMax} + 짝 심법 Lv{ev.PairPassiveMinLevel} 이상", sec);
+            // 표기 순서는 경지 순서(balance realms)
+            var ordered = _d.Balance.Realms.Where(r => ev.Vessels.ContainsKey(r.Id)).ToList();
+            Assert.Equal(ev.Vessels.Count, ordered.Count);
+            string list = string.Join(", ", ordered.Select(r => $"{r.NameKo} {ev.Vessels[r.Id]}"));
+            Assert.Contains(list + ".", sec);
+            // 그릇은 경지마다 늘기만 한다
+            for (int i = 1; i < ordered.Count; i++) Assert.True(ev.Vessels[ordered[i].Id] > ev.Vessels[ordered[i - 1].Id]);
+            // '일류까지는 0' — 그릇 표에 없는 경지는 첫 그릇 경지보다 앞이다
+            int first = _d.Balance.Realms.FindIndex(r => r.Id == ordered[0].Id);
+            Assert.Equal("일류", _d.Balance.Realms[first - 1].NameKo);
+            Assert.Contains("일류까지는 0", sec);
+        }
+
+        [Fact] public void 피격_글이_balance_contact_와_같다()
+        {
+            var sec = TestData.GddSection("피격과 사망");
+            var c = _d.Balance.Contact;
+            Assert.Contains($"같은 적에게는 {TestData.Num(c.SameEnemyIntervalSeconds)}초마다 한 번만", sec);
+            Assert.Contains($"받는 피해 = max({TestData.Num(c.MinDamage)}, 적 피해 - 호신)", sec);
+        }
+
+        [Fact] public void 성능_상한_표가_balance_limits_와_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("성능 상한")).ToDictionary(r => r[0], r => r[1]);
+            var l = _d.Balance.Limits;
+            string N(int v) => v.ToString("#,0", CultureInfo.InvariantCulture);
+            Assert.Equal($"{N(l.EnemiesPc)}(PC), {N(l.EnemiesMobile)}(모바일)", rows["동시 적 수"]);
+            Assert.Equal(N(l.Projectiles), rows["동시 투사체"]);
+            Assert.Equal($"{N(l.Orbs)}(넘으면 합침)", rows["화면 위 진기 구슬"]);
+            Assert.Equal(N(l.DamageNumbers), rows["동시 피해 숫자 표시"]);
+            Assert.Equal(4, rows.Count);
+        }
+
         sealed class FloatEq : IEqualityComparer<float>
         {
             public bool Equals(float a, float b) => Math.Abs(a - b) < 1e-4;
