@@ -1009,7 +1009,7 @@ function weaponDamage(w) {
   const def = W_BY_ID[w.id];
   let d = lerp(def.damageLv1, def.damageLv8, (w.lv - 1) / 7);
   d *= G.stats.might * aspectMult(def.yinyang);
-  if (w.evolved) d *= 2;
+  if (w.evolved) d *= B.evolution.damageMultiplier;
   if (G.glow && G.glow.w === w) d *= BA.afterglowDamageMultiplier;   // 각성 여운(balance.json awakening)
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
   const swd = synEff('sword_damage'); if (swd && def.category === 'sword') d *= 1 + swd.damageBonus;

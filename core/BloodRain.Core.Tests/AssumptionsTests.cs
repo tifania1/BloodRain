@@ -63,6 +63,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(Assumptions.WaveSpawnPause, a.SpawnPauseSeconds, 4);
             Assert.Equal(Assumptions.GlowSeconds, a.AfterglowSeconds, 4);
             Assert.Equal(Assumptions.GlowMultiplier, a.AfterglowDamageMultiplier, 4);
+            Assert.Equal(Assumptions.EvolvedDamage, G.Balance.Evolution.DamageMultiplier, 4);
         }
 
         [Fact] public void 무리에_닿는_시간은_생성_고리_거리와_1장_적_걸음에서_나온다()

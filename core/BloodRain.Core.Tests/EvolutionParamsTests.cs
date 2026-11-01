@@ -89,6 +89,11 @@ namespace BloodRain.Core.Tests
             Assert.Throws<KeyNotFoundException>(() => Of("changcheon_qi").Param("lightning")); // 두 바퀴 + 반경 1.3배뿐, 낙뢰 없음
             Assert.Contains("치명타 시 작은 폭발", Effect("flash_finger"));
             Assert.Equal(0.25f, Of("flash_finger").Param("explodeChance"));               // 치명타가 아니라 25% 확률
+            // (5) 프로토타입은 모든 절기 피해 2배인데 기획서 효과 칸은 천지인 삼검에만 '피해 2배'
+            Assert.Equal(2f, _d.Balance.Evolution.DamageMultiplier);
+            Assert.Contains("피해 2배", Effect("samjae_sword"));
+            Assert.DoesNotContain("피해 2배", Effect("nahan_fist"));
+            Assert.Contains("if (w.evolved) d *= B.evolution.damageMultiplier", TestData.ReadRepoFile("web", "prototype", "template.html"));
         }
     }
 }
