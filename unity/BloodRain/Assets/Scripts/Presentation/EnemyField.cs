@@ -30,12 +30,13 @@ namespace BloodRain.Presentation
 
         float _playerBody = 0.8f;
         static readonly Color TelegraphTint = new Color(0.95f, 0.15f, 0.1f);
+        static readonly Color BuffTint = new Color(0.75f, 0.12f, 0.10f);
         readonly List<EnemySim.ContactHit> _hits = new List<EnemySim.ContactHit>();
 
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f),
         };
 
         struct Kind
@@ -225,6 +226,12 @@ namespace BloodRain.Presentation
                 a.RestMax = dash.RestMax;
                 a.Telegraph = def.Telegraph;
             }
+            if (def.AuraRadius > 0f)
+            {
+                // 기수 깃발(enemies.json auraRadius·auraBonus, 기획서 6장 '반경 5m 적 이동속도·피해 +20%'): 경지 m → 세계 m
+                a.AuraRadius = ws.Length(def.AuraRadius, realm);
+                a.AuraBonus = def.AuraBonus;
+            }
             int kindIndex = _kinds.FindIndex(k => k.Def == def);
             a.Kind = kindIndex;
             int id = _sim.Spawn(a);
@@ -277,6 +284,7 @@ namespace BloodRain.Presentation
             while (_sim.Count > targetCount) _sim.RemoveAt(_sim.Count - 1);
 
             _watch.Restart();
+            ApplyAuras();
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
             _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
@@ -297,6 +305,47 @@ namespace BloodRain.Presentation
             Sync();
         }
 
+        readonly List<int> _auraOwners = new List<int>();
+        readonly List<int> _auraNear = new List<int>();
+
+        /// <summary>buff_aura(기수): 깃발 둘레 AuraRadius 안 다른 적의 Buff 를 AuraBonus 로(여럿이 겹쳐도 더하지 않고 큰 값 하나).
+        /// 기수 자신은 받지 않는다. 격자는 지난 Step 끝 위치라 이번 프레임에 막 나온 적은 다음 프레임부터 받는다.</summary>
+        void ApplyAuras()
+        {
+            int n = _sim.Count;
+            if (n == 0) return;
+            var agents = _sim.Agents;
+            _auraOwners.Clear();
+            for (int i = 0; i < n; i++)
+            {
+                var a = agents[i];
+                if (a.AuraRadius > 0f) _auraOwners.Add(i);
+                if (a.Buff != 0f) { a.Buff = 0f; agents[i] = a; }
+            }
+            foreach (int o in _auraOwners)
+            {
+                var owner = agents[o];
+                _sim.QueryCircle(owner.Pos, owner.AuraRadius, _auraNear);
+                foreach (int j in _auraNear)
+                {
+                    if (j == o || j >= n) continue; // 격자에 남은 걷어 낸 자리
+                    var e = agents[j];
+                    if (e.AuraRadius > 0f || e.Buff >= owner.AuraBonus) continue;
+                    e.Buff = owner.AuraBonus;
+                    agents[j] = e;
+                }
+            }
+        }
+
+        /// <summary>시험용: 지금 기수 깃발 아래(Buff &gt; 0) 있는 적 수.</summary>
+        public int BuffedCount()
+        {
+            int c = 0;
+            var agents = _sim.Agents;
+            for (int i = 0; i < _sim.Count; i++) if (agents[i].Buff > 0f) c++;
+            return c;
+        }
+
         void Sync()
         {
             foreach (var id in _sim.Removed) _views.Remove(id);
@@ -312,8 +361,13 @@ namespace BloodRain.Presentation
                 view.Health = a.MaxHealth > 0 ? Mathf.Clamp01(a.Health / a.MaxHealth) : 1f;
                 if (a.Move == (byte)EnemyMove.Hop) view.HopBeat = a.Hop;
                 else view.HopBeat = -2f; // 0 아래면 콩콩 없음
+                // 색은 늘 종류 색에서 다시 얹는다(ClusterView 는 프레임을 넘어 남으니 지난 프레임 색에 겹쳐 섞지 않게)
+                var baseTint = a.Kind >= 0 && a.Kind < _kinds.Count ? _kinds[a.Kind].Tint : view.Tint;
+                if (a.Buff > 0f) baseTint = Color.Lerp(baseTint, BuffTint, 0.45f); // 기수 깃발 아래: 핏빛이 돈다(이펙트 오기 전 임시)
                 if (a.Move == (byte)EnemyMove.Dash && a.Phase == (byte)DashPhase.Telegraph)
-                    view.Tint = Color.Lerp(view.Tint, TelegraphTint, Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임(이펙트 오기 전 임시)
+                    view.Tint = Color.Lerp(baseTint, TelegraphTint, Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임(이펙트 오기 전 임시)
+                else
+                    view.Tint = baseTint;
                 clusters.Add(view);
             }
         }

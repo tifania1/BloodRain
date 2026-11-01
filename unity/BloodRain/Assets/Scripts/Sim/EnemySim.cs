@@ -41,6 +41,9 @@ namespace BloodRain.Sim
         // telegraph_dash(EnemyDef.Telegraph·Dash). 거리·속도는 세계 m, m/s
         public float DashRange, DashSpeed, DashSeconds, Telegraph, RestMin, RestMax;
         public float PhaseLeft;   // 지금 단계 남은 초
+        // buff_aura(기수, EnemyDef.AuraRadius·AuraBonus): AuraRadius(세계 m) 안 다른 적의 Buff 를 AuraBonus 로 올린다.
+        // Buff 는 EnemyField 가 매 프레임 다시 매기고, 이동 속도·접촉 피해에 (1 + Buff) 로 곱한다.
+        public float AuraRadius, AuraBonus, Buff;
         public float2 DashDir;
         public byte Phase;        // DashPhase
         public byte Move;
@@ -208,7 +211,7 @@ namespace BloodRain.Sim
                 if (dealsDamage != null && !dealsDamage(e.BornRealm, playerRealm)) continue;
                 e.Contact = interval;
                 _a[i] = e;
-                hits.Add(new ContactHit { Index = i, Id = e.Id, Damage = e.ContactDamage });
+                hits.Add(new ContactHit { Index = i, Id = e.Id, Damage = e.ContactDamage * (1f + e.Buff) });
             }
             return hits.Count;
         }
@@ -235,7 +238,7 @@ namespace BloodRain.Sim
                 float2 to = Player - e.Pos;
                 float d = math.length(to);
                 float2 dir = d > 1e-5f ? to / d : new float2(1, 0);
-                float speed = e.Speed * SpeedScale;
+                float speed = e.Speed * SpeedScale * (1f + e.Buff);
                 float2 v = float2.zero;
                 switch ((EnemyMove)e.Move)
                 {
@@ -258,7 +261,7 @@ namespace BloodRain.Sim
                                 if (e.PhaseLeft <= 0f) { e.Phase = (byte)DashPhase.Dashing; e.PhaseLeft = e.DashSeconds; }
                                 break;
                             case DashPhase.Dashing:
-                                v = e.DashDir * e.DashSpeed * SpeedScale;
+                                v = e.DashDir * e.DashSpeed * SpeedScale * (1f + e.Buff);
                                 if (e.PhaseLeft <= 0f)
                                 {
                                     // 쉬는 초는 [RestMin, RestMax] 사이. Id·나이로 섞은 값이라 잡 안에서도 같은 결과
