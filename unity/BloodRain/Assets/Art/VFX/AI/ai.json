@@ -2,6 +2,30 @@
   "_note": "tools/import_vfx_ai.py 가 쓴다. 손으로 고치지 않는다. ChatGPT 로 뽑은 이펙트 재료. 층은 흰색 + 알파 512px (stroke 먹 · gold 금빛 더하기 · core 흰빛 더하기). sizeMeters 는 한 변이 몇 m, 텍스처 가운데가 기준점. progress 는 그어지는 방향(radial 가운데서 바깥 · down 위→아래 · up · right 왼→오른 · left).",
   "textures": [
     {
+      "name": "fx_aura_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 3.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "3단·절기 몸 둘레 금빛 기운(공용)"
+    },
+    {
+      "name": "fx_bomb_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 2.5,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "벽력탄(thunder_bomb) 터지는 순간 빛(먹 폭발 위에 더하기)"
+    },
+    {
       "name": "fx_bomb_ink_1",
       "kind": "ai_ink",
       "sizeMeters": 2.5,
@@ -32,6 +56,18 @@
       "use": "비도술(flying_dagger) 비도 꼬리"
     },
     {
+      "name": "fx_finger_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 3.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "right",
+      "use": "섬광지(flash_finger) 지풍"
+    },
+    {
       "name": "fx_fist_ink",
       "kind": "ai_ink",
       "sizeMeters": 1.5,
@@ -52,6 +88,18 @@
       ],
       "progress": "down",
       "use": "뇌부(thunder_talisman) 낙뢰, 위에서 아래로 그어짐"
+    },
+    {
+      "name": "fx_lightning_glow_2",
+      "kind": "ai_glow",
+      "sizeMeters": 4.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "right",
+      "use": "뇌부(thunder_talisman) 옆으로 튀는 연쇄 번개"
     },
     {
       "name": "fx_mist_ink",
@@ -94,6 +142,30 @@
       "use": "장풍(palm_wind) 날아가는 손바람 몸통"
     },
     {
+      "name": "fx_sickle_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 3.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "right",
+      "use": "쇄겸술(chain_sickle) 낫날 빛"
+    },
+    {
+      "name": "fx_spark_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 1.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "맞을 때 금빛 불똥(3단부터, 공용)"
+    },
+    {
       "name": "fx_staff_ink",
       "kind": "ai_ink",
       "sizeMeters": 3.5,
@@ -102,6 +174,30 @@
       ],
       "progress": "down",
       "use": "취선봉(drunken_staff) 휘두른 자국"
+    },
+    {
+      "name": "fx_sword_qi_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 3.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "down",
+      "use": "창천검기(changcheon_qi) 도는 검기, 3단·절기 검광"
+    },
+    {
+      "name": "fx_taiji_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 2.5,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "태극검(taiji_sword) 공전 검 끝 빛"
     }
   ]
 }
