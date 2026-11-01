@@ -424,7 +424,13 @@ function updateSynergy() {
   for (const sc of SYN.schools) for (const t of sc.tiers) if (t.harmonyRange && sch(sc.id, t.count)) hr = Math.max(hr, t.harmonyRange);
   G.harmonyRange = hr;
 }
-function addSilver(v) { G.silver += Math.round(v * (sch('waterfort', 2) ? 1.3 : 1)); }
+// 닿은 진전 단계의 stats 합(synergies.json, Core SynergyState.StatBonus 와 같다)
+function synStats() {
+  const out = {};
+  for (const sc of SYN.schools) for (const t of sc.tiers) if (t.stats && sch(sc.id, t.count)) for (const k in t.stats) out[k] = (out[k] || 0) + t.stats[k];
+  return out;
+}
+function addSilver(v) { G.silver += Math.round(v * (1 + (synStats().Greed || 0))); }
 function showDiscovery(seal, hanja, name, desc) {
   overlay = 'find'; overlayAt = performance.now(); sfx('gong');
   $('findseal').textContent = seal; $('findhanja').textContent = hanja; $('findname').textContent = name; $('finddesc').textContent = desc;
@@ -843,11 +849,7 @@ function recomputeStats() {
     }
   }
   // 진전 능력치
-  if (sch('shaolin', 2)) s.armor += 2;
-  if (sch('shaolin', 3)) s.maxHealth += 0.15;
-  if (sch('huashan', 2)) s.crit += 0.05;
-  if (sch('gaebang', 2)) s.foodHeal += 0.5;
-  if (sch('tang', 2)) s.dot += 0.2;
+  for (const [k, v] of Object.entries(synStats())) { const key = map[k]; if (key) s[key] += v; }
   const rr = realmRewardSum(G.realm.level);
   const yb = yyBand();
   s.cdr += yb.band === 'harmony' ? B.yinyang.harmony.cooldownReduction : 0;

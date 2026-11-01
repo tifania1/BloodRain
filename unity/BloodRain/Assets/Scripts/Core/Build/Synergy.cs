@@ -108,6 +108,18 @@ namespace BloodRain.Core.Build
         /// <summary>단계가 하나라도 켜진 문파(HUD 인장).</summary>
         public IEnumerable<SchoolState> ActiveSchools => Schools.Where(s => s.Tier != null);
 
+        /// <summary>닿은 진전 단계의 능력치 덧셈(synergies.json stats). Life.CurrentStats(extra) 의 extra 에 더한다.
+        /// 장강수로채 2단계 은자 +30% 는 Greed 로 온다.</summary>
+        public StatBonus StatBonus()
+        {
+            var b = new StatBonus();
+            foreach (var s in Schools)
+                foreach (var t in s.School.Tiers)
+                    if (t.Count <= s.TierCount)
+                        foreach (var kv in t.Stats) b.Add(Stats.Parse(kv.Key), kv.Value);
+            return b;
+        }
+
         /// <summary>닿은 진전 단계가 넓혀 주는 태극 구간(synergies.json harmonyRange 중 가장 넓은 것). 없으면 null.
         /// Unity 쪽은 시너지가 바뀔 때 loadout.Gauge.SetSynergyHarmonyRange(이 값)을 부른다.</summary>
         public int? HarmonyRange

@@ -34,6 +34,9 @@ namespace BloodRain.Core.Data
         public int ChestUpgrades;
         /// <summary>이 단계에 닿으면 태극 구간이 ±이만큼으로 넓어진다(무당 2단계 35). 몸이 원래 더 넓으면(운화 40) 그대로 둔다.</summary>
         public int? HarmonyRange;
+        /// <summary>이 단계에 닿으면 더하는 능력치(StatKind 이름 → 값, 비율은 0.15 = 15%). 닿은 단계까지 모두 더한다.
+        /// 조건이 붙거나 곱하는 효과(개방 3단계, 마교 2단계)는 여기 없고 desc 에만 있다.</summary>
+        public Dictionary<string, float> Stats = new Dictionary<string, float>();
     }
 
     /// <summary>진전: 같은 문파 무공·심법을 몇 개 모았는지로 단계가 정해진다.</summary>

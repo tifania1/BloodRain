@@ -54,8 +54,8 @@
     { "id": "shaolin", "nameKo": "소림", "hanja": "少林", "motto": "금강", "character": "hyegong",
       "members": ["nahan_fist", "geumgang", "sonic_qin", "cheongsim"],
       "tiers": [
-        { "count": 2, "desc": "호신 +2", "proto": true },
-        { "count": 3, "desc": "기혈 +15%, 넉백 면역", "proto": true },
+        { "count": 2, "desc": "호신 +2", "proto": true, "stats": { "Armor": 2 } },
+        { "count": 3, "desc": "기혈 +15%, 넉백 면역", "proto": true, "stats": { "MaxHealth": 0.15 } },
         { "count": 4, "desc": "기혈이 처음 50% 아래로 떨어지면 5초 동안 나한 허상 열여덟이 둘러싸 닿는 적을 밀쳐낸다(판마다 세 번)" } ] },
     { "id": "wudang", "nameKo": "무당", "hanja": "武當", "motto": "태극", "character": "unhwa",
       "members": ["taiji_sword", "yangui", "unryong"],
@@ -65,18 +65,18 @@
     { "id": "huashan", "nameKo": "화산", "hanja": "華山", "motto": "매화", "character": null,
       "members": ["falling_petals", "maehwa", "flash_finger"],
       "tiers": [
-        { "count": 2, "desc": "치명 확률 +5%", "proto": true },
+        { "count": 2, "desc": "치명 확률 +5%", "proto": true, "stats": { "CritChance": 0.05 } },
         { "count": 3, "desc": "치명타가 터질 때마다 매화 꽃잎 세 장이 튀어 근처 적을 벤다", "proto": true } ] },
     { "id": "gaebang", "nameKo": "개방", "hanja": "丐幇", "motto": "의", "character": "machil",
       "members": ["drunken_staff", "juseon", "palm_wind", "pasan"],
       "tiers": [
-        { "count": 2, "desc": "음식 회복 +50%", "proto": true },
+        { "count": 2, "desc": "음식 회복 +50%", "proto": true, "stats": { "FoodHeal": 0.5 } },
         { "count": 3, "desc": "기혈 30% 이하에서 공력 +30%", "proto": true },
         { "count": 4, "desc": "3분마다 개방 제자 셋이 나타나 10초 동안 함께 싸운다" } ] },
     { "id": "tang", "nameKo": "사천당가", "hanja": "四川唐家", "motto": "암기", "character": "dang_yeonhwa",
       "members": ["flying_dagger", "cheonsu", "poison_mist", "mandok", "thunder_bomb"],
       "tiers": [
-        { "count": 2, "desc": "지속 피해 +20%", "proto": true },
+        { "count": 2, "desc": "지속 피해 +20%", "proto": true, "stats": { "DotDamage": 0.2 } },
         { "count": 3, "desc": "중독된 적이 쓰러지면 독이 주변 2m로 번진다", "proto": true },
         { "count": 5, "desc": "20초마다 화면 안 모든 적에게 독침이 한 대씩 박힌다", "proto": true } ] },
     { "id": "namgung", "nameKo": "남궁세가", "hanja": "南宮世家", "motto": "창궁", "character": "namgung_hyeon",
@@ -87,7 +87,7 @@
     { "id": "waterfort", "nameKo": "장강수로채", "hanja": "長江水路寨", "motto": "수적", "character": "ha_yeon",
       "members": ["chain_sickle", "suryong", "pear_spear", "cheollian"],
       "tiers": [
-        { "count": 2, "desc": "은자 +30%", "proto": true },
+        { "count": 2, "desc": "은자 +30%", "proto": true, "stats": { "Greed": 0.3 } },
         { "count": 3, "desc": "경공 거리 +50%, 경공으로 지나간 적을 끌고 간다", "proto": true },
         { "count": 4, "desc": "정예 보갑에서 무공 강화가 하나 더 나온다", "chestUpgrades": 1, "proto": true } ] },
     { "id": "kunlun", "nameKo": "곤륜", "hanja": "崑崙", "motto": "부적", "character": null,
