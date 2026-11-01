@@ -245,6 +245,16 @@ const STAT_SHORT = { MaxHealth: '기혈', MoveSpeed: '신법', Might: '공력', 
 const BR = CH.bosses, QI = CH.rebirthQi, RB = CH.rebirth, CRUSH = CH.crush, BRK = CH.breakthrough;
 const AWAKE_T = REALMS.findIndex(r => r.id === BR.awakenFrom);
 const FINAL_T = REALMS.findIndex(r => r.id === BR.finalRequires.realm);
+// 땅의 주인 기혈 배율(7장, cheonha.json bosses.healthCurve). Core BossAwakening.HealthMultiplier 와 같은 식
+function bossHpMult(m) {
+  const p = BR.healthCurve;
+  if (!p || !p.length) return 1;
+  if (m <= p[0][0] || p.length === 1) return p[0][1];
+  for (let i = 1; i < p.length; i++)
+    if (m <= p[i][0]) return p[i - 1][1] + (p[i][1] - p[i - 1][1]) * (m - p[i - 1][0]) / (p[i][0] - p[i - 1][0]);
+  const a = p[p.length - 2], b = p[p.length - 1];
+  return b[1] + (b[1] - a[1]) / (b[0] - a[0]) * (m - b[0]);
+}
 const STONES_ALL = REGIONS.filter(r => r.sealStone).length;
 const SEGS = BAL.xpCurve.segments;
 const req = n => { const s = SEGS.find(g => n >= g.fromLevel && n <= g.toLevel) || SEGS[SEGS.length - 1]; return s.base + s.step * (n - s.anchor); };
@@ -678,7 +688,7 @@ function checkEngage(dt) {
     const r = REG[id];
     if (distTo(r) >= engageR(id)) { G.armed[id] = true; continue; }
     if (G.armed[id]) {
-      const def = BOSS[r.boss], m = eqMinute(), k = (1 + BR.healthPerMinute * m) / BR.normalizeAt20;
+      const def = BOSS[r.boss], m = eqMinute(), k = bossHpMult(m);
       G.engage = { id, t: 1.2 };
       showToast(`${def.nameKo}`, `${r.nameKo}의 땅의 주인이 일어선다 · 기준 체력의 ${k.toFixed(2)}배(환산 ${Math.floor(m)}분)`);
       G.trauma = Math.min(1, G.trauma + 0.3);
@@ -689,7 +699,7 @@ function checkEngage(dt) {
 function startFight(id) {
   const r = REG[id], def = BOSS[r.boss], e = G.tier, p = G.p;
   const base = def.phases ? def.phases.reduce((a, b) => a + b, 0) : def.health;
-  const hp = base * (1 + BR.healthPerMinute * eqMinute()) / BR.normalizeAt20 * LD.bossHpScale;
+  const hp = base * bossHpMult(eqMinute()) * LD.bossHpScale;
   // 싸움을 건 순간의 경지 축척으로, 지역 한가운데에서(화면 밖이면 내 쪽으로 당겨서) 나타난다
   let x = r.x, y = r.y; const dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy), lim = G.view * 0.3;
   if (d > lim) { x = p.x + dx / d * lim; y = p.y + dy / d * lim; }

@@ -73,7 +73,7 @@ namespace BloodRain.Core.World
         public int Realm { get; }
         /// <summary>싸움을 건 시각(한 생 경과 분).</summary>
         public float Minute { get; }
-        /// <summary>보스 기혈 = 기준 체력 × (1 + 0.08 × 경과 분) ÷ 2.6.</summary>
+        /// <summary>보스 기혈 = 기준 체력 × 기혈 배율(싸움을 건 분, cheonha.json bosses.healthCurve).</summary>
         public float MaxHealth { get; }
         /// <summary>이미 쓰러뜨린 적이 있는 땅의 주인이 다시 일어난 것(혈영).</summary>
         public bool IsShadow { get; }
@@ -203,9 +203,27 @@ namespace BloodRain.Core.World
 
         // ---- 싸움 ----
 
-        /// <summary>보스 기혈 = 기준 체력 × (1 + 0.08 × 경과 분) ÷ 2.6. 20분이면 기준 체력 그대로, 12분이면 약 0.75배.</summary>
-        public float Health(BossDef boss, float minute) =>
-            boss.Health * (1f + _rules.HealthPerMinute * Math.Max(0f, minute)) / _rules.NormalizeAt20;
+        /// <summary>보스 기혈 = 기준 체력 × 기혈 배율. 20분이면 기준 체력 그대로, 10분이면 0.3배(그 무렵 화력 0.2배 × 서두름 1.5).</summary>
+        public float Health(BossDef boss, float minute) => boss.Health * HealthMultiplier(_rules, minute);
+
+        /// <summary>싸움을 건 분의 기혈 배율. 점 사이는 곧게 잇고, 첫 점 앞은 첫 값, 마지막 점 뒤는 마지막 두 점의 기울기로 늘린다.</summary>
+        public static float HealthMultiplier(BossRulesDef rules, float minute)
+        {
+            var pts = rules.HealthCurve;
+            if (pts.Count == 0) return 1f;
+            if (minute <= pts[0][0] || pts.Count == 1) return pts[0][1];
+            for (int i = 1; i < pts.Count; i++)
+            {
+                if (minute <= pts[i][0])
+                {
+                    float t = (minute - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]);
+                    return pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t;
+                }
+            }
+            var a = pts[pts.Count - 2];
+            var b = pts[pts.Count - 1];
+            return b[1] + (b[1] - a[1]) / (b[0] - a[0]) * (minute - b[0]);
+        }
 
         /// <summary>싸움이 시작되는 반경(세계 m) = 지금 화면 대각선 × engageViewMultiple(0.15, 혈운 기둥 원).</summary>
         public float EngageRadius(float level) => _scale.ViewDiagonal(level) * _rules.EngageViewMultiple;

@@ -91,9 +91,28 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0.4f, life.SpawnTargetScale, 4);
             Assert.Null(life.TryEngage(center, lv, 12));                // 싸우는 중엔 새 싸움이 없다
 
-            // 기혈 = 기준 × (1 + 0.08 × 12) ÷ 2.6: 12분이면 0.75배 남짓
-            Assert.Equal(90000f * (1 + 0.08f * 12) / 2.6f, fight.MaxHealth, 0);
-            Assert.Equal(0.75, Math.Round(fight.MaxHealth / 90000f, 2));
+            // 기혈 = 기준 × 기혈 배율: 12분이면 10분 0.3 과 15분 0.67 사이 0.448
+            Assert.Equal(90000f * 0.448f, fight.MaxHealth, 0);
+        }
+
+        [Fact] public void 기혈_배율은_점_사이를_곧게_잇고_양끝은_첫_값과_마지막_기울기()
+        {
+            var rules = _d.Cheonha.Bosses;
+            Assert.Equal(0.08f, BossAwakening.HealthMultiplier(rules, 0), 4);   // 5분 앞은 첫 값
+            Assert.Equal(0.08f, BossAwakening.HealthMultiplier(rules, 5), 4);
+            Assert.Equal(0.19f, BossAwakening.HealthMultiplier(rules, 7.5f), 4);
+            Assert.Equal(0.3f, BossAwakening.HealthMultiplier(rules, 10), 4);
+            Assert.Equal(1f, BossAwakening.HealthMultiplier(rules, 20), 4);     // 20분이면 기준 체력 그대로
+            Assert.Equal(1.31f, BossAwakening.HealthMultiplier(rules, 30), 4);
+            Assert.Equal(1.62f, BossAwakening.HealthMultiplier(rules, 40), 4);  // 30분 뒤는 20~30분 기울기
+            // 늦게 갈수록 단단해지기만 한다
+            float prev = 0;
+            for (float m = 0; m <= 60; m += 0.5f)
+            {
+                float k = BossAwakening.HealthMultiplier(rules, m);
+                Assert.True(k >= prev, $"{m}분 배율 {k} < {prev}");
+                prev = k;
+            }
         }
 
         [Fact] public void 잠든_땅에는_들어서도_싸움이_없다()
@@ -107,8 +126,9 @@ namespace BloodRain.Core.Tests
 
         [Theory]
         [InlineData(20, 1.0)]
-        [InlineData(12, 0.754)]
-        [InlineData(30, 1.308)]
+        [InlineData(12, 0.448)]
+        [InlineData(30, 1.31)]
+        [InlineData(10, 0.3)]
         public void 보스_기혈은_싸움을_건_시각을_따른다(float minute, double ratio)
         {
             var life = Life("songshan");

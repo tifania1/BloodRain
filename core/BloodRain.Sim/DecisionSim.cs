@@ -111,7 +111,7 @@ namespace BloodRain.Sim
             foreach (var s in sects)
                 L($"| {s} | " + string.Join(" | ", rows.Select(r => r.BossRatio.TryGetValue(s, out var v) ? $"{M(r.BossStart[s])} / {N(v, "0.0")}" : "—")) + " |");
             L();
-            L("'배'는 걸린 초 ÷ 목표 초(60~80초). 1.0 근처가 목표다. 보스 기혈 식은 20분 화력 기준이라 화력이 늦게 크면 배수가 더 커진다.");
+            L($"'배'는 걸린 초 ÷ 목표 초(60~80초). 치는 시간을 {CheonhaSim.BossUptime:0.0}로 잡아 20분에 싸워도 {1 / CheonhaSim.BossUptime:0.0}배, 절정에 깨자마자면 {1.5 / CheonhaSim.BossUptime:0.0}배쯤이 기준이다(7장 기혈 배율, T-40). 보스 기혈은 11장 화력 목표를 따르므로 화력이 그보다 늦게 크면 배수가 더 커진다.");
             L();
 
             L("## T-41 혈공(백야)");
@@ -129,7 +129,7 @@ namespace BloodRain.Sim
             var a = rows[0]; var k = rows[1];
             double ra = YinYangSim.Median(a.BossRatio.Values), rk = YinYangSim.Median(k.BossRatio.Values);
             L($"- 처치 진기를 줄이면 천하 {top.NameKo} 도달이 {M(a.TopMinuteMedian)} → {M(k.TopMinuteMedian)}({k.TopReached}/{k.TopRuns}판만 30분 안에 닿음). 땅의 주인 첫 싸움은 {N(ra, "0.0")}배 → {N(rk, "0.0")}배" +
-              (rk > ra ? "로 더 나빠진다. P-02 만 정하면 T-40 은 저절로 풀리지 않고, 기혈 식이나 깨어나는 경지 쪽을 같이 손봐야 한다." : "로 줄어든다. T-40 의 배수 일부는 P-02 로 풀린다."));
+              (rk > ra ? "로 더 나빠진다. 기혈 배율이 11장 화력 목표를 따르므로, 처치 진기를 줄여 화력이 늦어지면 그만큼 땅의 주인이 길어진다. P-02 를 정할 때 화력 목표 표도 같이 봐야 한다." : "로 줄어든다."));
             L($"- 혈공은 지금 데이터에서 기준보다 {Diff(a.Blood, a.Base, top.Id)}, 처치 진기를 줄이면 {Diff(k.Blood, k.Base, top.Id)}. " +
               $"√농도로 바꾸면 각각 {Diff(a.BloodSqrt, a.Base, top.Id)}, {Diff(k.BloodSqrt, k.Base, top.Id)}. " +
               (Gap(k.Blood, k.Base, top.Id) < Gap(a.Blood, a.Base, top.Id)

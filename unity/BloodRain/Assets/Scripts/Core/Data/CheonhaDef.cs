@@ -117,8 +117,8 @@ namespace BloodRain.Core.Data
         /// <summary>깨어날 때 이미 싸움 원 안이면 이만큼 경고한 뒤 싸움(그사이 나가면 미룸).</summary>
         public float AwakenGraceSeconds;
         public float SpawnTargetScale;
-        public float HealthPerMinute;
-        public float NormalizeAt20;
+        /// <summary>[싸움을 건 분, 기준 체력에 곱할 배율]. 사이는 곧게 잇고, 첫 점 앞은 첫 값, 마지막 점 뒤는 마지막 두 점의 기울기로 늘린다(7장).</summary>
+        public List<float[]> HealthCurve = new List<float[]>();
         public BossFirstKillDef FirstKill = new BossFirstKillDef();
         public BossRepeatKillDef RepeatKill = new BossRepeatKillDef();
         public FinalRequiresDef FinalRequires = new FinalRequiresDef();

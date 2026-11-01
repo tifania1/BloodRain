@@ -314,7 +314,9 @@ namespace BloodRain.Sim
             if (ratios.Count > 0)
             {
                 ratios.Sort();
-                sum.AppendLine($"- 출생지 땅의 주인 첫 싸움이 목표 처치 시간의 {ratios.First():0.0}~{ratios.Last():0.0}배(가운데 {ratios[ratios.Count / 2]:0.0}배) 걸린다. 땅의 주인은 절정에 깨어나는데 보스 기혈 식(7장, 20분 화력 기준 ÷ 2.6)이 그 무렵 화력보다 천천히 줄어서다. 깨어나는 경지를 늦추거나, 기혈 식을 싸움 시작 분의 화력에 맞추거나, 처치 시간 목표를 늘리는 쪽 중 하나를 골라야 한다(사람 결정).");
+                sum.AppendLine($"- 출생지 땅의 주인 첫 싸움이 목표 처치 시간의 {ratios.First():0.0}~{ratios.Last():0.0}배(가운데 {ratios[ratios.Count / 2]:0.0}배) 걸린다. " +
+                    $"보스 기혈은 싸움을 건 분의 화력 목표(11장 메타 초반 열)에 맞추고 10분 앞은 1.5배 오래 걸리게 했다(7장 기혈 배율, T-40). 치는 시간을 {BossUptime:0.0}로 잡아 20분에 싸워도 {1 / BossUptime:0.0}배, 절정에 깨자마자면 {1.5 / BossUptime:0.0}배쯤이 이 표의 기준이다(숭산 원각이 여기 든다). " +
+                    "그보다 큰 땅의 주인은 기준 체력을 11장 메타 중후반 열에 맞춘 먼 땅이다. 소림·개방·남궁 말고는 그 땅의 주인을 한 번 쓰러뜨려야 열리는 문파라 실제 첫 싸움은 연무장이 오른 혼으로 혈영과 붙는다. 이 표는 혼 0 이라 그만큼 길게 나온다.");
             }
             var fought = all.Where(x => x.Seed == 1).Select(x => $"{x.Sect} {x.Bosses.Count(b => !double.IsNaN(b.EngagedAt))}").ToList();
             sum.AppendLine($"- 땅의 주인은 절정·초절정에 한꺼번에 깨어나지만 30분 안에 실제로 싸움을 거는 수는 문파마다 다르다(시드 1: {string.Join(", ", fought)}). 첫 싸움이 길면 다른 땅을 거의 못 밟는다.");

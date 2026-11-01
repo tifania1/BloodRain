@@ -171,15 +171,40 @@ namespace BloodRain.Core.Tests
         {
             var b = (JObject)_c["bosses"]!;
             var sec = TestData.GddSection("땅의 주인이 깨어나는 규칙");
-            float k = (float)b["healthPerMinute"]!, norm = (float)b["normalizeAt20"]!;
-            Assert.Contains($"(1 + {TestData.Num(k)} × 경과 분) ÷ {TestData.Num(norm)}", sec);
-            Assert.Equal(1 + k * 20, norm, 3); // 20분이면 기준 체력 그대로
             Assert.Contains($"{TestData.Num((float)b["engageViewMultiple"]!)}배 안", sec);
             Assert.Contains($"{TestData.Num((float)b["spawnTargetScale"]!)}배", sec);
             Assert.Contains($"윤회의 기 {(int)b["firstKill"]!["rebirthQi"]!}", sec);
             Assert.Contains($"윤회의 기 {(int)b["repeatKill"]!["rebirthQi"]!}과 혈정 {(int)b["repeatKill"]!["bloodCrystal"]!}", sec);
-            // 12분이면 0.75배라는 예
-            Assert.Equal(0.75, Math.Round((1 + k * 12) / norm, 2));
+
+            // 기혈 배율 표: 분·배율이 cheonha.json healthCurve 와 같다
+            var curve = ((JArray)b["healthCurve"]!).Select(p => (m: (float)p[0]!, k: (float)p[1]!)).ToList();
+            var rows = TestData.GddTable(sec);
+            string[] Row(string head) => rows.Single(r => r[0] == head).Skip(1).ToArray();
+            var minutes = sec.Split('\n').First(l => l.StartsWith("| 싸움을 건 분")).Split('|').Skip(2).Select(c => c.Trim()).Where(c => c != "").ToArray();
+            Assert.Equal(curve.Select(p => TestData.Num(p.m)), minutes);
+            Assert.Equal(curve.Select(p => TestData.Num(p.k)), Row("기혈 배율"));
+
+            // 배율 = 화력 목표(11장 메타 초반) ÷ 20분 × 서두름 배. 20분이면 기준 체력 그대로
+            var fire = TestData.GddTable(TestData.GddSection("플레이어 화력 목표"))
+                .ToDictionary(r => float.Parse(r[0].Replace("분", "")), r => float.Parse(r[1].Replace(",", "")));
+            var ratio = Row("화력 목표 ÷ 20분");
+            var hurry = Row("서두름 배");
+            for (int i = 0; i < curve.Count; i++)
+            {
+                var (m, k) = curve[i];
+                if (!fire.ContainsKey(m)) { Assert.Equal("—", ratio[i]); continue; }
+                double r = fire[m] / fire[20];
+                Assert.Equal(Math.Round(r, 3), double.Parse(ratio[i]), 3);
+                Assert.Equal(Math.Round(r * double.Parse(hurry[i]), 2), k, 2);
+            }
+            Assert.Equal(1f, curve.Single(p => p.m == 20).k);
+            Assert.Equal("1.5", hurry[curve.FindIndex(p => p.m == 10)]);  // 절정에 깨자마자 덤비면 1.5배 오래
+
+            // 20분 뒤 기울기는 옛 식 (1 + 0.08 × 분) ÷ 2.6 과 같다
+            var last = curve[curve.Count - 1];
+            var prev = curve[curve.Count - 2];
+            Assert.Equal(0.08 / 2.6, (last.k - prev.k) / (last.m - prev.m), 2);
+            Assert.Contains("1분에 0.031", sec);
         }
 
         // ---- 5장 문파 ----
