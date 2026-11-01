@@ -323,6 +323,7 @@ MonoBehaviour:
   font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
   orbs: {fileID: 244561121}
   weapons: {fileID: 303687331}
+  vitals: {fileID: 0}
 --- !u!4 &569941476
 Transform:
   m_ObjectHideFlags: 0
