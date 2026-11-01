@@ -64,8 +64,7 @@ namespace BloodRain.Core.Build
         {
             int n = 0;
             foreach (var s in synergy.Schools)
-                foreach (var t in s.School.Tiers)
-                    if (t.Count <= s.TierCount) n += t.ChestUpgrades;
+                foreach (var t in s.ReachedTiers) n += t.ChestUpgrades;
             return n;
         }
 

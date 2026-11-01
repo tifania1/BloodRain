@@ -25,6 +25,7 @@ namespace BloodRain.Sim
             public double Ssanggeom = 0.6;          // 쌍검합벽: 삼재검법 피해 +60%
             public double? JeomhyeolCrit = null;     // 점혈: null 이면 '반드시 치명', 값이면 치명 확률 +값
             public double Gaebang3 = 0.3;           // 개방 3단계: 기혈 30% 아래 공력 +30%
+            public bool BaseOnly;                   // 비급 층(tier: secret)을 빼고 기본 층만(S-06)
         }
         static Knobs K = new Knobs();
 
@@ -101,7 +102,7 @@ namespace BloodRain.Sim
                 var pick = combo.Select(i => ws[ids[i]]).ToArray();
                 var have = new HashSet<string>(pick.Select(p => p.Id));
                 double baseDps = pick.Sum(p => p.Dps);
-                var links = syn.Links.Where(l => have.Contains(l.A) && have.Contains(l.B)).ToList();
+                var links = syn.Links.Where(l => have.Contains(l.A) && have.Contains(l.B) && !(K.BaseOnly && l.IsSecret)).ToList();
 
                 // 진전: 무공으로 채운 수 + 심법으로 더 채울 수 있는 수.
                 var fromW = new Dictionary<string, int>();
@@ -139,15 +140,19 @@ namespace BloodRain.Sim
         }
 
         // 문파별 단계 수(오름차순). Run 이 돌 때 한 번 채운다. Eval 안에서 수천만 번 불려서 LINQ 를 안 쓴다.
+        // BaseOnly 면 비급 단계는 빼고 센다(그 위 단계는 그대로, Core SchoolState 와 같다).
         static SynergyDefs? _tierSyn;
+        static bool _tierBaseOnly;
         static Dictionary<string, int[]> _tiers = new Dictionary<string, int[]>();
 
         static int Tier(SynergyDefs syn, Dictionary<string, int> counts, string school)
         {
-            if (!ReferenceEquals(_tierSyn, syn))
+            if (!ReferenceEquals(_tierSyn, syn) || _tierBaseOnly != K.BaseOnly)
             {
-                _tiers = syn.Schools.ToDictionary(x => x.Id, x => x.Tiers.Select(t => t.Count).OrderBy(c => c).ToArray());
+                _tiers = syn.Schools.ToDictionary(x => x.Id,
+                    x => x.Tiers.Where(t => !(K.BaseOnly && t.IsSecret)).Select(t => t.Count).OrderBy(c => c).ToArray());
                 _tierSyn = syn;
+                _tierBaseOnly = K.BaseOnly;
             }
             int n = counts[school], best = 0;
             foreach (var c in _tiers[school]) if (c <= n && c > best) best = c;
@@ -201,10 +206,13 @@ namespace BloodRain.Sim
             }
             int gae = Tier(syn, counts, "gaebang");
             if (gae >= 4) Add("개방 4", baseDps * 3 * (1.0 / 6) * (10.0 / 180)); // 제자 하나 = 내 화력의 1/6
-            if (gae >= 3) Cond("개방 3", K.Gaebang3 * baseDps); // 기혈 30% 아래
-            if (Tier(syn, counts, "kunlun") >= 3) Cond("곤륜 3", 0.25 * baseDps); // 강시 계열 상대
+            if (gae >= 3 && Open(syn, "gaebang", 3)) Cond("개방 3", K.Gaebang3 * baseDps); // 기혈 30% 아래
+            if (Tier(syn, counts, "kunlun") >= 3 && Open(syn, "kunlun", 3)) Cond("곤륜 3", 0.25 * baseDps); // 강시 계열 상대
             return row;
         }
+
+        static bool Open(SynergyDefs syn, string school, int count) =>
+            !K.BaseOnly || !syn.School(school).Tiers.Any(t => t.Count == count && t.IsSecret);
 
         /// <summary>화력 진전 다섯 문파에 심법을 몇 개씩 넣을지, 칸 수 안의 모든 경우.</summary>
         static IEnumerable<Dictionary<string, int>> PassivePlans(SynergyDefs syn, Dictionary<string, int> room, int slots)
@@ -289,6 +297,19 @@ namespace BloodRain.Sim
             foreach (var kv in parts.OrderByDescending(kv => kv.Value))
                 sb.AppendLine($"| {kv.Key} | +{kv.Value * 100:0}% |");
 
+            // 비급 해금(S-06): 비급 층을 뺀 기본 층만.
+            var rb = Run(data, new Knobs { BaseOnly = true });
+            K = new Knobs();
+            var bb = rb.OrderByDescending(r => r.Ratio).First();
+            var bbc = rb.OrderByDescending(r => r.CondRatio).First();
+            var secretNames = g.Synergies.Links.Where(l => l.IsSecret).Select(l => l.NameKo)
+                .Concat(g.Synergies.Schools.SelectMany(sc => sc.Tiers.Where(t => t.IsSecret).Select(t => $"{sc.NameKo} {t.Count}단계")));
+            sb.AppendLine();
+            sb.AppendLine("## 기본 층만(비급 해금 전, S-06)");
+            sb.AppendLine($"비급 층({string.Join("·", secretNames)})을 빼고 같은 계산을 돌린 값이다. 위 '결과'는 비급을 전부 복원한 뒤의 값이다. 목표: 기본 층 {Limit}배 이하, 전부 연 뒤 1.9배 근처.");
+            sb.AppendLine($"- 늘 켜진 효과만: 가장 센 조합 {F(bb.Ratio)}배({string.Join("·", bb.Weapons.Select(Name))}). {Limit}배를 넘는 조합 {rb.Count(r => r.Ratio > Limit):N0}개.");
+            sb.AppendLine($"- 조건부까지: 가장 센 조합 {F(bbc.CondRatio)}배({string.Join("·", bbc.Weapons.Select(Name))}). {Limit}배를 넘는 조합 {rb.Count(r => r.CondRatio > Limit):N0}개.");
+
             // 낮춰 본 안: 가장 큰 셋만 줄였을 때.
             var soft = new Knobs { Ssanggeom = 0.3, JeomhyeolCrit = 0.25, Gaebang3 = 0.15 };
             var rs = Run(data, soft);
@@ -296,7 +317,7 @@ namespace BloodRain.Sim
             var bs = rs.OrderByDescending(r => r.Ratio).First();
             var bc = rs.OrderByDescending(r => r.CondRatio).First();
             sb.AppendLine();
-            sb.AppendLine("## 낮춰 본 안(데이터는 안 바꿈, 결정 대기)");
+            sb.AppendLine("## 낮춰 본 안(쓰지 않음: 2026-11-01 사람 결정은 수치를 깎지 않고 비급 층으로 늦게 연다)");
             sb.AppendLine("쌍검합벽 +60% → +30%, 점혈 '반드시 치명' → '치명 확률 +25%', 개방 3단계 공력 +30% → +15% 로 바꿔 같은 계산을 다시 돌린 값이다.");
             sb.AppendLine($"- 늘 켜진 효과만: 가장 센 조합 {F(bs.Ratio)}배({string.Join("·", bs.Weapons.Select(Name))}). {Limit}배를 넘는 조합 {rs.Count(r => r.Ratio > Limit):N0}개.");
             sb.AppendLine($"- 조건부까지: 가장 센 조합 {F(bc.CondRatio)}배. {Limit}배를 넘는 조합 {rs.Count(r => r.CondRatio > Limit):N0}개.");

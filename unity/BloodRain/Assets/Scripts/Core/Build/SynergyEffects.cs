@@ -41,8 +41,8 @@ namespace BloodRain.Core.Build
         {
             var e = new SynergyEffects();
             foreach (var s in synergy.Schools)
-                foreach (var t in s.School.Tiers)
-                    if (t.Count <= s.TierCount && t.Effect != null) e._active[t.Effect] = t;
+                foreach (var t in s.ReachedTiers)
+                    if (t.Effect != null) e._active[t.Effect] = t;
             return e;
         }
 

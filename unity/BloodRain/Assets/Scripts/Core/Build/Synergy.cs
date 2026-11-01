@@ -3,6 +3,7 @@
 //   연환: 두 무공이 모두 minLevel 이상. 절기가 된 무공은 최고 단계로 친다.
 //   진전: 문파 무공·심법을 가진 개수 + 바깥 보너스(고수의 유해, 연고지 …) + 기본의 극.
 //   기본의 극: 삼재검법 Lv8이면 가장 많이 모은 문파에 하나 더(common.target 이 all 이면 모든 문파에).
+//   비급 층(tier: secret): 복원한 것만 켜진다. 조건은 갖췄는데 잠긴 것은 LockedLinks·LockedTiers 로 따로 알린다('?' 표시, 찢긴 비급 등록).
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,18 +69,32 @@ namespace BloodRain.Core.Build
         public int ToNext => Next == null ? 0 : Next.Count - Count;
         /// <summary>닿은 단계의 개수(2·3·4·5). 없으면 0.</summary>
         public int TierCount => Tier?.Count ?? 0;
+        /// <summary>개수가 닿아 켜진 단계(낮은 것부터). 잠긴 비급 단계는 빠진다.</summary>
+        public IReadOnlyList<SchoolTierDef> ReachedTiers { get; }
+        /// <summary>개수는 닿았는데 비급이 잠겨 안 켜진 단계.</summary>
+        public IReadOnlyList<SchoolTierDef> LockedTiers { get; }
 
-        public SchoolState(SchoolDef school, int members, int bonus)
+        /// <summary>open: 이 단계가 열려 있나(null 이면 모두 열림).</summary>
+        public SchoolState(SchoolDef school, int members, int bonus, Func<SchoolTierDef, bool>? open = null)
         {
             School = school;
             Members = members;
             Bonus = bonus;
             int count = members + bonus;
+            var reached = new List<SchoolTierDef>();
+            var locked = new List<SchoolTierDef>();
             foreach (var t in school.Tiers.OrderBy(t => t.Count))
             {
-                if (t.Count <= count) Tier = t;
-                else { Next = t; break; }
+                bool isOpen = open == null || open(t);
+                if (t.Count <= count)
+                {
+                    if (isOpen) { Tier = t; reached.Add(t); }
+                    else locked.Add(t);
+                }
+                else if (isOpen && Next == null) Next = t;
             }
+            ReachedTiers = reached;
+            LockedTiers = locked;
         }
     }
 
@@ -93,14 +108,23 @@ namespace BloodRain.Core.Build
         public string? CommonSchool { get; }
         /// <summary>기본의 극이 켜져 있나(삼재검법 Lv8).</summary>
         public bool CommonActive { get; }
+        /// <summary>두 무공 레벨은 갖췄는데 비급이 잠겨 안 켜진 연환.</summary>
+        public IReadOnlyList<LinkDef> LockedLinks { get; }
 
-        public SynergyState(IReadOnlyList<LinkDef> links, IReadOnlyList<SchoolState> schools, string? commonSchool, bool commonActive)
+        public SynergyState(IReadOnlyList<LinkDef> links, IReadOnlyList<SchoolState> schools, string? commonSchool, bool commonActive,
+            IReadOnlyList<LinkDef>? lockedLinks = null)
         {
             Links = links;
             Schools = schools;
             CommonSchool = commonSchool;
             CommonActive = commonActive;
+            LockedLinks = lockedLinks ?? Array.Empty<LinkDef>();
         }
+
+        /// <summary>조건은 갖췄는데 잠긴 비급의 복원 id(연환 먼저). 이 상태로 생을 마치면 찢긴 비급으로 오른다(Meta.LifeLog.NoteSynergy).</summary>
+        public IEnumerable<string> LockedManualIds =>
+            LockedLinks.Select(l => l.ManualId)
+                .Concat(Schools.SelectMany(s => s.LockedTiers.Select(t => SynergyDefs.ManualIdOf(s.School, t))));
 
         public bool HasLink(string id) => Links.Any(l => l.Id == id);
         public SchoolState School(string id) => Schools.First(s => s.School.Id == id);
@@ -114,9 +138,8 @@ namespace BloodRain.Core.Build
         {
             var b = new StatBonus();
             foreach (var s in Schools)
-                foreach (var t in s.School.Tiers)
-                    if (t.Count <= s.TierCount)
-                        foreach (var kv in t.Stats) b.Add(Stats.Parse(kv.Key), kv.Value);
+                foreach (var t in s.ReachedTiers)
+                    foreach (var kv in t.Stats) b.Add(Stats.Parse(kv.Key), kv.Value);
             return b;
         }
 
@@ -128,8 +151,8 @@ namespace BloodRain.Core.Build
             {
                 int? best = null;
                 foreach (var s in Schools)
-                    foreach (var t in s.School.Tiers)
-                        if (t.Count <= s.TierCount && t.HarmonyRange is int r && (best == null || r > best)) best = r;
+                    foreach (var t in s.ReachedTiers)
+                        if (t.HarmonyRange is int r && (best == null || r > best)) best = r;
                 return best;
             }
         }
@@ -142,7 +165,10 @@ namespace BloodRain.Core.Build
         public readonly string Partner;
         /// <summary>이 선택지로 연환이 켜진다.</summary>
         public readonly bool Completes;
-        public LinkHint(LinkDef link, string partner, bool completes) { Link = link; Partner = partner; Completes = completes; }
+        /// <summary>비급이 잠긴 연환이라 카드에는 '?'로만 보인다(켜지지 않는다).</summary>
+        public readonly bool Locked;
+        public LinkHint(LinkDef link, string partner, bool completes, bool locked = false)
+        { Link = link; Partner = partner; Completes = completes; Locked = locked; }
     }
 
     public readonly struct SchoolTierChange
@@ -184,20 +210,26 @@ namespace BloodRain.Core.Build
         static readonly IReadOnlyDictionary<string, int> NoExtra = new Dictionary<string, int>();
 
         /// <summary>지금 로드아웃의 연환·진전. extraCounts: 문파 id → 바깥에서 더할 진전 수(고수의 유해, 연고지, 혈마의 속삭임 …).</summary>
-        public static SynergyState Compute(GameData data, Loadout loadout, IReadOnlyDictionary<string, int>? extraCounts = null)
-            => Compute(data, BuildLevels.Of(data, loadout), extraCounts);
+        /// <param name="restored">복원한 비급 id(Meta.Soul.RestoredManuals). null 이면 비급까지 모두 열린 것으로 친다(시뮬레이터·시험용). 게임은 늘 넘긴다.</param>
+        public static SynergyState Compute(GameData data, Loadout loadout, IReadOnlyDictionary<string, int>? extraCounts = null,
+            IReadOnlyCollection<string>? restored = null)
+            => Compute(data, BuildLevels.Of(data, loadout), extraCounts, restored);
 
-        public static SynergyState Compute(GameData data, BuildLevels levels, IReadOnlyDictionary<string, int>? extraCounts = null)
+        public static SynergyState Compute(GameData data, BuildLevels levels, IReadOnlyDictionary<string, int>? extraCounts = null,
+            IReadOnlyCollection<string>? restored = null)
         {
             var syn = data.Synergies;
             extraCounts ??= NoExtra;
             foreach (var key in extraCounts.Keys)
                 if (syn.Schools.All(s => s.Id != key)) throw new ArgumentException($"없는 문파에 진전 보너스: {key}");
 
-            var links = syn.Links
+            var met = syn.Links
                 .Where(l => levels.Weapons.TryGetValue(l.A, out var a) && a >= l.MinLevel
                          && levels.Weapons.TryGetValue(l.B, out var b) && b >= l.MinLevel)
                 .ToList();
+            bool LinkOpen(LinkDef l) => !l.IsSecret || restored == null || restored.Contains(l.ManualId);
+            var links = met.Where(LinkOpen).ToList();
+            var lockedLinks = met.Where(l => !LinkOpen(l)).ToList();
 
             var members = new int[syn.Schools.Count];
             var bonus = new int[syn.Schools.Count];
@@ -224,8 +256,14 @@ namespace BloodRain.Core.Build
             }
 
             var schools = new List<SchoolState>(syn.Schools.Count);
-            for (int i = 0; i < syn.Schools.Count; i++) schools.Add(new SchoolState(syn.Schools[i], members[i], bonus[i]));
-            return new SynergyState(links, schools, commonSchool, commonActive);
+            for (int i = 0; i < syn.Schools.Count; i++)
+            {
+                var sc = syn.Schools[i];
+                Func<SchoolTierDef, bool>? open = restored == null ? null
+                    : t => !t.IsSecret || restored.Contains(SynergyDefs.ManualIdOf(sc, t));
+                schools.Add(new SchoolState(sc, members[i], bonus[i], open));
+            }
+            return new SynergyState(links, schools, commonSchool, commonActive, lockedLinks);
         }
 
         /// <summary>기본의 극이 채워 줄 문파. 가장 많이 모은 문파를 고르되, 이미 마지막 단계까지 찬 문파는 채울 것이 없으니 건너뛴다.
@@ -248,15 +286,17 @@ namespace BloodRain.Core.Build
         }
 
         /// <summary>선택지를 고르면 무엇이 켜지고 무엇이 가까워지는지. 로드아웃은 건드리지 않는다.</summary>
-        public static OfferPreview Preview(GameData data, Loadout loadout, Offer offer, IReadOnlyDictionary<string, int>? extraCounts = null)
-            => Preview(data, BuildLevels.Of(data, loadout), offer, extraCounts);
+        public static OfferPreview Preview(GameData data, Loadout loadout, Offer offer, IReadOnlyDictionary<string, int>? extraCounts = null,
+            IReadOnlyCollection<string>? restored = null)
+            => Preview(data, BuildLevels.Of(data, loadout), offer, extraCounts, restored);
 
-        public static OfferPreview Preview(GameData data, BuildLevels levels, Offer offer, IReadOnlyDictionary<string, int>? extraCounts = null)
+        public static OfferPreview Preview(GameData data, BuildLevels levels, Offer offer, IReadOnlyDictionary<string, int>? extraCounts = null,
+            IReadOnlyCollection<string>? restored = null)
         {
             var syn = data.Synergies;
             var after = levels.After(offer);
-            var s0 = Compute(data, levels, extraCounts);
-            var s1 = Compute(data, after, extraCounts);
+            var s0 = Compute(data, levels, extraCounts, restored);
+            var s1 = Compute(data, after, extraCounts, restored);
 
             var reached = new List<SchoolTierChange>();
             var lost = new List<SchoolTierChange>();
@@ -274,7 +314,9 @@ namespace BloodRain.Core.Build
                 {
                     var partner = l.Partner(offer.Id);
                     if (partner == null || s0.HasLink(l.Id) || !levels.Weapons.ContainsKey(partner)) continue;
-                    hints.Add(new LinkHint(l, partner, s1.HasLink(l.Id)));
+                    bool locked = l.IsSecret && restored != null && !restored.Contains(l.ManualId);
+                    if (locked && s0.LockedLinks.Contains(l)) continue;
+                    hints.Add(new LinkHint(l, partner, locked ? s1.LockedLinks.Contains(l) : s1.HasLink(l.Id), locked));
                 }
             }
 

@@ -94,10 +94,14 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> AwakenedEvolutions { get; }
         /// <summary>이번 생에 찾은 의서 권 수.</summary>
         public int Manuscripts { get; }
+        /// <summary>조건을 갖췄는데 잠겨 있던 비급 id(찢긴 비급으로 오를 것, synergies.json secretManuals).</summary>
+        public IReadOnlyList<string> TornManuals { get; }
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
-            IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0)
+            IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
+            IEnumerable<string>? tornManuals = null)
         {
+            TornManuals = tornManuals?.Distinct().ToList() ?? new List<string>();
             Sect = sect;
             EndWay = endWay;
             RebirthQi = rebirthQi;
@@ -121,12 +125,16 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> NewEvolutions { get; }
         /// <summary>종장을 깼다(봉인).</summary>
         public bool FinalCleared { get; }
+        /// <summary>장경각에 새로 오른 찢긴 비급 id.</summary>
+        public IReadOnlyList<string> NewTornManuals { get; }
 
         public LifeSummary(int rebirthQi, IReadOnlyList<string> newSealStones, IReadOnlyList<string> newlyUnlockedSects,
-            IReadOnlyList<string> newRegions, IReadOnlyList<string> newRealms, IReadOnlyList<string> newEvolutions, bool finalCleared)
+            IReadOnlyList<string> newRegions, IReadOnlyList<string> newRealms, IReadOnlyList<string> newEvolutions, bool finalCleared,
+            IReadOnlyList<string>? newTornManuals = null)
         {
             RebirthQi = rebirthQi; NewSealStones = newSealStones; NewlyUnlockedSects = newlyUnlockedSects;
             NewRegions = newRegions; NewRealms = newRealms; NewEvolutions = newEvolutions; FinalCleared = finalCleared;
+            NewTornManuals = newTornManuals ?? Array.Empty<string>();
         }
     }
 
@@ -149,6 +157,8 @@ namespace BloodRain.Core.Meta
         readonly HashSet<string> _evolutions = new HashSet<string>();
         readonly Dictionary<string, int> _livesBySect = new Dictionary<string, int>();
         readonly Dictionary<string, int> _finalClears = new Dictionary<string, int>();
+        readonly HashSet<string> _torn = new HashSet<string>();
+        readonly HashSet<string> _restored = new HashSet<string>();
 
         public Soul(GameData data) { _data = data; }
 
@@ -338,6 +348,41 @@ namespace BloodRain.Core.Meta
         /// <summary>이번 회차 종장에서 고를 수 있는 엔딩.</summary>
         public IReadOnlyList<string> Endings => Cycle == 1 ? C.Cycle.EndingsFirst : C.Cycle.EndingsSecond;
 
+        // ---- 장경각 비급(기획서 10·20장) ----
+
+        /// <summary>찢긴 비급: 조건을 갖춘 채 생을 마쳐 장경각에 오른 비급 id(복원한 것도 남는다).</summary>
+        public IReadOnlyCollection<string> TornManuals => _torn;
+        /// <summary>복원한 비급 id. Build.Synergy.Compute 의 restored 로 넘긴다.</summary>
+        public IReadOnlyCollection<string> RestoredManuals => _restored;
+        public bool IsRestored(string manualId) => _restored.Contains(manualId);
+
+        /// <summary>다음 복원에 필요한 봉인석 수와 윤회의 기. 몇 번째 복원인지로 정해진다.</summary>
+        public (int sealStones, int rebirthQi) NextRestoreCost
+        {
+            get
+            {
+                var m = _data.Synergies.SecretManuals;
+                return (m.SealStonesFor(_restored.Count), m.RebirthQiFor(_restored.Count));
+            }
+        }
+
+        /// <summary>이 비급을 지금 복원할 수 있나: 찢긴 비급이고, 아직 안 했고, 봉인석과 윤회의 기가 넉넉하다.</summary>
+        public bool CanRestore(string manualId)
+        {
+            if (!_torn.Contains(manualId) || _restored.Contains(manualId)) return false;
+            var (stones, qi) = NextRestoreCost;
+            return SealStoneCount >= stones && _qi >= qi;
+        }
+
+        /// <summary>장경각에서 비급을 복원한다(윤회의 기를 쓴다. 봉인석은 쓰지 않고 지닌 수만 본다).</summary>
+        public bool TryRestore(string manualId)
+        {
+            if (!CanRestore(manualId)) return false;
+            _qi -= NextRestoreCost.rebirthQi;
+            _restored.Add(manualId);
+            return true;
+        }
+
         // ---- 환혼과 한 생 ----
 
         /// <summary>침방을 연다. 첫 환혼이면 고정 셋, 아니면 해금한 문파에서 후보 수·다시 고르기만큼.</summary>
@@ -377,6 +422,7 @@ namespace BloodRain.Core.Meta
 
             var newEvolutions = record.AwakenedEvolutions.Where(e => _evolutions.Add(e)).ToList();
             Manuscripts += record.Manuscripts;
+            var newTorn = record.TornManuals.Where(m => !_restored.Contains(m) && _torn.Add(m)).ToList();
 
             Lives++;
             if (record.Sect == null) PrologueDone = true;
@@ -386,7 +432,7 @@ namespace BloodRain.Core.Meta
             if (sealedEnd) _finalClears[record.Sect!] = (_finalClears.TryGetValue(record.Sect!, out var f) ? f : 0) + 1;
 
             var newSects = UnlockedSects.Where(s => !sectsBefore.Contains(s)).ToList();
-            return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd);
+            return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn);
         }
 
         void Validate(LifeRecord r)
@@ -403,6 +449,8 @@ namespace BloodRain.Core.Meta
             foreach (var e in r.AwakenedEvolutions)
                 if (_data.Evolutions.All(x => x.Id != e)) throw new ArgumentException($"없는 절기입니다: {e}");
             if (r.Manuscripts < 0) throw new ArgumentException("의서 권 수가 음수입니다");
+            foreach (var m in r.TornManuals)
+                if (!_data.Synergies.IsSecretManual(m)) throw new ArgumentException($"비급 층이 아닙니다: {m}");
         }
 
         /// <summary>회귀(봉인 엔딩 뒤 백중의 밤으로): cycle.resets 에 적힌 것만 지우고 회차를 하나 올린다.</summary>
@@ -440,6 +488,8 @@ namespace BloodRain.Core.Meta
             public SortedDictionary<string, int> FinalClearsBySect = new SortedDictionary<string, int>(StringComparer.Ordinal);
             public int Manuscripts;
             public int Cycle = 1;
+            public List<string> TornManuals = new List<string>();
+            public List<string> RestoredManuals = new List<string>();
         }
 
         static readonly JsonSerializerSettings SaveSettings = new JsonSerializerSettings
@@ -476,6 +526,8 @@ namespace BloodRain.Core.Meta
                 FinalClearsBySect = Sorted(_finalClears),
                 Manuscripts = Manuscripts,
                 Cycle = Cycle,
+                TornManuals = Sorted(_torn),
+                RestoredManuals = Sorted(_restored),
             };
             return JsonConvert.SerializeObject(f, SaveSettings);
         }
@@ -504,6 +556,8 @@ namespace BloodRain.Core.Meta
             s._visited.UnionWith(f.VisitedRegions);
             s._realms.UnionWith(f.ReachedRealms);
             s._evolutions.UnionWith(f.AwakenedEvolutions);
+            s._torn.UnionWith(f.TornManuals);
+            s._restored.UnionWith(f.RestoredManuals);
             return s;
         }
     }
@@ -522,6 +576,7 @@ namespace BloodRain.Core.Meta
         readonly List<string> _visited = new List<string>();
         readonly List<string> _bosses = new List<string>();
         readonly List<string> _evolutions = new List<string>();
+        readonly List<string> _torn = new List<string>();
         RealmDef _highest;
 
         public RebirthBody Body { get; }
@@ -604,8 +659,18 @@ namespace BloodRain.Core.Meta
         /// <summary>은빛 등롱에서 의서가 나왔다.</summary>
         public void FindManuscript() => Manuscripts++;
 
+        /// <summary>조건은 갖췄는데 잠긴 비급(찢긴 비급 후보). 생이 끝날 때 장경각에 오른다.</summary>
+        public IReadOnlyList<string> TornManuals => _torn;
+
+        /// <summary>시너지가 바뀔 때마다 부른다. 잠긴 비급의 조건을 갖췄으면 적어 둔다(한 번 갖추면 나중에 풀려도 남는다).</summary>
+        public void NoteSynergy(Build.SynergyState state)
+        {
+            foreach (var id in state.LockedManualIds)
+                if (!_torn.Contains(id)) _torn.Add(id);
+        }
+
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
-            new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts);
+            new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn);
     }
 }

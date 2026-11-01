@@ -16,6 +16,11 @@ namespace BloodRain.Core.Data
         public string A = "";
         public string B = "";
         public int MinLevel = 4;
+        /// <summary>base(늘 열림) 또는 secret(비급 층: 장경각에서 복원해야 켜진다, 기획서 20장).</summary>
+        public string Tier = SynergyDefs.BaseTier;
+        public bool IsSecret => Tier == SynergyDefs.SecretTier;
+        /// <summary>비급 복원 id. 연환은 연환 id 그대로.</summary>
+        public string ManualId => Id;
         public bool Proto;
         public string Desc = "";
         public string Lore = "";
@@ -28,6 +33,9 @@ namespace BloodRain.Core.Data
     public sealed class SchoolTierDef
     {
         public int Count;
+        /// <summary>base 또는 secret(비급 층). 잠긴 단계는 건너뛰고 그 위 단계는 그대로 켜진다.</summary>
+        public string Tier = SynergyDefs.BaseTier;
+        public bool IsSecret => Tier == SynergyDefs.SecretTier;
         public string Desc = "";
         public bool Proto;
         /// <summary>이 단계에 닿으면 보갑 강화가 이만큼 더(장강수로채 4단계 1). Build.Chest.ExtraUpgrades 가 더한다.</summary>
@@ -143,6 +151,17 @@ namespace BloodRain.Core.Data
         public bool NeedsChapterSchool;
     }
 
+    /// <summary>비급 복원 값. n번째 복원(0부터)은 sealStones[n]·rebirthQi[n], 목록보다 많으면 마지막 값.</summary>
+    public sealed class SecretManualsDef
+    {
+        public List<int> SealStones = new List<int>();
+        public List<int> RebirthQi = new List<int>();
+
+        static int At(List<int> list, int n) => list.Count == 0 ? 0 : list[Math.Min(Math.Max(n, 0), list.Count - 1)];
+        public int SealStonesFor(int restoredBefore) => At(SealStones, restoredBefore);
+        public int RebirthQiFor(int restoredBefore) => At(RebirthQi, restoredBefore);
+    }
+
     public sealed class LuckDef
     {
         /// <summary>기연 능력치 1당 사건 확률에 더하는 값(곱이 아니라 더하기).</summary>
@@ -157,6 +176,20 @@ namespace BloodRain.Core.Data
         public List<SecretDef> Secrets = new List<SecretDef>();
         public List<EncounterDef> Encounters = new List<EncounterDef>();
         public LuckDef Luck = new LuckDef();
+        public SecretManualsDef SecretManuals = new SecretManualsDef();
+
+        public const string BaseTier = "base";
+        public const string SecretTier = "secret";
+
+        /// <summary>진전 단계의 비급 복원 id: "문파id:개수"(개방 3단계 = gaebang:3).</summary>
+        public static string ManualIdOf(SchoolDef school, SchoolTierDef tier) => school.Id + ":" + tier.Count;
+
+        /// <summary>비급 층에 든 모든 것의 복원 id(연환 먼저, 데이터 순서).</summary>
+        public IEnumerable<string> SecretManualIds =>
+            Links.Where(l => l.IsSecret).Select(l => l.ManualId)
+                .Concat(Schools.SelectMany(sc => sc.Tiers.Where(t => t.IsSecret).Select(t => ManualIdOf(sc, t))));
+
+        public bool IsSecretManual(string id) => SecretManualIds.Contains(id);
 
         Dictionary<string, SchoolDef>? _schoolOf;
 

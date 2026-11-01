@@ -1,7 +1,7 @@
 {
   "_note": "무공끼리 만나는 법. 기획서 '20. 시너지와 기연'과 같은 내용이어야 한다. 연환은 공격 무공 둘(둘 다 minLevel 이상), 진전은 같은 문파 무공·심법 개수, 비전은 숨은 조건, 기연은 판 도중 사건. proto: true 는 웹 프로토타입에 들어간 것. 비전 require 와 기연 chapters·minMinute·needsChapterSchool 은 글(condition, where)을 Core 판정용으로 옮긴 것이라 글을 고치면 같이 고친다.",
   "links": [
-    { "id": "ssanggeom", "nameKo": "쌍검합벽", "hanja": "雙劍合璧", "a": "samjae_sword", "b": "changcheon_qi", "minLevel": 4, "proto": true,
+    { "id": "ssanggeom", "tier": "secret", "nameKo": "쌍검합벽", "hanja": "雙劍合璧", "a": "samjae_sword", "b": "changcheon_qi", "minLevel": 4, "proto": true,
       "desc": "창천검기가 도는 동안 삼재검법을 휘두르면 두 검기가 겹쳐 그 획의 피해가 60% 오르고 금빛으로 바뀐다.",
       "lore": "남궁과 화산은 백 년을 다퉜다. 혈겁 때 처음 등을 맞댄 두 검객이 남긴 수법이다." },
     { "id": "geomhwa", "nameKo": "검화", "hanja": "劍花", "a": "samjae_sword", "b": "falling_petals", "minLevel": 4,
@@ -25,7 +25,7 @@
     { "id": "punghwa", "nameKo": "풍화", "hanja": "風火", "a": "palm_wind", "b": "thunder_bomb", "minLevel": 4, "proto": true,
       "desc": "불붙은 적을 지난 장풍은 불을 실어 크기가 30% 커지고 맞힌 적에게 화상을 입힌다.",
       "lore": "바람은 불을 키운다. 개방 거지들이 겨울밤 모닥불 앞에서 익힌 이치다." },
-    { "id": "jeomhyeol", "nameKo": "점혈창", "hanja": "點穴槍", "a": "flash_finger", "b": "pear_spear", "minLevel": 4,
+    { "id": "jeomhyeol", "tier": "secret", "nameKo": "점혈창", "hanja": "點穴槍", "a": "flash_finger", "b": "pear_spear", "minLevel": 4,
       "desc": "섬광지에 맞은 적은 0.5초 혈도가 짚혀 멈추고, 그 적을 찌른 이화창은 반드시 치명타가 된다.",
       "lore": "먼저 혈도를 짚고 나중에 찌른다. 수로채 수적들이 배 위에서 쓰는 순서다." },
     { "id": "noehwa", "nameKo": "뇌화", "hanja": "雷火", "a": "thunder_bomb", "b": "thunder_talisman", "minLevel": 4,
@@ -40,7 +40,7 @@
     { "id": "charyeok", "nameKo": "차력타력", "hanja": "借力打力", "a": "taiji_sword", "b": "chain_sickle", "minLevel": 4,
       "desc": "쇄겸술에 끌려온 적이 태극검에 닿으면 끌려온 힘 그대로 반대쪽으로 튕겨 나가 뒤의 적들과 부딪힌다.",
       "lore": "남의 힘을 빌려 남을 친다. 무당이 가르치는 첫 번째이자 마지막 이치." },
-    { "id": "chwijung", "nameKo": "취중매화", "hanja": "醉中梅花", "a": "drunken_staff", "b": "falling_petals", "minLevel": 4,
+    { "id": "chwijung", "tier": "secret", "nameKo": "취중매화", "hanja": "醉中梅花", "a": "drunken_staff", "b": "falling_petals", "minLevel": 4,
       "desc": "취선봉이 흩날리던 꽃잎을 감아 2초 동안 몸 주위를 도는 꽃잎 회오리로 만든다.",
       "lore": "화산 매화림에서 술에 취해 봉을 휘두른 거지가 있었다고 한다." },
     { "id": "gyeonin", "nameKo": "견인타", "hanja": "牽引打", "a": "drunken_staff", "b": "chain_sickle", "minLevel": 4,
@@ -73,7 +73,7 @@
       "members": ["drunken_staff", "juseon", "palm_wind", "pasan"],
       "tiers": [
         { "count": 2, "desc": "음식 회복 +50%", "proto": true, "stats": { "FoodHeal": 0.5 } },
-        { "count": 3, "desc": "기혈 30% 이하에서 공력 +30%", "proto": true, "effect": "low_health_might", "params": { "healthThreshold": 0.3, "damageBonus": 0.3 } },
+        { "count": 3, "tier": "secret", "desc": "기혈 30% 이하에서 공력 +30%", "proto": true, "effect": "low_health_might", "params": { "healthThreshold": 0.3, "damageBonus": 0.3 } },
         { "count": 4, "desc": "3분마다 개방 제자 셋이 나타나 10초 동안 함께 싸운다" } ] },
     { "id": "tang", "nameKo": "사천당가", "hanja": "四川唐家", "motto": "암기", "character": "dang_yeonhwa",
       "members": ["flying_dagger", "cheonsu", "poison_mist", "mandok", "thunder_bomb"],
@@ -99,7 +99,7 @@
       "members": ["thunder_talisman", "domun", "hwaryong"],
       "tiers": [
         { "count": 2, "desc": "정신부로 멈춘 적이 두 배 오래 멈춘다", "proto": true, "effect": "talisman_freeze", "params": { "freezeMultiplier": 2 } },
-        { "count": 3, "desc": "강시 계열 적에게 피해 +25%", "proto": true, "effect": "jiangshi_damage", "params": { "damageBonus": 0.25 } } ] },
+        { "count": 3, "tier": "secret", "desc": "강시 계열 적에게 피해 +25%", "proto": true, "effect": "jiangshi_damage", "params": { "damageBonus": 0.25 } } ] },
     { "id": "demonic", "nameKo": "마도", "hanja": "魔道", "motto": "혈", "character": "baekya",
       "members": ["blood_claw", "hyeolhae"],
       "tiers": [
@@ -178,5 +178,7 @@
       "reward": "버린 무공의 레벨 하나당 남은 무공 공력 +3%", "chance": 0.5,
       "chapters": ["chapter5"] }
   ],
+  "secretManuals": { "_note": "비급 층(tier: secret) 시너지는 잠긴 채 시작한다. 그 조합을 갖춘 채 한 생을 마치면 장경각에 '찢긴 비급'으로 오르고, 장경각에서 윤회의 기로 복원한다. 값은 몇 번째 복원인지로 정한다(마지막 값을 계속 씀). sealStones 는 그때 지닌 봉인석 수 하한, rebirthQi 는 값. 기획서 10·20장",
+    "sealStones": [2, 3, 4, 5, 5], "rebirthQi": [2000, 3000, 4500, 6000, 8000] },
   "luck": { "_note": "기연 능력치 1당 기연 사건 확률이 0.5%p 오른다(곱이 아니라 더하기)", "chancePerLuck": 0.005 }
 }
