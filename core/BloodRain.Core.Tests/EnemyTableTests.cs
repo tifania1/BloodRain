@@ -120,7 +120,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"진기 구슬 {r.Orbs}알(한 알 {Num(r.OrbXp)})", sec);
 
             // 다른 적에는 붙지 않는다
-            Assert.All(_d.Enemies.Where(e => e.Shoot != null), e => Assert.Equal("kite_shoot", e.Behavior));
+            Assert.All(_d.Enemies.Where(e => e.Shoot != null), e => Assert.Contains(e.Behavior, new[] { "kite_shoot", "petal_shot", "ice_throw" }));
             Assert.All(_d.Enemies.Where(e => e.Mark != null), e => Assert.StartsWith("mark_teleport", e.Behavior));
             Assert.All(_d.Enemies.Where(e => e.Pool != null), e => Assert.StartsWith("blood_pool", e.Behavior));
         }
@@ -144,6 +144,43 @@ namespace BloodRain.Core.Tests
             // onDeath 가 있는 적은 모두 크기·피해가 있다
             Assert.All(_d.Enemies.Where(e => e.OnDeath != null), e => { Assert.NotNull(e.Death); Assert.True(e.Death!.Radius > 0); });
             Assert.All(_d.Enemies.Where(e => e.Behavior == "fly_curve"), e => Assert.NotNull(e.Curve));
+        }
+        /// <summary>C-13: 지역 고유 적 나머지 행동 숫자 표(6장 '지역별 고유 적' 둘째 표)와 enemies.json.</summary>
+        [Fact] public void 지역_고유_적_행동_숫자_표가_데이터와_같다()
+        {
+            var sec = GddSection("지역별 고유 적");
+            string Row(string name) => sec.Split('\n').Single(l => l.StartsWith($"- {name}: "));
+
+            var pull = _d.Enemy("water_ghost").Pull!;
+            Assert.Contains($"{Num(pull.Range)}m 안이면 플레이어를 초속 {Num(pull.Speed)}m로 끌어당김", Row("수귀"));
+            var wb = _d.Enemy("water_bandit");
+            Assert.Contains($"{Num(wb.Hook!.Range)}m 안이면 {Num(wb.Telegraph)}초 예고 뒤 초속 {Num(wb.Hook.Speed)}m 갈고리. 맞으면 {Num(wb.Hook.BindSeconds)}초", Row("수적"));
+            Assert.Contains($"{Num(wb.Hook.Interval)}초마다", Row("수적"));
+            var plum = _d.Enemy("plum_sword_ghost");
+            var ps = plum.Shoot!;
+            Assert.Contains($"{Num(ps.Range)}m 안이면 {Num(ps.Interval)}초마다 꽃잎 {ps.Count}발을 {Num(ps.Spread)}도로 펼쳐 쏨. 초속 {Num(ps.Speed)}m, 한 발 {Num(plum.ProjectileDamage)}", Row("매화검귀"));
+            Assert.Contains($"꽃잎 탄 {ps.Count}발", GddTable(sec).Single(r => r[1] == "매화검귀")[2]);
+            var yeti = _d.Enemy("yeti");
+            var ys = yeti.Shoot!;
+            Assert.Contains($"{Num(ys.Range)}m 안이면 {Num(ys.Interval)}초마다 얼음덩이 한 발. 초속 {Num(ys.Speed)}m, 반경 {Num(ys.Radius)}m, {Num(yeti.ProjectileDamage)}", Row("설인"));
+            var wolf = _d.Enemy("snow_wolf").Group!;
+            Assert.Contains($"{wolf.Size}마리가 함께 나와 양옆 {Num(wolf.FlankAngle)}도로 돌아 들어오다 {Num(wolf.CommitRange)}m 안에서", Row("설랑 떼"));
+            var cult = _d.Enemy("demon_cultist").Group!;
+            Assert.Contains($"{cult.Size}명이 {Num(cult.Spacing)}m 간격 한 줄", Row("마교도"));
+            var cent = _d.Enemy("golden_centipede").Group!;
+            Assert.Contains($"{Num(cent.Spacing)}m 간격 마디 {cent.Size}개", Row("금선지네 떼"));
+            var mim = _d.Enemy("blood_shadow_clone").Mimic!;
+            Assert.Contains($"피해 {Num(mim.DamageScale)}배, 쿨다운 {Num(mim.CooldownScale)}배", Row("혈영 분신"));
+            var lion = _d.Enemy("blood_lion");
+            Assert.Contains($"{Num(lion.Dash!.Range)}m 안이면 {Num(lion.Telegraph)}초 예고 뒤 {Num(lion.Dash.Seconds)}초 동안 초속 {Num(lion.Dash.Speed)}m 돌진", Row("혈사자"));
+            Assert.Contains($"반경 {Num(lion.AuraRadius)}m 적 이동속도·피해 +{Num(lion.AuraBonus * 100)}%를 {Num(lion.RoarSeconds)}초. {Num(lion.Dash.RestMin)}~{Num(lion.Dash.RestMax)}초 쉼", Row("혈사자"));
+            var dogin = _d.Enemy("dogin");
+            Assert.Contains($"반경 {Num(dogin.ZoneRadius)}m 독안개, 초당 {Num(dogin.ZoneDamagePerSecond)}", Row("독인"));
+
+            // 지역 고유 적은 행동마다 숫자가 다 있다(쫓기만 하는 hop_chase 와 표에 없는 정예는 뺌)
+            foreach (var e in _d.Enemies.Where(e => e.Chapter != null && e.Behavior != "hop_chase"))
+                Assert.True(e.Shoot != null || e.Pull != null || e.Hook != null || e.Group != null || e.Mimic != null || e.Dash != null
+                            || e.ZoneRadius > 0 || e.ReviveSeconds > 0 || e.Death != null, $"{e.NameKo}({e.Behavior}): 행동 숫자가 없다");
         }
     }
 }

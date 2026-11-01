@@ -208,6 +208,54 @@ namespace BloodRain.Core.Data
         public EnemyCurve? Curve;
         /// <summary>OnDeath 의 크기·피해(splinter_burst·poison_pool). 없으면 null.</summary>
         public EnemyDeath? Death;
+        /// <summary>끌어당김(수귀 water_pull). 없으면 null.</summary>
+        public EnemyPull? Pull;
+        /// <summary>갈고리 묶기(수적 hook_bind). 예고 초는 Telegraph. 없으면 null.</summary>
+        public EnemyHook? Hook;
+        /// <summary>무리·줄(설랑 flank_pack, 마교도 spear_line, 금선지네 snake_line). 없으면 null.</summary>
+        public EnemyGroup? Group;
+        /// <summary>플레이어 무공 흉내(혈영 분신 mimic). 없으면 null.</summary>
+        public EnemyMimic? Mimic;
+        /// <summary>돌진 뒤 포효로 AuraRadius 안 적에게 AuraBonus 를 주는 초(혈사자 charge_roar). 0 이면 늘 켜진 오라(기수).</summary>
+        public float RoarSeconds;
+        /// <summary>제 몸 둘레 장판 반경(독인 poison_aura, 초당 피해는 ZoneDamagePerSecond). 0 이면 없음.</summary>
+        public float ZoneRadius;
+    }
+
+    /// <summary>water_pull: 플레이어가 Range m 안이면 수귀 쪽으로 초속 Speed m 를 이동에 더한다(여럿이면 큰 것 하나).</summary>
+    public sealed class EnemyPull
+    {
+        public float Range;
+        public float Speed;
+    }
+
+    /// <summary>hook_bind: Range m 안이면 Telegraph 초 예고선 뒤 초속 Speed m 갈고리를 던져, 맞으면 BindSeconds 초 걷기·경공을 못 한다
+    /// (무공은 나감). 던지고 다음 던지기까지 Interval 초.</summary>
+    public sealed class EnemyHook
+    {
+        public float Range;
+        public float Speed;
+        public float BindSeconds;
+        public float Interval;
+    }
+
+    /// <summary>함께 나오는 무리. Size 마리가 한 번에 생긴다.
+    /// flank_pack: 플레이어 쪽에서 ±FlankAngle 도 비껴 돌아 들어오다 CommitRange m 안에서 곧장 덮친다.
+    /// spear_line: 플레이어를 향한 방향에 수직으로 Spacing m 간격 한 줄, 줄째 전진.
+    /// snake_line: 머리를 Spacing m 간격 마디가 따라온다. 머리가 쓰러지면 남은 마디가 저마다 흩어져 쫓는다.</summary>
+    public sealed class EnemyGroup
+    {
+        public int Size;
+        public float Spacing;
+        public float FlankAngle;
+        public float CommitRange;
+    }
+
+    /// <summary>mimic: 플레이어의 첫 무공을 그 레벨로, 피해 DamageScale 배·쿨다운 CooldownScale 배로 쓴다.</summary>
+    public sealed class EnemyMimic
+    {
+        public float DamageScale;
+        public float CooldownScale;
     }
 
     public sealed class EnemyCurve
@@ -232,12 +280,16 @@ namespace BloodRain.Core.Data
     /// 2026-11-02 클라우드 세션이 정함(기획서 6장 표 아래).</summary>
     public sealed class EnemyShoot
     {
+        /// <summary>둘 다 0 이면 거리를 지키지 않고 쫓으며, 플레이어가 Range 안일 때만 쏜다(매화검귀·설인).</summary>
         public float KeepMin;
         public float KeepMax;
         public float Interval;
         public float Speed;
         public float Range;
         public float Radius;
+        /// <summary>한 번에 쏘는 수와 양 끝 사이 각(도). 매화검귀 3발·30도.</summary>
+        public int Count = 1;
+        public float Spread;
     }
 
     /// <summary>mark_teleport: 플레이어 발밑에 반경 Radius m 붉은 표식을 찍고 Telegraph 초 뒤 그 자리로 순간이동해
