@@ -157,12 +157,13 @@
     "shadowFromMinute": 30,
     "shadowStepMinutes": 5,
     "shadow": {
-      "_note": "혈마의 그림자 한 단계의 세기(T-39, 2026-10-30 예약 세션이 정함). 죽지 않고 밀리지 않는 그림자 하나가 쫓아온다. 단계 n 의 접촉 피해 = contactDamage x damageGrowth^(n-1), 이동속도 = moveSpeed + speedPerStep x (n-1) 을 maxSpeed 까지, 화면 위 모든 적 피해 = 1 + enemyDamagePerStep x (n-1). 1단계는 플레이어 기본(100)보다 느리고 3단계(40분)부터 기본보다 빠르다.",
+      "_note": "혈마의 그림자 한 단계의 세기(T-39, 2026-10-30 예약 세션이 정함). 죽지 않고 밀리지 않는 그림자 하나가 쫓아온다. 단계 n 의 접촉 피해 = contactDamage x damageGrowth^(n-1), 이동속도 = moveSpeed + speedPerStep x (n-1)(상한 없음, 2026-11-01), 화면 위 모든 적 피해 = 1 + enemyDamagePerStep x (n-1). 1단계는 플레이어 기본(100)보다 느리고 3단계(40분)부터 기본보다 빠르다. 2단계부터 단계가 오를 때마다 teleportWarningSeconds 예고 뒤 몸 뒤 teleportGap m(현경 축척)로 순간이동한다(이미 더 가까우면 그대로).",
       "contactDamage": 30,
       "damageGrowth": 1.25,
       "moveSpeed": 85,
       "speedPerStep": 8,
-      "maxSpeed": 125,
+      "teleportWarningSeconds": 0.5,
+    "teleportGap": 1,
       "hitIntervalSeconds": 0.5,
       "enemyDamagePerStep": 0.1
     }

@@ -264,7 +264,12 @@ namespace BloodRain.Core.Data
         /// <summary>1단계 이동속도(플레이어 기본 100 기준).</summary>
         public float MoveSpeed;
         public float SpeedPerStep;
+        /// <summary>이동속도 상한. 0 이하면 상한 없음(데이터 기본, 2026-11-01 T-42).</summary>
         public float MaxSpeed;
+        /// <summary>단계가 오를 때(2단계부터) 순간이동 전 예고(초). 그 자리에 핏자국이 먼저 번진다.</summary>
+        public float TeleportWarningSeconds;
+        /// <summary>순간이동해 내려앉는 거리(몸 뒤, 현경 축척 m). 0 이하면 순간이동 없음. 이미 더 가까우면 그대로.</summary>
+        public float TeleportGap;
         /// <summary>계속 닿아 있을 때 다시 맞는 간격(초).</summary>
         public float HitIntervalSeconds;
         /// <summary>단계가 하나 오를 때 화면 위 모든 적 피해에 더하는 배율.</summary>

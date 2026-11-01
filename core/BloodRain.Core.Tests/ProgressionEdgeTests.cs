@@ -169,10 +169,12 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1f, s.EnemyDamageMultiplier);
         }
 
-        [Fact] public void 그림자_속도는_상한에서_멈추고_맞는_간격은_그대로다()
+        [Fact] public void 그림자_속도는_상한이_있으면_멈추고_맞는_간격은_그대로다()
         {
-            var far = BloodShadow.Strength(Sh, 200);
-            Assert.Equal(Sh.MaxSpeed, far.MoveSpeed);
+            var capped = new BloodShadowDef { ContactDamage = 10, DamageGrowth = 1.1f, MoveSpeed = 85, SpeedPerStep = 8, MaxSpeed = 125, HitIntervalSeconds = 0.5f };
+            Assert.Equal(125f, BloodShadow.Strength(capped, 200).MoveSpeed);
+            // 지금 데이터는 상한이 없다(T-42): 200단계면 85 + 8 × 199
+            Assert.Equal(Sh.MoveSpeed + Sh.SpeedPerStep * 199, BloodShadow.Strength(Sh, 200).MoveSpeed, 2);
             for (int step = 1; step <= 20; step++)
                 Assert.Equal(Sh.HitIntervalSeconds, BloodShadow.Strength(Sh, step).HitIntervalSeconds);
         }
@@ -183,6 +185,17 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0, BloodShadow.FirstStepFasterThanPlayer(slow));
             var still = new BloodShadowDef { ContactDamage = 10, DamageGrowth = 1f, MoveSpeed = 80, SpeedPerStep = 0, MaxSpeed = 200, HitIntervalSeconds = 1 };
             Assert.Equal(0, BloodShadow.FirstStepFasterThanPlayer(still));
+            var uncappedStill = new BloodShadowDef { ContactDamage = 10, DamageGrowth = 1f, MoveSpeed = 80, SpeedPerStep = 0, HitIntervalSeconds = 1 };
+            Assert.Equal(0, BloodShadow.FirstStepFasterThanPlayer(uncappedStill));
+        }
+
+        [Fact] public void 순간이동은_단계가_오를_때만_처음_나타날_땐_아니다()
+        {
+            Assert.False(BloodShadow.TeleportsOn(Sh, 0, 1));
+            Assert.True(BloodShadow.TeleportsOn(Sh, 1, 2));
+            Assert.False(BloodShadow.TeleportsOn(Sh, 2, 2));
+            var none = new BloodShadowDef { TeleportGap = 0 };
+            Assert.False(BloodShadow.TeleportsOn(none, 1, 2));
         }
     }
 }

@@ -27,14 +27,14 @@ namespace BloodRain.Core.Tests
             Assert.Equal(G.Balance.Dash.Charges + 1, ShadowSim.BaseCharges(G));
         }
 
-        [Fact] public void 그림자보다_느리면_붙잡히고_빠르면_끝내_안_잡힌다()
+        [Fact] public void 그림자보다_느리면_붙잡히고_상한이_있으면_빠른_몸은_끝내_안_잡힌다()
         {
-            float max = G.Cheonha.LifeEnd.Shadow.MaxSpeed;
             var slow = ShadowSim.Run(G, 90, 3, 110, 0, 0, 0);
             Assert.NotNull(slow.CaughtMinute);
             Assert.NotNull(slow.DeadMinute);
             Assert.True(slow.DeadMinute >= slow.CaughtMinute);
-            var fast = ShadowSim.Run(G, max + 1, 3, 110, 0, 0, 0);
+            var capped = ShadowSim.Options(G).First(o => o.Shadow.MaxSpeed > 0 && o.Teleport == 0);
+            var fast = ShadowSim.Run(G, capped.Shadow, 0, capped.Shadow.MaxSpeed + 1, 3, 110, 0, 0, 0);
             Assert.Null(fast.CaughtMinute);
             Assert.Equal(0, fast.Hits);
         }
@@ -64,7 +64,7 @@ namespace BloodRain.Core.Tests
         {
             var opt = ShadowSim.Options(G)[0];
             Assert.Same(G.Cheonha.LifeEnd.Shadow, opt.Shadow);
-            Assert.Equal(0, opt.Teleport);
+            Assert.Equal(G.Cheonha.LifeEnd.Shadow.TeleportGap, opt.Teleport, 6);
             var a = ShadowSim.Run(G, 100, 3, 110, 0, 0, 0);
             var b = ShadowSim.Run(G, opt.Shadow, opt.Teleport, 100, 3, 110, 0, 0, 0);
             Assert.Equal(a.CaughtMinute, b.CaughtMinute);
@@ -72,19 +72,30 @@ namespace BloodRain.Core.Tests
             Assert.Equal(a.Hits, b.Hits);
         }
 
-        [Fact] public void 상한을_없애면_상한보다_빠른_몸도_잡히고_순간이동은_더_일찍_붙인다()
+        [Fact] public void 지금_데이터는_상한이_없고_순간이동으로_더_일찍_붙인다()
         {
-            var opts = ShadowSim.Options(G);
-            var uncapped = opts.First(o => o.Shadow.MaxSpeed == float.MaxValue);
-            float max = G.Cheonha.LifeEnd.Shadow.MaxSpeed;
-            Assert.Null(ShadowSim.Run(G, max + 1, 3, 110, 0, 0, 0).CaughtMinute);
-            Assert.NotNull(ShadowSim.Run(G, uncapped.Shadow, 0, max + 1, 3, 110, 0, 0, 0).DeadMinute);
+            var sh = G.Cheonha.LifeEnd.Shadow;
+            Assert.True(sh.MaxSpeed <= 0);
+            Assert.True(sh.TeleportGap > 0);
+            Assert.Equal(0.5f, sh.TeleportWarningSeconds);
+            // 옛 상한 125 보다 빠른 몸도 잡힌다
+            Assert.NotNull(ShadowSim.Run(G, 126, 3, 110, 0, 0, 0).DeadMinute);
 
-            var tele = opts.First(o => o.Teleport > 0 && o.Shadow == G.Cheonha.LifeEnd.Shadow);
-            var plain = ShadowSim.Run(G, 100, 3, 110, 0, 0, 0);
-            var jumped = ShadowSim.Run(G, tele.Shadow, tele.Teleport, 100, 3, 110, 0, 0, 0);
+            var plain = ShadowSim.Run(G, sh, 0, 100, 3, 110, 0, 0, 0);
+            var jumped = ShadowSim.Run(G, sh, sh.TeleportGap, 100, 3, 110, 0, 0, 0);
             Assert.True(jumped.CaughtMinute <= plain.CaughtMinute);
             Assert.True(jumped.DeadMinute <= plain.DeadMinute);
+        }
+
+        [Fact] public void 신법을_다_갖춘_몸도_100분_안에_그림자로_쓰러진다()
+        {
+            // T-42 목표: 운룡보 Lv5·'둘 다' 몸도 100분 안에(방어 보통)
+            foreach (var c in ShadowSim.SpeedCases(G))
+                foreach (var sect in G.Cheonha.Sects)
+                {
+                    var r = ShadowSim.RunSect(G, sect, c, false);
+                    Assert.True(r.DeadMinute.HasValue && r.DeadMinute < 100, $"{sect.Id} · {c.Ko}: {r.DeadMinute}");
+                }
         }
 
         [Fact] public void 보고서는_지금_데이터로_만든_것과_같다()

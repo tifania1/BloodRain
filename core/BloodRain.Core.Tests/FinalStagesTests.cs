@@ -121,7 +121,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1f, s.EnemyDamageMultiplier);
         }
 
-        [Fact] public void 그림자는_단계마다_세지고_속도는_상한에서_멈춘다()
+        [Fact] public void 그림자는_단계마다_세지고_속도는_상한_없이_오른다()
         {
             var prev = BloodShadow.Strength(Sh, 1);
             Assert.Equal(Sh.ContactDamage, prev.ContactDamage);
@@ -130,11 +130,11 @@ namespace BloodRain.Core.Tests
             {
                 var s = BloodShadow.Strength(Sh, step);
                 Assert.Equal(prev.ContactDamage * Sh.DamageGrowth, s.ContactDamage, 2);
-                Assert.True(s.MoveSpeed >= prev.MoveSpeed && s.MoveSpeed <= Sh.MaxSpeed);
+                Assert.Equal(prev.MoveSpeed + Sh.SpeedPerStep, s.MoveSpeed, 3);
                 Assert.True(s.EnemyDamageMultiplier > prev.EnemyDamageMultiplier);
                 prev = s;
             }
-            Assert.Equal(Sh.MaxSpeed, prev.MoveSpeed);
+            Assert.True(Sh.MaxSpeed <= 0);
             Assert.Equal(3, BloodShadow.FirstStepFasterThanPlayer(Sh));
         }
 
