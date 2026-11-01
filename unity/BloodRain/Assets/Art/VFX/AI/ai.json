@@ -2,6 +2,46 @@
   "_note": "tools/import_vfx_ai.py 가 쓴다. 손으로 고치지 않는다. ChatGPT 로 뽑은 이펙트 재료. 층은 흰색 + 알파 512px (stroke 먹 · gold 금빛 더하기 · core 흰빛 더하기). sizeMeters 는 한 변이 몇 m, 텍스처 가운데가 기준점. progress 는 그어지는 방향(radial 가운데서 바깥 · down 위→아래 · up · right 왼→오른 · left).",
   "textures": [
     {
+      "name": "fx_bomb_ink_1",
+      "kind": "ai_ink",
+      "sizeMeters": 2.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "벽력탄(thunder_bomb) 터질 때 먹 폭발"
+    },
+    {
+      "name": "fx_bomb_ink_2",
+      "kind": "ai_ink",
+      "sizeMeters": 2.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "벽력탄(thunder_bomb) 폭발 뒤 남는 먹연기"
+    },
+    {
+      "name": "fx_dagger_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 2.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "비도술(flying_dagger) 비도 꼬리"
+    },
+    {
+      "name": "fx_fist_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 1.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "나한권(nahan_fist) 주먹이 닿는 자리"
+    },
+    {
       "name": "fx_lightning_glow",
       "kind": "ai_glow",
       "sizeMeters": 4.0,
@@ -21,6 +61,46 @@
       ],
       "progress": "right",
       "use": "독무(poison_mist) 안개 덩이, 흐름 셰이더로 일렁임"
+    },
+    {
+      "name": "fx_mist_ink_2",
+      "kind": "ai_ink",
+      "sizeMeters": 3.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "독무(poison_mist) 바닥에 깔리는 안개"
+    },
+    {
+      "name": "fx_mist_ink_3",
+      "kind": "ai_ink",
+      "sizeMeters": 3.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "독무(poison_mist) 몸 둘레를 도는 안개 고리"
+    },
+    {
+      "name": "fx_palm_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 2.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "장풍(palm_wind) 날아가는 손바람 몸통"
+    },
+    {
+      "name": "fx_staff_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 3.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "down",
+      "use": "취선봉(drunken_staff) 휘두른 자국"
     }
   ]
 }
