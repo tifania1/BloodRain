@@ -19,6 +19,8 @@ namespace BloodRain.Presentation.Hud
     //   아래 버튼 셋 = Core LevelUpCharges: 다시 고르기(진소운 특성 +2), 파기(누른 뒤 카드를 고르면 이번 판에서 영영 뺌), 정진(진기 게이지 +20).
     //   고른 무공은 WeaponRunner.Learn 으로 바로 쏜다. 심법 능력치·시너지 진전·은자·음식은 아직 몸에 안 얹는다(C-06 남은 것, S-04).
     //   레벨은 지금 OrbLayer 의 시험용 RunXp 를 본다. Life 가 붙으면(C-10) 그쪽 레벨로 바꾼다.
+    //   서장(진소운 제 몸)의 첫 레벨업은 Loadout.RollFirstLevelUp(chapters.json prologue firstLevelUpChoices) — 새 무공 한 장만,
+    //   다시 고르기·파기는 숨긴다(C-06b, 기획서 5장 서장 표). 그 뒤는 보통 RollLevelUp.
     //   키보드: 1~4 카드, R 다시 고르기, B 파기, S 정진.
     public sealed class LevelUpScreen : MonoBehaviour
     {
@@ -41,7 +43,8 @@ namespace BloodRain.Presentation.Hud
         List<Offer> _offers = new List<Offer>();
         int _handledLevel = 1;
         int _pending;
-        bool _open, _banishMode;
+        bool _open, _banishMode, _firstDone, _firstOpen;
+        ChapterDef _prologue;
         float _savedTimeScale = 1f;
 
         RectTransform _root, _cardRow;
@@ -59,6 +62,8 @@ namespace BloodRain.Presentation.Hud
             var body = Meta.RebirthHandoff.Body ?? Rebirth.Prologue(_data);
             var character = body.Character;
             _loadout = new Loadout(_data, character);
+            if (body.IsPrologue) _prologue = _data.Chapter("prologue");
+            else _firstDone = true;
             // 연무장·몸의 성질 덧셈은 Life 가 붙을 때(C-10) LevelUpCharges.Start 로. 지금은 특성 몫만.
             _charges = new LevelUpCharges(LevelUpCharges.TraitRerolls(_data.Balance.LevelUp, character), 0, 0);
             _ultimate = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony);
@@ -96,7 +101,9 @@ namespace BloodRain.Presentation.Hud
             _banishMode = false;
             _savedTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
             Time.timeScale = 0f;
-            _offers = _loadout.RollLevelUp(_rng, 0f, _unlocked);
+            _firstOpen = !_firstDone && _prologue != null;
+            _firstDone = true;
+            _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, 0f, _unlocked, _prologue) : _loadout.RollLevelUp(_rng, 0f, _unlocked);
             _root.gameObject.SetActive(true);
             Refresh();
         }
@@ -129,7 +136,7 @@ namespace BloodRain.Presentation.Hud
 
         void Reroll()
         {
-            if (!_open || !_charges.Can(LevelUpAction.Reroll)) return;
+            if (!_open || _firstOpen || !_charges.Can(LevelUpAction.Reroll)) return;
             _charges.Reroll();
             _offers = _loadout.RollLevelUp(_rng, 0f, _unlocked);
             _banishMode = false;
@@ -138,7 +145,7 @@ namespace BloodRain.Presentation.Hud
 
         void ToggleBanish()
         {
-            if (!_open || !_charges.Can(LevelUpAction.Banish)) return;
+            if (!_open || _firstOpen || !_charges.Can(LevelUpAction.Banish)) return;
             _banishMode = !_banishMode;
             Refresh();
         }
@@ -196,6 +203,9 @@ namespace BloodRain.Presentation.Hud
             _reroll.interactable = _charges.Can(LevelUpAction.Reroll);
             _banish.interactable = _charges.Can(LevelUpAction.Banish);
             _skip.interactable = _charges.Can(LevelUpAction.Skip);
+            // 서장 첫 레벨업은 카드 한 장(새 무공)뿐이라 다시 고르기·파기를 숨긴다. 정진은 남긴다.
+            _reroll.gameObject.SetActive(!_firstOpen);
+            _banish.gameObject.SetActive(!_firstOpen);
         }
 
         void MakeCard(int index, Offer o)
