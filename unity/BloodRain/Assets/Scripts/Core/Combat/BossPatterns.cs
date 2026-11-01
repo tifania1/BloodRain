@@ -104,8 +104,8 @@ namespace BloodRain.Core.Combat
         /// <summary>보스가 멈춰 서 있어야 하는가(금강장 예고처럼 BossHolds 인 패턴을 예고하는 중).</summary>
         public bool Holding => _pending.Any(c => c.Pattern.BossHolds);
 
-        /// <summary>남은 기혈 비율로 2막인지. 문턱과 같으면 2막이다.</summary>
-        public static bool IsPhase2(BossPatternSetDef def, float healthRatio) => healthRatio <= def.Phase2At;
+        /// <summary>남은 기혈 비율로 2막인지. 문턱과 같으면 2막이다. 2막 패턴이 없는 보스(서장 장삼)는 2막이 오지 않는다.</summary>
+        public static bool IsPhase2(BossPatternSetDef def, float healthRatio) => def.Phase2.Count > 0 && healthRatio <= def.Phase2At;
 
         /// <summary>시계를 민다. healthRatio 는 이번 Tick 을 시작할 때의 남은 기혈 / 최대 기혈.
         /// 이번에 지나간 일을 시각 순서대로 돌려준다.</summary>

@@ -148,8 +148,12 @@ namespace BloodRain.Sim
                             rows.Add(Make(boss, p, p.TelegraphSeconds, new[] { (double)(p.Radius + BodyRadius) }, d, $"첫 내려찍기. 뒤 {p.Count - 1}번은 {F1(p.WaveIntervalSeconds)}초마다"));
                             rows.Add(Make(boss, p, p.WaveIntervalSeconds, new[] { (double)(p.Radius + BodyRadius) }, d, "둘째부터(앞 내려찍기 때 자리를 노린다고 봄)"));
                             break;
+                        case "jump_slam":
+                            rows.Add(Make(boss, p, p.TelegraphSeconds, new[] { (double)(p.Radius + BodyRadius) }, d, $"착지 그림자 {p.Count}번, 뛸 때마다 그 순간 플레이어 자리"));
+                            break;
                         case "line":
                         case "pull_line":
+                        case "bind_line":
                             rows.Add(Make(boss, p, p.TelegraphSeconds, new[] { StripEscape(p.Width * 0.5f) }, d, "가운데 줄 위에서 옆으로"));
                             break;
                         case "chain_circles":
@@ -204,7 +208,7 @@ namespace BloodRain.Sim
                     else if (p.Shape == "radial_burst")
                         foreach (var dist in new[] { 3f, 6f, 10f })
                             sb.AppendLine($"| {boss} | {p.NameKo} | 보스에서 {F0(dist)}m, 탄 {p.Count}발 사이 틈(탄 크기 0) | {F2(RadialGap(p, dist))}m (몸 너비 {F1(2 * BodyRadius)}m) |");
-                    else if (!new[] { "cone", "circles", "blink_slam", "line", "pull_line", "chain_circles" }.Contains(p.Shape))
+                    else if (!new[] { "cone", "circles", "blink_slam", "jump_slam", "line", "pull_line", "bind_line", "chain_circles" }.Contains(p.Shape))
                         extra.Add($"{boss} {p.NameKo}({p.Shape})");
                 }
             }
@@ -236,7 +240,7 @@ namespace BloodRain.Sim
             sb.AppendLine($"- 경공을 섞어도 절반을 못 피하는 것: {(dashFail.Count == 0 ? "없음" : string.Join(", ", dashFail.Select(r => $"{r.Boss} {r.Pattern}({F1(r.EscapeMedian)}m 대 {F1(r.Dash)}m)")))}.");
             double rate = 1.0 / d.RechargeSeconds;
             var needDash = rows.Where(r => r.WalkOk < 0.5).GroupBy(r => r.Boss).Select(gp => $"{gp.Key} {gp.Count()}").ToList();
-            sb.AppendLine($"- 경공은 {F0(d.RechargeSeconds)}초에 하나씩 찬다(초당 {F2(rate)}번). 패턴 간격이 {F1(g.BossPatterns.Values.Min(v => v.IntervalSeconds))}~{F1(g.BossPatterns.Values.Max(v => v.IntervalSeconds))}초(2막 {F1(g.BossPatterns.Values.Min(v => v.Phase2IntervalSeconds))}~{F1(g.BossPatterns.Values.Max(v => v.Phase2IntervalSeconds))}초)라 세 패턴 가운데 하나만 경공이 필요하면 충전이 남고, 내려찍기처럼 한 시전에 여러 번 필요하면 충전 {d.Charges}회가 바로 바닥난다. 걸어서 못 피하는 줄 수: {(needDash.Count == 0 ? "없음" : string.Join(", ", needDash))}.");
+            sb.AppendLine($"- 경공은 {F0(d.RechargeSeconds)}초에 하나씩 찬다(초당 {F2(rate)}번). 패턴 간격이 {F1(g.BossPatterns.Values.Min(v => v.IntervalSeconds))}~{F1(g.BossPatterns.Values.Max(v => v.IntervalSeconds))}초(2막 {F1(g.BossPatterns.Values.Where(v => v.Phase2.Count > 0).Min(v => v.Phase2IntervalSeconds))}~{F1(g.BossPatterns.Values.Where(v => v.Phase2.Count > 0).Max(v => v.Phase2IntervalSeconds))}초)라 세 패턴 가운데 하나만 경공이 필요하면 충전이 남고, 내려찍기처럼 한 시전에 여러 번 필요하면 충전 {d.Charges}회가 바로 바닥난다. 걸어서 못 피하는 줄 수: {(needDash.Count == 0 ? "없음" : string.Join(", ", needDash))}.");
             foreach (var set in g.BossPatterns)
                 foreach (var p in set.Value.Patterns.Where(p => p.Shape == "blink_slam" && p.Count > d.Charges && WalkReach(p.WaveIntervalSeconds) < p.Radius + BodyRadius))
                 {

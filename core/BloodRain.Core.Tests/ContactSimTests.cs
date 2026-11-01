@@ -90,7 +90,8 @@ namespace BloodRain.Core.Tests
         {
             var text = TestData.ReadText(Path.Combine(TestData.RepoRoot, "docs", "design", "sim", "contact.md"));
             var rows = Regex.Matches(text, @"^\| [^|]+\([^,|]+, [0-9.]+\) \| [0-9]+:[0-5][0-9]", RegexOptions.Multiline);
-            Assert.Equal(G.BossPatterns.Count, rows.Count);
+            Assert.Equal(G.Cheonha.Regions.Count(r => r.Boss != null && G.BossPatterns.ContainsKey(r.Boss!)), rows.Count);
+            Assert.Equal(7, rows.Count);
         }
 
         [Fact] public void 보고서는_지금_데이터와_같다()

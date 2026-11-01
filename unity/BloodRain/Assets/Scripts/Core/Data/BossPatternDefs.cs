@@ -15,7 +15,7 @@ namespace BloodRain.Core.Data
         public float IntervalSeconds;
         /// <summary>2막이 된 뒤 시작하는 패턴부터 쓰는 간격(초).</summary>
         public float Phase2IntervalSeconds;
-        /// <summary>남은 기혈 비율이 이 값 이하가 되면 2막. enemies.json phase2At 과 같아야 한다.</summary>
+        /// <summary>남은 기혈 비율이 이 값 이하가 되면 2막. enemies.json phase2At 과 같아야 한다. Phase2 가 비면(서장 장삼) 2막이 없다.</summary>
         public float Phase2At;
         /// <summary>몸에 닿을 때 피해(0분·혈운 농도 1 값).</summary>
         public float ContactDamage;
@@ -90,6 +90,8 @@ namespace BloodRain.Core.Data
         public float WaveIntervalSeconds;
         /// <summary>사슬에 걸리면 보스 앞까지 끌려가는 시간(초). 경공으로 끊긴다.</summary>
         public float PullSeconds;
+        /// <summary>포승줄에 맞으면 걷지 못하는 시간(초). 경공으로 끊긴다(서장 장삼).</summary>
+        public float RootSeconds;
         /// <summary>분열: 분열체 하나가 받는 남은 기혈의 몫.</summary>
         public float HealthShare;
         /// <summary>분열: 첫 분열체가 쓰러진 뒤 이 시간 안에 다 쓰러지지 않으면 쓰러진 분열체가 되살아난다.</summary>
