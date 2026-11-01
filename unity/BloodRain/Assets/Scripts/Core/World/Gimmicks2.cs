@@ -19,10 +19,11 @@ namespace BloodRain.Core.World
             return into < def.DurationSeconds;
         }
 
-        /// <summary>다음에 켜지는 시각(지금 켜져 있으면 그다음 번).</summary>
+        /// <summary>다음에 켜지는 시각(지금 켜져 있으면 그다음 번). 한 번만 켜지는 날씨(periodSeconds 0)가 이미 켜졌으면 float.PositiveInfinity.</summary>
         public static float NextStartAt(WeatherGimmickDef def, float lifeSeconds)
         {
             if (lifeSeconds < def.FirstSeconds) return def.FirstSeconds;
+            if (def.PeriodSeconds <= 0) return float.PositiveInfinity;
             int n = (int)Math.Floor((lifeSeconds - def.FirstSeconds) / def.PeriodSeconds) + 1;
             return def.FirstSeconds + n * def.PeriodSeconds;
         }

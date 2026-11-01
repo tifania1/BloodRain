@@ -64,6 +64,41 @@ namespace BloodRain.Core.Tests
             Assert.Equal(540f, WeatherGimmick.NextStartAt(m, 400f));
         }
 
+        [Fact] public void 다음_날씨_시각은_켜진_동안에도_그다음_번()
+        {
+            var m = G.RedMoon;
+            Assert.Equal(m.FirstSeconds, WeatherGimmick.NextStartAt(m, 0f));
+            Assert.Equal(m.FirstSeconds + m.PeriodSeconds, WeatherGimmick.NextStartAt(m, m.FirstSeconds)); // 막 켜진 순간
+            Assert.Equal(m.FirstSeconds + m.PeriodSeconds, WeatherGimmick.NextStartAt(m, m.FirstSeconds + 1f));
+            for (float t = 0; t < 3600; t += 7.3f)
+            {
+                float next = WeatherGimmick.NextStartAt(m, t);
+                Assert.True(next > t);
+                Assert.True(WeatherGimmick.ActiveAt(m, next));
+                Assert.False(WeatherGimmick.ActiveAt(m, next - 0.01f));
+            }
+        }
+
+        [Fact] public void 한_번만_켜지는_날씨는_주기_0()
+        {
+            var once = new WeatherGimmickDef { FirstSeconds = 60, PeriodSeconds = 0, DurationSeconds = 20, ViewScale = 0.5f };
+            Assert.False(WeatherGimmick.ActiveAt(once, 59f));
+            Assert.True(WeatherGimmick.ActiveAt(once, 60f));
+            Assert.False(WeatherGimmick.ActiveAt(once, 80f));
+            Assert.False(WeatherGimmick.ActiveAt(once, 200f));
+            Assert.Equal(60f, WeatherGimmick.NextStartAt(once, 10f));
+            Assert.Equal(float.PositiveInfinity, WeatherGimmick.NextStartAt(once, 61f));
+            Assert.Equal(float.PositiveInfinity, WeatherGimmick.NextStartAt(once, 500f));
+        }
+
+        [Fact] public void 배율_0은_그대로로_읽는다()
+        {
+            var w = new WeatherGimmickDef { FirstSeconds = 0, PeriodSeconds = 10, DurationSeconds = 5 };
+            Assert.Equal(1f, WeatherGimmick.ViewScale(w, 1f));
+            Assert.Equal(1f, WeatherGimmick.PlayerMoveSpeed(w, 1f));
+            Assert.Equal(1f, WeatherGimmick.EnemyMoveSpeed(w, 1f));
+        }
+
         [Fact] public void 눈보라는_시야와_걸음을_줄인다()
         {
             var b = G.Blizzard;
