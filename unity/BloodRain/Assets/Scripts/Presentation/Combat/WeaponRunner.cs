@@ -11,7 +11,8 @@ namespace BloodRain.Presentation.Combat
 {
     // 무공 실행기(C-04). weapons.json behavior 마다 웹 프로토타입 fireWeapon 과 같은 규칙으로 판정한다.
     //   피해 = Core WeaponMath.DamageAt(무공, 레벨). 사거리·속도·넉백은 경지 m → WorldScale 세계 m.
-    //   쿨다운은 weapons.json cooldown(aura 는 웹처럼 0.5초마다 한 번, 초당 피해의 절반, random_rapid 는 초당 4→9발).
+    //   쿨다운은 Core WeaponGrowth.Cooldown(쿨다운 0 인 독무는 tickSeconds 마다 초당 피해 x tickSeconds, 섬광지는 초당 4→9발).
+    //   레벨 성장(연타·개수·관통·범위·새 동작)은 WeaponGrowth, 탄속·반경·수명·넉백·간격은 WeaponDef(weapons.json) 에서 읽는다(C-04b).
     //   능력치(범위·쿨감·투사체 수 등)는 Loadout/Stats 가 붙을 때(C-06) 곱한다. 지금은 모두 1.
     // 처음 8갈래: front_arc(삼재검법), melee_combo(나한권), orbit_slash(창천검기), aura(독무),
     //   homing_dagger(비도술), slow_projectile(장풍), random_rapid(섬광지), random_bomb(벽력탄).
@@ -125,9 +126,9 @@ namespace BloodRain.Presentation.Combat
                 s.Cooldown -= dt;
                 if (s.Cooldown > 0f) continue;
                 Fire(s);
-                float cd = s.Def.Behavior == "aura" ? 0.5f
-                         : s.Def.Behavior == "random_rapid" ? 1f / Mathf.Lerp(4f, 9f, T(s)) // weapons.json shotsPerSecond [4, 9]
-                         : Mathf.Max(0.05f, s.Def.Cooldown);
+                // 쿨다운 0(독무처럼 상시)이면 tickSeconds 마다 한 번, 섬광지는 1 / shotsPerSecond(WeaponGrowth.Cooldown)
+                float cd = s.Def.Cooldown <= 0f && s.Def.ShotsPerSecond == null ? Tick(s)
+                         : Mathf.Max(0.05f, WeaponGrowth.Cooldown(s.Def, s.level));
                 s.Cooldown += cd;
                 if (s.Cooldown < -1f) s.Cooldown = 0f;
             }
@@ -153,7 +154,12 @@ namespace BloodRain.Presentation.Combat
         }
 
         float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level);
-        static float T(Slot s) => (s.level - 1) / 7f;
+        // 숫자는 모두 weapons.json(기획서 9장 'Lv8까지 성장'·'날아가는 것과 넉백'). 빠진 값의 기본은 옛 웹 값.
+        static float Knock(Slot s) => s.Def.Knockback ?? 0f;
+        static float Gap(Slot s, float fallback) => s.Def.GapSeconds ?? fallback;
+        static float Tick(Slot s) => s.Def.TickSeconds ?? 0.5f;
+        static bool Has(Slot s, string milestone) => WeaponGrowth.HasMilestone(s.Def, s.level, milestone);
+        static WeaponShot ShotOf(Slot s) => s.Def.Shot ?? throw new InvalidOperationException($"{s.id} weapons.json 에 shot 이 없습니다");
 
         void Deal(Slot s, float dmg, int hit)
         {
@@ -174,15 +180,16 @@ namespace BloodRain.Presentation.Combat
                     float R = ws.Length(s.Def.Range);
                     // 웹 결정: 사거리 1.25배 안에 적이 있으면 가장 가까운 적 쪽, 없으면 바라보는 쪽
                     float baseA = Nearest(R * 1.25f, out var dir) ? Mathf.Atan2(dir.y, dir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
-                    var dirs = s.level >= 4 ? new[] { baseA, baseA + Mathf.PI } : new[] { baseA };
-                    int strikes = s.level >= 7 ? 3 : 1;
+                    var dirs = Has(s, "앞뒤 베기") ? new[] { baseA, baseA + Mathf.PI } : new[] { baseA };
+                    int strikes = Has(s, "3연 베기") ? 3 : 1;
+                    float gap = Gap(s, 0.12f), kb = ws.Speed(Knock(s));
                     for (int k = 0; k < strikes; k++)
-                        Later(k * 0.12f, () =>
+                        Later(k * gap, () =>
                         {
                             foreach (var a in dirs)
                             {
                                 AddFx(a, Mathf.PI, R, 0.22f, new Color(0.95f, 0.93f, 0.85f, 0.75f));
-                                Deal(s, dmg, HitArc(P, R, a, dmg, ws.Speed(3f)));
+                                Deal(s, dmg, HitArc(P, R, a, dmg, kb));
                             }
                         });
                     break;
@@ -190,41 +197,45 @@ namespace BloodRain.Presentation.Combat
                 case "melee_combo":
                 {
                     float R = ws.Length(s.Def.Range);
-                    int hits = Mathf.RoundToInt(Mathf.Lerp(3, 5, T(s))); // weapons.json hits [3, 5]
+                    int hits = WeaponGrowth.Hits(s.Def, s.level); // weapons.json hits [3, 5]
+                    float gap = Gap(s, 0.08f), kb = ws.Speed(Knock(s));
                     for (int k = 0; k < hits; k++)
-                        Later(k * 0.08f, () =>
+                        Later(k * gap, () =>
                         {
                             AddFx(Mathf.Atan2(player.Facing.y, player.Facing.x), Mathf.PI * 2f, R * 0.6f, 0.12f, new Color(0.85f, 0.55f, 0.25f, 0.6f));
                             enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
-                            Deal(s, dmg, enemies.Damage(_near, dmg, P, ws.Speed(4f)));
+                            Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
                         });
                     break;
                 }
                 case "orbit_slash":
                 {
-                    float R = ws.Length(s.Def.Range);
-                    int sweeps = s.level >= 5 ? 2 : 1;
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level)); // Lv8 범위 +40%(areaLv8)
+                    int sweeps = Has(s, "2회 회전") ? 2 : 1;
                     _fx.Add(new Fx
                     {
-                        Angle = UnityEngine.Random.value * Mathf.PI * 2f, Span = 0.6f, Radius = R, Life = 0.36f * sweeps,
+                        Angle = UnityEngine.Random.value * Mathf.PI * 2f, Span = 0.6f, Radius = R, Life = (s.Def.SweepSeconds ?? 0.36f) * sweeps,
                         Color = new Color(0.55f, 0.75f, 0.95f, 0.8f), Sweep = true, Sweeps = sweeps, Weapon = s, Damage = dmg, Hit = new HashSet<int>(),
                     });
                     break;
                 }
                 case "aura":
                 {
-                    float R = ws.Length(Mathf.Lerp(s.Def.Range, 3.5f, T(s))); // 3.5 = weapons.json rangeLv8(WeaponDef 에 아직 없음)
-                    float hitDmg = dmg * 0.5f;                                  // 0.5초마다 초당 피해의 절반
-                    AddFx(0f, Mathf.PI * 2f, R, 0.5f, new Color(0.37f, 0.50f, 0.29f, 0.22f));
+                    float R = ws.Length(WeaponGrowth.Range(s.Def, s.level)); // range → rangeLv8(2 → 3.5m)
+                    float tick = Tick(s);
+                    float hitDmg = dmg * tick;                                 // tickSeconds 마다 초당 피해 x tickSeconds
+                    AddFx(0f, Mathf.PI * 2f, R, tick, new Color(0.37f, 0.50f, 0.29f, 0.22f));
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
-                    Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, 0f));
+                    Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, ws.Speed(Knock(s))));
                     break;
                 }
                 case "homing_dagger":
                 {
-                    // 비도: 가까운 적 n 명에게, 초속 12m, 관통 1→3, 1.2초, 따라가기 6(웹 값)
-                    int n = Mathf.RoundToInt(Mathf.Lerp(1, 4, T(s)));
-                    int pierce = Mathf.RoundToInt(Mathf.Lerp(1, 3, T(s)));
+                    // 비도: 가까운 적 n 명에게(projectiles 1→4), 관통 1→3, 탄속·반경·수명·따라가기는 shot(12·0.25·1.2·6)
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level);
+                    int pierce = WeaponGrowth.Pierce(s.Def, s.level);
+                    var shot = ShotOf(s);
+                    float kb = ws.Speed(Knock(s));
                     NearestN(ws.Length(s.Def.Range * 1.4f), n, _targets);
                     for (int k = 0; k < n; k++)
                     {
@@ -233,52 +244,59 @@ namespace BloodRain.Presentation.Combat
                         float a = tg >= 0 ? Mathf.Atan2(agents[tg].Pos.y - P.y, agents[tg].Pos.x - P.x)
                                           : Mathf.Atan2(player.Facing.y, player.Facing.x) + (k - n / 2f) * 0.25f;
                         a += UnityEngine.Random.Range(-0.08f, 0.08f);
-                        Shoot(s, a, ws.Speed(12f), ws.Length(0.25f), dmg, pierce, 1.2f, tg >= 0 ? agents[tg].Id : 0, 6f, 0f,
+                        Shoot(s, a, ws.Speed(shot.Speed), ws.Length(shot.Radius), dmg, pierce, shot.LifeSeconds, tg >= 0 ? agents[tg].Id : 0, shot.Homing, kb,
                               new Color(0.80f, 0.82f, 0.88f, 1f));
                     }
                     break;
                 }
                 case "slow_projectile":
                 {
-                    // 장풍: 바라보는 쪽으로 초속 5m, 반경 0.55→0.88m, 다 뚫고, 2.6초, 넉백 5. Lv6 2연발
-                    int shots = s.level >= 6 ? 2 : 1;
+                    // 장풍: 바라보는 쪽으로 shot(초속 5m, 반경 0.55m x areaLv8 1.6, 2.6초), 다 뚫고(pierce 999), 넉백 5. Lv6 2연발
+                    int shots = Has(s, "2연발") ? 2 : 1;
+                    var shot = ShotOf(s);
+                    int pierce = WeaponGrowth.Pierce(s.Def, s.level);
+                    float gap = Gap(s, 0.15f), kb = ws.Speed(Knock(s));
                     for (int k = 0; k < shots; k++)
-                        Later(k * 0.15f, () =>
+                        Later(k * gap, () =>
                         {
-                            float r = ws.Length(0.55f * Mathf.Lerp(1f, 1.6f, T(s)));
-                            Shoot(s, Mathf.Atan2(player.Facing.y, player.Facing.x), ws.Speed(5f), r, dmg, 999, 2.6f, 0, 0f, ws.Speed(5f),
+                            float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level));
+                            Shoot(s, Mathf.Atan2(player.Facing.y, player.Facing.x), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds, 0, shot.Homing, kb,
                                   new Color(0.95f, 0.85f, 0.55f, 0.55f));
                         });
                     break;
                 }
                 case "random_rapid":
                 {
-                    // 섬광지: 사거리 안 가까운 12명 가운데 하나에게 초속 18m, 안 뚫음, 0.6초. 쿨다운은 초당 4→9발
+                    // 섬광지: 사거리 안 가까운 12명 가운데 하나에게 shot(초속 18m, 0.16m, 0.6초), 안 뚫음, 넉백 1.2. 쿨다운은 초당 4→9발
                     NearestN(ws.Length(s.Def.Range), 12, _targets);
                     if (_targets.Count == 0) break;
+                    var shot = ShotOf(s);
                     var e = enemies.Sim.Agents[_targets[UnityEngine.Random.Range(0, _targets.Count)]];
-                    Shoot(s, Mathf.Atan2(e.Pos.y - P.y, e.Pos.x - P.x), ws.Speed(18f), ws.Length(0.16f), dmg, 0, 0.6f, 0, 0f, 0f,
+                    Shoot(s, Mathf.Atan2(e.Pos.y - P.y, e.Pos.x - P.x), ws.Speed(shot.Speed), ws.Length(shot.Radius), dmg,
+                          WeaponGrowth.Pierce(s.Def, s.level), shot.LifeSeconds, 0, shot.Homing, ws.Speed(Knock(s)),
                           new Color(1f, 0.95f, 0.6f, 1f));
                     break;
                 }
                 case "random_bomb":
                 {
                     // 벽력탄: 7m 안 가까운 20명 가운데 무작위 자리(없으면 둘레 4m)에 0.6초 뒤 터짐, 반경 2→3m, 넉백 3.
-                    // 화상(burnPerSecond)은 적 상태 칸이 붙을 때(C-04 남은 것)
-                    int n = Mathf.RoundToInt(Mathf.Lerp(1, 3, T(s)));
-                    NearestN(ws.Length(7f), 20, _targets);
-                    float R = ws.Length(s.Def.Range * Mathf.Lerp(1f, 1.5f, T(s)));
+                    // 개수 projectiles, 거리 seekRange, 퓨즈 fuseSeconds, 반경 range x areaLv8, 넉백 knockback(weapons.json).
+                    // 화상(burnPerSecond·burnSeconds)은 적 상태 칸이 붙을 때(C-04 남은 것)
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level);
+                    NearestN(ws.Length(s.Def.SeekRange ?? 7f), 20, _targets);
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level));
+                    float fuse = s.Def.FuseSeconds ?? 0.6f, kb = ws.Speed(Knock(s));
                     for (int k = 0; k < n; k++)
                     {
                         Vector2 at;
                         if (_targets.Count > 0) { var e = enemies.Sim.Agents[_targets[UnityEngine.Random.Range(0, _targets.Count)]]; at = new Vector2(e.Pos.x, e.Pos.y); }
                         else at = P + new Vector2(UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-4f, 4f)) * ws.Length(1f);
-                        AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.6f, new Color(0.70f, 0.15f, 0.12f, 0.18f)); // 떨어질 자리 표시
-                        Later(0.6f, () =>
+                        AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.70f, 0.15f, 0.12f, 0.18f)); // 떨어질 자리 표시
+                        Later(fuse, () =>
                         {
                             AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
                             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
-                            Deal(s, dmg, enemies.Damage(_near, dmg, at, ws.Speed(3f)));
+                            Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
                         });
                     }
                     break;
@@ -392,7 +410,7 @@ namespace BloodRain.Presentation.Combat
                 float slack = d > 1e-4f ? a.Radius / d : Mathf.PI; // 덩이 반경만큼 각을 넓힌다
                 if (rel <= span + slack || rel >= Mathf.PI * 2f - slack) { _filtered.Add(i); f.Hit.Add(a.Id); }
             }
-            Deal(f.Weapon, f.Damage, enemies.Damage(_filtered, f.Damage, P, World.Speed(2f)));
+            Deal(f.Weapon, f.Damage, enemies.Damage(_filtered, f.Damage, P, World.Speed(Knock(f.Weapon))));
         }
 
         int HitArc(Vector2 c, float R, float a, float dmg, float knock)
