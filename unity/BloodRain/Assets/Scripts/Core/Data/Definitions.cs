@@ -22,6 +22,29 @@ namespace BloodRain.Core.Data
         /// <summary>레벨업 풀에 들어오는 조건. "start", "boss:&lt;지역 id&gt;"(그 땅의 주인 첫 처치), 그 밖은 도전 과제 토큰.</summary>
         public string Unlock = "start";
 
+        // Lv1 → Lv8 로 자라는 값(기획서 9장 'Lv8까지 성장' 칸). [Lv1 값, Lv8 값]. 그 무공에 없으면 null.
+        // 읽는 쪽은 Combat.WeaponGrowth. 목록 기본값을 두지 않는다(Newtonsoft 가 기본값 뒤에 덧붙인다).
+        /// <summary>한 번에 치는 횟수(나한권 연타, 취선봉 휘두르기, 이화창 찌르기).</summary>
+        public List<float>? Hits;
+        /// <summary>한 번에 나가는 개수(비도·폭탄·검·사슬·갈래·낙뢰·꽃잎).</summary>
+        public List<float>? Projectiles;
+        public List<float>? Pierce;
+        /// <summary>섬광지 초당 발 수. 있으면 쿨다운 대신 1 / 이 값.</summary>
+        public List<float>? ShotsPerSecond;
+        public List<float>? BurnPerSecond;
+        /// <summary>둔화 비율(0.15 = 15%).</summary>
+        public List<float>? Slow;
+        /// <summary>지속 초(태극검 공전).</summary>
+        public List<float>? Duration;
+        public List<float>? Lifesteal;
+        public List<float>? StunChance;
+        /// <summary>Lv8 반경(m). 독무처럼 반경이 '2→3.5m' 로 자라는 무공만.</summary>
+        public float? RangeLv8;
+        /// <summary>Lv8 범위·크기 배율(창천검기 범위 +40% = 1.4, 장풍은 장풍 크기). 없으면 1.</summary>
+        public float? AreaLv8;
+        /// <summary>그 레벨에 붙는 새 동작(레벨 → 이름). 기획서 '앞뒤 베기(Lv4)'.</summary>
+        public Dictionary<string, string>? Milestones;
+
         public YinYang Aspect => YinYangParse.From(Yinyang);
         /// <summary>땅의 주인 첫 처치로 열리면 그 지역 id, 아니면 null.</summary>
         public string? UnlockBossRegion => UnlockToken.BossRegion(Unlock);
