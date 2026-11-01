@@ -15,7 +15,7 @@
     { "id": "blood_demon_hand","nameKo": "혈마수", "hanja": "血魔手",      "weapon": "blood_claw",      "passive": "hyeolhae",     "summary": "핏빛 손이 전방 부채꼴을 할퀴고 흡혈 4%. 극음이면 범위 2배" },
     { "id": "patian_qin",    "nameKo": "파천금음", "hanja": "破天琴音",      "weapon": "sonic_qin",       "passive": "cheongsim",    "summary": "음파가 겹칠수록 피해 증폭(최대 3배), 기절 30%" },
     { "id": "hundred_flowers","nameKo": "백화난무창", "hanja": "百花亂舞槍",   "weapon": "pear_spear",      "passive": "unryong",      "summary": "경공 경로를 따라 창격 폭풍, 상시 5방향 찌르기" },
-    { "id": "five_thunders", "nameKo": "오뢰정법", "hanja": "五雷正法",      "weapon": "thunder_talisman","passive": "domun",        "summary": "화면 5곳 동시 대낙뢰, 맞은 적 주변으로 번개 전이" },
+    { "id": "five_thunders", "nameKo": "오뢰정법", "hanja": "五雷正法",      "weapon": "thunder_talisman","passive": "domun",        "summary": "화면 5곳 동시 대낙뢰, 맞은 적 주변으로 번개 전이", "params": {"strikes": 5, "rangeMultiplier": 1.5, "radiusMultiplier": 2, "lightningChains": 2, "lightningRange": 3, "lightningFalloff": 0.6} },
     { "id": "plum_full_bloom","nameKo": "매화만개", "hanja": "梅花滿開",     "weapon": "falling_petals",  "passive": "maehwa",       "summary": "화면 전체를 도는 매화 폭풍, 닿을 때마다 기혈 0.2 회복" }
   ]
 }

@@ -76,6 +76,13 @@ namespace BloodRain.Core.Tests
             Assert.Equal($"{Num(c.Param("lightningRange"))}m 안 다음 적", bolt[3]);
             Assert.Equal($"{Num(c.Param("lightningDamage"))}배, 옮을 때마다 {Num(c.Param("lightningFalloff"))}배", bolt[5]);
             Assert.Contains($"{Num(c.Param("lightningChance") * 100)}% 확률, 곁의 적으로 {Num(c.Param("lightningChains"))}번", bolt[6]);
+            var t = Of("thunder_talisman");
+            var five = rows[t.NameKo];
+            Assert.Equal($"뇌부 낙뢰의 {Num(t.Param("radiusMultiplier"))}배, {Num(t.Param("lightningRange"))}m 안 다음 적", five[3]);
+            Assert.Equal($"1배, 옮을 때마다 {Num(t.Param("lightningFalloff"))}배", five[5]);
+            Assert.Contains($"사거리 {Num(t.Param("rangeMultiplier"))}배 안 서로 다른 적 {Num(t.Param("strikes"))}곳 동시", five[6]);
+            Assert.Contains($"곁의 적으로 {Num(t.Param("lightningChains"))}번", five[6]);
+            Assert.Contains($"화면 {Num(t.Param("strikes"))}곳 동시 대낙뢰", Effect("thunder_talisman"));
         }
 
         /// <summary>E-02: 기획서 효과 칸의 불바다·낙뢰 연쇄·치명타 폭발을 프로토타입이 그린다.</summary>

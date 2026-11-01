@@ -195,11 +195,17 @@ namespace BloodRain.Sim
                 case "random_lightning":
                 {
                     // 뇌부: 사거리 안 서로 다른 적 n곳(2→5)에 반경 strikeRadius 낙뢰. 감전(멈춤)은 피해가 아니라 셈하지 않는다.
-                    // 절기 오뢰정법은 아직 params 가 없어 갈래 수만 그대로 둔다.
-                    int n = RoundJs(Range(ex?.Projectiles, t, 2, 5)) + s.Amount;
-                    double rr = (def.StrikeRadius ?? 1.2) * s.Area;
+                    // 절기 오뢰정법: 5곳 동시, 반경 2배, 맞은 적마다 곁의 적으로 lightningChains 번 lightningFalloff 배씩 옮는다.
+                    int n = (evolved ? (int)(ex?.EvoParam("strikes", 5) ?? 5) : RoundJs(Range(ex?.Projectiles, t, 2, 5))) + s.Amount;
+                    double rr = (def.StrikeRadius ?? 1.2) * s.Area * (evolved ? ex?.EvoParam("radiusMultiplier", 2) ?? 2 : 1);
+                    int chains = evolved ? (int)(ex?.EvoParam("lightningChains", 2) ?? 2) : 0;
+                    double fall = ex?.EvoParam("lightningFalloff", 0.6) ?? 0.6;
                     for (int i = 0; i < n; i++)
+                    {
                         list.Add(new Strike(area: Disc(rr + EnemyRadius), random: true, damage: dmg, singleHits: 1));
+                        for (int k = 1; k <= chains; k++)
+                            list.Add(new Strike(targets: 1, random: true, damage: dmg * Math.Pow(fall, k)));
+                    }
                     break;
                 }
                 case "aura":
