@@ -253,6 +253,28 @@ namespace BloodRain.Core.Tests
             Assert.Equal(270f, fog.NextSpreadAt(180f));
         }
 
+        [Fact] public void 주기가_0인_독안개는_퍼지지_않고_다음_시각도_없다()
+        {
+            var def = new PoisonFogGimmickDef { FirstSpreadSeconds = 90, PeriodSeconds = 0, SpreadSeconds = 4, HoldSeconds = 20, FadeSeconds = 4, Radius = 10 };
+            var fog = new PoisonFogGimmick(def);
+            Assert.Equal(FogPhase.Clear, fog.PhaseAt(92f));
+            Assert.Equal(0f, fog.RadiusAt(100f));
+            Assert.Equal(float.PositiveInfinity, fog.NextSpreadAt(0f));
+            Assert.Equal(float.PositiveInfinity, fog.NextSpreadAt(500f));
+        }
+
+        [Fact] public void 독안개_다음_시각은_늘_그때_퍼지기_시작한다()
+        {
+            var fog = new PoisonFogGimmick(G.PoisonFog);
+            for (float t = 0; t < 3600; t += 6.7f)
+            {
+                float next = fog.NextSpreadAt(t);
+                Assert.True(next > t);
+                Assert.Equal(FogPhase.Spreading, fog.PhaseAt(next));
+                Assert.NotEqual(FogPhase.Spreading, fog.PhaseAt(next - 0.01f));
+            }
+        }
+
         [Fact] public void 독안개_안에선_누구나_초당_최대_기혈_1퍼센트를_잃고_보스와_독_면역은_잃지_않는다()
         {
             var fog = new PoisonFogGimmick(G.PoisonFog);

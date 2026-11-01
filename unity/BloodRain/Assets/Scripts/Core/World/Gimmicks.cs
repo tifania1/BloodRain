@@ -220,9 +220,10 @@ namespace BloodRain.Core.World
             return r > 0f && distanceFromSource <= r;
         }
 
-        /// <summary>lifeSeconds 뒤로 처음 퍼지기 시작하는 시각.</summary>
+        /// <summary>lifeSeconds 뒤로 처음 퍼지기 시작하는 시각. periodSeconds 가 0 이하면 안 퍼지니(PhaseAt 과 같음) float.PositiveInfinity.</summary>
         public float NextSpreadAt(float lifeSeconds)
         {
+            if (_def.PeriodSeconds <= 0f) return float.PositiveInfinity;
             if (lifeSeconds < _def.FirstSpreadSeconds) return _def.FirstSpreadSeconds;
             int k = (int)Math.Floor((lifeSeconds - _def.FirstSpreadSeconds) / _def.PeriodSeconds);
             return _def.FirstSpreadSeconds + (k + 1) * _def.PeriodSeconds;
