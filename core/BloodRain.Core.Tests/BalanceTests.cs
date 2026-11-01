@@ -190,6 +190,10 @@ namespace BloodRain.Core.Tests
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             Assert.Contains("viewDiag() * rand(B.spawnTarget.ringMinDiagonal, B.spawnTarget.ringMaxDiagonal)", html);
             Assert.Contains("diag * B.spawnTarget.recycleToDiagonal", html);
+            Assert.Contains($"정예는 대각선 {TestData.Num(t.EliteDiagonal)}배 거리에, 금두꺼비는 생성 고리의 {TestData.Num(t.ToadRingScale)}배 거리(화면 안)에", sec);
+            Assert.True(t.RingMaxDiagonal * t.ToadRingScale < 0.5f, "금두꺼비가 화면 밖에 나온다(대각선 0.5배 = 화면 모서리)");
+            Assert.Contains("viewDiag() * B.spawnTarget.eliteDiagonal", html);
+            Assert.Contains("(x - p.x) * B.spawnTarget.toadRingScale", html);
             Assert.Contains("한 생의 시간대별 가중치표와 서 있는 지역의 고유 적에서 뽑습니다", sec);
         }
 

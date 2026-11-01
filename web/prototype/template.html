@@ -959,7 +959,7 @@ function spawnEnemy(type, x, y, extra) {
   return e;
 }
 function spawnElite(key) {
-  const d = ELITES[key], p = G.player, a = rand(0, TAU), R = viewDiag() * 0.62;
+  const d = ELITES[key], p = G.player, a = rand(0, TAU), R = viewDiag() * B.spawnTarget.eliteDiagonal;
   const hp = d.hp * (1 + B.enemyScaling.healthPerMinute * G.gm);
   const e = spawnEnemy('sigang', p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, {
     sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * (1 + B.enemyScaling.damagePerMinute * G.gm),
@@ -1541,7 +1541,7 @@ function runEvent(ev) {
     }
     toast('혈인 떼', '한 방향으로 돌진해 온다');
   } else if (ev.kind === 'elite') spawnElite(ev.type);
-  else if (ev.kind === 'toad') { const [x, y] = ringPos(); spawnEnemy('golden_toad', p.x + (x - p.x) * 0.55, p.y + (y - p.y) * 0.55); toast('금두꺼비', '잡으면 은자와 진기'); }
+  else if (ev.kind === 'toad') { const [x, y] = ringPos(); spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale); toast('금두꺼비', '잡으면 은자와 진기'); }
   else if (ev.kind === 'ring') { for (let i = 0; i < ev.n; i++) { const a = i / ev.n * TAU; spawnEnemy('donggap', p.x + Math.cos(a) * diag * 0.6, p.y + Math.sin(a) * diag * 0.6); } toast('동갑시 포위', '원을 좁혀 온다'); }
   else if (ev.kind === 'boss') spawnBoss();
 }

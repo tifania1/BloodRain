@@ -53,3 +53,4 @@
 - 2026-11-01 · 6장 '공통 적' 표 아래 · 혈인 14초·금두꺼비 25초 뒤 사라짐, 혈무사 돌진(5m 안 예고, 0.5초·초당 9m, 2~3.5초 쉼) 한 문단. 프로토타입에 박혀 있던 값을 enemies.json lifeSeconds·dash 로 옮기며(예약 세션) → 원본 미반영
 - 2026-11-01 · 8장 '피격과 사망' · 플레이어 몸 반지름 0.4m 한 줄. 프로토타입·시뮬레이터에 박혀 있던 값을 balance.json stats.playerBodyRadius 로 옮기며(예약 세션) → 원본 미반영
 - 2026-11-01 · 9장 '날아가는 것과 넉백' 표 아래 · 넉백 속도가 1초 뒤 2%만 남도록 줄어든다 한 문장. 프로토타입·Unity EnemySim 에 박혀 있던 값을 balance.json enemyStatus.knockbackKeepPerSecond 로 옮기며(예약 세션) → 원본 미반영
+- 2026-11-01 · 11장 '생성 규칙' · 정예 대각선 0.62배, 금두꺼비 생성 고리 0.55배(화면 안)에 나타남. 프로토타입 값을 balance.json spawnTarget.eliteDiagonal·toadRingScale 로 옮기며(예약 세션) → 원본 미반영

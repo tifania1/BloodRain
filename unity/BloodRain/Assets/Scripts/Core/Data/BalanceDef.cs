@@ -186,6 +186,10 @@ namespace BloodRain.Core.Data
         public float RecycleBeyondDiagonal = 1.5f;
         /// <summary>옮긴 적을 두는 거리(대각선 배수). 생성 고리 안쪽 끝에 가깝게 둬서 바로 화면에 들어오게 한다.</summary>
         public float RecycleToDiagonal = 0.65f;
+        /// <summary>정예가 나타나는 거리(대각선 배수, 화면 바로 바깥).</summary>
+        public float EliteDiagonal = 0.62f;
+        /// <summary>금두꺼비는 생성 고리 자리에 이 배율을 곱한 거리(화면 안)에 나타난다. 보여야 쫓아간다.</summary>
+        public float ToadRingScale = 0.55f;
     }
 
     public sealed class ContactDef
