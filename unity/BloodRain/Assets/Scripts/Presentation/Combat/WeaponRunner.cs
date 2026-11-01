@@ -35,6 +35,18 @@ namespace BloodRain.Presentation.Combat
         public List<Slot> slots = new List<Slot>();
         public bool showStats = true;
 
+        [Header("붓 획(V-04). VfxBootstrap 이 채운다. 비면 옛 부채꼴로 그린다")]
+        public Material brushMaterial;
+        public Texture2D[] samjaeTier1;
+        [Tooltip("텍스처 한 변(경지 m), samjae.json sizeMeters")]
+        public float samjaeTier1Meters = 5.74f;
+        [Tooltip("호가 펼친 각(라디안), samjae.json span")]
+        public float samjaeTier1Span = 2.3f;
+
+        // 획 시간(vfx.md: 0.4초 안에 흩어진다). 그어지기 → 잠깐 멈춤 → 흩어짐
+        const float BrushDraw = 0.10f, BrushHold = 0.06f, BrushLife = 0.40f;
+        static readonly Color StrokeInk = new Color(0.078f, 0.078f, 0.078f, 1f); // #141414
+
         static readonly string[] TestOrder =
         {
             "samjae_sword", "nahan_fist", "changcheon_qi", "poison_mist", "flying_dagger", "palm_wind", "flash_finger", "thunder_bomb",
@@ -142,6 +154,7 @@ namespace BloodRain.Presentation.Combat
             }
 
             StepProjectiles(dt);
+            StepBrushes(dt);
 
             for (int i = _fx.Count - 1; i >= 0; i--)
             {
@@ -188,7 +201,7 @@ namespace BloodRain.Presentation.Combat
                         {
                             foreach (var a in dirs)
                             {
-                                AddFx(a, Mathf.PI, R, 0.22f, new Color(0.95f, 0.93f, 0.85f, 0.75f));
+                                if (!AddBrush(s, a)) AddFx(a, Mathf.PI, R, 0.22f, new Color(0.95f, 0.93f, 0.85f, 0.75f));
                                 Deal(s, dmg, HitArc(P, R, a, dmg, kb));
                             }
                         });
@@ -448,6 +461,79 @@ namespace BloodRain.Presentation.Combat
             else _pending.Add(new Pending { Delay = delay, Apply = a });
         }
 
+        // ── 붓 획(V-04) ─────────────────────────────────────────
+        struct Brush
+        {
+            public Texture2D Tex;
+            public float Angle, Size, Span, Age;
+            public Color Color;
+        }
+
+        readonly List<Brush> _brushes = new List<Brush>();
+        Mesh _quad;
+        MaterialPropertyBlock _brushProps;
+        static readonly int IdMainTex = Shader.PropertyToID("_MainTex");
+        static readonly int IdColor = Shader.PropertyToID("_Color");
+        static readonly int IdProgress = Shader.PropertyToID("_Progress");
+        static readonly int IdSpan = Shader.PropertyToID("_Span");
+        static readonly int IdKind = Shader.PropertyToID("_Kind");
+        static readonly int IdAlpha = Shader.PropertyToID("_Alpha");
+
+        /// <summary>그 무공의 붓 획이 있으면 띄우고 true. 지금은 삼재검법 1단만(2·3단 텍스처와 담채·금빛 층은 V-05).</summary>
+        bool AddBrush(Slot s, float angle)
+        {
+            if (brushMaterial == null || s.id != "samjae_sword" || samjaeTier1 == null || samjaeTier1.Length == 0) return false;
+            var tex = samjaeTier1[s.Fired % samjaeTier1.Length];
+            if (tex == null) return false;
+            _brushes.Add(new Brush { Tex = tex, Angle = angle, Size = World.Length(samjaeTier1Meters), Span = samjaeTier1Span, Color = StrokeInk });
+            return true;
+        }
+
+        void StepBrushes(float dt)
+        {
+            for (int i = _brushes.Count - 1; i >= 0; i--)
+            {
+                var b = _brushes[i];
+                b.Age += dt;
+                if (b.Age >= BrushLife) _brushes.RemoveAt(i);
+                else _brushes[i] = b;
+            }
+        }
+
+        void DrawBrushes()
+        {
+            if (_brushes.Count == 0 || brushMaterial == null) return;
+            if (_quad == null) _quad = MakeQuad();
+            if (_brushProps == null) _brushProps = new MaterialPropertyBlock();
+            var rp = new RenderParams(brushMaterial) { matProps = _brushProps, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
+            var c = P;
+            foreach (var b in _brushes)
+            {
+                float progress = Mathf.Clamp01(b.Age / BrushDraw);
+                float dissolve = Mathf.Clamp01((b.Age - BrushDraw - BrushHold) / (BrushLife - BrushDraw - BrushHold));
+                _brushProps.Clear();
+                _brushProps.SetTexture(IdMainTex, b.Tex);
+                _brushProps.SetColor(IdColor, b.Color);
+                _brushProps.SetFloat(IdProgress, progress);
+                _brushProps.SetFloat(IdDissolve, dissolve);
+                _brushProps.SetFloat(IdSpan, b.Span);
+                _brushProps.SetFloat(IdKind, 0f);
+                _brushProps.SetFloat(IdAlpha, 1f);
+                var m = Matrix4x4.TRS(new Vector3(c.x, c.y, -0.27f), Quaternion.Euler(0, 0, b.Angle * Mathf.Rad2Deg), new Vector3(b.Size, b.Size, 1f));
+                Graphics.RenderMesh(rp, _quad, 0, m);
+            }
+        }
+
+        static Mesh MakeQuad()
+        {
+            var m = new Mesh { name = "붓 획 사각형" };
+            m.vertices = new[] { new Vector3(-0.5f, -0.5f), new Vector3(0.5f, -0.5f), new Vector3(0.5f, 0.5f), new Vector3(-0.5f, 0.5f) };
+            m.uv = new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), new Vector2(0, 1) };
+            m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+            m.RecalculateBounds();
+            return m;
+        }
+
         void AddFx(float angle, float span, float radius, float life, Color c) =>
             _fx.Add(new Fx { Angle = angle, Span = span, Radius = radius, Life = life, Color = c });
 
@@ -456,7 +542,9 @@ namespace BloodRain.Presentation.Combat
 
         void LateUpdate()
         {
-            if (_mat == null || player == null || (_fx.Count == 0 && _projs.Count == 0)) return;
+            if (player == null) return;
+            DrawBrushes();
+            if (_mat == null || (_fx.Count == 0 && _projs.Count == 0)) return;
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             foreach (var f in _fx)
             {

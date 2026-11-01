@@ -269,6 +269,13 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
   slots: []
   showStats: 1
+  brushMaterial: {fileID: 2100000, guid: 12e660c1901fa5342be9b3c1d19a456a, type: 2}
+  samjaeTier1:
+  - {fileID: 2800000, guid: 5034d5fc8ec36a44fa573032ee813fa3, type: 3}
+  - {fileID: 2800000, guid: ca740e95547153f44843860917f11742, type: 3}
+  - {fileID: 2800000, guid: 22cb4792ff0ef8c4d97faed598907f3c, type: 3}
+  samjaeTier1Meters: 5.74
+  samjaeTier1Span: 2.3
 --- !u!4 &303687332
 Transform:
   m_ObjectHideFlags: 0
