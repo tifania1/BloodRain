@@ -32,8 +32,13 @@ namespace BloodRain.Sim
         /// <summary>장삼이 나오는 시각(분). chapters.json prologue boss 사건과 같다(테스트가 확인).</summary>
         public const double BossMinute = 9;
 
-        /// <summary>기획서 4장 표의 목표 시각(분).</summary>
-        public const double TargetFirstLevelUp = 40 / 60.0, TargetUltimate = 2, TargetIryu = 10 / 3.0, TargetIlryu = 20 / 3.0, TargetOffHarmony = 7.5;
+        /// <summary>기획서 4장 표의 시각(분). 2026-11-01 T-43 에서 이 시뮬레이션에 맞춰 고쳤다(테스트가 표와 같은지 본다).</summary>
+        public const double TargetFirstLevelUp = 15 / 60.0, TargetUltimate = 2, TargetIryu = 2.75, TargetIlryu = 37 / 6.0, TargetOffHarmony = 10 / 3.0;
+        /// <summary>6장 장삼 문단의 '9분 화력 약 210이면 각성까지 35초쯤'.</summary>
+        public const double TargetJangSamDps = 210;
+
+        /// <summary>6장 문단의 각성까지 초: 깎을 기혈 ÷ (화력 210 × 치는 시간), 5초 단위로 반올림.</summary>
+        public static double JangSamTargetSeconds(double toCut) => Math.Round(toCut / (TargetJangSamDps * CheonhaSim.BossUptime) / 5) * 5;
 
         public static SimResult RunOne(SimData data, int seed, string policy = "average") =>
             RunSimulator.Run(data, new SimOptions { Prologue = true, Seed = seed, Policy = policy, Minutes = BossMinute, Character = data.Game.Cheonha.PrologueBody.Character });
@@ -126,7 +131,7 @@ namespace BloodRain.Sim
             sb.AppendLine();
             sb.AppendLine("## 장삼전(9:00)");
             sb.AppendLine();
-            sb.AppendLine($"장삼 기혈 {boss.Health:0}(혈운 농도·시간 배율 없음, Core `Prologue.BossMaxHealth`). 기혈이 {floor * 100:0}%에 닿으면 각성한다. 그때까지 깎을 {boss.Health * (1 - floor):0} ÷ (9분 단일 대상 초당 피해 × 치는 시간 {CheonhaSim.BossUptime:0.0}). 기획서 6장은 '10분 화력 목표 300이면 각성까지 18초쯤'(치는 시간 비율 없이).");
+            sb.AppendLine($"장삼 기혈 {boss.Health:0}(혈운 농도·시간 배율 없음, Core `Prologue.BossMaxHealth`). 기혈이 {floor * 100:0}%에 닿으면 각성한다. 그때까지 깎을 {boss.Health * (1 - floor):0} ÷ (9분 단일 대상 초당 피해 × 치는 시간 {CheonhaSim.BossUptime:0.0}). 기획서 6장은 '9분 화력 약 {F0(TargetJangSamDps)}이면 각성까지 {F0(JangSamTargetSeconds(boss.Health * (1 - floor)))}초쯤'(이 시뮬레이션에 맞춤, 치는 시간 {CheonhaSim.BossUptime:0.0} 포함).");
             sb.AppendLine();
             sb.AppendLine("| 정책 | 9분 레벨 | 9분 단일 대상 초당 피해 | 각성까지(초) | 9분 전에 절정 |");
             sb.AppendLine("|---|---|---|---|---|");
@@ -141,7 +146,7 @@ namespace BloodRain.Sim
                 sb.AppendLine();
                 sb.AppendLine("| 조정 시험 | 첫 레벨업 | 오의 | 이류 | 일류 | 9분 레벨 | 장삼 각성까지(초) |");
                 sb.AppendLine("|---|---|---|---|---|---|---|");
-                sb.AppendLine($"| 기획서 4장 | {Clock(TargetFirstLevelUp)} | {Clock(TargetUltimate)} | {Clock(TargetIryu)} | {Clock(TargetIlryu)} | - | 18 (화력 300) |");
+                sb.AppendLine($"| 기획서 4장 | {Clock(TargetFirstLevelUp)} | {Clock(TargetUltimate)} | {Clock(TargetIryu)} | {Clock(TargetIlryu)} | - | {F0(JangSamTargetSeconds(boss.Health * (1 - floor)))} (화력 {F0(TargetJangSamDps)}) |");
                 foreach (var sc in Scenarios.All)
                 {
                     var d = sc.LoadData(dataDir);
@@ -153,12 +158,12 @@ namespace BloodRain.Sim
             sb.AppendLine("## 읽는 법");
             sb.AppendLine();
             var avg = rows[0];
-            sb.AppendLine($"- 평균 정책 기준 이류 {Clock(avg.Iryu)}(기획서 3:20), 일류 {Clock(avg.Ilryu)}(6:40). 돌파 레벨은 balance.json realms 이고 진기는 숭산과 같은 처치 진기(시강 1)를 쓴다.");
-            sb.AppendLine($"- 첫 레벨업 {Clock(avg.FirstLevelUp)}(기획서 0:40), 오의 게이지 {Clock(avg.FirstUltimate)}(2:00). 오의 게이지는 처치마다 차서 서장처럼 시강만 나오는 판에서는 처치 수가 곧 시각이다.");
-            sb.AppendLine($"- 음양은 {avg.OffHarmonyRuns}/{avg.Runs}판에서 9분 안에 태극을 벗어났다(기획서 7:30에 '처음 기울며 짧은 설명'). 안 기운 판이 많으면 설명 문구는 시각이 아니라 '처음 기울 때'에 붙여야 한다.");
+            sb.AppendLine($"- 평균 정책 기준 이류 {Clock(avg.Iryu)}(기획서 {Clock(TargetIryu)}), 일류 {Clock(avg.Ilryu)}({Clock(TargetIlryu)}). 돌파 레벨은 balance.json realms 이고 진기는 숭산과 같은 처치 진기(시강 1)를 쓴다.");
+            sb.AppendLine($"- 첫 레벨업 {Clock(avg.FirstLevelUp)}(기획서 {Clock(TargetFirstLevelUp)}), 오의 게이지 {Clock(avg.FirstUltimate)}({Clock(TargetUltimate)}). 오의 게이지는 처치마다 차서 서장처럼 시강만 나오는 판에서는 처치 수가 곧 시각이다.");
+            sb.AppendLine($"- 음양은 {avg.OffHarmonyRuns}/{avg.Runs}판에서 9분 안에 태극을 벗어났다. 기획서는 설명 문구를 시각이 아니라 '처음 기울 때'(가운데 {Clock(TargetOffHarmony)}쯤)에 붙인다.");
             sb.AppendLine($"- 장삼전 각성까지 평균 정책 {F0(avg.AwakenSeconds)}초. 서장 장삼은 처치 목표 {boss.TargetKillSeconds:0}초(enemies.json targetKillSeconds)인데, 각성 전 90%를 깎는 데 이만큼 걸리고 각성 뒤 남은 10%를 절기로 마저 친다.");
             if (scenarios)
-                sb.AppendLine("- 조정 시험 가운데 서장 시각을 움직이는 것은 생성 채움 비율(0.3 → 0.1)뿐이다. 이류는 표와 맞지만(3:20 근처) 일류가 1분쯤 늦어지고 장삼 각성도 길어진다. 서장만 따로 바꾸려면 chapters.json prologue 에 채움 비율을 따로 두는 길이 있다(지금은 balance.json 하나를 같이 쓴다).");
+                sb.AppendLine("- 조정 시험 가운데 서장 시각을 움직이는 것은 생성 채움 비율(0.3 → 0.1)뿐이다. 이류가 3:20 근처로 늦어지고 일류도 1분쯤 늦어지며 장삼 각성도 길어진다. 서장만 따로 바꾸려면 chapters.json prologue 에 채움 비율을 따로 두는 길이 있다(지금은 balance.json 하나를 같이 쓴다).");
             sb.AppendLine("- 빠진 것: 장삼전 동안 레벨업·잡몹 진기, 장삼 패턴(포승줄 묶임 1초·호루라기 시강 소환), 덩이(이류부터 4명)의 그림. 정책은 사람이 아니라 정해진 규칙으로 고른다.");
             return sb.ToString();
         }

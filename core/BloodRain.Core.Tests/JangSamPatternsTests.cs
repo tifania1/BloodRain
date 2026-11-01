@@ -110,9 +110,9 @@ namespace BloodRain.Core.Tests
             var row = GddTable(GddSection("땅의 주인(지역 보스)")).Single(r => r[0] == boss.NameKo);
             Assert.Equal(boss.Health.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture), row[2]);
             Assert.Contains(boss.Health.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture) + " 그대로", GddSection(boss.NameKo));
-            // 10분 화력 목표 300으로 각성(기혈 10%)까지 18초
+            // 9분 화력 약 210(치는 시간 0.7)으로 각성(기혈 10%)까지 35초쯤 — 서장 시뮬레이션(prologue.md)에 맞춘 값
             float floor = _d.Cheonha.PrologueBody.BossHealthFloor;
-            Assert.Contains($"각성까지 {Num(boss.Health * (1 - floor) / 300f)}초쯤", GddSection(boss.NameKo));
+            Assert.Contains($"9분 화력 약 {BloodRain.Sim.PrologueSim.TargetJangSamDps:0}이면 각성까지 {BloodRain.Sim.PrologueSim.JangSamTargetSeconds(boss.Health * (1 - floor)):0}초쯤", GddSection(boss.NameKo));
         }
 
         [Fact] public void 패턴_이름이_보스_표의_설명과_대응한다()

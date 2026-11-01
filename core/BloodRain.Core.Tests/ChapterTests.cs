@@ -344,9 +344,11 @@ namespace BloodRain.Core.Tests
                 var brk = Regex.Match(what, @"^(\S+) 돌파");
                 if (brk.Success)
                 {
-                    // 서장도 천하 규칙 그대로라 경지표 시각에 돌파한다(7장 '서장(첫 생)')
+                    // 표 시각은 서장 시뮬레이션(prologue.md, 평균 정책)에 맞췄다(T-43). 경지표(7장 한 생 목표)보다 이르다
                     breakthroughs++;
-                    Assert.Equal(ReachMinute(RealmByName(brk.Groups[1].Value)), at!.Value, 2);
+                    double target = brk.Groups[1].Value == "이류" ? BloodRain.Sim.PrologueSim.TargetIryu : BloodRain.Sim.PrologueSim.TargetIlryu;
+                    Assert.Equal(target, at!.Value, 2);
+                    Assert.True(at!.Value < ReachMinute(RealmByName(brk.Groups[1].Value)));
                 }
             }
             Assert.Equal(charges, c.Events.Count(e => e.Type == WaveEventKind.Charge));

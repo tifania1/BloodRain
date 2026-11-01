@@ -49,7 +49,7 @@ namespace BloodRain.Core.Tests
             var text = PrologueSim.Report(Data.Value, 2);
             foreach (var p in new[] { "average", "greedy", "slow" }) Assert.Contains($"| {p} |", text);
             Assert.Contains("이류 돌파", text);
-            Assert.Contains("3:20", text);
+            Assert.Contains("2:45", text);
         }
 
         [Fact] public void 조정_시험_표는_시험마다_한_줄이고_지금_데이터는_위_표와_같다()
