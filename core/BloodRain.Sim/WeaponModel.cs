@@ -192,6 +192,16 @@ namespace BloodRain.Sim
                     }
                     break;
                 }
+                case "random_lightning":
+                {
+                    // 뇌부: 사거리 안 서로 다른 적 n곳(2→5)에 반경 strikeRadius 낙뢰. 감전(멈춤)은 피해가 아니라 셈하지 않는다.
+                    // 절기 오뢰정법은 아직 params 가 없어 갈래 수만 그대로 둔다.
+                    int n = RoundJs(Range(ex?.Projectiles, t, 2, 5)) + s.Amount;
+                    double rr = (def.StrikeRadius ?? 1.2) * s.Area;
+                    for (int i = 0; i < n; i++)
+                        list.Add(new Strike(area: Disc(rr + EnemyRadius), random: true, damage: dmg, singleHits: 1));
+                    break;
+                }
                 case "aura":
                 {
                     // 독무: 발밑 원(반경 2→3.5m) 안을 0.5초마다 '초당 피해의 절반'씩. 절기는 반경 2배, 7초 버틴 잡몹 즉사.

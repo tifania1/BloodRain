@@ -50,8 +50,12 @@ namespace BloodRain.Core.Data
         public WeaponShot? Shot;
         /// <summary>맞은 적을 미는 세기. 적 넉백 저항·넉백 배율을 곱하기 전. 보스는 안 밀린다.</summary>
         public float? Knockback;
-        /// <summary>벽력탄이 자리에 떨어지기까지 초.</summary>
+        /// <summary>벽력탄·뇌부 낙뢰가 자리에 떨어지기까지 초(그동안 바닥에 표식).</summary>
         public float? FuseSeconds;
+        /// <summary>뇌부 낙뢰 한 줄기가 맞히는 반경(m). 연무장 범위를 곱하기 전.</summary>
+        public float? StrikeRadius;
+        /// <summary>뇌부 감전(Lv5)으로 맞은 적이 멈추는 초. 보스는 걸리지 않는다.</summary>
+        public float? ShockSeconds;
         /// <summary>벽력탄이 떨어질 자리를 고르는 거리(m). 이 안의 적이 없으면 몸 둘레에 떨어진다.</summary>
         public float? SeekRange;
         /// <summary>한 번 쏠 때 연달아 나가는 획·발 사이 초(삼재검법 3연 베기, 나한권 연타, 장풍 2연발, 취선봉 휘두르기).</summary>

@@ -27,7 +27,7 @@ namespace BloodRain.Core.Tests
         public void 기획서_표와_데이터가_같다()
         {
             var rows = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백"));
-            Assert.Equal(9, rows.Count);
+            Assert.Equal(10, rows.Count);
             foreach (var r in rows)
             {
                 var w = ByName(r[0]);
@@ -58,7 +58,27 @@ namespace BloodRain.Core.Tests
             var w = _d.Weapons.Single(x => x.Id == "thunder_bomb");
             Assert.Equal(float.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), w.SeekRange);
             Assert.Equal(float.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture), w.FuseSeconds);
-            Assert.All(_d.Weapons.Where(x => x.Id != "thunder_bomb"), x => { Assert.Null(x.SeekRange); Assert.Null(x.FuseSeconds); });
+            Assert.All(_d.Weapons.Where(x => x.Id != "thunder_bomb"), x => Assert.Null(x.SeekRange));
+            Assert.All(_d.Weapons.Where(x => x.Id != "thunder_bomb" && x.Id != "thunder_talisman"), x => Assert.Null(x.FuseSeconds));
+        }
+
+        [Fact]
+        public void 뇌부_낙뢰_값이_표와_같다()
+        {
+            // 2026-11-02 PC 세션이 숫자가 없어 멈춘 자리. 사거리 안 서로 다른 적, 표식 뒤 떨어짐, 반경, 감전.
+            var row = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백")).Single(r => r[0] == "뇌부");
+            var m = Regex.Match(row[6], @"([0-9.]+)m 안의 서로 다른 적 자리에 ([0-9.]+)초 뒤 떨어짐, 낙뢰 반경 ([0-9.]+)m, 감전\(Lv([0-9])\) 맞은 적 ([0-9.]+)초 멈춤");
+            Assert.True(m.Success, row[6]);
+            var w = _d.Weapons.Single(x => x.Id == "thunder_talisman");
+            float F(int g) => float.Parse(m.Groups[g].Value, CultureInfo.InvariantCulture);
+            Assert.Equal(F(1), w.Range);
+            Assert.Equal(F(2), w.FuseSeconds);
+            Assert.Equal(F(3), w.StrikeRadius);
+            Assert.Equal("감전", w.Milestones![m.Groups[4].Value]);
+            Assert.Equal(F(5), w.ShockSeconds);
+            Assert.All(_d.Weapons.Where(x => x.Id != "thunder_talisman"), x => { Assert.Null(x.StrikeRadius); Assert.Null(x.ShockSeconds); });
+            // 9장 무공 표의 '낙뢰 2→5곳'
+            Assert.Equal(new List<float> { 2, 5 }, w.Projectiles);
         }
 
         [Fact]
