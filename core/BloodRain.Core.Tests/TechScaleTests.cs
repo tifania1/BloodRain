@@ -68,5 +68,28 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"남은 은자는 절반만 윤회의 기로", sec);
             Assert.Equal(0.5f, _d.Cheonha.RebirthQi.LeftoverSilverRate);
         }
+
+        /// <summary>10장 '화폐' 표: 혈정은 정예 1·땅의 주인 5, 봉인석은 땅의 주인 첫 처치로 모두 7개.</summary>
+        [Fact] public void 화폐_표의_혈정_봉인석이_데이터와_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("화폐"));
+            var b = _d.Cheonha.Bosses;
+            var crystal = rows.Single(r => r[0].StartsWith("혈정"));
+            Assert.Equal($"정예 {_d.Balance.Drops.EliteBloodCrystal}개, 땅의 주인 {b.FirstKill.BloodCrystal}개", crystal[1]);
+            Assert.Equal(b.FirstKill.BloodCrystal, b.RepeatKill.BloodCrystal); // 다시 잡아도 같은 수(표에 하나로 적음)
+
+            var seal = rows.Single(r => r[0].StartsWith("봉인석"));
+            Assert.True(b.FirstKill.SealStone);
+            Assert.Equal("땅의 주인 첫 처치", seal[1]);
+            Assert.Equal($"지역마다 1개, 모두 {b.FinalRequires.SealStones}개", seal[3]);
+
+            // 땅의 주인 윤회의 기는 bosses 와 rebirthQi 두 곳에 적혀 있다. 둘이 같아야 한다.
+            Assert.Equal(b.FirstKill.RebirthQi, _d.Cheonha.RebirthQi.BossFirstKill);
+            Assert.Equal(b.RepeatKill.RebirthQi, _d.Cheonha.RebirthQi.BossRepeatKill);
+
+            var qi = rows.Single(r => r[0].StartsWith("윤회의 기"));
+            foreach (var t in _d.Cheonha.RebirthQi.Targets.Where(t => t.Minute >= 10))
+                Assert.Contains($"{t.Minute}분 약 {t.Qi:#,0}", qi[3]);
+        }
     }
 }
