@@ -21,3 +21,24 @@
   Content-Type: application/octet-stream
   Content-Encoding: br
   Cache-Control: public, max-age=31536000, immutable, no-transform
+
+# 지금 프로젝트 설정은 Gzip(webGLCompressionFormat 1)이라 빌드가 .gz 로 나온다. 같은 방식으로 하나씩만 건다.
+/Build/*.wasm.gz
+  Content-Type: application/wasm
+  Content-Encoding: gzip
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+
+/Build/*.js.gz
+  Content-Type: application/javascript
+  Content-Encoding: gzip
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+
+/Build/*.data.gz
+  Content-Type: application/octet-stream
+  Content-Encoding: gzip
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+
+/Build/*.json.gz
+  Content-Type: application/octet-stream
+  Content-Encoding: gzip
+  Cache-Control: public, max-age=31536000, immutable, no-transform
