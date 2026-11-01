@@ -29,6 +29,7 @@ namespace BloodRain.Presentation
         public bool showStats = true;
 
         float _playerBody = 0.8f;
+        static readonly Color TelegraphTint = new Color(0.95f, 0.15f, 0.1f);
         readonly List<EnemySim.ContactHit> _hits = new List<EnemySim.ContactHit>();
 
         // 시험용 생성표: (적 id, 가중치)
@@ -162,7 +163,8 @@ namespace BloodRain.Presentation
                 case "hop_chase": return EnemyMove.Hop;
                 case "flee": return EnemyMove.Flee;
                 case "line_charge": return EnemyMove.Line;
-                default: return EnemyMove.Chase; // telegraph_dash·fly_curve 등은 C-04 뒤 갈래를 붙이기 전까지 곧장 쫓는다
+                case "telegraph_dash": return EnemyMove.Dash; // EnemyDef.Dash 가 없으면 SpawnAt 이 Chase 로 돌린다
+                default: return EnemyMove.Chase; // fly_curve 등은 갈래를 붙이기 전까지 곧장 쫓는다
             }
         }
 
@@ -195,6 +197,7 @@ namespace BloodRain.Presentation
             var ws = World;
             int realm = ws.Realm;
             var move = MoveOf(def.Behavior);
+            if (move == EnemyMove.Dash && def.Dash == null) move = EnemyMove.Chase;
             var to = (Vector2)player.position - pos;
             var a = new EnemyAgent
             {
@@ -211,6 +214,17 @@ namespace BloodRain.Presentation
                 BornRealm = realm,
                 Move = (byte)move,
             };
+            if (move == EnemyMove.Dash)
+            {
+                // 혈무사 돌진(enemies.json telegraph·dash, 기획서 6장): 경지 m → 세계 m
+                var dash = def.Dash;
+                a.DashRange = ws.Length(dash.Range, realm);
+                a.DashSpeed = ws.Speed(dash.Speed, realm) * _speedMul;
+                a.DashSeconds = dash.Seconds;
+                a.RestMin = dash.RestMin;
+                a.RestMax = dash.RestMax;
+                a.Telegraph = def.Telegraph;
+            }
             int kindIndex = _kinds.FindIndex(k => k.Def == def);
             a.Kind = kindIndex;
             int id = _sim.Spawn(a);
@@ -298,6 +312,8 @@ namespace BloodRain.Presentation
                 view.Health = a.MaxHealth > 0 ? Mathf.Clamp01(a.Health / a.MaxHealth) : 1f;
                 if (a.Move == (byte)EnemyMove.Hop) view.HopBeat = a.Hop;
                 else view.HopBeat = -2f; // 0 아래면 콩콩 없음
+                if (a.Move == (byte)EnemyMove.Dash && a.Phase == (byte)DashPhase.Telegraph)
+                    view.Tint = Color.Lerp(view.Tint, TelegraphTint, Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임(이펙트 오기 전 임시)
                 clusters.Add(view);
             }
         }

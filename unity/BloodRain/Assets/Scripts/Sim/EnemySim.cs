@@ -6,14 +6,18 @@ using Unity.Mathematics;
 
 namespace BloodRain.Sim
 {
-    /// <summary>적 움직임 갈래. enemies.json behavior 를 여기 넷으로 줄인다(나머지 갈래는 C-04 뒤에 하나씩).</summary>
+    /// <summary>적 움직임 갈래. enemies.json behavior 를 여기 다섯으로 줄인다(나머지 갈래는 C-04 뒤에 하나씩).</summary>
     public enum EnemyMove : byte
     {
         Chase = 0,   // 곧장 쫓기
         Hop = 1,     // hop_chase: 강시 콩콩. 0.6초 박자 중 72% 동안만 뛴다(평균 속도는 데이터 그대로)
         Flee = 2,    // flee: 금두꺼비
         Line = 3,    // line_charge: 처음 방향으로 곧장. EnemyAgent.MaxLife(enemies.json lifeSeconds) 뒤 사라짐
+        Dash = 4,    // telegraph_dash: 혈무사. 쫓다가 DashRange 안이면 Telegraph 초 멈춰 예고 → DashSeconds 동안 DashSpeed 로 돌진 → Rest 초 쉬며 쫓기
     }
+
+    /// <summary>telegraph_dash 단계.</summary>
+    public enum DashPhase : byte { Chase = 0, Telegraph = 1, Dashing = 2, Rest = 3 }
 
     /// <summary>적 한 덩이의 상태. 위치·속도·반경은 세계 m(WorldScale 로 바꾼 값).</summary>
     public struct EnemyAgent
@@ -34,6 +38,11 @@ namespace BloodRain.Sim
         public int BornRealm;     // 이 덩이가 생긴 경지. 플레이어보다 아래면 접촉 피해 없음(Scale.DealsContactDamage)
         public int Kind;          // 적 종류 순번(EnemyField 의 표)
         public int Id;            // 풀에서 꺼낼 때마다 새 번호
+        // telegraph_dash(EnemyDef.Telegraph·Dash). 거리·속도는 세계 m, m/s
+        public float DashRange, DashSpeed, DashSeconds, Telegraph, RestMin, RestMax;
+        public float PhaseLeft;   // 지금 단계 남은 초
+        public float2 DashDir;
+        public byte Phase;        // DashPhase
         public byte Move;
         public byte Dead;         // 1 이면 Step 끝에 걷어 낸다(Line 시간 초과 등)
     }
@@ -239,6 +248,34 @@ namespace BloodRain.Sim
                         break;
                     case EnemyMove.Line:
                         v = e.LineDir * speed;
+                        break;
+                    case EnemyMove.Dash:
+                        e.PhaseLeft -= Dt;
+                        switch ((DashPhase)e.Phase)
+                        {
+                            case DashPhase.Telegraph:
+                                e.DashDir = dir; // 예고 동안 겨누다가 돌진하는 순간 굳힌다
+                                if (e.PhaseLeft <= 0f) { e.Phase = (byte)DashPhase.Dashing; e.PhaseLeft = e.DashSeconds; }
+                                break;
+                            case DashPhase.Dashing:
+                                v = e.DashDir * e.DashSpeed * SpeedScale;
+                                if (e.PhaseLeft <= 0f)
+                                {
+                                    // 쉬는 초는 [RestMin, RestMax] 사이. Id·나이로 섞은 값이라 잡 안에서도 같은 결과
+                                    float r = (math.hash(new float2(e.Id, e.Life)) & 0xFFFF) / 65535f;
+                                    e.Phase = (byte)DashPhase.Rest;
+                                    e.PhaseLeft = math.lerp(e.RestMin, e.RestMax, r);
+                                }
+                                break;
+                            case DashPhase.Rest:
+                                v = dir * speed;
+                                if (e.PhaseLeft <= 0f) e.Phase = (byte)DashPhase.Chase;
+                                break;
+                            default:
+                                v = dir * speed;
+                                if (d < e.DashRange) { e.Phase = (byte)DashPhase.Telegraph; e.PhaseLeft = e.Telegraph; e.DashDir = dir; }
+                                break;
+                        }
                         break;
                     default:
                         v = dir * speed;
