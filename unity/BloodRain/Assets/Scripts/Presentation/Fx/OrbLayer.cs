@@ -72,6 +72,19 @@ namespace BloodRain.Presentation.Fx
         {
             var ws = WorldScale.Current;
             if (ws == null || player == null) return;
+            var def = enemies != null ? enemies.DefOf(a.Kind) : null;
+            var reward = def?.Reward;
+            if (reward != null && reward.OrbBurst && reward.Orbs > 0)
+            {
+                // 금두꺼비(enemies.json reward): Orbs 알 × OrbXp 를 둘레 1.5m 안에 쏟는다. 은자는 Life 가 붙을 때(C-10)
+                float r = ws.Length(1.5f);
+                for (int i = 0; i < reward.Orbs; i++)
+                {
+                    float ang = UnityEngine.Random.value * Mathf.PI * 2f, d = Mathf.Sqrt(UnityEngine.Random.value) * r;
+                    Field.Drop(pos + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * d, reward.OrbXp, player.position, ws.Length(mergeRealmMeters));
+                }
+                return;
+            }
             Field.Drop(pos, _small, player.position, ws.Length(mergeRealmMeters));
         }
 

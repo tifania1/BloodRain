@@ -122,6 +122,9 @@ namespace BloodRain.Presentation
             return hit;
         }
 
+        /// <summary>EnemyAgent.Kind 순번의 적 정의. 표에 없으면 null.</summary>
+        public EnemyDef DefOf(int kind) => kind >= 0 && kind < _kinds.Count ? _kinds[kind].Def : null;
+
         public EnemySim Sim => _sim;
         public int Count => _sim?.Count ?? 0;
         public float LastSimMs => _simMs;
@@ -247,6 +250,12 @@ namespace BloodRain.Presentation
                 a.ShotLeft = sh.Interval * (float)_rng.NextDouble();
             }
             int kindIndex = _kinds.FindIndex(k => k.Def == def);
+            if (kindIndex < 0)
+            {
+                // 생성표 밖 적(디렉터·시험이 직접 넣은 것)도 종류 순번을 갖게 가중치 0 으로 표 끝에 붙인다(DefOf·탄·보상이 읽는다)
+                _kinds.Add(new Kind { Def = def, Move = move, Tint = TintOf(def.Family), Weight = 0f });
+                kindIndex = _kinds.Count - 1;
+            }
             a.Kind = kindIndex;
             int id = _sim.Spawn(a);
             if (id < 0) return -1;
