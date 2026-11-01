@@ -49,3 +49,4 @@
 - 2026-11-01 · 9장 '날아가는 것과 넉백' · 비도술 '중독 2초, 초당 한 방의 25%', 벽력탄 '맞은 적 2초 화상'. 프로토타입에만 박혀 있던 값을 weapons.json poisonSeconds·poisonDamage·burnSeconds 로 옮기며(예약 세션) → 원본 미반영
 - 2026-11-01 · 9장 '날아가는 것과 넉백' · 독무 '닿은 적 1초 중독', 표 아래 화상·중독 0.5초마다·둔화 초당 0.6 풀림 한 문단. 프로토타입 값을 balance.json enemyStatus·weapons.json poison_mist poisonSeconds 로 옮기며(예약 세션) → 원본 미반영
 - 2026-11-01 · 8장 '드롭' 표 아래 · 진기 구슬 끌기(초당 9m + 나이 1초마다 4m)·흡수 0.5m·400개 넘으면 오래된 100개를 둘레 5m 큰 구슬로 한 문단. 프로토타입·Unity OrbField 에 박혀 있던 값을 balance.json orbPickup 으로 옮기며(예약 세션) → 원본 미반영
+- 2026-11-01 · 11장 '생성 규칙' · 멀어진 적을 옮기는 거리 '대각선 0.65배'. 프로토타입에 박혀 있던 값을 balance.json spawnTarget.recycleToDiagonal 로 옮기며(예약 세션) → 원본 미반영

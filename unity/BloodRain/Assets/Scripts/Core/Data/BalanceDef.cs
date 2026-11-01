@@ -184,6 +184,8 @@ namespace BloodRain.Core.Data
         public float RingMaxDiagonal = 0.75f;
         /// <summary>플레이어에게서 이만큼(대각선 배수) 넘게 멀어진 적은 진행 방향 반대편으로 옮긴다.</summary>
         public float RecycleBeyondDiagonal = 1.5f;
+        /// <summary>옮긴 적을 두는 거리(대각선 배수). 생성 고리 안쪽 끝에 가깝게 둬서 바로 화면에 들어오게 한다.</summary>
+        public float RecycleToDiagonal = 0.65f;
     }
 
     public sealed class ContactDef

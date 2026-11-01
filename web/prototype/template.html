@@ -997,7 +997,7 @@ function pickType(gm) {
   return table[0][0];
 }
 function ringPos() {
-  const p = G.player, a = rand(0, TAU), R = viewDiag() * 0.5 * rand(1.2, 1.5);
+  const p = G.player, a = rand(0, TAU), R = viewDiag() * rand(B.spawnTarget.ringMinDiagonal, B.spawnTarget.ringMaxDiagonal);
   return [p.x + Math.cos(a) * R, p.y + Math.sin(a) * R];
 }
 
@@ -1415,7 +1415,7 @@ function update(dt) {
     if (Math.abs(vx) > 0.05) e.dir = vx > 0 ? 1 : -1;
     // 떨어진 적은 반대편으로 옮겨 다시 쓴다
     if (d > diag * B.spawnTarget.recycleBeyondDiagonal && e.behavior !== 'line_charge' && !e.boss && !e.elite && e.behavior !== 'flee') {
-      e.x = p.x + dx * diag * 0.65; e.y = p.y + dy * diag * 0.65;
+      e.x = p.x + dx * diag * B.spawnTarget.recycleToDiagonal; e.y = p.y + dy * diag * B.spawnTarget.recycleToDiagonal;
     }
     // 접촉 피해
     if (d < e.r + 0.4 && e.contact <= 0) { e.contact = B.contact.sameEnemyIntervalSeconds; hurtPlayer(e.dmg, e); }

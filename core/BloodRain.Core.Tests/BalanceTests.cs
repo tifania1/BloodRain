@@ -174,7 +174,12 @@ namespace BloodRain.Core.Tests
 
             Assert.Contains($"부족분의 {TestData.Num(t.SpawnFractionPerSecond * 100)}%", sec);
             Assert.Contains($"화면 대각선의 {TestData.Num(t.RingMinDiagonal)}~{TestData.Num(t.RingMaxDiagonal)}배", sec);
-            Assert.Contains($"대각선 {TestData.Num(t.RecycleBeyondDiagonal)}배 넘게", sec);
+            Assert.Contains($"대각선 {TestData.Num(t.RecycleBeyondDiagonal)}배 넘게 멀어진 적은 진행 방향 반대편, 대각선 {TestData.Num(t.RecycleToDiagonal)}배 거리로", sec);
+            Assert.InRange(t.RecycleToDiagonal, t.RingMinDiagonal, t.RingMaxDiagonal); // 옮긴 적도 생성 고리 안에 선다
+            // 웹 프로토타입도 같은 값을 읽는다(2026-11-01 전엔 0.5 x 1.2~1.5, 0.65 를 박아 뒀다)
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("viewDiag() * rand(B.spawnTarget.ringMinDiagonal, B.spawnTarget.ringMaxDiagonal)", html);
+            Assert.Contains("diag * B.spawnTarget.recycleToDiagonal", html);
             Assert.Contains("한 생의 시간대별 가중치표와 서 있는 지역의 고유 적에서 뽑습니다", sec);
         }
 
