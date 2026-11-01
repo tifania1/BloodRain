@@ -368,6 +368,7 @@ const P_BY_ID = Object.fromEntries(DATA.passives.map(p => [p.id, p]));
 const E_BY_ID = Object.fromEntries(DATA.enemies.map(e => [e.id, e]));
 const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
+const BA = B.awakening; // 절기 각성 연출·파동·여운(기획서 8장)
 const DR = B.drops; // 음식·은자·등롱(기획서 8장 '드롭')
 const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver' };
 // 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
@@ -1009,7 +1010,7 @@ function weaponDamage(w) {
   let d = lerp(def.damageLv1, def.damageLv8, (w.lv - 1) / 7);
   d *= G.stats.might * aspectMult(def.yinyang);
   if (w.evolved) d *= 2;
-  if (G.glow && G.glow.w === w) d *= 1.5;   // 각성 여운 8초
+  if (G.glow && G.glow.w === w) d *= BA.afterglowDamageMultiplier;   // 각성 여운(balance.json awakening)
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
   const swd = synEff('sword_damage'); if (swd && def.category === 'sword') d *= 1 + swd.damageBonus;
   const lhm = synEff('low_health_might'); if (lhm && G.player.hp < G.player.maxHp * lhm.healthThreshold) d *= 1 + lhm.damageBonus;
@@ -1846,9 +1847,11 @@ function choosePick(i, then) {
 }
 
 // 시간표(초, 실제 시간). 긴 연출은 그 절기를 처음 깨칠 때, 짧은 연출은 그다음부터(설정으로 바꿀 수 있다).
+// 장면 시각·세상 시간·파동·여운은 balance.json awakening(기획서 8장 각성 연출 표). 그리기만 쓰는 값(흑백 번짐·확대·글자 간격·사라짐)은 여기.
+const awTimes = T => ({ dur: T.durationSeconds, glyph: T.glyphSeconds == null ? null : [T.glyphSeconds, T.crackSeconds], crack: T.crackSeconds, name: T.nameSeconds, stamp: T.stampSeconds, shock: T.shockSeconds });
 const AW = {
-  long:  { dur: 3.5, monoIn: 0.25, zoom: 0.16, glyph: [0.45, 0.95], crack: 0.95, name: 1.15, perChar: 0.11, ko: 1.62, stamp: 1.8, shock: 2.3, fade: [2.75, 3.4] },
-  short: { dur: 1.5, monoIn: 0.12, zoom: 0.1, glyph: null, crack: null, name: 0.1, perChar: 0, ko: 0.18, stamp: 0.42, shock: 0.64, fade: [1.0, 1.45] },
+  long:  Object.assign(awTimes(BA.long),  { monoIn: 0.25, zoom: 0.16, perChar: 0.11, ko: 1.62, fade: [2.75, 3.4] }),
+  short: Object.assign(awTimes(BA.short), { monoIn: 0.12, zoom: 0.1, perChar: 0, ko: 0.18, fade: [1.0, 1.45] }),
 };
 function startAwaken(w, opts = {}) {
   const evo = EVO_BY_W[w.id];
@@ -1860,7 +1863,7 @@ function startAwaken(w, opts = {}) {
   const motes = Array.from({ length: 70 }, (_, i) => ({ a: rand(0, TAU), r: rand(0.55, 1), d: rand(0, 0.35), s: rand(1.5, 4.5), gold: i % 6 === 0 }));
   const jag = Array.from({ length: 40 }, () => rand(-1, 1));
   G.awaken = { w, evo, t: 0, P, long, scale: 1, then: opts.then || null, fired: {}, slot, motes, jag, why: opts.why || '' };
-  G.player.iframe = Math.max(G.player.iframe, P.dur + 0.8);
+  G.player.iframe = Math.max(G.player.iframe, P.dur + BA.invulnerableExtraSeconds);
   $('hud').classList.add('cine');
   if (!seenAwaken.has(evo.id)) { seenAwaken.add(evo.id); store.set('awoke', [...seenAwaken]); }
   G.evoLog.push({ id: w.id, gm: +G.gm.toFixed(2), lv: G.level, why: opts.why || '' });
@@ -1870,7 +1873,7 @@ const easeOut = k => 1 - Math.pow(1 - k, 3), easeIn = k => k * k * k, easeInOut 
 function addTrauma(v) { G.cam.trauma = Math.min(1, G.cam.trauma + v); }
 function tickAwaken(dt) {
   const A = G.awaken, P = A.P; A.t += dt; const t = A.t;
-  A.scale = t < P.shock ? lerp(1, 0.04, clamp(t / 0.18, 0, 1)) : lerp(0.04, 1, clamp((t - P.shock) / 0.25, 0, 1));
+  A.scale = t < P.shock ? lerp(1, BA.worldTimeScale, clamp(t / BA.timeScaleInSeconds, 0, 1)) : lerp(BA.worldTimeScale, 1, clamp((t - P.shock) / BA.timeScaleOutSeconds, 0, 1));
   if (P.crack != null && !A.fired.crack && t >= P.crack) { A.fired.crack = true; addTrauma(0.3); sfxAwaken('crack'); }
   if (!A.fired.stamp && t >= P.stamp) {
     A.fired.stamp = true; A.w.evolved = true; renderSlots();
@@ -1879,24 +1882,25 @@ function tickAwaken(dt) {
   if (!A.fired.shock && t >= P.shock) { A.fired.shock = true; awakenShock(A); }
   if (t >= P.dur) {
     const then = A.then; G.awaken = null; $('hud').classList.remove('cine');
-    toast(A.evo.nameKo, `절기 각성 · 8초 동안 이 절기 피해 1.5배`);
+    toast(A.evo.nameKo, `절기 각성 · ${BA.afterglowSeconds}초 동안 이 절기 피해 ${BA.afterglowDamageMultiplier}배`);
     if (then) then(); else lastTs = performance.now();
   }
 }
 // 파동: 화면 안 잡몹은 쓸려 나가고, 정예·보스는 크게 깎이며 밀린다. 연출 동안 못 움직인 값을 돌려준다.
 function awakenShock(A) {
-  const p = G.player, R = Math.hypot(viewW(), viewH()) * 0.62;
+  const p = G.player, R = Math.hypot(viewW(), viewH()) * BA.shockRadiusViewDiagonal;
   addTrauma(1); sfxAwaken('shock'); buzz([60, 40, 90]);
   for (const e of G.enemies) {
     if (e.dead) continue;
     const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d > R) continue;
-    if (e.boss) hurtEnemy(e, e.maxHp * 0.04, A.w, dx / d, dy / d, 0);
-    else if (e.elite) hurtEnemy(e, e.maxHp * 0.15, A.w, dx / d, dy / d, 8);
+    if (e.boss) hurtEnemy(e, e.maxHp * BA.bossMaxHealthRatio, A.w, dx / d, dy / d, 0);
+    else if (e.elite) hurtEnemy(e, e.maxHp * BA.eliteMaxHealthRatio, A.w, dx / d, dy / d, BA.eliteKnockback);
     else { e.hp = 0; A.w.dealt += e.maxHp || 0; killEnemy(e); }
   }
   G.enemies = G.enemies.filter(e => !e.dead);
-  for (const pr of G.projs) if (pr.enemy) pr.dead = true;
-  A.w.cd = 0; G.glow = { w: A.w, t: 8 }; G.spawnHold = 2.5; renderSlots();
+  if (BA.clearEnemyProjectiles) for (const pr of G.projs) if (pr.enemy) pr.dead = true;
+  if (BA.resetCooldownOnShock) A.w.cd = 0;
+  G.glow = { w: A.w, t: BA.afterglowSeconds }; G.spawnHold = BA.spawnPauseSeconds; renderSlots();
 }
 
 // 화면 공간에 겹쳐 그린다. 순서: 흑백(탁본) → 금빛 균열·무공 글자 → 이름과 낙관 → 파동 → 뒤집기

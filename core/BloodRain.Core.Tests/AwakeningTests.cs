@@ -411,54 +411,24 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"금빛 기운 {Num(A.AfterglowSeconds)}초(그 절기 피해 {Num(A.AfterglowDamageMultiplier)}배), {Num(A.SpawnPauseSeconds)}초 동안 적이 새로 몰려오지 않음", rows["여운"][3]);
         }
 
-        [Fact] public void 웹_프로토타입의_각성_숫자와_같다()
+        [Fact] public void 웹_프로토타입은_각성_숫자를_balance_에서_읽는다()
         {
-            // 프로토타입(template.html)은 같은 규칙을 먼저 만든 참고 구현이다. 어느 한쪽만 고치면 여기서 걸린다.
+            // 프로토타입(template.html)은 같은 규칙을 먼저 만든 참고 구현이다. 2026-11-01 부터 장면 시각·세상 시간·파동·여운을
+            // balance.json awakening(BA)에서 읽는다. 숫자를 다시 박아 넣으면 여기서 걸린다.
             var html = ReadRepoFile("web", "prototype", "template.html");
-            float Grab(string text, string pattern, int group = 1)
-            {
-                var m = Regex.Match(text, pattern);
-                Assert.True(m.Success, $"template.html 에서 /{pattern}/ 를 못 찾았습니다. 프로토타입 코드가 바뀌었으면 이 패턴도 같이 고친다");
-                return float.Parse(m.Groups[group].Value, CultureInfo.InvariantCulture);
-            }
-            float? GrabOrNull(string text, string field)
-            {
-                var m = Regex.Match(text, $@"\b{field}:\s*(null|\[?\s*([\d.]+))");
-                Assert.True(m.Success, $"AW 에서 {field} 를 못 찾았습니다");
-                return m.Groups[1].Value == "null" ? (float?)null : float.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
-            }
-
-            var aw = Regex.Match(html, @"const AW = \{\s*long:\s*\{([^}]*)\},\s*short:\s*\{([^}]*)\}");
+            var aw = Regex.Match(html, @"const AW = \{\s*long:(.*?)\n\};", RegexOptions.Singleline);
             Assert.True(aw.Success, "template.html 에서 const AW 를 못 찾았습니다");
-            foreach (var (text, p) in new[] { (aw.Groups[1].Value, A.Long), (aw.Groups[2].Value, A.Short) })
-            {
-                Assert.Equal(p.DurationSeconds, GrabOrNull(text, "dur"));
-                Assert.Equal(p.GlyphSeconds, GrabOrNull(text, "glyph"));   // [시작, 끝] 중 시작
-                Assert.Equal(p.CrackSeconds, GrabOrNull(text, "crack"));
-                Assert.Equal(p.NameSeconds, GrabOrNull(text, "name"));
-                Assert.Equal(p.StampSeconds, GrabOrNull(text, "stamp"));
-                Assert.Equal(p.ShockSeconds, GrabOrNull(text, "shock"));
-            }
-
-            // tickAwaken: 세상 시간 배율
-            Assert.Equal(A.WorldTimeScale, Grab(html, @"lerp\(1,\s*([\d.]+),\s*clamp\(t / ([\d.]+)"));
-            Assert.Equal(A.TimeScaleInSeconds, Grab(html, @"lerp\(1,\s*([\d.]+),\s*clamp\(t / ([\d.]+)", 2));
-            Assert.Equal(A.WorldTimeScale, Grab(html, @"lerp\(([\d.]+),\s*1,\s*clamp\(\(t - P\.shock\) / ([\d.]+)"));
-            Assert.Equal(A.TimeScaleOutSeconds, Grab(html, @"lerp\(([\d.]+),\s*1,\s*clamp\(\(t - P\.shock\) / ([\d.]+)", 2));
-
-            // startAwaken: 무적
-            Assert.Equal(A.InvulnerableExtraSeconds, Grab(html, @"iframe,\s*P\.dur \+ ([\d.]+)\)"));
-
-            // awakenShock: 반경, 정예·보스, 여운, 생성 멈춤
-            Assert.Equal(A.ShockRadiusViewDiagonal, Grab(html, @"Math\.hypot\(viewW\(\), viewH\(\)\) \* ([\d.]+)"));
-            Assert.Equal(A.BossMaxHealthRatio, Grab(html, @"if \(e\.boss\) hurtEnemy\(e, e\.maxHp \* ([\d.]+)"));
-            Assert.Equal(A.EliteMaxHealthRatio, Grab(html, @"else if \(e\.elite\) hurtEnemy\(e, e\.maxHp \* ([\d.]+), A\.w, dx / d, dy / d, ([\d.]+)\)"));
-            Assert.Equal(A.EliteKnockback, Grab(html, @"else if \(e\.elite\) hurtEnemy\(e, e\.maxHp \* ([\d.]+), A\.w, dx / d, dy / d, ([\d.]+)\)", 2));
-            Assert.Equal(A.AfterglowSeconds, Grab(html, @"G\.glow = \{ w: A\.w, t: ([\d.]+) \}"));
-            Assert.Equal(A.SpawnPauseSeconds, Grab(html, @"G\.spawnHold = ([\d.]+)"));
-
-            // weaponDamage: 여운 배율
-            Assert.Equal(A.AfterglowDamageMultiplier, Grab(html, @"G\.glow\.w === w\) d \*= ([\d.]+)"));
+            foreach (var field in new[] { "dur:", "glyph:", "crack:", "name:", "stamp:", "shock:" })
+                Assert.DoesNotContain(field, aw.Groups[1].Value);
+            Assert.Contains("const BA = B.awakening", html);
+            foreach (var used in new[] { "T.durationSeconds", "T.glyphSeconds", "T.crackSeconds", "T.nameSeconds", "T.stampSeconds", "T.shockSeconds",
+                                         "BA.worldTimeScale", "BA.timeScaleInSeconds", "BA.timeScaleOutSeconds", "BA.invulnerableExtraSeconds",
+                                         "BA.shockRadiusViewDiagonal", "BA.bossMaxHealthRatio", "BA.eliteMaxHealthRatio", "BA.eliteKnockback",
+                                         "BA.clearEnemyProjectiles", "BA.resetCooldownOnShock", "BA.afterglowSeconds", "BA.spawnPauseSeconds",
+                                         "d *= BA.afterglowDamageMultiplier" })
+                Assert.Contains(used, html);
+            foreach (var old in new[] { "P.dur + 0.8", "lerp(1, 0.04", "viewH()) * 0.62", "e.maxHp * 0.04", "e.maxHp * 0.15", "t: 8 }", "spawnHold = 2.5", "=== w) d *= 1.5" })
+                Assert.DoesNotContain(old, html);
         }
     }
 }
