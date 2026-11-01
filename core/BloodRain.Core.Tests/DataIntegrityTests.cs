@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Xunit;
@@ -8,6 +10,17 @@ namespace BloodRain.Core.Tests
     public class DataIntegrityTests
     {
         readonly Data.GameData _d = TestData.Load();
+
+        /// <summary>Data 폴더의 JSON 과 GameData.FileNames 가 같고, CLAUDE.md 데이터 목록에도 다 적혀 있다.
+        /// 새 파일을 만들고 FileNames 에 안 넣으면 Unity DataBoot 가 못 읽는다.</summary>
+        [Fact] public void 데이터_폴더와_파일_목록과_CLAUDE_md가_같다()
+        {
+            var onDisk = Directory.GetFiles(TestData.DataDir, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n, StringComparer.Ordinal).ToArray();
+            Assert.Equal(Data.GameData.FileNames.OrderBy(n => n, StringComparer.Ordinal).ToArray(), onDisk);
+            var line = TestData.ReadRepoFile("CLAUDE.md").Split('\n').Single(l => l.Contains("Resources/Data/*.json"));
+            foreach (var n in Data.GameData.FileNames)
+                Assert.True(Regex.IsMatch(line, $@"(?<![a-z]){n}(?![a-z])"), $"CLAUDE.md 데이터 목록에 {n} 이 없다");
+        }
 
         [Fact] public void 무공_심법_절기는_각각_16종이다()
         {
