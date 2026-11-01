@@ -253,8 +253,32 @@ namespace BloodRain.Core.Data
         public float Large = 25;
     }
 
+    /// <summary>등롱 한 칸(balance.json drops.lantern).</summary>
+    public sealed class LanternDropDef
+    {
+        public string Kind = "";
+        public float Weight;
+    }
+
+    /// <summary>음식·은자·혈정·등롱(balance.json drops, 기획서 8장 '드롭').</summary>
+    public sealed class DropsDef
+    {
+        /// <summary>만두 회복(FoodHeal 배율 전).</summary>
+        public float BunHeal = 20;
+        /// <summary>오리구이 회복(FoodHeal 배율 전).</summary>
+        public float DuckHeal = 50;
+        /// <summary>은자 주머니 [최소, 최대].</summary>
+        public List<int> SilverBag = new List<int>();
+        /// <summary>잡몹 하나가 쓰러질 때 은자 주머니를 떨굴 확률.</summary>
+        public float EnemySilverChance;
+        /// <summary>정예 하나가 주는 혈정(땅의 주인 몫은 cheonha.json bosses).</summary>
+        public int EliteBloodCrystal = 1;
+        public List<LanternDropDef> Lantern = new List<LanternDropDef>();
+    }
+
     public sealed class BalanceDef
     {
+        public DropsDef Drops = new DropsDef();
         public LimitsDef Limits = new LimitsDef();
         public OrbValuesDef Orbs = new OrbValuesDef();
         public XpCurveDef XpCurve = new XpCurveDef();

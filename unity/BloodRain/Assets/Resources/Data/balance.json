@@ -92,5 +92,20 @@
     ]
   },
   "limits": { "enemiesPc": 600, "enemiesMobile": 400, "projectiles": 1500, "orbs": 400, "damageNumbers": 80 },
-  "orbs": { "small": 1, "medium": 5, "large": 25 }
+  "orbs": { "small": 1, "medium": 5, "large": 25 },
+  "drops": {
+    "_note": "기획서 8장 '드롭'. 음식 회복은 FoodHeal 배율을 곱하기 전 값. 등롱 표와 잡몹 은자 확률은 웹 프로토타입에서 돌던 값을 그대로 옮김(벽력탄은 아직 표에 없다).",
+    "bunHeal": 20,
+    "duckHeal": 50,
+    "silverBag": [10, 50],
+    "enemySilverChance": 0.012,
+    "eliteBloodCrystal": 1,
+    "lantern": [
+      { "kind": "bun", "weight": 0.45 },
+      { "kind": "duck", "weight": 0.15 },
+      { "kind": "chwigi_talisman", "weight": 0.15 },
+      { "kind": "jeongsin_talisman", "weight": 0.12 },
+      { "kind": "silver_bag", "weight": 0.13 }
+    ]
+  }
 }

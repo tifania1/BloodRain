@@ -363,6 +363,8 @@ const P_BY_ID = Object.fromEntries(DATA.passives.map(p => [p.id, p]));
 const E_BY_ID = Object.fromEntries(DATA.enemies.map(e => [e.id, e]));
 const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
+const DR = B.drops; // 음식·은자·등롱(기획서 8장 '드롭')
+const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver' };
 // 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
 const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100, moveSpeed: 1 };
 const JIN_REROLLS = B.levelUp.traitRerolls?.[JIN.trait] ?? 0;
@@ -1046,7 +1048,7 @@ function killEnemy(e) {
   if (e.xp > 0) dropOrb(e.x, e.y, e.xp);
   if (e.type === 'mogin_nahan') { addEffect('burst', e.x, e.y, { r: 1.6, color: '#8B6A45' }); forNear(e.x, e.y, 1.6, o => { if (o !== e) hurtEnemy(o, 30, null, 0, 0, 0); }); }
   if (e.elite) { G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 }); }
-  if (Math.random() < 0.012) G.drops.push({ x: e.x, y: e.y, kind: 'silver', t: 0 });
+  if (Math.random() < DR.enemySilverChance) G.drops.push({ x: e.x, y: e.y, kind: 'silver', t: 0 });
 }
 function dropOrb(x, y, v) {
   G.orbs.push({ x, y, v, t: 0, pull: false });
@@ -1216,8 +1218,11 @@ function hitLanterns(x, y, R) {
 }
 function breakLantern(l) {
   l.dead = true; addEffect('burst', l.x, l.y, { r: 0.9, color: '#C8392B' });
-  const r = Math.random();
-  const kind = r < 0.45 ? 'food' : r < 0.6 ? 'meat' : r < 0.75 ? 'magnet' : r < 0.87 ? 'freeze' : 'silver';
+  // balance.json drops.lantern: 앞에서부터 깎는다(Core Drops.RollLantern 과 같은 순서)
+  const tot = DR.lantern.reduce((a, l) => a + l.weight, 0);
+  let r = Math.random() * tot, pick = DR.lantern[DR.lantern.length - 1].kind;
+  for (const l of DR.lantern) { r -= l.weight; if (r < 0) { pick = l.kind; break; } }
+  const kind = LANTERN_KIND[pick];
   G.drops.push({ x: l.x, y: l.y, kind, t: 0 });
 }
 
@@ -1613,11 +1618,11 @@ function bossAI(e, dt, dx, dy, d) {
 
 function pickup(dr) {
   const p = G.player;
-  if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + 20 * G.stats.foodHeal); toast('만두', '기혈 +20'); }
-  else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + 50 * G.stats.foodHeal); toast('오리구이', '기혈 +50'); }
+  if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal); toast('만두', `기혈 +${DR.bunHeal}`); }
+  else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal); toast('오리구이', `기혈 +${DR.duckHeal}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
   else if (dr.kind === 'freeze') { G.freeze = 5 * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
-  else if (dr.kind === 'silver') { addSilver(rand(10, 50)); }
+  else if (dr.kind === 'silver') { addSilver(DR.silverBag[0] + Math.floor(Math.random() * (DR.silverBag[1] - DR.silverBag[0] + 1))); }
   else if (dr.kind === 'chest') openChest();
 }
 
