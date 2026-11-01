@@ -60,6 +60,12 @@ namespace BloodRain.Core.Data
         public float? SweepSeconds;
         /// <summary>독무가 닿는 간격 초. 쿨다운 0(상시)인 무공이 한 번 닿을 때 초당 피해 x 이 값.</summary>
         public float? TickSeconds;
+        /// <summary>벽력탄에 맞은 적이 타는 초. 연무장 '지속'을 곱하기 전. 초당 피해는 BurnPerSecond.</summary>
+        public float? BurnSeconds;
+        /// <summary>비도 중독(Lv6·절기)이 가는 초.</summary>
+        public float? PoisonSeconds;
+        /// <summary>중독 초당 피해 = 비도 한 방 x 이 값(0.25 = 25%).</summary>
+        public float? PoisonDamage;
 
         public YinYang Aspect => YinYangParse.From(Yinyang);
         /// <summary>땅의 주인 첫 처치로 열리면 그 지역 id, 아니면 null.</summary>

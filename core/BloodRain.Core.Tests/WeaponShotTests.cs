@@ -82,6 +82,23 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 화상과_중독_시간이_표와_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백"));
+            var burn = Regex.Match(rows.Single(r => r[0] == "벽력탄")[6], @"맞은 적 ([0-9.]+)초 화상");
+            Assert.True(burn.Success);
+            Assert.Equal(float.Parse(burn.Groups[1].Value, CultureInfo.InvariantCulture), _d.Weapons.Single(x => x.Id == "thunder_bomb").BurnSeconds);
+            var poison = Regex.Match(rows.Single(r => r[0] == "비도술")[6], @"중독 ([0-9.]+)초, 초당 한 방의 ([0-9]+)%");
+            Assert.True(poison.Success);
+            var dagger = _d.Weapons.Single(x => x.Id == "flying_dagger");
+            Assert.Equal(float.Parse(poison.Groups[1].Value, CultureInfo.InvariantCulture), dagger.PoisonSeconds);
+            Assert.Equal(float.Parse(poison.Groups[2].Value, CultureInfo.InvariantCulture) / 100f, dagger.PoisonDamage!.Value, 4);
+            // 화상 초당 피해가 있는 무공에는 화상 시간이 있어야 프로토타입이 0초로 태우지 않는다
+            Assert.All(_d.Weapons.Where(x => x.BurnPerSecond != null), x => Assert.True(x.BurnSeconds > 0, x.NameKo));
+            Assert.Contains("W_BY_ID[w.id].burnSeconds", TestData.ReadRepoFile("web", "prototype", "template.html"));
+        }
+
+        [Fact]
         public void 처음부터_쓰는_무공은_모두_넉백이_있다()
         {
             // 프로토타입이 def.knockback 을 바로 읽으니 빠지면 넉백이 사라진다(undefined → 0).

@@ -126,7 +126,7 @@ namespace BloodRain.Sim
                     int n = RoundJs(Range(ex?.Projectiles, t, 1, 4)) + s.Amount + (evolved ? (int)(ex?.EvoParam("extraProjectiles", 2) ?? 2) : 0);
                     int pierce = RoundJs(Range(ex?.Pierce, t, 1, 3));
                     int per = pierce + 1 + (evolved ? (int)(ex?.EvoParam("bounces", 5) ?? 5) : 0);
-                    double dot = WeaponGrowth.HasMilestone(def, level, "중독") || evolved ? dmg * 0.25 * (1 + b.Dot) * 2 : 0;
+                    double dot = WeaponGrowth.HasMilestone(def, level, "중독") || evolved ? dmg * (def.PoisonDamage ?? 0.25) * (1 + b.Dot) * (def.PoisonSeconds ?? 2) : 0;
                     list.Add(new Strike(targets: n * per, damage: dmg, dot: dot, singleHits: n, singleDot: dot));
                     break;
                 }
@@ -164,7 +164,7 @@ namespace BloodRain.Sim
                     // 벽력탄: 가까운 적 근처에 폭탄 n개, 반경 2→3m, 맞은 적은 2초 화상. 절기는 +1개, 3연쇄(0.9배씩 작아짐).
                     int n = RoundJs(Range(ex?.Projectiles, t, 1, 3)) + s.Amount + (evolved ? (int)(ex?.EvoParam("extraProjectiles", 1) ?? 1) : 0);
                     double rr = def.Range * Lerp(1, ex?.AreaLv8 ?? 1, t) * s.Area * (1 + b.ExplosionArea);
-                    double burn = Range(ex?.BurnPerSecond, t, 4, 10) * (1 + b.Burn) * (1 + b.Dot) * 2 * s.Duration;
+                    double burn = Range(ex?.BurnPerSecond, t, 4, 10) * (1 + b.Burn) * (1 + b.Dot) * (def.BurnSeconds ?? 2) * s.Duration;
                     for (int i = 0; i < n; i++)
                     {
                         list.Add(new Strike(area: Disc(rr + EnemyRadius), random: true, damage: dmg, dot: burn,

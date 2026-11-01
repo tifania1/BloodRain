@@ -68,6 +68,16 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"{Num(b.Param("chainDelaySeconds"))}초 뒤", rows[b.NameKo][6]);
         }
 
+        [Fact] public void 프로토타입이_절기_숫자를_박아_두지_않는다()
+        {
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            foreach (var old in new[] { "vx: fx * 13", "[-0.5, 0, 0.5]", "Math.sin(a) * 11, r: 0.6", "{ r: 1.1, life: 0.25 }", "pr.dmg * 0.5",
+                                        "nearestEnemies(pr.x, pr.y, 1, 6,", "delay: 0.2, apply: () => bomb", "R * 0.9, dmg * 0.8" })
+                Assert.DoesNotContain(old, html);
+            foreach (var used in new[] { "ep.waveSpeed", "ep.projectileSpread", "pr.bounceRange", "X.explodeRadius", "ep.chainShrink" })
+                Assert.Contains(used, html);
+        }
+
         /// <summary>기획서와 프로토타입이 다른 곳(backlog E-02). 한쪽을 고치면 여기가 실패하니 그 줄을 지우고 E-02 를 닫는다.</summary>
         [Fact] public void 기획서와_다른_곳()
         {
