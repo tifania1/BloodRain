@@ -130,7 +130,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1, S("changcheon_qi", 4)[0].Hits);
             Assert.Equal(2, S("changcheon_qi", 5)[0].Hits);
             var def = G.Weapon("changcheon_qi");
-            double r = def.Range * (double)def.AreaLv8!.Value * 1.3 + EnemyRadius; // Lv8 범위 +40%(areaLv8) × 절기 1.3
+            double r = def.Range * (double)def.AreaLv8!.Value * (double)G.Evolutions.Single(e => e.Weapon == "changcheon_qi").Param("rangeMultiplier") + EnemyRadius; // Lv8 범위 +40%(areaLv8) × 절기 1.3(params)
             Assert.Equal(1.4f, def.AreaLv8);
             Assert.Equal(Math.PI * r * r, S("changcheon_qi", Max, true)[0].Area, 6);
         }
