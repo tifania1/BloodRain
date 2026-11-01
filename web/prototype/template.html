@@ -370,6 +370,7 @@ const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
 const BA = B.awakening; // 절기 각성 연출·파동·여운(기획서 8장)
 const DR = B.drops; // 음식·은자·등롱(기획서 8장 '드롭')
+const OP = B.orbPickup, LIM = B.limits; // 구슬 끌기·흡수·합치기, 화면 위 수 상한
 const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver' };
 // 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
 const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100, moveSpeed: 1 };
@@ -1002,7 +1003,7 @@ function ringPos() {
 
 // ───────── 피해 ─────────
 function addNum(x, y, v, crit, color) {
-  if (G.nums.length > 80) G.nums.shift();
+  if (G.nums.length > LIM.damageNumbers) G.nums.shift();
   G.nums.push({ x: x + rand(-0.2, 0.2), y, v: Math.round(v), t: 0, crit, color });
 }
 function weaponDamage(w) {
@@ -1058,10 +1059,10 @@ function killEnemy(e) {
 }
 function dropOrb(x, y, v) {
   G.orbs.push({ x, y, v, t: 0, pull: false });
-  if (G.orbs.length > B.limits?.orbs || G.orbs.length > 400) {
+  if (G.orbs.length > LIM.orbs) {
     // 오래된 구슬을 모아 하나로 합친다
-    let sum = 0; const keep = G.orbs.slice(100); for (const o of G.orbs.slice(0, 100)) sum += o.v;
-    G.orbs = keep; const p = G.player, a = rand(0, TAU); G.orbs.push({ x: p.x + Math.cos(a) * 5, y: p.y + Math.sin(a) * 5, v: sum, t: 0, pull: false, big: true });
+    let sum = 0; const keep = G.orbs.slice(OP.mergeBatch); for (const o of G.orbs.slice(0, OP.mergeBatch)) sum += o.v;
+    G.orbs = keep; const p = G.player, a = rand(0, TAU); G.orbs.push({ x: p.x + Math.cos(a) * OP.mergeDistance, y: p.y + Math.sin(a) * OP.mergeDistance, v: sum, t: 0, pull: false, big: true });
   }
 }
 function addUlt(v) {
@@ -1084,7 +1085,7 @@ function hurtPlayer(dmg, src) {
 
 // ───────── 효과·투사체 ─────────
 function addEffect(kind, x, y, o) { if (G.effects.length > 160) G.effects.shift(); G.effects.push(Object.assign({ kind, x, y, t: 0, life: 0.3 }, o)); }
-function addProj(o) { if (G.projs.length > 1500) return; G.projs.push(Object.assign({ t: 0, pierce: 0, hit: new Set(), homing: 0, bounce: 0 }, o)); }
+function addProj(o) { if (G.projs.length > LIM.projectiles) return; G.projs.push(Object.assign({ t: 0, pierce: 0, hit: new Set(), homing: 0, bounce: 0 }, o)); }
 
 // 무공 실행 (weapons.json behavior 별)
 function fireWeapon(w) {
@@ -1492,8 +1493,8 @@ function update(dt) {
   for (const o of G.orbs) {
     o.t += dt;
     const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
-    if (o.pull || d < mag) { o.pull = true; const sp = 9 + o.t * 4; o.x += dx / (d || 1) * sp * dt; o.y += dy / (d || 1) * sp * dt; }
-    if (d < 0.5) { o.dead = true; gainXp(o.v); sfx('orb'); }
+    if (o.pull || d < mag) { o.pull = true; const sp = OP.pullSpeedBase + o.t * OP.pullSpeedPerSecond; o.x += dx / (d || 1) * sp * dt; o.y += dy / (d || 1) * sp * dt; }
+    if (d < OP.absorbRadius) { o.dead = true; gainXp(o.v); sfx('orb'); }
   }
   G.orbs = G.orbs.filter(o => !o.dead);
   // 떨어진 물건
@@ -2100,8 +2101,8 @@ function render() {
   for (const d of G.drops) drawDrop(d);
   drawEncounters();
   for (const o of G.orbs) {
-    const r = (o.v >= 25 ? 0.22 : o.v >= 5 ? 0.17 : 0.12) * PPM;
-    ctx.fillStyle = o.v >= 25 ? '#B3261E' : o.v >= 5 ? '#3E8E5A' : '#3E6FA8';
+    const r = (o.v >= B.orbs.large ? 0.22 : o.v >= B.orbs.medium ? 0.17 : 0.12) * PPM;
+    ctx.fillStyle = o.v >= B.orbs.large ? '#B3261E' : o.v >= B.orbs.medium ? '#3E8E5A' : '#3E6FA8';
     ctx.beginPath(); ctx.arc(wx(o.x), wy(o.y), r, 0, TAU); ctx.fill();
     ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 1.2; ctx.stroke();
   }

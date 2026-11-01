@@ -134,6 +134,24 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"화면 위 구슬이 {_d.Balance.Limits.Orbs}개를 넘으면 오래된 것부터 하나로 합쳐짐", TestData.Gdd);
         }
 
+        /// <summary>8장 드롭 표 아래 진기 구슬 문단과 balance.json orbPickup. 웹 프로토타입이 박아 두던 끌기·흡수·합치기 값을
+        /// 2026-11-01 데이터로 옮겼다. 프로토타입이 숫자 대신 데이터를 읽는지도 본다(Unity OrbField 는 unity_tasks C-05b).</summary>
+        [Fact] public void 진기_구슬_끌기와_합치기가_기획서_8장과_같고_프로토타입이_데이터를_읽는다()
+        {
+            var p = _d.Balance.OrbPickup;
+            Assert.True(p.AbsorbRadius > 0 && p.PullSpeedBase > 0 && p.PullSpeedPerSecond >= 0);
+            Assert.InRange(p.MergeBatch, 2, _d.Balance.Limits.Orbs);
+            Assert.Contains($"끌리는 속도는 초당 {TestData.Num(p.PullSpeedBase)}m에 구슬 나이 1초마다 {TestData.Num(p.PullSpeedPerSecond)}m씩 더하고, "
+                + $"{TestData.Num(p.AbsorbRadius)}m 안에 오면 흡수합니다. {_d.Balance.Limits.Orbs}개를 넘으면 오래된 {p.MergeBatch}개를 합쳐 "
+                + $"플레이어 둘레 {TestData.Num(p.MergeDistance)}m에 큰 구슬 하나로 둡니다", TestData.Gdd);
+
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            foreach (var use in new[] { "OP.pullSpeedBase + o.t * OP.pullSpeedPerSecond", "d < OP.absorbRadius", "G.orbs.slice(OP.mergeBatch)",
+                                        "* OP.mergeDistance", "G.orbs.length > LIM.orbs", "G.projs.length > LIM.projectiles", "G.nums.length > LIM.damageNumbers" })
+                Assert.Contains(use, html);
+            Assert.DoesNotContain("9 + o.t * 4", html);
+        }
+
         /// <summary>11장 '화면 위 적 수 목표' 문단: 15분 이후 가장 가파르게 늘어 18분에 정점 400, 그 뒤로는 400.
         /// 생성 규칙: 부족분의 30%, 화면 대각선 0.6~0.75배 고리, 1.5배 넘게 멀어지면 옮김.</summary>
         [Fact] public void 화면_위_적_수_곡선과_생성_규칙이_기획서_11장과_같다()

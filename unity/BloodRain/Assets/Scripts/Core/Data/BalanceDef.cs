@@ -257,6 +257,20 @@ namespace BloodRain.Core.Data
         public float Large = 25;
     }
 
+    /// <summary>진기 구슬 끌기·흡수·합치기(balance.json orbPickup, 기획서 8장 '드롭' 아래). 길이는 경지 m, 속도는 경지 m/s.</summary>
+    public sealed class OrbPickupDef
+    {
+        /// <summary>플레이어에게 이만큼 다가오면 흡수.</summary>
+        public float AbsorbRadius = 0.5f;
+        /// <summary>끌리는 속도 = PullSpeedBase + PullSpeedPerSecond x 구슬 나이(초).</summary>
+        public float PullSpeedBase = 9;
+        public float PullSpeedPerSecond = 4;
+        /// <summary>limits.orbs 를 넘으면 오래된 구슬 이만큼을 하나로 합친다.</summary>
+        public int MergeBatch = 100;
+        /// <summary>합친 큰 구슬을 두는 플레이어 둘레 거리.</summary>
+        public float MergeDistance = 5;
+    }
+
     /// <summary>등롱 한 칸(balance.json drops.lantern).</summary>
     public sealed class LanternDropDef
     {
@@ -297,6 +311,7 @@ namespace BloodRain.Core.Data
         public DropsDef Drops = new DropsDef();
         public LimitsDef Limits = new LimitsDef();
         public OrbValuesDef Orbs = new OrbValuesDef();
+        public OrbPickupDef OrbPickup = new OrbPickupDef();
         public XpCurveDef XpCurve = new XpCurveDef();
         public List<RealmDef> Realms = new List<RealmDef>();
         public SlotsDef Slots = new SlotsDef();
