@@ -219,6 +219,8 @@ namespace BloodRain.Core.Data
         public float MoveBase = 4.6f;
         public float MagnetBase = 1.5f;
         public float CooldownReductionCap = 0.6f;
+        /// <summary>치명타 피해 배율. 기획서 9장 천리안 '치명 피해 2배'. 시뮬레이터는 (1 + 치명 확률)로 2배를 가정한다.</summary>
+        public float CritDamageMultiplier = 2f;
     }
 
     /// <summary>연무장 한 항목. Stat은 Core.Build.StatKind 이름.</summary>

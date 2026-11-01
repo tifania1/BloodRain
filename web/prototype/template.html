@@ -1022,7 +1022,7 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   if (e.elite || e.boss) dmg *= G.stats.elite;
   const jsd = synEff('jiangshi_damage'); if (jsd && (E_BY_ID[e.type] || {}).family === 'jiangshi') dmg *= 1 + jsd.damageBonus;
   let crit = false;
-  if (Math.random() < G.stats.crit) { dmg *= 2; crit = true; }
+  if (Math.random() < G.stats.crit) { dmg *= B.stats.critDamageMultiplier; crit = true; }
   e.hp -= dmg; e.flash = 0.08;
   if (w) w.dealt += dmg;
   if (G.stats.lifesteal > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * G.stats.lifesteal);

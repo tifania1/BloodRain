@@ -66,6 +66,16 @@ namespace BloodRain.Core.Tests
             Assert.Equal(Assumptions.EvolvedDamage, G.Balance.Evolution.DamageMultiplier, 4);
         }
 
+        [Fact] public void 치명_피해_배율은_기획서와_데이터와_시뮬레이터가_같다()
+        {
+            // WeaponModel 은 기대 피해를 (1 + 치명 확률)로 센다 = 치명 피해 2배
+            Assert.Equal(2f, G.Balance.Stats.CritDamageMultiplier);
+            var m = System.Text.RegularExpressions.Regex.Match(TestData.Gdd, @"\| 천리안 \| 치명 확률 \+\d+%\(치명 피해 (\d+)배\)");
+            Assert.True(m.Success);
+            Assert.Equal(float.Parse(m.Groups[1].Value), G.Balance.Stats.CritDamageMultiplier);
+            Assert.Contains("dmg *= B.stats.critDamageMultiplier", TestData.ReadRepoFile("web", "prototype", "template.html"));
+        }
+
         [Fact] public void 무리에_닿는_시간은_생성_고리_거리와_1장_적_걸음에서_나온다()
         {
             // 주석의 셈: 대각선 38m × 고리 가운데(0.6~0.75의 평균) − 무공 사거리 3m, 걸음 초속 약 3.3m → 약 7초.
