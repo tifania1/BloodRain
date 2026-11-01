@@ -80,6 +80,10 @@ namespace BloodRain.Core.Data
         public string Weapon = "";
         public string Passive = "";
         public string Summary = "";
+        /// <summary>절기 수치(rangeMultiplier, bounces, chain …). 웹 프로토타입 값을 옮긴 것이고 아직 아홉 절기만 있다. 없으면 null.</summary>
+        public Dictionary<string, float>? Params;
+        /// <summary>params 값. 없으면 예외(데이터 빠짐을 바로 알게).</summary>
+        public float Param(string key) => Params != null && Params.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"{Id} params 에 {key} 가 없습니다");
     }
 
     public sealed class CharacterDef
