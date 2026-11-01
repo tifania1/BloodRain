@@ -67,7 +67,8 @@
       "members": ["falling_petals", "maehwa", "flash_finger"],
       "tiers": [
         { "count": 2, "desc": "치명 확률 +5%", "proto": true, "stats": { "CritChance": 0.05 } },
-        { "count": 3, "desc": "치명타가 터질 때마다 매화 꽃잎 세 장이 튀어 근처 적을 벤다", "proto": true } ] },
+        { "count": 3, "desc": "치명타가 터질 때마다 매화 꽃잎 세 장이 튀어 근처 적을 벤다", "proto": true,
+          "effect": "crit_petals", "params": { "petals": 3, "damage": 6, "speed": 7, "radius": 0.22, "lifeSeconds": 0.45 } } ] },
     { "id": "gaebang", "nameKo": "개방", "hanja": "丐幇", "motto": "의", "character": "machil",
       "members": ["drunken_staff", "juseon", "palm_wind", "pasan"],
       "tiers": [
@@ -78,18 +79,21 @@
       "members": ["flying_dagger", "cheonsu", "poison_mist", "mandok", "thunder_bomb"],
       "tiers": [
         { "count": 2, "desc": "지속 피해 +20%", "proto": true, "stats": { "DotDamage": 0.2 } },
-        { "count": 3, "desc": "중독된 적이 쓰러지면 독이 주변 2m로 번진다", "proto": true },
-        { "count": 5, "desc": "20초마다 화면 안 모든 적에게 독침이 한 대씩 박힌다", "proto": true } ] },
+        { "count": 3, "desc": "중독된 적이 쓰러지면 독이 주변 2m로 번진다", "proto": true,
+          "effect": "poison_spread", "params": { "radius": 2, "seconds": 2, "damagePerSecond": 5 } },
+        { "count": 5, "desc": "20초마다 화면 안 모든 적에게 독침이 한 대씩 박힌다", "proto": true,
+          "effect": "needle_rain", "params": { "intervalSeconds": 20, "damage": 8, "poisonSeconds": 2 } } ] },
     { "id": "namgung", "nameKo": "남궁세가", "hanja": "南宮世家", "motto": "창궁", "character": "namgung_hyeon",
       "members": ["changcheon_qi", "noejeong", "cheongmyeong"],
       "tiers": [
         { "count": 2, "desc": "검 계열 무공 피해 +12%", "proto": true, "effect": "sword_damage", "params": { "damageBonus": 0.12 } },
-        { "count": 3, "desc": "검 계열 무공의 세 번째 공격마다 하늘에서 검기 하나가 내리꽂힌다", "proto": true } ] },
+        { "count": 3, "desc": "검 계열 무공의 세 번째 공격마다 하늘에서 검기 하나가 내리꽂힌다", "proto": true,
+          "effect": "sky_sword", "params": { "everyAttacks": 3, "damageMultiplier": 1.2, "radius": 1.2, "delaySeconds": 0.22, "searchRange": 8 } } ] },
     { "id": "waterfort", "nameKo": "장강수로채", "hanja": "長江水路寨", "motto": "수적", "character": "ha_yeon",
       "members": ["chain_sickle", "suryong", "pear_spear", "cheollian"],
       "tiers": [
         { "count": 2, "desc": "은자 +30%", "proto": true, "stats": { "Greed": 0.3 } },
-        { "count": 3, "desc": "경공 거리 +50%, 경공으로 지나간 적을 끌고 간다", "proto": true, "effect": "dash_drag", "params": { "distanceBonus": 0.5 } },
+        { "count": 3, "desc": "경공 거리 +50%, 경공으로 지나간 적을 끌고 간다", "proto": true, "effect": "dash_drag", "params": { "distanceBonus": 0.5, "dragRadius": 1.0, "dragFactor": 0.9 } },
         { "count": 4, "desc": "정예 보갑에서 무공 강화가 하나 더 나온다", "chestUpgrades": 1, "proto": true } ] },
     { "id": "kunlun", "nameKo": "곤륜", "hanja": "崑崙", "motto": "부적", "character": null,
       "members": ["thunder_talisman", "domun", "hwaryong"],

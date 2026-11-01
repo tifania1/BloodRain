@@ -35,6 +35,32 @@ namespace BloodRain.Core.Tests
             Assert.Contains(string.Format(format, (int)System.Math.Round(t.Param(key) * scale)), t.Desc);
         }
 
+        [Fact] public void 모양_효과의_숫자도_설명과_같다()
+        {
+            SchoolTierDef T(string e) => _d.Synergies.Schools.SelectMany(s => s.Tiers).Single(x => x.Effect == e);
+            Assert.Equal(3f, T("crit_petals").Param("petals"));
+            Assert.Contains("세 장", T("crit_petals").Desc);
+            Assert.Equal(3f, T("sky_sword").Param("everyAttacks"));
+            Assert.Contains("세 번째", T("sky_sword").Desc);
+            Assert.Contains($"{T("poison_spread").Param("radius"):0}m", T("poison_spread").Desc);
+            Assert.Contains($"{T("needle_rain").Param("intervalSeconds"):0}초마다", T("needle_rain").Desc);
+            foreach (var k in new[] { "damage", "speed", "radius", "lifeSeconds" }) Assert.True(T("crit_petals").Param(k) > 0);
+            foreach (var k in new[] { "damageMultiplier", "radius", "delaySeconds", "searchRange" }) Assert.True(T("sky_sword").Param(k) > 0);
+            foreach (var k in new[] { "seconds", "damagePerSecond" }) Assert.True(T("poison_spread").Param(k) > 0);
+            foreach (var k in new[] { "damage", "poisonSeconds" }) Assert.True(T("needle_rain").Param(k) > 0);
+            foreach (var k in new[] { "dragRadius", "dragFactor" }) Assert.True(T("dash_drag").Param(k) > 0);
+        }
+
+        [Fact] public void 켜진_단계만_Tier_로_params_를_준다()
+        {
+            var off = Of(("samjae_sword", 1), ("falling_petals", 1));
+            Assert.Null(off.Tier("crit_petals"));
+            var hs = _d.Synergies.Schools.First(s => s.Id == "huashan");
+            var items = new[] { ("samjae_sword", 1) }.Concat(hs.Members.Select(m => (m, 1))).ToArray();
+            var on = Of(items);
+            Assert.Equal(3f, on.Tier("crit_petals")!.Param("petals"));
+        }
+
         [Fact] public void 남궁_둘이면_검만_12퍼센트()
         {
             var e = Of(("samjae_sword", 1), ("changcheon_qi", 1), ("noejeong", 1));

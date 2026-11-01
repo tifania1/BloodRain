@@ -1,7 +1,7 @@
 #nullable enable
 // 진전 단계의 effect(synergies.json tiers[].effect + params, 기획서 20장 진전 표).
 //   능력치 덧셈은 SynergyState.StatBonus(), 태극 구간은 SynergyState.HarmonyRange 가 따로 맡는다.
-//   여기는 곱하는 값만 숫자로 내준다. 꽃잎·검기·독 번짐 같은 모양은 아직 effect 가 없고 Unity 쪽 몫이다.
+//   곱하는 값은 아래 메서드가 숫자로 내주고, 모양이 있는 효과는 Tier(effect) 로 params 를 그대로 넘긴다(Unity 가 그린다).
 //
 //   sword_damage      남궁 2  검 계열(WeaponDef.Category "sword") 무공 피해 +damageBonus
 //   low_health_might  개방 3  기혈 비율 < healthThreshold 면 무공 피해 +damageBonus
@@ -10,6 +10,12 @@
 //   talisman_freeze   곤륜 2  정신부 멈춤 시간 × freezeMultiplier
 //   harmony_deflect   무당 3  태극 구간이면 받는 피해 -damageCut, 줄인 몫 × reflectMultiplier 를 부딪힌 적에게
 //   blood_trade       마도 2  흡혈 × lifestealMultiplier, 음식 회복 × foodHealMultiplier
+//   (모양) crit_petals   화산 3  치명타마다 꽃잎 petals 장(damage × 공력, speed m/s, radius, lifeSeconds). 꽃잎 치명타는 다시 꽃잎을 안 낸다
+//   (모양) sky_sword     남궁 3  검 계열 무공 everyAttacks 번째 공격마다 searchRange 안 가장 가까운 적 자리에 delaySeconds 뒤
+//                               radius 범위로 그 무공 한 방 × damageMultiplier. 공격 수는 판 동안 Unity 가 센다
+//   (모양) poison_spread 당가 3  중독된 적이 쓰러지면 radius 안 적에게 seconds 동안 초당 damagePerSecond × 지속 피해
+//   (모양) needle_rain   당가 5  intervalSeconds 마다 화면 안 모든 적에게 damage × 공력 × 지속 피해, poisonSeconds 중독
+//   dash_drag 의 dragRadius·dragFactor: 경공 중 몸 dragRadius 안 잡몹(정예·보스 빼고)을 경공 속도 × dragFactor 로 끌고 간다
 //
 // 시너지가 바뀔 때(레벨업에서 고른 뒤) SynergyEffects.Of(Synergy.Compute(…)) 로 새로 만든다.
 using System.Collections.Generic;
@@ -24,6 +30,7 @@ namespace BloodRain.Core.Build
         {
             "sword_damage", "low_health_might", "jiangshi_damage", "dash_drag",
             "talisman_freeze", "harmony_deflect", "blood_trade",
+            "crit_petals", "sky_sword", "poison_spread", "needle_rain",
         };
 
         readonly Dictionary<string, SchoolTierDef> _active = new Dictionary<string, SchoolTierDef>();
@@ -43,6 +50,9 @@ namespace BloodRain.Core.Build
 
         public bool Has(string effect) => _active.ContainsKey(effect);
         SchoolTierDef? Find(string effect) => _active.TryGetValue(effect, out var t) ? t : null;
+
+        /// <summary>그 효과가 켜져 있으면 단계 정의(params 를 Param(key) 로 읽는다), 아니면 null.</summary>
+        public SchoolTierDef? Tier(string effect) => Find(effect);
 
         /// <summary>무공 한 방 피해에 곱하는 값(남궁 2 검 계열, 개방 3 낮은 기혈).</summary>
         public float WeaponDamageMultiplier(WeaponDef weapon, float healthRatio)
