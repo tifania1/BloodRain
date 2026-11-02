@@ -81,6 +81,78 @@
       "inkGamma": 0.75
     },
     {
+      "name": "fx_evo_array_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 5.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "천뢰검진 검기 원 두 겹 + 낙뢰"
+    },
+    {
+      "name": "fx_evo_qin_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 5.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "파천금음 겹치는 음파"
+    },
+    {
+      "name": "fx_evo_samjae_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 4.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "right",
+      "use": "천지인 삼검 거대 반원 베기·관통 검기"
+    },
+    {
+      "name": "fx_evo_star_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 1.2,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "만천성지 치명타 작은 폭발"
+    },
+    {
+      "name": "fx_evo_taiji_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 4.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "태극양의검 흑백 검 8자루 공전"
+    },
+    {
+      "name": "fx_evo_thunder_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 6.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "down",
+      "use": "오뢰정법 대낙뢰"
+    },
+    {
       "name": "fx_finger_glow",
       "kind": "ai_glow",
       "sizeMeters": 3.0,
