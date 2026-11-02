@@ -16,6 +16,7 @@ namespace BloodRain.Sim
         Dash = 4,    // telegraph_dash: 혈무사. 쫓다가 DashRange 안이면 Telegraph 초 멈춰 예고 → DashSeconds 동안 DashSpeed 로 돌진 → Rest 초 쉬며 쫓기
         Keep = 5,    // kite_shoot: 혈궁수. KeepMax 보다 멀면 다가오고 KeepMin 보다 가까우면 물러난다(그 사이에선 선다)
         Curve = 6,   // fly_curve: 비강. 쫓으면서 옆으로 CurveAmp m 만큼 CurvePeriod 초 주기로 흔들린다(EnemyDef.Curve)
+        Flank = 7,   // flank_pack: 설랑. 플레이어 쪽에서 FlankAngle 만큼 비껴 돌아 들어오다 CommitRange 안이면 곧장 덮친다(EnemyDef.Group)
     }
 
     /// <summary>telegraph_dash 단계.</summary>
@@ -54,6 +55,8 @@ namespace BloodRain.Sim
         public float Stun;
         // fly_curve(비강, EnemyDef.Curve): 옆 흔들림 폭(세계 m)과 주기(초). 위상은 Hop 자리(0~1)를 같이 쓴다
         public float CurveAmp, CurvePeriod;
+        // flank_pack(설랑, EnemyDef.Group): 비껴 드는 각(라디안, 부호가 왼쪽·오른쪽)과 곧장 덮치는 거리(세계 m)
+        public float FlankAngle, CommitRange;
         public float2 DashDir;
         public byte Phase;        // DashPhase
         public byte Move;
@@ -281,6 +284,17 @@ namespace BloodRain.Sim
                         float w = 2f * math.PI / math.max(0.05f, e.CurvePeriod);
                         float side = e.CurveAmp * w * math.cos(w * e.Life + e.Hop * 2f * math.PI);
                         v = dir * speed + new float2(-dir.y, dir.x) * side;
+                        break;
+                    }
+                    case EnemyMove.Flank:
+                    {
+                        // 멀면 플레이어 쪽 방향을 FlankAngle 만큼 돌려 옆으로 감아 들고(앞으로 가는 몫은 cos), 가까우면 곧장
+                        if (d > e.CommitRange)
+                        {
+                            float s = math.sin(e.FlankAngle), c = math.cos(e.FlankAngle);
+                            v = new float2(dir.x * c - dir.y * s, dir.x * s + dir.y * c) * speed;
+                        }
+                        else v = dir * speed;
                         break;
                     }
                     case EnemyMove.Line:

@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f), ("dogin", 3f), ("blood_lion", 2f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f), ("dogin", 3f), ("blood_lion", 2f), ("snow_wolf", 1f),
         };
 
         struct Kind
@@ -176,6 +176,7 @@ namespace BloodRain.Presentation
                 case "charge_roar": return EnemyMove.Dash;    // 혈사자: 같은 돌진, 쉬기로 들어서면 포효(ApplyAuras)
                 case "kite_shoot": return EnemyMove.Keep;     // EnemyDef.Shoot 의 KeepMax 가 0 이면 SpawnAt 이 Chase 로 돌린다
                 case "fly_curve": return EnemyMove.Curve;     // EnemyDef.Curve 가 없으면 SpawnAt 이 Chase 로 돌린다
+                case "flank_pack": return EnemyMove.Flank;    // EnemyDef.Group 이 없으면 SpawnAt 이 Chase 로 돌린다
                 default: return EnemyMove.Chase; // 나머지 갈래는 붙이기 전까지 곧장 쫓는다
             }
         }
@@ -212,6 +213,7 @@ namespace BloodRain.Presentation
             if (move == EnemyMove.Dash && def.Dash == null) move = EnemyMove.Chase;
             if (move == EnemyMove.Keep && (def.Shoot == null || def.Shoot.KeepMax <= 0f)) move = EnemyMove.Chase;
             if (move == EnemyMove.Curve && (def.Curve == null || def.Curve.Amplitude <= 0f)) move = EnemyMove.Chase;
+            if (move == EnemyMove.Flank && (def.Group == null || def.Group.FlankAngle <= 0f)) move = EnemyMove.Chase;
             var to = (Vector2)player.position - pos;
             var a = new EnemyAgent
             {
@@ -244,6 +246,13 @@ namespace BloodRain.Presentation
                 // 비강 곡선 비행(enemies.json curve, 기획서 6장 '옆 1.5m, 1.6초'): 경지 m → 세계 m. 위상은 Hop 의 무작위 값
                 a.CurveAmp = ws.Length(def.Curve.Amplitude, realm);
                 a.CurvePeriod = def.Curve.Period;
+            }
+            if (move == EnemyMove.Flank)
+            {
+                // 설랑 무리(enemies.json group, 기획서 6장 '지역별 고유 적'): 무리 안에서 번갈아 왼쪽·오른쪽으로 비껴 든다
+                a.FlankAngle = def.Group.FlankAngle * Mathf.Deg2Rad * (_flankSide ? 1f : -1f);
+                _flankSide = !_flankSide;
+                a.CommitRange = ws.Length(def.Group.CommitRange, realm);
             }
             if (def.AuraRadius > 0f)
             {
@@ -282,8 +291,24 @@ namespace BloodRain.Presentation
                 _spawningTwin = false;
                 if (pid >= 0) { _twinOf[id] = pid; _twinOf[pid] = id; }
             }
+            if (move == EnemyMove.Flank && def.Group.Size > 1 && !_spawningGroup)
+            {
+                // 설랑은 Size 마리가 한 번에 나온다. 첫 마리 둘레 1m 안에 흩어 세우고, 왼쪽·오른쪽은 _flankSide 가 번갈아 준다
+                _spawningGroup = true;
+                float spread = ws.Length(1f, realm);
+                for (int i = 1; i < def.Group.Size; i++)
+                {
+                    float ang = (float)_rng.NextDouble() * Mathf.PI * 2f, r = Mathf.Sqrt((float)_rng.NextDouble()) * spread;
+                    var off = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r;
+                    SpawnAt(def, pos + off);
+                }
+                _spawningGroup = false;
+            }
             return id;
         }
+
+        bool _flankSide = true;   // 설랑 다음 마리가 비껴 드는 쪽
+        bool _spawningGroup;      // 무리 나머지를 세우는 중(그 안에서 다시 무리를 부르지 않게)
 
         // ── 흑백 쌍강시 되살림(twin_revive) ─────────────────────────
         // 한쪽이 쓰러지면 그 자리에 눕고(Fallen), 짝이 ReviveSeconds 버티면 최대 기혈 × ReviveHealth 로 일어난다.
