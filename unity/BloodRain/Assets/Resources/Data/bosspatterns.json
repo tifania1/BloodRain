@@ -443,7 +443,7 @@
       ]
     },
     "hyeokryeon_hwi": {
-      "_note": "혈영회주 혁련휘(십만대산, T-14). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 혈영 분신(blood_shadow_clone)은 아직 enemies.json 에 없다(T-33에서 넣는다).",
+      "_note": "혈영회주 혁련휘(십만대산, T-14). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 혈영 분신은 enemies.json blood_shadow_clone 을 부르고, 흉내 값은 mirror_clone 의 mimic 이 덮는다.",
       "firstCastSeconds": 2.5,
       "intervalSeconds": 4.5,
       "phase2IntervalSeconds": 3.5,
@@ -487,6 +487,7 @@
           "summon": "blood_shadow_clone",
           "center": "boss",
           "leaveSeconds": 12,
+          "mimic": { "damageScale": 0.5, "cooldownScale": 1, "allWeapons": true },
           "baseDamage": 0
         }
       ],

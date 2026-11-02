@@ -78,6 +78,8 @@ namespace BloodRain.Core.Data
         public string LeaveGimmick = "";
         /// <summary>남긴 기믹이 사라질 때까지(초).</summary>
         public float LeaveSeconds;
+        /// <summary>소환한 적이 플레이어 무공을 흉내 낼 때 그 적의 mimic 대신 쓰는 값(혈영회주 혈영 분신). 없으면 null.</summary>
+        public EnemyMimic? Mimic;
         /// <summary>남긴 기믹을 쓸 수 있는 횟수.</summary>
         public int LeaveUses;
         /// <summary>2막 패턴처럼 켜지면 끝까지 이어지는가.</summary>

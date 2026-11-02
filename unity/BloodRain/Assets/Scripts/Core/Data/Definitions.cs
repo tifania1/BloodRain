@@ -263,6 +263,8 @@ namespace BloodRain.Core.Data
     {
         public float DamageScale;
         public float CooldownScale;
+        /// <summary>true 면 첫 무공만이 아니라 가진 무공을 모두 흉내 낸다(혈영회주 패턴 혈영 분신).</summary>
+        public bool AllWeapons;
     }
 
     /// <summary>twin_revive: 둘이 Gap m 떨어져 한 쌍으로 나와 같이 움직인다. 한쪽이 쓰러지면 그 자리에 눕고,
