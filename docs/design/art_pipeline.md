@@ -78,6 +78,7 @@
   - AI 빛 재료 층: gold 는 금빛을 더하고, core 는 흰빛을 더한다. shade 는 빛 밑에 먼저 까는 먹 받침(보통 섞기, 먹 #141414)이다. 그어짐·흩어짐은 gold 와 같은 값으로 묶는다.
     더하기 빛만 그리면 밝은 종이 바닥에서 크림색으로 묻힌다(2026-11-01 PC 화면). 받침은 `import_vfx_ai.py` 가 gold 를 13px 넓히고 9px 흐려 0.55배로 만든다(`--reshade` 로 이미 반영된 것도 다시 만듦). 견줌: `docs/vfx_preview/glow_shade_paper.png`(왼쪽 받침 없음, 오른쪽 받침).
 - 크기는 같은 폴더 json 의 `sizeMeters`, PPU = 512 ÷ sizeMeters.
+- Unity 를 열지 않고 `.meta` 를 만들 때는 기존 먹·빛 재료 meta 를 본뜨되 `guid` 는 꼭 새로 뽑는다(`python -c "import uuid;print(uuid.uuid4().hex)"`). guid 가 겹치거나 에셋 없이 meta 만 남으면 `MetaGuidTests` 가 막는다.
 - 붓 획 셰이더와 이펙트 틀은 backlog V-04 / `unity_tasks.md` V-04 에서 만든다.
   - `_Progress` 는 호면 각도, 찌르기면 +x 로 그어진다. AI 재료는 `ai.json` 의 `progress` 방향(가운데서 바깥, 위→아래 …)을 쓴다.
   - `_Dissolve` 는 `Common/noise_1` 문턱으로 흩어진다.
