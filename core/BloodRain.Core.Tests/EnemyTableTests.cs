@@ -172,8 +172,9 @@ namespace BloodRain.Core.Tests
             var pull = _d.Enemy("water_ghost").Pull!;
             Assert.Contains($"{Num(pull.Range)}m 안이면 플레이어를 초속 {Num(pull.Speed)}m로 끌어당김", Row("수귀"));
             var wb = _d.Enemy("water_bandit");
-            Assert.Contains($"{Num(wb.Hook!.Range)}m 안이면 {Num(wb.Telegraph)}초 예고 뒤 초속 {Num(wb.Hook.Speed)}m 갈고리. 맞으면 {Num(wb.Hook.BindSeconds)}초", Row("수적"));
+            Assert.Contains($"{Num(wb.Hook!.Range)}m 안이면 {Num(wb.Telegraph)}초 예고 뒤 초속 {Num(wb.Hook.Speed)}m 갈고리(머리 반경 {Num(wb.Hook.Radius)}m). 맞으면 {Num(wb.Hook.BindSeconds)}초", Row("수적"));
             Assert.Contains($"{Num(wb.Hook.Interval)}초마다", Row("수적"));
+            Assert.True(wb.Hook.Radius > 0);
             var plum = _d.Enemy("plum_sword_ghost");
             var ps = plum.Shoot!;
             Assert.Contains($"{Num(ps.Range)}m 안이면 {Num(ps.Interval)}초마다 꽃잎 {ps.Count}발을 {Num(ps.Spread)}도로 펼쳐 쏨. 초속 {Num(ps.Speed)}m, 한 발 {Num(plum.ProjectileDamage)}", Row("매화검귀"));

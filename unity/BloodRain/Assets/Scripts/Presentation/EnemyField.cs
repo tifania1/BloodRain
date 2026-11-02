@@ -716,7 +716,7 @@ namespace BloodRain.Presentation
                         _hookShots.Add(new HookShot
                         {
                             Owner = a.Id, From = at, Pos = at, Dir = s.Dir, Speed = ws.Speed(hk.Speed, a.BornRealm),
-                            Left = range, Bind = hk.BindSeconds, Radius = ws.Length(0.25f, a.BornRealm),
+                            Left = range, Bind = hk.BindSeconds, Radius = ws.Length(hk.Radius > 0f ? hk.Radius : 0.25f, a.BornRealm),
                         });
                         s.Cool = hk.Interval;
                     }

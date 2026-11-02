@@ -235,12 +235,13 @@ namespace BloodRain.Core.Data
         public float Speed;
     }
 
-    /// <summary>hook_bind: Range m 안이면 Telegraph 초 예고선 뒤 초속 Speed m 갈고리를 던져, 맞으면 BindSeconds 초 걷기·경공을 못 한다
+    /// <summary>hook_bind: Range m 안이면 Telegraph 초 예고선 뒤 초속 Speed m 갈고리(머리 반경 Radius m)를 던져, 맞으면 BindSeconds 초 걷기·경공을 못 한다
     /// (무공은 나감). 던지고 다음 던지기까지 Interval 초.</summary>
     public sealed class EnemyHook
     {
         public float Range;
         public float Speed;
+        public float Radius;
         public float BindSeconds;
         public float Interval;
     }
