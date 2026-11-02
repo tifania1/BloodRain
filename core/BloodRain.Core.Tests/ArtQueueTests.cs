@@ -104,6 +104,24 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        [Fact] public void 먹_재료는_stroke_한_층이고_감마가_스크립트와_같다()
+        {
+            // import_vfx_ai.py 의 INK_GAMMA 를 바꾸면 이미 반영된 먹 재료는 옛 감마로 남는다.
+            // ai.json 의 inkGamma 가 스크립트 값과 다르면 --reink 로 원본에서 다시 키잉해야 한다(V-11). 없는 줄은 감마 전에 키잉된 것.
+            var script = File.ReadAllText(Path.Combine(RepoRoot, "tools", "import_vfx_ai.py"));
+            var m = System.Text.RegularExpressions.Regex.Match(script, @"^INK_GAMMA = ([0-9.]+)", System.Text.RegularExpressions.RegexOptions.Multiline);
+            Assert.True(m.Success, "import_vfx_ai.py 에 INK_GAMMA 가 없다");
+            var gamma = double.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+            Assert.InRange(gamma, 0.4, 1.0);
+            var ai = JObject.Parse(File.ReadAllText(Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Art", "VFX", "AI", "ai.json")));
+            foreach (var t in ((JArray)ai["textures"]!).Cast<JObject>().Where(t => (string)t["kind"]! == "ai_ink"))
+            {
+                Assert.Equal(new[] { "stroke" }, ((JArray)t["layers"]!).Select(l => (string)l!));
+                if (t["inkGamma"] != null)
+                    Assert.True(System.Math.Abs((double)t["inkGamma"]! - gamma) < 1e-6, $"{t["name"]}: inkGamma {t["inkGamma"]} 인데 스크립트는 {gamma}. --reink 로 다시 키잉");
+            }
+        }
+
         [Fact] public void imported_줄은_Unity_Art_폴더에_파일이_있다()
         {
             var kinds = Kinds();
