@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f),
         };
 
         struct Kind
@@ -173,7 +173,8 @@ namespace BloodRain.Presentation
                 case "line_charge": return EnemyMove.Line;
                 case "telegraph_dash": return EnemyMove.Dash; // EnemyDef.Dash 가 없으면 SpawnAt 이 Chase 로 돌린다
                 case "kite_shoot": return EnemyMove.Keep;     // EnemyDef.Shoot 의 KeepMax 가 0 이면 SpawnAt 이 Chase 로 돌린다
-                default: return EnemyMove.Chase; // fly_curve 등은 갈래를 붙이기 전까지 곧장 쫓는다
+                case "fly_curve": return EnemyMove.Curve;     // EnemyDef.Curve 가 없으면 SpawnAt 이 Chase 로 돌린다
+                default: return EnemyMove.Chase; // 나머지 갈래는 붙이기 전까지 곧장 쫓는다
             }
         }
 
@@ -208,6 +209,7 @@ namespace BloodRain.Presentation
             var move = MoveOf(def.Behavior);
             if (move == EnemyMove.Dash && def.Dash == null) move = EnemyMove.Chase;
             if (move == EnemyMove.Keep && (def.Shoot == null || def.Shoot.KeepMax <= 0f)) move = EnemyMove.Chase;
+            if (move == EnemyMove.Curve && (def.Curve == null || def.Curve.Amplitude <= 0f)) move = EnemyMove.Chase;
             var to = (Vector2)player.position - pos;
             var a = new EnemyAgent
             {
@@ -234,6 +236,12 @@ namespace BloodRain.Presentation
                 a.RestMin = dash.RestMin;
                 a.RestMax = dash.RestMax;
                 a.Telegraph = def.Telegraph;
+            }
+            if (move == EnemyMove.Curve)
+            {
+                // 비강 곡선 비행(enemies.json curve, 기획서 6장 '옆 1.5m, 1.6초'): 경지 m → 세계 m. 위상은 Hop 의 무작위 값
+                a.CurveAmp = ws.Length(def.Curve.Amplitude, realm);
+                a.CurvePeriod = def.Curve.Period;
             }
             if (def.AuraRadius > 0f)
             {
