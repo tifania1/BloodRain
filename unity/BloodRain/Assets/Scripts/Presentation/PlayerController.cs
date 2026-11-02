@@ -36,6 +36,14 @@ namespace BloodRain.Presentation
 
         public float SlowLeft => _slowLeft;
 
+        float _bindLeft;
+
+        /// <summary>묶임(수적 갈고리 hook_bind: enemies.json hook.bindSeconds). 남은 초 동안 걷기·경공을 못 한다(무공은 나감).
+        /// 다시 걸리면 긴 쪽.</summary>
+        public void Bind(float seconds) { if (seconds > _bindLeft) _bindLeft = seconds; }
+
+        public float BindLeft => _bindLeft;
+
         public Dash Dash { get; private set; }
         public Vector2 Facing => _facing;
         public bool Invulnerable => Dash != null && Dash.Invulnerable;
@@ -81,11 +89,13 @@ namespace BloodRain.Presentation
 
         void Update()
         {
-            var move = ReadMove();
-            if (move.sqrMagnitude > 1e-4f) _facing = move.normalized;
-            if (DashPressed()) Dash.TryStart(_facing.x, _facing.y);
-
             float dt = Time.deltaTime;
+            var move = ReadMove();
+            bool bound = _bindLeft > 0f;
+            if (bound) { _bindLeft = Mathf.Max(0f, _bindLeft - dt); move = Vector2.zero; }
+            if (move.sqrMagnitude > 1e-4f) _facing = move.normalized;
+            if (!bound && DashPressed()) Dash.TryStart(_facing.x, _facing.y);
+
             if (_slowLeft > 0f) { _slowLeft -= dt; if (_slowLeft <= 0f) _slowMul = 1f; }
             var (ddx, ddy) = Dash.Tick(dt);
             var pos = new System.Numerics.Vector2(transform.position.x, transform.position.y);

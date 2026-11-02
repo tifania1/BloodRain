@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f),
         };
 
         struct Kind
@@ -433,6 +433,7 @@ namespace BloodRain.Presentation
             StepMarks(dt, p);
             StepPools(dt, p);
             StepTwins(dt);
+            StepHooks(dt, p);
             _watch.Stop();
             _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
             _fps = Mathf.Lerp(_fps, dt > 0 ? 1f / Time.unscaledDeltaTime : 0f, 0.05f);
@@ -671,6 +672,109 @@ namespace BloodRain.Presentation
             }
         }
 
+        // ── 갈고리 묶기(수적 hook_bind) ─────────────────────────────
+        //   EnemyDef.Hook 이 있는 적은 플레이어가 Range(경지 m) 안이고 쉬는 시간이 끝났으면 그 순간 플레이어 쪽으로 겨눠
+        //   Telegraph 초 동안 서서 예고선을 긋고(겨눈 방향은 굳힘 — 비켜서면 피한다), 초속 Speed 갈고리를 Range 까지 던진다.
+        //   플레이어 몸에 닿으면 BindSeconds 동안 걷기·경공을 못 한다(PlayerController.Bind, 무적이면 지나감). 피해는 없다.
+        //   던진 뒤 다음까지 Interval 초. 처음 나온 적은 0~Interval 사이 아무 때나. 그림은 임시 선(이펙트 오기 전).
+        struct HookState { public float Cool, Tele; public Vector2 Dir; public bool Seen; }
+        struct HookShot { public int Owner; public Vector2 From, Pos, Dir; public float Speed, Left, Bind, Radius; }
+        readonly Dictionary<int, HookState> _hookStates = new Dictionary<int, HookState>();
+        readonly List<HookShot> _hookShots = new List<HookShot>();
+        readonly List<LineRenderer> _hookLines = new List<LineRenderer>();
+        Material _lineMat;
+        static readonly Color HookAimColor = new Color(0.85f, 0.10f, 0.06f, 0.45f);
+        static readonly Color HookRopeColor = new Color(0.12f, 0.10f, 0.08f, 0.9f);
+
+        /// <summary>시험용: 지금까지 갈고리에 묶인 수.</summary>
+        public int HookBindCount { get; private set; }
+
+        void StepHooks(float dt, Vector2 p)
+        {
+            var ws = World;
+            var agents = _sim.Agents;
+            float pr = ws.Length(_playerBody) * 0.5f;
+            int line = 0;
+            for (int i = 0; i < _sim.Count; i++)
+            {
+                var a = agents[i];
+                var def = DefOf(a.Kind);
+                var hk = def?.Hook;
+                if (hk == null || hk.Interval <= 0f) continue;
+                _hookStates.TryGetValue(a.Id, out var s);
+                if (!s.Seen) { s.Seen = true; s.Cool = hk.Interval * (float)_rng.NextDouble(); }
+                var at = new Vector2(a.Pos.x, a.Pos.y);
+                float range = ws.Length(hk.Range, a.BornRealm);
+                if (s.Tele > 0f)
+                {
+                    s.Tele -= dt;
+                    if (a.Stun < dt * 2f) { a.Stun = dt * 2f; _sim.Set(i, a); } // 예고 동안 선다
+                    if (s.Tele <= 0f)
+                    {
+                        _hookShots.Add(new HookShot
+                        {
+                            Owner = a.Id, From = at, Pos = at, Dir = s.Dir, Speed = ws.Speed(hk.Speed, a.BornRealm),
+                            Left = range, Bind = hk.BindSeconds, Radius = ws.Length(0.25f, a.BornRealm),
+                        });
+                        s.Cool = hk.Interval;
+                    }
+                    else DrawHookLine(line++, at, at + s.Dir * range, HookAimColor, ws.Length(0.06f));
+                }
+                else
+                {
+                    s.Cool -= dt;
+                    if (s.Cool <= 0f && (p - at).sqrMagnitude <= range * range)
+                    {
+                        var d = p - at;
+                        s.Dir = d.sqrMagnitude > 1e-6f ? d.normalized : Vector2.right;
+                        s.Tele = Mathf.Max(0.05f, def.Telegraph);
+                    }
+                }
+                _hookStates[a.Id] = s;
+            }
+            for (int k = _hookShots.Count - 1; k >= 0; k--)
+            {
+                var h = _hookShots[k];
+                float step = h.Speed * dt;
+                h.Pos += h.Dir * step;
+                h.Left -= step;
+                bool gone = h.Left <= 0f;
+                float rr = h.Radius + pr;
+                if (!gone && (h.Pos - p).sqrMagnitude <= rr * rr && (_playerMove == null || !_playerMove.Invulnerable))
+                {
+                    _playerMove?.Bind(h.Bind);
+                    HookBindCount++;
+                    gone = true;
+                }
+                if (gone) { _hookShots.RemoveAt(k); continue; }
+                _hookShots[k] = h;
+                DrawHookLine(line++, h.From, h.Pos, HookRopeColor, ws.Length(0.05f));
+            }
+            for (int k = line; k < _hookLines.Count; k++) if (_hookLines[k].enabled) _hookLines[k].enabled = false;
+        }
+
+        void DrawHookLine(int index, Vector2 from, Vector2 to, Color color, float width)
+        {
+            if (_lineMat == null) _lineMat = new Material(Shader.Find("Sprites/Default"));
+            while (_hookLines.Count <= index)
+            {
+                var go = new GameObject("갈고리 선");
+                go.transform.SetParent(transform, false);
+                var lr = go.AddComponent<LineRenderer>();
+                lr.sharedMaterial = _lineMat;
+                lr.positionCount = 2;
+                lr.useWorldSpace = true;
+                lr.sortingOrder = 3;
+                _hookLines.Add(lr);
+            }
+            var l = _hookLines[index];
+            l.enabled = true;
+            l.SetPosition(0, new Vector3(from.x, from.y, 0f));
+            l.SetPosition(1, new Vector3(to.x, to.y, 0f));
+            l.startColor = l.endColor = color;
+            l.startWidth = l.endWidth = width;
+        }
+
         // ── 쓰러질 때 남기는 것(EnemyDef.Death, 목인나한 splinter_burst·독두꺼비 poison_pool) ─────────────────
         //   Kill 은 Damage 고리 안에서 불리니 바로 터뜨리지 않고 모아 두었다가 프레임마다 여기서 푼다(자리 번호가 꼬이지 않게).
         //   splinter_burst: 반경 Radius(경지 m) 안 다른 적에게 EnemyDamage, 플레이어가 안이면 PlayerDamage 한 번.
@@ -784,7 +888,7 @@ namespace BloodRain.Presentation
 
         void Sync()
         {
-            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); _twinOf.Remove(id); }
+            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); _twinOf.Remove(id); _hookStates.Remove(id); }
             _sim.Removed.Clear();
             if (clusters == null) return;
             clusters.Clear();
