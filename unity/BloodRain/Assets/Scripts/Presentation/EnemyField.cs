@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f), ("dogin", 3f), ("blood_lion", 2f), ("snow_wolf", 1f), ("golden_centipede", 1f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f), ("dogin", 3f), ("blood_lion", 2f), ("snow_wolf", 1f), ("golden_centipede", 1f), ("demon_cultist", 1f),
         };
 
         struct Kind
@@ -326,19 +326,42 @@ namespace BloodRain.Presentation
                 }
                 _spawningGroup = false;
             }
+            if (def.Behavior == "spear_line" && def.Group != null && def.Group.Size > 1 && !_spawningGroup)
+            {
+                // 마교도 창진(enemies.json group, 기획서 6장): 머리를 가운데 두고 플레이어 쪽에 수직으로 Spacing m 간격 한 줄.
+                // 나머지는 머리 옆 +1·-1·+2·-2… 칸 자리를 지키며 줄째 전진한다(줄은 늘 플레이어를 마주 보게 돈다)
+                _spawningGroup = true;
+                float gap = ws.Length(def.Group.Spacing, realm);
+                var side = to.sqrMagnitude > 1e-6f ? new Vector2(-to.y, to.x).normalized : Vector2.up;
+                for (int i = 1; i < def.Group.Size; i++)
+                {
+                    float off = ((i + 1) / 2) * (i % 2 == 1 ? 1f : -1f) * gap;
+                    int sid = SpawnAt(def, pos + side * off);
+                    if (sid < 0) break;
+                    int si = _sim.Count - 1;
+                    var s = _sim.Get(si);
+                    s.Move = (byte)EnemyMove.Follow;
+                    s.FollowGap = gap * 0.1f;
+                    s.FollowTarget = s.Pos;
+                    _sim.Set(si, s);
+                    _follow[sid] = new FollowLink { Leader = id, Head = id, Offset = off };
+                }
+                _spawningGroup = false;
+            }
             return id;
         }
 
-        // ── 금선지네 마디(snake_line) ─────────────────────────────
+        // ── 금선지네 마디(snake_line)·마교도 창진(spear_line) ─────────
         // 마디마다 바로 앞 마디(Leader)와 머리(Head)를 기억한다. 앞 마디가 쓰러지면 그 앞 마디를 따라가 줄을 잇고,
         // 머리가 쓰러지면 남은 마디가 저마다 흩어져 곧장 쫓는다(Chase).
-        struct FollowLink { public int Leader, Head; }
+        // 창진은 Offset(세계 m)이 0 이 아니어서 머리 자리에서 플레이어 쪽에 수직으로 Offset 만큼 옆 자리를 지킨다.
+        struct FollowLink { public int Leader, Head; public float Offset; }
         readonly Dictionary<int, FollowLink> _follow = new Dictionary<int, FollowLink>();
         readonly Dictionary<int, int> _indexOf = new Dictionary<int, int>();
         readonly List<int> _followDone = new List<int>();
         public int SnakeScattered { get; private set; }
 
-        void StepFollow()
+        void StepFollow(float2 player)
         {
             if (_follow.Count == 0) return;
             _indexOf.Clear();
@@ -364,6 +387,12 @@ namespace BloodRain.Presentation
                 if (!_indexOf.TryGetValue(leader, out int li)) continue;
                 if (leader != link.Leader) { link.Leader = leader; _follow[fid] = link; }
                 e.FollowTarget = agents[li].Pos;
+                if (link.Offset != 0f)
+                {
+                    float2 toP = player - agents[li].Pos;
+                    float2 sd = math.lengthsq(toP) > 1e-6f ? math.normalize(new float2(-toP.y, toP.x)) : new float2(0f, 1f);
+                    e.FollowTarget += sd * link.Offset;
+                }
                 agents[fi] = e;
             }
             foreach (int fid in _followDone) _follow.Remove(fid);
@@ -507,7 +536,7 @@ namespace BloodRain.Presentation
 
             _watch.Restart();
             ApplyAuras(dt);
-            StepFollow();
+            StepFollow(new float2(p.x, p.y));
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
             _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
