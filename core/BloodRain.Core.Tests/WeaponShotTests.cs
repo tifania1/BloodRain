@@ -150,6 +150,10 @@ namespace BloodRain.Core.Tests
             var rows = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백")).Select(r => r[0]).ToHashSet();
             var expected = inProto.Select(w => w.NameKo).Append(_d.Weapons.Single(w => w.Id == "thunder_talisman").NameKo).ToHashSet();
             Assert.True(expected.SetEquals(rows), $"표: {string.Join(",", rows)} / 기대: {string.Join(",", expected)}");
+            // 프로토타입 README 의 '시작 무공 n종' 과 '해금 무공 n종' 도 같은 수
+            var readme = TestData.ReadRepoFile("web", "prototype", "README.md");
+            Assert.Contains($"시작 무공 {inProto.Count(w => w.Unlock == "start")}종", readme);
+            Assert.Contains($"해금 무공 {_d.Weapons.Count(w => w.Unlock != "start")}종", readme);
         }
 
         [Fact]
