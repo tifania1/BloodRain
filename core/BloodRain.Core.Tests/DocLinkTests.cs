@@ -16,6 +16,7 @@ namespace BloodRain.Core.Tests
         {
             "docs/daily/YYYY-MM-DD.md",      // 날짜 틀
             "tools/agent_loop/config.json",  // .gitignore (비밀값)
+            "docs/session_lock.md",          // 세션이 일하는 동안만 있는 잠금 파일
         };
 
         static readonly Regex RepoPath = new Regex(
