@@ -17,6 +17,7 @@ namespace BloodRain.Sim
         Keep = 5,    // kite_shoot: 혈궁수. KeepMax 보다 멀면 다가오고 KeepMin 보다 가까우면 물러난다(그 사이에선 선다)
         Curve = 6,   // fly_curve: 비강. 쫓으면서 옆으로 CurveAmp m 만큼 CurvePeriod 초 주기로 흔들린다(EnemyDef.Curve)
         Flank = 7,   // flank_pack: 설랑. 플레이어 쪽에서 FlankAngle 만큼 비껴 돌아 들어오다 CommitRange 안이면 곧장 덮친다(EnemyDef.Group)
+        Follow = 8,  // snake_line 마디: 앞 마디 자리(FollowTarget)를 FollowGap 간격으로 따라간다. 머리가 쓰러지면 EnemyField 가 Chase 로 바꾼다
     }
 
     /// <summary>telegraph_dash 단계.</summary>
@@ -57,6 +58,9 @@ namespace BloodRain.Sim
         public float CurveAmp, CurvePeriod;
         // flank_pack(설랑, EnemyDef.Group): 비껴 드는 각(라디안, 부호가 왼쪽·오른쪽)과 곧장 덮치는 거리(세계 m)
         public float FlankAngle, CommitRange;
+        // snake_line 마디(금선지네, EnemyDef.Group): 따라갈 앞 마디 자리(EnemyField 가 매 프레임 넣음)와 간격(세계 m)
+        public float2 FollowTarget;
+        public float FollowGap;
         public float2 DashDir;
         public byte Phase;        // DashPhase
         public byte Move;
@@ -297,6 +301,15 @@ namespace BloodRain.Sim
                         else v = dir * speed;
                         break;
                     }
+                    case EnemyMove.Follow:
+                    {
+                        // 앞 마디와 간격보다 벌어지면 따라붙는다. 많이 벌어졌으면 최대 1.5배까지 빨리(줄이 끊어지지 않게)
+                        float2 tf = e.FollowTarget - e.Pos;
+                        float df = math.length(tf);
+                        if (df > e.FollowGap && df > 1e-5f)
+                            v = tf / df * speed * math.clamp(df / math.max(1e-4f, e.FollowGap), 1f, 1.5f);
+                        break;
+                    }
                     case EnemyMove.Line:
                         v = e.LineDir * speed;
                         break;
@@ -338,7 +351,7 @@ namespace BloodRain.Sim
                 if (e.MaxLife > 0f && e.Life > e.MaxLife) e.Dead = 1;
 
                 // 멀리 떨어진 적은 플레이어가 가는 쪽(서 있으면 원래 쪽 반대편)으로 옮겨 다시 쓴다
-                if (d > RecycleBeyond && e.Move != (byte)EnemyMove.Line && e.Move != (byte)EnemyMove.Flee)
+                if (d > RecycleBeyond && e.Move != (byte)EnemyMove.Line && e.Move != (byte)EnemyMove.Flee && e.Move != (byte)EnemyMove.Follow)
                 {
                     float2 side = math.lengthsq(Heading) > 1e-6f ? math.normalize(Heading) : dir;
                     // 같은 자리에 겹치지 않게 Id 로 조금 비튼다

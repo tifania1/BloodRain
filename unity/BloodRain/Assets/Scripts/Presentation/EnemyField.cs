@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f), ("dogin", 3f), ("blood_lion", 2f), ("snow_wolf", 1f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f), ("dogin", 3f), ("blood_lion", 2f), ("snow_wolf", 1f), ("golden_centipede", 1f),
         };
 
         struct Kind
@@ -304,7 +304,82 @@ namespace BloodRain.Presentation
                 }
                 _spawningGroup = false;
             }
+            if (def.Behavior == "snake_line" && def.Group != null && def.Group.Size > 1 && !_spawningGroup)
+            {
+                // 금선지네(enemies.json group, 기획서 6장): 머리는 곧장 쫓고, 뒤로 Spacing m 간격 마디 Size-1 개가 앞 마디를 따라간다
+                _spawningGroup = true;
+                float gap = ws.Length(def.Group.Spacing, realm);
+                var back = to.sqrMagnitude > 1e-6f ? -to.normalized : Vector2.left;
+                int leader = id;
+                for (int i = 1; i < def.Group.Size; i++)
+                {
+                    int sid = SpawnAt(def, pos + back * gap * i);
+                    if (sid < 0) break;
+                    int si = _sim.Count - 1; // Spawn 은 맨 뒤에 넣는다
+                    var s = _sim.Get(si);
+                    s.Move = (byte)EnemyMove.Follow;
+                    s.FollowGap = gap;
+                    s.FollowTarget = _sim.Get(si - 1).Pos;
+                    _sim.Set(si, s);
+                    _follow[sid] = new FollowLink { Leader = leader, Head = id };
+                    leader = sid;
+                }
+                _spawningGroup = false;
+            }
             return id;
+        }
+
+        // ── 금선지네 마디(snake_line) ─────────────────────────────
+        // 마디마다 바로 앞 마디(Leader)와 머리(Head)를 기억한다. 앞 마디가 쓰러지면 그 앞 마디를 따라가 줄을 잇고,
+        // 머리가 쓰러지면 남은 마디가 저마다 흩어져 곧장 쫓는다(Chase).
+        struct FollowLink { public int Leader, Head; }
+        readonly Dictionary<int, FollowLink> _follow = new Dictionary<int, FollowLink>();
+        readonly Dictionary<int, int> _indexOf = new Dictionary<int, int>();
+        readonly List<int> _followDone = new List<int>();
+        public int SnakeScattered { get; private set; }
+
+        void StepFollow()
+        {
+            if (_follow.Count == 0) return;
+            _indexOf.Clear();
+            var agents = _sim.Agents;
+            for (int i = 0; i < _sim.Count; i++) _indexOf[agents[i].Id] = i;
+            _followDone.Clear();
+            var keys = new List<int>(_follow.Keys);
+            foreach (int fid in keys)
+            {
+                if (!_indexOf.TryGetValue(fid, out int fi)) continue; // 쓰러진 마디: 뒤 마디가 지나갈 길로 남겨 둔다
+                var link = _follow[fid];
+                var e = agents[fi];
+                if (!_indexOf.ContainsKey(link.Head))
+                {
+                    e.Move = (byte)EnemyMove.Chase;
+                    agents[fi] = e;
+                    _followDone.Add(fid);
+                    SnakeScattered++;
+                    continue;
+                }
+                int leader = link.Leader;
+                while (!_indexOf.ContainsKey(leader) && leader != link.Head && _follow.TryGetValue(leader, out var up)) leader = up.Leader;
+                if (!_indexOf.TryGetValue(leader, out int li)) continue;
+                if (leader != link.Leader) { link.Leader = leader; _follow[fid] = link; }
+                e.FollowTarget = agents[li].Pos;
+                agents[fi] = e;
+            }
+            foreach (int fid in _followDone) _follow.Remove(fid);
+            // 산 마디가 하나도 안 가리키는 쓰러진 마디는 지운다
+            if (_follow.Count > 0)
+            {
+                _followDone.Clear();
+                foreach (var kv in _follow)
+                {
+                    if (_indexOf.ContainsKey(kv.Key)) continue;
+                    bool referenced = false;
+                    foreach (var kv2 in _follow) if (kv2.Value.Leader == kv.Key && _indexOf.ContainsKey(kv2.Key)) { referenced = true; break; }
+                    if (!referenced) _followDone.Add(kv.Key);
+                }
+                foreach (int fid in _followDone) _follow.Remove(fid);
+            }
         }
 
         bool _flankSide = true;   // 설랑 다음 마리가 비껴 드는 쪽
@@ -432,6 +507,7 @@ namespace BloodRain.Presentation
 
             _watch.Restart();
             ApplyAuras(dt);
+            StepFollow();
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
             _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
