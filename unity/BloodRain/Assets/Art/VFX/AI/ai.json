@@ -128,6 +128,18 @@
       "use": "뇌부(thunder_talisman) 옆으로 튀는 연쇄 번개"
     },
     {
+      "name": "fx_lightning_glow_3",
+      "kind": "ai_glow",
+      "sizeMeters": 4.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "down",
+      "use": "뇌부(thunder_talisman) 큰 낙뢰"
+    },
+    {
       "name": "fx_mist_ink",
       "kind": "ai_ink",
       "sizeMeters": 3.0,
@@ -172,6 +184,18 @@
       "inkGamma": 0.75
     },
     {
+      "name": "fx_petal_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 2.5,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "right",
+      "use": "낙화검우(falling_petals) 꽃잎 빛"
+    },
+    {
       "name": "fx_petal_ink",
       "kind": "ai_ink",
       "sizeMeters": 2.5,
@@ -181,6 +205,18 @@
       "progress": "right",
       "use": "낙화검우(falling_petals) 꽃잎 흩날림",
       "inkGamma": 0.75
+    },
+    {
+      "name": "fx_qin_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 3.0,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "radial",
+      "use": "음공(sonic_qin) 음파 고리 빛"
     },
     {
       "name": "fx_qin_ink",
@@ -227,6 +263,18 @@
       ],
       "progress": "radial",
       "use": "맞을 때 금빛 불똥(3단부터, 공용)"
+    },
+    {
+      "name": "fx_spear_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 3.5,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "right",
+      "use": "이화창(pear_spear) 찌르기 빛"
     },
     {
       "name": "fx_spear_ink",
