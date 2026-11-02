@@ -56,5 +56,27 @@ namespace BloodRain.Editor
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/Test/TrainingTest.unity");
             Debug.Log("[SettlementBootstrap] Assets/Scenes/Test/TrainingTest.unity 만듦");
         }
+
+        // S-04 장경각 시험 씬. 찢긴 비급 넷, 윤회의 기 9,000, 봉인석 셋을 가진 혼으로 연다.
+        [MenuItem("BloodRain/Test/장경각 시험 씬 만들기")]
+        public static void CreateLibraryScene()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            Directory.CreateDirectory("Assets/Scenes/Test");
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
+            var cam = camGo.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.91f, 0.87f, 0.78f);
+            camGo.transform.position = new Vector3(0, 0, -10);
+            camGo.AddComponent<UniversalAdditionalCameraData>();
+            new GameObject("DataBoot").AddComponent<DataBoot>();
+            var screen = new GameObject("장경각 화면").AddComponent<LibraryScreen>();
+            screen.font = HudBootstrap.EnsureBodyFont();
+            screen.demo = true;
+            EditorSceneManager.SaveScene(scene, "Assets/Scenes/Test/LibraryTest.unity");
+            Debug.Log("[SettlementBootstrap] Assets/Scenes/Test/LibraryTest.unity 만듦");
+        }
     }
 }

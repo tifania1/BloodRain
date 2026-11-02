@@ -143,6 +143,15 @@ namespace BloodRain.Presentation.Meta
                 ex.alignment = TextAlignmentOptions.Right;
                 Place(ex.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - 96), new Vector2(620, 32));
             }
+            // 장경각에 새로 오른 찢긴 비급(S-04). 조건을 갖췄는데 잠겨 있던 비급이다. 객잔 장경각에서 복원한다.
+            if (summary.NewTornManuals.Count > 0)
+            {
+                var names = summary.NewTornManuals.Select(id => ManualNames.Name(_data, id));
+                var torn = Text(right, $"찢긴 비급 장경각에 오름  <size=85%>{string.Join("·", names)}</size>", 22, FontStyles.Bold, Crimson);
+                torn.alignment = TextAlignmentOptions.Right;
+                torn.textWrappingMode = TextWrappingModes.Normal;
+                Place(torn.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - 140), new Vector2(620, 60));
+            }
 
             var btn = MakeButton(_root, "객잔으로  <size=70%><alpha=#88>Enter<alpha=#FF></size>");
             Place((RectTransform)btn.transform, new Vector2(0.5f, 0f), new Vector2(0, 80), new Vector2(380, 64));
@@ -224,7 +233,11 @@ namespace BloodRain.Presentation.Meta
             var scale = new Scale(_data);
             for (int r = 1; r <= 3 && r < scale.Realms.Count; r++) log.Breakthrough(scale.Realms[r].Id);
             log.KillBoss("danggata");
-            var record = log.Finish("fallen", 240);
+            var r0 = log.Finish("fallen", 240);
+            // 잠긴 비급 둘을 갖춘 채 끝난 생으로 친다(찢긴 비급 줄 보기)
+            var torn = _data.Synergies.SecretManualIds.Take(2);
+            var record = new LifeRecord(r0.Sect, r0.EndWay, r0.RebirthQi, r0.BossesKilled, r0.VisitedRegions, r0.HighestRealm,
+                r0.AwakenedEvolutions, r0.Manuscripts, torn);
             var summary = soul.EndLife(record);
             var stats = new SettlementStats
             {
