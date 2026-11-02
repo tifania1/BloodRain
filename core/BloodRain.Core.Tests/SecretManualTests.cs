@@ -19,6 +19,35 @@ namespace BloodRain.Core.Tests
 
         // ---- 데이터 ----
 
+        [Fact] public void 비급_id는_겹치지_않고_장경각이_이름_한자_설명을_모두_찾는다()
+        {
+            // 장경각·정산 화면(Presentation/Meta/ManualNames)은 연환 id 를 먼저 찾고, 없으면 "문파:단계" 로 나눠 읽는다.
+            // 연환 id 에 ':' 가 들어가거나 문파 id 와 겹치면 엉뚱한 이름이 뜬다.
+            var ids = _d.Synergies.SecretManualIds.ToList();
+            Assert.Equal(ids.Count, ids.Distinct().Count());
+            Assert.All(_d.Synergies.Links, l => Assert.DoesNotContain(':', l.Id));
+            Assert.Empty(_d.Synergies.Links.Select(l => l.Id).Intersect(_d.Synergies.Schools.Select(s => s.Id)));
+            foreach (var id in ids)
+            {
+                var link = _d.Synergies.Links.FirstOrDefault(l => l.ManualId == id);
+                if (link != null)
+                {
+                    Assert.False(string.IsNullOrWhiteSpace(link.NameKo), id);
+                    Assert.False(string.IsNullOrWhiteSpace(link.Hanja), id);
+                    Assert.False(string.IsNullOrWhiteSpace(link.Desc), id);
+                    continue;
+                }
+                var parts = id.Split(':');
+                Assert.Equal(2, parts.Length);
+                var school = _d.Synergies.Schools.Single(s => s.Id == parts[0]);
+                var tier = school.Tiers.Single(t => t.Count == int.Parse(parts[1]));
+                Assert.True(tier.IsSecret, id);
+                Assert.False(string.IsNullOrWhiteSpace(school.NameKo), id);
+                Assert.False(string.IsNullOrWhiteSpace(school.Hanja), id);
+                Assert.False(string.IsNullOrWhiteSpace(tier.Desc), id);
+            }
+        }
+
         [Fact] public void 비급_층은_점혈_쌍검합벽_취중_개방3_곤륜3이다()
         {
             Assert.Equal(new[] { "ssanggeom", "jeomhyeol", "chwijung", "gaebang:3", "kunlun:3" }, _d.Synergies.SecretManualIds.ToArray());
