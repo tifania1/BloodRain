@@ -48,6 +48,28 @@
       "inkGamma": 0.75
     },
     {
+      "name": "fx_claw_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 2.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "혈조(blood_claw) 할퀸 자국 셋(색은 셰이더가 입힘)",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_claw_ink_2",
+      "kind": "ai_ink",
+      "sizeMeters": 1.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "혈조(blood_claw) 맞은 자리 튐",
+      "inkGamma": 0.75
+    },
+    {
       "name": "fx_dagger_ink",
       "kind": "ai_ink",
       "sizeMeters": 2.5,
@@ -150,6 +172,28 @@
       "inkGamma": 0.75
     },
     {
+      "name": "fx_petal_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 2.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "낙화검우(falling_petals) 꽃잎 흩날림",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_qin_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 3.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "음공(sonic_qin) 퍼지는 음파 고리",
+      "inkGamma": 0.75
+    },
+    {
       "name": "fx_sickle_glow",
       "kind": "ai_glow",
       "sizeMeters": 3.0,
@@ -162,6 +206,17 @@
       "use": "쇄겸술(chain_sickle) 낫날 빛"
     },
     {
+      "name": "fx_sickle_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 3.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "쇄겸술(chain_sickle) 사슬 휘감기 궤적",
+      "inkGamma": 0.75
+    },
+    {
       "name": "fx_spark_glow",
       "kind": "ai_glow",
       "sizeMeters": 1.0,
@@ -172,6 +227,17 @@
       ],
       "progress": "radial",
       "use": "맞을 때 금빛 불똥(3단부터, 공용)"
+    },
+    {
+      "name": "fx_spear_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 3.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "이화창(pear_spear) 찌르기 몸통",
+      "inkGamma": 0.75
     },
     {
       "name": "fx_staff_ink",
@@ -207,6 +273,28 @@
       ],
       "progress": "radial",
       "use": "태극검(taiji_sword) 공전 검 끝 빛"
+    },
+    {
+      "name": "fx_taiji_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 2.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "태극검(taiji_sword) 공전하는 검 두 자루의 궤적",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_talisman_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 2.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "뇌부(thunder_talisman) 낙뢰 맞은 땅 자국",
+      "inkGamma": 0.75
     }
   ]
 }
