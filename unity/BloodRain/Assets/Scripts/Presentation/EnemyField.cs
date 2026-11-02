@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f),
         };
 
         struct Kind
@@ -68,6 +68,8 @@ namespace BloodRain.Presentation
         {
             var a = _sim.Get(index);
             _sim.RemoveAt(index);
+            var def = DefOf(a.Kind);
+            if (def?.Death != null) _deaths.Add((new Vector2(a.Pos.x, a.Pos.y), def, a.BornRealm));
             Killed?.Invoke(new Vector2(a.Pos.x, a.Pos.y), a);
         }
 
@@ -331,6 +333,7 @@ namespace BloodRain.Presentation
             }
             FireShots();
             StepShots(dt, p);
+            ResolveDeaths(p);
             StepPools(dt, p);
             _watch.Stop();
             _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
@@ -451,7 +454,7 @@ namespace BloodRain.Presentation
         //   한 적이 깐 것은 Max 개까지(넘으면 오래된 것부터). 플레이어가 하나라도 밟고 있으면 1초마다 ZoneDamagePerSecond 를 한 번
         //   (겹쳐 밟아도 한 번, 무적이면 Hit 이 걸러 냄). 화면 밖(대각선 절반 너머) 혈술사는 깔지 않는다. 깐 적이 쓰러져도 웅덩이는 남는다.
         //   첫 웅덩이는 나온 뒤 0~Interval 사이. 그림은 이펙트가 오기 전 임시 핏빛 원.
-        struct Pool { public Vector2 Pos; public float Radius, Left, Damage; public int Owner; }
+        struct Pool { public Vector2 Pos; public float Radius, Left, Damage; public int Owner; public Color Color; }
         readonly List<Pool> _pools = new List<Pool>();
         readonly List<SpriteRenderer> _poolViews = new List<SpriteRenderer>();
         readonly Dictionary<int, float> _poolTimers = new Dictionary<int, float>();
@@ -486,7 +489,7 @@ namespace BloodRain.Presentation
                         _pools.Add(new Pool
                         {
                             Pos = p, Radius = ws.Length(pool.Radius, a.BornRealm), Left = pool.Seconds,
-                            Damage = def.ZoneDamagePerSecond * (1f + a.Buff), Owner = a.Id,
+                            Damage = def.ZoneDamagePerSecond * (1f + a.Buff), Owner = a.Id, Color = PoolColor,
                         });
                     }
                     t += pool.Interval;
@@ -518,6 +521,49 @@ namespace BloodRain.Presentation
             DrawPools();
         }
 
+        // ── 쓰러질 때 남기는 것(EnemyDef.Death, 목인나한 splinter_burst·독두꺼비 poison_pool) ─────────────────
+        //   Kill 은 Damage 고리 안에서 불리니 바로 터뜨리지 않고 모아 두었다가 프레임마다 여기서 푼다(자리 번호가 꼬이지 않게).
+        //   splinter_burst: 반경 Radius(경지 m) 안 다른 적에게 EnemyDamage, 플레이어가 안이면 PlayerDamage 한 번.
+        //     나뭇조각에 쓰러진 목인나한이 또 터지면 다음 프레임에 이어서 터진다.
+        //   poison_pool: 그 자리에 반경 Radius 독 장판 Seconds 초, 밟으면 초당 PerSecond(피 웅덩이와 같은 줄: 겹쳐도 1초에 한 번, 큰 값).
+        readonly List<(Vector2 pos, EnemyDef def, int born)> _deaths = new List<(Vector2, EnemyDef, int)>();
+        readonly List<(Vector2 pos, EnemyDef def, int born)> _deathsNow = new List<(Vector2, EnemyDef, int)>();
+        readonly List<int> _splinterHits = new List<int>();
+        static readonly Color PoisonColor = new Color(0.30f, 0.55f, 0.12f, 0.45f);
+        static readonly Color SplinterColor = new Color(0.45f, 0.30f, 0.15f, 0.6f);
+
+        /// <summary>시험용: 지금까지 터진 나뭇조각 수.</summary>
+        public int SplinterCount { get; private set; }
+
+        void ResolveDeaths(Vector2 p)
+        {
+            if (_deaths.Count == 0) return;
+            _deathsNow.Clear();
+            _deathsNow.AddRange(_deaths);
+            _deaths.Clear();
+            var ws = World;
+            float pr = ws.Length(_playerBody) * 0.5f;
+            foreach (var (pos, def, born) in _deathsNow)
+            {
+                var d = def.Death;
+                float r = ws.Length(d.Radius, born);
+                if (def.OnDeath == "splinter_burst")
+                {
+                    SplinterCount++;
+                    _sim.QueryCircle(new float2(pos.x, pos.y), r, _splinterHits);
+                    _splinterHits.RemoveAll(i => i >= _sim.Count); // 격자에 남은 걷어 낸 자리
+                    if (d.EnemyDamage > 0f && _splinterHits.Count > 0) Damage(_splinterHits, d.EnemyDamage, pos, 0f);
+                    if (d.PlayerDamage > 0f && vitals != null && (pos - p).sqrMagnitude <= (r + pr) * (r + pr)) vitals.Hit(d.PlayerDamage);
+                    // 터진 자리를 0.3초 비춘다(이펙트 오기 전 임시)
+                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = 0.3f, Damage = 0f, Owner = -1, Color = SplinterColor });
+                }
+                else if (def.OnDeath == "poison_pool" && d.Seconds > 0f)
+                {
+                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = d.Seconds, Damage = d.PerSecond, Owner = -1, Color = PoisonColor });
+                }
+            }
+        }
+
         void DrawPools()
         {
             while (_poolViews.Count < _pools.Count)
@@ -539,7 +585,7 @@ namespace BloodRain.Presentation
                 sr.sprite = _dot;
                 sr.transform.position = new Vector3(q.Pos.x, q.Pos.y, 0f);
                 sr.transform.localScale = Vector3.one * (q.Radius * 2f);
-                var c = PoolColor;
+                var c = q.Color;
                 c.a *= Mathf.Clamp01(q.Left / 0.5f); // 마르기 직전 0.5초에 옅어짐
                 sr.color = c;
             }
