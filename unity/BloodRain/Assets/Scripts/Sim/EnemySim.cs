@@ -58,6 +58,7 @@ namespace BloodRain.Sim
         public byte Phase;        // DashPhase
         public byte Move;
         public byte Dead;         // 1 이면 Step 끝에 걷어 낸다(Line 시간 초과 등)
+        public byte NoDrop;       // 1 이면 쓰러져도 구슬을 떨구지 않는다(쌍강시 되살아난 몸)
     }
 
     // 적 시뮬레이션(C-02). 구조체 배열(NativeArray) 하나에 살아 있는 적만 앞쪽에 빽빽이 두고, 죽으면 맨 뒤 것을 그 자리로 옮긴다(풀).

@@ -72,6 +72,7 @@ namespace BloodRain.Presentation.Fx
         {
             var ws = WorldScale.Current;
             if (ws == null || player == null) return;
+            if (a.NoDrop != 0) return; // 쌍강시 되살아난 몸은 구슬을 다시 떨구지 않는다(기획서 6장)
             var def = enemies != null ? enemies.DefOf(a.Kind) : null;
             var reward = def?.Reward;
             if (reward != null && reward.OrbBurst && reward.Orbs > 0)

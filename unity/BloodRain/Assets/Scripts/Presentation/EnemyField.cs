@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f),
         };
 
         struct Kind
@@ -70,6 +70,7 @@ namespace BloodRain.Presentation
             _sim.RemoveAt(index);
             var def = DefOf(a.Kind);
             if (def?.Death != null) _deaths.Add((new Vector2(a.Pos.x, a.Pos.y), def, a.BornRealm));
+            if (def?.Twin != null) OnTwinKilled(a, def);
             Killed?.Invoke(new Vector2(a.Pos.x, a.Pos.y), a);
         }
 
@@ -271,7 +272,94 @@ namespace BloodRain.Presentation
             if (id < 0) return -1;
             var tint = kindIndex >= 0 ? _kinds[kindIndex].Tint : TintOf(def.Family);
             _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f };
+            if (def.Twin != null && !_spawningTwin)
+            {
+                // 흑백 쌍강시(enemies.json twin, 기획서 6장): 플레이어 쪽 방향에 직각으로 Gap m 옆에 짝을 하나 더 세운다
+                var side = to.sqrMagnitude > 1e-6f ? new Vector2(-to.y, to.x).normalized : Vector2.up;
+                _spawningTwin = true;
+                int pid = SpawnAt(def, pos + side * ws.Length(def.Twin.Gap, realm));
+                _spawningTwin = false;
+                if (pid >= 0) { _twinOf[id] = pid; _twinOf[pid] = id; }
+            }
             return id;
+        }
+
+        // ── 흑백 쌍강시 되살림(twin_revive) ─────────────────────────
+        // 한쪽이 쓰러지면 그 자리에 눕고(Fallen), 짝이 ReviveSeconds 버티면 최대 기혈 × ReviveHealth 로 일어난다.
+        // 둘 다 누우면 끝. 되살아난 몸은 NoDrop 이라 구슬을 다시 떨구지 않는다. 정예 한 쌍 보갑 하나는 보갑이 붙을 때(C-09).
+        struct Fallen { public Vector2 Pos; public EnemyDef Def; public int Realm; public int Partner; public float Left; }
+        readonly Dictionary<int, int> _twinOf = new Dictionary<int, int>();
+        readonly List<Fallen> _fallen = new List<Fallen>();
+        readonly List<SpriteRenderer> _fallenViews = new List<SpriteRenderer>();
+        bool _spawningTwin;
+        static readonly Color FallenColor = new Color(0.25f, 0.25f, 0.25f, 0.55f);
+
+        /// <summary>시험용: 지금 누워 있는 쌍강시 수와 지금까지 되살아난 수.</summary>
+        public int FallenCount => _fallen.Count;
+        public int RevivedCount { get; private set; }
+
+        int IndexOfId(int id)
+        {
+            var agents = _sim.Agents;
+            for (int i = 0; i < _sim.Count; i++) if (agents[i].Id == id) return i;
+            return -1;
+        }
+
+        void OnTwinKilled(EnemyAgent a, EnemyDef def)
+        {
+            if (!_twinOf.TryGetValue(a.Id, out int partner)) return;
+            _twinOf.Remove(a.Id);
+            int lying = _fallen.FindIndex(f => f.Partner == a.Id);
+            if (lying >= 0) { _fallen.RemoveAt(lying); _twinOf.Remove(partner); return; } // 짝이 이미 누워 있다: 둘 다 누우면 끝
+            if (IndexOfId(partner) < 0) return;
+            _fallen.Add(new Fallen { Pos = new Vector2(a.Pos.x, a.Pos.y), Def = def, Realm = a.BornRealm, Partner = partner, Left = def.ReviveSeconds });
+        }
+
+        void StepTwins(float dt)
+        {
+            for (int i = _fallen.Count - 1; i >= 0; i--)
+            {
+                var f = _fallen[i];
+                if (IndexOfId(f.Partner) < 0) { _fallen.RemoveAt(i); continue; } // 짝이 다른 길로 사라짐(비우기 등)
+                f.Left -= dt;
+                if (f.Left > 0f) { _fallen[i] = f; continue; }
+                _fallen.RemoveAt(i);
+                _spawningTwin = true;
+                int nid = SpawnAt(f.Def, f.Pos);
+                _spawningTwin = false;
+                if (nid < 0) continue;
+                int ni = _sim.Count - 1; // Spawn 은 맨 뒤에 넣는다
+                var na = _sim.Get(ni);
+                na.Health = na.MaxHealth * f.Def.Twin.ReviveHealth;
+                na.NoDrop = 1;
+                _sim.Set(ni, na);
+                _twinOf[nid] = f.Partner;
+                _twinOf[f.Partner] = nid;
+                RevivedCount++;
+            }
+            // 누운 몸: 잿빛 원, 일어나기 직전 1초에 깜빡인다(그림 오기 전 임시)
+            while (_fallenViews.Count < _fallen.Count)
+            {
+                var go = new GameObject("누운 쌍강시");
+                go.transform.SetParent(transform, false);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sortingOrder = 1;
+                _fallenViews.Add(sr);
+            }
+            for (int i = 0; i < _fallenViews.Count; i++)
+            {
+                var sr = _fallenViews[i];
+                bool on = i < _fallen.Count && _dot != null;
+                if (sr.enabled != on) sr.enabled = on;
+                if (!on) continue;
+                var f = _fallen[i];
+                sr.sprite = _dot;
+                sr.transform.position = new Vector3(f.Pos.x, f.Pos.y, 0f);
+                sr.transform.localScale = Vector3.one * (RadiusOf(f.Realm) * 2f);
+                var c = FallenColor;
+                if (f.Left < 1f) c.a *= 0.4f + 0.6f * Mathf.PingPong(Time.time * 6f, 1f);
+                sr.color = c;
+            }
         }
 
         EnemyDef PickDef()
@@ -344,6 +432,7 @@ namespace BloodRain.Presentation
             ResolveDeaths(p);
             StepMarks(dt, p);
             StepPools(dt, p);
+            StepTwins(dt);
             _watch.Stop();
             _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
             _fps = Mathf.Lerp(_fps, dt > 0 ? 1f / Time.unscaledDeltaTime : 0f, 0.05f);
@@ -695,7 +784,7 @@ namespace BloodRain.Presentation
 
         void Sync()
         {
-            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); }
+            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); _twinOf.Remove(id); }
             _sim.Removed.Clear();
             if (clusters == null) return;
             clusters.Clear();
