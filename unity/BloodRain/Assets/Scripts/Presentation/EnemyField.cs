@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f), ("bigang", 4f), ("twin_gangsi", 2f), ("water_bandit", 3f), ("dogin", 3f), ("blood_lion", 2f),
         };
 
         struct Kind
@@ -173,6 +173,7 @@ namespace BloodRain.Presentation
                 case "flee": return EnemyMove.Flee;
                 case "line_charge": return EnemyMove.Line;
                 case "telegraph_dash": return EnemyMove.Dash; // EnemyDef.Dash 가 없으면 SpawnAt 이 Chase 로 돌린다
+                case "charge_roar": return EnemyMove.Dash;    // 혈사자: 같은 돌진, 쉬기로 들어서면 포효(ApplyAuras)
                 case "kite_shoot": return EnemyMove.Keep;     // EnemyDef.Shoot 의 KeepMax 가 0 이면 SpawnAt 이 Chase 로 돌린다
                 case "fly_curve": return EnemyMove.Curve;     // EnemyDef.Curve 가 없으면 SpawnAt 이 Chase 로 돌린다
                 default: return EnemyMove.Chase; // 나머지 갈래는 붙이기 전까지 곧장 쫓는다
@@ -405,7 +406,7 @@ namespace BloodRain.Presentation
             while (_sim.Count > targetCount) _sim.RemoveAt(_sim.Count - 1);
 
             _watch.Restart();
-            ApplyAuras();
+            ApplyAuras(dt);
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
             _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
@@ -607,6 +608,7 @@ namespace BloodRain.Presentation
                 float r = q.Radius + pr * 0.5f; // 몸 가운데가 웅덩이 가장자리를 넘어서면 밟은 것
                 if ((q.Pos - p).sqrMagnitude <= r * r) hurt = Mathf.Max(hurt, q.Damage);
             }
+            hurt = Mathf.Max(hurt, StepZones(p, pr));
             if (hurt > 0f)
             {
                 _poolTick -= dt;
@@ -845,12 +847,70 @@ namespace BloodRain.Presentation
             }
         }
 
+        // 독인 poison_aura(enemies.json zoneRadius·zoneDamagePerSecond, 기획서 6장 '제 몸 둘레 반경 1.5m 독안개, 초당 4'):
+        // 웅덩이와 같은 줄에서 큰 값 하나를 1초에 한 번. 안개 그림은 몸을 따라다니는 옅은 초록 원(임시).
+        readonly List<SpriteRenderer> _zoneViews = new List<SpriteRenderer>();
+
+        float StepZones(Vector2 p, float pr)
+        {
+            var ws = World;
+            var agents = _sim.Agents;
+            float hurt = 0f;
+            int shown = 0;
+            for (int i = 0; i < _sim.Count; i++)
+            {
+                var a = agents[i];
+                var def = DefOf(a.Kind);
+                if (def == null || def.ZoneRadius <= 0f || def.ZoneDamagePerSecond <= 0f) continue;
+                var at = new Vector2(a.Pos.x, a.Pos.y);
+                float zr = ws.Length(def.ZoneRadius, a.BornRealm);
+                float r = zr + pr * 0.5f;
+                if ((at - p).sqrMagnitude <= r * r) hurt = Mathf.Max(hurt, def.ZoneDamagePerSecond * (1f + a.Buff));
+                if (_dot == null) continue;
+                if (shown == _zoneViews.Count)
+                {
+                    var go = new GameObject("독안개");
+                    go.transform.SetParent(transform, false);
+                    var sr0 = go.AddComponent<SpriteRenderer>();
+                    sr0.sortingOrder = 1;
+                    _zoneViews.Add(sr0);
+                }
+                var sr = _zoneViews[shown++];
+                sr.enabled = true;
+                sr.sprite = _dot;
+                sr.transform.position = new Vector3(at.x, at.y, 0f);
+                sr.transform.localScale = Vector3.one * (zr * 2f);
+                sr.color = new Color(PoisonColor.r, PoisonColor.g, PoisonColor.b, 0.22f);
+            }
+            for (int k = shown; k < _zoneViews.Count; k++) if (_zoneViews[k].enabled) _zoneViews[k].enabled = false;
+            return hurt;
+        }
+
         readonly List<int> _auraOwners = new List<int>();
         readonly List<int> _auraNear = new List<int>();
 
+        // 혈사자 charge_roar(enemies.json roarSeconds, 기획서 6장): 돌진이 끝나 쉬기로 들어서는 순간 포효,
+        // RoarSeconds 동안만 깃발처럼 AuraRadius 안 적에 AuraBonus. RoarSeconds 0 인 기수는 늘 켜져 있다.
+        readonly Dictionary<int, (byte phase, float roar)> _roars = new Dictionary<int, (byte, float)>();
+
+        /// <summary>시험용: 지금까지 포효한 수.</summary>
+        public int RoarCount { get; private set; }
+
+        bool AuraOn(EnemyAgent a, float dt)
+        {
+            var def = DefOf(a.Kind);
+            if (def == null || def.RoarSeconds <= 0f) return true;
+            _roars.TryGetValue(a.Id, out var r);
+            if (r.phase == (byte)DashPhase.Dashing && a.Phase == (byte)DashPhase.Rest) { r.roar = def.RoarSeconds; RoarCount++; }
+            else r.roar = Mathf.Max(0f, r.roar - dt);
+            r.phase = a.Phase;
+            _roars[a.Id] = r;
+            return r.roar > 0f;
+        }
+
         /// <summary>buff_aura(기수): 깃발 둘레 AuraRadius 안 다른 적의 Buff 를 AuraBonus 로(여럿이 겹쳐도 더하지 않고 큰 값 하나).
         /// 기수 자신은 받지 않는다. 격자는 지난 Step 끝 위치라 이번 프레임에 막 나온 적은 다음 프레임부터 받는다.</summary>
-        void ApplyAuras()
+        void ApplyAuras(float dt)
         {
             int n = _sim.Count;
             if (n == 0) return;
@@ -859,7 +919,7 @@ namespace BloodRain.Presentation
             for (int i = 0; i < n; i++)
             {
                 var a = agents[i];
-                if (a.AuraRadius > 0f) _auraOwners.Add(i);
+                if (a.AuraRadius > 0f && AuraOn(a, dt)) _auraOwners.Add(i);
                 if (a.Buff != 0f) { a.Buff = 0f; agents[i] = a; }
             }
             foreach (int o in _auraOwners)
@@ -888,7 +948,7 @@ namespace BloodRain.Presentation
 
         void Sync()
         {
-            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); _twinOf.Remove(id); _hookStates.Remove(id); }
+            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); _twinOf.Remove(id); _hookStates.Remove(id); _roars.Remove(id); }
             _sim.Removed.Clear();
             if (clusters == null) return;
             clusters.Clear();
