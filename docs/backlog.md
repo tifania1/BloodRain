@@ -25,7 +25,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] S-01 2026-10-29 — `Synergy.cs`: 켜진 연환, 문파별 진전 개수·단계·남은 수, 기본의 극(삼재검법 Lv8), 바깥 보너스, 카드 미리보기
 - [x] S-02 2026-10-29 — `Secrets.cs`: 판 기록(RunRecord)과 비전 8종 판정. 조건을 synergies.json `secrets[].require` 로 옮김
 - [x] S-03 2026-10-29 — `Encounters.cs`: 사건마다 판에 한 번, 기본 확률 + 기연×0.005, 장·시간 제한
-- [ ] S-04 `[U]` 레벨업 카드 연환 띠·문파 인장, HUD 진전 인장, 발견 연출(탁본 뒤집기 + 秘傳 낙관), 장경각 도감 화면
+- [ ] S-04 `[U]` 레벨업 카드 연환 띠·문파 인장, HUD 진전 인장, 발견 연출(탁본 뒤집기 + 秘傳 낙관), 장경각 도감 화면 (진행: 2026-11-03 PC 세션들이 연환 띠·문파 인장·HUD 진전 인장·발견 연출·장경각 도감·복원·정산 찢긴 비급 첫 판을 붙임. 남은 것은 unity_tasks S-04 끝: 발견 조건을 Record 에 알리기, 기연 사건 배치, `LifeLog.NoteSynergy`)
 - [x] S-05 2026-10-30 — `core/BloodRain.Sim/SynergyCheck.cs`, 보고서 `docs/design/sim/synergy.md`. 무공 6칸 8,008조합 Lv8 보스 화력: 늘 켜진 효과만으로 최대 1.62배(1.3배 넘는 조합 1,184개), 조건부까지 1.92배. 큰 몫은 점혈·쌍검합벽·개방 3단계. 셋을 낮춰 봐도 1.50배
 - [x] S-06 2026-11-01 — 비급 해금. 쌍검합벽·점혈창·취중매화·개방 3·곤륜 3 을 synergies.json `tier: secret` 로, 복원 값 `secretManuals`(봉인석 2·3·4·5·5개 지닌 채, 윤회의 기 2,000·3,000·4,500·6,000·8,000). Core `Synergy.Compute(restored)`·`LockedLinks`·`LockedTiers`·`LinkHint.Locked`, `LifeLog.NoteSynergy` → `Soul` 찢긴 비급·`TryRestore`·저장. 시뮬레이터 기본 층 1.29배, 전부 연 뒤 1.90배(`sim/synergy.md`). 기획서 20장 '비급 층과 해금'·10장 장경각. Unity 표시·장경각 화면은 unity_tasks S-04 줄에. 웹 프로토타입은 그대로(비급까지 다 켜진 상태)
 - [x] S-07 2026-11-01 — 무명검이 열린다. 뜬 레벨업 카드가 모두 새 무공이면 은자·음식 카드를 한 장 더 붙인다(balance.json levelUp.fallbackWhenAllNewWeapons, Core `Loadout.RollLevelUp`, 웹 프로토타입, 기획서 8장). secrets.md 무명검 0/200 → 200/200(가운데 12.2분). 카드가 한 장 늘어 시뮬레이터 난수가 밀려 보고서 11개 숫자가 조금씩 바뀜(prologue 이류 2:46·일류 6:11·음양 처음 기욺 3:24)
