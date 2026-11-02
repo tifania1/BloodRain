@@ -84,6 +84,9 @@ namespace BloodRain.Editor
             // 먹 튐·바닥 먹 자국(V-04)
             InkMarksBootstrap.Attach();
 
+            // 혈마의 그림자(C-12)
+            ShadowBootstrap.Attach();
+
             EditorSceneManager.SaveScene(scene, RunScenePath);
             Debug.Log($"[RunBootstrap] {RunScenePath} 지음");
         }

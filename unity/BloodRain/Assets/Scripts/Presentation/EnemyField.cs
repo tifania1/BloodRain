@@ -27,6 +27,10 @@ namespace BloodRain.Presentation
         [Tooltip("접촉 피해를 받을 쪽. 비우면 player 에서 찾는다")]
         public PlayerVitals vitals;
         public bool showStats = true;
+        [Tooltip("플레이어에게 들어가는 모든 적 피해 배율. 혈마의 그림자(C-12)가 EnemyDamageMultiplier 를 넣는다.")]
+        public float damageMultiplier = 1f;
+
+        bool HitPlayer(float damage) => vitals != null && vitals.Hit(damage * damageMultiplier);
 
         float _playerBody = 0.8f;
         PlayerController _playerMove;
@@ -551,7 +555,7 @@ namespace BloodRain.Presentation
                 var agents = _sim.Agents;
                 foreach (var h in _hits)
                 {
-                    if (!vitals.Hit(h.Damage)) continue;
+                    if (!HitPlayer(h.Damage)) continue;
                     // 빙강시: 닿으면 걸음 둔화(enemies.json onHitSlowSeconds 2·onHitSlowMultiplier 0.65)
                     int kind = h.Index >= 0 && h.Index < _sim.Count ? agents[h.Index].Kind : -1;
                     if (kind >= 0 && kind < _kinds.Count && _kinds[kind].Def.OnHitSlowSeconds > 0f && _playerMove != null)
@@ -630,7 +634,7 @@ namespace BloodRain.Presentation
                 bool gone = s.Left <= 0f;
                 if (!gone && vitals != null && (s.Pos - p).sqrMagnitude <= (pr + s.Radius) * (pr + s.Radius) && !vitals.Invulnerable)
                 {
-                    vitals.Hit(s.Damage);
+                    HitPlayer(s.Damage);
                     gone = true;
                 }
                 if (gone) _shots.RemoveAt(i);
@@ -744,7 +748,7 @@ namespace BloodRain.Presentation
                 _poolTick -= dt;
                 if (_poolTick <= 0f)
                 {
-                    vitals?.Hit(hurt);
+                    HitPlayer(hurt);
                     _poolTick = 1f;
                 }
             }
@@ -785,7 +789,7 @@ namespace BloodRain.Presentation
                         _sim.Set(i, a);
                         TeleportCount++;
                         float r = ws.Length(mk.Radius, a.BornRealm) + pr;
-                        if (vitals != null && (p - s.At).sqrMagnitude <= r * r) vitals.Hit(def.ContactDamage * (1f + a.Buff));
+                        if (vitals != null && (p - s.At).sqrMagnitude <= r * r) HitPlayer(def.ContactDamage * (1f + a.Buff));
                     }
                 }
                 else
@@ -939,7 +943,7 @@ namespace BloodRain.Presentation
                     _sim.QueryCircle(new float2(pos.x, pos.y), r, _splinterHits);
                     _splinterHits.RemoveAll(i => i >= _sim.Count); // 격자에 남은 걷어 낸 자리
                     if (d.EnemyDamage > 0f && _splinterHits.Count > 0) Damage(_splinterHits, d.EnemyDamage, pos, 0f);
-                    if (d.PlayerDamage > 0f && vitals != null && (pos - p).sqrMagnitude <= (r + pr) * (r + pr)) vitals.Hit(d.PlayerDamage);
+                    if (d.PlayerDamage > 0f && vitals != null && (pos - p).sqrMagnitude <= (r + pr) * (r + pr)) HitPlayer(d.PlayerDamage);
                     // 터진 자리를 0.3초 비춘다(이펙트 오기 전 임시)
                     _pools.Add(new Pool { Pos = pos, Radius = r, Left = 0.3f, Damage = 0f, Owner = -1, Color = SplinterColor });
                 }
