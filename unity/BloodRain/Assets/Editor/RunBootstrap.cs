@@ -81,6 +81,9 @@ namespace BloodRain.Editor
             // 레벨업 화면(C-06)
             LevelUpBootstrap.Attach();
 
+            // 먹 튐·바닥 먹 자국(V-04)
+            InkMarksBootstrap.Attach();
+
             EditorSceneManager.SaveScene(scene, RunScenePath);
             Debug.Log($"[RunBootstrap] {RunScenePath} 지음");
         }

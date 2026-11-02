@@ -866,6 +866,72 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -44}
   m_SizeDelta: {x: 900, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1408224928
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1408224930}
+  - component: {fileID: 1408224929}
+  m_Layer: 0
+  m_Name: "\uBA39 \uC790\uAD6D"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1408224929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408224928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a4b2bd7a406634449c07106549e21ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.InkMarks
+  material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
+  enemies: {fileID: 1838331824}
+  player: {fileID: 1182728146}
+  splats:
+  - {fileID: 2800000, guid: 058954cf62c969640972691f902978cc, type: 3}
+  - {fileID: 2800000, guid: 4c5ad57e9d0b55e49a5ef198cc28dbdb, type: 3}
+  - {fileID: 2800000, guid: 2d0f110c2b73ebd46861f75267debc2c, type: 3}
+  - {fileID: 2800000, guid: d121775514662ec489d87441d5f87db1, type: 3}
+  - {fileID: 2800000, guid: 6b56dc166ae52344689c1ba82cfda9d0, type: 3}
+  - {fileID: 2800000, guid: 5448163e4e1b1154d8ade152efe660d6, type: 3}
+  groundInks:
+  - {fileID: 2800000, guid: 002783ecf879c05449221541d958dcb2, type: 3}
+  - {fileID: 2800000, guid: d51b8015d457ae44aaa81c52eb988d46, type: 3}
+  - {fileID: 2800000, guid: 56abcfaf1b94fb34389328789c93f6b9, type: 3}
+  - {fileID: 2800000, guid: 5cc9c4089a4d6b54488fa584e313b21a, type: 3}
+  dryingSeconds: 8
+  splatSeconds: 0.45
+  splatScale: 3.2
+  groundScale: 3
+  maxGround: 240
+  maxSplats: 300
+  newPerFrame: 12
+--- !u!4 &1408224930
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408224928}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1440310590
 GameObject:
   m_ObjectHideFlags: 0
@@ -1386,3 +1452,4 @@ SceneRoots:
   - {fileID: 569941476}
   - {fileID: 801562153}
   - {fileID: 2065094849}
+  - {fileID: 1408224930}
