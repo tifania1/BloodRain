@@ -18,6 +18,10 @@ docs/design/art_pipeline.md 의 '기계 검수와 반영' 단계. 이미지가 �
   python tools/import_vfx_ai.py --only fx_mist_ink
   python tools/import_vfx_ai.py --reject fx_mist_ink "글자가 들어감"
   python tools/import_vfx_ai.py --reshade        # 이미 반영된 빛 재료의 shade 층을 gold 층에서 다시 만듦(원본 필요 없음)
+  python tools/import_vfx_ai.py --reink --inbox E:/Unity/BloodRain   # 반영된 먹 재료를 원본에서 지금 감마로 다시 키잉
+  python tools/import_vfx_ai.py --gamma-preview fx_mist_ink fx_mist_ink_2 fx_mist_ink_3   # 감마 전후 비교 한 장
+먹 알파에는 INK_GAMMA(0.75)를 건다. 그냥 두면 옅은 회색 자락(안개 끝)이 게임 색에서 거의 사라진다(2026-11-02, V-11).
+ai.json 의 ai_ink 줄에 inkGamma 가 없으면 감마를 걸기 전에 키잉된 것이다.
 필요: numpy, Pillow
 """
 from __future__ import annotations
@@ -63,7 +67,7 @@ def key(kind, rgb):
             problems.append("바탕이 고르지 않다(종이 결·그라디언트)")
         dark = float(np.percentile(L, 0.5))
         a = np.clip((bg - L) / max(0.05, bg - dark), 0, 1)
-        a = np.clip((a - 0.02) / 0.98, 0, 1)
+        a = np.clip((a - 0.02) / 0.98, 0, 1) ** INK_GAMMA
         sat = rgb.max(-1) - rgb.min(-1)
         m = a > 0.2
         if m.any() and float((sat[m] > 0.18).mean()) > 0.05:
@@ -104,6 +108,45 @@ def square(layers, main):
         im = Image.fromarray((canvas * 255 + 0.5).astype(np.uint8)).resize((SIZE, SIZE), Image.LANCZOS)
         out[name] = np.asarray(im, np.float32) / 255
     return out
+
+
+INK_GAMMA = 0.75  # 먹 알파 감마. 0.04 → 0.09, 0.2 → 0.30, 0.5 → 0.59, 1 → 1. 짙은 곳은 그대로, 옅은 자락만 산다.
+
+
+def gamma_preview(names, inbox, path):
+    """먹 재료 감마 전후를 게임 색(종이 위 먹)으로 나란히: 원본 | 감마 전 | 감마 후.
+    원본이 inbox 에 있으면 원본에서 둘 다 키잉하고, 없으면 저장된 stroke 층을 감마 전으로 보고 감마만 더 건다(근사)."""
+    rows = {json.loads(l)["id"]: json.loads(l) for l in QUEUE.read_text(encoding="utf-8").splitlines() if l.strip()}
+    meta = {t["name"]: t for t in load_meta()["textures"]}
+    cell = 256
+    canvas = np.ones((cell * len(names) + 16, cell * 3 + 32, 3), np.float32) * np.array(PAPER)
+    rs = lambda ch: np.asarray(Image.fromarray((np.clip(ch, 0, 1) * 255 + 0.5).astype(np.uint8)).resize((cell - 8, cell - 8), Image.LANCZOS), np.float32)[..., None] / 255
+    report = []
+    for r, name in enumerate(names):
+        y = 8 + r * cell
+        src = inbox / rows[name]["save_as"] if name in rows and rows[name].get("save_as") else None
+        if src is not None and src.exists():
+            rgb = np.asarray(Image.open(src).convert("RGB"), np.float32) / 255
+            after = key("vfx_ink", rgb)[0]["stroke"]
+            before = after ** (1 / INK_GAMMA)
+            canvas[y:y + cell - 8, 8:8 + cell - 8] = np.asarray(Image.open(src).convert("RGB").resize((cell - 8, cell - 8)), np.float32) / 255
+            how = "원본"
+        else:
+            stored = np.asarray(Image.open(OUT / f"{name}_stroke.png").getchannel("A"), np.float32) / 255
+            g = meta.get(name, {}).get("inkGamma")
+            before = stored ** (1 / g) if g else stored
+            after = before ** INK_GAMMA
+            how = "저장된 stroke(근사)"
+        for c, a in enumerate((before, after)):
+            x = 16 + (c + 1) * cell
+            al = rs(a)
+            tile = canvas[y:y + cell - 8, x:x + cell - 8]
+            canvas[y:y + cell - 8, x:x + cell - 8] = tile * (1 - al) + np.array(INK) * al
+        cov = lambda a, t: float((a > t).mean())
+        report.append(f"{name} ({how}): 알파>0.05 덮임 {cov(before, .05):.1%} → {cov(after, .05):.1%}, "
+                      f">0.1 {cov(before, .1):.1%} → {cov(after, .1):.1%}")
+    Image.fromarray((np.clip(canvas, 0, 1) * 255).astype(np.uint8)).save(path, optimize=True)
+    return report
 
 
 SHADE_GROW, SHADE_BLUR, SHADE_ALPHA = 13, 9.0, 0.55
@@ -181,6 +224,8 @@ def main(argv=None):
     ap.add_argument("--inbox", help="art_inbox 가 들어 있는 폴더(기본: 저장소 루트)")
     ap.add_argument("--reject", nargs=2, metavar=("ID", "REASON"), help="눈 검수에서 떨어뜨림")
     ap.add_argument("--reshade", action="store_true", help="반영된 빛 재료의 shade 층을 gold 층에서 다시 만듦")
+    ap.add_argument("--reink", action="store_true", help="반영된 먹 재료를 원본에서 다시 키잉(감마 바꾼 뒤)")
+    ap.add_argument("--gamma-preview", nargs="+", metavar="ID", help="먹 재료 감마 전후 비교 미리보기")
     args = ap.parse_args(argv)
     inbox = Path(args.inbox) if args.inbox else ROOT
     rows = [json.loads(l) for l in QUEUE.read_text(encoding="utf-8").splitlines() if l.strip()]
@@ -220,9 +265,20 @@ def main(argv=None):
         print(f"먹 받침 {n}장")
         return 0
 
+    if args.gamma_preview:
+        PREVIEW.mkdir(parents=True, exist_ok=True)
+        out = PREVIEW / f"ink_gamma_{dt.date.today().isoformat()}.png"
+        for line in gamma_preview(args.gamma_preview, inbox, out):
+            print(line)
+        print(f"미리보기 {out.relative_to(ROOT)} (왼쪽부터 원본 | 감마 전 | 감마 {INK_GAMMA})")
+        return 0
+
+    want = "imported" if args.reink else "generated"
     shown, done, bad = [], 0, 0
     for row in rows:
-        if not row["kind"].startswith("vfx_") or row.get("status") != "generated":
+        if args.reink and row["kind"] != "vfx_ink":
+            continue
+        if not row["kind"].startswith("vfx_") or row.get("status") != want:
             continue
         if args.only and row["id"] != args.only:
             continue
@@ -239,6 +295,9 @@ def main(argv=None):
         if stats["edge"] > 0.04 and not row.get("edgeOk"):
             problems.append(f"그림이 가장자리에 걸렸다({stats['edge']:.1%})")
         row["check"] = stats
+        if problems and args.reink:
+            print(f"그대로 둠 {row['id']}: 다시 키잉하니 {' · '.join(problems)} (이미 눈 검수를 통과한 것이라 떨어뜨리지 않음)")
+            continue
         if problems:
             row.update(status="rejected", reason=" · ".join(problems), tries=int(row.get("tries", 0)) + 1)
             print(f"탈락 {row['id']}: {row['reason']}")
@@ -253,7 +312,12 @@ def main(argv=None):
             white_alpha_png(a, OUT / f"{row['id']}_{name}.png")
         by_name[row["id"]] = {"name": row["id"], "kind": row["kind"].replace("vfx_", "ai_"), "sizeMeters": float(row.get("sizeM", 2.0)),
                               "layers": list(sq.keys()), "progress": row.get("progress", "radial"), "use": row.get("use", "")}
-        row.update(status="imported", picked=dt.date.today().isoformat())
+        if row["kind"] == "vfx_ink":
+            by_name[row["id"]]["inkGamma"] = INK_GAMMA
+        if args.reink and row.get("picked"):
+            row["reinked"] = dt.date.today().isoformat()
+        else:
+            row.update(status="imported", picked=dt.date.today().isoformat())
         row.pop("reason", None)
         shown.append((row, sq, np.asarray(im)))
         done += 1
