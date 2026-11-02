@@ -135,6 +135,23 @@ namespace BloodRain.Core.Tests
             Assert.Contains("W_BY_ID[w.id].burnSeconds", TestData.ReadRepoFile("web", "prototype", "template.html"));
         }
 
+        /// <summary>표 아래 '아직 프로토타입에 없는 무공 일곱' 이 실제와 맞는지. 표 줄은 프로토타입이 돌리는 무공 + 먼저 정한 뇌부다.
+        /// 프로토타입에 무공이 새로 들어오면 문장의 개수와 표 줄을 같이 고쳐야 이 테스트가 통과한다.</summary>
+        [Fact]
+        public void 프로토타입에_없는_무공_개수가_문장과_같다()
+        {
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            var inProto = _d.Weapons.Where(w => html.Contains($"case '{w.Behavior}':")).ToList();
+            var missing = _d.Weapons.Count - inProto.Count;
+            var words = new[] { "", "하나", "둘", "셋", "넷", "다섯", "여섯", "일곱", "여덟", "아홉", "열" };
+            Assert.InRange(missing, 1, words.Length - 1);
+            Assert.Contains($"아직 프로토타입에 없는 무공 {words[missing]}은", TestData.GddSection("날아가는 것과 넉백"));
+            // 표에 있는 무공 = 프로토타입 무공 + 프로토타입보다 먼저 값을 정한 것(뇌부)
+            var rows = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백")).Select(r => r[0]).ToHashSet();
+            var expected = inProto.Select(w => w.NameKo).Append(_d.Weapons.Single(w => w.Id == "thunder_talisman").NameKo).ToHashSet();
+            Assert.True(expected.SetEquals(rows), $"표: {string.Join(",", rows)} / 기대: {string.Join(",", expected)}");
+        }
+
         [Fact]
         public void 처음부터_쓰는_무공은_모두_넉백이_있다()
         {

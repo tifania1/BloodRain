@@ -25,7 +25,7 @@ namespace BloodRain.Core.Tests
         {
             var dir = Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Art", "VFX", "Brush");
             return Directory.GetFiles(dir, "*.json")
-                .ToDictionary(Path.GetFileName, f => (string)JObject.Parse(File.ReadAllText(f))["weapon"]!);
+                .ToDictionary(f => Path.GetFileName(f)!, f => (string)JObject.Parse(File.ReadAllText(f))["weapon"]!);
         }
 
         [Fact] public void 붓_획_json의_weapon은_있는_무공이다()
