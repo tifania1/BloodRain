@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f), ("mogin_nahan", 4f), ("poison_toad", 4f), ("hyeolyeong_assassin", 2f),
         };
 
         struct Kind
@@ -334,6 +334,7 @@ namespace BloodRain.Presentation
             FireShots();
             StepShots(dt, p);
             ResolveDeaths(p);
+            StepMarks(dt, p);
             StepPools(dt, p);
             _watch.Stop();
             _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
@@ -521,6 +522,58 @@ namespace BloodRain.Presentation
             DrawPools();
         }
 
+        // ── 표식 뒤 순간이동(혈영자객 mark_teleport) ─────────────────
+        //   EnemyDef.Mark 가 있는 적은 처음 나타나면 바로, 그 뒤 Interval 초마다 그때 플레이어 발밑에 반경 Radius(경지 m) 붉은 표식을 찍고
+        //   Telegraph 초 뒤 그 자리로 옮긴다. 그 순간 플레이어가 표식 안이면 접촉 피해 한 번(기수 깃발 배율, 무적이면 Hit 이 거름).
+        //   걸음(speed 0)은 시뮬이 그대로 돌린다. 표식 그림은 웅덩이 줄에 피해 0 으로 얹는다(이펙트 오기 전 임시).
+        struct MarkState { public float Next, Left; public Vector2 At; }
+        readonly Dictionary<int, MarkState> _marks = new Dictionary<int, MarkState>();
+        static readonly Color MarkColor = new Color(0.85f, 0.08f, 0.06f, 0.35f);
+
+        /// <summary>시험용: 지금까지 순간이동한 수.</summary>
+        public int TeleportCount { get; private set; }
+
+        void StepMarks(float dt, Vector2 p)
+        {
+            var ws = World;
+            var agents = _sim.Agents;
+            float pr = ws.Length(_playerBody) * 0.5f;
+            for (int i = 0; i < _sim.Count; i++)
+            {
+                var a = agents[i];
+                var def = DefOf(a.Kind);
+                var mk = def?.Mark;
+                if (mk == null || mk.Interval <= 0f) continue;
+                _marks.TryGetValue(a.Id, out var s); // 처음이면 Next 0 → 바로 첫 표식
+                if (s.Left > 0f)
+                {
+                    s.Left -= dt;
+                    if (s.Left <= 0f)
+                    {
+                        a.Pos = new float2(s.At.x, s.At.y);
+                        a.Knock = float2.zero;
+                        _sim.Set(i, a);
+                        TeleportCount++;
+                        float r = ws.Length(mk.Radius, a.BornRealm) + pr;
+                        if (vitals != null && (p - s.At).sqrMagnitude <= r * r) vitals.Hit(def.ContactDamage * (1f + a.Buff));
+                    }
+                }
+                else
+                {
+                    s.Next -= dt;
+                    if (s.Next <= 0f)
+                    {
+                        float tele = Mathf.Max(0.05f, def.Telegraph);
+                        s.At = p;
+                        s.Left = tele;
+                        s.Next = Mathf.Max(0f, mk.Interval - tele); // 표식부터 다음 표식까지 Interval(예고 동안은 Next 가 줄지 않는다)
+                        _pools.Add(new Pool { Pos = p, Radius = ws.Length(mk.Radius, a.BornRealm), Left = tele, Damage = 0f, Owner = -2, Color = MarkColor });
+                    }
+                }
+                _marks[a.Id] = s;
+            }
+        }
+
         // ── 쓰러질 때 남기는 것(EnemyDef.Death, 목인나한 splinter_burst·독두꺼비 poison_pool) ─────────────────
         //   Kill 은 Damage 고리 안에서 불리니 바로 터뜨리지 않고 모아 두었다가 프레임마다 여기서 푼다(자리 번호가 꼬이지 않게).
         //   splinter_burst: 반경 Radius(경지 m) 안 다른 적에게 EnemyDamage, 플레이어가 안이면 PlayerDamage 한 번.
@@ -634,7 +687,7 @@ namespace BloodRain.Presentation
 
         void Sync()
         {
-            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); }
+            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); }
             _sim.Removed.Clear();
             if (clusters == null) return;
             clusters.Clear();
