@@ -37,7 +37,7 @@ namespace BloodRain.Presentation
         // 시험용 생성표: (적 id, 가중치)
         static readonly (string id, float w)[] Mix =
         {
-            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f),
+            ("sigang", 50f), ("hyeol_gangsi", 22f), ("hyeolin", 10f), ("hyeol_musa", 10f), ("donggap", 8f), ("gisu", 1f), ("hyeol_gungsu", 4f), ("ice_gangsi", 4f), ("hyeol_sulsa", 3f),
         };
 
         struct Kind
@@ -331,6 +331,7 @@ namespace BloodRain.Presentation
             }
             FireShots();
             StepShots(dt, p);
+            StepPools(dt, p);
             _watch.Stop();
             _simMs = Mathf.Lerp(_simMs, (float)_watch.Elapsed.TotalMilliseconds, 0.1f);
             _fps = Mathf.Lerp(_fps, dt > 0 ? 1f / Time.unscaledDeltaTime : 0f, 0.05f);
@@ -445,6 +446,105 @@ namespace BloodRain.Presentation
             }
         }
 
+        // ── 피 웅덩이(혈술사 blood_pool) ─────────────────
+        //   EnemyDef.Pool 이 있는 적은 Interval 초마다 그때 플레이어 발밑에 반경 Radius(경지 m) 웅덩이를 깔고 Seconds 초 남긴다.
+        //   한 적이 깐 것은 Max 개까지(넘으면 오래된 것부터). 플레이어가 하나라도 밟고 있으면 1초마다 ZoneDamagePerSecond 를 한 번
+        //   (겹쳐 밟아도 한 번, 무적이면 Hit 이 걸러 냄). 화면 밖(대각선 절반 너머) 혈술사는 깔지 않는다. 깐 적이 쓰러져도 웅덩이는 남는다.
+        //   첫 웅덩이는 나온 뒤 0~Interval 사이. 그림은 이펙트가 오기 전 임시 핏빛 원.
+        struct Pool { public Vector2 Pos; public float Radius, Left, Damage; public int Owner; }
+        readonly List<Pool> _pools = new List<Pool>();
+        readonly List<SpriteRenderer> _poolViews = new List<SpriteRenderer>();
+        readonly Dictionary<int, float> _poolTimers = new Dictionary<int, float>();
+        float _poolTick;
+        static readonly Color PoolColor = new Color(0.55f, 0.04f, 0.04f, 0.45f);
+
+        /// <summary>시험용: 깔려 있는 피 웅덩이 수.</summary>
+        public int PoolCount => _pools.Count;
+
+        void StepPools(float dt, Vector2 p)
+        {
+            var ws = World;
+            var agents = _sim.Agents;
+            float reach = ws.ViewDiagonal * 0.5f;
+            for (int i = 0; i < _sim.Count; i++)
+            {
+                var a = agents[i];
+                if (a.Kind < 0 || a.Kind >= _kinds.Count) continue;
+                var def = _kinds[a.Kind].Def;
+                var pool = def.Pool;
+                if (pool == null || pool.Interval <= 0f) continue;
+                if (!_poolTimers.TryGetValue(a.Id, out float t)) t = pool.Interval * (float)_rng.NextDouble();
+                t -= dt;
+                if (t <= 0f)
+                {
+                    if ((new Vector2(a.Pos.x, a.Pos.y) - p).sqrMagnitude <= reach * reach)
+                    {
+                        int mine = 0, oldest = -1;
+                        for (int k = 0; k < _pools.Count; k++)
+                            if (_pools[k].Owner == a.Id) { mine++; if (oldest < 0) oldest = k; }
+                        if (pool.Max > 0 && mine >= pool.Max && oldest >= 0) _pools.RemoveAt(oldest);
+                        _pools.Add(new Pool
+                        {
+                            Pos = p, Radius = ws.Length(pool.Radius, a.BornRealm), Left = pool.Seconds,
+                            Damage = def.ZoneDamagePerSecond * (1f + a.Buff), Owner = a.Id,
+                        });
+                    }
+                    t += pool.Interval;
+                }
+                _poolTimers[a.Id] = t;
+            }
+
+            float pr = ws.Length(_playerBody) * 0.5f;
+            float hurt = 0f;
+            for (int k = _pools.Count - 1; k >= 0; k--)
+            {
+                var q = _pools[k];
+                q.Left -= dt;
+                if (q.Left <= 0f) { _pools.RemoveAt(k); continue; }
+                _pools[k] = q;
+                float r = q.Radius + pr * 0.5f; // 몸 가운데가 웅덩이 가장자리를 넘어서면 밟은 것
+                if ((q.Pos - p).sqrMagnitude <= r * r) hurt = Mathf.Max(hurt, q.Damage);
+            }
+            if (hurt > 0f)
+            {
+                _poolTick -= dt;
+                if (_poolTick <= 0f)
+                {
+                    vitals?.Hit(hurt);
+                    _poolTick = 1f;
+                }
+            }
+            else _poolTick = 0f; // 밟자마자 첫 피해
+            DrawPools();
+        }
+
+        void DrawPools()
+        {
+            while (_poolViews.Count < _pools.Count)
+            {
+                var go = new GameObject("피 웅덩이");
+                go.transform.SetParent(transform, false);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = _dot;
+                sr.sortingOrder = 2;
+                _poolViews.Add(sr);
+            }
+            for (int i = 0; i < _poolViews.Count; i++)
+            {
+                var sr = _poolViews[i];
+                bool on = i < _pools.Count && _dot != null;
+                if (sr.enabled != on) sr.enabled = on;
+                if (!on) continue;
+                var q = _pools[i];
+                sr.sprite = _dot;
+                sr.transform.position = new Vector3(q.Pos.x, q.Pos.y, 0f);
+                sr.transform.localScale = Vector3.one * (q.Radius * 2f);
+                var c = PoolColor;
+                c.a *= Mathf.Clamp01(q.Left / 0.5f); // 마르기 직전 0.5초에 옅어짐
+                sr.color = c;
+            }
+        }
+
         readonly List<int> _auraOwners = new List<int>();
         readonly List<int> _auraNear = new List<int>();
 
@@ -488,7 +588,7 @@ namespace BloodRain.Presentation
 
         void Sync()
         {
-            foreach (var id in _sim.Removed) _views.Remove(id);
+            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); }
             _sim.Removed.Clear();
             if (clusters == null) return;
             clusters.Clear();
