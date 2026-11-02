@@ -72,6 +72,31 @@ namespace BloodRain.Core.Tests
             Assert.Equal(2f / _d.Weapon("flash_finger").ShotsPerSecond![0], m.Cooldown, 4);
         }
 
+        [Fact] public void 절기로_각성한_무공도_바탕_무공으로_흉내_낸다()
+        {
+            var evo = _d.Evolutions.First(e => e.Weapon == Jin.StartWeapon);
+            var before = JinWith((Jin.StartWeapon, 5));
+            var after = JinWith((Jin.StartWeapon, 5));
+            after.Evolve(evo);
+            Assert.Contains(Jin.StartWeapon, after.Evolved);
+            var a = Assert.Single(Mimicry.Weapons(_d, Jin, before, Clone.Mimic!));
+            var b = Assert.Single(Mimicry.Weapons(_d, Jin, after, Clone.Mimic!));
+            Assert.Equal(a.WeaponId, b.WeaponId);
+            Assert.Equal(a.Damage, b.Damage, 4);
+            Assert.Equal(a.Cooldown, b.Cooldown, 4);
+        }
+
+        [Fact] public void 분신_무공은_피해와_쿨다운이_0보다_작지_않다()
+        {
+            var l = JinWith(("flying_dagger", 8), ("poison_mist", 4), ("thunder_bomb", 2));
+            foreach (var m in Mimicry.Weapons(_d, Jin, l, Mirror.Mimic!))
+            {
+                Assert.True(m.Damage > 0, m.ToString());
+                Assert.True(m.Cooldown >= 0, m.ToString());
+                Assert.Equal(l.Weapons[m.WeaponId], m.Level);
+            }
+        }
+
         [Fact] public void 소환_패턴이_mimic_을_안_주면_적의_값을_쓴다()
         {
             Assert.Same(Clone.Mimic, Mimicry.For(Clone));
