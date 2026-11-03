@@ -44,6 +44,27 @@ namespace BloodRain.Core.Combat
         public static float Cooldown(WeaponDef w, int level)
             => w.ShotsPerSecond != null && w.ShotsPerSecond.Count > 0 ? 1f / At(w.ShotsPerSecond, level) : w.Cooldown;
 
+        /// <summary>이펙트 2단·3단이 시작되는 레벨(docs/design/vfx.md 단계 규칙).
+        /// 마일스톤 둘 이상: 낮은 둘. 하나: Lv7 이상이면 3단 문턱(2단은 Lv4), 아니면 2단 문턱(3단은 Lv7). 없으면 Lv4·Lv7.</summary>
+        public static (int second, int third) VisualTierLevels(WeaponDef w)
+        {
+            var lv = new List<int>();
+            if (w.Milestones != null)
+                foreach (var key in w.Milestones.Keys)
+                    lv.Add(int.Parse(key, System.Globalization.CultureInfo.InvariantCulture));
+            lv.Sort();
+            if (lv.Count >= 2) return (lv[0], lv[1]);
+            if (lv.Count == 1) return lv[0] >= 7 ? (4, lv[0]) : (lv[0], 7);
+            return (4, 7);
+        }
+
+        /// <summary>그 레벨의 이펙트 단계 1~3(절기는 따로). WeaponRunner 의 붓 획 단계가 이것을 쓴다.</summary>
+        public static int VisualTier(WeaponDef w, int level)
+        {
+            var (second, third) = VisualTierLevels(w);
+            return level >= third ? 3 : level >= second ? 2 : 1;
+        }
+
         /// <summary>그 레벨이면 붙어 있는 새 동작인지(이름으로). 이름이 데이터에 없으면 예외.</summary>
         public static bool HasMilestone(WeaponDef w, int level, string name)
         {
