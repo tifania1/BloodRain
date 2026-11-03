@@ -93,6 +93,72 @@
       "use": "천뢰검진 검기 원 두 겹 + 낙뢰"
     },
     {
+      "name": "fx_evo_dragon_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 4.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "흑룡탄 끌어모으는 소용돌이",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_evo_fire_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 3.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "벽력천화 5초 불바다(색은 셰이더)",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_evo_fist_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 4.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "백보신권 권경",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_evo_hand_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 4.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "혈마수 핏빛 손 부채꼴(색은 셰이더)",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_evo_mist_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 6.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "칠보단혼무 큰 독안개",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_evo_palm_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 4.5,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "right",
+      "use": "파산장 거대 장력과 지나간 자리 폭발",
+      "inkGamma": 0.75
+    },
+    {
       "name": "fx_evo_qin_glow",
       "kind": "ai_glow",
       "sizeMeters": 5.0,
@@ -115,6 +181,28 @@
       ],
       "progress": "right",
       "use": "천지인 삼검 거대 반원 베기·관통 검기"
+    },
+    {
+      "name": "fx_evo_spear_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 4.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "백화난무창 5방향 찌르기 폭풍",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_evo_staff_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 5.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "팔선과해 봉 분신 여덟 방향 휩쓸기",
+      "inkGamma": 0.75
     },
     {
       "name": "fx_evo_star_glow",
