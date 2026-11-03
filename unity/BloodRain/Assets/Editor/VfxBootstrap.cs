@@ -45,6 +45,7 @@ namespace BloodRain.Editor
                 wr.lightningGold = Load($"{AiDir}/fx_lightning_glow_gold.png");
                 wr.lightningCore = Load($"{AiDir}/fx_lightning_glow_core.png");
                 wr.lightningMeters = SizeOf(AiDir, "fx_lightning_glow", 4f);
+                wr.aiFx = AiList();
                 EditorUtility.SetDirty(wr);
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
@@ -53,6 +54,32 @@ namespace BloodRain.Editor
         }
 
         static Texture2D Load(string path) => AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+
+        /// <summary>ai.json 의 재료 전부를 WeaponRunner 가 이름으로 찾게 넘긴다(층 텍스처·sizeMeters·progress).</summary>
+        static List<WeaponRunner.AiFx> AiList()
+        {
+            var list = new List<WeaponRunner.AiFx>();
+            var path = $"{AiDir}/ai.json";
+            if (!File.Exists(path)) return list;
+            var root = JObject.Parse(File.ReadAllText(path));
+            if (!(root["textures"] is JArray arr)) return list;
+            foreach (var t in arr)
+            {
+                var name = (string)t["name"];
+                if (string.IsNullOrEmpty(name)) continue;
+                list.Add(new WeaponRunner.AiFx
+                {
+                    name = name,
+                    meters = t["sizeMeters"] != null ? (float)t["sizeMeters"] : 2f,
+                    kind = KindOf((string)t["progress"]),
+                    stroke = Load($"{AiDir}/{name}_stroke.png"),
+                    shade = Load($"{AiDir}/{name}_shade.png"),
+                    gold = Load($"{AiDir}/{name}_gold.png"),
+                    core = Load($"{AiDir}/{name}_core.png"),
+                });
+            }
+            return list;
+        }
 
         static Material EnsureMaterial()
         {

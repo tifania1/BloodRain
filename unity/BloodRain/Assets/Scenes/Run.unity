@@ -281,6 +281,260 @@ MonoBehaviour:
   lightningGold: {fileID: 2800000, guid: 4f470859d0397564abbfacdd0051d18b, type: 3}
   lightningCore: {fileID: 2800000, guid: 9c375989c8510be4fb1686cbeaffff29, type: 3}
   lightningMeters: 4
+  aiFx:
+  - name: fx_aura_glow
+    meters: 3
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: e9d2d922079c79f4ba70fd6e749e9f3a, type: 3}
+    gold: {fileID: 2800000, guid: ed0508f06a1e9b34f8abb60c83296530, type: 3}
+    core: {fileID: 2800000, guid: 61548d4ea6f942347a17b43b4546f7c0, type: 3}
+  - name: fx_bomb_glow
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: fe33c4937e41d9d4298bff768a2eed7b, type: 3}
+    gold: {fileID: 2800000, guid: 8c4165fe457ad2c449230486e3cf7757, type: 3}
+    core: {fileID: 2800000, guid: 1799d60e3474dc748a5f6e586cebcc63, type: 3}
+  - name: fx_bomb_ink_1
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: a2d1c08e678d98d4b87439fdb7591fd1, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_bomb_ink_2
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: deba3107c30a0534a898b2fdcd479af0, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_claw_ink
+    meters: 2
+    kind: 1
+    stroke: {fileID: 2800000, guid: 668e010e4f954de497c0321df03aff4b, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_claw_ink_2
+    meters: 1.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: 15eabbae30f2421da0990427c3b552d5, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_dagger_ink
+    meters: 2.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: d55f2d7669352ae48beb1c9d8a5565d9, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_array_glow
+    meters: 5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: e23b303bbe6f4fa2ae2b169ce97be1c3, type: 3}
+    gold: {fileID: 2800000, guid: a088794d9eef413daf6c4c9ddb7c39b3, type: 3}
+    core: {fileID: 2800000, guid: 7a910673a9054922bfd7841bac508dac, type: 3}
+  - name: fx_evo_qin_glow
+    meters: 5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: fb762efb973a413e8b0be037c67410e7, type: 3}
+    gold: {fileID: 2800000, guid: fbcdf2fb56a046c98903ccb16ad521b0, type: 3}
+    core: {fileID: 2800000, guid: 57d374301329427c88644007d57ec8e7, type: 3}
+  - name: fx_evo_samjae_glow
+    meters: 4
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: d02923c6819b4561a48572fb0f73c5c9, type: 3}
+    gold: {fileID: 2800000, guid: 6d1e406708ee4a9d8d2eae90644734b6, type: 3}
+    core: {fileID: 2800000, guid: 56053330bc9843ba99ddeca561720caa, type: 3}
+  - name: fx_evo_star_glow
+    meters: 1.2
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 3cfe5926596f4d00aa05c6136c6e50b6, type: 3}
+    gold: {fileID: 2800000, guid: fba05202b4fd48cca09fd56ff44ac8e0, type: 3}
+    core: {fileID: 2800000, guid: 42486082352b47fa811d263b93a385ca, type: 3}
+  - name: fx_evo_taiji_glow
+    meters: 4
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: d1308506b1b140019956db2c75f1844c, type: 3}
+    gold: {fileID: 2800000, guid: 7d0c9ee45e6b464b89e46a40d2e7730f, type: 3}
+    core: {fileID: 2800000, guid: b76bc1c609fc42b782d4c5c068f4b284, type: 3}
+  - name: fx_evo_thunder_glow
+    meters: 6
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: b3235bb7b3104c18a7c8e33776a10f09, type: 3}
+    gold: {fileID: 2800000, guid: 9de2260655194a11add39425880b9ed6, type: 3}
+    core: {fileID: 2800000, guid: 2fc88ac731ce42ff9f02e4df38fc123c, type: 3}
+  - name: fx_finger_glow
+    meters: 3
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 73f89a3b74a79e346a6d4be02b25b731, type: 3}
+    gold: {fileID: 2800000, guid: d543f3c6cd6757a42ab3539ba8418f8a, type: 3}
+    core: {fileID: 2800000, guid: e9d4455280a24fd4394ba18ce4fc1fb2, type: 3}
+  - name: fx_fist_ink
+    meters: 1.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 63fcc0d728bcc6947b9f87ca73f800e6, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_lightning_glow
+    meters: 4
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 309c06bc46a0b1f43bb56205606ed31d, type: 3}
+    gold: {fileID: 2800000, guid: 4f470859d0397564abbfacdd0051d18b, type: 3}
+    core: {fileID: 2800000, guid: 9c375989c8510be4fb1686cbeaffff29, type: 3}
+  - name: fx_lightning_glow_2
+    meters: 4
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: cbd3e8710fc5d4e46885010638ce5393, type: 3}
+    gold: {fileID: 2800000, guid: c9edd555ab2fda6489f4b854bf4fa950, type: 3}
+    core: {fileID: 2800000, guid: 572be56faa874634fa3aa5c0e1da4692, type: 3}
+  - name: fx_lightning_glow_3
+    meters: 4
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 8f9d57304e894d7295621c093bde82f2, type: 3}
+    gold: {fileID: 2800000, guid: d7cf16e0f335453cabfb2608a0a59c18, type: 3}
+    core: {fileID: 2800000, guid: ab58d310629440ea9d235a301386a3c7, type: 3}
+  - name: fx_mist_ink
+    meters: 3
+    kind: 1
+    stroke: {fileID: 2800000, guid: 8f1322e0fd9e7ae4bbc0148b18621c76, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_mist_ink_2
+    meters: 3.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 760091ce56c4ba34998d277ba6f1a876, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_mist_ink_3
+    meters: 3
+    kind: 2
+    stroke: {fileID: 2800000, guid: b5b7bdf9479f25d4fbfa334a6172af2c, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_palm_ink
+    meters: 2
+    kind: 1
+    stroke: {fileID: 2800000, guid: dd6009020d3cb074c9117be1ddaae809, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_petal_glow
+    meters: 2.5
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 8e6cc875083043548556a876a6455ca5, type: 3}
+    gold: {fileID: 2800000, guid: 700fb05c5d074e27a9a455a2328ada12, type: 3}
+    core: {fileID: 2800000, guid: c8bc69933ec54ccd99904e1ad8402e44, type: 3}
+  - name: fx_petal_ink
+    meters: 2.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 0fffe59c6adf43c09d9da926987b8ba8, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_qin_glow
+    meters: 3
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 818cde5ac2f4486b8cb2d4312becb7f7, type: 3}
+    gold: {fileID: 2800000, guid: 053a7e69a1c049cf8b0eaed749e81263, type: 3}
+    core: {fileID: 2800000, guid: 6c762ddff410403dadc6f769ea590720, type: 3}
+  - name: fx_qin_ink
+    meters: 3
+    kind: 2
+    stroke: {fileID: 2800000, guid: 8a8d25b9156d4e39a9401de7e8634c37, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_sickle_glow
+    meters: 3
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 13ad7e8bf336fdf4788caf8623d63269, type: 3}
+    gold: {fileID: 2800000, guid: 8778ec1cf0758cc41babd23ed4fc43a6, type: 3}
+    core: {fileID: 2800000, guid: 9a639f20f20ad164f96aa39406640600, type: 3}
+  - name: fx_sickle_ink
+    meters: 3
+    kind: 1
+    stroke: {fileID: 2800000, guid: 0c872b1ba7ed4d1ca07e4665c9eb37f8, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_spark_glow
+    meters: 1
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 4e294b80cbec80e42bbb8c9a97bc4596, type: 3}
+    gold: {fileID: 2800000, guid: d49c6a593c0780f46963dde0765343ee, type: 3}
+    core: {fileID: 2800000, guid: 6804de3107f3df14698823a7772fc20c, type: 3}
+  - name: fx_spear_glow
+    meters: 3.5
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: f8570bfbaaa44dada5a3a69164ff6b89, type: 3}
+    gold: {fileID: 2800000, guid: 3637cf46b83b476b800ea89476c04953, type: 3}
+    core: {fileID: 2800000, guid: a0c1b00893e640ed9cf4016554618d0a, type: 3}
+  - name: fx_spear_ink
+    meters: 3.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 5aa6a650e39e4a52b07164a720f8e81f, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_staff_ink
+    meters: 3.5
+    kind: 3
+    stroke: {fileID: 2800000, guid: 95f3b3e7bba08d843a23e365a93e74ce, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_sword_qi_glow
+    meters: 3
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 81a3c20f09fda8045bcaf813b07d0b1e, type: 3}
+    gold: {fileID: 2800000, guid: e0740b52f3f794d478469ddb6832f139, type: 3}
+    core: {fileID: 2800000, guid: ce60ea9a7e8e084429947e3e3736cf06, type: 3}
+  - name: fx_taiji_glow
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: e27ac7c325b67d64387f4829d87217aa, type: 3}
+    gold: {fileID: 2800000, guid: 74fe27dc8e603314bb2d1e5a998f58de, type: 3}
+    core: {fileID: 2800000, guid: 6d525702bfc02414d8f7d4a86270ba8e, type: 3}
+  - name: fx_taiji_ink
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: a3562e6c6d0f48829d8db7a183941339, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_talisman_ink
+    meters: 2
+    kind: 2
+    stroke: {fileID: 2800000, guid: 3d63734291d441249f14690ba179f071, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  fxRenderQueue: 3002
 --- !u!4 &303687332
 Transform:
   m_ObjectHideFlags: 0

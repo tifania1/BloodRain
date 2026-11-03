@@ -17,6 +17,9 @@ namespace BloodRain.Presentation.Combat
     // 처음 8갈래: front_arc(삼재검법), melee_combo(나한권), orbit_slash(창천검기), aura(독무),
     //   homing_dagger(비도술), slow_projectile(장풍), random_rapid(섬광지), random_bomb(벽력탄).
     // 아직 없는 것: 절기(evolved) 모양, 중독·화상·느려짐 같은 적 상태, 넉백 저항.
+    // 그림(V-04): 삼재검법은 구운 붓 획, 나머지는 ai.json AI 재료(나한권 fx_fist_ink, 창천검기 fx_sword_qi_glow, 독무 fx_mist_ink_3,
+    //   비도 fx_dagger_ink, 장풍 fx_palm_ink, 섬광지 fx_finger_glow, 벽력탄 fx_bomb_ink_1·2 + fx_bomb_glow, 뇌부 fx_lightning_glow).
+    //   재료가 없으면 옛 부채꼴·원으로. 모두 renderQueue 3002(먹)·3003(빛)이라 적 덩이(3000) 위에 그린다.
     public sealed class WeaponRunner : MonoBehaviour
     {
         [Serializable]
@@ -48,6 +51,22 @@ namespace BloodRain.Presentation.Combat
         public Texture2D lightningShade, lightningGold, lightningCore;
         [Tooltip("텍스처 한 변(경지 m), ai.json sizeMeters")]
         public float lightningMeters = 4f;
+
+        // AI 재료 한 장(ai.json 한 줄). 층: stroke·shade(보통 섞기, 먹) → gold(더하기, 금빛) → core(더하기, 흰빛)
+        [Serializable]
+        public sealed class AiFx
+        {
+            public string name;
+            [Tooltip("텍스처 한 변(경지 m), ai.json sizeMeters")] public float meters = 2f;
+            [Tooltip("셰이더 _Kind(radial 2·down 3·up 4·right 1·left 5), ai.json progress")] public float kind = 1f;
+            public Texture2D stroke, shade, gold, core;
+        }
+
+        [Header("무공 AI 재료(V-04). VfxBootstrap 이 ai.json 전부를 채운다. 없는 무공은 옛 도형으로 그린다")]
+        public List<AiFx> aiFx = new List<AiFx>();
+        [Tooltip("이펙트를 적 덩이(renderQueue 3000) 위에 그린다")]
+        public int fxRenderQueue = 3002;
+        static readonly Color MistWash = new Color32(0x4F, 0x7F, 0x7A, 0xFF); // vfx.md wash 청회
 
         // 낙뢰 시간: 0.08초에 위에서 내리꽂히고, 0.06초 머문 뒤 0.36초까지 흩어진다(기획서 9장 '0.4초 안쪽')
         const float BoltDraw = 0.08f, BoltHold = 0.06f, BoltLife = 0.36f;
@@ -112,9 +131,13 @@ namespace BloodRain.Presentation.Combat
                 for (int i = 0; i < 16; i++) px[i] = new Color32(255, 255, 255, 255);
                 white.SetPixels32(px);
                 white.Apply();
-                _mat = new Material(material) { name = "무공 이펙트", enableInstancing = true, mainTexture = white };
+                _mat = new Material(material) { name = "무공 이펙트", enableInstancing = true, mainTexture = white, renderQueue = fxRenderQueue };
             }
             _mpb = new MaterialPropertyBlock();
+            // 붓 획·AI 재료도 적 덩이 위로(같은 3000 이면 덩이 뒤에 깔리기도 했다). 공유 에셋은 건드리지 않게 복사본을 쓴다
+            if (brushMaterial != null) _ink = new Material(brushMaterial) { name = "무공 획(먹)", renderQueue = fxRenderQueue };
+            if (brushAddMaterial != null) _add = new Material(brushAddMaterial) { name = "무공 획(빛)", renderQueue = fxRenderQueue + 1 };
+            foreach (var f in aiFx) if (f != null && !string.IsNullOrEmpty(f.name)) _ai[f.name] = f;
         }
 
         /// <summary>시험용: 무공을 하나 더 익힌다(있으면 레벨 +1).</summary>
@@ -227,7 +250,11 @@ namespace BloodRain.Presentation.Combat
                     for (int k = 0; k < hits; k++)
                         Later(k * gap, () =>
                         {
-                            AddFx(Mathf.Atan2(player.Facing.y, player.Facing.x), Mathf.PI * 2f, R * 0.6f, 0.12f, new Color(0.85f, 0.55f, 0.25f, 0.6f));
+                            // 나한권: 바라보는 쪽 사거리 절반 자리에 주먹 먹 자국(fx_fist_ink), 연타마다 조금씩 흔들어 찍는다
+                            float fa = Mathf.Atan2(player.Facing.y, player.Facing.x) + UnityEngine.Random.Range(-0.35f, 0.35f);
+                            var fat = P + new Vector2(Mathf.Cos(fa), Mathf.Sin(fa)) * R * 0.55f;
+                            if (!AddSpark("fx_fist_ink", fat, fa, 0f, 0.28f, 0.05f))
+                                AddFx(Mathf.Atan2(player.Facing.y, player.Facing.x), Mathf.PI * 2f, R * 0.6f, 0.12f, new Color(0.85f, 0.55f, 0.25f, 0.6f));
                             enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                             Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
                         });
@@ -249,7 +276,9 @@ namespace BloodRain.Presentation.Combat
                     float R = ws.Length(WeaponGrowth.Range(s.Def, s.level)); // range → rangeLv8(2 → 3.5m)
                     float tick = Tick(s);
                     float hitDmg = dmg * tick;                                 // tickSeconds 마다 초당 피해 x tickSeconds
-                    AddFx(0f, Mathf.PI * 2f, R, tick, new Color(0.37f, 0.50f, 0.29f, 0.22f));
+                    // 독무: 몸 둘레 안개(fx_mist_ink_3, 가운데서 번짐)를 틱마다 새로 피워 두 장씩 겹치게, 청회 담채색으로 옅게
+                    if (!AddSpark("fx_mist_ink_3", Vector2.zero, UnityEngine.Random.value * Mathf.PI * 2f, R * 2.3f, tick * 2.2f, tick * 0.8f, true, 0.55f, MistWash))
+                        AddFx(0f, Mathf.PI * 2f, R, tick, new Color(0.37f, 0.50f, 0.29f, 0.22f));
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                     Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, ws.Speed(Knock(s))));
                     break;
@@ -319,7 +348,11 @@ namespace BloodRain.Presentation.Combat
                         AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.70f, 0.15f, 0.12f, 0.18f)); // 떨어질 자리 표시
                         Later(fuse, () =>
                         {
-                            AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
+                            // 벽력탄: 터진 자리에 먹 번짐(fx_bomb_ink_1·2 번갈아) 위로 불꽃 빛(fx_bomb_glow)
+                            float rot = UnityEngine.Random.value * Mathf.PI * 2f;
+                            bool ink = AddSpark(s.Fired % 2 == 0 ? "fx_bomb_ink_1" : "fx_bomb_ink_2", at, rot, R * 2.4f, 0.55f, 0.08f);
+                            bool glow = AddSpark("fx_bomb_glow", at, rot, R * 2.2f, 0.35f, 0.06f);
+                            if (!ink && !glow) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
                             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
                             Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
                         });
@@ -375,7 +408,7 @@ namespace BloodRain.Presentation.Combat
         struct Proj
         {
             public Vector2 Pos, Vel;
-            public float Radius, Damage, Life, Homing, Knock;
+            public float Radius, Damage, Life, Homing, Knock, Age;
             public int Pierce, Target;
             public Slot Weapon;
             public Color Color;
@@ -403,6 +436,7 @@ namespace BloodRain.Presentation.Combat
             {
                 var p = _projs[i];
                 p.Life -= dt;
+                p.Age += dt;
                 if (p.Target != 0 && p.Homing > 0f)
                 {
                     int ti = IndexOf(p.Target);
@@ -554,10 +588,10 @@ namespace BloodRain.Presentation.Combat
 
         void DrawBrushes()
         {
-            if (_brushes.Count == 0 || brushMaterial == null) return;
+            if (_brushes.Count == 0 || _ink == null) return;
             if (_quad == null) _quad = MakeQuad();
             if (_brushProps == null) _brushProps = new MaterialPropertyBlock();
-            var rp = new RenderParams(brushMaterial) { matProps = _brushProps, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
+            var rp = new RenderParams(_ink) { matProps = _brushProps, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             var c = P;
             foreach (var b in _brushes)
             {
@@ -584,7 +618,7 @@ namespace BloodRain.Presentation.Combat
 
         bool AddBolt(Vector2 at)
         {
-            if (brushMaterial == null || brushAddMaterial == null || lightningGold == null) return false;
+            if (_ink == null || _add == null || lightningGold == null) return false;
             _bolts.Add(new Bolt { At = at });
             return true;
         }
@@ -607,24 +641,99 @@ namespace BloodRain.Presentation.Combat
                 float dissolve = Mathf.Clamp01((b.Age - BoltDraw - BoltHold) / (BoltLife - BoltDraw - BoltHold));
                 // 번개 아래 끝이 친 자리에 오게 텍스처 가운데를 조금 위로 올린다
                 var m = Matrix4x4.TRS(new Vector3(b.At.x, b.At.y + size * 0.4f, -0.28f), Quaternion.identity, new Vector3(size, size, 1f));
-                Layer(brushMaterial, lightningShade, StrokeInk, progress, dissolve, m);
-                Layer(brushAddMaterial, lightningGold, BoltGold, progress, dissolve, m);
-                Layer(brushAddMaterial, lightningCore, Color.white, progress, dissolve, m);
+                Layer(_ink, lightningShade, StrokeInk, progress, dissolve, m);
+                Layer(_add, lightningGold, BoltGold, progress, dissolve, m);
+                Layer(_add, lightningCore, Color.white, progress, dissolve, m);
             }
         }
 
-        void Layer(Material mat, Texture2D tex, Color col, float progress, float dissolve, Matrix4x4 m)
+        void Layer(Material mat, Texture2D tex, Color col, float progress, float dissolve, Matrix4x4 m, float kind = 3f, float alpha = 1f)
         {
-            if (tex == null) return;
+            if (tex == null || mat == null) return;
             _brushProps.Clear();
             _brushProps.SetTexture(IdMainTex, tex);
             _brushProps.SetColor(IdColor, col);
             _brushProps.SetFloat(IdProgress, progress);
             _brushProps.SetFloat(IdDissolve, dissolve);
-            _brushProps.SetFloat(IdKind, 3f); // ai.json progress "down"
-            _brushProps.SetFloat(IdAlpha, 1f);
+            _brushProps.SetFloat(IdKind, kind); // 뇌부는 ai.json progress "down"(3)
+            _brushProps.SetFloat(IdAlpha, alpha);
             var rp = new RenderParams(mat) { matProps = _brushProps, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             Graphics.RenderMesh(rp, _quad, 0, m);
+        }
+
+        // ── 무공 AI 재료(V-04) ──────────────────────────────────
+        // 무공마다 ai.json 재료 한 장을 붙인다(무공 → 재료 이름은 아래 표, ai.json use 줄과 같음).
+        // 한 번 뜨는 것(Spark): 그어지기(draw) → 머묾 → 흩어짐(뒤 45%). 투사체는 날아가는 쪽으로 돌려 몸에 붙여 그린다.
+        Material _ink, _add;
+        readonly Dictionary<string, AiFx> _ai = new Dictionary<string, AiFx>();
+
+        struct Spark
+        {
+            public AiFx Fx;
+            public Vector2 Pos;      // Follow 면 플레이어 기준 자리
+            public bool Follow;
+            public float Angle, Size, Age, Life, Draw, Alpha;
+            public Color Ink;
+        }
+        readonly List<Spark> _sparks = new List<Spark>();
+
+        AiFx Ai(string name) => name != null && _ai.TryGetValue(name, out var f) && _ink != null ? f : null;
+
+        /// <summary>재료가 있으면 한 번 띄우고 true. size 는 세계 m(0 이면 재료 sizeMeters 를 경지 m 로).</summary>
+        bool AddSpark(string name, Vector2 pos, float angle, float size, float life, float draw, bool follow = false, float alpha = 1f, Color? ink = null)
+        {
+            var f = Ai(name);
+            if (f == null) return false;
+            _sparks.Add(new Spark
+            {
+                Fx = f, Pos = pos, Follow = follow, Angle = angle, Size = size > 0f ? size : World.Length(f.meters),
+                Life = life, Draw = draw, Alpha = alpha, Ink = ink ?? StrokeInk,
+            });
+            return true;
+        }
+
+        void DrawSparks(float dt)
+        {
+            for (int i = _sparks.Count - 1; i >= 0; i--)
+            {
+                var s = _sparks[i];
+                s.Age += dt;
+                if (s.Age >= s.Life) _sparks.RemoveAt(i); else _sparks[i] = s;
+            }
+            if (_sparks.Count == 0) return;
+            var c = P;
+            foreach (var s in _sparks)
+            {
+                float progress = s.Draw > 0f ? Mathf.Clamp01(s.Age / s.Draw) : 1f;
+                float fadeFrom = Mathf.Max(s.Draw, s.Life * 0.55f);
+                float dissolve = Mathf.Clamp01((s.Age - fadeFrom) / Mathf.Max(0.01f, s.Life - fadeFrom));
+                var at = s.Follow ? c + s.Pos : s.Pos;
+                DrawAi(s.Fx, at, s.Angle, s.Size, progress, dissolve, s.Alpha, s.Ink);
+            }
+        }
+
+        void DrawAi(AiFx f, Vector2 at, float angle, float size, float progress, float dissolve, float alpha, Color ink)
+        {
+            if (_quad == null) _quad = MakeQuad();
+            if (_brushProps == null) _brushProps = new MaterialPropertyBlock();
+            var m = Matrix4x4.TRS(new Vector3(at.x, at.y, -0.28f), Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), new Vector3(size, size, 1f));
+            Layer(_ink, f.stroke, ink, progress, dissolve, m, f.kind, alpha);
+            Layer(_ink, f.shade, StrokeInk, progress, dissolve, m, f.kind, alpha);
+            Layer(_add, f.gold, BoltGold, progress, dissolve, m, f.kind, alpha);
+            Layer(_add, f.core, Color.white, progress, dissolve, m, f.kind, alpha);
+        }
+
+        // 투사체 그림: 무공 → (재료, 길이 = 경지 m 또는 투사체 반경의 몇 배, 그어지는 시간)
+        bool ProjFx(Slot s, out AiFx f, out float realmMeters, out float radiusTimes)
+        {
+            realmMeters = 0f; radiusTimes = 0f; f = null;
+            switch (s.Def.Behavior)
+            {
+                case "homing_dagger": f = Ai("fx_dagger_ink"); realmMeters = 1.4f; break;   // 비도 궤적
+                case "slow_projectile": f = Ai("fx_palm_ink"); radiusTimes = 3.6f; break;   // 장풍 손바람
+                case "random_rapid": f = Ai("fx_finger_glow"); realmMeters = 1.8f; break;   // 섬광지 지풍
+            }
+            return f != null;
         }
 
         static Mesh MakeQuad()
@@ -648,10 +757,32 @@ namespace BloodRain.Presentation.Combat
             if (player == null) return;
             DrawBrushes();
             DrawBolts(Time.deltaTime);
+            DrawSparks(Time.deltaTime);
+            var qi = Ai("fx_sword_qi_glow");
+            // 창천검기: 도는 칼날 끝에 검기 한 장. 텍스처 위(+y)가 바깥을 보게 돌리고, 마지막 바퀴 끝 30% 에 흩어진다
+            if (qi != null)
+                foreach (var f in _fx)
+                {
+                    if (!f.Sweep) continue;
+                    float a = f.Angle + f.Prev;
+                    float dissolve = Mathf.Clamp01((f.Age / f.Life - 0.7f) / 0.3f);
+                    var at = P + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * f.Radius * 0.62f;
+                    DrawAi(qi, at, a - Mathf.PI / 2f, f.Radius * 0.95f, 1f, dissolve, 1f, StrokeInk);
+                }
+            // 투사체: 날아가는 쪽으로 돌린 재료. 머리가 투사체 자리에 오게 길이 0.3 만큼 뒤로 물린다
+            foreach (var p in _projs)
+            {
+                if (!ProjFx(p.Weapon, out var pf, out float rm, out float rt)) continue;
+                float size = rm > 0f ? World.Length(rm) : p.Radius * rt;
+                var dir = p.Vel.sqrMagnitude > 1e-8f ? p.Vel.normalized : Vector2.right;
+                float dissolve = Mathf.Clamp01(1f - p.Life / 0.15f);
+                DrawAi(pf, p.Pos - dir * size * 0.3f, Mathf.Atan2(dir.y, dir.x), size, Mathf.Clamp01(p.Age / 0.06f), dissolve, 1f, StrokeInk);
+            }
             if (_mat == null || (_fx.Count == 0 && _projs.Count == 0)) return;
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             foreach (var f in _fx)
             {
+                if (f.Sweep && qi != null) continue;
                 float k = f.Age / f.Life;
                 float angle = f.Sweep ? f.Angle + f.Prev : f.Angle;
                 var c = f.Fixed ? f.Center : P;
@@ -661,7 +792,8 @@ namespace BloodRain.Presentation.Combat
             }
             var disc = Sector(Mathf.PI * 2f);
             foreach (var p in _projs)
-                Draw(rp, disc, new Vector3(p.Pos.x, p.Pos.y, -0.26f), 0f, p.Radius, p.Color);
+                if (!ProjFx(p.Weapon, out _, out _, out _))
+                    Draw(rp, disc, new Vector3(p.Pos.x, p.Pos.y, -0.26f), 0f, p.Radius, p.Color);
         }
 
         void Draw(RenderParams rp, Mesh mesh, Vector3 pos, float angle, float radius, Color col)
