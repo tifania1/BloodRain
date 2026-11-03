@@ -93,6 +93,18 @@
       "use": "천뢰검진 검기 원 두 겹 + 낙뢰"
     },
     {
+      "name": "fx_evo_dagger_glow",
+      "kind": "ai_glow",
+      "sizeMeters": 1.5,
+      "layers": [
+        "gold",
+        "core",
+        "shade"
+      ],
+      "progress": "right",
+      "use": "무영비도 보이지 않는 비도"
+    },
+    {
       "name": "fx_evo_dragon_ink",
       "kind": "ai_ink",
       "sizeMeters": 4.0,
@@ -156,6 +168,17 @@
       ],
       "progress": "right",
       "use": "파산장 거대 장력과 지나간 자리 폭발",
+      "inkGamma": 0.75
+    },
+    {
+      "name": "fx_evo_plum_ink",
+      "kind": "ai_ink",
+      "sizeMeters": 6.0,
+      "layers": [
+        "stroke"
+      ],
+      "progress": "radial",
+      "use": "매화만개 화면 매화 폭풍(색은 셰이더)",
       "inkGamma": 0.75
     },
     {
