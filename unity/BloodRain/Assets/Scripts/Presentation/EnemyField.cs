@@ -627,7 +627,7 @@ namespace BloodRain.Presentation
         // Core Mimicry.Weapons 가 준 무공(잡몹: 시작 무공 하나, 피해 0.3배·쿨 2배 — 배율은 backlog C-14 결정 대기)을 적이 쓴다.
         //   날아가는 무공(비도·장풍·섬광지·벽력탄·뇌부)은 플레이어 쪽으로 적 탄 하나(그 무공 shot 의 탄속·반경, 없으면 초속 8m·0.25m),
         //   붙어 치는 무공(삼재검법·나한권·창천검기 등)은 그 무공 사거리 안이면 바로 한 번. 사거리 밖이면 쿨을 쓰지 않고 기다린다.
-        //   피해는 HitPlayer → PlayerVitals(호신을 뺌). 쿨다운 0(독무)인 무공은 Core 가 0 으로 주니 쓰지 않는다.
+        //   피해는 HitPlayer → PlayerVitals(호신을 뺌). 간격은 Core 의 Interval(쿨다운, 상시 무공이면 닿는 간격 × 쿨 배율).
         //   절기 모양은 따라 하지 않는다(Mimicry 가 바탕 무공으로 줌). 보스(혈영회주 mirror_clone)가 부른 분신은 보스가 붙을 때.
         [Tooltip("분신이 흉내 낼 무공의 출처(레벨업 화면의 Loadout). 비면 시작 무공 Lv1")]
         public Hud.LevelUpScreen levelUp;
@@ -676,7 +676,7 @@ namespace BloodRain.Presentation
                 if (!_mimicCool.TryGetValue(a.Id, out var cd) || cd.Length != list.Count)
                 {
                     cd = new float[list.Count];
-                    for (int k = 0; k < cd.Length; k++) cd[k] = UnityEngine.Random.Range(0f, Mathf.Max(0.1f, list[k].Cooldown));
+                    for (int k = 0; k < cd.Length; k++) cd[k] = UnityEngine.Random.Range(0f, Mathf.Max(0.1f, list[k].Interval));
                     _mimicCool[a.Id] = cd;
                 }
                 if (a.Stun > 0f) continue;
@@ -686,12 +686,17 @@ namespace BloodRain.Presentation
                 for (int k = 0; k < list.Count; k++)
                 {
                     var mw = list[k];
-                    if (mw.Cooldown <= 0f || mw.Damage <= 0f) continue;
+                    if (mw.Interval <= 0f || mw.Damage <= 0f) continue;
                     cd[k] -= dt;
                     if (cd[k] > 0f) continue;
                     var w = data.Weapon(mw.WeaponId);
                     float dmg = mw.Damage * (1f + a.Buff);
-                    if (Ranged(w))
+                    if (mw.Aura)
+                    {
+                        if (dist > ws.Length(w.Range, a.BornRealm) + pr) { cd[k] = 0f; continue; }
+                        if (HitPlayer(dmg)) MimicHits++;
+                    }
+                    else if (Ranged(w))
                     {
                         float reach = ws.Length(Mathf.Max(w.SeekRange ?? w.Range, 6f), a.BornRealm);
                         if (dist > reach) { cd[k] = 0f; continue; }
@@ -709,7 +714,7 @@ namespace BloodRain.Presentation
                         if (dist > ws.Length(w.Range, a.BornRealm) + pr) { cd[k] = 0f; continue; }
                         if (HitPlayer(dmg)) MimicHits++;
                     }
-                    cd[k] += mw.Cooldown;
+                    cd[k] += mw.Interval;
                     MimicFires++;
                 }
             }
