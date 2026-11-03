@@ -40,6 +40,15 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        [Fact] public void 시작_무공은_모두_있는_무공이고_겹치지_않는다()
+        {
+            var ids = MimicSim.StartWeapons(G);
+            Assert.True(ids.Count >= 8);
+            Assert.Equal(ids.Count, ids.Distinct().Count());
+            foreach (var id in ids) Assert.Contains(G.Weapons, w => w.Id == id);
+            foreach (var c in G.Characters.Where(c => c.StartWeapon != "")) Assert.Contains(c.StartWeapon, ids);
+        }
+
         [Fact] public void 보고서가_지금_데이터와_같다()
         {
             string onDisk = TestData.ReadRepoFile("docs", "design", "sim", "mimic.md").Replace("\r\n", "\n");
