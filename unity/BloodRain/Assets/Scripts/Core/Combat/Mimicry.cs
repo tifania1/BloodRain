@@ -12,17 +12,26 @@ using BloodRain.Core.Data;
 
 namespace BloodRain.Core.Combat
 {
-    /// <summary>분신이 쓰는 무공 하나. Damage 는 한 번 맞을 때 피해(받는 쪽 호신 빼기 전), Cooldown 은 다음 발까지 초.</summary>
+    /// <summary>
+    /// 분신이 쓰는 무공 하나. Damage 는 한 번 맞을 때 피해(받는 쪽 호신 빼기 전), Cooldown 은 무공 쿨다운 × 배율(상시 무공은 0).
+    /// Interval 은 실제로 다음 피해까지 초 — 쿨다운이 있으면 Cooldown, 독무 같은 상시(aura) 무공이면 닿는 간격(tickSeconds, 없으면 0.5) × 쿨 배율.
+    /// Aura 면 분신 몸 둘레(무공 range, 경지 m) 안에 있는 동안 Interval 마다 한 번 맞는다(2026-11-03 21시 예약 세션, mimic.md 시뮬레이션 가정과 맞춤).
+    /// </summary>
     public readonly struct MimicWeapon
     {
         public readonly string WeaponId;
         public readonly int Level;
         public readonly float Damage;
         public readonly float Cooldown;
+        public readonly float Interval;
+        public readonly bool Aura;
 
         public MimicWeapon(string weaponId, int level, float damage, float cooldown)
+            : this(weaponId, level, damage, cooldown, cooldown, false) { }
+
+        public MimicWeapon(string weaponId, int level, float damage, float cooldown, float interval, bool aura)
         {
-            WeaponId = weaponId; Level = level; Damage = damage; Cooldown = cooldown;
+            WeaponId = weaponId; Level = level; Damage = damage; Cooldown = cooldown; Interval = interval; Aura = aura;
         }
 
         public override string ToString() => $"{WeaponId} Lv{Level} {Damage:0.##}/{Cooldown:0.##}s";
@@ -30,10 +39,13 @@ namespace BloodRain.Core.Combat
 
     public static class Mimicry
     {
+        /// <summary>상시 무공에 tickSeconds 가 없을 때 닿는 간격(시뮬레이터 WeaponModel.Interval 과 같음).</summary>
+        public const float DefaultTickSeconds = 0.5f;
+
         /// <summary>
         /// 분신이 쓸 무공 목록. 첫 무공은 늘 시작 무공이다(Loadout 은 무공을 빼지 않는다).
         /// allWeapons 가 아니면 그 하나만, 맞으면 시작 무공을 맨 앞에 두고 나머지를 이름순으로(순서가 판마다 같게).
-        /// 독무처럼 쿨다운 0(상시)인 무공은 배율을 곱해도 0 이다.
+        /// 독무처럼 쿨다운 0(상시)인 무공은 Cooldown 이 배율을 곱해도 0 이고, 대신 Interval·Aura 로 닿는 간격을 준다.
         /// </summary>
         public static List<MimicWeapon> Weapons(GameData data, CharacterDef character, Loadout loadout, EnemyMimic mimic)
         {
@@ -55,9 +67,12 @@ namespace BloodRain.Core.Combat
             {
                 var w = data.Weapon(id);
                 int level = loadout.Weapons[id];
+                float cooldown = WeaponGrowth.Cooldown(w, level) * mimic.CooldownScale;
+                bool aura = w.Behavior == "aura";
+                float interval = aura ? (w.TickSeconds ?? DefaultTickSeconds) * mimic.CooldownScale : cooldown;
                 list.Add(new MimicWeapon(id, level,
                     WeaponMath.DamageAt(w, level, WeaponGrowth.MaxLevel) * mimic.DamageScale,
-                    WeaponGrowth.Cooldown(w, level) * mimic.CooldownScale));
+                    cooldown, interval, aura));
             }
             return list;
         }

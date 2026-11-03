@@ -97,6 +97,26 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        [Fact] public void 상시_무공은_닿는_간격을_Interval_로_준다()
+        {
+            var l = JinWith(("flying_dagger", 8), ("poison_mist", 4), ("thunder_bomb", 2));
+            var m = new EnemyMimic { DamageScale = 0.5f, CooldownScale = 2, AllWeapons = true };
+            foreach (var w in Mimicry.Weapons(_d, Jin, l, m))
+            {
+                var def = _d.Weapon(w.WeaponId);
+                Assert.Equal(def.Behavior == "aura", w.Aura);
+                Assert.True(w.Interval > 0, w.ToString());
+                if (w.Aura)
+                {
+                    Assert.Equal(0f, w.Cooldown);
+                    // 시뮬레이터(mimic.md)가 쓴 간격과 같아야 Unity 분신과 보고서가 맞는다.
+                    Assert.Equal(BloodRain.Sim.WeaponModel.Interval(def, null, w.Level, false, 0, WeaponGrowth.MaxLevel) * m.CooldownScale, w.Interval, 4);
+                }
+                else Assert.Equal(w.Cooldown, w.Interval, 4);
+            }
+            Assert.Contains(Mimicry.Weapons(_d, Jin, l, m), w => w.WeaponId == "poison_mist" && w.Aura);
+        }
+
         [Fact] public void 소환_패턴이_mimic_을_안_주면_적의_값을_쓴다()
         {
             Assert.Same(Clone.Mimic, Mimicry.For(Clone));
