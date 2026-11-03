@@ -39,6 +39,16 @@ namespace BloodRain.Editor
                 };
                 wr.samjaeTier1Meters = SizeOf(BrushDir, "samjae_t1_1", 5.74f);
                 wr.samjaeTier1Span = 2.3f;
+                // 2·3단(첫·둘째 마일스톤): 담채(wash)는 2단부터, 금빛(gold)은 3단부터. 값은 samjae.json
+                wr.samjaeTier2 = Layer("samjae_t2", "stroke");
+                wr.samjaeTier2Wash = Layer("samjae_t2", "wash");
+                wr.samjaeTier2Meters = SizeOf(BrushDir, "samjae_t2_1", 6.456f);
+                wr.samjaeTier2Span = 2.4f;
+                wr.samjaeTier3 = Layer("samjae_t3", "stroke");
+                wr.samjaeTier3Wash = Layer("samjae_t3", "wash");
+                wr.samjaeTier3Gold = Layer("samjae_t3", "gold");
+                wr.samjaeTier3Meters = SizeOf(BrushDir, "samjae_t3_1", 7.1f);
+                wr.samjaeTier3Span = 2.5f;
                 // 뇌부 낙뢰(W-01): AI 빛 재료 fx_lightning_glow(먹 받침 + 금빛 + 흰빛, 위에서 아래로)
                 wr.brushAddMaterial = EnsureAddMaterial();
                 wr.lightningShade = Load($"{AiDir}/fx_lightning_glow_shade.png");
@@ -147,6 +157,11 @@ namespace BloodRain.Editor
             }
             return map;
         }
+
+        static Texture2D[] Layer(string prefix, string layer) => new[]
+        {
+            Load($"{BrushDir}/{prefix}_1_{layer}.png"), Load($"{BrushDir}/{prefix}_2_{layer}.png"), Load($"{BrushDir}/{prefix}_3_{layer}.png"),
+        };
 
         static float SizeOf(string dir, string name, float fallback) => Sizes(dir).TryGetValue(name, out var s) ? s : fallback;
 

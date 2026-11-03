@@ -45,6 +45,12 @@ namespace BloodRain.Presentation.Combat
         public float samjaeTier1Meters = 5.74f;
         [Tooltip("호가 펼친 각(라디안), samjae.json span")]
         public float samjaeTier1Span = 2.3f;
+        [Tooltip("2단(첫 마일스톤부터): 본 획 + 담채(청회, 커지며 옅어짐). 순서는 stroke 와 같은 번호")]
+        public Texture2D[] samjaeTier2, samjaeTier2Wash;
+        public float samjaeTier2Meters = 6.456f, samjaeTier2Span = 2.4f;
+        [Tooltip("3단(둘째 마일스톤부터): 본 획 + 담채 + 금빛 비백")]
+        public Texture2D[] samjaeTier3, samjaeTier3Wash, samjaeTier3Gold;
+        public float samjaeTier3Meters = 7.1f, samjaeTier3Span = 2.5f;
 
         [Header("뇌부 낙뢰(W-01). AI 재료 fx_lightning_glow: 먹 받침(보통 섞기) → 금빛·흰빛(더하기), 위에서 아래로 그어짐")]
         public Material brushAddMaterial;
@@ -550,10 +556,24 @@ namespace BloodRain.Presentation.Combat
         // ── 붓 획(V-04) ─────────────────────────────────────────
         struct Brush
         {
-            public Texture2D Tex;
+            public Texture2D Tex, Wash, Gold;
             public float Angle, Size, Span, Age;
             public Color Color;
         }
+
+        static readonly Color BrushGold = new Color32(0xC9, 0xA2, 0x27, 0xFF); // vfx.md gold
+
+        /// <summary>vfx.md 단계: 1단 Lv1~, 2단 첫 마일스톤(삼재검법 Lv4 앞뒤 베기)부터, 3단 둘째 마일스톤(Lv7 3연 베기)부터.</summary>
+        static int BrushTier(Slot s)
+        {
+            if (s.Def?.Milestones == null) return 1;
+            int tier = 1;
+            foreach (var kv in s.Def.Milestones)
+                if (int.TryParse(kv.Key, out int lv) && s.level >= lv) tier++;
+            return Mathf.Min(tier, 3);
+        }
+
+        static Texture2D Pick(Texture2D[] arr, int i) => arr != null && arr.Length > 0 ? arr[i % arr.Length] : null;
 
         readonly List<Brush> _brushes = new List<Brush>();
         Mesh _quad;
@@ -565,13 +585,22 @@ namespace BloodRain.Presentation.Combat
         static readonly int IdKind = Shader.PropertyToID("_Kind");
         static readonly int IdAlpha = Shader.PropertyToID("_Alpha");
 
-        /// <summary>그 무공의 붓 획이 있으면 띄우고 true. 지금은 삼재검법 1단만(2·3단 텍스처와 담채·금빛 층은 V-05).</summary>
+        /// <summary>그 무공의 붓 획이 있으면 띄우고 true. 지금은 삼재검법 1~3단(2단부터 담채, 3단부터 금빛 층). 그 단 텍스처가 없으면 아래 단으로.</summary>
         bool AddBrush(Slot s, float angle)
         {
-            if (brushMaterial == null || s.id != "samjae_sword" || samjaeTier1 == null || samjaeTier1.Length == 0) return false;
-            var tex = samjaeTier1[s.Fired % samjaeTier1.Length];
-            if (tex == null) return false;
-            _brushes.Add(new Brush { Tex = tex, Angle = angle, Size = World.Length(samjaeTier1Meters), Span = samjaeTier1Span, Color = StrokeInk });
+            if (brushMaterial == null || s.id != "samjae_sword") return false;
+            int tier = BrushTier(s);
+            int i = s.Fired;
+            Brush b;
+            if (tier >= 3 && Pick(samjaeTier3, i) != null)
+                b = new Brush { Tex = Pick(samjaeTier3, i), Wash = Pick(samjaeTier3Wash, i), Gold = Pick(samjaeTier3Gold, i), Size = World.Length(samjaeTier3Meters), Span = samjaeTier3Span };
+            else if (tier >= 2 && Pick(samjaeTier2, i) != null)
+                b = new Brush { Tex = Pick(samjaeTier2, i), Wash = Pick(samjaeTier2Wash, i), Size = World.Length(samjaeTier2Meters), Span = samjaeTier2Span };
+            else if (Pick(samjaeTier1, i) != null)
+                b = new Brush { Tex = Pick(samjaeTier1, i), Size = World.Length(samjaeTier1Meters), Span = samjaeTier1Span };
+            else return false;
+            b.Angle = angle; b.Color = StrokeInk;
+            _brushes.Add(b);
             return true;
         }
 
@@ -597,17 +626,35 @@ namespace BloodRain.Presentation.Combat
             {
                 float progress = Mathf.Clamp01(b.Age / BrushDraw);
                 float dissolve = Mathf.Clamp01((b.Age - BrushDraw - BrushHold) / (BrushLife - BrushDraw - BrushHold));
-                _brushProps.Clear();
-                _brushProps.SetTexture(IdMainTex, b.Tex);
-                _brushProps.SetColor(IdColor, b.Color);
-                _brushProps.SetFloat(IdProgress, progress);
-                _brushProps.SetFloat(IdDissolve, dissolve);
-                _brushProps.SetFloat(IdSpan, b.Span);
-                _brushProps.SetFloat(IdKind, 0f);
-                _brushProps.SetFloat(IdAlpha, 1f);
-                var m = Matrix4x4.TRS(new Vector3(c.x, c.y, -0.27f), Quaternion.Euler(0, 0, b.Angle * Mathf.Rad2Deg), new Vector3(b.Size, b.Size, 1f));
-                Graphics.RenderMesh(rp, _quad, 0, m);
+                var rot = Quaternion.Euler(0, 0, b.Angle * Mathf.Rad2Deg);
+                // 층 순서: 담채(아래) → 본 획 → 금빛(위). z 가 카메라 쪽일수록 나중에 그려진다.
+                if (b.Wash != null)
+                {
+                    // 담채는 획을 따라 번진 뒤 천천히 커지며 옅어진다(vfx.md '담채 번짐'). 흩어짐은 본 획의 절반만.
+                    float life = b.Age / BrushLife;
+                    float grow = 1f + 0.12f * life;
+                    DrawBrushLayer(rp, b.Wash, MistWash, progress, dissolve * 0.5f, b.Span, 0.55f * (1f - life),
+                        Matrix4x4.TRS(new Vector3(c.x, c.y, -0.26f), rot, new Vector3(b.Size * grow, b.Size * grow, 1f)));
+                }
+                var m = Matrix4x4.TRS(new Vector3(c.x, c.y, -0.27f), rot, new Vector3(b.Size, b.Size, 1f));
+                DrawBrushLayer(rp, b.Tex, b.Color, progress, dissolve, b.Span, 1f, m);
+                if (b.Gold != null)
+                    DrawBrushLayer(rp, b.Gold, BrushGold, progress, dissolve, b.Span, 1f,
+                        Matrix4x4.TRS(new Vector3(c.x, c.y, -0.28f), rot, new Vector3(b.Size, b.Size, 1f)));
             }
+        }
+
+        void DrawBrushLayer(RenderParams rp, Texture2D tex, Color color, float progress, float dissolve, float span, float alpha, Matrix4x4 m)
+        {
+            _brushProps.Clear();
+            _brushProps.SetTexture(IdMainTex, tex);
+            _brushProps.SetColor(IdColor, color);
+            _brushProps.SetFloat(IdProgress, progress);
+            _brushProps.SetFloat(IdDissolve, dissolve);
+            _brushProps.SetFloat(IdSpan, span);
+            _brushProps.SetFloat(IdKind, 0f);
+            _brushProps.SetFloat(IdAlpha, alpha);
+            Graphics.RenderMesh(rp, _quad, 0, m);
         }
 
         // ── 낙뢰(W-01) ──────────────────────────────────────────

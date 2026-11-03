@@ -276,6 +276,30 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 22cb4792ff0ef8c4d97faed598907f3c, type: 3}
   samjaeTier1Meters: 5.74
   samjaeTier1Span: 2.3
+  samjaeTier2:
+  - {fileID: 2800000, guid: 8c91fed1f6bb443429c675e1c718a558, type: 3}
+  - {fileID: 2800000, guid: 3070893ef48e5c84c8d5a1824eaa1c84, type: 3}
+  - {fileID: 2800000, guid: 6cc932036893cd547a0d17a2a2b547a4, type: 3}
+  samjaeTier2Wash:
+  - {fileID: 2800000, guid: cc5cf28483b145b49b29736bd03a0a3a, type: 3}
+  - {fileID: 2800000, guid: 0cd4572745f055b4e94667811c56a4d2, type: 3}
+  - {fileID: 2800000, guid: 7931b28d1632f5b469b4ae0474031e71, type: 3}
+  samjaeTier2Meters: 6.456
+  samjaeTier2Span: 2.4
+  samjaeTier3:
+  - {fileID: 2800000, guid: 2ae1b94c6ef983249b18f3328b427645, type: 3}
+  - {fileID: 2800000, guid: 934ad63106c85fc49ba40676353bdefc, type: 3}
+  - {fileID: 2800000, guid: 99c7e5429f0033c4482157d56dabdeb3, type: 3}
+  samjaeTier3Wash:
+  - {fileID: 2800000, guid: f907ae8d6d551714ebb90353ab82b775, type: 3}
+  - {fileID: 2800000, guid: d2d294de367d16f4fa31018aa7ea25a0, type: 3}
+  - {fileID: 2800000, guid: 1a88bbaec1fc63c459b5ef37d6ce469c, type: 3}
+  samjaeTier3Gold:
+  - {fileID: 2800000, guid: 10784e4b5b773524e9b272c729b637fc, type: 3}
+  - {fileID: 2800000, guid: 82339961e3d344a468f10b3856c13685, type: 3}
+  - {fileID: 2800000, guid: 310130a2cac55404f9cb51cf3c90a3bf, type: 3}
+  samjaeTier3Meters: 7.1
+  samjaeTier3Span: 2.5
   brushAddMaterial: {fileID: 2100000, guid: c057ad4b200d2a3448f11cccf71e07b8, type: 2}
   lightningShade: {fileID: 2800000, guid: 309c06bc46a0b1f43bb56205606ed31d, type: 3}
   lightningGold: {fileID: 2800000, guid: 4f470859d0397564abbfacdd0051d18b, type: 3}
@@ -338,6 +362,48 @@ MonoBehaviour:
     shade: {fileID: 2800000, guid: e23b303bbe6f4fa2ae2b169ce97be1c3, type: 3}
     gold: {fileID: 2800000, guid: a088794d9eef413daf6c4c9ddb7c39b3, type: 3}
     core: {fileID: 2800000, guid: 7a910673a9054922bfd7841bac508dac, type: 3}
+  - name: fx_evo_dragon_ink
+    meters: 4
+    kind: 2
+    stroke: {fileID: 2800000, guid: ea4d8f2cc4e5477988fcb20413914a18, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_fire_ink
+    meters: 3
+    kind: 2
+    stroke: {fileID: 2800000, guid: 02a67216ad974f84bbd69592d3214a46, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_fist_ink
+    meters: 4
+    kind: 1
+    stroke: {fileID: 2800000, guid: 05a463fecd464f4dbba5593c1c6dca55, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_hand_ink
+    meters: 4
+    kind: 1
+    stroke: {fileID: 2800000, guid: a6c0e7cfcbcc422691a5acdf375b96aa, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_mist_ink
+    meters: 6
+    kind: 2
+    stroke: {fileID: 2800000, guid: 97b60a23419e4272a8335cd7971878ce, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_palm_ink
+    meters: 4.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: b356d4bebe254e2ab66efb7b324c24a7, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
   - name: fx_evo_qin_glow
     meters: 5
     kind: 2
@@ -352,6 +418,20 @@ MonoBehaviour:
     shade: {fileID: 2800000, guid: d02923c6819b4561a48572fb0f73c5c9, type: 3}
     gold: {fileID: 2800000, guid: 6d1e406708ee4a9d8d2eae90644734b6, type: 3}
     core: {fileID: 2800000, guid: 56053330bc9843ba99ddeca561720caa, type: 3}
+  - name: fx_evo_spear_ink
+    meters: 4
+    kind: 2
+    stroke: {fileID: 2800000, guid: 4454817520944ca6bfa6ad12b14da570, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_staff_ink
+    meters: 5
+    kind: 2
+    stroke: {fileID: 2800000, guid: 0689cadf92bf459ca692c655be8f9859, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
   - name: fx_evo_star_glow
     meters: 1.2
     kind: 2
@@ -1516,6 +1596,7 @@ MonoBehaviour:
   vitals: {fileID: 0}
   showStats: 1
   damageMultiplier: 1
+  levelUp: {fileID: 0}
 --- !u!114 &1838331825
 MonoBehaviour:
   m_ObjectHideFlags: 0
