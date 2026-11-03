@@ -621,7 +621,7 @@ namespace BloodRain.Presentation.Combat
                 float dissolve = Mathf.Clamp01((b.Age - BrushDraw - BrushHold) / (BrushLife - BrushDraw - BrushHold));
                 var rot = Quaternion.Euler(0, 0, b.Angle * Mathf.Rad2Deg);
                 // 층 순서: 담채(아래) → 본 획 → 금빛(위). z 가 카메라 쪽일수록 나중에 그려진다.
-                if (b.Wash != null)
+                if (b.Wash != null && !BloodRain.Presentation.Fx.FxSettings.Simplified) // 효과 간소화면 담채를 건너뜀
                 {
                     // 담채는 획을 따라 번진 뒤 천천히 커지며 옅어진다(vfx.md '담채 번짐'). 흩어짐은 본 획의 절반만.
                     float life = b.Age / BrushLife;

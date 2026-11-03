@@ -67,7 +67,7 @@ namespace BloodRain.Presentation.Fx
         void OnKilled(Vector2 pos, EnemyAgent a)
         {
             if (Time.frameCount != _frame) { _frame = Time.frameCount; _madeThisFrame = 0; }
-            if (_madeThisFrame >= newPerFrame) return;
+            if (_madeThisFrame >= FxSettings.Scale(newPerFrame)) return;
             _madeThisFrame++;
             float r = Mathf.Max(a.Radius, 0.05f);
             Vector2 away = player != null ? pos - (Vector2)player.position : Random.insideUnitCircle;
@@ -80,7 +80,7 @@ namespace BloodRain.Presentation.Fx
         public void Splat(Vector2 pos, float size, float angleDeg)
         {
             if (_splatMats.Length == 0) return;
-            if (_splat.Count >= maxSplats) _splat.RemoveAt(0);
+            while (_splat.Count > 0 && _splat.Count >= FxSettings.Scale(maxSplats)) _splat.RemoveAt(0);
             _splat.Add(new Mark { Pos = pos, Angle = angleDeg, Size = size, Tex = Random.Range(0, _splatMats.Length) });
         }
 
@@ -94,7 +94,7 @@ namespace BloodRain.Presentation.Fx
                 var g = _ground[i];
                 if (g.Age < dryingSeconds * 0.5f && (g.Pos - pos).sqrMagnitude < near * near) return false;
             }
-            if (_ground.Count >= maxGround) _ground.RemoveAt(0);
+            while (_ground.Count > 0 && _ground.Count >= FxSettings.Scale(maxGround)) _ground.RemoveAt(0);
             _ground.Add(new Mark { Pos = pos, Angle = Random.value * 360f, Size = size * Random.Range(0.85f, 1.15f), Tex = Random.Range(0, _groundMats.Length) });
             return true;
         }
