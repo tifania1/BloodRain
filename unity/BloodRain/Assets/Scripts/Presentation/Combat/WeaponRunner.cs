@@ -563,15 +563,8 @@ namespace BloodRain.Presentation.Combat
 
         static readonly Color BrushGold = new Color32(0xC9, 0xA2, 0x27, 0xFF); // vfx.md gold
 
-        /// <summary>vfx.md 단계: 1단 Lv1~, 2단 첫 마일스톤(삼재검법 Lv4 앞뒤 베기)부터, 3단 둘째 마일스톤(Lv7 3연 베기)부터.</summary>
-        static int BrushTier(Slot s)
-        {
-            if (s.Def?.Milestones == null) return 1;
-            int tier = 1;
-            foreach (var kv in s.Def.Milestones)
-                if (int.TryParse(kv.Key, out int lv) && s.level >= lv) tier++;
-            return Mathf.Min(tier, 3);
-        }
+        /// <summary>vfx.md 단계. 셈은 Core `WeaponGrowth.VisualTier`(마일스톤 없으면 Lv4·Lv7, 하나면 Lv7 기준).</summary>
+        static int BrushTier(Slot s) => s.Def == null ? 1 : WeaponGrowth.VisualTier(s.Def, s.level);
 
         static Texture2D Pick(Texture2D[] arr, int i) => arr != null && arr.Length > 0 ? arr[i % arr.Length] : null;
 
