@@ -19,6 +19,7 @@
 //   dotnet run --project core/BloodRain.Sim -c Release -- --secrets docs/design/sim/secrets.md      비전의 무공 구성이 갖춰지는 분, 무극·무명검이 열리는 비율
 //   dotnet run --project core/BloodRain.Sim -c Release -- --awakenings docs/design/sim/awakenings.md 캐릭터 여덟 명의 절기 각성 시각
 //   dotnet run --project core/BloodRain.Sim -c Release -- --prologue docs/design/sim/prologue.md     서장 흐름 시각(4장 표와 나란히)
+//   dotnet run --project core/BloodRain.Sim -c Release -- --mimic docs/design/sim/mimic.md           혈영 분신이 흉내 낸 무공의 피해(혈영회주 패턴과 견주기)
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
 using System.Globalization;
@@ -34,7 +35,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "", mimic = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -68,6 +69,7 @@ namespace BloodRain.Sim
                     case "--secrets": secrets = Next(); break;
                     case "--awakenings": awakenings = Next(); break;
                     case "--prologue": prologue = Next(); break;
+                    case "--mimic": mimic = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -75,7 +77,7 @@ namespace BloodRain.Sim
                     case "--help":
                         Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--scenario id] [--data 폴더] [--minutes 분]");
                         Console.WriteLine("  무리 가정: [--crowd-radius m] [--max-density 마리/㎡] [--arrival 초]");
-                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue");
+                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue --mimic");
                         Console.WriteLine($"  조정 시험 id: {string.Join(", ", Scenarios.All.Select(s => s.Id))}");
                         return 0;
                     default:
@@ -86,6 +88,13 @@ namespace BloodRain.Sim
 
             var sc = Scenarios.Find(scenario);
             var data = sc.LoadData(dataDir);
+            if (mimic.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(mimic))!);
+                File.WriteAllText(mimic, MimicSim.Report(data), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {mimic}");
+                return 0;
+            }
             if (shadow.Length > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(shadow))!);
