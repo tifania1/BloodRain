@@ -52,6 +52,16 @@ namespace BloodRain.Presentation.Combat
         public Texture2D[] samjaeTier3, samjaeTier3Wash, samjaeTier3Gold;
         public float samjaeTier3Meters = 7.1f, samjaeTier3Span = 2.5f;
 
+        // 붓 획 텍스처는 원래 512 칸에서 획 있는 쪽만 잘라 구웠다(V-10). 자리는 Brush/*.json crop → 셰이더 _Rect 꼴.
+        [Serializable]
+        public struct BrushCrop
+        {
+            [Tooltip("텍스처 이름(층 stroke·wash·gold 뺀 것), 예: samjae_t1_1")] public string name;
+            [Tooltip("원래 칸 uv 에서 잘린 자리: 왼쪽 아래 x·y, 너비·높이(0~1)")] public Vector4 rect;
+        }
+        [Tooltip("VfxBootstrap 이 Brush/*.json crop 에서 채운다. 없는 이름은 자르지 않은 512 칸으로 본다")]
+        public List<BrushCrop> brushCrops = new List<BrushCrop>();
+
         [Header("뇌부 낙뢰(W-01). AI 재료 fx_lightning_glow: 먹 받침(보통 섞기) → 금빛·흰빛(더하기), 위에서 아래로 그어짐")]
         public Material brushAddMaterial;
         public Texture2D lightningShade, lightningGold, lightningCore;
@@ -559,7 +569,31 @@ namespace BloodRain.Presentation.Combat
             public Texture2D Tex, Wash, Gold;
             public float Angle, Size, Span, Age;
             public Color Color;
+            public Vector4 Rect;   // 층 셋이 같은 자리로 잘려 있다
         }
+
+        static readonly Vector4 FullRect = new Vector4(0f, 0f, 1f, 1f);
+        Dictionary<string, Vector4> _crops;
+
+        /// <summary>텍스처가 512 칸에서 잘린 자리(uv). 이름 끝 _stroke·_wash·_gold 를 떼고 brushCrops 에서 찾는다.</summary>
+        Vector4 CropOf(Texture2D tex)
+        {
+            if (tex == null) return FullRect;
+            if (_crops == null)
+            {
+                _crops = new Dictionary<string, Vector4>();
+                foreach (var c in brushCrops)
+                    if (!string.IsNullOrEmpty(c.name)) _crops[c.name] = c.rect;
+            }
+            var n = tex.name;
+            int k = n.LastIndexOf('_');
+            if (k > 0) n = n.Substring(0, k);
+            return _crops.TryGetValue(n, out var r) ? r : FullRect;
+        }
+
+        /// <summary>몸이 가운데인 한 변 1 칸 안에서 잘린 사각형 자리로 옮기고 줄인다(사각형 메시는 -0.5~0.5).</summary>
+        static Matrix4x4 CropMatrix(Vector4 r) =>
+            Matrix4x4.TRS(new Vector3(r.x + r.z * 0.5f - 0.5f, r.y + r.w * 0.5f - 0.5f, 0f), Quaternion.identity, new Vector3(r.z, r.w, 1f));
 
         static readonly Color BrushGold = new Color32(0xC9, 0xA2, 0x27, 0xFF); // vfx.md gold
 
@@ -577,6 +611,7 @@ namespace BloodRain.Presentation.Combat
         static readonly int IdSpan = Shader.PropertyToID("_Span");
         static readonly int IdKind = Shader.PropertyToID("_Kind");
         static readonly int IdAlpha = Shader.PropertyToID("_Alpha");
+        static readonly int IdRect = Shader.PropertyToID("_Rect");
 
         /// <summary>그 무공의 붓 획이 있으면 띄우고 true. 지금은 삼재검법 1~3단(2단부터 담채, 3단부터 금빛 층). 그 단 텍스처가 없으면 아래 단으로.</summary>
         bool AddBrush(Slot s, float angle)
@@ -592,7 +627,7 @@ namespace BloodRain.Presentation.Combat
             else if (Pick(samjaeTier1, i) != null)
                 b = new Brush { Tex = Pick(samjaeTier1, i), Size = World.Length(samjaeTier1Meters), Span = samjaeTier1Span };
             else return false;
-            b.Angle = angle; b.Color = StrokeInk;
+            b.Angle = angle; b.Color = StrokeInk; b.Rect = CropOf(b.Tex);
             _brushes.Add(b);
             return true;
         }
@@ -617,6 +652,7 @@ namespace BloodRain.Presentation.Combat
             var c = P;
             foreach (var b in _brushes)
             {
+                var crop = CropMatrix(b.Rect);
                 float progress = Mathf.Clamp01(b.Age / BrushDraw);
                 float dissolve = Mathf.Clamp01((b.Age - BrushDraw - BrushHold) / (BrushLife - BrushDraw - BrushHold));
                 var rot = Quaternion.Euler(0, 0, b.Angle * Mathf.Rad2Deg);
@@ -627,17 +663,17 @@ namespace BloodRain.Presentation.Combat
                     float life = b.Age / BrushLife;
                     float grow = 1f + 0.12f * life;
                     DrawBrushLayer(rp, b.Wash, MistWash, progress, dissolve * 0.5f, b.Span, 0.55f * (1f - life),
-                        Matrix4x4.TRS(new Vector3(c.x, c.y, -0.26f), rot, new Vector3(b.Size * grow, b.Size * grow, 1f)));
+                        Matrix4x4.TRS(new Vector3(c.x, c.y, -0.26f), rot, new Vector3(b.Size * grow, b.Size * grow, 1f)) * crop, b.Rect);
                 }
-                var m = Matrix4x4.TRS(new Vector3(c.x, c.y, -0.27f), rot, new Vector3(b.Size, b.Size, 1f));
-                DrawBrushLayer(rp, b.Tex, b.Color, progress, dissolve, b.Span, 1f, m);
+                var m = Matrix4x4.TRS(new Vector3(c.x, c.y, -0.27f), rot, new Vector3(b.Size, b.Size, 1f)) * crop;
+                DrawBrushLayer(rp, b.Tex, b.Color, progress, dissolve, b.Span, 1f, m, b.Rect);
                 if (b.Gold != null)
                     DrawBrushLayer(rp, b.Gold, BrushGold, progress, dissolve, b.Span, 1f,
-                        Matrix4x4.TRS(new Vector3(c.x, c.y, -0.28f), rot, new Vector3(b.Size, b.Size, 1f)));
+                        Matrix4x4.TRS(new Vector3(c.x, c.y, -0.28f), rot, new Vector3(b.Size, b.Size, 1f)) * crop, b.Rect);
             }
         }
 
-        void DrawBrushLayer(RenderParams rp, Texture2D tex, Color color, float progress, float dissolve, float span, float alpha, Matrix4x4 m)
+        void DrawBrushLayer(RenderParams rp, Texture2D tex, Color color, float progress, float dissolve, float span, float alpha, Matrix4x4 m, Vector4 rect)
         {
             _brushProps.Clear();
             _brushProps.SetTexture(IdMainTex, tex);
@@ -647,6 +683,7 @@ namespace BloodRain.Presentation.Combat
             _brushProps.SetFloat(IdSpan, span);
             _brushProps.SetFloat(IdKind, 0f);
             _brushProps.SetFloat(IdAlpha, alpha);
+            _brushProps.SetVector(IdRect, rect);
             Graphics.RenderMesh(rp, _quad, 0, m);
         }
 

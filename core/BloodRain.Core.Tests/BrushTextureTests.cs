@@ -53,6 +53,27 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        [Fact] public void 잘린_텍스처는_meta_피벗이_몸_위치이고_Tight_메시다()
+        {
+            // VfxBootstrap.ImportSettings 와 같은 값: alignment 9(Custom), spritePivot = json pivot, spriteMeshType 1(Tight)
+            foreach (var json in Directory.GetFiles(Dir, "*.json"))
+                foreach (var t in JObject.Parse(File.ReadAllText(json))["textures"]!)
+                {
+                    var p = t["pivot"]!.Select(v => (double)v).ToArray();
+                    foreach (var l in t["layers"]!)
+                    {
+                        var name = $"{t["name"]}_{l}.png";
+                        var meta = File.ReadAllText(Path.Combine(Dir, name + ".meta"));
+                        Assert.Matches(@"\n  alignment: 9\r?\n", meta);
+                        Assert.Matches(@"\n  spriteMeshType: 1\r?\n", meta);
+                        var m = System.Text.RegularExpressions.Regex.Match(meta, @"spritePivot: \{x: ([-0-9.eE]+), y: ([-0-9.eE]+)\}");
+                        Assert.True(m.Success, name);
+                        Assert.True(System.Math.Abs(p[0] - double.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture)) < 1e-4, name);
+                        Assert.True(System.Math.Abs(p[1] - double.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture)) < 1e-4, name);
+                    }
+                }
+        }
+
         [Fact] public void 공통_텍스처_낙관_바탕_먹_튐_6_바닥_먹_자국_4_노이즈_2()
         {
             var dir = Path.GetFullPath(Path.Combine(Dir, "..", "Common"));
@@ -71,15 +92,37 @@ namespace BloodRain.Core.Tests
             }
         }
 
-        [Fact] public void 텍스처는_512px_알파가_있는_PNG다()
+        [Fact] public void 텍스처는_알파가_있는_PNG이고_json_crop_크기로_잘려_있다()
         {
+            // V-10 (2): 512 칸에 그린 뒤 층들이 함께 덮는 쪽만 잘라 쓴다. 너비·높이는 4의 배수(휴대폰 압축 블록), 층은 같은 크기.
+            int listed = 0;
+            foreach (var json in Directory.GetFiles(Dir, "*.json"))
+                foreach (var t in JObject.Parse(File.ReadAllText(json))["textures"]!)
+                {
+                    var name = (string)t["name"]!;
+                    var c = t["crop"]!.Select(v => (int)v).ToArray();
+                    Assert.Equal(4, c.Length);
+                    int x = c[0], y = c[1], cw = c[2], ch = c[3];
+                    Assert.True(x >= 0 && y >= 0 && cw > 0 && ch > 0 && x + cw <= 512 && y + ch <= 512, $"{name}: crop {string.Join(",", c)}");
+                    Assert.True(cw % 4 == 0 && ch % 4 == 0, $"{name}: {cw}x{ch} 가 4의 배수가 아니다");
+                    foreach (var l in t["layers"]!)
+                    {
+                        var (w, h, _) = Header(Path.Combine(Dir, $"{name}_{l}.png"));
+                        Assert.True((w, h) == (cw, ch), $"{name}_{l}: PNG {w}x{h}, crop {cw}x{ch}");
+                        listed++;
+                    }
+                    // 피벗 = 원래 칸 가운데(몸)가 잘린 그림의 어디인가(왼쪽 아래 0, 위로 +)
+                    var p = t["pivot"]!.Select(v => (double)v).ToArray();
+                    Assert.True(System.Math.Abs((256.0 - x) / cw - p[0]) < 1e-4, $"{name}: pivot x {p[0]}");
+                    Assert.True(System.Math.Abs((y + ch - 256.0) / ch - p[1]) < 1e-4, $"{name}: pivot y {p[1]}");
+                }
             foreach (var f in Directory.GetFiles(Dir, "*.png"))
             {
                 var (w, h, ct) = Header(f);
-                Assert.Equal(512, w);
-                Assert.Equal(512, h);
+                Assert.True(w <= 512 && h <= 512, f);
                 Assert.Equal(6, ct); // RGBA
             }
+            Assert.Equal(Directory.GetFiles(Dir, "*.png").Length, listed);
             Assert.True(File.Exists(Path.Combine(TestData.DataDir, "..", "..", "..", "..", "..", "docs", "vfx_preview", "brush_samjae.png")));
         }
     }

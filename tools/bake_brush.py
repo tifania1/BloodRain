@@ -2,11 +2,11 @@
 """붓 획 텍스처 굽기(backlog V-01, docs/design/vfx.md).
 
 web/lookdev/samjae.html 의 brushArc(터럭을 한 올씩 반원을 따라 긋는 획)·마른 붓 자국을 numpy·Pillow 로 옮겼다.
-결과는 흰 획 + 알파 PNG 512px. 색은 Unity 셰이더가 입힌다(먹·담채·금빛).
+결과는 흰 획 + 알파 PNG. 512px 칸에 그린 뒤 획이 있는 쪽만 잘라 쓴다(V-10, 자른 자리·피벗은 json). 색은 Unity 셰이더가 입힌다(먹·담채·금빛).
 시드를 고정해서 다시 구워도 같은 그림이 나온다.
 
   python tools/bake_brush.py              # 삼재검법 1·2·3단 각 3장, 나머지 시작 무공 여덟 × 3단 각 2장 + 미리보기 둘
-  python tools/bake_brush.py --check      # 다시 구워서 저장소 파일과 같은지만 본다(바이트 비교)
+  python tools/bake_brush.py --check      # 다시 구워서 저장소 파일과 같은지만 본다(PNG 는 픽셀, 나머지는 바이트 비교)
 
 한 장에 들어가는 것(이름 규칙 {무공}_t{단}_{번호}_{층}.png, 무공 앞 이름은 WEAPONS):
   stroke  본 획(옅은 테두리·눌러 시작한 자리 포함). 늘 있다
@@ -299,9 +299,40 @@ def wash_of(alpha: np.ndarray) -> np.ndarray:
     return np.asarray(b.resize((SIZE, SIZE), Image.BICUBIC), dtype=np.float32) / 255
 
 
-def white_png(alpha: np.ndarray) -> bytes:
+def crop_box(*alphas, margin=2, align=4):
+    """층들(같은 512 칸)을 함께 덮는 사각형 (x, y, w, h) — PIL 좌표(위가 0). V-10 (2).
+    PNG 에 0 이 아닌 알파로 남는 픽셀을 모두 담고, 둘레에 투명 margin px 를 두고(겹선형 거르기가 가장자리를 끌지 않게),
+    너비·높이를 align 의 배수로 늘린다(휴대폰 압축 ETC2·ASTC 블록이 4). 비면 가운데 align 칸."""
+    mask = np.zeros((SIZE, SIZE), dtype=bool)
+    for a in alphas:
+        if a is not None:
+            mask |= np.round(np.clip(a, 0, 1) * 255) > 0
+    ys, xs = np.nonzero(mask)
+    if len(xs) == 0:
+        c = SIZE // 2 - align // 2
+        return c, c, align, align
+    x0, x1 = max(0, int(xs.min()) - margin), min(SIZE, int(xs.max()) + 1 + margin)
+    y0, y1 = max(0, int(ys.min()) - margin), min(SIZE, int(ys.max()) + 1 + margin)
+
+    def grow_to(lo, hi):
+        n = -(-(hi - lo) // align) * align
+        extra = n - (hi - lo)
+        lo -= extra // 2
+        lo = max(0, min(lo, SIZE - n))
+        return lo, n
+
+    x0, w = grow_to(x0, x1)
+    y0, h = grow_to(y0, y1)
+    return x0, y0, w, h
+
+
+def white_png(alpha: np.ndarray, box=None) -> bytes:
+    """흰색 + 알파 PNG. box(x, y, w, h)가 있으면 그 사각형만 잘라 쓴다."""
+    if box is not None:
+        x, y, w, h = box
+        alpha = alpha[y:y + h, x:x + w]
     a = np.uint8(np.round(np.clip(alpha, 0, 1) * 255))
-    rgba = np.zeros((SIZE, SIZE, 4), dtype=np.uint8)
+    rgba = np.zeros(a.shape + (4,), dtype=np.uint8)
     rgba[..., :3] = 255
     rgba[..., 3] = a
     buf = io.BytesIO()
@@ -313,7 +344,7 @@ def bake():
     """{파일 이름: 바이트}, 설명 json, 미리보기에 쓸 층들."""
     files, layers = {}, []
     for wi, (prefix, weapon, tiers, variants) in enumerate(WEAPONS):
-      meta = {"_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 텍스처 한 변이 게임에서 몇 m 인가. 텍스처 가운데가 기준점: 호(arc)는 몸 위치를 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 가운데를 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m).",
+      meta = {"_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 원래 512px 칸 한 변이 게임에서 몇 m 인가(Pixels Per Unit = 512 / sizeMeters, 잘라도 그대로). 칸 가운데가 몸: 호(arc)는 몸을 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 몸을 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m). PNG 는 획이 있는 쪽만 자른 것: crop [x, y, w, h] 는 512 칸에서 잘라 낸 사각형(px, 위가 0, 너비·높이 4의 배수), pivot 은 잘린 그림에서 몸 위치(왼쪽 아래 0, 위로 +, 0~1 밖일 수 있음). 셰이더 _Rect = (x/512, 1-(y+h)/512, w/512, h/512).",
               "weapon": weapon, "textures": []}
       for ti, t in enumerate(tiers):
         for v in range(1, variants + 1):
@@ -324,17 +355,22 @@ def bake():
             entry = {"name": base, "tier": ti + 1, "seed": seed, "kind": kind, "sizeMeters": round(size_m, 4)}
             entry.update({k: t[k] for k in ("R", "span", "L", "Rb", "thick") if k in t})
             entry["layers"] = ["stroke"]
-            files[f"{base}_stroke.png"] = white_png(stroke)
-            wash = None
-            if t["wash"]:
-                wash = wash_of(stroke)
-                files[f"{base}_wash.png"] = white_png(wash)
+            wash = wash_of(stroke) if t["wash"] else None
+            # 금빛 두 겹(GOLD·GOLD_HI)을 한 장에: 알파는 합친 것, 밝은 쪽은 미리보기에서만 따로 쓴다
+            both = gold + gold_hi * (1 - gold) if gold is not None else None
+            # V-10 (2): 층들이 함께 덮는 쪽만 잘라 쓴다. 한 텍스처의 층은 같은 사각형이라 그대로 겹친다.
+            box = crop_box(stroke, wash, both)
+            files[f"{base}_stroke.png"] = white_png(stroke, box)
+            if wash is not None:
+                files[f"{base}_wash.png"] = white_png(wash, box)
                 entry["layers"].append("wash")
-            if gold is not None:
-                # 금빛 두 겹(GOLD·GOLD_HI)을 한 장에: 알파는 합친 것, 밝은 쪽은 미리보기에서만 따로 쓴다
-                both = gold + gold_hi * (1 - gold)
-                files[f"{base}_gold.png"] = white_png(both)
+            if both is not None:
+                files[f"{base}_gold.png"] = white_png(both, box)
                 entry["layers"].append("gold")
+            x, y, w, h = box
+            entry["crop"] = [x, y, w, h]
+            # 피벗: 몸(원래 512 칸 가운데)이 잘린 그림의 어디인가. Unity 스프라이트 꼴(왼쪽 아래 0, 위로 +), 0~1 밖일 수 있다(호는 몸이 획 밖)
+            entry["pivot"] = [round((SIZE / 2 - x) / w, 5), round((y + h - SIZE / 2) / h, 5)]
             meta["textures"].append(entry)
             layers.append((prefix, t, v, stroke, wash, gold, gold_hi))
       files[f"{prefix}.json"] = (json.dumps(meta, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
@@ -514,15 +550,34 @@ def previews(layers):
     return one, nine
 
 
+def same_file(path: Path, data: bytes) -> bool:
+    """PNG 는 풀어 놓은 픽셀로, 나머지는 바이트로 견준다. Pillow·zlib 판이 다르면 같은 그림도 바이트가 달라진다."""
+    if not path.exists():
+        return False
+    old = path.read_bytes()
+    if old == data:
+        return True
+    if path.suffix != ".png":
+        return False
+    a, b = Image.open(io.BytesIO(old)), Image.open(io.BytesIO(data))
+    return a.mode == b.mode and a.size == b.size and np.array_equal(np.asarray(a), np.asarray(b))
+
+
+def write_if_changed(path: Path, data: bytes) -> None:
+    """그림이 같으면 손대지 않는다(다른 판 Pillow 로 다시 구워도 저장소가 흔들리지 않게)."""
+    if not same_file(path, data):
+        path.write_bytes(data)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--check", action="store_true", help="다시 구워서 저장소 파일과 바이트가 같은지만 본다")
+    ap.add_argument("--check", action="store_true", help="다시 구워서 저장소 파일과 같은지만 본다(PNG 는 픽셀 비교)")
     args = ap.parse_args(argv)
     files, layers = bake()
     common = bake_common()
     if args.check:
-        bad = [n for n, b in files.items() if not (OUT_DIR / n).exists() or (OUT_DIR / n).read_bytes() != b]
-        bad += [n for n, b in common.items() if not (COMMON_DIR / n).exists() or (COMMON_DIR / n).read_bytes() != b]
+        bad = [n for n, b in files.items() if not same_file(OUT_DIR / n, b)]
+        bad += [n for n, b in common.items() if not same_file(COMMON_DIR / n, b)]
         if bad:
             print("다시 구운 것과 다른 파일:", ", ".join(bad))
             return 1
@@ -530,13 +585,13 @@ def main(argv=None) -> int:
         return 0
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for n, b in files.items():
-        (OUT_DIR / n).write_bytes(b)
+        write_if_changed(OUT_DIR / n, b)
     PREVIEW.parent.mkdir(parents=True, exist_ok=True)
     one, nine = previews(layers)
     one.save(PREVIEW, optimize=True)
     COMMON_DIR.mkdir(parents=True, exist_ok=True)
     for n, b in common.items():
-        (COMMON_DIR / n).write_bytes(b)
+        write_if_changed(COMMON_DIR / n, b)
     common_preview(common).save(PREVIEW_COMMON, optimize=True)
     nine.save(PREVIEW_START, optimize=True)
     print(f"{len(files)}개를 {OUT_DIR.relative_to(ROOT)} 에, 미리보기 {PREVIEW.relative_to(ROOT)}")

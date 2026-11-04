@@ -56,12 +56,14 @@ const NAMES = { samjae: '삼재검법', nahan: '나한권', dagger: '비도술',
 
 const $ = id => document.getElementById(id);
 const cache = new Map();
-function alphaOf(url) {
+// crop: Brush json 의 [x, y, w, h](원래 512 칸 px, 위가 0). 잘린 그림을 원래 칸 자리에 되돌려 놓는다(V-10)
+function alphaOf(url, crop) {
   if (cache.has(url)) return cache.get(url);
   const p = new Promise((ok, no) => {
     const im = new Image(); im.onload = () => {
       const c = document.createElement('canvas'); c.width = c.height = RES;
-      const g = c.getContext('2d'); g.drawImage(im, 0, 0, RES, RES);
+      const g = c.getContext('2d'), k = RES / 512;
+      if (crop) g.drawImage(im, crop[0] * k, crop[1] * k, crop[2] * k, crop[3] * k); else g.drawImage(im, 0, 0, RES, RES);
       const d = g.getImageData(0, 0, RES, RES).data, a = new Float32Array(RES * RES);
       // 노이즈는 회색(값이 r), 나머지는 흰색 + 알파
       const gray = url.includes('noise_');
@@ -129,7 +131,7 @@ async function loadGroup(key) {
   }
   const dir = key === 'ai' ? 'AI' : 'Brush';
   const j = await (await fetch(`${BASE}${dir}/${key === 'ai' ? 'ai' : key}.json`)).json();
-  return j.textures.map(t => ({ dir, name: t.name, kind: KIND[t.progress || t.kind] ?? 2, span: t.span, layers: t.layers, note: t.use || `${t.tier}단 · ${t.kind}${t.sizeMeters ? ` · ${t.sizeMeters}m` : ''}` }));
+  return j.textures.map(t => ({ dir, name: t.name, kind: KIND[t.progress || t.kind] ?? 2, span: t.span, crop: t.crop, layers: t.layers, note: t.use || `${t.tier}단 · ${t.kind}${t.sizeMeters ? ` · ${t.sizeMeters}m` : ''}` }));
 }
 
 let token = 0;
@@ -143,7 +145,7 @@ async function show(key) {
       const layers = [];
       for (const L of ORDER.filter(l => t.layers.includes(l)).concat(t.layers.includes(null) ? [null] : [])) {
         const url = L ? `${BASE}${t.dir}/${t.name}_${L}.png` : `${BASE}${t.dir}/${t.name}.png`;
-        layers.push({ name: L || 'stroke', a: await alphaOf(url) });
+        layers.push({ name: L || 'stroke', a: await alphaOf(url, t.crop) });
       }
       out.push({ tex: t, layers });
     }

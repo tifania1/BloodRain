@@ -11,6 +11,8 @@ namespace BloodRain.Editor
     // 붓 획 이펙트 틀(V-04). tools/bake_brush.py 가 구운 텍스처의 가져오기 설정과 붓 획 머티리얼을 만들고,
     // Run 씬 무공(WeaponRunner)에 삼재검법 1단 획을 물린다. 다시 돌려도 같은 결과.
     //   텍스처: Sprite, Pixels Per Unit = 512 / sizeMeters(같은 폴더 json), Clamp, 알파 = 투명.
+    //   Brush 텍스처는 획 있는 쪽만 잘려 있다(V-10): 스프라이트 피벗 = json pivot(몸 위치), 메시 Tight,
+    //   WeaponRunner.brushCrops 에 json crop 을 셰이더 _Rect 꼴로 넘긴다.
     public static class VfxBootstrap
     {
         const string BrushDir = "Assets/Art/VFX/Brush";
@@ -49,6 +51,7 @@ namespace BloodRain.Editor
                 wr.samjaeTier3Gold = Layer("samjae_t3", "gold");
                 wr.samjaeTier3Meters = SizeOf(BrushDir, "samjae_t3_1", 7.1f);
                 wr.samjaeTier3Span = 2.5f;
+                wr.brushCrops = Crops(BrushDir);
                 // 뇌부 낙뢰(W-01): AI 빛 재료 fx_lightning_glow(먹 받침 + 금빛 + 흰빛, 위에서 아래로)
                 wr.brushAddMaterial = EnsureAddMaterial();
                 wr.lightningShade = Load($"{AiDir}/fx_lightning_glow_shade.png");
@@ -64,6 +67,42 @@ namespace BloodRain.Editor
         }
 
         static Texture2D Load(string path) => AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+
+        const float FullSize = 512f; // bake_brush.py SIZE: 자르기 전 칸 한 변(px)
+
+        /// <summary>json crop [x, y, w, h](px, 위가 0) → 셰이더 _Rect(uv, 왼쪽 아래 x·y, 너비·높이).</summary>
+        public static Vector4 RectOf(int x, int y, int w, int h) =>
+            new Vector4(x / FullSize, 1f - (y + h) / FullSize, w / FullSize, h / FullSize);
+
+        /// <summary>폴더 json 들의 textures[] 중 crop 이 있는 것 → WeaponRunner.brushCrops.</summary>
+        static List<WeaponRunner.BrushCrop> Crops(string dir)
+        {
+            var list = new List<WeaponRunner.BrushCrop>();
+            foreach (var json in Directory.GetFiles(dir, "*.json"))
+            {
+                var root = JObject.Parse(File.ReadAllText(json));
+                if (!(root["textures"] is JArray arr)) continue;
+                foreach (var t in arr)
+                    if (t["name"] != null && t["crop"] is JArray c && c.Count == 4)
+                        list.Add(new WeaponRunner.BrushCrop { name = (string)t["name"], rect = RectOf((int)c[0], (int)c[1], (int)c[2], (int)c[3]) });
+            }
+            return list;
+        }
+
+        /// <summary>폴더 json 들의 textures[].name → pivot(잘린 그림에서 몸 위치, 왼쪽 아래 0).</summary>
+        static Dictionary<string, Vector2> Pivots(string dir)
+        {
+            var map = new Dictionary<string, Vector2>();
+            foreach (var json in Directory.GetFiles(dir, "*.json"))
+            {
+                var root = JObject.Parse(File.ReadAllText(json));
+                if (!(root["textures"] is JArray arr)) continue;
+                foreach (var t in arr)
+                    if (t["name"] != null && t["pivot"] is JArray p && p.Count == 2)
+                        map[(string)t["name"]] = new Vector2((float)p[0], (float)p[1]);
+            }
+            return map;
+        }
 
         /// <summary>ai.json 의 재료 전부를 WeaponRunner 가 이름으로 찾게 넘긴다(층 텍스처·sizeMeters·progress).</summary>
         static List<WeaponRunner.AiFx> AiList()
@@ -169,6 +208,7 @@ namespace BloodRain.Editor
         {
             if (!Directory.Exists(dir)) return 0;
             var sizes = Sizes(dir);
+            var pivots = Pivots(dir);
             int n = 0;
             foreach (var png in Directory.GetFiles(dir, "*.png"))
             {
@@ -185,6 +225,17 @@ namespace BloodRain.Editor
                 imp.textureType = TextureImporterType.Sprite;
                 imp.spriteImportMode = SpriteImportMode.Single;
                 if (size > 0f) imp.spritePixelsPerUnit = 512f / size;
+                // 잘린 Brush 텍스처: 피벗을 몸 위치로(호는 몸이 획 밖이라 0~1 밖), 메시는 Tight(빈 곳을 덜 그림)
+                int k = stem.LastIndexOf('_');
+                if (k > 0 && pivots.TryGetValue(stem.Substring(0, k), out var pivot))
+                {
+                    var ts = new TextureImporterSettings();
+                    imp.ReadTextureSettings(ts);
+                    ts.spriteAlignment = (int)SpriteAlignment.Custom;
+                    ts.spritePivot = pivot;
+                    ts.spriteMeshType = SpriteMeshType.Tight;
+                    imp.SetTextureSettings(ts);
+                }
                 imp.wrapMode = TextureWrapMode.Clamp;
                 imp.alphaIsTransparency = true;
                 imp.mipmapEnabled = false;
