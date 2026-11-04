@@ -71,6 +71,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: `BloodRain/WebGL 빌드` (WebGLBuild.cs)
   - 끝: 브라우저 화면에 붓 획·먹 자국·AI 재료가 보이고 브라우저 콘솔에 셰이더 오류 없음
   - 찍기: `docs/unity_shots/V-04/` 의 `webgl.png`
+  - 막힘: 2026-11-04 22:37 PC 세션 — 에디터 메뉴로 빌드는 성공(42.3MB, 13분 25초, 장면 3개). 로컬(br 헤더 붙인 python 서버, `tools/serve_webgl.py`)에서 열면 WebGL2 컨텍스트·데이터 로드·DataBoot 로그까지 나온 뒤 첫 프레임에 `RuntimeError: null function` 으로 멈춰 화면이 안 나옴. 셰이더 오류는 URP 기본 `Hidden/CoreSRP/CoreCopy`·`HDRDebugView` 둘뿐(흔한 것). 다음: Development Build + Full stack trace 로 다시 빌드해 어느 함수인지 보기(IL2CPP 코드 스트리핑이 리플렉션으로 쓰는 것을 지웠을 가능성, link.xml)
 
 ### B. 한 생 뼈대 (Run 씬에 Core Life 붙이기 — 여기서부터 아래가 풀린다)
 
