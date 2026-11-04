@@ -58,5 +58,16 @@ namespace BloodRain.Core.Tests
             foreach (var s in new[] { "__hyeolu.sim", "__ch.step", "pageerror", "멈춤", "화면 겹침" }) Assert.Contains(s, js);
             Assert.Contains("## 웹 자동 점검", ReadRepoFile("web", "prototype", "README.md"));
         }
+
+        [Fact] public void CI_가_묶은_뒤_자동_점검을_돌린다()
+        {
+            // WP-04: 올리기 전에 자동 점검. 한동안은 결과만 남긴다(continue-on-error).
+            var yml = ReadRepoFile(".github", "workflows", "web-prototype.yml");
+            int build = yml.IndexOf("python tools/build_web_prototype.py");
+            int check = yml.IndexOf("node tools/web_autocheck.js --runs 2");
+            int deploy = yml.IndexOf("name: 올리기");
+            Assert.True(build >= 0 && check > build && deploy > check);
+            Assert.Contains("npx playwright install --with-deps chromium", yml);
+        }
     }
 }

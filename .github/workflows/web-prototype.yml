@@ -5,6 +5,10 @@
 # 묶기는 비밀값 없이도 늘 돈다(빌드가 깨졌는지 확인용).
 # 올리기는 CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID 비밀값이 있어야 한다. WebGL 배포와 같은 값이다.
 # 비밀값이 없으면 PC에서 python tools/deploy_web_prototype.py 로 올린다(wrangler 로그인 필요).
+#
+# 자동 점검(WP-04): 묶은 뒤 tools/web_autocheck.js 를 2판씩 돌린다(크로미움 설치 1분 남짓 + 점검 2분).
+# 한동안은 continue-on-error 로 결과만 남긴다(실패해도 올리기는 한다, 요약에 '문제 N').
+# 일주일 조용하면 continue-on-error 를 지워서 문제가 있을 때 미리보기 올리기를 막는다.
 
 name: 웹 프로토타입 배포
 
@@ -27,7 +31,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,6 +40,18 @@ jobs:
       - run: pip install pillow
       - name: 묶기
         run: python tools/build_web_prototype.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 자동 점검
+        continue-on-error: true
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.0
+          npx playwright install --with-deps chromium
+          node tools/web_autocheck.js --runs 2 | tee /tmp/autocheck.txt
+          status=${PIPESTATUS[0]}
+          { echo "### 웹 자동 점검"; echo '```'; tail -n 40 /tmp/autocheck.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
       - name: 올리기
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
