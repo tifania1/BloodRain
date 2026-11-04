@@ -249,7 +249,7 @@ const PAT_SHAPES = new Set(['cone', 'summon_ring', 'circles', 'rotating_beams', 
   'split', 'pull_line', 'bind_line', 'line', 'sweep_wave', 'split_field', 'inhale_exhale', 'closing_ring',
   'spiral_bullets', 'radial_burst', 'view_shrink', 'clones', 'chain_circles', 'shrinking_arena', 'blink_slam', 'empower']);
 // 지역 콘텐츠(WP-01): enemies.json 고유 적·정예, bosspatterns.json elites, 장별 정예 표, gimmicks.json, chapters.json 한 생
-const RFOE = Object.fromEntries((DATA.regionFoes || []).map(e => [e.id, e]));
+const RFOE = Object.fromEntries([...(DATA.regionFoes || []), ...(DATA.eventFoes || [])].map(e => [e.id, e]));
 const ELITES_BY = DATA.elitesByChapter || {};
 const EPAT = DATA.elitePatterns || {};
 const GIM = DATA.gimmicks || {};
@@ -649,7 +649,7 @@ function startLife(c) {
     c, sect, home, body, t: 0, tier: 0, lv: REALMS[0].level, xp: 0, kills: 0, orbSum: 0, orbRaw: 0, spawnAcc: 0, eliteAcc: 0,
     p: { x: home.x, y: home.y + 4, fx: 1, fy: 0, hp: body.maxHp, maxHp: body.maxHp, iframe: 0, dashT: 0, dvx: 0, dvy: 0, dashN: body.dash, dashMax: body.dash, dashAcc: 0, r: 0.5 },
     foes: [], orbs: [], fx: [], cd: 0.3, orbitA: 0, waveCd: 2, view: VIEW0, brk: null, trauma: 0, hintT: 0, toastT: 0, toastQ: [],
-    region: null, dens: home.density, stepped: [], dmgBy: { arc: 0, orbit: 0, wave: 0 }, eliteKills: 0, bossCrystal: 0, newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
+    region: null, dens: home.density, stepped: [], dmgBy: { arc: 0, orbit: 0, wave: 0 }, eliteKills: 0, bossCrystal: 0, evN: 0, evLog: [], newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
     awake: new Set(), done: new Set(), armed: {}, armR: {}, fight: null, engage: null, ended: false, auto: false, fast, reachT: [0], bossT: {},
     cards: {}, extra: {}, pendingCards: 0, offers: null,
     eliteN: 0, shots: [], pools: [], fogs: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
@@ -787,6 +787,41 @@ function splinter(f, d, k) {
   G.fx.push({ k: 'splinter', x: f.x, y: f.y, r: R, t: 0, life: 0.3 });
   if (toFoe > 0) for (const o of G.foes) if (o !== f && !o.dead && !o.boss && Math.hypot(o.x - f.x, o.y - f.y) < R + o.r) hurt(o, toFoe, 0, 0, 0);
   if (d.death.playerDamage > 0 && Math.hypot(p.x - f.x, p.y - f.y) < R + p.r) hitPlayer(d.death.playerDamage * f.dmg / d.contactDamage);
+}
+// 한 생 사건(RM-14, 7장 '한 생의 시간대별 흐름', chapters.json life.events). 시각은 환산 분(레벨 ÷ 3).
+// 돌파 연출·땅의 주인 싸움 중이면 끝날 때까지 미룬다. 모양은 1장 프로토타입과 같다(화면 대각선 0.6배 밖에서)
+function lifeEvents() {
+  const ev = (LIFE.events || [])[G.evN];
+  if (!ev || eqMinute() < ev.at || G.brk || G.fight) return;
+  G.evN++;
+  const p = G.p, e = G.tier, k = sc(e), far = G.view * 0.6;
+  if (ev.kind === 'charge') {
+    // 한 줄 벽이 한쪽에서 돌진한다. 어딘가 두 칸(약 2.4m)이 빈다. 빈틈으로 빠지거나 경공으로 뚫는다
+    const side = Math.floor(rand(0, 4)), ax = [1, -1, 0, 0][side], ay = [0, 0, 1, -1][side], gap = Math.floor(rand(ev.count * 0.25, ev.count * 0.75));
+    for (let i = 0; i < ev.count; i++) {
+      if (i === gap || i === gap + 1) continue;
+      const off = (i - ev.count / 2) * 1.2 * k;
+      const f = spawnFoe(e, false, ev.enemy, { x: p.x - ax * far + (ay ? off : 0), y: p.y - ay * far + (ax ? off : 0) });
+      f.charge = { vx: ax * f.sp, vy: ay * f.sp, t: f.def.lifeSeconds || 14 };
+    }
+    G.evLog.push(`${clock(G.t)} 혈인 돌진 ${ev.count}`);
+    toast('혈인 떼', '한 방향으로 돌진해 온다');
+  } else if (ev.kind === 'group') {
+    // 서 있는 지역 고유 적(여럿이면 하나를 골라) count 명이 한 무더기로. 고유 적이 없는 땅이면 enemy(혈강시)
+    const loc = ev.local ? LOCAL_BY[regionChapter()] || [] : [], kind = loc.length ? loc[Math.floor(Math.random() * loc.length)].id : ev.enemy;
+    const c = spawnRing(), n0 = G.foes.length;
+    for (let tries = 0; G.foes.length - n0 < ev.count && tries < ev.count * 3; tries++) {
+      const at = { x: c.x + rand(-2.5, 2.5) * k, y: c.y + rand(-2.5, 2.5) * k };
+      if (!(kind !== ev.enemy && spawnLocal(e, kind, at))) spawnFoe(e, false, ev.enemy, at);   // 물 밖 수귀처럼 못 나오면 혈강시
+    }
+    const name = (RFOE[kind] || {}).nameKo || kind;
+    G.evLog.push(`${clock(G.t)} ${name} 무리 ${G.foes.length - n0}`);
+    toast(`${name} 무리`, REG[G.region] ? REG[G.region].nameKo : '');
+  } else if (ev.kind === 'ring') {
+    for (let i = 0; i < ev.count; i++) { const a = i / ev.count * TAU; spawnFoe(e, false, ev.enemy, { x: p.x + Math.cos(a) * far, y: p.y + Math.sin(a) * far }); }
+    G.evLog.push(`${clock(G.t)} ${(RFOE[ev.enemy] || {}).nameKo} 포위 ${ev.count}`);
+    toast('동갑시 포위', '원을 좁혀 온다');
+  }
 }
 function mergeOrbs() { const o = G.orbs.splice(0, 60); const sum = o.reduce((a, b) => a + b.v, 0); G.orbs.push({ x: G.p.x, y: G.p.y, v: sum, heal: 0, pull: true }); }
 function gainXp(v) {
@@ -1087,6 +1122,7 @@ function update(rdt) {
     G.eliteAcc += dt;
     if (G.eliteAcc >= LD.eliteEvery) { G.eliteAcc = 0; spawnFoe(G.tier, true); }   // 이 시안의 이름 없는 정예(쫓아오기만)
     // 이름 있는 정예: chapters.json 한 생의 정예 사건(5·10·15·20·25분, 환산 분)에 서 있는 지역의 표에서
+    lifeEvents();
     const ev = (LIFE.elites || [])[G.eliteN];
     if (ev && eqMinute() >= ev.at && !G.fight) {
       const kind = eliteKind(ev.nth), f = kind && (spawnLocal(G.tier, kind, null, true) || spawnFoe(G.tier, true, kind));
@@ -1144,6 +1180,14 @@ function update(rdt) {
     if (f.pat && (f.boss || d < G.view * LD.eliteRange)) bossPatterns(f, dt);
     if (f.def) localBehavior(f, dx, dy, d, dt);
     if (f.dashing) { foeDash(f, dt); continue; }
+    // 혈인 돌진(line_charge): 한 방향으로 곧게 달리고 lifeSeconds 뒤 사라진다(진기 없음). 되돌려 놓지 않는다
+    if (f.charge) {
+      f.charge.t -= dt; if (f.charge.t <= 0) { f.dead = true; f.gone = true; continue; }
+      f.x += (f.charge.vx + f.kx) * dt; f.y += (f.charge.vy + f.ky) * dt; f.kx *= Math.pow(0.03, dt); f.ky *= Math.pow(0.03, dt);
+      pushOutOfPagodas(f, f.r, false);
+      if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier) { f.contact = 0.4; hitPlayer(f.dmg); }
+      continue;
+    }
     const fw = GIM.water && f.kind !== 'water_ghost' && !(f.def && f.def.ignoresTerrain) && inWater(f.x, f.y) ? GIM.water.moveSpeedMultiplier : 1;
     const held = f.pat && (f.pat.hold || f.pat.recover > 0);
     const cold = GIM.campfire && f.def && f.def.family === GIM.campfire.slowedFamily && nearCampfire(f.x, f.y) ? GIM.campfire.slowedMoveSpeedMultiplier : 1;   // 모닥불 곁 빙강시
@@ -2547,9 +2591,10 @@ window.__ch = {
   bells: () => songBells().map(b => ({ x: Math.round(b.x), y: Math.round(b.y), touch: +b.touch.toFixed(2), stunR: +b.stunR.toFixed(2), ready: (G.bellCd[b.key] || 0) <= G.t })).concat(G.dropBells.map(b => ({ x: Math.round(b.x), y: Math.round(b.y), drop: true, life: +b.life.toFixed(1), uses: b.uses }))),
   pagodas() { const seen = new Set(), sp = LD.pagodaSpacing * sc(G.tier); for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const pt = pagodaPatchAt(G.p.x + dx * sp, G.p.y + dy * sp); if (pt) seen.add(pt); } return [...seen].map(pt => ({ x: Math.round(pt.x), y: Math.round(pt.y), R: +pt.R.toFixed(1), stones: pt.stones.length, minGap: +Math.min(...pt.stones.flatMap((a, i) => pt.stones.slice(i + 1).map(b => Math.hypot(a.x - b.x, a.y - b.y) - a.r - b.r))).toFixed(2) })); },
   stunned: () => G.foes.filter(f => f.stunT > 0 && !f.dead).length,
-  splinters: () => G.splinters || 0,
+  events: () => G.evLog.slice(),   // 한 생 사건(RM-14)이 일어난 시각과 무엇
+  splinters: () => G.splinters || 0,   // 이번 생 목인나한 나뭇조각이 터진 수(RM-12)
   // 정산(RM-13): crystal() 이번 생 혈정·잔고, dmg() 무공별 피해, stepped() 이번 생 밟은 땅
-  crystal: () => ({ life: lifeCrystal(), elites: G.eliteKills, boss: G.bossCrystal, total: meta.crystal }), dmg: () => Object.assign({}, G.dmgBy), stepped: () => G.stepped.slice(),   // 이번 생 목인나한 나뭇조각이 터진 수(RM-12)
+  crystal: () => ({ life: lifeCrystal(), elites: G.eliteKills, boss: G.bossCrystal, total: meta.crystal }), dmg: () => Object.assign({}, G.dmgBy), stepped: () => G.stepped.slice(),
   // 혈마의 그림자(RM-10): shadow() 지금 단계·세기·거리, shadowStep() 지금 시각의 단계
   shadow: () => G.shadow && { step: G.shadow.step, str: G.shadow.str, dist: +Math.hypot(G.shadow.x - G.p.x, G.shadow.y - G.p.y).toFixed(1), warn: G.shadow.warn },
   shadowStep: () => shadowStep(), shadowMinute: () => shadowMinute(),

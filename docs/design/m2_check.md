@@ -7,7 +7,7 @@
 | M2 줄 | 기획서 | 데이터 | Core | 웹 | Unity |
 |---|---|---|---|---|---|
 | 서장 | 4장 서장 상세 흐름, 19장 | chapters.json `prologue`, cheonha.json `prologueBody` | `Run/Prologue.cs`, `Spawning/PrologueDirector.cs`, 첫 레벨업 한 장(T-43) | 1장 프로토타입 '서장'(M1-04~06) → 끝 컷 → 첫 환혼 셋 → 천하 시안 `#first=` 로 첫 생. 서장 생 정산(윤회의 기·청운진·이류/일류)은 WP-02 | C-06b(첫 레벨업 카드 한 장) |
-| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 1장 프로토타입: 범종만. 천하 시안: 범종·탑림(RM-08, 원각이 떨어뜨린 종 포함), 목인나한 나뭇조각(RM-12) | TU 축척·지역 HUD 끝 |
+| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 1장 프로토타입: 범종만. 천하 시안: 범종·탑림(RM-08, 원각이 떨어뜨린 종 포함), 목인나한 나뭇조각(RM-12), 한 생 사건(혈인 돌진·목인나한 무리·동갑시 포위, RM-14) | TU 축척·지역 HUD 끝 |
 | 원각 | 6장 땅의 주인 패턴 수치 | bosspatterns.json `wongak` | `BossPatterns`·`BossAwakening`(기혈 곡선 T-40) | 둘 다 패턴 다 나옴 | 보스 패턴 러너 |
 | 문파 3 | 5·21장 | cheonha.json sects 소림·개방·남궁(`unlock: start`), 시작 무공, 대표 인물 | `Rebirth`(후보·몸·성별), 진전 `Synergy` | 천하 시안: 몸 기혈·걸음만, 무공은 시안 셋 | TU-11 후보 카드 |
 | 축척 전환 | 7장 | cheonha.json `realmScale`·`breakthrough`·`cluster`·`crush` | `Scale`·`Breakthrough` | 천하 시안 그대로 | TU-01 축척 카메라 |
@@ -23,7 +23,7 @@
 - **은자 수입이 목표에 맞는지 잰 적이 없다.** 10장 '20분 600~900' → RM-06
 - 웹 천하 시안이 M2 의 손맛을 보려면 깨달음·숭산 기믹·침방 강화가 있어야 한다 → RM-07~RM-09(끝)
 - 천하 시안 정산 화면에 12장 줄 가운데 밟은 땅·무공별 피해 막대·혈정이 없다 → RM-13(끝)
-- 천하 시안에 7장 '한 생의 시간대별 흐름' 사건(혈인 돌진·목인나한 무리·동갑시 포위)이 없다. 레벨과 정예만 시간표를 따른다 → RM-14
+- 천하 시안에 7장 '한 생의 시간대별 흐름' 사건(혈인 돌진·목인나한 무리·동갑시 포위)이 없다. 레벨과 정예만 시간표를 따른다 → RM-14(끝)
 - 천하 시안의 문파 몸은 시작 무공을 안 쓴다(무공은 시안 셋) → RM-15 사람 결정 대기
 - (WP-02, 2026-11-04) 웹 한 판 이어 보기: 서장 → 첫 환혼 → 숭산 삼류–절정 → 원각이 이어진다. 서장 생이 시안 기록에 안 남던 것과 장삼 뒤 컷이 다른 화면에 막히던 것을 붙였다. 결과는 `web/prototype/README.md` 'M2 한 판 이어 보기'
 

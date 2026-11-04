@@ -146,7 +146,13 @@ def cheonha_blob() -> str:
         "elitePatterns": drop_notes(load("bosspatterns")["elites"]),
         "gimmicks": drop_notes(load("gimmicks")),
         "life": dict(drop_notes({k: life[k] for k in ("localShare", "eliteFallback")}),
-                     elites=[{"at": e["at"], "nth": e["nth"]} for e in life["events"] if e.get("kind") == "elite"]),
+                     elites=[{"at": e["at"], "nth": e["nth"]} for e in life["events"] if e.get("kind") == "elite"],
+                     # 한 생 사건(RM-14): 혈인 돌진·지역 무리·포위. 금두꺼비·보부상·은빛 등롱은 은자가 시안에 없어 뺀다
+                     events=[{k: e[k] for k in ("at", "kind", "enemy", "count", "local") if k in e}
+                             for e in life["events"] if e.get("kind") in ("charge", "group", "ring")]),
+        # 한 생 사건에 나오는 공통 적(혈인·혈강시·동갑시) 정의
+        "eventFoes": [drop_notes(e) for e in enemies["enemies"]
+                      if e["id"] in {ev.get("enemy") for ev in life["events"] if ev.get("kind") in ("charge", "group", "ring")}],
     })
 
 
