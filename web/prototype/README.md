@@ -113,7 +113,7 @@ python tools/deploy_web_prototype.py --branch claude/dev   # 미리보기 주소
 
 `web/lookdev/cheonha.html` 은 천하 구조(기획서 5·7·10·21장)를 손으로 만져 보는 놀이판이다. 무공은 검기·도는 검·먹 파동 셋이 경지에 따라 저절로 붙고, 레벨 셋마다 레벨업 카드 석 장 중 하나를 고른다(T-21). 카드는 이 세 무공의 단계(검기 피해 +12%, 도는 검 +1자루, 먹 파동 간격 -8%, 각 8단계까지)와 몸에 바로 붙는 능력치만 쓰는 심법(passives.json 에서 청명·금강·뇌정·양의·청심·운룡·매화 일곱, 5단계까지. 흡혈·투사체 속도처럼 이 시안에 없는 효과가 섞인 심법은 뺐다)이다. 땅의 주인은 `bosspatterns.json` 시간표대로 패턴을 쓴다. 당소혜·마천패·혈허진인까지 패턴 모양을 다 그린다(아래 '지역 콘텐츠'). 화산·곤륜·십만대산 땅의 주인은 이 시안에 없는 모양(꽃잎 소용돌이·눈보라 등)을 건너뛴다. 길이는 싸움을 건 경지 축척을 곱하고, 피해는 패턴 피해 ÷ 몸 피해 × 이 시안의 보스 몸 피해다.
 
-원본에 데이터 자리(`/*__DATA__*/null`)가 있고, 빌드가 `cheonha.json` 전체, characters·weapons 이름, enemies.json 땅의 주인(이름·기준 체력), balance.json 의 `realms`·`xpCurve`·`training`·`stats`·`spawnTarget`·`dash`·`limits`, insights.json 전체를 끼워 넣는다(`tools/build_web_prototype.py` 의 `cheonha_blob`). 원본 파일을 그냥 열면 빌드하라는 문구만 나온다. 데이터를 바꾸면 빌드만 다시 돌리면 된다.
+원본에 데이터 자리(`/*__DATA__*/null`)가 있고, 빌드가 `cheonha.json` 전체, characters·weapons 이름, enemies.json 땅의 주인(이름·기준 체력), balance.json 의 `realms`·`xpCurve`·`training`·`stats`·`spawnTarget`·`dash`·`limits`·`yinyang`·`drops`, insights.json 전체를 끼워 넣는다(`tools/build_web_prototype.py` 의 `cheonha_blob`). 원본 파일을 그냥 열면 빌드하라는 문구만 나온다. 데이터를 바꾸면 빌드만 다시 돌리면 된다.
 
 ### 데이터에서 그대로 읽는 것
 
@@ -129,6 +129,7 @@ python tools/deploy_web_prototype.py --branch claude/dev   # 미리보기 주소
 - 연무장(RM-09): balance.json `training` 스무 항목 가운데 이 시안의 몸에 실제로 들어가는 열(공력·기혈·호신·회복·쾌속·범위·신법·흡기·심득·경공 충전, 데이터 순서). 투사체 속도·지속·투사체 수·기연·탐욕·절기 충전·부활·카드 다시 굴리기/봉인/넘기기는 받을 곳이 없어 뺐다. 비용 = 기본가 × 다음 레벨 × (1 + 0.1 × 지금까지 산 총 레벨). 언제든 모두 돌려받을 수 있다. 쾌속처럼 2.5% 단위인 값은 소수 한 자리까지 쓴다.
 - 침방 환혼 강화(RM-09, cheonha.json `rebirth.upgrades`): 넷째 몸(기 2,000, 한 번, 후보 넷)·다시 고르기(기 400 × 다음 레벨, 세 번까지, 환혼마다 후보를 그 횟수만큼 다시 뽑음, `R` 키). 값과 효과는 Core `Soul.UpgradeCost`·`CandidateCount`·`RerollsPerRebirth` 와 같고, 연무장과 달리 돌려받지 않는다. 첫 환혼(고정 셋)엔 다시 고르기가 없다. 이 시안은 침방이 후보 화면 안에 있어서 산 것이 그 자리에서 바로 듣는다(넷째 몸은 후보 하나를 더 뽑아 붙이고, 다시 고르기는 이번 환혼 횟수에 하나 더). Core 는 후보를 뽑는 순간 수를 정하므로 Unity 는 침방을 환혼 앞에 둔다.
 - 서장 정산(WP-02, Core `Soul.EndLife` 가 서장 생을 받는 것과 같게): 웹 서장에서 넘어오면 정산 식 그대로 0.04 × 주운 구슬 값 × 청운진 농도 0.8 + 청운진 처음 밟음 50 + 서장에서 처음 오른 경지(보통 이류·일류) 100씩을 윤회의 기로 넣고, 청운진을 밟은 땅, 그 경지를 오른 경지로 남긴다. 그래서 첫 문파 생의 이류·일류 돌파는 '한 번 깨친 길'(연출 2배 빠름, 깨달음 넉 장)이고 절정부터 처음 연출이다. 첫 생 시작에 '서장 · 윤회의 기 +N' 알림. 서장은 한 번뿐이라 `cheonha_meta2` 의 `prologue` 가 있으면 다시 셈하지 않는다. 자동 판 서장(Lv28~29, 구슬 3,800~4,200)이면 370~390. 시안의 '윤회 N번'(meta.lives)은 문파 몸으로 산 생만 센다(Core `Soul.Lives` 는 서장까지 센다). 서장을 거치지 않고 시안을 바로 열면 서장 정산 없이 예전처럼 시작한다.
+- 정산 화면(RM-13, 12장 화면 목록 '정산' 줄): 오른 경지·버틴 시간·처치 수·밟은 땅(이번 생에 들어선 지역 수와 이름)·혈정(이번 생 몫과 잔고)·봉인석, 무공별 피해 비중 막대(검기·도는 검·먹 파동, 남은 기혈보다 많이 들어간 몫은 빼고 셈), 윤회의 기 내역. 혈정은 Core `LifeLog.BloodCrystal` 과 같은 셈이다: 땅의 주인 첫 처치·다시 처치 각 5(cheonha.json `bosses`), 이름 있는 정예 하나에 balance.json `drops.eliteBloodCrystal`(1). 이 시안의 이름 없는 정예(24초마다)는 기획서 정예가 아니라 세지 않고, 쌍강시 정예는 둘째가 쓰러질 때 한 번. 혈월이 시안에 없어 배율은 1. 잔고는 `cheonha_meta2` 의 `crystal` 에 쌓이고 쓸 곳(객잔 시설·영약)은 아직 시안에 없다.
 - 생이 끝나는 길: 쓰러짐, 좌화(멈춤 화면), 봉인. 기록(기·연무장·해금·봉인석·밟은 땅·오른 경지)은 브라우저 localStorage `cheonha_meta2` 에만 남고, 저장이 막혀 있어도 판은 돈다. 제목 화면 '기록 지우기'로 처음부터.
 
 ### M2 한 판 이어 보기(2026-11-04, backlog WP-02)
@@ -171,7 +172,7 @@ python tools/deploy_web_prototype.py --branch claude/dev   # 미리보기 주소
 - 봉마곡은 봉인석 일곱 전엔 혈운 농도 섞기에서도 뺀다(지도 한가운데라 넣으면 숭산·무당 사이가 짙어진다).
 - 구슬의 '그 자리 혈운 농도'는 주운 자리 값이다.
 - 혈마를 쓰러뜨려도 윤회의 기 보너스는 없다(10장 표에 없음).
-- 은자·혈정이 없어서 '남은 은자 절반'과 혈영 혈정 5는 빠졌다.
+- 은자가 없어서 '남은 은자 절반'은 빠졌다. 혈정은 RM-13 부터 있다(아래 '정산 화면').
 - 지형 기믹은 독안개·물·태극 바닥·범종·탑림 다섯(아래 '지역 콘텐츠'·'숭산 기믹').
 - 태극 바닥 기운은 '반대 속성 무공' 피해를 올리는데 이 시안의 무공 셋(검기·도는 검·먹 파동)은 속성이 없다. 그래서 기운이 걸리면 셋 다 그 속성으로 친다.
 
@@ -225,7 +226,7 @@ python tools/deploy_web_prototype.py --branch claude/dev   # 미리보기 주소
 
 ### 시험 훅
 
-콘솔에서 `__ch` 로 부른다. `start(문파 id 또는 순번, [성질 id…])`, `elite(id)`·`local(id)`(곁에 정예·고유 적), `fog()`(독안개 바로), `yy(n)`(음양 게이지), `area()`(지역 상태), `sim(초)`(자동 조종, 30초마다 한 줄), `setTier(n)`, `breakNow()`, `fight(지역 id)`, `warp(지역 id, 대각선 배율)`, `end('zuohwa')`, `unlockAll()`, `setStones(n)`, `addQi(n)`, `setLives(n)`, `reset()`, `draw(n)`(후보 추첨 n번의 성질 수 분포와 규칙 위반 수), `density(x, y)`, `tune({...})`, `ins()`(가진 깨달음)·`ins(id)`(곧바로 얻기)·`insOffers()`(떠 있는 후보)·`insRoll(n)`(후보 n번 뽑아 겹침·가진 것·장 수·마공 자리 위반 세기), `bells()`(곁의 범종·떨어진 종), `pagodas()`(곁의 탑림 무더기·돌탑 수·가장 좁은 사이), `stunned()`(기절한 적 수), `splinters()`(이번 생 목인나한 나뭇조각 수), `upg()`·`buyUpg(id)`·`reroll()`·`rerollsLeft()`(침방), `train()`(연무장 항목), `shadow()`·`shadowStep()`·`shadowMinute()`(혈마의 그림자).
+콘솔에서 `__ch` 로 부른다. `start(문파 id 또는 순번, [성질 id…])`, `elite(id)`·`local(id)`(곁에 정예·고유 적), `fog()`(독안개 바로), `yy(n)`(음양 게이지), `area()`(지역 상태), `sim(초)`(자동 조종, 30초마다 한 줄), `setTier(n)`, `breakNow()`, `fight(지역 id)`, `warp(지역 id, 대각선 배율)`, `end('zuohwa')`, `unlockAll()`, `setStones(n)`, `addQi(n)`, `setLives(n)`, `reset()`, `draw(n)`(후보 추첨 n번의 성질 수 분포와 규칙 위반 수), `density(x, y)`, `tune({...})`, `ins()`(가진 깨달음)·`ins(id)`(곧바로 얻기)·`insOffers()`(떠 있는 후보)·`insRoll(n)`(후보 n번 뽑아 겹침·가진 것·장 수·마공 자리 위반 세기), `bells()`(곁의 범종·떨어진 종), `pagodas()`(곁의 탑림 무더기·돌탑 수·가장 좁은 사이), `stunned()`(기절한 적 수), `splinters()`(이번 생 목인나한 나뭇조각 수), `crystal()`·`dmg()`·`stepped()`(정산의 혈정·무공별 피해·밟은 땅), `upg()`·`buyUpg(id)`·`reroll()`·`rerollsLeft()`(침방), `train()`(연무장 항목), `shadow()`·`shadowStep()`·`shadowMinute()`(혈마의 그림자).
 
 2026-10-29 확인: `draw(5000)` 의 성질 0·1·2개가 19.5·59.9·20.6%, 안 맞는 쌍·문파 겹침 0. 콘솔 에러 0. 1366x768·360x780에서 제목·환생 카드·전투·절정 돌파·현경·보스전·정산·멈춤 화면을 찍어 보고 겹침을 고쳤다(HUD 글자 뒤 선지 깔기, 휴대폰 알림 줄을 경공 버튼 왼쪽으로, 돌파 글자와 겹치던 알림은 연출 뒤로 미룸, 지명은 겹치면 지금 땅·깨어난 땅부터).
 

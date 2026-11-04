@@ -121,10 +121,15 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
 .meta button:disabled { opacity: .45; cursor: default; }
 .meta button.refund { border-style: dashed; }
 /* 정산 */
-.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 560px; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 560px; }
 @media (max-width: 420px) { .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .facts b { display: block; font: 700 19px var(--num); }
 .facts span { font-size: 11.5px; color: var(--ink-soft); }
+.facts .steps { grid-column: 1 / -1; margin: 0; font-size: 11.5px; color: var(--ink-soft); }
+.dbars { width: min(100%, 460px); display: grid; gap: 4px; }
+.dbar { display: grid; grid-template-columns: 64px 1fr 40px; align-items: center; gap: 8px; font-size: 12.5px; }
+.dbar i { display: block; height: 8px; background: var(--ink); border-radius: 2px; }
+.dbar b { font: 700 12.5px var(--num); text-align: right; }
 .ledger { width: min(100%, 460px); border-collapse: collapse; font-size: 13px; text-align: left; }
 .ledger td { padding: 6px 4px; border-bottom: 1px dashed var(--wash); vertical-align: top; }
 .ledger td:last-child { text-align: right; font: 700 14px var(--num); white-space: nowrap; padding-left: 10px; }
@@ -203,6 +208,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
       <div class="big" id="dtitle">쓰러졌다</div>
       <p class="lead" id="dline"></p>
       <div class="facts" id="dfacts"></div>
+      <div class="dbars" id="dbars"></div>
       <table class="ledger" id="ledger"></table>
       <p class="news" id="dnews"></p>
       <div class="row"><button class="b main" id="again" type="button">윤회<small>기를 들고 다시 태어난다</small></button></div>
@@ -379,13 +385,14 @@ const store = {
   del(k) { try { localStorage.removeItem('cheonha_' + k); } catch (e) { /* 지우지 못해도 아래에서 새 기록으로 덮는다 */ } },
 };
 const START_SECTS = SECTS.filter(s => s.unlock === 'start').map(s => s.id);
-function freshMeta() { return { v: 2, qi: 0, train: {}, spent: 0, upg: {}, lives: 0, best: 0, unlocked: START_SECTS.slice(), visited: [], reached: [], bossKills: {}, stones: [] }; }
+function freshMeta() { return { v: 2, qi: 0, train: {}, spent: 0, upg: {}, lives: 0, best: 0, crystal: 0, unlocked: START_SECTS.slice(), visited: [], reached: [], bossKills: {}, stones: [] }; }
 function loadMeta() {
   const m = Object.assign(freshMeta(), store.get('meta2') || {});
   for (const k of ['unlocked', 'visited', 'reached', 'stones']) if (!Array.isArray(m[k])) m[k] = k === 'unlocked' ? START_SECTS.slice() : [];
   if (typeof m.train !== 'object' || !m.train) m.train = {};
   if (typeof m.bossKills !== 'object' || !m.bossKills) m.bossKills = {};
   if (typeof m.upg !== 'object' || !m.upg) m.upg = {};
+  if (!(m.crystal >= 0)) m.crystal = 0;   // 혈정 잔고(RM-13). 옛 기록은 0
   for (const id of START_SECTS) if (!m.unlocked.includes(id)) m.unlocked.push(id);
   return m;
 }
@@ -625,7 +632,7 @@ function startLife(c) {
     c, sect, home, body, t: 0, tier: 0, lv: REALMS[0].level, xp: 0, kills: 0, orbSum: 0, orbRaw: 0, spawnAcc: 0, eliteAcc: 0,
     p: { x: home.x, y: home.y + 4, fx: 1, fy: 0, hp: body.maxHp, maxHp: body.maxHp, iframe: 0, dashT: 0, dvx: 0, dvy: 0, dashN: body.dash, dashMax: body.dash, dashAcc: 0, r: 0.5 },
     foes: [], orbs: [], fx: [], cd: 0.3, orbitA: 0, waveCd: 2, view: VIEW0, brk: null, trauma: 0, hintT: 0, toastT: 0, toastQ: [],
-    region: null, dens: home.density, newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
+    region: null, dens: home.density, stepped: [], dmgBy: { arc: 0, orbit: 0, wave: 0 }, eliteKills: 0, bossCrystal: 0, newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
     awake: new Set(), done: new Set(), armed: {}, armR: {}, fight: null, engage: null, ended: false, auto: false, fast, reachT: [0], bossT: {},
     cards: {}, extra: {}, pendingCards: 0, offers: null,
     eliteN: 0, shots: [], pools: [], fogs: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
@@ -646,6 +653,7 @@ function trackRegion() {
   G.dens = densityAt(p.x, p.y);
   if (!a || a.id === G.region) return;
   G.region = a.id;
+  if (!G.stepped.includes(a.id)) G.stepped.push(a.id);   // 이번 생에 밟은 땅(정산 화면)
   if (!meta.visited.includes(a.id) && !G.newVisits.includes(a.id)) {
     G.newVisits.push(a.id);
     if (G.t > 0.5) setHint(`처음 밟은 땅 · ${a.nameKo} · 윤회의 기 +${QI.firstVisitRegion}`);
@@ -712,9 +720,10 @@ function eliteKind(nth) {
   const t = ELITES_BY[ch]; if (!t || !t.length) return null;
   return t[Math.min(nth || G.eliteN, t.length) - 1];
 }
-function hurt(f, dmg, kx, ky, kb) {
+function hurt(f, dmg, kx, ky, kb, src) {
   if (f.dead) return;
   if (f.down) return;   // 분열해 누운 몸
+  if (src) G.dmgBy[src] += Math.min(dmg, Math.max(0, f.hp));   // 무공별 피해(정산 막대). 남은 기혈보다 많이 들어간 몫은 세지 않는다
   f.hp -= dmg; f.flash = 0.08;
   if (kb && !f.boss) { f.kx += kx * kb; f.ky += ky * kb; }
   if (f.hp <= 0) { if (f.splitOf || (f.pat && f.pat.split && f.pat.split.on)) splitDown(f); else kill(f); }
@@ -744,6 +753,8 @@ function kill(f, crushed) {
   if (d && d.onDeath === 'poison_pool' && d.death) G.pools.push({ x: f.x, y: f.y, r: d.death.radius * k, dps: d.death.perSecond * f.dmg / d.contactDamage, t: d.death.seconds, green: true });
   if (d && d.behavior === 'twin_revive' && f.twin && !f.twin.dead) G.revives.push({ f, t: d.reviveSeconds });
   if (d && d.onDeath === 'splinter_burst' && d.death) splinter(f, d, k);
+  // 혈정(10장·8장, Core LifeLog.KillElite): 이름 있는 정예 하나에 drops.eliteBloodCrystal. 이 시안의 이름 없는 정예(24초마다)는 기획서 정예가 아니라 세지 않는다. 쌍강시 정예는 둘째가 쓰러질 때 한 번
+  if (f.elite && f.kind && !(f.twin && !f.twin.dead)) G.eliteKills++;
   G.kills += CLUSTER[f.e];                                         // 처치 수는 덩이 속 사람 수
   const v = f.xv * (f.e < G.tier ? CRUSH.xpPerCrushed : 1) * (G.fast ? LD.fastXp : 1);   // 진기는 적 하나 값, 밟히면 0.3
   G.orbs.push({ x: f.x, y: f.y, v, heal: f.elite ? 25 : 0 });
@@ -860,8 +871,9 @@ function bossDown(f) {
     if (r.sealStone && BR.firstKill.sealStone) { G.newStones.push(r.sealStone); lines.push(`봉인석 ${r.sealStone} · ${stonesHeld()}/${STONES_ALL}`); }
     const s = BR.firstKill.unlockSect && SECTS.find(x => x.unlock === 'boss:' + r.id);
     if (s && !meta.unlocked.includes(s.id) && !G.newSects.includes(s.id)) { G.newSects.push(s.id); lines.push(`${ro(s.nameKo)} 환생할 수 있다`); }
-    lines.push(`윤회의 기 +${BR.firstKill.rebirthQi}`);
-  } else { G.bossRepeat.push(f.def.id); lines.push(`혈영으로 다시 일어날 것이다 · 윤회의 기 +${BR.repeatKill.rebirthQi}`); }
+    G.bossCrystal += BR.firstKill.bloodCrystal || 0;
+    lines.push(`윤회의 기 +${BR.firstKill.rebirthQi} · 혈정 +${BR.firstKill.bloodCrystal || 0}`);
+  } else { G.bossRepeat.push(f.def.id); G.bossCrystal += BR.repeatKill.bloodCrystal || 0; lines.push(`혈영으로 다시 일어날 것이다 · 윤회의 기 +${BR.repeatKill.rebirthQi} · 혈정 +${BR.repeatKill.bloodCrystal || 0}`); }
   toast(`${eul(f.def.nameKo)} 쓰러뜨렸다`, lines.join(' · '));
   const woke = wakeBosses();   // 일곱째 봉인석을 현경에서 얻으면 봉마곡이 바로 열린다
   if (woke.length) toast('봉마곡이 열렸다', `${BOSS[FINAL.boss].nameKo} — 화면 끝 붉은 표시`);
@@ -1048,7 +1060,7 @@ function update(rdt) {
         if (f.dead) continue; const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy);
         if (d > range + f.r) continue;
         let ad = Math.atan2(dy, dx) - da; ad = Math.atan2(Math.sin(ad), Math.cos(ad));
-        if (Math.abs(ad) < 1.25 || d < f.r + p.r) hurt(f, arcDmg, dx / (d || 1), dy / (d || 1), 2 * s);
+        if (Math.abs(ad) < 1.25 || d < f.r + p.r) hurt(f, arcDmg, dx / (d || 1), dy / (d || 1), 2 * s, 'arc');
       }
     }
   }
@@ -1057,12 +1069,12 @@ function update(rdt) {
     G.orbitA += dt * 3.2; const n = orbitCount(), R = 1.9 * s * M.area;
     for (let i = 0; i < n; i++) {
       const a = G.orbitA + i * TAU / n, bx = p.x + Math.cos(a) * R, by = p.y + Math.sin(a) * R;
-      for (const f of G.foes) if (!f.dead && Math.hypot(f.x - bx, f.y - by) < f.r + 0.35 * s && (f.contact2 || 0) <= 0) { f.contact2 = 0.3; hurt(f, dmg * 0.5, 0, 0, 0); }
+      for (const f of G.foes) if (!f.dead && Math.hypot(f.x - bx, f.y - by) < f.r + 0.35 * s && (f.contact2 || 0) <= 0) { f.contact2 = 0.3; hurt(f, dmg * 0.5, 0, 0, 0, 'orbit'); }
     }
   }
   if (G.tier >= 4) {
     G.waveCd -= dt;
-    if (G.waveCd <= 0) { G.waveCd = 2.6 * (1 - cdr) * (1 - 0.08 * (G.cards.art_wave || 0)); const R = 6.5 * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * 1.4, 0, 0, 0); }
+    if (G.waveCd <= 0) { G.waveCd = 2.6 * (1 - cdr) * (1 - 0.08 * (G.cards.art_wave || 0)); const R = 6.5 * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * 1.4, 0, 0, 0, 'wave'); }
   }
   // 적
   const aura = p.r * 1.7, recycle = G.view * SPT.recycleBeyondDiagonal;
@@ -2165,12 +2177,15 @@ function settle() {
   const sub = rows.reduce((a, r) => a + r[2], 0), mul = G.body.qiMul, total = Math.round(sub * mul);
   return { rows, sub, mul, total };
 }
+// 이번 생의 혈정: 땅의 주인 몫 + 이름 있는 정예 수 × drops.eliteBloodCrystal(혈월 배율은 이 시안에 없음, Core LifeLog.BloodCrystal)
+const ARTS_KO = { arc: '검기', orbit: '도는 검', wave: '먹 파동' };
+function lifeCrystal() { return G.bossCrystal + Math.round(G.eliteKills * ((BAL.drops && BAL.drops.eliteBloodCrystal) || 0)); }
 function endLife(kind) {
   if (!G || G.ended) return;
   G.ended = true; G.endKind = kind; running = false; paused = false;
   const st = settle();
   // 혼에 새긴다
-  meta.qi += st.total; meta.lives++; meta.best = Math.max(meta.best, G.tier);
+  meta.qi += st.total; meta.crystal += lifeCrystal(); meta.lives++; meta.best = Math.max(meta.best, G.tier);
   for (const id of G.newVisits) if (!meta.visited.includes(id)) meta.visited.push(id);
   for (const id of G.newRealms) if (!meta.reached.includes(id)) meta.reached.push(id);
   for (const id of [...G.bossFirst, ...G.bossRepeat]) meta.bossKills[id] = (meta.bossKills[id] || 0) + 1;
@@ -2182,8 +2197,14 @@ function endLife(kind) {
   $('dline').textContent = kind === 'sealed' ? '중원이 한 화면에 들어왔고, 봉마곡의 피가 걷혔다. 이번 생의 기는 다음 윤회로 넘어간다.'
     : kind === 'zuohwa' ? `${G.sect.nameKo}의 제자는 ${realm}에서 가부좌를 틀고 생을 닫았다. 모은 기를 들고 다시 태어난다.`
     : `${G.sect.nameKo}의 제자는 ${realm}에서 쓰러졌다. 모은 기를 들고 다른 문파의 몸으로 다시 태어난다.`;
-  $('dfacts').innerHTML = [[realm, `오른 경지 · Lv${G.lv}`], [clock(G.t), '버틴 시간'], [fmtN(G.kills), '처치(덩이 속 사람)'], [`${stonesHeld()}/${STONES_ALL}`, '봉인석']]
-    .map(f => `<div><b>${esc(f[0])}</b><span>${esc(f[1])}</span></div>`).join('');
+  // 12장 정산 줄: 생존 시간, 오른 경지, 밟은 땅, 처치 수, 무공별 피해 비중 막대, 윤회의 기(어디서 얼마)·혈정
+  $('dfacts').innerHTML = [[realm, `오른 경지 · Lv${G.lv}`], [clock(G.t), '버틴 시간'], [fmtN(G.kills), '처치(덩이 속 사람)'], [`${G.stepped.length}`, '밟은 땅'],
+    [`+${lifeCrystal()}`, `혈정 · 모두 ${fmtN(meta.crystal)}`], [`${stonesHeld()}/${STONES_ALL}`, '봉인석']]
+    .map(f => `<div><b>${esc(f[0])}</b><span>${esc(f[1])}</span></div>`).join('')
+    + `<p class="steps">${esc(G.stepped.map(id => REG[id] ? REG[id].nameKo : id).join(' · '))}</p>`;
+  const dsum = Object.values(G.dmgBy).reduce((a, b) => a + b, 0);
+  $('dbars').innerHTML = dsum > 0 ? Object.entries(G.dmgBy).filter(e => e[1] > 0).sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `<div class="dbar"><span>${esc(ARTS_KO[k])}</span><i style="width:${(v / dsum * 100).toFixed(1)}%"></i><b>${Math.round(v / dsum * 100)}%</b></div>`).join('') : '';
   const traitNames = G.c.traits.filter(id => TRAIT[id].rebirthQi).map(id => `${TRAIT[id].nameKo} +${Math.round(TRAIT[id].rebirthQi * 100)}%`).join(', ');
   $('ledger').innerHTML = st.rows.map(r => `<tr><td>${esc(r[0])}<small>${esc(r[1])}</small></td><td>${fmtN(r[2])}</td></tr>`).join('')
     + (st.mul !== 1 ? `<tr><td>타고난 성질<small>${esc(traitNames)}</small></td><td>× ${st.mul.toFixed(2)}</td></tr>` : '')
@@ -2293,7 +2314,9 @@ window.__ch = {
   bells: () => songBells().map(b => ({ x: Math.round(b.x), y: Math.round(b.y), touch: +b.touch.toFixed(2), stunR: +b.stunR.toFixed(2), ready: (G.bellCd[b.key] || 0) <= G.t })).concat(G.dropBells.map(b => ({ x: Math.round(b.x), y: Math.round(b.y), drop: true, life: +b.life.toFixed(1), uses: b.uses }))),
   pagodas() { const seen = new Set(), sp = LD.pagodaSpacing * sc(G.tier); for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const pt = pagodaPatchAt(G.p.x + dx * sp, G.p.y + dy * sp); if (pt) seen.add(pt); } return [...seen].map(pt => ({ x: Math.round(pt.x), y: Math.round(pt.y), R: +pt.R.toFixed(1), stones: pt.stones.length, minGap: +Math.min(...pt.stones.flatMap((a, i) => pt.stones.slice(i + 1).map(b => Math.hypot(a.x - b.x, a.y - b.y) - a.r - b.r))).toFixed(2) })); },
   stunned: () => G.foes.filter(f => f.stunT > 0 && !f.dead).length,
-  splinters: () => G.splinters || 0,   // 이번 생 목인나한 나뭇조각이 터진 수(RM-12)
+  splinters: () => G.splinters || 0,
+  // 정산(RM-13): crystal() 이번 생 혈정·잔고, dmg() 무공별 피해, stepped() 이번 생 밟은 땅
+  crystal: () => ({ life: lifeCrystal(), elites: G.eliteKills, boss: G.bossCrystal, total: meta.crystal }), dmg: () => Object.assign({}, G.dmgBy), stepped: () => G.stepped.slice(),   // 이번 생 목인나한 나뭇조각이 터진 수(RM-12)
   // 혈마의 그림자(RM-10): shadow() 지금 단계·세기·거리, shadowStep() 지금 시각의 단계
   shadow: () => G.shadow && { step: G.shadow.step, str: G.shadow.str, dist: +Math.hypot(G.shadow.x - G.p.x, G.shadow.y - G.p.y).toFixed(1), warn: G.shadow.warn },
   shadowStep: () => shadowStep(), shadowMinute: () => shadowMinute(),

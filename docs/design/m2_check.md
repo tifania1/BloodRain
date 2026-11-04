@@ -13,7 +13,7 @@
 | 축척 전환 | 7장 | cheonha.json `realmScale`·`breakthrough`·`cluster`·`crush` | `Scale`·`Breakthrough` | 천하 시안 그대로 | TU-01 축척 카메라 |
 | 침방 | 10장 환혼 강화, 21장 | cheonha.json `rebirth`·환혼 강화 | `Soul.TryBuyUpgrade`·`CandidateCount`·`RerollsPerRebirth` | 천하 시안: 넷째 몸·다시 고르기(RM-09) | TU-11·12 |
 | 연무장 | 10장 표 20항목 | balance.json `training` 20 | `Stats`·`Soul.TryBuyTraining`·`RefundTraining` | 천하 시안: 몸에 닿는 열 항목(RM-09) | TU-14 |
-| 정산 화면 | 10장 윤회의 기, 12장 정산 줄 | cheonha.json `rebirthQi` | `RebirthQi`(줄별 내역), `Soul.EndLife` | 천하 시안: 은자 줄 없음(은자 자체가 없음) | TU-13. 생존 시간·처치·무공별 피해·혈정은 전투 쪽 `SettlementStats` |
+| 정산 화면 | 10장 윤회의 기, 12장 정산 줄 | cheonha.json `rebirthQi` | `RebirthQi`(줄별 내역), `Soul.EndLife` | 천하 시안: 12장 줄(밟은 땅·무공별 피해 막대·혈정 잔고, RM-13). 은자 줄 없음(은자 자체가 없음) | TU-13. 생존 시간·처치·무공별 피해·혈정은 전투 쪽 `SettlementStats` |
 
 ## 걸리는 것
 
@@ -22,7 +22,7 @@
 - **보부상 품목 값이 기획서에 없다.** 7장에 '회복약, 다시 고르기 권, 취기부'만 있다 → RM-04(사람 결정 대기), RM-05
 - **은자 수입이 목표에 맞는지 잰 적이 없다.** 10장 '20분 600~900' → RM-06
 - 웹 천하 시안이 M2 의 손맛을 보려면 깨달음·숭산 기믹·침방 강화가 있어야 한다 → RM-07~RM-09(끝)
-- 천하 시안 정산 화면에 12장 줄 가운데 밟은 땅·무공별 피해 막대·혈정이 없다 → RM-13
+- 천하 시안 정산 화면에 12장 줄 가운데 밟은 땅·무공별 피해 막대·혈정이 없다 → RM-13(끝)
 - 천하 시안에 7장 '한 생의 시간대별 흐름' 사건(혈인 돌진·목인나한 무리·동갑시 포위)이 없다. 레벨과 정예만 시간표를 따른다 → RM-14
 - 천하 시안의 문파 몸은 시작 무공을 안 쓴다(무공은 시안 셋) → RM-15 사람 결정 대기
 - (WP-02, 2026-11-04) 웹 한 판 이어 보기: 서장 → 첫 환혼 → 숭산 삼류–절정 → 원각이 이어진다. 서장 생이 시안 기록에 안 남던 것과 장삼 뒤 컷이 다른 화면에 막히던 것을 붙였다. 결과는 `web/prototype/README.md` 'M2 한 판 이어 보기'
