@@ -103,7 +103,7 @@ namespace BloodRain.Core.Tests
             // backlog BGM-01: 서장·객잔·침방·연무장·정산, 절기 각성 짧은 곡. 타이틀과 엔딩 셋은 기획서 14장
             var ids = Ids();
             foreach (var id in new[] { "bgm_title", "bgm_prologue", "bgm_inn", "bgm_chimbang", "bgm_yeonmu", "bgm_settle",
-                                       "sting_awaken", "bgm_ending_seal", "bgm_ending_heir", "bgm_ending_true" })
+                                       "sting_awaken", "bgm_ending_seal", "bgm_ending_inherit", "bgm_ending_true" })
                 Assert.Contains(id, ids);
         }
 
