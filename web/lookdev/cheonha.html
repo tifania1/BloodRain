@@ -726,6 +726,17 @@ function spawnLocal(e, kind, at, elite) {
     for (let i = 1; i < def.group.size; i++) { const m = spawnFoe(e, elite, kind, { x: base.x + i * def.group.spacing * k, y: base.y }); m.lead = prev; prev = m; }
   } else if (def.behavior === 'twin_revive' && def.twin) {
     const m = spawnFoe(e, elite, kind, { x: base.x + def.twin.gap * k, y: base.y }); f.twin = m; m.twin = f; f.v = 0; m.v = 2;
+  } else if (def.behavior === 'spear_line' && def.group) {
+    // 마교도(R4-11): size 명이 spacing 간격으로 플레이어를 향한 줄에 가로로 서서, 나올 때 정한 방향으로 줄째 곧게 걷는다
+    const a = Math.atan2(G.p.y - base.y, G.p.x - base.x), ux = Math.cos(a), uy = Math.sin(a), n = def.group.size;
+    f.march = { x: ux, y: uy };
+    for (let i = 1; i < n; i++) { const o = (i - (n - 1) / 2) * def.group.spacing * k, m = spawnFoe(e, elite, kind, { x: base.x - uy * o, y: base.y + ux * o }); m.march = f.march; }
+    const o0 = -(n - 1) / 2 * def.group.spacing * k; f.x = base.x - uy * o0; f.y = base.y + ux * o0;
+  } else if (def.behavior === 'flank_pack' && def.group) {
+    // 설랑 떼(R4-11): size 마리가 함께 나와 양옆 flankAngle 도로 돌아 들어오다 commitRange 안에서 곧장 덮친다
+    const fa = def.group.flankAngle * Math.PI / 180;
+    f.flank = 0;
+    for (let i = 1; i < def.group.size; i++) { const m = spawnFoe(e, elite, kind, { x: base.x + rand(-1, 1) * k, y: base.y + rand(-1, 1) * k }); m.flank = (i % 2 ? 1 : -1) * fa * Math.ceil(i / 2) / Math.ceil((def.group.size - 1) / 2); }
   }
   return f;
 }
@@ -1184,6 +1195,13 @@ function update(rdt) {
     if (f.pat && (f.boss || d < G.view * LD.eliteRange)) bossPatterns(f, dt);
     if (f.def) localBehavior(f, dx, dy, d, dt);
     if (f.dashing) { foeDash(f, dt); continue; }
+    if (f.roarT > 0) f.roarT -= dt;
+    if (f.lunge) {   // 혈사자 돌진(R4-11): 예고 때 정한 방향으로 seconds 동안. 닿으면 한 번 맞고, 끝나면 포효
+      f.lunge.t -= dt; f.x += f.lunge.vx * dt; f.y += f.lunge.vy * dt;
+      if (!f.lunge.hit && d < f.r + p.r * 0.8 && f.e >= G.tier) f.lunge.hit = hitPlayer(f.dmg) === true;
+      if (f.lunge.t <= 0) { f.lunge = null; lionRoar(f); }
+      continue;
+    }
     // 혈인 돌진(line_charge): 한 방향으로 곧게 달리고 lifeSeconds 뒤 사라진다(진기 없음). 되돌려 놓지 않는다
     if (f.charge) {
       f.charge.t -= dt; if (f.charge.t <= 0) { f.dead = true; f.gone = true; continue; }
@@ -1199,11 +1217,17 @@ function update(rdt) {
     if (f.lead && !f.lead.dead) {   // 금선지네: 앞 마디를 spacing 만큼 떨어져 따라간다
       const lx = f.lead.x - f.x, ly = f.lead.y - f.y, ld = Math.hypot(lx, ly) || 1, gap = f.def.group.spacing * sc(f.e) + f.r;
       if (ld > gap) { const v = Math.min(ld - gap, f.sp * 2.2 * fw * dt); f.x += lx / ld * v; f.y += ly / ld * v; }
-    } else { f.x += (dx / d * sp + f.kx) * dt; f.y += (dy / d * sp + f.ky) * dt; }
+    } else {
+      let ux = dx / d, uy = dy / d;
+      if (f.march) { ux = f.march.x; uy = f.march.y; }   // 마교도 줄째 전진
+      else if (f.flank && d > f.def.group.commitRange * sc(f.e)) { const c = Math.cos(f.flank), sn = Math.sin(f.flank); [ux, uy] = [ux * c - uy * sn, ux * sn + uy * c]; }   // 설랑 옆으로 돌기
+      const roar = f.roarT > 0 ? 1 + f.roarBonus : 1;   // 혈사자 포효
+      f.x += (ux * sp * roar + f.kx) * dt; f.y += (uy * sp * roar + f.ky) * dt;
+    }
     f.kx *= Math.pow(0.03, dt); f.ky *= Math.pow(0.03, dt);
     pushOutOfPagodas(f, f.r, !!(f.def && f.def.ignoresTerrain));   // 탑림: 걷는 적은 막히고 나는 적은 지나간다
     if (d > recycle && !f.boss && !f.cloneOf) { f.x = p.x - dx / d * G.view * 0.62; f.y = p.y - dy / d * G.view * 0.62; }
-    if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier && !(f.pat && f.pat.blink)) { f.contact = 0.4; if (hitPlayer(f.dmg) === true && f.def && f.def.onHitSlowSeconds > 0) { p.slowT = f.def.onHitSlowSeconds; p.slowMul = f.def.onHitSlowMultiplier; } }   // 순간이동 중엔 잔상만, 닿아도 피해 없음
+    if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier && !(f.pat && f.pat.blink)) { f.contact = 0.4; if (hitPlayer(f.dmg * (f.roarT > 0 ? 1 + f.roarBonus : 1)) === true && f.def && f.def.onHitSlowSeconds > 0) { p.slowT = f.def.onHitSlowSeconds; p.slowMul = f.def.onHitSlowMultiplier; } }   // 순간이동 중엔 잔상만, 닿아도 피해 없음
   }
   // 밀어내기(대충): 같은 경지끼리만
   const live = G.foes.filter(f => !f.dead);
@@ -1601,6 +1625,12 @@ function bossShot(f, deg, pt, k, dmg) {
   G.shots.push({ x: f.x, y: f.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, left: pt.length * k, r: 0.25 * k, dmg, src: f, petal: true });
 }
 // 방패 돌진(line): 예고한 방향으로 length 만큼 달리고 width 안에 닿으면 한 번 맞는다. 다 달리면 recoverySeconds 쉰다
+// 혈사자 포효: 반경 auraRadius 안 적(땅의 주인 빼고)의 걸음·닿기 피해 + auraBonus 를 roarSeconds 동안
+function lionRoar(f) {
+  const D = f.def, R = D.auraRadius * sc(f.e);
+  G.fx.push({ k: 'wave', x: f.x, y: f.y, r: R, t: 0, life: 0.5, red: true });
+  for (const o of G.foes) if (!o.dead && !o.boss && Math.hypot(o.x - f.x, o.y - f.y) <= R) { o.roarT = D.roarSeconds; o.roarBonus = D.auraBonus; }
+}
 function foeDash(f, dt) {
   const D = f.dashing, p = G.p, step = Math.hypot(D.vx, D.vy) * dt;
   f.x = clamp(f.x + D.vx * dt, 0, W); f.y = clamp(f.y + D.vy * dt, 0, H); D.left -= step;
@@ -1618,6 +1648,13 @@ function localBehavior(f, dx, dy, d, dt) {
       f.hookWind -= dt;
       if (f.hookWind <= 0) { const a = f.hookA, v = D.hook.speed * k; G.shots.push({ x: f.x, y: f.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, left: D.hook.range * k, r: D.hook.radius * k, dmg: f.dmg, src: f, chain: true, root: D.hook.bindSeconds }); }
     } else if (f.cd <= 0 && d < D.hook.range * k) { f.cd = D.hook.interval; f.hookWind = D.telegraph || 0.5; f.hookA = Math.atan2(dy, dx); }
+  } else if (D.behavior === 'charge_roar' && D.dash) {
+    // 혈사자(R4-11): dash.range 안이면 telegraph 예고 뒤 dash.seconds 동안 dash.speed 로 돌진, 이어 포효, restMin~restMax 쉼
+    if (f.cd == null) f.cd = rand(D.dash.restMin, D.dash.restMax);
+    if (f.lungeWind > 0) {
+      f.lungeWind -= dt;
+      if (f.lungeWind <= 0) { const v = D.dash.speed * k; f.lunge = { vx: Math.cos(f.lungeA) * v, vy: Math.sin(f.lungeA) * v, t: D.dash.seconds, hit: false }; }
+    } else if ((f.cd -= dt) <= 0 && d < D.dash.range * k) { f.cd = D.telegraph + D.dash.seconds + rand(D.dash.restMin, D.dash.restMax); f.lungeWind = D.telegraph; f.lungeA = Math.atan2(dy, dx); }
   } else if ((D.behavior === 'petal_shot' || D.behavior === 'ice_throw') && D.shoot) {
     // 매화검귀 꽃잎 탄(range 안이면 interval 마다 count 발을 spread 도 부채꼴로), 설인 얼음덩이(한 발). Unity EnemyField 쏘기와 같은 셈(R4-11)
     const sh = D.shoot; f.cd = (f.cd == null ? sh.interval * Math.random() : f.cd) - dt;
