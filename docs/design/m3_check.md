@@ -10,7 +10,7 @@
 | 몸(기혈·걸음·음양 시작·시작 무공·오의) | 5장 '한눈에 보기' | cheonha.json sects 여섯, characters.json 당연화·하연·운화. 같음(`CheonhaDataTests.문파_표가_데이터와_같다`·`대표_인물이_있는_문파는_그_인물의_몸과_같다`) | `Rebirth`(후보·몸), 해금은 `Soul` 의 `boss:<지역>` 토큰 | 없음(진소운만) | 아홉 문파 몸의 기혈·걸음, 땅의 주인 첫 처치로 문파가 열림. 음양 시작은 카드에 흐리게만 | TU-11 |
 | 고유 능력 | 5장 칸(소림 피해 -2, 개방 은자 +30%·음식 +50%, 남궁 기혈 50% 이상 공력 +25%, 당가 독 무효·중독된 적 +20%, 수로채 움직이는 동안 회피 15%·물 감속 무시, 무당 태극 ±40·조화 보너스 2배) | sects `traitEffect`(아홉 문파, R-04·R-04b 2026-11-04). 마교 '기혈이 낮을수록 공격속도' 곡선만 없음(R-04c 사람 결정 대기). 무당 태극 구간은 `harmonyRange` 40 | `Build/SectTrait.cs`(능력치 덧셈·독 무효·물 무시·중독 피해 배율·조화 보너스 배수), `RebirthBody.SectTrait`·`ComputeStats(…, healthRatio, moving)`, `Life.CurrentStats`·`Life.HarmonyCooldownReduction`, `UltimateCharge.HarmonyBonusMultiplier`, `StatKind.Evade`·`Evade.Roll`(`SectTraitTests` 16). 시뮬레이터 소림 호신도 데이터에서 읽음 | 없음 | 없음 | R-04U |
 | 오의(만천화우·역류·태극무량, 나머지 셋 포함) | 5장 '오의 상세' | characters.json ultimates: `mightMultiplier` 와 `params`(R-05 2026-11-04: 시간·반경·곳·방향·연타·천마해체 비율, `UltimateParamsTests` 가 5장 칸과 맞춤). 일검(숫자 없음)·역류(R-05b 사람 결정 대기)만 params 없음 | `Ultimates.HitDamage`(피해만) | 일검만(`useUlt`) | 없음 | C-09(진소운 일검만 적힘) |
-| 진전 | 20장 '진전 9문파' | synergies.json schools. 여섯 문파 단계 글·인원이 표와 같음(손으로 대조. 이 표를 맞추는 테스트는 못 찾음). 소림 4·개방 4 는 desc 만 있고 effect 없음 | `Synergy.Compute`, `SynergyEffects`(effect 11). 수로채 4 는 `Chest` 의 `chestUpgrades` | 아홉 문파 인장, proto 단계 효과 11 다 씀. 태극검·쇄겸술·이화창이 없어 무당·수로채는 심법 둘(+기본의 극)까지만 | 없음 | S-04(표시), 몸에 얹기는 C-06 '남은 것' |
+| 진전 | 20장 '진전 9문파' | synergies.json schools. 여섯 문파 단계 글·인원이 표와 같음(`SynergyDataTests.기획서_20장_진전_표가_schools_와_같다`, R-06). 소림 4·개방 4 는 effect `arhat_ring`·`beggar_allies`(R-07) | `Synergy.Compute`, `SynergyEffects`(effect 13), 판 상태는 `SchoolSummons`. 수로채 4 는 `Chest` 의 `chestUpgrades` | 아홉 문파 인장, proto 단계 효과 11 다 씀. 태극검·쇄겸술·이화창이 없어 무당·수로채는 심법 둘(+기본의 극)까지만 | 없음 | S-04(표시), 몸에 얹기는 C-06 '남은 것' |
 
 ## 무공 16·절기 16
 
@@ -41,7 +41,7 @@
 
 - **문파 고유 능력이 Core 에 없다.** 소림·개방·남궁·당가·수로채 다섯과 무당 '조화 보너스 2배'. 기획서 5장에 숫자가 있으니 cheonha.json sects 에 효과 칸을 더하고, Core 몸(`Meta/Rebirth.cs` 의 몸 능력치)과 기믹 인자(`poisonImmune`·`ignoresWater`)에 잇는다. 수로채 회피 15% 는 `Build/Stats.cs` `StatKind` 에 회피 칸이 없어 그것부터 필요하다. Unity 는 unity_tasks 에 줄 없음
 - **오의 모양 수치가 글로만 있다.** characters.json ultimates 에 5장 '오의 상세' 숫자(만천화우 3초·중독, 태극무량 5초, 사자후 6m·3초, 천뢰낙 12곳·1초, 팔방풍우 8방향 3연타, 천설부 3초, 천마해체 8초·2%·2배·10%)를 칸으로. 역류는 '공력 x12' 말고 물살 폭·시간이 없다: 숫자 없음, 사람 결정 필요. Unity 는 C-09 가 일검만 적고 나머지 오의 줄 없음
-- **진전 소림 4·개방 4 효과가 없다.** synergies.json 에 effect·params(나한 허상 열여덟·5초·판마다 3번, 3분마다 제자 셋·10초)를 넣고 `SynergyEffects.Known` 에 더한다. 허상이 밀쳐 내는 세기, 개방 제자 셋의 피해·기혈은 숫자 없음, 사람 결정 필요
+- ~~진전 소림 4·개방 4 효과가 없다~~ → 2026-11-04 R-07: `arhat_ring`·`beggar_allies` + Core `SchoolSummons`. 허상이 밀쳐 내는 세기·둘레, 개방 제자의 피해·기혈은 숫자 없음, 사람 결정 R-07b
 - 기획서 20장 진전 표 ↔ synergies.json schools 를 맞추는 테스트가 없다(지금은 손으로 대조해 같다). `SynergyDataTests` 에 하나 더하면 된다
 - **도전 과제 해금 셋을 세는 곳이 없다.** 음공(한 판 처치 5,000)·이화창(한 판 경공 300)·뇌부(정신부 누적 10)는 토큰만 있다. 한 판 기록(`Run/Life.cs` 쪽)과 혼에 쌓는 누적(`Meta/Soul.cs`)에서 세어 `Soul.Unlock` 을 부르게
 - **무공 여섯의 날아가는 것·넉백 값이 없다**(태극검·쇄겸술·혈조·음공·이화창·낙화검우, 9장 표·weapons.json `shot`·`knockback`). 기획서는 프로토타입에서 손으로 맞춘 뒤 채운다고 했다 → WP-01. 그 전까지는 숫자 없음, 사람 결정 필요

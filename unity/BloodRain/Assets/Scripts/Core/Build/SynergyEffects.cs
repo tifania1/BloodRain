@@ -15,6 +15,8 @@
 //                               radius 범위로 그 무공 한 방 × damageMultiplier. 공격 수는 판 동안 Unity 가 센다
 //   (모양) poison_spread 당가 3  중독된 적이 쓰러지면 radius 안 적에게 seconds 동안 초당 damagePerSecond × 지속 피해
 //   (모양) needle_rain   당가 5  intervalSeconds 마다 화면 안 모든 적에게 damage × 공력 × 지속 피해, poisonSeconds 중독
+//   (판 상태) arhat_ring    소림 4  기혈이 healthThreshold 아래로 떨어지면 seconds 동안 나한 허상 images 개, 판마다 timesPerRun 번 → SchoolSummons
+//   (판 상태) beggar_allies 개방 4  intervalSeconds 마다 개방 제자 allies 명이 seconds 동안 함께 싸움 → SchoolSummons
 //   dash_drag 의 dragRadius·dragFactor: 경공 중 몸 dragRadius 안 잡몹(정예·보스 빼고)을 경공 속도 × dragFactor 로 끌고 간다
 //
 // 시너지가 바뀔 때(레벨업에서 고른 뒤) SynergyEffects.Of(Synergy.Compute(…)) 로 새로 만든다.
@@ -31,6 +33,7 @@ namespace BloodRain.Core.Build
             "sword_damage", "low_health_might", "jiangshi_damage", "dash_drag",
             "talisman_freeze", "harmony_deflect", "blood_trade",
             "crit_petals", "sky_sword", "poison_spread", "needle_rain",
+            "arhat_ring", "beggar_allies",
         };
 
         readonly Dictionary<string, SchoolTierDef> _active = new Dictionary<string, SchoolTierDef>();
