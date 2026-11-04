@@ -8,7 +8,7 @@
 //   무당 음양조화: 태극 구간 ±40 은 sects[].harmonyRange 가 맡고(Loadout 이 게이지에 넣는다), 조화 보너스 2배는 HarmonyBonusMultiplier.
 //   화산 매화의 눈: 치명 확률 +10%(CritChance).
 //   곤륜 설한기: 3m 안 적이 10% 느려짐(EnemySpeedMultiplier). 거리는 세계 m 이고, 축척을 따르게 하려면 부른 쪽이 scale 을 넘긴다.
-//   마교 마인의 피: 회복 효과 -50%(HealingMultiplier, 흡혈도 포함). '기혈이 낮을수록 공격속도'는 곡선이 기획서에 없어 아직 없다(backlog R-04c).
+//   마교 마인의 피: 회복 효과 -50%(HealingMultiplier). 회복 능력치는 RecoveryHeal, 음식은 Drops.FoodHeal·모닥불은 CampfireGimmick.Heal 의 healingMultiplier, 흡혈은 LifestealHeal 에 넘긴다. '기혈이 낮을수록 공격속도'는 곡선이 기획서에 없어 아직 없다(backlog R-04c).
 // 서장 진소운 몸은 None(아무것도 안 함)이다.
 using System;
 using System.Collections.Generic;
@@ -37,6 +37,12 @@ namespace BloodRain.Core.Build
 
         /// <summary>기혈 회복 전부에 곱하는 수(마교 0.5, 나머지 1). 회복 능력치·음식·흡혈·영약 모두.</summary>
         public float HealingMultiplier => _def.HealingMultiplier;
+
+        /// <summary>회복량 하나에 고유 능력을 곱한다(마교면 절반). 음식·모닥불·영약처럼 따로 셈한 양을 넘긴다.</summary>
+        public float Heal(float amount) => amount <= 0f ? 0f : amount * HealingMultiplier;
+
+        /// <summary>이번 프레임 회복 능력치로 차는 기혈(초당 Recovery x dt, 마교면 절반). 음수 회복·dt 는 0.</summary>
+        public float RecoveryHeal(StatSheet stats, float dt) => dt <= 0f ? 0f : Heal(stats.Recovery * dt);
 
         /// <summary>몸에서 distance(세계 m) 떨어진 적의 이동속도 배율. 곤륜이면 반경 3m(x scale) 안에서 0.9, 나머지는 1.</summary>
         public float EnemySpeedMultiplier(float distance, float scale = 1f) =>

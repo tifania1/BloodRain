@@ -287,7 +287,8 @@ namespace BloodRain.Core.Run
         public Life RestartPrologue(Random rng)
         {
             var p = Prologue ?? throw new InvalidOperationException("서장에서만 씁니다");
-            if (p.Step != PrologueStep.Fight) throw new InvalidOperationException($"장삼 전에만 처음부터 합니다: {p.Step}");
+            // 장삼 전에 쓰러졌거나, 장삼을 쓰러뜨리기 전 어느 때든 좌화·그만두기를 골랐을 때. 쓰러진 횟수(Restarts)는 PlayerDown 만 센다.
+            if (p.FightOver) throw new InvalidOperationException($"장삼을 쓰러뜨린 뒤에는 처음부터 하지 않습니다: {p.Step}");
             return new Life(_soul, Body, rng, p.Restarts);
         }
 
@@ -388,6 +389,9 @@ namespace BloodRain.Core.Run
         {
             if (Record != null) throw new InvalidOperationException("이미 끝난 생입니다");
             if (!_data.Cheonha.LifeEnd.Ways.Contains(way)) throw new ArgumentException($"모르는 생의 끝입니다: {way}");
+            // 서장은 장삼을 쓰러뜨려야(KillPrologueBoss) 끝난다. 그 전에 좌화·그만두기를 고르면 RestartPrologue 로 처음부터.
+            if (Prologue != null && !Prologue.FightOver)
+                throw new InvalidOperationException("서장은 장삼을 쓰러뜨려야 끝납니다. 그 전에 그만두면 RestartPrologue 로 처음부터");
             Record = Log.Finish(way, leftoverSilver);
             return Record;
         }

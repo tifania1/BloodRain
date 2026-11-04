@@ -35,14 +35,16 @@ namespace BloodRain.Core.Build
             return rule.Lantern[rule.Lantern.Count - 1].Kind;
         }
 
-        /// <summary>음식 회복량. foodHeal 은 StatSheet 의 음식 회복 배율(기본 1, 개방 대식·혈공 거래 등이 곱해진 값). 음식이 아니면 0.</summary>
-        public static float FoodHeal(DropsDef rule, string kind, float foodHeal = 1f)
+        /// <summary>음식 회복량. foodHeal 은 StatSheet 의 음식 회복 배율(기본 1, 개방 대식·혈공 거래 등이 곱해진 값),
+        /// healingMultiplier 는 SectTrait.HealingMultiplier(마교 0.5). 음식이 아니면 0.</summary>
+        public static float FoodHeal(DropsDef rule, string kind, float foodHeal = 1f, float healingMultiplier = 1f)
         {
             if (foodHeal < 0) throw new ArgumentOutOfRangeException(nameof(foodHeal));
+            if (healingMultiplier < 0) throw new ArgumentOutOfRangeException(nameof(healingMultiplier));
             switch (kind)
             {
-                case Bun: return rule.BunHeal * foodHeal;
-                case Duck: return rule.DuckHeal * foodHeal;
+                case Bun: return rule.BunHeal * foodHeal * healingMultiplier;
+                case Duck: return rule.DuckHeal * foodHeal * healingMultiplier;
                 default: return 0;
             }
         }

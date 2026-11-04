@@ -59,6 +59,7 @@ namespace BloodRain.Core.Tests
             {
                 "durationSeconds", "radius", "stunSeconds", "strikes", "shockSeconds", "directions", "volleys",
                 "freezeSeconds", "healthCostPerSecond", "damageMultiplier", "lifesteal", "poisons", "mightPerSecond",
+                "pulseSeconds", "blocksDamage", "reflectsProjectiles",
             };
             foreach (var u in _d.Ultimates.Where(u => u.Params != null))
                 foreach (var kv in u.Params!)
@@ -68,12 +69,15 @@ namespace BloodRain.Core.Tests
                 }
         }
 
+        /// <summary>숫자가 아니라 있다·없다를 뜻하는 칸, 요약 글의 '초당' 같은 말로만 드러나는 칸.</summary>
+        static readonly HashSet<string> Flags = new HashSet<string> { "poisons", "mightPerSecond", "pulseSeconds", "blocksDamage", "reflectsProjectiles" };
+
         [Fact] public void 요약_글도_같은_숫자를_쓴다()
         {
             foreach (var kv in Expected())
             {
                 var u = U(kv.Key);
-                foreach (var key in u.Params!.Keys.Where(k => k != "poisons" && k != "mightPerSecond"))
+                foreach (var key in u.Params!.Keys.Where(k => !Flags.Contains(k)))
                 {
                     float v = u.Params[key];
                     string s = key is "healthCostPerSecond" or "lifesteal" ? Pct(v) : N(v);

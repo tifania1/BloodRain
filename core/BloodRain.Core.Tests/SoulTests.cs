@@ -371,7 +371,9 @@ namespace BloodRain.Core.Tests
             Assert.Equal(2, s.Cycle);
             Assert.True(s.IsBloodMoon);
             Assert.Equal(C.Cycle.EndingsSecond, s.Endings);
-            foreach (var key in new[] { "sealStones", "cycle" }) { before.Remove(key); after.Remove(key); }
+            Assert.True(before.Value<bool>("endingPending"));
+            Assert.False(after.Value<bool>("endingPending"));   // 회귀하면 고를 엔딩이 남지 않는다(QA-10)
+            foreach (var key in new[] { "sealStones", "cycle", "endingPending" }) { before.Remove(key); after.Remove(key); }
             Assert.True(JToken.DeepEquals(before, after), "회귀가 봉인석 말고 다른 것도 지웠다");
 
             // 회귀 뒤 첫 처치는 다시 봉인석과 300. 문파는 이미 열려 있다
@@ -394,10 +396,8 @@ namespace BloodRain.Core.Tests
             var s = Rich();
             Assert.Equal(0, s.Manuscripts);
             Assert.True(C.Cycle.Bloodmoon.ManuscriptsOnlyHere);
-            var first = s.BeginLife(Body("wudang"));
-            Assert.False(first.ManuscriptsHere);
-            Assert.False(first.FindManuscript());
-            Assert.Equal(0, first.Finish("fallen", 0).Manuscripts);
+            // 1회차 생에 의서가 없는 것은 Rich 안에서 본다. Rich 는 종장을 깨고 끝나 엔딩을 고르기 전엔 새 생이 없다(QA-10).
+            Assert.Throws<InvalidOperationException>(() => s.BeginLife(Body("wudang")));
 
             s.Regress();
             var moon = s.BeginLife(Body("wudang"));

@@ -512,6 +512,7 @@ namespace BloodRain.Core.Meta
         public RebirthDraw OpenRebirth(Random rng)
         {
             if (!PrologueDone) throw new InvalidOperationException("서장을 마치기 전에는 환혼이 없습니다. 첫 생은 Rebirth.Prologue 로 시작합니다");
+            GuardNewLife();
             return new RebirthDraw(C, UnlockedSects, CandidateCount, RerollsPerRebirth, IsFirstRebirth, rng);
         }
 
@@ -519,7 +520,15 @@ namespace BloodRain.Core.Meta
         public LifeLog BeginLife(RebirthBody body)
         {
             if (!PrologueDone && !body.IsPrologue) throw new InvalidOperationException("첫 생은 서장(진소운 제 몸)입니다");
+            GuardNewLife();
             return new LifeLog(this, body);
+        }
+
+        /// <summary>새 생을 열 수 없는 때: 진엔딩으로 여정이 끝났거나, 종장을 깨고 엔딩을 아직 안 골랐다.</summary>
+        void GuardNewLife()
+        {
+            if (JourneyOver) throw new InvalidOperationException("진엔딩 뒤에는 환혼이 없습니다");
+            if (EndingPending) throw new InvalidOperationException("종장을 깼으니 엔딩을 먼저 고릅니다(ChooseEnding)");
         }
 
         /// <summary>한 생을 혼에 옮긴다: 윤회의 기, 잡은 땅의 주인(해금·봉인석), 밟은 땅, 오른 경지, 깨운 절기, 의서, 생 횟수, 종장.</summary>
@@ -603,6 +612,7 @@ namespace BloodRain.Core.Meta
                 }
             }
             Cycle++;
+            EndingPending = false; // 회귀하면 백중의 밤부터 새 회차라 고를 엔딩이 남지 않는다
         }
 
         // ---- 저장 ----

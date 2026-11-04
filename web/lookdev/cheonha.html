@@ -1224,9 +1224,9 @@ function useUlt() {
   if (!G || G.ended || G.brk || paused || overlay || G.ult < UC.max) return false;
   const u = ultDef(); if (!u) return false;
   G.ult = 0;
-  const dur = UPar(u, 'durationSeconds', 0), per = dur > 0 && UPar(u, 'mightPerSecond', 0) > 0 ? 1 : 0;
+  const dur = UPar(u, 'durationSeconds', 0), per = dur > 0 && UPar(u, 'mightPerSecond', 0) > 0 ? UPar(u, 'pulseSeconds', 0) : 0;
   G.ultCast = { u, el: 0, done: 0, per, dur, total: u.mightMultiplier <= 0 ? 0 : per > 0 ? Math.max(1, Math.ceil(dur / per - 1e-4)) : 1, a: Math.atan2(G.p.fy, G.p.fx) };
-  if (u.id === 'taiji_muryang') G.taiji = dur;   // 또 쓰면 새로 5초
+  if (UPar(u, 'blocksDamage', 0) > 0) G.taiji = dur;   // 태극무량: 받는 피해 무효·탄 반사. 또 쓰면 새로 5초
   if (u.id === 'cheonma_haeche') { G.diss = dur; if (G.sect.bloodArt && G.sect.bloodArt.resetUltimate === u.id) { G.yy = clamp(G.body.yin, YY.min, YY.max); G.simma.base = G.simma.steps; } }   // 혈공: 음양 게이지가 시작값으로, 심마환영 공력도 사라진다(Core OnDemonicReset)
   G.ultN = (G.ultN || 0) + 1; G.trauma = 1; toast(u.nameKo, u.summary || '');
   return true;
@@ -1750,11 +1750,13 @@ function bossPatterns(f, dt) {
     }
   }
   // ── 종장 단계(R4-12) ──
-  for (const R of P.pulses) {   // 맥 짚는 손: 예고 때 플레이어 자리를 가운데로 조여 든다
+  for (const R of P.pulses) {   // 맥 짚는 손: 예고 때 플레이어 자리를 가운데로 조여 든다. 최소 반경에 닿는 순간 마지막으로 보고 사라진다(Core ClosingRingAlive)
     R.t += dt; R.hit -= dt;
-    if (R.hit <= 0 && inClosingRing(R.pt, R.t, (p.x - R.x) / k, (p.y - R.y) / k, p.r / k)) { R.hit = R.pt.hitIntervalSeconds; hitPlayer(R.dmg); }
+    const cs = closingSeconds(R.pt), last = R.t >= cs;
+    if ((R.hit <= 0 || last) && inClosingRing(R.pt, Math.min(R.t, cs), (p.x - R.x) / k, (p.y - R.y) / k, p.r / k)) { R.hit = R.pt.hitIntervalSeconds; hitPlayer(R.dmg); }
+    if (last) R.done = 1;
   }
-  P.pulses = P.pulses.filter(R => R.t < closingSeconds(R.pt) + 0.3);
+  P.pulses = P.pulses.filter(R => !R.done);
   for (const C of P.clouds) {   // 역병 구름(Core CloudDrift·CloudAlive): 플레이어 쪽으로 지나치지 않고 떠다닌다
     C.t += dt; C.hit -= dt;
     const dx = p.x - C.x, dy = p.y - C.y, d = Math.hypot(dx, dy);

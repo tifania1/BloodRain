@@ -2,9 +2,9 @@
 // 쓴 오의 하나가 흘러가는 것(기획서 5장 '오의 상세', characters.json ultimates[].params, backlog R-15).
 //   피해 한 방은 Ultimates.HitDamage, 천설부·천마해체 효과는 UltimateEffects·Life.Dissolution(R4-10)이 한다.
 //   여기서는 모든 오의에 대해 '언제 몇 번 때리나'와 나머지 다섯(천뢰낙·사자후·만천화우·태극무량·팔방풍우)의 데이터 숫자를 준다.
-//   - 때리는 박자(Pulse): 쓰는 순간 한 번. 만천화우처럼 durationSeconds 와 mightPerSecond 가 있으면 0초·1초·2초 … 지속 시간 안에서 1초마다 한 번(3초면 세 번).
+//   - 때리는 박자(Pulse): 쓰는 순간 한 번. 만천화우처럼 durationSeconds·mightPerSecond·pulseSeconds 가 있으면 0초·1초·2초 … 지속 시간 안에서 pulseSeconds(1초)마다 한 번(3초면 세 번).
 //     공력 배율 0 인 태극무량·천마해체는 때리지 않는다.
-//   - 몸에 붙는 것: 태극무량 5초 동안 받는 피해 0·몸 주위 적 탄 되돌림.
+//   - 몸에 붙는 것: 태극무량 5초 동안 받는 피해 0(params.blocksDamage)·몸 주위 적 탄 되돌림(params.reflectsProjectiles).
 //   - 맞은 적에 붙는 것: 천뢰낙 감전 1초, 사자후 기절 3초, 만천화우 중독.
 //   - 모양: 천뢰낙 화면 안 무작위 12곳(StrikePoints), 사자후 반경 6m(InRadius, 경지 축척을 곱함), 팔방풍우 8방향(Directions)·3연타(Volleys).
 //   현경 '오의 2연속'(Life.UltimateCasts)이면 박자마다 두 번 때리고, 지속형(태극무량)은 R4-10 천마해체처럼 새로 시작할 뿐 늘지 않는다(Life.UseUltimate 가 새로 만든다).
@@ -26,8 +26,8 @@ namespace BloodRain.Core.Combat
         {
             Def = def ?? throw new ArgumentNullException(nameof(def));
             DurationSeconds = def.Param("durationSeconds", 0f);
-            // 지속 시간 동안 1초마다 때리는 오의(만천화우 '초당 공력 xN')
-            _pulseInterval = DurationSeconds > 0f && def.Param("mightPerSecond", 0f) > 0f ? 1f : 0f;
+            // 지속 시간 동안 pulseSeconds 마다 때리는 오의(만천화우 '초당 공력 xN', 1초마다). 박자가 안 적혔으면 쓰는 순간 한 번.
+            _pulseInterval = DurationSeconds > 0f && def.Param("mightPerSecond", 0f) > 0f ? def.Param("pulseSeconds", 0f) : 0f;
             TotalPulses = def.MightMultiplier <= 0f ? 0
                 : _pulseInterval > 0f ? Math.Max(1, (int)Math.Ceiling(DurationSeconds / _pulseInterval - 1e-4f)) : 1;
         }
@@ -65,10 +65,10 @@ namespace BloodRain.Core.Combat
         // ---- 몸에 붙는 것(천마해체는 Life.Dissolution) ----
 
         /// <summary>받는 피해에 곱한다. 태극무량이 붙어 있으면 0('받는 피해 무효'), 아니면 1.</summary>
-        public float DamageTakenMultiplier => ReflectsProjectiles ? 0f : 1f;
+        public float DamageTakenMultiplier => Buffing && Def.Param("blocksDamage", 0f) > 0f ? 0f : 1f;
 
         /// <summary>태극무량이 붙어 있으면 몸 주위 원 안의 적 탄을 되돌려 보낸다. 원 반경은 R-15b.</summary>
-        public bool ReflectsProjectiles => Buffing && Id == TaijiMuryang;
+        public bool ReflectsProjectiles => Buffing && Def.Param("reflectsProjectiles", 0f) > 0f;
 
         // ---- 맞은 적에 붙는 것(천설부 얼림은 UltimateEffects) ----
 

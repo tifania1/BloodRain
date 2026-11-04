@@ -63,6 +63,10 @@ namespace BloodRain.Core.Run
         public EvolutionDef Evolution { get; }
         /// <summary>몇 번 처음부터 다시 했나(장삼 전에 쓰러진 횟수).</summary>
         public int Restarts { get; private set; }
+        /// <summary>이 판에서 이미 Restart 를 줬다. RestartPrologue 로 새 판을 만들면 새 Prologue 라 다시 false.</summary>
+        public bool RestartPending { get; private set; }
+        /// <summary>장삼을 쓰러뜨려 서장 싸움이 끝났다(컷·첫 환혼 차례).</summary>
+        public bool FightOver => Step >= PrologueStep.Cutscene;
         /// <summary>각성을 부른 것이 진소운의 기혈 바닥이 아니라 장삼 기혈 바닥이었나(센 플레이어).</summary>
         public bool AwakenedByBossFloor { get; private set; }
 
@@ -86,7 +90,8 @@ namespace BloodRain.Core.Run
             switch (Step)
             {
                 case PrologueStep.Fight:
-                    Restarts++;
+                    // 같은 판에서 두 번 불려도(한 프레임에 피해가 여럿 겹침) 처음부터 한 번으로 센다.
+                    if (!RestartPending) { Restarts++; RestartPending = true; }
                     return PrologueDown.Restart;
                 case PrologueStep.Boss:
                     Step = PrologueStep.Awakening;
