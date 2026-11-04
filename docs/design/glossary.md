@@ -220,6 +220,9 @@
 | 정파 | the orthodox sects | 혁련휘 컷 |
 | 사파 | the unorthodox sects | 인트로 컷 2 |
 | 대운 32년(연호) | Year 32 of Daeun | 인트로 컷 4 |
+| 회혼침 | Soul-Recalling Needle | 엔딩 컷 |
+| 의심(醫心, 진엔딩) | Physician's Heart | 엔딩 고르는 화면 |
+| 백중의 밤 | the Ghost Festival night | 종장 혈월 줄 |
 
 ## 번체(繁體) — 상점 글과 화면에 쓴 말 (ST-06·L-08, 2026-11-04)
 

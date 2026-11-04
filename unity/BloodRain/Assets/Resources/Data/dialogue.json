@@ -19,7 +19,8 @@
     {"id": "seol_muhyang", "nameKo": "설무향"},
     {"id": "hyeokryeon_hwi", "nameKo": "혁련휘"},
     {"id": "cheonma", "nameKo": "천마"},
-    {"id": "baekya", "nameKo": "백야"}
+    {"id": "baekya", "nameKo": "백야"},
+    {"id": "danmok_hyeon", "nameKo": "단목현"}
   ],
   "returns": {
     "_note": "객잔 귀환 한 번에 나오는 마디 수와 고르는 순서(docs/story 각 파일 '쓰는 법'). 순서에 있는 갈래가 먼저, 같은 갈래 안에서는 이 파일 순서. 밀린 줄은 다음 귀환으로. 대표 인물은 귀환마다 한 사람 한 마디(합류 줄 먼저).",
@@ -619,6 +620,54 @@
         "phase2Ko": "보아라, 그분의 달이다. 죽음은 끝이 아니다!",
         "echoKo": "아무도… 잃지 않는…",
         "bloodMoonKo": "또 돌아왔구나. 이번엔 그분도 너를 기억하실 거다."
+      }
+    ]
+  },
+  "final": {
+    "_note": "종장 「혈지」(docs/story/final.md). enter 는 봉마곡에 들어설 때 컷 둘. 혈영 일곱은 bosspatterns.json final.shadows 차례로 lords 의 echo 를 그대로 쓴다(여기 줄 없음). stages 는 FinalFight 단계 id(bosspatterns final.stages)마다 단계가 바뀔 때 머리 위 한 줄, bloodMoonKo 는 혈월 회차에 그 뒤 더하는 줄.",
+    "enter": {
+      "cuts": [
+        {"id": "enter1", "lines": [{"speaker": null, "textKo": "일곱 개의 돌이 다시 한자리에 모였다."}]},
+        {"id": "enter2", "lines": [{"speaker": null, "textKo": "봉마곡 혈지. 먼저 쓰러뜨린 일곱이 다시 길을 막는다."}]}
+      ]
+    },
+    "stages": [
+      {"id": "hyeoleui", "speaker": "danmok_hyeon", "textKo": "맥이 빠르구나. 몇 번이나 죽었다 왔느냐.", "bloodMoonKo": "백중의 밤을 또 걸어왔구나. 이번엔 어디까지 갈 테냐."},
+      {"id": "hyeolhae", "speaker": "danmok_hyeon", "textKo": "이 피 속에서라면 내 아내도, 딸도 죽지 않았을 것이다."},
+      {"id": "jinhyeolma", "speaker": null, "textKo": "하늘을 덮은 것은 비구름이 아니었다."}
+    ]
+  },
+  "endings": {
+    "_note": "엔딩 세 갈래(docs/story/endings.md). id 는 Soul.EndingSeal·EndingInherit·EndingTrue. nameKo·descKo 는 고르는 화면, cuts 는 차례로. 봉인 컷 4 뒤 Soul.Regress, 계승 뒤 혈마 모드, 진엔딩 뒤 JourneyOver.",
+    "list": [
+      {
+        "id": "seal", "nameKo": "봉인", "descKo": "일곱 조각으로 혈마를 다시 가둔다.",
+        "cuts": [
+          {"id": "c1", "lines": [{"speaker": null, "textKo": "일곱 개의 돌로 혈마를 다시 가두었다."}]},
+          {"id": "c2", "lines": [{"speaker": null, "textKo": "혈우가 그쳤다. 무림은 다시 일어서기 시작했다."}]},
+          {"id": "c3", "lines": []},
+          {"id": "c4", "lines": [{"speaker": null, "textKo": "대운 32년, 칠월 보름."}]}
+        ]
+      },
+      {
+        "id": "inherit", "nameKo": "계승", "descKo": "속삭임을 받아들이고 마지막 회혼침을 거부한다.",
+        "cuts": [
+          {"id": "c1", "lines": [{"speaker": null, "whisper": true, "textKo": "이 힘이면 다시는 아무도 잃지 않는다."}]},
+          {"id": "c2", "lines": [{"speaker": "mok", "textKo": "그 말, 삼백 년 전에도 들었다."}]},
+          {"id": "c3", "lines": [{"speaker": null, "textKo": "다시 태어나지 않았다. 빌린 힘을 모두 품었다."}]},
+          {"id": "c4", "lines": [{"speaker": null, "textKo": "새 혈마가 깨어났다."}]}
+        ]
+      },
+      {
+        "id": "true", "nameKo": "의심(醫心)", "descKo": "목 노인이 침을 거두고 그 사람에게 걸어간다.",
+        "cuts": [
+          {"id": "c1", "lines": [{"speaker": "mok", "textKo": "오래 앓았구나."}]},
+          {"id": "c2", "lines": [{"speaker": null, "textKo": "떨어져 나간 의원의 마음이 제자리로 돌아갔다."}]},
+          {"id": "c3", "lines": [{"speaker": "danmok_hyeon", "textKo": "살리려던 것이었다. 이제 돌려보내마."}]},
+          {"id": "c4", "lines": [{"speaker": null, "textKo": "강시가 되었던 이들이 먹물처럼 풀려 땅으로 돌아갔다."}]},
+          {"id": "c5", "lines": [{"speaker": null, "textKo": "그 사람도 함께 사라졌다."}]},
+          {"id": "c6", "lines": [{"speaker": null, "textKo": "회혼침이 사라졌다. 환혼도 회귀도 여기서 끝났다."}]}
+        ]
       }
     ]
   },

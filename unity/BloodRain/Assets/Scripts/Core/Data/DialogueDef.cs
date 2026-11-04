@@ -22,11 +22,17 @@ namespace BloodRain.Core.Data
         public LeaderDialoguesDef Leaders = new LeaderDialoguesDef();
         public LordDialoguesDef Lords = new LordDialoguesDef();
         public DialogueLinesDef Settlement = new DialogueLinesDef();
+        /// <summary>종장 「혈지」(docs/story/final.md).</summary>
+        public FinalDialogueDef Final = new FinalDialogueDef();
+        /// <summary>엔딩 세 갈래(docs/story/endings.md).</summary>
+        public EndingDialoguesDef Endings = new EndingDialoguesDef();
 
         public SpeakerDef Speaker(string id) => Speakers.First(s => s.Id == id);
         public LeaderDialogueDef Leader(string id) => Leaders.List.First(l => l.Id == id);
         public LordDialogueDef Lord(string id) => Lords.List.First(l => l.Id == id);
         public SectCardDef Card(string sect) => Cards.List.First(c => c.Id == sect);
+        /// <summary>id 는 Soul.EndingSeal·EndingInherit·EndingTrue.</summary>
+        public EndingDialogueDef Ending(string id) => Endings.List.First(e => e.Id == id);
     }
 
     public sealed class SpeakerDef
@@ -179,5 +185,39 @@ namespace BloodRain.Core.Data
         public List<string> BodiesKo = new List<string>();
         /// <summary>여자 몸일 때 같은 번호 칸. 남자만인 문파(소림)는 비어 있다.</summary>
         public List<string> FemaleBodiesKo = new List<string>();
+    }
+
+    /// <summary>종장: 봉마곡 입장 컷과 단목현 단계 한 줄. 혈영 일곱은 lords 의 EchoKo 를 그대로 쓴다.</summary>
+    public sealed class FinalDialogueDef
+    {
+        public CutSceneDef Enter = new CutSceneDef();
+        /// <summary>Id 는 bosspatterns.json final.stages 의 id.</summary>
+        public List<FinalStageLineDef> Stages = new List<FinalStageLineDef>();
+
+        public FinalStageLineDef Stage(string id) => Stages.First(s => s.Id == id);
+    }
+
+    public sealed class FinalStageLineDef
+    {
+        public string Id = "";
+        /// <summary>speakers id. null 이면 서술 자막.</summary>
+        public string? Speaker;
+        public string TextKo = "";
+        /// <summary>혈월 회차에 TextKo 뒤에 더하는 줄.</summary>
+        public string? BloodMoonKo;
+    }
+
+    public sealed class EndingDialoguesDef
+    {
+        public List<EndingDialogueDef> List = new List<EndingDialogueDef>();
+    }
+
+    /// <summary>엔딩 하나: 고르는 화면의 이름·한 줄과 컷.</summary>
+    public sealed class EndingDialogueDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        public string DescKo = "";
+        public List<CutDef> Cuts = new List<CutDef>();
     }
 }
