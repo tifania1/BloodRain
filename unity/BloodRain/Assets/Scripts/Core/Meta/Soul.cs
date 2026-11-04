@@ -435,16 +435,27 @@ namespace BloodRain.Core.Meta
         public bool TrueEndingManuscriptsMet => Manuscripts >= C.Cycle.TrueEndingManuscripts;
 
         /// <summary>진엔딩 조건 셋(의서·종장 문파 수·목 노인 대화)을 다 채웠나. 목 노인 대화를 끝까지 봤는지는 대사 쪽(InnDialogue)이 알려 준다.
-        /// FinalFight.CheckTrueEnding 의 trueEndingMet 으로 넘긴다.</summary>
+        /// 싸움 뒤(EndLife 다음) 기준. 싸움 도중 FinalFight.CheckTrueEnding 에는 TrueEndingMetDuringFinal 을 넘긴다.</summary>
         public bool TrueEndingMet(bool mokTalkDone) => mokTalkDone && TrueEndingManuscriptsMet && TrueEndingSectsMet;
+
+        /// <summary>종장 싸움 도중(진혈마 기혈 10%) 진엔딩 조건. 이번 생은 아직 EndLife 전이라 혼 장부에 없으니
+        /// 지금 몸의 문파(종장을 깨면 한 문파로 더 세짐)와 이번 생에 주운 의서를 더해 본다. 싸움 뒤 EndingsOpen 과 같은 답이 나온다.</summary>
+        public bool TrueEndingMetDuringFinal(bool mokTalkDone, string? sect, int manuscriptsThisLife)
+        {
+            if (!mokTalkDone || Manuscripts + Math.Max(0, manuscriptsThisLife) < C.Cycle.TrueEndingManuscripts) return false;
+            int sects = DistinctFinalSects;
+            if (!string.IsNullOrEmpty(sect) && !(_finalClears.TryGetValue(sect!, out var n) && n > 0)) sects++;
+            return sects >= C.Cycle.TrueEndingDistinctSects;
+        }
 
         /// <summary>지금 고를 수 있는 엔딩. 이번 회차 목록에서 진엔딩은 조건을 채웠을 때만. 고를 차례가 아니면 비어 있다.</summary>
         public IReadOnlyList<string> EndingsOpen(bool mokTalkDone) =>
             !EndingPending || JourneyOver ? Array.Empty<string>()
             : Endings.Where(e => e != EndingTrue || TrueEndingMet(mokTalkDone)).ToList();
 
-        /// <summary>엔딩을 고른다. 봉인은 회귀(Regress), 계승은 혈마 모드 해금, 진엔딩은 여정을 닫는다.</summary>
-        public void ChooseEnding(string ending, bool mokTalkDone)
+        /// <summary>엔딩을 고른다. 봉인은 회귀(Regress), 계승은 혈마 모드 해금, 진엔딩은 여정을 닫는다.
+        /// 이때 새로 열린 모드(혈월 천하·보스 연전처럼 봉인 엔딩을 기다리던 것)를 돌려준다.</summary>
+        public IReadOnlyList<string> ChooseEnding(string ending, bool mokTalkDone)
         {
             if (!EndingPending) throw new InvalidOperationException("종장을 깨야 엔딩을 고릅니다");
             if (!EndingsOpen(mokTalkDone).Contains(ending)) throw new InvalidOperationException($"지금 고를 수 없는 엔딩입니다: {ending}");
@@ -457,7 +468,7 @@ namespace BloodRain.Core.Meta
                 case EndingTrue: JourneyOver = true; break;
                 default: throw new InvalidOperationException($"모르는 엔딩입니다: {ending}");
             }
-            Modes.Refresh(this);
+            return Modes.Refresh(this);
         }
 
         // ---- 장경각 비급(기획서 10·20장) ----

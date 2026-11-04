@@ -40,7 +40,8 @@ namespace BloodRain.Core.Meta
         public bool PickedHaomunLetter;
         /// <summary>이번 생에 기연 '은거기인'(바둑 두는 노인 곁 6초)을 마쳤나. 목 노인 은거기인 줄 하나(기획서 20장).</summary>
         public bool MetHermit;
-        /// <summary>이번 귀환에 새로 열린 객잔 시설(dialogue.json facility:&lt;id&gt;).</summary>
+        /// <summary>이번 귀환에 새로 열린 객잔 시설 id(cheonha.json inn, dialogue.json facility:&lt;id&gt;).
+        /// LifeSummary.NewFacilities 에, 지난 귀환 뒤 Inn.TryBuild 로 지은 시설(약방·대장간)을 더해 넘긴다.</summary>
         public List<string> NewFacilities = new List<string>();
         /// <summary>혈마의 그림자에게 쓰러졌나(정산 자막).</summary>
         public bool FallenToShadow;
@@ -197,7 +198,7 @@ namespace BloodRain.Core.Meta
 
         public static DialogueProgress FromJson(string json)
         {
-            var f = JsonConvert.DeserializeObject<SaveFile>(json) ?? throw new FormatException("대사 진행 저장이 비었습니다");
+            var f = JsonConvert.DeserializeObject<SaveFile>(json, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }) ?? throw new FormatException("대사 진행 저장이 비었습니다");
             if (f.Version > SaveVersion) throw new NotSupportedException($"이 판보다 새 저장 형식입니다: {f.Version}");
             var p = new DialogueProgress { Cycle = Math.Max(1, f.Cycle), LastChat = f.LastChat, LastBedroomChat = f.LastBedroomChat };
             p._seen.UnionWith(f.Seen);
@@ -300,6 +301,12 @@ namespace BloodRain.Core.Meta
                 }
             }
             var opens = mok.Concat(unnang).Where(l => l.Opens != null).Select(l => l.Opens!).ToList();
+            // 대사로 여는 시설은 그 시설이 기다리는 해금 토큰(하오문 게시판 → talk:unnang_haomun)을 혼에 준다.
+            foreach (var id in opens)
+            {
+                var token = soul.Data.Cheonha.Inn.Facilities.FirstOrDefault(f => f.Id == id)?.Require.Unlock;
+                if (token != null) soul.Unlock(token);
+            }
 
             // ---- 대표 인물 ----
             foreach (var leader in d.Leaders.List)

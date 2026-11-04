@@ -70,7 +70,10 @@ namespace BloodRain.Core.Combat
             InPhase2 = inPhase2;
         }
 
-        public float ResolveAt => TelegraphAt + Pattern.TelegraphSeconds;
+        /// <summary>판정 시각. 순간이동(blink_slam)은 마지막 자리에서 내려찍는 때(BlinkSlamSeconds), 나머지는 예고가 끝날 때.</summary>
+        public float ResolveAt => TelegraphAt + (Pattern.Shape == "blink_slam" ? BossPatterns.BlinkSlamSeconds(Pattern) : Pattern.TelegraphSeconds);
+        /// <summary>BossHolds 인 패턴에서 보스가 멈춰 서는 끝(예고부터 시전이 끝날 때까지, CastSeconds). 태극권은 빨아들이는 1.5초까지 선다(6장).</summary>
+        public float HoldUntil => TelegraphAt + Math.Max(Pattern.TelegraphSeconds, BossPatterns.CastSeconds(Pattern));
     }
 
     public sealed class BossPatterns
@@ -79,6 +82,7 @@ namespace BloodRain.Core.Combat
         readonly BossPatternDef[] _order;
         readonly bool[] _phase2Resolved;
         readonly List<BossPatternCast> _pending = new List<BossPatternCast>();
+        float _holdUntil = float.NegativeInfinity;
         float _t;
         int _nextIndex;
         float _nextAt;
@@ -101,8 +105,8 @@ namespace BloodRain.Core.Combat
         public BossPatternCast NextCast => new BossPatternCast(_nextIndex, _order[_nextIndex % _order.Length], _nextAt, InPhase2);
         /// <summary>예고는 시작했고 아직 판정 전인 차례 패턴들.</summary>
         public IReadOnlyList<BossPatternCast> Pending => _pending;
-        /// <summary>보스가 멈춰 서 있어야 하는가(금강장 예고처럼 BossHolds 인 패턴을 예고하는 중).</summary>
-        public bool Holding => _pending.Any(c => c.Pattern.BossHolds);
+        /// <summary>보스가 멈춰 서 있어야 하는가(BossHolds 인 패턴을 예고하거나 시전하는 중, 판정 뒤 CastSeconds 까지 포함).</summary>
+        public bool Holding => _pending.Any(c => c.Pattern.BossHolds) || _t < _holdUntil;
 
         /// <summary>남은 기혈 비율로 2막인지. 문턱과 같으면 2막이다. 2막 패턴이 없는 보스(서장 장삼)는 2막이 오지 않는다.</summary>
         public static bool IsPhase2(BossPatternSetDef def, float healthRatio) => def.Phase2.Count > 0 && healthRatio <= def.Phase2At;
@@ -128,6 +132,7 @@ namespace BloodRain.Core.Combat
                 var cast = NextCast;
                 events.Add(new BossPatternEvent(BossPatternEventKind.Telegraph, cast.Pattern, cast.Index, cast.TelegraphAt));
                 _pending.Add(cast);
+                if (cast.Pattern.BossHolds) _holdUntil = Math.Max(_holdUntil, cast.HoldUntil);
                 _nextAt += IntervalAfter(_def, cast.TelegraphAt, Phase2StartedAt);
                 _nextIndex++;
             }
@@ -477,6 +482,13 @@ namespace BloodRain.Core.Combat
         /// <summary>맥 짚는 손(closing_ring) 고리 띠(폭 Width)에 닿나. activeSeconds 는 판정 뒤 흐른 시간, 가운데는 예고 때 플레이어 자리.
         /// 고리가 MinRadius 에 닿은 뒤(ClosingSeconds)에는 고리 안쪽 전체가 맞는다(안에 남으면 끝에 맞는다).</summary>
         public static bool InClosingRing(BossPatternDef p, float activeSeconds, float dx, float dy, float targetRadius = 0f)
+            => activeSeconds <= ClosingSeconds(p) && InClosingRingShape(p, activeSeconds, dx, dy, targetRadius);
+
+        /// <summary>조여 드는 고리가 아직 살아 있나. 고리는 MinRadius 에 닿는 순간(ClosingSeconds) 마지막으로 맞히고 사라진다
+        /// (기획서 맥 짚는 손 '고리가 1.5m에 닿을 때까지 안에 남으면 맞는다'). 줄지 않는 고리(ShrinkPerSecond 0)는 DataCheck 가 막는다.</summary>
+        public static bool ClosingRingAlive(BossPatternDef p, float activeSeconds) => activeSeconds >= 0f && activeSeconds <= ClosingSeconds(p);
+
+        static bool InClosingRingShape(BossPatternDef p, float activeSeconds, float dx, float dy, float targetRadius)
         {
             float d = (float)Math.Sqrt(dx * dx + dy * dy);
             float half = p.Width * 0.5f;

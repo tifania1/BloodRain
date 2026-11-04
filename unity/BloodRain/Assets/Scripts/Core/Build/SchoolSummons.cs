@@ -65,7 +65,7 @@ namespace BloodRain.Core.Build
             {
                 float interval = b.Param("intervalSeconds");
                 _beggarClock += dt;
-                while (_beggarClock >= interval)
+                while (interval > 0f && _beggarClock >= interval)   // 간격 0 이면 프레임이 멈추지 않게
                 {
                     _beggarClock -= interval;
                     allies += (int)b.Param("allies");

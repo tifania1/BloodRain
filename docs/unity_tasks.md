@@ -366,7 +366,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R4-02U/` 의 `hyeokryeon_hwi.png`
 
 - [ ] R4-03U 종장 러너 · 먼저: R4-02Uc
-  - 할 것: 차례·기혈·단계 시간표는 Core `Combat/FinalFight`(`Patterns` 가 단계마다 시간표)를 PatternRunner 로. 혈의 맥 짚는 손 `InClosingRing(p, 판정 뒤 초, dx, dy)` 가 참이면 0.5초마다 피해(경공 무적이면 통과), 역병 구름 `CloudOffsets`·`CloudDrift(p, 구름→플레이어, dt, moveBase)`·`CloudAlive`, 혈해 피바다 섬 `IslandRadius`·`OnIsland`(섬 자리는 backlog R4-07 이 정해질 때까지 싸움터에 고르게 아무렇게나), 혈영 솟음 `FinalFight.RisingShadow(n)`·`RisingShadowHealth`, 진혈마 혈우 `RainDropOffsets`·`RainWaveSeconds`(파마다 플레이어 자리로 다시), 진엔딩 컷 `CheckTrueEnding`. 40분을 넘으면 단계 하나씩 끊어 (진행:) 표시.
+  - 할 것: 차례·기혈·단계 시간표는 Core `Combat/FinalFight`(`Patterns` 가 단계마다 시간표)를 PatternRunner 로. 혈의 맥 짚는 손 `InClosingRing(p, 판정 뒤 초, dx, dy)` 가 참이면 0.5초마다 피해(경공 무적이면 통과), 역병 구름 `CloudOffsets`·`CloudDrift(p, 구름→플레이어, dt, moveBase)`·`CloudAlive`, 혈해 피바다 섬 `IslandRadius`·`OnIsland`(섬 자리는 backlog R4-07 이 정해질 때까지 싸움터에 고르게 아무렇게나), 혈영 솟음 `FinalFight.RisingShadow(n)`·`RisingShadowHealth`, 진혈마 혈우 `RainDropOffsets`·`RainWaveSeconds`(파마다 플레이어 자리로 다시), 진엔딩 컷 `CheckTrueEnding`(조건은 `soul.TrueEndingMetDuringFinal(목 노인 대화, 몸 문파, 이번 생 의서)` — 이번 생이 아직 혼 장부에 없어서). 40분을 넘으면 단계 하나씩 끊어 (진행:) 표시.
   - 쓸 것: Core `Combat/FinalFight.cs`·`BossPatterns`(R4-03 모양 함수), bosspatterns.json `final`
   - 메뉴: `BloodRain/Test/종장 부르기(플레이 중)/<단계>`
   - 끝: 단계마다 모양이 천하 시안과 같고, 마지막 단계를 넘기면 진엔딩 조건 판정

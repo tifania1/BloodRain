@@ -63,7 +63,7 @@ namespace BloodRain.Core.Combat
         /// <summary>세상 시간 dt.</summary>
         public void Tick(float dt)
         {
-            if (SecondsLeft <= 0f) return;
+            if (SecondsLeft <= 0f || dt <= 0f) return;   // 음수 프레임 시간으로 늘어나지 않게
             SecondsLeft = SecondsLeft > dt ? SecondsLeft - dt : 0f;
         }
 

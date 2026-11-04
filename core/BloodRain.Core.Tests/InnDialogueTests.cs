@@ -207,7 +207,7 @@ namespace BloodRain.Core.Tests
             var p = new DialogueProgress();
             var s = AfterPrologue(p);
             Live(s, p, "shaolin"); Live(s, p, "shaolin");
-            var r = Live(s, p, "shaolin", facts: new ReturnFacts { NewFacilities = { "jangyeonggak" }, PickedHaomunLetter = true });
+            var r = Live(s, p, "shaolin", facts: new ReturnFacts { NewFacilities = { "library" }, PickedHaomunLetter = true });
             Assert.Equal(new[] { "facility_jangyeonggak" }, Ids(r.Unnang));
             var r2 = Live(s, p, "shaolin");
             Assert.Equal(new[] { "letter_before" }, Ids(r2.Unnang));   // 밀린 줄

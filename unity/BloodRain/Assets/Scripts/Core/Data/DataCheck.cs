@@ -2,6 +2,7 @@
 // 데이터를 읽은 뒤 한 번 훑어, 0 나누기·무한 반복·순서 뒤집힘으로 게임이 멈추거나 NaN 이 화면까지 가는 값을 찾는다(QA-03).
 // 던지지 않고 문제 목록만 돌려준다. Unity DataBoot 는 에러 로그로, 테스트는 빈 목록인지 본다.
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BloodRain.Core.Data
 {
@@ -63,6 +64,28 @@ namespace BloodRain.Core.Data
             foreach (var i in d.Insights)
                 if (i.Effect == "periodic_block" && i.Params.TryGetValue("blocks", out var n) && n != 1f)
                     p.Add($"insights.{i.Id}.blocks = {n} (InsightEffects.TryBlock 은 간격마다 한 번만 막는다, 1 이어야 함)");
+
+            // 패턴 모양마다 꼭 있어야 하는 값(QA-09). 0 이면 고리가 처음부터 안쪽 전체를 때리거나, 끌어당김·되살아남이 첫 프레임에 끝난다.
+            var sets = d.BossPatterns.Select(kv => ("bosspatterns.bosses." + kv.Key, kv.Value))
+                .Concat(d.ElitePatterns.Select(kv => ("bosspatterns.elites." + kv.Key, kv.Value)))
+                .Concat(d.FinalBoss.Stages.Select(st => ("bosspatterns.final." + st.Id, st.Set)));
+            foreach (var (where, set) in sets)
+                foreach (var pt in set.Patterns.Concat(set.Phase2))
+                {
+                    string at = $"{where}.{pt.Id}";
+                    if (pt.Shape == "closing_ring" && !(pt.ShrinkPerSecond > 0)) p.Add($"{at}.shrinkPerSecond = {pt.ShrinkPerSecond} (closing_ring 은 0보다 커야 함)");
+                    if (pt.Shape == "closing_ring" && pt.MinRadius > pt.Radius) p.Add($"{at}.minRadius {pt.MinRadius} > radius {pt.Radius}");
+                    if ((pt.Shape == "inhale_exhale" || pt.Shape == "pull_line") && !(pt.PullSeconds > 0)) p.Add($"{at}.pullSeconds = {pt.PullSeconds} ({pt.Shape} 은 0보다 커야 함)");
+                }
+
+            // 운낭 시설 대사(facility:<id>)는 cheonha.json inn 시설 id 를 써야 귀환 때 맞는다.
+            var facilityIds = new HashSet<string>(c.Inn.Facilities.Select(f => f.Id));
+            foreach (var l in d.Dialogue.Unnang.Lines)
+                if (l.Kind == "facility" && l.Args.Length > 0 && !facilityIds.Contains(l.Args[0]))
+                    p.Add($"dialogue.unnang.{l.Id}.when = {l.When} (cheonha.json inn 에 없는 시설)");
+            foreach (var l in d.Dialogue.Unnang.Lines.Concat(d.Dialogue.Mok.Lines))
+                if (l.Opens != null && !facilityIds.Contains(l.Opens))
+                    p.Add($"dialogue.{l.Id}.opens = {l.Opens} (cheonha.json inn 에 없는 시설)");
             return p;
         }
 
