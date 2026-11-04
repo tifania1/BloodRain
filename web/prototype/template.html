@@ -2594,7 +2594,7 @@ function step(dt) {
 function frame(ts) {
   rafId = requestAnimationFrame(frame);
   if (!running) return;
-  let dt = Math.min(0.05, (ts - lastTs) / 1000); lastTs = ts;
+  let dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts;   // 화면을 닫을 때 lastTs 를 performance.now() 로 잡아 rAF 시각보다 늦을 수 있다(음수면 효과 반경이 음수가 됐다, WP-03)
   if (dt > 0) G.fps = lerp(G.fps, 1 / dt, 0.05);
   if (!paused && !overlay) step(dt);
   G.cam.trauma = Math.max(0, G.cam.trauma - dt * 1.5);
@@ -2603,6 +2603,8 @@ function frame(ts) {
 function endRun(won) {
   if (!running) return;
   running = false; cancelAnimationFrame(rafId);
+  // 한 프레임 안에서 쓰러진 뒤 같은 update 끝에 레벨업·보갑이 열려 결과 화면 뒤에 겹치던 것을 막는다(WP-03)
+  overlay = 'result'; ['levelup', 'brk', 'chest', 'find', 'evopick', 'pause'].forEach(id => $(id).hidden = true);
   render();
   const gs = Math.floor(G.gm * 60);
   $('restitle').textContent = won ? (isPro() ? '장삼을 쓰러뜨렸다' : '천추석 조각을 얻었다') : '쓰러졌다';
