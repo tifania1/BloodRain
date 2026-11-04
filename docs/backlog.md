@@ -60,6 +60,10 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] BGM-03 2026-11-04 — `tools/postprocess_audio.py`(표준 라이브러리 + ffmpeg): 앞뒤 무음 자르기(-50dBFS), cut_s 자르기, 루프 곡은 끝 2초를 앞머리에 등가 출력 크로스페이드(이어 돌리면 원곡의 이어진 두 샘플), 곡 전체 같은 이득으로 -18 LUFS·-1.5 dBTP, Vorbis ogg → `Assets/Audio/BGM/` + `bgm.json`. 파이썬 테스트 9개(`tools/tests`, CI·pre-push 에 붙임), `AudioQueueTests` 에 imported·bgm.json·ogg 맞물림. Unity 가져오기 설정은 unity_tasks BGM-03a
 - [x] BGM-04 2026-11-04 — `audio_pipeline.md` '생산 순서' 10단계: 회사 PC 크롬 → Gemini '음악 만들기'(full 은 Pro, short 는 Fast) → MP3 받아 `art_inbox/audio/<id>.mp3` → 길이 기계 검수(full 90초·short 20초 아래면 다시) → 사람이 귀로 듣고 feedback.md 에 고름/다시 → picked → `postprocess_audio.py`. M2 줄부터, 한 번 4곡·하룻밤 8곡 안쪽. 예약 설명을 고치는 일은 아래 BGM-04a
 - [ ] BGM-04a 대화 세션 몫: 밤 이미지 생산 예약 설명에 `audio_pipeline.md` '생산 순서'를 붙인다(PC 승인 필요). 그 전에 사람에게 Google 약관의 자동화 접근 조항을 알리고 예약으로 돌릴지 묻는다(BGM-02a 와 같이 물으면 좋다)
+- [ ] BGM-05 Core 곡 고르기 `BgmSelector`: 지금 화면(타이틀·객잔·침방·연무장·정산)·서장인지·서 있는 지역(`Regions.Nearest`)·땅의 주인 싸움·종장 단계·엔딩 → 곡 id. 돌려줄 수 있는 id 가 모두 큐에 있고, 큐의 곡이 모두 어딘가에서 불리는지 테스트. 바꾸는 때와 크로스페이드는 BGM-06 (하는 중: 클라우드 11-04 배경음)
+- [ ] BGM-06 **사람 결정 대기** — 지역 곡을 언제 바꿀지. 경지가 오르면 화면이 넓어져 지역 경계를 자주 넘나든다(7장). 추천: 서 있는 지역이 바뀐 뒤 4초 넘게 그대로면 3초 크로스페이드로 바꾸고, 땅의 주인 싸움·종장 단계·화면 전환은 바로 1초. 돌파 연출(1.4초) 동안은 곡을 바꾸지 않는다
+- [ ] BGM-07 효과음 목록(M2): 기획서 8·14장(무공·적·보상·환경, 각성 연출 소리 칸)과 M2 범위(17장)에서 실제로 울릴 소리를 사건(무엇이 일어날 때)마다 한 줄로 docs/design 의 새 파일 sfx_list.md 에. 어디서 구할지는 BGM-08 (하는 중: 클라우드 11-04 배경음)
+- [ ] BGM-08 **사람 결정 대기** — 효과음을 어디서 구할지. Gemini '음악 만들기'는 30초 곡 단위라 짧은 효과음엔 맞지 않는다. 추천: 상업 사용이 분명한 유료 효과음 묶음(한 번 사서 쓰는 라이선스)을 바탕으로, 진기 흡수 음계·풍경 같은 음높이 놀이는 코드로 음높이를 바꿔 쓴다
 
 현지화·스토어(M3 한·영·간체, M2 끝 스토어 페이지)
 - [x] L-01 2026-11-04 — 틀: 데이터 JSON 한국어가 원문, 영어·간체는 `Resources/Data/strings/<lang>.json`(키 = 파일.경로.필드, 목록은 id, 끝의 Ko 뗌, `_` 칸과 한자 칸 빼고 한글 든 문자열만). UI 원문은 `strings/ko.json`(ui. 키, 레벨업 화면 31줄부터). Core `StringCatalog`·`Strings`(없으면 한국어, 그다음 키), Unity `Presentation/Loc`. 원문 496줄. 테스트 `LocalizationTests`: 남는 키는 늘 막고 빠진 키는 `_meta.complete` 갈래만, {0} 자리 같음, 한글 안 남음, 글꼴. 영어는 Noto Serif KR 라틴으로 되고 간체는 KR 로 안 돼 Noto Serif SC(OFL)를 Art/Fonts 에 넣음(12장 글꼴). TMP 대체 글꼴은 unity_tasks L-01b
