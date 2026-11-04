@@ -89,5 +89,15 @@ namespace BloodRain.Core.Tests
             Assert.Contains("D.behavior === 'mimic'", html);
             Assert.Contains("if (pt.mimic) G.foes[i].mimic = pt.mimic;", html);   // Core Mimicry.For: 소환 패턴 mimic 이 먼저
         }
+
+        [Fact] public void 마교_혈공은_Core_BloodArt_와_같은_셈이다()
+        {
+            var html = Cheonha;
+            // R4-14: 진기 × 농도^지수(레벨만), 더 받은 진기 extraXpPerStep 마다 음 yinPerStep, 천마해체로 시작값·심마환영 기준 다시
+            foreach (var used in new[] { "Math.pow(Math.max(0, G.dens), ba.xpDensityExponent)", "Math.floor(G.simma.extra / ba.extraXpPerStep)",
+                "(steps - G.simma.steps) * ba.yinPerStep", "G.simma.base = G.simma.steps", "G.xp += bloodArtXp(v)", "G.orbSum += v * G.dens" })
+                Assert.Contains(used, html);
+            Assert.Contains("'inner_demon_might']", html);   // 심마환영이 붙는 깨달음 목록에
+        }
     }
 }

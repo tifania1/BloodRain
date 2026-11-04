@@ -356,8 +356,8 @@ const INS = DATA.insights || { choices: { base: 3, realmReward: 'insight_choice'
 const INS_BY = Object.fromEntries([...INS.insights, ...(INS.demonicInsights || [])].map(i => [i.id, i]));
 const DEMONIC_INS = new Set((INS.demonicInsights || []).map(i => i.id));
 // 이 시안에 실제로 붙는 효과. 나머지는 카드에 흐리게 나오고 골라도 아무것도 안 붙는다(왜 없는지는 INS_OFF)
-const INS_APPLIED = new Set(['first_weapon_damage', 'still_regen', 'melee_range', 'periodic_block', 'magnet_multiplier', 'yinyang_reset', 'kill_stack_might', 'might_for_health', 'low_health_frenzy']);
-const INS_OFF = { lifesteal_no_heal: '이 놀이판엔 흡혈이 없다', inner_demon_might: '이 놀이판엔 혈공(심마)이 없다' };
+const INS_APPLIED = new Set(['first_weapon_damage', 'still_regen', 'melee_range', 'periodic_block', 'magnet_multiplier', 'yinyang_reset', 'kill_stack_might', 'might_for_health', 'low_health_frenzy', 'inner_demon_might']);
+const INS_OFF = { lifesteal_no_heal: '이 놀이판엔 흡혈이 천마해체에만 있다' };
 const ARC_WEAPON = { behavior: 'front_arc' };   // 검기 = 앞쪽 반원. 이 시안의 첫 번째 공격 무공이라 일검파만도 여기에 붙는다
 // 시안 무공 셋의 바탕 값(길이는 m × 경지 축척, 시간은 초). 플레이어와 혈영 분신(mimic, R4-11)이 같이 읽는다.
 // 피해는 검기 한 방 damage 가 바탕이고 도는 검·먹 파동은 그 배(damageRatio). 플레이어 쪽은 여기에 경지 power·공력·심법·깨달음이 붙는다
@@ -733,7 +733,7 @@ function startLife(c) {
     awake: new Set(), done: new Set(), armed: {}, armR: {}, fight: null, engage: null, ended: false, auto: false, fast, reachT: [0], bossT: {},
     cards: {}, extra: {}, pendingCards: 0, offers: null,
     eliteN: 0, shots: [], pools: [], fogs: [], rocks: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
-    yy: clamp(body.yin, YY.min, YY.max), bless: null, taijiCd: {},
+    yy: clamp(body.yin, YY.min, YY.max), simma: { extra: 0, steps: 0, base: 0 }, bless: null, taijiCd: {},
     shadow: null, bellCd: {}, dropBells: [], pagodaCache: new Map(), pagodaTier: -1,
     ins: [], insEff: {}, pendingIns: 0, insRealms: [], insOffers: null, still: 0, blockCd: 0, salgiKills: 0, yyTilt: 1, yyCarry: 0,
   };
@@ -924,9 +924,21 @@ function lifeEvents() {
 function mergeOrbs() { const o = G.orbs.splice(0, 60); const sum = o.reduce((a, b) => a + b.v, 0); G.orbs.push({ x: G.p.x, y: G.p.y, v: sum, heal: 0, pull: true }); }
 function gainXp(v) {
   const fog = GIM.poisonFog && inFog(G.p.x, G.p.y) ? GIM.poisonFog.qiMultiplier : 1;   // 독안개 안에서 얻는 진기 2배(레벨만)
-  G.xp += v * G.body.growth * fog;           // 심득은 레벨만 올린다
+  G.xp += bloodArtXp(v) * G.body.growth * fog;   // 심득은 레벨만 올린다. 마교 혈공도 레벨만(윤회의 기는 구슬 값 그대로)
   G.orbSum += v * G.dens; G.orbRaw += v;     // 윤회의 기는 구슬 값 × 그 자리 혈운 농도(심득 전)
   levelLoop();
+}
+// 마교 혈공(R4-14, 기획서 5장, Core BloodArt): 진기 × 그 자리 혈운 농도^xpDensityExponent. 농도 덕에 더 받은 진기가 extraXpPerStep 쌓일 때마다
+// 음양 게이지가 음 쪽으로 yinPerStep(심마). 천마해체를 쓰면 게이지가 시작값으로 돌아온다(useUlt). 농도 1 아래면 덜 받고 심마는 줄지 않는다
+function bloodArtXp(v) {
+  const ba = G.sect.bloodArt; if (!ba || !(ba.xpDensityExponent > 0)) return v;
+  const got = v * Math.pow(Math.max(0, G.dens), ba.xpDensityExponent), extra = got - v;
+  if (extra > 0) {
+    G.simma.extra += extra;
+    const steps = ba.extraXpPerStep > 0 ? Math.floor(G.simma.extra / ba.extraXpPerStep) : 0;
+    if (steps > G.simma.steps) { G.yy = clamp(G.yy - (steps - G.simma.steps) * ba.yinPerStep, YY.min, YY.max); G.simma.steps = steps; }
+  }
+  return got;
 }
 function levelLoop() {
   while (!G.brk && G.xp >= req(G.lv)) {
@@ -1215,7 +1227,7 @@ function useUlt() {
   const dur = UPar(u, 'durationSeconds', 0), per = dur > 0 && UPar(u, 'mightPerSecond', 0) > 0 ? 1 : 0;
   G.ultCast = { u, el: 0, done: 0, per, dur, total: u.mightMultiplier <= 0 ? 0 : per > 0 ? Math.max(1, Math.ceil(dur / per - 1e-4)) : 1, a: Math.atan2(G.p.fy, G.p.fx) };
   if (u.id === 'taiji_muryang') G.taiji = dur;   // 또 쓰면 새로 5초
-  if (u.id === 'cheonma_haeche') { G.diss = dur; if (G.sect.bloodArt && G.sect.bloodArt.resetUltimate === u.id) G.yy = G.body.yin; }   // 혈공: 음양 게이지가 시작값으로
+  if (u.id === 'cheonma_haeche') { G.diss = dur; if (G.sect.bloodArt && G.sect.bloodArt.resetUltimate === u.id) { G.yy = clamp(G.body.yin, YY.min, YY.max); G.simma.base = G.simma.steps; } }   // 혈공: 음양 게이지가 시작값으로, 심마환영 공력도 사라진다(Core OnDemonicReset)
   G.ultN = (G.ultN || 0) + 1; G.trauma = 1; toast(u.nameKo, u.summary || '');
   return true;
 }
@@ -1536,8 +1548,9 @@ function takeInsight(def) {
 }
 // 처치·기혈에 따라 움직이는 몫(Core InsightEffects.Bonus): 살기충천 공력, 혈광 쾌속
 function insMight() {
-  const k = G.insEff.kill_stack_might;
-  return k ? Math.min(k.mightMax, Math.floor(Math.max(0, G.kills - G.salgiKills) / k.killsPerStack) * k.mightPerStack) : 0;
+  const k = G.insEff.kill_stack_might, sm = G.insEff.inner_demon_might;
+  return (k ? Math.min(k.mightMax, Math.floor(Math.max(0, G.kills - G.salgiKills) / k.killsPerStack) * k.mightPerStack) : 0)
+    + (sm ? Math.min(sm.mightMax, Math.max(0, G.simma.steps - G.simma.base) * sm.mightPerStep) : 0);   // 심마환영: 마지막 천마해체 뒤 심마로 기운 횟수마다
 }
 const frenzy = () => { const f = G.insEff.low_health_frenzy; return f && G.p.hp / G.p.maxHp < f.healthThreshold ? f : null; };
 function insCard(def) {
@@ -3070,6 +3083,7 @@ window.__ch = {
   step: (dt) => update(dt), render,
   // 오의(R-16): ult(v) 게이지를 v 로(빼면 지금 값), useUlt() 쓰기, ultInfo() 지금 오의·위력·연속·태극무량·천마해체
   ult(v) { if (v != null) G.ult = Math.min(UC.max, v); return G.ult; }, useUlt: () => useUlt(),
+  simma: () => Object.assign({ yy: G.yy, might: +insMight().toFixed(3) }, G.simma), xp: v => { gainXp(v); return G.lv; },   // 마교 혈공(R4-14): 더 받은 진기·심마 횟수·기준·게이지, xp(v) 구슬 값 v 를 지금 자리에서 줍기
   ultInfo: () => ({ id: G.sect.ultimate, uses: G.ultN || 0, casts: ultCasts(), power: ultPower(), rate: +ultRate().toFixed(3), taiji: +G.taiji.toFixed(2), diss: +G.diss.toFixed(2), shots: G.ultShots.length, cast: G.ultCast && { done: G.ultCast.done, total: G.ultCast.total } }),
   sim(seconds, auto) {
     running = false; G.auto = auto !== false; const out = [];
