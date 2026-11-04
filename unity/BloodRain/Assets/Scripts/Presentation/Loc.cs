@@ -71,6 +71,7 @@ namespace BloodRain.Presentation
             }
             var asset = lang == "ko" ? null : Resources.Load<TextAsset>(Dir + lang);
             if (lang != "ko" && asset == null) Debug.LogError($"[Loc] Resources/{Dir}{lang}.json 이 없다");
+            FontFallback.Apply(lang); // 간체·번체 대체 글꼴 순서(L-08b)
             return Strings.Load(lang, _catalog, asset != null ? asset.text : null);
         }
 

@@ -58,7 +58,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 다섯 화면 × en·zh 에서 넘침 없음
   - 찍기: `docs/unity_shots/L-01b/` 의 `<chimbang|library|settlement|training|region>_<en|zh>.png`
 
-- [ ] L-08b 번체 글꼴과 언어별 대체 순서 · 먼저: L-01b1
+- [x] L-08b 번체 글꼴과 언어별 대체 순서 · 먼저: L-01b1 — 2026-11-04 메뉴 `번체 글꼴(Noto Serif TC SDF)` 로 동적 SDF 2048, `Presentation/FontFallback.cs` 가 Loc 언어를 읽을 때 SC·TC 둘의 자리만 바꿈(zh-Hant 면 TC 먼저, YujiBoku 자리는 그대로). 레벨업·침방 번체 두부 없음. `Loc.FromSystem` 은 원래 번체→zh-Hant. 본 것: 번체 침방의 대표 인물이 `唐 Yeonhwa` 처럼 로마자(zh 문자열에 인물 이름이 빠진 듯)
   - 할 것: `Art/Fonts/NotoSerifTC-Regular.otf` 로 TMP 동적 SDF(`NotoSerifTC SDF.asset`, Dynamic, 아틀라스 2048). 간체·번체가 같은 코드포인트를 많이 쓰므로 `Loc.Lang` 이 zh-Hant 면 TC 를, zh-Hans 면 SC 를 KR 대체 목록 앞쪽에 두는 작은 스크립트(Presentation 쪽, 언어를 바꿀 때 `TMP_Settings.fallbackFontAssets` 나 KR 에셋 fallbackFontAssetTable 순서를 바꿈)가 필요하면 만든다. 기기 언어가 번체면 zh-Hant 로 시작하는지(`Loc.FromSystem`).
   - 쓸 것: `Presentation/Loc.cs`, `Resources/Data/strings/zh-Hant.json`
   - 메뉴: `BloodRain/Bootstrap/번체 글꼴(Noto Serif TC SDF)` 를 새로(L-01b1 메뉴와 같은 파일), L-01b2 의 언어 바꾸기에 zh-Hant 하나 더

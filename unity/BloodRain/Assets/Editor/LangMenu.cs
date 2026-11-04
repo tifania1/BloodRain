@@ -12,6 +12,7 @@ namespace BloodRain.Editor
         [MenuItem(Root + "ko")] static void Ko() => Set("ko");
         [MenuItem(Root + "en")] static void En() => Set("en");
         [MenuItem(Root + "zh-Hans")] static void ZhHans() => Set("zh-Hans");
+        [MenuItem(Root + "zh-Hant")] static void ZhHant() => Set("zh-Hant");
 
         static void Set(string lang)
         {

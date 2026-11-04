@@ -19,6 +19,9 @@ namespace BloodRain.Editor
         // 간체 중국어(L-01b1). 한국어 글꼴에 없는 간체 자형(华·剑·气)을 채운다. 대체 목록 맨 뒤.
         const string ScFontPath = "Assets/Art/Fonts/NotoSerifSC-Regular.otf";
         const string ScFontAssetPath = "Assets/Art/Fonts/NotoSerifSC SDF.asset";
+        // 번체 중국어(L-08b). 순서는 언어에 따라 FontFallback 이 바꾼다.
+        const string TcFontPath = "Assets/Art/Fonts/NotoSerifTC-Regular.otf";
+        const string TcFontAssetPath = "Assets/Art/Fonts/NotoSerifTC SDF.asset";
 
         static readonly Color Ink = new Color(0.12f, 0.10f, 0.09f);
 
@@ -55,6 +58,21 @@ namespace BloodRain.Editor
             EditorUtility.SetDirty(body);
             AssetDatabase.SaveAssets();
             return sc;
+        }
+
+        /// <summary>번체 글꼴 Noto Serif TC 동적 SDF(아틀라스 2048)를 만들어 본문 글꼴 대체 목록 맨 뒤에 건다. 간체 글꼴도 같이 챙긴다.</summary>
+        [MenuItem("BloodRain/Bootstrap/번체 글꼴(Noto Serif TC SDF)")]
+        public static TMP_FontAsset EnsureTraditionalFont()
+        {
+            EnsureSimplifiedFont();
+            var body = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BodyFontAssetPath);
+            var tc = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TcFontAssetPath);
+            if (tc == null) tc = CreateDynamic(TcFontPath, TcFontAssetPath, "NotoSerifTC SDF", 2048);
+            if (body == null || tc == null) return tc;
+            if (!body.fallbackFontAssetTable.Contains(tc)) body.fallbackFontAssetTable.Add(tc);
+            EditorUtility.SetDirty(body);
+            AssetDatabase.SaveAssets();
+            return tc;
         }
 
         static TMP_FontAsset CreateDynamic(string fontPath, string assetPath, string name, int atlas = 1024)
