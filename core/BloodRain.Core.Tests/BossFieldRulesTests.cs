@@ -258,6 +258,19 @@ namespace BloodRain.Core.Tests
             Assert.False(HalfFieldFog.Covers(0, 3f));
         }
 
+        /// <summary>R-11w: 웹 천하 시안이 같은 셈을 쓴다(북두칠성 꼴, 끌림 비율, 세로줄 독안개, 게이지로 정하는 내 색, 분열 되살림).</summary>
+        [Fact] public void 웹_천하_시안이_Core_와_같은_셈을_쓴다()
+        {
+            var html = ReadRepoFile("web", "lookdev", "cheonha.html");
+            string N(float v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var js = "const BIG_DIPPER = [" + string.Join(", ", BossPatterns.BigDipperShape.Select(s => $"[{N(s.x)}, {N(s.y)}]")) + "];";
+            Assert.Contains(js, html);
+            foreach (var used in new[] { "ratio: pt.pullSpeedRatio", "nx: sg, ny: 0", "yyLean()", "S.pt.rejoinSeconds", "S2.pt.healthShare", "if (P.split && P.split.on) return;" })
+                Assert.Contains(used, html);
+            foreach (var old in new[] { "4.6 * k * 0.55", "[-0.5, -0.1], [-0.33, -0.05]", "mirror: f", "yySide(fd) > 0" })
+                Assert.DoesNotContain(old, html);
+        }
+
         [Fact] public void 기획서_태극권_줄에_끌리는_세기가_있다()
         {
             var row = GddTable(GddSection("혈허진인")).Single(r => r[0] == "태극권");

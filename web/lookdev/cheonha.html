@@ -251,6 +251,10 @@ const LOCAL_BY = {};   // 장 이름 → 그 지역 고유 적
 for (const e of Object.values(RFOE)) if (e.chapter && e.family !== 'elite') (LOCAL_BY[e.chapter] = LOCAL_BY[e.chapter] || []).push(e);
 const YY = BAL.yinyang || { min: -100, max: 100, passivePerLevel: 8 };
 const pspd = v => v / 100 * 4.6;   // 패턴 속도(플레이어 기본 이동속도 100 기준) → 화면 기준 m/s
+// 칠성검진 북두칠성 꼴(Core BossPatterns.BigDipperShape 와 같은 값). 손잡이 끝 → 국자 끝이 +x, x 에 전체 길이를 곱한다. 일곱째(국자 끝)에 플레이어
+const BIG_DIPPER = [[0, 0], [0.18, 0.05], [0.36, 0.03], [0.54, 0.11], [0.67, 0.3], [0.93, 0.33], [1, 0.09]];
+// 흑백의 내 색(Core YinYangGauge.Leaning): 태극 구간이면 0(양쪽 다 내 색), 양으로 기울면 +1(흰 구역), 음이면 -1(검은 구역)
+const yyLean = () => Math.abs(G.yy) <= (YY.harmonyRange || 25) ? 0 : Math.sign(G.yy);
 // 레벨업 카드(T-21): 몸에 바로 붙는 능력치만 쓰는 심법(passives.json) + 이 시안의 무공 셋
 const BODY_STATS = new Set(['MaxHealth', 'MoveSpeed', 'Might', 'Recovery', 'Armor', 'CooldownReduction', 'Magnet', 'Growth', 'FoodHeal', 'Area']);
 const LV = DATA.levels || { weaponMax: 8, passiveMax: 5 };
@@ -710,14 +714,29 @@ function eliteKind(nth) {
 }
 function hurt(f, dmg, kx, ky, kb) {
   if (f.dead) return;
-  if (f.mirror) { f.flash = 0.08; hurt(f.mirror, dmg, 0, 0, 0); return; }   // 분열한 몸: 맞은 만큼 본체가 깎인다
+  if (f.down) return;   // 분열해 누운 몸
   f.hp -= dmg; f.flash = 0.08;
   if (kb && !f.boss) { f.kx += kx * kb; f.ky += ky * kb; }
-  if (f.hp <= 0) kill(f);
+  if (f.hp <= 0) { if (f.splitOf || (f.pat && f.pat.split && f.pat.split.on)) splitDown(f); else kill(f); }
+}
+// 분열(Core BossSplit): 쓰러진 몸은 눕고, 첫 몸이 누운 뒤 rejoinSeconds 안에 다 눕지 않으면 누운 몸이 남은 몸 가운데 가장 많은 기혈로 일어난다
+function splitDown(b) {
+  const root = b.splitOf || b, S = root.pat.split;
+  b.hp = 0; b.down = true; G.fx.push({ k: 'puff', x: b.x, y: b.y, r: b.r * 1.6, t: 0, life: 0.5, red: true });
+  if (S.bodies.every(x => x.down)) { for (const c of S.bodies) if (c !== root) c.dead = true; root.down = false; kill(root); return; }
+  if (S.left == null) S.left = S.pt.rejoinSeconds;
+}
+function splitTick(root, dt) {
+  const S = root.pat.split;
+  if (!S.on || S.left == null) return;
+  S.left -= dt; if (S.left > 0) return;
+  S.left = null;
+  const best = Math.max(...S.bodies.map(b => b.hp));
+  for (const b of S.bodies) if (b.down) { b.down = false; b.hp = best; G.fx.push({ k: 'wave', x: b.x, y: b.y, r: b.r * 3, t: 0, life: 0.4 }); }
 }
 function kill(f, crushed) {
   f.dead = true;
-  if (f.mirror) return;
+  if (f.splitOf) return;
   G.fx.push({ k: crushed ? 'crush' : 'puff', x: f.x, y: f.y, r: f.r * 1.6, t: 0, life: crushed ? 0.35 : 0.5, red: f.e >= 4 || f.boss });
   if (f.boss) { G.kills++; bossDown(f); return; }
   const d = f.def, k = sc(f.e);
@@ -817,7 +836,7 @@ function startFight(id) {
   $('bossname').textContent = def.nameKo; $('bossbar').hidden = false;
 }
 function bossDown(f) {
-  for (const c of G.foes) if (c.mirror === f) c.dead = true;
+  for (const c of G.foes) if (c.splitOf === f) c.dead = true;
   G.fight = null; G.done.add(f.reg); $('bossbar').hidden = true;
   if (G.bossT[f.reg]) G.bossT[f.reg].secs = Math.round(G.t - G.bossT[f.reg].start);
   if (f.reg === (FINAL && FINAL.id)) { G.sealed = true; toast('혈마를 봉했다', '봉마곡의 피가 걷힌다'); setTimeout(() => endLife('sealed'), 1400); return; }
@@ -883,8 +902,8 @@ function autopilot() {
   const away = (x, y, r, w) => { const dx = p.x - x, dy = p.y - y, d = Math.hypot(dx, dy) || 1; if (d < r + p.r) { ax += dx / d * w; ay += dy / d * w; } };
   for (const f of G.foes) if (f.pat) {
     for (const fd of f.pat.fields) {
-      const nx = fd.kind === 'yy' ? Math.cos(fd.a) : fd.nx, ny = fd.kind === 'yy' ? Math.sin(fd.a) : fd.ny;
-      if ((p.x - fd.x) * nx + (p.y - fd.y) * ny > 0) { ax -= nx * 2; ay -= ny * 2; }
+      if (fd.kind === 'yy') { if (yyWrong(fd)) { const c = yyColor(fd); ax += Math.cos(fd.a) * 2 * c; ay += Math.sin(fd.a) * 2 * c; } continue; }
+      if ((p.x - fd.x) * fd.nx + (p.y - fd.y) * fd.ny >= -p.r) { ax -= fd.nx * 2; ay -= fd.ny * 2; }
     }
     for (const z of f.pat.zones) if (!(z.delay > 0)) away(z.x, z.y, z.r, 2);
   }
@@ -994,7 +1013,7 @@ function update(rdt) {
   if (G.cd <= 0) {
     G.cd = 0.8 * (1 - cdr);
     let tg = null, best = range * 1.6;
-    for (const f of G.foes) { if (f.dead || (f.e < G.tier && !f.boss)) continue; const d = Math.hypot(f.x - p.x, f.y - p.y) - f.r; if (d < best) { best = d; tg = f; } }
+    for (const f of G.foes) { if (f.dead || f.down || (f.e < G.tier && !f.boss)) continue; const d = Math.hypot(f.x - p.x, f.y - p.y) - f.r; if (d < best) { best = d; tg = f; } }
     const a = tg ? Math.atan2(tg.y - p.y, tg.x - p.x) : Math.atan2(p.fy, p.fx);
     const dirs = G.tier >= 1 ? [a, a + Math.PI] : [a];
     for (const da of dirs) {
@@ -1023,10 +1042,12 @@ function update(rdt) {
   const aura = p.r * 1.7, recycle = G.view * SPT.recycleBeyondDiagonal;
   for (const f of G.foes) {
     if (f.dead) continue;
+    if (f.pat && f.pat.split) splitTick(f, dt);
+    if (f.down) continue;
     f.flash = Math.max(0, f.flash - dt); f.contact = Math.max(0, f.contact - dt); if (f.contact2) f.contact2 -= dt;
     const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy) || 1;
     // 아래 경지 덩이는 기세에 눌려 쓰러진다
-    if (!f.boss && !f.mirror && f.e < G.tier && d < aura + f.r) { kill(f, true); continue; }
+    if (!f.boss && !f.splitOf && f.e < G.tier && d < aura + f.r) { kill(f, true); continue; }
     if (f.stunT > 0) { f.stunT -= dt; f.kx = 0; f.ky = 0; continue; }   // 범종 기절: 걷기·패턴·닿기 모두 멈춤(Core: 기절한 보스는 BossPatterns.Tick 을 안 부른다)
     f.hop = (f.hop + dt / 0.6) % 1;
     if (f.pat && (f.boss || d < G.view * LD.eliteRange)) bossPatterns(f, dt);
@@ -1187,7 +1208,7 @@ function bossPatterns(f, dt) {
       if (pt.shape === 'rotating_beams') {
         const a0 = Math.atan2(p.y - f.y, p.x - f.x) + (pt.startOffsetDegrees || 0) * Math.PI / 180;
         P.beams.push({ pt, a: a0, warm: pt.telegraphSeconds, hit: 0 });
-      } else if (pt.shape === 'split') P.split = { pt, t: pt.telegraphSeconds, clones: [] };
+      } else if (pt.shape === 'split') P.split = { pt, t: pt.telegraphSeconds, on: false, bodies: [], left: null };
       else if (pt.shape === 'sweep_wave') P.waves = { pt, next: pt.telegraphSeconds, list: [] };
       else if (pt.shape === 'split_field') P.fields.push({ kind: 'yy', pt, x: f.x, y: f.y, a: Math.atan2(p.y - f.y, p.x - f.x), warm: pt.telegraphSeconds, left: Infinity });
     }
@@ -1207,7 +1228,7 @@ function bossPatterns(f, dt) {
     fd.left -= dt;
     if (fd.kind === 'yy') { fd.x = f.x; fd.y = f.y; fd.a += (fd.pt.turnDegreesPerSecond || 0) * Math.PI / 180 * dt; continue; }
     fd.hit -= dt;   // 반쪽 독안개: 그 반쪽에 서 있으면 hitIntervalSeconds 마다
-    if (fd.hit <= 0 && (p.x - fd.x) * fd.nx + (p.y - fd.y) * fd.ny > 0) { fd.hit = fd.pt.hitIntervalSeconds || 0.5; hitPlayer(hurtBy(fd.pt)); }
+    if (fd.hit <= 0 && (p.x - fd.x) * fd.nx + (p.y - fd.y) * fd.ny >= -p.r) { fd.hit = fd.pt.hitIntervalSeconds || 0.5; hitPlayer(hurtBy(fd.pt)); }
   }
   P.fields = P.fields.filter(fd => fd.left > 0);
   for (const g of P.rings) {
@@ -1234,23 +1255,23 @@ function bossPatterns(f, dt) {
     }
     Wv.list = Wv.list.filter(w => w.left > 0);
   }
-  if (P.split) {   // 분열: 본체 곁에 몸 둘이 더 생겨 같이 쫓는다. 어느 몸을 베어도 본체가 깎이고, rejoinSeconds 뒤 다시 하나로
+  if (P.split && !P.split.on) {   // 분열(Core BossSplit): 쓰러지는 몸짓(예고) 뒤 남은 기혈을 셋이 healthShare 씩 나눠 scatter 둘레에 선다
     const S2 = P.split; S2.t -= dt;
     if (S2.t <= 0) {
-      if (S2.clones.length) { for (const c of S2.clones) c.dead = true; S2.clones = []; S2.t = set.phase2IntervalSeconds; G.fx.push({ k: 'wave', x: f.x, y: f.y, r: f.r * 3, t: 0, life: 0.4 }); }
-      else {
-        for (let i = 1; i < S2.pt.count; i++) {
-          const a = rand(0, TAU), c = { e: f.e, boss: false, mirror: f, x: f.x + Math.cos(a) * S2.pt.scatter * k, y: f.y + Math.sin(a) * S2.pt.scatter * k, r: f.r, hp: 1, maxHp: 1, sp: f.sp * 1.2, dmg: f.dmg, hop: 0, flash: 0, contact: 0, kx: 0, ky: 0, xv: 0 };
-          G.foes.push(c); S2.clones.push(c);
-        }
-        S2.t = S2.pt.rejoinSeconds;
+      const each = f.hp * S2.pt.healthShare, cx = f.x, cy = f.y, a0 = rand(0, TAU), n = S2.pt.count, R = S2.pt.scatter * k;
+      S2.on = true; S2.left = null; S2.bodies = [f];
+      f.hp = each; f.splitMax = each; f.x = cx + Math.cos(a0) * R; f.y = cy + Math.sin(a0) * R;
+      for (let i = 1; i < n; i++) {
+        const a = a0 + i * TAU / n, c = { e: f.e, boss: false, splitOf: f, x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, r: f.r * 0.8, hp: each, maxHp: each, sp: f.sp, dmg: f.dmg, hop: 0, flash: 0, contact: 0, kx: 0, ky: 0, xv: 0 };
+        G.foes.push(c); S2.bodies.push(c);
       }
+      G.fx.push({ k: 'wave', x: cx, y: cy, r: R, t: 0, life: 0.4 });
     }
   }
   if (P.inhale) {   // 태극권: 들이쉬는 동안 radius 안을 끌어당기고, 다 들이쉬면 burstRadius 터짐
     const I = P.inhale; I.t -= dt;
     const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy) || 1;
-    if (d < I.r && d > f.r + p.r && p.dashT <= 0) { const v = Math.min(d - f.r - p.r, 4.6 * k * 0.55 * dt); p.x += dx / d * v; p.y += dy / d * v; }
+    if (d < I.r && d > f.r + p.r && p.dashT <= 0) { const v = Math.min(d - f.r - p.r, pspd(100) * I.ratio * k * dt); p.x += dx / d * v; p.y += dy / d * v; }
     if (I.t <= 0) { P.inhale = null; P.hold = false; G.fx.push({ k: 'wave', x: f.x, y: f.y, r: I.burst, t: 0, life: 0.5 }); if (d < I.burst + p.r) hitPlayer(I.dmg); }
   }
   for (const z of P.zones) {
@@ -1266,6 +1287,7 @@ function bossPatterns(f, dt) {
     }
   }
   P.zones = P.zones.filter(z => !z.done);
+  if (P.split && P.split.on) return;   // 분열한 동안은 패턴 시계가 멈춘다(기절과 같은 규칙)
   if (P.recover > 0) P.recover -= dt;
   P.timer -= dt;   // 간격은 패턴이 시작된 시각부터 잰다(예고 중에도 흐른다)
   if (P.cur) {
@@ -1293,8 +1315,8 @@ function bossPatterns(f, dt) {
     const pts = [];
     if (pt.aim === 'self') pts.push([f.x, f.y]);
     else if (pt.arrangement === 'big_dipper') {
-      const L = (pt.length || 10) * k, rot = rand(0, TAU), D = [[-0.5, -0.1], [-0.33, -0.05], [-0.17, -0.07], [0, 0], [0.12, 0.18], [0.36, 0.2], [0.42, -0.02]];
-      for (const [u, v] of D) pts.push([p.x + (u * Math.cos(rot) - v * Math.sin(rot)) * L, p.y + (u * Math.sin(rot) + v * Math.cos(rot)) * L]);
+      const L = pt.length * k, rot = Math.atan2(f.y - p.y, f.x - p.x) + Math.PI, E = BIG_DIPPER[BIG_DIPPER.length - 1];
+      for (const [u0, v0] of BIG_DIPPER) { const u = (u0 - E[0]) * L, v = (v0 - E[1]) * L; pts.push([p.x + u * Math.cos(rot) - v * Math.sin(rot), p.y + u * Math.sin(rot) + v * Math.cos(rot)]); }
     } else { const sp = (pt.scatter || 2.5) * k; for (let i = 0; i < pt.count; i++) pts.push([p.x + rand(-sp, sp), p.y + rand(-sp, sp)]); }
     const bell = pt.leaveUses && GIM.bell ? { life: pt.leaveSeconds, uses: pt.leaveUses, touch: GIM.bell.touchRadius * k, stunR: GIM.bell.stunRadius * k } : null;   // 범종 낙하: 떨어진 자리에 종이 남는다
     for (const [x, y] of pts) P.zones.push({ x, y, r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt), pool, bell });
@@ -1303,10 +1325,10 @@ function bossPatterns(f, dt) {
     for (let i = 0; i < pt.count; i++) P.zones.push({ x: p.x, y: p.y, r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt), delay: i * (pt.waveIntervalSeconds || 0.3), land: true, pool });
     P.cur = null;
   } else if (pt.shape === 'half_field') {
-    // 반쪽 독안개: 처음엔 플레이어가 선 쪽, 그다음부터 번갈아(alternate)
-    const nx = p.x - f.x, ny = p.y - f.y, n = Math.hypot(nx, ny) || 1, sg = P.hfSide === 0 ? 1 : -P.hfSide;
-    if (pt.alternate) P.hfSide = sg;
-    P.fields.push({ kind: 'half', pt, x: f.x, y: f.y, nx: nx / n * sg, ny: ny / n * sg, warm: pt.telegraphSeconds, left: pt.leaveSeconds, hit: 0 });
+    // 반쪽 독안개(Core HalfFieldFog): 보스를 지나는 세로줄로 나눠, 처음엔 플레이어가 선 쪽, 그다음부터 번갈아(alternate)
+    const sg = P.hfSide !== 0 && pt.alternate ? -P.hfSide : (p.x - f.x >= 0 ? 1 : -1);
+    P.hfSide = sg;
+    P.fields.push({ kind: 'half', pt, x: f.x, y: f.y, nx: sg, ny: 0, warm: pt.telegraphSeconds, left: pt.leaveSeconds, hit: 0 });
     P.cur = null;
   } else if (pt.shape === 'split_field') {
     P.fields.push({ kind: 'yy', pt, x: f.x, y: f.y, a: P.ca, warm: pt.telegraphSeconds, left: pt.leaveSeconds || Infinity });
@@ -1347,7 +1369,7 @@ function resolvePattern(f, pt, k, dmg) {
     const v = pspd(pt.projectileSpeed) * k;
     f.dashing = { vx: Math.cos(P.ca) * v, vy: Math.sin(P.ca) * v, left: pt.length * k, w: pt.width * k, dmg, hit: false, rec: pt.recoverySeconds || 0 };
   } else if (pt.shape === 'inhale_exhale') {
-    P.inhale = { t: pt.pullSeconds, r: pt.radius * k, burst: pt.burstRadius * k, dmg }; P.hold = true;
+    P.inhale = { t: pt.pullSeconds, r: pt.radius * k, burst: pt.burstRadius * k, ratio: pt.pullSpeedRatio, dmg }; P.hold = true;
   } else if (pt.shape === 'closing_ring') {
     P.rings.push({ pt, x: P.ax, y: P.ay, R: pt.radius * k, min: (pt.minRadius || 1) * k, shrink: pt.shrinkPerSecond * k, n: pt.count, w: pt.width * k, a: rand(0, TAU), hit: 0, left: 0.6 });
   }
@@ -1522,7 +1544,7 @@ function regionGimmicks(dt) {
   if (fg && G.fogs.length) {
     G.fogs = G.fogs.filter(f => G.t - f.t0 < fg.spreadSeconds + fg.holdSeconds + fg.fadeSeconds);
     if (inFog(p.x, p.y) && G.sect.id !== 'tang') drainPlayer(p.maxHp * fg.healthLossPerSecond * dt);
-    for (const f of G.foes) if (!f.dead && !f.mirror && !(f.boss && fg.bossImmune) && inFog(f.x, f.y)) { f.hp -= f.maxHp * fg.healthLossPerSecond * dt; if (f.hp <= 0) kill(f); }
+    for (const f of G.foes) if (!f.dead && !f.splitOf && !(f.boss && fg.bossImmune) && inFog(f.x, f.y)) { f.hp -= f.maxHp * fg.healthLossPerSecond * dt; if (f.hp <= 0) kill(f); }
   }
   // 태극 바닥: 밟으면 음양 게이지 반대 속성 30초. 게이지가 0이면 아무 일도 없고 바닥도 쓰이지 않는다
   const tj = GIM.taijiFloor;
@@ -1568,14 +1590,16 @@ function drainPlayer(v) {
   p.hp -= v * takenMul();
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
 }
-// 흑백(혈허진인): 검은 쪽에 서 있으면 받는 피해 damageTakenMultiplier 배
+// 흑백(혈허진인, Core SplitFieldDamageTaken): 예고 때 플레이어 쪽이 검은(음) 구역. 내 색(yyLean)이 아닌 구역이면 받는 피해 damageTakenMultiplier 배, 태극 구간이면 양쪽 다 안전
 function takenMul() {
   let m = 1;
-  for (const f of G.foes) if (f.pat) for (const fd of f.pat.fields) if (fd.kind === 'yy' && fd.warm <= 0 && yySide(fd) > 0) m = Math.max(m, fd.pt.damageTakenMultiplier || 1);
+  for (const f of G.foes) if (f.pat) for (const fd of f.pat.fields) if (fd.kind === 'yy' && fd.warm <= 0 && yyWrong(fd)) m = Math.max(m, fd.pt.damageTakenMultiplier || 1);
   const fz = frenzy();   // 혈광폭주: 기혈이 문턱 아래면 받는 피해 × (1 + damageTaken)
   return fz ? m * (1 + fz.damageTaken) : m;
 }
 const yySide = fd => (G.p.x - fd.x) * Math.cos(fd.a) + (G.p.y - fd.y) * Math.sin(fd.a);
+const yyColor = fd => yySide(fd) >= -1e-4 ? -1 : 1;   // -1 검은(음), +1 흰(양). 경계 위는 검은 쪽
+const yyWrong = fd => { const l = yyLean(); return l !== 0 && l !== yyColor(fd); };
 
 // ───────── 그리기 ─────────
 function resize() {
@@ -1708,7 +1732,7 @@ function render() {
   const foes = G.foes.slice().sort((a, b) => a.y - b.y);
   for (const f of foes) {
     const X = sx(f.x), Y = sy(f.y), R = f.r * PPM; if (X < -R * 2 || X > VW + R * 2 || Y < -R * 2 || Y > VH + R * 2) continue;
-    if (f.mirror) { const s2 = R * 2.6; ctx.globalAlpha = 0.7; ctx.drawImage(demon, X - s2 / 2, Y - s2 * 0.6, s2, s2); ctx.globalAlpha = 1; continue; }
+    if (f.splitOf || f.down) { const s2 = R * 2.6; ctx.globalAlpha = f.down ? 0.25 : 0.8; ctx.drawImage(demon, X - s2 / 2, Y - s2 * 0.6, s2, s2); ctx.globalAlpha = 1; if (!f.down) drawHpRing(X, Y, R, f); continue; }
     if (f.boss) { const s2 = R * 2.6; ctx.drawImage(demon, X - s2 / 2, Y - s2 * 0.6, s2, s2); if (f.flash > 0) { ctx.globalAlpha = 0.3; ctx.fillStyle = '#FFF8EC'; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; } drawHpRing(X, Y, R, f); continue; }
     const lift = f.hop < 0.72 && !f.pat ? Math.sin(f.hop / 0.72 * Math.PI) * R * 0.25 : 0;
     const s2 = R * 2.6, tint = foeTint(f);
@@ -2095,7 +2119,7 @@ function updateHud() {
   $('kills').textContent = `처치 ${fmtN(G.kills)}`;
   $('qi').textContent = `윤회의 기 +${fmtN((QI.perOrbValue * G.orbSum + G.bossFirst.length * QI.bossFirstKill + G.bossRepeat.length * QI.bossRepeatKill + G.newVisits.length * QI.firstVisitRegion + G.newRealms.length * QI.firstReachRealm) * G.body.qiMul)}`;
   $('stones').textContent = `봉인석 ${stonesHeld()}/${STONES_ALL}`;
-  if (G.fight) $('bosshp').style.width = (Math.max(0, G.fight.hp / G.fight.maxHp) * 100).toFixed(1) + '%';
+  if (G.fight) { const S = G.fight.pat && G.fight.pat.split, hp = S && S.on ? S.bodies.reduce((t, b) => t + Math.max(0, b.hp), 0) : G.fight.hp; $('bosshp').style.width = (Math.max(0, hp / G.fight.maxHp) * 100).toFixed(1) + '%'; }
   measureSafe();
 }
 let last = 0, hudAcc = 0;

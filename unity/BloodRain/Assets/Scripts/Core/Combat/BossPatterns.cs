@@ -334,6 +334,9 @@ namespace BloodRain.Core.Combat
             (0f, 0f), (0.18f, 0.05f), (0.36f, 0.03f), (0.54f, 0.11f), (0.67f, 0.30f), (0.93f, 0.33f), (1f, 0.09f),
         };
 
+        /// <summary>북두칠성 꼴(손잡이 끝 → 국자 끝이 +x, x 0~1). 웹 천하 시안 BIG_DIPPER 가 같은 값이다.</summary>
+        public static IReadOnlyList<(float x, float y)> BigDipperShape => BigDipper;
+
         /// <summary>칠성검진 일곱 자리(플레이어 기준). handleDegrees 는 국자 끝 → 손잡이 쪽 방향
         /// (보스 쪽을 주면 손잡이가 보스를 향한다). 일곱째가 (0, 0), 곧 예고를 시작할 때 플레이어 자리다.</summary>
         public static (float x, float y)[] BigDipperOffsets(BossPatternDef p, float handleDegrees)
