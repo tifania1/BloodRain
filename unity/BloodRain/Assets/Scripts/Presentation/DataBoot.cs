@@ -30,7 +30,11 @@ namespace BloodRain.Presentation
                 }
                 files[name] = asset.text;
             }
-            return GameData.FromJson(files);
+            var data = GameData.FromJson(files);
+            // 0 나누기·무한 반복이 날 값은 읽을 때 바로 알린다(QA-03).
+            foreach (var problem in DataCheck.Problems(data))
+                Debug.LogError($"[DataBoot] 데이터 값 문제: {problem}");
+            return data;
         }
 
         void Awake()
