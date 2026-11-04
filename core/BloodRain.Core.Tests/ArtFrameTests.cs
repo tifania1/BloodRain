@@ -30,6 +30,9 @@ namespace BloodRain.Core.Tests
         [InlineData("card", "환생 카드(세로 2:3)", "2:3")]
         [InlineData("background", "화면 배경", "3:2")]
         [InlineData("map", "지도 배경", "3:2")]
+        [InlineData("tile", "바닥 타일", "1:1")]
+        [InlineData("enemy", "캐릭터·적 스프라이트", "1:1")]
+        [InlineData("character", "캐릭터·적 스프라이트", "1:1")]
         public void 그_종류의_줄은_틀의_고정_문장을_모두_담는다(string kind, string frame, string ratio)
         {
             var parts = Fixed(Frame(frame));
