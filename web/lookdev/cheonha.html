@@ -2288,6 +2288,8 @@ window.__ch = {
   setStones(n) { const rs = REGIONS.filter(r => r.sealStone).slice(0, n); meta.stones = rs.map(r => r.sealStone); for (const r of rs) meta.bossKills[r.boss] = Math.max(1, meta.bossKills[r.boss] || 0); saveMeta(); },
   addQi(n) { meta.qi += n; saveMeta(); if (overlay === 'rebirth') renderMeta(); },
   setLives(n) { meta.lives = n; saveMeta(); },
+  // 서장 정산(WP-02): prologue() 새긴 값, recordPrologue(구슬 값, 경지 id) 직접 새기기
+  prologue: () => meta.prologue || null, recordPrologue: (orb, realm) => recordPrologue(orb, realm),
   reset() { store.del('meta2'); meta = freshMeta(); showBest(); },
   // 침방(RM-09): upg() 강화 레벨, buyUpg(id) 기가 있으면 산다, reroll() 후보 다시 뽑기, rerollsLeft()
   upg: () => Object.assign({}, meta.upg), buyUpg: id => buyUpgrade(id),
@@ -2331,13 +2333,34 @@ window.__ch = {
 window.addEventListener('resize', resize);
 resize(); buildArt(); showBest();
 // 웹 서장(web/prototype 의 '서장', backlog M1-06)에서 첫 환혼을 고르고 넘어오면 #first=<문파>. 아직 생이 없으면 그 몸으로 바로 첫 생, 있으면 침방부터.
+// 서장도 한 생이다(Core Soul.EndLife 가 진소운 몸의 생을 받는다). 함께 넘어온 구슬 값(orb)·오른 경지(realm)로 정산 식 그대로
+// 윤회의 기를 셈해 혼에 새기고, 청운진을 밟은 땅으로, 서장에서 오른 경지(이류·일류)를 오른 경지로 남긴다. 그래서 첫 문파 생의
+// 이류·일류 돌파는 '한 번 깨친 길'이다(RM-11). 서장은 한 번뿐이라 이미 새겼으면 다시 셈하지 않는다. 생 횟수(meta.lives)는
+// 시안에서 '문파 몸으로 산 생'이라 서장을 넣지 않는다(Core Soul.Lives 는 서장까지 센다. 대사 '생 횟수'는 서장을 뺀다, 21장).
+function recordPrologue(orbRaw, realmId) {
+  if (meta.prologue) return null;
+  const home = REG[CH.prologueBody.region], top = Math.max(0, REALMS.findIndex(r => r.id === realmId));
+  const realms = REALMS.slice(1, top + 1).map(r => r.id).filter(id => !meta.reached.includes(id));
+  const visits = meta.visited.includes(home.id) ? [] : [home.id];
+  const orbQi = QI.perOrbValue * Math.max(0, orbRaw || 0) * home.density;
+  const total = Math.round(orbQi + visits.length * QI.firstVisitRegion + realms.length * QI.firstReachRealm);
+  meta.qi += total; meta.best = Math.max(meta.best, top);
+  for (const id of visits) meta.visited.push(id);
+  for (const id of realms) meta.reached.push(id);
+  meta.prologue = { qi: total, orb: Math.round(orbRaw || 0), realm: REALMS[top].id };
+  saveMeta();
+  return { total, home, realms };
+}
 {
   const m = /first=([a-z_]+)/.exec(location.hash);
   if (m) {
+    const orb = /[&#]orb=(\d+)/.exec(location.hash), rl = /[&#]realm=([a-z_]+)/.exec(location.hash);
     history.replaceState(null, '', location.pathname + location.search);
+    const pro = recordPrologue(orb ? +orb[1] : 0, rl ? rl[1] : REALMS[0].id);
     openRebirth();
     const i = candidates.findIndex(c => c.sect === m[1]);
     if (meta.lives === 0 && i >= 0) beginLife(i);
+    if (pro && G && !G.ended) toast(`서장 · 윤회의 기 +${fmtN(pro.total)}`, pro.realms.length ? `${eul(pro.home.nameKo)} 밟고 ${pro.realms.map(id => REALMS.find(r => r.id === id).nameKo).join('·')}에 올랐다. 다시 오를 때는 한 번 깨친 길` : `${eul(pro.home.nameKo)} 밟았다`);
   }
 }
 requestAnimationFrame(t => { last = t; frame(t); });

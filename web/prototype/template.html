@@ -877,7 +877,7 @@ function newRun(mode) {
     weapons: [{ id: 'samjae_sword', lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }],
     passives: [], insights: [], realm: REALMS[0], weaponSlots: B.slots.weapons, passiveSlots: B.slots.passives,
     yy: 0, yyHalf: false, backlashT: 0, backlash: null,
-    ult: 0, ultBonus: 1, rerolls: JIN_REROLLS, banished: new Set(),
+    ult: 0, ultBonus: 1, rerolls: JIN_REROLLS, banished: new Set(), orbRaw: 0,   // orbRaw: 주운 진기 구슬 값의 합(심득·빠른 판 배율 전). 서장이면 천하 시안이 윤회의 기로 셈
     enemies: [], projs: [], effects: [], orbs: [], drops: [], lanterns: [], splats: [], nums: [], zones: [],
     // 범종은 숭산 기믹이라 서장(청운진 객잔 마당)엔 없다
     bells: mode === 'prologue' ? [] : [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
@@ -1149,7 +1149,7 @@ function killEnemy(e) {
   sfx('kill');
   if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
   if (e.elite && isPro()) cue('elite_kill:' + ELITES[e.eliteKey].id);
-  if (e.boss && e.jang) { G.won = true; cue('boss_kill'); setTimeout(() => { if (isPro() && G.won && !overlay && $('title').hidden) prologueCuts(); }, 1000 * (PD.lineSeconds + 0.4)); return; } // 장삼 마지막 줄을 듣고 컷으로
+  if (e.boss && e.jang) { G.won = true; cue('boss_kill'); setTimeout(proCutsWhenFree, 1000 * (PD.lineSeconds + 0.4)); return; } // 장삼 마지막 줄을 듣고 컷으로
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
   if (e.xp > 0) dropOrb(e.x, e.y, e.xp);
   if (e.type === 'mogin_nahan') { addEffect('burst', e.x, e.y, { r: 1.6, color: '#8B6A45' }); forNear(e.x, e.y, 1.6, o => { if (o !== e) hurtEnemy(o, 30, null, 0, 0, 0); }); }
@@ -1628,7 +1628,7 @@ function update(dt) {
     o.t += dt;
     const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
     if (o.pull || d < mag) { o.pull = true; const sp = OP.pullSpeedBase + o.t * OP.pullSpeedPerSecond; o.x += dx / (d || 1) * sp * dt; o.y += dy / (d || 1) * sp * dt; }
-    if (d < OP.absorbRadius) { o.dead = true; gainXp(o.v); sfx('orb'); }
+    if (d < OP.absorbRadius) { o.dead = true; G.orbRaw += o.v; gainXp(o.v); sfx('orb'); }
   }
   G.orbs = G.orbs.filter(o => !o.dead);
   // 떨어진 물건
@@ -2374,6 +2374,12 @@ function drawTalk() {
   }
   ctx.globalAlpha = 1;
 }
+// 그때 레벨업·보갑·멈춤 화면이 떠 있으면 닫힐 때까지 기다린다(전에는 한 번만 보고 넘어가 서장이 컷 없이 멈췄다, WP-02). 제목으로 나갔으면 그만둔다
+function proCutsWhenFree() {
+  if (!isPro() || !G.won || !$('title').hidden || overlay === 'procut' || overlay === 'profirst') return;
+  if (overlay) { setTimeout(proCutsWhenFree, 300); return; }
+  prologueCuts();
+}
 // 장삼을 쓰러뜨린 뒤: 끝 컷 두 장(dialogue.json prologue cuts, 그림은 아직이면 먹 바탕에 자막만) → 첫 환혼 셋(21장)
 function prologueCuts() {
   running = false; cancelAnimationFrame(rafId); render();
@@ -2403,7 +2409,8 @@ function nextCut() {
   $('profirst').hidden = false; focusFirst(box.firstChild);
 }
 // 고르면 천하 시안(lookdev/cheonha.html)이 그 문파 몸으로 첫 생을 연다(#first=<문파>). 시안 기록이 이미 있으면 침방부터.
-function firstRebirth(id) { location.href = 'lookdev/cheonha.html#first=' + id; }
+// 서장도 한 생이라(Core Soul.EndLife) 주운 진기 구슬 값과 오른 경지를 같이 넘기고, 시안이 윤회의 기·청운진·오른 경지로 혼에 새긴다(WP-02).
+function firstRebirth(id) { location.href = `lookdev/cheonha.html#first=${id}&orb=${Math.round(G.orbRaw)}&realm=${G.realm.id}`; }
 
 function drawDrop(d) {
   const x = wx(d.x), y = wy(d.y) - Math.sin(d.t * 3) * 3, r = 0.28 * PPM;
@@ -2812,6 +2819,8 @@ window.__hyeolu = {
     return { log, evo: G.evoLog, final: { t: G.t, gm: G.gm, level: G.level, kills: G.kills, hp: G.player.hp, won: G.won, boss: G.boss ? Math.round(G.boss.hp) : null } };
   },
   state: () => G,
+  // overlay() 지금 떠 있는 화면, overlay(v) 그 화면이 떠 있는 셈 치기(서장 끝 컷이 화면이 닫힐 때까지 기다리는지 보는 시험용)
+  overlay(v) { if (v !== undefined) overlay = v; return overlay; },
 };
 
 // ───────── 시작 ─────────
