@@ -94,6 +94,9 @@ def data_blob() -> str:
         "jangSam": drop_notes(load("bosspatterns")["bosses"]["jang_sam"]),
         "prologueDialogue": drop_notes(load("dialogue")["prologue"]),
         "speakers": {x["id"]: x["nameKo"] for x in load("dialogue")["speakers"]},
+        # 서장 끝 컷 그림: Art/Cutscenes/<art id>.jpg 가 있을 때만(아직이면 먹 바탕에 자막만)
+        "cutImages": {c["art"]: image_uri(f"{c['art']}.jpg", 960) for c in load("dialogue")["prologue"]["cuts"]
+                      if c.get("art") and (CUTS / f"{c['art']}.jpg").exists()},
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
     return to_js(blob)

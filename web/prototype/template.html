@@ -120,6 +120,11 @@ button { touch-action: manipulation; }
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-top: calc(20px + env(safe-area-inset-top, 0px)); padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 }
+.screen.veil.procut { background: #1A1A1A; color: #EFE6D2; }
+.procut .cutlines p { font-size: 20px; line-height: 1.6; margin: .4em 0; }
+.procut .cutlines b { color: #C9A227; margin-right: .6em; font-weight: 700; }
+.procut .b, .procut .b.main { color: #EFE6D2; background: transparent; border-color: #C9A227; }
+.procut .resimg { max-height: 58vh; }
 .screen.veil { background: rgba(239,230,210,.84); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 /* margin:auto 는 화면보다 길어지면 0이 되어 위가 잘리지 않고 스크롤된다 */
 .panel { margin: auto; width: min(100%, 560px); display: grid; gap: 14px; justify-items: center; text-align: center; }
@@ -227,7 +232,7 @@ button { touch-action: manipulation; }
   <div class="screen" id="title">
     <div class="panel">
       <div><div class="logo">血雨江湖</div><div class="logo-ko">혈우강호</div></div>
-      <p class="lead">혈마의 봉인이 깨지고 피의 비가 내린다. 객잔 심부름꾼 진소운이 되어 숭산 소림에 몰려드는 강시 떼를 버티고, 20분째에 나타나는 혈나한 원각을 쓰러뜨리자. 움직이기만 하면 무공은 알아서 나간다.</p>
+      <p class="lead">혈마의 봉인이 깨지고 피의 비가 내린다. 객잔 심부름꾼 진소운이 되어 서장에선 청운진 객잔 마당을 지켜 포쾌 장삼을, 1장에선 숭산 소림에서 20분을 버텨 혈나한 원각을 쓰러뜨리자. 움직이기만 하면 무공은 알아서 나간다.</p>
       <div class="row">
         <button class="b" id="startprologue" type="button">서장<small>10분 · 청운진 객잔 마당, 장삼까지</small></button>
         <button class="b main" id="startquick" type="button">빠른 판<small>5분 압축 · 처음이면 이것</small></button>
@@ -322,6 +327,21 @@ button { touch-action: manipulation; }
     </div>
   </div>
 
+  <div class="screen veil procut" id="procut" hidden>
+    <div class="panel">
+      <img class="resimg" id="procutimg" alt="서장 끝 컷" hidden>
+      <div class="cutlines" id="procutlines"></div>
+      <div class="row"><button class="b main" id="procutnext" type="button">다음</button></div>
+    </div>
+  </div>
+  <div class="screen veil" id="profirst" hidden>
+    <div class="panel">
+      <div class="brush" style="font-size:44px">첫 환혼</div>
+      <p class="subtle">목 노인이 회혼침으로 혼을 붙잡았다. 그날 밤 숨진 제자 셋 가운데 한 몸을 고르면 천하 시안에서 첫 생이 이어진다.</p>
+      <div class="cards" id="profirstcards"></div>
+      <div class="row"><button class="b" id="profirsttitle" type="button">처음으로</button></div>
+    </div>
+  </div>
   <div class="screen veil" id="result" hidden>
     <div class="panel">
       <div class="brush" style="font-size:56px" id="restitle">쓰러졌다</div>
@@ -387,6 +407,30 @@ const STOP_SPAWN_AT = 19;
 // 서장(기획서 4장 '서장 상세 흐름', backlog M1-04): chapters.json prologue 시간표와 cheonha.json prologueBody 를 그대로 쓴다.
 const PRO = DATA.prologue, PROB = DATA.prologueBody;
 const isPro = () => !!G && G.mode === 'prologue';
+// 서장 대사·안내(dialogue.json prologue, backlog M1-06). 고르는 규칙은 Core Run/PrologueCues 와 같다:
+// 사건이 처음 일어날 때 한 번씩, 안내가 먼저(지연 0)·대사는 hintFirstDelaySeconds 뒤·대사가 여럿이면 lineSeconds 간격. 시계는 실제 시간.
+const PD = DATA.prologueDialogue, SPK = DATA.speakers, PRO_CUT_IMG = DATA.cutImages || {};
+function cue(...whens) {
+  if (!isPro()) return;
+  const C = G.cues, hints = [], lines = [];
+  for (const w of whens) {
+    if (C.fired.has(w)) continue; C.fired.add(w);
+    for (const h of PD.hints) if (h.when === w) hints.push(h);
+    for (const l of PD.lines) if (l.when === w) lines.push(l);
+  }
+  for (const h of hints) C.q.push({ at: C.clock, hint: h });
+  let t = hints.length ? PD.hintFirstDelaySeconds : 0;
+  for (const l of lines) { C.q.push({ at: C.clock + t, line: l }); t += PD.lineSeconds; }
+}
+// 매 걸음: Life 상태에서 처음 일어난 일을 알아챈다(Core PrologueCues.Watch)
+function watchCues() {
+  const C = G.cues;
+  if (G.level >= 2 && G.pendingLevels === 0 && !overlay) cue('first_levelup');
+  if (G.ult >= 100) cue('ultimate_ready');
+  if (!C.realms.has(G.realm.id)) { C.realms.add(G.realm.id); cue('realm:' + G.realm.id); }
+  if (yyBand().band !== 'harmony') cue('yinyang_tilt');
+  if (G.proAwake && !G.awaken) cue('awaken_after');
+}
 const ULT_MULT =((DATA.ultimates || []).find(u => u.id === 'il_geom') || { mightMultiplier: 30 }).mightMultiplier;
 const GLYPH = {
   samjae_sword: '劍', nahan_fist: '拳', flying_dagger: '刀', changcheon_qi: '氣', palm_wind: '掌', flash_finger: '指', thunder_bomb: '雷', poison_mist: '毒',
@@ -840,6 +884,7 @@ function newRun(mode) {
     spawnAcc: 0, lanternAcc: 0, events: makeEvents(mode), firstLevelUp: mode === 'prologue', elitesDone: 0, boss: null, bossSpawned: false, won: false,
     freeze: 0, cam: { x: 0, y: 0, shake: 0, trauma: 0 }, stats: null, fps: 60, salgiBonus: 0, salgiBase: 0, pendingLevels: 0,
     syn: newSyn(), enc: newEnc(), awaken: null, glow: null, evoLog: [], demo: false,
+    cues: { fired: new Set(), realms: new Set([REALMS[0].id]), q: [], clock: 0 },
   };
   grid = new Map();
   recomputeStats();
@@ -947,7 +992,7 @@ function nearestEnemies(x, y, n, maxR, exclude) {
 // ───────── 적 ─────────
 // 1장 정예 셋. 기혈·걸음·접촉 피해·넉백 저항은 enemies.json 에서, 공격(첫 시각·간격·패턴)은 bosspatterns.json elites 에서.
 const ELITES = Object.fromEntries([['dongin', 'dongin'], ['gyeyul', 'gyeyul_monk'], ['abbot', 'acting_abbot'], ['gangsi_axeman', 'gangsi_axeman']]
-  .map(([key, id]) => { const d = E_BY_ID[id], ps = DATA.elitePatterns[id]; return [key, { name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] }]; }));
+  .map(([key, id]) => { const d = E_BY_ID[id], ps = DATA.elitePatterns[id]; return [key, { id, name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] }]; }));
 function spawnEnemy(type, x, y, extra) {
   const def = E_BY_ID[type];
   const gm = G.gm, mult = B.enemyScaling.chapterMultiplier[isPro() ? 'prologue' : 'chapter1'];
@@ -996,6 +1041,7 @@ function spawnJangSam() {
   });
   G.boss = e; G.bossSpawned = true;
   toast(def.nameKo, '마을 포쾌가 강시가 되어 덮쳐 온다');
+  cue('boss_warning', 'boss_spawn');
   sfx('gong');
 }
 // 장삼 패턴(bosspatterns.json jang_sam): firstCastSeconds 뒤 intervalSeconds 마다 order 차례로. 2막 없음.
@@ -1015,6 +1061,7 @@ function jangSamAI(e, dt, dx, dy, d) {
 function prologueAwaken(why) {
   if (G.proAwake) return;
   G.proAwake = why;
+  cue('awaken');
   const evo = DATA.evolutions.find(x => x.id === PROB.fixedAwakening);
   let w = G.weapons.find(x => x.id === evo.weapon);
   if (!w) { w = { id: evo.weapon, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }; G.weapons.unshift(w); renderSlots(); }
@@ -1071,8 +1118,9 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   let crit = false;
   if (Math.random() < G.stats.crit) { dmg *= B.stats.critDamageMultiplier; crit = true; }
   e.hp -= dmg; e.flash = 0.08;
-  // 서장 장삼: 각성 전엔 기혈 바닥(cheonha.json prologueBody.bossHealthFloor)에서 멈추고 그 순간 고정 각성(Core Prologue.ApplyBossDamage)
-  if (e.jang && !G.proAwake && e.hp <= e.maxHp * PROB.bossHealthFloor) { dmg -= e.maxHp * PROB.bossHealthFloor - e.hp; e.hp = e.maxHp * PROB.bossHealthFloor; prologueAwaken('boss'); }
+  // 서장 장삼: 각성이 끝나기 전엔 기혈 바닥(cheonha.json prologueBody.bossHealthFloor)에서 멈추고, 처음 닿는 순간 고정 각성(Core Prologue.ApplyBossDamage)
+  const floor = e.maxHp * PROB.bossHealthFloor;
+  if (e.jang && (!G.proAwake || G.awaken) && e.hp < floor) { dmg -= floor - e.hp; e.hp = floor; prologueAwaken('boss'); }
   if (w) w.dealt += dmg;
   if (G.stats.lifesteal > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * G.stats.lifesteal);
   if (kb && !e.boss) { const k = kb * G.stats.knockback * (1 - e.kbRes); e.kbx += kx * k; e.kby += ky * k; }
@@ -1100,6 +1148,8 @@ function killEnemy(e) {
   G.splats.push({ x: e.x, y: e.y, r: e.r * rand(1.4, 2.2), t: 0, red: e.sprite.startsWith('hyeol') || e.boss });
   sfx('kill');
   if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
+  if (e.elite && isPro()) cue('elite_kill:' + ELITES[e.eliteKey].id);
+  if (e.boss && e.jang) { G.won = true; cue('boss_kill'); setTimeout(() => { if (isPro() && G.won && !overlay && $('title').hidden) prologueCuts(); }, 1000 * (PD.lineSeconds + 0.4)); return; } // 장삼 마지막 줄을 듣고 컷으로
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
   if (e.xp > 0) dropOrb(e.x, e.y, e.xp);
   if (e.type === 'mogin_nahan') { addEffect('burst', e.x, e.y, { r: 1.6, color: '#8B6A45' }); forNear(e.x, e.y, 1.6, o => { if (o !== e) hurtEnemy(o, 30, null, 0, 0, 0); }); }
@@ -1605,6 +1655,7 @@ function update(dt) {
   G.cam.shake = Math.max(0, G.cam.shake - dt);
 
   if (G.glow) { G.glow.t -= dt; if (G.glow.t <= 0) { G.glow = null; renderSlots(); } }
+  if (isPro()) watchCues();
   if (G.pendingLevels > 0 && !overlay && !G.awaken) openLevelUp();
 }
 
@@ -1623,7 +1674,8 @@ function runEvent(ev) {
       spawnEnemy('hyeolin', x, y, { behavior: 'line_charge', vx: ax * sp, vy: ay * sp });
     }
     toast('혈인 떼', '한 방향으로 돌진해 온다');
-  } else if (ev.kind === 'elite') spawnElite(ev.type);
+    cue('first_charge');
+  } else if (ev.kind === 'elite') { spawnElite(ev.type); cue('elite_spawn:' + ELITES[ev.type].id); }
   else if (ev.kind === 'toad') { const [x, y] = ringPos(); spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale); toast('금두꺼비', '잡으면 은자와 진기'); }
   else if (ev.kind === 'ring') { for (let i = 0; i < ev.n; i++) { const a = i / ev.n * TAU; spawnEnemy('donggap', p.x + Math.cos(a) * diag * 0.6, p.y + Math.sin(a) * diag * 0.6); } toast('동갑시 포위', '원을 좁혀 온다'); }
   else if (ev.kind === 'boss') { if (isPro()) spawnJangSam(); else spawnBoss(); }
@@ -2296,7 +2348,62 @@ function render() {
   if (p.hp / p.maxHp < 0.3) { ctx.globalAlpha = 0.7 + Math.sin(G.t * 6) * 0.15; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
   else { ctx.globalAlpha = 0.35; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
   if (G.awaken) drawAwaken();
+  if (isPro()) drawTalk();
 }
+// 서장 대사: 말하는 사람 머리 위에 lineSeconds 동안(화면 밖 목소리는 아래 가운데), 안내 문구는 가운데 아래에 크게 3초
+function drawTalk() {
+  const C = G.cues, now = C.clock;
+  C.q = C.q.filter(it => now < it.at + (it.hint ? 3 : PD.lineSeconds));
+  ctx.textAlign = 'center';
+  for (const it of C.q) {
+    if (now < it.at) continue;
+    const k = (now - it.at) / (it.hint ? 3 : PD.lineSeconds), a = Math.min(1, k * 6, (1 - k) * 6);
+    ctx.globalAlpha = a;
+    if (it.hint) {
+      ctx.font = '900 26px "Noto Serif KR", serif'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(239,230,210,.95)'; ctx.fillStyle = '#B3261E';
+      ctx.strokeText(it.hint.textKo, VW / 2, VH * 0.72, VW - 32); ctx.fillText(it.hint.textKo, VW / 2, VH * 0.72, VW - 32);
+      continue;
+    }
+    const l = it.line, who = l.speaker === 'jin_sowoon' ? G.player : l.speaker === 'jang_sam' && G.boss && !G.boss.dead ? G.boss : null;
+    let x = VW / 2, y = VH - 96;
+    if (!l.offscreen && who) { x = clamp(wx(who.x), 120, VW - 120); y = clamp(wy(who.y) - 1.9 * PPM, 60, VH - 60); }
+    ctx.font = '700 15px "Noto Serif KR", serif';
+    const text = (l.offscreen || !who ? SPK[l.speaker] + ' · ' : '') + l.textKo, w = Math.min(VW - 24, ctx.measureText(text).width + 22);
+    ctx.fillStyle = 'rgba(26,26,26,.82)'; ctx.fillRect(x - w / 2, y - 18, w, 28);
+    ctx.fillStyle = '#EFE6D2'; ctx.fillText(text, x, y + 1, w - 12);
+  }
+  ctx.globalAlpha = 1;
+}
+// 장삼을 쓰러뜨린 뒤: 끝 컷 두 장(dialogue.json prologue cuts, 그림은 아직이면 먹 바탕에 자막만) → 첫 환혼 셋(21장)
+function prologueCuts() {
+  running = false; cancelAnimationFrame(rafId); render();
+  overlay = 'procut'; G.cutI = 0; showCut();
+  $('procut').hidden = false;
+}
+function showCut() {
+  const cut = PD.cuts[G.cutI], img = PRO_CUT_IMG[cut.art];
+  $('procutimg').hidden = !img; if (img) $('procutimg').src = img;
+  $('procutlines').innerHTML = cut.lines.map(l => `<p>${l.speaker ? `<b>${SPK[l.speaker]}</b>` : ''}${l.textKo}</p>`).join('');
+  $('procutnext').textContent = G.cutI + 1 < PD.cuts.length ? '다음' : '침방으로';
+  focusFirst($('procutnext'));
+}
+function nextCut() {
+  if (overlay !== 'procut' || tooSoon()) return;
+  overlayAt = performance.now();
+  if (++G.cutI < PD.cuts.length) return showCut();
+  $('procut').hidden = true; overlay = 'profirst';
+  const best = store.get('best') || {}; const key = 'prologue' + (G.easy ? '_easy' : '');
+  best[key] = { gs: Math.floor(G.gm * 60), won: true, level: G.level, kills: G.kills }; store.set('best', best);
+  const box = $('profirstcards'); box.innerHTML = '';
+  DATA.firstRebirth.forEach((sct, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'card';
+    b.innerHTML = `<span class="ic">${sct.nameKo[0]}</span><span><h3>${sct.nameKo} 제자 <em>${i + 1}</em></h3><p>그날 밤 숨진 ${sct.nameKo} 제자의 몸 · 타고난 성질 없음</p></span>`;
+    b.onclick = () => firstRebirth(sct.id); box.appendChild(b);
+  });
+  $('profirst').hidden = false; focusFirst(box.firstChild);
+}
+// 고르면 천하 시안(lookdev/cheonha.html)이 그 문파 몸으로 첫 생을 연다(#first=<문파>). 시안 기록이 이미 있으면 침방부터.
+function firstRebirth(id) { location.href = 'lookdev/cheonha.html#first=' + id; }
 
 function drawDrop(d) {
   const x = wx(d.x), y = wy(d.y) - Math.sin(d.t * 3) * 3, r = 0.28 * PPM;
@@ -2462,16 +2569,18 @@ let lastTs = 0, rafId = 0;
 function startRun(mode) {
   ensureAudio(); if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
   newRun(mode); toastQ.length = 0;
-  ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick'].forEach(id => $(id).hidden = true);
+  ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true);
   $('cv').classList.remove('mono'); $('hud').classList.remove('cine'); $('demobar').hidden = true;
   $('hud').hidden = false; overlay = null; paused = false; running = true;
   renderSlots(); lastTs = performance.now();
   cancelAnimationFrame(rafId); rafId = requestAnimationFrame(frame);
-  toast('숭산 소림', '천년고찰에 목탁 소리가 끊겼다');
+  if (isPro()) { toast('서장 · 백중의 비', '청운진 객잔 마당. 움직이면 무공은 알아서 나간다'); cue('start', 'start_reply'); }
+  else toast('숭산 소림', '천년고찰에 목탁 소리가 끊겼다');
 }
 // 한 걸음: 각성 중이면 연출 시계를 먼저 돌리고, 세상은 그 배율로 느리게 간다
 function step(dt) {
   if (G.demo) demoTick(dt);
+  if (isPro()) G.cues.clock += dt;
   if (G.awaken) { tickAwaken(dt); if (G.awaken) update(dt * G.awaken.scale); }
   else update(dt);
 }
@@ -2523,7 +2632,7 @@ function showBest() {
   $('best').textContent = parts.join(' · ');
   $('dexcount').textContent = `찾은 비급 ${dex.size} / ${DEX_TOTAL}`;
 }
-function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); drawIdle(); }
+function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); drawIdle(); }
 
 function drawIdle() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -2580,6 +2689,8 @@ window.addEventListener('keydown', e => {
   }
   if (overlay === 'brk') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseInsight(n - 1); return; }
   if (overlay === 'evopick') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) choosePick(n - 1); return; }
+  if (overlay === 'procut') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); nextCut(); } return; }
+  if (overlay === 'profirst') { const n = parseInt(e.key, 10); if (n >= 1 && n <= DATA.firstRebirth.length) firstRebirth(DATA.firstRebirth[n - 1].id); return; }
   if (overlay === 'chest') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); closeOverlay('chest'); } return; }
   if (G.awaken) return;
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
@@ -2623,6 +2734,8 @@ $('skip').addEventListener('click', skipOffer);
 $('chestok').addEventListener('click', () => closeOverlay('chest'));
 $('startquick').addEventListener('click', () => startRun('quick'));
 $('startprologue').addEventListener('click', () => startRun('prologue'));
+$('procutnext').addEventListener('click', nextCut);
+$('profirsttitle').addEventListener('click', () => { $('profirst').hidden = true; toTitle(); });
 $('startfull').addEventListener('click', () => startRun('full'));
 $('again').addEventListener('click', () => startRun(G ? G.mode : 'quick'));
 $('totitle').addEventListener('click', toTitle);

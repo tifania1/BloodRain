@@ -2231,6 +2231,16 @@ window.__ch = {
 
 window.addEventListener('resize', resize);
 resize(); buildArt(); showBest();
+// 웹 서장(web/prototype 의 '서장', backlog M1-06)에서 첫 환혼을 고르고 넘어오면 #first=<문파>. 아직 생이 없으면 그 몸으로 바로 첫 생, 있으면 침방부터.
+{
+  const m = /first=([a-z_]+)/.exec(location.hash);
+  if (m) {
+    history.replaceState(null, '', location.pathname + location.search);
+    openRebirth();
+    const i = candidates.findIndex(c => c.sect === m[1]);
+    if (meta.lives === 0 && i >= 0) beginLife(i);
+  }
+}
 requestAnimationFrame(t => { last = t; frame(t); });
 })();
 </script>
