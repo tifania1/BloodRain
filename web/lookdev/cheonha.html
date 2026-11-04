@@ -34,6 +34,11 @@ button { touch-action: manipulation; font: inherit; }
 .bar.xp i { background: var(--gold); }
 .bar.hp i { background: var(--teal); }
 .bar.hp.low i { background: var(--crimson); }
+.bar.ult { height: 5px; margin-top: 3px; }
+.bar.ult i { background: var(--crimson); }
+.bar.ult.full { box-shadow: 0 0 0 2px var(--gold); }
+.dash.ultb { bottom: calc(100px + var(--sb)); width: 60px; height: 60px; font-size: 18px; opacity: .45; }
+.dash.ultb.full { opacity: 1; border-color: var(--crimson); color: var(--crimson); }
 /* 글자 뒤에 옅은 선지를 깔아 지명·덩이 그림 위에서도 읽히게 한다 */
 .hc { position: absolute; top: calc(10px + var(--st)); left: 50%; transform: translateX(-50%); text-align: center; font: 700 13px/1.5 var(--num); white-space: nowrap; background: rgba(239,230,210,.78); border-radius: 4px; padding: 2px 10px 3px; }
 .hc b { display: block; font: 700 18px/1.2 var(--num); }
@@ -147,6 +152,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
       <div class="realm"><span id="realm">삼류</span><small id="lvl">Lv 1</small></div>
       <div class="bar xp"><i id="xp"></i></div>
       <div class="bar hp" id="hpbar"><i id="hp"></i></div>
+      <div class="bar ult" id="ultbar" title="오의"><i id="ult"></i></div>
     </div>
     <div class="hc"><b id="clock">0:00</b><span id="where"></span></div>
     <div class="hr">
@@ -157,6 +163,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
     <div class="toast" id="toast" hidden><b id="toastb"></b><span id="toasts"></span></div>
     <div class="hint" id="hint" hidden></div>
     <button class="dash" id="dash" type="button" aria-label="경공">輕功</button>
+    <button class="dash ultb" id="ultbtn" type="button" aria-label="오의">奧義</button>
   </div>
 
   <div class="screen" id="title">
@@ -165,7 +172,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
       <div class="big">천하 시안</div>
       <p class="lead" id="lead">죽으면 다른 문파 제자의 몸으로 다시 태어난다. 처음엔 문파 마당 몇 걸음만 보이지만, 경지가 한 단계 오를 때마다 세상이 2.25배씩 물러나 마을이 점이 되고 산맥이 발밑에 깔린다. 절정부터는 장막 안 땅의 주인이 깨어나고, 처음 쓰러뜨리면 그 땅의 문파로 태어날 수 있다. 생이 끝나면 모은 윤회의 기로 능력치를 찍는다.</p>
       <div class="row"><button class="b main" id="start" type="button">윤회 시작<small>다음 생을 고른다</small></button><button class="b fasttg" type="button" aria-pressed="false"></button></div>
-      <div class="keys">이동 <kbd>WASD</kbd>·<kbd>방향키</kbd> · 경공 <kbd>Space</kbd> · 멈춤 <kbd>Esc</kbd> · 카드 <kbd>1</kbd>~<kbd>3</kbd><br>휴대폰은 화면을 끌어서 이동, 오른쪽 아래 버튼으로 경공. 공격은 알아서 나간다</div>
+      <div class="keys">이동 <kbd>WASD</kbd>·<kbd>방향키</kbd> · 경공 <kbd>Space</kbd> · 오의 <kbd>E</kbd> · 멈춤 <kbd>Esc</kbd> · 카드 <kbd>1</kbd>~<kbd>3</kbd><br>휴대폰은 화면을 끌어서 이동, 오른쪽 아래 버튼으로 경공, 그 위 버튼으로 오의. 공격은 알아서 나간다</div>
       <div class="subtle" id="best"></div>
       <button class="b small" id="wipe" type="button">기록 지우기</button>
     </div>
@@ -535,7 +542,7 @@ function bodyOf(c, extra) {
     maxHp: Math.max(1, s.maxHealth * (1 + b('MaxHealth'))), speed: s.moveSpeed * (1 + b('MoveSpeed')), might: 1 + b('Might'),
     regen: LD.baseRegen + b('Recovery'), armor: b('Armor'), cdr: Math.min(BAL.stats.cooldownReductionCap, b('CooldownReduction')),
     magnet: BAL.stats.magnetBase * (1 + b('Magnet')), growth: Math.max(0.1, 1 + b('Growth')), food: 1 + b('FoodHeal'),
-    dash: Math.max(1, BAL.dash.charges + b('DashCharges')), qiMul: 1 + qi, yin, area: 1 + b('Area'),
+    dash: Math.max(1, BAL.dash.charges + b('DashCharges')), qiMul: 1 + qi, yin, area: 1 + b('Area'), ultCharge: b('UltimateCharge'),
   };
 }
 function trainCost(it) {
@@ -722,7 +729,7 @@ function startLife(c) {
     c, sect, home, body, t: 0, tier: 0, lv: REALMS[0].level, xp: 0, kills: 0, orbSum: 0, orbRaw: 0, spawnAcc: 0, eliteAcc: 0,
     p: { x: home.x, y: home.y + 4, fx: 1, fy: 0, hp: body.maxHp, maxHp: body.maxHp, iframe: 0, dashT: 0, dvx: 0, dvy: 0, dashN: body.dash, dashMax: body.dash, dashAcc: 0, r: 0.5 },
     foes: [], orbs: [], fx: [], cd: 0.3, orbitA: 0, waveCd: 2, view: VIEW0, brk: null, trauma: 0, hintT: 0, toastT: 0, toastQ: [],
-    region: null, dens: home.density, stepped: [], dmgBy: { arc: 0, orbit: 0, wave: 0 }, eliteKills: 0, bossCrystal: 0, evN: 0, evLog: [], newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
+    region: null, dens: home.density, stepped: [], dmgBy: { arc: 0, orbit: 0, wave: 0, ult: 0 }, ult: 0, ultCast: null, ultShots: [], taiji: 0, diss: 0, eliteKills: 0, bossCrystal: 0, evN: 0, evLog: [], newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
     awake: new Set(), done: new Set(), armed: {}, armR: {}, fight: null, engage: null, ended: false, auto: false, fast, reachT: [0], bossT: {},
     cards: {}, extra: {}, pendingCards: 0, offers: null,
     eliteN: 0, shots: [], pools: [], fogs: [], rocks: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
@@ -828,7 +835,11 @@ function hurt(f, dmg, kx, ky, kb, src) {
   if (f.dead) return;
   if (f.down) return;   // 분열해 누운 몸
   if (f.cloneOf) { f.dead = true; G.fx.push({ k: 'puff', x: f.x, y: f.y, r: f.r * 1.4, t: 0, life: 0.45 }); return; }   // 빙분신은 한 대에 깨진다(Core BossClones.Hit)
-  if (src) G.dmgBy[src] += Math.min(dmg, Math.max(0, f.hp));   // 무공별 피해(정산 막대). 남은 기혈보다 많이 들어간 몫은 세지 않는다
+  if (src && G.diss > 0) dmg *= UPar(ULTS.cheonma_haeche, 'damageMultiplier', 1);   // 천마해체: 모든 피해 2배(R-16)
+  if (src && f.poisonUntil > G.t) dmg *= 1 + (G.body.te.poisonedTargetDamage || 0);   // 당가 '중독된 적 피해 +20%'(만천화우가 건 중독)
+  const dealt = Math.min(dmg, Math.max(0, f.hp));
+  if (src) G.dmgBy[src] += dealt;   // 무공별 피해(정산 막대). 남은 기혈보다 많이 들어간 몫은 세지 않는다
+  if (src && G.diss > 0) ultLifesteal(dealt);
   f.hp -= dmg; f.flash = 0.08;
   if (kb && !f.boss) { f.kx += kx * kb; f.ky += ky * kb; }
   if (f.hp <= 0) { if (f.splitOf || (f.pat && f.pat.split && f.pat.split.on)) splitDown(f); else kill(f); }
@@ -853,6 +864,7 @@ function kill(f, crushed) {
   if (f.splitOf || f.cloneOf || f.riseOf) return;
   G.fx.push({ k: crushed ? 'crush' : 'puff', x: f.x, y: f.y, r: f.r * 1.6, t: 0, life: crushed ? 0.35 : 0.5, red: f.e >= 4 || f.boss });
   if (f.boss) { G.kills++; bossDown(f); return; }
+  if (!crushed) addUlt(f.elite && f.kind ? UC.perElite : UC.perKill);   // 오의 게이지(Core UltimateCharge): 이름 있는 정예 15, 나머지 덩이 하나 0.4. 기세에 눌려 쓰러진 아래 경지는 안 센다
   const d = f.def, k = sc(f.e);
   // 독두꺼비: 죽은 자리에 독 웅덩이(onDeath poison_pool). 흑백 쌍강시: 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다
   if (d && d.onDeath === 'poison_pool' && d.death) G.pools.push({ x: f.x, y: f.y, r: d.death.radius * k, dps: d.death.perSecond * f.dmg / d.contactDamage, t: d.death.seconds, green: true });
@@ -1160,6 +1172,118 @@ function doDash() {
   const sp = BAL.dash.distance / BAL.dash.duration * sc(G.tier); p.dvx = p.fx * sp; p.dvy = p.fy * sp;
   G.fx.push({ k: 'dash', x: p.x, y: p.y, a: Math.atan2(p.fy, p.fx), r: sc(G.tier), t: 0, life: 0.3 });
 }
+// ───────── 오의(R-16, 기획서 5장 '오의 상세', Core UltimateCharge·Ultimates·UltimateCast·UltimateEffects) ─────────
+// 게이지: 처치 perKill·피격 perHit·이름 있는 정예 perElite × (1 + 연무장·심법 UltimateCharge) × (태극 구간이면 1 + harmony.ultimateChargeBonus × 무당 조화 보너스 배수 2).
+// 한 방 = 시작 무공 한 방 × mightMultiplier × 절정 '오의 위력 +25%'. 이 시안의 시작 무공 자리는 첫 무공인 검기라 검기 한 방(경지 power·공력·카드·일검파만·태극 바닥 기운까지)이 바탕이다.
+// 박자는 Core UltimateCast: 쓰는 순간 한 번, 만천화우는 0·1·2초 세 번, 배율 0(태극무량·천마해체)은 안 때린다. 현경 '오의 2연속'이면 박자마다 두 번(지속형은 새로 시작할 뿐 늘지 않음).
+const ULTS = Object.fromEntries((DATA.ultimates || []).map(u => [u.id, u]));
+const UC = BAL.ultimateCharge || { max: 100, perKill: 0.4, perHit: 3, perElite: 15 };
+const UPar = (u, k, d) => u && u.params && u.params[k] != null ? u.params[k] : d;
+// R-15b(오의 빈 숫자)·R-05b(역류 물살)가 정해지기 전 backlog 추천안 값. README '문파 오의'
+const ULT_TMP = {
+  taijiRadius: 3,      // 태극무량 몸 주위 원(m) — 태극검 도는 검 둘레쯤
+  strikeRadius: 1.2,   // 천뢰낙 한 곳 = 뇌부 낙뢰 strikeRadius
+  roarSpread: 0.3,     // 사자후 음파가 반경까지 퍼지는 초(그림만, 맞는 것은 쓰는 순간)
+  poisonSeconds: 3,    // 만천화우 중독 시간. 세기는 이 시안에 적 중독 피해가 없어 0(당가 '중독된 적 +20%'만 붙는다)
+  wind: { speed: 5, radius: 0.55, life: 2.6, gap: 0.3, knockback: 15 },   // 팔방풍우 = 장풍(palm_wind) 탄, 연타 0.3초, 넉백 15(장풍 5의 세 배)
+  flood: { width: 3, knockback: 12 },   // 역류 = 마천패 역류 파도 폭 3m 로 앞쪽 화면 끝까지 한 번. 화면 끝 쪽으로 미는 세기는 시안 값
+};
+const rewardAt = tok => REALMS.findIndex(r => r.reward && r.reward.split(',').some(x => x.trim().startsWith(tok)));
+const ULT_POWER_T = rewardAt('ultimate_power_'), DOUBLE_ULT_T = rewardAt('double_ultimate');
+const ULT_POWER = ULT_POWER_T < 0 ? 1 : 1 + parseInt(REALMS[ULT_POWER_T].reward.split(',').map(x => x.trim()).find(x => x.startsWith('ultimate_power_')).slice(15), 10) / 100;
+const ultDef = () => G && ULTS[G.sect.ultimate];
+const ultCasts = () => DOUBLE_ULT_T >= 0 && G.tier >= DOUBLE_ULT_T ? 2 : 1;
+const ultPower = () => ULT_POWER_T >= 0 && G.tier >= ULT_POWER_T ? ULT_POWER : 1;
+function ultRate() {
+  const h = YY.harmony && yyLean() === 0 ? 1 + (YY.harmony.ultimateChargeBonus || 0) * (G.body.te.harmonyBonusMultiplier || 1) : 1;
+  return (1 + (G.body.ultCharge || 0)) * h;
+}
+// 태극 구간 쿨다운 감소(Core Life.HarmonyCooldownReduction): harmony.cooldownReduction × 무당 조화 보너스 배수
+function harmonyCdr() { return YY.harmony && yyLean() === 0 ? (YY.harmony.cooldownReduction || 0) * (G.body.te.harmonyBonusMultiplier || 1) : 0; }
+function addUlt(v) { if (G && !G.ended) G.ult = Math.min(UC.max, G.ult + v * ultRate()); }
+// 검기 한 방(무공 1 과 같은 셈). 오의 피해의 바탕
+function startHit() {
+  const il = G.insEff.first_weapon_damage, bless = G.bless && G.bless.t > 0 ? 1 + GIM.taijiFloor.oppositeAspectDamageBonus : 1;
+  return ART.arc.damage * power() * (G.body.might + insMight() + aboveHealthMight()) * bless * (1 + ART.arc.perCard * (G.cards.art_arc || 0)) * (il ? 1 + il.damageBonus : 1);
+}
+// 천마해체 흡혈: 이 시안 피해는 경지 power 를 곱한 수라 power 로 나눈 값(무공 바탕 단위)에 흡혈 10% × 회복 배율(마교 절반)
+function ultLifesteal(dealt) { const p = G.p; p.hp = Math.min(p.maxHp, p.hp + dealt / power() * UPar(ULTS.cheonma_haeche, 'lifesteal', 0) * G.body.heal); }
+function useUlt() {
+  if (!G || G.ended || G.brk || paused || overlay || G.ult < UC.max) return false;
+  const u = ultDef(); if (!u) return false;
+  G.ult = 0;
+  const dur = UPar(u, 'durationSeconds', 0), per = dur > 0 && UPar(u, 'mightPerSecond', 0) > 0 ? 1 : 0;
+  G.ultCast = { u, el: 0, done: 0, per, dur, total: u.mightMultiplier <= 0 ? 0 : per > 0 ? Math.max(1, Math.ceil(dur / per - 1e-4)) : 1, a: Math.atan2(G.p.fy, G.p.fx) };
+  if (u.id === 'taiji_muryang') G.taiji = dur;   // 또 쓰면 새로 5초
+  if (u.id === 'cheonma_haeche') { G.diss = dur; if (G.sect.bloodArt && G.sect.bloodArt.resetUltimate === u.id) G.yy = G.body.yin; }   // 혈공: 음양 게이지가 시작값으로
+  G.ultN = (G.ultN || 0) + 1; G.trauma = 1; toast(u.nameKo, u.summary || '');
+  return true;
+}
+function autoUlt() {   // 자동 조종: 땅의 주인과 싸우거나 같은 경지 적이 몰렸을 때. 태극무량은 기혈이 절반 아래면, 천마해체는 절반 위일 때만
+  const u = ultDef(), p = G.p; if (!u) return;
+  if (u.id === 'cheonma_haeche' && p.hp < p.maxHp * 0.5) return;
+  if (u.id === 'taiji_muryang') { if (G.fight || p.hp < p.maxHp * 0.5) useUlt(); return; }
+  let n = 0; for (const f of G.foes) if (!f.dead && f.e >= G.tier && Math.hypot(f.x - p.x, f.y - p.y) < G.view * 0.3) n++;
+  if (G.fight || n >= 12) useUlt();
+}
+function viewHalf() { const vd = Math.hypot(VW, VH) || 1; return [G.view * VW / vd / 2, G.view * VH / vd / 2]; }
+function tickUlt(dt) {
+  const p = G.p, C = G.ultCast;
+  if (C) {
+    C.el += dt;
+    while (C.done < C.total && C.done * C.per <= C.el + 1e-4) { C.done++; for (let c = 0; c < ultCasts(); c++) ultPulse(C.u, C, c); }
+    if (C.done >= C.total && C.el >= C.dur) G.ultCast = null;
+  }
+  if (G.taiji > 0) {   // 태극무량: 몸 주위 원 안의 적 탄을 되돌려 보낸다(되돌린 탄은 플레이어를 안 맞힌다)
+    G.taiji = Math.max(0, G.taiji - dt); const R = ULT_TMP.taijiRadius * sc(G.tier);
+    for (const q of G.shots) if (!q.refl && !(q.delay > 0) && Math.hypot(q.x - p.x, q.y - p.y) < R + q.r) { q.refl = true; q.vx = -q.vx; q.vy = -q.vy; q.root = 0; q.pull = 0; }
+  }
+  if (G.diss > 0) {   // 천마해체: 초당 최대 기혈 2%(바닥 규칙이 없어 쓰러질 수 있다)
+    p.hp -= p.maxHp * UPar(ULTS.cheonma_haeche, 'healthCostPerSecond', 0) * Math.min(dt, G.diss); G.diss = Math.max(0, G.diss - dt);
+    if (p.hp <= 0 && !G.ended) { p.hp = 0; endLife('fallen'); return; }
+  }
+  for (const w of G.ultShots) {   // 팔방풍우 장풍: 꿰뚫고 지나가며 적 하나를 한 번씩
+    if (w.delay > 0) { w.delay -= dt; w.x = p.x; w.y = p.y; continue; }
+    w.x += w.vx * dt; w.y += w.vy * dt; w.t -= dt;
+    for (const f of G.foes) if (!f.dead && !w.hit.has(f) && Math.hypot(f.x - w.x, f.y - w.y) < f.r + w.r) { w.hit.add(f); hurt(f, w.dmg, w.ux, w.uy, w.kb, 'ult'); }
+  }
+  G.ultShots = G.ultShots.filter(w => w.t > 0);
+}
+// 오의 한 박자(현경이면 c = 0·1 두 번). 화면 = 지금 카메라가 보는 사각형
+function ultPulse(u, C, c) {
+  const p = G.p, s = sc(G.tier), hit = startHit() * u.mightMultiplier * ultPower(), [hw, hh] = viewHalf();
+  const onScreen = f => !f.dead && Math.abs(f.x - p.x) < hw + f.r && Math.abs(f.y - p.y) < hh + f.r;
+  const ca = Math.cos(C.a), sa = Math.sin(C.a), edge = Math.hypot(hw, hh) * 1.1;
+  if (u.id === 'il_geom' || u.id === 'yeokryu') {   // 일검: 바라보는 쪽 화면 끝까지 한 줄(관통 무한) / 역류: 폭 3m 물살로 같은 길을 쓸며 끝 쪽으로 민다
+    const half = u.id === 'il_geom' ? 0.9 * s : ULT_TMP.flood.width / 2 * s, kb = u.id === 'il_geom' ? 6 * s : ULT_TMP.flood.knockback * s;
+    for (const f of G.foes) { if (f.dead) continue; const dx = f.x - p.x, dy = f.y - p.y, al = dx * ca + dy * sa, pe = Math.abs(-dx * sa + dy * ca); if (al > -0.5 * s && al < edge && pe < half + f.r) hurt(f, hit, ca, sa, kb, 'ult'); }
+    if (c === 0) G.fx.push({ k: u.id === 'il_geom' ? 'slash' : 'flood', x: p.x, y: p.y, a: C.a, r: edge, w: half, t: 0, life: 0.6 });
+  } else if (u.id === 'cheonroe_rak') {   // 천뢰낙: 화면 안 무작위 strikes 곳 낙뢰, 감전(이 시안은 멈춤으로)
+    const R = ULT_TMP.strikeRadius * s, shock = UPar(u, 'shockSeconds', 0);
+    for (let i = 0; i < UPar(u, 'strikes', 0); i++) {
+      const x = p.x + rand(-hw, hw), y = p.y + rand(-hh, hh);
+      for (const f of G.foes) if (!f.dead && Math.hypot(f.x - x, f.y - y) < R + f.r) { hurt(f, hit, 0, 0, 0, 'ult'); f.stunT = Math.max(f.stunT || 0, shock); }
+      G.fx.push({ k: 'bolt', x, y, r: R, t: 0, life: 0.45 });
+    }
+  } else if (u.id === 'saja_hu') {   // 사자후: 반경 6m × 축척 음파, 기절 3초
+    const R = UPar(u, 'radius', 0) * s, st = UPar(u, 'stunSeconds', 0);
+    for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) { hurt(f, hit, 0, 0, 0, 'ult'); f.stunT = Math.max(f.stunT || 0, st); }
+    if (c === 0) G.fx.push({ k: 'bell', x: p.x, y: p.y, r: R, t: 0, life: ULT_TMP.roarSpread + 0.4 });
+  } else if (u.id === 'mancheon_hwau') {   // 만천화우: 화면 전체 암기 비(1초마다), 맞은 적 중독
+    for (const f of G.foes) if (onScreen(f)) { hurt(f, hit, 0, 0, 0, 'ult'); if (UPar(u, 'poisons', 0) > 0) f.poisonUntil = G.t + ULT_TMP.poisonSeconds; }
+    if (c === 0) G.fx.push({ k: 'rain', x: p.x, y: p.y, r: Math.hypot(hw, hh), t: 0, life: 0.7, seed: Math.random() * 100 });
+  } else if (u.id === 'palbang_pungu') {   // 팔방풍우: 바라보는 쪽부터 8방향 장풍을 3연타
+    const W = ULT_TMP.wind, n = UPar(u, 'directions', 8), v = W.speed * s;
+    for (let vI = 0; vI < UPar(u, 'volleys', 1); vI++) for (let i = 0; i < n; i++) {
+      const a = C.a + TAU * i / n, ux = Math.cos(a), uy = Math.sin(a);
+      G.ultShots.push({ x: p.x, y: p.y, vx: ux * v, vy: uy * v, ux, uy, t: W.life, r: W.radius * s, dmg: hit, kb: W.knockback * s, hit: new Set(), delay: vI * W.gap + c * 0.1 });
+    }
+  } else if (u.id === 'cheonseol_bu') {   // 천설부: 화면 안 모든 적 3초 얼림(땅의 주인도, 패턴 시계도 멈춤), 피해는 강시 계열만
+    const fz = UPar(u, 'freezeSeconds', 0);
+    for (const f of G.foes) if (onScreen(f)) { f.stunT = Math.max(f.stunT || 0, fz); f.frozenUntil = G.t + fz; if ((f.def ? f.def.family : 'jiangshi') === 'jiangshi') hurt(f, hit, 0, 0, 0, 'ult'); }
+    if (c === 0) G.fx.push({ k: 'frost', x: p.x, y: p.y, r: Math.hypot(hw, hh), t: 0, life: 0.8 });
+  }
+}
 function update(rdt) {
   const B = G.brk;
   let dt = rdt;
@@ -1183,7 +1307,7 @@ function update(rdt) {
   G.t += dt;
   G.trauma = Math.max(0, G.trauma - rdt * 1.4);
   const p = G.p, s = sc(G.tier), M = G.body, pr = prog();
-  const fz = frenzy(), might = M.might + insMight() + aboveHealthMight(), cdr = fz ? Math.min(BAL.stats.cooldownReductionCap, M.cdr + fz.cooldownReduction) : M.cdr;
+  const fz = frenzy(), might = M.might + insMight() + aboveHealthMight(), cdr = Math.min(BAL.stats.cooldownReductionCap, M.cdr + (fz ? fz.cooldownReduction : 0) + harmonyCdr());
   p.r = 0.5 * s * (1 + 0.12 * pr);
   // 이동
   const [mx, my, moving] = readMove(); G.moving = moving;
@@ -1279,6 +1403,8 @@ function update(rdt) {
     G.waveCd -= dt;
     if (G.waveCd <= 0) { G.waveCd = ART.wave.cooldown * (1 - cdr) * (1 - ART.wave.perCard * (G.cards.art_wave || 0)); const R = ART.wave.radius * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * ART.wave.damageRatio, 0, 0, 0, 'wave'); }
   }
+  tickUlt(dt);
+  if (G.auto && G.ult >= UC.max) autoUlt();
   // 적
   const aura = p.r * 1.7, recycle = G.view * SPT.recycleBeyondDiagonal, wEnemy = weatherEnemyMul();   // 눈보라·붉은 달 걸음
   for (const f of G.foes) {
@@ -1857,7 +1983,7 @@ function tickHazards(dt) {
   for (const s of G.shots) {
     if (s.delay > 0) { s.delay -= dt; s.x = s.src.x; s.y = s.src.y; if (s.delay <= 0 && s.aim) { const a = Math.atan2(p.y - s.y, p.x - s.x); s.vx = Math.cos(a) * s.v; s.vy = Math.sin(a) * s.v; } continue; }
     const st = Math.hypot(s.vx, s.vy) * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.left -= st;
-    if (Math.hypot(p.x - s.x, p.y - s.y) < s.r + p.r) {
+    if (!s.refl && Math.hypot(p.x - s.x, p.y - s.y) < s.r + p.r) {
       s.left = 0;
       if (hitPlayer(s.dmg) === true) { if (s.pull && !s.src.dead) p.pull = { f: s.src, t: s.pull }; if (s.root) p.root = Math.max(p.root, s.root); }
     }
@@ -2140,6 +2266,7 @@ function aboveHealthMight() { const te = G.body.te, p = G.p; return te.aboveHeal
 function kunlunSlow(d) { const te = G.body.te; return te.nearEnemySlow > 0 && d <= te.nearEnemySlowRadius * sc(G.tier) ? 1 - te.nearEnemySlow : 1; }
 function hitPlayer(dmg, raw) {   // raw: 혈마의 그림자 자신의 피해(적 피해 배율을 안 받음)
   const p = G.p; if (p.iframe > 0 || G.brk || G.ended || G.sealed) return false;
+  if (G.taiji > 0) return 'blocked';   // 태극무량: 받는 피해 무효(Core UltimateCast.DamageTakenMultiplier 0)
   // 금종조: 막을 수 있으면 이번 피해는 없던 일(묶임·끌림도 없음). 맞은 셈은 쳐서 같은 장판이 곧바로 다시 때리지 않게 한다
   const gj = G.insEff.periodic_block;
   if (gj && G.blockCd <= 0) { G.blockCd = gj.intervalSeconds; p.iframe = LD.hitIframe; G.fx.push({ k: 'block', x: p.x, y: p.y, r: p.r * 2.2, t: 0, life: 0.45 }); return 'blocked'; }
@@ -2148,12 +2275,13 @@ function hitPlayer(dmg, raw) {   // raw: 혈마의 그림자 자신의 피해(�
   if (ev > 0 && Math.random() < ev) { p.iframe = LD.hitIframe; G.fx.push({ k: 'block', x: p.x, y: p.y, r: p.r * 1.6, t: 0, life: 0.3 }); return 'blocked'; }
   p.hp -= Math.max(1, dmg * (raw ? 1 : enemyDmgMul()) * takenMul() - G.body.armor);   // 그림자 단계마다·혈월이면 화면 위 모든 적 피해가 오른다(enemyDmgMul)
   p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
+  addUlt(UC.perHit);   // 오의 게이지: 맞으면 3
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
   return true;
 }
 // 무적 시간과 상관없이 빠지는 기혈(독안개·웅덩이·독 기운). 호신은 받지 않는다
 function drainPlayer(v) {
-  const p = G.p; if (v <= 0 || G.brk || G.ended || G.sealed) return;
+  const p = G.p; if (v <= 0 || G.brk || G.ended || G.sealed || G.taiji > 0) return;
   p.hp -= v * takenMul();
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
 }
@@ -2314,6 +2442,7 @@ function render() {
     if (tint) { ctx.fillStyle = tint; ctx.beginPath(); ctx.ellipse(X, Y + R * 0.15, R * 1.05, R * 0.45, 0, 0, TAU); ctx.fill(); }
     ctx.globalAlpha = f.e < G.tier ? 0.55 : 1;
     ctx.drawImage(clusterImg(f), X - s2 / 2, Y - s2 * 0.62 - lift, s2, s2);
+    if (f.frozenUntil > G.t) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#DCE8F0'; ctx.beginPath(); ctx.arc(X, Y - lift, R * 1.1, 0, TAU); ctx.fill(); }   // 천설부에 언 적
     if (f.flash > 0) { ctx.globalAlpha = 0.35; ctx.fillStyle = '#FFF8EC'; ctx.beginPath(); ctx.arc(X, Y - lift, R * 1.1, 0, TAU); ctx.fill(); }
     ctx.globalAlpha = 1;
     if (f.lungeWind > 0 && f.def && f.def.dash) {   // 혈사자 돌진 예고: 달려갈 길(속도 × 시간)을 붉은 띠로, 예고가 끝날수록 짙게
@@ -2357,6 +2486,10 @@ function render() {
   // 땅의 주인·정예 패턴 예고(붉은 먹)와 날아가는 것
   for (const f of G.foes) if (f.pat && !f.dead) drawPattern(f);
   drawShots();
+  // 오의(R-16): 팔방풍우 장풍, 태극무량 원, 천마해체 붉은 기운
+  for (const w of G.ultShots) { if (w.delay > 0) continue; const X = sx(w.x), Y = sy(w.y), R = w.r * PPM; ctx.fillStyle = 'rgba(122,106,74,0.35)'; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, R * 0.8, Math.atan2(w.vy, w.vx) - 1.2, Math.atan2(w.vy, w.vx) + 1.2); ctx.stroke(); }
+  if (G.taiji > 0) { const X = sx(p.x), Y = sy(p.y), R = ULT_TMP.taijiRadius * sc(G.tier) * PPM; ctx.strokeStyle = 'rgba(201,162,39,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(26,26,26,0.6)'; ctx.beginPath(); ctx.arc(X, Y - R / 2, R / 2, -Math.PI / 2, Math.PI / 2); ctx.arc(X, Y + R / 2, R / 2, -Math.PI / 2, Math.PI / 2, true); ctx.stroke(); }
+  if (G.diss > 0) { const X = sx(p.x), Y = sy(p.y), R = p.r * 2.4 * PPM; ctx.strokeStyle = `rgba(179,38,30,${0.5 + 0.3 * Math.sin(now * 12)})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke(); }
   // 효과
   for (const e of G.fx) {
     const k = e.t / e.life, X = sx(e.x), Y = sy(e.y), R = e.r * PPM;
@@ -2369,6 +2502,19 @@ function render() {
     } else if (e.k === 'wave') {
       ctx.strokeStyle = `rgba(26,26,26,${0.8 * (1 - k)})`; ctx.lineWidth = 24 * (1 - k) + 2; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k), 0, TAU); ctx.stroke();
       ctx.strokeStyle = e.red ? `rgba(179,38,30,${1 - k})` : `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k) * 0.97, 0, TAU); ctx.stroke();
+    } else if (e.k === 'slash' || e.k === 'flood') {   // 오의 일검(먹 한 획 + 금빛 심)·역류(폭 3m 물살)
+      const ex = X + Math.cos(e.a) * R, ey = Y + Math.sin(e.a) * R, wpx = e.w * PPM * 2; ctx.lineCap = 'round';
+      if (e.k === 'slash') { ctx.strokeStyle = `rgba(26,26,26,${0.9 * (1 - k)})`; ctx.lineWidth = Math.max(6, wpx) * (1 - k * 0.6); ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(ex, ey); ctx.stroke(); ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(ex, ey); ctx.stroke(); }
+      else { ctx.strokeStyle = `rgba(47,90,106,${0.45 * (1 - k)})`; ctx.lineWidth = wpx; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(e.a) * R * easeOut(Math.min(1, k * 2)), Y + Math.sin(e.a) * R * easeOut(Math.min(1, k * 2))); ctx.stroke(); }
+    } else if (e.k === 'bolt') {   // 천뢰낙 낙뢰: 위에서 꺾여 내려오는 금빛 줄과 떨어진 자리 원
+      ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X + 10, Y - 160);
+      for (let i = 1; i <= 5; i++) ctx.lineTo(X + (i % 2 ? -12 : 12) * (1 - i / 5), Y - 160 + 32 * i); ctx.stroke();
+      ctx.fillStyle = `rgba(201,162,39,${0.3 * (1 - k)})`; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+    } else if (e.k === 'rain') {   // 만천화우: 화면 가득 비스듬한 암기 줄
+      ctx.strokeStyle = `rgba(62,90,58,${0.8 * (1 - k)})`; ctx.lineWidth = 1.6;
+      for (let i = 0; i < 90; i++) { const u = (Math.sin(i * 12.9898 + e.seed) * 43758.5453) % 1, v = (Math.sin(i * 78.233 + e.seed) * 12345.678) % 1, x0 = (Math.abs(u)) * VW, y0 = (Math.abs(v) * VH + k * 120) % VH; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 - 6, y0 + 14); ctx.stroke(); }
+    } else if (e.k === 'frost') {   // 천설부: 화면이 한 번 희게 언다
+      ctx.fillStyle = `rgba(220,232,240,${0.45 * (1 - k)})`; ctx.fillRect(0, 0, VW, VH);
     } else if (e.k === 'splinter') {   // 목인나한 나뭇조각: 닿는 반경을 옅게 비추고 갈색 조각 열 개가 튄다
       ctx.fillStyle = `rgba(120,80,40,${0.18 * (1 - k)})`; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
       ctx.strokeStyle = `rgba(96,62,30,${0.9 * (1 - k)})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
@@ -2807,7 +2953,7 @@ function endLife(kind) {
     + `<p class="steps">${esc(G.stepped.map(id => REG[id] ? REG[id].nameKo : id).join(' · '))}</p>`;
   const dsum = Object.values(G.dmgBy).reduce((a, b) => a + b, 0);
   $('dbars').innerHTML = dsum > 0 ? Object.entries(G.dmgBy).filter(e => e[1] > 0).sort((a, b) => b[1] - a[1])
-    .map(([k, v]) => `<div class="dbar"><span>${esc(ARTS_KO[k])}</span><i style="width:${(v / dsum * 100).toFixed(1)}%"></i><b>${Math.round(v / dsum * 100)}%</b></div>`).join('') : '';
+    .map(([k, v]) => `<div class="dbar"><span>${esc(k === 'ult' ? (ultDef() ? ultDef().nameKo : '오의') : ARTS_KO[k])}</span><i style="width:${(v / dsum * 100).toFixed(1)}%"></i><b>${Math.round(v / dsum * 100)}%</b></div>`).join('') : '';
   const traitNames = G.c.traits.filter(id => TRAIT[id].rebirthQi).map(id => `${TRAIT[id].nameKo} +${Math.round(TRAIT[id].rebirthQi * 100)}%`).join(', ');
   $('ledger').innerHTML = st.rows.map(r => `<tr><td>${esc(r[0])}<small>${esc(r[1])}</small></td><td>${fmtN(r[2])}</td></tr>`).join('')
     + (st.mul !== 1 ? `<tr><td>타고난 성질<small>${esc(traitNames)}</small></td><td>× ${st.mul.toFixed(2)}</td></tr>` : '')
@@ -2840,6 +2986,8 @@ function updateHud() {
   $('realm').textContent = REALMS[G.tier].nameKo; $('lvl').textContent = `Lv ${G.lv}`;
   $('xp').style.width = (clamp(G.xp / req(G.lv), 0, 1) * 100).toFixed(1) + '%';
   $('hp').style.width = (p.hp / p.maxHp * 100).toFixed(1) + '%'; $('hpbar').classList.toggle('low', p.hp / p.maxHp < 0.3);
+  const uf = G.ult >= UC.max; $('ult').style.width = (G.ult / UC.max * 100).toFixed(1) + '%'; $('ultbar').classList.toggle('full', uf); $('ultbtn').classList.toggle('full', uf);
+  const ud = ultDef(); if (ud && $('ultbar').title !== ud.nameKo) { $('ultbar').title = `오의 ${ud.nameKo}`; $('ultbtn').setAttribute('aria-label', `오의 ${ud.nameKo}`); }
   $('clock').textContent = clock(G.t);
   const r = REG[G.region], thick = G.dens >= 2;
   $('where').innerHTML = `${esc(r ? r.nameKo : '')} · <span class="${thick ? 'thick' : ''}">혈운 ${fmtD(G.dens)}</span>`;
@@ -2867,6 +3015,7 @@ window.addEventListener('keydown', e => {
   if (overlay === 'pause') { if (e.code === 'Escape' || e.code === 'Enter') setPaused(false); return; }
   if (!running) return;
   if (e.code === 'Space' || e.code.startsWith('Shift')) { e.preventDefault(); doDash(); }
+  if (e.code === 'KeyE') useUlt();
   if (e.code === 'Escape') setPaused(true);
 });
 window.addEventListener('keyup', e => input.keys.delete(e.code));
@@ -2883,6 +3032,7 @@ cv.addEventListener('pointermove', e => {
 const endJoy = e => { if (e.pointerId === joyId) { joyId = null; input.joy = null; } };
 cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
 $('dash').addEventListener('pointerdown', e => { e.preventDefault(); doDash(); });
+$('ultbtn').addEventListener('pointerdown', e => { e.preventDefault(); useUlt(); });
 $('pausebtn').addEventListener('click', () => setPaused(true));
 $('resume').addEventListener('click', () => setPaused(false));
 $('zuohwa').addEventListener('click', () => endLife('zuohwa'));
@@ -2918,6 +3068,9 @@ window.__ch = {
     return G.tier;
   },
   step: (dt) => update(dt), render,
+  // 오의(R-16): ult(v) 게이지를 v 로(빼면 지금 값), useUlt() 쓰기, ultInfo() 지금 오의·위력·연속·태극무량·천마해체
+  ult(v) { if (v != null) G.ult = Math.min(UC.max, v); return G.ult; }, useUlt: () => useUlt(),
+  ultInfo: () => ({ id: G.sect.ultimate, uses: G.ultN || 0, casts: ultCasts(), power: ultPower(), rate: +ultRate().toFixed(3), taiji: +G.taiji.toFixed(2), diss: +G.diss.toFixed(2), shots: G.ultShots.length, cast: G.ultCast && { done: G.ultCast.done, total: G.ultCast.total } }),
   sim(seconds, auto) {
     running = false; G.auto = auto !== false; const out = [];
     for (let t = 0, next = 30; t < seconds && !G.ended; t += 1 / 30) { update(1 / 30); if (t >= next) { next += 30; out.push(`${Math.round(t)}초 ${REALMS[G.tier].nameKo} Lv${G.lv} 적${G.foes.length} 기혈${Math.round(G.p.hp)} 처치${G.kills} ${REG[G.region].nameKo} ${fmtD(G.dens)}${G.fight ? ' 보스' + Math.round(G.fight.hp / G.fight.maxHp * 100) + '%' : ''}`); } }

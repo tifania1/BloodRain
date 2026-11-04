@@ -126,13 +126,14 @@ def cheonha_blob() -> str:
     return to_js({
         "cheonha": drop_notes(load("cheonha")),
         "characters": [{"id": c["id"], "nameKo": c["nameKo"]} for c in chars["characters"]],
-        "ultimates": [{"id": u["id"], "nameKo": u["nameKo"]} for u in chars["ultimates"]],
+        # 문파 오의(R-16): 공력 배율·효과 숫자(params)·한 줄 설명. 게이지는 balance.json ultimateCharge
+        "ultimates": [{k: u[k] for k in ("id", "nameKo", "mightMultiplier", "summary", "params") if k in u} for u in chars["ultimates"]],
         "weapons": [{"id": w["id"], "nameKo": w["nameKo"]} for w in load("weapons")["weapons"]],
         "bosses": [
             {k: b[k] for k in ("id", "nameKo", "health", "targetKillSeconds", "phases") if k in b}
             for b in enemies["bosses"]
         ],
-        "balance": drop_notes({k: bal[k] for k in ("realms", "xpCurve", "training", "stats", "spawnTarget", "dash", "limits", "yinyang", "drops")}),
+        "balance": drop_notes({k: bal[k] for k in ("realms", "xpCurve", "training", "stats", "spawnTarget", "dash", "limits", "yinyang", "drops", "ultimateCharge")}),
         # 땅의 주인 패턴 시간표(T-21). 시안이 그리는 모양은 cheonha.html PAT_SHAPES
         "bossPatterns": drop_notes(load("bosspatterns")["bosses"]),
         # 종장(R4-12): 혈영 일곱 차례·기혈 비율과 혈마 세 단계 시간표(Core FinalFight)

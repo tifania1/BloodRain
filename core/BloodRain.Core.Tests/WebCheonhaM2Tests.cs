@@ -44,7 +44,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("BR.firstKill.bloodCrystal", html);
             Assert.Contains("BR.repeatKill.bloodCrystal", html);
             Assert.Contains("BAL.drops.eliteBloodCrystal", html);
-            Assert.Contains("\"drops\")}", Build());
+            Assert.Matches(@"for k in \([^)]*""drops""[^)]*\)\}", Build());   // balance 묶음 칸 목록 안에
         }
 
         [Fact] public void 한_생_사건은_chapters_json_에서_오고_나오는_적이_다_있다()
