@@ -65,6 +65,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: `Loc.Lang = "zh-Hant"` 로 레벨업 화면·침방 카드에 `血雨江湖 華山 劍氣 輪迴之氣 「一方之主」` 가 두부 없이, 간체로 바꾸면 간체 모양으로 찍힘
   - 찍기: `docs/unity_shots/L-08b/` 의 `levelup_zht.png`·`chimbang_zht.png`
 
+- [ ] LOC-01 침방 능력치 이름이 한국어로 나오는지
+  - 할 것: 컴파일 확인 → Inn 씬 침방을 열어 타고난 성질 줄과 연무장 줄이 '공력·쾌속'처럼 나오는지 본다(LF-03 때 `Might`·`CooldownReduction` 이 그대로 나왔음).
+  - 고친 것(2026-11-05 03시 클라우드): `Loc.Stat` 이 두 인자 `T(key, 영어 키)` 라 한국어에선 영어 키를 돌려줬다. 한 인자 `T(key)` 로 바꿈. strings 넷에 StatKind 나머지 여덟(치명 확률·넉백·정예 피해·화상 피해·폭발 범위·지속 피해·흡혈·회피) 더함. `ScreenLocalizationTests` 가 ui. 키 두 인자 T 를 막음
+  - 끝: 침방 카드·연무장에 영어 키가 하나도 없음, 콘솔 에러 0
+  - 찍기: `docs/unity_shots/LF-03/` 의 `chimbang_ko.png`
+
 - [ ] V-04d 웹 빌드에서 붓 획 한 장
   - 할 것: WebGL 빌드를 로컬로 띄워 삼재검법·AI 재료 무공이 브라우저에서도 에디터와 같은 색·순서로 그려지는지(셰이더가 WebGL2 에서 빠지지 않는지).
   - 쓸 것: V-04 셰이더·머티리얼, `FxSettings`

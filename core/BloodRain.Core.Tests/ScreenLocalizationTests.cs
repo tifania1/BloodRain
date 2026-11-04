@@ -51,6 +51,33 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 능력치_이름은_StatKind_전부와_데이터가_쓰는_능력치를_다_갖는다()
+        {
+            // 심법 부가 능력치·문파 고유 능력(회피)도 능력치 줄(LifeRunner 디버그, 연무장, 침방)에 나올 수 있다.
+            var data = Load();
+            var used = System.Enum.GetNames(typeof(BloodRain.Core.Build.StatKind))
+                .Concat(data.Passives.SelectMany(p => p.Effects.Select(e => e.Stat)))
+                .Concat(data.Cheonha.Sects.Where(s => s.TraitEffect != null)
+                    .SelectMany(s => s.TraitEffect!.Stats.Keys.Concat(s.TraitEffect.AboveHealthStats.Keys).Concat(s.TraitEffect.MovingStats.Keys)))
+                .Concat(data.Synergies.Schools.SelectMany(s => s.Tiers.SelectMany(t => t.Stats.Keys)))
+                .Distinct().ToList();
+            var missing = used.Where(s => !Catalog.Korean.ContainsKey($"ui.stat.{s}")).ToList();
+            Assert.True(missing.Count == 0, "strings/ko.json 에 ui.stat.<이름> 이 없다: " + string.Join(", ", missing));
+        }
+
+        [Fact]
+        public void 화면_코드는_ui_키에_두_인자_T를_쓰지_않는다()
+        {
+            // ui. 키의 한국어 원문은 strings/ko.json 에 있다. T("ui.…", x) 꼴은 한국어 화면에서 원문 대신 x 를 돌려줘서
+            // 침방 성질 줄에 'Might' 같은 영어 키가 그대로 나왔다(2026-11-05). ui. 키는 한 인자 T 로 부른다.
+            var bad = Directory.GetFiles(PresentationDir, "*.cs", SearchOption.AllDirectories)
+                .SelectMany(f => Regex.Matches(File.ReadAllText(f), @"\bT\(\s*\$?""ui\.[^""]*""\s*,")
+                    .Cast<Match>().Select(m => $"{Path.GetFileName(f)}: {m.Value}"))
+                .ToList();
+            Assert.True(bad.Count == 0, "ui. 키를 두 인자 T 로 부른다:\n" + string.Join("\n", bad));
+        }
+
+        [Fact]
         public void 문파_제자_이름은_Core_와_화면이_같은_꼴이다()
         {
             // Core Rebirth.CharacterOf 의 NameKo 는 한국어 원문이고, 화면은 ui.rebirth.disciple 로 옮긴 이름을 쓴다(Loc.Disciple).

@@ -45,7 +45,9 @@ namespace BloodRain.Presentation
         public static string Trait(BirthTraitDef t) => T($"cheonha.birthTraits.list.{t.Id}.name", t.NameKo);
         public static string Upgrade(RebirthUpgradeDef u) => T($"cheonha.rebirth.upgrades.{u.Id}.name", u.NameKo);
         /// <summary>능력치 이름(Might → 공력). 표에 없는 이름이면 그대로.</summary>
-        public static string Stat(string stat) => T($"ui.stat.{stat}", stat);
+        // ui. 키는 한국어 원문이 strings/ko.json 에 있다. 두 인자 T(key, korean) 로 영어 키를 넘기면
+        // 한국어 화면에 'Might' 가 그대로 나와서(2026-11-05 침방), 한 인자 T 로 원문까지 찾는다.
+        public static string Stat(string stat) => T($"ui.stat.{stat}");
         /// <summary>이름 옆에 붙이는 한자. 중국어(간체·번체) 화면에선 이름이 이미 한자라 겹치니 뺀다.</summary>
         public static string Hanja(string hanja) => Current.Lang.StartsWith("zh") ? "" : hanja ?? "";
 
