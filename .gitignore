@@ -8,6 +8,9 @@ unity/BloodRain/[Ll]ogs/
 unity/BloodRain/[Uu]ser[Ss]ettings/
 unity/BloodRain/[Mm]emoryCaptures/
 unity/BloodRain/.vsconfig
+# unityMCP 스크린샷 기본 폴더. 남길 화면은 docs/unity_shots/<항목 id>/ 로 옮긴다
+unity/BloodRain/Assets/Screenshots/
+unity/BloodRain/Assets/Screenshots.meta
 *.csproj.user
 *.pidb.meta
 *.pdb.meta
