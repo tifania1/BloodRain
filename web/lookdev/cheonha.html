@@ -457,8 +457,11 @@ function bodyOf(c, extra) {
   for (const k in extra || {}) add(k, extra[k]);   // 이번 생에 익힌 심법(레벨업 카드)
   for (const it of BAL.training.items) { const lv = meta.train[it.stat] || 0; if (lv > 0) add(it.stat, it.perLevel * Math.min(lv, it.maxLevel)); }
   for (const id of c.traits) { const t = TRAIT[id]; for (const k in t.stats) add(k, t.stats[k]); qi += t.rebirthQi || 0; yin += t.yinyangStart || 0; }
+  const te = s.traitEffect || {};   // 문파 고유 능력(5장, Core SectTrait): 늘 붙는 능력치는 여기서 더하고, 조건 붙은 것은 싸움 중에(te)
+  for (const k in te.stats || {}) add(k, te.stats[k]);
   const b = k => bonus[k] || 0;
   return {
+    te, heal: te.healingMultiplier ?? 1,
     maxHp: Math.max(1, s.maxHealth * (1 + b('MaxHealth'))), speed: s.moveSpeed * (1 + b('MoveSpeed')), might: 1 + b('Might'),
     regen: LD.baseRegen + b('Recovery'), armor: b('Armor'), cdr: Math.min(BAL.stats.cooldownReductionCap, b('CooldownReduction')),
     magnet: BAL.stats.magnetBase * (1 + b('Magnet')), growth: Math.max(0.1, 1 + b('Growth')), food: 1 + b('FoodHeal'),
@@ -1069,10 +1072,10 @@ function update(rdt) {
   G.t += dt;
   G.trauma = Math.max(0, G.trauma - rdt * 1.4);
   const p = G.p, s = sc(G.tier), M = G.body, pr = prog();
-  const fz = frenzy(), might = M.might + insMight(), cdr = fz ? Math.min(BAL.stats.cooldownReductionCap, M.cdr + fz.cooldownReduction) : M.cdr;
+  const fz = frenzy(), might = M.might + insMight() + aboveHealthMight(), cdr = fz ? Math.min(BAL.stats.cooldownReductionCap, M.cdr + fz.cooldownReduction) : M.cdr;
   p.r = 0.5 * s * (1 + 0.12 * pr);
   // 이동
-  const [mx, my, moving] = readMove();
+  const [mx, my, moving] = readMove(); G.moving = moving;
   if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; }
   const speed = 4.6 * s * (1 + 0.15 * pr) * M.speed;
   // 물(장강): 플레이어·적 모두 0.7배. 수상비(경공 뒤 3초)·수로채 몸은 느려지지 않는다
@@ -1093,11 +1096,11 @@ function update(rdt) {
   if (br !== Infinity) { const dx = p.x - G.home.x, dy = p.y - G.home.y, d = Math.hypot(dx, dy); if (d > br - p.r) { p.x = G.home.x + dx / d * (br - p.r); p.y = G.home.y + dy / d * (br - p.r); } }
   p.x = clamp(p.x, 0, W); p.y = clamp(p.y, 0, H);
   p.iframe = Math.max(0, p.iframe - dt);
-  p.hp = Math.min(p.maxHp, p.hp + M.regen * dt);
+  p.hp = Math.min(p.maxHp, p.hp + M.regen * M.heal * dt);
   // 운기조식: stillSeconds 동안 안 움직이면 최대 기혈 × 초당 비율. 경공·끌려감도 움직인 것으로 친다
   G.still = moving || p.dashT > 0 || p.pull ? 0 : G.still + dt;
   const ug = G.insEff.still_regen;
-  if (ug && G.still >= ug.stillSeconds) p.hp = Math.min(p.maxHp, p.hp + p.maxHp * ug.maxHealthPerSecond * dt);
+  if (ug && G.still >= ug.stillSeconds) p.hp = Math.min(p.maxHp, p.hp + p.maxHp * ug.maxHealthPerSecond * M.heal * dt);
   G.blockCd = Math.max(0, G.blockCd - dt);
   trackRegion();
   checkEngage(dt);
@@ -1192,7 +1195,7 @@ function update(rdt) {
     const fw = (GIM.water && f.kind !== 'water_ghost' && !(f.def && f.def.ignoresTerrain) && inWater(f.x, f.y) ? GIM.water.moveSpeedMultiplier : 1) * wEnemy;
     const held = f.pat && (f.pat.hold || f.pat.recover > 0);
     const cold = GIM.campfire && f.def && f.def.family === GIM.campfire.slowedFamily && nearCampfire(f.x, f.y) ? GIM.campfire.slowedMoveSpeedMultiplier : 1;   // 모닥불 곁 빙강시
-    const sp = (f.boss || f.pat || f.cloneOf ? (held ? 0 : f.sp) : f.sp * (f.hop < 0.72 ? 1 / 0.72 : 0.15)) * fw * cold * enemySpdMul();
+    const sp = (f.boss || f.pat || f.cloneOf ? (held ? 0 : f.sp) : f.sp * (f.hop < 0.72 ? 1 / 0.72 : 0.15)) * fw * cold * enemySpdMul() * kunlunSlow(d);
     if (f.lead && !f.lead.dead) {   // 금선지네: 앞 마디를 spacing 만큼 떨어져 따라간다
       const lx = f.lead.x - f.x, ly = f.lead.y - f.y, ld = Math.hypot(lx, ly) || 1, gap = f.def.group.spacing * sc(f.e) + f.r;
       if (ld > gap) { const v = Math.min(ld - gap, f.sp * 2.2 * fw * dt); f.x += lx / ld * v; f.y += ly / ld * v; }
@@ -1215,7 +1218,7 @@ function update(rdt) {
   for (const o of G.orbs) {
     const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
     if (o.pull || d < mag + p.r) { o.pull = true; const v = 14 * s; o.x += dx / (d || 1) * v * dt; o.y += dy / (d || 1) * v * dt; }
-    if (d < p.r + 0.2 * s) { o.dead = true; gainXp(o.v); if (o.heal) p.hp = Math.min(p.maxHp, p.hp + o.heal * M.food); }
+    if (d < p.r + 0.2 * s) { o.dead = true; gainXp(o.v); if (o.heal) p.hp = Math.min(p.maxHp, p.hp + o.heal * M.food * M.heal); }
   }
   G.orbs = G.orbs.filter(o => !o.dead);
   for (const e of G.fx) e.t += rdt;
@@ -1895,7 +1898,7 @@ function regionGimmicks(dt) {
   }
   // 모닥불(곤륜 설원): 곁에 서 있으면 초당 최대 기혈 healPerSecondMaxHealthRatio 회복
   const cf = GIM.campfire;
-  if (cf && regionHas(here, cf.id) && nearCampfire(p.x, p.y)) p.hp = Math.min(p.maxHp, p.hp + p.maxHp * cf.healPerSecondMaxHealthRatio * dt);
+  if (cf && regionHas(here, cf.id) && nearCampfire(p.x, p.y)) p.hp = Math.min(p.maxHp, p.hp + p.maxHp * cf.healPerSecondMaxHealthRatio * G.body.heal * dt);
   // 범종(숭산): 닿으면 울리고 cooldownSeconds 동안 쉰다. 원각이 떨어뜨린 종은 leaveSeconds 동안 leaveUses 번
   const bg = GIM.bell;
   if (bg) {
@@ -1911,11 +1914,18 @@ function regionGimmicks(dt) {
     G.dropBells = G.dropBells.filter(b => b.life > 0 && b.uses > 0);
   }
 }
+// 남궁 '기혈 50% 이상이면 공력 +25%'(traitEffect aboveHealthRatio·aboveHealthStats)
+function aboveHealthMight() { const te = G.body.te, p = G.p; return te.aboveHealthRatio > 0 && p.hp >= p.maxHp * te.aboveHealthRatio ? (te.aboveHealthStats?.Might || 0) : 0; }
+// 곤륜 '가까운 적 이동속도 -10%'(nearEnemySlow, 반경 × 축척). Core SectTrait.EnemySpeedMultiplier
+function kunlunSlow(d) { const te = G.body.te; return te.nearEnemySlow > 0 && d <= te.nearEnemySlowRadius * sc(G.tier) ? 1 - te.nearEnemySlow : 1; }
 function hitPlayer(dmg, raw) {   // raw: 혈마의 그림자 자신의 피해(적 피해 배율을 안 받음)
   const p = G.p; if (p.iframe > 0 || G.brk || G.ended || G.sealed) return false;
   // 금종조: 막을 수 있으면 이번 피해는 없던 일(묶임·끌림도 없음). 맞은 셈은 쳐서 같은 장판이 곧바로 다시 때리지 않게 한다
   const gj = G.insEff.periodic_block;
   if (gj && G.blockCd <= 0) { G.blockCd = gj.intervalSeconds; p.iframe = LD.hitIframe; G.fx.push({ k: 'block', x: p.x, y: p.y, r: p.r * 2.2, t: 0, life: 0.45 }); return 'blocked'; }
+  // 수로채 '움직이는 동안 회피 15%'(movingStats.Evade, Core Evade.Roll): 피했으면 피해·묶임 없이 무적 시간만
+  const ev = G.moving ? (G.body.te.movingStats?.Evade || 0) : 0;
+  if (ev > 0 && Math.random() < ev) { p.iframe = LD.hitIframe; G.fx.push({ k: 'block', x: p.x, y: p.y, r: p.r * 1.6, t: 0, life: 0.3 }); return 'blocked'; }
   p.hp -= Math.max(1, dmg * (raw ? 1 : enemyDmgMul()) * takenMul() - G.body.armor);   // 그림자 단계마다·혈월이면 화면 위 모든 적 피해가 오른다(enemyDmgMul)
   p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
