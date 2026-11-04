@@ -25,6 +25,7 @@ import datetime as dt
 import json
 import os
 import subprocess
+import time
 import sys
 from pathlib import Path
 
@@ -136,6 +137,14 @@ def sync_repo() -> bool:
     """claude/dev 최신으로. 사람이 고치던 변경이 있으면 False."""
     # 추적 안 되는 파일(로그 등)은 사람 작업으로 보지 않는다. 고친 채 커밋 안 된 추적 파일만 본다
     dirty = [l for l in git("status", "--porcelain", "--untracked-files=no").splitlines() if "art_inbox" not in l]
+    # TextMeshPro 동적 글꼴(*SDF.asset)은 Unity 를 켜기만 해도 글자 아틀라스가 바뀐다. 이것만 바뀌었으면 되돌리고 간다
+    # (2026-11-04 21:32 실행 뒤 NotoSerifKR SDF.asset 하나 때문에 다음 실행이 막힘)
+    sdf = [l for l in dirty if l.rstrip('"').endswith("SDF.asset")]
+    if dirty and len(sdf) == len(dirty):
+        paths = [l[3:].strip().strip('"') for l in sdf]
+        git("checkout", "--", *paths)
+        log("Unity 가 바꾼 동적 글꼴 애셋을 되돌림: " + "; ".join(paths))
+        dirty = []
     if dirty:
         log("작업 트리에 커밋 안 된 변경이 있어 이번 실행은 건너뜀: " + "; ".join(dirty[:5]))
         return False
@@ -189,7 +198,14 @@ def agent_env(cfg: dict) -> dict:
 async def run_agent(cfg: dict) -> None:
     from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query  # 필요할 때만 불러온다
 
+    tail: list[str] = []
+
+    def keep_stderr(line: str) -> None:
+        tail.append(line.rstrip())
+        del tail[:-20]
+
     options = ClaudeAgentOptions(
+        stderr=keep_stderr,
         cwd=str(ROOT),
         model=cfg.get("model", "sonnet"),
         permission_mode="acceptEdits",
@@ -210,7 +226,17 @@ async def run_agent(cfg: dict) -> None:
         **({"cli_path": cfg["cli_path"]} if cfg.get("cli_path") else {}),
     )
     prompt = PROMPT.format(root=ROOT, today=f"{dt.date.today():%Y-%m-%d}")
-    async for message in query(prompt=prompt, options=options):
+    try:
+        await _consume(query(prompt=prompt, options=options), ResultMessage)
+    except Exception as e:
+        # 예산·턴 한도에 닿아도 SDK 가 예외로 끝낼 수 있다. 남긴 뒤 바깥에서 커밋·푸시는 계속한다
+        log(f"에이전트가 예외로 끝남: {e!r}"[:1500])
+        if tail:
+            log("CLI 끝 줄: " + " | ".join(tail)[-1500:])
+
+
+async def _consume(stream, ResultMessage) -> None:
+    async for message in stream:
         if isinstance(message, ResultMessage):
             cost = getattr(message, "total_cost_usd", None)
             log(f"에이전트 종료: {message.subtype}, 비용 {cost if cost is not None else '알 수 없음'} USD")
@@ -235,8 +261,18 @@ def commit_and_push(dry: bool) -> None:
         git("commit", "-m", "PC 루프: 이미지 반영·Unity 작업")
     ahead = git("rev-list", "--count", "origin/claude/dev..HEAD", check=False) or "0"
     if ahead != "0" and not dry:
-        git("push", "origin", "HEAD:claude/dev")
-        log(f"claude/dev 에 커밋 {ahead}개 푸시")
+        # 클라우드 세션이 같이 올려서 자주 거절된다. pull --rebase 하고 다섯 번까지 다시
+        for attempt in range(5):
+            try:
+                git("pull", "--rebase", "origin", "claude/dev")
+                git("push", "origin", "HEAD:claude/dev")
+                log(f"claude/dev 에 커밋 {ahead}개 푸시")
+                return
+            except RuntimeError as e:
+                log(f"푸시 실패({attempt + 1}/5): {e}"[:800])
+                git("rebase", "--abort", check=False)
+                time.sleep(20)
+        log("푸시를 못 했다. 커밋은 PC 저장소에 남아 있어 다음 실행이 다시 올린다")
 
 
 def main() -> int:
@@ -306,4 +342,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except BaseException:
+        import traceback
+        log("실행 중 오류: " + traceback.format_exc()[-2000:])
+        sys.exit(1)
