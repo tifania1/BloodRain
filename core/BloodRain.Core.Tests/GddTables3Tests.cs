@@ -112,12 +112,12 @@ namespace BloodRain.Core.Tests
             Assert.Contains("짧은 곡", rows["절기 각성"][3]);
         }
 
-        /// <summary>16장 현지화 우선순위의 1순위 언어 셋이 Core Strings.Languages 와 strings/ 파일과 같다.</summary>
-        [Fact] public void 현지화_1순위_언어가_Strings_Languages_와_같다()
+        /// <summary>16장 현지화 우선순위의 1·2순위 언어(한·간체·영어, 번체)가 Core Strings.Languages 와 strings/ 파일과 같다. 3순위(일본어)는 얼리 액세스 뒤.</summary>
+        [Fact] public void 현지화_2순위까지_언어가_Strings_Languages_와_같다()
         {
-            var code = new Dictionary<string, string> { ["한국어"] = "ko", ["简体中文"] = "zh-Hans", ["English"] = "en" };
-            var first = GddTable(GddSection("현지화 우선순위")).Where(r => r[0] == "1").Select(r => r[1]).ToList();
-            Assert.All(first, l => Assert.True(code.ContainsKey(l), $"1순위 '{l}' 의 언어 코드가 없다"));
+            var code = new Dictionary<string, string> { ["한국어"] = "ko", ["简体中文"] = "zh-Hans", ["English"] = "en", ["繁體中文"] = "zh-Hant" };
+            var first = GddTable(GddSection("현지화 우선순위")).Where(r => r[0] == "1" || r[0] == "2").Select(r => r[1]).ToList();
+            Assert.All(first, l => Assert.True(code.ContainsKey(l), $"'{l}' 의 언어 코드가 없다"));
             Assert.Equal(first.Select(l => code[l]).OrderBy(s => s), Data.Strings.Languages.OrderBy(s => s));
             var files = Directory.GetFiles(Path.Combine(DataDir, "strings"), "*.json").Select(Path.GetFileNameWithoutExtension);
             Assert.Equal(Data.Strings.Languages.OrderBy(s => s), files.OrderBy(s => s));

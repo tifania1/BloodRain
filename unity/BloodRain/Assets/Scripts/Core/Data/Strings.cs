@@ -118,8 +118,8 @@ namespace BloodRain.Core.Data
     /// <summary>한 언어의 문구 표. 옮긴 값이 없으면 한국어 원문, 원문도 없으면 키를 그대로 돌려준다(빠진 것이 화면에서 보이게).</summary>
     public sealed class Strings
     {
-        /// <summary>지원 언어(기획서 16장 현지화 우선순위 1순위). 파일 이름이 곧 코드다.</summary>
-        public static readonly string[] Languages = { "ko", "en", "zh-Hans" };
+        /// <summary>지원 언어(기획서 16장 현지화 우선순위 1순위 한·영·간체, 2순위 번체). 파일 이름이 곧 코드다.</summary>
+        public static readonly string[] Languages = { "ko", "en", "zh-Hans", "zh-Hant" };
 
         public string Lang { get; }
         readonly StringCatalog _catalog;

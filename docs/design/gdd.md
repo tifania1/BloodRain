@@ -1203,7 +1203,7 @@ Oct 28, 2026 · @Tifania
 ### 글꼴(상업 이용 가능한 오픈 라이선스)
 
 - 제목·연출: 나눔손글씨 붓 계열(SIL OFL)
-- 본문: 본명조(Noto Serif KR), 중국어는 Noto Serif SC·TC, 일본어는 Noto Serif JP. 저장소에는 `Assets/Art/Fonts/NotoSerifKR-Regular.otf` 가 있고, 거기 없는 한자(丐·罩)는 Yuji Boku 로 대체한다. 영어는 Noto Serif KR 의 라틴 글자를 그대로 쓰고, 간체는 `NotoSerifSC-Regular.otf`(SIL OFL)를 쓴다
+- 본문: 본명조(Noto Serif KR), 중국어는 Noto Serif SC·TC, 일본어는 Noto Serif JP. 저장소에는 `Assets/Art/Fonts/NotoSerifKR-Regular.otf` 가 있고, 거기 없는 한자(丐·罩)는 Yuji Boku 로 대체한다. 영어는 Noto Serif KR 의 라틴 글자를 그대로 쓰고, 간체는 `NotoSerifSC-Regular.otf`, 번체는 `NotoSerifTC-Regular.otf`(둘 다 SIL OFL)를 쓴다
 - 숫자(피해 표시): 굵은 고딕 계열로 따로 지정해 가독성 확보
 - 절기 이름(한자 붓글씨): Yuji Boku(SIL OFL). 절기 16개 이름의 번체 한자가 모두 있다. Ma Shan Zheng 같은 중국 붓글씨 글꼴은 劍·無·飛 같은 번체가 빠져 쓸 수 없다
 
@@ -1479,7 +1479,7 @@ Steam은 AI로 만든 콘텐츠를 스토어 등록 때 공개하도록 요구�
 | 2 | 繁體中文 | 대만·홍콩 무협 팬층 |
 | 3 | 日本語 | 얼리 액세스 이후 |
 
-무협 용어는 언어마다 옮기는 방식이 다릅니다. 중국어는 원래 한자를 그대로 쓰고, 영어는 'Inner Energy(진기)', 'Realm(경지)', 'Ultimate Art(오의)'처럼 뜻을 살린 용어집을 먼저 만들어 고정합니다.
+번체는 간체 문구를 대만 낱말로 바꾼 뒤 손으로 고쳐 만들고, 화면 문구와 데이터 이름부터 넣습니다(대사는 간체 대사 뒤). 무협 용어는 언어마다 옮기는 방식이 다릅니다. 중국어는 원래 한자를 그대로 쓰고, 영어는 'Inner Energy(진기)', 'Realm(경지)', 'Ultimate Art(오의)'처럼 뜻을 살린 용어집을 먼저 만들어 고정합니다.
 
 ## 17. 개발 로드맵
 

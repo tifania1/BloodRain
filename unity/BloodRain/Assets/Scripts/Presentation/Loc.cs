@@ -5,7 +5,7 @@ using UnityEngine;
 namespace BloodRain.Presentation
 {
     // 화면 문구를 지금 언어로 꺼낸다. 원문·키 규칙은 Core/Data/Strings.cs, 표는 Resources/Data/strings/<lang>.json.
-    // 언어는 PlayerPrefs 에 남고, 정한 적 없으면 기기 언어(한국어·간체·그 밖은 영어)로 시작한다. 설정 화면이 생기면 Lang 을 바꾼다.
+    // 언어는 PlayerPrefs 에 남고, 정한 적 없으면 기기 언어(한국어·간체·번체·그 밖은 영어)로 시작한다. 설정 화면이 생기면 Lang 을 바꾼다.
     //   Loc.T("ui.levelup.none")                         UI 문구
     //   Loc.F("ui.levelup.skip", charges)                {0} 자리 채우기
     //   Loc.T($"weapons.{w.Id}.name", w.NameKo)           데이터 문구(옮긴 값이 없으면 넘긴 한국어)
@@ -46,12 +46,13 @@ namespace BloodRain.Presentation
         public static string Upgrade(RebirthUpgradeDef u) => T($"cheonha.rebirth.upgrades.{u.Id}.name", u.NameKo);
         /// <summary>능력치 이름(Might → 공력). 표에 없는 이름이면 그대로.</summary>
         public static string Stat(string stat) => T($"ui.stat.{stat}", stat);
-        /// <summary>이름 옆에 붙이는 한자. 간체 화면에선 이름이 이미 한자라 겹치니 뺀다.</summary>
-        public static string Hanja(string hanja) => Current.Lang == "zh-Hans" ? "" : hanja ?? "";
+        /// <summary>이름 옆에 붙이는 한자. 중국어(간체·번체) 화면에선 이름이 이미 한자라 겹치니 뺀다.</summary>
+        public static string Hanja(string hanja) => Current.Lang.StartsWith("zh") ? "" : hanja ?? "";
 
         static string FromSystem(SystemLanguage l) =>
             l == SystemLanguage.Korean ? "ko"
             : l == SystemLanguage.ChineseSimplified || l == SystemLanguage.Chinese ? "zh-Hans"
+            : l == SystemLanguage.ChineseTraditional ? "zh-Hant"
             : "en";
 
         static Strings Load(string lang)
