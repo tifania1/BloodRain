@@ -42,6 +42,27 @@ namespace BloodRain.Core.Tests
             var staff = Of("drunken_staff");
             Assert.Contains($"봉 분신 {staff.Param("directions")}개", Effect("drunken_staff"));
             Assert.Contains($"{staff.Param("stunSeconds")}초 기절", Effect("drunken_staff"));
+            // R-09: 프로토타입에 아직 없는 절기 다섯도 효과 칸의 숫자만은 params 로
+            string Pct(float v) => System.Math.Round(v * 100).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            string Num(float v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var taiji = Of("taiji_sword");
+            Assert.Contains($"흑백 검 {taiji.Param("swords")}자루", Effect("taiji_sword"));
+            Assert.Contains($"태극 구간이면 피해 +{Pct(taiji.Param("taijiDamageBonus"))}%", Effect("taiji_sword"));
+            var claw = Of("blood_claw");
+            Assert.Contains($"흡혈 {Pct(claw.Param("lifesteal"))}%", Effect("blood_claw"));
+            Assert.Contains($"극음이면 범위 {Num(claw.Param("extremeYinRangeMultiplier"))}배", Effect("blood_claw"));
+            var qin = Of("sonic_qin");
+            Assert.Contains($"최대 {Num(qin.Param("stackDamageMax"))}배", Effect("sonic_qin"));
+            Assert.Contains($"기절 {Pct(qin.Param("stunChance"))}%", Effect("sonic_qin"));
+            Assert.Contains($"상시 {Of("pear_spear").Param("directions")}방향 찌르기", Effect("pear_spear"));
+            Assert.Contains($"기혈 {Num(Of("falling_petals").Param("healPerHit"))} 회복", Effect("falling_petals"));
+        }
+
+        /// <summary>효과 칸에 숫자가 없는 흑룡탄은 params 를 지어내지 않는다(R-09). 생기면 이 테스트를 지우고 위에 더한다.</summary>
+        [Fact] public void 숫자가_없는_흑룡탄은_params_가_없다()
+        {
+            Assert.Null(Of("chain_sickle").Params);
+            Assert.DoesNotMatch(@"\d", Effect("chain_sickle"));
         }
 
         /// <summary>9장 '절기로 바뀐 뒤 날아가는 것' 표 = params. 프로토타입·시뮬레이터가 이 값을 읽는다.</summary>

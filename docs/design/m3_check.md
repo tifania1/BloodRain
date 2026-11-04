@@ -20,7 +20,7 @@
 | 날아가는 것·넉백 | 9장 표, 여섯 무공 비어 있음('손으로 맞춘 뒤 채운다') | 태극검·쇄겸술·혈조·음공·이화창·낙화검우에 shot·knockback 없음(`WeaponShotTests.프로토타입에_없는_무공_개수가_문장과_같다`) | - | - | - | - |
 | 해금 조건 | 9장 표(음공 한 판 5,000 처치, 이화창 한 판 경공 300, 뇌부 정신부 누적 10, 태극검·쇄겸술 땅의 주인 첫 처치) | weapons.json `unlock` 같음 | `boss:` 는 `Soul` 이 판정. 도전 과제 셋은 `Soul.Unlock(token)` 로 받기만 하고, 세는 곳 없음 | 처음부터 쓰는 아홉만 | - | 줄 없음 |
 | 심법 16 | 9장 '심법 16종' | passives.json 16. 같음(`GddTablesTests.심법_표가_passives_json_과_같다`) | `Stats` | 16 다 | 몸 능력치에 닿는 심법만 카드로 | C-06 '남은 것'(심법 능력치 얹기) |
-| 절기 16 | 9장 '절기 16종'·'절기로 바뀐 뒤 날아가는 것' | evolutions.json 16, params 는 열(프로토타입 아홉 + 오뢰정법). 태극양의검·흑룡탄·혈마수·파천금음·백화난무창·매화만개는 params 없음(`EvolutionParamsTests` 셋) | `Awakening`(문턱·그릇), `EvolutionDef.Param` | 아홉 | 없음 | J-01U(각성 연출) 끝, C-09(절기 4종), C-09c(셋 효과), W-01(오뢰정법). 나머지 줄 없음 |
+| 절기 16 | 9장 '절기 16종'·'절기로 바뀐 뒤 날아가는 것' | evolutions.json 16, params 는 열다섯(프로토타입 아홉 + 오뢰정법 + R-09 다섯은 효과 칸 숫자만). 흑룡탄만 params 없음(`EvolutionParamsTests` 넷) | `Awakening`(문턱·그릇), `EvolutionDef.Param` | 아홉 | 없음 | J-01U(각성 연출) 끝, C-09(절기 4종), C-09c(셋 효과), W-01(오뢰정법). 나머지 줄 없음 |
 
 ## 세 지역
 
@@ -45,7 +45,7 @@
 - 기획서 20장 진전 표 ↔ synergies.json schools 를 맞추는 테스트가 없다(지금은 손으로 대조해 같다). `SynergyDataTests` 에 하나 더하면 된다
 - **도전 과제 해금 셋을 세는 곳이 없다.** 음공(한 판 처치 5,000)·이화창(한 판 경공 300)·뇌부(정신부 누적 10)는 토큰만 있다. 한 판 기록(`Run/Life.cs` 쪽)과 혼에 쌓는 누적(`Meta/Soul.cs`)에서 세어 `Soul.Unlock` 을 부르게
 - **무공 여섯의 날아가는 것·넉백 값이 없다**(태극검·쇄겸술·혈조·음공·이화창·낙화검우, 9장 표·weapons.json `shot`·`knockback`). 기획서는 프로토타입에서 손으로 맞춘 뒤 채운다고 했다 → WP-01. 그 전까지는 숫자 없음, 사람 결정 필요
-- **절기 여섯에 params 가 없다.** 9장 효과 칸에 숫자가 있는 것은 evolutions.json params 로 옮기면 된다(태극양의검 검 8자루·태극 +30%, 혈마수 흡혈 4%·극음 범위 2배, 파천금음 최대 3배·기절 30%, 백화난무창 5방향, 매화만개 기혈 0.2). 흑룡탄과 여섯의 탄속·반경·수명은 숫자 없음, 사람 결정 필요. 넣으면 `EvolutionParamsTests.효과_칸의_숫자가_params_와_같다` 에 더한다
+- ~~**절기 여섯에 params 가 없다.**~~ → R-09(11-04) 다섯은 옮김, 흑룡탄은 숫자가 없어 그대로. 9장 효과 칸에 숫자가 있는 것은 evolutions.json params 로 옮기면 된다(태극양의검 검 8자루·태극 +30%, 혈마수 흡혈 4%·극음 범위 2배, 파천금음 최대 3배·기절 30%, 백화난무창 5방향, 매화만개 기혈 0.2). 흑룡탄과 여섯의 탄속·반경·수명은 숫자 없음, 사람 결정 필요. 넣으면 `EvolutionParamsTests.효과_칸의_숫자가_params_와_같다` 에 더한다
 - Unity 무공 일곱(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`·`ring_wave`·`pierce_thrust`·`petal_scatter`)과 그 절기 모양은 unity_tasks 에 줄 없음(취선봉은 C-04b 에 '넣을 때' 한 마디뿐)
 - **기믹 넷의 수치가 없다.** `bamboo_thicket`·`drifting_boats`·`reverse_wave`·`cloud_sea` 는 cheonha.json regions 에만 있고 gimmicks.json·Core 에 없다. 7장도 '아직 수치가 없다'(역류 파도는 '2분마다'만). 숫자 없음, 사람 결정 필요. 마천패 2막 역류 파도의 '배 위면 맞지 않음'이 떠내려오는 배에 걸려 있다. 이름도 지역 표는 '대나무 덤불', 수치 문단은 '대숲'
 - **기믹을 지역 안 어디에 몇 개 놓는지가 없다.** 독안개 샘 수, 물 구역의 모양·넓이(수귀는 물에서만 솟는다), 태극 바닥 수. Core 에 놓는 함수는 탑림 `PagodaForest.Layout` 뿐이다(숭산 범종·우물도 같다). 숫자 없음, 사람 결정 필요

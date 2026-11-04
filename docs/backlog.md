@@ -90,7 +90,7 @@ M3 지역 콘텐츠(당가타·장강·무당산)
 - [ ] R-06 진전 표 테스트: 기획서 20장 진전 표 ↔ synergies.json schools 를 맞추는 테스트를 `SynergyDataTests` 에(지금은 손으로 대조해 같음)
 - [ ] R-07 진전 소림 4·개방 4 효과: synergies.json 에 effect·params(나한 허상 열여덟·5초·판마다 3번, 3분마다 제자 셋·10초, 20장 숫자)를 넣고 `SynergyEffects.Known` 에. 허상이 밀쳐 내는 세기·개방 제자 셋의 피해·기혈은 기획서에 숫자가 없어 그 칸만 사람 결정 대기로 따로 적는다
 - [ ] R-08 도전 과제 해금 셋 세기: 음공(한 판 처치 5,000)·이화창(한 판 경공 300)·뇌부(정신부 누적 10)를 한 판 기록(`Run/Life.cs` 쪽)과 혼 누적(`Meta/Soul.cs`)에서 세어 `Soul.Unlock` 을 부르게, 저장 왕복과 테스트
-- [ ] R-09 절기 여섯 params: 9장 효과 칸에 숫자가 있는 것(태극양의검 검 8자루·태극 +30%, 혈마수 흡혈 4%·극음 범위 2배, 파천금음 최대 3배·기절 30%, 백화난무창 5방향, 매화만개 기혈 0.2)을 evolutions.json params 로, `EvolutionParamsTests.효과_칸의_숫자가_params_와_같다` 에 더함. 흑룡탄과 여섯의 탄속·반경·수명은 숫자가 없어 건드리지 않는다 (하는 중: 클라우드 11-04 M3 Core 다)
+- [x] R-09 2026-11-04 — evolutions.json params: 태극양의검 `swords 8·taijiDamageBonus 0.3`, 혈마수 `lifesteal 0.04·extremeYinRangeMultiplier 2`, 파천금음 `stackDamageMax 3·stunChance 0.3`, 백화난무창 `directions 5`, 매화만개 `healPerHit 0.2`. `효과_칸의_숫자가_params_와_같다` 에 더하고, 숫자 없는 흑룡탄은 params 를 안 지어내게 테스트 하나. 탄속·반경·수명은 프로토타입에 붙일 때. m3_check 고침
 - [ ] R-10 **사람 결정 대기** 세 지역 기믹 넷의 수치와 배치: `bamboo_thicket`·`drifting_boats`·`reverse_wave`·`cloud_sea` 는 cheonha.json regions 에만 있고 gimmicks.json·Core·7장 수치가 없다(역류 파도는 '2분마다'만). 독안개 샘·물 구역·태극 바닥을 지역 안 어디에 몇 개 놓는지도 없다(Core 배치 함수는 탑림 `PagodaForest.Layout` 뿐). 추천: 클라우드 세션이 같은 땅의 기존 기믹(독안개·물·태극 바닥·탑림)에 맞춘 시작값 표를 7장 '지형 기믹 수치' 꼴로 만들어 올리고, 사람이 보고 정한다. 마천패 2막의 '배 위면 맞지 않음'이 떠내려오는 배에 걸려 있다
 - [ ] R-11 땅의 주인 셋 판정 Core: 흑백 구역(내 음양 색·경계 회전), 분열 되살림(`rejoinSeconds`), 칠성검진 `big_dipper` 자리, 태극권 끌어당김, 갈고리 사슬 끌기, 반쪽 독안개 쪽 고르기를 `Combat/BossPatterns.cs` 에 함수로(`RingOffsets`·`InPool` 처럼). Unity·웹이 같은 셈을 쓰게. 테스트 (하는 중: 클라우드 11-04 M3 Core 다)
 
