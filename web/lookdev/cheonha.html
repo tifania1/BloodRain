@@ -352,6 +352,13 @@ const DEMONIC_INS = new Set((INS.demonicInsights || []).map(i => i.id));
 const INS_APPLIED = new Set(['first_weapon_damage', 'still_regen', 'melee_range', 'periodic_block', 'magnet_multiplier', 'yinyang_reset', 'kill_stack_might', 'might_for_health', 'low_health_frenzy']);
 const INS_OFF = { lifesteal_no_heal: '이 놀이판엔 흡혈이 없다', inner_demon_might: '이 놀이판엔 혈공(심마)이 없다' };
 const ARC_WEAPON = { behavior: 'front_arc' };   // 검기 = 앞쪽 반원. 이 시안의 첫 번째 공격 무공이라 일검파만도 여기에 붙는다
+// 시안 무공 셋의 바탕 값(길이는 m × 경지 축척, 시간은 초). 플레이어와 혈영 분신(mimic, R4-11)이 같이 읽는다.
+// 피해는 검기 한 방 damage 가 바탕이고 도는 검·먹 파동은 그 배(damageRatio). 플레이어 쪽은 여기에 경지 power·공력·심법·깨달음이 붙는다
+const ART = {
+  arc:   { damage: 18, cooldown: 0.8, range: 2.7, halfAngle: 1.25, perCard: 0.12 },
+  orbit: { damageRatio: 0.5, radius: 1.9, spin: 3.2, blade: 0.35, touchGap: 0.3, fromTier: 2 },
+  wave:  { damageRatio: 1.4, cooldown: 2.6, radius: 6.5, perCard: 0.08, fromTier: 4 },
+};
 const offersInsight = r => !!(r && r.reward) && r.reward.split(',').some(x => x.trim() === INS.choices.realmReward);
 const BR = CH.bosses, QI = CH.rebirthQi, RB = CH.rebirth, CRUSH = CH.crush, BRK = CH.breakthrough;
 const AWAKE_T = REALMS.findIndex(r => r.id === BR.awakenFrom);
@@ -1242,10 +1249,10 @@ function update(rdt) {
   regionGimmicks(dt);
   const bless = G.bless && G.bless.t > 0 ? 1 + GIM.taijiFloor.oppositeAspectDamageBonus : 1;   // 태극 바닥 기운(이 시안의 무공 셋은 걸린 속성으로 친다)
   const ig = G.insEff.melee_range, il = G.insEff.first_weapon_damage;
-  const range = 2.7 * s * (1 + 0.08 * pr) * M.area * (ig && INS_BY.igi.weaponBehaviors.includes(ARC_WEAPON.behavior) ? 1 + ig.rangeBonus : 1);   // 이기어검은 검기에만
-  const dmg = 18 * power() * might * bless, arcDmg = dmg * (1 + 0.12 * (G.cards.art_arc || 0)) * (il ? 1 + il.damageBonus : 1);           // 일검파만도 검기에만
+  const range = ART.arc.range * s * (1 + 0.08 * pr) * M.area * (ig && INS_BY.igi.weaponBehaviors.includes(ARC_WEAPON.behavior) ? 1 + ig.rangeBonus : 1);   // 이기어검은 검기에만
+  const dmg = ART.arc.damage * power() * might * bless, arcDmg = dmg * (1 + ART.arc.perCard * (G.cards.art_arc || 0)) * (il ? 1 + il.damageBonus : 1);           // 일검파만도 검기에만
   if (G.cd <= 0) {
-    G.cd = 0.8 * (1 - cdr);
+    G.cd = ART.arc.cooldown * (1 - cdr);
     let tg = null, best = range * 1.6;
     for (const f of G.foes) { if (f.dead || f.down || (f.e < G.tier && !f.boss)) continue; const d = Math.hypot(f.x - p.x, f.y - p.y) - f.r; if (d < best) { best = d; tg = f; } }
     const a = tg ? Math.atan2(tg.y - p.y, tg.x - p.x) : Math.atan2(p.fy, p.fx);
@@ -1256,21 +1263,21 @@ function update(rdt) {
         if (f.dead) continue; const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy);
         if (d > range + f.r) continue;
         let ad = Math.atan2(dy, dx) - da; ad = Math.atan2(Math.sin(ad), Math.cos(ad));
-        if (Math.abs(ad) < 1.25 || d < f.r + p.r) hurt(f, arcDmg, dx / (d || 1), dy / (d || 1), 2 * s, 'arc');
+        if (Math.abs(ad) < ART.arc.halfAngle || d < f.r + p.r) hurt(f, arcDmg, dx / (d || 1), dy / (d || 1), 2 * s, 'arc');
       }
     }
   }
   // 무공 2(일류부터): 몸 주위를 도는 검 / 무공 3(초절정부터): 먹 파동
-  if (G.tier >= 2) {
-    G.orbitA += dt * 3.2; const n = orbitCount(), R = 1.9 * s * M.area;
+  if (G.tier >= ART.orbit.fromTier) {
+    G.orbitA += dt * ART.orbit.spin; const n = orbitCount(), R = ART.orbit.radius * s * M.area;
     for (let i = 0; i < n; i++) {
       const a = G.orbitA + i * TAU / n, bx = p.x + Math.cos(a) * R, by = p.y + Math.sin(a) * R;
-      for (const f of G.foes) if (!f.dead && Math.hypot(f.x - bx, f.y - by) < f.r + 0.35 * s && (f.contact2 || 0) <= 0) { f.contact2 = 0.3; hurt(f, dmg * 0.5, 0, 0, 0, 'orbit'); }
+      for (const f of G.foes) if (!f.dead && Math.hypot(f.x - bx, f.y - by) < f.r + ART.orbit.blade * s && (f.contact2 || 0) <= 0) { f.contact2 = ART.orbit.touchGap; hurt(f, dmg * ART.orbit.damageRatio, 0, 0, 0, 'orbit'); }
     }
   }
-  if (G.tier >= 4) {
+  if (G.tier >= ART.wave.fromTier) {
     G.waveCd -= dt;
-    if (G.waveCd <= 0) { G.waveCd = 2.6 * (1 - cdr) * (1 - 0.08 * (G.cards.art_wave || 0)); const R = 6.5 * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * 1.4, 0, 0, 0, 'wave'); }
+    if (G.waveCd <= 0) { G.waveCd = ART.wave.cooldown * (1 - cdr) * (1 - ART.wave.perCard * (G.cards.art_wave || 0)); const R = ART.wave.radius * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * ART.wave.damageRatio, 0, 0, 0, 'wave'); }
   }
   // 적
   const aura = p.r * 1.7, recycle = G.view * SPT.recycleBeyondDiagonal, wEnemy = weatherEnemyMul();   // 눈보라·붉은 달 걸음
@@ -1701,7 +1708,7 @@ function resolvePattern(f, pt, k, dmg) {
     // 이름 있는 적 부르기(금선지네·수귀). 부른 적은 진기를 떨구지 않는다
     const cx = pt.center === 'boss' ? f.x : p.x, cy = pt.center === 'boss' ? f.y : p.y, sp = (pt.scatter || 3) * k, before = G.foes.length;
     for (let i = 0; i < pt.count; i++) spawnLocal(f.e, pt.summon, { x: clamp(cx + rand(-sp, sp), 0, W), y: clamp(cy + rand(-sp, sp), 0, H) });
-    for (let i = before; i < G.foes.length; i++) { G.foes[i].xv = 0; if (pt.leaveSeconds) G.foes[i].life = pt.leaveSeconds; }   // 혈영 분신은 leaveSeconds 뒤 사라진다
+    for (let i = before; i < G.foes.length; i++) { G.foes[i].xv = 0; if (pt.leaveSeconds) G.foes[i].life = pt.leaveSeconds; if (pt.mimic) G.foes[i].mimic = pt.mimic; }   // 혈영 분신은 leaveSeconds 뒤 사라지고, 흉내 값은 패턴 mimic 이 덮는다(Core Mimicry.For)
   } else if (pt.shape === 'projectile_fan') {
     const waves = pt.waves || 1;
     for (let w = 0; w < waves; w++) for (let i = 0; i < pt.count; i++) {
@@ -1803,6 +1810,44 @@ function localBehavior(f, dx, dy, d, dt) {
         const a = n === 1 ? a0 : a0 - sp / 2 + sp * i / (n - 1);
         G.shots.push({ x: f.x, y: f.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, left: sh.range * k, r: sh.radius * k, dmg: (D.projectileDamage || 0) * f.dmg / D.contactDamage, src: f, petal: D.behavior === 'petal_shot', ice: D.behavior === 'ice_throw' });
       }
+    }
+  } else if (D.behavior === 'mimic' && (f.mimic || D.mimic)) mimicTick(f, d, dt);
+}
+// 혈영 분신 흉내(R4-11, Core Mimicry). 잡몹 분신은 enemies.json mimic — 첫 무공(시작 무공) 하나 = 이 시안의 검기를 피해 damageScale·쿨 cooldownScale 배로.
+// 혈영회주가 부른 분신은 mirror_clone 의 mimic(allWeapons) — 가진 무공 모두. 이 시안 무공 셋은 경지에 따라 붙으니 '가진 무공'은 지금 플레이어 경지에 붙어 있는 것.
+// 무공 단계는 플레이어 카드 단계 그대로(검기 피해·도는 검 자루·먹 파동 간격). 피해는 ART 바탕 피해 × 단계 × 배율이고
+// 경지 power·공력·심법·깨달음·문파 보너스는 받지 않는다(Mimicry '심법·문파 보너스는 받지 않는다'). 도는 검 닿는 간격도 쿨 배율을 곱한다(Mimicry Interval)
+function mimicArts(mm) {
+  const L = ['arc'];
+  if (mm.allWeapons) { if (G.tier >= ART.orbit.fromTier) L.push('orbit'); if (G.tier >= ART.wave.fromTier) L.push('wave'); }
+  return L;
+}
+function mimicTick(f, d, dt) {
+  const mm = f.mimic || f.def.mimic, k = sc(f.e), p = G.p, arts = mimicArts(mm), cs = mm.cooldownScale || 1, base = ART.arc.damage * (mm.damageScale || 0);
+  f.arts = arts;
+  if (f.e < G.tier) return;   // 아래 경지면 기세에 눌려 곧 쓰러진다
+  // 검기: 플레이어 쪽 반원. 쿨이 돌았어도 플레이어가 겨누는 거리(사거리 1.6배) 밖이면 기다린다
+  f.mArc = (f.mArc ?? ART.arc.cooldown * cs * Math.random()) - dt;
+  const R = ART.arc.range * k;
+  if (f.mArc <= 0 && d < R * 1.6) {
+    f.mArc = ART.arc.cooldown * cs;
+    G.fx.push({ k: 'arc', x: f.x, y: f.y, a: Math.atan2(p.y - f.y, p.x - f.x), r: R, t: 0, life: 0.25, red: true });
+    if (d < R + p.r) hitPlayer(base * (1 + ART.arc.perCard * (G.cards.art_arc || 0)));
+  }
+  if (arts.includes('orbit')) {
+    f.orbA = (f.orbA || 0) + dt * ART.orbit.spin; f.mOrb = (f.mOrb || 0) - dt;
+    const n = orbitCount(), RO = ART.orbit.radius * k;
+    for (let i = 0; i < n && f.mOrb <= 0; i++) {
+      const a = f.orbA + i * TAU / n;
+      if (Math.hypot(p.x - f.x - Math.cos(a) * RO, p.y - f.y - Math.sin(a) * RO) < p.r + ART.orbit.blade * k) { f.mOrb = ART.orbit.touchGap * cs; hitPlayer(base * ART.orbit.damageRatio); }
+    }
+  }
+  if (arts.includes('wave')) {
+    f.mWave = (f.mWave ?? ART.wave.cooldown * cs) - dt;
+    if (f.mWave <= 0) {
+      f.mWave = ART.wave.cooldown * (1 - ART.wave.perCard * (G.cards.art_wave || 0)) * cs;
+      const RW = ART.wave.radius * k; G.fx.push({ k: 'wave', x: f.x, y: f.y, r: RW, t: 0, life: 0.5, red: true });
+      if (d < RW + p.r) hitPlayer(base * ART.wave.damageRatio);
     }
   }
 }
@@ -2277,6 +2322,10 @@ function render() {
       ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(f.lungeA) * L, Y + Math.sin(f.lungeA) * L); ctx.stroke();
     }
     if (f.elite) { ctx.strokeStyle = CRIMSON; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X, Y, R * 1.25, 0, TAU); ctx.stroke(); drawHpRing(X, Y, R, f); }
+    if (f.arts && f.arts.includes('orbit') && f.e >= G.tier) {   // 혈영 분신이 흉내 낸 도는 검(붉은 먹)
+      const n = orbitCount(), RO = ART.orbit.radius * sc(f.e) * PPM; ctx.strokeStyle = CRIMSON; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      for (let i = 0; i < n; i++) { const a = f.orbA + i * TAU / n, bx = X + Math.cos(a) * RO, by = Y + Math.sin(a) * RO; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); }
+    }
     if (f.def && (f.elite ? R > 6 : R > 12)) {   // 이름: 정예는 다, 고유 적은 크게 보일 때만 첫 글자
       ctx.font = `700 ${f.elite ? 12 : 11}px ui-sans-serif, system-ui, sans-serif`; ctx.textAlign = 'center';
       const lab = f.elite ? f.def.nameKo : f.def.nameKo.slice(0, 1);
@@ -2292,7 +2341,7 @@ function render() {
     ctx.globalAlpha = 1;
     if (G.tier >= 1) { ctx.strokeStyle = `rgba(201,162,39,${0.25 + 0.1 * G.tier})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 1.7 * PPM, 0, TAU); ctx.stroke(); }
     if (G.insEff.periodic_block && G.blockCd <= 0) { ctx.strokeStyle = 'rgba(201,162,39,0.45)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 2.1 * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }   // 금종조 준비됨
-    if (G.tier >= 2) { const n = orbitCount(), R = 1.9 * sc(G.tier) * G.body.area * PPM; ctx.strokeStyle = G.tier >= 3 ? GOLD : INK; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const a = G.orbitA + i * TAU / n, bx = X + Math.cos(a) * R, by = Y + Math.sin(a) * R; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); } }
+    if (G.tier >= ART.orbit.fromTier) { const n = orbitCount(), R = ART.orbit.radius * sc(G.tier) * G.body.area * PPM; ctx.strokeStyle = G.tier >= 3 ? GOLD : INK; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const a = G.orbitA + i * TAU / n, bx = X + Math.cos(a) * R, by = Y + Math.sin(a) * R; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); } }
   }
   // 혈마의 그림자: 반투명 혈마에 붉은 테, 순간이동 예고는 몸 뒤 붉은 점선 원
   if (G.shadow) {
@@ -2311,15 +2360,15 @@ function render() {
   // 효과
   for (const e of G.fx) {
     const k = e.t / e.life, X = sx(e.x), Y = sy(e.y), R = e.r * PPM;
-    if (e.k === 'arc') {
+    if (e.k === 'arc') {   // red: 혈영 분신이 흉내 낸 검기·먹 파동은 붉은 먹
       ctx.lineCap = 'round';
-      for (let i = 0; i < 3; i++) { ctx.strokeStyle = e.gold && i === 1 ? `rgba(201,162,39,${1 - k})` : `rgba(26,26,26,${0.85 * (1 - k)})`; ctx.lineWidth = (12 - i * 3.5) * (1 - k * 0.5); ctx.beginPath(); ctx.arc(X, Y, R * (0.78 + i * 0.1), e.a - 1.25 + k * 0.4, e.a + 1.25 - k * 0.2); ctx.stroke(); }
+      for (let i = 0; i < 3; i++) { ctx.strokeStyle = e.red ? `rgba(${i === 1 ? '179,38,30' : '90,16,14'},${0.85 * (1 - k)})` : e.gold && i === 1 ? `rgba(201,162,39,${1 - k})` : `rgba(26,26,26,${0.85 * (1 - k)})`; ctx.lineWidth = (12 - i * 3.5) * (1 - k * 0.5); ctx.beginPath(); ctx.arc(X, Y, R * (0.78 + i * 0.1), e.a - 1.25 + k * 0.4, e.a + 1.25 - k * 0.2); ctx.stroke(); }
     } else if (e.k === 'puff' || e.k === 'crush') {
       ctx.fillStyle = e.k === 'crush' ? `rgba(120,110,95,${0.35 * (1 - k)})` : e.red ? `rgba(150,30,26,${0.4 * (1 - k)})` : `rgba(26,26,26,${0.35 * (1 - k)})`;
       ctx.beginPath(); ctx.arc(X, Y, R * (0.5 + k * 0.8), 0, TAU); ctx.fill();
     } else if (e.k === 'wave') {
       ctx.strokeStyle = `rgba(26,26,26,${0.8 * (1 - k)})`; ctx.lineWidth = 24 * (1 - k) + 2; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k), 0, TAU); ctx.stroke();
-      ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k) * 0.97, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = e.red ? `rgba(179,38,30,${1 - k})` : `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k) * 0.97, 0, TAU); ctx.stroke();
     } else if (e.k === 'splinter') {   // 목인나한 나뭇조각: 닿는 반경을 옅게 비추고 갈색 조각 열 개가 튄다
       ctx.fillStyle = `rgba(120,80,40,${0.18 * (1 - k)})`; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
       ctx.strokeStyle = `rgba(96,62,30,${0.9 * (1 - k)})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
