@@ -2132,6 +2132,11 @@ function render() {
     ctx.drawImage(clusterImg(f), X - s2 / 2, Y - s2 * 0.62 - lift, s2, s2);
     if (f.flash > 0) { ctx.globalAlpha = 0.35; ctx.fillStyle = '#FFF8EC'; ctx.beginPath(); ctx.arc(X, Y - lift, R * 1.1, 0, TAU); ctx.fill(); }
     ctx.globalAlpha = 1;
+    if (f.lungeWind > 0 && f.def && f.def.dash) {   // 혈사자 돌진 예고: 달려갈 길(속도 × 시간)을 붉은 띠로, 예고가 끝날수록 짙게
+      const L = f.def.dash.speed * f.def.dash.seconds * sc(f.e) * PPM, q = 1 - f.lungeWind / (f.def.telegraph || 1);
+      ctx.strokeStyle = `rgba(179,38,30,${0.25 + 0.5 * q})`; ctx.lineWidth = Math.max(2, R * 1.2); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(f.lungeA) * L, Y + Math.sin(f.lungeA) * L); ctx.stroke();
+    }
     if (f.elite) { ctx.strokeStyle = CRIMSON; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X, Y, R * 1.25, 0, TAU); ctx.stroke(); drawHpRing(X, Y, R, f); }
     if (f.def && (f.elite ? R > 6 : R > 12)) {   // 이름: 정예는 다, 고유 적은 크게 보일 때만 첫 글자
       ctx.font = `700 ${f.elite ? 12 : 11}px ui-sans-serif, system-ui, sans-serif`; ctx.textAlign = 'center';
