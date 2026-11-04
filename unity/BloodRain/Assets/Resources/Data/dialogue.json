@@ -31,6 +31,13 @@
   },
   "prologue": {
     "_note": "서장 판 안 말풍선(docs/story/prologue.md). when 은 그 일이 처음 일어나는 순간. offscreen 이면 화면 아래 가운데. cuts 는 장삼 처치 뒤 컷 두 장.",
+    "_noteHints": "안내 문구(4장 '서장 상세 흐름'). 대사와 같은 사건에 걸리면 안내를 먼저 띄우고 대사는 hintFirstDelaySeconds 늦춘다. 한 사건에 대사가 여럿이면 앞 줄이 lineSeconds 동안 떠 있다 지운 뒤 다음 줄(prologue.md '쓰는 법'). 고르는 규칙은 Core Run/PrologueCues.cs. 음양 문구는 2026-11-04 클라우드 초안.",
+    "lineSeconds": 2,
+    "hintFirstDelaySeconds": 0.5,
+    "hints": [
+      { "id": "ultimate", "when": "ultimate_ready", "textKo": "오의를 써라" },
+      { "id": "yinyang", "when": "yinyang_tilt", "textKo": "태극이 기울었다. 한쪽 기운만 키우면 극성에 빠져 기혈이 거꾸로 흐른다." }
+    ],
     "lines": [
       {"id": "start", "when": "start", "speaker": "unnang", "offscreen": true, "textKo": "소운아, 문 걸어! 소운아!"},
       {"id": "start_reply", "when": "start_reply", "speaker": "jin_sowoon", "textKo": "문 걸면 마을 사람들은 어디로 숨어요."},

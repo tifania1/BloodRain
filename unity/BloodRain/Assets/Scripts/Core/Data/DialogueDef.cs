@@ -75,6 +75,20 @@ namespace BloodRain.Core.Data
     {
         public List<DialogueLineDef> Lines = new List<DialogueLineDef>();
         public List<CutDef> Cuts = new List<CutDef>();
+        /// <summary>판 안 대사 한 줄이 떠 있는 초(prologue.md '쓰는 법' 2초).</summary>
+        public float LineSeconds = 2f;
+        /// <summary>안내 문구와 같은 사건이면 대사를 이만큼 늦춘다(0.5초).</summary>
+        public float HintFirstDelaySeconds = 0.5f;
+        /// <summary>조작 안내 문구(4장 '서장 상세 흐름'). 고르는 규칙은 Run/PrologueCues.</summary>
+        public List<PrologueHintDef> Hints = new List<PrologueHintDef>();
+    }
+
+    public sealed class PrologueHintDef
+    {
+        public string Id = "";
+        /// <summary>PrologueCue 의 사건 id(ultimate_ready, yinyang_tilt …).</summary>
+        public string When = "";
+        public string TextKo = "";
     }
 
     /// <summary>컷 한 장의 자막. Lines 가 비면 자막 없음.</summary>
