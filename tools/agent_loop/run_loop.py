@@ -133,7 +133,8 @@ def open_unity_tasks() -> list[str]:
 
 def sync_repo() -> bool:
     """claude/dev 최신으로. 사람이 고치던 변경이 있으면 False."""
-    dirty = [l for l in git("status", "--porcelain").splitlines() if not l.endswith("/") and "art_inbox" not in l]
+    # 추적 안 되는 파일(로그 등)은 사람 작업으로 보지 않는다. 고친 채 커밋 안 된 추적 파일만 본다
+    dirty = [l for l in git("status", "--porcelain", "--untracked-files=no").splitlines() if "art_inbox" not in l]
     if dirty:
         log("작업 트리에 커밋 안 된 변경이 있어 이번 실행은 건너뜀: " + "; ".join(dirty[:5]))
         return False
@@ -207,12 +208,17 @@ async def run_agent(cfg: dict) -> None:
             STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# 바깥 스크립트가 대신 커밋할 때 넣는 곳. 이 밖의 새 파일(로그 따위)은 커밋하지 않는다
+COMMIT_PATHS = ["docs", "art_queue", "core", "tools", "web",
+                "unity/BloodRain/Assets", "unity/BloodRain/Packages", "unity/BloodRain/ProjectSettings"]
+
+
 def commit_and_push(dry: bool) -> None:
-    if git("status", "--porcelain"):
+    if git("status", "--porcelain", "--", *COMMIT_PATHS):
         if dry:
             log("(dry) 바뀐 파일이 있지만 커밋하지 않음")
             return
-        git("add", "-A")
+        git("add", "-A", "--", *COMMIT_PATHS)
         git("commit", "-m", "PC 루프: 이미지 반영·Unity 작업")
     ahead = git("rev-list", "--count", "origin/claude/dev..HEAD", check=False) or "0"
     if ahead != "0" and not dry:
