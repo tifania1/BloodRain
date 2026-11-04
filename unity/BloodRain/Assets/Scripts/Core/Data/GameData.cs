@@ -37,6 +37,8 @@ namespace BloodRain.Core.Data
         public FinalBossDef FinalBoss { get; private set; } = new FinalBossDef();
         /// <summary>지역 기믹 수치(gimmicks.json, 기획서 7장).</summary>
         public GimmicksDef Gimmicks { get; private set; } = new GimmicksDef();
+        /// <summary>대사(dialogue.json, docs/story).</summary>
+        public DialogueDef Dialogue { get; private set; } = new DialogueDef();
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -87,10 +89,11 @@ namespace BloodRain.Core.Data
                 ElitePatterns = bossPatterns.Elites,
                 FinalBoss = bossPatterns.Final,
                 Gimmicks = Read<GimmicksDef>("gimmicks"),
+                Dialogue = Read<DialogueDef>("dialogue"),
             };
         }
 
-        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha", "bosspatterns", "gimmicks" };
+        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha", "bosspatterns", "gimmicks", "dialogue" };
 
         public WeaponDef Weapon(string id) => Weapons.First(w => w.Id == id);
         public PassiveDef Passive(string id) => Passives.First(p => p.Id == id);

@@ -1,0 +1,584 @@
+{
+  "_note": "대사(backlog DL-02). 원문 문장과 쓰는 법은 docs/story/*.md, 이 파일은 게임이 읽는 사본이라 문장을 바꾸면 두 곳을 같이 고친다(StoryDocTests 가 맞춰 봄). when 은 Core/Meta/InnDialogue 가 읽는 조건이고 뜻은 각 묶음 _note. speaker 는 speakers id, null 이면 서술 자막. 현지화 키는 dialogue.<묶음>.<id>.<필드>(Core/Data/Strings.cs).",
+  "speakers": [
+    {"id": "jin_sowoon", "nameKo": "진소운"},
+    {"id": "unnang", "nameKo": "운낭"},
+    {"id": "mok", "nameKo": "목 노인"},
+    {"id": "old_master", "nameKo": "노고수"},
+    {"id": "jang_sam", "nameKo": "장삼"},
+    {"id": "hyegong", "nameKo": "혜공"},
+    {"id": "wongak", "nameKo": "원각"},
+    {"id": "dang_sohye", "nameKo": "당소혜"},
+    {"id": "dang_yeonhwa", "nameKo": "당연화"},
+    {"id": "ma_cheonpae", "nameKo": "마천패"},
+    {"id": "ha_yeon", "nameKo": "하연"},
+    {"id": "hyeolheo", "nameKo": "혈허진인"},
+    {"id": "cheongheo", "nameKo": "청허진인"},
+    {"id": "unhwa", "nameKo": "운화"},
+    {"id": "sword_soul", "nameKo": "검혼"},
+    {"id": "seol_muhyang", "nameKo": "설무향"},
+    {"id": "hyeokryeon_hwi", "nameKo": "혁련휘"},
+    {"id": "cheonma", "nameKo": "천마"},
+    {"id": "baekya", "nameKo": "백야"}
+  ],
+  "returns": {
+    "_note": "객잔 귀환 한 번에 나오는 마디 수와 고르는 순서(docs/story 각 파일 '쓰는 법'). 순서에 있는 갈래가 먼저, 같은 갈래 안에서는 이 파일 순서. 밀린 줄은 다음 귀환으로. 대표 인물은 귀환마다 한 사람 한 마디(합류 줄 먼저).",
+    "mokMax": 2,
+    "unnangMax": 1,
+    "leaderMax": 1,
+    "mokOrder": ["lord", "stones", "realm", "zuohwa", "lives"],
+    "unnangOrder": ["return", "confess", "facility", "letter", "lives", "chat"]
+  },
+  "prologue": {
+    "_note": "서장 판 안 말풍선(docs/story/prologue.md). when 은 그 일이 처음 일어나는 순간. offscreen 이면 화면 아래 가운데. cuts 는 장삼 처치 뒤 컷 두 장.",
+    "lines": [
+      {"id": "start", "when": "start", "speaker": "unnang", "offscreen": true, "textKo": "소운아, 문 걸어! 소운아!"},
+      {"id": "start_reply", "when": "start_reply", "speaker": "jin_sowoon", "textKo": "문 걸면 마을 사람들은 어디로 숨어요."},
+      {"id": "first_levelup", "when": "first_levelup", "speaker": "jin_sowoon", "textKo": "몸이 뜨겁다. 그 노인이 넣어 준 건가."},
+      {"id": "ultimate_ready", "when": "ultimate_ready", "speaker": "jin_sowoon", "textKo": "가슴에 뭔가 꽉 찼다."},
+      {"id": "realm_iryu", "when": "realm:iryu", "speaker": "jin_sowoon", "textKo": "마을이… 작아졌다?"},
+      {"id": "first_charge", "when": "first_charge", "speaker": "jin_sowoon", "textKo": "저건 피하는 수밖에 없다."},
+      {"id": "elite_spawn_gangsi_axeman", "when": "elite_spawn:gangsi_axeman", "speaker": "jin_sowoon", "textKo": "백정 왕씨 아저씨 도끼다…"},
+      {"id": "elite_kill_gangsi_axeman", "when": "elite_kill:gangsi_axeman", "speaker": "jin_sowoon", "textKo": "미안해요, 아저씨."},
+      {"id": "realm_ilryu", "when": "realm:ilryu", "speaker": "jin_sowoon", "textKo": "청운진이 다 보인다. 비가 비켜 간다."},
+      {"id": "boss_warning", "when": "boss_warning", "speaker": "jang_sam", "offscreen": true, "textKo": "통…금이다… 다들… 들어가…"},
+      {"id": "boss_spawn", "when": "boss_spawn", "speaker": "jin_sowoon", "textKo": "장 포쾌님…!"},
+      {"id": "awaken", "when": "awaken", "speaker": "old_master", "offscreen": true, "textKo": "살아라… 그리고 막아라."},
+      {"id": "awaken_after", "when": "awaken_after", "speaker": "jin_sowoon", "textKo": "검이… 저절로 나간다."},
+      {"id": "boss_kill", "when": "boss_kill", "speaker": "jang_sam", "textKo": "비가… 그쳤…나…"}
+    ],
+    "cuts": [
+      {
+        "id": "burnout",
+        "art": "sb_prologue_burnout",
+        "lines": [
+          {"speaker": "jin_sowoon", "textKo": "문은… 열어 뒀어요."},
+          {"speaker": null, "textKo": "빌린 내공이 경맥을 태웠다."}
+        ]
+      },
+      {
+        "id": "needle",
+        "art": "sb_prologue_needle",
+        "lines": [
+          {"speaker": "mok", "textKo": "그건 네 것이 아니다. 네 것으로 만들고 싶으면, 다시 걸어라."}
+        ]
+      }
+    ]
+  },
+  "mok": {
+    "_note": "목 노인 귀환 대사(docs/story/mok.md). lives:N 은 N번째 생이 끝난 뒤(서장 빼고), stones:N 은 봉인석 N개, realm:<경지> 는 계정 처음 오른 경지, realm:hyeongyeong:short/sealed 는 현경에 처음 선 생에 봉인석이 모자랐는지/일곱이었는지, zuohwa:first/repeat/shadow, lord:<땅의 주인> 은 처음 쓰러뜨린 뒤. repeat 이면 본 뒤에도 다시 나온다.",
+    "lines": [
+      {"id": "lives_1", "when": "lives:1", "textKo": "첫 몸은 다들 낯설어한다. 남의 신을 신고 뛴 셈이니."},
+      {"id": "lives_3", "when": "lives:3", "textKo": "세 번째다. 맥이 처음보다 고르다."},
+      {"id": "lives_10", "when": "lives:10", "textKo": "열 번째다. 몸은 바뀌어도 혼에는 굳은살이 박인다."},
+      {"id": "lives_30", "when": "lives:30", "textKo": "서른 번이다. 죽어도 돌아온다는 게 얼마나 달콤한지, 나는 안다."},
+      {"id": "lives_100", "when": "lives:100", "textKo": "백 번이면 죽음이 무섭지 않겠지. 나는 그게 제일 무섭다."},
+      {"id": "stones_1", "when": "stones:1", "textKo": "벌써 하나가 돌아왔구나."},
+      {"id": "stones_2", "when": "stones:2", "textKo": "둘이다. 그날은 일곱을 다 놓는 데 사흘이 걸렸지."},
+      {"id": "stones_3", "when": "stones:3", "textKo": "셋이다. 돌을 맡았던 이들 얼굴이 하나씩 떠오른다."},
+      {"id": "stones_4", "when": "stones:4", "textKo": "넷이다. 넷째 돌을 놓을 무렵이었지, 처음 사람이 쓰러진 게."},
+      {"id": "stones_5", "when": "stones:5", "textKo": "돌을 쥐면 손이 차지? 그 사람 손은 늘 따뜻했는데."},
+      {"id": "stones_6", "when": "stones:6", "textKo": "하나 남았다고 서두르지 마라. 조급하면 맥이 먼저 안다."},
+      {"id": "stones_7", "when": "stones:7", "textKo": "일곱이 다 모였다. 이번에는 가두고 끝날지, 나도 모르겠다."},
+      {"id": "realm_iryu", "when": "realm:iryu", "textKo": "이류라. 이제 빗방울이 살갗 앞에서 비켜 갈 게다."},
+      {"id": "realm_ilryu", "when": "realm:ilryu", "textKo": "일류면 사람들이 우러러본다. 그 눈빛에 맛 들이지 마라."},
+      {"id": "realm_jeoljeong", "when": "realm:jeoljeong", "textKo": "절정이다. 이제 땅의 주인들도 너를 알아본다."},
+      {"id": "realm_chojeoljeong", "when": "realm:chojeoljeong", "textKo": "산이 손바닥만 해 보였을 게다. 그 사람도 그 무렵부터 사람을 쉽게 썼지."},
+      {"id": "realm_hwagyeong", "when": "realm:hwagyeong", "textKo": "화경이라. 삼백 년 전 그 골짜기에서도 그런 금빛을 봤다."},
+      {"id": "realm_hyeongyeong_short", "when": "realm:hyeongyeong:short", "textKo": "현경에 올라도 돌이 모자랐지. 그 그림자가 쫓아온 건 너를 탐내서다."},
+      {"id": "realm_hyeongyeong_sealed", "when": "realm:hyeongyeong:sealed", "textKo": "골짜기 문이 열렸다. 그 안에서 누가 기다리는지는 가 보면 안다."},
+      {"id": "zuohwa_first", "when": "zuohwa:first", "textKo": "스스로 앉았구나. 버틸 까닭이 없을 때 앉을 줄 아는 것도 공부다."},
+      {"id": "zuohwa_repeat", "when": "zuohwa:repeat", "repeat": true, "textKo": "앉아서 간 얼굴은 편하다. 열에 들떠 간 얼굴은 오래 남지."},
+      {"id": "zuohwa_shadow", "when": "zuohwa:shadow", "textKo": "그림자한테 잡히기 전에 앉았다니, 잘했다."},
+      {"id": "lord_wongak", "when": "lord:wongak", "textKo": "안에서 열렸다고 하더냐. 문은 늘 안에서 먼저 열린다."},
+      {"id": "lord_dang_sohye", "when": "lord:dang_sohye", "textKo": "독으로 독을 막으려 했구나. 몰라서가 아니라 급해서였을 게다."},
+      {"id": "lord_ma_cheonpae", "when": "lord:ma_cheonpae", "textKo": "지킨 값을 받고 싶었던 게지. 삼백 년이면 누구라도 지친다."},
+      {"id": "lord_hyeolheo", "when": "lord:hyeolheo", "textKo": "의원이었다는 말을 들었구나. 그래, 침 놓는 솜씨가 좋았지."},
+      {"id": "lord_huashan_sword_soul", "when": "lord:huashan_sword_soul", "textKo": "그 검객은 끝까지 베지 않았다. 고칠 수 있다고 믿은 건 그 하나뿐이었다."},
+      {"id": "lord_seol_muhyang", "when": "lord:seol_muhyang", "textKo": "그 산마을은 기침 소리로 가득했다. 아이들 이마가 불덩이 같았다."},
+      {"id": "lord_hyeokryeon_hwi", "when": "lord:hyeokryeon_hwi", "textKo": "아무도 잃지 않겠다는 말, 삼백 년 전에도 들었다."}
+    ]
+  },
+  "bedroom": {
+    "_note": "침방 목 노인(docs/story/mok.md 첫 환혼·문파 첫 환생, inn_screens.md 침방). 한 번 환혼에 한 마디. first:* 는 첫 환혼 순서, sect:<문파> 는 그 문파 후보를 처음 골랐을 때, show 는 후보를 보여 줄 때 무작위, reroll:first/many, fourth:first, same_sect, pick:female, pick:trait, pick:trait:<성질>.",
+    "lines": [
+      {"id": "first_open", "when": "first:open", "textKo": "네 몸은 다했다. 혼까지 보낼 수는 없지."},
+      {"id": "first_candidates", "when": "first:candidates", "textKo": "오늘 밤 숨진 아이들이다. 하나를 골라 그 몸으로 다시 걸어라."},
+      {"id": "first_needle", "when": "first:needle", "textKo": "따끔할 게다. 남의 몸은 처음엔 다 그렇다."},
+      {"id": "first_send", "when": "first:send", "textKo": "이 아이는 강시로 일어나지 않겠구나. 그거면 됐다."},
+      {"id": "sect_shaolin", "when": "sect:shaolin", "textKo": "소림 아이다. 염불은 몰라도 된다, 주먹은 몸이 기억한다."},
+      {"id": "sect_gaebang", "when": "sect:gaebang", "textKo": "배곯던 몸이다. 먹은 게 살로 잘 붙는다."},
+      {"id": "sect_namgung", "when": "sect:namgung", "textKo": "남궁의 피다. 기혈이 넉넉할 땐 검이 하늘을 찌르지만, 바닥나면 금방 꺾인다."},
+      {"id": "sect_tang", "when": "sect:tang", "textKo": "당가 몸은 독을 타지 않는다. 독과 약이 한 뿌리라는 걸 잊지 마라."},
+      {"id": "sect_waterfort", "when": "sect:waterfort", "textKo": "물에서 자란 몸이다. 뭍에서도 발이 가볍지."},
+      {"id": "sect_wudang", "when": "sect:wudang", "textKo": "무당 몸은 음양이 고르다. 기울거든 숨부터 골라라."},
+      {"id": "sect_huashan", "when": "sect:huashan", "textKo": "화산이라. 검을 쥐어 보면 안다, 처음 쥐는 검이 아니라는 걸."},
+      {"id": "sect_kunlun", "when": "sect:kunlun", "textKo": "곤륜 아이다. 부적 쓰는 손은 차가워서 강시가 싫어하지."},
+      {"id": "sect_demonic", "when": "sect:demonic", "textKo": "마교 몸이다. 이 무공은 피를 먹고, 배가 불러도 멈추지 않는다."},
+      {"id": "show_1", "when": "show", "repeat": true, "textKo": "오늘 밤에도 셋이다. 비가 그치질 않으니."},
+      {"id": "show_2", "when": "show", "repeat": true, "textKo": "고르는 손이 빨라졌구나. 나쁘지 않다."},
+      {"id": "show_3", "when": "show", "repeat": true, "textKo": "고르지 않은 둘 얼굴도 봐 둬라."},
+      {"id": "reroll_first", "when": "reroll:first", "textKo": "마음에 안 드느냐. 오늘 밤 죽은 아이들은 더 있다."},
+      {"id": "reroll_many", "when": "reroll:many", "repeat": true, "textKo": "너무 고르지 마라. 몸은 옷이 아니다."},
+      {"id": "fourth_first", "when": "fourth:first", "textKo": "넷을 보여 주마. 하나 더 보는 만큼 하나 더 아프다."},
+      {"id": "same_sect", "when": "same_sect", "repeat": true, "textKo": "같은 산문에서 둘이 갔구나."},
+      {"id": "female_first", "when": "pick:female", "textKo": "여자아이 몸이다. 사형들이 사매라 부를 게다, 대답해 줘라."},
+      {"id": "trait_first", "when": "pick:trait", "textKo": "몸마다 타고난 게 있다. 맥을 짚어 보면 안다."},
+      {"id": "trait_yakgol", "when": "pick:trait:yakgol", "textKo": "맥이 가는 아이다. 대신 배우는 건 빠르다."},
+      {"id": "trait_danmyeong", "when": "pick:trait:danmyeong", "textKo": "오래 못 갈 몸이다. 짧게 타는 불이 뜨겁지."},
+      {"id": "trait_dunjae", "when": "pick:trait:dunjae", "textKo": "더딘 아이다. 더디게 배운 건 혼에 오래 남는다."}
+    ]
+  },
+  "unnang": {
+    "_note": "운낭 귀환 대사(docs/story/unnang.md). return:1/2 는 첫·두 번째 귀환, confess:N 은 마천패 첫 처치 뒤 차례(3에서 하오문 게시판이 열림), facility:<시설>, letter:before/after 는 하오문 밀서를 처음 주운 생(마천패 전/뒤), chat:before/after 는 무작위 잡담.",
+    "lines": [
+      {"id": "return_1", "when": "return:1", "textKo": "얼굴은 남인데 문턱에서 신 털고 들어오는 건 그대로네. 어서 와, 소운아."},
+      {"id": "return_2", "when": "return:2", "textKo": "목 영감이 뒤채에서 뭘 하는지는 안 물을게. 너도 내 일은 묻지 마."},
+      {"id": "lives_3", "when": "lives:3", "textKo": "국밥 데워 놨어. 몸이 바뀌어도 배는 고프지?"},
+      {"id": "lives_10", "when": "lives:10", "textKo": "열 번째네. 네 젓가락은 아예 꽂아 두기로 했어."},
+      {"id": "lives_30", "when": "lives:30", "textKo": "서른 번을 보냈으면 울 때도 됐는데, 이상하게 웃음만 나와."},
+      {"id": "lives_100", "when": "lives:100", "textKo": "백 번째야. 이 집 문지방이 너 때문에 다 닳았다."},
+      {"id": "facility_jangyeonggak", "when": "facility:jangyeonggak", "textKo": "뒤채 창고 열쇠야. 목 영감이 책을 들이라더라."},
+      {"id": "facility_yakbang", "when": "facility:yakbang", "textKo": "약 달이는 냄새 나면 손님 끊긴다니까. …끊길 손님이 있어야 말이지."},
+      {"id": "facility_daejangan", "when": "facility:daejangan", "textKo": "철 대장이 돌아왔어. 망치 소리가 나니까 사람 사는 집 같네."},
+      {"id": "facility_suryeondong", "when": "facility:suryeondong", "textKo": "뒷산 굴은 치워 놨어. 거기서 뭘 하든 객잔만 무너뜨리지 마."},
+      {"id": "confess_1", "when": "confess:1", "textKo": "장부 봤구나. …앉아, 한잔 따를게. 이번엔 웃으면서 말 안 할게."},
+      {"id": "confess_2", "when": "confess:2", "textKo": "봉인석 자리를 판 건 나야. 혈영회인 줄 몰랐다는 건 핑계도 안 되지."},
+      {"id": "confess_3", "when": "confess:3", "opens": "haomun_board", "textKo": "하오문이 아는 건 이제 너한테만 팔게. 값은 받을 거야. 장사니까."},
+      {"id": "letter_before", "when": "letter:before", "textKo": "등롱 속 쪽지? 손님들이 별걸 다 흘리고 가네. 버려, 버려."},
+      {"id": "letter_after", "when": "letter:after", "textKo": "그 쪽지, 내가 넣어 둔 거야. 대놓고 건네면 하오문이 알아채거든."},
+      {"id": "chat_before_1", "when": "chat:before", "repeat": true, "textKo": "오늘도 손님은 너 하나네. 내일은 둘이면 좋겠다."},
+      {"id": "chat_before_2", "when": "chat:before", "repeat": true, "textKo": "비 그치면 간판부터 새로 달 거야. 청운객잔, 금박으로."},
+      {"id": "chat_before_3", "when": "chat:before", "repeat": true, "textKo": "웃는 게 장사 밑천이야. 너도 좀 웃어 봐."},
+      {"id": "chat_after_1", "when": "chat:after", "repeat": true, "textKo": "웃는 게 장사 밑천이라고 했지. 요샌 밑천이 바닥이야."},
+      {"id": "chat_after_2", "when": "chat:after", "repeat": true, "textKo": "하오문엔 열네 살에 들어갔어. 배고프면 다들 뭐든 팔아."},
+      {"id": "chat_after_3", "when": "chat:after", "repeat": true, "textKo": "그때 받은 은자는 한 푼도 못 썼어. 장독 밑에 그대로 있어."}
+    ]
+  },
+  "training": {
+    "_note": "연무장 운낭 한마디(docs/story/unnang.md 연무장). 조건마다 한 번.",
+    "lines": [
+      {"id": "open", "when": "training:open", "textKo": "마당 쓸 빗자루 대신 목검이네. 부서진 건 내가 치울게."},
+      {"id": "first_buy", "when": "training:first_buy", "textKo": "혼에 새긴 건 몸이 바뀌어도 남는대. 목 영감 말이야."},
+      {"id": "first_refund", "when": "training:first_refund", "textKo": "무르는 것도 공부야. 장사도 그렇게 배웠어."},
+      {"id": "first_max", "when": "training:first_max", "textKo": "그건 이제 네 거야. 누가 빌려준 게 아니라."}
+    ]
+  },
+  "leaders": {
+    "_note": "대표 인물(docs/story/leaders.md). yardUnknown·yardKnown 는 마당 줄(그 상태 첫 번째는 0번, 그 뒤 무작위), yardBloodMoon 은 혈월 회차 첫 탄생 한 번, join 은 합류 때, inn 은 합류 뒤 귀환마다 차례로. sister 는 여자 몸일 때 바꿔 쓰는 줄(키는 위 칸 이름.번호).",
+    "list": [
+      {
+        "id": "hyegong",
+        "sect": "shaolin",
+        "yardUnknown": ["사제, 살아났구나!", "주먹밥 하나 남았다. 먹고 싸워.", "대웅전 쪽엔 가지 마라. 스승님이… 계신다."],
+        "yardKnown": ["이 아이 법명은 제가 기억하겠습니다. 시주는 싸우기만 하십시오."],
+        "yardBloodMoon": "사제, 살아났구나! …이상하다. 이 말을 전에도 한 것 같다.",
+        "join": "누구 몸이었든, 스승님을 보내 드린 건 시주였습니다. 같이 가겠습니다.",
+        "inn": [
+          "운낭 아주머니 국밥은 세 그릇까지가 예의라고 들었습니다. 이게 네 그릇째입니다.",
+          "사형제들 몸이 다시 걸어 다니는 걸 보면 고맙습니다. 그런데 밤엔 잠이 안 옵니다.",
+          "스승님은 마지막까지 제 밥 걱정을 하셨습니다. 그래서 남기지 않습니다."
+        ]
+      },
+      {
+        "id": "machil",
+        "sect": "gaebang",
+        "yardUnknown": ["어이쿠, 이놈 살았네! 곡하려고 목 풀던 참이었는데.", "한 모금 할 텐가? 아서라, 살아난 날은 술보다 밥이다.", "요새 밤길에 등롱 든 낯선 장사치가 많아. 보거든 말 섞지 말고 지나가."],
+        "yardKnown": ["또 우리 애 몸을 빌렸구먼. 이 녀석 외상 술값이 석 냥이니 그것도 같이 갚게."],
+        "yardBloodMoon": "살았구나, 이놈! 근데 네 얼굴 보니 술이 당기네, 전에도 이랬던가?",
+        "join": "우리 애가 땅의 주인을 잡았다길래 바로 알았지, 다른 혼이 들었구나 하고. 그 녀석 깜냥으론 어림없거든.",
+        "inn": [
+          "주인장 웃음이 요새 좀 헐겁더라. 웃는 얼굴 속이 원래 제일 시끄러운 법이야.",
+          "취한 척하면 다들 내 앞에서 말을 흘려. 취한 거지는 아무도 안 무서워하거든.",
+          "총타에 숨은 꼬마들 밥은 내가 챙기네. 자네가 빌린 몸 중에도 내가 업어 키운 놈이 있어."
+        ],
+        "sister": {
+          "yardUnknown.0": "어이쿠, 이 계집애 살았네! 곡하려고 목 풀던 참이었는데.",
+          "yardKnown.0": "또 우리 애 몸을 빌렸구먼. 이 계집애 외상 술값이 석 냥이니 그것도 같이 갚게.",
+          "yardBloodMoon": "살았구나, 이 계집애! 근데 네 얼굴 보니 술이 당기네, 전에도 이랬던가?",
+          "join": "우리 애가 땅의 주인을 잡았다길래 바로 알았지, 다른 혼이 들었구나 하고. 그 계집애 깜냥으론 어림없거든."
+        }
+      },
+      {
+        "id": "namgung_hyeon",
+        "sect": "namgung",
+        "yardUnknown": ["살아 있었군! 역시 남궁의 피는 비 따위에 지지 않아.", "세가는 내가 다시 세운다. 너는 내 뒤에… 아니, 옆에 서라. 옆에.", "가주께서 계셨으면 이런 꼴은… 됐다. 검이나 챙겨."],
+        "yardKnown": ["남궁 옷이 제법 어울리는군. 이름에 먹칠하지 말고, 살아서 돌아와라."],
+        "yardBloodMoon": "살아 있었군! 어디서 많이 본 얼굴인데, 남궁 사람이니 당연한가.",
+        "join": "남궁 말단이 땅의 주인을 베었다길래 세가가 살아났나 했지. 혼이 객잔 점소이라니, 체면이 말이 아니군.",
+        "inn": [
+          "세가가 다시 서면 이 객잔 빚은 내가 다 갚는다. 아마. 언젠가는.",
+          "그날 밤 나는 무고 문을 걸어 잠그고 그 안에 숨어 있었다. 아무한테도 말하지 마라.",
+          "점소이가 검을 드는데 소가주가 숨어 있을 수는 없지. 다음엔 내가 앞에 선다."
+        ],
+        "sister": {"yardUnknown.0": "살아 있었군, 사매! 역시 남궁의 피는 비 따위에 지지 않아.", "yardUnknown.1": "세가는 내가 다시 세운다. 사매는 내 뒤에… 아니, 옆에 서라. 옆에."}
+      },
+      {
+        "id": "dang_yeonhwa",
+        "sect": "tang",
+        "yardUnknown": [],
+        "yardKnown": ["이번엔 우리 집 아이구나. 본가 사람들은 이 아이 이름도 몰랐을 거야.", "비도는 내가 갈아 뒀어. 이 손에 맞을 거야.", "독안개는 바람 따라 피해. 넌 이번엔 좀 오래 살아."],
+        "yardBloodMoon": "살았네. 근데 너 어디서 본 것 같아, 본가 쪽 애였나?",
+        "join": "마지막 한 자루는 내가 던졌어. 거기까지 끌고 와 준 게 너였구나.",
+        "inn": [
+          "해독단 첫 솥을 끓였어. 냄새는 독이랑 똑같더라.",
+          "본가 애들은 나한테 비도 한 자루 안 빌려줬어. 이제는 빌려줄 사람도 없지만.",
+          "고모 방에서 나온 상자, 아직 못 버렸어. 혈영회 인장만 보면 손이 떨려."
+        ],
+        "sister": {"yardKnown.0": "이번엔 우리 집 사매구나. 본가 사람들은 이 아이 이름도 몰랐을 거야."}
+      },
+      {
+        "id": "ha_yeon",
+        "sect": "waterfort",
+        "yardUnknown": [],
+        "yardKnown": ["또 우리 배 탔냐. 이번 놈은 노 하나는 잘 저었어.", "물에 빠지면 건져 준다. 대신 다음엔 네가 날 건져.", "아버지 얘기 꺼내기만 해 봐. 강에 처박는다."],
+        "yardBloodMoon": "살았냐? 낯이 익은데, 같은 배 탔던가.",
+        "join": "아버지 일은 내 손으로 끝냈어야 했어. 빚졌으니 갚는다.",
+        "inn": ["주인장 술은 마셔. 근데 아직 웃어 주진 못하겠다.", "우린 도적이어도 그 돌 하나는 삼백 년을 지켰어. 아버지가 그걸 팔았지.", "네가 몇 번을 죽든 셈 안 해. 나한텐 그냥 한 놈이야."],
+        "sister": {"yardKnown.0": "또 우리 배 탔냐. 이번 사매는 노 하나는 잘 저었어.", "yardBloodMoon": "살았냐, 사매? 낯이 익은데, 같은 배 탔던가."}
+      },
+      {
+        "id": "unhwa",
+        "sect": "wudang",
+        "yardUnknown": [],
+        "yardKnown": ["왔구나. 이번 생도 무당에서 시작이네.", "사부님은 산을 지키려다 산이 되셨어. 너는 그 산에서 다시 태어난 거야.", "태극은 기울어도 제자리로 돌아와. 너도 그렇겠지."],
+        "yardBloodMoon": "사제, 무사했구나. 이상하지, 처음 보는 얼굴 같지가 않아.",
+        "join": "사부님이 왜 그걸 받아들이셨는지 아직 모르겠어. 너를 따라가면 알 것 같아서 왔어.",
+        "inn": [
+          "사부님 일지 마지막 장엔 '그도 처음엔 사람을 살리려 했다'는 한 줄뿐이야.",
+          "음양이 뒤집힌 건 벌이 아니었을지도 몰라. 사부님은 혈기를 받아 보고서야 혈마를 아셨던 거야.",
+          "너는 죽을 때 무섭지 않아? 사부님께는 끝내 그걸 못 여쭤봤어."
+        ],
+        "sister": {"yardKnown.0": "왔구나, 사매. 이번 생도 무당에서 시작이네.", "yardBloodMoon": "사매, 무사했구나. 이상하지, 처음 보는 얼굴 같지가 않아."}
+      },
+      {
+        "id": "baekya",
+        "sect": "demonic",
+        "yardUnknown": [],
+        "yardKnown": ["또 왔나. 그 몸으로 몇 놈이나 베는지 보자.", "어차피 또 죽을 몸이다. 죽기 전에 한 놈이라도 더 베어라.", "이 녀석, 강시로 일어나기 전에 네가 먼저 들어갔군. 나쁘지 않다."],
+        "yardBloodMoon": "…네 피 냄새, 어디서 맡아 봤다.",
+        "join": "네가 매번 다른 몸으로 온다는 건 들었다. 상관없다, 혈마 앞까지만 같이 가면 된다.",
+        "inn": ["웃는 법은 잊었다. 혈마를 죽이고 나면 생각해 보지.", "이 팔은 혈영회가 만들었다. 혈마 앞에서 돌려준다.", "그 늙은이한테선 피 냄새가 안 난다. 사람인데 그런 건 처음 본다."],
+        "sister": {"yardKnown.2": "이 아이, 강시로 일어나기 전에 네가 먼저 들어갔군. 나쁘지 않다."}
+      }
+    ]
+  },
+  "lords": {
+    "_note": "땅의 주인 컷과 싸움 중 한 줄(docs/story/boss_cuts.md). cuts 는 만남 2·처치 4, alt 는 when 의 지역 봉인석(stone:<지역>)을 지니고 있으면 바꿔 쓰는 줄(무당·화산 한 쌍). phase2 는 2막 예고, echo 는 혈영(다시 만날 때·종장), bloodMoon 은 혈월 회차 첫 만남에 더하는 줄.",
+    "list": [
+      {
+        "id": "wongak",
+        "cuts": [
+          {
+            "id": "meet1",
+            "lines": [
+              {"speaker": null, "textKo": "천년고찰에 목탁 소리가 끊겼다."}
+            ]
+          },
+          {
+            "id": "meet2",
+            "lines": [
+              {"speaker": "hyegong", "textKo": "스승님…"}
+            ]
+          },
+          {
+            "id": "kill1",
+            "lines": [
+              {"speaker": "wongak", "textKo": "봉인은… 깨진 게 아니다. 안에서… 열렸다."}
+            ]
+          },
+          {
+            "id": "kill2",
+            "lines": [
+              {"speaker": "wongak", "textKo": "혜공아… 밥은 거르지 마라."}
+            ]
+          },
+          {"id": "kill3", "lines": []},
+          {
+            "id": "kill4",
+            "lines": [
+              {"speaker": "hyegong", "textKo": "…누구십니까."}
+            ]
+          }
+        ],
+        "phase2Ko": "물러서라… 이 빛은 내가 아니다!",
+        "echoKo": "봉인은… 안에서…",
+        "bloodMoonKo": "이 마당에 전에도 선 적이 있느냐. 범종이 그리 우는구나."
+      },
+      {
+        "id": "dang_sohye",
+        "cuts": [
+          {
+            "id": "meet1",
+            "lines": [
+              {"speaker": null, "textKo": "강시를 막으려던 독이 당가를 삼켰다."}
+            ]
+          },
+          {
+            "id": "meet2",
+            "lines": [
+              {"speaker": "dang_sohye", "textKo": "방계가 여긴 왜 왔느냐."},
+              {"speaker": "dang_yeonhwa", "textKo": "고모 데리러요."}
+            ]
+          },
+          {"id": "kill1", "lines": []},
+          {
+            "id": "kill2",
+            "lines": [
+              {"speaker": "dang_sohye", "textKo": "연화야… 내 방 옻칠 상자를… 열어 보거라."}
+            ]
+          },
+          {
+            "id": "kill3",
+            "lines": [
+              {"speaker": null, "textKo": "혈독 만드는 법은 혈영회가 보낸 것이었다."}
+            ]
+          },
+          {
+            "id": "kill4",
+            "lines": [
+              {"speaker": "dang_yeonhwa", "textKo": "고모, 이 독은 이제 사람 살리는 데 쓸게요."}
+            ]
+          }
+        ],
+        "phase2Ko": "당가의 독은 죽어서도 흩어진다.",
+        "echoKo": "연화야… 상자를…",
+        "bloodMoonKo": "그 걸음, 본 적이 있다. 어느 비 오던 밤이었지."
+      },
+      {
+        "id": "ma_cheonpae",
+        "cuts": [
+          {
+            "id": "meet1",
+            "lines": [
+              {"speaker": null, "textKo": "철룡 마천패는 비를 맞고도 멀쩡했다."}
+            ]
+          },
+          {
+            "id": "meet2",
+            "lines": [
+              {"speaker": "ma_cheonpae", "textKo": "값을 못 치르겠으면 내가 먹지."}
+            ]
+          },
+          {
+            "id": "kill1",
+            "lines": [
+              {"speaker": "ma_cheonpae", "textKo": "삼백 년을 지켰다… 한 번쯤 값을 받으면 안 되나."}
+            ]
+          },
+          {
+            "id": "kill2",
+            "lines": [
+              {"speaker": null, "textKo": "거래를 이어 준 건 하오문이었다. 장부 끝 줄에 운낭의 이름이 있었다."}
+            ]
+          },
+          {"id": "kill3", "lines": []},
+          {
+            "id": "kill4",
+            "lines": [
+              {"speaker": "ha_yeon", "textKo": "팔지 말랬잖아, 아버지."}
+            ]
+          }
+        ],
+        "phase2Ko": "강이 내 편이다! 삼백 년 지킨 값이다!",
+        "echoKo": "값을… 한 번쯤…",
+        "bloodMoonKo": "흥정은 지난번에 끝났을 텐데. …지난번이 언제였지?"
+      },
+      {
+        "id": "hyeolheo",
+        "cuts": [
+          {
+            "id": "meet1",
+            "lines": [
+              {"speaker": null, "textKo": "무당산의 태극이 거꾸로 돌았다."}
+            ]
+          },
+          {
+            "id": "meet2",
+            "lines": [
+              {"speaker": "hyeolheo", "textKo": "오지 마라. 산이 아직 버티고 있다."}
+            ]
+          },
+          {
+            "id": "kill1",
+            "lines": [
+              {"speaker": "cheongheo", "textKo": "혈기를 받아 보니… 알겠더구나."}
+            ]
+          },
+          {
+            "id": "kill2",
+            "lines": [
+              {"speaker": "cheongheo", "textKo": "혈마는 본래… 의원이었다."}
+            ]
+          },
+          {
+            "id": "kill3",
+            "lines": [],
+            "alt": {
+              "when": "stone:huashan",
+              "lines": [
+                {"speaker": null, "textKo": "검집에 새겨진 '고쳐라'가 이제야 무슨 말인지 알 것 같았다."}
+              ]
+            }
+          },
+          {
+            "id": "kill4",
+            "lines": [
+              {"speaker": "unhwa", "textKo": "사부님, 왜 그런 걸 받으셨어요."}
+            ]
+          }
+        ],
+        "phase2Ko": "산이 돈다… 오지 말라 했거늘!",
+        "echoKo": "알겠더구나… 알겠더구나…",
+        "bloodMoonKo": "너는 이 산을 한 번 내려간 적이 있구나."
+      },
+      {
+        "id": "huashan_sword_soul",
+        "cuts": [
+          {
+            "id": "meet1",
+            "lines": [
+              {"speaker": null, "textKo": "화산 조사의 무덤이 열렸다."}
+            ]
+          },
+          {
+            "id": "meet2",
+            "lines": [
+              {"speaker": "sword_soul", "textKo": "끝나지 않았느냐… 그가 아직 살아 있느냐."}
+            ]
+          },
+          {
+            "id": "kill1",
+            "lines": [
+              {"speaker": "sword_soul", "textKo": "그날… 나는 베지 않았다."}
+            ]
+          },
+          {
+            "id": "kill2",
+            "lines": [
+              {"speaker": null, "textKo": "그를 죽이지 말고 고쳐라."}
+            ]
+          },
+          {
+            "id": "kill3",
+            "lines": [
+              {"speaker": null, "textKo": "혈마를 고치라니. 무엇을 고치라는 건지 알 수 없었다."}
+            ],
+            "alt": {
+              "when": "stone:wudangsan",
+              "lines": [
+                {"speaker": null, "textKo": "혈마가 본래 의원이었다면, 고치라는 말도 빈말이 아니었다."}
+              ]
+            }
+          },
+          {
+            "id": "kill4",
+            "lines": [
+              {"speaker": null, "textKo": "검집 끝에 새긴 성이 낯익었다."}
+            ]
+          }
+        ],
+        "phase2Ko": "베지 않으려 했다… 그런데 왜 검이 멈추지 않느냐!",
+        "echoKo": "그가… 아직…",
+        "bloodMoonKo": "그 혼, 낯이 익다. 언젠가 이 절벽에서 마주쳤지."
+      },
+      {
+        "id": "seol_muhyang",
+        "cuts": [
+          {
+            "id": "meet1",
+            "lines": [
+              {"speaker": null, "textKo": "곤륜의 조각은 벌써 산을 내려가고 있었다."}
+            ]
+          },
+          {
+            "id": "meet2",
+            "lines": [
+              {"speaker": "seol_muhyang", "textKo": "따라오지 마. 이건 그분께 돌려드릴 거야."}
+            ]
+          },
+          {
+            "id": "kill1",
+            "lines": [
+              {"speaker": "seol_muhyang", "textKo": "우리 마을은… 삼백 년 전에 다 죽을 뻔했어."}
+            ]
+          },
+          {
+            "id": "kill2",
+            "lines": [
+              {"speaker": "seol_muhyang", "textKo": "그분이 살려 주셨어. 너희가 혈마라고 부르는 그분이."}
+            ]
+          },
+          {
+            "id": "kill3",
+            "lines": [
+              {"speaker": null, "textKo": "혈영회 사람들은 그를 구세주라 불렀다."}
+            ]
+          },
+          {
+            "id": "kill4",
+            "lines": [
+              {"speaker": "seol_muhyang", "textKo": "돌려드려야… 했는데."}
+            ]
+          }
+        ],
+        "phase2Ko": "아무도 못 지나가. 그분께 가는 길은 내가 막아.",
+        "echoKo": "돌려드려야…",
+        "bloodMoonKo": "너, 전에도 이 호수를 건넜지? 얼음이 기억해."
+      },
+      {
+        "id": "hyeokryeon_hwi",
+        "cuts": [
+          {
+            "id": "meet1",
+            "lines": [
+              {"speaker": null, "textKo": "천마신교 총단에 붉은 달이 떴다."}
+            ]
+          },
+          {
+            "id": "meet2",
+            "lines": [
+              {"speaker": "hyeokryeon_hwi", "textKo": "죽었다 돌아온 냄새가 나는구나. 그분이 반기시겠다."}
+            ]
+          },
+          {
+            "id": "kill1",
+            "lines": [
+              {"speaker": "hyeokryeon_hwi", "textKo": "그분은… 아무도 잃지 않는 세상을 원하셨다."}
+            ]
+          },
+          {"id": "kill2", "lines": []},
+          {
+            "id": "kill3",
+            "lines": [
+              {"speaker": "cheonma", "textKo": "가져가라. 혈마가 죽는 날까지만 정파와 손을 잡겠다."}
+            ]
+          },
+          {
+            "id": "kill4",
+            "lines": [
+              {"speaker": "baekya", "textKo": "다음은 혈마다."}
+            ]
+          }
+        ],
+        "phase2Ko": "보아라, 그분의 달이다. 죽음은 끝이 아니다!",
+        "echoKo": "아무도… 잃지 않는…",
+        "bloodMoonKo": "또 돌아왔구나. 이번엔 그분도 너를 기억하실 거다."
+      }
+    ]
+  },
+  "settlement": {
+    "_note": "정산 서술 자막(docs/story/inn_screens.md 정산). 위에서부터 맞는 하나. lord_first 의 {0} 은 지역, {1} 은 땅의 주인 이름, any_3 의 {0} 은 문파, {1} 은 버틴 시간. bloodMoon 은 혈월 회차에 바꿔 쓰는 줄.",
+    "lines": [
+      {"id": "prologue", "when": "prologue", "textKo": "백중날 밤, 청운진의 심부름꾼이 처음 검을 들었다."},
+      {"id": "lord_first", "when": "lord_first", "textKo": "{0}의 땅의 주인, {1}. 그 땅의 비가 옅어졌다."},
+      {"id": "first_hyeongyeong", "when": "first_hyeongyeong", "textKo": "현경. 이 몸의 주인은 꿈도 못 꿨을 자리다."},
+      {"id": "shadow", "when": "shadow", "textKo": "그림자에 잡혔다. 혼은 간신히 침을 붙잡았다."},
+      {"id": "zuohwa", "when": "zuohwa", "textKo": "스스로 앉아 생을 닫았다."},
+      {"id": "short", "when": "short", "textKo": "이 몸은 빗속에서 오래 버티지 못했다."},
+      {"id": "any_1", "when": "any", "textKo": "몸은 빗속에 남고, 혼은 객잔으로 돌아왔다."},
+      {"id": "any_2", "when": "any", "bloodMoonKo": "한 생이 끝났다. 혈월은 아직 지지 않았다.", "textKo": "한 생이 끝났다. 혈우는 아직 그치지 않았다."},
+      {"id": "any_3", "when": "any", "textKo": "{0}의 이름 없는 제자가 빗속에서 {1} 버텼다."}
+    ]
+  }
+}

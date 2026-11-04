@@ -32,7 +32,7 @@
 - `unity/BloodRain/Assets/Scripts/Core/` — 게임 규칙. **UnityEngine 금지**(asmdef noEngineReferences). C# 9, .NET Standard 2.1 범위 안에서만 쓴다.
   Unity 는 nullable 을 켜지 않으니 참조형에 `?` 를 쓰는 파일은 맨 위에 `#nullable enable` 을 둔다(CI가 nullable 끈 빌드로 확인).
   `core/BloodRain.Core` 가 이 폴더를 그대로 컴파일하고 `core/BloodRain.Core.Tests` 가 테스트한다. 클라우드에는 Unity가 없으니 규칙은 전부 여기서 만들고 검증한다.
-- `unity/BloodRain/Assets/Resources/Data/*.json` — weapons·passives·evolutions(무공·심법·절기), characters(서장 진소운·대표 인물), enemies(적·정예·땅의 주인), balance, synergies, insights(깨달음), chapters(서장·한 생 흐름), cheonha(천하 한 장: 축척·지역·문파·타고난 성질·환혼·윤회의 기), bosspatterns(땅의 주인 패턴), gimmicks(지역 기믹·날씨). 목록은 `GameData.FileNames`. Unity와 테스트가 같은 파일을 읽는다.
+- `unity/BloodRain/Assets/Resources/Data/*.json` — weapons·passives·evolutions(무공·심법·절기), characters(서장 진소운·대표 인물), enemies(적·정예·땅의 주인), balance, synergies, insights(깨달음), chapters(서장·한 생 흐름), cheonha(천하 한 장: 축척·지역·문파·타고난 성질·환혼·윤회의 기), bosspatterns(땅의 주인 패턴), gimmicks(지역 기믹·날씨), dialogue(대사, 원문은 `docs/story/`). 목록은 `GameData.FileNames`. Unity와 테스트가 같은 파일을 읽는다.
   현지화: 데이터의 한국어가 원문이고 영어·간체는 `Resources/Data/strings/<lang>.json`(Core `Strings`, 키 규칙은 그 파일 맨 위, 용어는 `docs/design/glossary.md`). 이름·설명을 바꾸거나 새로 넣으면 그 키가 빠졌다고 테스트가 알려 준다.
   값을 바꾸면 `docs/design/gdd.md` 의 같은 표도 고친다. 테스트(`BalanceTests`, `CheonhaDataTests` 등)가 기획서 숫자와 맞는지 확인한다.
 - 게임 구조는 '천하'(2026-10-29 결정): 죽을 때마다 다른 문파 제자의 몸으로 환생(차시환혼), 경지마다 세상이 2.25배 작아지는 중원 한 장 맵, 생이 끝나면 윤회의 기로 능력치. 기획서 5·7·10·21장. 옛 '장 선택 + 강호 지도' 안은 버렸다.
