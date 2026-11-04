@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &145272447
+--- !u!1 &15283631
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,9 +127,363 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 145272450}
-  - component: {fileID: 145272449}
-  - component: {fileID: 145272448}
+  - component: {fileID: 15283635}
+  - component: {fileID: 15283634}
+  - component: {fileID: 15283633}
+  - component: {fileID: 15283632}
+  m_Layer: 0
+  m_Name: "\uC804\uD22C HUD"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &15283632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15283631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d534e03d8c779264e91ab968501f67a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Hud.RegionHud
+  target: {fileID: 1665862242}
+  clockText: {fileID: 119067753}
+  regionText: {fileID: 1863248329}
+  rain: {fileID: 1155308098}
+  sealStones: 0
+  elapsedOverride: -1
+--- !u!114 &15283633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15283631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 1
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0.5
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
+--- !u!223 &15283634
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15283631}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!224 &15283635
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15283631}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1155308100}
+  - {fileID: 119067755}
+  - {fileID: 1863248331}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
+--- !u!1 &119067752
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 119067755}
+  - component: {fileID: 119067754}
+  - component: {fileID: 119067753}
+  m_Layer: 0
+  m_Name: "\uACBD\uACFC \uC2DC\uAC04"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &119067753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 119067752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 0:00
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
+  m_sharedMaterial: {fileID: 5741830947140742626, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 0.12, g: 0.1, b: 0.09, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: 0
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 40
+  m_fontSizeBase: 40
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 1
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 0
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &119067754
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 119067752}
+  m_CullTransparentMesh: 1
+--- !u!224 &119067755
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 119067752}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 15283635}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -44}
+  m_SizeDelta: {x: 900, y: 64}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &136662922
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 136662924}
+  - component: {fileID: 136662923}
+  m_Layer: 0
+  m_Name: DataBoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &136662923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136662922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 263b429c0079a504fb69e9ba9fc0dcad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.DataBoot
+  logWeapons: 1
+--- !u!4 &136662924
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136662922}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &523477894
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 523477897}
+  - component: {fileID: 523477896}
+  - component: {fileID: 523477895}
+  m_Layer: 0
+  m_Name: "\uD55C \uC0DD"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &523477895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523477894}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f63382f0e17c5d4a98d6641dce7a46e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.BreakthroughFx
+  monoHoldSeconds: 0.2
+  monoFadeSeconds: 0.3
+  holeRadius: 0.05
+  debugFreezeAt: -1
+  curtainLiftScale: 1.6
+--- !u!114 &523477896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523477894}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f59c66c617d00f4d88ba08b2f3aec9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.LifeRunner
+  player: {fileID: 1665862242}
+  orbs: {fileID: 1857771625}
+  enemies: {fileID: 1986243807}
+  breakthrough: {fileID: 523477895}
+  showDebug: 1
+--- !u!4 &523477897
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523477894}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &924421614
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 924421617}
+  - component: {fileID: 924421616}
+  - component: {fileID: 924421615}
   m_Layer: 0
   m_Name: "\uC18C\uD488 \uCE35"
   m_TagString: Untagged
@@ -137,13 +491,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &145272448
+--- !u!114 &924421615
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 145272447}
+  m_GameObject: {fileID: 924421614}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b58f9b86156ef194bb91850ae192ccaf, type: 3}
@@ -151,13 +505,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.MapLayer
   material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
   map: {fileID: 2800000, guid: 6a4b3bcda5c96b84580ad84cdb3a0822, type: 3}
---- !u!114 &145272449
+--- !u!114 &924421616
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 145272447}
+  m_GameObject: {fileID: 924421614}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3198f92ecb228ad42b3522dde74a5bdb, type: 3}
@@ -166,13 +520,13 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
   seed: 7
   originRegion: cheongun
---- !u!4 &145272450
+--- !u!4 &924421617
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 145272447}
+  m_GameObject: {fileID: 924421614}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -181,7 +535,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &244561120
+--- !u!1 &969549471
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -189,731 +543,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 244561122}
-  - component: {fileID: 244561121}
-  m_Layer: 0
-  m_Name: "\uC9C4\uAE30 \uAD6C\uC2AC"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &244561121
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 244561120}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a254634ebc776c641a5968bd01a05890, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.OrbLayer
-  material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
-  enemies: {fileID: 1838331824}
-  player: {fileID: 1182728146}
-  orbRealmMeters: 0.35
-  absorbRealmMeters: 0.5
-  pullBase: 9
-  pullPerSecond: 4
-  mergeRealmMeters: 5
-  ownTestXp: 1
-  showStats: 1
---- !u!4 &244561122
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 244561120}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &303687330
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 303687332}
-  - component: {fileID: 303687331}
-  m_Layer: 0
-  m_Name: "\uBB34\uACF5"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &303687331
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 303687330}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 27b3e56622f94a24aad65d243a86198e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Combat.WeaponRunner
-  enemies: {fileID: 1838331824}
-  player: {fileID: 1182728147}
-  material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
-  slots: []
-  showStats: 1
-  brushMaterial: {fileID: 2100000, guid: 12e660c1901fa5342be9b3c1d19a456a, type: 2}
-  samjaeTier1:
-  - {fileID: 2800000, guid: 5034d5fc8ec36a44fa573032ee813fa3, type: 3}
-  - {fileID: 2800000, guid: ca740e95547153f44843860917f11742, type: 3}
-  - {fileID: 2800000, guid: 22cb4792ff0ef8c4d97faed598907f3c, type: 3}
-  samjaeTier1Meters: 5.74
-  samjaeTier1Span: 2.3
-  samjaeTier2:
-  - {fileID: 2800000, guid: 8c91fed1f6bb443429c675e1c718a558, type: 3}
-  - {fileID: 2800000, guid: 3070893ef48e5c84c8d5a1824eaa1c84, type: 3}
-  - {fileID: 2800000, guid: 6cc932036893cd547a0d17a2a2b547a4, type: 3}
-  samjaeTier2Wash:
-  - {fileID: 2800000, guid: cc5cf28483b145b49b29736bd03a0a3a, type: 3}
-  - {fileID: 2800000, guid: 0cd4572745f055b4e94667811c56a4d2, type: 3}
-  - {fileID: 2800000, guid: 7931b28d1632f5b469b4ae0474031e71, type: 3}
-  samjaeTier2Meters: 6.456
-  samjaeTier2Span: 2.4
-  samjaeTier3:
-  - {fileID: 2800000, guid: 2ae1b94c6ef983249b18f3328b427645, type: 3}
-  - {fileID: 2800000, guid: 934ad63106c85fc49ba40676353bdefc, type: 3}
-  - {fileID: 2800000, guid: 99c7e5429f0033c4482157d56dabdeb3, type: 3}
-  samjaeTier3Wash:
-  - {fileID: 2800000, guid: f907ae8d6d551714ebb90353ab82b775, type: 3}
-  - {fileID: 2800000, guid: d2d294de367d16f4fa31018aa7ea25a0, type: 3}
-  - {fileID: 2800000, guid: 1a88bbaec1fc63c459b5ef37d6ce469c, type: 3}
-  samjaeTier3Gold:
-  - {fileID: 2800000, guid: 10784e4b5b773524e9b272c729b637fc, type: 3}
-  - {fileID: 2800000, guid: 82339961e3d344a468f10b3856c13685, type: 3}
-  - {fileID: 2800000, guid: 310130a2cac55404f9cb51cf3c90a3bf, type: 3}
-  samjaeTier3Meters: 7.1
-  samjaeTier3Span: 2.5
-  brushCrops:
-  - name: bomb_t1_1
-    rect: {x: 0.09765625, y: 0.15039062, z: 0.765625, w: 0.734375}
-  - name: bomb_t1_2
-    rect: {x: 0.060546875, y: 0.060546875, z: 0.8359375, w: 0.859375}
-  - name: bomb_t2_1
-    rect: {x: 0.080078125, y: 0.06640625, z: 0.8828125, w: 0.8984375}
-  - name: bomb_t2_2
-    rect: {x: 0.052734375, y: 0.0390625, z: 0.9375, w: 0.953125}
-  - name: bomb_t3_1
-    rect: {x: 0.041015625, y: 0.037109375, z: 0.8671875, w: 0.953125}
-  - name: bomb_t3_2
-    rect: {x: 0.083984375, y: 0.037109375, z: 0.8515625, w: 0.8984375}
-  - name: chain_t1_1
-    rect: {x: 0.12890625, y: 0.45507812, z: 0.71875, w: 0.0859375}
-  - name: chain_t1_2
-    rect: {x: 0.13867188, y: 0.45703125, z: 0.7109375, w: 0.0859375}
-  - name: chain_t2_1
-    rect: {x: 0.091796875, y: 0.42382812, z: 0.7890625, w: 0.1484375}
-  - name: chain_t2_2
-    rect: {x: 0.107421875, y: 0.42578125, z: 0.7734375, w: 0.1484375}
-  - name: chain_t3_1
-    rect: {x: 0.091796875, y: 0.42578125, z: 0.796875, w: 0.1484375}
-  - name: chain_t3_2
-    rect: {x: 0.09375, y: 0.42578125, z: 0.8125, w: 0.1484375}
-  - name: changcheon_t1_1
-    rect: {x: 0.27148438, y: 0.1015625, z: 0.640625, w: 0.8125}
-  - name: changcheon_t1_2
-    rect: {x: 0.28125, y: 0.09765625, z: 0.6328125, w: 0.8203125}
-  - name: changcheon_t2_1
-    rect: {x: 0.25585938, y: 0.0625, z: 0.6796875, w: 0.875}
-  - name: changcheon_t2_2
-    rect: {x: 0.25585938, y: 0.08984375, z: 0.6796875, w: 0.84375}
-  - name: changcheon_t3_1
-    rect: {x: 0.23242188, y: 0.064453125, z: 0.703125, w: 0.875}
-  - name: changcheon_t3_2
-    rect: {x: 0.23242188, y: 0.0625, z: 0.703125, w: 0.8828125}
-  - name: cheonjiin_main_1
-    rect: {x: 0.7050781, y: 0.18554688, z: 0.2578125, w: 0.640625}
-  - name: cheonjiin_main_2
-    rect: {x: 0.7050781, y: 0.19335938, z: 0.2578125, w: 0.6328125}
-  - name: cheonjiin_wave_1
-    rect: {x: 0.63671875, y: 0.21875, z: 0.2578125, w: 0.6015625}
-  - name: claw_t1_1
-    rect: {x: 0.1484375, y: 0.35546875, z: 0.6796875, w: 0.296875}
-  - name: claw_t1_2
-    rect: {x: 0.15039062, y: 0.35742188, z: 0.6796875, w: 0.296875}
-  - name: claw_t2_1
-    rect: {x: 0.119140625, y: 0.33984375, z: 0.734375, w: 0.3203125}
-  - name: claw_t2_2
-    rect: {x: 0.119140625, y: 0.33789062, z: 0.734375, w: 0.3203125}
-  - name: claw_t3_1
-    rect: {x: 0.119140625, y: 0.34375, z: 0.75, w: 0.3125}
-  - name: claw_t3_2
-    rect: {x: 0.119140625, y: 0.34375, z: 0.734375, w: 0.3125}
-  - name: dagger_t1_1
-    rect: {x: 0.20117188, y: 0.42578125, z: 0.578125, w: 0.15625}
-  - name: dagger_t1_2
-    rect: {x: 0.20507812, y: 0.42578125, z: 0.546875, w: 0.140625}
-  - name: dagger_t2_1
-    rect: {x: 0.17773438, y: 0.3984375, z: 0.6171875, w: 0.203125}
-  - name: dagger_t2_2
-    rect: {x: 0.17578125, y: 0.40039062, z: 0.59375, w: 0.1796875}
-  - name: dagger_t3_1
-    rect: {x: 0.17382812, y: 0.3984375, z: 0.625, w: 0.203125}
-  - name: dagger_t3_2
-    rect: {x: 0.17382812, y: 0.39453125, z: 0.625, w: 0.2109375}
-  - name: flash_t1_1
-    rect: {x: 0.13085938, y: 0.46679688, z: 0.7109375, w: 0.0703125}
-  - name: flash_t1_2
-    rect: {x: 0.1328125, y: 0.46875, z: 0.703125, w: 0.0703125}
-  - name: flash_t2_1
-    rect: {x: 0.09375, y: 0.44921875, z: 0.734375, w: 0.125}
-  - name: flash_t2_2
-    rect: {x: 0.091796875, y: 0.42578125, z: 0.78125, w: 0.125}
-  - name: flash_t3_1
-    rect: {x: 0.09375, y: 0.42578125, z: 0.7578125, w: 0.1484375}
-  - name: flash_t3_2
-    rect: {x: 0.09375, y: 0.42578125, z: 0.7890625, w: 0.1484375}
-  - name: mist_t1_1
-    rect: {x: 0.08203125, y: 0.09375, z: 0.7421875, w: 0.6953125}
-  - name: mist_t1_2
-    rect: {x: 0.1796875, y: 0.25976562, z: 0.6796875, w: 0.65625}
-  - name: mist_t2_1
-    rect: {x: 0.037109375, y: 0.064453125, z: 0.8984375, w: 0.7578125}
-  - name: mist_t2_2
-    rect: {x: 0.19335938, y: 0.25585938, z: 0.796875, w: 0.6484375}
-  - name: mist_t3_1
-    rect: {x: 0.115234375, y: 0.068359375, z: 0.859375, w: 0.7890625}
-  - name: mist_t3_2
-    rect: {x: 0.1875, y: 0.123046875, z: 0.71875, w: 0.671875}
-  - name: nahan_t1_1
-    rect: {x: 0.25585938, y: 0.28515625, z: 0.4140625, w: 0.4296875}
-  - name: nahan_t1_2
-    rect: {x: 0.26953125, y: 0.28515625, z: 0.3984375, w: 0.421875}
-  - name: nahan_t2_1
-    rect: {x: 0.23242188, y: 0.2578125, z: 0.453125, w: 0.5078125}
-  - name: nahan_t2_2
-    rect: {x: 0.23242188, y: 0.25976562, z: 0.453125, w: 0.5078125}
-  - name: nahan_t3_1
-    rect: {x: 0.23242188, y: 0.25976562, z: 0.453125, w: 0.484375}
-  - name: nahan_t3_2
-    rect: {x: 0.23046875, y: 0.2578125, z: 0.453125, w: 0.484375}
-  - name: palm_t1_1
-    rect: {x: 0.55859375, y: 0.26171875, z: 0.2890625, w: 0.5234375}
-  - name: palm_t1_2
-    rect: {x: 0.5488281, y: 0.27148438, z: 0.296875, w: 0.515625}
-  - name: palm_t2_1
-    rect: {x: 0.5078125, y: 0.25976562, z: 0.375, w: 0.5625}
-  - name: palm_t2_2
-    rect: {x: 0.5078125, y: 0.25976562, z: 0.375, w: 0.5625}
-  - name: palm_t3_1
-    rect: {x: 0.5078125, y: 0.25585938, z: 0.375, w: 0.59375}
-  - name: palm_t3_2
-    rect: {x: 0.5097656, y: 0.25390625, z: 0.3671875, w: 0.5703125}
-  - name: petals_t1_1
-    rect: {x: 0.31640625, y: 0.15039062, z: 0.484375, w: 0.640625}
-  - name: petals_t1_2
-    rect: {x: 0.15625, y: 0.1328125, z: 0.671875, w: 0.578125}
-  - name: petals_t1_3
-    rect: {x: 0.15039062, y: 0.32226562, z: 0.5625, w: 0.5078125}
-  - name: petals_t2_1
-    rect: {x: 0.091796875, y: 0.083984375, z: 0.65625, w: 0.578125}
-  - name: petals_t2_2
-    rect: {x: 0.23242188, y: 0.1484375, z: 0.625, w: 0.59375}
-  - name: petals_t2_3
-    rect: {x: 0.203125, y: 0.34179688, z: 0.59375, w: 0.5390625}
-  - name: petals_t3_1
-    rect: {x: 0.20507812, y: 0.13476562, z: 0.625, w: 0.75}
-  - name: petals_t3_2
-    rect: {x: 0.22460938, y: 0.23242188, z: 0.6015625, w: 0.59375}
-  - name: petals_t3_3
-    rect: {x: 0.17578125, y: 0.125, z: 0.6484375, w: 0.75}
-  - name: qin_t1_1
-    rect: {x: 0.068359375, y: 0.060546875, z: 0.875, w: 0.8828125}
-  - name: qin_t1_2
-    rect: {x: 0.068359375, y: 0.060546875, z: 0.875, w: 0.8828125}
-  - name: qin_t2_1
-    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
-  - name: qin_t2_2
-    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
-  - name: qin_t3_1
-    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
-  - name: qin_t3_2
-    rect: {x: 0.03515625, y: 0.03515625, z: 0.9296875, w: 0.9296875}
-  - name: samjae_t1_1
-    rect: {x: 0.6425781, y: 0.14257812, z: 0.2890625, w: 0.734375}
-  - name: samjae_t1_2
-    rect: {x: 0.6386719, y: 0.15039062, z: 0.2890625, w: 0.7265625}
-  - name: samjae_t1_3
-    rect: {x: 0.64453125, y: 0.15039062, z: 0.2890625, w: 0.7265625}
-  - name: samjae_t2_1
-    rect: {x: 0.59375, y: 0.119140625, z: 0.3671875, w: 0.7890625}
-  - name: samjae_t2_2
-    rect: {x: 0.59375, y: 0.119140625, z: 0.3671875, w: 0.7890625}
-  - name: samjae_t2_3
-    rect: {x: 0.59375, y: 0.119140625, z: 0.3671875, w: 0.7890625}
-  - name: samjae_t3_1
-    rect: {x: 0.5878906, y: 0.09765625, z: 0.375, w: 0.8125}
-  - name: samjae_t3_2
-    rect: {x: 0.5644531, y: 0.103515625, z: 0.3984375, w: 0.8046875}
-  - name: samjae_t3_3
-    rect: {x: 0.58984375, y: 0.099609375, z: 0.375, w: 0.8125}
-  - name: spear_t1_1
-    rect: {x: 0.095703125, y: 0.44921875, z: 0.765625, w: 0.109375}
-  - name: spear_t1_2
-    rect: {x: 0.09765625, y: 0.44335938, z: 0.78125, w: 0.109375}
-  - name: spear_t2_1
-    rect: {x: 0.08984375, y: 0.421875, z: 0.7890625, w: 0.15625}
-  - name: spear_t2_2
-    rect: {x: 0.091796875, y: 0.42382812, z: 0.7890625, w: 0.15625}
-  - name: spear_t3_1
-    rect: {x: 0.06640625, y: 0.421875, z: 0.796875, w: 0.15625}
-  - name: spear_t3_2
-    rect: {x: 0.064453125, y: 0.421875, z: 0.8203125, w: 0.1640625}
-  - name: staff_t1_1
-    rect: {x: 0.6484375, y: 0.21679688, z: 0.2578125, w: 0.6015625}
-  - name: staff_t1_2
-    rect: {x: 0.6484375, y: 0.21289062, z: 0.2578125, w: 0.609375}
-  - name: staff_t2_1
-    rect: {x: 0.62109375, y: 0.203125, z: 0.3125, w: 0.6484375}
-  - name: staff_t2_2
-    rect: {x: 0.6171875, y: 0.20117188, z: 0.3203125, w: 0.6328125}
-  - name: staff_t3_1
-    rect: {x: 0.62109375, y: 0.1953125, z: 0.3125, w: 0.65625}
-  - name: staff_t3_2
-    rect: {x: 0.62109375, y: 0.203125, z: 0.3125, w: 0.6484375}
-  - name: taiji_t1_1
-    rect: {x: 0.0859375, y: 0.14648438, z: 0.828125, w: 0.703125}
-  - name: taiji_t1_2
-    rect: {x: 0.091796875, y: 0.15234375, z: 0.8203125, w: 0.6953125}
-  - name: taiji_t2_1
-    rect: {x: 0.06640625, y: 0.12109375, z: 0.8671875, w: 0.7578125}
-  - name: taiji_t2_2
-    rect: {x: 0.06640625, y: 0.12109375, z: 0.8671875, w: 0.7578125}
-  - name: taiji_t3_1
-    rect: {x: 0.06640625, y: 0.12109375, z: 0.8671875, w: 0.7578125}
-  - name: taiji_t3_2
-    rect: {x: 0.064453125, y: 0.12109375, z: 0.875, w: 0.7578125}
-  - name: talisman_t1_1
-    rect: {x: 0.12890625, y: 0.37304688, z: 0.703125, w: 0.2265625}
-  - name: talisman_t1_2
-    rect: {x: 0.1328125, y: 0.39453125, z: 0.703125, w: 0.203125}
-  - name: talisman_t2_1
-    rect: {x: 0.115234375, y: 0.3671875, z: 0.7578125, w: 0.2421875}
-  - name: talisman_t2_2
-    rect: {x: 0.111328125, y: 0.37109375, z: 0.7421875, w: 0.2578125}
-  - name: talisman_t3_1
-    rect: {x: 0.09375, y: 0.36523438, z: 0.7578125, w: 0.265625}
-  - name: talisman_t3_2
-    rect: {x: 0.09375, y: 0.37109375, z: 0.7578125, w: 0.265625}
-  brushAddMaterial: {fileID: 2100000, guid: c057ad4b200d2a3448f11cccf71e07b8, type: 2}
-  lightningShade: {fileID: 2800000, guid: 309c06bc46a0b1f43bb56205606ed31d, type: 3}
-  lightningGold: {fileID: 2800000, guid: 4f470859d0397564abbfacdd0051d18b, type: 3}
-  lightningCore: {fileID: 2800000, guid: 9c375989c8510be4fb1686cbeaffff29, type: 3}
-  lightningMeters: 4
-  aiFx:
-  - name: fx_aura_glow
-    meters: 3
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: e9d2d922079c79f4ba70fd6e749e9f3a, type: 3}
-    gold: {fileID: 2800000, guid: ed0508f06a1e9b34f8abb60c83296530, type: 3}
-    core: {fileID: 2800000, guid: 61548d4ea6f942347a17b43b4546f7c0, type: 3}
-  - name: fx_bomb_glow
-    meters: 2.5
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: fe33c4937e41d9d4298bff768a2eed7b, type: 3}
-    gold: {fileID: 2800000, guid: 8c4165fe457ad2c449230486e3cf7757, type: 3}
-    core: {fileID: 2800000, guid: 1799d60e3474dc748a5f6e586cebcc63, type: 3}
-  - name: fx_bomb_ink_1
-    meters: 2.5
-    kind: 2
-    stroke: {fileID: 2800000, guid: a2d1c08e678d98d4b87439fdb7591fd1, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_bomb_ink_2
-    meters: 2.5
-    kind: 2
-    stroke: {fileID: 2800000, guid: deba3107c30a0534a898b2fdcd479af0, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_claw_ink
-    meters: 2
-    kind: 1
-    stroke: {fileID: 2800000, guid: 668e010e4f954de497c0321df03aff4b, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_claw_ink_2
-    meters: 1.5
-    kind: 2
-    stroke: {fileID: 2800000, guid: 15eabbae30f2421da0990427c3b552d5, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_dagger_ink
-    meters: 2.5
-    kind: 1
-    stroke: {fileID: 2800000, guid: d55f2d7669352ae48beb1c9d8a5565d9, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_array_glow
-    meters: 5
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: e23b303bbe6f4fa2ae2b169ce97be1c3, type: 3}
-    gold: {fileID: 2800000, guid: a088794d9eef413daf6c4c9ddb7c39b3, type: 3}
-    core: {fileID: 2800000, guid: 7a910673a9054922bfd7841bac508dac, type: 3}
-  - name: fx_evo_dagger_glow
-    meters: 1.5
-    kind: 1
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: f98b002a29c84ac0bb34d771fb5f55bc, type: 3}
-    gold: {fileID: 2800000, guid: 94936b4def124f9d834c3b7d5787fdcb, type: 3}
-    core: {fileID: 2800000, guid: 765a23b6976b4251a4f121d4f4b585f9, type: 3}
-  - name: fx_evo_dragon_ink
-    meters: 4
-    kind: 2
-    stroke: {fileID: 2800000, guid: ea4d8f2cc4e5477988fcb20413914a18, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_fire_ink
-    meters: 3
-    kind: 2
-    stroke: {fileID: 2800000, guid: 02a67216ad974f84bbd69592d3214a46, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_fist_ink
-    meters: 4
-    kind: 1
-    stroke: {fileID: 2800000, guid: 05a463fecd464f4dbba5593c1c6dca55, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_hand_ink
-    meters: 4
-    kind: 1
-    stroke: {fileID: 2800000, guid: a6c0e7cfcbcc422691a5acdf375b96aa, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_mist_ink
-    meters: 6
-    kind: 2
-    stroke: {fileID: 2800000, guid: 97b60a23419e4272a8335cd7971878ce, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_palm_ink
-    meters: 4.5
-    kind: 1
-    stroke: {fileID: 2800000, guid: b356d4bebe254e2ab66efb7b324c24a7, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_plum_ink
-    meters: 6
-    kind: 2
-    stroke: {fileID: 2800000, guid: e373e15ad54e46c79e2c5cfeaec98435, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_qin_glow
-    meters: 5
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: fb762efb973a413e8b0be037c67410e7, type: 3}
-    gold: {fileID: 2800000, guid: fbcdf2fb56a046c98903ccb16ad521b0, type: 3}
-    core: {fileID: 2800000, guid: 57d374301329427c88644007d57ec8e7, type: 3}
-  - name: fx_evo_samjae_glow
-    meters: 4
-    kind: 1
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: d02923c6819b4561a48572fb0f73c5c9, type: 3}
-    gold: {fileID: 2800000, guid: 6d1e406708ee4a9d8d2eae90644734b6, type: 3}
-    core: {fileID: 2800000, guid: 56053330bc9843ba99ddeca561720caa, type: 3}
-  - name: fx_evo_spear_ink
-    meters: 4
-    kind: 2
-    stroke: {fileID: 2800000, guid: 4454817520944ca6bfa6ad12b14da570, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_staff_ink
-    meters: 5
-    kind: 2
-    stroke: {fileID: 2800000, guid: 0689cadf92bf459ca692c655be8f9859, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_evo_star_glow
-    meters: 1.2
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 3cfe5926596f4d00aa05c6136c6e50b6, type: 3}
-    gold: {fileID: 2800000, guid: fba05202b4fd48cca09fd56ff44ac8e0, type: 3}
-    core: {fileID: 2800000, guid: 42486082352b47fa811d263b93a385ca, type: 3}
-  - name: fx_evo_taiji_glow
-    meters: 4
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: d1308506b1b140019956db2c75f1844c, type: 3}
-    gold: {fileID: 2800000, guid: 7d0c9ee45e6b464b89e46a40d2e7730f, type: 3}
-    core: {fileID: 2800000, guid: b76bc1c609fc42b782d4c5c068f4b284, type: 3}
-  - name: fx_evo_thunder_glow
-    meters: 6
-    kind: 3
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: b3235bb7b3104c18a7c8e33776a10f09, type: 3}
-    gold: {fileID: 2800000, guid: 9de2260655194a11add39425880b9ed6, type: 3}
-    core: {fileID: 2800000, guid: 2fc88ac731ce42ff9f02e4df38fc123c, type: 3}
-  - name: fx_finger_glow
-    meters: 3
-    kind: 1
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 73f89a3b74a79e346a6d4be02b25b731, type: 3}
-    gold: {fileID: 2800000, guid: d543f3c6cd6757a42ab3539ba8418f8a, type: 3}
-    core: {fileID: 2800000, guid: e9d4455280a24fd4394ba18ce4fc1fb2, type: 3}
-  - name: fx_fist_ink
-    meters: 1.5
-    kind: 1
-    stroke: {fileID: 2800000, guid: 63fcc0d728bcc6947b9f87ca73f800e6, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_lightning_glow
-    meters: 4
-    kind: 3
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 309c06bc46a0b1f43bb56205606ed31d, type: 3}
-    gold: {fileID: 2800000, guid: 4f470859d0397564abbfacdd0051d18b, type: 3}
-    core: {fileID: 2800000, guid: 9c375989c8510be4fb1686cbeaffff29, type: 3}
-  - name: fx_lightning_glow_2
-    meters: 4
-    kind: 1
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: cbd3e8710fc5d4e46885010638ce5393, type: 3}
-    gold: {fileID: 2800000, guid: c9edd555ab2fda6489f4b854bf4fa950, type: 3}
-    core: {fileID: 2800000, guid: 572be56faa874634fa3aa5c0e1da4692, type: 3}
-  - name: fx_lightning_glow_3
-    meters: 4
-    kind: 3
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 8f9d57304e894d7295621c093bde82f2, type: 3}
-    gold: {fileID: 2800000, guid: d7cf16e0f335453cabfb2608a0a59c18, type: 3}
-    core: {fileID: 2800000, guid: ab58d310629440ea9d235a301386a3c7, type: 3}
-  - name: fx_mist_ink
-    meters: 3
-    kind: 1
-    stroke: {fileID: 2800000, guid: 8f1322e0fd9e7ae4bbc0148b18621c76, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_mist_ink_2
-    meters: 3.5
-    kind: 1
-    stroke: {fileID: 2800000, guid: 760091ce56c4ba34998d277ba6f1a876, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_mist_ink_3
-    meters: 3
-    kind: 2
-    stroke: {fileID: 2800000, guid: b5b7bdf9479f25d4fbfa334a6172af2c, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_palm_ink
-    meters: 2
-    kind: 1
-    stroke: {fileID: 2800000, guid: dd6009020d3cb074c9117be1ddaae809, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_petal_glow
-    meters: 2.5
-    kind: 1
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 8e6cc875083043548556a876a6455ca5, type: 3}
-    gold: {fileID: 2800000, guid: 700fb05c5d074e27a9a455a2328ada12, type: 3}
-    core: {fileID: 2800000, guid: c8bc69933ec54ccd99904e1ad8402e44, type: 3}
-  - name: fx_petal_ink
-    meters: 2.5
-    kind: 1
-    stroke: {fileID: 2800000, guid: 0fffe59c6adf43c09d9da926987b8ba8, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_qin_glow
-    meters: 3
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 818cde5ac2f4486b8cb2d4312becb7f7, type: 3}
-    gold: {fileID: 2800000, guid: 053a7e69a1c049cf8b0eaed749e81263, type: 3}
-    core: {fileID: 2800000, guid: 6c762ddff410403dadc6f769ea590720, type: 3}
-  - name: fx_qin_ink
-    meters: 3
-    kind: 2
-    stroke: {fileID: 2800000, guid: 8a8d25b9156d4e39a9401de7e8634c37, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_sickle_glow
-    meters: 3
-    kind: 1
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 13ad7e8bf336fdf4788caf8623d63269, type: 3}
-    gold: {fileID: 2800000, guid: 8778ec1cf0758cc41babd23ed4fc43a6, type: 3}
-    core: {fileID: 2800000, guid: 9a639f20f20ad164f96aa39406640600, type: 3}
-  - name: fx_sickle_ink
-    meters: 3
-    kind: 1
-    stroke: {fileID: 2800000, guid: 0c872b1ba7ed4d1ca07e4665c9eb37f8, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_spark_glow
-    meters: 1
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 4e294b80cbec80e42bbb8c9a97bc4596, type: 3}
-    gold: {fileID: 2800000, guid: d49c6a593c0780f46963dde0765343ee, type: 3}
-    core: {fileID: 2800000, guid: 6804de3107f3df14698823a7772fc20c, type: 3}
-  - name: fx_spear_glow
-    meters: 3.5
-    kind: 1
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: f8570bfbaaa44dada5a3a69164ff6b89, type: 3}
-    gold: {fileID: 2800000, guid: 3637cf46b83b476b800ea89476c04953, type: 3}
-    core: {fileID: 2800000, guid: a0c1b00893e640ed9cf4016554618d0a, type: 3}
-  - name: fx_spear_ink
-    meters: 3.5
-    kind: 1
-    stroke: {fileID: 2800000, guid: 5aa6a650e39e4a52b07164a720f8e81f, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_staff_ink
-    meters: 3.5
-    kind: 3
-    stroke: {fileID: 2800000, guid: 95f3b3e7bba08d843a23e365a93e74ce, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_sword_qi_glow
-    meters: 3
-    kind: 3
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: 81a3c20f09fda8045bcaf813b07d0b1e, type: 3}
-    gold: {fileID: 2800000, guid: e0740b52f3f794d478469ddb6832f139, type: 3}
-    core: {fileID: 2800000, guid: ce60ea9a7e8e084429947e3e3736cf06, type: 3}
-  - name: fx_taiji_glow
-    meters: 2.5
-    kind: 2
-    stroke: {fileID: 0}
-    shade: {fileID: 2800000, guid: e27ac7c325b67d64387f4829d87217aa, type: 3}
-    gold: {fileID: 2800000, guid: 74fe27dc8e603314bb2d1e5a998f58de, type: 3}
-    core: {fileID: 2800000, guid: 6d525702bfc02414d8f7d4a86270ba8e, type: 3}
-  - name: fx_taiji_ink
-    meters: 2.5
-    kind: 2
-    stroke: {fileID: 2800000, guid: a3562e6c6d0f48829d8db7a183941339, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  - name: fx_talisman_ink
-    meters: 2
-    kind: 2
-    stroke: {fileID: 2800000, guid: 3d63734291d441249f14690ba179f071, type: 3}
-    shade: {fileID: 0}
-    gold: {fileID: 0}
-    core: {fileID: 0}
-  fxRenderQueue: 3002
---- !u!4 &303687332
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 303687330}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &334079418
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 334079420}
-  - component: {fileID: 334079419}
-  m_Layer: 0
-  m_Name: "\uD608\uB9C8\uC758 \uADF8\uB9BC\uC790"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &334079419
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 334079418}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa6edb33d5bd2e044897df417f0480c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.BloodShadowRunner
-  player: {fileID: 1182728146}
-  enemies: {fileID: 1838331824}
-  step: 0
-  bodyRealmMeters: 1.1
-  showStats: 1
---- !u!4 &334079420
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 334079418}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &569941474
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 569941476}
-  - component: {fileID: 569941475}
+  - component: {fileID: 969549473}
+  - component: {fileID: 969549472}
   m_Layer: 0
   m_Name: "\uB808\uBCA8\uC5C5 \uD654\uBA74"
   m_TagString: Untagged
@@ -921,29 +552,29 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &569941475
+--- !u!114 &969549472
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 569941474}
+  m_GameObject: {fileID: 969549471}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 065641636543cde4f9f6cc1922cc7fa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Hud.LevelUpScreen
   font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
-  orbs: {fileID: 244561121}
-  weapons: {fileID: 303687331}
+  orbs: {fileID: 1857771625}
+  weapons: {fileID: 1318444394}
   vitals: {fileID: 0}
---- !u!4 &569941476
+--- !u!4 &969549473
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 569941474}
+  m_GameObject: {fileID: 969549471}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -952,7 +583,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &801562151
+--- !u!1 &1155308097
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -960,54 +591,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 801562153}
-  - component: {fileID: 801562152}
-  m_Layer: 0
-  m_Name: "\uBC1C\uACAC \uC5F0\uCD9C"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &801562152
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 801562151}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d325406aa9a60e5468bf1e90e32c6a1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.DiscoveryFx
-  font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
---- !u!4 &801562153
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 801562151}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &996470359
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 996470362}
-  - component: {fileID: 996470361}
-  - component: {fileID: 996470360}
+  - component: {fileID: 1155308100}
+  - component: {fileID: 1155308099}
+  - component: {fileID: 1155308098}
   m_Layer: 0
   m_Name: "\uD654\uBA74 \uD608\uC6B0"
   m_TagString: Untagged
@@ -1015,13 +601,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &996470360
+--- !u!114 &1155308098
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 996470359}
+  m_GameObject: {fileID: 1155308097}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 582e76b15f2ab194684f8d743a71ccc2, type: 3}
@@ -1037,34 +623,34 @@ MonoBehaviour:
       m_Calls: []
   density: 1
   widthScale: 1.5
---- !u!222 &996470361
+--- !u!222 &1155308099
 CanvasRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 996470359}
+  m_GameObject: {fileID: 1155308097}
   m_CullTransparentMesh: 1
---- !u!224 &996470362
+--- !u!224 &1155308100
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 996470359}
+  m_GameObject: {fileID: 1155308097}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1342333892}
+  m_Father: {fileID: 15283635}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1042880382
+--- !u!1 &1161831997
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1072,35 +658,36 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1042880384}
-  - component: {fileID: 1042880383}
+  - component: {fileID: 1161831999}
+  - component: {fileID: 1161831998}
   m_Layer: 0
-  m_Name: DataBoot
+  m_Name: "\uBE44\uC804 \uD310\uC815"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1042880383
+--- !u!114 &1161831998
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1042880382}
+  m_GameObject: {fileID: 1161831997}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 263b429c0079a504fb69e9ba9fc0dcad, type: 3}
+  m_Script: {fileID: 11500000, guid: 7cc376d13370e434c9e0a4d3ea829445, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.DataBoot
-  logWeapons: 1
---- !u!4 &1042880384
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Hud.SecretWatch
+  levelUp: {fileID: 969549472}
+  fx: {fileID: 1198363265}
+--- !u!4 &1161831999
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1042880382}
+  m_GameObject: {fileID: 1161831997}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -1109,7 +696,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1182728145
+--- !u!1 &1198363264
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1117,10 +704,231 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1182728146}
-  - component: {fileID: 1182728149}
-  - component: {fileID: 1182728147}
-  - component: {fileID: 1182728148}
+  - component: {fileID: 1198363266}
+  - component: {fileID: 1198363265}
+  m_Layer: 0
+  m_Name: "\uBC1C\uACAC \uC5F0\uCD9C"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1198363265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1198363264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d325406aa9a60e5468bf1e90e32c6a1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.DiscoveryFx
+  font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
+--- !u!4 &1198363266
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1198363264}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1318444393
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1318444395}
+  - component: {fileID: 1318444394}
+  m_Layer: 0
+  m_Name: "\uBB34\uACF5"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1318444394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1318444393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27b3e56622f94a24aad65d243a86198e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Combat.WeaponRunner
+  enemies: {fileID: 1986243807}
+  player: {fileID: 1665862243}
+  material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
+  slots: []
+  showStats: 1
+  brushMaterial: {fileID: 0}
+  samjaeTier1: []
+  samjaeTier1Meters: 5.74
+  samjaeTier1Span: 2.3
+  samjaeTier2: []
+  samjaeTier2Wash: []
+  samjaeTier2Meters: 6.456
+  samjaeTier2Span: 2.4
+  samjaeTier3: []
+  samjaeTier3Wash: []
+  samjaeTier3Gold: []
+  samjaeTier3Meters: 7.1
+  samjaeTier3Span: 2.5
+  brushCrops: []
+  brushAddMaterial: {fileID: 0}
+  lightningShade: {fileID: 0}
+  lightningGold: {fileID: 0}
+  lightningCore: {fileID: 0}
+  lightningMeters: 4
+  aiFx: []
+  fxRenderQueue: 3002
+--- !u!4 &1318444395
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1318444393}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1460105457
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1460105461}
+  - component: {fileID: 1460105460}
+  - component: {fileID: 1460105459}
+  - component: {fileID: 1460105458}
+  m_Layer: 0
+  m_Name: "\uD608\uC6B0 \uC7A5\uB9C9"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1460105458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1460105457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c21ef457abc436141972c12976bb03fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.BloodCurtain
+  birthplace: {x: 0, y: 0}
+  breakthrough: {fileID: 523477895}
+  splitPeak: 1
+--- !u!23 &1460105459
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1460105457}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: d4c2e113e1e0ede449c6b485be22441a, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1460105460
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1460105457}
+  m_Mesh: {fileID: 0}
+--- !u!4 &1460105461
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1460105457}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1665862241
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1665862242}
+  - component: {fileID: 1665862245}
+  - component: {fileID: 1665862243}
+  - component: {fileID: 1665862244}
   m_Layer: 0
   m_Name: "\uD50C\uB808\uC774\uC5B4"
   m_TagString: Untagged
@@ -1128,13 +936,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1182728146
+--- !u!4 &1665862242
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1182728145}
+  m_GameObject: {fileID: 1665862241}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -1}
@@ -1143,13 +951,13 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1182728147
+--- !u!114 &1665862243
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1182728145}
+  m_GameObject: {fileID: 1665862241}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f2fe20d12c4f07f40a1ccb72d9477488, type: 3}
@@ -1157,13 +965,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.PlayerController
   bodyRealmMeters: 0.8
   birthplace: {x: 0, y: 0}
---- !u!114 &1182728148
+--- !u!114 &1665862244
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1182728145}
+  m_GameObject: {fileID: 1665862241}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6fe6e82b08d44e944a6b56668047dc00, type: 3}
@@ -1173,14 +981,14 @@ MonoBehaviour:
   armor: 0
   refillOnDeath: 1
   showStats: 1
---- !u!212 &1182728149
+--- !u!212 &1665862245
 SpriteRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1182728145}
+  m_GameObject: {fileID: 1665862241}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -1232,7 +1040,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
---- !u!1 &1342333888
+--- !u!1 &1814734359
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1240,250 +1048,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1342333892}
-  - component: {fileID: 1342333891}
-  - component: {fileID: 1342333890}
-  - component: {fileID: 1342333889}
-  m_Layer: 0
-  m_Name: "\uC804\uD22C HUD"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1342333889
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1342333888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d534e03d8c779264e91ab968501f67a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Hud.RegionHud
-  target: {fileID: 1182728146}
-  clockText: {fileID: 1371968314}
-  regionText: {fileID: 1805715582}
-  rain: {fileID: 996470360}
-  sealStones: 0
-  elapsedOverride: -1
---- !u!114 &1342333890
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1342333888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 1
-  m_ReferencePixelsPerUnit: 100
-  m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1920, y: 1080}
-  m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0.5
-  m_PhysicalUnit: 3
-  m_FallbackScreenDPI: 96
-  m_DefaultSpriteDPI: 96
-  m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
---- !u!223 &1342333891
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1342333888}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 0
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 25
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 0
-  m_TargetDisplay: 0
---- !u!224 &1342333892
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1342333888}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 996470362}
-  - {fileID: 1371968316}
-  - {fileID: 1805715584}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0}
---- !u!1 &1371968313
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1371968316}
-  - component: {fileID: 1371968315}
-  - component: {fileID: 1371968314}
-  m_Layer: 0
-  m_Name: "\uACBD\uACFC \uC2DC\uAC04"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1371968314
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1371968313}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: 0:00
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
-  m_sharedMaterial: {fileID: 5741830947140742626, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4279704095
-  m_fontColor: {r: 0.12, g: 0.1, b: 0.09, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
-  m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
-  m_fontStyle: 1
-  m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 0
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!222 &1371968315
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1371968313}
-  m_CullTransparentMesh: 1
---- !u!224 &1371968316
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1371968313}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1342333892}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -44}
-  m_SizeDelta: {x: 900, y: 64}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1408224928
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1408224930}
-  - component: {fileID: 1408224929}
+  - component: {fileID: 1814734361}
+  - component: {fileID: 1814734360}
   m_Layer: 0
   m_Name: "\uBA39 \uC790\uAD6D"
   m_TagString: Untagged
@@ -1491,21 +1057,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1408224929
+--- !u!114 &1814734360
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1408224928}
+  m_GameObject: {fileID: 1814734359}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a4b2bd7a406634449c07106549e21ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.InkMarks
   material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
-  enemies: {fileID: 1838331824}
-  player: {fileID: 1182728146}
+  enemies: {fileID: 1986243807}
+  player: {fileID: 1665862242}
   splats:
   - {fileID: 2800000, guid: 058954cf62c969640972691f902978cc, type: 3}
   - {fileID: 2800000, guid: 4c5ad57e9d0b55e49a5ef198cc28dbdb, type: 3}
@@ -1525,13 +1091,13 @@ MonoBehaviour:
   maxGround: 240
   maxSplats: 300
   newPerFrame: 12
---- !u!4 &1408224930
+--- !u!4 &1814734361
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1408224928}
+  m_GameObject: {fileID: 1814734359}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -1540,7 +1106,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1440310590
+--- !u!1 &1857771624
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1548,96 +1114,44 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1440310594}
-  - component: {fileID: 1440310593}
-  - component: {fileID: 1440310592}
-  - component: {fileID: 1440310591}
+  - component: {fileID: 1857771626}
+  - component: {fileID: 1857771625}
   m_Layer: 0
-  m_Name: "\uD608\uC6B0 \uC7A5\uB9C9"
+  m_Name: "\uC9C4\uAE30 \uAD6C\uC2AC"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1440310591
+--- !u!114 &1857771625
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1440310590}
+  m_GameObject: {fileID: 1857771624}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c21ef457abc436141972c12976bb03fa, type: 3}
+  m_Script: {fileID: 11500000, guid: a254634ebc776c641a5968bd01a05890, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.BloodCurtain
-  birthplace: {x: 0, y: 0}
-  breakthrough: {fileID: 0}
-  splitPeak: 1
---- !u!23 &1440310592
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1440310590}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: d4c2e113e1e0ede449c6b485be22441a, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1440310593
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1440310590}
-  m_Mesh: {fileID: 0}
---- !u!4 &1440310594
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.OrbLayer
+  material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
+  enemies: {fileID: 1986243807}
+  player: {fileID: 1665862242}
+  orbRealmMeters: 0.35
+  absorbRealmMeters: 0.5
+  pullBase: 9
+  pullPerSecond: 4
+  mergeRealmMeters: 5
+  ownTestXp: 0
+  showStats: 1
+--- !u!4 &1857771626
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1440310590}
+  m_GameObject: {fileID: 1857771624}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -1646,7 +1160,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1805715581
+--- !u!1 &1863248328
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1654,9 +1168,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1805715584}
-  - component: {fileID: 1805715583}
-  - component: {fileID: 1805715582}
+  - component: {fileID: 1863248331}
+  - component: {fileID: 1863248330}
+  - component: {fileID: 1863248329}
   m_Layer: 0
   m_Name: "\uC9C0\uC5ED\uACFC \uD608\uC6B4"
   m_TagString: Untagged
@@ -1664,13 +1178,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1805715582
+--- !u!114 &1863248329
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805715581}
+  m_GameObject: {fileID: 1863248328}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
@@ -1706,7 +1220,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
+  m_TextStyleHashCode: 0
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1756,34 +1270,34 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!222 &1805715583
+--- !u!222 &1863248330
 CanvasRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805715581}
+  m_GameObject: {fileID: 1863248328}
   m_CullTransparentMesh: 1
---- !u!224 &1805715584
+--- !u!224 &1863248331
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805715581}
+  m_GameObject: {fileID: 1863248328}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1342333892}
+  m_Father: {fileID: 15283635}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: -92}
   m_SizeDelta: {x: 900, y: 41.600002}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1838331823
+--- !u!1 &1932055965
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1791,85 +1305,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1838331826}
-  - component: {fileID: 1838331825}
-  - component: {fileID: 1838331824}
-  m_Layer: 0
-  m_Name: "\uC801 \uBB34\uB9AC"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1838331824
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838331823}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: beedef3dced70954db56733c36ca46d9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.EnemyField
-  targetCount: 300
-  capacity: 4096
-  spawnPerFrame: 60
-  player: {fileID: 1182728146}
-  clusters: {fileID: 1838331825}
-  vitals: {fileID: 0}
-  showStats: 1
-  damageMultiplier: 1
-  levelUp: {fileID: 0}
---- !u!114 &1838331825
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838331823}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cf68d825ba50ca4b8e5b1b9ec29df87, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.ClusterRenderer
-  material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
-  atlas: {fileID: 0}
-  memberRealmMeters: 1
-  spacing: 0.9
-  hopPeriod: 0.55
-  hopHeight: 0.22
-  hopPhaseSpread: 0.3
-  dissolveSeconds: 0.35
-  cull: 1
---- !u!4 &1838331826
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838331823}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1933548946
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1933548950}
-  - component: {fileID: 1933548949}
-  - component: {fileID: 1933548948}
-  - component: {fileID: 1933548947}
+  - component: {fileID: 1932055969}
+  - component: {fileID: 1932055968}
+  - component: {fileID: 1932055967}
+  - component: {fileID: 1932055966}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1877,26 +1316,26 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1933548947
+--- !u!114 &1932055966
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1933548946}
+  m_GameObject: {fileID: 1932055965}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a9bc7357dfb21aa499bf015bd319a33d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.ScaleCamera
   target: {fileID: 0}
---- !u!114 &1933548948
+--- !u!114 &1932055967
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1933548946}
+  m_GameObject: {fileID: 1932055965}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
@@ -1934,13 +1373,13 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!20 &1933548949
+--- !u!20 &1932055968
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1933548946}
+  m_GameObject: {fileID: 1932055965}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
@@ -1985,13 +1424,13 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &1933548950
+--- !u!4 &1932055969
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1933548946}
+  m_GameObject: {fileID: 1932055965}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -10}
@@ -2000,7 +1439,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2065094847
+--- !u!1 &1957780759
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2008,36 +1447,114 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2065094849}
-  - component: {fileID: 2065094848}
+  - component: {fileID: 1957780761}
+  - component: {fileID: 1957780760}
   m_Layer: 0
-  m_Name: "\uBE44\uC804 \uD310\uC815"
+  m_Name: "\uD608\uB9C8\uC758 \uADF8\uB9BC\uC790"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2065094848
+--- !u!114 &1957780760
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2065094847}
+  m_GameObject: {fileID: 1957780759}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7cc376d13370e434c9e0a4d3ea829445, type: 3}
+  m_Script: {fileID: 11500000, guid: aa6edb33d5bd2e044897df417f0480c6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Hud.SecretWatch
-  levelUp: {fileID: 569941475}
-  fx: {fileID: 801562152}
---- !u!4 &2065094849
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.BloodShadowRunner
+  player: {fileID: 1665862242}
+  enemies: {fileID: 1986243807}
+  step: 0
+  bodyRealmMeters: 1.1
+  showStats: 1
+--- !u!4 &1957780761
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2065094847}
+  m_GameObject: {fileID: 1957780759}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1986243806
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1986243809}
+  - component: {fileID: 1986243808}
+  - component: {fileID: 1986243807}
+  m_Layer: 0
+  m_Name: "\uC801 \uBB34\uB9AC"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1986243807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1986243806}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: beedef3dced70954db56733c36ca46d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.EnemyField
+  targetCount: 300
+  capacity: 4096
+  spawnPerFrame: 60
+  player: {fileID: 1665862242}
+  clusters: {fileID: 1986243808}
+  vitals: {fileID: 0}
+  showStats: 1
+  damageMultiplier: 1
+  levelUp: {fileID: 0}
+--- !u!114 &1986243808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1986243806}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cf68d825ba50ca4b8e5b1b9ec29df87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.ClusterRenderer
+  material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
+  atlas: {fileID: 0}
+  memberRealmMeters: 1
+  spacing: 0.9
+  hopPeriod: 0.55
+  hopHeight: 0.22
+  hopPhaseSpread: 0.3
+  dissolveSeconds: 0.35
+  cull: 1
+--- !u!4 &1986243809
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1986243806}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -2050,17 +1567,18 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1933548950}
-  - {fileID: 1042880384}
-  - {fileID: 1182728146}
-  - {fileID: 1440310594}
-  - {fileID: 145272450}
-  - {fileID: 1838331826}
-  - {fileID: 244561122}
-  - {fileID: 303687332}
-  - {fileID: 1342333892}
-  - {fileID: 569941476}
-  - {fileID: 801562153}
-  - {fileID: 2065094849}
-  - {fileID: 1408224930}
-  - {fileID: 334079420}
+  - {fileID: 1932055969}
+  - {fileID: 136662924}
+  - {fileID: 1665862242}
+  - {fileID: 1460105461}
+  - {fileID: 924421617}
+  - {fileID: 1986243809}
+  - {fileID: 1857771626}
+  - {fileID: 1318444395}
+  - {fileID: 15283635}
+  - {fileID: 969549473}
+  - {fileID: 1198363266}
+  - {fileID: 1161831999}
+  - {fileID: 1814734361}
+  - {fileID: 1957780761}
+  - {fileID: 523477897}

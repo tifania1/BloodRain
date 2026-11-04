@@ -19,7 +19,7 @@ namespace BloodRain.Presentation.Hud
     //   아래 버튼 셋 = Core LevelUpCharges: 다시 고르기(진소운 특성 +2), 파기(누른 뒤 카드를 고르면 이번 판에서 영영 뺌), 정진(진기 게이지 +20).
     //   고른 무공은 WeaponRunner.Learn 으로 바로 쏜다. 행낭(은자·음식) 카드는 은자를 Silver 에 더하고 PlayerVitals.Heal.
     //   심법 능력치·시너지 진전 능력치는 아직 몸에 안 얹는다(C-06 남은 것, Life 가 붙을 때). 카드의 연환 띠·문파 인장과 HUD 진전 인장은 S-04.
-    //   레벨은 지금 OrbLayer 의 시험용 RunXp 를 본다. Life 가 붙으면(C-10) 그쪽 레벨로 바꾼다.
+    //   레벨·Loadout·Charges 는 Run 씬의 한 생(LifeRunner.Life)을 본다. 한 생이 없는 시험 씬이면 OrbLayer 의 시험용 RunXp.
     //   서장(진소운 제 몸)의 첫 레벨업은 Loadout.RollFirstLevelUp(chapters.json prologue firstLevelUpChoices) — 새 무공 한 장만,
     //   다시 고르기·파기는 숨긴다(C-06b, 기획서 5장 서장 표). 그 뒤는 보통 RollLevelUp.
     //   키보드: 1~4 카드, R 다시 고르기, B 파기, S 정진.
@@ -69,16 +69,19 @@ namespace BloodRain.Presentation.Hud
             _data = DataBoot.Data;
             var body = Meta.RebirthHandoff.Body ?? Rebirth.Prologue(_data);
             var character = body.Character;
-            _loadout = new Loadout(_data, character);
+            // LF-01: Run 씬에 한 생이 있으면 그 생의 Loadout·Charges(연무장·몸의 성질 덧셈까지)를 쓴다.
+            var life = LifeRunner.Instance != null ? LifeRunner.Instance.Life : null;
+            if (life != null) body = life.Body;
+            _loadout = life != null ? life.Loadout : new Loadout(_data, character);
             if (body.IsPrologue) _prologue = _data.Chapter("prologue");
             else _firstDone = true;
             // 연무장·몸의 성질 덧셈은 Life 가 붙을 때(C-10) LevelUpCharges.Start 로. 지금은 특성 몫만.
-            _charges = new LevelUpCharges(LevelUpCharges.TraitRerolls(_data.Balance.LevelUp, character), 0, 0);
+            _charges = life != null ? life.Charges : new LevelUpCharges(LevelUpCharges.TraitRerolls(_data.Balance.LevelUp, character), 0, 0);
             _ultimate = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony);
             foreach (var w in _data.Weapons) if (w.Unlock == "start") _unlocked.Add(w.Id);
             if (orbs == null) orbs = FindFirstObjectByType<OrbLayer>();
             if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();
-            if (orbs != null && orbs.TestXp != null) _handledLevel = orbs.TestXp.Level;
+            _handledLevel = CurrentLevel();
             if (EventSystem.current == null) new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             if (Meta.RebirthHandoff.Soul != null) _restored = Meta.RebirthHandoff.Soul.RestoredManuals;
             Build();
@@ -87,15 +90,26 @@ namespace BloodRain.Presentation.Hud
             RefreshSeals();
         }
 
+        // 한 생이 있으면 life.Level, 없으면(시험 씬) OrbLayer 의 시험 RunXp, 둘 다 없으면 그대로.
+        int CurrentLevel()
+        {
+            if (LifeRunner.Instance != null) return LifeRunner.Instance.Life.Level;
+            if (orbs != null && orbs.TestXp != null) return orbs.TestXp.Level;
+            return _handledLevel;
+        }
+
         /// <summary>지금 로드아웃의 연환·진전(복원한 비급만 켜짐).</summary>
         public SynergyState Synergy => BloodRain.Core.Build.Synergy.Compute(_data, _loadout, null, _restored);
 
         void Update()
         {
-            int level = orbs != null && orbs.TestXp != null ? orbs.TestXp.Level : _handledLevel;
+            int level = CurrentLevel();
             if (level > _handledLevel) { _pending += level - _handledLevel; _handledLevel = level; }
-            if (!_open && _pending > 0) Open();
+            // 돌파 줌이 도는 동안은 열지 않는다(줌이 끝나면 카드). 줌이 끝나며 세상 시간을 1로 되돌려도 열린 동안은 멈춰 둔다.
+            bool zooming = LifeRunner.Instance != null && LifeRunner.Instance.breakthrough != null && LifeRunner.Instance.breakthrough.IsPlaying;
+            if (!_open && _pending > 0 && !zooming) Open();
             if (!_open) return;
+            if (Time.timeScale != 0f && !zooming) Time.timeScale = 0f;
 
             var kb = Keyboard.current;
             if (kb == null) return;

@@ -75,7 +75,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 ### B. 한 생 뼈대 (Run 씬에 Core Life 붙이기 — 여기서부터 아래가 풀린다)
 
-- [ ] LF-01 Run 씬에 한 생(Life) 들이기
+- [x] LF-01 Run 씬에 한 생(Life) 들이기 — 2026-11-05 00:50 PC: `Presentation/LifeRunner.cs`(한 생, Tick·Absorb·돌파 줌·디버그 줄) + `Editor/LifeBootstrap.cs`(메뉴 `Run 씬에 한 생 붙이기`, RunBootstrap 도 부름). 구슬 시험 RunXp 끔, LevelUpScreen 이 Life 의 Level·Loadout·Charges 를 봄. 돌파 줌 도는 동안엔 레벨업 화면을 미루고, 줌이 끝나며 세상 시간을 1로 돌려도 열린 동안은 0으로 붙잡게 고침. 서장 첫 레벨업 카드 한 장·삼류→이류 돌파 줌 확인, 콘솔 에러 0. 찍음 `docs/unity_shots/LF-01/`(life_debug·levelup·breakthrough)
   - 할 것: `Presentation/LifeRunner.cs` 하나가 Run 씬의 한 생을 든다. 시작할 때 `new Life(soul, body, rng)` — soul 은 `RebirthHandoff.Soul ?? new Soul(data)`, body 는 `RebirthHandoff.Body ?? Rebirth.Prologue(data)`. 매 프레임 `life.Tick(Time.unscaledDeltaTime, 플레이어 자리, enemyField.Count)`(LF-02 전까지 돌려준 LifeSecond 는 버린다). OrbLayer.Absorbed 를 `life.Absorb(xp, orbs)` 로 돌리고(시험 RunXp 끔), LevelUpScreen 이 `life.Level`·`life.Charges`·`life.Loadout` 을 보게 바꾼다. `LifeAbsorb.Breakthroughs` 가 있으면 BreakthroughFx 를 그것으로 띄운다(지금은 시험 RunXp 에서 띄움). 플레이어 자리 단위는 `Life.MoveTo` 주석대로(세계 m ↔ 천하 좌표는 `WorldScale`).
   - 쓸 것: Core `Run/Life.cs`(Tick·Absorb·Level·Realm·Minutes·RegionId·Density·Charges·Loadout), `Meta/Soul.cs`, `Meta/Rebirth.cs`
   - 메뉴: `BloodRain/Bootstrap/Run 씬에 한 생 붙이기` 를 새로(RunBootstrap 도 부르게)

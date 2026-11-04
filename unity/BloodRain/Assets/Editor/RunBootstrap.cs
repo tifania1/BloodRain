@@ -87,6 +87,9 @@ namespace BloodRain.Editor
             // 혈마의 그림자(C-12)
             ShadowBootstrap.Attach();
 
+            // 한 생(LF-01): Core Life 와 돌파 줌
+            LifeBootstrap.Attach();
+
             EditorSceneManager.SaveScene(scene, RunScenePath);
             Debug.Log($"[RunBootstrap] {RunScenePath} 지음");
         }
