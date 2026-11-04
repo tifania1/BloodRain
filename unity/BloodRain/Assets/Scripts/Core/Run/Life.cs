@@ -156,8 +156,14 @@ namespace BloodRain.Core.Run
         /// <summary>오의 위력 배율(절정 돌파면 1.25).</summary>
         public float UltimatePowerMultiplier => 1f + RealmRewards.UltimatePower;
 
-        /// <summary>받는 피해 배율(화경 돌파면 0.9). Damage.Taken(…, 호신) 뒤에 곱한다.</summary>
-        public float DamageTakenMultiplier => RealmRewards.DamageTakenMultiplier;
+        /// <summary>받는 피해 배율(화경 돌파면 0.9, 태극무량이 붙어 있으면 0). Damage.Taken(…, 호신) 뒤에 곱한다.</summary>
+        public float DamageTakenMultiplier => RealmRewards.DamageTakenMultiplier * (Ultimate?.DamageTakenMultiplier ?? 1f);
+
+        /// <summary>지금 흐르는 오의(쓴 뒤 지속 시간·때릴 박자가 남은 동안). 없으면 null. 박자·모양·적에 붙는 것은 여기서 읽는다(천마해체 몸 효과는 Dissolution).</summary>
+        public UltimateCast? Ultimate { get; private set; }
+
+        /// <summary>이번 Tick 에 오의가 때릴 박자 수. 한 박자마다 Ultimates.HitDamage 를 UltimateCasts 번(쓴 직후 첫 Tick 에 1, 만천화우는 1초마다).</summary>
+        public int UltimatePulses { get; private set; }
 
         /// <summary>오의 한 번에 몇 번 나가나. 현경이면 2(오의 2연속). 게이지는 한 번만 비운다.</summary>
         public int UltimateCasts => RealmRewards.DoubleUltimate ? 2 : 1;
@@ -201,6 +207,7 @@ namespace BloodRain.Core.Run
 
             float dt = unscaledDt * WorldTimeScale;
             Minutes += dt / 60f;
+            TickUltimate(dt);
             if (PrologueSpawns != null) return TickPrologue(dt, position, aliveNow);
             Director.Tick(dt);
             Awakening.TickWorld(dt);
@@ -216,6 +223,12 @@ namespace BloodRain.Core.Run
             if (_secondAcc < 1.0) return null;
             _secondAcc -= 1.0; // 한 프레임이 몇 초를 건너뛰면 남은 초는 다음 프레임들이 하나씩 낸다(버리지 않는다)
             return Director.Second(Minutes, Level, RegionId, aliveNow);
+        }
+
+        void TickUltimate(float dt)
+        {
+            if (Ultimate != null && !Ultimate.IsActive) Ultimate = null;
+            UltimatePulses = Ultimate?.Advance(dt) ?? 0;
         }
 
         LifeSecond? TickPrologue(float dt, Vector2 position, int aliveNow)
@@ -322,12 +335,13 @@ namespace BloodRain.Core.Run
             return info;
         }
 
-        /// <summary>오의를 쓴다. 게이지가 가득 찼을 때만 비우고 true. 마교 몸이면 천마해체로 음양 게이지가 시작값으로 돌아오고(혈공) 8초 Dissolution 이 켜진다.
+        /// <summary>오의를 쓴다. 게이지가 가득 찼을 때만 비우고 true. 그 몸의 오의가 Ultimate 로 흐르기 시작한다(R-15). 마교 몸이면 천마해체로 음양 게이지가 시작값으로 돌아오고(혈공) 8초 Dissolution 이 켜진다.
         /// Unity 쪽은 Charge.TryUse 를 따로 부르지 말고 이걸 부른다.</summary>
         public bool UseUltimate()
         {
             if (Record != null) throw new InvalidOperationException("끝난 생입니다");
             if (!Charge.TryUse()) return false;
+            Ultimate = new UltimateCast(Ultimates.Of(_data, Body.Character)); // 다음 Tick 에 첫 박자(UltimatePulses)
             Dissolution?.Start();
             if (BloodArt != null && BloodArt.OnUltimate(Body.Character.Ultimate))
                 InsightEffects.OnDemonicReset(BloodArt.Steps); // 마공 깨달음 '심마' 공력도 사라진다

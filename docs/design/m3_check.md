@@ -9,7 +9,7 @@
 |---|---|---|---|---|---|---|
 | 몸(기혈·걸음·음양 시작·시작 무공·오의) | 5장 '한눈에 보기' | cheonha.json sects 여섯, characters.json 당연화·하연·운화. 같음(`CheonhaDataTests.문파_표가_데이터와_같다`·`대표_인물이_있는_문파는_그_인물의_몸과_같다`) | `Rebirth`(후보·몸), 해금은 `Soul` 의 `boss:<지역>` 토큰 | 없음(진소운만) | 아홉 문파 몸의 기혈·걸음, 땅의 주인 첫 처치로 문파가 열림. 음양 시작은 카드에 흐리게만 | TU-11 |
 | 고유 능력 | 5장 칸(소림 피해 -2, 개방 은자 +30%·음식 +50%, 남궁 기혈 50% 이상 공력 +25%, 당가 독 무효·중독된 적 +20%, 수로채 움직이는 동안 회피 15%·물 감속 무시, 무당 태극 ±40·조화 보너스 2배) | sects `traitEffect`(아홉 문파, R-04·R-04b 2026-11-04). 마교 '기혈이 낮을수록 공격속도' 곡선만 없음(R-04c 사람 결정 대기). 무당 태극 구간은 `harmonyRange` 40 | `Build/SectTrait.cs`(능력치 덧셈·독 무효·물 무시·중독 피해 배율·조화 보너스 배수), `RebirthBody.SectTrait`·`ComputeStats(…, healthRatio, moving)`, `Life.CurrentStats`·`Life.HarmonyCooldownReduction`, `UltimateCharge.HarmonyBonusMultiplier`, `StatKind.Evade`·`Evade.Roll`(`SectTraitTests` 16). 시뮬레이터 소림 호신도 데이터에서 읽음 | 없음 | 없음 | R-04U |
-| 오의(만천화우·역류·태극무량, 나머지 셋 포함) | 5장 '오의 상세' | characters.json ultimates: `mightMultiplier` 와 `params`(R-05 2026-11-04: 시간·반경·곳·방향·연타·천마해체 비율, `UltimateParamsTests` 가 5장 칸과 맞춤). 일검(숫자 없음)·역류(R-05b 사람 결정 대기)만 params 없음 | `Ultimates.HitDamage`(피해만) | 일검만(`useUlt`) | 없음 | C-09(진소운 일검만 적힘) |
+| 오의(만천화우·역류·태극무량, 나머지 셋 포함) | 5장 '오의 상세' | characters.json ultimates: `mightMultiplier` 와 `params`(R-05 2026-11-04: 시간·반경·곳·방향·연타·천마해체 비율, `UltimateParamsTests` 가 5장 칸과 맞춤). 일검(숫자 없음)·역류(R-05b 사람 결정 대기)만 params 없음 | `Ultimates.HitDamage`(피해), `UltimateCast`(박자·다섯 오의 모양, R-15)·`UltimateEffects`(천설부·천마해체, R4-10). 빈 숫자는 R-15b | 일검만(`useUlt`) | 없음 | C-09(진소운 일검), R-15U(다섯), R4-13(천설부·천마해체) |
 | 진전 | 20장 '진전 9문파' | synergies.json schools. 여섯 문파 단계 글·인원이 표와 같음(`SynergyDataTests.기획서_20장_진전_표가_schools_와_같다`, R-06). 소림 4·개방 4 는 effect `arhat_ring`·`beggar_allies`(R-07) | `Synergy.Compute`, `SynergyEffects`(effect 13), 판 상태는 `SchoolSummons`. 수로채 4 는 `Chest` 의 `chestUpgrades` | 아홉 문파 인장, proto 단계 효과 11 다 씀. 태극검·쇄겸술·이화창이 없어 무당·수로채는 심법 둘(+기본의 극)까지만 | 없음 | S-04(표시), 몸에 얹기는 C-06 '남은 것' |
 
 ## 무공 16·절기 16
@@ -58,3 +58,7 @@
 
 - 문파 여섯 몸·해금, 무공 16 성장·해금, 심법·절기 효과 칸, 지역 표, 기믹 셋(독안개·물·태극 바닥) 수치, 고유 적 여섯, 정예 아홉, 땅의 주인 셋 패턴은 위 칸에 적은 테스트가 기획서 표와 데이터를 맞춰 본다. 숫자가 서로 다른 곳은 찾지 못했다
 - 정예 아홉을 걸어서 피할 수 있는지는 `docs/design/sim/dodge.md`(R-01)
+
+## 그 뒤(2026-11-04 클라우드 M1·M3 이어서)
+
+빈 칸 가운데 backlog 에 없던 것을 R-15~R-17 로 넣었다. 오의 박자·모양 Core 는 R-15(끝), 오의 빈 숫자는 R-15b, 웹 천하 시안 몸의 고유 능력·오의는 R-16, 무공 여섯 날아가는 것·넉백과 흑룡탄은 R-17(사람 결정 대기). 검혼 `_note` 의 '매화검귀가 아직 없다'도 옛말이라 고쳤다.
