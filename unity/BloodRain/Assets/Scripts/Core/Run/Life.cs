@@ -77,7 +77,10 @@ namespace BloodRain.Core.Run
             Scale = new Scale(_data);
             Breakthrough = new Breakthrough(Scale, _data.Cheonha.Breakthrough, _data.Cheonha.Crush);
             Awakening = new Awakening(_data.Balance.Awakening);
-            Charge = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony, StartChargeBonus(soul, body));
+            Charge = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony, StartChargeBonus(soul, body))
+            {
+                HarmonyBonusMultiplier = body.SectTrait.HarmonyBonusMultiplier, // 무당 '조화 보너스 2배'
+            };
             Charges = LevelUpCharges.Start(_data.Balance.LevelUp, body.Character, StartBonus(soul, body));
             // 역류를 경공으로 끊으면 오의 게이지 +50 이 이 게이지로 들어간다.
             Backlash = new Backlash(_data.Balance.Yinyang.Extreme, Charge);
@@ -133,10 +136,15 @@ namespace BloodRain.Core.Run
         /// <summary>지금까지 돌파한 경지들의 보상 합(경지표 '돌파 보상'). 효과를 얹는 일은 부른 쪽이 한다.</summary>
         public RealmRewardSum RealmRewards => Progression.RealmRewards.Upto(_data.Balance.Realms, Xp.Level);
 
-        /// <summary>지금 몸의 능력치: 몸 + 지금 심법 레벨 + 연무장 + 성질 + 경지 돌파 최대 기혈(이류 +10).
-        /// 깨달음·진전 같은 덧셈은 extra 로. 심법을 올리거나 경지를 넘으면 다시 부른다(값을 들고 있지 않는다).</summary>
-        public StatSheet CurrentStats(StatBonus? extra = null) =>
-            Body.ComputeStats(_data, Loadout.Passives, _soul.Training, extra, RealmRewards.MaxHealthFlat);
+        /// <summary>지금 몸의 능력치: 몸 + 지금 심법 레벨 + 연무장 + 성질 + 문파 고유 능력 + 경지 돌파 최대 기혈(이류 +10).
+        /// 깨달음·진전 같은 덧셈은 extra 로. 심법을 올리거나 경지를 넘으면 다시 부른다(값을 들고 있지 않는다).
+        /// healthRatio·moving 은 조건이 붙은 고유 능력(남궁 기혈 50% 이상 공력 +25%, 수로채 움직이는 동안 회피 15%)에 쓴다.</summary>
+        public StatSheet CurrentStats(StatBonus? extra = null, float healthRatio = 1f, bool moving = false) =>
+            Body.ComputeStats(_data, Loadout.Passives, _soul.Training, extra, RealmRewards.MaxHealthFlat, healthRatio, moving);
+
+        /// <summary>태극(조화) 구간이면 붙는 쾌속(기본 0.1, 무당 몸 0.2). 태극이 아니면 0. StatSheet.CooldownReduction 에 더하고 상한으로 자른다.</summary>
+        public float HarmonyCooldownReduction =>
+            Loadout.Gauge.Band == YinYangBand.Harmony ? Body.SectTrait.HarmonyCooldownReduction(_data.Balance.Yinyang.Harmony) : 0f;
 
         /// <summary>경공 최대 충전: balance.json dash 기본 + 연무장·성질 + 경지 돌파(일류 +1). 돌파 뒤 Dash.SetMaxCharges 에 넣는다.</summary>
         public int DashMaxCharges(StatSheet stats) => _data.Balance.Dash.Charges + stats.DashCharges + RealmRewards.DashCharges;

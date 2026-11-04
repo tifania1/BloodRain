@@ -1,6 +1,6 @@
 // 진기(오의) 게이지. 100이 차면 오의를 쓴다(기획서 '8. 전투 시스템' 오의 상세).
 //   처치 0.4, 피격 3, 정예 처치 15 → 충전 배율을 곱한다.
-//   충전 배율 = (1 + 연무장·심법 UltimateCharge) × (태극이면 1.25)
+//   충전 배율 = (1 + 연무장·심법 UltimateCharge) × (태극이면 1 + 0.25 × 조화 보너스 배수, 무당 몸이면 배수 2라 1.5)
 //   정진(건너뛰기) 20, 기혈역류 끊기 50, 공청석유 시작 100 같은 '정해진 양'은 배율 없이 그대로 더한다.
 using System;
 using BloodRain.Core.Data;
@@ -16,6 +16,8 @@ namespace BloodRain.Core.Combat
         public float Value { get; private set; }
         /// <summary>연무장·심법에서 온 충전 보너스(0.2 = +20%).</summary>
         public float ChargeBonus { get; set; }
+        /// <summary>태극 보너스에 곱하는 수. 무당 고유 능력 '조화 보너스 2배'면 2(SectTrait.HarmonyBonusMultiplier).</summary>
+        public float HarmonyBonusMultiplier { get; set; } = 1f;
 
         public UltimateCharge(UltimateChargeDef def, YinYangHarmonyDef harmony, float chargeBonus = 0f, float start = 0f)
         {
@@ -32,7 +34,7 @@ namespace BloodRain.Core.Combat
         float Clamp(float v) => Math.Max(0f, Math.Min(_def.Max, v));
 
         public float Rate(YinYangBand band) =>
-            (1f + ChargeBonus) * (band == YinYangBand.Harmony ? 1f + _harmony.UltimateChargeBonus : 1f);
+            (1f + ChargeBonus) * (band == YinYangBand.Harmony ? 1f + _harmony.UltimateChargeBonus * HarmonyBonusMultiplier : 1f);
 
         public void OnKill(YinYangBand band, int count = 1) => Value = Clamp(Value + _def.PerKill * count * Rate(band));
         public void OnHit(YinYangBand band) => Value = Clamp(Value + _def.PerHit * Rate(band));

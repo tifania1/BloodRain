@@ -33,6 +33,9 @@ namespace BloodRain.Core.Build
         Greed,              // 은자 획득 비율
         UltimateCharge,     // 진기(오의) 충전 비율
         DashCharges, Rerolls, Banishes, Skips,
+
+        // 문파 고유 능력에만 있는 항목(5장, cheonha.json sects[].traitEffect)
+        Evade,              // 회피: 피격을 통째로 피할 확률(0.15 = 15%). 수로채는 움직이는 동안만
     }
 
     /// <summary>더한 값의 원본 합. 비율 능력치는 0.10 = +10%.</summary>
@@ -71,6 +74,8 @@ namespace BloodRain.Core.Build
         public int Revival { get; }
         /// <summary>연무장·성질에서 온 경공 충전 덧셈(Dash 기본 충전 위에 더한다).</summary>
         public int DashCharges { get; }
+        /// <summary>회피 확률(0~1). 피격 판정 직전에 Evade.Roll 로 굴린다.</summary>
+        public float Evade { get; }
 
         /// <param name="maxHealthFlat">비율을 곱한 뒤 그대로 더하는 최대 기혈(경지 돌파 이류 +10 같은 것).</param>
         public StatSheet(CharacterDef character, StatsDef rules, StatBonus bonus, float maxHealthFlat = 0f)
@@ -91,6 +96,7 @@ namespace BloodRain.Core.Build
             Luck = bonus[StatKind.Luck];
             Revival = (int)Math.Round(bonus[StatKind.Revival]);
             DashCharges = (int)Math.Round(bonus[StatKind.DashCharges]);
+            Evade = Math.Max(0f, Math.Min(1f, bonus[StatKind.Evade]));
         }
     }
 

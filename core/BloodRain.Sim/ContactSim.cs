@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using BloodRain.Core.Build;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
 using BloodRain.Core.Progression;
@@ -33,7 +34,8 @@ namespace BloodRain.Sim
             float training = TrainingMax(g, "Armor");
             var geumgang = g.Passives.First(p => p.Id == "geumgang");
             float passive = geumgang.Effects.Where(e => e.Stat == "Armor").Sum(e => e.PerLevel) * g.Balance.Levels.PassiveMax;
-            return new[] { ("맨몸", 0f), ("연무장", training), ("최대", training + passive + 2f) };
+            float shaolin = SectTrait.Of(g.Cheonha.Sect("shaolin")).Bonus()[StatKind.Armor];
+            return new[] { ("맨몸", 0f), ("연무장", training), ("최대", training + passive + shaolin) };
         }
 
         /// <summary>최대 기혈 비율 두 경우: 몸 그대로, 연무장 기혈 다 사고 혈해심법 Lv5. 이류 보상 +10%는 이류 뒤 분에만 더한다.</summary>

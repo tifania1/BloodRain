@@ -190,9 +190,12 @@ namespace BloodRain.Core.Tests
             var body = Rebirth.Body(C, Candidate("namgung", "danmyeong", "ganggol"));
             var extra = new StatBonus();
             extra.Add(StatKind.Might, 0.1f);
-            var sheet = body.ComputeStats(_d, new Dictionary<string, int>(), new Dictionary<string, int> { ["Might"] = 2, ["MaxHealth"] = 1 }, extra);
+            var training = new Dictionary<string, int> { ["Might"] = 2, ["MaxHealth"] = 1 };
+            // 기혈 40%: 남궁 고유 능력(기혈 50% 이상 공력 +25%)이 빠진 값
+            var sheet = body.ComputeStats(_d, new Dictionary<string, int>(), training, extra, healthRatio: 0.4f);
             // 공력: 단명 0.25 + 연무장 0.10 + extra 0.10 / 기혈: 100 × (1 - 0.40 + 0.25 + 0.10)
             Assert.Equal(1.45f, sheet.Might, 3);
+            Assert.Equal(1.70f, body.ComputeStats(_d, new Dictionary<string, int>(), training, extra).Might, 3);
             Assert.Equal(95f, sheet.MaxHealth, 3);
             Assert.Equal(0.9f, sheet.MoveSpeed, 3);
             // 꺼낸 사본을 고쳐도 몸의 성질 값은 그대로다

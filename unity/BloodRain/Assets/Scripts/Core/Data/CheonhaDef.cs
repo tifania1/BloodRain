@@ -177,8 +177,31 @@ namespace BloodRain.Core.Data
         public string Unlock = "start";
         /// <summary>마교 몸의 성장 '혈공'(5장). 다른 문파는 null.</summary>
         public BloodArtDef? BloodArt;
+        /// <summary>고유 능력의 숫자(5장 '한눈에 보기' 고유 능력 칸). 아직 숫자를 옮기지 않은 문파(화산·곤륜·마교)는 null.</summary>
+        public SectTraitDef? TraitEffect;
 
         public string? UnlockBossRegion => UnlockToken.BossRegion(Unlock);
+    }
+
+    /// <summary>문파 고유 능력(기획서 5장 '한눈에 보기'). 능력치 이름은 StatKind 로 읽고, 비율은 0.25 = 25%.
+    /// Core.Build.SectTrait 가 이 값으로 몸의 덧셈·독 무효·물 감속 무시·피해 배율·조화 보너스 배율을 낸다.</summary>
+    public sealed class SectTraitDef
+    {
+        /// <summary>늘 붙는 능력치(소림 호신 2, 개방 탐욕 0.3·음식 회복 0.5).</summary>
+        public Dictionary<string, float> Stats = new Dictionary<string, float>();
+        /// <summary>기혈 비율이 이 값 이상일 때 aboveHealthStats 가 붙는다(남궁 0.5). 0 이면 쓰지 않는다.</summary>
+        public float AboveHealthRatio;
+        public Dictionary<string, float> AboveHealthStats = new Dictionary<string, float>();
+        /// <summary>움직이는 동안 붙는 능력치(수로채 회피 0.15).</summary>
+        public Dictionary<string, float> MovingStats = new Dictionary<string, float>();
+        /// <summary>독 피해 무효(당가). 당가타 독안개·독 장판·독 탄 모두.</summary>
+        public bool PoisonImmune;
+        /// <summary>중독된 적에게 주는 피해에 더하는 비율(당가 0.2).</summary>
+        public float PoisonedTargetDamage;
+        /// <summary>물 지형 감속 무시(수로채).</summary>
+        public bool IgnoresWater;
+        /// <summary>태극(조화) 보너스(쾌속 +10%·오의 충전 +25%)에 곱하는 수(무당 2). 기본 1.</summary>
+        public float HarmonyBonusMultiplier = 1f;
     }
 
     /// <summary>혈공(기획서 5장 '마교 몸의 성장').</summary>

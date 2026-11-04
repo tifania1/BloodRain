@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using BloodRain.Core.Build;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
 using BloodRain.Core.Progression;
@@ -133,7 +134,7 @@ namespace BloodRain.Sim
         {
             float iryu = ContactSim.IryuHealthFlat(g);
             float cut = ContactSim.HwagyeongCut(g);
-            float traitArmor = sect.Trait == "flat_damage_reduction2" ? 2f : 0f;
+            float traitArmor = SectTrait.Of(sect).Bonus()[StatKind.Armor]; // 소림 금강불괴 2(cheonha.json traitEffect)
             float hpBonus = maxDefense ? ContactSim.MaxHealthBuild(g) : 0f;
             float armor = maxDefense ? ContactSim.ArmorCases(g).Last().Armor : traitArmor;
             float recovery = maxDefense ? ContactSim.RecoveryMax(g) : 0f;

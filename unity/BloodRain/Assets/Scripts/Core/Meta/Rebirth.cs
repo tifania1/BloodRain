@@ -5,6 +5,7 @@
 //   타고난 성질: 후보마다 0·1·2개를 countWeights 비율로. 같은 성질은 두 번 안 붙고, excludes 쌍(음체·양체, 약골·강골)도 같이 안 붙는다.
 //   첫 환혼(서장 직후)은 firstRebirth 셋 고정, firstRebirthTraits 가 거짓이면 성질도 없다. 다시 고르기도 없다.
 //   몸: 문파가 기혈·걸음·음양 시작·시작 무공·오의·고유 능력을 정하고(5장), 성질이 능력치·음양 시작·윤회의 기 배율을 더한다.
+//       고유 능력의 숫자(sects[].traitEffect)는 SectTrait 가 읽는다. 능력치 덧셈은 ComputeStats 가 함께 얹는다.
 //       태어난 문파의 진전은 homeSchoolTiers 만큼 더 센다. Synergy.Compute 의 바깥 보너스(고수의 유해와 같은 자리)로 넣는다.
 // 난수는 밖에서 받는다(Insights.cs 와 같다). 같은 시드면 같은 후보가 나와야 일일 도전과 테스트가 된다.
 using System;
@@ -74,20 +75,28 @@ namespace BloodRain.Core.Meta
             _traitStats = traitStats;
             RebirthQiBonus = rebirthQiBonus;
             SchoolBonus = schoolBonus;
+            SectTrait = SectTrait.Of(sect);
         }
 
         public bool IsPrologue => Sect == null;
+        /// <summary>태어난 문파의 고유 능력(5장). 서장 몸이면 SectTrait.None.
+        /// 독 무효는 PoisonFogGimmick.HealthLoss(…, SectTrait.PoisonImmune), 물은 WaterGimmick.MoveSpeedMultiplier(…, ignoresWater: SectTrait.IgnoresWater),
+        /// 중독된 적 피해는 SectTrait.DamageMultiplier(중독됨) 를 무공 피해에 곱한다.</summary>
+        public SectTrait SectTrait { get; }
         /// <summary>여자 몸인가(후보에서 그대로). 서장 진소운은 남자.</summary>
         public bool Female { get; internal set; }
 
         /// <summary>이 몸으로 시작하는 로드아웃(시작 무공 Lv1, 음양 게이지는 이 몸의 시작값과 태극 구간).</summary>
         public Loadout NewLoadout(GameData data) => new Loadout(data, Character);
 
-        /// <summary>이 몸의 능력치: 몸 + 심법 + 연무장 + 성질 (+ extra).</summary>
+        /// <summary>이 몸의 능력치: 몸 + 심법 + 연무장 + 성질 + 문파 고유 능력 (+ extra).
+        /// healthRatio(지금 기혈 / 최대 기혈)와 moving 은 조건이 붙은 고유 능력(남궁 기혈 50% 이상 공력, 수로채 움직이는 동안 회피)만 본다.</summary>
         public StatSheet ComputeStats(GameData data, IReadOnlyDictionary<string, int> passiveLevels,
-            IReadOnlyDictionary<string, int> trainingLevels, StatBonus? extra = null, float maxHealthFlat = 0f)
+            IReadOnlyDictionary<string, int> trainingLevels, StatBonus? extra = null, float maxHealthFlat = 0f,
+            float healthRatio = 1f, bool moving = false)
         {
             var b = TraitStats;
+            b.Add(SectTrait.Bonus(healthRatio, moving));
             if (extra != null) b.Add(extra);
             return Stats.Compute(data, Character, passiveLevels, trainingLevels, b, maxHealthFlat);
         }
