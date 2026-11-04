@@ -122,5 +122,40 @@ namespace BloodRain.Core.Tests
             var files = Directory.GetFiles(Path.Combine(DataDir, "strings"), "*.json").Select(Path.GetFileNameWithoutExtension);
             Assert.Equal(Data.Strings.Languages.OrderBy(s => s), files.OrderBy(s => s));
         }
+        /// <summary>13장 에셋 규격 표의 게임용 크기가 tools/postprocess_art.py KINDS 의 출력 크기(긴 변)와 같다.
+        /// art_list.md 가 '게임용 크기는 KINDS 가 정한다'고 적어 둔 값이다. 컷신은 화면 크기로 늘려 쓰는 줄이라 뺀다.</summary>
+        [Fact] public void 에셋_규격_게임용_크기가_postprocess_KINDS_와_같다()
+        {
+            var py = ReadRepoFile("tools", "postprocess_art.py");
+            var kinds = System.Text.RegularExpressions.Regex.Matches(py, @"^\s*""(\w+)"": \(""[^""]+"", (\d+), (?:True|False)\)", System.Text.RegularExpressions.RegexOptions.Multiline)
+                .Cast<System.Text.RegularExpressions.Match>().ToDictionary(m => m.Groups[1].Value, m => int.Parse(m.Groups[2].Value));
+            var rows = GddTable(GddSection("에셋 규격")).ToDictionary(r => r[0], r => r[2]);
+            Assert.Equal($"{kinds["character"]}px", rows["플레이어 캐릭터"]);
+            Assert.Equal($"{kinds["enemy"]}px", rows["일반 적"]);
+            Assert.Equal($"정예 {kinds["elite"]}px, 보스 {kinds["boss"]}px", rows["정예·보스"]);
+            Assert.Equal($"{kinds["icon"]}px", rows["무공·심법 아이콘"]);
+            Assert.Equal($"{kinds["tile"]}px", rows["바닥 타일"]);
+            Assert.Equal($"긴 변 {kinds["portrait"]}px", rows["초상(대화·선택 화면)"]);
+            Assert.Equal($"긴 변 {kinds["ui"]}px", rows["UI 바탕(카드 틀·칸·바·버튼·족자)"]);
+        }
+        /// <summary>13장 색 표 여섯이 웹 프로토타입 template.html 의 :root 색 토큰과 같고, 에셋 규격의 단색 배경이 postprocess_art.py BG 와 같다.</summary>
+        [Fact] public void 색_표가_웹_프로토타입_토큰과_같다()
+        {
+            var css = ReadRepoFile("web", "prototype", "template.html");
+            var token = new Dictionary<string, string>
+            {
+                ["먹"] = "ink", ["선지"] = "paper", ["담묵"] = "wash", ["청록"] = "teal", ["금"] = "gold", ["주홍(혈우)"] = "crimson",
+            };
+            var rows = GddTable(GddSection("색"));
+            Assert.Equal(token.Keys.OrderBy(k => k), rows.Select(r => r[0]).OrderBy(k => k));
+            foreach (var r in rows)
+                Assert.Contains($"--{token[r[0]]}: {r[1]};", css, StringComparison.OrdinalIgnoreCase);
+
+            var bg = System.Text.RegularExpressions.Regex.Match(ReadRepoFile("tools", "postprocess_art.py"), @"BG = \(0x(\w\w), 0x(\w\w), 0x(\w\w)\)");
+            Assert.True(bg.Success, "postprocess_art.py 에 BG 가 없다");
+            string hex = "#" + bg.Groups[1].Value + bg.Groups[2].Value + bg.Groups[3].Value;
+            foreach (var r in GddTable(GddSection("에셋 규격")).Where(r => r[3].StartsWith("단색 #")))
+                Assert.Equal(hex, r[3].Substring(3), ignoreCase: true);
+        }
     }
 }
