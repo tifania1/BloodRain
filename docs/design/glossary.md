@@ -221,7 +221,7 @@
 
 ## 번체(繁體) — 상점 글과 화면에 쓴 말 (ST-06·L-08, 2026-11-04)
 
-상점 글(`docs/store/store_text.md`)과 게임 화면 번체(`strings/zh-Hant.json`, L-08)가 같이 쓴다. 대만 표기를 따른다: `zh-Hans.json` 을 OpenCC s2twp 로 바꾼 뒤 아래 표와 그 밑 설명대로 손으로 고친다. 간체에 문구를 더하면 번체도 같은 키로 더한다(테스트 `HantStringsTests` 가 키·글자 수·이 표 말·간체 글자 섞임·Noto Serif TC 글자를 본다).
+상점 글(`docs/store/store_text.md`)과 게임 화면 번체(`strings/zh-Hant.json`, L-08)가 같이 쓴다. 대만 표기를 따른다: `zh-Hans.json` 을 OpenCC s2twp 로 바꾼 뒤 아래 표와 그 밑 설명대로 고친다(`python3 tools/make_hant.py`, 고칠 말은 그 파일 FIXES). 간체에 문구를 더하면 이 도구로 번체도 같은 키로 더한다(테스트 `HantStringsTests` 가 키·글자 수·이 표 말·간체 글자 섞임·Noto Serif TC 글자를 본다).
 
 | 한국어 | 간체 | 번체 |
 | --- | --- | --- |

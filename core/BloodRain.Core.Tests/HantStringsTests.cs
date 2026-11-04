@@ -52,12 +52,12 @@ namespace BloodRain.Core.Tests
         [Fact]
         public void 번체는_간체와_같은_키와_갈래를_갖는다()
         {
-            // 번체는 간체를 바꿔 만든다. 간체에 옮긴 문구를 더하면 번체도 같이 더한다(OpenCC s2twp 뒤 용어집 번체 표로 손질).
+            // 번체는 간체를 바꿔 만든다. 간체에 옮긴 문구를 더하면 번체도 같이 더한다(tools/make_hant.py: OpenCC s2twp 뒤 용어집 번체 표대로 손질).
             var hans = Table("zh-Hans");
             var hant = Table("zh-Hant");
             var onlyHans = hans.Keys.Except(hant.Keys).ToList();
             var onlyHant = hant.Keys.Except(hans.Keys).ToList();
-            Assert.True(onlyHans.Count == 0, "간체에만 있는 키:\n" + string.Join("\n", onlyHans));
+            Assert.True(onlyHans.Count == 0, "간체에만 있는 키. python3 tools/make_hant.py 로 번체를 채운다(pip install opencc):\n" + string.Join("\n", onlyHans));
             Assert.True(onlyHant.Count == 0, "번체에만 있는 키:\n" + string.Join("\n", onlyHant));
             Assert.Equal(Complete("zh-Hans").Select(t => (string)t!), Complete("zh-Hant").Select(t => (string)t!));
             var len = hans.Where(kv => kv.Value.Length != hant[kv.Key].Length).Select(kv => kv.Key).ToList();
