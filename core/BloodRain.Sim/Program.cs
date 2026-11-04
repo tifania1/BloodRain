@@ -5,6 +5,7 @@
 //   dotnet run --project core/BloodRain.Sim -- --synergy docs/design/sim/synergy.md     연환·진전 화력 상한(S-05)
 //   dotnet run --project core/BloodRain.Sim -- --cheonha docs/design/sim/cheonha.md     천하 한 생 30분(T-17)
 //   dotnet run --project core/BloodRain.Sim -- --meta docs/design/sim/meta.md           생을 이어 메타 곡선(T-18)
+//   dotnet run --project core/BloodRain.Sim -- --meta-pace docs/design/sim/meta-pace.md 메타 진행 속도 조정안 비교(R-02)
 //   dotnet run --project core/BloodRain.Sim -- --cluster-xp docs/design/sim/cluster-xp.md  천하에서 조정 시험별 레벨 속도(T-19)
 //   dotnet run --project core/BloodRain.Sim -- --encounters docs/design/sim/encounters.md  천하 한 생의 기연 사건 출현율과 도감 채우기
 //   dotnet run --project core/BloodRain.Sim -- --contact docs/design/sim/contact.md        맞는 쪽 셈(한 번 피해, 둘러싸여 버티는 초, 회복)
@@ -35,7 +36,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "", mimic = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "", mimic = "", metaPace = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -55,6 +56,7 @@ namespace BloodRain.Sim
                     case "--synergy": synergy = Next(); break;
                     case "--cheonha": cheonha = Next(); break;
                     case "--meta": meta = Next(); break;
+                    case "--meta-pace": metaPace = Next(); break;
                     case "--cluster-xp": clusterXp = Next(); break;
                     case "--encounters": encounters = Next(); break;
                     case "--contact": contact = Next(); break;
@@ -77,7 +79,7 @@ namespace BloodRain.Sim
                     case "--help":
                         Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--scenario id] [--data 폴더] [--minutes 분]");
                         Console.WriteLine("  무리 가정: [--crowd-radius m] [--max-density 마리/㎡] [--arrival 초]");
-                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue --mimic");
+                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --meta-pace --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue --mimic");
                         Console.WriteLine($"  조정 시험 id: {string.Join(", ", Scenarios.All.Select(s => s.Id))}");
                         return 0;
                     default:
@@ -192,6 +194,12 @@ namespace BloodRain.Sim
                 File.WriteAllText(clusterXp, CheonhaSim.ClusterXpReport(dataDir, seeds > 0 ? seeds : 5), new UTF8Encoding(false));
                 Console.WriteLine($"보고서를 썼습니다: {clusterXp}");
                 return 0;
+            }
+            if (metaPace.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(metaPace))!);
+                File.WriteAllText(metaPace, MetaPaceSim.Report(data), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {metaPace}");
             }
             if (meta.Length > 0)
             {

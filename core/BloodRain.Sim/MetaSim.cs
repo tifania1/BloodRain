@@ -37,7 +37,9 @@ namespace BloodRain.Sim
         public const double PerTrainingLevel = 0.5;
         public static readonly double[] BaseSurviveOptions = { 6, 8, 12 };
 
-        public static List<MetaLifeRow> Run(SimData data, double baseSurvive, Func<SimOptions, SimOptions>? apply, int maxLives = 40, int seed = 1)
+        /// <summary>killsPerStone 이 1보다 크면 봉인석 하나를 같은 땅의 주인을 그만큼 쓰러뜨려야 모은다고 셈한다(시뮬레이터에서만, R-02 비교안).
+        /// 세상(장막·봉마곡)은 Soul 의 첫 처치 봉인석으로 돌아가니 그 경우 SealStones 칸은 이 셈이다.</summary>
+        public static List<MetaLifeRow> Run(SimData data, double baseSurvive, Func<SimOptions, SimOptions>? apply, int maxLives = 40, int seed = 1, int killsPerStone = 1)
         {
             var g = data.Game;
             var c = g.Cheonha;
@@ -47,6 +49,8 @@ namespace BloodRain.Sim
             double hours = PrologueMinutes / 60;
             var rows = new List<MetaLifeRow>();
             var realmOrder = g.Balance.Realms.OrderBy(r => r.Level).Select(r => r.Id).ToList();
+            var kills = new Dictionary<string, int>();
+            int need = g.Cheonha.Bosses.FinalRequires.SealStones;
 
             for (int n = 1; n <= maxLives; n++)
             {
@@ -59,13 +63,15 @@ namespace BloodRain.Sim
                 var summary = soul.EndLife(record);
                 BuyTraining(soul);
                 hours += (minutes + InnMinutes) / 60;
+                foreach (var id in record.BossesKilled) kills[id] = kills.TryGetValue(id, out var k) ? k + 1 : 1;
+                int stones = killsPerStone <= 1 ? soul.SealStoneCount : kills.Count(kv => kv.Value >= killsPerStone && c.Region(kv.Key).SealStone != null);
                 rows.Add(new MetaLifeRow
                 {
                     Life = n, Sect = pick.Sect.NameKo, Minutes = minutes, Realm = g.Balance.Realms.Single(r => r.Id == record.HighestRealm).NameKo,
-                    Qi = record.RebirthQi.Total, TrainingLevels = soul.Training.Values.Sum(), SealStones = soul.SealStoneCount, Hours = hours,
+                    Qi = record.RebirthQi.Total, TrainingLevels = soul.Training.Values.Sum(), SealStones = stones, Hours = hours,
                     Killed = record.BossesKilled.Select(id => g.Bosses.First(b => b.Id == c.Region(id).Boss).NameKo).ToList(),
                 });
-                if (soul.HasAllSealStones && rows.Count >= 5) break;
+                if (stones >= need && rows.Count >= 5) break;
             }
             return rows;
         }
