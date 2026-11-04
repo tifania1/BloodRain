@@ -15,4 +15,4 @@
 | `endings.md` | 엔딩 세 갈래 컷과 고르는 화면 | `endings` |
 | `sects.md` | 침방 후보 카드의 문파 소개와 몸 묘사 | `cards` |
 
-조건(`when`)의 뜻은 dialogue.json 묶음마다 `_note` 에 있다. 현지화 키는 `dialogue.<묶음>.<…>` 로 저절로 잡힌다(`Core/Data/Strings.cs`). 고르는 코드는 `Core/Meta/InnDialogue.cs`(귀환 `OnReturn`, 마당 `YardLine`, 연무장 `Training`, 침방 `Bedroom` → `BedroomTalk`, 정산 `Settlement`, 땅의 주인 `LordMeet`·`LordKill`).
+조건(`when`)의 뜻은 dialogue.json 묶음마다 `_note` 에 있다. 현지화 키는 `dialogue.<묶음>.<…>` 로 저절로 잡힌다(`Core/Data/Strings.cs`). 고르는 코드는 `Core/Meta/InnDialogue.cs`(귀환 `OnReturn`, 마당 `YardLine`, 연무장 `Training`, 침방 `Bedroom` → `BedroomTalk`, 정산 `Settlement`, 땅의 주인 `LordMeet`·`LordKill`), 인트로·종장·엔딩은 `Core/Meta/FinalDialogue.cs`(`Intro`, `FinalEnter`·`FinalOpponent`, `EndingChoices`·`EndingCuts`).

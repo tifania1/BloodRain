@@ -39,7 +39,7 @@
 
 ## 고르는 코드
 
-아직 없다(backlog DL-10). 입장 컷은 봉마곡에 들어설 때 한 번, 혈영 줄은 `lords` 의 `echo` 를 `shadows` 차례로, 단계 줄은 `FinalFight` 가 단계를 넘길 때.
+`Core/Meta/FinalDialogue.cs`. `FinalEnter`(봉마곡에 들어설 때, 회차마다 처음 한 번 컷 둘), `FinalOpponent(data, soul, fight)`(싸움을 시작할 때와 `FinalFight.Defeat` 뒤마다 한 줄: 혈영이면 `lords` 의 `echo`, 단계면 단계 줄, 혈월 회차면 혈월 줄을 뒤에).
 
 ## 아직 정하지 않은 것
 
