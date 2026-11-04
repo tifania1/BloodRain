@@ -606,14 +606,14 @@
     ]
   },
   "settlement": {
-    "_note": "정산 서술 자막(docs/story/inn_screens.md 정산). 위에서부터 맞는 하나. lord_first 의 {0} 은 지역, {1} 은 땅의 주인 이름, any_3 의 {0} 은 문파, {1} 은 버틴 시간. bloodMoon 은 혈월 회차에 바꿔 쓰는 줄.",
+    "_note": "정산 서술 자막(docs/story/inn_screens.md 정산). 위에서부터 맞는 하나. lord_first 의 {0} 은 지역, {1} 은 땅의 주인 이름, any_3 의 {0} 은 문파, {1} 은 버틴 시간. short:<초> 는 그 초가 안 되어 쓰러졌을 때. bloodMoon 은 혈월 회차에 바꿔 쓰는 줄. 고르는 코드는 Core/Meta/InnDialogue.cs Settlement.",
     "lines": [
       {"id": "prologue", "when": "prologue", "textKo": "백중날 밤, 청운진의 심부름꾼이 처음 검을 들었다."},
       {"id": "lord_first", "when": "lord_first", "textKo": "{0}의 땅의 주인, {1}. 그 땅의 비가 옅어졌다."},
       {"id": "first_hyeongyeong", "when": "first_hyeongyeong", "textKo": "현경. 이 몸의 주인은 꿈도 못 꿨을 자리다."},
       {"id": "shadow", "when": "shadow", "textKo": "그림자에 잡혔다. 혼은 간신히 침을 붙잡았다."},
       {"id": "zuohwa", "when": "zuohwa", "textKo": "스스로 앉아 생을 닫았다."},
-      {"id": "short", "when": "short", "textKo": "이 몸은 빗속에서 오래 버티지 못했다."},
+      {"id": "short", "when": "short:300", "textKo": "이 몸은 빗속에서 오래 버티지 못했다."},
       {"id": "any_1", "when": "any", "textKo": "몸은 빗속에 남고, 혼은 객잔으로 돌아왔다."},
       {"id": "any_2", "when": "any", "bloodMoonKo": "한 생이 끝났다. 혈월은 아직 지지 않았다.", "textKo": "한 생이 끝났다. 혈우는 아직 그치지 않았다."},
       {"id": "any_3", "when": "any", "textKo": "{0}의 이름 없는 제자가 빗속에서 {1} 버텼다."}

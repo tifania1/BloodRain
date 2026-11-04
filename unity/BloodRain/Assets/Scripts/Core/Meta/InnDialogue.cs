@@ -8,6 +8,7 @@
 //   서장이 끝난 귀환에는 귀환 줄이 없다(침방 첫 환혼 줄이 이어진다).
 // 마당(YardLine): 그 문파로 태어나 삼류로 첫걸음을 뗄 때 대표 인물 한 줄. 여자 몸이면 사매판.
 // 연무장(Training): 조건마다 한 번.
+// 정산(Settlement, backlog DL-05): 정산 화면 맨 아래 서술 자막 한 줄. 위에서부터 맞는 하나, 그 밖이면 무작위(inn_screens.md '정산').
 // 침방(Bedroom → BedroomTalk, backlog DL-04): 환혼 한 번 단위. 열 때 → 후보 → 다시 고르기 → 고름 → 보냄 순서로 부른다.
 //   첫 환혼(first:*)·문파 첫 환생(sect:<문파>) 줄은 늘 한다. 나머지는 한 번 환혼에 한 마디이고,
 //   그 침방에 첫 환혼·문파 첫 환생 줄이 나왔으면 하지 않는다(inn_screens.md '그 줄이 없는 때에만').
@@ -36,6 +37,30 @@ namespace BloodRain.Core.Meta
         public bool PickedHaomunLetter;
         /// <summary>이번 귀환에 새로 열린 객잔 시설(dialogue.json facility:&lt;id&gt;).</summary>
         public List<string> NewFacilities = new List<string>();
+        /// <summary>혈마의 그림자에게 쓰러졌나(정산 자막).</summary>
+        public bool FallenToShadow;
+        /// <summary>이번 생에 버틴 시간(초, 정산 자막).</summary>
+        public float LifeSeconds;
+    }
+
+    /// <summary>정산 자막 한 줄. Text 는 한국어로 채운 문장이고, 다른 말은 Line 의 키에 Region·Lord·Sect·Seconds 를 넣어 채운다.</summary>
+    public sealed class SettlementCaption
+    {
+        public DialogueLineDef Line { get; }
+        /// <summary>혈월 회차라 bloodMoon 문장을 쓰나(현지화 키 끝이 .bloodMoon).</summary>
+        public bool BloodMoon { get; }
+        public string Text { get; }
+        /// <summary>lord_first 의 지역 id({0}).</summary>
+        public string? Region { get; }
+        /// <summary>lord_first 의 땅의 주인 id({1}, enemies.json bosses).</summary>
+        public string? Lord { get; }
+        /// <summary>any_3 의 문파 id({0}).</summary>
+        public string? Sect { get; }
+        /// <summary>any_3 의 버틴 시간(초, {1}).</summary>
+        public int Seconds { get; }
+
+        public SettlementCaption(DialogueLineDef line, bool bloodMoon, string text, string? region, string? lord, string? sect, int seconds)
+        { Line = line; BloodMoon = bloodMoon; Text = text; Region = region; Lord = lord; Sect = sect; Seconds = seconds; }
     }
 
     /// <summary>대표 인물 한 줄.</summary>
@@ -343,6 +368,61 @@ namespace BloodRain.Core.Meta
                 "join" => l.Join,
                 _ => throw new ArgumentException($"모르는 칸입니다: {slot}"),
             };
+        }
+
+        /// <summary>정산 화면 자막. Soul.EndLife 바로 뒤(OnReturn 과 같은 때)에 부른다. 위에서부터 맞는 줄 하나, 그 밖이면 무작위.</summary>
+        public static SettlementCaption Settlement(GameData data, Soul soul, LifeRecord record, LifeSummary summary, ReturnFacts facts, Random rng)
+        {
+            var lines = data.Dialogue.Settlement.Lines;
+            int seconds = Math.Max(0, (int)Math.Round(facts.LifeSeconds));
+            bool fallen = record.EndWay == LifeEndWay.Fallen;
+            string? lordRegion = record.BossesKilled.LastOrDefault(r => summary.NewSealStones.Contains(r));   // 혈영은 봉인석이 없다
+
+            DialogueLineDef? pick = null;
+            foreach (var l in lines)
+            {
+                bool hit = l.Kind switch
+                {
+                    "prologue" => record.Sect == null,
+                    "lord_first" => lordRegion != null,
+                    "first_hyeongyeong" => summary.NewRealms.Contains("hyeongyeong"),
+                    "shadow" => fallen && facts.FallenToShadow,
+                    "zuohwa" => record.EndWay == LifeEndWay.Zuohwa,
+                    "short" => fallen && seconds < int.Parse(l.Args[0], System.Globalization.CultureInfo.InvariantCulture),
+                    _ => false,
+                };
+                if (hit) { pick = l; break; }
+            }
+            if (pick == null)
+            {
+                var any = lines.Where(l => l.Kind == "any").ToList();
+                pick = any[rng.Next(any.Count)];
+            }
+
+            bool blood = soul.IsBloodMoon && pick.BloodMoonKo != null;
+            string text = blood ? pick.BloodMoonKo! : pick.TextKo;
+            string? region = null, lord = null, sect = null;
+            if (pick.Kind == "lord_first")
+            {
+                var r = data.Cheonha.Region(lordRegion!);
+                region = r.Id;
+                lord = r.Boss;
+                text = string.Format(text, r.NameKo, data.Bosses.First(b => b.Id == r.Boss).NameKo);
+            }
+            else if (text.Contains("{0}"))
+            {
+                sect = record.Sect;
+                text = string.Format(text, sect == null ? "" : data.Cheonha.Sect(sect).NameKo, KoreanDuration(seconds));
+            }
+            return new SettlementCaption(pick, blood, text, region, lord, sect, seconds);
+        }
+
+        /// <summary>'12분 30초', '12분', '45초'.</summary>
+        public static string KoreanDuration(int seconds)
+        {
+            int m = seconds / 60, s = seconds % 60;
+            if (m == 0) return s + "초";
+            return s == 0 ? m + "분" : m + "분 " + s + "초";
         }
 
         /// <summary>침방을 열 때 부른다. 후보는 draw 가 뽑고, 다시 고르기·고르기는 돌려받은 BedroomTalk 로 한다.</summary>
