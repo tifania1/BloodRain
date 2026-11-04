@@ -53,10 +53,10 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] A-07 사람 결정 대기: 장경각은 봉인석 하나로 열리는데(10장) 17장 M2 범위에는 침방·연무장·정산만 있다. M2 에서 원각을 쓰러뜨려 장경각이 열리면 어떻게 보일지. 추천: M2 에서는 객잔에 문만 그려 두고 '수리 중'으로 잠그고, 화면과 배경은 M3 에서 그린다(그림 목록 `art_list.md` 'M2 밖')
 
 배경음(2026-11-04 사람: "배경음은 제미나이를 통해서 생성하도록 하자")
-- [ ] BGM-01 배경음 목록과 대기열: 기획서(지역 11·땅의 주인 7·서장·객잔·침방·연무장·정산·종장, 절기 각성 짧은 곡)를 보고 `audio_queue/queue.jsonl`(id·쓰는 곳·길이 short/full·loop·prompt·status·save_as)과 공통 문구 `audio_queue/STYLE.txt`(영어, 가사 없는 연주곡, 얼후·고쟁·소·북 같은 전통 악기, 수묵 분위기)를 만들고 테스트. Gemini '음악 만들기'는 짧은 곡 약 1분, 전체 곡 2~3분(Pro 모델), MP3로 받고 워터마크가 들어간다(support.google.com/gemini/answer/16901237)
-- [ ] BGM-02 이용 조건: Gemini 로 만든 음악을 판매용 게임에 써도 되는지 Google 약관·도움말을 찾아 `audio_pipeline.md`(docs/design 에 새로)에 출처와 함께 적는다. 애매하면 사람 결정 대기로
-- [ ] BGM-03 받은 곡 다듬는 도구 `postprocess_audio.py`(tools 에 새로, ffmpeg: 소리 크기 맞춤, 앞뒤 무음 자르기, 루프 이음매 크로스페이드, ogg → `Assets/Audio/BGM/`) + 테스트. 먼저: BGM-01
-- [ ] BGM-04 생산 순서를 `audio_pipeline.md` 에: 회사 PC 크롬 → gemini.google.com '음악 만들기'(연주곡, 길이) → MP3 받기 → `art_inbox/audio/` → BGM-03 도구 → 귀로 듣는 검수는 사람(feedback.md). 이미지 생산 예약 작업이 이 순서도 돌게 하는 건 대화 세션이 예약 설명을 고친다(PC 승인 필요). 먼저: BGM-01·BGM-02
+- [ ] BGM-01 배경음 목록과 대기열: 기획서(지역 11·땅의 주인 7·서장·객잔·침방·연무장·정산·종장, 절기 각성 짧은 곡)를 보고 `audio_queue/queue.jsonl`(id·쓰는 곳·길이 short/full·loop·prompt·status·save_as)과 공통 문구 `audio_queue/STYLE.txt`(영어, 가사 없는 연주곡, 얼후·고쟁·소·북 같은 전통 악기, 수묵 분위기)를 만들고 테스트. Gemini '음악 만들기'는 짧은 곡 약 1분, 전체 곡 2~3분(Pro 모델), MP3로 받고 워터마크가 들어간다(support.google.com/gemini/answer/16901237) (하는 중: 클라우드 11-04 배경음)
+- [ ] BGM-02 이용 조건: Gemini 로 만든 음악을 판매용 게임에 써도 되는지 Google 약관·도움말을 찾아 `audio_pipeline.md`(docs/design 에 새로)에 출처와 함께 적는다. 애매하면 사람 결정 대기로 (하는 중: 클라우드 11-04 배경음)
+- [ ] BGM-03 받은 곡 다듬는 도구 `postprocess_audio.py`(tools 에 새로, ffmpeg: 소리 크기 맞춤, 앞뒤 무음 자르기, 루프 이음매 크로스페이드, ogg → `Assets/Audio/BGM/`) + 테스트. 먼저: BGM-01 (하는 중: 클라우드 11-04 배경음)
+- [ ] BGM-04 생산 순서를 `audio_pipeline.md` 에: 회사 PC 크롬 → gemini.google.com '음악 만들기'(연주곡, 길이) → MP3 받기 → `art_inbox/audio/` → BGM-03 도구 → 귀로 듣는 검수는 사람(feedback.md). 이미지 생산 예약 작업이 이 순서도 돌게 하는 건 대화 세션이 예약 설명을 고친다(PC 승인 필요). 먼저: BGM-01·BGM-02 (하는 중: 클라우드 11-04 배경음)
 
 현지화·스토어(M3 한·영·간체, M2 끝 스토어 페이지)
 - [ ] L-01 현지화 틀: 데이터 JSON 의 한국어(nameKo·descKo 등)는 그대로 두고 영어·간체는 `Resources/Data/strings/<lang>.json`(키 = 파일.id.필드), UI 문구도 같은 파일에 키로. Core `Strings` 로 읽고 빠진 키·남는 키 테스트. 간체·영어 글꼴이 12장 글꼴로 되는지 확인
