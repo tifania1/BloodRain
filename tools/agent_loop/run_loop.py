@@ -245,7 +245,14 @@ def main() -> int:
         pass
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--force", action="store_true", help="평일 낮에도 돈다(사람이 직접 돌릴 때만)")
     args = ap.parse_args()
+
+    # 평일 06~19시는 회사 일 시간이다. 꺼져 있다 깨어난 PC 에서 밀린 예약이 낮에 돌지 않게 막는다
+    now = dt.datetime.now()
+    if now.weekday() < 5 and 6 <= now.hour < 19 and not (args.dry_run or args.force):
+        log("평일 낮(06~19시)이라 건너뜀")
+        return 0
 
     if not CONFIG.exists():
         log("config.json 이 없다. config.example.json 을 복사해 개인 API 키를 넣을 것")

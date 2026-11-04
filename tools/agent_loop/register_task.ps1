@@ -7,7 +7,8 @@
 $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $python = (Get-Command python).Source
 $action = New-ScheduledTaskAction -Execute $python -Argument "tools\agent_loop\run_loop.py" -WorkingDirectory $root
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+# 놓친 예약을 나중에 몰아 돌리지 않는다(StartWhenAvailable 끔). 아침에 PC 를 켰을 때 회사 시간에 Unity 가 뜨는 걸 막는다
+$settings = New-ScheduledTaskSettingsSet -DontStopIfGoingOnBatteries -AllowStartIfOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
 $weekday = @(
   New-ScheduledTaskTrigger -Daily -At 21:32
