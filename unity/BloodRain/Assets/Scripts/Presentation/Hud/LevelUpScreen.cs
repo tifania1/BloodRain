@@ -250,18 +250,21 @@ namespace BloodRain.Presentation.Hud
             var k = MakeText(card.rectTransform, "갈래", 26, Blood, TextAlignmentOptions.Center);
             Place(k.rectTransform, new Vector2(0.5f, 1f), new Vector2(8, -50), new Vector2(290, 40));
             k.text = kind;
+            k.enableAutoSizing = true; k.fontSizeMin = 16; k.fontSizeMax = 26;
             var n = MakeText(card.rectTransform, "이름", 44, Ink, TextAlignmentOptions.Center);
             Place(n.rectTransform, new Vector2(0.5f, 1f), new Vector2(8, -130), new Vector2(290, 110));
             n.textWrappingMode = TextWrappingModes.Normal;
             n.text = name;
+            n.enableAutoSizing = true; n.fontSizeMin = 26; n.fontSizeMax = 44;
             var l = MakeText(card.rectTransform, "단계", 32, Ink, TextAlignmentOptions.Center);
             Place(l.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(8, 10), new Vector2(290, 50));
             l.text = level;
             var d = MakeText(card.rectTransform, "설명", 24, new Color(0.3f, 0.26f, 0.22f), TextAlignmentOptions.Center);
             Place(d.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 98), new Vector2(290, 110));
-            if (o.Kind != OfferKind.Fallback) DrawSynergy(card.rectTransform, o);
+            if (o.Kind != OfferKind.Fallback) DrawSynergy(card.rectTransform, o, k);
             d.textWrappingMode = TextWrappingModes.Normal;
             d.text = note;
+            d.enableAutoSizing = true; d.fontSizeMin = 16; d.fontSizeMax = 24;
             var key = MakeText(card.rectTransform, "키", 26, new Color(0.45f, 0.4f, 0.35f), TextAlignmentOptions.Center);
             Place(key.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 26), new Vector2(290, 36));
             key.text = (index + 1).ToString();
@@ -275,7 +278,7 @@ namespace BloodRain.Presentation.Hud
         static readonly Color Gold = new Color(0.79f, 0.64f, 0.16f);
         static readonly Color SealDim = new Color(0.55f, 0.10f, 0.08f, 0.35f);
 
-        void DrawSynergy(RectTransform card, Offer o)
+        void DrawSynergy(RectTransform card, Offer o, TextMeshProUGUI kindText)
         {
             var pv = BloodRain.Core.Build.Synergy.Preview(_data, _loadout, o, null, _restored);
             if (pv.School != null)
@@ -290,6 +293,10 @@ namespace BloodRain.Presentation.Hud
                 var sealText = MakeText(seal.rectTransform, "글", 20, reaches ? PaperHot : Blood, TextAlignmentOptions.Center);
                 Stretch(sealText.rectTransform);
                 sealText.lineSpacing = -20;
+                // 영어는 이름 전체라 길다(L-01b2): 칸 안에서 줄이고, 머리글은 인장 왼쪽까지만 쓴다
+                sealText.enableAutoSizing = true; sealText.fontSizeMin = 9; sealText.fontSizeMax = 20;
+                sealText.margin = new Vector4(3, 3, 3, 3);
+                Place(kindText.rectTransform, new Vector2(0.5f, 1f), new Vector2(-34, -50), new Vector2(214, 40));
                 sealText.text = $"{SchoolSeal(pv.School)}\n{pv.SchoolCountAfter}/{next}";
                 if (st.LockedTiers.Count > 0) sealText.text += "?";
             }

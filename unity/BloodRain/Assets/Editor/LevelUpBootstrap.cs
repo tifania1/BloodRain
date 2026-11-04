@@ -1,3 +1,4 @@
+using BloodRain.Presentation;
 using BloodRain.Presentation.Combat;
 using BloodRain.Presentation.Fx;
 using BloodRain.Presentation.Hud;
@@ -51,8 +52,8 @@ namespace BloodRain.Editor
         {
             var fx = Object.FindFirstObjectByType<DiscoveryFx>();
             if (!Application.isPlaying || fx == null) { Debug.LogWarning("[LevelUpBootstrap] 플레이 중 Run 씬에서 부른다"); return; }
-            fx.Show(DiscoveryFx.Kind.Secret, "무명검", "無名劍");
-            fx.Show(DiscoveryFx.Kind.Encounter, "은거기인", "");
+            fx.Show(DiscoveryFx.Kind.Secret, Loc.T("synergies.secrets.mumyeong.name", "무명검"), "無名劍"); // 실제 SecretWatch 처럼 지금 언어로
+            fx.Show(DiscoveryFx.Kind.Encounter, Loc.T("synergies.encounters.hermit.name", "은거기인"), "");
         }
     }
 }

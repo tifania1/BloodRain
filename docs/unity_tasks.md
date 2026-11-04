@@ -44,7 +44,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: TMP 글자 하나에 `血雨江湖 华山 剑气 Inner Energy` 를 넣어 두부(□) 없이 찍힘, 콘솔 에러 0
   - 찍기: `docs/unity_shots/L-01b/` 의 `font_sc.png`
 
-- [ ] L-01b2 언어별 넘침: 레벨업·발견 연출 · 먼저: L-01b1
+- [x] L-01b2 언어별 넘침: 레벨업·발견 연출 · 먼저: L-01b1 — 2026-11-04 영어에서 인장 글자가 72px 칸을 넘고 머리글과 겹치던 것을 고침(인장·이름·머리글·설명 TMP Auto Size, 인장이 있으면 머리글은 인장 왼쪽까지). 발견 시험 메뉴도 Loc 로. 메뉴 `언어 바꾸기/ko·en·zh-Hans`(LangMenu.cs). 세 언어 칸 안, 콘솔 에러 0
   - 할 것: `Loc.Lang` 을 ko·en·zh-Hans 로 바꿔 레벨업 카드 글이 칸을 넘지 않는지, 영어 문파 인장(이름 전체)이 72px 칸에서 읽히는지 본다. 넘치면 TMP Auto Size(최소 크기 정해서)나 줄임으로 맞춘다.
   - 쓸 것: `LevelUpScreen`, `DiscoveryFx`, `BloodRain/Test/발견 연출 보기(플레이 중)`
   - 메뉴: `BloodRain/Test/언어 바꾸기/ko·en·zh-Hans` 셋을 새로(PlayerPrefs `lang`)
