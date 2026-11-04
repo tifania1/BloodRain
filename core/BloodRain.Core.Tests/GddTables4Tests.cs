@@ -173,11 +173,19 @@ namespace BloodRain.Core.Tests
             }
         }
 
-        /// <summary>20장 기연 8 표의 사건 이름과 순서가 synergies.json encounters 와 같다(확률 칸은 SynergyDataTests 가 본다).</summary>
-        [Fact] public void 기연_8_표의_사건이_encounters_와_같다()
+        /// <summary>20장 기연 8 표의 사건 이름과 순서가 synergies.json encounters 와 같고, 어디서·어떻게·얻는 것 칸의 숫자는
+        /// where·how·reward 에 있다(확률 칸은 SynergyDataTests 가 본다).</summary>
+        [Fact] public void 기연_8_표가_encounters_와_같다()
         {
             var rows = GddTable(GddSection("기연(奇緣) 사건 8"));
             Assert.Equal(S.Encounters.Select(e => e.NameKo), rows.Select(r => r[0]));
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var e = S.Encounters[i];
+                foreach (var (cell, text) in new[] { (rows[i][1], e.Where), (rows[i][2], e.How), (rows[i][3], e.Reward) })
+                    foreach (var n in Numbers(cell))
+                        Assert.True(Numbers(text).Contains(n), $"{e.NameKo}: 기획서 '{cell}' 의 {n} 이 데이터 글에 없다 — {text}");
+            }
         }
 
         // ---- 21장 ----
