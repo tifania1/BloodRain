@@ -998,8 +998,27 @@ function spawnJangSam() {
   toast(def.nameKo, '마을 포쾌가 강시가 되어 덮쳐 온다');
   sfx('gong');
 }
+// 장삼 패턴(bosspatterns.json jang_sam): firstCastSeconds 뒤 intervalSeconds 마다 order 차례로. 2막 없음.
+// 패턴 피해는 정예처럼 분마다 커진다(baseDamage 는 0분 값).
 function jangSamAI(e, dt, dx, dy, d) {
+  const J = DATA.jangSam;
+  if (e.windup > 0) { e.windup -= dt; return; }
   e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1;
+  e.timer -= dt;
+  if (e.timer > 0) return;
+  e.timer = J.intervalSeconds;
+  const id = J.order[e.cycle++ % J.order.length], P = J.patterns.find(x => x.id === id);
+  castPattern(e, P, P.baseDamage * (1 + B.enemyScaling.damagePerMinute * G.gm), dx, dy);
+}
+// 장삼전 고정 각성(기획서 21장): 진소운 기혈이 바닥나거나 장삼 기혈이 bossHealthFloor 에 닿으면 천지인 삼검이 늘 긴 연출로 깨어난다.
+// 서장 각성은 '처음 본 절기' 기록에 남기지 않는다(첫 생에 맛본 절기를 내 힘으로 다시 깨우는 것이 목표, Core Life 와 같다).
+function prologueAwaken(why) {
+  if (G.proAwake) return;
+  G.proAwake = why;
+  const evo = DATA.evolutions.find(x => x.id === PROB.fixedAwakening);
+  let w = G.weapons.find(x => x.id === evo.weapon);
+  if (!w) { w = { id: evo.weapon, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }; G.weapons.unshift(w); renderSlots(); }
+  startAwaken(w, { long: true, noRecord: true, why: why === 'boss' ? '장삼 기혈 바닥' : '진소운 기혈 바닥' });
 }
 function viewW() { return VW / PPM; }
 function viewH() { return VH / PPM; }
@@ -1052,6 +1071,8 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   let crit = false;
   if (Math.random() < G.stats.crit) { dmg *= B.stats.critDamageMultiplier; crit = true; }
   e.hp -= dmg; e.flash = 0.08;
+  // 서장 장삼: 각성 전엔 기혈 바닥(cheonha.json prologueBody.bossHealthFloor)에서 멈추고 그 순간 고정 각성(Core Prologue.ApplyBossDamage)
+  if (e.jang && !G.proAwake && e.hp <= e.maxHp * PROB.bossHealthFloor) { dmg -= e.maxHp * PROB.bossHealthFloor - e.hp; e.hp = e.maxHp * PROB.bossHealthFloor; prologueAwaken('boss'); }
   if (w) w.dealt += dmg;
   if (G.stats.lifesteal > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * G.stats.lifesteal);
   if (kb && !e.boss) { const k = kb * G.stats.knockback * (1 - e.kbRes); e.kbx += kx * k; e.kby += ky * k; }
@@ -1108,7 +1129,11 @@ function hurtPlayer(dmg, src) {
   p.hp -= taken * (G.easy ? 0.5 : 1); p.hurt = 0.25; p.iframe = Math.max(p.iframe, HIT_IFRAMES); G.cam.shake = Math.min(0.3, G.cam.shake + 0.08);
   addUlt(B.ultimateCharge.perHit);
   sfx('hurt');
-  if (p.hp <= 0) { p.hp = 0; endRun(false); }
+  if (p.hp <= 0) {
+    // 서장: 장삼전에서 바닥나면 쓰러지지 않고 고정 각성, 각성 뒤에는 쓰러지지 않는다(기혈 1). 장삼 전이면 처음부터(endRun)
+    if (isPro() && G.bossSpawned) { p.hp = 1; prologueAwaken('player'); return; }
+    p.hp = 0; endRun(false);
+  }
 }
 
 // ───────── 효과·투사체 ─────────
@@ -1304,6 +1329,7 @@ function doDash() {
   const p = G.player;
   if (p.dashCharges <= 0 || p.dashT > 0 || p.stunT > 0) return;
   p.dashCharges--; p.dashT = B.dash.duration; p.iframe = B.dash.iframes;
+  if (p.rootT > 0) { p.rootT = 0; toast('포승줄을 끊었다', ''); }
   const sp = B.dash.distance * (1 + ((synEff('dash_drag') || {}).distanceBonus || 0)) / B.dash.duration; p.dashVx = p.fx * sp; p.dashVy = p.fy * sp;
   addEffect('dash', p.x, p.y, { a: Math.atan2(p.fy, p.fx), life: 0.3 });
   sfx('dash');
@@ -1375,6 +1401,7 @@ function update(dt) {
   let speed = S.move * (G.backlash ? 0.5 : 1);
   // 기절(방장 대리 범종): 걷지도 경공도 못 한다. 무공은 그대로 나간다.
   if (p.stunT > 0) { p.stunT -= dt; speed = 0; }
+  if (p.rootT > 0) { p.rootT -= dt; speed = 0; } // 장삼 포승줄: 걷지 못하고 경공은 된다
   if (p.dashT > 0) { p.x += p.dashVx * dt; p.y += p.dashVy * dt; p.dashT -= dt; }
   else { p.x += mx * speed * dt; p.y += my * speed * dt; }
   p.iframe = Math.max(0, p.iframe - dt); p.block = Math.max(0, p.block - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt);
@@ -1484,7 +1511,11 @@ function update(dt) {
     if (pr.enemy) {
       pr.x += pr.vx * dt; pr.y += pr.vy * dt;
       if (pr.t > pr.life) pr.dead = true;
-      else if (Math.hypot(p.x - pr.x, p.y - pr.y) < pr.r + 0.35) { pr.dead = true; hurtPlayer(pr.dmg); }
+      else if (Math.hypot(p.x - pr.x, p.y - pr.y) < pr.r + 0.35) {
+        pr.dead = true;
+        if (pr.root && p.iframe <= 0 && p.dashT <= 0) { p.rootT = pr.root; toast('포승줄', '묶였다 · 경공으로 끊는다'); }
+        hurtPlayer(pr.dmg);
+      }
       continue;
     }
     if (pr.homing && pr.target && !pr.target.dead) {
@@ -1607,6 +1638,10 @@ function eliteAI(e, dt, dx, dy, d) {
   e.timer -= dt;
   if (e.timer > 0) return;
   e.timer = e.ps.intervalSeconds;
+  castPattern(e, P, dmg, dx, dy);
+}
+// 패턴 한 번(bosspatterns.json shape). 정예와 서장 장삼이 같이 쓴다.
+function castPattern(e, P, dmg, dx, dy) {
   if (P.shape === 'jump_slam') {
     // 뛸 때마다 그 순간 플레이어 자리에 그림자, telegraphSeconds 뒤 착지
     const step = P.telegraphSeconds + P.waveIntervalSeconds, R = P.radius;
@@ -1637,6 +1672,24 @@ function eliteAI(e, dt, dx, dy, d) {
       addEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: 0.35, hot: true }); sfx('boom');
       const px = G.player.x - e.x, py = G.player.y - e.y, ang = Math.abs(((Math.atan2(py, px) - ca + Math.PI * 3) % TAU) - Math.PI);
       if (Math.hypot(px, py) < P.radius && ang < half) hurtPlayer(dmg, e);
+    } });
+  } else if (P.shape === 'bind_line') {
+    // 장삼 포승줄: 멈춰 서서 예고선, 줄이 날아가 맞으면 피해와 rootSeconds 동안 걷지 못함(경공으로 끊김, 무공은 그대로)
+    const ca = Math.atan2(dy, dx), sp = P.projectileSpeed / 100 * MOVE;
+    if (P.bossHolds) e.windup = P.telegraphSeconds;
+    addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+      if (e.dead) return;
+      G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds });
+      sfx('dash');
+    } });
+  } else if (P.shape === 'summon') {
+    // 장삼 호루라기: telegraphSeconds 뒤 그 순간 플레이어 둘레 scatter 안에서 시강이 일어난다
+    toast(P.nameKo, '시강이 땅에서 일어난다');
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+      if (e.dead) return;
+      for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, P.scatter); spawnEnemy(P.summon, G.player.x + Math.cos(a) * r, G.player.y + Math.sin(a) * r); }
+      sfx('gong');
     } });
   } else if (P.shape === 'circles' && P.aim === 'self') {
     if (P.bossHolds) e.windup = P.telegraphSeconds;
@@ -1938,7 +1991,7 @@ function startAwaken(w, opts = {}) {
   G.awaken = { w, evo, t: 0, P, long, scale: 1, then: opts.then || null, fired: {}, slot, motes, jag, why: opts.why || '' };
   G.player.iframe = Math.max(G.player.iframe, P.dur + BA.invulnerableExtraSeconds);
   $('hud').classList.add('cine');
-  if (!seenAwaken.has(evo.id)) { seenAwaken.add(evo.id); store.set('awoke', [...seenAwaken]); }
+  if (!opts.noRecord && !seenAwaken.has(evo.id)) { seenAwaken.add(evo.id); store.set('awoke', [...seenAwaken]); }
   G.evoLog.push({ id: w.id, gm: +G.gm.toFixed(2), lv: G.level, why: opts.why || '' });
   sfxAwaken('in');
 }
@@ -2289,6 +2342,10 @@ function drawEffect(fx) {
   } else if (fx.kind === 'burst') {
     ctx.fillStyle = fx.color; ctx.globalAlpha = 0.6 * (1 - k);
     for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; ctx.beginPath(); ctx.arc(x + Math.cos(a) * fx.r * PPM * k, y + Math.sin(a) * fx.r * PPM * k, 3, 0, TAU); ctx.fill(); }
+  } else if (fx.kind === 'tline') {
+    ctx.translate(x, y); ctx.rotate(fx.a);
+    ctx.fillStyle = `rgba(179,38,30,${0.12 + 0.25 * k})`; ctx.strokeStyle = 'rgba(179,38,30,0.7)'; ctx.lineWidth = 1.5;
+    ctx.fillRect(0, -fx.w / 2 * PPM, fx.len * PPM, fx.w * PPM); ctx.strokeRect(0, -fx.w / 2 * PPM, fx.len * PPM, fx.w * PPM);
   } else if (fx.kind === 'ring') {
     ctx.strokeStyle = fx.color || '#C9A227'; ctx.globalAlpha = 1 - k; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(x, y, fx.r * PPM * (0.3 + k * 0.7), 0, TAU); ctx.stroke();
