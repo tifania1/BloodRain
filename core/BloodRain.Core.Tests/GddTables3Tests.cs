@@ -157,5 +157,21 @@ namespace BloodRain.Core.Tests
             foreach (var r in GddTable(GddSection("에셋 규격")).Where(r => r[3].StartsWith("단색 #")))
                 Assert.Equal(hex, r[3].Substring(3), ignoreCase: true);
         }
+        /// <summary>10장 진행 속도 목표 표가 메타 시뮬레이션 보고서(meta.md·meta-pace.md)의 '목표(10장)' 줄과 같다.
+        /// 목표는 MetaSim·MetaPaceSim 이 글로 박아 두므로 기획서를 고치면 시뮬레이터 줄도 같이 고쳐야 한다.</summary>
+        [Fact] public void 진행_속도_목표가_메타_시뮬레이션_목표와_같다()
+        {
+            var rows = GddTable(GddSection("진행 속도 목표")).ToDictionary(r => r[0], r => r[1]);
+            string Lives(string key) => System.Text.RegularExpressions.Regex.Match(rows[key], @"^[\d~]+생").Value;
+            string Hours(string key) => System.Text.RegularExpressions.Regex.Match(rows[key], @"^[\d~]+시간").Value;
+            Assert.Equal("2~4생", Lives("첫 절정"));
+            foreach (var report in new[] { "meta.md", "meta-pace.md" })
+            {
+                var line = ReadRepoFile("docs", "design", "sim", report).Split('\n').Single(l => l.StartsWith("목표(10장)"));
+                Assert.Contains($"첫 절정 {Lives("첫 절정")}", line);
+                Assert.Contains($"첫 봉인석 {Lives("첫 봉인석")}", line);
+                Assert.Matches($"봉인 엔딩[^,]* {Hours("봉인 엔딩(봉인석 7 + 종장)")}", line);
+            }
+        }
     }
 }
