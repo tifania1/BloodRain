@@ -215,7 +215,7 @@ M3 지역 콘텐츠(당가타·장강·무당산)
 ### 로드맵에서 채움(2026-11-04 클라우드 M1 로드맵, 점검표 `docs/design/m1_check.md`)
 17장 M1 '서장 끝까지 플레이 가능'의 Core·데이터·웹 몫. Unity 몫(C-06~C-10)은 unity_tasks 에 그대로 있다.
 - [x] M1-01 2026-11-04 — 점검표 `docs/design/m1_check.md`(M1 여덟 줄 × 기획서·데이터·Core·웹·Unity). 이동·적 300·레벨업·음양·경공·오의·무공 수는 다 있고, 빈 곳은 서장 하나: 묶는 Core 가 없고(M1-02), 안내 차례가 없고(M1-03), 웹에서 못 해 본다(M1-04~07)
-- [ ] M1-02 Core 서장 한 판 묶음: `Life` 처럼 서장 10분을 한데 묶는다. 서장 몸이면 생성은 `PrologueDirector`, 차례는 `Prologue`, 장삼·강시 도부수 패턴은 `BossPatterns`. 장삼 전에 쓰러지면 처음부터(일지 버림, 생 횟수 안 셈), 장삼 처치 → 컷 → 첫 환혼, 끝나면 `Soul.EndLife` 로 PrologueDone. 가짜 시계 10분 테스트, unity_tasks C-10 입구 고침 (하는 중: 클라우드 11-04 M1 로드맵)
+- [x] M1-02 2026-11-04 — 서장 몸으로 만든 `Life` 가 서장 10분을 묶는다: `IsPrologue`·`Prologue`·`PrologueSpawns`, Tick 이 서장 표로 생성하고 장삼 사건에서 Step=Boss, 돌파·각성 파동이 서장 생성을 멈춤, `PlayerDown`(바닥이면 고정 긴 각성 저절로)·`DamagePrologueBoss`(10% 바닥에서 각성)·`KillPrologueBoss`(정산, way fallen)·`RestartPrologue`(새 판, 혼에 안 남음, 다시 한 횟수만 이어감). 서장 각성은 혼 기록에 안 남김(21장). `PrologueLifeTests` 8개, unity_tasks C-10 에 입구
 - [ ] M1-03 Core 서장 안내·말풍선 차례: 사건(시작·첫 레벨업·오의 게이지 참·이류·음양 처음 기욺·돌진·정예 등장/처치·일류·장삼 경고/등장·각성·처치)에서 dialogue.json `prologue.lines` 의 `when` 과 안내 문구(4장 '오의를 써라'·음양·경공)를 한 번씩 고른다. 안내 문구는 dialogue.json 에 현지화 키로. Unity DL-03b(3)·웹이 같은 규칙을 쓴다 (하는 중: 클라우드 11-04 M1 로드맵)
 - [ ] M1-04 웹 서장 판: 1장 프로토타입 제목 화면에 '서장' — 청운진 객잔 마당 10분, chapters.json `prologue` 시간표(시강, 3:30 혈인 돌진, 5:00 강시 도부수와 보갑, 8:30 생성 멈춤), 첫 레벨업 한 장, 장삼 전에 쓰러지면 처음부터. 빌드가 chapters·cheonha prologueBody 를 넣는다 (하는 중: 클라우드 11-04 M1 로드맵)
 - [ ] M1-05 웹 장삼: bosspatterns.json `jang_sam`(포승줄 `bind_line`·호루라기 `summon`·내려찍기 `jump_slam`), 기혈 6,000. 진소운 기혈이 바닥나거나 장삼 기혈이 10%에 닿으면 천지인 삼검 고정 긴 각성(이미 있는 각성 연출), 그 뒤 진소운은 쓰러지지 않음. 먼저: M1-04 (하는 중: 클라우드 11-04 M1 로드맵)

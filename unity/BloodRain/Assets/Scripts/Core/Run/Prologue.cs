@@ -50,9 +50,10 @@ namespace BloodRain.Core.Run
         readonly GameData _data;
         int _cut;
 
-        public Prologue(GameData data)
+        public Prologue(GameData data, int restarts = 0)
         {
             _data = data;
+            Restarts = restarts;
             _def = data.Cheonha.PrologueBody;
             Evolution = data.Evolutions.First(e => e.Id == _def.FixedAwakening);
         }

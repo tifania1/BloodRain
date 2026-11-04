@@ -3,6 +3,10 @@
 // Life 가 하는 일: 세상 시간(돌파·각성 연출 중엔 느려짐), 서 있는 지역과 처음 밟은 땅, 진기 흡수 → 레벨·돌파(축척) → 땅의 주인 깨어남,
 // 땅의 주인 싸움 시작·처치, 매초 적 생성(LifeDirector), 기혈역류와 오의 게이지(Charge), 생의 끝(쓰러짐·좌화·봉인)과 정산 기록.
 // 전투(맞히기·피해)는 Unity 쪽 Sim 이 하고 결과만 여기로 알려 준다(Absorb, DefeatBoss, End).
+// 서장 몸(Rebirth.Prologue)이면 서장 10분이 된다(기획서 4장 '서장 상세 흐름', 21장): 생성은 PrologueDirector, 차례는 Prologue.
+//   장삼 전에 쓰러지면 PlayerDown 이 Restart 를 주고 RestartPrologue 로 새 Life 를 만든다(혼에 아무것도 안 남는다, 생 횟수도 안 셈).
+//   장삼전에서 바닥나면 천지인 삼검 고정 각성이 저절로 시작되고, 장삼을 쓰러뜨리면 KillPrologueBoss 가 정산 기록을 만든다.
+//   그 기록을 Soul.EndLife 에 넘기면 PrologueDone 이 되고, 컷(Prologue.NextCut) 뒤 Soul.OpenRebirth 가 첫 환혼 셋을 준다.
 #nullable enable
 using System;
 using System.Collections.Generic;
@@ -59,7 +63,9 @@ namespace BloodRain.Core.Run
         readonly BossRecord _bossRecord;
         double _secondAcc;
 
-        public Life(Soul soul, RebirthBody body, Random rng)
+        public Life(Soul soul, RebirthBody body, Random rng) : this(soul, body, rng, 0) { }
+
+        Life(Soul soul, RebirthBody body, Random rng, int prologueRestarts)
         {
             _soul = soul;
             _data = soul.Data;
@@ -82,7 +88,18 @@ namespace BloodRain.Core.Run
             InsightEffects = new InsightEffects(body.Character.StartWeapon);
             RegionId = body.Region.Id;
             Position = Regions.Center(body.Region);
+            if (body.IsPrologue)
+            {
+                Prologue = new Prologue(_data, prologueRestarts);
+                PrologueSpawns = new PrologueDirector(_data, rng);
+            }
         }
+
+        /// <summary>서장 차례(서장 몸일 때만). 장삼 등장은 Tick 이 알아서 알린다.</summary>
+        public Prologue? Prologue { get; }
+        /// <summary>서장 생성(서장 몸일 때만). 서장이면 Tick 이 Director 대신 이걸 돌린다.</summary>
+        public PrologueDirector? PrologueSpawns { get; }
+        public bool IsPrologue => Prologue != null;
 
         public RebirthBody Body { get; }
         public LifeLog Log { get; }
@@ -159,11 +176,20 @@ namespace BloodRain.Core.Run
             if (Record != null) return null;
 
             if (Breakthrough.IsActive) Breakthrough.Tick(unscaledDt);
-            if (Awakening.IsActive && (Awakening.Tick(unscaledDt) & AwakeningCue.Shock) != 0)
-                Director.Hold(_data.Balance.Awakening.SpawnPauseSeconds);
+            if (Awakening.IsActive)
+            {
+                var cues = Awakening.Tick(unscaledDt);
+                if ((cues & AwakeningCue.Shock) != 0)
+                {
+                    Director.Hold(_data.Balance.Awakening.SpawnPauseSeconds);
+                    PrologueSpawns?.Hold(_data.Balance.Awakening.SpawnPauseSeconds);
+                }
+                if ((cues & AwakeningCue.End) != 0) Prologue?.AwakeningEnded();
+            }
 
             float dt = unscaledDt * WorldTimeScale;
             Minutes += dt / 60f;
+            if (PrologueSpawns != null) return TickPrologue(dt, position, aliveNow);
             Director.Tick(dt);
             Awakening.TickWorld(dt);
             Backlash.Tick(dt, Loadout.Gauge.Band == YinYangBand.Extreme);
@@ -177,6 +203,66 @@ namespace BloodRain.Core.Run
             if (_secondAcc < 1.0) return null;
             _secondAcc -= 1.0; // 한 프레임이 몇 초를 건너뛰면 남은 초는 다음 프레임들이 하나씩 낸다(버리지 않는다)
             return Director.Second(Minutes, Level, RegionId, aliveNow);
+        }
+
+        LifeSecond? TickPrologue(float dt, Vector2 position, int aliveNow)
+        {
+            PrologueSpawns!.Tick(dt);
+            Awakening.TickWorld(dt);
+            Backlash.Tick(dt, Loadout.Gauge.Band == YinYangBand.Extreme);
+            MoveTo(position);
+
+            _secondAcc += dt;
+            if (_secondAcc < 1.0) return null;
+            _secondAcc -= 1.0;
+            var s = PrologueSpawns.Second(Minutes, Level, aliveNow);
+            foreach (var e in s.Events)
+                if (e.Wave.Def.Type == WaveEventKind.Boss) Prologue!.BossAppeared(e.Enemy);
+            return s;
+        }
+
+        /// <summary>서장: 진소운의 기혈이 0이 됐다. Awaken 이면 고정 각성이 이미 시작됐고 기혈은 1로 남긴다.
+        /// Restart 면 RestartPrologue 로 처음부터.</summary>
+        public PrologueDown PlayerDown()
+        {
+            var p = Prologue ?? throw new InvalidOperationException("서장에서만 씁니다. 한 생은 End(fallen)");
+            var down = p.PlayerDown();
+            if (down == PrologueDown.Awaken) StartPrologueAwakening();
+            return down;
+        }
+
+        /// <summary>서장: 장삼에게 피해를 준다. 각성 전엔 기혈 바닥(prologueBody.bossHealthFloor)에서 멈추고 그 순간 고정 각성을 시작한다.
+        /// 돌려준 값이 새 기혈이다. 0이 되면 KillPrologueBoss 를 부른다.</summary>
+        public float DamagePrologueBoss(float health, float maxHealth, float damage)
+        {
+            var p = Prologue ?? throw new InvalidOperationException("서장에서만 씁니다");
+            float next = p.ApplyBossDamage(health, maxHealth, damage);
+            if (p.Step == PrologueStep.Awakening && !Awakening.IsActive) StartPrologueAwakening();
+            return next;
+        }
+
+        void StartPrologueAwakening()
+        {
+            // 서장 각성은 혼 기록(첫 각성 긴 연출)에 남기지 않는다. 첫 생에 맛본 절기를 내 힘으로 다시 깨우는 것이 목표라서(21장).
+            if (Awakening.IsActive) return;
+            Prologue!.StartAwakening(Awakening, Loadout);
+        }
+
+        /// <summary>서장: 장삼을 쓰러뜨렸다. 진소운의 몸이 다해 생이 끝난다(정산 기록). 혼에 옮기는 일은 부른 쪽이 Soul.EndLife 로.
+        /// 그 뒤 Prologue.CurrentCut 컷을 NextCut 으로 넘기고, 침방에서 Soul.OpenRebirth(첫 환혼 셋) → Prologue.ChooseFirst.</summary>
+        public LifeRecord KillPrologueBoss(int leftoverSilver = 0)
+        {
+            var p = Prologue ?? throw new InvalidOperationException("서장에서만 씁니다");
+            p.BossKilled();
+            return End(LifeEndWay.Fallen, leftoverSilver);
+        }
+
+        /// <summary>서장: 장삼 전에 쓰러져 처음부터. 같은 혼·같은 몸으로 새 판을 만든다. 이 판의 일지는 버린다(혼에 남는 것 없음).</summary>
+        public Life RestartPrologue(Random rng)
+        {
+            var p = Prologue ?? throw new InvalidOperationException("서장에서만 씁니다");
+            if (p.Step != PrologueStep.Fight) throw new InvalidOperationException($"장삼 전에만 처음부터 합니다: {p.Step}");
+            return new Life(_soul, Body, rng, p.Restarts);
         }
 
         /// <summary>플레이어 위치를 옮긴다(Tick 이 부른다). 다른 지역에 들어서면 일지에 남긴다.</summary>
@@ -207,7 +293,8 @@ namespace BloodRain.Core.Run
                 // 연출 도중 또 넘었으면(큰 구슬·쓸림 진기) 돌던 연출의 끝만 새 경지로 옮긴다.
                 if (Breakthrough.IsActive) Breakthrough.Extend(r.ToLevel);
                 else Breakthrough.Start(r.FromLevel, r.ToLevel, revisit);
-                Director.OnBreakthrough(revisit);
+                if (PrologueSpawns != null) PrologueSpawns.OnBreakthrough();
+                else Director.OnBreakthrough(revisit);
                 woken = Bosses.UpdateRealm(Xp.Level);
             }
             return new LifeAbsorb(r, infos, woken);
