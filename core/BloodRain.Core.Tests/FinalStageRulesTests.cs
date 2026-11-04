@@ -78,5 +78,32 @@ namespace BloodRain.Core.Tests
             Assert.True(BossPatterns.CastSeconds(p) < Set("jinhyeolma").Phase2IntervalSeconds);
             Assert.Contains($"핏방울 {p.Count}개(반경 {Num(p.Radius)}m) × {p.Waves}파", Gdd);
         }
+
+        /// <summary>R4-12: 웹 천하 시안이 종장 차례(혈영 일곱 → 세 단계)와 단계 모양을 Core 와 같은 셈으로 쓴다.</summary>
+        [Fact] public void 웹_천하_시안이_종장_차례와_단계_모양을_Core_와_같은_셈으로_쓴다()
+        {
+            var html = ReadRepoFile("web", "lookdev", "cheonha.html");
+            var m = System.Text.RegularExpressions.Regex.Match(html, @"const PAT_SHAPES = new Set\(\[(.*?)\]\);", System.Text.RegularExpressions.RegexOptions.Singleline);
+            var shapes = System.Text.RegularExpressions.Regex.Matches(m.Groups[1].Value, "'([a-z_]+)'").Select(x => x.Groups[1].Value).ToHashSet();
+            Assert.All(_d.FinalBoss.Stages.SelectMany(s => s.Set.Patterns.Concat(s.Set.Phase2)).Select(p => p.Shape).Distinct(), shape => Assert.Contains(shape, shapes));
+            foreach (var same in new[]
+            {
+                "health: BOSS[id].health * F.shadowHealthRatio, set: BPAT[id]",                       // FinalFight.BaseHealth·Patterns(혈영)
+                "health: st.health, set: st.set",                                                      // FinalFight.BaseHealth·Patterns(단계)
+                "FINALDEF.shadows[((n % L) + L) % L]",                                                 // FinalFight.RisingShadow
+                "BOSS[sid].health * pt.summonHealthRatio",                                             // FinalFight.RisingShadowHealth
+                "Math.max(pt.minRadius, pt.radius - pt.shrinkPerSecond * Math.max(0, t))",             // ClosingRadius·IslandRadius
+                "Math.max(0, pt.radius - pt.minRadius) / pt.shrinkPerSecond",                          // ClosingSeconds·IslandSeconds
+                "t >= closingSeconds(pt) ? d <= pt.minRadius + h + tr : Math.abs(d - closingRadius(pt, t)) <= h + tr", // InClosingRing
+                "(x - c[0]) * (x - c[0]) + (y - c[1]) * (y - c[1]) <= r * r",                          // OnIsland: 몸 가운데
+                "Math.min(d, pspd(C.pt.projectileSpeed) * k * dt)",                                    // CloudDrift: 지나치지 않는다
+                "C.t < C.pt.leaveSeconds",                                                             // CloudAlive
+                "w * pt.waveIntervalSeconds",                                                          // RainWaveSeconds
+            })
+                Assert.Contains(same, html);
+            // 혈영 일곱은 데이터 차례 그대로, 단계 셋은 그 뒤
+            Assert.Equal(7, _d.FinalBoss.Shadows.Count);
+            Assert.Equal(new[] { "hyeoleui", "hyeolhae", "jinhyeolma" }, _d.FinalBoss.Stages.Select(s => s.Id));
+        }
     }
 }

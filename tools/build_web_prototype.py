@@ -135,6 +135,8 @@ def cheonha_blob() -> str:
         "balance": drop_notes({k: bal[k] for k in ("realms", "xpCurve", "training", "stats", "spawnTarget", "dash", "limits", "yinyang", "drops")}),
         # 땅의 주인 패턴 시간표(T-21). 시안이 그리는 모양은 cheonha.html PAT_SHAPES
         "bossPatterns": drop_notes(load("bosspatterns")["bosses"]),
+        # 종장(R4-12): 혈영 일곱 차례·기혈 비율과 혈마 세 단계 시간표(Core FinalFight)
+        "finalBoss": drop_notes(load("bosspatterns")["final"]),
         # 레벨업 카드(T-21): 심법 이름과 능력치 효과, 레벨 상한
         "passives": [{k: x[k] for k in ("id", "nameKo", "yinyang", "yinyangPerLevelOverride", "effects") if k in x} for x in load("passives")["passives"]],
         "levels": bal["levels"],
