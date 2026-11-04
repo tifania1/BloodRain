@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -79,6 +80,68 @@ namespace BloodRain.Core.Tests
                 var urls = g.Select(o => (string?)o["chat_url"]).Where(u => !string.IsNullOrEmpty(u)).Distinct().ToList();
                 Assert.True(urls.Count <= 1, $"chat '{g.Key}' 에 대화방 주소가 {urls.Count}개");
             }
+        }
+
+        // ---- AQ-01: 기획서 13장 규격·색과 대기열 문구 ----
+
+        /// <summary>단색 #F2EBDD 바탕에서 뽑아 배경을 지우는 종류(13장 에셋 규격, postprocess 가 색 키로 지운다). 나머지 원화는 장면 그대로.</summary>
+        static readonly string[] FlatBgKinds = { "character", "character_sheet", "enemy", "elite", "boss", "props", "portrait", "ui" };
+
+        static IEnumerable<JObject> ArtRows() => Rows().Where(o => !((string)o["kind"]!).StartsWith("vfx_"));
+        static IEnumerable<JObject> Waiting() => ArtRows().Where(o => (string)o["status"]! is "todo" or "generated");
+
+        [Fact] public void 단색_바탕_종류만_F2EBDD를_쓰고_png로_받는다()
+        {
+            foreach (var o in ArtRows())
+            {
+                bool flat = FlatBgKinds.Contains((string)o["kind"]!);
+                Assert.True(flat == ((string)o["prompt"]!).Contains("#F2EBDD"), $"{o["id"]}: {o["kind"]} 인데 #F2EBDD 바탕 문구가 {(flat ? "없다" : "있다")}");
+                Assert.EndsWith(".png", (string)o["save_as"]!);
+            }
+        }
+
+        /// <summary>ChatGPT 는 문구 속 비율을 따른다. 기다리는 줄은 ratio 칸의 비율을 문구에도 적는다(13장 틀의 'Square 1:1'·'wide 3:2'·'tall 2:3').</summary>
+        [Fact] public void 기다리는_줄은_문구에_비율을_적는다()
+        {
+            foreach (var o in Waiting())
+                Assert.True(((string)o["prompt"]!).Contains((string)o["ratio"]!), $"{o["id"]}: 문구에 {o["ratio"]} 가 없다");
+        }
+
+        /// <summary>주홍은 적·혈우·위험에만 쓴다(13장 색). 플레이어 몸과 아군 인물(보스가 아닌 캐릭터·시트·초상)은 문구로 막는다.</summary>
+        [Fact] public void 아군_인물은_주홍을_막는다()
+        {
+            foreach (var o in Waiting().Where(o => (string)o["kind"]! is "character" or "character_sheet" or "portrait" && !((string)o["id"]!).StartsWith("boss_")))
+            {
+                var p = (string)o["prompt"]!;
+                Assert.True(p.Contains("No red or crimson") || p.Contains("No crimson"), $"{o["id"]}: 아군 인물인데 주홍을 막는 문구가 없다");
+            }
+        }
+
+        /// <summary>한 인물의 시트·스프라이트·초상은 한 대화방에서(13장 '일관성 지키는 법' 1·3).</summary>
+        [Fact] public void 한_인물의_시트_스프라이트_초상은_같은_chat()
+        {
+            var rows = ArtRows().ToDictionary(o => (string)o["id"]!);
+            foreach (var o in rows.Values.Where(o => (string)o["kind"]! == "character_sheet"))
+            {
+                var id = (string)o["id"]!;
+                var name = id.Substring(id.IndexOf('_') + 1).Replace("_sheet", "");
+                foreach (var other in new[] { $"char_{name}", $"portrait_{name}", $"boss_{name}" })
+                    if (rows.TryGetValue(other, out var r))
+                        Assert.True((string)r["chat"]! == (string)o["chat"]!, $"{other} chat '{r["chat"]}' 이 시트 {id} 의 '{o["chat"]}' 와 다르다");
+            }
+        }
+
+        /// <summary>글자·낙관은 굽지 않는다(CLAUDE.md). 글자 비슷한 것을 그리라면 반드시 비워 두라고 적는다.</summary>
+        [Fact] public void 기다리는_줄은_글자를_그리라고_하지_않는다()
+        {
+            var texty = new Regex(@"\b(calligraph(y|ic) (on|of|text)|inscri\w+|lettering|signboard|seal stamp|caption|kanji|hanzi|Chinese characters)\b", RegexOptions.IgnoreCase);
+            foreach (var o in Waiting())
+                foreach (Match m in texty.Matches((string)o["prompt"]!))
+                {
+                    var p = (string)o["prompt"]!;
+                    var around = p.Substring(Math.Max(0, m.Index - 60), Math.Min(p.Length, m.Index + m.Length + 30) - Math.Max(0, m.Index - 60));
+                    Assert.True(Regex.IsMatch(around, @"\b(no|blank|empty|without|bare|unmarked)\b", RegexOptions.IgnoreCase), $"{o["id"]}: 글자를 그리라는 말 같다: …{around}…");
+                }
         }
 
         [Fact] public void 이펙트_재료_imported_줄과_ai_json이_서로_맞다()
