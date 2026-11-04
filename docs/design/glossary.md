@@ -12,7 +12,7 @@
 5. **간체는 원래 한자를 간체로 바꿔 쓴다.** 중국어는 무협 용어가 원래 말이라 옮기지 않는다(기획서 16장). 한자가 없는 한국어 고유어(한 생, 넷째 몸, 다시 고르기 등)만 뜻으로 옮긴다. 사람 이름도 한자로 쓰되, 데이터·기획서에 한자가 없으면 지어 붙이지 말고 '사람 결정 대기'로 묻는다.
 6. **특정 작가 고유 명칭 금지**: 김용·고룡 등 특정 작가가 만든 고유 무공·문파·인물 이름(항룡십팔장, 독고구검 등)은 어느 언어로도 쓰지 않는다. 그 이름의 공식 영어·중국어 번역도 마찬가지다. 장르 공통어나 새로 지은 이름만 쓴다(CLAUDE.md).
 7. **문체**: 영어는 짧고 담백하게, 고어(thee, thou, -eth)는 쓰지 않는다. 기술 설명은 현재형 평서문("Slashes front and back"). 숫자·%·m·초는 원문 그대로 두고 자리만 바꾼다. `{0}` 자리는 원문과 같은 번호를 쓴다(테스트가 본다).
-8. **길이**: 레벨업 카드 이름은 영어 22자 안쪽, 간체 6자 안쪽을 목표로. 넘으면 짧은 이름을 따로 짓는다(뜻 우선).
+8. **길이**: 레벨업 카드에 나오는 무공·심법 이름은 영어 24자, 간체 6자 안쪽(테스트 `GlossaryTests` 가 본다). 넘으면 뜻을 살린 짧은 이름을 따로 짓는다.
 
 ## 체계 용어
 
@@ -72,6 +72,46 @@
 
 `땅의 주인` 간체: 地主 는 '지주(땅 가진 부자)'로 읽혀 쓰지 않고 `一方之主` 로 한다.
 
+심법 이름에는 Heart 를 빼고 Method·Art 로 끝낸다(Clear Mind Method). 갈래 이름(카드 위 '새 심법')만 Heart Method.
+
+## 전투·능력치 말
+
+| 한국어 | 영어 | 간체 |
+| --- | --- | --- |
+| 진전(眞傳) | Lineage (step) | 真传 |
+| 쾌속 | Haste | 快速 |
+| 흡혈 | Lifesteal | 吸血 |
+| 넉백 | Knockback | 击退 |
+| 관통 | Pierce | 贯穿 |
+| 치명타 / 치명 확률 | Critical Hit / Critical Chance | 暴击 / 暴击率 |
+| 기절 | Stun | 眩晕 |
+| 둔화 | Slow | 减速 |
+| 중독 | Poison | 中毒 |
+| 감전 | Shock | 感电 |
+| 화상 | Burn | 灼烧 |
+| 지속 피해 | Damage over Time | 持续伤害 |
+| 정신부 | Stilling Talisman | 定身符 |
+| 취기부 | Qi-Gathering Talisman | 聚气符 |
+| 의서 | Medical Book | 医书 |
+| 은빛 등롱 | Silver Lantern | 银灯笼 |
+| 혈월 | Blood Moon | 血月 |
+
+## 세력·곳·이야기
+
+| 한국어 | 영어 | 간체 |
+| --- | --- | --- |
+| 혈영회 | Blood Shadow Society | 血影会 |
+| 하오문 | Lower Five Gates | 下五门 |
+| 혈겁 | Blood Calamity | 血劫 |
+| 계승 엔딩 | Inheritance Ending | 继承结局 |
+| 객잔 | Inn | 客栈 |
+| 침방 | Sleeping Quarters | 寝房 |
+| 연무장 | Training Ground | 练武场 |
+| 장경각 | Sutra Library | 藏经阁 |
+| 정산 | Reckoning | 结算 |
+| 목 노인 | Elder Mok | 사람 결정 대기 |
+| 운낭 | Unnang | 사람 결정 대기 |
+
 ## 경지
 
 | 한국어 | 영어 | 간체 |
@@ -113,7 +153,7 @@
 | 무당산 | Mount Wudang | 武当山 |
 | 화산 | Mount Hua | 华山 |
 | 곤륜 설원 | Kunlun Snowfield | 昆仑雪原 |
-| 십만대산 | the Hundred Thousand Mountains | 十万大山 |
+| 십만대산 | The Hundred Thousand Mountains | 十万大山 |
 | 봉마곡 혈지 | Demon-Sealing Valley Blood Pool | 封魔谷血池 |
 
 봉인석 일곱(천추·천선·천기·천권·옥형·개양·요광)은 북두칠성 별의 옛 이름이다. 영어는 한자 뜻으로 옮기고 서양 별 이름(Dubhe 등)은 쓰지 않는다: Heavenly Pivot, Heavenly Jade, Heavenly Pearl, Heavenly Authority, Jade Balance, Opening Yang, Flickering Light 뒤에 Stone. 간체는 天枢石·天璇石·天玑石·天权石·玉衡石·开阳石·摇光石.

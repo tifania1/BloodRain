@@ -102,7 +102,7 @@ namespace BloodRain.Core.Tests
             var sections = Catalog.Value.Sections.ToHashSet();
             Assert.All(complete, s => Assert.True(sections.Contains(s), $"{lang}: complete 에 없는 갈래 '{s}'"));
             var missing = Lang(lang).Missing().Where(k => complete.Contains(StringCatalog.Section(k))).ToList();
-            Assert.True(missing.Count == 0, $"{lang}: 다 옮겼다고 적은 갈래에 빠진 키:\n" + string.Join("\n", missing));
+            Assert.True(missing.Count == 0, $"{lang}: 다 옮겼다고 적은 갈래에 빠진 키. strings/{lang}.json 에 옮긴 문구를 넣는다(용어는 docs/design/glossary.md). 지금 못 옮기면 그 파일 _meta.complete 에서 갈래를 빼고 backlog 에 적는다:\n" + string.Join("\n", missing));
         }
 
         [Theory, MemberData(nameof(OtherLanguages))]
