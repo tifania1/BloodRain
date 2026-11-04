@@ -1290,24 +1290,33 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 
 ### 곡 목록
 
+천하 한 장 구조(7장)에 맞춰 곡을 지역·땅의 주인·거점 화면 단위로 나눕니다. 곡마다의 문구와 진행 상태는 `audio_queue/queue.jsonl`, 생산 순서는 `docs/design/audio_pipeline.md` 에 있습니다.
+
 | 곡 | 쓰는 곳 | 분위기 | 길이 |
 | --- | --- | --- | --- |
-| 메인 테마 「혈우강호」 | 타이틀, 인트로 컷신 | 얼후 독주로 시작해 전 악기 합주 | 2분 반 |
-| 객잔 | 거점 | 비 그친 뒤 저녁, 고쟁과 빗소리 | 루프 2분 |
-| 서장 | 청운진 | 긴장, 북과 방울 | 루프 2분 |
-| 1\~7장 각 1곡 | 각 장 | 1장 목탁과 범종, 2장 피리와 벌레 소리, 3장 뱃노래, 4장 도가 음악, 5장 비파 속주, 6장 바람과 저음 현, 7장 마교 의식 북 | 루프 3\~4분, 10분 이후 편곡 한 겹 추가 |
-| 보스 공통 2곡 | 장 보스 | 빠른 템포, 합창 | 루프 2분 |
-| 혈마 3곡 | 종장 단계별 | 1단계 고요한 고금, 2단계 합창, 3단계 전 악기 | 각 2\~3분 |
-| 엔딩 3곡 | 엔딩별 | 봉인·계승·진엔딩 | 각 2분 |
+| 메인 테마 「혈우강호」 | 타이틀, 인트로 컷신 | 얼후 독주로 시작해 전 악기 합주 | 2\~3분 |
+| 객잔 | 거점 본채 | 비 그친 뒤 저녁, 고쟁과 빗소리 | 루프 2\~3분 |
+| 침방 | 다음 몸 고르기(21장) | 밤, 소와 고금 배음, 고요하고 아련함 | 루프 2\~3분 |
+| 연무장 | 영구 강화(10장) | 새벽 수련, 북과 딱따기, 비파 | 루프 2\~3분 |
+| 정산 | 생이 끝난 뒤 | 얼후 한 줄, 쓸쓸하지만 다음으로 | 루프 짧은 곡 |
+| 서장 | 첫 생의 청운진 | 긴장, 북과 방울 | 루프 2\~3분 |
+| 지역 11곡 | 그 지역에 서 있을 때 | 청운진 장터 민요, 숭산 목탁과 범종, 개방 총타 비파와 술독 장단, 남궁세가 고쟁 속주, 당가타 피리와 벌레 소리, 장강 뱃노래, 무당산 도가 음악, 화산 비파 속주, 곤륜 바람과 저음 현, 십만대산 마교 의식 북, 봉마곡 앞선 곡들의 조각 | 루프 2\~3분 |
+| 땅의 주인 8곡 | 장삼(짧은 곡)과 땅의 주인 일곱 | 빠른 템포, 그 땅의 악기를 세게 | 루프 2\~3분 |
+| 혈마 3곡 | 종장 단계별 | 1단계 고요한 고금, 2단계 합창 같은 저음, 3단계 전 악기 | 루프 2\~3분 |
+| 엔딩 3곡 | 엔딩별 | 봉인·계승·진엔딩 | 2\~3분 |
+| 절기 각성 | 각성 뒤 금빛 기운(8장) | 범종과 큰 북 뒤 금빛 고쟁·얼후 | 8초(짧은 곡에서 자름) |
 
-음악은 Suno로 시안을 만들고 마음에 드는 방향을 고른 뒤 다듬습니다. 상업 게임에 넣으려면 Suno 유료 플랜에서 생성한 곡이어야 하니, 생성 전에 계정 플랜을 꼭 확인합니다.
+- 예전 안의 '10분 이후 편곡 한 겹 추가'는 Gemini 가 악기별로 나눈 파일을 주지 않아 그대로는 못 합니다. 어떻게 할지는 `audio_pipeline.md` '사람 결정 대기'.
+- 가사는 넣지 않습니다. 합창도 말 없는 저음으로만.
 
-**Suno 프롬프트 예시**
+음악은 Gemini 앱의 '음악 만들기'로 뽑습니다(2026-11-04 결정). 짧은 곡은 약 30초, 전체 곡은 최대 3분(Pro 모델)이고 SynthID 워터마크가 들어갑니다. 판매용 게임에 써도 되는지는 `audio_pipeline.md` '이용 조건'에 정리했습니다. 받은 MP3 는 다듬는 도구(BGM-03)로 소리 크기·앞뒤 무음·루프 이음매를 다듬어 ogg 로 넣습니다.
+
+**문구 예시**(앞에 `audio_queue/STYLE.txt` 공통 문구가 붙습니다)
 
 ```
-[장 BGM] wuxia rock, erhu lead melody, guzheng arpeggios, fast taiko drums, driving electric bass, pipa tremolo, heroic and tense, loopable, 150 bpm, instrumental
+[숭산] Mountain temple under siege. Wooden fish percussion and great temple bell strikes, low monk-like drones on cello and erhu, steady martial drums, solemn and powerful, 140 bpm, loopable.
 
-[객잔] chinese folk ambient, guzheng and dizi, soft rain, warm evening, slow, instrumental, loopable
+[객잔] Evening at a small roadside inn after the rain stops. Gentle guzheng and dizi, soft rain on roof tiles, warm and calm, slow 70 bpm, loopable.
 ```
 
 ### 효과음

@@ -53,7 +53,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] A-07 사람 결정 대기: 장경각은 봉인석 하나로 열리는데(10장) 17장 M2 범위에는 침방·연무장·정산만 있다. M2 에서 원각을 쓰러뜨려 장경각이 열리면 어떻게 보일지. 추천: M2 에서는 객잔에 문만 그려 두고 '수리 중'으로 잠그고, 화면과 배경은 M3 에서 그린다(그림 목록 `art_list.md` 'M2 밖')
 
 배경음(2026-11-04 사람: "배경음은 제미나이를 통해서 생성하도록 하자")
-- [ ] BGM-01 배경음 목록과 대기열: 기획서(지역 11·땅의 주인 7·서장·객잔·침방·연무장·정산·종장, 절기 각성 짧은 곡)를 보고 `audio_queue/queue.jsonl`(id·쓰는 곳·길이 short/full·loop·prompt·status·save_as)과 공통 문구 `audio_queue/STYLE.txt`(영어, 가사 없는 연주곡, 얼후·고쟁·소·북 같은 전통 악기, 수묵 분위기)를 만들고 테스트. Gemini '음악 만들기'는 짧은 곡 약 1분, 전체 곡 2~3분(Pro 모델), MP3로 받고 워터마크가 들어간다(support.google.com/gemini/answer/16901237) (하는 중: 클라우드 11-04 배경음)
+- [x] BGM-01 2026-11-04 — `audio_queue/queue.jsonl` 32곡(todo, M2 13·M3 6·나중 13): 타이틀·객잔·침방·연무장·정산·서장, 지역 11, 땅의 주인 8(장삼 포함), 혈마 3단계, 엔딩 3, 절기 각성 8초 짧은 곡. 공통 문구 `STYLE.txt`(영어, 가사 없음). 기획서 14장 곡 목록을 옛 1~7장에서 천하 구조로, Suno → Gemini 로 고침. 짧은 곡은 검색 결과로는 약 30초(Fast 모델)라 1분이 아님. `AudioQueueTests` 9개(지역·보스·종장 단계가 데이터와 맞는지 포함). 큐 설명은 `docs/design/audio_pipeline.md`
 - [ ] BGM-02 이용 조건: Gemini 로 만든 음악을 판매용 게임에 써도 되는지 Google 약관·도움말을 찾아 `audio_pipeline.md`(docs/design 에 새로)에 출처와 함께 적는다. 애매하면 사람 결정 대기로 (하는 중: 클라우드 11-04 배경음)
 - [ ] BGM-03 받은 곡 다듬는 도구 `postprocess_audio.py`(tools 에 새로, ffmpeg: 소리 크기 맞춤, 앞뒤 무음 자르기, 루프 이음매 크로스페이드, ogg → `Assets/Audio/BGM/`) + 테스트. 먼저: BGM-01 (하는 중: 클라우드 11-04 배경음)
 - [ ] BGM-04 생산 순서를 `audio_pipeline.md` 에: 회사 PC 크롬 → gemini.google.com '음악 만들기'(연주곡, 길이) → MP3 받기 → `art_inbox/audio/` → BGM-03 도구 → 귀로 듣는 검수는 사람(feedback.md). 이미지 생산 예약 작업이 이 순서도 돌게 하는 건 대화 세션이 예약 설명을 고친다(PC 승인 필요). 먼저: BGM-01·BGM-02 (하는 중: 클라우드 11-04 배경음)
