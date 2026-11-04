@@ -240,6 +240,15 @@ namespace BloodRain.Core.Build
                 bonus[i] = extraCounts.TryGetValue(sc.Id, out var x) ? x : 0;
             }
 
+            // 장경각에서 아직 복원하지 않은 비급 층은 닫혀 있다(restored 가 null 이면 모두 열림).
+            var opens = new Func<SchoolTierDef, bool>?[syn.Schools.Count];
+            for (int i = 0; i < syn.Schools.Count; i++)
+            {
+                var sc = syn.Schools[i];
+                opens[i] = restored == null ? null
+                    : t => !t.IsSecret || restored.Contains(SynergyDefs.ManualIdOf(sc, t));
+            }
+
             bool commonActive = syn.Common.Weapon != "" && levels.Weapons.TryGetValue(syn.Common.Weapon, out var cl) && cl >= syn.Common.AtLevel;
             string? commonSchool = null;
             if (commonActive)
@@ -250,7 +259,7 @@ namespace BloodRain.Core.Build
                 }
                 else
                 {
-                    int best = PickBest(syn.Schools, members, bonus);
+                    int best = PickBest(syn.Schools, members, bonus, opens);
                     if (best >= 0) { bonus[best]++; commonSchool = syn.Schools[best].Id; }
                 }
             }
@@ -258,17 +267,14 @@ namespace BloodRain.Core.Build
             var schools = new List<SchoolState>(syn.Schools.Count);
             for (int i = 0; i < syn.Schools.Count; i++)
             {
-                var sc = syn.Schools[i];
-                Func<SchoolTierDef, bool>? open = restored == null ? null
-                    : t => !t.IsSecret || restored.Contains(SynergyDefs.ManualIdOf(sc, t));
-                schools.Add(new SchoolState(sc, members[i], bonus[i], open));
+                schools.Add(new SchoolState(syn.Schools[i], members[i], bonus[i], opens[i]));
             }
             return new SynergyState(links, schools, commonSchool, commonActive, lockedLinks);
         }
 
         /// <summary>기본의 극이 채워 줄 문파. 가장 많이 모은 문파를 고르되, 이미 마지막 단계까지 찬 문파는 채울 것이 없으니 건너뛴다.
-        /// 개수가 같으면 하나 더해서 새 단계에 닿는 쪽, 그래도 같으면 데이터 순서. 하나도 안 모았으면 -1.</summary>
-        static int PickBest(IReadOnlyList<SchoolDef> schools, int[] members, int[] bonus)
+        /// 개수가 같으면 하나 더해서 새 단계에 닿는 쪽(닫힌 비급 층은 닿는 것으로 치지 않는다), 그래도 같으면 데이터 순서. 하나도 안 모았으면 -1.</summary>
+        static int PickBest(IReadOnlyList<SchoolDef> schools, int[] members, int[] bonus, Func<SchoolTierDef, bool>?[] opens)
         {
             int best = -1, bestCount = 0;
             bool bestReaches = false;
@@ -276,7 +282,8 @@ namespace BloodRain.Core.Build
             {
                 int count = members[i] + bonus[i];
                 if (count < 1 || count >= schools[i].MaxTierCount) continue;
-                bool reaches = schools[i].Tiers.Any(t => t.Count == count + 1);
+                var open = opens[i];
+                bool reaches = schools[i].Tiers.Any(t => t.Count == count + 1 && (open == null || open(t)));
                 if (best < 0 || count > bestCount || (count == bestCount && reaches && !bestReaches))
                 {
                     best = i; bestCount = count; bestReaches = reaches;

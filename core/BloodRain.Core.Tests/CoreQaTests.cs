@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using BloodRain.Core.Build;
 using BloodRain.Core.Combat;
@@ -129,6 +130,18 @@ namespace BloodRain.Core.Tests
             if (life.Tick(3.5f, life.Position, 0) != null) seconds++;
             for (int i = 0; i < 5; i++) if (life.Tick(0.01f, life.Position, 0) != null) seconds++;
             Assert.Equal(3, seconds);
+        }
+        [Fact] public void 기본의_극은_닫힌_비급_층을_새_단계로_치지_않는다()
+        {
+            // 개방·당가 둘 다 둘씩. 개방 셋째는 비급 층이라 복원 전에는 닫혀 있으니 당가 셋째(독 번짐)를 채운다.
+            var weapons = new Dictionary<string, int> { ["samjae_sword"] = 8, ["drunken_staff"] = 1, ["flying_dagger"] = 1 };
+            var passives = new Dictionary<string, int> { ["juseon"] = 1, ["cheonsu"] = 1 };
+            var levels = new BuildLevels(weapons, passives);
+            var locked = Synergy.Compute(_d, levels, restored: Array.Empty<string>());
+            Assert.Equal("tang", locked.CommonSchool);
+            // 다 복원했으면 데이터 순서대로 개방
+            var all = Synergy.Compute(_d, levels, restored: _d.Synergies.SecretManualIds.ToList());
+            Assert.Equal("gaebang", all.CommonSchool);
         }
     }
 }
