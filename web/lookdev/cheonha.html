@@ -743,10 +743,20 @@ function kill(f, crushed) {
   // 독두꺼비: 죽은 자리에 독 웅덩이(onDeath poison_pool). 흑백 쌍강시: 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다
   if (d && d.onDeath === 'poison_pool' && d.death) G.pools.push({ x: f.x, y: f.y, r: d.death.radius * k, dps: d.death.perSecond * f.dmg / d.contactDamage, t: d.death.seconds, green: true });
   if (d && d.behavior === 'twin_revive' && f.twin && !f.twin.dead) G.revives.push({ f, t: d.reviveSeconds });
+  if (d && d.onDeath === 'splinter_burst' && d.death) splinter(f, d, k);
   G.kills += CLUSTER[f.e];                                         // 처치 수는 덩이 속 사람 수
   const v = f.xv * (f.e < G.tier ? CRUSH.xpPerCrushed : 1) * (G.fast ? LD.fastXp : 1);   // 진기는 적 하나 값, 밟히면 0.3
   G.orbs.push({ x: f.x, y: f.y, v, heal: f.elite ? 25 : 0 });
   if (G.orbs.length > BAL.limits.orbs) mergeOrbs();
+}
+// 목인나한(6장, onDeath splinter_burst): 쓰러지면 나뭇조각이 터져 반경 안의 다른 적과 플레이어에게 한 번 피해.
+// 값은 기획서 단위라 이 시안 단위로 바꾼다: 적 몫은 목인나한 기혈에 대한 비율(40 ÷ 120 = 제 기혈의 1/3), 플레이어 몫은 독 웅덩이처럼 접촉 피해에 대한 비율(6 ÷ 10)
+function splinter(f, d, k) {
+  const R = d.death.radius * k, toFoe = d.death.enemyDamage * f.maxHp / d.health, p = G.p;
+  G.splinters = (G.splinters || 0) + 1;
+  G.fx.push({ k: 'splinter', x: f.x, y: f.y, r: R, t: 0, life: 0.3 });
+  if (toFoe > 0) for (const o of G.foes) if (o !== f && !o.dead && !o.boss && Math.hypot(o.x - f.x, o.y - f.y) < R + o.r) hurt(o, toFoe, 0, 0, 0);
+  if (d.death.playerDamage > 0 && Math.hypot(p.x - f.x, p.y - f.y) < R + p.r) hitPlayer(d.death.playerDamage * f.dmg / d.contactDamage);
 }
 function mergeOrbs() { const o = G.orbs.splice(0, 60); const sum = o.reduce((a, b) => a + b.v, 0); G.orbs.push({ x: G.p.x, y: G.p.y, v: sum, heal: 0, pull: true }); }
 function gainXp(v) {
@@ -1645,7 +1655,8 @@ function hitPlayer(dmg, raw) {   // raw: 혈마의 그림자 자신의 피해(�
   // 금종조: 막을 수 있으면 이번 피해는 없던 일(묶임·끌림도 없음). 맞은 셈은 쳐서 같은 장판이 곧바로 다시 때리지 않게 한다
   const gj = G.insEff.periodic_block;
   if (gj && G.blockCd <= 0) { G.blockCd = gj.intervalSeconds; p.iframe = LD.hitIframe; G.fx.push({ k: 'block', x: p.x, y: p.y, r: p.r * 2.2, t: 0, life: 0.45 }); return 'blocked'; }
-  p.hp -= Math.max(1, dmg * (raw ? 1 : enemyDmgMul()) * takenMul() - G.body.armor);   // 그림자 단계마다 화면 위 모든 적 피해 +10% p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
+  p.hp -= Math.max(1, dmg * (raw ? 1 : enemyDmgMul()) * takenMul() - G.body.armor);   // 그림자 단계마다 화면 위 모든 적 피해 +10%
+  p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
   return true;
 }
@@ -1850,6 +1861,10 @@ function render() {
     } else if (e.k === 'wave') {
       ctx.strokeStyle = `rgba(26,26,26,${0.8 * (1 - k)})`; ctx.lineWidth = 24 * (1 - k) + 2; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k), 0, TAU); ctx.stroke();
       ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k) * 0.97, 0, TAU); ctx.stroke();
+    } else if (e.k === 'splinter') {   // 목인나한 나뭇조각: 닿는 반경을 옅게 비추고 갈색 조각 열 개가 튄다
+      ctx.fillStyle = `rgba(120,80,40,${0.18 * (1 - k)})`; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+      ctx.strokeStyle = `rgba(96,62,30,${0.9 * (1 - k)})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      for (let i = 0; i < 10; i++) { const a = i * 0.628 + e.x * 7.1, r0 = R * (0.15 + 0.75 * easeOut(k)), r1 = r0 + R * 0.18; ctx.beginPath(); ctx.moveTo(X + Math.cos(a) * r0, Y + Math.sin(a) * r0); ctx.lineTo(X + Math.cos(a) * r1, Y + Math.sin(a) * r1); ctx.stroke(); }
     } else if (e.k === 'bell') {   // 범종 소리: 금빛 고리 두 겹이 기절 반경까지 퍼진다
       for (const q of [1, 0.75]) { ctx.strokeStyle = `rgba(201,162,39,${(1 - k) * q})`; ctx.lineWidth = 6 * (1 - k) + 1; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(Math.min(1, k * 1.4)) * q, 0, TAU); ctx.stroke(); }
     } else if (e.k === 'block') {   // 금종조가 막음: 금빛 종 테두리가 퍼진다
@@ -2278,6 +2293,7 @@ window.__ch = {
   bells: () => songBells().map(b => ({ x: Math.round(b.x), y: Math.round(b.y), touch: +b.touch.toFixed(2), stunR: +b.stunR.toFixed(2), ready: (G.bellCd[b.key] || 0) <= G.t })).concat(G.dropBells.map(b => ({ x: Math.round(b.x), y: Math.round(b.y), drop: true, life: +b.life.toFixed(1), uses: b.uses }))),
   pagodas() { const seen = new Set(), sp = LD.pagodaSpacing * sc(G.tier); for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const pt = pagodaPatchAt(G.p.x + dx * sp, G.p.y + dy * sp); if (pt) seen.add(pt); } return [...seen].map(pt => ({ x: Math.round(pt.x), y: Math.round(pt.y), R: +pt.R.toFixed(1), stones: pt.stones.length, minGap: +Math.min(...pt.stones.flatMap((a, i) => pt.stones.slice(i + 1).map(b => Math.hypot(a.x - b.x, a.y - b.y) - a.r - b.r))).toFixed(2) })); },
   stunned: () => G.foes.filter(f => f.stunT > 0 && !f.dead).length,
+  splinters: () => G.splinters || 0,   // 이번 생 목인나한 나뭇조각이 터진 수(RM-12)
   // 혈마의 그림자(RM-10): shadow() 지금 단계·세기·거리, shadowStep() 지금 시각의 단계
   shadow: () => G.shadow && { step: G.shadow.step, str: G.shadow.str, dist: +Math.hypot(G.shadow.x - G.p.x, G.shadow.y - G.p.y).toFixed(1), warn: G.shadow.warn },
   shadowStep: () => shadowStep(), shadowMinute: () => shadowMinute(),
