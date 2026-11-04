@@ -51,12 +51,6 @@ namespace BloodRain.Presentation.Meta
         const string CrimsonHex = "#B3261E";
         const string MutedHex = "#8A7F70";
 
-        static readonly Dictionary<string, string> StatKo = new Dictionary<string, string>
-        {
-            { "Might", "공력" }, { "MaxHealth", "기혈" }, { "MoveSpeed", "신법" }, { "Recovery", "회복" }, { "Magnet", "흡기" },
-            { "CooldownReduction", "쾌속" }, { "Growth", "심득" }, { "Luck", "기연" }, { "Greed", "탐욕" },
-            { "DashCharges", "경공 충전" }, { "Armor", "호신" }, { "FoodHeal", "음식 회복" },
-        };
         static readonly HashSet<string> Flat = new HashSet<string> { "Recovery", "Luck", "DashCharges", "Armor" };
 
         GameData _data;
@@ -82,8 +76,8 @@ namespace BloodRain.Presentation.Meta
             bool first = firstRebirth || soul.IsFirstRebirth;
             Draw = new RebirthDraw(c, sects, soul.CandidateCount + extraCandidates, soul.RerollsPerRebirth + extraRerolls, first, rng);
             _sub.text = first
-                ? $"첫 환혼 · {string.Join("·", c.Rebirth.FirstRebirth.Select(id => c.Sect(id).NameKo))} 가운데 하나"
-                : $"{soul.Lives + 1}번째 생 · 목 노인이 그날 밤 숨진 제자 {CountKo(Draw.Count)}을 보여 준다";
+                ? Loc.F("ui.chimbang.first", string.Join("·", c.Rebirth.FirstRebirth.Select(id => Loc.Sect(c.Sect(id)))))
+                : Loc.F("ui.chimbang.nth", soul.Lives + 1, CountWord(Draw.Count));
             _done = false;
             _soul = soul;
             _map.SetSoul(soul);
@@ -105,12 +99,12 @@ namespace BloodRain.Presentation.Meta
             _upgrades.anchorMin = _upgrades.anchorMax = new Vector2(1f, 0f);
             _upgrades.anchoredPosition = new Vector2(-360, 215);
             _upgrades.sizeDelta = new Vector2(640, 120);
-            var head = Text("환혼 강화 제목", _upgrades, $"환혼 강화 <size=75%><alpha=#88>윤회의 기 {soul.RebirthQi:N0}<alpha=#FF></size>", 22, FontStyles.Bold);
+            var head = Text("환혼 강화 제목", _upgrades, UpgradeHead(soul), 22, FontStyles.Bold);
             Place(head.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, 0), new Vector2(640, 32));
             float y = -40;
             foreach (var up in _data.Cheonha.Rebirth.Upgrades)
             {
-                var row = MetaShopRow.Upgrade(_upgrades, font, soul, up, () => { foreach (var r in _upgradeRows) r.Refresh(); head.text = $"환혼 강화 <size=75%><alpha=#88>윤회의 기 {soul.RebirthQi:N0}<alpha=#FF></size>"; }, 640);
+                var row = MetaShopRow.Upgrade(_upgrades, font, soul, up, () => { foreach (var r in _upgradeRows) r.Refresh(); head.text = UpgradeHead(soul); }, 640);
                 row.Rect.anchorMin = row.Rect.anchorMax = new Vector2(0.5f, 1f);
                 row.Rect.anchoredPosition = new Vector2(0, y);
                 _upgradeRows.Add(row);
@@ -118,8 +112,11 @@ namespace BloodRain.Presentation.Meta
             }
         }
 
-        /// <summary>셋·넷(웹 시안 "제자 셋을"). 받침 있는 말만 와서 조사는 '을'로 둔다.</summary>
-        static string CountKo(int n) => n switch { 3 => "셋", 4 => "넷", 5 => "다섯", _ => n.ToString() };
+        static string UpgradeHead(Soul soul) =>
+            $"{Loc.T("ui.chimbang.upgrades")} <size=75%><alpha=#88>{Loc.F("ui.qi.balance", soul.RebirthQi.ToString("N0"))}<alpha=#FF></size>";
+
+        /// <summary>셋·넷(웹 시안 "제자 셋을"). 한국어는 받침 있는 말만 와서 조사는 '을'로 둔다. 표에 없는 수는 숫자로.</summary>
+        static string CountWord(int n) => n >= 3 && n <= 5 ? Loc.T($"ui.count.{n}") : n.ToString();
 
         public void Reroll()
         {
@@ -158,7 +155,7 @@ namespace BloodRain.Presentation.Meta
             for (int i = 0; i < Draw.Candidates.Count; i++) BuildCard(Draw.Candidates[i], i);
             _reroll.gameObject.SetActive(!Draw.IsFirst);
             _reroll.interactable = Draw.RerollsLeft > 0;
-            _rerollLabel.text = $"다시 고르기 <size=80%>(남은 {Draw.RerollsLeft})</size>  <size=70%><alpha=#88>R<alpha=#FF></size>";
+            _rerollLabel.text = $"{Loc.T("ui.chimbang.reroll")} <size=80%>{Loc.F("ui.chimbang.reroll_left", Draw.RerollsLeft)}</size>  <size=70%><alpha=#88>R<alpha=#FF></size>";
         }
 
         void BuildFrame()
@@ -178,12 +175,12 @@ namespace BloodRain.Presentation.Meta
             bg.preserveAspect = false;
             bg.raycastTarget = false;
 
-            var title = Text("제목", root, "침방 寢房", 46, FontStyles.Bold);
+            var title = Text("제목", root, Loc.T("ui.chimbang.title"), 46, FontStyles.Bold);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -70), new Vector2(1200, 70));
             _sub = Text("부제", root, "", 26, FontStyles.Normal);
             Place(_sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -125), new Vector2(1400, 40));
             // 목 노인 자리(그림이 오면 배경에 들어 있다). 지금은 이름만
-            var elder = Text("목 노인", root, "<alpha=#88>목 노인<alpha=#FF>", 22, FontStyles.Italic);
+            var elder = Text("목 노인", root, $"<alpha=#88>{Loc.T("ui.chimbang.elder")}<alpha=#FF>", 22, FontStyles.Italic);
             Place(elder.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -165), new Vector2(600, 32));
 
             _cards = Rect("후보 카드", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
@@ -230,7 +227,7 @@ namespace BloodRain.Presentation.Meta
             paper.color = new Color(Paper.r, Paper.g, Paper.b, 0.94f);
             paper.raycastTarget = false;
 
-            var name = Text("이름", rt, $"{sect.NameKo} 제자{(cand.Female ? " <size=70%>(여)</size>" : "")}", 40, FontStyles.Bold);
+            var name = Text("이름", rt, $"{Loc.Disciple(sect)}{(cand.Female ? $" <size=70%>{Loc.T("ui.chimbang.female")}</size>" : "")}", 40, FontStyles.Bold);
             Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -60), new Vector2(250, 56));
             name.enableAutoSizing = true; name.fontSizeMin = 26; name.fontSizeMax = 38;
             var key = Text("번호", rt, $"<alpha=#88>{index + 1}<alpha=#FF>", 24, FontStyles.Normal);
@@ -250,15 +247,17 @@ namespace BloodRain.Presentation.Meta
             var s = cand.Sect;
             var r = cand.Region;
             var sb = new StringBuilder();
-            string dens = $"혈운 {r.Density:0.0}";
+            string dens = Loc.F("ui.density", r.Density.ToString("0.0"));
             if (r.Density >= 2f) dens = $"<color={CrimsonHex}><b>{dens}</b></color>";
-            sb.Append($"{r.NameKo}에서 태어난다 · {dens}\n");
-            string weapon = _data.Weapons.FirstOrDefault(w => w.Id == s.StartWeapon)?.NameKo ?? s.StartWeapon;
-            sb.Append($"{weapon} · 기혈 {s.MaxHealth:0} · 걸음 {Mathf.RoundToInt(s.MoveSpeed * 100)}%\n");
-            string leader = s.Leader != null ? _data.Characters.FirstOrDefault(c => c.Id == s.Leader)?.NameKo ?? s.Leader : null;
-            sb.Append(leader != null ? $"대표 인물 {leader}\n" : $"<color={MutedHex}>대표 인물 없음</color>\n");
+            sb.Append(Loc.F("ui.chimbang.born_in", Loc.Region(r))).Append(" · ").Append(dens).Append('\n');
+            var wd = _data.Weapons.FirstOrDefault(w => w.Id == s.StartWeapon);
+            string weapon = wd != null ? Loc.Weapon(wd) : s.StartWeapon;
+            sb.Append(Loc.F("ui.chimbang.body", weapon, s.MaxHealth.ToString("0"), Mathf.RoundToInt(s.MoveSpeed * 100))).Append('\n');
+            var lc = s.Leader != null ? _data.Characters.FirstOrDefault(c => c.Id == s.Leader) : null;
+            string leader = lc != null ? Loc.Character(lc) : s.Leader;
+            sb.Append(leader != null ? Loc.F("ui.chimbang.leader", leader) + "\n" : $"<color={MutedHex}>{Loc.T("ui.chimbang.no_leader")}</color>\n");
             sb.Append('\n');
-            if (cand.Traits.Count == 0) sb.Append($"<color={MutedHex}>타고난 성질 없음</color>");
+            if (cand.Traits.Count == 0) sb.Append($"<color={MutedHex}>{Loc.T("ui.chimbang.no_trait")}</color>");
             foreach (var t in cand.Traits) sb.Append(TraitLine(t)).Append('\n');
             return sb.ToString().TrimEnd('\n');
         }
@@ -267,17 +266,17 @@ namespace BloodRain.Presentation.Meta
         public static string TraitLine(BirthTraitDef t)
         {
             var parts = t.Stats.Select(kv => FormatStat(kv.Key, kv.Value)).ToList();
-            if (t.YinyangStart != 0) parts.Add($"음양 시작 {(t.YinyangStart > 0 ? "+" : "−")}{Math.Abs(t.YinyangStart)}");
-            if (t.RebirthQi != 0) parts.Add($"윤회의 기 +{Mathf.RoundToInt(t.RebirthQi * 100)}%");
-            return $"<b>{t.NameKo}</b> <size=75%><alpha=#99>{t.Hanja}<alpha=#FF></size>\n<size=90%>{string.Join(" · ", parts)}</size>";
+            if (t.YinyangStart != 0) parts.Add(Loc.F("ui.trait.yinyang", $"{(t.YinyangStart > 0 ? "+" : "−")}{Math.Abs(t.YinyangStart)}"));
+            if (t.RebirthQi != 0) parts.Add(Loc.F("ui.trait.rebirth_qi", Mathf.RoundToInt(t.RebirthQi * 100)));
+            return $"<b>{Loc.Trait(t)}</b> <size=75%><alpha=#99>{Loc.Hanja(t.Hanja)}<alpha=#FF></size>\n<size=90%>{string.Join(" · ", parts)}</size>";
         }
 
         public static string FormatStat(string key, float v)
         {
             string sign = v > 0 ? "+" : v < 0 ? "−" : "";
             float a = Math.Abs(v);
-            string ko = StatKo.TryGetValue(key, out var n) ? n : key;
-            if (key == "Recovery") return $"{ko} 초당 {sign}{a:0.##}";
+            string ko = Loc.Stat(key);
+            if (key == "Recovery") return $"{ko} {Loc.F("ui.per_second", $"{sign}{a:0.##}")}";
             if (Flat.Contains(key)) return $"{ko} {sign}{a:0.##}";
             return $"{ko} {sign}{Mathf.RoundToInt(a * 100)}%";
         }

@@ -96,6 +96,25 @@
 | 은빛 등롱 | Silver Lantern | 银灯笼 |
 | 혈월 | Blood Moon | 血月 |
 
+연무장·성질 카드의 능력치 이름(`strings/*.json` 의 `ui.stat.<이름>`, 2026-11-04 L-05). 위 표에 있는 공력·기혈·호신·쾌속·기연·정진·파기는 그 표기 그대로.
+
+| 한국어 | 영어 | 간체 | 코드 이름 |
+| --- | --- | --- | --- |
+| 회복 | Recovery | 回复 | Recovery |
+| 기세 | Area | 气势 | Area |
+| 탄속 | Projectile Speed | 弹速 | ProjectileSpeed |
+| 지속 | Duration | 持续 | Duration |
+| 분광 | Amount | 分光 | Amount |
+| 신법 | Footwork | 身法 | MoveSpeed |
+| 흡기 | Qi Pull | 吸气 | Magnet |
+| 심득 | Growth | 心得 | Growth |
+| 탐욕 | Greed | 贪欲 | Greed |
+| 진기 충전 | Dantian Charge | 丹田充能 | UltimateCharge |
+| 경공 충전 | Lightfoot Charges | 轻功次数 | DashCharges |
+| 재기 | Revival | 再起 | Revival |
+| 재고 | Rerolls | 重选 | Rerolls |
+| 음식 회복 | Food Healing | 食物回复 | FoodHeal |
+
 ## 세력·곳·이야기
 
 | 한국어 | 영어 | 간체 |

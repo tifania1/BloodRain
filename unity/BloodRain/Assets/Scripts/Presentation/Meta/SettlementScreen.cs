@@ -73,26 +73,27 @@ namespace BloodRain.Presentation.Meta
             var scale = new Scale(_data);
             var regions = new Regions(_data);
 
-            string end = record.EndWay switch { "zuohwa" => "좌화 坐化", "sealed" => "봉인 封印", _ => "쓰러짐" };
-            var title = Text(_root, $"{end} · 한 생이 끝났다", 44, FontStyles.Bold, Ink);
+            string end = Loc.T(record.EndWay switch { "zuohwa" => "ui.settle.end.zuohwa", "sealed" => "ui.settle.end.sealed", _ => "ui.settle.end.fallen" });
+            var title = Text(_root, Loc.F("ui.settle.title", end), 44, FontStyles.Bold, Ink);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -70), new Vector2(1400, 64));
-            string sect = record.Sect != null ? _data.Cheonha.Sect(record.Sect).NameKo + " 제자" : "진소운";
+            string sect = record.Sect != null ? Loc.Disciple(_data.Cheonha.Sect(record.Sect)) : Loc.T("characters.jin_sowoon.name", "진소운");
             var sub = Text(_root, sect, 26, FontStyles.Normal, new Color(Ink.r, Ink.g, Ink.b, 0.6f));
             Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -122), new Vector2(1000, 40));
 
             // ---- 왼쪽: 한 생 ----
             var left = Column(new Vector2(-430, 0));
             int sec = Mathf.FloorToInt(stats.SurvivalSeconds);
-            string realm = scale.Realms.FirstOrDefault(r => r.Id == record.HighestRealm)?.NameKo ?? record.HighestRealm;
-            var visited = record.VisitedRegions.Select(id => regions.All.FirstOrDefault(r => r.Id == id)?.NameKo ?? id).ToList();
+            var realmDef = scale.Realms.FirstOrDefault(r => r.Id == record.HighestRealm);
+            string realm = realmDef != null ? Loc.Realm(realmDef) : record.HighestRealm;
+            var visited = record.VisitedRegions.Select(id => regions.All.FirstOrDefault(r => r.Id == id) is RegionDef rd ? Loc.Region(rd) : id).ToList();
             float y = 0;
-            Row(left, ref y, "생존 시간", $"{sec / 60}:{sec % 60:00}");
-            Row(left, ref y, "오른 경지", realm);
-            Row(left, ref y, "밟은 땅", $"{visited.Count}곳", string.Join("·", visited));
-            Row(left, ref y, "처치", $"{stats.Kills:N0}");
-            Row(left, ref y, "혈정", $"{stats.BloodCrystal:N0}");
+            Row(left, ref y, Loc.T("ui.settle.survival"), $"{sec / 60}:{sec % 60:00}");
+            Row(left, ref y, Loc.T("ui.settle.realm"), realm);
+            Row(left, ref y, Loc.T("ui.settle.regions"), Loc.F("ui.settle.regions_count", visited.Count), string.Join("·", visited));
+            Row(left, ref y, Loc.T("ui.settle.kills"), $"{stats.Kills:N0}");
+            Row(left, ref y, Loc.T("ui.settle.crystal"), $"{stats.BloodCrystal:N0}");
             y -= 24;
-            var head = Text(left, "무공별 피해", 24, FontStyles.Bold, Ink);
+            var head = Text(left, Loc.T("ui.settle.damage_head"), 24, FontStyles.Bold, Ink);
             head.alignment = TextAlignmentOptions.Left;
             Place(head.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, y - 18), new Vector2(640, 34));
             y -= 46;
@@ -100,14 +101,15 @@ namespace BloodRain.Presentation.Meta
             foreach (var kv in stats.DamageByWeapon.OrderByDescending(k => k.Value).Take(6))
             {
                 float share = sum > 0 ? (float)(kv.Value / sum) : 0f;
-                string name = _data.Weapons.FirstOrDefault(w => w.Id == kv.Key)?.NameKo ?? kv.Key;
+                var wd = _data.Weapons.FirstOrDefault(w => w.Id == kv.Key);
+                string name = wd != null ? Loc.Weapon(wd) : kv.Key;
                 Bar(left, y, name, share);
                 y -= 38;
             }
 
             // ---- 오른쪽: 윤회의 기 ----
             var right = Column(new Vector2(430, 0));
-            var qhead = Text(right, "윤회의 기 輪迴氣", 30, FontStyles.Bold, Ink);
+            var qhead = Text(right, Loc.T("ui.settle.qi_head"), 30, FontStyles.Bold, Ink);
             Place(qhead.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -20), new Vector2(640, 44));
             var res = record.RebirthQi;
             float qy = -80;
@@ -137,8 +139,8 @@ namespace BloodRain.Presentation.Meta
             if (summary.NewlyUnlockedSects.Count > 0 || summary.NewSealStones.Count > 0)
             {
                 var extra = new List<string>();
-                if (summary.NewSealStones.Count > 0) extra.Add("봉인석 " + string.Join("·", summary.NewSealStones.Select(s => regions.All.FirstOrDefault(r => r.Id == s)?.SealStone ?? s)));
-                if (summary.NewlyUnlockedSects.Count > 0) extra.Add("새 문파 " + string.Join("·", summary.NewlyUnlockedSects.Select(id => _data.Cheonha.Sect(id).NameKo)));
+                if (summary.NewSealStones.Count > 0) extra.Add(Loc.F("ui.settle.seal_stones", string.Join("·", summary.NewSealStones.Select(s => regions.All.FirstOrDefault(r => r.Id == s) is RegionDef rd ? Loc.SealStone(rd) : s))));
+                if (summary.NewlyUnlockedSects.Count > 0) extra.Add(Loc.F("ui.settle.new_sects", string.Join("·", summary.NewlyUnlockedSects.Select(id => Loc.Sect(_data.Cheonha.Sect(id))))));
                 var ex = Text(right, string.Join("   ", extra), 22, FontStyles.Bold, Crimson);
                 ex.alignment = TextAlignmentOptions.Right;
                 Place(ex.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - 96), new Vector2(620, 32));
@@ -147,13 +149,13 @@ namespace BloodRain.Presentation.Meta
             if (summary.NewTornManuals.Count > 0)
             {
                 var names = summary.NewTornManuals.Select(id => ManualNames.Name(_data, id));
-                var torn = Text(right, $"찢긴 비급 장경각에 오름  <size=85%>{string.Join("·", names)}</size>", 22, FontStyles.Bold, Crimson);
+                var torn = Text(right, Loc.T("ui.settle.torn") + $"  <size=85%>{string.Join("·", names)}</size>", 22, FontStyles.Bold, Crimson);
                 torn.alignment = TextAlignmentOptions.Right;
                 torn.textWrappingMode = TextWrappingModes.Normal;
                 Place(torn.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - 140), new Vector2(620, 60));
             }
 
-            var btn = MakeButton(_root, "객잔으로  <size=70%><alpha=#88>Enter<alpha=#FF></size>");
+            var btn = MakeButton(_root, Loc.T("ui.settle.to_inn") + "  <size=70%><alpha=#88>Enter<alpha=#FF></size>");
             Place((RectTransform)btn.transform, new Vector2(0.5f, 0f), new Vector2(0, 80), new Vector2(380, 64));
             btn.onClick.AddListener(Finish);
 
@@ -164,14 +166,14 @@ namespace BloodRain.Presentation.Meta
 
         (string label, string note) LineText(RebirthQiLine line, RebirthQiResult res) => line.Kind switch
         {
-            RebirthQiLineKind.Orbs => ("진기 × 혈운 농도", $"구슬 {line.Count:N0}개"),
-            RebirthQiLineKind.BossFirstKill => ("땅의 주인", $"처음 {line.Count}"),
-            RebirthQiLineKind.BossRepeatKill => ("땅의 주인", $"다시 {line.Count}"),
-            RebirthQiLineKind.FirstVisitRegion => ("처음 밟은 땅", $"{line.Count}곳"),
-            RebirthQiLineKind.FirstReachRealm => ("처음 오른 경지", $"{line.Count}"),
-            RebirthQiLineKind.Silver => ("남은 은자 절반", $"은자 {line.Count:N0}"),
-            RebirthQiLineKind.Traits => ("성질 배율", $"{(res.TraitBonus >= 0 ? "+" : "")}{Mathf.RoundToInt(res.TraitBonus * 100)}%"),
-            RebirthQiLineKind.BloodMoon => ("혈월 보상", $"×{res.RewardMultiplier:0.##}"),
+            RebirthQiLineKind.Orbs => (Loc.T("ui.settle.line.orbs"), Loc.F("ui.settle.line.orbs_note", line.Count.ToString("N0"))),
+            RebirthQiLineKind.BossFirstKill => (Loc.T("ui.settle.line.boss"), Loc.F("ui.settle.line.boss_first", line.Count)),
+            RebirthQiLineKind.BossRepeatKill => (Loc.T("ui.settle.line.boss"), Loc.F("ui.settle.line.boss_repeat", line.Count)),
+            RebirthQiLineKind.FirstVisitRegion => (Loc.T("ui.settle.line.first_region"), Loc.F("ui.settle.regions_count", line.Count)),
+            RebirthQiLineKind.FirstReachRealm => (Loc.T("ui.settle.line.first_realm"), $"{line.Count}"),
+            RebirthQiLineKind.Silver => (Loc.T("ui.settle.line.silver"), Loc.F("ui.settle.line.silver_note", line.Count.ToString("N0"))),
+            RebirthQiLineKind.Traits => (Loc.T("ui.settle.line.traits"), $"{(res.TraitBonus >= 0 ? "+" : "")}{Mathf.RoundToInt(res.TraitBonus * 100)}%"),
+            RebirthQiLineKind.BloodMoon => (Loc.T("ui.settle.line.blood_moon"), $"×{res.RewardMultiplier:0.##}"),
             _ => (line.Kind.ToString(), ""),
         };
 
@@ -199,8 +201,8 @@ namespace BloodRain.Presentation.Meta
                 value.text = s <= 0f ? "" : $"+{Mathf.RoundToInt(amount * EaseOut(s)):N0}";
             }
             float tt = Mathf.Clamp01((t - (_qiLines.Count + 1) * lineInterval) / 0.4f);
-            _total.text = tt <= 0f ? "" : $"합계  {Mathf.RoundToInt(_totalAmount * EaseOut(tt)):N0}";
-            _balance.text = tt < 1f ? "" : $"혼에 남은 윤회의 기 {_balanceAfter:N0}";
+            _total.text = tt <= 0f ? "" : Loc.F("ui.settle.total", Mathf.RoundToInt(_totalAmount * EaseOut(tt)).ToString("N0"));
+            _balance.text = tt < 1f ? "" : Loc.F("ui.settle.balance", _balanceAfter.ToString("N0"));
         }
 
         static float EaseOut(float x) => 1f - (1f - x) * (1f - x);

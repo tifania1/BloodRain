@@ -33,6 +33,22 @@ namespace BloodRain.Presentation
         public static string T(string key, string korean) => Current.Get(key, korean);
         public static string F(string key, params object[] args) => Current.Format(key, args);
 
+        // ── 데이터 이름(키는 Core/Data/Strings.cs 규칙: 파일.경로.필드, 목록은 id). 화면 여럿이 같이 쓴다 ──
+        public static string Sect(SectDef s) => T($"cheonha.sects.{s.Id}.name", s.NameKo);
+        public static string Disciple(SectDef s) => F("ui.rebirth.disciple", Sect(s));
+        public static string Region(RegionDef r) => T($"cheonha.regions.{r.Id}.name", r.NameKo);
+        public static string SealStone(RegionDef r) => T($"cheonha.regions.{r.Id}.sealStone", r.SealStone);
+        public static string Realm(RealmDef r) => T($"balance.realms.{r.Id}.name", r.NameKo);
+        public static string Weapon(WeaponDef w) => T($"weapons.{w.Id}.name", w.NameKo);
+        public static string Character(CharacterDef c) => T($"characters.{c.Id}.name", c.NameKo);
+        public static string Boss(BossDef b) => T($"enemies.bosses.{b.Id}.name", b.NameKo);
+        public static string Trait(BirthTraitDef t) => T($"cheonha.birthTraits.list.{t.Id}.name", t.NameKo);
+        public static string Upgrade(RebirthUpgradeDef u) => T($"cheonha.rebirth.upgrades.{u.Id}.name", u.NameKo);
+        /// <summary>능력치 이름(Might → 공력). 표에 없는 이름이면 그대로.</summary>
+        public static string Stat(string stat) => T($"ui.stat.{stat}", stat);
+        /// <summary>이름 옆에 붙이는 한자. 간체 화면에선 이름이 이미 한자라 겹치니 뺀다.</summary>
+        public static string Hanja(string hanja) => Current.Lang == "zh-Hans" ? "" : hanja ?? "";
+
         static string FromSystem(SystemLanguage l) =>
             l == SystemLanguage.Korean ? "ko"
             : l == SystemLanguage.ChineseSimplified || l == SystemLanguage.Chinese ? "zh-Hans"

@@ -13,13 +13,7 @@ namespace BloodRain.Presentation.Meta
     // 값(레벨·비용·사기)은 모두 Core Soul 이 정한다. 칸은 그리기와 누르기만.
     public sealed class MetaShopRow
     {
-        public static readonly Dictionary<string, string> StatKo = new Dictionary<string, string>
-        {
-            { "Might", "공력" }, { "MaxHealth", "기혈" }, { "Armor", "호신" }, { "Recovery", "회복" }, { "CooldownReduction", "쾌속" },
-            { "Area", "기세" }, { "ProjectileSpeed", "탄속" }, { "Duration", "지속" }, { "Amount", "분광" }, { "MoveSpeed", "신법" },
-            { "Magnet", "흡기" }, { "Growth", "심득" }, { "Luck", "기연" }, { "Greed", "탐욕" }, { "UltimateCharge", "진기 충전" },
-            { "DashCharges", "경공 충전" }, { "Revival", "재기" }, { "Rerolls", "재고" }, { "Banishes", "파기" }, { "Skips", "정진" },
-        };
+        // 능력치 이름은 strings/ko.json 의 ui.stat.<이름>(Loc.Stat).
         static readonly HashSet<string> Flat = new HashSet<string>
             { "Armor", "Recovery", "Amount", "Luck", "DashCharges", "Revival", "Rerolls", "Banishes", "Skips" };
         // 기획서 10장 표처럼 줄어드는 쪽으로 보이는 능력치
@@ -75,7 +69,7 @@ namespace BloodRain.Presentation.Meta
 
         /// <summary>연무장 한 항목.</summary>
         public static MetaShopRow Training(Transform parent, TMP_FontAsset font, Soul soul, TrainingItemDef item, Action changed, float width = 600) =>
-            new MetaShopRow(parent, font, StatKo.TryGetValue(item.Stat, out var ko) ? ko : item.Stat, "레벨당 " + FormatPerLevel(item.Stat, item.PerLevel),
+            new MetaShopRow(parent, font, Loc.Stat(item.Stat), Loc.F("ui.shop.per_level", FormatPerLevel(item.Stat, item.PerLevel)),
                 item.MaxLevel, () => soul.TrainingLevel(item.Stat), () => soul.TrainingCost(item.Stat), () => soul.RebirthQi,
                 () => soul.TryBuyTraining(item.Stat), changed, width);
 
@@ -83,15 +77,15 @@ namespace BloodRain.Presentation.Meta
         public static MetaShopRow Upgrade(Transform parent, TMP_FontAsset font, Soul soul, RebirthUpgradeDef u, Action changed, float width = 600)
         {
             var (key, amount) = Soul.ParseEffect(u.Effect);
-            string effect = key == "candidates" ? $"환생 후보 +{amount}" : key == "rerolls" ? $"침방 다시 고르기 +{amount}" : u.Effect;
-            return new MetaShopRow(parent, font, u.NameKo, effect, u.MaxLevel, () => soul.UpgradeLevel(u.Id), () => soul.UpgradeCost(u.Id),
+            string effect = key == "candidates" ? Loc.F("ui.shop.candidates", amount) : key == "rerolls" ? Loc.F("ui.shop.rerolls", amount) : u.Effect;
+            return new MetaShopRow(parent, font, Loc.Upgrade(u), effect, u.MaxLevel, () => soul.UpgradeLevel(u.Id), () => soul.UpgradeCost(u.Id),
                 () => soul.RebirthQi, () => soul.TryBuyUpgrade(u.Id), changed, width);
         }
 
         public static string FormatPerLevel(string stat, float v)
         {
             string sign = Negative.Contains(stat) ? "−" : "+";
-            if (stat == "Recovery") return $"초당 {sign}{v:0.##}";
+            if (stat == "Recovery") return Loc.F("ui.per_second", $"{sign}{v:0.##}");
             if (Flat.Contains(stat)) return $"{sign}{v:0.##}";
             return $"{sign}{v * 100:0.#}%";
         }
@@ -102,7 +96,7 @@ namespace BloodRain.Presentation.Meta
             for (int i = 0; i < _pips.Length; i++) _pips[i].color = i < lv ? Gold : new Color(Ink.r, Ink.g, Ink.b, 0.18f);
             var c = _cost();
             _buy.interactable = c.HasValue && c.Value <= _balance();
-            _buyLabel.text = c.HasValue ? $"{c.Value:N0}" : "다 익힘";
+            _buyLabel.text = c.HasValue ? $"{c.Value:N0}" : Loc.T("ui.shop.maxed");
             _buy.GetComponent<Image>().color = c.HasValue ? new Color(0.25f, 0.20f, 0.17f) : new Color(Gold.r, Gold.g, Gold.b, 0.5f);
         }
 

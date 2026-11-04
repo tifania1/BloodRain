@@ -44,7 +44,7 @@ namespace BloodRain.Presentation.Hud
                 {
                     _shownId = region.Id;
                     _shownDensity10 = d10;
-                    if (regionText != null) regionText.text = RegionLine(region.NameKo, region.Hanja, Density);
+                    if (regionText != null) regionText.text = RegionLine(Loc.Region(region), Loc.Hanja(region.Hanja), Density);
                 }
             }
             if (rain != null) rain.density = Density;
@@ -58,12 +58,12 @@ namespace BloodRain.Presentation.Hud
         }
 
         /// <summary>"청운진 靑雲鎭 · 혈운 0.8". 농도 2 이상은 주홍 굵게(웹 시안 .thick).</summary>
-        public static string RegionLine(string nameKo, string hanja, float density)
+        public static string RegionLine(string name, string hanja, float density)
         {
-            string dens = $"혈운 {density:0.0}";
+            string dens = Loc.F("ui.density", density.ToString("0.0"));
             if (density >= 2f) dens = $"<color={CrimsonHex}><b>{dens}</b></color>";
             string han = string.IsNullOrEmpty(hanja) ? "" : $" <size=80%><alpha=#99>{hanja}<alpha=#FF></size>";
-            return $"{nameKo}{han}  ·  {dens}";
+            return $"{name}{han}  ·  {dens}";
         }
     }
 }

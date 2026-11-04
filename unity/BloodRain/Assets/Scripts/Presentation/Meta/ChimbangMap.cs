@@ -93,9 +93,10 @@ namespace BloodRain.Presentation.Meta
                     Put(flag.rectTransform, p + new Vector2(0, 26), new Vector2(30, 30));
                 }
                 // 지명 밑에 옅은 종이 번짐(바쁜 수묵 위에서 읽히게)
+                string place = Loc.Region(r);
                 var under = Img("지명 바탕 " + r.NameKo, _soft, new Color(0.93f, 0.89f, 0.80f, visited || sealed_ ? 0.75f : 0.35f));
-                Put(under, p + new Vector2(0, -14), new Vector2(r.NameKo.Length * 18f + 40f, 30));
-                var label = Text("지명 " + r.NameKo, r.NameKo, 16, visited || sealed_ ? Ink : new Color(Ink.r, Ink.g, Ink.b, 0.38f),
+                Put(under, p + new Vector2(0, -14), new Vector2(place.Length * (Loc.Current.Lang == "en" ? 9f : 18f) + 40f, 30));
+                var label = Text("지명 " + r.NameKo, place, 16, visited || sealed_ ? Ink : new Color(Ink.r, Ink.g, Ink.b, 0.38f),
                     visited || sealed_ ? FontStyles.Bold : FontStyles.Normal);
                 Put(label.rectTransform, p + new Vector2(0, -14), new Vector2(160, 24));
                 _labels[r.Id] = label;
@@ -114,7 +115,7 @@ namespace BloodRain.Presentation.Meta
             {
                 var r = _regions.Region(kv.Key);
                 bool known = _soul.HasVisited(r.Id) || (r.SealStone != null && _soul.SealStones.Contains(r.SealStone));
-                kv.Value.text = r.NameKo;
+                kv.Value.text = Loc.Region(r);
                 kv.Value.color = known ? Ink : new Color(Ink.r, Ink.g, Ink.b, 0.38f);
             }
             if (cand == null) return;
@@ -137,7 +138,7 @@ namespace BloodRain.Presentation.Meta
                 ir.dashed = realm != _realmJeol;
                 ((RectTransform)ring.transform).anchoredPosition = p;
                 _hover.Add(ring);
-                var tag = Text("원 이름", _scale.Realms[realm].NameKo, 15, ir.color, FontStyles.Italic);
+                var tag = Text("원 이름", Loc.Realm(_scale.Realms[realm]), 15, ir.color, FontStyles.Italic);
                 Put(tag.rectTransform, p + new Vector2(0, ir.radius + 10), new Vector2(80, 20));
                 _hover.Add(tag.gameObject);
             }
@@ -152,8 +153,9 @@ namespace BloodRain.Presentation.Meta
                 var r = _regions.Region(kv.Key);
                 if (r.Boss == null) continue;
                 if (System.Numerics.Vector2.Distance(_regions.Center(r), birth) > outer) continue;
-                string boss = _data.Bosses.FirstOrDefault(e => e.Id == r.Boss)?.NameKo ?? r.Boss;
-                kv.Value.text = $"{r.NameKo} <color={CrimsonHex}><b>· {boss}</b></color>";
+                var bd = _data.Bosses.FirstOrDefault(e => e.Id == r.Boss);
+                string boss = bd != null ? Loc.Boss(bd) : r.Boss;
+                kv.Value.text = $"{Loc.Region(r)} <color={CrimsonHex}><b>· {boss}</b></color>";
                 kv.Value.color = Ink;
             }
         }

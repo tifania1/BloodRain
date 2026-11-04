@@ -12,14 +12,16 @@ namespace BloodRain.Presentation.Meta
         {
             var syn = data.Synergies;
             var link = syn.Links.FirstOrDefault(l => l.ManualId == manualId);
-            if (link != null) return (link.NameKo, link.Hanja, link.Desc);
+            if (link != null)
+                return (Loc.T($"synergies.links.{link.Id}.name", link.NameKo), Loc.Hanja(link.Hanja), Loc.T($"synergies.links.{link.Id}.desc", link.Desc));
             int colon = manualId.IndexOf(':');
             if (colon > 0 && int.TryParse(manualId.Substring(colon + 1), out int count))
             {
                 var school = syn.Schools.FirstOrDefault(s => s.Id == manualId.Substring(0, colon));
-                var tier = school?.Tiers.FirstOrDefault(t => t.Count == count);
-                if (school != null && tier != null)
-                    return ($"{school.NameKo} 진전 {count}단계", school.Hanja, tier.Desc);
+                int tier = school == null ? -1 : school.Tiers.FindIndex(t => t.Count == count);
+                if (school != null && tier >= 0)
+                    return (Loc.F("ui.manual.lineage", Loc.T($"synergies.schools.{school.Id}.name", school.NameKo), count), Loc.Hanja(school.Hanja),
+                        Loc.T($"synergies.schools.{school.Id}.tiers.{tier}.desc", school.Tiers[tier].Desc));
             }
             return (manualId, "", "");
         }

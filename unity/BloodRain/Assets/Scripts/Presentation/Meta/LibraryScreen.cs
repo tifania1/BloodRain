@@ -64,9 +64,9 @@ namespace BloodRain.Presentation.Meta
             var bg = Panel(_root, Paper);
             bg.anchorMin = Vector2.zero; bg.anchorMax = Vector2.one; bg.offsetMin = bg.offsetMax = Vector2.zero;
 
-            var title = Text(_root, "장경각 藏經閣", 44, FontStyles.Bold, Ink);
+            var title = Text(_root, Loc.T("ui.library.title"), 44, FontStyles.Bold, Ink);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -64), new Vector2(1000, 60));
-            var sub = Text(_root, "생을 마치며 남긴 찢긴 비급을 윤회의 기로 이어 붙인다", 22, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.55f));
+            var sub = Text(_root, Loc.T("ui.library.sub"), 22, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.55f));
             Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -108), new Vector2(1200, 32));
             _balance = Text(_root, "", 28, FontStyles.Bold, Gold);
             Place(_balance.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(1200, 40));
@@ -121,9 +121,9 @@ namespace BloodRain.Presentation.Meta
         public void Refresh()
         {
             var (stones, qi) = _soul.NextRestoreCost;
-            _balance.text = $"윤회의 기 {_soul.RebirthQi:N0}   ·   봉인석 {_soul.SealStoneCount}개";
+            _balance.text = Loc.F("ui.library.balance", _soul.RebirthQi.ToString("N0"), _soul.SealStoneCount);
             int torn = _soul.TornManuals.Count, restored = _soul.RestoredManuals.Count;
-            _cost.text = $"찢긴 비급 {torn} / {_rows.Count}   복원 {restored}      다음 복원: 봉인석 {stones}개 이상 지님 · 윤회의 기 {qi:N0}";
+            _cost.text = Loc.F("ui.library.cost", torn, _rows.Count, restored, stones, qi.ToString("N0"));
             foreach (var r in _rows)
             {
                 bool isTorn = _soul.TornManuals.Contains(r.Id);
@@ -131,9 +131,9 @@ namespace BloodRain.Presentation.Meta
                 var (name, hanja, desc) = ManualNames.Of(_soul.Data, r.Id);
                 if (!isTorn)
                 {
-                    r.Name.text = "?  <size=70%><alpha=#88>아직 못 본 비급<alpha=#FF></size>";
+                    r.Name.text = $"?  <size=70%><alpha=#88>{Loc.T("ui.library.unseen")}<alpha=#FF></size>";
                     r.Name.color = new Color(Ink.r, Ink.g, Ink.b, 0.45f);
-                    r.Desc.text = "조건을 갖춘 채 생을 마치면 이 자리에 오른다";
+                    r.Desc.text = Loc.T("ui.library.unseen_desc");
                     r.Back.color = new Color(Ink.r, Ink.g, Ink.b, 0.04f);
                     r.State.text = "";
                     r.Restore.gameObject.SetActive(false);
@@ -143,14 +143,14 @@ namespace BloodRain.Presentation.Meta
                 r.Name.color = isRestored ? Ink : Crimson;
                 r.Desc.text = desc;
                 r.Back.color = isRestored ? new Color(Gold.r, Gold.g, Gold.b, 0.14f) : new Color(Crimson.r, Crimson.g, Crimson.b, 0.07f);
-                r.State.text = isRestored ? "복원함" : "";
+                r.State.text = isRestored ? Loc.T("ui.library.restored") : "";
                 r.Restore.gameObject.SetActive(!isRestored);
                 if (!isRestored)
                 {
                     bool can = _soul.CanRestore(r.Id);
                     r.Restore.interactable = can;
-                    string why = _soul.SealStoneCount < stones ? $"봉인석 {stones}개 필요" : $"{qi:N0}";
-                    r.RestoreLabel.text = $"복원  <size=80%>{why}</size>";
+                    string why = _soul.SealStoneCount < stones ? Loc.F("ui.library.need_stones", stones) : $"{qi:N0}";
+                    r.RestoreLabel.text = $"{Loc.T("ui.library.restore")}  <size=80%>{why}</size>";
                     r.RestoreLabel.alpha = can ? 1f : 0.55f;
                 }
             }

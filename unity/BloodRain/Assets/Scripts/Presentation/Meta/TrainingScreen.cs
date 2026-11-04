@@ -58,9 +58,9 @@ namespace BloodRain.Presentation.Meta
             bg.rectTransform.anchorMin = Vector2.zero; bg.rectTransform.anchorMax = Vector2.one;
             bg.rectTransform.offsetMin = bg.rectTransform.offsetMax = Vector2.zero;
 
-            var title = Text(_root, "연무장 演武場", 44, FontStyles.Bold, Ink);
+            var title = Text(_root, Loc.T("ui.training.title"), 44, FontStyles.Bold, Ink);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -64), new Vector2(1000, 60));
-            var sub = Text(_root, "혼에 새긴 수련이라 몸이 바뀌어도 남는다", 22, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.55f));
+            var sub = Text(_root, Loc.T("ui.training.sub"), 22, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.55f));
             Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -108), new Vector2(1000, 32));
             _balance = Text(_root, "", 30, FontStyles.Bold, new Color32(176, 132, 40, 255));
             Place(_balance.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(1000, 44));
@@ -86,7 +86,7 @@ namespace BloodRain.Presentation.Meta
             _refund.onClick.AddListener(() => { if (_soul.TrainingSpent > 0) { _soul.RefundTraining(); Refresh(); } });
 
             y -= 70;
-            var uh = Text(_root, "환혼 강화 <size=75%><alpha=#88>침방<alpha=#FF></size>", 26, FontStyles.Bold, Ink);
+            var uh = Text(_root, $"{Loc.T("ui.chimbang.upgrades")} <size=75%><alpha=#88>{Loc.T("ui.chimbang.name")}<alpha=#FF></size>", 26, FontStyles.Bold, Ink);
             Place(uh.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, y), new Vector2(800, 40));
             y -= 50;
             int k = 0;
@@ -103,10 +103,10 @@ namespace BloodRain.Presentation.Meta
 
         public void Refresh()
         {
-            _balance.text = $"윤회의 기 {_soul.RebirthQi:N0}";
+            _balance.text = Loc.F("ui.qi.balance", _soul.RebirthQi.ToString("N0"));
             foreach (var r in _rows) r.Refresh();
             _refund.interactable = _soul.TrainingSpent > 0;
-            _refundLabel.text = $"전부 환불  <size=80%>(+{_soul.TrainingSpent:N0})</size>";
+            _refundLabel.text = $"{Loc.T("ui.training.refund")}  <size=80%>(+{_soul.TrainingSpent:N0})</size>";
         }
 
         TextMeshProUGUI Text(Transform parent, string text, float size, FontStyles style, Color color)
