@@ -16,8 +16,6 @@ namespace BloodRain.Core.World
 {
     public sealed class Regions
     {
-        /// <summary>지역 정예가 없는 땅(청운진·개방 총타·남궁세가)은 이 지역의 정예 표를 쓴다(6장 '정예').</summary>
-        public const string EliteFallbackRegion = "songshan";
         /// <summary>서장 전용 장 이름. 청운진의 정예(강시 도부수)는 서장 생에서만 나온다.</summary>
         public const string PrologueChapter = "prologue";
 
@@ -128,15 +126,6 @@ namespace BloodRain.Core.World
             return _enemies.Where(e => e.Chapter == chapter).ToList();
         }
 
-        /// <summary>그 지역 정예 표(첫째·둘째·셋째 순서, enemies.json elites). 지역 정예가 없는 땅은 숭산 표.
-        /// 청운진의 표(서장)는 서장 생에서만 쓰고, 다른 생에서 청운진에 서 있으면 숭산 표를 쓴다.</summary>
-        public IReadOnlyList<string> Elites(string regionId, bool prologueLife = false)
-        {
-            var r = Region(regionId);
-            if (!(r.Chapter == PrologueChapter && !prologueLife) && OwnElites(regionId) is { } own) return own;
-            return OwnElites(EliteFallbackRegion) ?? (IReadOnlyList<string>)Array.Empty<string>();
-        }
-
         /// <summary>그 지역 장(chapter)에 적힌 정예 표 그대로(대신 쓰는 표 없이). 없거나 비었으면 null.
         /// 정예 표를 찾는 곳은 여기 하나다. Spawning.RegionSpawns 도 이걸 부른다.</summary>
         public IReadOnlyList<string>? OwnElites(string regionId)
@@ -144,14 +133,5 @@ namespace BloodRain.Core.World
             var chapter = Region(regionId).Chapter;
             return chapter != null && _elites.TryGetValue(chapter, out var t) && t.Count > 0 ? t : null;
         }
-
-        /// <summary>그 생에서 nth 번째(0부터: 5분 0, 10분 1, 15분 2 …)로 나오는 정예 id. 셋째 뒤로는 마지막 정예가 다시 나온다.</summary>
-        public string? Elite(string regionId, int nth, bool prologueLife = false)
-        {
-            var list = Elites(regionId, prologueLife);
-            if (list.Count == 0 || nth < 0) return null;
-            return list[Math.Min(nth, list.Count - 1)];
-        }
-
     }
 }

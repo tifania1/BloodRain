@@ -136,26 +136,19 @@ namespace BloodRain.Core.Tests
             Assert.Empty(g.LocalEnemies("cheongun"));
         }
 
-        [Fact] public void 정예는_서_있는_지역의_것이고_없는_땅은_숭산_표를_쓴다()
+        /// <summary>정예 표는 OwnElites 한 곳에서 찾는다. 대신 쓰는 땅(숭산 표)과 n번째 정예는 Spawning.RegionSpawns 가 한다(RegionSpawnsTests, QA-04).</summary>
+        [Fact] public void 정예_표는_그_지역_장의_것이고_없으면_null()
         {
             var g = NewRegions();
-            var songshan = _d.Elites["chapter1"];
-            Assert.Equal(songshan, g.Elites("songshan"));
-            Assert.Equal(songshan, g.Elites("gaebang_hq"));
-            Assert.Equal(songshan, g.Elites("namgung_manor"));
-            Assert.Equal(songshan, g.Elites("cheongun"));                         // 서장 아닌 생의 청운진
-            Assert.Equal(_d.Elites["prologue"], g.Elites("cheongun", prologueLife: true));
-            // 첫째(5분)·둘째(10분)·셋째(15분), 넷째·다섯째는 셋째가 다시
-            Assert.Equal(songshan[0], g.Elite("songshan", 0));
-            Assert.Equal(songshan[1], g.Elite("songshan", 1));
-            Assert.Equal(songshan[2], g.Elite("songshan", 2));
-            Assert.Equal(songshan[2], g.Elite("songshan", 4));
-            Assert.Equal(_d.Elites["prologue"][0], g.Elite("cheongun", 1, prologueLife: true));
+            Assert.Equal(_d.Elites["chapter1"], g.OwnElites("songshan"));
+            Assert.Null(g.OwnElites("gaebang_hq"));
+            Assert.Null(g.OwnElites("namgung_manor"));
+            Assert.Null(g.OwnElites("bongmagok"));
+            Assert.Equal(_d.Elites["prologue"], g.OwnElites("cheongun")); // 서장 흐름의 표. 한 생에선 RegionSpawns 가 숭산 표로 바꾼다
             Assert.Contains("넷째·다섯째는 셋째가 다시 나옴", TestData.GddSection("정예(5분마다)"));
             Assert.Contains("숭산 표", TestData.GddSection("정예(5분마다)"));
-            // 정예 표가 있는 장은 그 표를 그대로 쓴다
-            foreach (var r in g.All.Where(r => r.Chapter != null && r.Chapter != Regions.PrologueChapter && _d.Elites.ContainsKey(r.Chapter)))
-                Assert.Equal(_d.Elites[r.Chapter!], g.Elites(r.Id));
+            foreach (var r in g.All.Where(r => r.Chapter != null && _d.Elites.ContainsKey(r.Chapter)))
+                Assert.Equal(_d.Elites[r.Chapter!], g.OwnElites(r.Id));
         }
     }
 }

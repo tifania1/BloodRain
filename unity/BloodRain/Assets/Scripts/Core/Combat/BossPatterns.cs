@@ -240,16 +240,7 @@ namespace BloodRain.Core.Combat
         }
 
         /// <summary>원 위에 고르게 놓은 소환 자리(가운데 기준). 첫 자리는 0도.</summary>
-        public static (float x, float y)[] RingOffsets(BossPatternDef p)
-        {
-            var list = new (float x, float y)[p.Count];
-            for (int i = 0; i < p.Count; i++)
-            {
-                double a = 2.0 * Math.PI * i / p.Count;
-                list[i] = ((float)(Math.Cos(a) * p.Radius), (float)(Math.Sin(a) * p.Radius));
-            }
-            return list;
-        }
+        public static (float x, float y)[] RingOffsets(BossPatternDef p) => RingOffsets(p, p.Radius);
 
         /// <summary>한 시전이 예고 시작부터 마지막 판정까지 걸리는 시간(초).
         /// jump_slam 은 Count 번 뛰는데 뛸 때마다 예고가 있어 Count × 예고 + (Count - 1) × 사이,

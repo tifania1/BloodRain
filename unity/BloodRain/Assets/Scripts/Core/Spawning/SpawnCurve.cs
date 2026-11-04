@@ -48,10 +48,17 @@ namespace BloodRain.Core.Spawning
         public int SpawnThisSecond(float minutes, int aliveNow)
         {
             if (SpawningStopped(minutes)) return 0;
-            float deficit = TargetAt(minutes) - aliveNow;
+            return SpawnCount(TargetAt(minutes), aliveNow, _def.SpawnFractionPerSecond);
+        }
+
+        /// <summary>목표 target 에 지금 aliveNow 마리면 이번 1초에 만들 수: 모자란 수 × fraction 을 올림.
+        /// LifeDirector·PrologueDirector·SpawnThisSecond 가 모두 이 식을 쓴다(QA-04).</summary>
+        public static int SpawnCount(float target, int aliveNow, float fraction)
+        {
+            float deficit = target - aliveNow;
             if (deficit <= 0) return 0;
             // float 오차(180 × 0.3 = 54.000002)로 하나 더 올라가지 않게 아주 작은 값을 빼고 올림한다.
-            return (int)Math.Ceiling(deficit * _def.SpawnFractionPerSecond - 1e-4f);
+            return Math.Max(0, (int)Math.Ceiling(deficit * fraction - 1e-4f));
         }
     }
 }

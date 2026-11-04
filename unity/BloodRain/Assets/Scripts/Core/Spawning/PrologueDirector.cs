@@ -67,9 +67,8 @@ namespace BloodRain.Core.Spawning
             r.Target = target;
             if (_hold > 0f) { r.Held = true; return r; }
 
-            float deficit = target - aliveNow;
-            if (deficit <= 0) return r;
-            int n = (int)Math.Ceiling(deficit * _fraction - 1e-4f);
+            int n = SpawnCurve.SpawnCount(target, aliveNow, _fraction);
+            if (n == 0) return r;
             for (int i = 0; i < n; i++)
                 r.Spawns.Add(new LifeSpawn(_table.PickEnemy(WaveTable.Prologue, minute, _rng), realm, members));
             return r;
