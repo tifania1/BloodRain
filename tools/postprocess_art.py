@@ -42,6 +42,7 @@ KINDS = {
     "background": ("Backgrounds", 1536, False),
     "props": ("Props", 2048, True),
     "ui": ("UI", 1024, True),
+    "store": ("Store", 1536, False),  # 스토어 시안. 사람이 Steam 규격으로 잘라 손본다(art_list.md)
     "vfx_ink": ("VFX/AI", 512, False),
     "vfx_glow": ("VFX/AI", 512, False),
 }
@@ -157,7 +158,7 @@ def process(row: dict, dry: bool) -> Path | None:
     if kind == "tile":
         img = make_seamless(img)
     img.thumbnail((size, size), Image.LANCZOS)
-    ext = ".jpg" if kind in ("storyboard", "map", "card", "background") else ".png"
+    ext = ".jpg" if kind in ("storyboard", "map", "card", "background", "store") else ".png"
     dst = ART / folder / (row["id"] + ext)
     if dry:
         print(f"  (dry) {row['id']} → {dst.relative_to(ROOT)} {img.size}")

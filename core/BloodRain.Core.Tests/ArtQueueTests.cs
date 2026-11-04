@@ -125,7 +125,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void imported_줄은_Unity_Art_폴더에_파일이_있다()
         {
             var kinds = Kinds();
-            var jpg = new[] { "storyboard", "map", "card", "background" };
+            var jpg = new[] { "storyboard", "map", "card", "background", "store" };
             foreach (var o in Rows().Where(o => (string)o["status"]! == "imported"))
             {
                 var kind = (string)o["kind"]!;

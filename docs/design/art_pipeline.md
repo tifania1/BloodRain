@@ -66,7 +66,7 @@
    - 받으려고 연 탭은 끝나면 닫는다.
 6. **기계 검수와 반영.** 작업 폴더 `E:\Unity\BloodRain-art` 에서 돌린다.
    - 이펙트 재료: `python tools/import_vfx_ai.py --inbox E:/Unity/BloodRain`. 바탕이 단색인지, 덮임 양, 가장자리 걸림, 먹에 색이 섞였는지를 본다. 통과하면 `Assets/Art/VFX/AI/<id>_stroke.png`(먹) 또는 `<id>_gold.png`·`<id>_core.png`·`<id>_shade.png`(빛과 그 밑 먹 받침)와 `ai.json` 에 들어가고 미리보기 `docs/vfx_preview/ai_<날짜>.png` 가 나온다. 먹 알파에는 감마 0.75 를 걸어 옅은 자락(안개 끝)을 살린다(ai.json 줄의 `inkGamma`, 2026-11-02 V-11). 감마를 바꾸면 `--reink --inbox …` 로 이미 반영된 먹 재료를 원본에서 다시 키잉하고, `--gamma-preview <id>…` 로 전후를 한 장에 본다.
-   - 원화: `postprocess_art.py`. UI 바탕(`ui`)은 그림 가장자리에서 이어진 배경만 지워 틀 안쪽 종이를 남기고, 정사각으로 만들지 않는다. 무엇을 뽑는지는 `art_list.md`.
+   - 원화: `postprocess_art.py`. UI 바탕(`ui`)은 그림 가장자리에서 이어진 배경만 지워 틀 안쪽 종이를 남기고, 정사각으로 만들지 않는다. 스토어 시안(`store`)은 배경도 크기도 손대지 않고 `Assets/Art/Store/` 에 jpg 로 두며, 마무리는 사람이 한다. 무엇을 뽑는지는 `art_list.md`.
 7. **눈 검수.** 미리보기를 직접 열어 본다. 미리보기는 원본 | 게임 색 | 그어짐 50% | 흩어짐 40% 순서다. 아래 중 하나라도 해당하면 `import_vfx_ai.py --reject <id> "<이유>"` 로 떨어뜨린다.
    - 글자나 낙관이 들어 있다.
    - 모양이 무엇인지 안 읽힌다.
