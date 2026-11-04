@@ -150,6 +150,36 @@ namespace BloodRain.Core.Data
 
         public static string? BossRegion(string token) =>
             token.StartsWith(BossPrefix, System.StringComparison.Ordinal) ? token.Substring(BossPrefix.Length) : null;
+
+        static readonly System.Text.RegularExpressions.Regex ChallengePattern =
+            new System.Text.RegularExpressions.Regex(@"^(kills|dash|seal_talisman)_(\d+)_(one_run|total)$");
+
+        /// <summary>도전 과제 토큰(기획서 10장 '해금과 도전 과제'): "kills_5000_one_run" 한 생 처치, "dash_300_one_run" 한 생 경공,
+        /// "seal_talisman_10_total" 정신부 누적. 도전 과제가 아니면 null.</summary>
+        public static Challenge? ParseChallenge(string token)
+        {
+            var m = ChallengePattern.Match(token);
+            if (!m.Success) return null;
+            var counter = m.Groups[1].Value switch
+            {
+                "kills" => ChallengeCounter.Kills,
+                "dash" => ChallengeCounter.Dashes,
+                _ => ChallengeCounter.Talismans,
+            };
+            return new Challenge(counter, int.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture), m.Groups[3].Value == "one_run");
+        }
+    }
+
+    /// <summary>도전 과제가 세는 것. 한 생 기록은 Meta.LifeLog, 누적은 Meta.Soul.</summary>
+    public enum ChallengeCounter { Kills, Dashes, Talismans }
+
+    public readonly struct Challenge
+    {
+        public readonly ChallengeCounter Counter;
+        public readonly int Count;
+        /// <summary>true 면 한 생 안에서, false 면 계정 누적으로 센다.</summary>
+        public readonly bool OneRun;
+        public Challenge(ChallengeCounter counter, int count, bool oneRun) { Counter = counter; Count = count; OneRun = oneRun; }
     }
 
     public sealed class UltimateDef

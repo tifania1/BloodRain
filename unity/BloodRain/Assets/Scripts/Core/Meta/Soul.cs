@@ -98,11 +98,20 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> TornManuals { get; }
         /// <summary>이번 생에 얻은 혈정(정예·땅의 주인, 혈월 배율까지 곱한 값).</summary>
         public int BloodCrystal { get; }
+        /// <summary>이번 생에 쓰러뜨린 적 수(잡몹·정예·땅의 주인 모두). 도전 과제 kills_N_one_run.</summary>
+        public int Kills { get; }
+        /// <summary>이번 생에 쓴 경공 수. 도전 과제 dash_N_one_run.</summary>
+        public int Dashes { get; }
+        /// <summary>이번 생에 쓴 정신부 수. 혼에 누적되어 도전 과제 seal_talisman_N_total.</summary>
+        public int TalismansUsed { get; }
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
-            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0)
+            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0)
         {
+            Kills = kills;
+            Dashes = dashes;
+            TalismansUsed = talismansUsed;
             BloodCrystal = bloodCrystal;
             TornManuals = tornManuals?.Distinct().ToList() ?? new List<string>();
             Sect = sect;
@@ -134,6 +143,8 @@ namespace BloodRain.Core.Meta
         public int BloodCrystal { get; }
         /// <summary>이번 정산으로 새로 열린 객잔 시설 id(조건만 갖추면 열리는 것. 짓는 시설은 Inn.Buildable).</summary>
         public IReadOnlyList<string> NewFacilities { get; internal set; } = Array.Empty<string>();
+        /// <summary>이번 생으로 새로 채운 도전 과제 해금 토큰(kills_5000_one_run 같은 것, 데이터 순서). 정산 화면이 '음공을 얻었다'처럼 띄운다.</summary>
+        public IReadOnlyList<string> NewUnlocks { get; internal set; } = Array.Empty<string>();
 
         public LifeSummary(int rebirthQi, IReadOnlyList<string> newSealStones, IReadOnlyList<string> newlyUnlockedSects,
             IReadOnlyList<string> newRegions, IReadOnlyList<string> newRealms, IReadOnlyList<string> newEvolutions, bool finalCleared,
@@ -313,6 +324,34 @@ namespace BloodRain.Core.Meta
         /// <summary>도전 과제처럼 땅의 주인 말고 다른 데서 오는 해금.</summary>
         public void Unlock(string token) => _unlocks.Add(token);
 
+        /// <summary>지금까지 모든 생에서 쓴 정신부 수(도전 과제 seal_talisman_N_total).</summary>
+        public int TalismansUsedTotal { get; private set; }
+
+        /// <summary>데이터(무공·캐릭터·문파)에 나오는 도전 과제 토큰, 처음 나온 순서.</summary>
+        IEnumerable<string> ChallengeTokens() =>
+            _data.Weapons.Select(w => w.Unlock).Concat(_data.Characters.Select(c => c.Unlock)).Concat(C.Sects.Select(s => s.Unlock))
+                .Where(t => UnlockToken.ParseChallenge(t) != null).Distinct();
+
+        /// <summary>한 생 기록과 누적으로 새로 채운 도전 과제를 연다. EndLife 가 TalismansUsedTotal 을 더한 뒤 부른다.</summary>
+        List<string> UnlockChallenges(LifeRecord r)
+        {
+            var opened = new List<string>();
+            foreach (var token in ChallengeTokens())
+            {
+                if (_unlocks.Contains(token)) continue;
+                var c = UnlockToken.ParseChallenge(token)!.Value;
+                int value = c.Counter switch
+                {
+                    ChallengeCounter.Kills => c.OneRun ? r.Kills : -1,
+                    ChallengeCounter.Dashes => c.OneRun ? r.Dashes : -1,
+                    _ => c.OneRun ? r.TalismansUsed : TalismansUsedTotal,
+                };
+                if (value < 0) throw new InvalidOperationException($"누적으로 세지 않는 도전 과제입니다: {token}");
+                if (value >= c.Count) { _unlocks.Add(token); opened.Add(token); }
+            }
+            return opened;
+        }
+
         /// <summary>환생할 수 있는 문파(데이터 순서).</summary>
         public IReadOnlyList<string> UnlockedSects => C.Sects.Where(s => IsUnlocked(s.Unlock)).Select(s => s.Id).ToList();
 
@@ -451,6 +490,8 @@ namespace BloodRain.Core.Meta
 
             var newEvolutions = record.AwakenedEvolutions.Where(e => _evolutions.Add(e)).ToList();
             Manuscripts += record.Manuscripts;
+            TalismansUsedTotal += record.TalismansUsed;
+            var newUnlocks = UnlockChallenges(record);
             var newTorn = record.TornManuals.Where(m => !_restored.Contains(m) && _torn.Add(m)).ToList();
 
             Lives++;
@@ -464,6 +505,7 @@ namespace BloodRain.Core.Meta
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
             {
                 NewFacilities = Inn.Refresh(this),
+                NewUnlocks = newUnlocks,
             };
         }
 
@@ -482,6 +524,7 @@ namespace BloodRain.Core.Meta
                 if (_data.Evolutions.All(x => x.Id != e)) throw new ArgumentException($"없는 절기입니다: {e}");
             if (r.Manuscripts < 0) throw new ArgumentException("의서 권 수가 음수입니다");
             if (r.BloodCrystal < 0) throw new ArgumentException("혈정이 음수입니다");
+            if (r.Kills < 0 || r.Dashes < 0 || r.TalismansUsed < 0) throw new ArgumentException("처치·경공·정신부 수가 음수입니다");
             foreach (var m in r.TornManuals)
                 if (!_data.Synergies.IsSecretManual(m)) throw new ArgumentException($"비급 층이 아닙니다: {m}");
         }
@@ -525,6 +568,8 @@ namespace BloodRain.Core.Meta
             public int Cycle = 1;
             public List<string> TornManuals = new List<string>();
             public List<string> RestoredManuals = new List<string>();
+            /// <summary>모든 생에서 쓴 정신부 수. 이 칸이 생기기 전 저장은 0으로 읽는다.</summary>
+            public int TalismansUsed;
         }
 
         static readonly JsonSerializerSettings SaveSettings = new JsonSerializerSettings
@@ -564,6 +609,7 @@ namespace BloodRain.Core.Meta
                 Cycle = Cycle,
                 TornManuals = Sorted(_torn),
                 RestoredManuals = Sorted(_restored),
+                TalismansUsed = TalismansUsedTotal,
             };
             return JsonConvert.SerializeObject(f, SaveSettings);
         }
@@ -582,6 +628,7 @@ namespace BloodRain.Core.Meta
                 PrologueDone = f.PrologueDone,
                 Manuscripts = f.Manuscripts,
                 Cycle = Math.Max(1, f.Cycle),
+                TalismansUsedTotal = Math.Max(0, f.TalismansUsed),
             };
             foreach (var kv in f.Training) s._training[kv.Key] = kv.Value;
             foreach (var kv in f.RebirthUpgrades) s._upgrades[kv.Key] = kv.Value;
@@ -715,6 +762,26 @@ namespace BloodRain.Core.Meta
         /// <summary>은빛 등롱에서 의서가 나왔다.</summary>
         public void FindManuscript() => Manuscripts++;
 
+        /// <summary>이번 생에 쓰러뜨린 적 수(잡몹·정예·땅의 주인). 도전 과제 '한 생에서 적 N 처치'.</summary>
+        public int Kills { get; private set; }
+        /// <summary>이번 생에 쓴 경공 수. 도전 과제 '한 생에서 경공 N회'.</summary>
+        public int Dashes { get; private set; }
+        /// <summary>이번 생에 쓴 정신부 수. 혼에 누적된다('정신부 누적 N회').</summary>
+        public int TalismansUsed { get; private set; }
+
+        /// <summary>적을 쓰러뜨렸다(한 번에 여럿이면 count). 정예·땅의 주인도 여기서 한 번 더 센다(KillElite·KillBoss 는 보상만).</summary>
+        public void Kill(int count = 1)
+        {
+            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
+            Kills += count;
+        }
+
+        /// <summary>경공을 썼다.</summary>
+        public void Dash() => Dashes++;
+
+        /// <summary>정신부를 썼다. 비전 판정용 Build.RunRecord.UseTalisman 과 따로 센다(둘 다 부른다).</summary>
+        public void UseTalisman() => TalismansUsed++;
+
         /// <summary>조건은 갖췄는데 잠긴 비급(찢긴 비급 후보). 생이 끝날 때 장경각에 오른다.</summary>
         public IReadOnlyList<string> TornManuals => _torn;
 
@@ -728,6 +795,6 @@ namespace BloodRain.Core.Meta
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
             new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
-                BloodCrystal);
+                BloodCrystal, Kills, Dashes, TalismansUsed);
     }
 }
