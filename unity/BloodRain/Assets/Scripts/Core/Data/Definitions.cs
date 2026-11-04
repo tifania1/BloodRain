@@ -158,6 +158,13 @@ namespace BloodRain.Core.Data
         public string NameKo = "";
         public float MightMultiplier;
         public string Summary = "";
+        /// <summary>5장 '오의 상세'의 숫자(durationSeconds·radius·stunSeconds·strikes·shockSeconds·directions·volleys·freezeSeconds·
+        /// healthCostPerSecond·damageMultiplier·lifesteal·poisons·mightPerSecond). 숫자가 없는 오의(일검·역류)는 null.</summary>
+        public Dictionary<string, float>? Params;
+        /// <summary>params 값. 없으면 예외(데이터 빠짐을 바로 알게).</summary>
+        public float Param(string key) => Params != null && Params.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"{Id} params 에 {key} 가 없습니다");
+        /// <summary>params 값. 없으면 fallback.</summary>
+        public float Param(string key, float fallback) => Params != null && Params.TryGetValue(key, out var v) ? v : fallback;
     }
 
     public sealed class EnemyDef

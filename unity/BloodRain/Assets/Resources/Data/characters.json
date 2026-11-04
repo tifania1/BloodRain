@@ -1,5 +1,5 @@
 {
-  "_note": "서장의 진소운과 문파 대표 인물 7명(천하 구조에서는 cheonha.json sects 가 몸의 바탕이고, 대표 인물이 있는 문파는 여기 값과 같아야 한다). moveSpeed는 기본 대비 배율. yinyangStart는 태극 게이지 시작값. 기획서 '5. 문파와 대표 인물'과 같은 값이어야 한다. unlock 은 그 몸으로 태어날 수 있게 되는 조건이라 cheonha.json sects[].unlock 과 같다(start 또는 boss:<지역 id>). 대표 인물이 객잔에 오는 것은 따로, 그 땅의 주인을 처음 쓰러뜨릴 때다(21장).",
+  "_note": "서장의 진소운과 문파 대표 인물 7명(천하 구조에서는 cheonha.json sects 가 몸의 바탕이고, 대표 인물이 있는 문파는 여기 값과 같아야 한다). moveSpeed는 기본 대비 배율. yinyangStart는 태극 게이지 시작값. 기획서 '5. 문파와 대표 인물'과 같은 값이어야 한다. unlock 은 그 몸으로 태어날 수 있게 되는 조건이라 cheonha.json sects[].unlock 과 같다(start 또는 boss:<지역 id>). 대표 인물이 객잔에 오는 것은 따로, 그 땅의 주인을 처음 쓰러뜨릴 때다(21장). ultimates[].params 는 5장 '오의 상세'의 숫자(초·m·곳·방향·연타·비율, 비율은 0.02 = 2%). poisons 1 은 맞은 적을 중독시킨다는 뜻, mightPerSecond 1 은 공력 xN 이 초당 피해라는 뜻(만천화우). 역류는 물살 폭·시간이 정해지지 않아 아직 없다(R-05b).",
   "characters": [
     { "id": "jin_sowoon",  "nameKo": "진소운", "startWeapon": "samjae_sword",  "maxHealth": 100, "moveSpeed": 1.00, "yinyangStart": 0,   "ultimate": "il_geom",        "trait": "reroll_plus2_insight4", "unlock": "start" },
     { "id": "namgung_hyeon","nameKo": "남궁현", "startWeapon": "changcheon_qi", "maxHealth": 100, "moveSpeed": 1.00, "yinyangStart": 10,  "ultimate": "cheonroe_rak",   "trait": "might25_above_half_hp", "unlock": "start" },
@@ -12,13 +12,13 @@
   ],
   "ultimates": [
     { "id": "il_geom",        "nameKo": "일검",     "mightMultiplier": 30, "summary": "바라보는 방향 화면 끝까지 일직선 참격, 관통 무한" },
-    { "id": "cheonroe_rak",   "nameKo": "천뢰낙",   "mightMultiplier": 8,  "summary": "화면 안 무작위 12곳 낙뢰, 1초 감전" },
-    { "id": "saja_hu",        "nameKo": "사자후",   "mightMultiplier": 10, "summary": "반경 6m 원형 음파, 3초 기절" },
-    { "id": "mancheon_hwau",  "nameKo": "만천화우", "mightMultiplier": 6,  "summary": "3초 동안 화면 전체 암기 비(초당), 중독" },
+    { "id": "cheonroe_rak",   "nameKo": "천뢰낙",   "mightMultiplier": 8,  "summary": "화면 안 무작위 12곳 낙뢰, 1초 감전", "params": { "strikes": 12, "shockSeconds": 1 } },
+    { "id": "saja_hu",        "nameKo": "사자후",   "mightMultiplier": 10, "summary": "반경 6m 원형 음파, 3초 기절", "params": { "radius": 6, "stunSeconds": 3 } },
+    { "id": "mancheon_hwau",  "nameKo": "만천화우", "mightMultiplier": 6,  "summary": "3초 동안 화면 전체 암기 비(초당), 중독", "params": { "durationSeconds": 3, "mightPerSecond": 1, "poisons": 1 } },
     { "id": "yeokryu",        "nameKo": "역류",     "mightMultiplier": 12, "summary": "물살이 적을 한쪽 끝으로 쓸어 모음" },
-    { "id": "taiji_muryang",  "nameKo": "태극무량", "mightMultiplier": 0,  "summary": "5초 동안 원 안 적 탄 반사, 받는 피해 무효" },
-    { "id": "palbang_pungu",  "nameKo": "팔방풍우", "mightMultiplier": 7,  "summary": "8방향 장풍 3연타, 큰 넉백" },
-    { "id": "cheonseol_bu",   "nameKo": "천설부",   "mightMultiplier": 8,  "summary": "화면 안 모든 적 3초 얼림, 강시 계열에 공력 x8 피해" },
-    { "id": "cheonma_haeche", "nameKo": "천마해체", "mightMultiplier": 0,  "summary": "8초 동안 초당 기혈 2% 소모, 모든 피해 2배, 흡혈 10%" }
+    { "id": "taiji_muryang",  "nameKo": "태극무량", "mightMultiplier": 0,  "summary": "5초 동안 원 안 적 탄 반사, 받는 피해 무효", "params": { "durationSeconds": 5 } },
+    { "id": "palbang_pungu",  "nameKo": "팔방풍우", "mightMultiplier": 7,  "summary": "8방향 장풍 3연타, 큰 넉백", "params": { "directions": 8, "volleys": 3 } },
+    { "id": "cheonseol_bu",   "nameKo": "천설부",   "mightMultiplier": 8,  "summary": "화면 안 모든 적 3초 얼림, 강시 계열에 공력 x8 피해", "params": { "freezeSeconds": 3 } },
+    { "id": "cheonma_haeche", "nameKo": "천마해체", "mightMultiplier": 0,  "summary": "8초 동안 초당 기혈 2% 소모, 모든 피해 2배, 흡혈 10%", "params": { "durationSeconds": 8, "healthCostPerSecond": 0.02, "damageMultiplier": 2, "lifesteal": 0.10 } }
   ]
 }
