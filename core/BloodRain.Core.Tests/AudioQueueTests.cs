@@ -115,5 +115,31 @@ namespace BloodRain.Core.Tests
                                        "bgm_boss_wongak", "bgm_boss_jang_sam", "bgm_prologue", "bgm_inn", "bgm_chimbang", "bgm_yeonmu", "bgm_settle" })
                 Assert.Contains(id, m2);
         }
+        [Fact] public void imported_줄과_bgm_json과_ogg가_서로_맞다()
+        {
+            // tools/postprocess_audio.py 가 picked → ogg 로 만들고 bgm.json 에 적은 뒤 imported 로 바꾼다. 한쪽만 손으로 고치면 어긋난다.
+            var dir = Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Audio", "BGM");
+            var imported = Rows().Where(o => (string)o["status"]! == "imported").ToDictionary(o => (string)o["id"]!);
+            var manifest = Path.Combine(dir, "bgm.json");
+            if (!File.Exists(manifest)) { Assert.Empty(imported); return; }
+            var tracks = ((JArray)JObject.Parse(File.ReadAllText(manifest))["tracks"]!).Cast<JObject>().ToList();
+            Assert.Equal(imported.Keys.OrderBy(s => s), tracks.Select(t => (string)t["id"]!).OrderBy(s => s));
+            foreach (var t in tracks)
+            {
+                var id = (string)t["id"]!;
+                Assert.Equal($"{id}.ogg", (string)t["file"]!);
+                Assert.True(File.Exists(Path.Combine(dir, $"{id}.ogg")), $"{id}.ogg 가 없다");
+                Assert.Equal((bool)imported[id]["loop"]!, (bool)t["loop"]!);
+                if (imported[id]["cut_s"] != null)
+                    Assert.InRange((double)t["seconds"]!, 0.5, (double)imported[id]["cut_s"]! + 0.01);
+            }
+        }
+
+        [Fact] public void 다듬는_도구가_큐와_같은_폴더를_쓴다()
+        {
+            var py = ReadRepoFile("tools", "postprocess_audio.py");
+            Assert.Contains("ROOT / \"audio_queue\" / \"queue.jsonl\"", py);
+            Assert.Contains("\"Assets\" / \"Audio\" / \"BGM\"", py);
+        }
     }
 }

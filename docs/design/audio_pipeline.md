@@ -24,6 +24,25 @@
 - 가사는 넣지 않는다. 합창이 필요하면 'wordless … drone' 처럼 말 없는 저음으로 쓴다.
 - 같은 곡을 다시 뽑을 때는 문구를 고치고 `note` 에 무엇을 고쳤는지 덧붙인다.
 
+## 다듬기 `tools/postprocess_audio.py`
+
+`picked` 줄의 MP3 를 읽어 ogg 로 `unity/BloodRain/Assets/Audio/BGM/<id>.ogg` 에 넣고, 목록 `bgm.json` 을 고친 뒤 `imported` 로 바꾼다. 파이썬 표준 라이브러리와 ffmpeg(libvorbis 포함)만 쓴다.
+
+    python tools/postprocess_audio.py [--dry-run] [--only <id>] [--inbox E:/Unity/BloodRain/art_inbox]
+
+| 단계 | 하는 일 | 값 |
+|---|---|---|
+| 무음 자르기 | 앞뒤로 문턱 아래만 이어지는 곳을 자르고 조금 남김 | -50 dBFS, 50ms |
+| 자르기 | `cut_s` 가 있으면 앞에서 그만큼만, 끝 페이드아웃 | 0.5초 |
+| 루프 이음매 | `loop` 곡은 끝 꼬리를 앞머리에 등가 출력 크로스페이드로 겹치고 꼬리는 버림. 마지막 샘플 다음이 원곡에서 바로 이어지던 샘플이 된다. 루프가 아닌 곡은 끝 50ms 페이드아웃 | 2초(곡 길이 1/4 이 상한) |
+| 소리 크기 | 곡 전체에 같은 이득. 통합 소리 크기를 목표로 맞추되, 올릴 때는 실제 최고점이 천장을 넘지 않는 데까지만 | -18 LUFS, -1.5 dBTP |
+| 저장 | Vorbis 48kHz 스테레오 | 품질 6 |
+
+- `bgm.json` 은 도구가 쓴다(곡마다 file·use·loop·seconds·sourceLufs·gainDb). 손으로 고치지 않는다. `AudioQueueTests` 가 imported 줄·bgm.json·ogg 파일이 서로 맞는지 본다.
+- 테스트: `python -m unittest discover -s tools/tests`(CI 와 pre-push 훅이 돌림). ffmpeg 가 없으면 MP3 → ogg 한 바퀴는 건너뛴다.
+- 3분 곡 하나에 약 10초 걸린다.
+- 소리 크기 값은 효과음과 섞어 들어 보고 바꿀 수 있다. 바꾸면 이미 넣은 곡도 `picked` 로 되돌려 다시 돌린다.
+
 ## 이용 조건 (BGM-02, 2026-11-04 조사)
 
 이 클라우드 세션은 구글 도메인(support.google.com·policies.google.com·blog.google·gemini.google)을 직접 열 수 없어서, 웹 검색 결과 요약으로만 확인했다. 원문은 사람이 회사 PC 브라우저로 한 번 열어 보고 아래 '확인할 것'을 채운다.

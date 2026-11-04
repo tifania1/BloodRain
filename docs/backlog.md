@@ -57,7 +57,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] BGM-02 2026-11-04 — `audio_pipeline.md` '이용 조건': 길이(Fast 약 30초·Pro 최대 3분)·하루 한도·MP3/MP4·SynthID·소유(API 약관은 소유권 주장 안 함)·저작권·Steam 공개를 출처와 함께. 소비자 Gemini 앱 약관의 상업적 사용 문장은 못 찾음(이 세션은 구글 도메인을 직접 못 열어 검색 요약만 봄) → 애매해서 아래 BGM-02a 로
 - [ ] BGM-02a **사람 결정 대기** — Gemini 곡을 판매용 빌드에 넣을지. 추천: M2 까지는 시안·임시곡으로 쓰고, 스토어 페이지 열기 전에 사람이 Gemini 앱 약관 원문에서 상업적 사용 문장을 확인. 안 되면 고른 곡을 레퍼런스로 작곡을 맡기거나 다른 도구로(`audio_pipeline.md` '사람 결정 대기' 1)
 - [ ] BGM-02b **사람 결정 대기** — 옛 14장 '10분 이후 편곡 한 겹 추가'를 Gemini 로 어떻게 할지(악기별 파일이 안 나옴). 추천: 지역마다 기본·격해진 두 벌을 같은 대화에서 뽑아 10분에 4초 크로스페이드, 숭산 하나로 먼저 시험(`audio_pipeline.md` '사람 결정 대기' 2)
-- [ ] BGM-03 받은 곡 다듬는 도구 `postprocess_audio.py`(tools 에 새로, ffmpeg: 소리 크기 맞춤, 앞뒤 무음 자르기, 루프 이음매 크로스페이드, ogg → `Assets/Audio/BGM/`) + 테스트. 먼저: BGM-01 (하는 중: 클라우드 11-04 배경음)
+- [x] BGM-03 2026-11-04 — `tools/postprocess_audio.py`(표준 라이브러리 + ffmpeg): 앞뒤 무음 자르기(-50dBFS), cut_s 자르기, 루프 곡은 끝 2초를 앞머리에 등가 출력 크로스페이드(이어 돌리면 원곡의 이어진 두 샘플), 곡 전체 같은 이득으로 -18 LUFS·-1.5 dBTP, Vorbis ogg → `Assets/Audio/BGM/` + `bgm.json`. 파이썬 테스트 9개(`tools/tests`, CI·pre-push 에 붙임), `AudioQueueTests` 에 imported·bgm.json·ogg 맞물림. Unity 가져오기 설정은 unity_tasks BGM-03a
 - [ ] BGM-04 생산 순서를 `audio_pipeline.md` 에: 회사 PC 크롬 → gemini.google.com '음악 만들기'(연주곡, 길이) → MP3 받기 → `art_inbox/audio/` → BGM-03 도구 → 귀로 듣는 검수는 사람(feedback.md). 이미지 생산 예약 작업이 이 순서도 돌게 하는 건 대화 세션이 예약 설명을 고친다(PC 승인 필요). 먼저: BGM-01·BGM-02 (하는 중: 클라우드 11-04 배경음)
 
 현지화·스토어(M3 한·영·간체, M2 끝 스토어 페이지)

@@ -1323,7 +1323,7 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 - 예전 안의 '10분 이후 편곡 한 겹 추가'는 Gemini 가 악기별로 나눈 파일을 주지 않아 그대로는 못 합니다. 어떻게 할지는 `audio_pipeline.md` '사람 결정 대기'.
 - 가사는 넣지 않습니다. 합창도 말 없는 저음으로만.
 
-음악은 Gemini 앱의 '음악 만들기'로 뽑습니다(2026-11-04 결정). 짧은 곡은 약 30초, 전체 곡은 최대 3분(Pro 모델)이고 SynthID 워터마크가 들어갑니다. 판매용 게임에 써도 되는지는 `audio_pipeline.md` '이용 조건'에 정리했습니다. 받은 MP3 는 다듬는 도구(BGM-03)로 소리 크기·앞뒤 무음·루프 이음매를 다듬어 ogg 로 넣습니다.
+음악은 Gemini 앱의 '음악 만들기'로 뽑습니다(2026-11-04 결정). 짧은 곡은 약 30초, 전체 곡은 최대 3분(Pro 모델)이고 SynthID 워터마크가 들어갑니다. 판매용 게임에 써도 되는지는 `audio_pipeline.md` '이용 조건'에 정리했습니다. 받은 MP3 는 `tools/postprocess_audio.py` 로 소리 크기·앞뒤 무음·루프 이음매를 다듬어 ogg 로 넣습니다.
 
 **문구 예시**(앞에 `audio_queue/STYLE.txt` 공통 문구가 붙습니다)
 

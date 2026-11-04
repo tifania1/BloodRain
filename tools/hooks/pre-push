@@ -45,6 +45,13 @@ if printf '%s\n' "$need" | grep -q '^unity/BloodRain/Assets/Scripts/Core/'; then
   fi
 fi
 
+if printf '%s\n' "$need" | grep -Eq '^tools/(postprocess_audio\.py|tests/)'; then
+  if ! python3 -m unittest discover -s tools/tests >&2; then
+    echo "pre-push: 도구 테스트(tools/tests) 실패." >&2
+    exit 1
+  fi
+fi
+
 if printf '%s\n' "$need" | grep -Eq '^(web/|tools/build_web_prototype\.py|unity/BloodRain/Assets/Resources/Data/)'; then
   if ! python3 tools/build_web_prototype.py >/dev/null; then
     echo "pre-push: 웹 프로토타입 빌드 실패." >&2
