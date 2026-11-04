@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using BloodRain.Core.Build;
+using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
 using BloodRain.Core.Meta;
 using BloodRain.Core.Run;
@@ -99,6 +101,34 @@ namespace BloodRain.Core.Tests
             int expect = (int)Math.Round(bosses.FirstKill.BloodCrystal * _d.Cheonha.Cycle.Bloodmoon.Rewards, MidpointRounding.AwayFromZero);
             Assert.Equal(expect, bloodmoon.BloodCrystal);
             Assert.True(bloodmoon.BloodCrystal > first.BloodCrystal);
+        }
+        [Fact] public void 적_기혈과_피해는_음수_분을_0분으로_본다()
+        {
+            var s = new EnemyScaling(_d.Balance.EnemyScaling);
+            Assert.Equal(s.HealthAt(10, 0, 1), s.HealthAt(10, -15, 1));
+            Assert.Equal(s.DamageAt(10, 0, 1), s.DamageAt(10, -15, 1));
+            Assert.True(s.HealthAt(10, -1000, 1) > 0);
+        }
+
+        [Fact] public void 이미_가진_무공과_심법을_새로_받으면_막는다()
+        {
+            var jin = _d.Character("jin_sowoon");
+            var l = new Loadout(_d, jin);
+            l.Apply(new Offer(OfferKind.UpgradeWeapon, jin.StartWeapon));
+            Assert.Throws<InvalidOperationException>(() => l.Apply(new Offer(OfferKind.NewWeapon, jin.StartWeapon)));
+            Assert.Equal(2, l.Weapons[jin.StartWeapon]); // 1단으로 돌아가지 않았다
+            var p = _d.Passives[0].Id;
+            l.Apply(new Offer(OfferKind.NewPassive, p));
+            Assert.Throws<InvalidOperationException>(() => l.Apply(new Offer(OfferKind.NewPassive, p)));
+        }
+
+        [Fact] public void 한_프레임에_몇_초가_지나도_생성_초를_버리지_않는다()
+        {
+            var life = NewLife("shaolin");
+            int seconds = 0;
+            if (life.Tick(3.5f, life.Position, 0) != null) seconds++;
+            for (int i = 0; i < 5; i++) if (life.Tick(0.01f, life.Position, 0) != null) seconds++;
+            Assert.Equal(3, seconds);
         }
     }
 }

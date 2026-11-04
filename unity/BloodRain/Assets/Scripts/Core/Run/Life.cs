@@ -175,7 +175,7 @@ namespace BloodRain.Core.Run
 
             _secondAcc += dt;
             if (_secondAcc < 1.0) return null;
-            _secondAcc -= Math.Floor(_secondAcc);
+            _secondAcc -= 1.0; // 한 프레임이 몇 초를 건너뛰면 남은 초는 다음 프레임들이 하나씩 낸다(버리지 않는다)
             return Director.Second(Minutes, Level, RegionId, aliveNow);
         }
 

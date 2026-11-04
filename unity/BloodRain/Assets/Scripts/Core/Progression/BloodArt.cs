@@ -27,7 +27,7 @@ namespace BloodRain.Core.Progression
         /// <summary>심마로 기운 횟수.</summary>
         public int Steps { get; private set; }
 
-        /// <summary>그 농도에서 진기 배율 = 농도^xpDensityExponent. 농도 4.3 이면 √4.3 ≈ 2.07.</summary>
+        /// <summary>그 농도에서 진기 배율 = 농도^xpDensityExponent. 지금 지수 0.25 면 농도 4.3 에서 ≈ 1.44.</summary>
         public double XpMultiplier(float density) =>
             _def.XpDensityExponent <= 0 ? 1 : Math.Pow(Math.Max(0f, density), _def.XpDensityExponent);
 

@@ -19,6 +19,7 @@ namespace BloodRain.Core.Combat
             _data = data;
             _def = data.FinalBoss;
             if (_def.Stages.Count == 0) throw new InvalidOperationException("bosspatterns.json final 에 단계가 없습니다");
+            if (_def.Shadows.Count == 0) throw new InvalidOperationException("bosspatterns.json final 에 혈영(shadows)이 없습니다"); // RisingShadow 가 % 로 돈다
         }
 
         /// <summary>지금 몇 번째 상대인가(0부터, 혈영 일곱 다음 단계 셋).</summary>

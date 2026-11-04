@@ -22,13 +22,13 @@ namespace BloodRain.Core.Combat
         public float Damage(float baseDamage, float minutes, string chapter) =>
             DamageAt(baseDamage, minutes, ChapterMultiplier(chapter));
 
-        /// <summary>혈운 농도로 바로 셈한 기혈. 농도가 0 아래면 0으로 본다.</summary>
+        /// <summary>혈운 농도로 바로 셈한 기혈. 농도가 0 아래면 0으로, 분이 0 아래면 0분으로 본다.</summary>
         public float HealthAt(float baseHealth, float minutes, float density) =>
-            baseHealth * (1f + _def.HealthPerMinute * minutes) * Math.Max(0f, density);
+            baseHealth * (1f + _def.HealthPerMinute * Math.Max(0f, minutes)) * Math.Max(0f, density);
 
-        /// <summary>혈운 농도로 바로 셈한 피해(√농도).</summary>
+        /// <summary>혈운 농도로 바로 셈한 피해(√농도). 분이 0 아래면 0분으로 본다.</summary>
         public float DamageAt(float baseDamage, float minutes, float density) =>
-            baseDamage * (1f + _def.DamagePerMinute * minutes) * (float)Math.Sqrt(Math.Max(0f, density));
+            baseDamage * (1f + _def.DamagePerMinute * Math.Max(0f, minutes)) * (float)Math.Sqrt(Math.Max(0f, density));
     }
 
     public static class Damage

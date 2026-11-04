@@ -57,6 +57,7 @@ namespace BloodRain.Core.Build
             switch (offer.Kind)
             {
                 case OfferKind.NewWeapon:
+                    if (_weapons.ContainsKey(offer.Id)) throw new InvalidOperationException($"이미 가진 무공입니다: {offer.Id}");
                     if (_weapons.Count >= WeaponSlots) throw new InvalidOperationException("무공 칸이 가득 찼습니다");
                     _weapons[offer.Id] = 1;
                     Gauge.OnWeaponLevelUp(_data.Weapon(offer.Id));
@@ -67,6 +68,7 @@ namespace BloodRain.Core.Build
                     Gauge.OnWeaponLevelUp(_data.Weapon(offer.Id));
                     break;
                 case OfferKind.NewPassive:
+                    if (_passives.ContainsKey(offer.Id)) throw new InvalidOperationException($"이미 가진 심법입니다: {offer.Id}");
                     if (_passives.Count >= PassiveSlots) throw new InvalidOperationException("심법 칸이 가득 찼습니다");
                     _passives[offer.Id] = 1;
                     Gauge.OnPassiveLevelUp(_data.Passive(offer.Id));
