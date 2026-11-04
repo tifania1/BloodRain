@@ -163,6 +163,7 @@ def postprocess_art(dry: bool) -> None:
 
 PROMPT = """너는 혈우강호(BloodRain) Unity 프로젝트의 PC 담당 개발자다. 저장소 루트는 {root}, Unity 프로젝트는 unity/BloodRain 이다.
 먼저 CLAUDE.md 와 docs/feedback.md 를 읽어라. 그다음 docs/unity_tasks.md 에서 위에서부터 안 끝난 항목(- [ ]) 1~3개를 40분 안에 처리한다. 다른 세션이 '하는 중'으로 표시한 항목은 건너뛴다.
+unity_tasks.md 맨 위 '항목 읽는 법'을 따른다: '할 차례' 절을 위에서부터, 첫 줄 '먼저:' 의 항목이 [x] 가 아니면 건너뛰고, 밑줄(할 것·쓸 것·메뉴·끝·찍기)대로 한다. 지난 진행 기록은 맨 아래 '옛 줄 원문'의 같은 ID 줄에 있다.
 
 규칙
 - Unity 에디터 조작은 unityMCP 도구로 한다. 스크립트를 고친 뒤에는 refresh_unity 후 read_console 로 오류가 없는지 꼭 본다.
