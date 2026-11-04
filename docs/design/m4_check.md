@@ -19,10 +19,10 @@
 | 항목 | 기획서 | 데이터 | Core | 웹 프로토타입 | 천하 시안 | Unity |
 |---|---|---|---|---|---|---|
 | 자리·농도·봉인석·땅의 주인 | 7장 '지역과 혈운 농도' | cheonha.json regions 화산 2.8·곤륜 설원 3.5·십만대산 4.3(`CheonhaDataTests.지역표가_데이터와_같다`) | `Regions`, `RegionSpawns` | 없음 | 셋 다 있고 땅의 주인이 깨어남 | TU-09 |
-| 화산 낙석·매화 더미 | 7장 '지형 기믹 수치' | gimmicks.json `fallingRocks`·`plumHeaps`(`Gimmicks2Tests.수치_표가_데이터와_같다`) | `FallingRocksGimmick`·`PlumHeapGimmick` | 없음 | 없음 | R4-13b(낙석). 매화 더미는 R4-07 뒤 |
+| 화산 낙석·매화 더미 | 7장 '지형 기믹 수치' | gimmicks.json `fallingRocks`·`plumHeaps`(`Gimmicks2Tests.수치_표가_데이터와_같다`) | `FallingRocksGimmick`·`PlumHeapGimmick` | 없음 | 낙석(R4-11) | R4-13b(낙석). 매화 더미는 R4-07 뒤 |
 | 화산 좁은 잔도 | 지역 표에 이름만. 수치 문단 '잔도는 아직 수치가 없습니다' | regions 에 `cliff_path` 만 | 없음 | 없음 | 없음 | 줄 없음 |
-| 곤륜 눈보라·빙판·모닥불 | 7장 | gimmicks.json `blizzard`·`iceFloor`·`campfire`(같은 테스트) | `WeatherGimmick`·`IceFloorGimmick`·`CampfireGimmick` | 없음 | 모닥불만(R4-02w, 곁 회복·빙강시 감속·설무향 축소 절반. 자리는 놀이판 값 `campfireSpacing` 격자, R4-07 이 정해지면 바꿈) | R4-13b(눈보라). 빙판·모닥불은 R4-07 뒤 |
-| 십만대산 혈제단·붉은 달 | 7장 | gimmicks.json `bloodAltars`·`redMoon`(같은 테스트, `붉은_달은_180초부터_3분마다_30초`) | `BloodAltarGimmick`, 붉은 달은 `WeatherGimmick` | 없음 | 없음 | R4-13b(붉은 달). 혈제단은 R4-07 뒤 |
+| 곤륜 눈보라·빙판·모닥불 | 7장 | gimmicks.json `blizzard`·`iceFloor`·`campfire`(같은 테스트) | `WeatherGimmick`·`IceFloorGimmick`·`CampfireGimmick` | 없음 | 눈보라(R4-11), 모닥불(R4-02w, 곁 회복·빙강시 감속·설무향 축소 절반. 자리는 놀이판 값 `campfireSpacing` 격자, R4-07 이 정해지면 바꿈) | R4-13b(눈보라). 빙판·모닥불은 R4-07 뒤 |
+| 십만대산 혈제단·붉은 달 | 7장 | gimmicks.json `bloodAltars`·`redMoon`(같은 테스트, `붉은_달은_180초부터_3분마다_30초`) | `BloodAltarGimmick`, 붉은 달은 `WeatherGimmick` | 없음 | 붉은 달(R4-11) | R4-13b(붉은 달). 혈제단은 R4-07 뒤 |
 | 기믹을 어디에 몇 개 | 혈제단만 '네 개'. 낙석은 플레이어 둘레라 자리가 필요 없음. 매화 더미·모닥불 수와 자리는 없음 | - | 놓는 함수는 탑림 `PagodaForest.Layout` 뿐 | - | - | - |
 | 고유 적 일곱(매화검귀 / 빙강시·설랑 떼·설인 / 마교도·혈영 분신·혈사자) | 6장 '지역별 고유 적'과 아래 문단 | enemies.json chapter5~7(`EliteDataTests.지역별_고유_적_표의_모든_줄에_데이터가_있고_수치가_같다`, `EnemyTableTests.지역_고유_적_행동_숫자_표가_데이터와_같다`) | `EnemyDef`, 혈영 분신은 `Mimicry`(`MimicryTests`) | 없음 | 없음 | C-02b 에 일곱 행동 줄 없음 |
 | 정예 아홉 기혈·속도·피해 | 6장 '정예 수치' | enemies.json elites chapter5~7(`EliteDataTests.정예_수치_표가_데이터와_같다`) | `RegionSpawns` 차례 | 없음 | 큰 일반 적 | 줄 없음 |

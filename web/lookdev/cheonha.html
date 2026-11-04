@@ -652,7 +652,7 @@ function startLife(c) {
     region: null, dens: home.density, stepped: [], dmgBy: { arc: 0, orbit: 0, wave: 0 }, eliteKills: 0, bossCrystal: 0, evN: 0, evLog: [], newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
     awake: new Set(), done: new Set(), armed: {}, armR: {}, fight: null, engage: null, ended: false, auto: false, fast, reachT: [0], bossT: {},
     cards: {}, extra: {}, pendingCards: 0, offers: null,
-    eliteN: 0, shots: [], pools: [], fogs: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
+    eliteN: 0, shots: [], pools: [], fogs: [], rocks: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
     yy: clamp(body.yin, YY.min, YY.max), bless: null, taijiCd: {},
     shadow: null, bellCd: {}, dropBells: [], pagodaCache: new Map(), pagodaTier: -1,
     ins: [], insEff: {}, pendingIns: 0, insRealms: [], insOffers: null, still: 0, blockCd: 0, salgiKills: 0, yyTilt: 1, yyCarry: 0,
@@ -1026,6 +1026,7 @@ function autopilot() {
   }
   for (const o of G.pools) away(o.x, o.y, o.r, 1.5);
   for (const fg of G.fogs) if (G.sect.id !== 'tang') away(fg.x, fg.y, fogR(fg), 1);
+  for (const r of G.rocks) away(r.x, r.y, r.r, 1);   // 낙석 그림자
   // 혈마의 그림자(RM-10): 화면 대각선 0.35배 안에 들면 무엇보다 먼저 반대쪽으로 달아나고, 바짝 붙으면 경공
   if (flee) {   // 그림자 반대쪽(강호 끝에 막히면 옆으로). 장판 피하기는 위에서 그대로 더했다
     let fx = flee.x, fy = flee.y;
@@ -1083,7 +1084,7 @@ function update(rdt) {
     if (d > stop && q.t > 0) { const v = Math.min(d - stop, (d - stop) / q.t * dt + 0.0001); p.x += dx / d * v; p.y += dy / d * v; }
     if (q.t <= 0 || d <= stop || q.f.dead) p.pull = null;
   } else if (p.dashT > 0) { p.x += p.dvx * dt; p.y += p.dvy * dt; p.dashT -= dt; }
-  else if (p.root <= 0) { p.x += mx * speed * wmul * dt; p.y += my * speed * wmul * dt; }
+  else if (p.root <= 0) { const wm = wmul * weatherPlayerMul(); p.x += mx * speed * wm * dt; p.y += my * speed * wm * dt; }
   if (p.dashN < p.dashMax) { p.dashAcc += dt; if (p.dashAcc >= BAL.dash.rechargeSeconds) { p.dashAcc = 0; p.dashN++; } }
   pushOutOfPagodas(p, p.r * 0.8, false);   // 탑림: 몸 폭(반지름 0.4m 꼴)으로 돌탑에 막힌다
   // 혈우 장막과 강호 끝
@@ -1165,7 +1166,7 @@ function update(rdt) {
     if (G.waveCd <= 0) { G.waveCd = 2.6 * (1 - cdr) * (1 - 0.08 * (G.cards.art_wave || 0)); const R = 6.5 * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * 1.4, 0, 0, 0, 'wave'); }
   }
   // 적
-  const aura = p.r * 1.7, recycle = G.view * SPT.recycleBeyondDiagonal;
+  const aura = p.r * 1.7, recycle = G.view * SPT.recycleBeyondDiagonal, wEnemy = weatherEnemyMul();   // 눈보라·붉은 달 걸음
   for (const f of G.foes) {
     if (f.dead) continue;
     if (f.pat && f.pat.split) splitTick(f, dt);
@@ -1188,7 +1189,7 @@ function update(rdt) {
       if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier) { f.contact = 0.4; hitPlayer(f.dmg); }
       continue;
     }
-    const fw = GIM.water && f.kind !== 'water_ghost' && !(f.def && f.def.ignoresTerrain) && inWater(f.x, f.y) ? GIM.water.moveSpeedMultiplier : 1;
+    const fw = (GIM.water && f.kind !== 'water_ghost' && !(f.def && f.def.ignoresTerrain) && inWater(f.x, f.y) ? GIM.water.moveSpeedMultiplier : 1) * wEnemy;
     const held = f.pat && (f.pat.hold || f.pat.recover > 0);
     const cold = GIM.campfire && f.def && f.def.family === GIM.campfire.slowedFamily && nearCampfire(f.x, f.y) ? GIM.campfire.slowedMoveSpeedMultiplier : 1;   // 모닥불 곁 빙강시
     const sp = (f.boss || f.pat || f.cloneOf ? (held ? 0 : f.sp) : f.sp * (f.hop < 0.72 ? 1 / 0.72 : 0.15)) * fw * cold * enemySpdMul();
@@ -1659,6 +1660,16 @@ function fogR(fg) {   // Core PoisonFogGimmick.RadiusAt 과 같은 식
   return g.radius * fg.k * clamp(q, 0, 1);
 }
 function inFog(x, y) { for (const fg of G.fogs) if (Math.hypot(x - fg.x, y - fg.y) <= fogR(fg)) return true; return false; }
+// 날씨(R4-11, Core WeatherGimmick.ActiveAt 와 같은 식): 한 생 시계로 firstSeconds 에 처음, 그 뒤 periodSeconds 마다 durationSeconds 동안.
+// 지금 선 지역에 그 기믹이 있을 때만 켠다(곤륜 설원 눈보라, 십만대산 붉은 달)
+function weatherOn(def) {
+  if (!def || !G || !regionHas(REG[G.region], def.id) || G.t < def.firstSeconds) return false;
+  if (!(def.periodSeconds > 0)) return G.t < def.firstSeconds + def.durationSeconds;
+  return (G.t - def.firstSeconds) % def.periodSeconds < def.durationSeconds;
+}
+const or1 = v => v > 0 ? v : 1;
+const weatherPlayerMul = () => weatherOn(GIM.blizzard) ? or1(GIM.blizzard.playerMoveSpeedMultiplier) : 1;
+const weatherEnemyMul = () => (weatherOn(GIM.blizzard) ? or1(GIM.blizzard.enemyMoveSpeedMultiplier) : 1) * (weatherOn(GIM.redMoon) ? or1(GIM.redMoon.enemyMoveSpeedMultiplier) : 1);
 // ───────── 혈마의 그림자(RM-10, 기획서 7장 '생의 끝', cheonha.json lifeEnd) ─────────
 // 현경인데 봉인석이 모자라면 환산 shadowFromMinute(30분)부터, shadowStepMinutes(5분)마다 한 단계씩. 단계는 Core LifeDirector.ShadowStep,
 // 세기는 Core BloodShadow.Strength 와 같다. 피해·기혈은 기획서 단위 그대로 쓴다(이 시안의 몸 기혈이 기획서 값이라).
@@ -1819,6 +1830,30 @@ function campfires(x0, y0, reach) {
 const nearCampfire = (x, y) => campfires(x, y, (GIM.campfire ? GIM.campfire.radius : 0) * sc(G.tier)).some(c => Math.hypot(x - c.x, y - c.y) <= c.r);
 function regionGimmicks(dt) {
   const p = G.p, here = REG[G.region], fg = GIM.poisonFog;
+  // 낙석(화산, R4-11, Core FallingRocksGimmick): 한 생 시계로 periodSeconds 마다 플레이어 둘레 가로·세로 ±scatter 안 count 곳에 그림자,
+  // telegraphSeconds 뒤 반경 radius 안을 친다. 플레이어 최대 기혈 10%(경공 중엔 피함), 잡몹은 쓰러지고 정예·땅의 주인은 최대 기혈 5%
+  const fr = GIM.fallingRocks;
+  if (fr && fr.periodSeconds > 0) {
+    const falls = Math.floor(G.t / fr.periodSeconds) - Math.floor(Math.max(0, G.t - dt) / fr.periodSeconds);
+    if (falls > 0 && regionHas(here, fr.id)) {
+      const k = sc(G.tier);
+      for (let i = 0; i < fr.count; i++) G.rocks.push({ x: p.x + rand(-1, 1) * fr.scatter * k, y: p.y + rand(-1, 1) * fr.scatter * k, r: fr.radius * k, t: fr.telegraphSeconds, life: fr.telegraphSeconds });
+      if (!G.rockHinted) { G.rockHinted = true; setHint(`낙석 · ${fr.periodSeconds}초마다 그림자 ${fr.count}곳, ${fr.telegraphSeconds}초 뒤 바위 · 맞으면 최대 기혈 ${Math.round(fr.playerDamageMaxHealthRatio * 100)}%, 잡몹은 깔린다`); }
+    }
+  }
+  if (G.rocks.length) {
+    for (const r of G.rocks) {
+      r.t -= dt; if (r.t > 0) continue;
+      G.fx.push({ k: 'crush', x: r.x, y: r.y, r: r.r, t: 0, life: 0.35, red: false });
+      if (p.dashT <= 0 && Math.hypot(p.x - r.x, p.y - r.y) <= r.r) drainPlayer(p.maxHp * fr.playerDamageMaxHealthRatio);
+      for (const f of G.foes) {
+        if (f.dead || f.splitOf || Math.hypot(f.x - r.x, f.y - r.y) > r.r) continue;
+        if (!f.boss && !f.elite) { kill(f, true); continue; }
+        f.hp -= f.maxHp * fr.eliteDamageMaxHealthRatio; f.flash = 0.12; if (f.hp <= 0) kill(f);
+      }
+    }
+    G.rocks = G.rocks.filter(r => r.t > 0);
+  }
   // 독안개: 한 생 시계로 firstSpreadSeconds 에 처음, 그 뒤 periodSeconds 마다. 그때 독안개 땅에 서 있으면 내 둘레 아무 데서 샘이 터진다
   if (fg && G.t >= G.fogNext) {
     G.fogNext += fg.periodSeconds;
@@ -2105,6 +2140,13 @@ function render() {
   }
   ctx.restore();
   drawBossOverlays();
+  // 눈보라(곤륜 설원): 보이는 범위 viewScale 배 — 화면 대각선의 그 비율 밖을 흰 덮개로(카메라는 그대로, R4-02 설무향 눈보라와 같은 꼴)
+  if (weatherOn(GIM.blizzard)) {
+    const R = Math.hypot(VW, VH) / 2, inner = R * or1(GIM.blizzard.viewScale), g = ctx.createRadialGradient(VW / 2, VH / 2, inner * 0.7, VW / 2, VH / 2, inner);
+    g.addColorStop(0, 'rgba(244,246,248,0)'); g.addColorStop(1, 'rgba(244,246,248,0.94)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  }
+  if (weatherOn(GIM.redMoon)) { ctx.fillStyle = 'rgba(150,20,20,0.12)'; ctx.fillRect(0, 0, VW, VH); }   // 붉은 달: 적 걸음 1.2배 동안 화면이 붉다
   // 혈우(화면): 지금 선 자리의 혈운 농도만큼 빗줄기가 굵고 많아진다
   const D = G.dens, nRain = Math.round(30 + 26 * D), len = 12 + 3 * D;
   ctx.strokeStyle = `rgba(179,38,30,${Math.min(0.42, 0.13 + 0.05 * D)})`; ctx.lineWidth = 0.6 + 0.55 * D; ctx.lineCap = 'round'; ctx.beginPath();
@@ -2194,6 +2236,11 @@ function drawGimmicks(now) {
     ctx.beginPath(); ctx.moveTo(X - bw * 0.8, Y - bh * 0.25); ctx.lineTo(X + bw * 0.8, Y - bh * 0.25); ctx.stroke();
     if (b.drop) { ctx.strokeStyle = CRIMSON; ctx.beginPath(); ctx.moveTo(X - bw * 0.6, Y - bh * 0.6); ctx.lineTo(X + bw * 0.6, Y - bh * 0.6); ctx.stroke(); }
     ctx.globalAlpha = 1;
+  }
+  for (const r of G.rocks) {   // 낙석 그림자: 떨어질수록 짙어진다
+    const R = r.r * PPM; if (R < 1) continue; const q = 1 - r.t / r.life;
+    ctx.fillStyle = `rgba(26,26,26,${0.12 + 0.3 * q})`; ctx.beginPath(); ctx.arc(sx(r.x), sy(r.y), R, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(26,26,26,0.55)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(sx(r.x), sy(r.y), R * (0.25 + 0.75 * q), 0, TAU); ctx.stroke();
   }
   for (const fg of G.fogs) {
     const R = fogR(fg) * PPM; if (R < 1) continue; const X = sx(fg.x), Y = sy(fg.y);
@@ -2598,7 +2645,7 @@ window.__ch = {
   // 혈마의 그림자(RM-10): shadow() 지금 단계·세기·거리, shadowStep() 지금 시각의 단계
   shadow: () => G.shadow && { step: G.shadow.step, str: G.shadow.str, dist: +Math.hypot(G.shadow.x - G.p.x, G.shadow.y - G.p.y).toFixed(1), warn: G.shadow.warn },
   shadowStep: () => shadowStep(), shadowMinute: () => shadowMinute(),
-  area() { return { region: G.region, chapter: regionChapter(), localShare: localShare(), eliteN: G.eliteN, inWater: inWater(G.p.x, G.p.y), inFog: inFog(G.p.x, G.p.y), fogs: G.fogs.length, pools: G.pools.length, shots: G.shots.length, yy: G.yy, bless: G.bless, pads: taijiPads().length, kinds: G.foes.filter(f => f.kind).map(f => f.kind) }; },
+  area() { return { region: G.region, chapter: regionChapter(), localShare: localShare(), eliteN: G.eliteN, inWater: inWater(G.p.x, G.p.y), inFog: inFog(G.p.x, G.p.y), fogs: G.fogs.length, pools: G.pools.length, shots: G.shots.length, yy: G.yy, bless: G.bless, pads: taijiPads().length, rocks: G.rocks.length, blizzard: weatherOn(GIM.blizzard), redMoon: weatherOn(GIM.redMoon), kinds: G.foes.filter(f => f.kind).map(f => f.kind) }; },
   // 땅의 주인(R4-02w): pat() 지금 싸움의 패턴 상태, campfires() 화면 근처 모닥불. fight(지역 id, 기혈 몫)은 아래
   pat() { const b = G.fight, P = b && b.pat; if (!P) return null; return { boss: b.def.id, hp: +(b.hp / b.maxHp).toFixed(3), phase2: P.phase2, cur: P.cur && P.cur.id, spirals: P.spirals.length, burstWave: P.burst && P.burst.wave, snow: P.snow && +P.snow.t.toFixed(2), clones: P.clones && P.clones.list.filter(c => !c.dead).length, spikes: P.spikes.length, arenaR: P.arena && +P.arena.R.toFixed(2), blink: P.blink && P.blink.i, empower: !!G.empower && G.empower.warm <= 0, enemyDmg: enemyDmgMul(), enemySpd: enemySpdMul(), campfire: nearCampfire(G.p.x, G.p.y), shots: G.shots.length }; },
   campfires: () => campfires(G.p.x, G.p.y, G.view).map(c => ({ x: Math.round(c.x), y: Math.round(c.y), r: +c.r.toFixed(2) })),
