@@ -766,11 +766,15 @@ function levelLoop() {
 function breakthrough() {
   const from = G.view;
   G.tier++;
-  G.brk = { t: 0, from, to: viewFor(G.tier, 0), oldR: boundR(G.tier - 1), crushed: false };
-  G.trauma = Math.min(1, G.trauma + 0.5);
   const id = REALMS[G.tier].id;
+  // 한 번 깨친 길(RM-11, 21장·cheonha.json mastery, Core Soul.Breakthrough·Breakthrough.Start): 계정에서 이미 오른 경지면
+  // 같은 연출을 revisitSeconds 로 줄이고(연출 시계가 zoomTo ÷ revisit 배로 감) 깨달음 후보 +revisitInsightChoicesBonus
+  const MS = CH.mastery || {}, revisit = meta.reached.includes(id);
+  const speed = revisit && MS.shortBreakthroughWhenRevisited !== false && BRK.revisitSeconds > 0 ? BRK.zoomToSeconds / BRK.revisitSeconds : 1;
+  G.brk = { t: 0, from, to: viewFor(G.tier, 0), oldR: boundR(G.tier - 1), crushed: false, speed, revisit };
+  G.trauma = Math.min(1, G.trauma + 0.5);
   G.reachT[G.tier] = G.t;
-  if (offersInsight(REALMS[G.tier])) { G.pendingIns++; G.insRealms.push(REALMS[G.tier].nameKo); }   // 연출이 끝나면 maybeCards 가 깨달음부터 띄운다
+  if (offersInsight(REALMS[G.tier])) { G.pendingIns++; G.insRealms.push({ name: REALMS[G.tier].nameKo, extra: revisit ? (MS.revisitInsightChoicesBonus || 0) : 0 }); }   // 연출이 끝나면 maybeCards 가 깨달음부터 띄운다
   if (!meta.reached.includes(id) && !G.newRealms.includes(id)) G.newRealms.push(id);
   const woke = wakeBosses();
   if (woke.length) toast('땅의 주인이 깨어났다', woke.map(r => `${BOSS[r.boss].nameKo}(${r.nameKo})`).join(' · ') + ' — 화면 끝 붉은 표시');
@@ -936,7 +940,7 @@ function update(rdt) {
   const B = G.brk;
   let dt = rdt;
   if (B) {
-    B.t += rdt; const T = B.t, z0 = BRK.zoomFromSeconds, z1 = BRK.zoomToSeconds;
+    B.t += rdt * (B.speed || 1); const T = B.t, z0 = BRK.zoomFromSeconds, z1 = BRK.zoomToSeconds;
     dt = rdt * (T < z1 ? BRK.timeScale : lerp(BRK.timeScale, 1, clamp((T - z1) / 0.3, 0, 1)));
     const k = easeInOut(clamp((T - z0) / (z1 - z0), 0, 1));
     G.view = Math.exp(lerp(Math.log(B.from), Math.log(B.to), k));
@@ -1142,8 +1146,8 @@ function rollFrom(list, count, rnd = Math.random) {
   return pool.slice(0, n);
 }
 // 마교 몸(혈공)은 그중 demonicInsightsPerBreakthrough 자리를 마공에서, 마공이 떨어지면 보통으로(Core RollWithDemonic, 마공이 앞자리)
-function rollInsights(rnd) {
-  const count = INS.choices.base, ba = G.sect.bloodArt;
+function rollInsights(rnd, extra = 0) {
+  const count = INS.choices.base + extra, ba = G.sect.bloodArt;   // extra: 한 번 깨친 길(올라 본 경지로 다시 돌파)
   const dem = ba ? rollFrom(INS.demonicInsights || [], Math.min(ba.demonicInsightsPerBreakthrough || 0, count), rnd) : [];
   return [...dem, ...rollFrom(INS.insights, count - dem.length, rnd)];
 }
@@ -1175,7 +1179,7 @@ function maybeCards() {
   const offers = rollCards();
   if (!offers.length) { G.pendingCards = 0; return; }
   if (G.auto || !running) { applyCard(offers[0]); return; }   // 자동 판·시뮬레이션은 첫 장을 바로 고른다
-  G.offers = offers; paused = true; show('levelup'); $('luhanja').textContent = '習';
+  G.offers = offers; paused = true; show('levelup'); $('luhanja').textContent = '習'; $('lucards').classList.remove('four');
   $('lusub').textContent = `Lv${G.lv} · 하나를 익힌다${G.pendingCards > 1 ? ` (남은 ${G.pendingCards - 1}장)` : ''}`;
   const box = $('lucards'); box.innerHTML = '';
   offers.forEach((o, i) => {
@@ -1187,12 +1191,13 @@ function maybeCards() {
   });
 }
 function maybeInsight() {
-  const offers = rollInsights(), realm = G.insRealms.shift() || REALMS[G.tier].nameKo;   // 깨달음을 준 경지(돌파가 겹쳐도 차례대로)
+  const q = G.insRealms.shift() || { name: REALMS[G.tier].nameKo, extra: 0 };   // 깨달음을 준 경지(돌파가 겹쳐도 차례대로)
+  const offers = rollInsights(Math.random, q.extra), realm = q.name;
   if (!offers.length) { G.pendingIns = 0; G.insRealms = []; return; }   // 다 가졌으면 돌파 연출만(Core: 빈 목록)
   if (G.auto || !running) { takeInsight(offers[0]); return; }
   G.insOffers = offers; paused = true; show('levelup'); $('luhanja').textContent = '悟';
-  $('lusub').textContent = `${realm} 돌파 · 깨달음 하나${G.pendingIns > 1 ? ` (남은 ${G.pendingIns - 1}번)` : ''}`;
-  const box = $('lucards'); box.innerHTML = '';
+  $('lusub').textContent = `${realm} 돌파 · 깨달음 하나${q.extra ? ` · 한 번 깨친 길(+${q.extra}장)` : ''}${G.pendingIns > 1 ? ` (남은 ${G.pendingIns - 1}번)` : ''}`;
+  const box = $('lucards'); box.innerHTML = ''; box.classList.toggle('four', offers.length === 4);
   offers.forEach((d, i) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'card' + (insOn(d.id) ? '' : ' dim');
@@ -2028,7 +2033,7 @@ function drawBreak() {
   ctx.save(); ctx.globalAlpha = clamp(a, 0, 1); ctx.translate(VW / 2, VH * 0.3); ctx.scale(sc2, sc2);
   ctx.fillStyle = 'rgba(239,230,210,0.82)'; ctx.beginPath(); ctx.ellipse(0, 0, Math.min(VW * 0.48, size * h.length * 0.62 + 30), size * 0.7, 0, 0, TAU); ctx.fill();
   ctx.font = `${Math.round(size)}px "Yuji Boku", "Noto Serif KR", serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = INK; ctx.shadowColor = 'rgba(26,26,26,0.3)'; ctx.shadowBlur = 10; ctx.fillText(h, 0, 4);
-  ctx.shadowBlur = 0; ctx.font = `900 ${Math.round(Math.max(15, size * 0.18))}px "Noto Serif KR", serif`; ctx.fillStyle = '#7A5A10'; ctx.fillText(`${REALMS[G.tier].nameKo} 돌파 · 세상이 물러난다`, 0, size * 0.72);
+  ctx.shadowBlur = 0; ctx.font = `900 ${Math.round(Math.max(15, size * 0.18))}px "Noto Serif KR", serif`; ctx.fillStyle = '#7A5A10'; ctx.fillText(`${REALMS[G.tier].nameKo} 돌파 · ${B.revisit ? '한 번 깨친 길' : '세상이 물러난다'}`, 0, size * 0.72);
   ctx.restore();
 }
 
