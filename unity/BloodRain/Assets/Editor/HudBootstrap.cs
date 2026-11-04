@@ -16,6 +16,9 @@ namespace BloodRain.Editor
         const string BrushFontPath = "Assets/Art/Fonts/YujiBoku-Regular.ttf";
         // 각성 연출용 YujiBoku SDF 는 절기 한자 56자 고정 아틀라스라, 본문 대체 글꼴은 동적으로 따로 만든다(丐·罩)
         const string BrushFallbackAssetPath = "Assets/Art/Fonts/YujiBoku Dynamic SDF.asset";
+        // 간체 중국어(L-01b1). 한국어 글꼴에 없는 간체 자형(华·剑·气)을 채운다. 대체 목록 맨 뒤.
+        const string ScFontPath = "Assets/Art/Fonts/NotoSerifSC-Regular.otf";
+        const string ScFontAssetPath = "Assets/Art/Fonts/NotoSerifSC SDF.asset";
 
         static readonly Color Ink = new Color(0.12f, 0.10f, 0.09f);
 
@@ -38,11 +41,27 @@ namespace BloodRain.Editor
             return body;
         }
 
-        static TMP_FontAsset CreateDynamic(string fontPath, string assetPath, string name)
+        /// <summary>간체 글꼴 Noto Serif SC 동적 SDF(아틀라스 2048)를 만들어 본문 글꼴 대체 목록 맨 뒤에 건다. 다시 돌려도 같다.</summary>
+        [MenuItem("BloodRain/Bootstrap/간체 글꼴(Noto Serif SC SDF)")]
+        public static TMP_FontAsset EnsureSimplifiedFont()
+        {
+            var body = EnsureBodyFont();
+            var sc = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ScFontAssetPath);
+            if (sc == null) sc = CreateDynamic(ScFontPath, ScFontAssetPath, "NotoSerifSC SDF", 2048);
+            if (body == null || sc == null) return sc;
+            body.fallbackFontAssetTable ??= new System.Collections.Generic.List<TMP_FontAsset>();
+            body.fallbackFontAssetTable.Remove(sc);
+            body.fallbackFontAssetTable.Add(sc);
+            EditorUtility.SetDirty(body);
+            AssetDatabase.SaveAssets();
+            return sc;
+        }
+
+        static TMP_FontAsset CreateDynamic(string fontPath, string assetPath, string name, int atlas = 1024)
         {
             var font = AssetDatabase.LoadAssetAtPath<Font>(fontPath);
             if (font == null) { Debug.LogError($"[HudBootstrap] {fontPath} 이 없다"); return null; }
-            var fa = TMP_FontAsset.CreateFontAsset(font, 64, 6, GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic, true);
+            var fa = TMP_FontAsset.CreateFontAsset(font, 64, 6, GlyphRenderMode.SDFAA, atlas, atlas, AtlasPopulationMode.Dynamic, true);
             fa.name = name;
             AssetDatabase.CreateAsset(fa, assetPath);
             fa.atlasTextures[0].name = name + " Atlas";

@@ -37,7 +37,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 컴파일·콘솔 에러 0. 곡이 하나라도 있으면 인스펙터에서 네 설정 확인
   - 찍기: 없음
 
-- [ ] L-01b1 Loc 컴파일과 간체 글꼴
+- [x] L-01b1 Loc 컴파일과 간체 글꼴 — 2026-11-04 Loc 와 화면들 컴파일 에러 0, 메뉴 `간체 글꼴(Noto Serif SC SDF)`(HudBootstrap.cs)로 동적 SDF 2048 을 만들어 KR 대체 목록 맨 뒤에 걸음. 시험 글자 두부 없음. 저장소가 무겁지 않게 SC 에셋의 동적 글리프는 비워 둠(실행 때 채움)
   - 할 것: `Presentation/Loc.cs` 와 Loc 로 바꾼 화면들(LevelUpScreen·DiscoveryFx·SecretWatch·SettlementScreen·ChimbangScreen·ChimbangMap·LibraryScreen·ManualNames·TrainingScreen·MetaShop·RegionHud)이 같이 컴파일되는지. `Art/Fonts/NotoSerifSC-Regular.otf` 로 TMP 동적 SDF(`Art/Fonts/NotoSerifSC SDF.asset`, Dynamic, 아틀라스 2048)를 만들어 NotoSerifKR SDF 의 대체 글꼴 맨 뒤에 건다.
   - 쓸 것: `Resources/Data/strings/*`, `Loc.T`·`Loc.F`·`Loc.Lang`
   - 메뉴: `BloodRain/Bootstrap/간체 글꼴(Noto Serif SC SDF)` 를 새로(본문 글꼴 메뉴와 같은 파일에)
