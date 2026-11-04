@@ -30,7 +30,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: `git status` 에 .meta 가 안 바뀌거나, 바뀌면 그대로 커밋. 콘솔 에러 0
   - 찍기: 없음(인스펙터 확인)
 
-- [ ] BGM-03a 배경음 가져오기 설정
+- [x] BGM-03a 배경음 가져오기 설정 — 2026-11-04 `Assets/Editor/BgmImport.cs`(Streaming·Vorbis 70%·Preload 끔·Mono 끔) 컴파일·콘솔 에러 0. 곡이 아직 없어 인스펙터 확인은 곡이 들어온 뒤
   - 할 것: `Assets/Editor` 의 `BgmImport.cs`(AssetPostprocessor) — `Assets/Audio/BGM/*.ogg` 는 Load Type Streaming, Compression Vorbis 품질 70%, Preload Audio Data 끔, Force To Mono 끔. 곡을 트는 쪽은 기획이 정해진 뒤.
   - 쓸 것: `Assets/Audio/BGM` 의 `bgm.json`(id·file·loop·seconds, `tools/postprocess_audio.py` 가 넣음). 아직 곡이 없을 수 있다
   - 메뉴: 없음(가져올 때 자동)
