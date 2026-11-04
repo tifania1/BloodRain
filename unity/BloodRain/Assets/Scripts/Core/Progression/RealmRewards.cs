@@ -86,13 +86,15 @@ namespace BloodRain.Core.Progression
             return sum;
         }
 
-        /// <summary>level 까지 닿은 모든 경지의 보상 합(삼류부터). 돌파를 지난 몸의 상태.</summary>
-        public static RealmRewardSum Upto(IEnumerable<RealmDef> realms, int level)
+        /// <summary>level 까지 닿은 모든 경지의 보상 합(삼류부터). 돌파를 지난 몸의 상태.
+        /// onlyIn 이 붙은 경지는 그 모드에서만 센다(Realms.For 와 같은 규칙, 지금 데이터엔 없음).</summary>
+        public static RealmRewardSum Upto(IEnumerable<RealmDef> realms, int level, string mode = "normal")
         {
             var sum = new RealmRewardSum();
             foreach (var r in realms)
             {
                 if (r.Level > level) continue;
+                if (r.OnlyIn != null && !r.OnlyIn.Contains(mode)) continue;
                 foreach (var t in Tokens(r.Reward)) Apply(sum, t);
             }
             return sum;

@@ -120,7 +120,11 @@ namespace BloodRain.Core.World
             return maxHealth * _def.HealMaxHealthRatio;
         }
 
-        public void Tick(float dt) => RegrowRemaining = Math.Max(0f, RegrowRemaining - dt);
+        public void Tick(float dt)
+        {
+            if (dt <= 0f) return; // 음수 dt 가 다시 필 시간을 늘리지 않게(QA-05)
+            RegrowRemaining = Math.Max(0f, RegrowRemaining - dt);
+        }
     }
 
     /// <summary>빙판: 속도가 바라는 속도로 천천히 바뀐다.</summary>
@@ -130,6 +134,7 @@ namespace BloodRain.Core.World
         public static Vector2 Step(IceFloorGimmickDef def, Vector2 current, Vector2 desired, float dt, bool onIce, bool flying = false)
         {
             if (!onIce || (flying && def.FlyingIgnores) || def.InertiaSeconds <= 0) return desired;
+            if (dt <= 0f) return current; // 멈춘 프레임엔 그대로. 음수면 바라는 쪽 반대로 밀리던 것(QA-05)
             float k = Math.Min(1f, dt / def.InertiaSeconds);
             return current + (desired - current) * k;
         }

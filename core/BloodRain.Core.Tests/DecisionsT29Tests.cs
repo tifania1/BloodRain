@@ -38,6 +38,18 @@ namespace BloodRain.Core.Tests
             Assert.InRange(t, 5f, 5.3f);
         }
 
+        /// <summary>QA-05: 깨어난 뒤 Tick 없이 바로 싸워 쓰러뜨린 곳이 나중 Tick 에 경고를 걸지 않는다.</summary>
+        [Fact] public void 이미_쓰러뜨린_곳은_막_깨어났어도_경고를_걸지_않는다()
+        {
+            var b = Songshan();
+            var center = new Regions(_d).Center("songshan");
+            b.UpdateRealm(35);
+            b.Engage("songshan", 35, 12);
+            b.Defeat();
+            Assert.Null(b.Tick(0.1f, center, 35, 13));
+            Assert.Null(b.GraceRegionId);
+        }
+
         [Fact] public void 경고_중에_원_밖으로_나가면_미루고_다시_들어서면_바로_싸운다()
         {
             var b = Songshan();

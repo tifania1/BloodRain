@@ -66,5 +66,18 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1f, s.DamageTakenMultiplier);
             Assert.False(s.DoubleUltimate);
         }
+
+        /// <summary>QA-05: onlyIn 이 붙은 경지 보상은 그 모드에서만 더한다(Realms.For 와 같게).</summary>
+        [Fact] public void onlyIn_경지_보상은_그_모드에서만()
+        {
+            var realms = new[]
+            {
+                new RealmDef { Id = "a", Level = 1 },
+                new RealmDef { Id = "b", Level = 10, Reward = "max_health_10" },
+                new RealmDef { Id = "c", Level = 20, Reward = "max_health_30", OnlyIn = new System.Collections.Generic.List<string> { "special" } },
+            };
+            Assert.Equal(10f, RealmRewards.Upto(realms, 99).MaxHealthFlat);
+            Assert.Equal(40f, RealmRewards.Upto(realms, 99, "special").MaxHealthFlat);
+        }
     }
 }

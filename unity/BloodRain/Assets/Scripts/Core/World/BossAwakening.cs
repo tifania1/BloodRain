@@ -249,7 +249,8 @@ namespace BloodRain.Core.World
 
         // ---- 깨어날 때 이미 원 안이면 경고 시간(T-29) ----
 
-        readonly HashSet<string> _justWoke = new HashSet<string>();
+        /// <summary>지난 Tick 뒤 깨어난 지역(깨어난 순서). Tick 이 매번 비운다. 싸움·경고 중에 깨어난 곳은 경고 없이 보통 규칙을 따른다.</summary>
+        readonly List<string> _justWoke = new List<string>();
 
         /// <summary>경고가 흐르는 지역(깨어날 때 이미 원 안이었던 곳). 없으면 null.</summary>
         public string? GraceRegionId { get; private set; }
@@ -263,6 +264,9 @@ namespace BloodRain.Core.World
         /// </summary>
         public BossFight? Tick(float dt, Vector2 player, float level, float minute)
         {
+            // 막 깨어난 곳은 이번 Tick 에만 본다. 싸움·경고 중이라 못 봤으면 버린다(묵은 것이 나중에 엉뚱한 경고를 걸던 것, QA-05).
+            var justWoke = _justWoke.ToList();
+            _justWoke.Clear();
             if (InFight) return null;
             float radius = EngageRadius(level);
             bool Inside(RegionDef r) => Vector2.Distance(player, _regions.Center(r)) <= radius;
@@ -282,12 +286,12 @@ namespace BloodRain.Core.World
             }
 
             // 막 깨어난 곳: 이미 안이면 경고를 걸고, 밖이면 보통 규칙으로 돌린다.
-            foreach (var id in _justWoke)
+            foreach (var id in justWoke)
             {
+                if (_state[id] != BossRegionState.Awake) continue; // 그사이 Engage 로 싸웠거나 쓰러뜨린 곳
                 var r = _regions.Region(id);
                 if (GraceRegionId == null && Inside(r)) { GraceRegionId = id; GraceRemaining = _rules.AwakenGraceSeconds; }
             }
-            _justWoke.Clear();
             if (GraceRegionId != null) return null;
 
             return TryEngage(player, level, minute);
