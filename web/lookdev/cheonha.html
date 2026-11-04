@@ -231,7 +231,19 @@ const TRAITS = CH.birthTraits.list, TRAIT = Object.fromEntries(TRAITS.map(t => [
 const NAME = Object.fromEntries([...DATA.characters, ...DATA.weapons].map(x => [x.id, x.nameKo]));
 const BOSS = Object.fromEntries(DATA.bosses.map(b => [b.id, b]));
 const BPAT = DATA.bossPatterns || {};   // bosspatterns.json bosses(T-21). 길이는 화면 기준 m라 싸움을 건 경지 축척을 곱한다
-const PAT_SHAPES = new Set(['cone', 'summon_ring', 'circles', 'rotating_beams']);
+// 이 시안이 그리는 패턴 모양. bosspatterns.json 의 땅의 주인·정예 패턴이 쓰는 모양은 모두 들어 있다(WP-01)
+const PAT_SHAPES = new Set(['cone', 'summon_ring', 'circles', 'rotating_beams', 'projectile_fan', 'summon', 'jump_slam', 'half_field',
+  'split', 'pull_line', 'bind_line', 'line', 'sweep_wave', 'split_field', 'inhale_exhale', 'closing_ring']);
+// 지역 콘텐츠(WP-01): enemies.json 고유 적·정예, bosspatterns.json elites, 장별 정예 표, gimmicks.json, chapters.json 한 생
+const RFOE = Object.fromEntries((DATA.regionFoes || []).map(e => [e.id, e]));
+const ELITES_BY = DATA.elitesByChapter || {};
+const EPAT = DATA.elitePatterns || {};
+const GIM = DATA.gimmicks || {};
+const LIFE = DATA.life || { localShare: [], eliteFallback: { region: 'songshan', regions: [] } };
+const LOCAL_BY = {};   // 장 이름 → 그 지역 고유 적
+for (const e of Object.values(RFOE)) if (e.chapter && e.family !== 'elite') (LOCAL_BY[e.chapter] = LOCAL_BY[e.chapter] || []).push(e);
+const YY = BAL.yinyang || { min: -100, max: 100, passivePerLevel: 8 };
+const pspd = v => v / 100 * 4.6;   // 패턴 속도(플레이어 기본 이동속도 100 기준) → 화면 기준 m/s
 // 레벨업 카드(T-21): 몸에 바로 붙는 능력치만 쓰는 심법(passives.json) + 이 시안의 무공 셋
 const BODY_STATS = new Set(['MaxHealth', 'MoveSpeed', 'Might', 'Recovery', 'Armor', 'CooldownReduction', 'Magnet', 'Growth', 'FoodHeal', 'Area']);
 const LV = DATA.levels || { weaponMax: 8, passiveMax: 5 };
@@ -286,6 +298,13 @@ const LD = {
   bossHpScale: 0.15,     // 땅의 주인 기혈 = 7장 식 × 이 값(놀이판 화력에 맞춤)
   baseRegen: 0.2,        // 기본 회복(초당). 기획서 기본값은 0
   hitIframe: 0.45,       // 맞은 뒤 무적
+  // 지역 콘텐츠(WP-01). 고유 적·정예는 이 기준값 대비 enemies.json 비율만큼 이 시안의 덩이 기혈·걸음·피해에 곱한다
+  localHpRef: 30, localSpeedRef: 70, localDmgRef: 8,   // 고유 적 기준(공통 적 혈강시~혈무사 사이)
+  eliteHpRef: 800, eliteDmgRef: 16,                    // 정예 기준(첫째 정예 무렵)
+  eliteRange: 0.5,       // 정예 패턴은 화면 대각선의 이 배 안에 들어와야 쓴다(화면 밖에서 쏘지 않게)
+  fogOffset: 6,          // 독안개 샘: 플레이어에게서 이 거리(m, × 축척) 안 아무 데
+  waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7,   // 장강 물길: 간격·반폭·굽이(m, × 축척)
+  taijiSpacing: 16,      // 태극 바닥 간격(m, × 축척)
 };
 
 // 그림에만 쓰는 값: 문파 인장 한자와 옷 색, 경지 한자
@@ -572,7 +591,11 @@ function startLife(c) {
     region: null, dens: home.density, newVisits: [], newRealms: [], bossFirst: [], bossRepeat: [], newStones: [], newSects: [],
     awake: new Set(), done: new Set(), armed: {}, armR: {}, fight: null, engage: null, ended: false, auto: false, fast, reachT: [0], bossT: {},
     cards: {}, extra: {}, pendingCards: 0, offers: null,
+    eliteN: 0, shots: [], pools: [], fogs: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
+    yy: clamp(body.yin, YY.min, YY.max), bless: null, taijiCd: {},
   };
+  Object.assign(G.p, { root: 0, pull: null, walkT: 0 });
+  $('bossbar').hidden = true;
   trackRegion();
   const lead = sect.leader ? `대표 인물 ${NAME[sect.leader]}: "사제, 살아났구나!"` : '맞아 주는 이가 없다. 이 문파엔 아직 대표 인물이 없다';
   setHint(`${home.nameKo}, ${sect.nameKo}의 마당. ${lead}`);
@@ -590,14 +613,18 @@ function trackRegion() {
   }
 }
 
-function spawnFoe(e, elite) {
+function spawnRing() {
   const p = G.p, diag = G.view, a = rand(0, TAU), d = diag * rand(SPT.ringMinDiagonal, SPT.ringMaxDiagonal);
   // 강호 밖으로 나가는 쪽이면 반대편으로 뒤집는다(귀퉁이에서 한 점에 몰리지 않게)
   let ox = Math.cos(a) * d, oy = Math.sin(a) * d;
   if (p.x + ox < 0 || p.x + ox > W) ox = -ox;
   if (p.y + oy < 0 || p.y + oy > H) oy = -oy;
-  const x = clamp(p.x + ox, 0, W), y = clamp(p.y + oy, 0, H);
-  const dens = densityAt(x, y), lower = e < G.tier;
+  return { x: clamp(p.x + ox, 0, W), y: clamp(p.y + oy, 0, H) };
+}
+// kind: enemies.json 고유 적·정예 id(없으면 이름 없는 덩이). at: 생길 자리(없으면 화면 밖 고리)
+function spawnFoe(e, elite, kind, at) {
+  const { x, y } = at || spawnRing();
+  const dens = densityAt(x, y), lower = e < G.tier, def = kind ? RFOE[kind] : null;
   // 아래 경지 덩이는 그 경지 끝 무렵에 생긴 셈으로 친다
   const lvAt = lower ? REALMS[e + 1].level - 1 : G.lv;
   const pw = lower ? Math.pow(LD.power, e + 0.9) : power();
@@ -608,18 +635,60 @@ function spawnFoe(e, elite) {
     xv: req(lvAt) / LD.killsPerLevel * (elite ? 6 : 1),
     hop: Math.random(), flash: 0, contact: 0, v: Math.floor(Math.random() * 3), kx: 0, ky: 0,
   };
+  if (def) {
+    f.kind = kind; f.def = def;
+    f.hp *= def.health / (elite ? LD.eliteHpRef : LD.localHpRef);
+    if (def.speed) f.sp *= def.speed / LD.localSpeedRef;
+    f.dmg *= (def.contactDamage || 0) / (elite ? LD.eliteDmgRef : LD.localDmgRef);
+    f.cd = rand(1, 3);   // 갈고리 같은 제 동작의 첫 대기
+    const set = elite && EPAT[kind];
+    if (set) f.pat = newPat(set);
+  }
   f.maxHp = f.hp; G.foes.push(f); return f;
+}
+const newPat = set => ({ set, timer: set.firstCastSeconds, cycle: 0, cur: null, wind: 0, phase2: false, beams: [], zones: [], fields: [], rings: [], waves: null, split: null, inhale: null, hfSide: 0 });
+// 무리로 나오는 고유 적: 금선지네는 한 줄로 이어 기고(snake_line), 쌍강시는 둘이 붙어 나온다(twin_revive)
+function spawnLocal(e, kind, at, elite) {
+  const def = RFOE[kind]; if (!def) return null;
+  const k = sc(e), base = at || spawnRing();
+  if (kind === 'water_ghost' && !at && !inWater(base.x, base.y)) return null;   // 물에서만 나온다(onlyInWater)
+  const f = spawnFoe(e, elite, kind, base);
+  if (def.behavior === 'snake_line' && def.group) {
+    let prev = f;
+    for (let i = 1; i < def.group.size; i++) { const m = spawnFoe(e, elite, kind, { x: base.x + i * def.group.spacing * k, y: base.y }); m.lead = prev; prev = m; }
+  } else if (def.behavior === 'twin_revive' && def.twin) {
+    const m = spawnFoe(e, elite, kind, { x: base.x + def.twin.gap * k, y: base.y }); f.twin = m; m.twin = f; f.v = 0; m.v = 2;
+  }
+  return f;
+}
+// 한 생의 고유 적 비율(chapters.json life.localShare, 환산 분)
+function localShare() { let s = 0; for (const b of LIFE.localShare) if (eqMinute() >= b.fromMinute) s = b.share; return s; }
+function regionChapter() { const r = REG[G.region]; return r && r.chapter; }
+// n번째 정예: 서 있는 지역의 장 표에서 min(n, 표 길이)번째. 표가 없거나 대신 쓰는 땅이면 eliteFallback.region 의 표
+function eliteKind(nth) {
+  const r = REG[G.region], fb = LIFE.eliteFallback;
+  let ch = r && r.chapter;
+  if (!ch || !ELITES_BY[ch] || (r && fb.regions.includes(r.id))) ch = REG[fb.region] && REG[fb.region].chapter;
+  G.eliteN++;
+  const t = ELITES_BY[ch]; if (!t || !t.length) return null;
+  return t[Math.min(nth || G.eliteN, t.length) - 1];
 }
 function hurt(f, dmg, kx, ky, kb) {
   if (f.dead) return;
+  if (f.mirror) { f.flash = 0.08; hurt(f.mirror, dmg, 0, 0, 0); return; }   // 분열한 몸: 맞은 만큼 본체가 깎인다
   f.hp -= dmg; f.flash = 0.08;
   if (kb && !f.boss) { f.kx += kx * kb; f.ky += ky * kb; }
   if (f.hp <= 0) kill(f);
 }
 function kill(f, crushed) {
   f.dead = true;
+  if (f.mirror) return;
   G.fx.push({ k: crushed ? 'crush' : 'puff', x: f.x, y: f.y, r: f.r * 1.6, t: 0, life: crushed ? 0.35 : 0.5, red: f.e >= 4 || f.boss });
   if (f.boss) { G.kills++; bossDown(f); return; }
+  const d = f.def, k = sc(f.e);
+  // 독두꺼비: 죽은 자리에 독 웅덩이(onDeath poison_pool). 흑백 쌍강시: 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다
+  if (d && d.onDeath === 'poison_pool' && d.death) G.pools.push({ x: f.x, y: f.y, r: d.death.radius * k, dps: d.death.perSecond * f.dmg / d.contactDamage, t: d.death.seconds, green: true });
+  if (d && d.behavior === 'twin_revive' && f.twin && !f.twin.dead) G.revives.push({ f, t: d.reviveSeconds });
   G.kills += CLUSTER[f.e];                                         // 처치 수는 덩이 속 사람 수
   const v = f.xv * (f.e < G.tier ? CRUSH.xpPerCrushed : 1) * (G.fast ? LD.fastXp : 1);   // 진기는 적 하나 값, 밟히면 0.3
   G.orbs.push({ x: f.x, y: f.y, v, heal: f.elite ? 25 : 0 });
@@ -627,7 +696,8 @@ function kill(f, crushed) {
 }
 function mergeOrbs() { const o = G.orbs.splice(0, 60); const sum = o.reduce((a, b) => a + b.v, 0); G.orbs.push({ x: G.p.x, y: G.p.y, v: sum, heal: 0, pull: true }); }
 function gainXp(v) {
-  G.xp += v * G.body.growth;                 // 심득은 레벨만 올린다
+  const fog = GIM.poisonFog && inFog(G.p.x, G.p.y) ? GIM.poisonFog.qiMultiplier : 1;   // 독안개 안에서 얻는 진기 2배(레벨만)
+  G.xp += v * G.body.growth * fog;           // 심득은 레벨만 올린다
   G.orbSum += v * G.dens; G.orbRaw += v;     // 윤회의 기는 구슬 값 × 그 자리 혈운 농도(심득 전)
   levelLoop();
 }
@@ -705,12 +775,13 @@ function startFight(id) {
   if (d > lim) { x = p.x + dx / d * lim; y = p.y + dy / d * lim; }
   const f = { e, boss: true, reg: id, def, x, y, r: 0.42 * sc(e) * 2.4, hp, maxHp: hp, sp: 1.7 * sc(e), dmg: 22 * (1 + 0.15 * e), hop: 0, flash: 0, contact: 0, kx: 0, ky: 0 };
   const set = BPAT[def.id];
-  if (set) f.pat = { set, timer: set.firstCastSeconds, cycle: 0, cur: null, wind: 0, phase2: false, beams: [], zones: [] };
+  if (set) f.pat = newPat(set);
   G.foes.push(f); G.fight = f; G.bossT[id] = { start: G.t, hp: Math.round(hp), lv: G.lv };
   G.hintNext = null; setHint(`${wa(def.nameKo)} 싸우는 동안 몰려오는 적은 ${BR.spawnTargetScale}배로 줄어든다`);
   $('bossname').textContent = def.nameKo; $('bossbar').hidden = false;
 }
 function bossDown(f) {
+  for (const c of G.foes) if (c.mirror === f) c.dead = true;
   G.fight = null; G.done.add(f.reg); $('bossbar').hidden = true;
   if (G.bossT[f.reg]) G.bossT[f.reg].secs = Math.round(G.t - G.bossT[f.reg].start);
   if (f.reg === (FINAL && FINAL.id)) { G.sealed = true; toast('혈마를 봉했다', '봉마곡의 피가 걷힌다'); setTimeout(() => endLife('sealed'), 1400); return; }
@@ -772,13 +843,26 @@ function autopilot() {
   const hx = G.home.x - p.x, hy = G.home.y - p.y, hd = Math.hypot(hx, hy), br = boundR(G.tier);
   if (br !== Infinity && hd > br * 0.85 && !G.awake.size) { ax += hx / hd * 1.5; ay += hy / hd * 1.5; }
   if (G.fight) { const b = G.fight, bx = b.x - p.x, by = b.y - p.y, bd = Math.hypot(bx, by); if (bd > b.r * 2.5) { ax += bx / bd * 1.2; ay += by / bd * 1.2; } }
+  // 장판 피하기(WP-01): 반쪽 독안개·흑백의 검은 쪽에선 경계 반대로, 웅덩이·독안개·내려찍기 예고에선 바깥으로
+  const away = (x, y, r, w) => { const dx = p.x - x, dy = p.y - y, d = Math.hypot(dx, dy) || 1; if (d < r + p.r) { ax += dx / d * w; ay += dy / d * w; } };
+  for (const f of G.foes) if (f.pat) {
+    for (const fd of f.pat.fields) {
+      const nx = fd.kind === 'yy' ? Math.cos(fd.a) : fd.nx, ny = fd.kind === 'yy' ? Math.sin(fd.a) : fd.ny;
+      if ((p.x - fd.x) * nx + (p.y - fd.y) * ny > 0) { ax -= nx * 2; ay -= ny * 2; }
+    }
+    for (const z of f.pat.zones) if (!(z.delay > 0)) away(z.x, z.y, z.r, 2);
+  }
+  for (const o of G.pools) away(o.x, o.y, o.r, 1.5);
+  for (const fg of G.fogs) if (G.sect.id !== 'tang') away(fg.x, fg.y, fogR(fg), 1);
   if (Math.hypot(ax, ay) < 0.2) { const a = G.t * 0.4; ax += Math.cos(a) * 0.6; ay += Math.sin(a) * 0.6; }
   if (crowd >= 6 && p.dashN > 0) doDash();
   return [ax, ay];
 }
 function doDash() {
   if (!G) return; const p = G.p; if (p.dashN <= 0 || p.dashT > 0 || G.brk) return;
-  p.dashN--; p.dashT = BAL.dash.duration; p.iframe = Math.max(p.iframe, BAL.dash.iframes + 0.05);
+  p.dashN--; p.dashT = BAL.dash.duration; p.root = 0; p.pull = null;
+  p.iframe = Math.max(p.iframe, BAL.dash.iframes + 0.05);
+  if (GIM.water) p.walkT = GIM.water.waterWalkSeconds;   // 수상비: 경공 뒤 물에서 느려지지 않는다
   const sp = BAL.dash.distance / BAL.dash.duration * sc(G.tier); p.dvx = p.fx * sp; p.dvy = p.fy * sp;
   G.fx.push({ k: 'dash', x: p.x, y: p.y, a: Math.atan2(p.fy, p.fx), r: sc(G.tier), t: 0, life: 0.3 });
 }
@@ -810,8 +894,16 @@ function update(rdt) {
   const [mx, my, moving] = readMove();
   if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; }
   const speed = 4.6 * s * (1 + 0.15 * pr) * M.speed;
-  if (p.dashT > 0) { p.x += p.dvx * dt; p.y += p.dvy * dt; p.dashT -= dt; }
-  else { p.x += mx * speed * dt; p.y += my * speed * dt; }
+  // 물(장강): 플레이어·적 모두 0.7배. 수상비(경공 뒤 3초)·수로채 몸은 느려지지 않는다
+  const wmul = GIM.water && p.walkT <= 0 && G.sect.id !== 'waterfort' && inWater(p.x, p.y) ? GIM.water.moveSpeedMultiplier : 1;
+  p.walkT = Math.max(0, p.walkT - dt); p.root = Math.max(0, p.root - dt);
+  if (p.pull) {   // 갈고리 사슬: 남은 시간 동안 보스 쪽으로 끌려간다
+    const q = p.pull, dx = q.f.x - p.x, dy = q.f.y - p.y, d = Math.hypot(dx, dy), stop = q.f.r + p.r;
+    q.t -= dt;
+    if (d > stop && q.t > 0) { const v = Math.min(d - stop, (d - stop) / q.t * dt + 0.0001); p.x += dx / d * v; p.y += dy / d * v; }
+    if (q.t <= 0 || d <= stop || q.f.dead) p.pull = null;
+  } else if (p.dashT > 0) { p.x += p.dvx * dt; p.y += p.dvy * dt; p.dashT -= dt; }
+  else if (p.root <= 0) { p.x += mx * speed * wmul * dt; p.y += my * speed * wmul * dt; }
   if (p.dashN < p.dashMax) { p.dashAcc += dt; if (p.dashAcc >= BAL.dash.rechargeSeconds) { p.dashAcc = 0; p.dashN++; } }
   // 혈우 장막과 강호 끝
   const br = B ? lerp(B.oldR, boundR(G.tier), easeOut(clamp((B.t - 0.5) / 1, 0, 1))) : boundR(G.tier);
@@ -832,14 +924,28 @@ function update(rdt) {
       G.spawnAcc = 0;
       const alive = G.foes.filter(f => !f.dead && !f.boss && f.e >= G.tier - 1).length;
       const n = Math.ceil(Math.max(0, want - alive) * SPT.spawnFractionPerSecond * 0.5);   // 매초 부족분의 30%(0.5초마다 나눠서)
-      for (let i = 0; i < n; i++) spawnFoe(G.tier > 0 && Math.random() < LD.lowerShare ? G.tier - 1 : G.tier);
+      const loc = LOCAL_BY[regionChapter()] || [], share = loc.length ? localShare() : 0;
+      for (let i = 0; i < n; i++) {
+        const e = G.tier > 0 && Math.random() < LD.lowerShare ? G.tier - 1 : G.tier;
+        // 서 있는 지역에 고유 적이 있으면 localShare 확률로 그 적(여럿이면 같은 비율). 물이 없는 자리의 수귀는 공통 적으로
+        if (share && Math.random() < share && spawnLocal(e, loc[Math.floor(Math.random() * loc.length)].id)) continue;
+        spawnFoe(e);
+      }
     }
     G.eliteAcc += dt;
-    if (G.eliteAcc >= LD.eliteEvery) { G.eliteAcc = 0; spawnFoe(G.tier, true); }
+    if (G.eliteAcc >= LD.eliteEvery) { G.eliteAcc = 0; spawnFoe(G.tier, true); }   // 이 시안의 이름 없는 정예(쫓아오기만)
+    // 이름 있는 정예: chapters.json 한 생의 정예 사건(5·10·15·20·25분, 환산 분)에 서 있는 지역의 표에서
+    const ev = (LIFE.elites || [])[G.eliteN];
+    if (ev && eqMinute() >= ev.at && !G.fight) {
+      const kind = eliteKind(ev.nth), f = kind && (spawnLocal(G.tier, kind, null, true) || spawnFoe(G.tier, true, kind));
+      if (f && f.def) setHint(`정예 · ${f.def.nameKo} · `+ `${REG[G.region] ? REG[G.region].nameKo : ''}${f.pat ? ' · ' + f.pat.set.patterns.map(x => x.nameKo).join(', ') : ''}`);
+    }
   }
   // 무공 1: 검기(가장 가까운 같은 경지 적 쪽 반원)
   G.cd -= dt;
-  const range = 2.7 * s * (1 + 0.08 * pr) * M.area, dmg = 18 * power() * M.might, arcDmg = dmg * (1 + 0.12 * (G.cards.art_arc || 0));
+  regionGimmicks(dt);
+  const bless = G.bless && G.bless.t > 0 ? 1 + GIM.taijiFloor.oppositeAspectDamageBonus : 1;   // 태극 바닥 기운(이 시안의 무공 셋은 걸린 속성으로 친다)
+  const range = 2.7 * s * (1 + 0.08 * pr) * M.area, dmg = 18 * power() * M.might * bless, arcDmg = dmg * (1 + 0.12 * (G.cards.art_arc || 0));
   if (G.cd <= 0) {
     G.cd = 0.8 * (1 - M.cdr);
     let tg = null, best = range * 1.6;
@@ -875,11 +981,18 @@ function update(rdt) {
     f.flash = Math.max(0, f.flash - dt); f.contact = Math.max(0, f.contact - dt); if (f.contact2) f.contact2 -= dt;
     const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy) || 1;
     // 아래 경지 덩이는 기세에 눌려 쓰러진다
-    if (!f.boss && f.e < G.tier && d < aura + f.r) { kill(f, true); continue; }
+    if (!f.boss && !f.mirror && f.e < G.tier && d < aura + f.r) { kill(f, true); continue; }
     f.hop = (f.hop + dt / 0.6) % 1;
-    if (f.pat) bossPatterns(f, dt);
-    const sp = f.boss ? (f.pat && f.pat.hold ? 0 : f.sp) : f.sp * (f.hop < 0.72 ? 1 / 0.72 : 0.15);
-    f.x += (dx / d * sp + f.kx) * dt; f.y += (dy / d * sp + f.ky) * dt;
+    if (f.pat && (f.boss || d < G.view * LD.eliteRange)) bossPatterns(f, dt);
+    if (f.def) localBehavior(f, dx, dy, d, dt);
+    if (f.dashing) { foeDash(f, dt); continue; }
+    const fw = GIM.water && f.kind !== 'water_ghost' && !(f.def && f.def.ignoresTerrain) && inWater(f.x, f.y) ? GIM.water.moveSpeedMultiplier : 1;
+    const held = f.pat && (f.pat.hold || f.pat.recover > 0);
+    const sp = (f.boss || f.pat ? (held ? 0 : f.sp) : f.sp * (f.hop < 0.72 ? 1 / 0.72 : 0.15)) * fw;
+    if (f.lead && !f.lead.dead) {   // 금선지네: 앞 마디를 spacing 만큼 떨어져 따라간다
+      const lx = f.lead.x - f.x, ly = f.lead.y - f.y, ld = Math.hypot(lx, ly) || 1, gap = f.def.group.spacing * sc(f.e) + f.r;
+      if (ld > gap) { const v = Math.min(ld - gap, f.sp * 2.2 * fw * dt); f.x += lx / ld * v; f.y += ly / ld * v; }
+    } else { f.x += (dx / d * sp + f.kx) * dt; f.y += (dy / d * sp + f.ky) * dt; }
     f.kx *= Math.pow(0.03, dt); f.ky *= Math.pow(0.03, dt);
     if (d > recycle && !f.boss) { f.x = p.x - dx / d * G.view * 0.62; f.y = p.y - dy / d * G.view * 0.62; }
     if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier) { f.contact = 0.4; hitPlayer(f.dmg); }
@@ -891,6 +1004,7 @@ function update(rdt) {
     if (d2 < rr * rr && d2 > 1e-6) { const d = Math.sqrt(d2), push = (rr - d) * 0.5 / d * (a.boss || b.boss ? 0.3 : 1); if (!a.boss) { a.x -= dx * push; a.y -= dy * push; } if (!b.boss) { b.x += dx * push; b.y += dy * push; } }
   }
   G.foes = live.filter(f => !f.dead);
+  tickHazards(dt);
   // 진기 구슬: 흡기 반경(balance.json magnetBase × 성질·연무장) 안이면 끌려온다
   const mag = M.magnet * s;
   for (const o of G.orbs) {
@@ -921,6 +1035,9 @@ function cardText(o) {
 function applyCard(o) {
   G.cards[o.def.id] = (G.cards[o.def.id] || 0) + 1;
   if (!o.art) {
+    // 음양 게이지(balance.json yinyang): 심법 한 레벨마다 그 속성 쪽으로 passivePerLevel(덮어쓰는 값이 있으면 그것)
+    const sg = o.def.yinyang === 'yang' ? 1 : o.def.yinyang === 'yin' ? -1 : 0;
+    G.yy = clamp(G.yy + sg * (o.def.yinyangPerLevelOverride ?? YY.passivePerLevel), YY.min, YY.max);
     for (const e of o.def.effects) G.extra[e.stat] = (G.extra[e.stat] || 0) + e.perLevel;
     const p = G.p, old = G.body.maxHp;
     G.body = bodyOf(G.c, G.extra);
@@ -949,18 +1066,24 @@ function chooseCard(i) {
   applyCard(G.offers[i]); G.offers = null; paused = false; show(null); last = performance.now();
 }
 
-// 땅의 주인 패턴(Core BossPatterns 와 같은 규칙: 패턴이 시작된 시각에서 다음 시작까지 간격, 30% 아래면 2막 패턴이 켜져 끝까지).
-// 피해는 패턴 baseDamage ÷ 몸 피해(contactDamage) × 이 시안의 보스 몸 피해. 시안이 못 그리는 모양은 건너뛴다.
+// 땅의 주인·정예 패턴(Core BossPatterns 와 같은 규칙: 패턴이 시작된 시각에서 다음 시작까지 간격, 30% 아래면 2막 패턴이 켜져 끝까지).
+// 피해는 패턴 baseDamage ÷ 몸 피해(contactDamage) × 이 시안의 몸 피해. 길이·반경은 싸움을 건(정예는 생긴) 경지 축척을 곱한다.
 function bossPatterns(f, dt) {
   const P = f.pat, set = P.set, p = G.p, k = sc(f.e), hurtBy = pt => pt.baseDamage / set.contactDamage * f.dmg;
-  if (!P.phase2 && f.hp <= f.maxHp * set.phase2At) {
+  if (!P.phase2 && set.phase2At > 0 && f.hp <= f.maxHp * set.phase2At) {
     P.phase2 = true;
-    for (const pt of set.phase2 || []) if (PAT_SHAPES.has(pt.shape)) {
+    for (const pt of set.phase2 || []) {
+      if (!PAT_SHAPES.has(pt.shape)) continue;
       toast(f.def.nameKo, pt.nameKo);
-      const a0 = Math.atan2(p.y - f.y, p.x - f.x) + (pt.startOffsetDegrees || 0) * Math.PI / 180;
-      P.beams.push({ pt, a: a0, warm: pt.telegraphSeconds, hit: 0 });
+      if (pt.shape === 'rotating_beams') {
+        const a0 = Math.atan2(p.y - f.y, p.x - f.x) + (pt.startOffsetDegrees || 0) * Math.PI / 180;
+        P.beams.push({ pt, a: a0, warm: pt.telegraphSeconds, hit: 0 });
+      } else if (pt.shape === 'split') P.split = { pt, t: pt.telegraphSeconds, clones: [] };
+      else if (pt.shape === 'sweep_wave') P.waves = { pt, next: pt.telegraphSeconds, list: [] };
+      else if (pt.shape === 'split_field') P.fields.push({ kind: 'yy', pt, x: f.x, y: f.y, a: Math.atan2(p.y - f.y, p.x - f.x), warm: pt.telegraphSeconds, left: Infinity });
     }
   }
+  // 이어지는 것들: 빛줄기, 장판(반쪽·흑백), 좁혀 오는 검진, 역류 파도, 분열, 들숨날숨
   for (const b of P.beams) {
     if (b.warm > 0) { b.warm -= dt; continue; }
     b.a += (b.pt.turnDegreesPerSecond || 0) * Math.PI / 180 * dt; b.hit -= dt;
@@ -970,37 +1093,79 @@ function bossPatterns(f, dt) {
       if (along > 0 && along < b.pt.length * k && perp < b.pt.width * k / 2 && b.hit <= 0) { b.hit = b.pt.hitIntervalSeconds || 0.35; hitPlayer(hurtBy(b.pt)); }
     }
   }
+  for (const fd of P.fields) {
+    if (fd.warm > 0) { fd.warm -= dt; continue; }
+    fd.left -= dt;
+    if (fd.kind === 'yy') { fd.x = f.x; fd.y = f.y; fd.a += (fd.pt.turnDegreesPerSecond || 0) * Math.PI / 180 * dt; continue; }
+    fd.hit -= dt;   // 반쪽 독안개: 그 반쪽에 서 있으면 hitIntervalSeconds 마다
+    if (fd.hit <= 0 && (p.x - fd.x) * fd.nx + (p.y - fd.y) * fd.ny > 0) { fd.hit = fd.pt.hitIntervalSeconds || 0.5; hitPlayer(hurtBy(fd.pt)); }
+  }
+  P.fields = P.fields.filter(fd => fd.left > 0);
+  for (const g of P.rings) {
+    g.R = Math.max(g.min, g.R - g.shrink * dt); g.hit -= dt; g.a += 0.6 * dt;
+    if (g.R <= g.min) g.left -= dt;
+    for (let i = 0; i < g.n && g.hit <= 0; i++) {
+      const a = g.a + i * TAU / g.n;
+      if (Math.hypot(p.x - (g.x + Math.cos(a) * g.R), p.y - (g.y + Math.sin(a) * g.R)) < g.w / 2 + p.r) { g.hit = g.pt.hitIntervalSeconds || 0.5; hitPlayer(hurtBy(g.pt)); }
+    }
+  }
+  P.rings = P.rings.filter(g => g.left > 0);
+  if (P.waves) {
+    const Wv = P.waves; Wv.next -= dt;
+    if (Wv.next <= 0) {   // 화면 한쪽 끝에서 반대쪽으로 쓸고 가는 붉은 물결. 경공 무적으로 넘는다
+      Wv.next = Wv.pt.waveIntervalSeconds || 6;
+      const a = Math.floor(Math.random() * 4) * Math.PI / 2, L = G.view * 0.55;
+      Wv.list.push({ a, x: p.x - Math.cos(a) * L, y: p.y - Math.sin(a) * L, left: L * 2, hit: false, warm: 0.6 });
+    }
+    for (const w of Wv.list) {
+      if (w.warm > 0) { w.warm -= dt; continue; }
+      const v = pspd(Wv.pt.projectileSpeed) * k * dt; w.x += Math.cos(w.a) * v; w.y += Math.sin(w.a) * v; w.left -= v;
+      const along = (p.x - w.x) * Math.cos(w.a) + (p.y - w.y) * Math.sin(w.a);
+      if (!w.hit && Math.abs(along) < Wv.pt.width * k / 2 + p.r) w.hit = hitPlayer(hurtBy(Wv.pt));
+    }
+    Wv.list = Wv.list.filter(w => w.left > 0);
+  }
+  if (P.split) {   // 분열: 본체 곁에 몸 둘이 더 생겨 같이 쫓는다. 어느 몸을 베어도 본체가 깎이고, rejoinSeconds 뒤 다시 하나로
+    const S2 = P.split; S2.t -= dt;
+    if (S2.t <= 0) {
+      if (S2.clones.length) { for (const c of S2.clones) c.dead = true; S2.clones = []; S2.t = set.phase2IntervalSeconds; G.fx.push({ k: 'wave', x: f.x, y: f.y, r: f.r * 3, t: 0, life: 0.4 }); }
+      else {
+        for (let i = 1; i < S2.pt.count; i++) {
+          const a = rand(0, TAU), c = { e: f.e, boss: false, mirror: f, x: f.x + Math.cos(a) * S2.pt.scatter * k, y: f.y + Math.sin(a) * S2.pt.scatter * k, r: f.r, hp: 1, maxHp: 1, sp: f.sp * 1.2, dmg: f.dmg, hop: 0, flash: 0, contact: 0, kx: 0, ky: 0, xv: 0 };
+          G.foes.push(c); S2.clones.push(c);
+        }
+        S2.t = S2.pt.rejoinSeconds;
+      }
+    }
+  }
+  if (P.inhale) {   // 태극권: 들이쉬는 동안 radius 안을 끌어당기고, 다 들이쉬면 burstRadius 터짐
+    const I = P.inhale; I.t -= dt;
+    const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy) || 1;
+    if (d < I.r && d > f.r + p.r && p.dashT <= 0) { const v = Math.min(d - f.r - p.r, 4.6 * k * 0.55 * dt); p.x += dx / d * v; p.y += dy / d * v; }
+    if (I.t <= 0) { P.inhale = null; P.hold = false; G.fx.push({ k: 'wave', x: f.x, y: f.y, r: I.burst, t: 0, life: 0.5 }); if (d < I.burst + p.r) hitPlayer(I.dmg); }
+  }
   for (const z of P.zones) {
+    if (z.delay > 0) { z.delay -= dt; if (z.delay <= 0) { z.x = p.x; z.y = p.y; } else continue; }   // 연쇄 내려찍기: 차례가 오면 그때 선 자리
     z.t -= dt;
     if (z.t <= 0 && !z.done) {
       z.done = true;
+      if (z.land) { f.x = z.x; f.y = z.y; }
       G.fx.push({ k: 'puff', x: z.x, y: z.y, r: z.r, t: 0, life: 0.45, red: true });
       if (Math.hypot(p.x - z.x, p.y - z.y) < z.r) hitPlayer(z.dmg);
+      if (z.pool) G.pools.push({ x: z.x, y: z.y, r: z.pool.r, dps: z.pool.dps, t: z.pool.t, green: z.pool.green });
     }
   }
   P.zones = P.zones.filter(z => !z.done);
+  if (P.recover > 0) P.recover -= dt;
   P.timer -= dt;   // 간격은 패턴이 시작된 시각부터 잰다(예고 중에도 흐른다)
   if (P.cur) {
     P.wind -= dt;
     if (P.wind > 0) return;
     const pt = P.cur; P.cur = null; P.hold = false;
-    if (pt.shape === 'cone') {
-      const R = pt.radius * k, px = p.x - f.x, py = p.y - f.y, d = Math.hypot(px, py);
-      const off = Math.abs(((Math.atan2(py, px) - P.ca + Math.PI * 3) % TAU) - Math.PI);
-      G.fx.push({ k: 'arc', x: f.x, y: f.y, a: P.ca, r: R, t: 0, life: 0.35, gold: false });
-      if (d < R && off < pt.angleDegrees * Math.PI / 360) hitPlayer(hurtBy(pt));
-    } else if (pt.shape === 'summon_ring') {
-      const R = pt.radius * k;
-      for (let i = 0; i < pt.count; i++) {
-        const a = i / pt.count * TAU, m = spawnFoe(f.e);
-        m.x = clamp(P.cx + Math.cos(a) * R, 0, W); m.y = clamp(P.cy + Math.sin(a) * R, 0, H);
-        if (pt.summonSpeed) m.sp = pt.summonSpeed / 100 * 4.6 * k;
-        m.xv = 0;
-      }
-    }
+    resolvePattern(f, pt, k, hurtBy(pt));
     return;
   }
-  if (P.timer > 0) return;
+  if (P.timer > 0 || P.inhale || f.dashing) return;
   const order = set.order, all = (set.patterns || []);
   let pt = null;
   for (let tries = 0; tries < order.length && !pt; tries++) {
@@ -1009,20 +1174,201 @@ function bossPatterns(f, dt) {
   }
   P.timer = P.phase2 ? set.phase2IntervalSeconds : set.intervalSeconds;
   if (!pt) return;
+  P.cur = pt; P.wind = pt.telegraphSeconds; P.hold = !!pt.bossHolds;
+  P.ca = Math.atan2(p.y - f.y, p.x - f.x); P.ax = p.x; P.ay = p.y; P.cx = p.x; P.cy = p.y;
+  const pool = pt.poolRadius ? { r: pt.poolRadius * k, dps: pt.poolDamagePerSecond / set.contactDamage * f.dmg, t: pt.leaveSeconds, green: f.kind && f.kind.indexOf('blood') < 0 && f.kind !== 'sulsa_elder' } : null;
+  if (pt.shape === 'summon_ring') toast(pt.nameKo, '한 곳을 뚫고 나가라');
+  else if (pt.shape === 'circles') {
+    // 예고 자리: 자기 둘레(self), 북두칠성 꼴(big_dipper), 아니면 플레이어 둘레 흩어서
+    const pts = [];
+    if (pt.aim === 'self') pts.push([f.x, f.y]);
+    else if (pt.arrangement === 'big_dipper') {
+      const L = (pt.length || 10) * k, rot = rand(0, TAU), D = [[-0.5, -0.1], [-0.33, -0.05], [-0.17, -0.07], [0, 0], [0.12, 0.18], [0.36, 0.2], [0.42, -0.02]];
+      for (const [u, v] of D) pts.push([p.x + (u * Math.cos(rot) - v * Math.sin(rot)) * L, p.y + (u * Math.sin(rot) + v * Math.cos(rot)) * L]);
+    } else { const sp = (pt.scatter || 2.5) * k; for (let i = 0; i < pt.count; i++) pts.push([p.x + rand(-sp, sp), p.y + rand(-sp, sp)]); }
+    for (const [x, y] of pts) P.zones.push({ x, y, r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt), pool });
+    P.cur = null;
+  } else if (pt.shape === 'jump_slam') {
+    for (let i = 0; i < pt.count; i++) P.zones.push({ x: p.x, y: p.y, r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt), delay: i * (pt.waveIntervalSeconds || 0.3), land: true, pool });
+    P.cur = null;
+  } else if (pt.shape === 'half_field') {
+    // 반쪽 독안개: 처음엔 플레이어가 선 쪽, 그다음부터 번갈아(alternate)
+    const nx = p.x - f.x, ny = p.y - f.y, n = Math.hypot(nx, ny) || 1, sg = P.hfSide === 0 ? 1 : -P.hfSide;
+    if (pt.alternate) P.hfSide = sg;
+    P.fields.push({ kind: 'half', pt, x: f.x, y: f.y, nx: nx / n * sg, ny: ny / n * sg, warm: pt.telegraphSeconds, left: pt.leaveSeconds, hit: 0 });
+    P.cur = null;
+  } else if (pt.shape === 'split_field') {
+    P.fields.push({ kind: 'yy', pt, x: f.x, y: f.y, a: P.ca, warm: pt.telegraphSeconds, left: pt.leaveSeconds || Infinity });
+    P.cur = null;
+  }
+}
+function resolvePattern(f, pt, k, dmg) {
+  const p = G.p, P = f.pat;
   if (pt.shape === 'cone') {
-    P.cur = pt; P.wind = pt.telegraphSeconds; P.hold = !!pt.bossHolds; P.ca = Math.atan2(p.y - f.y, p.x - f.x);
+    const R = pt.radius * k, px = p.x - f.x, py = p.y - f.y, d = Math.hypot(px, py);
+    const off = Math.abs(((Math.atan2(py, px) - P.ca + Math.PI * 3) % TAU) - Math.PI);
+    G.fx.push({ k: 'arc', x: f.x, y: f.y, a: P.ca, r: R, t: 0, life: 0.35, gold: false });
+    if (d < R && off < pt.angleDegrees * Math.PI / 360) hitPlayer(dmg);
   } else if (pt.shape === 'summon_ring') {
-    P.cur = pt; P.wind = pt.telegraphSeconds; P.cx = p.x; P.cy = p.y; toast(pt.nameKo, '한 곳을 뚫고 나가라');
-  } else if (pt.shape === 'circles') {
-    const sp = (pt.scatter || 2.5) * k;
-    for (let i = 0; i < pt.count; i++) P.zones.push({ x: p.x + rand(-sp, sp), y: p.y + rand(-sp, sp), r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt) });
+    const R = pt.radius * k;
+    for (let i = 0; i < pt.count; i++) {
+      const a = i / pt.count * TAU, m = spawnFoe(f.e);
+      m.x = clamp(P.cx + Math.cos(a) * R, 0, W); m.y = clamp(P.cy + Math.sin(a) * R, 0, H);
+      if (pt.summonSpeed) m.sp = pspd(pt.summonSpeed) * k;
+      m.xv = 0;
+    }
+  } else if (pt.shape === 'summon') {
+    // 이름 있는 적 부르기(금선지네·수귀). 부른 적은 진기를 떨구지 않는다
+    const cx = pt.center === 'boss' ? f.x : p.x, cy = pt.center === 'boss' ? f.y : p.y, sp = (pt.scatter || 3) * k, before = G.foes.length;
+    for (let i = 0; i < pt.count; i++) spawnLocal(f.e, pt.summon, { x: clamp(cx + rand(-sp, sp), 0, W), y: clamp(cy + rand(-sp, sp), 0, H) });
+    for (let i = before; i < G.foes.length; i++) G.foes[i].xv = 0;
+  } else if (pt.shape === 'projectile_fan') {
+    const waves = pt.waves || 1;
+    for (let w = 0; w < waves; w++) for (let i = 0; i < pt.count; i++) {
+      const a = P.ca + (pt.count > 1 ? (i / (pt.count - 1) - 0.5) : 0) * pt.angleDegrees * Math.PI / 180, v = pspd(pt.projectileSpeed) * k;
+      G.shots.push({ x: f.x, y: f.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, left: pt.length * k, r: 0.25 * k, dmg, delay: w * (pt.waveIntervalSeconds || 0.35), src: f });
+    }
+  } else if (pt.shape === 'pull_line' || pt.shape === 'bind_line') {
+    const waves = pt.waves || 1, v = pspd(pt.projectileSpeed) * k;
+    for (let w = 0; w < waves; w++) G.shots.push({ x: f.x, y: f.y, aim: w > 0, vx: Math.cos(P.ca) * v, vy: Math.sin(P.ca) * v, v, left: pt.length * k, r: pt.width * k / 2, dmg, delay: w * (pt.waveIntervalSeconds || 0.5), src: f, chain: true,
+      pull: pt.shape === 'pull_line' ? pt.pullSeconds : 0, root: pt.rootSeconds || 0 });
+  } else if (pt.shape === 'line') {
+    const v = pspd(pt.projectileSpeed) * k;
+    f.dashing = { vx: Math.cos(P.ca) * v, vy: Math.sin(P.ca) * v, left: pt.length * k, w: pt.width * k, dmg, hit: false, rec: pt.recoverySeconds || 0 };
+  } else if (pt.shape === 'inhale_exhale') {
+    P.inhale = { t: pt.pullSeconds, r: pt.radius * k, burst: pt.burstRadius * k, dmg }; P.hold = true;
+  } else if (pt.shape === 'closing_ring') {
+    P.rings.push({ pt, x: P.ax, y: P.ay, R: pt.radius * k, min: (pt.minRadius || 1) * k, shrink: pt.shrinkPerSecond * k, n: pt.count, w: pt.width * k, a: rand(0, TAU), hit: 0, left: 0.6 });
+  }
+}
+// 방패 돌진(line): 예고한 방향으로 length 만큼 달리고 width 안에 닿으면 한 번 맞는다. 다 달리면 recoverySeconds 쉰다
+function foeDash(f, dt) {
+  const D = f.dashing, p = G.p, step = Math.hypot(D.vx, D.vy) * dt;
+  f.x = clamp(f.x + D.vx * dt, 0, W); f.y = clamp(f.y + D.vy * dt, 0, H); D.left -= step;
+  if (!D.hit && Math.hypot(p.x - f.x, p.y - f.y) < D.w / 2 + p.r + f.r * 0.5) D.hit = hitPlayer(D.dmg);
+  if (D.left <= 0) { f.dashing = null; f.pat.recover = D.rec; }
+}
+// 고유 적의 제 동작(enemies.json behavior). 화면 기준 거리·속도에 그 적이 생긴 경지 축척을 곱한다
+function localBehavior(f, dx, dy, d, dt) {
+  const D = f.def, k = sc(f.e), p = G.p;
+  if (D.behavior === 'poison_aura' && d < D.zoneRadius * k + p.r && G.sect.id !== 'tang') drainPlayer(D.zoneDamagePerSecond * f.dmg / D.contactDamage * dt);
+  else if (D.behavior === 'water_pull' && D.pull && d < D.pull.range * k && inWater(f.x, f.y) && p.dashT <= 0) { const v = D.pull.speed * k * dt; p.x -= dx / d * v; p.y -= dy / d * v; }
+  else if (D.behavior === 'hook_bind' && D.hook) {
+    f.cd -= dt;
+    if (f.hookWind > 0) {
+      f.hookWind -= dt;
+      if (f.hookWind <= 0) { const a = f.hookA, v = D.hook.speed * k; G.shots.push({ x: f.x, y: f.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, left: D.hook.range * k, r: D.hook.radius * k, dmg: f.dmg, src: f, chain: true, root: D.hook.bindSeconds }); }
+    } else if (f.cd <= 0 && d < D.hook.range * k) { f.cd = D.hook.interval; f.hookWind = D.telegraph || 0.5; f.hookA = Math.atan2(dy, dx); }
+  }
+}
+// 날아가는 것(암기·갈고리), 웅덩이, 되살아나는 짝
+function tickHazards(dt) {
+  const p = G.p;
+  for (const s of G.shots) {
+    if (s.delay > 0) { s.delay -= dt; s.x = s.src.x; s.y = s.src.y; if (s.delay <= 0 && s.aim) { const a = Math.atan2(p.y - s.y, p.x - s.x); s.vx = Math.cos(a) * s.v; s.vy = Math.sin(a) * s.v; } continue; }
+    const st = Math.hypot(s.vx, s.vy) * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.left -= st;
+    if (Math.hypot(p.x - s.x, p.y - s.y) < s.r + p.r) {
+      s.left = 0;
+      if (hitPlayer(s.dmg)) { if (s.pull && !s.src.dead) p.pull = { f: s.src, t: s.pull }; if (s.root) p.root = Math.max(p.root, s.root); }
+    }
+  }
+  G.shots = G.shots.filter(s => s.left > 0 && !(s.src.dead && s.chain));
+  for (const o of G.pools) { o.t -= dt; if (Math.hypot(p.x - o.x, p.y - o.y) < o.r + p.r * 0.5 && !(o.green && G.sect.id === 'tang')) drainPlayer(o.dps * dt); }
+  G.pools = G.pools.filter(o => o.t > 0);
+  for (const r of G.revives) {
+    r.t -= dt;
+    if (r.t <= 0) {
+      r.done = true; const a = r.f.twin;
+      if (a && !a.dead && G.foes.includes(a)) {
+        const m = spawnFoe(r.f.e, r.f.elite, r.f.kind, { x: a.x + r.f.def.twin.gap * sc(r.f.e), y: a.y });
+        m.hp = m.maxHp * r.f.def.twin.reviveHealth; m.twin = a; a.twin = m; m.v = r.f.v;
+        G.fx.push({ k: 'wave', x: m.x, y: m.y, r: m.r * 2, t: 0, life: 0.4 });
+      }
+    }
+  }
+  G.revives = G.revives.filter(r => !r.done);
+}
+// ───────── 지형 기믹(WP-01, gimmicks.json). 지금 선 지역(가장 가까운 지역)의 기믹만, 지금 경지 축척으로 ─────────
+const regionHas = (r, id) => !!(r && r.gimmicks && r.gimmicks.includes(id));
+// 장강 물길: 지역 한가운데를 지나는 굽은 물길이 waterSpacing 마다. 그 자리에서 가장 가까운 지역이 물 기믹 땅일 때만
+function inWater(x, y) {
+  if (!GIM.water || !G) return false;
+  const a = nearestTwo(x, y).a; if (!regionHas(a, GIM.water.id)) return false;
+  const k = sc(G.tier), sp = LD.waterSpacing * k, v = y - a.y + LD.waterWave * k * Math.sin((x - a.x) / (LD.waterWaveLen * k));
+  const m = (((v + sp / 2) % sp) + sp) % sp - sp / 2;
+  return Math.abs(m) < LD.waterHalf * k;
+}
+function fogR(fg) {   // Core PoisonFogGimmick.RadiusAt 과 같은 식
+  const g = GIM.poisonFog, t = G.t - fg.t0;
+  const q = t < g.spreadSeconds ? t / g.spreadSeconds : t < g.spreadSeconds + g.holdSeconds ? 1 : 1 - (t - g.spreadSeconds - g.holdSeconds) / g.fadeSeconds;
+  return g.radius * fg.k * clamp(q, 0, 1);
+}
+function inFog(x, y) { for (const fg of G.fogs) if (Math.hypot(x - fg.x, y - fg.y) <= fogR(fg)) return true; return false; }
+function taijiPads() {   // 지금 화면 근처의 태극 바닥(무당산). 칸 번호가 같으면 같은 바닥이라 쿨타임을 칸으로 센다
+  const g = GIM.taijiFloor, out = []; if (!g) return out;
+  const k = sc(G.tier), sp = LD.taijiSpacing * k, half = G.view * 0.6;
+  for (const r of REGIONS) {
+    if (!regionHas(r, g.id) || Math.hypot(r.x - G.p.x, r.y - G.p.y) > G.view * 3 + 300 * k) continue;
+    const i0 = Math.floor((G.p.x - half - r.x) / sp), i1 = Math.ceil((G.p.x + half - r.x) / sp), j0 = Math.floor((G.p.y - half - r.y) / sp), j1 = Math.ceil((G.p.y + half - r.y) / sp);
+    if ((i1 - i0) * (j1 - j0) > 400) continue;
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const x = r.x + (i + (j & 1) * 0.5) * sp, y = r.y + j * sp;
+      if (nearestTwo(x, y).a !== r) continue;
+      out.push({ x, y, key: `${G.tier}:${i},${j}`, r: g.touchRadius * k });
+    }
+  }
+  return out;
+}
+function regionGimmicks(dt) {
+  const p = G.p, here = REG[G.region], fg = GIM.poisonFog;
+  // 독안개: 한 생 시계로 firstSpreadSeconds 에 처음, 그 뒤 periodSeconds 마다. 그때 독안개 땅에 서 있으면 내 둘레 아무 데서 샘이 터진다
+  if (fg && G.t >= G.fogNext) {
+    G.fogNext += fg.periodSeconds;
+    if (regionHas(here, fg.id)) {
+      const k = sc(G.tier), a = rand(0, TAU), d = rand(0, LD.fogOffset) * k;
+      G.fogs.push({ x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, k, t0: G.t });
+      setHint(G.sect.id === 'tang' ? '독안개가 퍼진다 · 당가의 몸은 독을 타지 않는다 · 안에서 얻는 진기 2배' : '독안개가 퍼진다 · 안에선 기혈이 빠지고 얻는 진기는 2배');
+    }
+  }
+  if (fg && G.fogs.length) {
+    G.fogs = G.fogs.filter(f => G.t - f.t0 < fg.spreadSeconds + fg.holdSeconds + fg.fadeSeconds);
+    if (inFog(p.x, p.y) && G.sect.id !== 'tang') drainPlayer(p.maxHp * fg.healthLossPerSecond * dt);
+    for (const f of G.foes) if (!f.dead && !f.mirror && !(f.boss && fg.bossImmune) && inFog(f.x, f.y)) { f.hp -= f.maxHp * fg.healthLossPerSecond * dt; if (f.hp <= 0) kill(f); }
+  }
+  // 태극 바닥: 밟으면 음양 게이지 반대 속성 30초. 게이지가 0이면 아무 일도 없고 바닥도 쓰이지 않는다
+  const tj = GIM.taijiFloor;
+  if (G.bless) { G.bless.t -= dt; if (G.bless.t <= 0) G.bless = null; }
+  if (tj && regionHas(here, tj.id)) {
+    for (const pad of taijiPads()) {
+      if (Math.hypot(p.x - pad.x, p.y - pad.y) > pad.r || (G.taijiCd[pad.key] || 0) > G.t) continue;
+      if (G.yy === 0) continue;
+      G.taijiCd[pad.key] = G.t + tj.cooldownSeconds;
+      const asp = G.yy > 0 ? '음' : '양';
+      G.bless = { aspect: asp, t: tj.durationSeconds };
+      G.fx.push({ k: 'wave', x: pad.x, y: pad.y, r: pad.r * 3, t: 0, life: 0.5 });
+      setHint(`태극 바닥 · 음양 ${G.yy > 0 ? '+' : ''}${G.yy} → ${asp}의 기운 ${tj.durationSeconds}초 · 무공 피해 +${Math.round(tj.oppositeAspectDamageBonus * 100)}%`);
+    }
   }
 }
 function hitPlayer(dmg) {
-  const p = G.p; if (p.iframe > 0 || G.brk || G.ended || G.sealed) return;
-  p.hp -= Math.max(1, dmg - G.body.armor); p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
+  const p = G.p; if (p.iframe > 0 || G.brk || G.ended || G.sealed) return false;
+  p.hp -= Math.max(1, dmg * takenMul() - G.body.armor); p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
+  if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
+  return true;
+}
+// 무적 시간과 상관없이 빠지는 기혈(독안개·웅덩이·독 기운). 호신은 받지 않는다
+function drainPlayer(v) {
+  const p = G.p; if (v <= 0 || G.brk || G.ended || G.sealed) return;
+  p.hp -= v * takenMul();
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
 }
+// 흑백(혈허진인): 검은 쪽에 서 있으면 받는 피해 damageTakenMultiplier 배
+function takenMul() {
+  let m = 1;
+  for (const f of G.foes) if (f.pat) for (const fd of f.pat.fields) if (fd.kind === 'yy' && fd.warm <= 0 && yySide(fd) > 0) m = Math.max(m, fd.pt.damageTakenMultiplier || 1);
+  return m;
+}
+const yySide = fd => (G.p.x - fd.x) * Math.cos(fd.a) + (G.p.y - fd.y) * Math.sin(fd.a);
 
 // ───────── 그리기 ─────────
 function resize() {
@@ -1100,6 +1446,8 @@ function render() {
     ctx.globalAlpha = alpha; ctx.drawImage(PROP_SPR[pr.kind][pr.v], X - size / 2, Y - size * 0.85, size, size);
   }
   ctx.globalAlpha = 1;
+  // 지형 기믹(WP-01): 장강 물길, 무당산 태극 바닥, 당가타 독안개, 웅덩이
+  drawGimmicks(now);
   // 혈우 장막
   if (G.bound !== Infinity && G.bound) {
     const hx = sx(G.home.x), hy = sy(G.home.y), R = G.bound * PPM;
@@ -1153,14 +1501,21 @@ function render() {
   const foes = G.foes.slice().sort((a, b) => a.y - b.y);
   for (const f of foes) {
     const X = sx(f.x), Y = sy(f.y), R = f.r * PPM; if (X < -R * 2 || X > VW + R * 2 || Y < -R * 2 || Y > VH + R * 2) continue;
+    if (f.mirror) { const s2 = R * 2.6; ctx.globalAlpha = 0.7; ctx.drawImage(demon, X - s2 / 2, Y - s2 * 0.6, s2, s2); ctx.globalAlpha = 1; continue; }
     if (f.boss) { const s2 = R * 2.6; ctx.drawImage(demon, X - s2 / 2, Y - s2 * 0.6, s2, s2); if (f.flash > 0) { ctx.globalAlpha = 0.3; ctx.fillStyle = '#FFF8EC'; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; } drawHpRing(X, Y, R, f); continue; }
-    const lift = f.hop < 0.72 ? Math.sin(f.hop / 0.72 * Math.PI) * R * 0.25 : 0;
-    const s2 = R * 2.6;
+    const lift = f.hop < 0.72 && !f.pat ? Math.sin(f.hop / 0.72 * Math.PI) * R * 0.25 : 0;
+    const s2 = R * 2.6, tint = foeTint(f);
+    if (tint) { ctx.fillStyle = tint; ctx.beginPath(); ctx.ellipse(X, Y + R * 0.15, R * 1.05, R * 0.45, 0, 0, TAU); ctx.fill(); }
     ctx.globalAlpha = f.e < G.tier ? 0.55 : 1;
     ctx.drawImage(clusterImg(f), X - s2 / 2, Y - s2 * 0.62 - lift, s2, s2);
     if (f.flash > 0) { ctx.globalAlpha = 0.35; ctx.fillStyle = '#FFF8EC'; ctx.beginPath(); ctx.arc(X, Y - lift, R * 1.1, 0, TAU); ctx.fill(); }
     ctx.globalAlpha = 1;
     if (f.elite) { ctx.strokeStyle = CRIMSON; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X, Y, R * 1.25, 0, TAU); ctx.stroke(); drawHpRing(X, Y, R, f); }
+    if (f.def && (f.elite ? R > 6 : R > 12)) {   // 이름: 정예는 다, 고유 적은 크게 보일 때만 첫 글자
+      ctx.font = `700 ${f.elite ? 12 : 11}px ui-sans-serif, system-ui, sans-serif`; ctx.textAlign = 'center';
+      const lab = f.elite ? f.def.nameKo : f.def.nameKo.slice(0, 1);
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(239,230,210,0.9)'; ctx.strokeText(lab, X, Y + R * 1.25 + 13); ctx.fillStyle = f.elite ? CRIMSON : INK; ctx.fillText(lab, X, Y + R * 1.25 + 13);
+    }
   }
   // 플레이어
   {
@@ -1172,23 +1527,9 @@ function render() {
     if (G.tier >= 1) { ctx.strokeStyle = `rgba(201,162,39,${0.25 + 0.1 * G.tier})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 1.7 * PPM, 0, TAU); ctx.stroke(); }
     if (G.tier >= 2) { const n = orbitCount(), R = 1.9 * sc(G.tier) * G.body.area * PPM; ctx.strokeStyle = G.tier >= 3 ? GOLD : INK; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const a = G.orbitA + i * TAU / n, bx = X + Math.cos(a) * R, by = Y + Math.sin(a) * R; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); } }
   }
-  // 땅의 주인 패턴 예고(붉은 먹)
-  if (G.fight && G.fight.pat) {
-    const f = G.fight, P = f.pat, k = sc(f.e), X = sx(f.x), Y = sy(f.y);
-    ctx.fillStyle = 'rgba(179,38,30,0.18)'; ctx.strokeStyle = 'rgba(179,38,30,0.7)'; ctx.lineWidth = 2;
-    if (P.cur && P.cur.shape === 'cone') {
-      const R = P.cur.radius * k * PPM, h = P.cur.angleDegrees * Math.PI / 360, fill = 1 - Math.max(0, P.wind) / P.cur.telegraphSeconds;
-      ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, R, P.ca - h, P.ca + h); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, R * fill, P.ca - h, P.ca + h); ctx.closePath(); ctx.fill();
-    }
-    if (P.cur && P.cur.shape === 'summon_ring') { ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(sx(P.cx), sy(P.cy), P.cur.radius * k * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
-    for (const z of P.zones) { const R = z.r * PPM, q = 1 - z.t / z.life; ctx.beginPath(); ctx.arc(sx(z.x), sy(z.y), R, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(sx(z.x), sy(z.y), R * q, 0, TAU); ctx.fill(); }
-    for (const b of P.beams) {
-      const L = b.pt.length * k * PPM, Wd = Math.max(2, b.pt.width * k * PPM);
-      ctx.strokeStyle = b.warm > 0 ? 'rgba(179,38,30,0.3)' : 'rgba(179,38,30,0.75)'; ctx.lineWidth = b.warm > 0 ? 2 : Wd; ctx.lineCap = 'butt';
-      ctx.beginPath(); for (let i = 0; i < b.pt.count; i++) { const a = b.a + i * TAU / b.pt.count; ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(a) * L, Y + Math.sin(a) * L); } ctx.stroke();
-    }
-  }
+  // 땅의 주인·정예 패턴 예고(붉은 먹)와 날아가는 것
+  for (const f of G.foes) if (f.pat && !f.dead) drawPattern(f);
+  drawShots();
   // 효과
   for (const e of G.fx) {
     const k = e.t / e.life, X = sx(e.x), Y = sy(e.y), R = e.r * PPM;
@@ -1215,6 +1556,112 @@ function render() {
   if (G.brk) drawBreak();
 }
 // 화면 밖 땅의 주인(깨어남·싸움 중) 방향 표시. HUD 아래, 경공 버튼 위에만 놓는다
+function drawGimmicks(now) {
+  const k = sc(G.tier);
+  if (GIM.water) for (const r of REGIONS) {
+    if (!regionHas(r, GIM.water.id)) continue;
+    const sp = LD.waterSpacing * k, hw = LD.waterHalf * k;
+    const x0 = camX - VW / 2 / PPM - sp, x1 = camX + VW / 2 / PPM + sp, y0 = camY - VH / 2 / PPM - sp, y1 = camY + VH / 2 / PPM + sp;
+    if ((x1 - x0) / sp > 60 || hw * PPM < 1) continue;
+    const step = Math.max((x1 - x0) / 80, 0.5 * k);
+    ctx.lineWidth = hw * 2 * PPM; ctx.lineCap = 'butt'; ctx.strokeStyle = 'rgba(70,110,120,0.32)';
+    for (let j = Math.floor((y0 - r.y) / sp) - 1; j <= Math.ceil((y1 - r.y) / sp) + 1; j++) {
+      ctx.beginPath(); let on = false;
+      for (let x = x0; x <= x1; x += step) {
+        const y = r.y + j * sp - LD.waterWave * k * Math.sin((x - r.x) / (LD.waterWaveLen * k));
+        if (nearestTwo(x, y).a !== r) { on = false; continue; }
+        if (on) ctx.lineTo(sx(x), sy(y)); else { ctx.moveTo(sx(x), sy(y)); on = true; }
+      }
+      ctx.stroke();
+    }
+  }
+  if (GIM.taijiFloor) for (const pad of taijiPads()) {
+    const X = sx(pad.x), Y = sy(pad.y), R = pad.r * PPM; if (R < 2 || X < -R || X > VW + R || Y < -R || Y > VH + R) continue;
+    const ready = (G.taijiCd[pad.key] || 0) <= G.t;
+    ctx.globalAlpha = ready ? 0.75 : 0.25;
+    ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(X, Y, R, -Math.PI / 2, Math.PI / 2); ctx.arc(X, Y + R / 2, R / 2, Math.PI / 2, -Math.PI / 2, true); ctx.arc(X, Y - R / 2, R / 2, Math.PI / 2, -Math.PI / 2); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  for (const fg of G.fogs) {
+    const R = fogR(fg) * PPM; if (R < 1) continue; const X = sx(fg.x), Y = sy(fg.y);
+    const g = ctx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, 'rgba(70,110,50,0.38)'); g.addColorStop(0.8, 'rgba(70,110,50,0.26)'); g.addColorStop(1, 'rgba(70,110,50,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+  }
+  for (const o of G.pools) {
+    const R = o.r * PPM; if (R < 1) continue;
+    ctx.fillStyle = o.green ? 'rgba(70,110,50,0.3)' : 'rgba(150,30,26,0.28)'; ctx.beginPath(); ctx.arc(sx(o.x), sy(o.y), R, 0, TAU); ctx.fill();
+  }
+}
+// 패턴 예고와 이어지는 것(붉은 먹). 땅의 주인과 정예 모두
+function drawPattern(f) {
+  const P = f.pat, k = sc(f.e), X = sx(f.x), Y = sy(f.y), p = G.p;
+  ctx.fillStyle = 'rgba(179,38,30,0.18)'; ctx.strokeStyle = 'rgba(179,38,30,0.7)'; ctx.lineWidth = 2;
+  const pt = P.cur, fill = pt ? 1 - Math.max(0, P.wind) / (pt.telegraphSeconds || 1) : 0;
+  if (pt && pt.shape === 'cone') {
+    const R = pt.radius * k * PPM, h = pt.angleDegrees * Math.PI / 360;
+    ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, R, P.ca - h, P.ca + h); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, R * fill, P.ca - h, P.ca + h); ctx.closePath(); ctx.fill();
+  }
+  if (pt && pt.shape === 'summon_ring') { ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(sx(P.cx), sy(P.cy), pt.radius * k * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+  if (pt && (pt.shape === 'projectile_fan')) {
+    const L = pt.length * k * PPM, h = pt.angleDegrees * Math.PI / 360;
+    ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, L * fill, P.ca - h, P.ca + h); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  if (pt && (pt.shape === 'pull_line' || pt.shape === 'bind_line' || pt.shape === 'line')) {
+    const L = pt.length * k * PPM, Wd = Math.max(2, pt.width * k * PPM);
+    ctx.lineWidth = Wd; ctx.strokeStyle = `rgba(179,38,30,${0.2 + 0.4 * fill})`; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(P.ca) * L, Y + Math.sin(P.ca) * L); ctx.stroke(); ctx.lineWidth = 2;
+  }
+  if (pt && pt.shape === 'inhale_exhale') { ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(X, Y, pt.radius * k * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+  if (pt && pt.shape === 'closing_ring') { ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(sx(P.ax), sy(P.ay), pt.radius * k * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+  if (P.inhale) {
+    const I = P.inhale; ctx.strokeStyle = 'rgba(26,26,26,0.45)'; ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) { const q = ((nowS() * 1.6 + i / 3) % 1); ctx.beginPath(); ctx.arc(X, Y, I.r * PPM * (1 - q), 0, TAU); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(179,38,30,0.18)'; ctx.beginPath(); ctx.arc(X, Y, I.burst * PPM, 0, TAU); ctx.fill();
+  }
+  for (const z of P.zones) {
+    if (z.delay > 0) continue;
+    const R = z.r * PPM, q = 1 - z.t / z.life; ctx.strokeStyle = 'rgba(179,38,30,0.7)'; ctx.fillStyle = 'rgba(179,38,30,0.18)';
+    ctx.beginPath(); ctx.arc(sx(z.x), sy(z.y), R, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(sx(z.x), sy(z.y), R * q, 0, TAU); ctx.fill();
+  }
+  for (const b of P.beams) {
+    const L = b.pt.length * k * PPM, Wd = Math.max(2, b.pt.width * k * PPM);
+    ctx.strokeStyle = b.warm > 0 ? 'rgba(179,38,30,0.3)' : 'rgba(179,38,30,0.75)'; ctx.lineWidth = b.warm > 0 ? 2 : Wd; ctx.lineCap = 'butt';
+    ctx.beginPath(); for (let i = 0; i < b.pt.count; i++) { const a = b.a + i * TAU / b.pt.count; ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(a) * L, Y + Math.sin(a) * L); } ctx.stroke();
+  }
+  for (const fd of P.fields) {   // 반쪽 독안개(초록)와 흑백(검은 쪽이 받는 피해 2배)
+    const Dg = Math.hypot(VW, VH), cx = sx(fd.x), cy = sy(fd.y);
+    const nx = fd.kind === 'yy' ? Math.cos(fd.a) : fd.nx, ny = fd.kind === 'yy' ? Math.sin(fd.a) : fd.ny;
+    ctx.save(); ctx.beginPath(); ctx.moveTo(cx - ny * Dg, cy + nx * Dg); ctx.lineTo(cx + ny * Dg, cy - nx * Dg); ctx.lineTo(cx + ny * Dg + nx * Dg, cy - nx * Dg + ny * Dg); ctx.lineTo(cx - ny * Dg + nx * Dg, cy + nx * Dg + ny * Dg); ctx.closePath();
+    ctx.fillStyle = fd.kind === 'yy' ? (fd.warm > 0 ? 'rgba(26,26,26,0.08)' : 'rgba(26,26,26,0.2)') : (fd.warm > 0 ? 'rgba(70,110,50,0.1)' : 'rgba(70,110,50,0.26)');
+    ctx.fill(); ctx.restore();
+    ctx.strokeStyle = fd.kind === 'yy' ? 'rgba(26,26,26,0.6)' : 'rgba(70,110,50,0.6)'; ctx.lineWidth = 2; ctx.setLineDash(fd.warm > 0 ? [8, 6] : []);
+    ctx.beginPath(); ctx.moveTo(cx - ny * Dg, cy + nx * Dg); ctx.lineTo(cx + ny * Dg, cy - nx * Dg); ctx.stroke(); ctx.setLineDash([]);
+  }
+  for (const g of P.rings) {
+    ctx.strokeStyle = 'rgba(26,26,26,0.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.arc(sx(g.x), sy(g.y), g.R * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = CRIMSON; ctx.lineWidth = Math.max(2, g.w * PPM * 0.5); ctx.lineCap = 'round';
+    for (let i = 0; i < g.n; i++) { const a = g.a + i * TAU / g.n, bx = sx(g.x + Math.cos(a) * g.R), by = sy(g.y + Math.sin(a) * g.R), t = g.w * PPM; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a) * t, by - Math.sin(a) * t); ctx.lineTo(bx + Math.cos(a) * t, by + Math.sin(a) * t); ctx.stroke(); }
+  }
+  if (P.waves) for (const w of P.waves.list) {
+    const Dg = Math.hypot(VW, VH), cx = sx(w.x), cy = sy(w.y), nx = Math.cos(w.a), ny = Math.sin(w.a);
+    ctx.strokeStyle = w.warm > 0 ? 'rgba(179,38,30,0.3)' : 'rgba(150,30,26,0.6)'; ctx.lineWidth = Math.max(3, P.waves.pt.width * k * PPM);
+    ctx.beginPath(); ctx.moveTo(cx - ny * Dg, cy + nx * Dg); ctx.lineTo(cx + ny * Dg, cy - nx * Dg); ctx.stroke();
+  }
+}
+function drawShots() {
+  for (const s of G.shots) {
+    if (s.delay > 0) continue;
+    const X = sx(s.x), Y = sy(s.y), R = Math.max(2.5, s.r * PPM);
+    if (s.chain) { ctx.strokeStyle = 'rgba(26,26,26,0.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(sx(s.src.x), sy(s.src.y)); ctx.lineTo(X, Y); ctx.stroke(); }
+    ctx.fillStyle = s.chain ? INK : CRIMSON; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+  }
+}
+const nowS = () => performance.now() / 1000;
+// 고유 적·정예 표시: 계열 색 띠와 이름 첫 글자(덩이 그림은 공통이라)
+const FOE_TINT = { chapter2: 'rgba(70,110,50,0.55)', chapter3: 'rgba(47,90,106,0.55)', chapter4: 'rgba(94,110,120,0.6)' };
+function foeTint(f) { return f.def && (FOE_TINT[f.def.chapter] || (f.elite ? null : 'rgba(26,26,26,0.35)')); }
 function drawMarkers() {
   const marks = [];
   for (const id of G.awake) if (!G.done.has(id) && !(G.fight && G.fight.reg === id)) marks.push({ x: REG[id].x, y: REG[id].y, label: REG[id].nameKo });
@@ -1443,6 +1890,12 @@ window.__ch = {
     if (!G.ended) { running = true; G.auto = false; updateHud(); }
     return { out, tier: G.tier, lv: G.lv, t: G.t, dead: G.ended, kills: G.kills, orbSum: G.orbSum, bossFirst: G.bossFirst.slice(), done: [...G.done], awake: [...G.awake], reachT: G.reachT.map(Math.round), bossT: G.bossT, qi: settle().total };
   },
+  // 지역 콘텐츠(WP-01): elite(id) 정예를 곁에, local(id) 고유 적을 곁에, fog() 독안개 샘을 지금, yy(n) 음양 게이지, area() 지역 상태
+  elite(id) { const f = spawnLocal(G.tier, id, { x: G.p.x + G.view * 0.2, y: G.p.y }, true); return f && f.def.nameKo; },
+  local(id) { const f = spawnLocal(G.tier, id, { x: G.p.x + G.view * 0.2, y: G.p.y }); return f && f.def.nameKo; },
+  fog() { G.fogNext = G.t; },
+  yy(n) { G.yy = n; return G.yy; },
+  area() { return { region: G.region, chapter: regionChapter(), localShare: localShare(), eliteN: G.eliteN, inWater: inWater(G.p.x, G.p.y), inFog: inFog(G.p.x, G.p.y), fogs: G.fogs.length, pools: G.pools.length, shots: G.shots.length, yy: G.yy, bless: G.bless, pads: taijiPads().length, kinds: G.foes.filter(f => f.kind).map(f => f.kind) }; },
   warp(id, frac) { const r = REG[id]; G.p.x = r.x + G.view * (frac == null ? 0.3 : frac); G.p.y = r.y; camX = G.p.x; camY = G.p.y; trackRegion(); return G.region; },
   end(kind) { endLife(kind || 'zuohwa'); },
   unlockAll() { meta.unlocked = SECTS.map(s => s.id); saveMeta(); },

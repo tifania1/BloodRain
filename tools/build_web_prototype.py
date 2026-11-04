@@ -111,6 +111,8 @@ def cheonha_blob() -> str:
     이름은 characters·weapons·enemies, 경지 문턱·진기 곡선·연무장은 balance.json 에서 그대로 가져온다."""
     chars = load("characters")
     bal = load("balance")
+    enemies = load("enemies")
+    life = next(c for c in load("chapters")["chapters"] if c["id"] == "life")
     return to_js({
         "cheonha": drop_notes(load("cheonha")),
         "characters": [{"id": c["id"], "nameKo": c["nameKo"]} for c in chars["characters"]],
@@ -118,14 +120,21 @@ def cheonha_blob() -> str:
         "weapons": [{"id": w["id"], "nameKo": w["nameKo"]} for w in load("weapons")["weapons"]],
         "bosses": [
             {k: b[k] for k in ("id", "nameKo", "health", "targetKillSeconds", "phases") if k in b}
-            for b in load("enemies")["bosses"]
+            for b in enemies["bosses"]
         ],
-        "balance": drop_notes({k: bal[k] for k in ("realms", "xpCurve", "training", "stats", "spawnTarget", "dash", "limits")}),
-        # 땅의 주인 패턴 시간표(T-21). 시안은 cone·summon_ring·circles·rotating_beams 모양만 그린다
+        "balance": drop_notes({k: bal[k] for k in ("realms", "xpCurve", "training", "stats", "spawnTarget", "dash", "limits", "yinyang")}),
+        # 땅의 주인 패턴 시간표(T-21). 시안이 그리는 모양은 cheonha.html PAT_SHAPES
         "bossPatterns": drop_notes(load("bosspatterns")["bosses"]),
         # 레벨업 카드(T-21): 심법 이름과 능력치 효과, 레벨 상한
-        "passives": [{k: x[k] for k in ("id", "nameKo", "yinyang", "effects") if k in x} for x in load("passives")["passives"]],
+        "passives": [{k: x[k] for k in ("id", "nameKo", "yinyang", "yinyangPerLevelOverride", "effects") if k in x} for x in load("passives")["passives"]],
         "levels": bal["levels"],
+        # 지역 콘텐츠(WP-01): 고유 적·정예 정의와 정예 패턴, 장별 정예 표, 지형 기믹 수치, 한 생의 고유 적 비율·정예 대신 쓸 땅
+        "regionFoes": [drop_notes(e) for e in enemies["enemies"] if e.get("chapter") or e.get("family") == "elite"],
+        "elitesByChapter": enemies["elites"],
+        "elitePatterns": drop_notes(load("bosspatterns")["elites"]),
+        "gimmicks": drop_notes(load("gimmicks")),
+        "life": dict(drop_notes({k: life[k] for k in ("localShare", "eliteFallback")}),
+                     elites=[{"at": e["at"], "nth": e["nth"]} for e in life["events"] if e.get("kind") == "elite"]),
     })
 
 
