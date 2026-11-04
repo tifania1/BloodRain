@@ -3,8 +3,8 @@
 // 숫자는 cheonha.json bosses, 기준 체력은 enemies.json bosses, 장막·화면 대각선은 World.Scale, 지역 위치는 World.Regions.
 // 보스 패턴·2막은 Combat.BossPatterns 가, 한 생의 적 생성은 Spawning 쪽이 맡는다. 여기서는 언제 깨어나 언제 싸우고 무엇을 주는지만.
 //
-// 계정 기록(이미 쓰러뜨린 땅의 주인, 봉인석 수)은 IBossRecord 로 받는다. Core/Meta 의 혼(계정 진행)이 이걸 구현해 넘기고,
-// 그 전에는 BossRecord(집합 하나)를 쓴다.
+// 이번 회차 기록(봉인석을 이미 가져온 땅, 봉인석 수)은 IBossRecord 로 받는다. Run.Life 가 혼의 이번 회차 봉인석으로
+// BossRecord 를 만들어 넘기고, 처치할 때마다 Apply 한 뒤 Refresh 한다(회귀하면 봉인석이 비니 땅의 주인도 다시 진짜로 일어난다).
 //
 // Unity 쪽 흐름:
 //   1. 생이 시작되면 new BossAwakening(data, 출생지 지역 id, 혼).
@@ -20,10 +20,10 @@ using BloodRain.Core.Data;
 
 namespace BloodRain.Core.World
 {
-    /// <summary>땅의 주인 규칙이 보는 계정 기록. 혼(계정 진행)이 구현한다.</summary>
+    /// <summary>땅의 주인 규칙이 보는 이번 회차 기록. 지금은 BossRecord 하나가 구현한다.</summary>
     public interface IBossRecord
     {
-        /// <summary>그 지역 땅의 주인을 이미 쓰러뜨렸나. 참이면 다음부터 혈영으로 일어나고, 첫 처치 보상은 없다.</summary>
+        /// <summary>이번 회차에 그 지역 땅의 주인을 이미 쓰러뜨렸나. 참이면 혈영으로 일어나고, 첫 처치 보상은 없다.</summary>
         bool HasDefeated(string regionId);
         /// <summary>지금 가진 봉인석 수.</summary>
         int SealStones { get; }
@@ -112,6 +112,8 @@ namespace BloodRain.Core.World
         public int BloodCrystal;
         /// <summary>보갑 하나(절기 계기, 8장).</summary>
         public bool Chest;
+        /// <summary>이 처치로 봉인석이 늘어 새로 깨어난 땅(일곱째면 봉마곡). Life.DefeatBoss 가 채운다.</summary>
+        public List<RegionDef> Woken = new List<RegionDef>();
     }
 
     public sealed class BossAwakening

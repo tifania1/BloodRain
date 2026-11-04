@@ -54,6 +54,9 @@ namespace BloodRain.Core.Run
     {
         readonly GameData _data;
         readonly Soul _soul;
+        // 이번 생이 보는 땅의 주인 기록. 이번 회차에 봉인석을 가져온 땅이면 혈영으로 일어난다(LifeLog.KillBoss 와 같은 기준).
+        // 생 도중 처치로 봉인석이 늘면 여기에 반영해 봉마곡이 그 생에서 열린다.
+        readonly BossRecord _bossRecord;
         double _secondAcc;
 
         public Life(Soul soul, RebirthBody body, Random rng)
@@ -73,7 +76,8 @@ namespace BloodRain.Core.Run
             // 역류를 경공으로 끊으면 오의 게이지 +50 이 이 게이지로 들어간다.
             Backlash = new Backlash(_data.Balance.Yinyang.Extreme, Charge);
             Director = new LifeDirector(_data, rng);
-            Bosses = new BossAwakening(_data, body.Region.Id, new BossRecord(soul.BossesKilled, soul.SealStoneCount));
+            _bossRecord = new BossRecord(soul.SealStones, soul.SealStoneCount);
+            Bosses = new BossAwakening(_data, body.Region.Id, _bossRecord);
             if (body.Sect?.BloodArt is { } art) BloodArt = new BloodArt(art, Loadout.Gauge, body.YinyangStart);
             InsightEffects = new InsightEffects(body.Character.StartWeapon);
             RegionId = body.Region.Id;
@@ -130,14 +134,16 @@ namespace BloodRain.Core.Run
         public int UltimateCasts => RealmRewards.DoubleUltimate ? 2 : 1;
         public Vector2 Position { get; private set; }
         /// <summary>지금 자리의 혈운 농도. 적 기혈·피해는 EnemyScaling.HealthAt·DamageAt 에 이 값을 넘긴다.</summary>
-        public float Density => Regions.Density(Position, _soul.SealStoneCount);
+        public float Density => Regions.Density(Position, SealStones);
+        /// <summary>지금 가진 봉인석 수(생이 시작될 때 혼의 수 + 이번 생에 새로 얻은 것).</summary>
+        public int SealStones => _bossRecord.SealStones;
         /// <summary>서 있는 지역(가장 가까운 지역 중심).</summary>
         public string RegionId { get; private set; }
         public LifePhase Phase => Record != null ? LifePhase.Ended : Bosses.InFight ? LifePhase.BossFight : LifePhase.Roaming;
         /// <summary>끝났으면 정산 기록(Soul.EndLife 에 넘긴다).</summary>
         public LifeRecord? Record { get; private set; }
         /// <summary>혈마의 그림자 단계(0이면 없음).</summary>
-        public int ShadowStep => Director.ShadowStep(Minutes, Level, _soul.SealStoneCount);
+        public int ShadowStep => Director.ShadowStep(Minutes, Level, SealStones);
         /// <summary>지금 혈마의 그림자 세기(단계 0이면 Active 가 false).</summary>
         public BloodShadowStrength Shadow => BloodShadow.Strength(_data.Cheonha.LifeEnd.Shadow, ShadowStep);
         /// <summary>혈월 천하(회귀, 21장)면 적 기혈 배율(cheonha.json cycle.bloodmoon.enemyHealth), 아니면 1. EnemyScaling.HealthAt 결과에 곱한다.</summary>
@@ -177,7 +183,7 @@ namespace BloodRain.Core.Run
         public void MoveTo(Vector2 position)
         {
             Position = position;
-            string now = Regions.Nearest(position, _soul.SealStoneCount).Id;
+            string now = Regions.Nearest(position, SealStones).Id;
             if (now == RegionId) return;
             RegionId = now;
             Log.Enter(now);
@@ -227,7 +233,9 @@ namespace BloodRain.Core.Run
             return true;
         }
 
-        /// <summary>싸우던 땅의 주인을 쓰러뜨렸다. 종장(봉마곡)이면 봉인으로 생이 끝난다.</summary>
+        /// <summary>싸우던 땅의 주인을 쓰러뜨렸다. 종장(봉마곡)이면 봉인으로 생이 끝난다.
+        /// 보상(첫 처치·봉인석·문파·윤회의 기·혈정)은 혼 장부(LifeLog.KillBoss) 값으로 맞춘다. 혈월 천하 배율도 거기서 붙는다.
+        /// 봉인석이 늘어 새로 깨어난 땅(일곱째면 봉마곡)은 kill.Woken.</summary>
         public BossKill DefeatBoss(int leftoverSilverIfFinal = 0)
         {
             var kill = Bosses.Defeat();
@@ -237,7 +245,14 @@ namespace BloodRain.Core.Run
                 End(LifeEndWay.Sealed, leftoverSilverIfFinal);
                 return kill;
             }
-            Log.KillBoss(kill.RegionId);
+            var info = Log.KillBoss(kill.RegionId);
+            kill.First = info.FirstInCycle;
+            kill.SealStone = info.SealStone;
+            kill.UnlockSect = info.UnlockedSect;
+            kill.RebirthQi = info.RebirthQi;
+            kill.BloodCrystal = info.BloodCrystal;
+            _bossRecord.Apply(kill);
+            kill.Woken = Bosses.Refresh();
             return kill;
         }
 

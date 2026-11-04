@@ -3,7 +3,9 @@ using System.Linq;
 using BloodRain.Core.Data;
 using BloodRain.Core.Meta;
 using BloodRain.Core.Run;
+using BloodRain.Core.Progression;
 using BloodRain.Core.Spawning;
+using BloodRain.Core.World;
 using Xunit;
 
 namespace BloodRain.Core.Tests
@@ -13,10 +15,17 @@ namespace BloodRain.Core.Tests
     {
         readonly GameData _d = TestData.Load();
 
-        Life NewLife(string sect, params string[] traits)
+        Soul NewSoul()
         {
             var soul = new Soul(_d);
             soul.EndLife(soul.BeginLife(Rebirth.Prologue(_d)).Finish(LifeEndWay.Fallen, 0));
+            return soul;
+        }
+
+        Life NewLife(string sect, params string[] traits) => NewLife(NewSoul(), sect, traits);
+
+        Life NewLife(Soul soul, string sect, params string[] traits)
+        {
             var c = _d.Cheonha;
             var cand = new RebirthCandidate(c.Sect(sect), c.Region(c.Sect(sect).Region), traits.Select(c.Trait).ToArray());
             return new Life(soul, Rebirth.Body(c, cand), new Random(1));
@@ -44,6 +53,52 @@ namespace BloodRain.Core.Tests
             Assert.True(nthElites > 0);
             Assert.Equal(all.Count - nthElites, events.Count);
             Assert.DoesNotContain(events, e => e.Wave.Def.Type == WaveEventKind.Elite && e.Wave.Def.Nth > 0);
+        }
+        /// <summary>숭산에서 절정까지 올려 땅의 주인과 싸우고 쓰러뜨린다.</summary>
+        BossKill KillSongshan(Life life, out bool wasShadow)
+        {
+            life.Absorb(new XpCurve(_d.Balance.XpCurve).CumulativeTo(35) * 2);
+            for (int i = 0; i < 400 && life.Phase != LifePhase.BossFight; i++) life.Tick(0.1f, life.Regions.Center("songshan"), 0);
+            Assert.Equal(LifePhase.BossFight, life.Phase);
+            wasShadow = life.Bosses.Fight!.IsShadow;
+            return life.DefeatBoss();
+        }
+
+        [Fact] public void 땅의_주인_처치_보상은_혼_장부와_같고_회귀하면_다시_첫_처치다()
+        {
+            var soul = NewSoul();
+            var bosses = _d.Cheonha.Bosses;
+
+            var life1 = NewLife(soul, "shaolin");
+            Assert.Equal(0, life1.SealStones);
+            var first = KillSongshan(life1, out bool shadow1);
+            Assert.False(shadow1);
+            Assert.True(first.First);
+            Assert.NotNull(first.SealStone);
+            Assert.Equal(1, life1.SealStones); // 생 도중에도 봉인석이 는다(일곱째면 그 생에서 봉마곡이 열린다)
+            soul.EndLife(life1.End(LifeEndWay.Fallen, 0));
+
+            // 같은 회차: 혈영
+            var life2 = NewLife(soul, "shaolin");
+            var again = KillSongshan(life2, out bool shadow2);
+            Assert.True(shadow2);
+            Assert.False(again.First);
+            Assert.Null(again.SealStone);
+            Assert.Equal(bosses.RepeatKill.BloodCrystal, again.BloodCrystal);
+            soul.EndLife(life2.End(LifeEndWay.Fallen, 0));
+
+            // 회귀(혈월 천하): 봉인석이 비었으니 진짜 땅의 주인이 다시 일어나고, 혈정에 혈월 배율이 붙는다
+            soul.Regress();
+            var life3 = NewLife(soul, "shaolin");
+            var bloodmoon = KillSongshan(life3, out bool shadow3);
+            Assert.False(shadow3);
+            Assert.True(bloodmoon.First);
+            Assert.NotNull(bloodmoon.SealStone);
+            Assert.Null(bloodmoon.UnlockSect); // 문파 해금은 계정 첫 처치에만
+            Assert.Equal(first.RebirthQi, bloodmoon.RebirthQi); // 보너스 값(배율은 정산 때)
+            int expect = (int)Math.Round(bosses.FirstKill.BloodCrystal * _d.Cheonha.Cycle.Bloodmoon.Rewards, MidpointRounding.AwayFromZero);
+            Assert.Equal(expect, bloodmoon.BloodCrystal);
+            Assert.True(bloodmoon.BloodCrystal > first.BloodCrystal);
         }
     }
 }
