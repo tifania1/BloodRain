@@ -630,8 +630,8 @@ function startLife(c) {
     cards: {}, extra: {}, pendingCards: 0, offers: null,
     eliteN: 0, shots: [], pools: [], fogs: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
     yy: clamp(body.yin, YY.min, YY.max), bless: null, taijiCd: {},
-    bellCd: {}, dropBells: [], pagodaCache: new Map(), pagodaTier: -1,
-    ins: [], insEff: {}, pendingIns: 0, insOffers: null, still: 0, blockCd: 0, salgiKills: 0, yyTilt: 1, yyCarry: 0,
+    shadow: null, bellCd: {}, dropBells: [], pagodaCache: new Map(), pagodaTier: -1,
+    ins: [], insEff: {}, pendingIns: 0, insRealms: [], insOffers: null, still: 0, blockCd: 0, salgiKills: 0, yyTilt: 1, yyCarry: 0,
   };
   Object.assign(G.p, { root: 0, pull: null, walkT: 0 });
   $('bossbar').hidden = true;
@@ -770,7 +770,7 @@ function breakthrough() {
   G.trauma = Math.min(1, G.trauma + 0.5);
   const id = REALMS[G.tier].id;
   G.reachT[G.tier] = G.t;
-  if (offersInsight(REALMS[G.tier])) G.pendingIns++;   // 연출이 끝나면 maybeCards 가 깨달음부터 띄운다
+  if (offersInsight(REALMS[G.tier])) { G.pendingIns++; G.insRealms.push(REALMS[G.tier].nameKo); }   // 연출이 끝나면 maybeCards 가 깨달음부터 띄운다
   if (!meta.reached.includes(id) && !G.newRealms.includes(id)) G.newRealms.push(id);
   const woke = wakeBosses();
   if (woke.length) toast('땅의 주인이 깨어났다', woke.map(r => `${BOSS[r.boss].nameKo}(${r.nameKo})`).join(' · ') + ' — 화면 끝 붉은 표시');
@@ -882,14 +882,18 @@ function autopilot() {
     if (d < range * 1.1) crowd++;
     if (d < range * 0.6) { danger++; const w = 1.2 / Math.max(0.25, d / s), h = (d + f.r) || 1; ax -= dx / h * w; ay -= dy / h * w; }
   }
+  // 혈마의 그림자(RM-10): 화면 대각선 0.35배 안이면 구슬·적·땅의 주인은 버리고 달아난다
+  let flee = null;
+  if (G.shadow) { const S = G.shadow, dx = p.x - S.x, dy = p.y - S.y, d = Math.hypot(dx, dy) || 1; if (d < G.view * 0.35) flee = { x: dx / d, y: dy / d, d }; }
   let o = null, od = 14 * s;
   for (const q of G.orbs) { if (q.pull) continue; const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < od) { od = d; o = q; } }
-  if (o && danger < 2) { ax += (o.x - p.x) / (od || 1) * 1.3; ay += (o.y - p.y) / (od || 1) * 1.3; }
+  if (flee) { /* 달아나는 중 */ }
+  else if (o && danger < 2) { ax += (o.x - p.x) / (od || 1) * 1.3; ay += (o.y - p.y) / (od || 1) * 1.3; }
   else if (near && danger === 0 && p.hp > p.maxHp * 0.35) {
     const dx = near.x - p.x, dy = near.y - p.y, d = Math.hypot(dx, dy) || 1;
     if (nd > range * 0.8) { ax += dx / d; ay += dy / d; } else { ax -= dy / d * 0.8; ay += dx / d * 0.8; }   // 거리 안이면 옆으로 돈다
   }
-  if (!G.fight && p.hp > p.maxHp * 0.55) {
+  if (!G.fight && !flee && p.hp > p.maxHp * 0.55) {
     let tg = null, td = Infinity;
     for (const id of G.awake) { if (G.done.has(id)) continue; const r = REG[id], d = Math.hypot(r.x - p.x, r.y - p.y); if (d < td) { td = d; tg = r; } }
     // 원 안에서 깨어났으면 한 번 밖으로 나갔다가 들어온다
@@ -897,7 +901,7 @@ function autopilot() {
   }
   const hx = G.home.x - p.x, hy = G.home.y - p.y, hd = Math.hypot(hx, hy), br = boundR(G.tier);
   if (br !== Infinity && hd > br * 0.85 && !G.awake.size) { ax += hx / hd * 1.5; ay += hy / hd * 1.5; }
-  if (G.fight) { const b = G.fight, bx = b.x - p.x, by = b.y - p.y, bd = Math.hypot(bx, by); if (bd > b.r * 2.5) { ax += bx / bd * 1.2; ay += by / bd * 1.2; } }
+  if (G.fight && !flee) { const b = G.fight, bx = b.x - p.x, by = b.y - p.y, bd = Math.hypot(bx, by); if (bd > b.r * 2.5) { ax += bx / bd * 1.2; ay += by / bd * 1.2; } }
   // 장판 피하기(WP-01): 반쪽 독안개·흑백의 검은 쪽에선 경계 반대로, 웅덩이·독안개·내려찍기 예고에선 바깥으로
   const away = (x, y, r, w) => { const dx = p.x - x, dy = p.y - y, d = Math.hypot(dx, dy) || 1; if (d < r + p.r) { ax += dx / d * w; ay += dy / d * w; } };
   for (const f of G.foes) if (f.pat) {
@@ -909,6 +913,13 @@ function autopilot() {
   }
   for (const o of G.pools) away(o.x, o.y, o.r, 1.5);
   for (const fg of G.fogs) if (G.sect.id !== 'tang') away(fg.x, fg.y, fogR(fg), 1);
+  // 혈마의 그림자(RM-10): 화면 대각선 0.35배 안에 들면 무엇보다 먼저 반대쪽으로 달아나고, 바짝 붙으면 경공
+  if (flee) {   // 그림자 반대쪽(강호 끝에 막히면 옆으로). 장판 피하기는 위에서 그대로 더했다
+    let fx = flee.x, fy = flee.y;
+    if (p.x < W * 0.03 || p.x > W * 0.97 || p.y < H * 0.03 || p.y > H * 0.97) { const t = fx; fx = -fy; fy = t; }
+    ax += fx * 3; ay += fy * 3;
+    if (flee.d < G.shadow.r * 3 && p.dashN > 0) { const m = Math.hypot(ax, ay) || 1; p.fx = ax / m; p.fy = ay / m; doDash(); }
+  }
   if (Math.hypot(ax, ay) < 0.2) { const a = G.t * 0.4; ax += Math.cos(a) * 0.6; ay += Math.sin(a) * 0.6; }
   if (crowd >= 6 && p.dashN > 0) doDash();
   return [ax, ay];
@@ -976,6 +987,7 @@ function update(rdt) {
   G.blockCd = Math.max(0, G.blockCd - dt);
   trackRegion();
   checkEngage(dt);
+  if (!B && !G.ended) tickShadow(dt);
 
   // 생성: 지금 경지 75%, 바로 아래 경지 25%. 보스전 동안 0.4배, 돌파 연출 동안 멈춤
   if (!B && !G.ended) {
@@ -1175,11 +1187,11 @@ function maybeCards() {
   });
 }
 function maybeInsight() {
-  const offers = rollInsights();
-  if (!offers.length) { G.pendingIns = 0; return; }   // 다 가졌으면 돌파 연출만(Core: 빈 목록)
+  const offers = rollInsights(), realm = G.insRealms.shift() || REALMS[G.tier].nameKo;   // 깨달음을 준 경지(돌파가 겹쳐도 차례대로)
+  if (!offers.length) { G.pendingIns = 0; G.insRealms = []; return; }   // 다 가졌으면 돌파 연출만(Core: 빈 목록)
   if (G.auto || !running) { takeInsight(offers[0]); return; }
   G.insOffers = offers; paused = true; show('levelup'); $('luhanja').textContent = '悟';
-  $('lusub').textContent = `${REALMS[G.tier].nameKo} 돌파 · 깨달음 하나${G.pendingIns > 1 ? ` (남은 ${G.pendingIns - 1}번)` : ''}`;
+  $('lusub').textContent = `${realm} 돌파 · 깨달음 하나${G.pendingIns > 1 ? ` (남은 ${G.pendingIns - 1}번)` : ''}`;
   const box = $('lucards'); box.innerHTML = '';
   offers.forEach((d, i) => {
     const b = document.createElement('button');
@@ -1437,6 +1449,54 @@ function fogR(fg) {   // Core PoisonFogGimmick.RadiusAt 과 같은 식
   return g.radius * fg.k * clamp(q, 0, 1);
 }
 function inFog(x, y) { for (const fg of G.fogs) if (Math.hypot(x - fg.x, y - fg.y) <= fogR(fg)) return true; return false; }
+// ───────── 혈마의 그림자(RM-10, 기획서 7장 '생의 끝', cheonha.json lifeEnd) ─────────
+// 현경인데 봉인석이 모자라면 환산 shadowFromMinute(30분)부터, shadowStepMinutes(5분)마다 한 단계씩. 단계는 Core LifeDirector.ShadowStep,
+// 세기는 Core BloodShadow.Strength 와 같다. 피해·기혈은 기획서 단위 그대로 쓴다(이 시안의 몸 기혈이 기획서 값이라).
+// 그림자는 무공에 맞지 않고(G.foes 밖), 밀리지도 기절하지도 않으며, 돌탑을 지나간다
+const LE = CH.lifeEnd || {}, SHD = LE.shadow;
+// 현경 뒤 환산 분: 이 시안은 현경 뒤 레벨이 몇 배로 뛰어(빨리 훑어보기면 Lv300 넘게) 레벨 ÷ 3 으로 세면 그림자가 몇 초 만에 10단계를 넘는다.
+// 그래서 현경에 오른 순간의 환산 분(레벨 90 = 30분)에, 그 뒤 흐른 실제 시간 × (그 생이 현경까지 온 압축 비율)을 더한다.
+// 보통 속도로 9분에 현경이면 실제 1분이 환산 3.3분(그림자 한 단계가 실제 1분 반쯤). 콘솔로 바로 올린 경우를 위해 비율은 1분 걸린 셈까지만
+function shadowMinute() {
+  const t0 = G.reachT[FINAL_T]; if (t0 == null) return eqMinute();
+  const m0 = REALMS[FINAL_T].level * LD.minPerLevel;
+  return m0 + (G.t - t0) / 60 * m0 / Math.max(1, t0 / 60);
+}
+function shadowStep() {
+  if (!SHD || G.tier < FINAL_T || stonesHeld() >= BR.finalRequires.sealStones) return 0;
+  const m = shadowMinute(); if (m < LE.shadowFromMinute) return 0;
+  if (!(LE.shadowStepMinutes > 0)) return 1;
+  return 1 + Math.floor((m - LE.shadowFromMinute) / LE.shadowStepMinutes + 1e-4);
+}
+function shadowStrength(n) {
+  const k = n - 1; let speed = SHD.moveSpeed + SHD.speedPerStep * k;
+  if (SHD.maxSpeed > 0) speed = Math.min(SHD.maxSpeed, speed);
+  return { step: n, dmg: SHD.contactDamage * Math.pow(SHD.damageGrowth, k), speed, hit: SHD.hitIntervalSeconds, enemyMul: 1 + SHD.enemyDamagePerStep * k };
+}
+const enemyDmgMul = () => G.shadow ? G.shadow.str.enemyMul : 1;
+function tickShadow(dt) {
+  const n = shadowStep(), p = G.p, k = sc(G.tier);
+  let S = G.shadow;
+  if (!n) { if (S) { G.shadow = null; setHint(`봉인석 ${BR.finalRequires.sealStones}개 · 혈마의 그림자가 걷혔다`); } return; }
+  if (!S) {
+    const at = spawnRing();
+    S = G.shadow = { x: at.x, y: at.y, r: 0.42 * k * 2.4, step: n, str: shadowStrength(n), hit: 0, warn: 0, from: G.t };
+    toast('혈마의 그림자', `봉인석 ${stonesHeld()}/${BR.finalRequires.sealStones} · 죽지도 밀리지도 않는다 · 환산 ${LE.shadowStepMinutes}분마다 강해진다`);
+  } else if (n > S.step) {
+    const prev = S.step; S.step = n; S.str = shadowStrength(n);
+    toast(`혈마의 그림자 ${n}단계`, `걸음 ${Math.round(S.str.speed)} · 닿으면 ${fmtD(S.str.dmg)} · 모든 적 피해 ×${S.str.enemyMul.toFixed(1)}`);
+    if (SHD.teleportGap > 0 && prev > 0) S.warn = SHD.teleportWarningSeconds;   // Core TeleportsOn: 처음 나타날 때는 아니다
+  }
+  const gap = SHD.teleportGap * k, bx = p.x - p.fx * gap, by = p.y - p.fy * gap;   // 몸 뒤(보는 방향 반대) gap
+  if (S.warn > 0) {
+    S.warn -= dt; S.wx = bx; S.wy = by;
+    if (S.warn <= 0 && Math.hypot(S.x - p.x, S.y - p.y) > gap) { S.x = bx; S.y = by; G.fx.push({ k: 'puff', x: bx, y: by, r: S.r * 1.6, t: 0, life: 0.5, red: true }); }   // 이미 더 가까우면 그대로
+  }
+  const dx = p.x - S.x, dy = p.y - S.y, d = Math.hypot(dx, dy) || 1, v = Math.min(d, pspd(S.str.speed) * k * dt);
+  S.x += dx / d * v; S.y += dy / d * v;
+  S.hit -= dt;
+  if (d < S.r + p.r * 0.8 && S.hit <= 0) { S.hit = S.str.hit; hitPlayer(S.str.dmg, true); }
+}
 // ───────── 숭산 기믹(RM-08): 범종·탑림. 수치는 gimmicks.json, 규칙은 Core BellGimmick·PagodaForest ─────────
 // 탑림 무더기 하나: Core PagodaForest.Layout 과 같은 순서(격자 자리마다 흔들기 x, y, 비우기)로 난수를 꺼낸다.
 // 난수기만 다르다(시안은 칸 번호로 시드를 만든 rng). 간격 판정은 축척 전 화면 m 로 하고 세계 m 로 돌려준다
@@ -1575,12 +1635,12 @@ function regionGimmicks(dt) {
     G.dropBells = G.dropBells.filter(b => b.life > 0 && b.uses > 0);
   }
 }
-function hitPlayer(dmg) {
+function hitPlayer(dmg, raw) {   // raw: 혈마의 그림자 자신의 피해(적 피해 배율을 안 받음)
   const p = G.p; if (p.iframe > 0 || G.brk || G.ended || G.sealed) return false;
   // 금종조: 막을 수 있으면 이번 피해는 없던 일(묶임·끌림도 없음). 맞은 셈은 쳐서 같은 장판이 곧바로 다시 때리지 않게 한다
   const gj = G.insEff.periodic_block;
   if (gj && G.blockCd <= 0) { G.blockCd = gj.intervalSeconds; p.iframe = LD.hitIframe; G.fx.push({ k: 'block', x: p.x, y: p.y, r: p.r * 2.2, t: 0, life: 0.45 }); return 'blocked'; }
-  p.hp -= Math.max(1, dmg * takenMul() - G.body.armor); p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
+  p.hp -= Math.max(1, dmg * (raw ? 1 : enemyDmgMul()) * takenMul() - G.body.armor);   // 그림자 단계마다 화면 위 모든 적 피해 +10% p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
   return true;
 }
@@ -1758,6 +1818,13 @@ function render() {
     if (G.tier >= 1) { ctx.strokeStyle = `rgba(201,162,39,${0.25 + 0.1 * G.tier})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 1.7 * PPM, 0, TAU); ctx.stroke(); }
     if (G.insEff.periodic_block && G.blockCd <= 0) { ctx.strokeStyle = 'rgba(201,162,39,0.45)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 2.1 * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }   // 금종조 준비됨
     if (G.tier >= 2) { const n = orbitCount(), R = 1.9 * sc(G.tier) * G.body.area * PPM; ctx.strokeStyle = G.tier >= 3 ? GOLD : INK; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const a = G.orbitA + i * TAU / n, bx = X + Math.cos(a) * R, by = Y + Math.sin(a) * R; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); } }
+  }
+  // 혈마의 그림자: 반투명 혈마에 붉은 테, 순간이동 예고는 몸 뒤 붉은 점선 원
+  if (G.shadow) {
+    const S = G.shadow, X = sx(S.x), Y = sy(S.y), R = S.r * PPM, s2 = R * 2.6;
+    if (S.warn > 0) { ctx.strokeStyle = 'rgba(179,38,30,0.85)'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.arc(sx(S.wx), sy(S.wy), R, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.globalAlpha = 0.6; ctx.drawImage(demon, X - s2 / 2, Y - s2 * 0.6, s2, s2); ctx.globalAlpha = 1;
+    ctx.strokeStyle = `rgba(179,38,30,${0.5 + 0.3 * Math.sin(now * 6)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * 1.15, 0, TAU); ctx.stroke();
   }
   // 범종에 기절한 적: 머리 위 금빛 점선 고리
   ctx.strokeStyle = 'rgba(201,162,39,0.9)'; ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
@@ -2206,6 +2273,9 @@ window.__ch = {
   bells: () => songBells().map(b => ({ x: Math.round(b.x), y: Math.round(b.y), touch: +b.touch.toFixed(2), stunR: +b.stunR.toFixed(2), ready: (G.bellCd[b.key] || 0) <= G.t })).concat(G.dropBells.map(b => ({ x: Math.round(b.x), y: Math.round(b.y), drop: true, life: +b.life.toFixed(1), uses: b.uses }))),
   pagodas() { const seen = new Set(), sp = LD.pagodaSpacing * sc(G.tier); for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const pt = pagodaPatchAt(G.p.x + dx * sp, G.p.y + dy * sp); if (pt) seen.add(pt); } return [...seen].map(pt => ({ x: Math.round(pt.x), y: Math.round(pt.y), R: +pt.R.toFixed(1), stones: pt.stones.length, minGap: +Math.min(...pt.stones.flatMap((a, i) => pt.stones.slice(i + 1).map(b => Math.hypot(a.x - b.x, a.y - b.y) - a.r - b.r))).toFixed(2) })); },
   stunned: () => G.foes.filter(f => f.stunT > 0 && !f.dead).length,
+  // 혈마의 그림자(RM-10): shadow() 지금 단계·세기·거리, shadowStep() 지금 시각의 단계
+  shadow: () => G.shadow && { step: G.shadow.step, str: G.shadow.str, dist: +Math.hypot(G.shadow.x - G.p.x, G.shadow.y - G.p.y).toFixed(1), warn: G.shadow.warn },
+  shadowStep: () => shadowStep(), shadowMinute: () => shadowMinute(),
   area() { return { region: G.region, chapter: regionChapter(), localShare: localShare(), eliteN: G.eliteN, inWater: inWater(G.p.x, G.p.y), inFog: inFog(G.p.x, G.p.y), fogs: G.fogs.length, pools: G.pools.length, shots: G.shots.length, yy: G.yy, bless: G.bless, pads: taijiPads().length, kinds: G.foes.filter(f => f.kind).map(f => f.kind) }; },
   warp(id, frac) { const r = REG[id]; G.p.x = r.x + G.view * (frac == null ? 0.3 : frac); G.p.y = r.y; camX = G.p.x; camY = G.p.y; trackRegion(); return G.region; },
   end(kind) { endLife(kind || 'zuohwa'); },
