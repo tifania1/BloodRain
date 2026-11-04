@@ -52,5 +52,24 @@ namespace BloodRain.Core.Tests
                 .ToList();
             Assert.True(bad.Count == 0, "alphaIsTransparency 가 꺼진 원화:\n" + string.Join("\n", bad));
         }
+
+        [Fact]
+        public void 원화_종류의_폴더는_모두_Sprite_규칙이_안다()
+        {
+            // postprocess_art.py KINDS 에 새 종류가 생기면 fix_art_meta.py 와 이 테스트도 같이 고쳐야 한다.
+            var post = File.ReadAllText(Path.Combine(RepoRoot, "tools", "postprocess_art.py"));
+            var skip = new[] { "Characters/Sheets", "Cutscenes", "Store", "VFX/AI" };
+            var kinds = Regex.Matches(post, @"^\s+""[a-z_]+"": \(""([A-Za-z/]+)"",", RegexOptions.Multiline)
+                .Select(m => m.Groups[1].Value).Distinct().ToList();
+            Assert.Contains("Enemies", kinds);
+            var unknown = kinds.Where(k => !skip.Contains(k) && !SpriteFolders.Contains(k)).ToList();
+            Assert.True(unknown.Count == 0, "Sprite 규칙에 없는 원화 폴더: " + string.Join(", ", unknown));
+
+            var fix = File.ReadAllText(Path.Combine(RepoRoot, "tools", "fix_art_meta.py"));
+            var sets = Regex.Matches(fix, @"^(?:ALPHA|WORLD|SCREEN) = \{([^}]*)\}", RegexOptions.Multiline)
+                .SelectMany(m => Regex.Matches(m.Groups[1].Value, @"""(\w+)""").Select(x => x.Groups[1].Value))
+                .Distinct().OrderBy(x => x).ToList();
+            Assert.Equal(SpriteFolders.OrderBy(x => x).ToList(), sets);
+        }
     }
 }
