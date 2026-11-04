@@ -6,8 +6,9 @@ Windows 작업 스케줄러가 깨우면(register_task.ps1) 한 번 돌고 끝�
 한 번 실행할 때 하는 일
   1. 저장소를 claude/dev 최신으로 맞춘다. 작업 트리에 사람이 고치던 변경이 있으면 아무것도 안 하고 끝낸다.
   2. art_queue 에서 picked 상태인 이미지를 후처리해 Assets/Art 로 옮긴다(tools/postprocess_art.py).
-  3. Unity 에디터가 켜져 있고 docs/unity_tasks.md 에 안 끝난 항목이 있으면,
-     에이전트가 Unity MCP로 1~2개를 처리하고 스크린샷을 docs/daily/ 에 남긴다.
+  3. docs/unity_tasks.md 에 안 끝난 항목이 있으면 에이전트가 Unity MCP 로 1~3개를 처리한다.
+     다른 프로젝트 Unity(회사 일)가 떠 있으면 건너뛴다. BloodRain Unity 가 꺼져 있으면 켜고, 끝나면 닫는다.
+     BloodRain Unity 가 이미 떠 있으면 사람 입력이 20분 넘게 없을 때만 쓰고 닫지 않는다.
   4. 바뀐 것이 있으면 claude/dev 로 커밋·푸시한다.
 
 API 키는 config.json(커밋 안 됨)에만 둔다. PC의 ANTHROPIC_API_KEY 환경변수는 회사 키라서
@@ -52,9 +53,75 @@ def load_json(p: Path, default: dict) -> dict:
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else dict(default)
 
 
-def unity_running() -> bool:
-    r = subprocess.run(["tasklist", "/FI", "IMAGENAME eq Unity.exe"], capture_output=True, text=True)
-    return "Unity.exe" in r.stdout
+UNITY_EXE = r"C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe"
+PROJECT = ROOT / "unity" / "BloodRain"
+
+
+def unity_processes() -> list[tuple[int, str]]:
+    """떠 있는 Unity.exe 의 (pid, 명령줄). Unity Hub 의 `unity.exe serve` 는 뺀다."""
+    ps = ("Get-CimInstance Win32_Process -Filter \"name='Unity.exe'\" | "
+          "ForEach-Object { \"$($_.ProcessId)`t$($_.CommandLine)\" }")
+    r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, encoding="utf-8")
+    out = []
+    for line in r.stdout.splitlines():
+        if "\t" not in line:
+            continue
+        pid, cmd = line.split("\t", 1)
+        if " serve" in cmd.lower():
+            continue
+        out.append((int(pid), cmd))
+    return out
+
+
+def is_bloodrain(cmd: str) -> bool:
+    c = cmd.lower().replace("/", "\\")
+    return str(PROJECT).lower() in c
+
+
+def idle_minutes() -> float:
+    """마지막 키보드·마우스 입력 뒤로 지난 분(사람이 PC 앞에 있는지)."""
+    import ctypes
+
+    class LASTINPUTINFO(ctypes.Structure):
+        _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+
+    li = LASTINPUTINFO()
+    li.cbSize = ctypes.sizeof(li)
+    ctypes.windll.user32.GetLastInputInfo(ctypes.byref(li))
+    return (ctypes.windll.kernel32.GetTickCount() - li.dwTime) / 60000.0
+
+
+def launch_unity(wait_seconds: int = 720) -> int | None:
+    """BloodRain Unity 를 켜고 창이 뜬 뒤 가져오기가 끝날 때까지 기다린다. 실패하면 None."""
+    import time
+
+    proc = subprocess.Popen([UNITY_EXE, "-projectPath", str(PROJECT)])
+    start = time.time()
+    while time.time() - start < wait_seconds:
+        time.sleep(15)
+        r = subprocess.run(["powershell", "-NoProfile", "-Command",
+                            f"(Get-Process -Id {proc.pid} -ErrorAction SilentlyContinue).MainWindowTitle"],
+                           capture_output=True, text=True, encoding="utf-8")
+        if "BloodRain" in r.stdout:
+            time.sleep(90)  # 스크립트 컴파일과 MCP 다리가 붙을 시간
+            return proc.pid
+    log("Unity 창이 12분 안에 안 떠서 닫음")
+    close_unity(proc.pid)
+    return None
+
+
+def close_unity(pid: int) -> None:
+    import time
+
+    subprocess.run(["powershell", "-NoProfile", "-Command",
+                    f"(Get-Process -Id {pid} -ErrorAction SilentlyContinue).CloseMainWindow() | Out-Null"])
+    for _ in range(12):
+        time.sleep(5)
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", f"Get-Process -Id {pid} -ErrorAction SilentlyContinue"],
+                           capture_output=True, text=True)
+        if not r.stdout.strip():
+            return
+    subprocess.run(["powershell", "-NoProfile", "-Command", f"Stop-Process -Id {pid} -Force"])
 
 
 def open_unity_tasks() -> list[str]:
@@ -91,12 +158,14 @@ def postprocess_art(dry: bool) -> None:
 
 
 PROMPT = """너는 혈우강호(BloodRain) Unity 프로젝트의 PC 담당 개발자다. 저장소 루트는 {root}, Unity 프로젝트는 unity/BloodRain 이다.
-먼저 CLAUDE.md 와 docs/feedback.md 를 읽어라. 그다음 docs/unity_tasks.md 에서 위에서부터 안 끝난 항목(- [ ]) 1~2개만 처리한다.
+먼저 CLAUDE.md 와 docs/feedback.md 를 읽어라. 그다음 docs/unity_tasks.md 에서 위에서부터 안 끝난 항목(- [ ]) 1~3개를 40분 안에 처리한다. 다른 세션이 '하는 중'으로 표시한 항목은 건너뛴다.
 
 규칙
 - Unity 에디터 조작은 unityMCP 도구로 한다. 스크립트를 고친 뒤에는 refresh_unity 후 read_console 로 오류가 없는지 꼭 본다.
 - 끝낸 항목은 - [x] 로 바꾸고 한 줄로 결과를 적는다. 막히면 - [ ] 그대로 두고 아래에 '막힘:' 한 줄을 적는다.
-- 화면에 보이는 작업이면 플레이 모드 스크린샷을 docs/daily/{today}-unity.png 로 남긴다.
+- 화면에 보이는 작업이면 플레이 모드 스크린샷을 docs/unity_shots/<항목 id>/ 에 남긴다.
+- 씬·프리팹은 Assets/Editor 의 [MenuItem] 부트스트랩 코드로 만들고 실행한다(다시 만들 수 있게). YAML 을 손으로 쓰지 않는다.
+- 끝나면 열린 씬과 애셋을 저장한다. docs/daily/{today}.md 에 "### HH:MM PC API 루프" 로 한 일을 덧붙인다.
 - Assets/Scripts/Core 에는 UnityEngine 을 쓰지 않는다. 바꿨으면 `dotnet test core/BloodRain.sln` 을 돌려 통과를 확인한다.
 - 커밋은 하되 푸시는 하지 마라(바깥 스크립트가 한다). 커밋 메시지는 한국어 한 줄.
 - 일을 지어내지 말 것. 할 항목이 없으면 아무것도 바꾸지 말고 끝낸다.
@@ -177,16 +246,30 @@ def main() -> int:
     postprocess_art(args.dry_run)
 
     tasks = open_unity_tasks()
+    procs = unity_processes()
+    others = [cmd for _, cmd in procs if not is_bloodrain(cmd)]
+    ours = [pid for pid, cmd in procs if is_bloodrain(cmd)]
+    launched = None
     if not tasks:
         log("Unity 작업 목록이 비어 있어 에이전트는 건너뜀")
-    elif not unity_running():
-        log(f"Unity 에디터가 꺼져 있어 에이전트는 건너뜀 (남은 Unity 작업 {len(tasks)}개)")
+    elif others:
+        # 회사 일(다른 프로젝트 Unity, 배치 빌드 포함)이 떠 있으면 절대 건드리지 않는다
+        log("다른 프로젝트 Unity 가 떠 있어 건너뜀")
+    elif ours and idle_minutes() < 20:
+        log("BloodRain Unity 를 사람이 쓰는 중일 수 있어(입력 20분 안) 건너뜀")
     elif args.dry_run:
-        log(f"(dry) 에이전트를 돌릴 차례 — 남은 Unity 작업 {len(tasks)}개")
+        log(f"(dry) 에이전트를 돌릴 차례 — 남은 Unity 작업 {len(tasks)}개, Unity {'떠 있음' if ours else '꺼짐(켤 예정)'}")
     else:
-        state.setdefault("runs", {})[today] = runs + 1
-        STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-        asyncio.run(run_agent(cfg))
+        if not ours:
+            launched = launch_unity()
+        if ours or launched:
+            state.setdefault("runs", {})[today] = runs + 1
+            STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+            try:
+                asyncio.run(run_agent(cfg))
+            finally:
+                if launched:
+                    close_unity(launched)
 
     commit_and_push(args.dry_run)
     return 0

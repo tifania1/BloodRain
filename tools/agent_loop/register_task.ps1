@@ -1,5 +1,6 @@
-# PC 루프를 Windows 작업 스케줄러에 등록한다. 클라우드 예약 세션과 겹치지 않는 시각으로 잡았다.
-#   평일 01:00, 05:00 / 주말 12:30, 18:30 (한국 시간, PC 시계 기준)
+# PC 루프를 Windows 작업 스케줄러에 등록한다. PC Unity 예약 세션(매일 20:37·22:37·00:37·02:37·04:37, 50분 안)과
+# 겹치지 않는 틈에 잡았다. 평일 낮은 회사 일이라 비운다.
+#   매일 21:32, 23:32, 01:32, 03:32 / 주말 낮 10:30, 12:30, 14:30, 16:30 (한국 시간, PC 시계 기준)
 # 쓰는 법: PowerShell에서  powershell -ExecutionPolicy Bypass -File tools\agent_loop\register_task.ps1
 # 지우려면: Unregister-ScheduledTask -TaskName "BloodRain PC 루프 *" -Confirm:$false
 
@@ -9,13 +10,18 @@ $action = New-ScheduledTaskAction -Execute $python -Argument "tools\agent_loop\r
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
 $weekday = @(
-  New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At 01:00
-  New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At 05:00
+  New-ScheduledTaskTrigger -Daily -At 21:32
+  New-ScheduledTaskTrigger -Daily -At 23:32
+  New-ScheduledTaskTrigger -Daily -At 01:32
+  New-ScheduledTaskTrigger -Daily -At 03:32
 )
 $weekend = @(
+  New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday,Sunday -At 10:30
   New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday,Sunday -At 12:30
-  New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday,Sunday -At 18:30
+  New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday,Sunday -At 14:30
+  New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday,Sunday -At 16:30
 )
-Register-ScheduledTask -TaskName "BloodRain PC 루프 평일" -Action $action -Trigger $weekday -Settings $settings -Force | Out-Null
+Register-ScheduledTask -TaskName "BloodRain PC 루프 밤" -Action $action -Trigger $weekday -Settings $settings -Force | Out-Null
 Register-ScheduledTask -TaskName "BloodRain PC 루프 주말" -Action $action -Trigger $weekend -Settings $settings -Force | Out-Null
-Write-Output "등록 완료: BloodRain PC 루프 평일 / 주말"
+Unregister-ScheduledTask -TaskName "BloodRain PC 루프 평일" -Confirm:$false -ErrorAction SilentlyContinue
+Write-Output "등록 완료: BloodRain PC 루프 밤 / 주말"
