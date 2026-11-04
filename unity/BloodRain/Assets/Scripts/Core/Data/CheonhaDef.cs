@@ -341,6 +341,8 @@ namespace BloodRain.Core.Data
         public List<string> EndingsFirst = new List<string>();
         public List<string> EndingsSecond = new List<string>();
         public int TrueEndingDistinctSects;
+        /// <summary>진엔딩 조건 하나: 모아야 하는 의서 권 수(기획서 4장·10장, 7).</summary>
+        public int TrueEndingManuscripts;
     }
 
     public sealed class BloodmoonDef { public float EnemyHealth; public float EnemySpeed; public float Rewards; public bool ManuscriptsOnlyHere; }

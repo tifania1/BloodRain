@@ -183,12 +183,13 @@
   },
 
   "cycle": {
-    "_note": "회귀(혈월 천하, 21장). 봉인 엔딩 뒤. 봉인석만 처음으로.",
+    "_note": "회귀(혈월 천하, 21장). 봉인 엔딩 뒤. 봉인석만 처음으로. 엔딩(4장): 1회차는 seal 만, 2회차부터 셋. 진엔딩 true 는 의서 trueEndingManuscripts 권·종장을 서로 다른 문파 trueEndingDistinctSects 곳으로·목 노인 대화를 끝까지 본 뒤에만 고를 수 있다. 고르면 seal 은 회귀, inherit 는 혈마 모드(mode:blood_demon) 해금, true 는 환혼·회귀가 끝난다.",
     "resets": ["sealStones"],
     "keeps": ["training", "unlockedSects", "unlocks", "codex", "visitedRegions", "mastery"],
     "bloodmoon": { "enemyHealth": 1.5, "enemySpeed": 1.15, "rewards": 1.5, "manuscriptsOnlyHere": true },
     "endingsFirst": ["seal"],
     "endingsSecond": ["seal", "inherit", "true"],
-    "trueEndingDistinctSects": 4
+    "trueEndingDistinctSects": 4,
+    "trueEndingManuscripts": 7
   }
 }

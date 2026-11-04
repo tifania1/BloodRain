@@ -169,6 +169,7 @@ namespace BloodRain.Core.Meta
         readonly Dictionary<string, int> _training = new Dictionary<string, int>();
         readonly Dictionary<string, int> _upgrades = new Dictionary<string, int>();
         readonly HashSet<string> _unlocks = new HashSet<string>();
+        readonly HashSet<string> _endingsSeen = new HashSet<string>();
         readonly HashSet<string> _bosses = new HashSet<string>();
         readonly HashSet<string> _sealStones = new HashSet<string>();
         readonly HashSet<string> _visited = new HashSet<string>();
@@ -415,6 +416,47 @@ namespace BloodRain.Core.Meta
         /// <summary>이번 회차 종장에서 고를 수 있는 엔딩.</summary>
         public IReadOnlyList<string> Endings => Cycle == 1 ? C.Cycle.EndingsFirst : C.Cycle.EndingsSecond;
 
+        // ---- 엔딩 고르기(기획서 4장 '엔딩 세 갈래') ----
+
+        public const string EndingSeal = "seal", EndingInherit = "inherit", EndingTrue = "true";
+        /// <summary>계승 엔딩을 고르면 여는 해금 토큰(크레딧 뒤 '혈마 모드').</summary>
+        public const string BloodDemonModeToken = "mode:blood_demon";
+
+        /// <summary>종장을 깨고(봉인으로 생을 마치고) 아직 엔딩을 고르지 않았다.</summary>
+        public bool EndingPending { get; private set; }
+        /// <summary>한 번이라도 고른 엔딩.</summary>
+        public IReadOnlyCollection<string> EndingsSeen => _endingsSeen;
+        /// <summary>진엔딩을 골라 환혼도 회귀도 끝났다.</summary>
+        public bool JourneyOver { get; private set; }
+
+        /// <summary>진엔딩 조건 하나: 의서를 trueEndingManuscripts 권 이상 모았다.</summary>
+        public bool TrueEndingManuscriptsMet => Manuscripts >= C.Cycle.TrueEndingManuscripts;
+
+        /// <summary>진엔딩 조건 셋(의서·종장 문파 수·목 노인 대화)을 다 채웠나. 목 노인 대화를 끝까지 봤는지는 대사 쪽(InnDialogue)이 알려 준다.
+        /// FinalFight.CheckTrueEnding 의 trueEndingMet 으로 넘긴다.</summary>
+        public bool TrueEndingMet(bool mokTalkDone) => mokTalkDone && TrueEndingManuscriptsMet && TrueEndingSectsMet;
+
+        /// <summary>지금 고를 수 있는 엔딩. 이번 회차 목록에서 진엔딩은 조건을 채웠을 때만. 고를 차례가 아니면 비어 있다.</summary>
+        public IReadOnlyList<string> EndingsOpen(bool mokTalkDone) =>
+            !EndingPending || JourneyOver ? Array.Empty<string>()
+            : Endings.Where(e => e != EndingTrue || TrueEndingMet(mokTalkDone)).ToList();
+
+        /// <summary>엔딩을 고른다. 봉인은 회귀(Regress), 계승은 혈마 모드 해금, 진엔딩은 여정을 닫는다.</summary>
+        public void ChooseEnding(string ending, bool mokTalkDone)
+        {
+            if (!EndingPending) throw new InvalidOperationException("종장을 깨야 엔딩을 고릅니다");
+            if (!EndingsOpen(mokTalkDone).Contains(ending)) throw new InvalidOperationException($"지금 고를 수 없는 엔딩입니다: {ending}");
+            EndingPending = false;
+            _endingsSeen.Add(ending);
+            switch (ending)
+            {
+                case EndingSeal: Regress(); break;
+                case EndingInherit: _unlocks.Add(BloodDemonModeToken); break;
+                case EndingTrue: JourneyOver = true; break;
+                default: throw new InvalidOperationException($"모르는 엔딩입니다: {ending}");
+            }
+        }
+
         // ---- 장경각 비급(기획서 10·20장) ----
 
         /// <summary>찢긴 비급: 조건을 갖춘 채 생을 마쳐 장경각에 오른 비급 id(복원한 것도 남는다).</summary>
@@ -499,7 +541,11 @@ namespace BloodRain.Core.Meta
             else _livesBySect[record.Sect] = (_livesBySect.TryGetValue(record.Sect, out var n) ? n : 0) + 1;
 
             bool sealedEnd = record.EndWay == "sealed";
-            if (sealedEnd) _finalClears[record.Sect!] = (_finalClears.TryGetValue(record.Sect!, out var f) ? f : 0) + 1;
+            if (sealedEnd)
+            {
+                _finalClears[record.Sect!] = (_finalClears.TryGetValue(record.Sect!, out var f) ? f : 0) + 1;
+                EndingPending = true;
+            }
 
             var newSects = UnlockedSects.Where(s => !sectsBefore.Contains(s)).ToList();
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
@@ -532,6 +578,7 @@ namespace BloodRain.Core.Meta
         /// <summary>회귀(봉인 엔딩 뒤 백중의 밤으로): cycle.resets 에 적힌 것만 지우고 회차를 하나 올린다.</summary>
         public void Regress()
         {
+            if (JourneyOver) throw new InvalidOperationException("진엔딩 뒤에는 회귀하지 않습니다");
             foreach (var key in C.Cycle.Resets)
             {
                 switch (key)
@@ -570,6 +617,10 @@ namespace BloodRain.Core.Meta
             public List<string> RestoredManuals = new List<string>();
             /// <summary>모든 생에서 쓴 정신부 수. 이 칸이 생기기 전 저장은 0으로 읽는다.</summary>
             public int TalismansUsed;
+            /// <summary>엔딩(4장). 이 칸들이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
+            public bool EndingPending;
+            public List<string> EndingsSeen = new List<string>();
+            public bool JourneyOver;
         }
 
         static readonly JsonSerializerSettings SaveSettings = new JsonSerializerSettings
@@ -610,6 +661,9 @@ namespace BloodRain.Core.Meta
                 TornManuals = Sorted(_torn),
                 RestoredManuals = Sorted(_restored),
                 TalismansUsed = TalismansUsedTotal,
+                EndingPending = EndingPending,
+                EndingsSeen = Sorted(_endingsSeen),
+                JourneyOver = JourneyOver,
             };
             return JsonConvert.SerializeObject(f, SaveSettings);
         }
@@ -629,6 +683,8 @@ namespace BloodRain.Core.Meta
                 Manuscripts = f.Manuscripts,
                 Cycle = Math.Max(1, f.Cycle),
                 TalismansUsedTotal = Math.Max(0, f.TalismansUsed),
+                EndingPending = f.EndingPending,
+                JourneyOver = f.JourneyOver,
             };
             foreach (var kv in f.Training) s._training[kv.Key] = kv.Value;
             foreach (var kv in f.RebirthUpgrades) s._upgrades[kv.Key] = kv.Value;
@@ -642,6 +698,7 @@ namespace BloodRain.Core.Meta
             s._evolutions.UnionWith(f.AwakenedEvolutions);
             s._torn.UnionWith(f.TornManuals);
             s._restored.UnionWith(f.RestoredManuals);
+            s._endingsSeen.UnionWith(f.EndingsSeen);
             return s;
         }
     }
