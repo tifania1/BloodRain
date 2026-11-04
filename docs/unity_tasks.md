@@ -16,14 +16,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
-- [ ] V-10b 붓 획 자른 텍스처 확인
+- [x] V-10b 붓 획 자른 텍스처 확인 — 2026-11-04 메뉴 다시 돌림, brushCrops 107줄(새 붓 획 포함, 27은 옛 수), 레벨 7 획이 V-04 화면과 같은 반지름·담채·금빛, 콘솔 에러 0
   - 할 것: 컴파일 확인 → 메뉴를 다시 돌려 Run 씬 WeaponRunner 에 brushCrops 가 채워지는지 → 삼재검법 1·2·3단이 전과 같은 자리·크기로 그어지는지 본다. 메뉴를 안 돌리면 잘린 그림이 512 칸 크기로 늘어나 보인다.
   - 쓸 것: `Art/VFX/Brush/*.json` 의 `crop`·`pivot`, `BrushStroke.shader` `_Rect`, `WeaponRunner.brushCrops`·`CropOf`·`CropMatrix`, `VfxBootstrap`
   - 메뉴: `BloodRain/Bootstrap/붓 획 이펙트(텍스처 설정·머티리얼·삼재검법 1단)` (VfxBootstrap.cs)
   - 끝: brushCrops 27줄, 콘솔 에러 0, 아주 느리게 돌린 1·2·3단 획이 `docs/unity_shots/V-04/samjae_tiers.png` 와 겹쳐 보아 같은 자리·크기
   - 찍기: `docs/unity_shots/V-10b/` 의 `samjae_tiers_cropped.png`
 
-- [ ] V-12c 새 붓 획 가져오기 · 먼저: V-10b
+- [x] V-12c 새 붓 획 가져오기 · 먼저: V-10b — 2026-11-04 같은 메뉴로 가져옴, .meta 는 spritePixelsToUnits 소수 끝자리만 바뀌어 그대로 커밋, 콘솔 에러 0
   - 할 것: Brush 에 새로 든 무공 일곱(taiji·chain·claw·qin·spear·talisman·petals) × 3단과 절기 천지인(cheonjiin_main_1·2, cheonjiin_wave_1) 텍스처의 가져오기 설정이 그대로인지 본다. 무공에 붙이는 건 V-06(아직 Unity 항목 아님).
   - 쓸 것: `Art/VFX/Brush/<무공>.json`, 클라우드 `tools/bake_brush.py` 가 만든 `.meta`(guid 는 이름에서)
   - 메뉴: V-10b 와 같은 메뉴 한 번 더

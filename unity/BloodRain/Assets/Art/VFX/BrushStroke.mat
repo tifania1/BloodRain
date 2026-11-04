@@ -42,5 +42,6 @@ Material:
     - _Span: 2.3
     m_Colors:
     - _Color: {r: 0.078, g: 0.078, b: 0.078, a: 1}
+    - _Rect: {r: 0, g: 0, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
