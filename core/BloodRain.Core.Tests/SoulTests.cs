@@ -352,7 +352,7 @@ namespace BloodRain.Core.Tests
             life.KillBoss("songshan");
             life.KillBoss("wudangsan");
             life.Awaken(_d.Evolutions[1].Id);
-            life.FindManuscript();
+            Assert.False(life.FindManuscript()); // 1회차엔 의서가 없다(QA-02)
             life.AbsorbOrb(20000, 1.3f);
             s.EndLife(life.Finish("fallen", 640));
             s.EndLife(Sealed("wudang"));
@@ -389,9 +389,32 @@ namespace BloodRain.Core.Tests
 
         // ---- 저장 ----
 
+        [Fact] public void 의서는_혈월_천하에서만_나온다()
+        {
+            var s = Rich();
+            Assert.Equal(0, s.Manuscripts);
+            Assert.True(C.Cycle.Bloodmoon.ManuscriptsOnlyHere);
+            var first = s.BeginLife(Body("wudang"));
+            Assert.False(first.ManuscriptsHere);
+            Assert.False(first.FindManuscript());
+            Assert.Equal(0, first.Finish("fallen", 0).Manuscripts);
+
+            s.Regress();
+            var moon = s.BeginLife(Body("wudang"));
+            Assert.True(moon.ManuscriptsHere);
+            Assert.True(moon.FindManuscript());
+            s.EndLife(moon.Finish("fallen", 0));
+            Assert.Equal(1, s.Manuscripts);
+        }
+
+        /// <summary>회귀해 혈월 천하에서 의서 하나를 주운 혼까지 저장한다.</summary>
         [Fact] public void 저장_문자열로_내보내고_읽으면_같은_혼이다()
         {
             var s = Rich();
+            s.Regress();
+            var moon = s.BeginLife(Body("wudang"));
+            Assert.True(moon.FindManuscript());
+            s.EndLife(moon.Finish("fallen", 0));
             var json = s.ToJson();
             var back = Soul.FromJson(_d, json);
             Assert.Equal(json, back.ToJson());

@@ -685,6 +685,7 @@ namespace BloodRain.Core.Meta
             _stonesKnown = new HashSet<string>(soul.SealStones);
             Body = body;
             RewardMultiplier = soul.IsBloodMoon ? _c.Cycle.Bloodmoon.Rewards : 1f;
+            ManuscriptsHere = soul.IsBloodMoon || !_c.Cycle.Bloodmoon.ManuscriptsOnlyHere;
             Qi = new RebirthQiLedger(_c.RebirthQi, body.RebirthQiBonus, RewardMultiplier);
             _eliteCrystal = soul.Data.Balance.Drops.EliteBloodCrystal;
             Enter(body.Region.Id);
@@ -759,8 +760,17 @@ namespace BloodRain.Core.Meta
             return BloodCrystal - before;
         }
 
-        /// <summary>은빛 등롱에서 의서가 나왔다.</summary>
-        public void FindManuscript() => Manuscripts++;
+        /// <summary>이번 생에 의서가 나오나. 의서는 혈월 천하 은빛 등롱에서만(5·7장, cheonha.json cycle.bloodmoon.manuscriptsOnlyHere).
+        /// 1회차면 false 라 Presentation 이 은빛 등롱을 놓지 않는다.</summary>
+        public bool ManuscriptsHere { get; }
+
+        /// <summary>은빛 등롱에서 의서가 나왔다. 의서가 안 나오는 생이면 세지 않고 false(QA-02).</summary>
+        public bool FindManuscript()
+        {
+            if (!ManuscriptsHere) return false;
+            Manuscripts++;
+            return true;
+        }
 
         /// <summary>이번 생에 쓰러뜨린 적 수(잡몹·정예·땅의 주인). 도전 과제 '한 생에서 적 N 처치'.</summary>
         public int Kills { get; private set; }
