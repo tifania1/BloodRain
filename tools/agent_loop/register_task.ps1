@@ -1,4 +1,4 @@
-# PC 루프를 Windows 작업 스케줄러에 등록한다. PC Unity 예약 세션(매일 20:37·22:37·00:37·02:37·04:37, 50분 안)과
+﻿# PC 루프를 Windows 작업 스케줄러에 등록한다. PC Unity 예약 세션(매일 20:37·22:37·00:37·02:37·04:37, 50분 안)과
 # 겹치지 않는 틈에 잡았다. 평일 낮은 회사 일이라 비운다.
 #   매일 21:32, 23:32, 01:32, 03:32 / 주말 낮 10:30, 12:30, 14:30, 16:30 (한국 시간, PC 시계 기준)
 # 쓰는 법: PowerShell에서  powershell -ExecutionPolicy Bypass -File tools\agent_loop\register_task.ps1
