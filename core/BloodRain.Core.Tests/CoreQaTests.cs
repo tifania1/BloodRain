@@ -143,5 +143,15 @@ namespace BloodRain.Core.Tests
             var all = Synergy.Compute(_d, levels, restored: _d.Synergies.SecretManualIds.ToList());
             Assert.Equal("gaebang", all.CommonSchool);
         }
+        [Fact] public void 미리보기는_한_번에_켜지는_단계를_모두_알린다()
+        {
+            // 소림 둘·당가 셋에 기본의 극이 당가로 가 있다. 청심공을 들면 소림이 셋이 되고 기본의 극이 소림으로 옮겨 넷.
+            var weapons = new Dictionary<string, int> { ["samjae_sword"] = 8, ["nahan_fist"] = 1, ["flying_dagger"] = 1, ["poison_mist"] = 1 };
+            var passives = new Dictionary<string, int> { ["geumgang"] = 1, ["cheonsu"] = 1 };
+            var levels = new BuildLevels(weapons, passives);
+            var p = Synergy.Preview(_d, levels, new Offer(OfferKind.NewPassive, "cheongsim"));
+            var shaolin = p.Reached.Where(r => r.School.Id == "shaolin").Select(r => r.Tier.Count).ToList();
+            Assert.Equal(new[] { 3, 4 }, shaolin);
+        }
     }
 }

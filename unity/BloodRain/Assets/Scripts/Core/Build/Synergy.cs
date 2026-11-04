@@ -310,8 +310,11 @@ namespace BloodRain.Core.Build
             for (int i = 0; i < s0.Schools.Count; i++)
             {
                 SchoolState a = s0.Schools[i], b = s1.Schools[i];
-                if (b.TierCount > a.TierCount) reached.Add(new SchoolTierChange(b.School, b.Tier!));
-                else if (b.TierCount < a.TierCount) lost.Add(new SchoolTierChange(a.School, a.Tier!));
+                // 기본의 극이 옮겨 가면 한 번에 두 단계가 켜지거나 꺼질 수 있어 단계마다 본다(낮은 것부터).
+                foreach (var t in b.ReachedTiers)
+                    if (!a.ReachedTiers.Contains(t)) reached.Add(new SchoolTierChange(b.School, t));
+                foreach (var t in a.ReachedTiers)
+                    if (!b.ReachedTiers.Contains(t)) lost.Add(new SchoolTierChange(a.School, t));
             }
 
             var hints = new List<LinkHint>();
