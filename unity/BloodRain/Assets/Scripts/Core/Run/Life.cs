@@ -241,6 +241,9 @@ namespace BloodRain.Core.Run
             return kill;
         }
 
+        /// <summary>정예를 쓰러뜨렸다. 이번에 얻은 혈정 수(정산 화면·HUD 용).</summary>
+        public int KillElite() => Log.KillElite();
+
         static StatBonus StartBonus(Soul soul, RebirthBody body)
         {
             var b = soul.TrainingBonus();

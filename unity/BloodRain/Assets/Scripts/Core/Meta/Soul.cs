@@ -96,11 +96,14 @@ namespace BloodRain.Core.Meta
         public int Manuscripts { get; }
         /// <summary>조건을 갖췄는데 잠겨 있던 비급 id(찢긴 비급으로 오를 것, synergies.json secretManuals).</summary>
         public IReadOnlyList<string> TornManuals { get; }
+        /// <summary>이번 생에 얻은 혈정(정예·땅의 주인, 혈월 배율까지 곱한 값).</summary>
+        public int BloodCrystal { get; }
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
-            IEnumerable<string>? tornManuals = null)
+            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0)
         {
+            BloodCrystal = bloodCrystal;
             TornManuals = tornManuals?.Distinct().ToList() ?? new List<string>();
             Sect = sect;
             EndWay = endWay;
@@ -127,11 +130,14 @@ namespace BloodRain.Core.Meta
         public bool FinalCleared { get; }
         /// <summary>장경각에 새로 오른 찢긴 비급 id.</summary>
         public IReadOnlyList<string> NewTornManuals { get; }
+        /// <summary>이번 생에 혼에 더한 혈정.</summary>
+        public int BloodCrystal { get; }
 
         public LifeSummary(int rebirthQi, IReadOnlyList<string> newSealStones, IReadOnlyList<string> newlyUnlockedSects,
             IReadOnlyList<string> newRegions, IReadOnlyList<string> newRealms, IReadOnlyList<string> newEvolutions, bool finalCleared,
-            IReadOnlyList<string>? newTornManuals = null)
+            IReadOnlyList<string>? newTornManuals = null, int bloodCrystal = 0)
         {
+            BloodCrystal = bloodCrystal;
             RebirthQi = rebirthQi; NewSealStones = newSealStones; NewlyUnlockedSects = newlyUnlockedSects;
             NewRegions = newRegions; NewRealms = newRealms; NewEvolutions = newEvolutions; FinalCleared = finalCleared;
             NewTornManuals = newTornManuals ?? Array.Empty<string>();
@@ -174,6 +180,26 @@ namespace BloodRain.Core.Meta
         {
             if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
             _qi += amount;
+        }
+
+        int _crystal;
+
+        /// <summary>혈정 잔고(10장 화폐: 정예 1개, 땅의 주인 5개. 시설 건설·영약에 쓴다).</summary>
+        public int BloodCrystal => _crystal;
+
+        public void AddBloodCrystal(int amount)
+        {
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "혈정은 음수로 더할 수 없습니다");
+            _crystal += amount;
+        }
+
+        /// <summary>혈정을 쓴다. 모자라면 아무것도 안 하고 false.</summary>
+        public bool TrySpendBloodCrystal(int amount)
+        {
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "혈정은 음수로 쓸 수 없습니다");
+            if (_crystal < amount) return false;
+            _crystal -= amount;
+            return true;
         }
 
         // ---- 연무장 ----
@@ -406,6 +432,7 @@ namespace BloodRain.Core.Meta
             var sectsBefore = new HashSet<string>(UnlockedSects);
 
             _qi += record.RebirthQi.Total;
+            _crystal += record.BloodCrystal;
 
             var newStones = new List<string>();
             foreach (var region in record.BossesKilled)
@@ -432,7 +459,7 @@ namespace BloodRain.Core.Meta
             if (sealedEnd) _finalClears[record.Sect!] = (_finalClears.TryGetValue(record.Sect!, out var f) ? f : 0) + 1;
 
             var newSects = UnlockedSects.Where(s => !sectsBefore.Contains(s)).ToList();
-            return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn);
+            return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal);
         }
 
         void Validate(LifeRecord r)
@@ -449,6 +476,7 @@ namespace BloodRain.Core.Meta
             foreach (var e in r.AwakenedEvolutions)
                 if (_data.Evolutions.All(x => x.Id != e)) throw new ArgumentException($"없는 절기입니다: {e}");
             if (r.Manuscripts < 0) throw new ArgumentException("의서 권 수가 음수입니다");
+            if (r.BloodCrystal < 0) throw new ArgumentException("혈정이 음수입니다");
             foreach (var m in r.TornManuals)
                 if (!_data.Synergies.IsSecretManual(m)) throw new ArgumentException($"비급 층이 아닙니다: {m}");
         }
@@ -473,6 +501,8 @@ namespace BloodRain.Core.Meta
         {
             public int Version = SaveVersion;
             public int RebirthQi;
+            /// <summary>혈정 잔고. 이 칸이 생기기 전 저장은 0으로 읽는다.</summary>
+            public int BloodCrystal;
             public SortedDictionary<string, int> Training = new SortedDictionary<string, int>(StringComparer.Ordinal);
             public int TrainingSpent;
             public SortedDictionary<string, int> RebirthUpgrades = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -511,6 +541,7 @@ namespace BloodRain.Core.Meta
             var f = new SaveFile
             {
                 RebirthQi = _qi,
+                BloodCrystal = _crystal,
                 Training = Sorted(_training),
                 TrainingSpent = _trainingSpent,
                 RebirthUpgrades = Sorted(_upgrades),
@@ -540,6 +571,7 @@ namespace BloodRain.Core.Meta
             var s = new Soul(data)
             {
                 _qi = f.RebirthQi,
+                _crystal = Math.Max(0, f.BloodCrystal),
                 _trainingSpent = f.TrainingSpent,
                 Lives = f.Lives,
                 PrologueDone = f.PrologueDone,
@@ -577,7 +609,10 @@ namespace BloodRain.Core.Meta
         readonly List<string> _bosses = new List<string>();
         readonly List<string> _evolutions = new List<string>();
         readonly List<string> _torn = new List<string>();
+        readonly int _eliteCrystal;
         RealmDef _highest;
+        int _eliteKills;
+        int _bossCrystal;
 
         public RebirthBody Body { get; }
         /// <summary>이번 생의 윤회의 기 장부(성질 배율은 몸에서).</summary>
@@ -599,6 +634,7 @@ namespace BloodRain.Core.Meta
             Body = body;
             RewardMultiplier = soul.IsBloodMoon ? _c.Cycle.Bloodmoon.Rewards : 1f;
             Qi = new RebirthQiLedger(_c.RebirthQi, body.RebirthQiBonus, RewardMultiplier);
+            _eliteCrystal = soul.Data.Balance.Drops.EliteBloodCrystal;
             Enter(body.Region.Id);
         }
 
@@ -653,7 +689,20 @@ namespace BloodRain.Core.Meta
             int qi = Qi.AddBonus(firstInCycle ? RebirthQiBonusKind.BossFirstKill : RebirthQiBonusKind.BossRepeatKill, region);
             int crystalBase = firstInCycle ? _c.Bosses.FirstKill.BloodCrystal : _c.Bosses.RepeatKill.BloodCrystal;
             int crystal = (int)Math.Round(crystalBase * RewardMultiplier, MidpointRounding.AwayFromZero);
+            _bossCrystal += crystal;
             return new BossKillInfo(region, firstInCycle, firstOnAccount, stone, sect, qi, crystal);
+        }
+
+        /// <summary>이번 생에 얻은 혈정. 정예 몫은 모은 수 × 1개 × 혈월 배율을 한 번에 반올림한다(혈월에서 정예 둘이면 3개).</summary>
+        public int BloodCrystal =>
+            _bossCrystal + (int)Math.Round((double)_eliteKills * _eliteCrystal * RewardMultiplier, MidpointRounding.AwayFromZero);
+
+        /// <summary>정예를 쓰러뜨렸다(balance.json drops.eliteBloodCrystal). 이번에 늘어난 혈정을 돌려준다(혈월이면 1·2개가 번갈아).</summary>
+        public int KillElite()
+        {
+            int before = BloodCrystal;
+            _eliteKills++;
+            return BloodCrystal - before;
         }
 
         /// <summary>은빛 등롱에서 의서가 나왔다.</summary>
@@ -671,6 +720,7 @@ namespace BloodRain.Core.Meta
 
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
-            new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn);
+            new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
+                BloodCrystal);
     }
 }
