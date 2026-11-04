@@ -315,7 +315,7 @@
       ]
     },
     "huashan_sword_soul": {
-      "_note": "낙매검선의 검혼(화산, T-13). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 매화검귀(plum_sword_ghost)는 아직 enemies.json 에 없다(T-33에서 넣는다).",
+      "_note": "낙매검선의 검혼(화산, T-13). 2026-10-30 예약 세션이 원각을 기준으로 정했다. 매화검귀(plum_sword_ghost)는 enemies.json chapter5 에 있다.",
       "firstCastSeconds": 2.5,
       "intervalSeconds": 4.5,
       "phase2IntervalSeconds": 3.5,
