@@ -13,6 +13,8 @@ namespace BloodRain.Core.Data
         public PrologueDialogueDef Prologue = new PrologueDialogueDef();
         public DialogueLinesDef Mok = new DialogueLinesDef();
         public DialogueLinesDef Bedroom = new DialogueLinesDef();
+        /// <summary>침방 후보 카드 글(docs/story/sects.md).</summary>
+        public SectCardsDef Cards = new SectCardsDef();
         public DialogueLinesDef Unnang = new DialogueLinesDef();
         public DialogueLinesDef Training = new DialogueLinesDef();
         public LeaderDialoguesDef Leaders = new LeaderDialoguesDef();
@@ -22,6 +24,7 @@ namespace BloodRain.Core.Data
         public SpeakerDef Speaker(string id) => Speakers.First(s => s.Id == id);
         public LeaderDialogueDef Leader(string id) => Leaders.List.First(l => l.Id == id);
         public LordDialogueDef Lord(string id) => Lords.List.First(l => l.Id == id);
+        public SectCardDef Card(string sect) => Cards.List.First(c => c.Id == sect);
     }
 
     public sealed class SpeakerDef
@@ -132,5 +135,22 @@ namespace BloodRain.Core.Data
         public string Phase2Ko = "";
         public string EchoKo = "";
         public string BloodMoonKo = "";
+    }
+
+    public sealed class SectCardsDef
+    {
+        public List<SectCardDef> List = new List<SectCardDef>();
+    }
+
+    /// <summary>문파 하나의 후보 카드 글. Id 는 문파 id.</summary>
+    public sealed class SectCardDef
+    {
+        public string Id = "";
+        /// <summary>한 줄 소개(문파의 내력).</summary>
+        public string IntroKo = "";
+        /// <summary>'그날 밤 숨진 몸' 묘사 셋.</summary>
+        public List<string> BodiesKo = new List<string>();
+        /// <summary>여자 몸일 때 같은 번호 칸. 남자만인 문파(소림)는 비어 있다.</summary>
+        public List<string> FemaleBodiesKo = new List<string>();
     }
 }

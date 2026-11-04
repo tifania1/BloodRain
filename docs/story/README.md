@@ -7,9 +7,9 @@
 | `prologue.md` | 서장 판 안 말풍선, 끝 컷 두 장 | `prologue` |
 | `mok.md` | 목 노인 귀환 대사, 첫 환혼, 문파 첫 환생 | `mok`, `bedroom` |
 | `unnang.md` | 운낭 귀환 대사, 연무장 | `unnang`, `training` |
-| `inn_screens.md` | 침방 무작위 줄, 정산 자막 | `bedroom`, `settlement` |
+| `inn_screens.md` | 침방 줄과 언제 하는지, 정산 자막 | `bedroom`, `settlement` |
 | `leaders.md` | 대표 인물 마당·합류·객잔 줄, 사매판 | `leaders` |
 | `boss_cuts.md` | 땅의 주인 만남·처치 컷, 싸움 중 한 줄 | `lords` |
-| `sects.md` | 침방 후보 카드의 문파 소개와 몸 묘사 | 아직 없음 |
+| `sects.md` | 침방 후보 카드의 문파 소개와 몸 묘사 | `cards` |
 
-조건(`when`)의 뜻은 dialogue.json 묶음마다 `_note` 에 있다. 현지화 키는 `dialogue.<묶음>.<…>` 로 저절로 잡힌다(`Core/Data/Strings.cs`).
+조건(`when`)의 뜻은 dialogue.json 묶음마다 `_note` 에 있다. 현지화 키는 `dialogue.<묶음>.<…>` 로 저절로 잡힌다(`Core/Data/Strings.cs`). 고르는 코드는 `Core/Meta/InnDialogue.cs`(귀환 `OnReturn`, 마당 `YardLine`, 연무장 `Training`, 침방 `Bedroom` → `BedroomTalk`).

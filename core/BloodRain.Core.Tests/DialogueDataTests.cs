@@ -129,6 +129,29 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 문파마다_후보_카드_글이_있고_여자_몸_칸은_남자만_문파에_없다()
+        {
+            var d = Load();
+            Assert.Equal(d.Cheonha.Sects.Select(s => s.Id), D.Cards.List.Select(c => c.Id));
+            foreach (var c in D.Cards.List)
+            {
+                Assert.False(string.IsNullOrEmpty(c.IntroKo));
+                Assert.Equal(3, c.BodiesKo.Count);
+                bool maleOnly = d.Cheonha.Rebirth.MaleOnlySects.Contains(c.Id);
+                Assert.Equal(maleOnly ? 0 : c.BodiesKo.Count, c.FemaleBodiesKo.Count);
+            }
+        }
+
+        [Fact]
+        public void 침방_줄_갈래는_고르는_코드가_아는_것만()
+        {
+            var known = new[] { "first", "sect", "show", "reroll", "fourth", "same_sect", "pick" };
+            Assert.All(D.Bedroom.Lines, l => Assert.Contains(l.Kind, known));
+            Assert.Equal(new[] { "open", "candidates", "needle", "send" }, D.Bedroom.Lines.Where(l => l.Kind == "first").Select(l => l.Args[0]));
+            Assert.All(D.Bedroom.Lines.Where(l => l.Kind == "show"), l => Assert.True(l.Repeat));
+        }
+
+        [Fact]
         public void 대표_인물과_땅의_주인이_빠짐없다()
         {
             var d = Load();
