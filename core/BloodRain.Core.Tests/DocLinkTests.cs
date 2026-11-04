@@ -29,7 +29,7 @@ namespace BloodRain.Core.Tests
         {
             var root = RepoRoot;
             yield return Path.Combine(root, "CLAUDE.md");
-            foreach (var dir in new[] { "docs", Path.Combine("docs", "design"), Path.Combine("docs", "design", "sim"), Path.Combine("docs", "daily") })
+            foreach (var dir in new[] { "docs", Path.Combine("docs", "store"), Path.Combine("docs", "design"), Path.Combine("docs", "design", "sim"), Path.Combine("docs", "daily") })
             {
                 var full = Path.Combine(root, dir);
                 if (!Directory.Exists(full)) continue;
