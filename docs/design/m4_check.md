@@ -34,7 +34,7 @@
 
 | 항목 | 기획서 | 데이터 | Core | 웹 프로토타입 | 천하 시안 | Unity |
 |---|---|---|---|---|---|---|
-| 혈영 일곱 → 세 단계 | 6장 '종장 보스' | bosspatterns.json final(`shadowHealthRatio` 0.4, shadows 일곱, stages 셋), enemies.json `danmok_hyeon` phases(`FinalStagesTests.단계_셋의_기혈이_enemies_json과_기획서와_같다`) | `Combat/FinalFight.cs`(차례·기혈·단계 시간표·진엔딩 컷 `CheckTrueEnding`, `FinalFightTests`) | 없음 | 봉인석 일곱이면 봉마곡이 열리고 단목현 하나와 싸움(혈영·단계 없음) | 줄 없음 |
+| 혈영 일곱 → 세 단계 | 6장 '종장 보스' | bosspatterns.json final(`shadowHealthRatio` 0.4, shadows 일곱, stages 셋), enemies.json `danmok_hyeon` phases(`FinalStagesTests.단계_셋의_기혈이_enemies_json과_기획서와_같다`) | `Combat/FinalFight.cs`(차례·기혈·단계 시간표·진엔딩 컷 `CheckTrueEnding`, `FinalFightTests`) | 없음 | R4-12(11-04): 혈영 일곱 → 혈의·혈해·진혈마를 차례로, 단계 모양은 R4-03 셈(섬 자리는 놀이판 값 `islandRing`). 진엔딩 컷은 의서·목 노인이 없어 안 남(`FinalStageRulesTests.웹_천하_시안이_종장_차례와_단계_모양을_Core_와_같은_셈으로_쓴다`) | 줄 없음 |
 | 단계 패턴 수치 | 6장 '단계 패턴 수치' | final stages[].set(`FinalStagesTests.단계_패턴_표가_기획서와_같다`) | 시간표는 `BossPatterns`. 피바다 섬 크기는 테스트(`피바다_섬은_90초쯤에_바닥에_닿는다`)만 셈 | - | - | - |
 | 단계 모양 판정 | 같은 표(맥 짚는 손 고리 9m→1.5m 초당 3.75m·폭 1.2m, 역병 구름 셋 10m 안·속도 25·12초, 섬 다섯 7m→2.5m 약 90초, 혈우 탄막 12m 안 14개 × 5파·0.6초, 혈영 솟음 10%·20초) | 칸은 다 있음(`closing_ring`·`drifting_clouds`·`shrinking_islands`·`rain_drops`·`summon_shadow`) | 고리 반경은 `ClosingRadius` 로 셈이 되고, 혈영 솟음 차례·기혈은 `FinalFight.RisingShadow`·`RisingShadowHealth`. R4-03(11-04): `InClosingRing`·`CloudDrift`·`IslandRadius`·`OnIsland`·`RainDropOffsets`(`FinalStageRulesTests`). 섬 자리만 싸움터 크기가 없어 부르는 쪽이 준다 | - | - | - |
 | 차오르는 피(기믹) | 7장 지역 표 '피가 차올라 안전 지대가 줄어든다', 수치 문단은 '아직 수치가 없습니다' | regions 봉마곡 `rising_blood`. 수치는 종장 혈해 `rising_blood_sea` 에 있음 | - | - | - | - |
@@ -43,13 +43,13 @@
 
 | 항목 | 기획서 | 데이터 | Core | 웹 프로토타입 | 천하 시안 | Unity |
 |---|---|---|---|---|---|---|
-| 회귀(봉인 엔딩 뒤) | 21장 '회귀(혈월 천하)' | cheonha.json cycle(`resets` 봉인석, `keeps`) | `Soul.Regress`·`Cycle`·`IsBloodMoon`(`SoulTests`) | 없음 | 봉하면 생이 끝남(회귀 없음) | 줄 없음 |
-| 혈월 천하 배율 | 7장 '모드'·21장 | cycle.bloodmoon(적 기혈 1.5·속도 1.15·보상 1.5) | `LifeLog.RewardMultiplier`(`BloodmoonLifeTests.기획서_21장_회차표와_같다`) | 없음 | 없음 | 줄 없음 |
+| 회귀(봉인 엔딩 뒤) | 21장 '회귀(혈월 천하)' | cheonha.json cycle(`resets` 봉인석, `keeps`) | `Soul.Regress`·`Cycle`·`IsBloodMoon`(`SoulTests`) | 없음 | R4-12(11-04): 봉인을 고르면 봉인석만 지우고 회차 +1, 첫 처치는 회차 안에서 셈(봉인석이 다시 나옴) | 줄 없음 |
+| 혈월 천하 배율 | 7장 '모드'·21장 | cycle.bloodmoon(적 기혈 1.5·속도 1.15·보상 1.5) | `LifeLog.RewardMultiplier`(`BloodmoonLifeTests.기획서_21장_회차표와_같다`) | 없음 | R4-12(11-04): 2회차부터 적·땅의 주인 기혈 ×1.5, 걸음 ×1.15, 윤회의 기·혈정 ×1.5(정산 줄에 보임). 의서는 없음 | 줄 없음 |
 | 혈월 천하 땅의 주인 새 패턴 | 7장 '모드' 칸에 말만. 17장 '밀릴 때 줄일 것'에 '대사 한 줄만' | 없음 | 없음 | - | - | - |
-| 회차마다 고를 수 있는 엔딩 | 4장 '엔딩 세 갈래'(1회차 봉인만, 2회차 셋) | cycle `endingsFirst`·`endingsSecond` | R4-04(11-04): `Soul.EndingPending`·`EndingsOpen`·`ChooseEnding`(봉인 → 회귀, 계승 → `mode:blood_demon`, 진엔딩 → `JourneyOver`)(`EndingTests`) | 없음 | 없음 | 줄 없음 |
+| 회차마다 고를 수 있는 엔딩 | 4장 '엔딩 세 갈래'(1회차 봉인만, 2회차 셋) | cycle `endingsFirst`·`endingsSecond` | R4-04(11-04): `Soul.EndingPending`·`EndingsOpen`·`ChooseEnding`(봉인 → 회귀, 계승 → `mode:blood_demon`, 진엔딩 → `JourneyOver`)(`EndingTests`) | 없음 | R4-12(11-04): 봉인 뒤 정산 화면에서 고름(1회차 봉인만, 2회차 봉인·계승, 진엔딩은 조건을 못 채워 안 보임). 고르기 전엔 윤회 단추가 없음(`웹_천하_시안의_엔딩과_회귀가_Core_와_같은_규칙이다`) | 줄 없음 |
 | 진엔딩 조건 | 4장(의서 일곱 권, 목 노인 대화 끝까지, 서로 다른 문파 4곳 이상으로 종장), 10장 화폐 표 '7권' | `trueEndingDistinctSects` 4, `trueEndingManuscripts` 7(R4-04) | `Soul.TrueEndingMet(목 노인 대화)`(R4-04). 목 노인 대화 줄기는 `docs/story/mok.md` 끝에 '이 풀에 없다' | - | - | - |
 | 의서가 나오는 확률 | 4장·7장·10장 '낮은 확률' | chapters.json 은빛 등롱(15~17분 하나, 17~19분 0.5). 의서 확률 칸 없음 | `LifeLog.FindManuscript`(혈월 천하에서만 셈) | - | - | - |
-| 일일 도전·보스 연전 열림 | 7장 '모드'(일일 도전 봉인석 3개, 보스 연전 봉인 엔딩) | cheonha.json `modes`(R4-05) | `Meta/Modes`(`ModesTests`). 일일 도전 시드 규칙·보스 연전 규칙은 아직 없음 | - | - | - |
+| 일일 도전·보스 연전 열림 | 7장 '모드'(일일 도전 봉인석 3개, 보스 연전 봉인 엔딩) | cheonha.json `modes`(R4-05) | `Meta/Modes`(`ModesTests`). 일일 도전 시드 규칙·보스 연전 규칙은 아직 없음 | - | R4-12(11-04): 생을 마칠 때·엔딩을 고를 때 열림을 셈해 정산 화면에 '모드 열림'. 모드 자체는 없음 | - |
 
 ## 걸리는 것
 

@@ -211,6 +211,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
       <div class="dbars" id="dbars"></div>
       <table class="ledger" id="ledger"></table>
       <p class="news" id="dnews"></p>
+      <div class="row" id="dend" hidden></div>
       <div class="row"><button class="b main" id="again" type="button">윤회<small>기를 들고 다시 태어난다</small></button></div>
     </div>
   </div>
@@ -293,6 +294,44 @@ const inClosingRing = (pt, t, dx, dy, tr) => { const d = Math.hypot(dx, dy), h =
 // 차오르는 피바다(Core IslandRadius·OnIsland): 몸 가운데가 섬 하나라도 안이면 섬 위
 const onIsland = (pt, t, islands, x, y) => { const r = closingRadius(pt, t); return islands.some(c => (x - c[0]) * (x - c[0]) + (y - c[1]) * (y - c[1]) <= r * r); };
 const rainWaveSeconds = (pt, w) => w * pt.waveIntervalSeconds;   // Core RainWaveSeconds
+// 회차·엔딩·모드(R4-12, Core Soul.Cycle·EndingsOpen·ChooseEnding·Regress, Meta/Modes). cheonha.json cycle·modes 그대로
+const CYC = CH.cycle || {}, BM = CYC.bloodmoon || {}, MODES = CH.modes || [];
+const bloodMoon = () => meta.cycle >= 2;   // 혈월 천하(2회차부터)
+const bmHealth = () => bloodMoon() ? BM.enemyHealth || 1 : 1, bmSpeed = () => bloodMoon() ? BM.enemySpeed || 1 : 1, bmReward = () => bloodMoon() ? BM.rewards || 1 : 1;
+const ENDING_KO = { seal: ['봉인', '봉인석을 내려놓고 백중의 밤으로 회귀한다. 다음 회차는 혈월 천하'], inherit: ['계승', '혈마의 힘을 잇는다. 혈마 모드가 열리고 회귀하지 않는다'], true: ['진엔딩', '목 노인과 함께 혈마의 근원을 끊는다. 환혼과 회귀가 끝난다'] };
+const endingsList = () => (meta.cycle === 1 ? CYC.endingsFirst : CYC.endingsSecond) || ['seal'];
+// 진엔딩 조건(Core TrueEndingMet): 의서·목 노인 대화가 이 시안에 없어 늘 false
+const trueEndingMet = () => false;
+const endingsOpen = () => !meta.endingPending || meta.journeyOver ? [] : endingsList().filter(e => e !== 'true' || trueEndingMet());
+const modeToken = id => 'mode:' + id;
+function modeMeets(m) {
+  const r = m.require || {};
+  if (r.prologue && !meta.prologue) return false;
+  if (meta.stones.length < (r.sealStones || 0)) return false;
+  if (r.ending && !meta.endingsSeen.includes(r.ending)) return false;
+  return true;
+}
+function modesRefresh() {   // Core Modes.Refresh: 처음 조건을 갖춘 모드를 혼에 적고 그 이름을 돌려준다
+  const opened = [];
+  for (const m of MODES) { if (meta.unlocks.includes(modeToken(m.id)) || !modeMeets(m)) continue; meta.unlocks.push(modeToken(m.id)); opened.push(m.nameKo); }
+  return opened;
+}
+function regress() {   // Core Soul.Regress: cycle.resets 만 지우고 회차 +1
+  for (const key of CYC.resets || []) { if (key === 'sealStones') meta.stones = []; else throw new Error('회귀가 지울 줄 모르는 항목: ' + key); }
+  meta.cycle++;
+}
+function chooseEnding(e) {   // Core Soul.ChooseEnding
+  if (!endingsOpen().includes(e)) return null;
+  meta.endingPending = false;
+  if (!meta.endingsSeen.includes(e)) meta.endingsSeen.push(e);
+  const lines = [];
+  if (e === 'seal') { regress(); lines.push(`${meta.cycle}회차 · 혈월 천하 — 봉인석이 흩어졌다. 적 기혈 ×${BM.enemyHealth} · 걸음 ×${BM.enemySpeed} · 보상 ×${BM.rewards}`); }
+  else if (e === 'inherit') { if (!meta.unlocks.includes('mode:blood_demon')) meta.unlocks.push('mode:blood_demon'); lines.push('혈마 모드가 열렸다(출시 뒤 추가할 모드라 이 시안엔 없다)'); }
+  else if (e === 'true') { meta.journeyOver = true; lines.push('환혼과 회귀가 끝났다'); }
+  const opened = modesRefresh(); if (opened.length) lines.push(`모드 열림: ${opened.join(' · ')}`);
+  saveMeta();
+  return lines;
+}
 // Core InLine: 몸에서 deg 쪽으로 length 만큼 뻗은 폭 width 의 줄
 const inLine = (L, w, dx, dy, deg, tr) => { const c = Math.cos(deg * D2R), s2 = Math.sin(deg * D2R), along = dx * c + dy * s2, perp = Math.abs(-dx * s2 + dy * c); return along >= 0 && along <= L + tr && perp <= w / 2 + tr; };
 // 레벨업 카드(T-21): 몸에 바로 붙는 능력치만 쓰는 심법(passives.json) + 이 시안의 무공 셋
@@ -421,7 +460,8 @@ const store = {
   del(k) { try { localStorage.removeItem('cheonha_' + k); } catch (e) { /* 지우지 못해도 아래에서 새 기록으로 덮는다 */ } },
 };
 const START_SECTS = SECTS.filter(s => s.unlock === 'start').map(s => s.id);
-function freshMeta() { return { v: 2, qi: 0, train: {}, spent: 0, upg: {}, lives: 0, best: 0, crystal: 0, unlocked: START_SECTS.slice(), visited: [], reached: [], bossKills: {}, stones: [] }; }
+function freshMeta() { return { v: 2, qi: 0, train: {}, spent: 0, upg: {}, lives: 0, best: 0, crystal: 0, unlocked: START_SECTS.slice(), visited: [], reached: [], bossKills: {}, stones: [],
+  cycle: 1, endingPending: false, endingsSeen: [], journeyOver: false, finalClears: {}, unlocks: [] }; }   // 회차·엔딩·모드(R4-12, Core Soul)
 function loadMeta() {
   const m = Object.assign(freshMeta(), store.get('meta2') || {});
   for (const k of ['unlocked', 'visited', 'reached', 'stones']) if (!Array.isArray(m[k])) m[k] = k === 'unlocked' ? START_SECTS.slice() : [];
@@ -429,6 +469,10 @@ function loadMeta() {
   if (typeof m.bossKills !== 'object' || !m.bossKills) m.bossKills = {};
   if (typeof m.upg !== 'object' || !m.upg) m.upg = {};
   if (!(m.crystal >= 0)) m.crystal = 0;   // 혈정 잔고(RM-13). 옛 기록은 0
+  if (!(m.cycle >= 1)) m.cycle = 1;   // 회차·엔딩·모드(R4-12). 옛 기록은 1회차
+  for (const k of ['endingsSeen', 'unlocks']) if (!Array.isArray(m[k])) m[k] = [];
+  if (typeof m.finalClears !== 'object' || !m.finalClears) m.finalClears = {};
+  m.endingPending = !!m.endingPending; m.journeyOver = !!m.journeyOver;
   for (const id of START_SECTS) if (!m.unlocked.includes(id)) m.unlocked.push(id);
   return m;
 }
@@ -730,6 +774,7 @@ function spawnFoe(e, elite, kind, at) {
     const set = elite && EPAT[kind];
     if (set) f.pat = newPat(set);
   }
+  f.hp *= bmHealth();   // 혈월 천하: 적 기혈 × cycle.bloodmoon.enemyHealth
   f.maxHp = f.hp; G.foes.push(f); return f;
 }
 const newPat = set => ({ set, timer: set.firstCastSeconds, cycle: 0, cur: null, wind: 0, phase2: false, beams: [], zones: [], fields: [], rings: [], waves: null, split: null, inhale: null, hfSide: 0,
@@ -942,7 +987,7 @@ function startFight(id) {
   const fo = fin ? finalFoe(G.final.i) : null;
   const def = fo ? Object.assign({}, BOSS[fo.shadow ? fo.id : FINALDEF.boss], { nameKo: fo.name }) : BOSS[r.boss];
   const base = fo ? fo.health : def.phases ? def.phases.reduce((a, b) => a + b, 0) : def.health;
-  const hp = base * bossHpMult(eqMinute()) * LD.bossHpScale;
+  const hp = base * bossHpMult(eqMinute()) * LD.bossHpScale * bmHealth();
   // 싸움을 건 순간의 경지 축척으로, 지역 한가운데에서(화면 밖이면 내 쪽으로 당겨서) 나타난다. 종장 다음 상대는 앞 상대가 쓰러진 자리
   let x = r.x, y = r.y; const dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy), lim = G.view * 0.3;
   if (d > lim) { x = p.x + dx / d * lim; y = p.y + dy / d * lim; }
@@ -969,15 +1014,17 @@ function bossDown(f) {
   G.fight = null; G.done.add(f.reg); $('bossbar').hidden = true;
   if (G.bossT[f.reg]) G.bossT[f.reg].secs = Math.round(G.t - G.bossT[f.reg].start);
   if (f.reg === (FINAL && FINAL.id)) { G.sealed = true; toast('혈마를 봉했다', '봉마곡의 피가 걷힌다'); setTimeout(() => endLife('sealed'), 1400); return; }
-  const r = REG[f.reg], first = !(meta.bossKills[f.def.id] > 0) && !G.bossFirst.includes(f.def.id), lines = [];
+  // 첫 처치는 회차 안에서 센다(Core Soul firstInCycle: 이 땅의 봉인석이 아직 없으면). 회귀로 봉인석이 지워지면 다시 첫 처치다
+  const r = REG[f.reg], lines = [], first = r.sealStone ? !meta.stones.includes(r.sealStone) && !G.newStones.includes(r.sealStone) : !(meta.bossKills[f.def.id] > 0) && !G.bossFirst.includes(f.def.id);
+  const cr = Math.round(((first ? BR.firstKill.bloodCrystal : BR.repeatKill.bloodCrystal) || 0) * bmReward());   // 혈정 × 혈월 천하 배율(Core 처치마다 반올림)
   if (first) {
     G.bossFirst.push(f.def.id);
     if (r.sealStone && BR.firstKill.sealStone) { G.newStones.push(r.sealStone); lines.push(`봉인석 ${r.sealStone} · ${stonesHeld()}/${STONES_ALL}`); }
     const s = BR.firstKill.unlockSect && SECTS.find(x => x.unlock === 'boss:' + r.id);
     if (s && !meta.unlocked.includes(s.id) && !G.newSects.includes(s.id)) { G.newSects.push(s.id); lines.push(`${ro(s.nameKo)} 환생할 수 있다`); }
-    G.bossCrystal += BR.firstKill.bloodCrystal || 0;
-    lines.push(`윤회의 기 +${BR.firstKill.rebirthQi} · 혈정 +${BR.firstKill.bloodCrystal || 0}`);
-  } else { G.bossRepeat.push(f.def.id); G.bossCrystal += BR.repeatKill.bloodCrystal || 0; lines.push(`혈영으로 다시 일어날 것이다 · 윤회의 기 +${BR.repeatKill.rebirthQi} · 혈정 +${BR.repeatKill.bloodCrystal || 0}`); }
+    G.bossCrystal += cr;
+    lines.push(`윤회의 기 +${BR.firstKill.rebirthQi} · 혈정 +${cr}`);
+  } else { G.bossRepeat.push(f.def.id); G.bossCrystal += cr; lines.push(`혈영으로 다시 일어날 것이다 · 윤회의 기 +${BR.repeatKill.rebirthQi} · 혈정 +${cr}`); }
   toast(`${eul(f.def.nameKo)} 쓰러뜨렸다`, lines.join(' · '));
   const woke = wakeBosses();   // 일곱째 봉인석을 현경에서 얻으면 봉마곡이 바로 열린다
   if (woke.length) toast('봉마곡이 열렸다', `${BOSS[FINAL.boss].nameKo} — 화면 끝 붉은 표시`);
@@ -1701,7 +1748,7 @@ function resolvePattern(f, pt, k, dmg) {
     P.cloudPlan = null;
   } else if (pt.shape === 'summon_shadow') {
     // 혈영 솟음(Core RisingShadow·RisingShadowHealth): 땅의 주인 일곱을 차례로, 패턴 없이 몸으로만, leaveSeconds 뒤 녹는다
-    const sid = risingShadow(G.final ? G.final.rise++ : 0), hp = BOSS[sid].health * pt.summonHealthRatio * bossHpMult(eqMinute()) * LD.bossHpScale;
+    const sid = risingShadow(G.final ? G.final.rise++ : 0), hp = BOSS[sid].health * pt.summonHealthRatio * bossHpMult(eqMinute()) * LD.bossHpScale * bmHealth();
     const cd = BPAT[sid] ? BPAT[sid].contactDamage : 22, a = rand(0, TAU), R = 3 * k;
     const c = { e: f.e, boss: false, riseOf: f, rise: sid, x: clamp(f.x + Math.cos(a) * R, 0, W), y: clamp(f.y + Math.sin(a) * R, 0, H), r: f.r * 0.8, hp, maxHp: hp, sp: 1.7 * k, dmg: cd / (P.set.contactDamage || 22) * f.dmg, hop: 0, flash: 0, contact: 0, kx: 0, ky: 0, xv: 0, life: pt.leaveSeconds };
     G.foes.push(c); G.fx.push({ k: 'puff', x: c.x, y: c.y, r: c.r * 2, t: 0, life: 0.6, red: true });
@@ -1837,7 +1884,7 @@ function shadowStrength(n) {
   return { step: n, dmg: SHD.contactDamage * Math.pow(SHD.damageGrowth, k), speed, hit: SHD.hitIntervalSeconds, enemyMul: 1 + SHD.enemyDamagePerStep * k };
 }
 const enemyDmgMul = () => (G.shadow ? G.shadow.str.enemyMul : 1) * (G.empower && G.empower.warm <= 0 ? empowerDamage(G.empower.pt) : 1);
-const enemySpdMul = () => G.empower && G.empower.warm <= 0 ? empowerSpeed(G.empower.pt) : 1;   // 혈월(혁련휘 2막)
+const enemySpdMul = () => (G.empower && G.empower.warm <= 0 ? empowerSpeed(G.empower.pt) : 1) * bmSpeed();   // 혈월(혁련휘 2막)·혈월 천하
 function tickShadow(dt) {
   const n = shadowStep(), p = G.p, k = sc(G.tier);
   let S = G.shadow;
@@ -2576,6 +2623,11 @@ function traitLine(id) {
 let rerollsLeft = 0;
 const NUM_KO = ['', '하나', '둘', '셋', '넷', '다섯'];
 function openRebirth() {
+  if (meta.endingPending && endingsOpen().length) {   // 엔딩을 고르지 않고 나갔다 들어왔으면 고르기부터
+    $('dtitle').textContent = '엔딩을 고른다'; $('dline').textContent = '혈마를 봉했다. 이 이야기를 어떻게 닫을지 고른다.';
+    for (const id of ['dfacts', 'dbars', 'ledger']) $(id).innerHTML = ''; $('dnews').textContent = '';
+    renderEndingChoice(); show('dead'); return;
+  }
   show('rebirth'); running = false; paused = false;
   rerollsLeft = meta.lives ? rerollsPerRebirth() : 0;   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
   candidates = drawCandidates();
@@ -2648,7 +2700,8 @@ function renderMeta() {
 }
 function beginLife(i) {
   startLife(candidates[i]); show(null);
-  $('sect').textContent = `${G.sect.nameKo} 제자`;
+  $('sect').textContent = bloodMoon() ? `${G.sect.nameKo} 제자 · 혈월 천하 ${meta.cycle}회차` : `${G.sect.nameKo} 제자`;
+  if (bloodMoon()) toast(`혈월 천하 · ${meta.cycle}회차`, `봉인석을 다시 모은다 · 적 기혈 ×${BM.enemyHealth} · 걸음 ×${BM.enemySpeed} · 보상 ×${BM.rewards}`);
   running = true; last = performance.now(); camX = G.p.x; camY = G.p.y;
   updateHud();
 }
@@ -2672,12 +2725,12 @@ function settle() {
   if (G.bossRepeat.length) rows.push([`땅의 주인 다시 처치 ${G.bossRepeat.length} × ${QI.bossRepeatKill}`, names(G.bossRepeat), G.bossRepeat.length * QI.bossRepeatKill]);
   if (G.newVisits.length) rows.push([`처음 밟은 땅 ${G.newVisits.length} × ${QI.firstVisitRegion}`, G.newVisits.map(id => REG[id].nameKo).join(', '), G.newVisits.length * QI.firstVisitRegion]);
   if (G.newRealms.length) rows.push([`처음 오른 경지 ${G.newRealms.length} × ${QI.firstReachRealm}`, G.newRealms.map(id => REALMS.find(r => r.id === id).nameKo).join(', '), G.newRealms.length * QI.firstReachRealm]);
-  const sub = rows.reduce((a, r) => a + r[2], 0), mul = G.body.qiMul, total = Math.round(sub * mul);
-  return { rows, sub, mul, total };
+  const sub = rows.reduce((a, r) => a + r[2], 0), mul = G.body.qiMul, rew = bmReward(), total = Math.round(sub * mul * rew);   // 혈월 천하 보상 배율(Core RewardMultiplier)
+  return { rows, sub, mul, rew, total };
 }
-// 이번 생의 혈정: 땅의 주인 몫 + 이름 있는 정예 수 × drops.eliteBloodCrystal(혈월 배율은 이 시안에 없음, Core LifeLog.BloodCrystal)
+// 이번 생의 혈정: 땅의 주인 몫 + 이름 있는 정예 수 × drops.eliteBloodCrystal(혈월 천하면 × rewards, Core LifeLog.BloodCrystal)
 const ARTS_KO = { arc: '검기', orbit: '도는 검', wave: '먹 파동' };
-function lifeCrystal() { return G.bossCrystal + Math.round(G.eliteKills * ((BAL.drops && BAL.drops.eliteBloodCrystal) || 0)); }
+function lifeCrystal() { return G.bossCrystal + Math.round(G.eliteKills * ((BAL.drops && BAL.drops.eliteBloodCrystal) || 0) * bmReward()); }   // 정예 몫 × 혈월 천하 배율을 한 번에 반올림(Core BloodCrystal)
 function endLife(kind) {
   if (!G || G.ended) return;
   G.ended = true; G.endKind = kind; running = false; paused = false;
@@ -2689,6 +2742,9 @@ function endLife(kind) {
   for (const id of [...G.bossFirst, ...G.bossRepeat]) meta.bossKills[id] = (meta.bossKills[id] || 0) + 1;
   for (const s of G.newStones) if (!meta.stones.includes(s)) meta.stones.push(s);
   for (const id of G.newSects) if (!meta.unlocked.includes(id)) meta.unlocked.push(id);
+  // 종장을 깼다(Core Soul.EndLife): 엔딩을 고를 차례, 그 문파로 깬 횟수(진엔딩 조건의 '서로 다른 문파')
+  if (kind === 'sealed') { meta.endingPending = true; meta.finalClears[G.sect.id] = (meta.finalClears[G.sect.id] || 0) + 1; }
+  const openedModes = modesRefresh();
   saveMeta();
   const realm = REALMS[G.tier].nameKo;
   $('dtitle').textContent = kind === 'sealed' ? '혈마를 봉했다' : kind === 'zuohwa' ? '좌화' : '쓰러졌다';
@@ -2706,13 +2762,29 @@ function endLife(kind) {
   const traitNames = G.c.traits.filter(id => TRAIT[id].rebirthQi).map(id => `${TRAIT[id].nameKo} +${Math.round(TRAIT[id].rebirthQi * 100)}%`).join(', ');
   $('ledger').innerHTML = st.rows.map(r => `<tr><td>${esc(r[0])}<small>${esc(r[1])}</small></td><td>${fmtN(r[2])}</td></tr>`).join('')
     + (st.mul !== 1 ? `<tr><td>타고난 성질<small>${esc(traitNames)}</small></td><td>× ${st.mul.toFixed(2)}</td></tr>` : '')
+    + (st.rew !== 1 ? `<tr><td>혈월 천하<small>${meta.cycle}회차 보상</small></td><td>× ${st.rew.toFixed(2)}</td></tr>` : '')
     + `<tr class="sum"><td>얻은 윤회의 기</td><td>+${fmtN(st.total)}</td></tr>`;
   const news = [];
   for (const id of G.newSects) news.push(`${ro(SECT[id].nameKo)} 환생할 수 있다`);
   if (G.newStones.length) news.push(`봉인석 ${G.newStones.join('·')}`);
   if (finalOpen() && G.newStones.length) news.push('봉인석 일곱 — 현경에 오르면 봉마곡이 열린다');
+  if (openedModes.length) news.push(`모드 열림: ${openedModes.join(' · ')}`);
   $('dnews').textContent = news.join(' · ');
+  renderEndingChoice();
   show('dead');
+}
+// 엔딩 고르기(R4-12, 기획서 4장 '엔딩 세 갈래', Core Soul.EndingsOpen·ChooseEnding). 고르기 전엔 윤회 단추를 감춘다
+function renderEndingChoice() {
+  const open = endingsOpen(), box = $('dend');
+  box.hidden = !open.length; $('again').hidden = !!open.length;
+  box.innerHTML = open.map(e => `<button class="b${e === 'seal' ? ' main' : ''}" type="button" data-ending="${e}">${esc(ENDING_KO[e][0])}<small>${esc(ENDING_KO[e][1])}</small></button>`).join('');
+  for (const b of box.querySelectorAll('button')) b.addEventListener('click', () => pickEnding(b.dataset.ending));
+}
+function pickEnding(e) {
+  const lines = chooseEnding(e); if (!lines) return;
+  $('dtitle').textContent = ENDING_KO[e][0];
+  $('dnews').textContent = lines.join(' · ');
+  renderEndingChoice();
 }
 function updateHud() {
   const p = G.p;
@@ -2723,7 +2795,7 @@ function updateHud() {
   const r = REG[G.region], thick = G.dens >= 2;
   $('where').innerHTML = `${esc(r ? r.nameKo : '')} · <span class="${thick ? 'thick' : ''}">혈운 ${fmtD(G.dens)}</span>`;
   $('kills').textContent = `처치 ${fmtN(G.kills)}`;
-  $('qi').textContent = `윤회의 기 +${fmtN((QI.perOrbValue * G.orbSum + G.bossFirst.length * QI.bossFirstKill + G.bossRepeat.length * QI.bossRepeatKill + G.newVisits.length * QI.firstVisitRegion + G.newRealms.length * QI.firstReachRealm) * G.body.qiMul)}`;
+  $('qi').textContent = `윤회의 기 +${fmtN((QI.perOrbValue * G.orbSum + G.bossFirst.length * QI.bossFirstKill + G.bossRepeat.length * QI.bossRepeatKill + G.newVisits.length * QI.firstVisitRegion + G.newRealms.length * QI.firstReachRealm) * G.body.qiMul * bmReward())}`;
   $('stones').textContent = `봉인석 ${stonesHeld()}/${STONES_ALL}`;
   if (G.fight) { const S = G.fight.pat && G.fight.pat.split, hp = S && S.on ? S.bodies.reduce((t, b) => t + Math.max(0, b.hp), 0) : G.fight.hp; $('bosshp').style.width = (Math.max(0, hp / G.fight.maxHp) * 100).toFixed(1) + '%'; }
   measureSafe();
@@ -2741,7 +2813,7 @@ window.addEventListener('keydown', e => {
   input.keys.add(e.code);
   if (overlay === 'title' && e.code === 'Enter') { openRebirth(); return; }
   if (overlay === 'rebirth') { if (e.code === 'KeyR') { rerollCandidates(); return; } const n = parseInt(e.key, 10); if (n >= 1 && n <= candidates.length) beginLife(n - 1); return; }
-  if (overlay === 'dead' && e.code === 'Enter') { openRebirth(); return; }
+  if (overlay === 'dead' && e.code === 'Enter') { if (!endingsOpen().length) openRebirth(); return; }
   if (overlay === 'levelup') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseCard(n - 1); return; }
   if (overlay === 'pause') { if (e.code === 'Escape' || e.code === 'Enter') setPaused(false); return; }
   if (!running) return;
@@ -2821,6 +2893,9 @@ window.__ch = {
   shadowStep: () => shadowStep(), shadowMinute: () => shadowMinute(),
   area() { return { region: G.region, chapter: regionChapter(), localShare: localShare(), eliteN: G.eliteN, inWater: inWater(G.p.x, G.p.y), inFog: inFog(G.p.x, G.p.y), fogs: G.fogs.length, pools: G.pools.length, shots: G.shots.length, yy: G.yy, bless: G.bless, pads: taijiPads().length, rocks: G.rocks.length, blizzard: weatherOn(GIM.blizzard), redMoon: weatherOn(GIM.redMoon), kinds: G.foes.filter(f => f.kind).map(f => f.kind) }; },
   // 땅의 주인(R4-02w): pat() 지금 싸움의 패턴 상태, campfires() 화면 근처 모닥불. fight(지역 id, 기혈 몫)은 아래
+  // 회차·엔딩(R4-12): cycleInfo() 회차·고를 수 있는 엔딩·본 엔딩·열린 모드, ending(e) 엔딩 고르기
+  cycleInfo: () => ({ cycle: meta.cycle, pending: meta.endingPending, open: endingsOpen(), seen: meta.endingsSeen.slice(), unlocks: meta.unlocks.slice(), stones: meta.stones.length, finalClears: Object.assign({}, meta.finalClears) }),
+  ending: e => { const r = chooseEnding(e); if (overlay === 'dead') { if (r) { $('dnews').textContent = r.join(' · '); } renderEndingChoice(); } return r; },
   pat() { const b = G.fight, P = b && b.pat; if (!P) return null; return { boss: b.def.id, hp: +(b.hp / b.maxHp).toFixed(3), phase2: P.phase2, cur: P.cur && P.cur.id, spirals: P.spirals.length, burstWave: P.burst && P.burst.wave, snow: P.snow && +P.snow.t.toFixed(2), clones: P.clones && P.clones.list.filter(c => !c.dead).length, spikes: P.spikes.length, arenaR: P.arena && +P.arena.R.toFixed(2), blink: P.blink && P.blink.i, empower: !!G.empower && G.empower.warm <= 0, enemyDmg: enemyDmgMul(), enemySpd: enemySpdMul(), campfire: nearCampfire(G.p.x, G.p.y), shots: G.shots.length }; },
   campfires: () => campfires(G.p.x, G.p.y, G.view).map(c => ({ x: Math.round(c.x), y: Math.round(c.y), r: +c.r.toFixed(2) })),
   warp(id, frac) { const r = REG[id]; G.p.x = r.x + G.view * (frac == null ? 0.3 : frac); G.p.y = r.y; camX = G.p.x; camY = G.p.y; trackRegion(); return G.region; },

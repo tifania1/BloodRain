@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
+using BloodRain.Core.Meta;
 using Xunit;
 using static BloodRain.Core.Tests.TestData;
 
@@ -104,6 +105,35 @@ namespace BloodRain.Core.Tests
             // 혈영 일곱은 데이터 차례 그대로, 단계 셋은 그 뒤
             Assert.Equal(7, _d.FinalBoss.Shadows.Count);
             Assert.Equal(new[] { "hyeoleui", "hyeolhae", "jinhyeolma" }, _d.FinalBoss.Stages.Select(s => s.Id));
+        }
+
+        /// <summary>R4-12: 웹 천하 시안의 엔딩 고르기·회귀·혈월 천하·모드 열림이 Core Soul·Modes 와 같은 규칙이다.</summary>
+        [Fact] public void 웹_천하_시안의_엔딩과_회귀가_Core_와_같은_규칙이다()
+        {
+            var html = ReadRepoFile("web", "lookdev", "cheonha.html");
+            var c = _d.Cheonha.Cycle;
+            Assert.Equal(new[] { "sealStones" }, c.Resets);   // 웹 regress() 가 아는 것은 이것뿐
+            foreach (var same in new[]
+            {
+                "(meta.cycle === 1 ? CYC.endingsFirst : CYC.endingsSecond)",                 // Soul.Endings
+                "endingsList().filter(e => e !== 'true' || trueEndingMet())",               // Soul.EndingsOpen
+                "if (key === 'sealStones') meta.stones = [];",                               // Soul.Regress
+                "meta.cycle++;",
+                "if (e === 'seal') { regress();",                                             // ChooseEnding: 봉인은 회귀
+                "meta.unlocks.push('mode:blood_demon')",                                      // 계승은 혈마 모드
+                "if (r.prologue && !meta.prologue) return false;",                            // Modes.MeetsRequirement
+                "if (meta.stones.length < (r.sealStones || 0)) return false;",
+                "if (r.ending && !meta.endingsSeen.includes(r.ending)) return false;",
+                "const bloodMoon = () => meta.cycle >= 2;",                                   // Soul.IsBloodMoon
+                "f.hp *= bmHealth();",                                                         // Life.EnemyHealthMultiplier
+                "* bmSpeed();",                                                                // Life.EnemySpeedMultiplier
+                "total = Math.round(sub * mul * rew)",                                         // RebirthQiLedger 혈월 보상
+                "G.eliteKills * ((BAL.drops && BAL.drops.eliteBloodCrystal) || 0) * bmReward())", // BloodCrystal 정예 몫
+                "!meta.stones.includes(r.sealStone) && !G.newStones.includes(r.sealStone)",  // firstInCycle
+            })
+                Assert.Contains(same, html);
+            Assert.Equal(Soul.BloodDemonModeToken, "mode:blood_demon");
+            Assert.Equal(new[] { "seal" }, c.EndingsFirst);
         }
     }
 }
