@@ -561,7 +561,7 @@
         } }
     ]
   },
-  "_noteElites": "정예 패턴(기획서 6장 '정예 패턴 수치'). 보스와 같은 틀(Core BossPatterns 로 시간표를 짠다)이고 2막이 없다. contactDamage·moveSpeed 는 enemies.json 그 정예의 값과 같다. 숭산 셋은 2026-11-01 예약 세션이 기획서 설명(동인 3연타, 방장 대리 기절)을 따르고 시간·반경·속도는 웹 프로토타입 eliteAI 값을 가져와 정했다.",
+  "_noteElites": "정예 패턴(기획서 6장 '정예 패턴 수치'). 보스와 같은 틀(Core BossPatterns 로 시간표를 짠다)이고 2막이 없다. contactDamage·moveSpeed 는 enemies.json 그 정예의 값과 같다. 숭산 셋은 2026-11-01 예약 세션이 기획서 설명(동인 3연타, 방장 대리 기절)을 따르고 시간·반경·속도는 웹 프로토타입 eliteAI 값을 가져와 정했다. 당가타·장강·무당산 아홉은 2026-11-04 클라우드 세션이 같은 차례(첫째·둘째·셋째)의 숭산 정예에 맞춰 정했다(R-01). 장판·안개·웅덩이는 poolRadius·poolDamagePerSecond·leaveSeconds.",
   "elites": {
     "gangsi_axeman": {
       "_note": "강시 도부수(서장 5분). 2026-11-01 예약 세션이 정했다. 첫 패턴과 간격은 프로토타입 정예(첫 3초, 3~4.5초마다)에 맞췄고, 한 방은 프로토타입 동인 내려찍기처럼 몸 피해의 1.3배쯤.",
@@ -662,6 +662,250 @@
           "stunSeconds": 0.8,
           "aim": "self",
           "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "poison_toad_king": {
+      "_note": "독두꺼비 왕(당가타 첫째). 2026-11-04 클라우드 세션이 숭산 첫째 동인에 맞춰 정했다: 뛰는 모양·시간·한 방은 동인과 같고, 착지마다 독두꺼비(공통 적)가 죽을 때 남기는 장판(1.2m, 4초, 초당 5)을 남긴다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 15,
+      "moveSpeed": 50,
+      "order": ["poison_hop_x3"],
+      "patterns": [
+        {
+          "id": "poison_hop_x3",
+          "nameKo": "독 장판 연쇄",
+          "shape": "jump_slam",
+          "_note": "세 번 뛰어 덮친다. 뛸 때마다 그 순간 플레이어 자리에 그림자가 드리우고 telegraphSeconds 뒤 떨어진다(동인과 같은 모양). 착지한 자리마다 반경 poolRadius 독 장판이 leaveSeconds 동안 남아 밟으면 초당 poolDamagePerSecond(장판이 겹쳐도 한 번). 한 시전 2.4초.",
+          "telegraphSeconds": 0.6,
+          "count": 3,
+          "radius": 2,
+          "waveIntervalSeconds": 0.3,
+          "baseDamage": 10,
+          "aim": "player_at_telegraph",
+          "poolRadius": 1.2,
+          "poolDamagePerSecond": 5,
+          "leaveSeconds": 4
+        }
+      ],
+      "phase2": []
+    },
+    "tang_dart_gangsi": {
+      "_note": "당가 암기 강시(당가타 둘째). 2026-11-04 클라우드 세션이 숭산 둘째 계율원 강시 승려에 맞춰 정했다: 예고·걸으며 쏘기는 승려와 같고, 한 발 피해는 몸 피해 그대로(승려와 같은 규칙). 비도 속도·사거리는 독후 당소혜 암기와 같다. 승려 장풍 셋(34°)보다 많은 다섯 발이라 부채꼴을 48°로 넓혀 발 사이 각도를 12°로 뒀다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 16,
+      "moveSpeed": 60,
+      "order": ["dart_fan"],
+      "patterns": [
+        {
+          "id": "dart_fan",
+          "nameKo": "비도 부채꼴",
+          "shape": "projectile_fan",
+          "_note": "예고를 시작할 때 플레이어 쪽으로 방향을 잡고, 판정 때 비도 다섯 자루를 부채꼴로 던진다. 걸으면서 던진다.",
+          "telegraphSeconds": 0.4,
+          "count": 5,
+          "angleDegrees": 48,
+          "waves": 1,
+          "projectileSpeed": 220,
+          "length": 14,
+          "baseDamage": 16,
+          "aim": "player_at_telegraph"
+        }
+      ],
+      "phase2": []
+    },
+    "dogin_elder": {
+      "_note": "독인 장로(당가타 셋째). 2026-11-04 클라우드 세션이 숭산 셋째 강시 방장 대리에 맞춰 정했다: 예고 1초·제 몸 둘레 4.5m·멈춰 섬·한 방(몸 피해 그대로)은 범종과 같고, 기절 대신 독안개가 남는다. 안개의 초당 피해는 독인(공통 적) 두른 안개와 같은 4.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 20,
+      "moveSpeed": 40,
+      "order": ["fog_expand"],
+      "patterns": [
+        {
+          "id": "fog_expand",
+          "nameKo": "독안개 확장",
+          "shape": "circles",
+          "_note": "멈춰 서서 몸에 두른 독안개를 부풀린다(예고 동안 반경이 커진다). 판정 때 제 몸 둘레 원 안의 플레이어를 때리고, 그 자리에 반경 poolRadius 독안개가 leaveSeconds 동안 남아 안에 있으면 초당 poolDamagePerSecond.",
+          "telegraphSeconds": 1,
+          "count": 1,
+          "radius": 4.5,
+          "baseDamage": 20,
+          "aim": "self",
+          "bossHolds": true,
+          "poolRadius": 4.5,
+          "poolDamagePerSecond": 4,
+          "leaveSeconds": 3
+        }
+      ],
+      "phase2": []
+    },
+    "pirate_chief": {
+      "_note": "수적 두목(장강 수로 첫째). 2026-11-04 클라우드 세션이 수적(공통 적) 갈고리와 숭산 첫째 동인에 맞춰 정했다: 예고 0.5초·사거리 7m·머리 폭 0.6m(반경 0.3)·속도(초속 14m ≈ 300)·0.8초는 수적과 같고, 한 개 피해 10·세 번은 동인 3연타와 같다. 수적은 맞으면 기절이지만 세 번 이어 던지면 풀려날 틈이 없어, 장삼 포승줄처럼 걷지만 못 하고 경공으로 끊기게(rootSeconds) 했다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 17,
+      "moveSpeed": 65,
+      "order": ["hook_x3"],
+      "patterns": [
+        {
+          "id": "hook_x3",
+          "nameKo": "갈고리 3연",
+          "shape": "bind_line",
+          "_note": "멈춰 서서 갈고리를 세 번 던진다. 던질 때마다 그 순간 플레이어 쪽으로 겨누고(첫 개는 예고선 telegraphSeconds 뒤), 다음 개는 waveIntervalSeconds 뒤. 맞으면 피해와 함께 rootSeconds 동안 걷지 못한다(무공은 나가고, 경공을 쓰면 끊긴다). 한 시전 1.5초.",
+          "telegraphSeconds": 0.5,
+          "length": 7,
+          "width": 0.6,
+          "projectileSpeed": 300,
+          "waves": 3,
+          "waveIntervalSeconds": 0.5,
+          "rootSeconds": 0.8,
+          "baseDamage": 10,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "water_ghost_chief": {
+      "_note": "수귀 무리 우두머리(장강 수로 둘째). 2026-11-04 클라우드 세션이 정했다. 소환 예고 1초는 장삼 호루라기·당소혜 금선지네와 같다. 제 손으로 때리는 패턴이 없는 대신 수귀가 붙어 다니며 끌어당긴다(수귀 끌기는 여럿이어도 큰 것 하나라 쌓이지 않는다).",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 18,
+      "moveSpeed": 55,
+      "order": ["call_water_ghosts"],
+      "patterns": [
+        {
+          "id": "call_water_ghosts",
+          "nameKo": "수귀 부르기",
+          "shape": "summon",
+          "_note": "우두머리 둘레 scatter 안 세 곳에서 수귀가 솟는다. 불려 온 수귀는 물 밖에서도 나오고(onlyInWater 를 따지지 않는다) 우두머리를 따라 함께 다닌다.",
+          "telegraphSeconds": 1,
+          "count": 3,
+          "scatter": 3,
+          "summon": "water_ghost",
+          "center": "boss",
+          "baseDamage": 0
+        }
+      ],
+      "phase2": []
+    },
+    "ironclad_fort_guard": {
+      "_note": "철갑 수채 무사(장강 수로 셋째). 2026-11-04 클라우드 세션이 숭산 셋째 강시 방장 대리와 낙매검선의 검혼 일섬에 맞춰 정했다: 예고 1초·멈춰 섬·한 방(몸 피해 그대로)은 방장 대리와 같고, 줄 모양과 끝난 뒤 굳는 틈은 일섬을 짧게 줄였다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 24,
+      "moveSpeed": 45,
+      "order": ["shield_charge"],
+      "patterns": [
+        {
+          "id": "shield_charge",
+          "nameKo": "방패 돌진",
+          "shape": "line",
+          "_note": "멈춰 서서 방패를 앞세우고 예고선을 플레이어 쪽으로 length 까지 긋는다. 판정 때 몸째 그 줄을 따라 projectileSpeed 로 달려가 줄 위의 플레이어를 친다. 줄 끝에서 멈추고 recoverySeconds 동안 굳어 있다(공격 기회).",
+          "telegraphSeconds": 1,
+          "length": 8,
+          "width": 1.6,
+          "projectileSpeed": 300,
+          "recoverySeconds": 1,
+          "baseDamage": 24,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "twin_gangsi_great": {
+      "_note": "흑백 쌍강시 대형(무당산 첫째). 2026-11-04 클라우드 세션이 숭산 첫째 동인에 맞춰 정했다: 뛰는 모양·시간·한 방은 동인과 같고, 두 몸이 한 번씩이라 두 번이다(되살림이 있어 동인보다 오래 버틴다). 시간표는 한 쌍에 하나다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 16,
+      "moveSpeed": 55,
+      "order": ["twin_slam"],
+      "patterns": [
+        {
+          "id": "twin_slam",
+          "nameKo": "쌍강 내려찍기",
+          "shape": "jump_slam",
+          "_note": "두 몸이 차례로 한 번씩 뛰어 덮친다(검은 몸 먼저). 뛸 때마다 그 순간 플레이어 자리에 그림자가 드리우고 telegraphSeconds 뒤 떨어진다. 한 몸이 누워 있으면 선 몸이 두 번 뛴다. 한 시전 1.5초.",
+          "telegraphSeconds": 0.6,
+          "count": 2,
+          "radius": 2,
+          "waveIntervalSeconds": 0.3,
+          "baseDamage": 10,
+          "aim": "player_at_telegraph"
+        }
+      ],
+      "phase2": []
+    },
+    "sword_array_taoist": {
+      "_note": "검진 도사 강시(무당산 둘째). 2026-11-04 클라우드 세션이 숭산 둘째 계율원 강시 승려와 종장 '맥 짚는 손'(closing_ring)에 맞춰 정했다: 예고 0.4초·한 자루 피해(몸 피해 그대로)는 승려와 같다. 고리가 아니라 검 다섯 자루라 틈으로 걸어 나갈 수 있다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 18,
+      "moveSpeed": 50,
+      "order": ["five_sword_array"],
+      "patterns": [
+        {
+          "id": "five_sword_array",
+          "nameKo": "검진",
+          "shape": "closing_ring",
+          "_note": "예고를 시작할 때 플레이어 자리를 가운데로 반경 radius 원 위에 검 count 자루가 고르게 꽂히고(첫 자루는 도사 쪽), 판정부터 shrinkPerSecond 로 minRadius 까지 조여 든다. 검(반경 width/2)에 닿으면 피해, 같은 검은 hitIntervalSeconds 마다. 조이는 데 2초.",
+          "telegraphSeconds": 0.4,
+          "count": 5,
+          "radius": 6,
+          "width": 1,
+          "minRadius": 1,
+          "shrinkPerSecond": 2.5,
+          "hitIntervalSeconds": 0.5,
+          "baseDamage": 18,
+          "aim": "player_at_telegraph"
+        }
+      ],
+      "phase2": []
+    },
+    "sulsa_elder": {
+      "_note": "혈술사 장로(무당산 셋째). 2026-11-04 클라우드 세션이 숭산 셋째 강시 방장 대리와 혈술사(공통 적) 피 웅덩이에 맞춰 정했다: 예고 1초·한 방(몸 피해 그대로)은 방장 대리와 같고, 웅덩이는 혈술사 것(반경 1.5, 6초, 초당 6)의 반경 두 배.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 20,
+      "moveSpeed": 45,
+      "order": ["great_blood_pool"],
+      "patterns": [
+        {
+          "id": "great_blood_pool",
+          "nameKo": "큰 피 웅덩이",
+          "shape": "circles",
+          "_note": "예고를 시작할 때 플레이어 자리에 핏빛 원이 번지고, 판정 때 피가 솟아 원 안을 때린다. 그 자리에 반경 poolRadius 피 웅덩이가 leaveSeconds 동안 남아 안에 있으면 초당 poolDamagePerSecond. 걸으면서 쓴다.",
+          "telegraphSeconds": 1,
+          "count": 1,
+          "radius": 3,
+          "baseDamage": 20,
+          "aim": "player_at_telegraph",
+          "poolRadius": 3,
+          "poolDamagePerSecond": 6,
+          "leaveSeconds": 6
         }
       ],
       "phase2": []

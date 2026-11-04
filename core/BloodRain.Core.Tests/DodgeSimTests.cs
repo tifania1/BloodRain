@@ -108,7 +108,9 @@ namespace BloodRain.Core.Tests
         [Fact] public void 정예_패턴도_표에_들어가고_방장_대리_범종은_걸어서_빠진다()
         {
             var rows = DodgeSim.Rows(G);
-            foreach (var id in G.ElitePatterns.Keys.Where(k => G.ElitePatterns[k].Patterns.Any(p => p.Shape != "projectile_fan")))
+            // 빠져나갈 거리를 셀 수 있는 모양이 하나라도 있는 정예(소환·조여 드는 고리·탄은 따로 적는다)
+            var counted = new[] { "cone", "circles", "blink_slam", "jump_slam", "line", "pull_line", "bind_line", "chain_circles" };
+            foreach (var id in G.ElitePatterns.Keys.Where(k => G.ElitePatterns[k].Patterns.Any(p => counted.Contains(p.Shape))))
                 Assert.Contains(rows, r => r.Boss == "정예 " + G.Enemies.Single(e => e.Id == id).NameKo);
             var bell = G.ElitePatternSet("acting_abbot").Pattern("bell_stun");
             var row = rows.Single(r => r.Pattern == bell.NameKo);

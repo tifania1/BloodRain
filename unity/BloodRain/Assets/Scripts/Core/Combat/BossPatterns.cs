@@ -247,6 +247,44 @@ namespace BloodRain.Core.Combat
             return list;
         }
 
+        /// <summary>한 시전이 예고 시작부터 마지막 판정까지 걸리는 시간(초).
+        /// jump_slam 은 Count 번 뛰는데 뛸 때마다 예고가 있어 Count × 예고 + (Count - 1) × 사이,
+        /// 여러 파(Waves)를 쏘는 것은 첫 예고 + (Waves - 1) × 사이. 나머지는 예고만.</summary>
+        public static float CastSeconds(BossPatternDef p)
+        {
+            if (p.Shape == "jump_slam")
+            {
+                int n = Math.Max(1, p.Count);
+                return n * p.TelegraphSeconds + (n - 1) * p.WaveIntervalSeconds;
+            }
+            return p.TelegraphSeconds + (Math.Max(1, p.Waves) - 1) * p.WaveIntervalSeconds;
+        }
+
+        /// <summary>조여 드는 고리(closing_ring)의 지금 반경. activeSeconds 는 판정에서 흐른 시간.
+        /// Radius 에서 ShrinkPerSecond 로 줄어 MinRadius 에서 멈춘다.</summary>
+        public static float ClosingRadius(BossPatternDef p, float activeSeconds) =>
+            Math.Max(p.MinRadius, p.Radius - p.ShrinkPerSecond * Math.Max(0f, activeSeconds));
+
+        /// <summary>조여 드는 고리가 MinRadius 에 닿을 때까지(초). 줄지 않으면 0.</summary>
+        public static float ClosingSeconds(BossPatternDef p) =>
+            p.ShrinkPerSecond > 0f ? Math.Max(0f, p.Radius - p.MinRadius) / p.ShrinkPerSecond : 0f;
+
+        /// <summary>반경 radius 원 위에 고르게 놓은 Count 자리(검진의 검). 첫 자리는 firstDegrees 쪽.</summary>
+        public static (float x, float y)[] RingOffsets(BossPatternDef p, float radius, float firstDegrees = 0f)
+        {
+            var list = new (float x, float y)[Math.Max(0, p.Count)];
+            for (int i = 0; i < list.Length; i++)
+            {
+                double a = (firstDegrees + 360.0 * i / list.Length) * Math.PI / 180.0;
+                list[i] = ((float)(Math.Cos(a) * radius), (float)(Math.Sin(a) * radius));
+            }
+            return list;
+        }
+
+        /// <summary>장판(PoolRadius) 안인가. 장판 가운데 기준.</summary>
+        public static bool InPool(BossPatternDef p, float dx, float dy, float targetRadius = 0f) =>
+            p.PoolRadius > 0f && InCircle(p.PoolRadius, dx, dy, targetRadius);
+
         /// <summary>플레이어 둘레 가로·세로 ±Scatter 안에서 Count 곳을 고른다(범종 낙하).</summary>
         public static (float x, float y)[] ScatterOffsets(BossPatternDef p, Random rng)
         {

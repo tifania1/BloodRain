@@ -38,7 +38,7 @@ namespace BloodRain.Core.Data
     {
         public string Id = "";
         public string NameKo = "";
-        /// <summary>cone(부채꼴), summon_ring(원 위에 소환), circles(동그라미 여러 곳), rotating_beams(도는 빛줄기).</summary>
+        /// <summary>cone(부채꼴), summon_ring(원 위에 소환), circles(동그라미 여러 곳), rotating_beams(도는 빛줄기), jump_slam(뛰어 덮치기 Count 번), closing_ring(조여 드는 고리, Count 가 있으면 고리 위 검 Count 자루) 등. 모양마다 쓰는 칸은 bosspatterns.json _note.</summary>
         public string Shape = "";
         /// <summary>예고 시작에서 판정까지(초).</summary>
         public float TelegraphSeconds;
@@ -82,6 +82,10 @@ namespace BloodRain.Core.Data
         public EnemyMimic? Mimic;
         /// <summary>남긴 기믹을 쓸 수 있는 횟수.</summary>
         public int LeaveUses;
+        /// <summary>판정 자리에 남는 장판·안개·웅덩이의 반경(m). 0이면 장판이 없다. 남는 시간은 LeaveSeconds(정예 독두꺼비 왕·독인 장로·혈술사 장로).</summary>
+        public float PoolRadius;
+        /// <summary>장판 안에 있으면 초당 피해(0분·혈운 농도 1 값). 장판이 겹쳐도 한 번만 받는다.</summary>
+        public float PoolDamagePerSecond;
         /// <summary>2막 패턴처럼 켜지면 끝까지 이어지는가.</summary>
         public bool Continuous;
         /// <summary>탄·사슬·파도가 나아가는 속도(플레이어 기본 이동속도 100 기준).</summary>
