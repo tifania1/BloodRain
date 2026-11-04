@@ -99,6 +99,9 @@ namespace BloodRain.Presentation.Meta
                 var label = Text("지명 " + r.NameKo, place, 16, visited || sealed_ ? Ink : new Color(Ink.r, Ink.g, Ink.b, 0.38f),
                     visited || sealed_ ? FontStyles.Bold : FontStyles.Normal);
                 Put(label.rectTransform, p + new Vector2(0, -14), new Vector2(160, 24));
+                // 영어 긴 지명이 160px 를 넘으면 줄이 바뀌어 아래 지명과 겹친다(L-01b3). 한 줄로 두고 줄여서 맞춘다
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.enableAutoSizing = true; label.fontSizeMin = 11; label.fontSizeMax = 16;
                 _labels[r.Id] = label;
                 var mark = Img("점 " + r.NameKo, _dot, label.color);
                 Put(mark, p, Vector2.one * 6);

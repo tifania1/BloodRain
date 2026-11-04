@@ -228,8 +228,9 @@ namespace BloodRain.Presentation.Meta
             paper.raycastTarget = false;
 
             var name = Text("이름", rt, $"{Loc.Disciple(sect)}{(cand.Female ? $" <size=70%>{Loc.T("ui.chimbang.female")}</size>" : "")}", 40, FontStyles.Bold);
-            Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -60), new Vector2(250, 56));
-            name.enableAutoSizing = true; name.fontSizeMin = 26; name.fontSizeMax = 38;
+            // 번호(오른쪽 위 40px)와 겹치지 않게 이름 칸은 번호 아래로, 양옆 20px 여백(L-01b3 영어 'Mount Hua Disciple')
+            Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -78), new Vector2(240, 56));
+            name.enableAutoSizing = true; name.fontSizeMin = 22; name.fontSizeMax = 38;
             var key = Text("번호", rt, $"<alpha=#88>{index + 1}<alpha=#FF>", 24, FontStyles.Normal);
             Place(key.rectTransform, new Vector2(1f, 1f), new Vector2(-26, -26), new Vector2(40, 40));
 

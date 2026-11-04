@@ -44,6 +44,9 @@ namespace BloodRain.Presentation.Meta
 
             var n = Text(Rect, font, name, 22, FontStyles.Bold, Ink);
             Put(n.rectTransform, new Vector2(0, 0.5f), new Vector2(8, 0), new Vector2(150, 36), 0f);
+            // 영어 'Projectile Speed'·'Lightfoot Charges' 가 점 칸을 덮지 않게(L-01b3) 한 줄로 줄여 맞춘다
+            n.textWrappingMode = TextWrappingModes.NoWrap;
+            n.enableAutoSizing = true; n.fontSizeMin = 13; n.fontSizeMax = 22;
             _pips = new Image[max];
             for (int i = 0; i < max; i++)
             {
@@ -55,6 +58,8 @@ namespace BloodRain.Presentation.Meta
             }
             var e = Text(Rect, font, effect, 19, FontStyles.Normal, new Color(Ink.r, Ink.g, Ink.b, 0.75f));
             Put(e.rectTransform, new Vector2(0, 0.5f), new Vector2(256, 0), new Vector2(width - 256 - 130, 36), 0f);
+            e.textWrappingMode = TextWrappingModes.NoWrap;
+            e.enableAutoSizing = true; e.fontSizeMin = 12; e.fontSizeMax = 19;
 
             _buy = new GameObject("사기", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
             _buy.transform.SetParent(Rect, false);

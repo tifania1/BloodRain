@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using BloodRain.Core.Data;
@@ -143,6 +143,8 @@ namespace BloodRain.Presentation.Meta
                 if (summary.NewlyUnlockedSects.Count > 0) extra.Add(Loc.F("ui.settle.new_sects", string.Join("·", summary.NewlyUnlockedSects.Select(id => Loc.Sect(_data.Cheonha.Sect(id))))));
                 var ex = Text(right, string.Join("   ", extra), 22, FontStyles.Bold, Crimson);
                 ex.alignment = TextAlignmentOptions.Right;
+                ex.textWrappingMode = TextWrappingModes.NoWrap;
+                ex.enableAutoSizing = true; ex.fontSizeMin = 13; ex.fontSizeMax = 22;
                 Place(ex.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - 96), new Vector2(620, 32));
             }
             // 장경각에 새로 오른 찢긴 비급(S-04). 조건을 갖췄는데 잠겨 있던 비급이다. 객잔 장경각에서 복원한다.
@@ -286,6 +288,9 @@ namespace BloodRain.Presentation.Meta
             var v = Text(col, note == null ? value : $"{value}  <size=70%><alpha=#99>{note}<alpha=#FF></size>", 28, FontStyles.Bold, Ink);
             v.alignment = TextAlignmentOptions.Left;
             Place(v.rectTransform, new Vector2(0.5f, 1f), new Vector2(120, y - 18), new Vector2(400, 36));
+            // 영어 지명 줄(L-01b3)이 오른쪽 칸까지 넘어가지 않게 한 줄로 줄인다
+            v.textWrappingMode = TextWrappingModes.NoWrap;
+            v.enableAutoSizing = true; v.fontSizeMin = 14; v.fontSizeMax = 28;
             y -= 48;
         }
 
@@ -293,9 +298,12 @@ namespace BloodRain.Presentation.Meta
         {
             var n = Text(col, name, 21, FontStyles.Normal, Ink);
             n.alignment = TextAlignmentOptions.Left;
-            Place(n.rectTransform, new Vector2(0.5f, 1f), new Vector2(-230, y - 16), new Vector2(180, 30));
+            Place(n.rectTransform, new Vector2(0.5f, 1f), new Vector2(-220, y - 16), new Vector2(230, 30));
+            // 영어 무공 이름(Azure Sky Sword Qi 등)이 막대를 덮지 않게(L-01b3): 이름 칸을 넓히고 막대를 줄이고 한 줄로 줄인다
+            n.textWrappingMode = TextWrappingModes.NoWrap;
+            n.enableAutoSizing = true; n.fontSizeMin = 13; n.fontSizeMax = 21;
             var back = Panel(col, new Color(Ink.r, Ink.g, Ink.b, 0.12f));
-            Place(back, new Vector2(0.5f, 1f), new Vector2(60, y - 16), new Vector2(380, 14));
+            Place(back, new Vector2(0.5f, 1f), new Vector2(80, y - 16), new Vector2(340, 14));
             var fill = Panel(back, Crimson);
             fill.anchorMin = new Vector2(0, 0); fill.anchorMax = new Vector2(share, 1); fill.offsetMin = fill.offsetMax = Vector2.zero;
             var p = Text(col, $"{Mathf.RoundToInt(share * 100)}%", 20, FontStyles.Normal, Ink);
