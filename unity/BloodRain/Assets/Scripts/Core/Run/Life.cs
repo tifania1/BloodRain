@@ -276,7 +276,7 @@ namespace BloodRain.Core.Run
 
         /// <summary>서장: 장삼을 쓰러뜨렸다. 진소운의 몸이 다해 생이 끝난다(정산 기록). 혼에 옮기는 일은 부른 쪽이 Soul.EndLife 로.
         /// 그 뒤 Prologue.CurrentCut 컷을 NextCut 으로 넘기고, 침방에서 Soul.OpenRebirth(첫 환혼 셋) → Prologue.ChooseFirst.</summary>
-        public LifeRecord KillPrologueBoss(int leftoverSilver = 0)
+        public LifeRecord KillPrologueBoss(int? leftoverSilver = null)
         {
             var p = Prologue ?? throw new InvalidOperationException("서장에서만 씁니다");
             p.BossKilled();
@@ -352,7 +352,7 @@ namespace BloodRain.Core.Run
         /// <summary>싸우던 땅의 주인을 쓰러뜨렸다. 종장(봉마곡)이면 봉인으로 생이 끝난다.
         /// 보상(첫 처치·봉인석·문파·윤회의 기·혈정)은 혼 장부(LifeLog.KillBoss) 값으로 맞춘다. 혈월 천하 배율도 거기서 붙는다.
         /// 봉인석이 늘어 새로 깨어난 땅(일곱째면 봉마곡)은 kill.Woken.</summary>
-        public BossKill DefeatBoss(int leftoverSilverIfFinal = 0)
+        public BossKill DefeatBoss(int? leftoverSilverIfFinal = null)
         {
             var kill = Bosses.Defeat();
             Director.BossFight = false;
@@ -384,15 +384,40 @@ namespace BloodRain.Core.Run
 
         static float StartChargeBonus(Soul soul, RebirthBody body) => StartBonus(soul, body)[StatKind.UltimateCharge];
 
-        /// <summary>생이 끝났다(쓰러짐·좌화·봉인). 정산 기록을 만든다. 혼에 옮기는 일은 부른 쪽이 Soul.EndLife 로.</summary>
-        public LifeRecord End(string way, int leftoverSilver)
+        /// <summary>은자 지갑. 레벨업 행낭·잡몹 주머니·등롱·보갑에서 주운 은자가 GainSilver 로 들어오고 보부상(7장)에서 SpendSilver 로 나간다.
+        /// 생이 끝날 때 남은 은자를 따로 주지 않으면 이 값이 정산의 '남은 은자'가 된다(10장 윤회의 기).</summary>
+        public int Silver { get; private set; }
+
+        /// <summary>은자를 주웠다. 혈월 천하면 보상 배율(LifeLog.RewardMultiplier)을 곱해 반올림한다. 실제로 들어온 양을 돌려준다.</summary>
+        public int GainSilver(int amount)
+        {
+            if (Record != null) throw new InvalidOperationException("끝난 생입니다");
+            if (amount <= 0) return 0;
+            int got = (int)Math.Round(amount * (double)Log.RewardMultiplier, MidpointRounding.AwayFromZero);
+            Silver += got;
+            return got;
+        }
+
+        /// <summary>은자를 쓴다. 모자라면 쓰지 않고 false.</summary>
+        public bool SpendSilver(int amount)
+        {
+            if (Record != null) throw new InvalidOperationException("끝난 생입니다");
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
+            if (amount > Silver) return false;
+            Silver -= amount;
+            return true;
+        }
+
+        /// <summary>생이 끝났다(쓰러짐·좌화·봉인). 정산 기록을 만든다. 혼에 옮기는 일은 부른 쪽이 Soul.EndLife 로.
+        /// leftoverSilver 를 안 주면 지갑(Silver)에 남은 은자로 정산한다.</summary>
+        public LifeRecord End(string way, int? leftoverSilver = null)
         {
             if (Record != null) throw new InvalidOperationException("이미 끝난 생입니다");
             if (!_data.Cheonha.LifeEnd.Ways.Contains(way)) throw new ArgumentException($"모르는 생의 끝입니다: {way}");
             // 서장은 장삼을 쓰러뜨려야(KillPrologueBoss) 끝난다. 그 전에 좌화·그만두기를 고르면 RestartPrologue 로 처음부터.
             if (Prologue != null && !Prologue.FightOver)
                 throw new InvalidOperationException("서장은 장삼을 쓰러뜨려야 끝납니다. 그 전에 그만두면 RestartPrologue 로 처음부터");
-            Record = Log.Finish(way, leftoverSilver);
+            Record = Log.Finish(way, leftoverSilver ?? Silver);
             return Record;
         }
     }
