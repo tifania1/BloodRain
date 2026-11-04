@@ -177,7 +177,7 @@ namespace BloodRain.Core.Data
         public string Unlock = "start";
         /// <summary>마교 몸의 성장 '혈공'(5장). 다른 문파는 null.</summary>
         public BloodArtDef? BloodArt;
-        /// <summary>고유 능력의 숫자(5장 '한눈에 보기' 고유 능력 칸). 아직 숫자를 옮기지 않은 문파(화산·곤륜·마교)는 null.</summary>
+        /// <summary>고유 능력의 숫자(5장 '한눈에 보기' 고유 능력 칸). 없으면 null(아무 효과 없음).</summary>
         public SectTraitDef? TraitEffect;
 
         public string? UnlockBossRegion => UnlockToken.BossRegion(Unlock);
@@ -202,6 +202,11 @@ namespace BloodRain.Core.Data
         public bool IgnoresWater;
         /// <summary>태극(조화) 보너스(쾌속 +10%·오의 충전 +25%)에 곱하는 수(무당 2). 기본 1.</summary>
         public float HarmonyBonusMultiplier = 1f;
+        /// <summary>몸 가까이(nearEnemySlowRadius m 안) 적의 이동속도를 이만큼 깎는다(곤륜 설한기 0.1).</summary>
+        public float NearEnemySlow;
+        public float NearEnemySlowRadius;
+        /// <summary>기혈 회복 전부(회복 능력치·음식·흡혈·영약)에 곱하는 수(마교 마인의 피 0.5). 기본 1.</summary>
+        public float HealingMultiplier = 1f;
     }
 
     /// <summary>혈공(기획서 5장 '마교 몸의 성장').</summary>

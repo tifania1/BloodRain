@@ -6,7 +6,10 @@
 //   당가 만독불침: 독 피해 무효(PoisonFogGimmick.HealthLoss 의 poisonImmune), 중독된 적에게 피해 +20%(DamageMultiplier).
 //   수로채 수적의 감: 움직이는 동안 회피 15%(Evade), 물 지형 감속 무시(WaterGimmick.MoveSpeedMultiplier 의 ignoresWater).
 //   무당 음양조화: 태극 구간 ±40 은 sects[].harmonyRange 가 맡고(Loadout 이 게이지에 넣는다), 조화 보너스 2배는 HarmonyBonusMultiplier.
-// 서장 진소운 몸과 아직 숫자를 옮기지 않은 문파는 None(아무것도 안 함)이다.
+//   화산 매화의 눈: 치명 확률 +10%(CritChance).
+//   곤륜 설한기: 3m 안 적이 10% 느려짐(EnemySpeedMultiplier). 거리는 세계 m 이고, 축척을 따르게 하려면 부른 쪽이 scale 을 넘긴다.
+//   마교 마인의 피: 회복 효과 -50%(HealingMultiplier, 흡혈도 포함). '기혈이 낮을수록 공격속도'는 곡선이 기획서에 없어 아직 없다(backlog R-04c).
+// 서장 진소운 몸은 None(아무것도 안 함)이다.
 using System;
 using System.Collections.Generic;
 using BloodRain.Core.Data;
@@ -31,6 +34,13 @@ namespace BloodRain.Core.Build
         public bool IgnoresWater => _def.IgnoresWater;
         /// <summary>조화 보너스에 곱하는 수(무당 2, 나머지 1).</summary>
         public float HarmonyBonusMultiplier => _def.HarmonyBonusMultiplier;
+
+        /// <summary>기혈 회복 전부에 곱하는 수(마교 0.5, 나머지 1). 회복 능력치·음식·흡혈·영약 모두.</summary>
+        public float HealingMultiplier => _def.HealingMultiplier;
+
+        /// <summary>몸에서 distance(세계 m) 떨어진 적의 이동속도 배율. 곤륜이면 반경 3m(x scale) 안에서 0.9, 나머지는 1.</summary>
+        public float EnemySpeedMultiplier(float distance, float scale = 1f) =>
+            _def.NearEnemySlow > 0f && distance <= _def.NearEnemySlowRadius * scale ? 1f - _def.NearEnemySlow : 1f;
 
         /// <summary>지금 몸에 붙는 능력치. healthRatio 는 지금 기혈 / 최대 기혈(0~1), moving 은 이번 프레임에 움직였는가.</summary>
         public StatBonus Bonus(float healthRatio = 1f, bool moving = false)

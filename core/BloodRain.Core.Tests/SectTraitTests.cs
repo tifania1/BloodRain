@@ -62,10 +62,30 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"조화 보너스 {wudang.TraitEffect!.HarmonyBonusMultiplier.ToString(Inv)}배", Cell("무당"));
         }
 
-        [Fact] public void M3_여섯_문파는_효과_칸이_있고_능력치_이름은_모두_읽힌다()
+        [Fact] public void 화산_곤륜_마교_칸의_숫자도_데이터와_같다()
         {
-            foreach (var id in new[] { "shaolin", "gaebang", "namgung", "tang", "waterfort", "wudang" })
-                Assert.NotNull(C.Sect(id).TraitEffect);
+            Assert.Contains($"치명 확률 +{Pct(C.Sect("huashan").TraitEffect!.Stats["CritChance"])}", Cell("화산"));
+            var kunlun = C.Sect("kunlun").TraitEffect!;
+            Assert.Contains($"{kunlun.NearEnemySlowRadius.ToString(Inv)}m 안 적이 {Pct(kunlun.NearEnemySlow)} 느려짐", Cell("곤륜"));
+            Assert.Contains($"회복 효과 -{Pct(1f - C.Sect("demonic").TraitEffect!.HealingMultiplier)}", Cell("마교"));
+        }
+
+        [Fact] public void 화산은_치명_10퍼센트_곤륜은_3m_안_적_10퍼센트_감속_마교는_회복_절반()
+        {
+            Assert.Equal(0.10f, Sheet("huashan").Bonus[StatKind.CritChance], 3);
+            var kunlun = Trait("kunlun");
+            Assert.Equal(0.9f, kunlun.EnemySpeedMultiplier(2.9f), 3);
+            Assert.Equal(0.9f, kunlun.EnemySpeedMultiplier(3f), 3);
+            Assert.Equal(1f, kunlun.EnemySpeedMultiplier(3.1f), 3);
+            Assert.Equal(0.9f, kunlun.EnemySpeedMultiplier(6f, scale: 2.25f), 3);
+            Assert.Equal(1f, Trait("shaolin").EnemySpeedMultiplier(0f), 3);
+            Assert.Equal(0.5f, Trait("demonic").HealingMultiplier, 3);
+            Assert.Equal(1f, Trait("gaebang").HealingMultiplier, 3);
+        }
+
+        [Fact] public void 아홉_문파_모두_효과_칸이_있고_능력치_이름은_모두_읽힌다()
+        {
+            foreach (var s in C.Sects) Assert.NotNull(s.TraitEffect);
             foreach (var s in C.Sects.Where(s => s.TraitEffect != null))
             {
                 var t = s.TraitEffect!;
@@ -187,7 +207,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0.15f, NewLife("waterfort").CurrentStats(moving: true).Evade, 3);
         }
 
-        [Fact] public void 서장_몸과_숫자가_없는_문파는_아무것도_하지_않는다()
+        [Fact] public void 서장_몸은_아무것도_하지_않는다()
         {
             var prologue = Rebirth.Prologue(_d);
             Assert.Same(SectTrait.None, prologue.SectTrait);
@@ -196,6 +216,8 @@ namespace BloodRain.Core.Tests
             Assert.False(SectTrait.None.PoisonImmune);
             Assert.False(SectTrait.None.IgnoresWater);
             Assert.Equal(1f, SectTrait.None.HarmonyBonusMultiplier);
+            Assert.Equal(1f, SectTrait.None.HealingMultiplier);
+            Assert.Equal(1f, SectTrait.None.EnemySpeedMultiplier(0f));
         }
     }
 }
