@@ -88,6 +88,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
 
 /* 환생 후보 카드 */
 .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.cards.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .card { display: grid; gap: 5px; align-content: start; justify-items: center; padding: 14px 10px 12px; border: 2px solid var(--ink); border-radius: 3px; background: linear-gradient(var(--paper-deep), var(--paper) 40%); cursor: pointer; color: var(--ink); text-align: center; }
 .card .seal { width: 56px; height: 56px; display: grid; place-items: center; background: var(--crimson); color: #F3EAD7; font: 400 24px/1 var(--seal); border-radius: 6px; transform: rotate(-5deg); box-shadow: inset 0 0 0 3px var(--crimson), inset 0 0 0 5px #F3EAD7; }
 .card h3 { margin: 4px 0 0; font-size: 17px; font-weight: 900; }
@@ -105,7 +106,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
 .card.dim .seal { filter: grayscale(.7); opacity: .7; }
 .card .seal.dem { background: #3A1E2A; box-shadow: inset 0 0 0 3px #3A1E2A, inset 0 0 0 5px #C9A0A8; }
 @media (max-width: 640px) {
-  .cards { grid-template-columns: 1fr; }
+  .cards, .cards.four { grid-template-columns: 1fr; }
   .card { grid-template-columns: 52px minmax(0, 1fr); column-gap: 12px; justify-items: start; text-align: left; padding: 12px 12px 10px; }
   .card .seal { grid-row: 1 / span 4; width: 48px; height: 48px; font-size: 20px; align-self: start; margin-top: 2px; }
   .card h3 { margin: 0; }
@@ -170,7 +171,10 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
       <div class="hanja">輪迴</div>
       <div class="subtle" id="rbsub">다음 생을 고르시오</div>
       <div class="cards" id="rbcards"></div>
+      <div class="row"><button class="b small" id="reroll" type="button" hidden>다시 고르기</button></div>
       <div class="subtle" id="qileft"></div>
+      <h4>침방 · 환혼 강화</h4>
+      <div class="meta" id="upg"></div>
       <h4>연무장</h4>
       <div class="meta" id="meta"></div>
       <div class="row"><button class="b small fasttg" type="button" aria-pressed="false"></button></div>
@@ -290,9 +294,11 @@ function spawnTarget(min) {   // 분 → 화면 위 목표 수. 생성 중지 �
   for (let i = 1; i < SPT_PTS.length; i++) if (min <= SPT_PTS[i][0]) { const [m0, v0] = SPT_PTS[i - 1], [m1, v1] = SPT_PTS[i]; return v0 + (v1 - v0) * (min - m0) / (m1 - m0); }
   return SPT_PTS[SPT_PTS.length - 1][1];
 }
-// 연무장에서 이 놀이판이 찍게 하는 항목(balance.json training 의 일부)
-const TRAIN = ['Might', 'MaxHealth', 'MoveSpeed', 'Recovery', 'Magnet'].map(k => BAL.training.items.find(i => i.stat === k)).filter(Boolean);
-const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복' };
+// 연무장에서 이 놀이판이 찍게 하는 항목(RM-09): balance.json training 가운데 몸 만들기(bodyOf)가 실제로 읽는 능력치 전부, 데이터 순서대로.
+// 투사체 속도·지속·투사체 수·기연·탐욕·절기 충전·부활·카드 다시 굴리기/봉인/넘기기는 이 시안에 받을 곳이 없어 뺀다
+const TRAIN_STATS = new Set(['Might', 'MaxHealth', 'Armor', 'Recovery', 'CooldownReduction', 'Area', 'MoveSpeed', 'Magnet', 'Growth', 'DashCharges']);
+const TRAIN = BAL.training.items.filter(i => TRAIN_STATS.has(i.stat));
+const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복', Area: '범위' };
 const FLAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor']);
 // 이 놀이판 능력치에 실제로 들어가는 것. 나머지(기연·탐욕)는 카드에 흐리게만 보인다. 음양 시작은 게이지 시작값으로 들어간다
 const APPLIED = new Set(['Might', 'MaxHealth', 'MoveSpeed', 'Recovery', 'Magnet', 'CooldownReduction', 'Growth', 'DashCharges', 'Armor', 'FoodHeal']);
@@ -352,7 +358,7 @@ function fmtStat(k, v) {
   const sign = v > 0 ? '+' : v < 0 ? '−' : '', a = Math.abs(v);
   if (k === 'Recovery') return `${STAT_KO[k]} 초당 ${sign}${+a.toFixed(2)}`;
   if (FLAT.has(k)) return `${STAT_KO[k] || k} ${sign}${a}`;
-  return `${STAT_KO[k] || k} ${sign}${Math.round(a * 100)}%`;
+  return `${STAT_KO[k] || k} ${sign}${+(a * 100).toFixed(1)}%`;   // 쾌속 2.5% 같은 값이 3% 로 보이지 않게
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // 조사: 마지막 글자의 받침을 보고 고른다(ㄹ 받침은 '로')
@@ -369,12 +375,13 @@ const store = {
   del(k) { try { localStorage.removeItem('cheonha_' + k); } catch (e) { /* 지우지 못해도 아래에서 새 기록으로 덮는다 */ } },
 };
 const START_SECTS = SECTS.filter(s => s.unlock === 'start').map(s => s.id);
-function freshMeta() { return { v: 2, qi: 0, train: {}, spent: 0, lives: 0, best: 0, unlocked: START_SECTS.slice(), visited: [], reached: [], bossKills: {}, stones: [] }; }
+function freshMeta() { return { v: 2, qi: 0, train: {}, spent: 0, upg: {}, lives: 0, best: 0, unlocked: START_SECTS.slice(), visited: [], reached: [], bossKills: {}, stones: [] }; }
 function loadMeta() {
   const m = Object.assign(freshMeta(), store.get('meta2') || {});
   for (const k of ['unlocked', 'visited', 'reached', 'stones']) if (!Array.isArray(m[k])) m[k] = k === 'unlocked' ? START_SECTS.slice() : [];
   if (typeof m.train !== 'object' || !m.train) m.train = {};
   if (typeof m.bossKills !== 'object' || !m.bossKills) m.bossKills = {};
+  if (typeof m.upg !== 'object' || !m.upg) m.upg = {};
   for (const id of START_SECTS) if (!m.unlocked.includes(id)) m.unlocked.push(id);
   return m;
 }
@@ -391,10 +398,22 @@ function rollTraits(rnd = Math.random) {
   return picks;
 }
 const sameSet = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+// 침방 환혼 강화(RM-09, cheonha.json rebirth.upgrades). Core Soul.UpgradeCost·CandidateCount·RerollsPerRebirth 와 같다:
+// 값 = 기본가(costPerLevel 이면 × 다음 레벨), 효과 'candidates+1'·'rerolls+1' 을 레벨만큼 더한다. 연무장과 달리 돌려받지 않는다
+const UPGRADES = RB.upgrades || [];
+const upgLevel = id => meta.upg[id] || 0;
+function upgCost(u) { const lv = upgLevel(u.id); return lv >= u.maxLevel ? null : u.costPerLevel ? u.baseCost * (lv + 1) : u.baseCost; }
+function upgEffect(key) {
+  let sum = 0;
+  for (const u of UPGRADES) { const m = /^([a-z]+)\+(\d+)$/.exec(u.effect); if (m && m[1] === key) sum += +m[2] * upgLevel(u.id); }
+  return sum;
+}
+const candidateCount = () => RB.candidates + upgEffect('candidates');
+const rerollsPerRebirth = () => upgEffect('rerolls');
 function drawCandidates(rnd = Math.random) {
   if (meta.lives === 0) return RB.firstRebirth.map(id => ({ sect: id, traits: RB.firstRebirthTraits ? rollTraits(rnd) : [] }));
   const order = shuffle(meta.unlocked.filter(id => SECT[id]), rnd), out = [];
-  for (let i = 0; i < RB.candidates; i++) {
+  for (let i = 0; i < candidateCount(); i++) {
     // 열린 문파가 모자라면 같은 문파가 성질만 달리해 나온다
     const sect = i < order.length ? order[i] : order[Math.floor(rnd() * order.length)];
     let traits = rollTraits(rnd);
@@ -1933,11 +1952,39 @@ function traitLine(id) {
   if (t.rebirthQi) parts.push(`윤회의 기 +${Math.round(t.rebirthQi * 100)}%`);
   return `<p class="tr"><b>${esc(t.nameKo)}</b>${parts.join(' · ')}</p>`;
 }
+let rerollsLeft = 0;
+const NUM_KO = ['', '하나', '둘', '셋', '넷', '다섯'];
 function openRebirth() {
   show('rebirth'); running = false; paused = false;
+  rerollsLeft = meta.lives ? rerollsPerRebirth() : 0;   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
   candidates = drawCandidates();
-  $('rbsub').textContent = meta.lives ? `${meta.lives + 1}번째 생 · 목 노인이 그날 밤 숨진 제자 셋을 보여 준다` : `첫 환혼 · ${RB.firstRebirth.map(id => SECT[id].nameKo).join('·')} 가운데 하나, 타고난 성질 없이`;
-  const box = $('rbcards'); box.innerHTML = '';
+  renderCandidates();
+  renderMeta();
+  $('rebirth').scrollTop = 0;
+}
+// 강화를 산다. 이 시안은 침방이 후보 화면에 붙어 있어 산 것이 이 화면에서 바로 듣는다(넷째 몸은 후보를 하나 더 뽑아 붙이고,
+// 다시 고르기는 이번 환혼 횟수에 하나 더). Core 는 후보를 뽑을 때 수를 정하니, Unity 는 침방을 환혼 앞에 둔다
+function buyUpgrade(id) {
+  const u = UPGRADES.find(x => x.id === id), c = u && upgCost(u);
+  if (c == null || meta.qi < c) return false;
+  meta.qi -= c; meta.upg[id] = upgLevel(id) + 1; saveMeta();
+  if (overlay === 'rebirth' && meta.lives) {
+    if (u.effect.startsWith('rerolls')) rerollsLeft++;
+    if (u.effect.startsWith('candidates')) {
+      const more = drawCandidates(), pick = more.find(m => !candidates.some(c2 => c2.sect === m.sect)) || more[0];
+      candidates = candidates.concat([pick]).slice(0, candidateCount());
+    }
+  }
+  if (overlay === 'rebirth') { renderCandidates(); renderMeta(); }
+  return true;
+}
+function rerollCandidates() {
+  if (overlay !== 'rebirth' || rerollsLeft <= 0 || !meta.lives) return;
+  rerollsLeft--; candidates = drawCandidates(); renderCandidates(); renderMeta();
+}
+function renderCandidates() {
+  $('rbsub').textContent = meta.lives ? `${meta.lives + 1}번째 생 · 목 노인이 그날 밤 숨진 제자 ${NUM_KO[candidates.length] || candidates.length}을 보여 준다` : `첫 환혼 · ${RB.firstRebirth.map(id => SECT[id].nameKo).join('·')} 가운데 하나, 타고난 성질 없이`;
+  const box = $('rbcards'); box.innerHTML = ''; box.classList.toggle('four', candidates.length === 4);
   candidates.forEach((c, i) => {
     const s = SECT[c.sect], r = REG[s.region], b = document.createElement('button');
     b.type = 'button'; b.className = 'card';
@@ -1949,11 +1996,22 @@ function openRebirth() {
       + `<div class="traits">${traits}</div>`;
     b.onclick = () => beginLife(i); box.appendChild(b);
   });
-  renderMeta();
-  $('rebirth').scrollTop = 0;
+  const rr = $('reroll'), have = rerollsPerRebirth();
+  rr.hidden = !meta.lives || !have; rr.disabled = rerollsLeft <= 0;
+  rr.innerHTML = `다시 고르기<small>남은 ${rerollsLeft}/${have} · <kbd>R</kbd></small>`;
 }
 function renderMeta() {
   $('qileft').textContent = `윤회의 기 ${fmtN(meta.qi)} · 봉인석 ${meta.stones.length}/${STONES_ALL} · 열린 문파 ${meta.unlocked.length}/${SECTS.length}`;
+  // 침방: 환혼 강화
+  const ub = $('upg'); ub.innerHTML = '';
+  for (const u of UPGRADES) {
+    const lv = upgLevel(u.id), cost = upgCost(u), b = document.createElement('button'); b.type = 'button';
+    b.disabled = cost == null || meta.qi < cost;
+    const what = u.effect.startsWith('candidates') ? '환생 후보 +1' : u.effect.startsWith('rerolls') ? '환혼마다 후보 다시 뽑기 +1' : u.effect;
+    b.innerHTML = `<b>${esc(u.nameKo)} ${lv}/${u.maxLevel}</b><span>${esc(what)} · ${cost == null ? '다 찍음' : '기 ' + fmtN(cost)}</span>`;
+    b.onclick = () => buyUpgrade(u.id);
+    ub.appendChild(b);
+  }
   const box = $('meta'); box.innerHTML = '';
   for (const it of TRAIN) {
     const lv = meta.train[it.stat] || 0, cost = trainCost(it), b = document.createElement('button'); b.type = 'button';
@@ -2052,7 +2110,7 @@ function frame(ts) {
 window.addEventListener('keydown', e => {
   input.keys.add(e.code);
   if (overlay === 'title' && e.code === 'Enter') { openRebirth(); return; }
-  if (overlay === 'rebirth') { const n = parseInt(e.key, 10); if (n >= 1 && n <= candidates.length) beginLife(n - 1); return; }
+  if (overlay === 'rebirth') { if (e.code === 'KeyR') { rerollCandidates(); return; } const n = parseInt(e.key, 10); if (n >= 1 && n <= candidates.length) beginLife(n - 1); return; }
   if (overlay === 'dead' && e.code === 'Enter') { openRebirth(); return; }
   if (overlay === 'levelup') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseCard(n - 1); return; }
   if (overlay === 'pause') { if (e.code === 'Escape' || e.code === 'Enter') setPaused(false); return; }
@@ -2089,6 +2147,7 @@ function showBest() {
   $('best').textContent = meta.lives ? `윤회 ${meta.lives}번 · 가장 높이 오른 경지 ${REALMS[meta.best].nameKo} · 남은 기 ${fmtN(meta.qi)} · 봉인석 ${meta.stones.length}/${STONES_ALL} · 열린 문파 ${meta.unlocked.length}/${SECTS.length}` : '';
   $('wipe').hidden = !meta.lives;
 }
+$('reroll').addEventListener('click', rerollCandidates);
 $('wipe').addEventListener('click', () => { if (!window.confirm('윤회 기록(기·연무장·해금·봉인석)을 모두 지울까?')) return; store.del('meta2'); meta = freshMeta(); showBest(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && running) setPaused(true); });
 
@@ -2131,6 +2190,9 @@ window.__ch = {
   addQi(n) { meta.qi += n; saveMeta(); if (overlay === 'rebirth') renderMeta(); },
   setLives(n) { meta.lives = n; saveMeta(); },
   reset() { store.del('meta2'); meta = freshMeta(); showBest(); },
+  // 침방(RM-09): upg() 강화 레벨, buyUpg(id) 기가 있으면 산다, reroll() 후보 다시 뽑기, rerollsLeft()
+  upg: () => Object.assign({}, meta.upg), buyUpg: id => buyUpgrade(id),
+  reroll: () => rerollCandidates(), rerollsLeft: () => rerollsLeft, train: () => TRAIN.map(t => t.stat),
   rebirth: () => openRebirth(), candidates: () => candidates,
   draw(n, rnd) {   // 후보 추첨 n번을 돌려 성질 수 분포·안 맞는 쌍·문파 겹침을 센다
     const count = [0, 0, 0], bad = { clash: 0, dupSect: 0, locked: 0 };

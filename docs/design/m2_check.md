@@ -11,8 +11,8 @@
 | 원각 | 6장 땅의 주인 패턴 수치 | bosspatterns.json `wongak` | `BossPatterns`·`BossAwakening`(기혈 곡선 T-40) | 둘 다 패턴 다 나옴 | 보스 패턴 러너 |
 | 문파 3 | 5·21장 | cheonha.json sects 소림·개방·남궁(`unlock: start`), 시작 무공, 대표 인물 | `Rebirth`(후보·몸·성별), 진전 `Synergy` | 천하 시안: 몸 기혈·걸음만, 무공은 시안 셋 | TU-11 후보 카드 |
 | 축척 전환 | 7장 | cheonha.json `realmScale`·`breakthrough`·`cluster`·`crush` | `Scale`·`Breakthrough` | 천하 시안 그대로 | TU-01 축척 카메라 |
-| 침방 | 10장 환혼 강화, 21장 | cheonha.json `rebirth`·환혼 강화 | `Soul.TryBuyUpgrade`·`CandidateCount`·`RerollsPerRebirth` | 천하 시안: 넷째 몸·다시 고르기 없음 → RM-09 | TU-11·12 |
-| 연무장 | 10장 표 20항목 | balance.json `training` 20 | `Stats`·`Soul.TryBuyTraining`·`RefundTraining` | 천하 시안 다섯 항목 → RM-09 | TU-14 |
+| 침방 | 10장 환혼 강화, 21장 | cheonha.json `rebirth`·환혼 강화 | `Soul.TryBuyUpgrade`·`CandidateCount`·`RerollsPerRebirth` | 천하 시안: 넷째 몸·다시 고르기(RM-09) | TU-11·12 |
+| 연무장 | 10장 표 20항목 | balance.json `training` 20 | `Stats`·`Soul.TryBuyTraining`·`RefundTraining` | 천하 시안: 몸에 닿는 열 항목(RM-09) | TU-14 |
 | 정산 화면 | 10장 윤회의 기, 12장 정산 줄 | cheonha.json `rebirthQi` | `RebirthQi`(줄별 내역), `Soul.EndLife` | 천하 시안: 은자 줄 없음(은자 자체가 없음) | TU-13. 생존 시간·처치·무공별 피해·혈정은 전투 쪽 `SettlementStats` |
 
 ## 걸리는 것
