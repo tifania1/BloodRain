@@ -472,6 +472,70 @@ namespace BloodRain.Core.Combat
         /// <summary>혈월이 켜져 있으면 모든 적(보스 포함)의 이동속도 배율, 아니면 1.</summary>
         public static float EmpowerSpeed(BossPatternDef p, bool active) => active && p.EnemySpeedMultiplier > 0f ? p.EnemySpeedMultiplier : 1f;
 
+        // ---- 종장 단계 판정(R4-03: 혈의·혈해·진혈마). 자리는 가운데(플레이어나 싸움터 섬) 기준 (dx, dy) ----
+
+        /// <summary>맥 짚는 손(closing_ring) 고리 띠(폭 Width)에 닿나. activeSeconds 는 판정 뒤 흐른 시간, 가운데는 예고 때 플레이어 자리.
+        /// 고리가 MinRadius 에 닿은 뒤(ClosingSeconds)에는 고리 안쪽 전체가 맞는다(안에 남으면 끝에 맞는다).</summary>
+        public static bool InClosingRing(BossPatternDef p, float activeSeconds, float dx, float dy, float targetRadius = 0f)
+        {
+            float d = (float)Math.Sqrt(dx * dx + dy * dy);
+            float half = p.Width * 0.5f;
+            if (activeSeconds >= ClosingSeconds(p)) return d <= p.MinRadius + half + targetRadius;
+            float r = ClosingRadius(p, activeSeconds);
+            return Math.Abs(d - r) <= half + targetRadius;
+        }
+
+        /// <summary>역병 구름(drifting_clouds) Count 곳이 피는 자리(플레이어 기준, 반경 Scatter 원 안).</summary>
+        public static (float x, float y)[] CloudOffsets(BossPatternDef p, Random rng)
+        {
+            var list = new (float x, float y)[Math.Max(0, p.Count)];
+            for (int i = 0; i < list.Length; i++) list[i] = DiscOffset(rng, p.Scatter);
+            return list;
+        }
+
+        /// <summary>구름 하나를 dt 동안 플레이어 쪽으로 옮긴다. (dx, dy) 는 구름 → 플레이어. 돌려주는 값은 구름이 움직인 거리(벡터).
+        /// 빠르기는 ProjectileSpeed(기본 이동속도 100 기준)를 m/s 로 바꾼 값이고, 플레이어 자리를 지나치지 않는다.</summary>
+        public static (float x, float y) CloudDrift(BossPatternDef p, float dx, float dy, float dt, float moveBase)
+        {
+            float d = (float)Math.Sqrt(dx * dx + dy * dy);
+            if (dt <= 0f || d <= 1e-4f) return (0f, 0f);
+            float step = Math.Min(d, MetersPerSecond(p.ProjectileSpeed, moveBase) * dt);
+            return (dx / d * step, dy / d * step);
+        }
+
+        /// <summary>구름이 판정 뒤 sinceResolve 초에 아직 떠 있나(LeaveSeconds 뒤 흩어진다).</summary>
+        public static bool CloudAlive(BossPatternDef p, float sinceResolve) => sinceResolve >= 0f && sinceResolve < p.LeaveSeconds;
+
+        /// <summary>차오르는 피바다(shrinking_islands) 섬의 지금 반경. Radius 에서 ShrinkPerSecond 로 MinRadius 까지.</summary>
+        public static float IslandRadius(BossPatternDef p, float activeSeconds) => ClosingRadius(p, activeSeconds);
+
+        /// <summary>섬이 MinRadius 에 닿을 때까지(초). 약 90초.</summary>
+        public static float IslandSeconds(BossPatternDef p) => ClosingSeconds(p);
+
+        /// <summary>섬 위인가: 섬 가운데들(싸움터 기준 자리, 부르는 쪽이 정한다) 가운데 하나라도 반경 안이면 섬 위.
+        /// (x, y) 는 같은 기준의 서 있는 자리. 몸 가운데가 섬 안이어야 한다(걸치기만 하면 피 위).</summary>
+        public static bool OnIsland(BossPatternDef p, float activeSeconds, IReadOnlyList<(float x, float y)> islands, float x, float y)
+        {
+            float r = IslandRadius(p, activeSeconds);
+            foreach (var c in islands)
+            {
+                float dx = x - c.x, dy = y - c.y;
+                if (dx * dx + dy * dy <= r * r) return true;
+            }
+            return false;
+        }
+
+        /// <summary>혈우 탄막(rain_drops) 한 파의 핏방울 Count 곳(그 파를 잡을 때 플레이어 기준, 반경 Scatter 원 안).</summary>
+        public static (float x, float y)[] RainDropOffsets(BossPatternDef p, Random rng)
+        {
+            var list = new (float x, float y)[Math.Max(0, p.Count)];
+            for (int i = 0; i < list.Length; i++) list[i] = DiscOffset(rng, p.Scatter);
+            return list;
+        }
+
+        /// <summary>혈우 탄막 wave 번째 파(0부터)가 시전 시작 뒤 몇 초에 그림자를 드리우나. 떨어지는 것은 그 뒤 TelegraphSeconds.</summary>
+        public static float RainWaveSeconds(BossPatternDef p, int wave) => wave * p.WaveIntervalSeconds;
+
         /// <summary>반경 r 원 안에서 고르게 한 점.</summary>
         static (float x, float y) DiscOffset(Random rng, float r)
         {

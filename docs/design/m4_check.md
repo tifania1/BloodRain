@@ -36,7 +36,7 @@
 |---|---|---|---|---|---|---|
 | 혈영 일곱 → 세 단계 | 6장 '종장 보스' | bosspatterns.json final(`shadowHealthRatio` 0.4, shadows 일곱, stages 셋), enemies.json `danmok_hyeon` phases(`FinalStagesTests.단계_셋의_기혈이_enemies_json과_기획서와_같다`) | `Combat/FinalFight.cs`(차례·기혈·단계 시간표·진엔딩 컷 `CheckTrueEnding`, `FinalFightTests`) | 없음 | 봉인석 일곱이면 봉마곡이 열리고 단목현 하나와 싸움(혈영·단계 없음) | 줄 없음 |
 | 단계 패턴 수치 | 6장 '단계 패턴 수치' | final stages[].set(`FinalStagesTests.단계_패턴_표가_기획서와_같다`) | 시간표는 `BossPatterns`. 피바다 섬 크기는 테스트(`피바다_섬은_90초쯤에_바닥에_닿는다`)만 셈 | - | - | - |
-| 단계 모양 판정 | 같은 표(맥 짚는 손 고리 9m→1.5m 초당 3.75m·폭 1.2m, 역병 구름 셋 10m 안·속도 25·12초, 섬 다섯 7m→2.5m 약 90초, 혈우 탄막 12m 안 14개 × 5파·0.6초, 혈영 솟음 10%·20초) | 칸은 다 있음(`closing_ring`·`drifting_clouds`·`shrinking_islands`·`rain_drops`·`summon_shadow`) | 고리 반경은 `ClosingRadius` 로 셈이 되고, 혈영 솟음 차례·기혈은 `FinalFight.RisingShadow`·`RisingShadowHealth`. 섬 자리·반경과 섬 위 판정, 구름 떠다님, 핏방울 자리는 없음 → R4-03 | - | - | - |
+| 단계 모양 판정 | 같은 표(맥 짚는 손 고리 9m→1.5m 초당 3.75m·폭 1.2m, 역병 구름 셋 10m 안·속도 25·12초, 섬 다섯 7m→2.5m 약 90초, 혈우 탄막 12m 안 14개 × 5파·0.6초, 혈영 솟음 10%·20초) | 칸은 다 있음(`closing_ring`·`drifting_clouds`·`shrinking_islands`·`rain_drops`·`summon_shadow`) | 고리 반경은 `ClosingRadius` 로 셈이 되고, 혈영 솟음 차례·기혈은 `FinalFight.RisingShadow`·`RisingShadowHealth`. R4-03(11-04): `InClosingRing`·`CloudDrift`·`IslandRadius`·`OnIsland`·`RainDropOffsets`(`FinalStageRulesTests`). 섬 자리만 싸움터 크기가 없어 부르는 쪽이 준다 | - | - | - |
 | 차오르는 피(기믹) | 7장 지역 표 '피가 차올라 안전 지대가 줄어든다', 수치 문단은 '아직 수치가 없습니다' | regions 봉마곡 `rising_blood`. 수치는 종장 혈해 `rising_blood_sea` 에 있음 | - | - | - | - |
 
 ## 엔딩 세 갈래·회귀·모드
@@ -54,7 +54,7 @@
 ## 걸리는 것
 
 - ~~**땅의 주인 셋의 모양 판정이 Core 에 없다.**~~ → 2026-11-04 R4-02 로 Core 에 넣음(웹 R4-02w, Unity R4-02U). 수치는 6장과 bosspatterns.json 에 다 있다. 꽃잎 나선 방향, 스물네 갈래 엇갈림, 빙분신 자리와 진짜 하나, 얼음 가시 차례 자리와 시각, 줄어드는 싸움터 반경(모닥불 곁 절반), 순간이동 네 자리, 혈월 배율. 당소혜·마천패·혈허진인 때(R-11)처럼 `Combat/BossPatterns.cs` 에 더하면 웹·Unity 가 같은 셈을 쓴다 → R4-02
-- **종장 단계 모양 판정이 덜 있다.** 피바다 섬 다섯의 자리와 반경, 섬 위에 서 있는지, 역병 구름 위치, 혈우 핏방울 자리. 수치는 6장 표에 있다 → R4-03
+- ~~**종장 단계 모양 판정이 덜 있다.**~~ → 2026-11-04 R4-03 로 Core 에 넣음(섬 자리는 R4-07). 피바다 섬 다섯의 자리와 반경, 섬 위에 서 있는지, 역병 구름 위치, 혈우 핏방울 자리. 수치는 6장 표에 있다 → R4-03
 - **엔딩을 고른 뒤가 없다.** `Soul.Endings` 는 고를 수 있는 목록만 준다. 봉인은 `Regress`, 계승은 혈마 모드 해금 기록, 진엔딩은 환혼·회귀를 닫는 기록이 필요하다. 진엔딩 조건 셋을 묶는 판정도 없고 의서 일곱 권은 데이터 칸이 없다 → R4-04. 목 노인 대화를 '끝까지' 본 것이 무엇인지는 대사 줄기가 없어 정하지 못한다(사람 결정 R4-08)
 - **모드 열림 조건이 데이터에 없다.** 일일 도전(봉인석 3개)·보스 연전(봉인 엔딩) → R4-05. 일일 도전 시드 규칙·리더보드는 Steam 몫이라 뺀다
 - **정예 아홉 패턴 수치가 없다.** 기획서가 '아직'이라 적었다. M3 아홉은 사람이 고른 R-01 이 '같은 차례 숭산 정예 기준'으로 정했다 → 사람 결정 R4-06
