@@ -192,6 +192,33 @@
 
 간체 사람 이름은 한자를 정하지 않은 채 옮기지 않는다. 그동안 간체 화면에는 한국어 로마자(Jin Sowoon)를 쓴다.
 
+## 대사(영어) — L-06 에서 정한 말 (2026-11-04)
+
+`dialogue.json` 을 옮기며 정한 것. 말투(목 노인 하게체, 운낭 해요체, 혜공 하십시오체)는 영어에선 낱말 고르기로만 살린다: 목 노인 짧고 무겁게, 운낭·마칠 가볍게, 혜공 정중하게(benefactor), 백야 끊어서.
+
+| 한국어 | 영어 | 쓰는 곳 |
+| --- | --- | --- |
+| 사제 / 사매(부를 때) | Junior Brother / Junior Sister | 혜공·운화·남궁현 마당 줄 |
+| 시주 | benefactor | 혜공 |
+| 법명 | dharma name | 혜공 |
+| 스승님 / 사부님 | Master | 혜공·운화·원각·혈허진인 |
+| 운낭 아주머니 | Madam Unnang | 혜공 |
+| 주인장 | the innkeeper | 마칠·하연 |
+| 고모 | Aunt | 당연화·당소혜 |
+| 본가 / 방계 | the main house / branch family(branch child) | 당가 |
+| 이놈 / 이 계집애(마칠) | the brat / the girl | 개방 몸 |
+| 점소이 | errand boy | 남궁현 |
+| 소가주 / 가주 | young master / clan head | 남궁 |
+| 목탁 | wooden fish | 원각 컷 |
+| 범종 | the great bell | 소림 |
+| 혈독 / 혈기 | blood poison / blood qi | 땅의 주인 컷 |
+| 고쳐라 | Heal him | 화산 검혼·혈허진인 컷 |
+| 성별을 모르는 '그 사람'(목 노인) | that one | 목 노인 |
+| 삼결 제자 | three-knot disciple | 개방 카드 |
+| 오대세가 | the Five Great Clans | 남궁 카드 |
+| 천마신교 | Heavenly Demon Cult | 마교 카드·혁련휘 컷 |
+| 정파 | the orthodox sects | 혁련휘 컷 |
+
 ## 번체(繁體) — 상점 글에 쓴 말 (ST-06, 2026-11-04)
 
 번체는 아직 게임 화면 언어가 아니고 상점 글(`docs/store/store_text.md`)에만 쓴다. 대만 표기를 따른다(OpenCC s2twp 로 바꾼 뒤 손으로 고침). 게임 화면 번체(`strings/zh-Hant.json`)를 만들 때도 이 표에서 시작한다.
