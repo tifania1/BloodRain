@@ -142,5 +142,38 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1f, BossPatterns.EmpowerSpeed(p, false));
             Assert.Contains($"모든 적의 피해 {Num(p.EnemyDamageMultiplier)}배, 이동속도 {Num(p.EnemySpeedMultiplier)}배", Gdd);
         }
+
+        // ---- 웹 천하 시안(R4-02w) ----
+
+        /// <summary>R4-02w: 웹 천하 시안이 모든 땅의 주인 패턴 모양을 쓰고, 이 절의 셈을 같은 식으로 옮겼다.</summary>
+        [Fact] public void 웹_천하_시안이_모든_땅의_주인_모양을_Core_와_같은_셈으로_쓴다()
+        {
+            var html = ReadRepoFile("web", "lookdev", "cheonha.html");
+            var m = System.Text.RegularExpressions.Regex.Match(html, @"const PAT_SHAPES = new Set\(\[(.*?)\]\);", System.Text.RegularExpressions.RegexOptions.Singleline);
+            Assert.True(m.Success);
+            var shapes = System.Text.RegularExpressions.Regex.Matches(m.Groups[1].Value, "'([a-z_]+)'").Select(x => x.Groups[1].Value).ToHashSet();
+            var used = _d.BossPatterns.Values.SelectMany(s => s.Patterns.Concat(s.Phase2)).Select(p => p.Shape).Distinct();
+            Assert.All(used, shape => Assert.Contains(shape, shapes));
+            foreach (var same in new[]
+            {
+                "Math.ceil(pt.leaveSeconds / pt.hitIntervalSeconds - 1e-4)",                                          // SpiralShotsPerArm
+                "start + 360 * arm / Math.max(1, pt.count) + pt.turnDegreesPerSecond * shot * pt.hitIntervalSeconds", // SpiralShotDegrees
+                "start + 360 * i / pt.count + (pt.waveOffsetDegrees || 0) * wave",                                    // RadialBurstDegrees
+                "since >= 0 && since < pt.leaveSeconds && pt.viewScale > 0 ? pt.viewScale : 1",                       // ViewScaleAt
+                "pt.count > 1 ? pt.length * i / (pt.count - 1) : 0",                                                  // ChainCircleOffset
+                "t: i * pt.waveIntervalSeconds",                                                                      // ChainCircleSeconds
+                "Math.max(pt.minRadius, R - pt.shrinkPerSecond * (nearSlow && pt.slowedNearMultiplier > 0 ? pt.slowedNearMultiplier : 1)", // ArenaRadiusStep
+                "dx * dx + dy * dy > (R + (tr || 0)) * (R + (tr || 0))",                                              // OutsideArena
+                "(Math.max(1, pt.count) - 1) * pt.waveIntervalSeconds + pt.telegraphSeconds",                         // BlinkSlamSeconds
+                "Bk.t >= Bk.i * Bk.pt.waveIntervalSeconds",                                                           // BlinkSeconds: 첫 자리는 시작하자마자
+                "if (i === real) { f.x = x; f.y = y; continue; }",                                                    // BossClones: 진짜 하나는 보스 자신
+                "if (f.cloneOf) { f.dead = true;",                                                                    // BossClones.Hit: 분신은 한 대에
+                "pt.shape === 'line' && !pt.projectileSpeed",                                                         // 일섬은 달리지 않고 벤다
+            })
+                Assert.Contains(same, html);
+            // 맞은 뒤 무적이 주석 속에 묻히지 않았다(RM-10 때 한 줄로 붙으며 빠졌던 것, RM-12 가 되살림)
+            var iframe = html.Split('\n').Single(l => l.Contains("p.iframe = LD.hitIframe; G.trauma"));
+            Assert.False(iframe.IndexOf("//", StringComparison.Ordinal) is var c && c >= 0 && c < iframe.IndexOf("p.iframe", StringComparison.Ordinal));
+        }
     }
 }
