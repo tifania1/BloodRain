@@ -24,6 +24,24 @@
 - 가사는 넣지 않는다. 합창이 필요하면 'wordless … drone' 처럼 말 없는 저음으로 쓴다.
 - 같은 곡을 다시 뽑을 때는 문구를 고치고 `note` 에 무엇을 고쳤는지 덧붙인다.
 
+## 생산 순서 (회사 PC 크롬)
+
+그림과 같은 길(회사 PC 크롬의 Claude 확장)로 뽑는다. 사람이 볼 때 하거나, 밤 이미지 생산 예약이 그림을 다 뽑은 뒤 이어서 한다. 예약 설명에 이 순서를 넣는 일은 대화 세션이 한다(PC 승인 필요, backlog BGM-04).
+
+1. **작업 폴더.** 그림과 같다(`art_pipeline.md` '이미지 세션이 하는 일' 1). `E:\Unity\BloodRain-art` 에서 하고, 받은 파일은 PC 원래 폴더 `E:\Unity\BloodRain\art_inbox\audio\` 에 둔다. 잠금은 잡지 않는다.
+2. **연결 확인.** 확장이 연결돼 있는지, gemini.google.com 에 로그인돼 있는지 본다. 로그인 화면·사람 확인(CAPTCHA)·"오늘 만들 수 있는 곡을 다 썼다" 같은 안내가 뜨면 바로 멈추고 daily 에 한 줄 남긴다. 우회하지 않고 계정 설정을 바꾸지 않는다.
+3. **고를 줄.** `audio_queue/queue.jsonl` 에서 `todo` 를 **M2 → M3 → later** 순서로, 같은 `chat` 끼리 묶는다. 한 번에 4곡, 하룻밤 8곡 안쪽(구독 한도가 Plus 10·Pro 20곡/일이라 사람 몫을 남긴다). 처음 하는 세션은 계정의 구독 등급과 남은 한도가 화면에 보이면 daily 에 적는다.
+4. **대화.** 같은 `chat` 은 같은 Gemini 대화에서 뽑는다. 대화 주소를 그 `chat` 의 모든 줄에 `chat_url` 로 적는다. 새 대화는 입력창이 비어 있을 때만 연다(글이 있으면 사람 것이니 건드리지 않음).
+5. **뽑기.** 도구 메뉴에서 '음악 만들기'를 켜고, `length` 가 `full` 이면 모델을 Pro(또는 Thinking)로, `short` 면 Fast 로 고른다. 문구는 `{STYLE}` 을 `audio_queue/STYLE.txt` 내용으로 바꿔 그대로 넣고, 연주곡(가사 없음)으로 해 달라는 말을 한 줄 덧붙인다. 다 만들어질 때까지 기다린다.
+6. **받기.** 곡의 다운로드 버튼에서 **MP3**(MP4 영상 말고)를 받는다. 받은 파일은 PC 다운로드 폴더에 떨어지니 PowerShell 로 `art_inbox/audio/<id>.mp3`(`save_as`)로 옮기고 그 줄을 `generated` 로 바꾼다.
+7. **기계 검수.** `ffprobe -v error -show_entries format=duration -of csv=p=0 <파일>` 로 길이를 본다. `full` 인데 90초 아래, `short` 인데 20초 아래면 다시 뽑는다(`tries` 를 1 올리고 `todo`). 가사나 말소리가 들어간 것은 기계로 못 거르니 사람 검수에 맡긴다.
+8. **올리기.** 큐만 바뀌므로 `dotnet test` 뒤 커밋·푸시한다. daily 에 몇 곡 뽑았는지 한 줄.
+9. **사람 검수(귀).** 사람이 PC 에서 `art_inbox/audio/` 를 듣고 `docs/feedback.md` 에 "bgm_… 고름 / bgm_… 다시: 이유" 로 적는다. 다음 세션이 고른 줄을 `picked`, 다시인 줄은 `rejected` + `reason`(문구를 고쳐 `todo` 로 되돌리고 `note` 에 무엇을 고쳤는지)로 바꾼다. 3번 떨어지면 그대로 두고 daily '아침에 확인할 것'에 올린다.
+10. **반영.** `picked` 가 생기면 PC 작업 폴더에서 `python tools/postprocess_audio.py --inbox E:/Unity/BloodRain/art_inbox` 를 돌려 ogg 와 `bgm.json` 을 올린다(아래 '다듬기').
+
+- 받은 MP3 원본은 커밋하지 않는다(`art_inbox/` 는 .gitignore). 게임용 ogg 만 커밋한다.
+- Google 서비스 약관에도 자동화된 접근을 막는 조항이 있다. ChatGPT 이미지 때처럼(2026-11-01) 사람이 이 점을 알고 정하도록, 예약에 넣기 전에 대화 세션이 한 번 묻는다.
+
 ## 다듬기 `tools/postprocess_audio.py`
 
 `picked` 줄의 MP3 를 읽어 ogg 로 `unity/BloodRain/Assets/Audio/BGM/<id>.ogg` 에 넣고, 목록 `bgm.json` 을 고친 뒤 `imported` 로 바꾼다. 파이썬 표준 라이브러리와 ffmpeg(libvorbis 포함)만 쓴다.

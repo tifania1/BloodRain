@@ -47,6 +47,7 @@
 - 코드로 되는 이펙트 텍스처(붓 획·먹 튐·자국·노이즈)는 `tools/bake_brush.py` 로 굽는다.
 - 같은 캐릭터·같은 계열 적은 같은 `chat` 값을 준다(같은 대화방에서 뽑아야 그림체가 맞는다).
 - 이미지에 글자를 굽지 않는다. 모든 글자는 Unity에서 얹는다.
+- 배경음은 Gemini '음악 만들기'로 뽑는다(2026-11-04). 필요한 곡은 `audio_queue/queue.jsonl` 에 `todo` 줄로, 문구는 `{STYLE}`(`audio_queue/STYLE.txt`)로 시작. 순서·다듬기는 `docs/design/audio_pipeline.md`.
 
 ## 글쓰기
 - 문서·커밋 메시지·주석은 한국어. 사람이 실제로 말하듯 자연스럽게. 과장 없이.
