@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Unity WebGL 빌드(build/WebGL/BloodRain, brotli)를 로컬에서 띄운다. .br 파일에 Content-Encoding: br 를 붙인다.
 # python tools/serve_webgl.py → http://127.0.0.1:8765/index.html
 import http.server, functools, os

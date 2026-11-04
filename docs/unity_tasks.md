@@ -78,6 +78,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 브라우저 화면에 붓 획·먹 자국·AI 재료가 보이고 브라우저 콘솔에 셰이더 오류 없음
   - 찍기: `docs/unity_shots/V-04/` 의 `webgl.png`
   - 막힘: 2026-11-04 22:37 PC 세션 — 에디터 메뉴로 빌드는 성공(42.3MB, 13분 25초, 장면 3개). 로컬(br 헤더 붙인 python 서버, `tools/serve_webgl.py`)에서 열면 WebGL2 컨텍스트·데이터 로드·DataBoot 로그까지 나온 뒤 첫 프레임에 `RuntimeError: null function` 으로 멈춰 화면이 안 나옴. 셰이더 오류는 URP 기본 `Hidden/CoreSRP/CoreCopy`·`HDRDebugView` 둘뿐(흔한 것). 다음: Development Build + Full stack trace 로 다시 빌드해 어느 함수인지 보기(IL2CPP 코드 스트리핑이 리플렉션으로 쓰는 것을 지웠을 가능성, link.xml)
+  (진행: 2026-11-05 03:40 PC API — 메뉴 둘 더함 `WebGL 빌드(개발·스택 추적)`·`WebGL 빌드(릴리스·함수 이름)`(WebGLBuild.cs, 끝나면 설정을 되돌림). `tools/serve_webgl.py` 가 둘째 줄 주석 `Content-Encoding: br` 를 파이썬이 인코딩 선언으로 읽어 안 뜨던 것을 고침(맨 위 utf-8 선언). 개발 빌드(272MB, 7분)도 릴리스+심볼 빌드(47.5MB, 15분)도 헤드리스 크롬(SwiftShader)에서 `null function` 없이 레벨업 화면·Run 이 돎 — 11-04 이후 코드에서 사라졌거나 심볼을 넣으면 안 나는 것. 셰이더 오류는 CoreCopy·HDRDebugView 둘뿐. 붓 획은 헤드리스 화면에서 흐린 노란 원·먹 점만 보여 판단 못함. OnGUI 디버그 줄 한글은 웹에서 글꼴이 없어 비어 보임. 찍음 `docs/unity_shots/V-04/` 의 `webgl_dev.png`·`webgl_release.png`. 남은 것: 심볼 없는 `WebGL 빌드` 로 한 번 더 열어 멈춤이 정말 사라졌는지, GPU 가 있는 크롬(헤드리스 아님)에서 삼재검법 획을 느리게 보며 `webgl.png`)
 
 ### B. 한 생 뼈대 (Run 씬에 Core Life 붙이기 — 여기서부터 아래가 풀린다)
 
