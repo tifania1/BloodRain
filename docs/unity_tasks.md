@@ -174,6 +174,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 이류 돌파 뒤 석 장이 뜨고, 일검파를 고르면 그 무공 피해가 오름. 마교 몸은 한 자리가 마공
   - 찍기: `docs/unity_shots/C-07/` 의 `insight_cards.png`
 
+- [ ] R4-13a 마교 몸 혈공·마공 · 먼저: C-07b, C-08a
+  - 할 것: 진기 배율(농도^0.25)과 심마(더 받은 진기 150마다 음 1)는 `life.Absorb` 가 이미 `life.BloodArt` 를 거쳐 하니 Unity 는 셈하지 않는다. 음양 HUD 에 심마로 기울 때 짧은 표시(`BloodArt.Steps` 가 늘면), 깨달음 화면이 마교 몸이면 `Insights.RollWithDemonic` 로 셋 중 하나를 마공으로, 능력치에 `life.InsightBonus(처치, 기혈 비율)`(심마환영은 천마해체 뒤 0부터). 마공 카드 테두리는 붉게.
+  - 쓸 것: Core `Progression/BloodArt.cs`, `Build/Insights.cs`(RollWithDemonic), `Build/InsightEffects.cs`, insights.json `demonicInsights`
+  - 메뉴: R-04Ua 의 몸 바꾸기(마교)
+  - 끝: 십만대산에서 마교 몸이 진기를 먹으면 음양이 음으로 기울고, 돌파 깨달음 셋 중 하나가 마공
+  - 찍기: `docs/unity_shots/R4-13U/` 의 `demonic_insight.png`
+
 - [ ] C-08a 음양 태극 문양 HUD · 먼저: C-06b
   - 할 것: `Presentation/Hud/YinYangHud.cs` — 태극 문양이 게이지 값만큼 기울고, 태극 구간(`gauge.HarmonyRange`) 안이면 금빛 테두리, 극단이면 핏빛. 지금 HUD 진전 인장이 LevelUpScreen 안에 있으면 같은 HUD 묶음으로 옮긴다.
   - 쓸 것: Core `YinYangGauge`(Value·Band·HarmonyRange·Leaning)
@@ -194,6 +201,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: C-08a 의 `Run 씬에 HUD 붙이기` 가 오의 버튼도 놓게
   - 끝: 충전이 차면 버튼이 켜지고 화면 안 적이 그 피해로 쓰러짐. 정진(레벨업 건너뛰기)이 충전을 채움
   - 찍기: `docs/unity_shots/C-09/` 의 `ultimate.png`
+
+- [ ] R4-10U 천설부·천마해체 오의 · 먼저: C-09a, R-04Ua
+  - 할 것: 곤륜 몸 천설부 — 화면 안 모든 적(땅의 주인 포함)을 `UltimateEffects.FreezeSeconds(ult)` 초 멈춤(걷기·패턴 시계 멈춤, 6장 기절과 같이), 한 방 피해는 `UltimateEffects.HitDamageOn(ult, enemy.Family, 시작 무공 한 방, life.UltimatePowerMultiplier)`(강시 계열만 들어감). 마교 몸 천마해체 — `life.UseUltimate()` 가 켠 `life.Dissolution` 이 켜져 있는 동안 플레이어 피해 × `DamageMultiplier`, 매 프레임 기혈 `HealthCostPerSecond(최대 기혈) × 세상 dt` 소모, 맞힌 피해마다 `UltimateEffects.LifestealHeal(피해, 능력치 흡혈 + LifestealBonus, SynergyEffects.LifestealMultiplier, SectTrait.HealingMultiplier)` 회복. 몸에 붉은 기운(남은 초).
+  - 쓸 것: Core `Combat/UltimateEffects.cs`(R4-10), `Life.Dissolution`, characters.json ultimates `cheonseol_bu`·`cheonma_haeche`
+  - 메뉴: R-04Ua 의 몸 바꾸기(곤륜·마교)
+  - 끝: 천설부로 강시만 쓰러지고 나머지는 3초 멈춤. 천마해체 8초 동안 피해 두 배·기혈이 줄고 때리면 참
+  - 찍기: `docs/unity_shots/R4-10U/` 의 `cheonseol_bu.png`, `cheonma_haeche.png`
 
 - [ ] C-09b 등롱·음식·은자 주머니·정신부 · 먼저: C-06a
   - 할 것: 등롱(맵 소품)을 깨면 `Drops.RollLantern(data.Balance.Drops, rng)` 하나 — bun·duck 은 `Drops.FoodHeal(rule, kind, stats.FoodHeal)` 회복, silver_bag 은 `RollSilverBag`(탐욕·혈월 배율은 줍는 쪽), chwigi_talisman, jeongsin_talisman 은 `Balance.Drops.JeongsinFreezeSeconds` 동안 화면 안 적 정지 + `life.Log.UseTalisman()`·`RunRecord.UseTalisman`. 잡몹 은자는 `EnemyDropsSilver`.
@@ -352,12 +366,20 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R4-03U/` 의 `<단계>.png`
 
 - [ ] R4-04U 엔딩 고르기 화면 · 먼저: R4-03U, LF-03
-- [ ] R4-05U 모드 고르기(2026-11-04 클라우드 M4 지역): 객잔에서 생을 시작할 때 `Core.Meta.Modes.OpenModes(soul)` 가 둘 이상이면 모드 고르기(이름은 strings `cheonha.modes.<id>.name`). 정산 화면에 `summary.NewModes` 를 '새 모드가 열렸다'로. 혈월 천하는 `soul.IsBloodMoon` 이 이미 셈하니 고르기만, 일일 도전·보스 연전은 아직 규칙이 없어 버튼만 두고 잠가 둔다
   - 할 것: 봉인으로 생을 마친 뒤 `soul.EndingPending` 이면 정산 다음에 엔딩 고르기 `Presentation/Meta/EndingScreen.cs`. 버튼은 `soul.EndingsOpen(목 노인 대화 끝)`(1회차는 봉인 하나라 고르기 없이 바로 봉인 엔딩 컷). 고르면 `soul.ChooseEnding(id, …)` 뒤 그 엔딩 컷·곡(기획서 14장 '엔딩 3곡', 곡이 없으면 무음), 봉인이면 백중의 밤으로(회귀), 진엔딩이면 `JourneyOver` 라 침방이 닫힌 객잔으로. 진혈마 10% 컷은 `FinalFight.CheckTrueEnding(비율, soul.TrueEndingMet(…))`. 목 노인 대화 끝은 backlog R4-08 전까지 false.
   - 쓸 것: Core `Meta/Soul.cs`(EndingPending·EndingsOpen·ChooseEnding·JourneyOver·TrueEndingMet), `Combat/FinalFight.cs`
   - 메뉴: `BloodRain/Test/엔딩 앞 혼 만들기(1회차·회귀)` 를 새로
   - 끝: 1회차 혼은 바로 봉인 엔딩 컷 → 회귀, 회귀한 혼은 고르기 버튼이 뜸
   - 찍기: `docs/unity_shots/R4-04U/` 의 `ending_choose.png`
+
+- [ ] R4-05U 모드 고르기(2026-11-04 클라우드 M4 지역): 객잔에서 생을 시작할 때 `Core.Meta.Modes.OpenModes(soul)` 가 둘 이상이면 모드 고르기(이름은 strings `cheonha.modes.<id>.name`). 정산 화면에 `summary.NewModes` 를 '새 모드가 열렸다'로. 혈월 천하는 `soul.IsBloodMoon` 이 이미 셈하니 고르기만, 일일 도전·보스 연전은 아직 규칙이 없어 버튼만 두고 잠가 둔다
+
+- [ ] R4-13b 세 지역 기믹 중 자리가 필요 없는 셋(낙석·눈보라·붉은 달) · 먼저: LF-01
+  - 할 것: 서 있는 지역(`life.RegionId`)이 화산이면 낙석 — `FallingRocksGimmick.FallsBetween` 이 1 이상인 프레임에 `Places(def, 플레이어, rng, 축척)` 세 곳에 그림자, telegraphSeconds 뒤 `Hits` 면 `Damage(def, 종류, 최대 기혈)`(잡몹은 쓰러짐). 곤륜 설원이면 눈보라 — `WeatherGimmick.ActiveAt(def, 한 생 초)` 동안 화면 가장자리 흰 덮개 `ViewScale`, 플레이어·적 걸음 `PlayerMoveSpeed`·`EnemyMoveSpeed`. 십만대산이면 붉은 달 — 같은 `WeatherGimmick` 으로 적 걸음, 하늘을 붉게. 혈제단·매화 더미·모닥불·빙판은 자리가 정해진 뒤(backlog R4-07).
+  - 쓸 것: Core `World/Gimmicks2.cs`(FallingRocksGimmick·WeatherGimmick), gimmicks.json `fallingRocks`·`blizzard`·`redMoon`
+  - 메뉴: `BloodRain/Bootstrap/Run 씬에 지역 기믹 붙이기`(R-13U 와 같은 메뉴, 없으면 새로)
+  - 끝: 화산에서 8초마다 바위 셋, 곤륜에서 60초에 눈보라 20초, 십만대산에서 180초에 붉은 달 30초
+  - 찍기: `docs/unity_shots/R4-13U/` 의 `falling_rocks.png`, `blizzard.png`, `red_moon.png`
 
 ### E. 객잔·대사
 

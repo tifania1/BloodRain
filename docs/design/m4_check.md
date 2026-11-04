@@ -9,8 +9,8 @@
 |---|---|---|---|---|---|---|
 | 몸(기혈·걸음·음양 시작·시작 무공·오의·해금) | 5장 '한눈에 보기' | cheonha.json sects `huashan`·`kunlun`·`demonic`, 마교 대표 인물 백야는 characters.json `baekya`. 같음(`CheonhaDataTests.문파_표가_데이터와_같다`) | `Rebirth`, 해금은 `Soul` 의 `boss:<지역>` | 없음(진소운만) | 아홉 문파 몸, 땅의 주인 첫 처치로 열림 | TU-11 |
 | 고유 능력 | 5장(화산 치명 +10%, 곤륜 3m 안 적 10% 느려짐, 마교 기혈이 낮을수록 공격속도·회복 -50%) | traitEffect 셋(R-04b). 마교 곡선만 없음(R-04c 사람 결정 대기) | `SectTrait`(`EnemySpeedMultiplier`·`HealingMultiplier`) | 없음 | 없음 | R-04U |
-| 마교 혈공·마공 | 5장 '마교 몸의 성장: 혈공'·마공 표 | cheonha.json sects demonic `bloodArt`, insights.json `demonicInsights` 넷 | `Progression/BloodArt.cs`, `InsightEffects`(`BloodArtTests`·`BloodArtSimTests`·`InsightEffectsTests`) | 없음 | 없음 | 줄 없음 |
-| 오의(일검·천설부·천마해체) | 5장 '오의 상세' | characters.json ultimates. 천설부·천마해체 params 있음(R-05), 일검은 숫자가 배율·관통 무한뿐이라 params 없음 | `Ultimates.HitDamage`(한 방 피해). R4-10(11-04): 천설부 얼림·강시 계열만 피해 `UltimateEffects.FreezeSeconds`·`HitDamageOn`, 천마해체 8초 `DemonDissolution`(피해 2배·흡혈 10%·초당 기혈 2%, `Life.Dissolution`), 흡혈 셈 `LifestealHeal`(`UltimateEffectsTests`) | 일검만 | 없음 | C-09(일검만) |
+| 마교 혈공·마공 | 5장 '마교 몸의 성장: 혈공'·마공 표 | cheonha.json sects demonic `bloodArt`, insights.json `demonicInsights` 넷 | `Progression/BloodArt.cs`, `InsightEffects`(`BloodArtTests`·`BloodArtSimTests`·`InsightEffectsTests`) | 없음 | 없음 | R4-13a |
+| 오의(일검·천설부·천마해체) | 5장 '오의 상세' | characters.json ultimates. 천설부·천마해체 params 있음(R-05), 일검은 숫자가 배율·관통 무한뿐이라 params 없음 | `Ultimates.HitDamage`(한 방 피해). R4-10(11-04): 천설부 얼림·강시 계열만 피해 `UltimateEffects.FreezeSeconds`·`HitDamageOn`, 천마해체 8초 `DemonDissolution`(피해 2배·흡혈 10%·초당 기혈 2%, `Life.Dissolution`), 흡혈 셈 `LifestealHeal`(`UltimateEffectsTests`) | 일검만 | 없음 | C-09a(일검), R4-10U(천설부·천마해체) |
 | 진전 | 20장 '진전 9문파' | synergies.json schools 아홉(`SynergyDataTests.기획서_20장_진전_표가_schools_와_같다`) | `Synergy`·`SynergyEffects` | 아홉 문파 인장 | 없음 | S-04 |
 | 시작 무공(낙화검우·뇌부·혈조) | 9장 | weapons.json. 낙화검우·혈조는 shot·knockback 없음(9장 '손으로 맞춘 뒤 채운다', m3_check 와 같은 사정) | `WeaponGrowth` | 뇌부만 | 없음 | W-01(뇌부). 낙화검우·혈조 줄 없음 |
 
@@ -19,10 +19,10 @@
 | 항목 | 기획서 | 데이터 | Core | 웹 프로토타입 | 천하 시안 | Unity |
 |---|---|---|---|---|---|---|
 | 자리·농도·봉인석·땅의 주인 | 7장 '지역과 혈운 농도' | cheonha.json regions 화산 2.8·곤륜 설원 3.5·십만대산 4.3(`CheonhaDataTests.지역표가_데이터와_같다`) | `Regions`, `RegionSpawns` | 없음 | 셋 다 있고 땅의 주인이 깨어남 | TU-09 |
-| 화산 낙석·매화 더미 | 7장 '지형 기믹 수치' | gimmicks.json `fallingRocks`·`plumHeaps`(`Gimmicks2Tests.수치_표가_데이터와_같다`) | `FallingRocksGimmick`·`PlumHeapGimmick` | 없음 | 없음 | 줄 없음 |
+| 화산 낙석·매화 더미 | 7장 '지형 기믹 수치' | gimmicks.json `fallingRocks`·`plumHeaps`(`Gimmicks2Tests.수치_표가_데이터와_같다`) | `FallingRocksGimmick`·`PlumHeapGimmick` | 없음 | 없음 | R4-13b(낙석). 매화 더미는 R4-07 뒤 |
 | 화산 좁은 잔도 | 지역 표에 이름만. 수치 문단 '잔도는 아직 수치가 없습니다' | regions 에 `cliff_path` 만 | 없음 | 없음 | 없음 | 줄 없음 |
-| 곤륜 눈보라·빙판·모닥불 | 7장 | gimmicks.json `blizzard`·`iceFloor`·`campfire`(같은 테스트) | `WeatherGimmick`·`IceFloorGimmick`·`CampfireGimmick` | 없음 | 모닥불만(R4-02w, 곁 회복·빙강시 감속·설무향 축소 절반. 자리는 놀이판 값 `campfireSpacing` 격자, R4-07 이 정해지면 바꿈) | 줄 없음 |
-| 십만대산 혈제단·붉은 달 | 7장 | gimmicks.json `bloodAltars`·`redMoon`(같은 테스트, `붉은_달은_180초부터_3분마다_30초`) | `BloodAltarGimmick`, 붉은 달은 `WeatherGimmick` | 없음 | 없음 | 줄 없음 |
+| 곤륜 눈보라·빙판·모닥불 | 7장 | gimmicks.json `blizzard`·`iceFloor`·`campfire`(같은 테스트) | `WeatherGimmick`·`IceFloorGimmick`·`CampfireGimmick` | 없음 | 모닥불만(R4-02w, 곁 회복·빙강시 감속·설무향 축소 절반. 자리는 놀이판 값 `campfireSpacing` 격자, R4-07 이 정해지면 바꿈) | R4-13b(눈보라). 빙판·모닥불은 R4-07 뒤 |
+| 십만대산 혈제단·붉은 달 | 7장 | gimmicks.json `bloodAltars`·`redMoon`(같은 테스트, `붉은_달은_180초부터_3분마다_30초`) | `BloodAltarGimmick`, 붉은 달은 `WeatherGimmick` | 없음 | 없음 | R4-13b(붉은 달). 혈제단은 R4-07 뒤 |
 | 기믹을 어디에 몇 개 | 혈제단만 '네 개'. 낙석은 플레이어 둘레라 자리가 필요 없음. 매화 더미·모닥불 수와 자리는 없음 | - | 놓는 함수는 탑림 `PagodaForest.Layout` 뿐 | - | - | - |
 | 고유 적 일곱(매화검귀 / 빙강시·설랑 떼·설인 / 마교도·혈영 분신·혈사자) | 6장 '지역별 고유 적'과 아래 문단 | enemies.json chapter5~7(`EliteDataTests.지역별_고유_적_표의_모든_줄에_데이터가_있고_수치가_같다`, `EnemyTableTests.지역_고유_적_행동_숫자_표가_데이터와_같다`) | `EnemyDef`, 혈영 분신은 `Mimicry`(`MimicryTests`) | 없음 | 없음 | C-02b 에 일곱 행동 줄 없음 |
 | 정예 아홉 기혈·속도·피해 | 6장 '정예 수치' | enemies.json elites chapter5~7(`EliteDataTests.정예_수치_표가_데이터와_같다`) | `RegionSpawns` 차례 | 없음 | 큰 일반 적 | 줄 없음 |
