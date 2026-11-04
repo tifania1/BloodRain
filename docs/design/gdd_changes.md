@@ -78,3 +78,4 @@
 - 2026-11-04 · 15장 '엔진과 패키지' 현지화 줄 · Unity Localization 대신 `Resources/Data/strings/<lang>.json` + Core `Strings`(클라우드에서 빠진 키·남는 키를 테스트하려고, backlog L-01)(클라우드 현지화) → 원본 반영
 - 2026-11-04 · 12장 '글꼴' 본문 줄 · 영어는 Noto Serif KR 라틴 글자, 간체는 저장소에 넣은 Noto Serif SC(클라우드 현지화) → 원본 반영
 - 2026-11-04 · 6장 '정예 수치'·'정예 패턴 수치' · 당가타·장강 수로·무당산 정예 아홉 패턴 표 추가(같은 차례 숭산 정예 기준, bosspatterns.json elites, 장판 poolRadius·poolDamagePerSecond). 수귀 무리 우두머리·흑백 쌍강시 대형·검진 도사 강시의 '하는 일'을 패턴 이름으로 시작하게(클라우드 M3 지역 콘텐츠 R-01) → 원본 반영
+- 2026-11-04 · 14장 '효과음' · 표 아래에 M2 효과음 목록 sfx_list.md 가리키는 한 줄(클라우드 배경음 BGM-07) → 원본 미반영
