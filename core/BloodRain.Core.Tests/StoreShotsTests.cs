@@ -31,14 +31,17 @@ namespace BloodRain.Core.Tests
         static string[] Ids(string cell) =>
             Regex.Matches(cell, "`([a-z_]+)`").Select(m => m.Groups[1].Value).ToArray();
 
-        sealed class Shot
+        internal sealed class Shot
         {
             public int No;
             public string[] Region = new string[0], Body = new string[0], Realm = new string[0],
                 Weapons = new string[0], Evolution = new string[0], Ultimate = new string[0];
+            /// <summary>'이펙트' 칸 글(예: "나한권 1단 먹 획, 먹 튐").</summary>
+            public string Effects = "";
         }
 
-        static List<Shot> Shots()
+        /// <summary>trailer_screens.md '스크린샷 10장' 표. StoreShotStageTests 도 쓴다.</summary>
+        internal static List<Shot> Shots()
         {
             var rows = Regex.Matches(Section("스크린샷 10장"), @"^\| (\d+) \|(.*)\|\s*$", RegexOptions.Multiline);
             return rows.Select(r =>
@@ -50,6 +53,7 @@ namespace BloodRain.Core.Tests
                     No = int.Parse(r.Groups[1].Value),
                     Region = Ids(c[1]), Body = Ids(c[2]), Realm = Ids(c[3]),
                     Weapons = Ids(c[4]), Evolution = Ids(c[5]), Ultimate = Ids(c[6]),
+                    Effects = c[8].Trim(),
                 };
             }).ToList();
         }

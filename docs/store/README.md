@@ -34,7 +34,7 @@ M2 끝(2027-02 말)에 Steam 스토어 페이지를 열고 위시리스트를 �
 
 1. ST-01 상점 문구 — 끝(이 폴더)
 2. ST-02 트레일러 콘티·스크린샷 목록 — 끝(`trailer_screens.md`)
-3. ST-03 스크린샷·움짤 찍는 순서(PC Unity 세션): 장면을 다시 만드는 시험용 시작 상태(경지·무공·적 수)를 Core 시나리오로 만들어 두면 PC 세션이 같은 그림을 다시 찍을 수 있다
+3. ST-03 스크린샷·움짤 찍는 순서(PC Unity 세션): 시작 상태 데이터 `Assets/Editor/StoreShots/store_shots.json` 과 Core `Run/StoreShotStage` 는 2026-11-04 에 만들었다(trailer_screens.md '찍는 법'). 남은 것은 PC 세션이 그 상태로 찍는 일(unity_tasks ST-03U)
 4. ST-04 시스템 사양 측정: M2 빌드를 낮은 PC·Steam Deck 에서 재고 최소 사양 칸을 채운다(PC Unity 세션 + 사람)
 5. ST-05 Steamworks 준비(사람): 앱 등록비, 개발사·배급사 이름, 콘텐츠 설문(AI 공개), 연령 등급 설문, 출시일 칸('2027년 예정' 같은 표기), '곧 출시' 페이지 검토 요청. 검토에 며칠 걸리니 공개 목표일보다 2주 먼저 낸다(일정은 Valve 안내를 보고 사람이 확정)
 6. ST-06 간체·번체 상점 글 — 끝(`store_text.md` 의 zh-Hans·zh-Hant 칸, 2026-11-04). 원어민 검수와 진소운 간체 이름(L-04b)은 남음

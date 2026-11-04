@@ -1,0 +1,88 @@
+{
+  "_note": "스토어 스크린샷 10장의 시작 상태(ST-03). 장면·id 는 docs/store/trailer_screens.md '스크린샷 10장' 표와 같고 StoreShotTests 가 맞춰 본다. Core Run/StoreShotStage.cs 가 이 값으로 한 생을 세우고, PC Unity 세션이 그 생으로 같은 그림을 다시 찍는다. Editor 폴더라 게임 빌드에는 들어가지 않는다.",
+  "_noteFields": "level 은 그 경지 안의 레벨, minutes 는 세상 시간(11장 목표 Lv = 3 x 분에 맞춤, 서장은 4장 표). weapons·passives 는 id → 레벨이고 처음 무공(몸의 시작 무공)도 적는다. 이펙트 단계(1·2·3단)는 무공 레벨에서 나오므로 표의 '이펙트' 칸과 맞아야 한다. ultimate 를 적으면 오의 게이지가 가득 찬 채로 시작한다. yinyang 은 'yang_extreme'·'yin_extreme'(극성 문턱에 놓음), 비우면 무공·심법 레벨대로 기운 그대로. boss 를 적으면 그 지역 땅의 주인과 싸우는 중이고 health(남은 기혈 비율)로 그 pattern 이 판정될 때까지 패턴 시계를 민다. 보스가 깨어 있는 지역인데 boss 가 없으면 싸움이 걸리지 않게 혈운 기둥 원 밖에 세운다. enemies 는 화면 위 적 수(balance.json limits.enemiesPc 이하), enemy 는 그 장면의 주된 적. breakthrough 가 참이면 마지막 경지 돌파 연출이 막 시작된 상태. levelUpCards 를 적으면 그 카드 석 장이 뜬 레벨업 화면.",
+  "seed": 20261104,
+  "shots": [
+    {
+      "no": 1, "id": "jeoljeong_songshan", "screen": "battle",
+      "region": "songshan", "body": "shaolin", "realm": "jeoljeong", "level": 38, "minutes": 12.5,
+      "weapons": { "nahan_fist": 8, "palm_wind": 6, "thunder_bomb": 6 },
+      "passives": { "geumgang": 3, "cheonsu": 4, "cheongsim": 4 },
+      "evolution": "baekbo_fist",
+      "enemies": 560
+    },
+    {
+      "no": 2, "id": "sigang_swarm", "screen": "battle",
+      "region": "songshan", "body": "shaolin", "realm": "samryu", "level": 6, "minutes": 2.0,
+      "weapons": { "nahan_fist": 3 },
+      "passives": { "cheongmyeong": 1 },
+      "enemies": 420, "enemy": "sigang"
+    },
+    {
+      "no": 3, "id": "ilryu_breakthrough", "screen": "battle",
+      "region": "songshan", "body": "gaebang", "realm": "ilryu", "level": 20, "minutes": 6.7,
+      "weapons": { "drunken_staff": 5, "poison_mist": 4 },
+      "passives": { "cheonsu": 2 },
+      "breakthrough": true,
+      "enemies": 300
+    },
+    {
+      "no": 4, "id": "wongak_phase2", "screen": "battle",
+      "region": "songshan", "body": "namgung", "realm": "jeoljeong", "level": 41, "minutes": 13.5,
+      "weapons": { "changcheon_qi": 8, "flash_finger": 5 },
+      "passives": { "noejeong": 3, "cheonsu": 2 },
+      "evolution": "cheonroe_array", "ultimate": "cheonroe_rak",
+      "boss": { "health": 0.25, "pattern": "bell_drop_x3" },
+      "enemies": 160
+    },
+    {
+      "no": 5, "id": "eighteen_arhat_ring", "screen": "battle",
+      "region": "songshan", "body": "shaolin", "realm": "jeoljeong", "level": 37, "minutes": 12.3,
+      "weapons": { "nahan_fist": 6, "palm_wind": 5 },
+      "passives": { "geumgang": 2, "cheonsu": 2 },
+      "ultimate": "saja_hu",
+      "boss": { "health": 0.7, "pattern": "eighteen_arhat_ring" },
+      "enemies": 140, "enemy": "mogin_nahan"
+    },
+    {
+      "no": 6, "id": "gaebang_hq_ultimate", "screen": "battle",
+      "region": "gaebang_hq", "body": "gaebang", "realm": "iryu", "level": 14, "minutes": 4.7,
+      "weapons": { "drunken_staff": 5, "flying_dagger": 3 },
+      "passives": { "cheonsu": 1 },
+      "ultimate": "palbang_pungu",
+      "enemies": 350
+    },
+    {
+      "no": 7, "id": "namgung_extreme", "screen": "battle",
+      "region": "namgung_manor", "body": "namgung", "realm": "ilryu", "level": 26, "minutes": 8.7,
+      "weapons": { "changcheon_qi": 6, "thunder_bomb": 4, "flash_finger": 4 },
+      "passives": { "noejeong": 2 },
+      "yinyang": "yang_extreme",
+      "enemies": 380
+    },
+    {
+      "no": 8, "id": "level_up", "screen": "battle",
+      "region": "songshan", "body": "gaebang", "realm": "iryu", "level": 16, "minutes": 5.3,
+      "weapons": { "drunken_staff": 4, "poison_mist": 4 },
+      "passives": { "cheonsu": 1 },
+      "levelUpCards": ["flying_dagger", "palm_wind", "cheongsim"],
+      "enemies": 300
+    },
+    {
+      "no": 9, "id": "rebirth_candidates", "screen": "rebirth",
+      "candidates": [
+        { "sect": "shaolin", "trait": "ganggol" },
+        { "sect": "gaebang", "trait": "bokdeok" },
+        { "sect": "namgung", "trait": "gyeongsin" }
+      ]
+    },
+    {
+      "no": 10, "id": "cheongun_prologue", "screen": "battle",
+      "region": "cheongun", "body": "jin_sowoon", "realm": "iryu", "level": 12, "minutes": 4.0,
+      "weapons": { "samjae_sword": 5, "palm_wind": 3 },
+      "passives": { "cheongmyeong": 1 },
+      "ultimate": "il_geom",
+      "enemies": 250, "enemy": "sigang"
+    }
+  ]
+}
