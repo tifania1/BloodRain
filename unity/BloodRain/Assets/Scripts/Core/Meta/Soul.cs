@@ -647,6 +647,8 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> VisitedRegions => _visited;
         public IReadOnlyList<string> BossesKilled => _bosses;
         public IReadOnlyList<string> AwakenedEvolutions => _evolutions;
+        /// <summary>이번 회차에 그 지역 봉인석을 가졌나(지난 생까지 + 이번 생에 쓰러뜨린 것). 땅의 주인 컷(InnDialogue.LordMeet·LordKill)이 본다.</summary>
+        public bool HasSealStone(string region) => _stonesKnown.Contains(region);
         public string HighestRealm => _highest.Id;
 
         /// <summary>지역에 들어섰다(태어난 곳은 생을 시작할 때 저절로). 계정 전체에서 처음 밟은 땅이면 윤회의 기를 적고 true.</summary>

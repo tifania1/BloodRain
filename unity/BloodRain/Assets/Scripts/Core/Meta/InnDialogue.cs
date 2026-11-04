@@ -8,6 +8,9 @@
 //   서장이 끝난 귀환에는 귀환 줄이 없다(침방 첫 환혼 줄이 이어진다).
 // 마당(YardLine): 그 문파로 태어나 삼류로 첫걸음을 뗄 때 대표 인물 한 줄. 여자 몸이면 사매판.
 // 연무장(Training): 조건마다 한 번.
+// 땅의 주인(LordMeet·LordKill, backlog DL-06): boss_cuts.md. 만남 2컷은 회차마다 그 땅의 주인을 처음 만날 때 한 번,
+//   혈월 회차면 만남 2 뒤에 혈월 줄. 이번 회차에 이미 쓰러뜨린 땅(봉인석이 있음)이면 컷 없이 혈영 줄.
+//   처치 4컷은 계정 첫 처치에만(혈월 천하에서 다시 나오는지는 boss_cuts.md '아직 정하지 않은 것'). alt 자막은 그 봉인석을 가졌을 때.
 // 정산(Settlement, backlog DL-05): 정산 화면 맨 아래 서술 자막 한 줄. 위에서부터 맞는 하나, 그 밖이면 무작위(inn_screens.md '정산').
 // 침방(Bedroom → BedroomTalk, backlog DL-04): 환혼 한 번 단위. 열 때 → 후보 → 다시 고르기 → 고름 → 보냄 순서로 부른다.
 //   첫 환혼(first:*)·문파 첫 환생(sect:<문파>) 줄은 늘 한다. 나머지는 한 번 환혼에 한 마디이고,
@@ -41,6 +44,36 @@ namespace BloodRain.Core.Meta
         public bool FallenToShadow;
         /// <summary>이번 생에 버틴 시간(초, 정산 자막).</summary>
         public float LifeSeconds;
+    }
+
+    /// <summary>컷 한 장(자막을 고른 뒤). Lines 가 비면 자막 없는 컷.</summary>
+    public sealed class LordCut
+    {
+        public string Id { get; }
+        public string? Art { get; }
+        public IReadOnlyList<CutLineDef> Lines { get; }
+        /// <summary>alt 자막을 썼나(현지화 키가 ….cuts.&lt;id&gt;.alt.lines.&lt;n&gt;.text).</summary>
+        public bool Alt { get; }
+
+        public LordCut(string id, string? art, IReadOnlyList<CutLineDef> lines, bool alt)
+        { Id = id; Art = art; Lines = lines; Alt = alt; }
+    }
+
+    /// <summary>땅의 주인을 만났을 때(보스전 경고 직후) 띄울 것.</summary>
+    public sealed class LordEncounter
+    {
+        public string Lord { get; }
+        /// <summary>만남 컷(meet1·meet2). 이번 회차에 처음 만날 때만.</summary>
+        public IReadOnlyList<LordCut> Cuts { get; }
+        /// <summary>만남 2 바로 뒤에 더하는 혈월 줄(혈월 회차 첫 만남).</summary>
+        public string? BloodMoon { get; }
+        /// <summary>혈영으로 다시 만났을 때 이름 붓글씨 아래 한 줄. 이때는 컷이 없다.</summary>
+        public string? Echo { get; }
+        /// <summary>기혈 30% 2막 예고 때 머리 위 한 줄(늘).</summary>
+        public string Phase2 { get; }
+
+        public LordEncounter(string lord, IReadOnlyList<LordCut> cuts, string? bloodMoon, string? echo, string phase2)
+        { Lord = lord; Cuts = cuts; BloodMoon = bloodMoon; Echo = echo; Phase2 = phase2; }
     }
 
     /// <summary>정산 자막 한 줄. Text 는 한국어로 채운 문장이고, 다른 말은 Line 의 키에 Region·Lord·Sect·Seconds 를 넣어 채운다.</summary>
@@ -368,6 +401,43 @@ namespace BloodRain.Core.Meta
                 "join" => l.Join,
                 _ => throw new ArgumentException($"모르는 칸입니다: {slot}"),
             };
+        }
+
+        /// <summary>땅의 주인 싸움이 걸렸을 때(보스전 경고 직후). region 은 그 땅의 지역 id.</summary>
+        public static LordEncounter LordMeet(GameData data, Soul soul, LifeLog log, string region, DialogueProgress p)
+        {
+            var r = data.Cheonha.Region(region);
+            if (r.Boss == null) throw new ArgumentException($"땅의 주인이 있는 지역이 아닙니다: {region}");
+            var lord = data.Dialogue.Lord(r.Boss);
+            if (log.HasSealStone(region))   // 이번 회차에 이미 쓰러뜨렸다: 혈영
+                return new LordEncounter(lord.Id, Array.Empty<LordCut>(), null, lord.EchoKo, lord.Phase2Ko);
+
+            var key = $"lord.{lord.Id}.meet.{soul.Cycle}";
+            if (p.HasSeen(key))
+                return new LordEncounter(lord.Id, Array.Empty<LordCut>(), null, null, lord.Phase2Ko);
+            p.See(key);
+            var cuts = lord.Cuts.Where(c => c.Id.StartsWith("meet", StringComparison.Ordinal)).Select(c => Resolve(c, log)).ToList();
+            return new LordEncounter(lord.Id, cuts, soul.IsBloodMoon ? lord.BloodMoonKo : null, null, lord.Phase2Ko);
+        }
+
+        /// <summary>땅의 주인을 쓰러뜨렸을 때(LifeLog.KillBoss 바로 뒤). 계정 첫 처치면 처치 4컷, 아니면 빈 목록.</summary>
+        public static IReadOnlyList<LordCut> LordKill(GameData data, LifeLog log, BossKillInfo kill, DialogueProgress p)
+        {
+            var lord = data.Dialogue.Lord(data.Cheonha.Region(kill.Region).Boss!);
+            var key = $"lord.{lord.Id}.kill";
+            if (!kill.FirstOnAccount || p.HasSeen(key)) return Array.Empty<LordCut>();
+            p.See(key);
+            return lord.Cuts.Where(c => c.Id.StartsWith("kill", StringComparison.Ordinal)).Select(c => Resolve(c, log)).ToList();
+        }
+
+        static LordCut Resolve(CutDef c, LifeLog log)
+        {
+            if (c.Alt != null)
+            {
+                var w = c.Alt.When.Split(':');
+                if (w[0] == "stone" && log.HasSealStone(w[1])) return new LordCut(c.Id, c.Art, c.Alt.Lines, true);
+            }
+            return new LordCut(c.Id, c.Art, c.Lines, false);
         }
 
         /// <summary>정산 화면 자막. Soul.EndLife 바로 뒤(OnReturn 과 같은 때)에 부른다. 위에서부터 맞는 줄 하나, 그 밖이면 무작위.</summary>
