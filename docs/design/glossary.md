@@ -1,0 +1,134 @@
+# 용어집(현지화)
+
+영어·간체 문구를 옮길 때 이 표를 먼저 본다. 한 번 정한 표기는 바꾸지 않는다(바꿀 때는 이 파일과 `strings/<lang>.json` 을 한 커밋에서 같이 고친다).
+문구 파일과 키 규칙은 `unity/BloodRain/Assets/Scripts/Core/Data/Strings.cs` 맨 위, 언어 순위는 기획서 16장 '현지화 우선순위'.
+
+## 원칙
+
+1. **게임 규칙에 붙은 말은 뜻으로 옮긴다.** 경지 → Realm, 진기 → Inner Energy, 오의 → Ultimate Art(기획서 16장). 영어 사용자가 처음 봐도 무엇을 하는 칸인지 알아야 한다. 음역(jingi, ohui)은 쓰지 않는다.
+2. **영어권에 이미 굳은 이름은 그대로 쓴다.** 소림 Shaolin, 무당 Wudang, 화산 Mount Hua, 곤륜 Kunlun, 개방 Beggars' Sect, 장강 Yangtze, 강시 jiangshi.
+3. **사람 이름과 세가 이름은 한국어 로마자 표기(국어의 로마자 표기법)를 쓰고 데이터 id 와 맞춘다.** 진소운 Jin Sowoon, 남궁현 Namgung Hyeon, 당연화 Dang Yeonhwa, 남궁세가 Namgung Clan, 당가 Dang Clan. 한국에서 만든 무협이라는 색을 남긴다. 법명(혜공·원각)도 같다.
+4. **무공·심법·절기·오의 이름은 뜻을 옮긴 짧은 이름(2~4단어, 제목 대문자)으로.** 한자 뜻을 따르되 영어로 읽어 그림이 떠오르게 한다. 삼재검법 Three Powers Sword, 나한권 Arhat Fist. 한자 붓글씨(데이터의 `hanja` 칸)는 언어와 상관없이 그대로 얹는다.
+5. **간체는 원래 한자를 간체로 바꿔 쓴다.** 중국어는 무협 용어가 원래 말이라 옮기지 않는다(기획서 16장). 한자가 없는 한국어 고유어(한 생, 넷째 몸, 다시 고르기 등)만 뜻으로 옮긴다. 사람 이름도 한자로 쓰되, 데이터·기획서에 한자가 없으면 지어 붙이지 말고 '사람 결정 대기'로 묻는다.
+6. **특정 작가 고유 명칭 금지**: 김용·고룡 등 특정 작가가 만든 고유 무공·문파·인물 이름(항룡십팔장, 독고구검 등)은 어느 언어로도 쓰지 않는다. 그 이름의 공식 영어·중국어 번역도 마찬가지다. 장르 공통어나 새로 지은 이름만 쓴다(CLAUDE.md).
+7. **문체**: 영어는 짧고 담백하게, 고어(thee, thou, -eth)는 쓰지 않는다. 기술 설명은 현재형 평서문("Slashes front and back"). 숫자·%·m·초는 원문 그대로 두고 자리만 바꾼다. `{0}` 자리는 원문과 같은 번호를 쓴다(테스트가 본다).
+8. **길이**: 레벨업 카드 이름은 영어 22자 안쪽, 간체 6자 안쪽을 목표로. 넘으면 짧은 이름을 따로 짓는다(뜻 우선).
+
+## 체계 용어
+
+| 한국어 | 영어 | 간체 | 게임에서 |
+| --- | --- | --- | --- |
+| 무공(武功) | Martial Art (공격 칸은 Technique) | 武功 | 자동 공격 |
+| 심법(心法) | Heart Method | 心法 | 패시브 |
+| 절기(絶技) | Pinnacle Art | 绝技 | 진화 |
+| 오의(奧義) | Ultimate Art | 奥义 | 캐릭터 필살기 |
+| 경지(境地) | Realm | 境界 | 레벨 구간 |
+| 돌파 | Breakthrough | 突破 | 경지가 오를 때 |
+| 깨달음 | Insight | 顿悟 | 돌파 보상 |
+| 진기(眞氣) | Inner Energy | 真气 | 경험치(구슬) |
+| 진기 구슬 | Qi Orb | 真气珠 | 떨어지는 경험치 |
+| 단전 | Dantian | 丹田 | 오의 게이지 |
+| 내공 | Inner Power | 内功 | 내공 능력치(기획서 쓰는 곳에 따라) |
+| 공력 | Might | 功力 | 피해 배율 능력치 |
+| 기혈(氣血) | Vitality (HP) | 气血 | 체력 |
+| 호신 | Guard | 护体 | 받는 피해 고정 감소 |
+| 경공(輕功) | Lightfoot (Dash) | 轻功 | 대시 |
+| 기연(奇緣) | Fortune (사건은 Fated Encounter) | 奇缘 | 행운·기연 사건 |
+| 비전(秘傳) | Secret Legacy | 秘传 | 숨은 조건 보상 |
+| 비급(秘笈) | Manual | 秘笈 | 레벨업 카드 하나 |
+| 찢긴 비급 | Torn Manual | 残页秘笈 | 잠긴 연환 |
+| 연환 | Combo Link | 连环 | 무공 짝 시너지 |
+| 문파 공명 | Sect Resonance | 门派共鸣 | 같은 문파 시너지 |
+| 음양 / 양·음·중 | Yin-Yang / Yang·Yin·Neutral | 阴阳 / 阳·阴·中 | 태극 게이지 |
+| 태극 | Taiji | 太极 | 조화 구간 |
+| 주화입마 | Qi Deviation | 走火入魔 | 극성 위험 |
+| 기혈역류 | Backlash | 气血逆流 | 극성 60초마다 |
+| 정진 | Train (건너뛰기) | 精进 | 레벨업 건너뛰기 |
+| 파기 | Discard | 废弃 | 선택지 빼기 |
+| 다시 고르기 | Reroll | 重选 | 선택지 새로 |
+| 행낭 | Satchel | 行囊 | 대체 카드(은자·음식) |
+| 은자 | Silver | 银两 | 판 안 화폐 |
+| 혈정 | Blood Crystal | 血晶 | 메타 화폐 |
+| 보갑(寶匣) | Treasure Chest | 宝匣 | 상자 |
+| 절기 그릇 | Pinnacle Slot | 绝技槽 | 진화 가능 수 |
+| 정예 | Elite | 精英 | 정예 적 |
+| 땅의 주인 | Lord of the Land | 一方之主 | 지역 보스 |
+| 혈운(血雲) / 혈운 농도 | Blood Cloud / Blood Cloud Density | 血云 / 血云浓度 | 지역 난이도 |
+| 혈우(血雨) 장막 | Blood Rain Veil | 血雨帷幕 | 맵 경계 |
+| 혈마(血魔) | Blood Demon | 血魔 | 최종 보스 |
+| 차시환혼(借屍還魂) | Borrowed Body Rebirth | 借尸还魂 | 죽으면 다른 몸으로 |
+| 환혼 / 환생 | Rebirth | 还魂 | 새 몸 고르기 |
+| 한 생 | A Life | 一生 | 몸 하나로 버티는 판 |
+| 윤회의 기 | Samsara Qi | 轮回之气 | 메타 성장 화폐 |
+| 타고난 성질 | Birth Trait | 天赋 | 몸의 장단점 |
+| 봉인석 | Seal Stone | 封印石 | 땅의 주인 보상, 시설 열기 |
+| 천하 | All Under Heaven | 天下 | 게임 구조 이름 |
+| 중원 | the Central Plains | 中原 | 맵 |
+| 문파 | Sect | 门派 | 몸의 소속 |
+| 세가 | Clan | 世家 | 남궁·당가 |
+| 마교 | Demonic Cult | 魔教 | 문파 하나 |
+| 혈공 | Blood Art | 血功 | 마교 몸 성장 |
+| 사형 / 사매 | Senior Brother / Junior Sister | 师兄 / 师妹 | 호칭 |
+
+`땅의 주인` 간체: 地主 는 '지주(땅 가진 부자)'로 읽혀 쓰지 않고 `一方之主` 로 한다.
+
+## 경지
+
+| 한국어 | 영어 | 간체 |
+| --- | --- | --- |
+| 삼류 | Third-Rate | 三流 |
+| 이류 | Second-Rate | 二流 |
+| 일류 | First-Rate | 一流 |
+| 절정 | Peak | 绝顶 |
+| 초절정 | Beyond Peak | 超绝顶 |
+| 화경 | Harmony Realm | 化境 |
+| 현경 | Mystic Realm | 玄境 |
+
+## 문파·세가
+
+| 한국어 | 영어 | 간체 |
+| --- | --- | --- |
+| 소림 | Shaolin | 少林 |
+| 무당 | Wudang | 武当 |
+| 화산 | Mount Hua | 华山 |
+| 곤륜 | Kunlun | 昆仑 |
+| 개방 | Beggars' Sect | 丐帮 |
+| 남궁 / 남궁세가 | Namgung / Namgung Clan | 南宫 / 南宫世家 |
+| 당가 | Dang Clan | 唐门 |
+| 수로채 | Waterway Fort | 水路寨 |
+| 마교 | Demonic Cult | 魔教 |
+
+당가: 영어는 원칙 3(사람 이름과 같은 Dang), 간체는 중국어 장르 관용 그대로 唐门.
+
+## 지역
+
+| 한국어 | 영어 | 간체 |
+| --- | --- | --- |
+| 청운진 | Cheongun Town | 青云镇 |
+| 숭산 | Mount Song | 嵩山 |
+| 개방 총타 | Beggars' Sect Headquarters | 丐帮总舵 |
+| 남궁세가 | Namgung Clan Manor | 南宫世家 |
+| 당가타 | Dang Clan Fort | 唐家堡 |
+| 장강 수로 | Yangtze Waterway | 长江水路 |
+| 무당산 | Mount Wudang | 武当山 |
+| 화산 | Mount Hua | 华山 |
+| 곤륜 설원 | Kunlun Snowfield | 昆仑雪原 |
+| 십만대산 | the Hundred Thousand Mountains | 十万大山 |
+| 봉마곡 혈지 | Demon-Sealing Valley Blood Pool | 封魔谷血池 |
+
+봉인석 일곱(천추·천선·천기·천권·옥형·개양·요광)은 북두칠성 별의 옛 이름이다. 영어는 한자 뜻으로 옮기고 서양 별 이름(Dubhe 등)은 쓰지 않는다: Heavenly Pivot, Heavenly Jade, Heavenly Pearl, Heavenly Authority, Jade Balance, Opening Yang, Flickering Light 뒤에 Stone. 간체는 天枢石·天璇石·天玑石·天权石·玉衡石·开阳石·摇光石.
+
+## 사람(대표 인물)
+
+| 한국어 | 영어 | 간체 |
+| --- | --- | --- |
+| 진소운 | Jin Sowoon | 사람 결정 대기(데이터에 한자 없음) |
+| 남궁현 | Namgung Hyeon | 南宫 + 사람 결정 대기 |
+| 혜공 | Hyegong | 慧空(법명, 추천) |
+| 당연화 | Dang Yeonhwa | 唐 + 사람 결정 대기 |
+| 하연 | Ha Yeon | 사람 결정 대기 |
+| 운화 | Unhwa | 사람 결정 대기 |
+| 마칠 | Ma Chil | 사람 결정 대기 |
+| 백야 | Baekya | 사람 결정 대기 |
+
+간체 사람 이름은 한자를 정하지 않은 채 옮기지 않는다. 그동안 간체 화면에는 한국어 로마자(Jin Sowoon)를 쓴다.
