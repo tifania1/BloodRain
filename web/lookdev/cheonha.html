@@ -101,6 +101,9 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
 .card .tr b { color: var(--gold-ink); font-weight: 900; margin-right: 4px; }
 .card .tr .off { opacity: .55; }
 .card .tr.none { opacity: .7; }
+.card p.off { opacity: .55; }
+.card.dim .seal { filter: grayscale(.7); opacity: .7; }
+.card .seal.dem { background: #3A1E2A; box-shadow: inset 0 0 0 3px #3A1E2A, inset 0 0 0 5px #C9A0A8; }
 @media (max-width: 640px) {
   .cards { grid-template-columns: 1fr; }
   .card { grid-template-columns: 52px minmax(0, 1fr); column-gap: 12px; justify-items: start; text-align: left; padding: 12px 12px 10px; }
@@ -171,13 +174,13 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
       <h4>연무장</h4>
       <div class="meta" id="meta"></div>
       <div class="row"><button class="b small fasttg" type="button" aria-pressed="false"></button></div>
-      <div class="subtle">흐린 글씨는 이 놀이판에 아직 없는 효과다(기연·탐욕·음양).</div>
+      <div class="subtle">흐린 글씨는 이 놀이판에 아직 없는 효과다(기연·탐욕).</div>
     </div>
   </div>
 
   <div class="screen" id="levelup" hidden>
     <div class="panel">
-      <div class="hanja">悟</div>
+      <div class="hanja" id="luhanja">習</div>
       <div class="subtle" id="lusub">하나를 익힌다</div>
       <div class="cards" id="lucards"></div>
     </div>
@@ -254,6 +257,15 @@ const CARD_ARTS = [
   { id: 'art_wave', nameKo: '먹 파동', hanja: '墨', desc: lv => `간격 -${8 * lv}%(초절정부터)` },
 ];
 const STAT_SHORT = { MaxHealth: '기혈', MoveSpeed: '신법', Might: '공력', Recovery: '회복', Armor: '호신', CooldownReduction: '쾌속', Magnet: '흡기', Growth: '심득', FoodHeal: '음식 회복', Area: '범위' };
+// 돌파 깨달음(RM-07). insights.json 그대로, 뽑는 규칙은 Core Insights.Roll·RollWithDemonic, 효과는 Core InsightEffects 와 같다
+const INS = DATA.insights || { choices: { base: 3, realmReward: 'insight_choice' }, insights: [], demonicInsights: [] };
+const INS_BY = Object.fromEntries([...INS.insights, ...(INS.demonicInsights || [])].map(i => [i.id, i]));
+const DEMONIC_INS = new Set((INS.demonicInsights || []).map(i => i.id));
+// 이 시안에 실제로 붙는 효과. 나머지는 카드에 흐리게 나오고 골라도 아무것도 안 붙는다(왜 없는지는 INS_OFF)
+const INS_APPLIED = new Set(['first_weapon_damage', 'still_regen', 'melee_range', 'periodic_block', 'magnet_multiplier', 'yinyang_reset', 'kill_stack_might', 'might_for_health', 'low_health_frenzy']);
+const INS_OFF = { lifesteal_no_heal: '이 놀이판엔 흡혈이 없다', inner_demon_might: '이 놀이판엔 혈공(심마)이 없다' };
+const ARC_WEAPON = { behavior: 'front_arc' };   // 검기 = 앞쪽 반원. 이 시안의 첫 번째 공격 무공이라 일검파만도 여기에 붙는다
+const offersInsight = r => !!(r && r.reward) && r.reward.split(',').some(x => x.trim() === INS.choices.realmReward);
 const BR = CH.bosses, QI = CH.rebirthQi, RB = CH.rebirth, CRUSH = CH.crush, BRK = CH.breakthrough;
 const AWAKE_T = REALMS.findIndex(r => r.id === BR.awakenFrom);
 const FINAL_T = REALMS.findIndex(r => r.id === BR.finalRequires.realm);
@@ -282,7 +294,7 @@ function spawnTarget(min) {   // 분 → 화면 위 목표 수. 생성 중지 �
 const TRAIN = ['Might', 'MaxHealth', 'MoveSpeed', 'Recovery', 'Magnet'].map(k => BAL.training.items.find(i => i.stat === k)).filter(Boolean);
 const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복' };
 const FLAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor']);
-// 이 놀이판 능력치에 실제로 들어가는 것. 나머지(기연·탐욕·음양 시작)는 카드에 흐리게만 보인다
+// 이 놀이판 능력치에 실제로 들어가는 것. 나머지(기연·탐욕)는 카드에 흐리게만 보인다. 음양 시작은 게이지 시작값으로 들어간다
 const APPLIED = new Set(['Might', 'MaxHealth', 'MoveSpeed', 'Recovery', 'Magnet', 'CooldownReduction', 'Growth', 'DashCharges', 'Armor', 'FoodHeal']);
 
 // ───────── 이 놀이판에서만 쓰는 값(README '천하 시안' 표와 같게). __ch.tune({...}) 로 바꿔 볼 수 있다 ─────────
@@ -593,6 +605,7 @@ function startLife(c) {
     cards: {}, extra: {}, pendingCards: 0, offers: null,
     eliteN: 0, shots: [], pools: [], fogs: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
     yy: clamp(body.yin, YY.min, YY.max), bless: null, taijiCd: {},
+    ins: [], insEff: {}, pendingIns: 0, insOffers: null, still: 0, blockCd: 0, salgiKills: 0, yyTilt: 1, yyCarry: 0,
   };
   Object.assign(G.p, { root: 0, pull: null, walkT: 0 });
   $('bossbar').hidden = true;
@@ -716,6 +729,7 @@ function breakthrough() {
   G.trauma = Math.min(1, G.trauma + 0.5);
   const id = REALMS[G.tier].id;
   G.reachT[G.tier] = G.t;
+  if (offersInsight(REALMS[G.tier])) G.pendingIns++;   // 연출이 끝나면 maybeCards 가 깨달음부터 띄운다
   if (!meta.reached.includes(id) && !G.newRealms.includes(id)) G.newRealms.push(id);
   const woke = wakeBosses();
   if (woke.length) toast('땅의 주인이 깨어났다', woke.map(r => `${BOSS[r.boss].nameKo}(${r.nameKo})`).join(' · ') + ' — 화면 끝 붉은 표시');
@@ -889,6 +903,7 @@ function update(rdt) {
   G.t += dt;
   G.trauma = Math.max(0, G.trauma - rdt * 1.4);
   const p = G.p, s = sc(G.tier), M = G.body, pr = prog();
+  const fz = frenzy(), might = M.might + insMight(), cdr = fz ? Math.min(BAL.stats.cooldownReductionCap, M.cdr + fz.cooldownReduction) : M.cdr;
   p.r = 0.5 * s * (1 + 0.12 * pr);
   // 이동
   const [mx, my, moving] = readMove();
@@ -912,6 +927,11 @@ function update(rdt) {
   p.x = clamp(p.x, 0, W); p.y = clamp(p.y, 0, H);
   p.iframe = Math.max(0, p.iframe - dt);
   p.hp = Math.min(p.maxHp, p.hp + M.regen * dt);
+  // 운기조식: stillSeconds 동안 안 움직이면 최대 기혈 × 초당 비율. 경공·끌려감도 움직인 것으로 친다
+  G.still = moving || p.dashT > 0 || p.pull ? 0 : G.still + dt;
+  const ug = G.insEff.still_regen;
+  if (ug && G.still >= ug.stillSeconds) p.hp = Math.min(p.maxHp, p.hp + p.maxHp * ug.maxHealthPerSecond * dt);
+  G.blockCd = Math.max(0, G.blockCd - dt);
   trackRegion();
   checkEngage(dt);
 
@@ -945,9 +965,11 @@ function update(rdt) {
   G.cd -= dt;
   regionGimmicks(dt);
   const bless = G.bless && G.bless.t > 0 ? 1 + GIM.taijiFloor.oppositeAspectDamageBonus : 1;   // 태극 바닥 기운(이 시안의 무공 셋은 걸린 속성으로 친다)
-  const range = 2.7 * s * (1 + 0.08 * pr) * M.area, dmg = 18 * power() * M.might * bless, arcDmg = dmg * (1 + 0.12 * (G.cards.art_arc || 0));
+  const ig = G.insEff.melee_range, il = G.insEff.first_weapon_damage;
+  const range = 2.7 * s * (1 + 0.08 * pr) * M.area * (ig && INS_BY.igi.weaponBehaviors.includes(ARC_WEAPON.behavior) ? 1 + ig.rangeBonus : 1);   // 이기어검은 검기에만
+  const dmg = 18 * power() * might * bless, arcDmg = dmg * (1 + 0.12 * (G.cards.art_arc || 0)) * (il ? 1 + il.damageBonus : 1);           // 일검파만도 검기에만
   if (G.cd <= 0) {
-    G.cd = 0.8 * (1 - M.cdr);
+    G.cd = 0.8 * (1 - cdr);
     let tg = null, best = range * 1.6;
     for (const f of G.foes) { if (f.dead || (f.e < G.tier && !f.boss)) continue; const d = Math.hypot(f.x - p.x, f.y - p.y) - f.r; if (d < best) { best = d; tg = f; } }
     const a = tg ? Math.atan2(tg.y - p.y, tg.x - p.x) : Math.atan2(p.fy, p.fx);
@@ -972,7 +994,7 @@ function update(rdt) {
   }
   if (G.tier >= 4) {
     G.waveCd -= dt;
-    if (G.waveCd <= 0) { G.waveCd = 2.6 * (1 - M.cdr) * (1 - 0.08 * (G.cards.art_wave || 0)); const R = 6.5 * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * 1.4, 0, 0, 0); }
+    if (G.waveCd <= 0) { G.waveCd = 2.6 * (1 - cdr) * (1 - 0.08 * (G.cards.art_wave || 0)); const R = 6.5 * s * M.area; G.fx.push({ k: 'wave', x: p.x, y: p.y, r: R, t: 0, life: 0.5 }); for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) hurt(f, dmg * 1.4, 0, 0, 0); }
   }
   // 적
   const aura = p.r * 1.7, recycle = G.view * SPT.recycleBeyondDiagonal;
@@ -1006,7 +1028,7 @@ function update(rdt) {
   G.foes = live.filter(f => !f.dead);
   tickHazards(dt);
   // 진기 구슬: 흡기 반경(balance.json magnetBase × 성질·연무장) 안이면 끌려온다
-  const mag = M.magnet * s;
+  const mag = M.magnet * s * (G.insEff.magnet_multiplier ? G.insEff.magnet_multiplier.multiplier : 1);   // 천리추종
   for (const o of G.orbs) {
     const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
     if (o.pull || d < mag + p.r) { o.pull = true; const v = 14 * s; o.x += dx / (d || 1) * v * dt; o.y += dy / (d || 1) * v * dt; }
@@ -1037,20 +1059,65 @@ function applyCard(o) {
   if (!o.art) {
     // 음양 게이지(balance.json yinyang): 심법 한 레벨마다 그 속성 쪽으로 passivePerLevel(덮어쓰는 값이 있으면 그것)
     const sg = o.def.yinyang === 'yang' ? 1 : o.def.yinyang === 'yin' ? -1 : 0;
-    G.yy = clamp(G.yy + sg * (o.def.yinyangPerLevelOverride ?? YY.passivePerLevel), YY.min, YY.max);
+    tiltYY(sg * (o.def.yinyangPerLevelOverride ?? YY.passivePerLevel));
     for (const e of o.def.effects) G.extra[e.stat] = (G.extra[e.stat] || 0) + e.perLevel;
-    const p = G.p, old = G.body.maxHp;
-    G.body = bodyOf(G.c, G.extra);
-    p.maxHp = G.body.maxHp; p.hp = Math.min(p.maxHp, p.hp + Math.max(0, p.maxHp - old)); p.dashMax = G.body.dash;
+    rebuildBody();
   }
   G.pendingCards--;
 }
+// 음양 기울이기. 역근을 얻으면 기울기 × tiltMultiplier, 남는 소수는 다음 번에 더한다(Core YinYangGauge.Tilt)
+function tiltYY(amount) {
+  const exact = amount * G.yyTilt + G.yyCarry, whole = Math.trunc(exact);
+  G.yyCarry = exact - whole; G.yy = clamp(G.yy + whole, YY.min, YY.max);
+}
+function rebuildBody() {
+  const p = G.p, old = G.body.maxHp;
+  G.body = bodyOf(G.c, G.extra);
+  p.maxHp = G.body.maxHp; p.hp = Math.min(p.maxHp, p.hp + Math.max(0, p.maxHp - old)); p.dashMax = G.body.dash;
+}
+
+// ───────── 돌파 깨달음(RM-07, 기획서 3장·5장) ─────────
+// Core Insights.Roll: 가진 것을 빼고 데이터 순서 위에서 앞자리부터 부분 셔플. 문파 몸엔 진소운 특성(4장)이 없어 늘 기본 수
+function rollFrom(list, count, rnd = Math.random) {
+  const pool = list.filter(i => !G.ins.includes(i.id)), n = Math.min(count, pool.length);
+  for (let i = 0; i < n; i++) { const j = i + Math.floor(rnd() * (pool.length - i)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return pool.slice(0, n);
+}
+// 마교 몸(혈공)은 그중 demonicInsightsPerBreakthrough 자리를 마공에서, 마공이 떨어지면 보통으로(Core RollWithDemonic, 마공이 앞자리)
+function rollInsights(rnd) {
+  const count = INS.choices.base, ba = G.sect.bloodArt;
+  const dem = ba ? rollFrom(INS.demonicInsights || [], Math.min(ba.demonicInsightsPerBreakthrough || 0, count), rnd) : [];
+  return [...dem, ...rollFrom(INS.insights, count - dem.length, rnd)];
+}
+const insOn = id => INS_APPLIED.has(INS_BY[id].effect);
+function takeInsight(def) {
+  G.ins.push(def.id); G.pendingIns--;
+  if (!insOn(def.id)) return;
+  const pr = def.params; G.insEff[def.effect] = pr;
+  if (def.effect === 'yinyang_reset') { G.yy = clamp(Math.round(pr.resetTo), YY.min, YY.max); G.yyTilt = pr.tiltMultiplier; G.yyCarry = 0; }
+  if (def.effect === 'kill_stack_might') G.salgiKills = G.kills;   // 고른 뒤 처치만 센다
+  if (def.effect === 'might_for_health') { G.extra.Might = (G.extra.Might || 0) + pr.mightBonus; G.extra.MaxHealth = (G.extra.MaxHealth || 0) - pr.maxHealthPenalty; rebuildBody(); }
+}
+// 처치·기혈에 따라 움직이는 몫(Core InsightEffects.Bonus): 살기충천 공력, 혈광 쾌속
+function insMight() {
+  const k = G.insEff.kill_stack_might;
+  return k ? Math.min(k.mightMax, Math.floor(Math.max(0, G.kills - G.salgiKills) / k.killsPerStack) * k.mightPerStack) : 0;
+}
+const frenzy = () => { const f = G.insEff.low_health_frenzy; return f && G.p.hp / G.p.maxHp < f.healthThreshold ? f : null; };
+function insCard(def) {
+  const on = insOn(def.id), dem = DEMONIC_INS.has(def.id);
+  return `<span class="seal${dem ? ' dem' : ''}">${esc(def.glyph)}</span><h3>${esc(def.nameKo)}</h3>`
+    + `<p class="where">${dem ? '마공' : '깨달음'} · ${esc(def.hanja)}</p><p${on ? '' : ' class="off"'}>${esc(def.textKo)}</p>`
+    + (on ? '' : `<p class="off">${esc(INS_OFF[def.effect] || '이 놀이판엔 아직 없는 효과')}</p>`);
+}
 function maybeCards() {
-  if (!G || G.pendingCards <= 0 || G.brk || G.ended || G.engage || overlay) return;
+  if (!G || G.brk || G.ended || G.engage || overlay) return;
+  if (G.pendingIns > 0) { maybeInsight(); return; }
+  if (G.pendingCards <= 0) return;
   const offers = rollCards();
   if (!offers.length) { G.pendingCards = 0; return; }
   if (G.auto || !running) { applyCard(offers[0]); return; }   // 자동 판·시뮬레이션은 첫 장을 바로 고른다
-  G.offers = offers; paused = true; show('levelup');
+  G.offers = offers; paused = true; show('levelup'); $('luhanja').textContent = '習';
   $('lusub').textContent = `Lv${G.lv} · 하나를 익힌다${G.pendingCards > 1 ? ` (남은 ${G.pendingCards - 1}장)` : ''}`;
   const box = $('lucards'); box.innerHTML = '';
   offers.forEach((o, i) => {
@@ -1061,9 +1128,26 @@ function maybeCards() {
     b.onclick = () => chooseCard(i); box.appendChild(b);
   });
 }
+function maybeInsight() {
+  const offers = rollInsights();
+  if (!offers.length) { G.pendingIns = 0; return; }   // 다 가졌으면 돌파 연출만(Core: 빈 목록)
+  if (G.auto || !running) { takeInsight(offers[0]); return; }
+  G.insOffers = offers; paused = true; show('levelup'); $('luhanja').textContent = '悟';
+  $('lusub').textContent = `${REALMS[G.tier].nameKo} 돌파 · 깨달음 하나${G.pendingIns > 1 ? ` (남은 ${G.pendingIns - 1}번)` : ''}`;
+  const box = $('lucards'); box.innerHTML = '';
+  offers.forEach((d, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'card' + (insOn(d.id) ? '' : ' dim');
+    b.innerHTML = insCard(d).replace('</h3>', `<kbd>${i + 1}</kbd></h3>`);
+    b.onclick = () => chooseCard(i); box.appendChild(b);
+  });
+}
 function chooseCard(i) {
-  if (overlay !== 'levelup' || !G.offers || !G.offers[i]) return;
-  applyCard(G.offers[i]); G.offers = null; paused = false; show(null); last = performance.now();
+  if (overlay !== 'levelup') return;
+  if (G.insOffers) { if (!G.insOffers[i]) return; takeInsight(G.insOffers[i]); G.insOffers = null; }
+  else if (G.offers && G.offers[i]) { applyCard(G.offers[i]); G.offers = null; }
+  else return;
+  paused = false; show(null); last = performance.now();
 }
 
 // 땅의 주인·정예 패턴(Core BossPatterns 와 같은 규칙: 패턴이 시작된 시각에서 다음 시작까지 간격, 30% 아래면 2막 패턴이 켜져 끝까지).
@@ -1269,7 +1353,7 @@ function tickHazards(dt) {
     const st = Math.hypot(s.vx, s.vy) * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.left -= st;
     if (Math.hypot(p.x - s.x, p.y - s.y) < s.r + p.r) {
       s.left = 0;
-      if (hitPlayer(s.dmg)) { if (s.pull && !s.src.dead) p.pull = { f: s.src, t: s.pull }; if (s.root) p.root = Math.max(p.root, s.root); }
+      if (hitPlayer(s.dmg) === true) { if (s.pull && !s.src.dead) p.pull = { f: s.src, t: s.pull }; if (s.root) p.root = Math.max(p.root, s.root); }
     }
   }
   G.shots = G.shots.filter(s => s.left > 0 && !(s.src.dead && s.chain));
@@ -1352,6 +1436,9 @@ function regionGimmicks(dt) {
 }
 function hitPlayer(dmg) {
   const p = G.p; if (p.iframe > 0 || G.brk || G.ended || G.sealed) return false;
+  // 금종조: 막을 수 있으면 이번 피해는 없던 일(묶임·끌림도 없음). 맞은 셈은 쳐서 같은 장판이 곧바로 다시 때리지 않게 한다
+  const gj = G.insEff.periodic_block;
+  if (gj && G.blockCd <= 0) { G.blockCd = gj.intervalSeconds; p.iframe = LD.hitIframe; G.fx.push({ k: 'block', x: p.x, y: p.y, r: p.r * 2.2, t: 0, life: 0.45 }); return 'blocked'; }
   p.hp -= Math.max(1, dmg * takenMul() - G.body.armor); p.iframe = LD.hitIframe; G.trauma = Math.min(1, G.trauma + 0.15);
   if (p.hp <= 0) { p.hp = 0; endLife('fallen'); }
   return true;
@@ -1366,7 +1453,8 @@ function drainPlayer(v) {
 function takenMul() {
   let m = 1;
   for (const f of G.foes) if (f.pat) for (const fd of f.pat.fields) if (fd.kind === 'yy' && fd.warm <= 0 && yySide(fd) > 0) m = Math.max(m, fd.pt.damageTakenMultiplier || 1);
-  return m;
+  const fz = frenzy();   // 혈광폭주: 기혈이 문턱 아래면 받는 피해 × (1 + damageTaken)
+  return fz ? m * (1 + fz.damageTaken) : m;
 }
 const yySide = fd => (G.p.x - fd.x) * Math.cos(fd.a) + (G.p.y - fd.y) * Math.sin(fd.a);
 
@@ -1525,6 +1613,7 @@ function render() {
     ctx.save(); ctx.translate(X, Y); if (p.fx < 0) ctx.scale(-1, 1); ctx.drawImage(playerSpr, -s2 / 2, -s2 * 0.82, s2, s2); ctx.restore();
     ctx.globalAlpha = 1;
     if (G.tier >= 1) { ctx.strokeStyle = `rgba(201,162,39,${0.25 + 0.1 * G.tier})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 1.7 * PPM, 0, TAU); ctx.stroke(); }
+    if (G.insEff.periodic_block && G.blockCd <= 0) { ctx.strokeStyle = 'rgba(201,162,39,0.45)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 2.1 * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }   // 금종조 준비됨
     if (G.tier >= 2) { const n = orbitCount(), R = 1.9 * sc(G.tier) * G.body.area * PPM; ctx.strokeStyle = G.tier >= 3 ? GOLD : INK; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const a = G.orbitA + i * TAU / n, bx = X + Math.cos(a) * R, by = Y + Math.sin(a) * R; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); } }
   }
   // 땅의 주인·정예 패턴 예고(붉은 먹)와 날아가는 것
@@ -1542,6 +1631,9 @@ function render() {
     } else if (e.k === 'wave') {
       ctx.strokeStyle = `rgba(26,26,26,${0.8 * (1 - k)})`; ctx.lineWidth = 24 * (1 - k) + 2; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k), 0, TAU); ctx.stroke();
       ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k) * 0.97, 0, TAU); ctx.stroke();
+    } else if (e.k === 'block') {   // 금종조가 막음: 금빛 종 테두리가 퍼진다
+      ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 5 * (1 - k) + 1.5;
+      for (const q of [0.8, 1]) { ctx.beginPath(); ctx.arc(X, Y - R * 0.25, R * q * (0.7 + 0.5 * easeOut(k)), 0, TAU); ctx.stroke(); }
     } else if (e.k === 'dash') {
       ctx.strokeStyle = `rgba(26,26,26,${0.4 * (1 - k)})`; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(X, Y - 20); ctx.lineTo(X - Math.cos(e.a) * 70, Y - 20 - Math.sin(e.a) * 70); ctx.stroke();
     }
@@ -1706,7 +1798,7 @@ let candidates = [];
 const rainSvg = d => `<svg viewBox="0 0 18 14" aria-hidden="true"><g stroke="#B3261E" stroke-linecap="round" stroke-width="${(0.5 + 0.45 * d).toFixed(2)}" opacity="${Math.min(1, 0.45 + 0.12 * d).toFixed(2)}"><path d="M4 1 2 13M9 1 7 13M14 1 12 13"/></g></svg>`;
 function traitLine(id) {
   const t = TRAIT[id], parts = Object.entries(t.stats).map(([k, v]) => APPLIED.has(k) ? esc(fmtStat(k, v)) : `<span class="off">${esc(fmtStat(k, v))}</span>`);
-  if (t.yinyangStart) parts.push(`<span class="off">음양 시작 ${t.yinyangStart > 0 ? '+' : '−'}${Math.abs(t.yinyangStart)}</span>`);
+  if (t.yinyangStart) parts.push(`음양 시작 ${t.yinyangStart > 0 ? '+' : '−'}${Math.abs(t.yinyangStart)}`);
   if (t.rebirthQi) parts.push(`윤회의 기 +${Math.round(t.rebirthQi * 100)}%`);
   return `<p class="tr"><b>${esc(t.nameKo)}</b>${parts.join(' · ')}</p>`;
 }
@@ -1755,7 +1847,8 @@ function setPaused(on) {
   paused = on;
   if (on) {
     const t = G.c.traits.map(id => TRAIT[id].nameKo).join('·') || '없음';
-    $('pline').innerHTML = `${esc(G.sect.nameKo)} 제자 · ${esc(G.home.nameKo)}에서 태어남<br>타고난 성질 ${esc(t)}<br>${esc(REALMS[G.tier].nameKo)} Lv${G.lv} · ${clock(G.t)} · 처치 ${fmtN(G.kills)}`;
+    $('pline').innerHTML = `${esc(G.sect.nameKo)} 제자 · ${esc(G.home.nameKo)}에서 태어남<br>타고난 성질 ${esc(t)}<br>${esc(REALMS[G.tier].nameKo)} Lv${G.lv} · ${clock(G.t)} · 처치 ${fmtN(G.kills)}`
+      + (G.ins.length ? `<br>깨달음 ${esc(G.ins.map(id => INS_BY[id].nameKo + (insOn(id) ? '' : '(효과 없음)')).join(' · '))}` : '');
     show('pause');
   } else { show(null); last = performance.now(); }
 }
@@ -1830,7 +1923,7 @@ window.addEventListener('keydown', e => {
   if (overlay === 'title' && e.code === 'Enter') { openRebirth(); return; }
   if (overlay === 'rebirth') { const n = parseInt(e.key, 10); if (n >= 1 && n <= candidates.length) beginLife(n - 1); return; }
   if (overlay === 'dead' && e.code === 'Enter') { openRebirth(); return; }
-  if (overlay === 'levelup') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 3) chooseCard(n - 1); return; }
+  if (overlay === 'levelup') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseCard(n - 1); return; }
   if (overlay === 'pause') { if (e.code === 'Escape' || e.code === 'Enter') setPaused(false); return; }
   if (!running) return;
   if (e.code === 'Space' || e.code.startsWith('Shift')) { e.preventDefault(); doDash(); }
@@ -1919,6 +2012,24 @@ window.__ch = {
   breakNow() { if (G.tier >= MAXT || G.brk) return; G.lv = REALMS[G.tier + 1].level; G.xp = 0; breakthrough(); },
   pause: on => setPaused(on !== false),
   cards: () => Object.assign({}, G.cards), offers: () => G.offers && G.offers.map(o => o.def.id), choose: i => chooseCard(i),
+  // 깨달음(RM-07): ins() 가진 것, ins(id) 곧바로 얻기, insOffers() 떠 있는 후보, insRoll(n) 후보 n번 뽑아 규칙 위반 세기
+  ins(id) { if (id) { G.pendingIns++; takeInsight(INS_BY[id]); } return G.ins.slice(); },
+  insOffers: () => G.insOffers && G.insOffers.map(d => d.id),
+  insRoll(n) {
+    const seen = {}, bad = { dup: 0, taken: 0, size: 0, demonicSlot: 0 };
+    const pool = Object.keys(INS_BY).filter(id => !G.ins.includes(id) && (G.sect.bloodArt || !DEMONIC_INS.has(id)));
+    const demLeft = (INS.demonicInsights || []).filter(d => !G.ins.includes(d.id)).length;
+    const wantDem = G.sect.bloodArt ? Math.min(G.sect.bloodArt.demonicInsightsPerBreakthrough, demLeft, INS.choices.base) : 0;
+    for (let i = 0; i < (n || 1000); i++) {
+      const ids = rollInsights().map(d => d.id);
+      if (new Set(ids).size < ids.length) bad.dup++;
+      if (ids.some(id => G.ins.includes(id))) bad.taken++;
+      if (ids.length !== Math.min(INS.choices.base, pool.length)) bad.size++;
+      if (ids.filter(id => DEMONIC_INS.has(id)).length !== wantDem) bad.demonicSlot++;
+      for (const id of ids) seen[id] = (seen[id] || 0) + 1;
+    }
+    return { seen, bad };
+  },
 };
 
 window.addEventListener('resize', resize);

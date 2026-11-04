@@ -128,6 +128,8 @@ def cheonha_blob() -> str:
         # 레벨업 카드(T-21): 심법 이름과 능력치 효과, 레벨 상한
         "passives": [{k: x[k] for k in ("id", "nameKo", "yinyang", "yinyangPerLevelOverride", "effects") if k in x} for x in load("passives")["passives"]],
         "levels": bal["levels"],
+        # 돌파 깨달음(RM-07): 보통 일곱·마공 넷과 보여 주는 수. 효과 숫자는 params 그대로
+        "insights": drop_notes(load("insights")),
         # 지역 콘텐츠(WP-01): 고유 적·정예 정의와 정예 패턴, 장별 정예 표, 지형 기믹 수치, 한 생의 고유 적 비율·정예 대신 쓸 땅
         "regionFoes": [drop_notes(e) for e in enemies["enemies"] if e.get("chapter") or e.get("family") == "elite"],
         "elitesByChapter": enemies["elites"],
