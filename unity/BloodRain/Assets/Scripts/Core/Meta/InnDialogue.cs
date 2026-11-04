@@ -38,6 +38,8 @@ namespace BloodRain.Core.Meta
         public bool ShadowChased;
         /// <summary>이번 생에 하오문 밀서(기연)를 주웠나.</summary>
         public bool PickedHaomunLetter;
+        /// <summary>이번 생에 기연 '은거기인'(바둑 두는 노인 곁 6초)을 마쳤나. 목 노인 은거기인 줄 하나(기획서 20장).</summary>
+        public bool MetHermit;
         /// <summary>이번 귀환에 새로 열린 객잔 시설(dialogue.json facility:&lt;id&gt;).</summary>
         public List<string> NewFacilities = new List<string>();
         /// <summary>혈마의 그림자에게 쓰러졌나(정산 자막).</summary>
@@ -250,6 +252,11 @@ namespace BloodRain.Core.Meta
                     _ => false,
                 };
                 if (hit) p.Queue("mok." + l.Id);
+            }
+            if (facts.MetHermit)   // 은거기인 줄은 만날 때마다 아직 안 한 것 가운데 앞에서 하나(mok.md)
+            {
+                var h = d.Mok.Lines.FirstOrDefault(l => l.Kind == "hermit" && !p.HasSeen("mok." + l.Id) && !p.Pending.Contains("mok." + l.Id));
+                if (h != null) p.Queue("mok." + h.Id);
             }
             if (record.EndWay == LifeEndWay.Zuohwa)
             {

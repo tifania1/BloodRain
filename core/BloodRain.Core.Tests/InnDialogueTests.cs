@@ -303,5 +303,21 @@ namespace BloodRain.Core.Tests
             Assert.Equal(p.Pending, q.Pending);
             Assert.Throws<NotSupportedException>(() => DialogueProgress.FromJson("{\"Version\": 99}"));
         }
+
+        [Fact]
+        public void 은거기인을_만난_생마다_목_노인_은거기인_줄을_차례로_하나씩()
+        {
+            var p = new DialogueProgress();
+            var s = AfterPrologue(p);
+            var said = new List<string>();
+            for (int i = 0; i < 10; i++)
+                said.AddRange(Ids(Live(s, p, "shaolin", facts: new ReturnFacts { MetHermit = i < 5 }).Mok).Where(id => id.StartsWith("hermit_")));
+            Assert.Equal(new[] { "hermit_1", "hermit_2", "hermit_3" }, said);   // 다섯 번 만나도 셋까지, 한 번씩
+
+            var p2 = new DialogueProgress();
+            var s2 = AfterPrologue(p2);
+            for (int i = 0; i < 6; i++)
+                Assert.DoesNotContain(Ids(Live(s2, p2, "shaolin").Mok), id => id.StartsWith("hermit_"));   // 안 만나면 없다
+        }
     }
 }
