@@ -132,6 +132,8 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> NewTornManuals { get; }
         /// <summary>이번 생에 혼에 더한 혈정.</summary>
         public int BloodCrystal { get; }
+        /// <summary>이번 정산으로 새로 열린 객잔 시설 id(조건만 갖추면 열리는 것. 짓는 시설은 Inn.Buildable).</summary>
+        public IReadOnlyList<string> NewFacilities { get; internal set; } = Array.Empty<string>();
 
         public LifeSummary(int rebirthQi, IReadOnlyList<string> newSealStones, IReadOnlyList<string> newlyUnlockedSects,
             IReadOnlyList<string> newRegions, IReadOnlyList<string> newRealms, IReadOnlyList<string> newEvolutions, bool finalCleared,
@@ -459,7 +461,10 @@ namespace BloodRain.Core.Meta
             if (sealedEnd) _finalClears[record.Sect!] = (_finalClears.TryGetValue(record.Sect!, out var f) ? f : 0) + 1;
 
             var newSects = UnlockedSects.Where(s => !sectsBefore.Contains(s)).ToList();
-            return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal);
+            return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
+            {
+                NewFacilities = Inn.Refresh(this),
+            };
         }
 
         void Validate(LifeRecord r)

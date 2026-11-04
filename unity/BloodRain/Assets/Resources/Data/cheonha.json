@@ -169,6 +169,19 @@
     }
   },
 
+  "inn": {
+    "_note": "청운객잔 시설(10장 '객잔 시설'). require 를 모두 갖추면 열린다: prologue 서장 끝, sealStones 지닌 봉인석 수, bossKilled 계정에서 쓰러뜨린 땅의 주인 지역, unlock 해금 토큰(대화 진행 등, Soul.Unlock). buildBloodCrystal 이 있으면 조건을 갖춘 뒤 혈정을 써서 짓는다(10장 화폐 '혈정: 시설 건설'). 한 번 열리면 회귀로 봉인석이 지워져도 남는다(혼 해금 facility:<id>).",
+    "facilities": [
+      { "id": "main_hall",   "nameKo": "객잔 본채",     "require": {} },
+      { "id": "training",    "nameKo": "연무장",        "require": { "prologue": true } },
+      { "id": "library",     "nameKo": "장경각",        "require": { "sealStones": 1 } },
+      { "id": "apothecary",  "nameKo": "약방",          "require": { "sealStones": 2 }, "buildBloodCrystal": 10 },
+      { "id": "smithy",      "nameKo": "대장간",        "require": {}, "buildBloodCrystal": 20 },
+      { "id": "cave",        "nameKo": "수련동",        "require": { "sealStones": 3 } },
+      { "id": "haomun_board", "nameKo": "하오문 게시판", "require": { "bossKilled": "janggang", "unlock": "talk:unnang_haomun" } }
+    ]
+  },
+
   "cycle": {
     "_note": "회귀(혈월 천하, 21장). 봉인 엔딩 뒤. 봉인석만 처음으로.",
     "resets": ["sealStones"],

@@ -23,12 +23,41 @@ namespace BloodRain.Core.Data
         public MasteryDef Mastery = new MasteryDef();
         public LifeEndDef LifeEnd = new LifeEndDef();
         public CycleDef Cycle = new CycleDef();
+        public InnDef Inn = new InnDef();
 
         public RegionDef Region(string id) => Regions.First(r => r.Id == id);
         public SectDef Sect(string id) => Sects.First(s => s.Id == id);
         public BirthTraitDef Trait(string id) => BirthTraits.List.First(t => t.Id == id);
         /// <summary>땅의 주인이 있는 지역(봉마곡 빼고 일곱).</summary>
         public IEnumerable<RegionDef> BossRegions => Regions.Where(r => r.Boss != null && !r.Final);
+    }
+
+    /// <summary>청운객잔 시설(cheonha.json inn, 기획서 10장 '객잔 시설').</summary>
+    public sealed class InnDef
+    {
+        public List<FacilityDef> Facilities = new List<FacilityDef>();
+        public FacilityDef Facility(string id) => Facilities.First(f => f.Id == id);
+    }
+
+    public sealed class FacilityDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        public FacilityRequireDef Require = new FacilityRequireDef();
+        /// <summary>0 이면 조건만 갖추면 저절로 열린다. 아니면 이만큼 혈정을 써서 짓는다.</summary>
+        public int BuildBloodCrystal;
+    }
+
+    public sealed class FacilityRequireDef
+    {
+        /// <summary>서장을 마쳐야 한다.</summary>
+        public bool Prologue;
+        /// <summary>지닌 봉인석 수.</summary>
+        public int SealStones;
+        /// <summary>계정에서 쓰러뜨린 땅의 주인 지역 id.</summary>
+        public string? BossKilled;
+        /// <summary>혼 해금 토큰(대화 진행 등).</summary>
+        public string? Unlock;
     }
 
     public sealed class WorldDef
