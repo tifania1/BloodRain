@@ -63,6 +63,16 @@ namespace BloodRain.Presentation
             return true;
         }
 
+        /// <summary>C-06a 최대 기혈을 바꾼다. 늘면 는 만큼 지금 기혈도 채우고, 줄면 넘친 만큼만 깎는다.</summary>
+        public void SetMaxHealth(float max)
+        {
+            max = Mathf.Max(1f, max);
+            if (Mathf.Approximately(max, MaxHealth)) return;
+            float gain = max - MaxHealth;
+            MaxHealth = max;
+            if (Health > 0f) Health = Mathf.Clamp(Health + Mathf.Max(0f, gain), 1f, MaxHealth);
+        }
+
         /// <summary>시험: 지금 쓰러진다(메뉴 '지금 쓰러지기').</summary>
         public void ForceDown()
         {

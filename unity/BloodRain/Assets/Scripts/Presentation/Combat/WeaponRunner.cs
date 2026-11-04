@@ -13,7 +13,7 @@ namespace BloodRain.Presentation.Combat
     //   피해 = Core WeaponMath.DamageAt(무공, 레벨). 사거리·속도·넉백은 경지 m → WorldScale 세계 m.
     //   쿨다운은 Core WeaponGrowth.Cooldown(쿨다운 0 인 독무는 tickSeconds 마다 초당 피해 x tickSeconds, 섬광지는 초당 4→9발).
     //   레벨 성장(연타·개수·관통·범위·새 동작)은 WeaponGrowth, 탄속·반경·수명·넉백·간격은 WeaponDef(weapons.json) 에서 읽는다(C-04b).
-    //   능력치(범위·쿨감·투사체 수 등)는 Loadout/Stats 가 붙을 때(C-06) 곱한다. 지금은 모두 1.
+    //   능력치는 LifeRunner 가 넣는 cooldownReduction·areaMultiplier 만 쓴다(C-06a). 개수·지속은 아직 1.
     // 처음 8갈래: front_arc(삼재검법), melee_combo(나한권), orbit_slash(창천검기), aura(독무),
     //   homing_dagger(비도술), slow_projectile(장풍), random_rapid(섬광지), random_bomb(벽력탄).
     // 아직 없는 것: 절기(evolved) 모양, 중독·화상·느려짐 같은 적 상태, 넉백 저항.
@@ -22,6 +22,11 @@ namespace BloodRain.Presentation.Combat
     //   재료가 없으면 옛 부채꼴·원으로. 모두 renderQueue 3002(먹)·3003(빛)이라 적 덩이(3000) 위에 그린다.
     public sealed class WeaponRunner : MonoBehaviour
     {
+        // C-06a 몸 능력치(StatSheet). LifeRunner 가 넣는다. 쾌속은 쿨다운에, 범위는 휘두르는 반경·폭발 반경에 곱한다.
+        // 개수·지속(연무장 몫 포함)은 무공마다 쓰는 자리가 달라 아직 안 얹음(C-06a 진행).
+        [NonSerialized] public float cooldownReduction;
+        [NonSerialized] public float areaMultiplier = 1f;
+
         [Serializable]
         public sealed class Slot
         {
@@ -190,7 +195,7 @@ namespace BloodRain.Presentation.Combat
                 if (!Fire(s)) { s.Cooldown = 0f; continue; }
                 // 쿨다운 0(독무처럼 상시)이면 tickSeconds 마다 한 번, 섬광지는 1 / shotsPerSecond(WeaponGrowth.Cooldown)
                 float cd = s.Def.Cooldown <= 0f && s.Def.ShotsPerSecond == null ? Tick(s)
-                         : Mathf.Max(0.05f, WeaponGrowth.Cooldown(s.Def, s.level));
+                         : Mathf.Max(0.05f, WeaponGrowth.Cooldown(s.Def, s.level) * (1f - cooldownReduction)); // C-06a 쾌속
                 s.Cooldown += cd;
                 if (s.Cooldown < -1f) s.Cooldown = 0f;
             }
@@ -278,7 +283,7 @@ namespace BloodRain.Presentation.Combat
                 }
                 case "orbit_slash":
                 {
-                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level)); // Lv8 범위 +40%(areaLv8)
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier); // Lv8 범위 +40%(areaLv8)
                     int sweeps = Has(s, "2회 회전") ? 2 : 1;
                     _fx.Add(new Fx
                     {
@@ -329,7 +334,7 @@ namespace BloodRain.Presentation.Combat
                     for (int k = 0; k < shots; k++)
                         Later(k * gap, () =>
                         {
-                            float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level));
+                            float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier);
                             Shoot(s, Mathf.Atan2(player.Facing.y, player.Facing.x), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds, 0, shot.Homing, kb,
                                   new Color(0.95f, 0.85f, 0.55f, 0.55f));
                         });
@@ -354,7 +359,7 @@ namespace BloodRain.Presentation.Combat
                     // 화상(burnPerSecond·burnSeconds)은 적 상태 칸이 붙을 때(C-04 남은 것)
                     int n = WeaponGrowth.Projectiles(s.Def, s.level);
                     NearestN(ws.Length(s.Def.SeekRange ?? 7f), 20, _targets);
-                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level));
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier);
                     float fuse = s.Def.FuseSeconds ?? 0.6f, kb = ws.Speed(Knock(s));
                     for (int k = 0; k < n; k++)
                     {

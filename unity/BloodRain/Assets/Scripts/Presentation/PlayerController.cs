@@ -48,6 +48,9 @@ namespace BloodRain.Presentation
         public Vector2 Facing => _facing;
         public bool Invulnerable => Dash != null && Dash.Invulnerable;
 
+        /// <summary>몸 걸음 배율(StatSheet.MoveSpeed = 몸 × (1 + 신법)). C-06a LifeRunner 가 넣는다.</summary>
+        public float MoveMultiplier { get => _moveMultiplier; set => _moveMultiplier = value; }
+
         void Awake()
         {
             var data = DataBoot.Data;
@@ -59,7 +62,7 @@ namespace BloodRain.Presentation
             }
             _ws = WorldScale.Current;
             var body = RebirthHandoff.Body ?? Rebirth.Prologue(data);
-            _moveMultiplier = body.Character.MoveSpeed;
+            _moveMultiplier = body.Character.MoveSpeed; // C-06a 한 생이 있으면 LifeRunner 가 ApplyStats 로 덮는다
             _baseMove = data.Balance.Stats.MoveBase;
             bodyRealmMeters = data.Balance.Stats.PlayerBodyRadius * 2f;
             Dash = new Dash(data.Balance.Dash);

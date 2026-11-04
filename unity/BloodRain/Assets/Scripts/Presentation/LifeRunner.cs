@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using BloodRain.Core.Build;
 using BloodRain.Core.Data;
 using BloodRain.Core.Meta;
 using BloodRain.Core.Run;
 using BloodRain.Core.Spawning;
+using BloodRain.Presentation.Combat;
 using BloodRain.Presentation.Fx;
 using BloodRain.Presentation.Hud;
 using BloodRain.Presentation.Meta;
@@ -101,6 +103,44 @@ namespace BloodRain.Presentation
 
         void OnKilled(Vector2 at, EnemyAgent a) => _kills++;
 
+        // ---- C-06a 몸 능력치 ----
+        // 능력치 한 장 = life.CurrentStats(심법 시너지 덧셈 + 깨달음, 기혈 비율, 움직였나). 레벨업 선택·돌파·기혈 50% 넘나듦·멈춤↔움직임을
+        // 일일이 잡는 대신 0.25초마다 다시 매긴다(값이 같으면 넣는 쪽이 바뀌지 않는다).
+
+        /// <summary>지금 몸에 얹힌 능력치(디버그 줄·다른 화면이 본다).</summary>
+        public StatSheet Stats { get; private set; }
+
+        public WeaponRunner weapons;
+        float _statTimer;
+        Vector3 _lastStatPos;
+
+        void ApplyStats()
+        {
+            if (_life == null || _life.Record != null) return;
+            var soul = RebirthHandoff.Soul;
+            var extra = BloodRain.Core.Build.Synergy.Compute(_data, _life.Loadout, null, soul != null ? soul.RestoredManuals : null).StatBonus();
+            float ratio = vitals != null && vitals.MaxHealth > 0f ? vitals.Health / vitals.MaxHealth : 1f;
+            extra.Add(_life.InsightBonus((int)System.Math.Min(_kills, int.MaxValue), ratio));
+            bool moving = player != null && (player.position - _lastStatPos).sqrMagnitude > 1e-6f;
+            if (player != null) _lastStatPos = player.position;
+            var st = _life.CurrentStats(extra, ratio, moving);
+            Stats = st;
+
+            if (vitals != null)
+            {
+                vitals.SetMaxHealth(st.MaxHealth);
+                vitals.armor = st.Armor;
+            }
+            if (player != null && player.TryGetComponent<PlayerController>(out var pc)) pc.MoveMultiplier = st.MoveSpeed;
+            if (orbs != null) orbs.MagnetMeters = st.Magnet;
+            if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();
+            if (weapons != null)
+            {
+                weapons.cooldownReduction = st.CooldownReduction;
+                weapons.areaMultiplier = st.Area;
+            }
+        }
+
         // ---- LF-03 쓰러짐 ----
 
         /// <summary>시험 메뉴 '지금 쓰러지기'.</summary>
@@ -171,6 +211,8 @@ namespace BloodRain.Presentation
             int alive = enemies != null ? enemies.Count : 0;
             var second = _life.Tick(dt, pos, alive);
             if (second != null) SpawnSecond(second);
+            _statTimer -= Time.unscaledDeltaTime;
+            if (_statTimer <= 0f) { _statTimer = 0.25f; ApplyStats(); }
             if (breakthrough == null || !breakthrough.IsPlaying) SyncScale();
         }
 
@@ -282,6 +324,12 @@ namespace BloodRain.Presentation
             GUI.Label(new Rect(12, 96, 900, 22),
                 $"한 생  {_life.Minutes:0.0}분  레벨 {_life.Level} ({_life.Xp.Progress * 100:0}%)  경지 {realm.NameKo}  지역 {region.NameKo}  혈운 {_life.Density:0.00}" +
                 (_life.IsPrologue ? "  [서장]" : ""));
+            if (Stats != null)
+            {
+                var st = Stats;
+                GUI.Label(new Rect(12, 118, 1100, 22),
+                    $"능력치  최대 기혈 {st.MaxHealth:0}  호신 {st.Armor:0.#}  회복 {st.Recovery:0.#}  걸음 x{st.MoveSpeed:0.00}  공력 x{st.Might:0.00}  쾌속 {st.CooldownReduction * 100:0}%  범위 x{st.Area:0.00}  개수 +{st.Amount}  지속 x{st.Duration:0.00}  흡기 {st.Magnet:0.0}m  회피 {st.Evade * 100:0}%");
+            }
         }
     }
 }

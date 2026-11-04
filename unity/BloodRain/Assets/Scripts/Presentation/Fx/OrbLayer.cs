@@ -35,6 +35,8 @@ namespace BloodRain.Presentation.Fx
         public RunXp TestXp { get; private set; }
 
         float _magnet = 1.5f;
+        /// <summary>자석 반경(경지 m, StatSheet.Magnet = magnetBase × (1 + 흡기)). C-06a LifeRunner 가 넣는다.</summary>
+        public float MagnetMeters { get => _magnet; set => _magnet = value; }
         double _small = 1, _medium = 5, _large = 25;
         Material _mat;
         Mesh _quad;
