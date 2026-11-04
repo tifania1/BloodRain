@@ -35,6 +35,7 @@ namespace BloodRain.Core.Tests
         [InlineData("character", "캐릭터·적 스프라이트", "1:1")]
         [InlineData("elite", "캐릭터·적 스프라이트", "1:1")]
         [InlineData("boss", "캐릭터·적 스프라이트", "1:1")]
+        [InlineData("icon", "무공·심법 아이콘", "1:1")]
         public void 그_종류의_줄은_틀의_고정_문장을_모두_담는다(string kind, string frame, string ratio)
         {
             var parts = Fixed(Frame(frame));

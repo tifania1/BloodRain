@@ -1221,6 +1221,7 @@ Oct 28, 2026 · @Tifania
 | 바닥 타일 | 1024x1024 | 512px | 화면 끝까지 꽉 참 | 이음새는 후처리로 지움 |
 | 컷신·스토리보드 | 1536x1024 | 1920x1080로 확대 | 장면 그대로 | 글자 없이 |
 | 초상(대화·선택 화면) | 1024x1536 | 그대로 | 단색 | 상반신 |
+| UI 바탕(카드 틀·칸·바·버튼·족자) | 1024x1024, 1536x1024, 1024x1536 | 긴 변 1024px | 단색 #F2EBDD | 글자 없이. 가장자리에서 이어진 배경만 지워 틀 안 종이는 남김. Unity 9-slice |
 
 ### 움직임은 이미지 한 장 + 연출로
 
@@ -1246,7 +1247,7 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 {STYLE} Game sprite of {외형 설명}. Full body, top-down 3/4 view from slightly above, idle pose facing down-right, centered with generous margin. Isolated on a plain flat background color #F2EBDD, no cast shadow, crisp clean edges. Square 1:1.
 
 [무공·심법 아이콘]
-{STYLE} Square skill icon for "{무공 이름}": {상징 이미지}. One bold symbol centered inside a round ink brush-stroke ring, high contrast, readable at 64 pixels. Square 1:1.
+{STYLE} Square skill icon for the {무공 뜻(영어)} technique: {상징 이미지}. One bold symbol centered inside a round ink brush-stroke ring, high contrast, readable at 64 pixels. Square 1:1.
 
 [바닥 타일]
 {STYLE} Top-down orthographic ground texture of {지형}. Evenly lit, no horizon, no perspective, no shadows, no objects larger than 5% of the frame, fills the entire frame edge to edge, tileable. Square 1:1.
@@ -1277,7 +1278,7 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 ### 후처리(자동)
 
 1. 받은 파일을 `art_inbox/`에 모음
-2. 단색 배경 제거(색 키 우선, 안 되면 rembg)
+2. 단색 배경 제거(색 키 우선, 안 되면 rembg). UI 바탕은 그림 가장자리에서 이어진 배경만 지운다
 3. 여백 자르고 정사각 패딩, 규격 크기로 줄이기
 4. 바닥 타일은 오른쪽 가장자리 일부를 왼쪽에 겹쳐 섞어 이음새 제거(위아래도 같은 방식)
 5. `Assets/Art/{종류}/`로 복사. Unity AssetPostprocessor가 Sprite 설정(PPU 100, 필터, 압축)을 자동으로 적용
