@@ -1077,14 +1077,14 @@ function update(rdt) {
   const speed = 4.6 * s * (1 + 0.15 * pr) * M.speed;
   // 물(장강): 플레이어·적 모두 0.7배. 수상비(경공 뒤 3초)·수로채 몸은 느려지지 않는다
   const wmul = GIM.water && p.walkT <= 0 && G.sect.id !== 'waterfort' && inWater(p.x, p.y) ? GIM.water.moveSpeedMultiplier : 1;
-  p.walkT = Math.max(0, p.walkT - dt); p.root = Math.max(0, p.root - dt);
+  p.walkT = Math.max(0, p.walkT - dt); p.root = Math.max(0, p.root - dt); p.slowT = Math.max(0, (p.slowT || 0) - dt);   // 빙강시 둔화: 다시 닿으면 시간만 처음부터
   if (p.pull) {   // 갈고리 사슬: 남은 시간 동안 보스 쪽으로 끌려간다
     const q = p.pull, dx = q.f.x - p.x, dy = q.f.y - p.y, d = Math.hypot(dx, dy), stop = q.f.r + p.r;
     q.t -= dt;
     if (d > stop && q.t > 0) { const v = Math.min(d - stop, (d - stop) / q.t * dt + 0.0001); p.x += dx / d * v; p.y += dy / d * v; }
     if (q.t <= 0 || d <= stop || q.f.dead) p.pull = null;
   } else if (p.dashT > 0) { p.x += p.dvx * dt; p.y += p.dvy * dt; p.dashT -= dt; }
-  else if (p.root <= 0) { const wm = wmul * weatherPlayerMul(); p.x += mx * speed * wm * dt; p.y += my * speed * wm * dt; }
+  else if (p.root <= 0) { const wm = wmul * weatherPlayerMul() * (p.slowT > 0 ? p.slowMul : 1); p.x += mx * speed * wm * dt; p.y += my * speed * wm * dt; }
   if (p.dashN < p.dashMax) { p.dashAcc += dt; if (p.dashAcc >= BAL.dash.rechargeSeconds) { p.dashAcc = 0; p.dashN++; } }
   pushOutOfPagodas(p, p.r * 0.8, false);   // 탑림: 몸 폭(반지름 0.4m 꼴)으로 돌탑에 막힌다
   // 혈우 장막과 강호 끝
@@ -1200,7 +1200,7 @@ function update(rdt) {
     f.kx *= Math.pow(0.03, dt); f.ky *= Math.pow(0.03, dt);
     pushOutOfPagodas(f, f.r, !!(f.def && f.def.ignoresTerrain));   // 탑림: 걷는 적은 막히고 나는 적은 지나간다
     if (d > recycle && !f.boss && !f.cloneOf) { f.x = p.x - dx / d * G.view * 0.62; f.y = p.y - dy / d * G.view * 0.62; }
-    if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier && !(f.pat && f.pat.blink)) { f.contact = 0.4; hitPlayer(f.dmg); }   // 순간이동 중엔 잔상만, 닿아도 피해 없음
+    if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier && !(f.pat && f.pat.blink)) { f.contact = 0.4; if (hitPlayer(f.dmg) === true && f.def && f.def.onHitSlowSeconds > 0) { p.slowT = f.def.onHitSlowSeconds; p.slowMul = f.def.onHitSlowMultiplier; } }   // 순간이동 중엔 잔상만, 닿아도 피해 없음
   }
   // 밀어내기(대충): 같은 경지끼리만
   const live = G.foes.filter(f => !f.dead);
@@ -1615,6 +1615,17 @@ function localBehavior(f, dx, dy, d, dt) {
       f.hookWind -= dt;
       if (f.hookWind <= 0) { const a = f.hookA, v = D.hook.speed * k; G.shots.push({ x: f.x, y: f.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, left: D.hook.range * k, r: D.hook.radius * k, dmg: f.dmg, src: f, chain: true, root: D.hook.bindSeconds }); }
     } else if (f.cd <= 0 && d < D.hook.range * k) { f.cd = D.hook.interval; f.hookWind = D.telegraph || 0.5; f.hookA = Math.atan2(dy, dx); }
+  } else if ((D.behavior === 'petal_shot' || D.behavior === 'ice_throw') && D.shoot) {
+    // 매화검귀 꽃잎 탄(range 안이면 interval 마다 count 발을 spread 도 부채꼴로), 설인 얼음덩이(한 발). Unity EnemyField 쏘기와 같은 셈(R4-11)
+    const sh = D.shoot; f.cd = (f.cd == null ? sh.interval * Math.random() : f.cd) - dt;
+    if (f.cd <= 0 && d < sh.range * k) {
+      f.cd = sh.interval;
+      const n = Math.max(1, sh.count || 1), sp = (sh.spread || 0) * Math.PI / 180, a0 = Math.atan2(dy, dx), v = sh.speed * k;
+      for (let i = 0; i < n; i++) {
+        const a = n === 1 ? a0 : a0 - sp / 2 + sp * i / (n - 1);
+        G.shots.push({ x: f.x, y: f.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, left: sh.range * k, r: sh.radius * k, dmg: (D.projectileDamage || 0) * f.dmg / D.contactDamage, src: f, petal: D.behavior === 'petal_shot', ice: D.behavior === 'ice_throw' });
+      }
+    }
   }
 }
 // 날아가는 것(암기·갈고리), 웅덩이, 되살아나는 짝
@@ -2344,7 +2355,7 @@ function drawShots() {
     if (s.delay > 0) continue;
     const X = sx(s.x), Y = sy(s.y), R = Math.max(2.5, s.r * PPM);
     if (s.chain) { ctx.strokeStyle = 'rgba(26,26,26,0.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(sx(s.src.x), sy(s.src.y)); ctx.lineTo(X, Y); ctx.stroke(); }
-    ctx.fillStyle = s.chain ? INK : s.petal ? 'rgba(200,70,90,0.92)' : CRIMSON; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+    ctx.fillStyle = s.chain ? INK : s.petal ? 'rgba(200,70,90,0.92)' : s.ice ? 'rgba(150,190,215,0.95)' : CRIMSON; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
   }
 }
 const nowS = () => performance.now() / 1000;
