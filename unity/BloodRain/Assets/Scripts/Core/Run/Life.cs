@@ -183,10 +183,12 @@ namespace BloodRain.Core.Run
             Log.Enter(now);
         }
 
-        /// <summary>진기 구슬을 먹었다. 윤회의 기는 구슬을 주운 자리의 혈운 농도로 센다.</summary>
+        /// <summary>진기 구슬을 먹었다. 윤회의 기는 구슬을 주운 자리의 혈운 농도로 센다.
+        /// 레벨에 들어가는 진기는 지금 몸의 심득(Growth: 성질·청심공·연무장)을 곱한다. 깨달음에는 심득이 없어 extra 없이 센다.</summary>
         public LifeAbsorb Absorb(double orbXp, int orbs = 1)
         {
             if (Record != null) throw new InvalidOperationException("끝난 생입니다");
+            Xp.Growth = CurrentStats().Growth;
             float density = Density;
             Log.AbsorbOrb(orbXp, density, orbs); // 윤회의 기는 구슬 값 그대로(혈공으로 늘지 않음)
             var r = Xp.Absorb(BloodArt?.OrbXp(orbXp, density) ?? orbXp);
