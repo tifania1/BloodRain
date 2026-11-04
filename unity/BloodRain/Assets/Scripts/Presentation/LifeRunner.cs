@@ -1,12 +1,15 @@
+using System.Collections.Generic;
 using System.Linq;
 using BloodRain.Core.Data;
 using BloodRain.Core.Meta;
 using BloodRain.Core.Run;
 using BloodRain.Core.Spawning;
 using BloodRain.Presentation.Fx;
+using BloodRain.Presentation.Hud;
 using BloodRain.Presentation.Meta;
 using BloodRain.Sim;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BloodRain.Presentation
 {
@@ -17,6 +20,7 @@ namespace BloodRain.Presentation
     //   생성(LF-02): Tick 이 돌려주는 LifeSecond 의 Spawns 는 생성 고리(balance.json spawnTarget 대각선 배수)에, Events 는 종류대로 세운다.
     //   덩이 사람 수는 EnemyField 가 지금 경지로 정한다(TU-04 덩이 길). 보부상·은빛 등롱·보스 사건은 아직 로그만(BR-01·C-09b).
     //   자리: Unity 좌표(1 = 세계 m, 출생지 = 0,0) ↔ 천하 좌표는 WorldCoords(PropLayer 가 Origin 을 출생지 한가운데로 둔다).
+    //   쓰러짐(LF-03): 천하 몸이면 Life.End → Soul.EndLife → SoulStore 저장 → 정산 → Inn 씬(침방). 서장 몸이면 PlayerDown 대로 각성·처음부터.
     [DefaultExecutionOrder(-50)]
     public sealed class LifeRunner : MonoBehaviour
     {
@@ -24,7 +28,12 @@ namespace BloodRain.Presentation
         public OrbLayer orbs;
         public EnemyField enemies;
         public BreakthroughFx breakthrough;
+        public PlayerVitals vitals;
+        [Tooltip("생이 끝나면 여는 정산 화면(loadInnScene 켬)")]
+        public SettlementScreen settlement;
         public bool showDebug = true;
+
+        long _kills;
 
         public static LifeRunner Instance { get; private set; }
 
@@ -39,9 +48,20 @@ namespace BloodRain.Presentation
                 if (_life == null)
                 {
                     _data = DataBoot.Data;
-                    var soul = RebirthHandoff.Soul ?? new Soul(_data);
-                    var body = RebirthHandoff.Body ?? Rebirth.Prologue(_data);
-                    _life = new Life(soul, body, new System.Random());
+                    // LF-03 혼은 침방이 넘긴 것, 없으면(Run 씬을 바로 켬) 저장된 혼(없으면 새 혼)
+                    var soul = RebirthHandoff.Soul ?? SoulStore.Load(_data);
+                    RebirthHandoff.Soul = soul;
+                    if (RebirthHandoff.PendingLife != null)
+                    {
+                        // 서장에서 쓰러져 처음부터: RestartPrologue 가 만든 생(쓰러진 횟수를 잇는다)
+                        _life = RebirthHandoff.PendingLife;
+                        RebirthHandoff.PendingLife = null;
+                    }
+                    else
+                    {
+                        var body = RebirthHandoff.Body ?? Rebirth.Prologue(_data);
+                        _life = new Life(soul, body, new System.Random());
+                    }
                 }
                 return _life;
             }
@@ -57,6 +77,8 @@ namespace BloodRain.Presentation
         {
             if (Instance == this) Instance = null;
             if (orbs != null) orbs.Absorbed -= OnAbsorbed;
+            if (vitals != null) vitals.Died -= OnDied;
+            if (enemies != null) enemies.Killed -= OnKilled;
         }
 
         void Start()
@@ -70,7 +92,74 @@ namespace BloodRain.Presentation
             }
             if (breakthrough == null) breakthrough = GetComponent<BreakthroughFx>();
             if (orbs != null) orbs.Absorbed += OnAbsorbed;
+            if (vitals == null && player != null) vitals = player.GetComponent<PlayerVitals>();
+            if (vitals != null) vitals.Died += OnDied;
+            if (enemies != null) enemies.Killed += OnKilled;
+            if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             SyncScale();
+        }
+
+        void OnKilled(Vector2 at, EnemyAgent a) => _kills++;
+
+        // ---- LF-03 쓰러짐 ----
+
+        /// <summary>시험 메뉴 '지금 쓰러지기'.</summary>
+        public void FallNow()
+        {
+            if (vitals != null) vitals.ForceDown();
+            else OnDied();
+        }
+
+        void OnDied()
+        {
+            if (_life == null || _life.Record != null) return;
+            if (_life.IsPrologue)
+            {
+                // 서장: 정산으로 가지 않는다. 각성이면 기혈 1로 이어서, 아니면 같은 혼·몸으로 처음부터(서장 끝은 C-10b)
+                var down = _life.PlayerDown();
+                Debug.Log($"[LifeRunner] 서장에서 쓰러짐 → {down}");
+                if (down == PrologueDown.Awaken)
+                {
+                    if (vitals != null) vitals.Revive(1f);
+                    return;
+                }
+                RebirthHandoff.PendingLife = _life.RestartPrologue(new System.Random());
+                SceneManager.LoadScene("Run");
+                return;
+            }
+            EndLife(LifeEndWay.Fallen);
+        }
+
+        /// <summary>한 생을 끝내고 혼에 옮겨 저장한 뒤 정산을 연다. 정산이 끝나면 객잔(Inn) 씬.</summary>
+        public void EndLife(string way)
+        {
+            var levelUp = FindFirstObjectByType<LevelUpScreen>();
+            int silver = levelUp != null ? levelUp.Silver : 0;
+            var soul = RebirthHandoff.Soul;
+            var record = _life.End(way, silver);
+            var summary = soul.EndLife(record);
+            SoulStore.Save(soul);
+            RebirthHandoff.ClearBody();
+            Debug.Log($"[LifeRunner] 생이 끝남({way}) · 윤회의 기 +{record.RebirthQi.Total:N0} → {soul.RebirthQi:N0} · {soul.Lives}생 · 저장 {SoulStore.SoulPath}");
+
+            Time.timeScale = 0f;
+            if (settlement == null)
+            {
+                Debug.LogWarning("[LifeRunner] 정산 화면이 없어 바로 객잔으로");
+                Time.timeScale = 1f;
+                SceneManager.LoadScene("Inn");
+                return;
+            }
+            settlement.loadInnScene = true;
+            settlement.Finished += () => Time.timeScale = 1f;
+            var stats = new SettlementStats
+            {
+                SurvivalSeconds = (float)(_life.Minutes * 60.0),
+                Kills = _kills,
+                BloodCrystal = record.BloodCrystal,
+                DamageByWeapon = new Dictionary<string, double>(), // 무공별 피해는 WeaponRunner 가 아직 안 셈
+            };
+            settlement.Show(record, summary, stats, soul.RebirthQi);
         }
 
         void Update()

@@ -31,20 +31,27 @@ namespace BloodRain.Editor
             camGo.AddComponent<UniversalAdditionalCameraData>();
 
             new GameObject("DataBoot").AddComponent<DataBoot>();
+            var screen = CreateScreen();
+            screen.allSects = true;   // 시험: 모든 문파에서 뽑아 카드를 두루 본다
+            screen.extraRerolls = 2;
+
+            EditorSceneManager.SaveScene(scene, TestScenePath);
+            Debug.Log($"[ChimbangBootstrap] {TestScenePath} 만듦, 산문 그림 {screen.sectArt.Count}장, 배경 {(screen.background != null ? "있음" : "없음")}");
+        }
+
+        /// <summary>침방 화면 하나(글꼴·바탕·벽 지도·산문 그림). 시험 씬과 객잔 씬(InnBootstrap)이 같이 쓴다.</summary>
+        public static ChimbangScreen CreateScreen()
+        {
             var screen = new GameObject("침방 화면").AddComponent<ChimbangScreen>();
             screen.font = HudBootstrap.EnsureBodyFont();
             screen.background = FindSprite("Assets/Art/Backgrounds/bg_chimbang");
             screen.wallMap = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg"); // TU-12
-            screen.allSects = true;   // 시험: 모든 문파에서 뽑아 카드를 두루 본다
-            screen.extraRerolls = 2;
             foreach (var s in DataBoot.Load().Cheonha.Sects)
             {
                 var art = FindSprite($"Assets/Art/Cards/card_sect_{s.Id}");
                 if (art != null) screen.sectArt.Add(new ChimbangScreen.SectArt { sectId = s.Id, art = art });
             }
-
-            EditorSceneManager.SaveScene(scene, TestScenePath);
-            Debug.Log($"[ChimbangBootstrap] {TestScenePath} 만듦, 산문 그림 {screen.sectArt.Count}장, 배경 {(screen.background != null ? "있음" : "없음")}");
+            return screen;
         }
 
         /// <summary>확장자 없는 경로로 png·jpg 를 찾아 Sprite 로 읽는다. 텍스처가 Sprite 로 안 들여와져 있으면 바꾼다.</summary>

@@ -1,5 +1,6 @@
 using BloodRain.Presentation;
 using BloodRain.Presentation.Fx;
+using BloodRain.Presentation.Meta;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -43,6 +44,18 @@ namespace BloodRain.Editor
                 r.orbs.ownTestXp = false;
                 EditorUtility.SetDirty(r.orbs);
             }
+
+            // LF-03 쓰러지면 LifeRunner 가 받는다(시험 씬처럼 다시 채우지 않는다). 정산 화면은 끝나면 객잔으로
+            var vitals = Object.FindFirstObjectByType<PlayerVitals>();
+            if (vitals != null) { vitals.refillOnDeath = false; EditorUtility.SetDirty(vitals); }
+            r.vitals = vitals;
+            var settle = Object.FindFirstObjectByType<SettlementScreen>();
+            if (settle == null) settle = new GameObject("정산 화면").AddComponent<SettlementScreen>();
+            settle.font = HudBootstrap.EnsureBodyFont();
+            settle.demo = false;
+            settle.loadInnScene = true;
+            EditorUtility.SetDirty(settle);
+            r.settlement = settle;
 
             var curtain = Object.FindFirstObjectByType<BloodCurtain>();
             if (curtain != null) { curtain.breakthrough = fx; EditorUtility.SetDirty(curtain); }

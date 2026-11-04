@@ -40,6 +40,8 @@ namespace BloodRain.Presentation.Meta
         [Tooltip("시험용: 첫 환혼(서장 직후 세 문파 고정)으로 연다")]
         public bool firstRebirth;
         public int seed = 7;
+        [Tooltip("시작하면 새 혼으로 바로 연다(시험 씬). 객잔 씬은 끄고 InnFlow 가 저장된 혼으로 연다")]
+        public bool openOnStart = true;
         [Tooltip("고르면 Run 씬을 연다(한 생 시작). 시험 씬에선 끔")]
         public bool loadRunScene;
 
@@ -65,7 +67,7 @@ namespace BloodRain.Presentation.Meta
             _data = DataBoot.Data;
             EnsureEventSystem();
             BuildFrame();
-            Open(new Soul(_data), new System.Random(seed));
+            if (openOnStart) Open(new Soul(_data), new System.Random(seed));
         }
 
         /// <summary>그 혼으로 침방을 연다. 첫 환혼이면 세 문파 고정, 아니면 해금 문파에서 후보 수만큼.</summary>
@@ -362,5 +364,14 @@ namespace BloodRain.Presentation.Meta
         public static RebirthBody Body;
         /// <summary>그 몸을 고른 혼. 레벨업 카드가 복원한 비급(Soul.RestoredManuals)을 읽는다. 없으면(Run 씬을 바로 켬) 새 혼으로 친다.</summary>
         public static Soul Soul;
+        /// <summary>서장에서 쓰러져 처음부터(Life.RestartPrologue) 다시 만든 생. Run 씬을 다시 열면 LifeRunner 가 이것을 쓴다.</summary>
+        public static BloodRain.Core.Run.Life PendingLife;
+
+        /// <summary>생이 끝났다. 다음 Run 은 침방에서 고른 몸으로(남은 몸·생을 쓰지 않게).</summary>
+        public static void ClearBody()
+        {
+            Body = null;
+            PendingLife = null;
+        }
     }
 }

@@ -8,7 +8,8 @@ namespace BloodRain.Presentation
     // 플레이어 기혈과 맞기(C-03). 적 접촉은 EnemyField 가 격자로 찾아 Hit 으로 넘긴다.
     //   받는 피해 = max(contact.minDamage, 피해 − 방어)(웹 hurtPlayer 와 같다. 방어는 능력치가 붙으면).
     //   경공 대시 무적 중이거나 맞은 뒤 무적(웹 프로토타입 0.5초, balance.json 에 아직 없음) 중이면 무시.
-    // 쓰러지면 Died 를 부른다. 정산(TU-13)으로 넘기는 연결은 C-10 에서. 시험 중엔 refillOnDeath 로 다시 채운다.
+    // 쓰러지면 Died 를 부른다. Run 씬에선 LifeRunner 가 받아 정산(천하 몸)이나 서장 각성·처음부터로 넘긴다(LF-03).
+    // 시험 씬에선 refillOnDeath 로 다시 채운다(Run 메뉴는 끔).
     public sealed class PlayerVitals : MonoBehaviour
     {
         [Tooltip("맞은 뒤 무적(초). 웹 프로토타입 값")]
@@ -60,6 +61,22 @@ namespace BloodRain.Presentation
                 if (refillOnDeath) Health = MaxHealth;
             }
             return true;
+        }
+
+        /// <summary>시험: 지금 쓰러진다(메뉴 '지금 쓰러지기').</summary>
+        public void ForceDown()
+        {
+            if (Health <= 0f) return;
+            Health = 0f;
+            Died?.Invoke();
+            if (refillOnDeath) Health = MaxHealth;
+        }
+
+        /// <summary>쓰러진 뒤 기혈을 이만큼으로 되살린다(서장 각성은 1). 맞은 뒤 무적도 준다.</summary>
+        public void Revive(float health)
+        {
+            Health = Mathf.Clamp(health, 1f, MaxHealth);
+            _iframe = hitIframes;
         }
 
         /// <summary>기혈을 채운다(최대를 넘지 않음). 실제로 찬 양.</summary>
