@@ -2,6 +2,7 @@ using System.Linq;
 using BloodRain.Core.Data;
 using BloodRain.Core.Meta;
 using BloodRain.Core.Run;
+using BloodRain.Core.Spawning;
 using BloodRain.Presentation.Fx;
 using BloodRain.Presentation.Meta;
 using BloodRain.Sim;
@@ -13,7 +14,8 @@ namespace BloodRain.Presentation
     //   혼·몸: 침방에서 넘어온 RebirthHandoff, 없으면(Run 씬을 바로 켬) 새 혼 + 서장 몸.
     //   진기: OrbLayer.Absorbed → life.Absorb. 경지를 넘으면 BreakthroughFx 로 줌.
     //   레벨업 화면은 Life 의 Level·Charges·Loadout 을 본다(LevelUpScreen 이 Life 를 찾는다).
-    //   생성 지시(Tick 이 돌려주는 LifeSecond)는 LF-02 전까지 버린다.
+    //   생성(LF-02): Tick 이 돌려주는 LifeSecond 의 Spawns 는 생성 고리(balance.json spawnTarget 대각선 배수)에, Events 는 종류대로 세운다.
+    //   덩이 사람 수는 EnemyField 가 지금 경지로 정한다(TU-04 덩이 길). 보부상·은빛 등롱·보스 사건은 아직 로그만(BR-01·C-09b).
     //   자리: Unity 좌표(1 = 세계 m, 출생지 = 0,0) ↔ 천하 좌표는 WorldCoords(PropLayer 가 Origin 을 출생지 한가운데로 둔다).
     [DefaultExecutionOrder(-50)]
     public sealed class LifeRunner : MonoBehaviour
@@ -78,8 +80,86 @@ namespace BloodRain.Presentation
             float dt = Time.timeScale > 0f ? Time.unscaledDeltaTime : 0f;
             var pos = player != null ? WorldCoords.FromUnity(player.position) : _life.Position;
             int alive = enemies != null ? enemies.Count : 0;
-            _ = _life.Tick(dt, pos, alive); // LF-02 에서 적 생성에 쓴다
+            var second = _life.Tick(dt, pos, alive);
+            if (second != null) SpawnSecond(second);
             if (breakthrough == null || !breakthrough.IsPlaying) SyncScale();
+        }
+
+        System.Random _spawnRng = new System.Random();
+
+        Vector2 RingPos(float scale = 1f)
+        {
+            var st = _data.Balance.SpawnTarget;
+            float diag = WorldScale.Current != null ? WorldScale.Current.ViewDiagonal : 30f;
+            float ang = (float)(_spawnRng.NextDouble() * Mathf.PI * 2);
+            float rad = diag * Mathf.Lerp(st.RingMinDiagonal, st.RingMaxDiagonal, (float)_spawnRng.NextDouble()) * scale;
+            return (Vector2)player.position + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * rad;
+        }
+
+        void SpawnSecond(LifeSecond s)
+        {
+            if (enemies == null || player == null) return;
+            if (!s.Held)
+                foreach (var sp in s.Spawns)
+                    enemies.SpawnAt(_data.Enemy(sp.Enemy), RingPos());
+            foreach (var e in s.Events) SpawnEvent(e);
+        }
+
+        // 사건 모양은 웹 프로토타입 runEvent 와 같다(혈인 떼 한 줄 벽, 동갑시 포위 원, 금두꺼비는 가까운 고리).
+        void SpawnEvent(LifeEvent e)
+        {
+            var def = e.Wave.Def;
+            var p = (Vector2)player.position;
+            float diag = WorldScale.Current != null ? WorldScale.Current.ViewDiagonal : 30f;
+            int n = Mathf.Max(1, def.Count);
+            switch (def.Type)
+            {
+                case WaveEventKind.Charge:
+                {
+                    // 한 방향에서 한 줄 벽으로 돌진. 어딘가에 두 칸 빈틈(경공으로 뚫거나 빈틈으로 빠진다)
+                    var enemy = _data.Enemy(string.IsNullOrEmpty(e.Enemy) ? "hyeolin" : e.Enemy);
+                    int side = _spawnRng.Next(4);
+                    var ax = new Vector2(new[] { 1f, -1f, 0f, 0f }[side], new[] { 0f, 0f, 1f, -1f }[side]);
+                    var along = new Vector2(-ax.y, ax.x);
+                    int gap = Mathf.FloorToInt(Mathf.Lerp(n * 0.25f, n * 0.75f, (float)_spawnRng.NextDouble()));
+                    float step = WorldScale.Current != null ? WorldScale.Current.Length(1.2f, WorldScale.Current.Realm) : 1.2f;
+                    for (int i = 0; i < n; i++)
+                    {
+                        if (i == gap || i == gap + 1) continue;
+                        enemies.SpawnAt(enemy, p - ax * diag * 0.6f + along * (i - n / 2f) * step);
+                    }
+                    break;
+                }
+                case WaveEventKind.Ring:
+                {
+                    var enemy = _data.Enemy(string.IsNullOrEmpty(e.Enemy) ? "donggap" : e.Enemy);
+                    for (int i = 0; i < n; i++)
+                    {
+                        float a = i / (float)n * Mathf.PI * 2f;
+                        enemies.SpawnAt(enemy, p + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * diag * 0.6f);
+                    }
+                    break;
+                }
+                case WaveEventKind.Group:
+                {
+                    // 한 방향에서 한 종류가 무리로
+                    var enemy = _data.Enemy(e.Enemy);
+                    var at = RingPos();
+                    float spread = diag * 0.08f;
+                    for (int i = 0; i < n; i++)
+                        enemies.SpawnAt(enemy, at + Random.insideUnitCircle * spread);
+                    break;
+                }
+                case WaveEventKind.Elite:
+                    enemies.SpawnAt(_data.Enemy(e.Enemy), RingPos());
+                    break;
+                case WaveEventKind.Toad:
+                    enemies.SpawnAt(_data.Enemy(e.Enemy), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
+                    break;
+                default:
+                    Debug.Log($"[LifeRunner] 사건 {def.Kind} {e.Enemy} ({e.Wave.At:0.0}분) — 아직 세우지 않음");
+                    break;
+            }
         }
 
         // 화면 축척은 레벨 + 진기 비율(경지 안에서 조금씩 넓어진다). 돌파 중엔 BreakthroughFx 가 맡는다.

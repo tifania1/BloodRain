@@ -31,6 +31,12 @@ namespace BloodRain.Editor
             var player = Object.FindFirstObjectByType<PlayerController>();
             r.player = player != null ? player.transform : null;
             r.enemies = Object.FindFirstObjectByType<EnemyField>();
+            if (r.enemies != null)
+            {
+                // LF-02 Run 씬 적은 생성 디렉터가 만든다(시험 씬 메뉴들은 testSpawn 켠 채)
+                r.enemies.testSpawn = false;
+                EditorUtility.SetDirty(r.enemies);
+            }
             r.orbs = Object.FindFirstObjectByType<OrbLayer>();
             if (r.orbs != null)
             {

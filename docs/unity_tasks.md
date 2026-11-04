@@ -82,7 +82,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 플레이하면 왼쪽 위 디버그 한 줄(분·레벨·경지·지역·혈운 농도)이 오르고, 구슬을 먹으면 `life.Level` 로 레벨업 화면이 뜨고, 삼류 경지에서 돌파 줌이 Life 쪽에서 뜬다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/LF-01/` 의 `life_debug.png`
 
-- [ ] LF-02 생성 디렉터로 적 만들기 · 먼저: LF-01
+- [x] LF-02 생성 디렉터로 적 만들기 · 먼저: LF-01 — 2026-11-05 01:40 PC API: LifeRunner 가 `LifeSecond` 의 Spawns 를 생성 고리에(Held 면 안 만듦), Events 는 웹 runEvent 모양대로(혈인 떼 한 줄 벽·빈틈 두 칸, 포위 원, 무리, 정예, 금두꺼비 가까운 고리), 보부상·등롱·보스는 로그만. EnemyField `testSpawn`(Run 메뉴가 끔, 시험 씬은 켠 채). 천하 몸인데 원점이 서장 땅(PropLayer originRegion)이라 지역이 청운진으로 잡히던 것을 고침 — 한 생이 있으면 몸의 출생지가 원점. 서장 2분 시강만 30여 마리, 마교 몸(십만대산)은 6분 디렉터 출력에 마교도·혈사자가 섞임(6분은 기다리지 않고 디렉터를 따로 불러 같은 길로 세움). 정예는 아직 패턴 없이 쫓기만(E-01). 콘솔 에러 0
   - 할 것: LifeRunner 가 `life.Tick` 이 돌려준 `LifeSecond` 로 적을 만든다. `Spawns`(Enemy·BornRealm·Members)는 화면 밖 둘레에 `EnemyField.SpawnAt(def, 자리)`(덩이 사람 수는 TU-04 덩이 길대로), `Events` 는 정예·무리를 그 자리에, 보스 사건은 로그만(BR-01 에서 씀). `Held` 면 안 만든다. EnemyField 의 시험 생성(targetCount)은 `testSpawn` 체크로 꺼 두고, 시험 씬 메뉴들은 켠 채 그대로 둔다.
   - 쓸 것: Core `Spawning/LifeDirector.cs`(LifeSecond·LifeSpawn·LifeEvent), 서장 몸이면 같은 Tick 이 `PrologueSpawns` 표로 준다, `data.Enemy(id)`
   - 메뉴: LF-01 메뉴가 testSpawn 을 끄게

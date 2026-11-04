@@ -42,7 +42,10 @@ namespace BloodRain.Presentation.Fx
         void Start()
         {
             var regions = new BloodRain.Core.World.Regions(DataBoot.Data);
-            if (!string.IsNullOrEmpty(originRegion)) WorldCoords.Origin = regions.Center(originRegion);
+            // 한 생이 있으면 그 몸의 출생지 한가운데가 Unity (0,0)(LF-02: 천하 몸이면 서장 땅이 아니라 태어난 땅). 없으면(시험 씬) originRegion
+            var life = LifeRunner.Instance != null ? LifeRunner.Instance.Life : null;
+            if (life != null) WorldCoords.Origin = life.Position;
+            else if (!string.IsNullOrEmpty(originRegion)) WorldCoords.Origin = regions.Center(originRegion);
             _field = new PropField(regions, seed);
             _quad = MakeQuad();
             _mpb = new MaterialPropertyBlock();

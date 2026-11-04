@@ -17,6 +17,8 @@ namespace BloodRain.Presentation
     // 지금은 목표 수만큼 채워 두는 시험용 생성만 있다. 진짜 생성 흐름은 C-10(LifeDirector).
     public sealed class EnemyField : MonoBehaviour
     {
+        [Tooltip("시험용 생성(targetCount 만큼 채워 둠). Run 씬은 LF-02 부터 꺼 두고 한 생(LifeRunner)이 생성 디렉터로 만든다")]
+        public bool testSpawn = true;
         [Tooltip("채워 둘 적 수. [ ] 키로 반·두 배")]
         public int targetCount = 300;
         public int capacity = 4096;
@@ -529,14 +531,17 @@ namespace BloodRain.Presentation
             _lastPlayer = p;
 
             // 모자라면 생성 고리(대각선 0.6~0.75배)에 채운다. 넘치면 뒤에서부터 걷는다.
-            int spawn = Mathf.Min(spawnPerFrame, targetCount - _sim.Count);
-            for (int i = 0; i < spawn; i++)
+            if (testSpawn)
             {
-                float ang = (float)(_rng.NextDouble() * Mathf.PI * 2);
-                float rad = diag * Mathf.Lerp(st.RingMinDiagonal, st.RingMaxDiagonal, (float)_rng.NextDouble());
-                SpawnAt(PickDef(), p + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * rad);
+                int spawn = Mathf.Min(spawnPerFrame, targetCount - _sim.Count);
+                for (int i = 0; i < spawn; i++)
+                {
+                    float ang = (float)(_rng.NextDouble() * Mathf.PI * 2);
+                    float rad = diag * Mathf.Lerp(st.RingMinDiagonal, st.RingMaxDiagonal, (float)_rng.NextDouble());
+                    SpawnAt(PickDef(), p + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * rad);
+                }
+                while (_sim.Count > targetCount) _sim.RemoveAt(_sim.Count - 1);
             }
-            while (_sim.Count > targetCount) _sim.RemoveAt(_sim.Count - 1);
 
             _watch.Restart();
             ApplyAuras(dt);
@@ -1207,7 +1212,7 @@ namespace BloodRain.Presentation
         void OnGUI()
         {
             if (!showStats) return;
-            GUI.Label(new Rect(12, 12, 520, 22), $"적 {Count}/{targetCount}  시뮬 {_simMs:0.00}ms  {_fps:0}fps   [ ] 수 조절, C 비우기");
+            GUI.Label(new Rect(12, 12, 520, 22), $"적 {Count}/{(testSpawn ? targetCount.ToString() : "디렉터")}  시뮬 {_simMs:0.00}ms  {_fps:0}fps   [ ] 수 조절, C 비우기");
         }
     }
 }
