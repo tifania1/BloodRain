@@ -44,7 +44,7 @@
 
 ## 4. 정해지면
 
-1. gimmicks.json 에 `bambooThicket`·`driftingBoats`·`reverseWave`·`cloudSea`·`plankRoad` 과 배치 값(`layout` 묶음)을 넣고, 7장 '지형 기믹 수치' 표와 '아직 수치가 없습니다' 문장을 고친다. `gdd_changes.md` 한 줄.
+1. gimmicks.json 에 `bambooThicket`·`driftingBoats`·`reverseWave`·`cloudSea`·`cliffPath`(cheonha id `cliff_path`) 과 배치 값(`layout` 묶음)을 넣고, 7장 '지형 기믹 수치' 표와 '아직 수치가 없습니다' 문장을 고친다. `gdd_changes.md` 한 줄.
 2. Core `World/Gimmicks` 에 판정·배치 함수(탑림 `Layout` 꼴)와 테스트. 수치 표 테스트(`Gimmicks2Tests.수치_표가_데이터와_같다` 꼴)에 다섯 줄.
 3. 웹 천하 시안 `LD` 의 놀이판 값을 gimmicks.json 에서 읽게 바꾼다.
 4. unity_tasks R-13U·R4-13b 의 '먼저:' 를 푼다.

@@ -44,6 +44,34 @@ namespace BloodRain.Core.Tests
             Assert.Null(G.Find("bamboo_thicket")); // 아직 수치 없음
         }
 
+        /// <summary>
+        /// cheonha.json 지역에 적힌 기믹 이름은 gimmicks.json 에 있거나, 7장 '지형 기믹 수치'가 '아직 수치가 없습니다'로 적은 것이다.
+        /// 이름을 잘못 적으면(오타) 지역에 아무것도 안 놓여도 조용히 지나가니 여기서 막는다. 수치가 생기면 아래 목록에서 빼고 gimmicks.json 으로.
+        /// 시작값 안은 docs/design/gimmick_draft.md(R-10·R4-07).
+        /// </summary>
+        [Fact] public void 지역의_기믹_이름은_데이터나_아직_목록에_있다()
+        {
+            var pending = new Dictionary<string, string>
+            {
+                ["bamboo_thicket"] = "대나무 덤불", ["cloud_sea"] = "운해", ["cliff_path"] = "잔도",
+                ["drifting_boats"] = "떠내려가는 배", ["reverse_wave"] = "역류 파도",
+                ["rising_blood"] = "차오르는 피",   // 봉마곡: 종장 혈해 '차오르는 피바다'(bosspatterns final)가 그것
+                ["breakables"] = "",                // 청운진 수레·장독(gimmicks.json _note '아직 없는 것')
+            };
+            var known = new HashSet<string>(G.All.Select(g => g.Id));
+            var section = GddSection("지형 기믹 수치");
+            var stillMissing = section.Split('\n').Single(l => l.Contains("아직 수치가 없습니다"));
+            foreach (var r in _d.Cheonha.Regions)
+                foreach (var id in r.Gimmicks)
+                    Assert.True(known.Contains(id) || pending.ContainsKey(id), $"{r.Id} 의 기믹 '{id}' 가 gimmicks.json 에도 아직 목록에도 없다");
+            foreach (var (id, nameKo) in pending)
+            {
+                Assert.DoesNotContain(id, known);   // 수치가 생겼으면 목록에서 뺄 것
+                Assert.Contains(_d.Cheonha.Regions, r => r.Gimmicks.Contains(id));
+                if (nameKo.Length > 0) Assert.Contains(nameKo, id == "rising_blood" ? section : stillMissing);
+            }
+        }
+
         [Fact] public void 지역표의_기믹_칸이_데이터와_같다()
         {
             Assert.Contains($"범종: 닿으면 둘레 적 {Num(G.Bell.StunSeconds)}초 기절, {Num(G.Bell.CooldownSeconds)}초에 한 번", RegionRow("숭산")[5]);
