@@ -98,8 +98,12 @@ namespace BloodRain.Core.Spawning
             int members = _scale.ClusterSize(realm);
 
             // 사건은 멈춤과 상관없이 시각이 지나면 한 번씩 나온다(멈춤이 끝난 뒤에 몰아서 나오지 않게 지금 낸다).
+            // 정예 표가 없는 땅(봉마곡)에 서 있으면 n번째 정예 사건은 나오지 않고 지나간다.
             foreach (var e in _schedule.Between(_lastMinute, minute))
+            {
+                if (e.Def.Type == WaveEventKind.Elite && e.Def.Nth > 0 && !_regions.HasElites(regionId)) continue;
                 r.Events.Add(new LifeEvent(e, _regions.EnemyFor(e, regionId, _rng), realm, members));
+            }
             _lastMinute = minute;
 
             float target = TargetAt(minute);
