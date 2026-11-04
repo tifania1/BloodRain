@@ -317,6 +317,8 @@ const LD = {
   fogOffset: 6,          // 독안개 샘: 플레이어에게서 이 거리(m, × 축척) 안 아무 데
   waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7,   // 장강 물길: 간격·반폭·굽이(m, × 축척)
   taijiSpacing: 16,      // 태극 바닥 간격(m, × 축척)
+  bellSpacing: 30,       // 숭산 범종 간격(m, × 축척). 지역 한가운데에 하나, 그 둘레 격자. 탑림 무더기 안에 들면 뺀다
+  pagodaSpacing: 60,     // 탑림 무더기 간격(m, × 축척). 범종 격자에서 반 칸 비켜 놓아 지역 한가운데(원각 자리)는 비운다
 };
 
 // 그림에만 쓰는 값: 문파 인장 한자와 옷 색, 경지 한자
@@ -605,6 +607,7 @@ function startLife(c) {
     cards: {}, extra: {}, pendingCards: 0, offers: null,
     eliteN: 0, shots: [], pools: [], fogs: [], fogNext: GIM.poisonFog ? GIM.poisonFog.firstSpreadSeconds : Infinity, revives: [],
     yy: clamp(body.yin, YY.min, YY.max), bless: null, taijiCd: {},
+    bellCd: {}, dropBells: [], pagodaCache: new Map(), pagodaTier: -1,
     ins: [], insEff: {}, pendingIns: 0, insOffers: null, still: 0, blockCd: 0, salgiKills: 0, yyTilt: 1, yyCarry: 0,
   };
   Object.assign(G.p, { root: 0, pull: null, walkT: 0 });
@@ -920,6 +923,7 @@ function update(rdt) {
   } else if (p.dashT > 0) { p.x += p.dvx * dt; p.y += p.dvy * dt; p.dashT -= dt; }
   else if (p.root <= 0) { p.x += mx * speed * wmul * dt; p.y += my * speed * wmul * dt; }
   if (p.dashN < p.dashMax) { p.dashAcc += dt; if (p.dashAcc >= BAL.dash.rechargeSeconds) { p.dashAcc = 0; p.dashN++; } }
+  pushOutOfPagodas(p, p.r * 0.8, false);   // 탑림: 몸 폭(반지름 0.4m 꼴)으로 돌탑에 막힌다
   // 혈우 장막과 강호 끝
   const br = B ? lerp(B.oldR, boundR(G.tier), easeOut(clamp((B.t - 0.5) / 1, 0, 1))) : boundR(G.tier);
   G.bound = br;
@@ -1004,6 +1008,7 @@ function update(rdt) {
     const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy) || 1;
     // 아래 경지 덩이는 기세에 눌려 쓰러진다
     if (!f.boss && !f.mirror && f.e < G.tier && d < aura + f.r) { kill(f, true); continue; }
+    if (f.stunT > 0) { f.stunT -= dt; f.kx = 0; f.ky = 0; continue; }   // 범종 기절: 걷기·패턴·닿기 모두 멈춤(Core: 기절한 보스는 BossPatterns.Tick 을 안 부른다)
     f.hop = (f.hop + dt / 0.6) % 1;
     if (f.pat && (f.boss || d < G.view * LD.eliteRange)) bossPatterns(f, dt);
     if (f.def) localBehavior(f, dx, dy, d, dt);
@@ -1016,6 +1021,7 @@ function update(rdt) {
       if (ld > gap) { const v = Math.min(ld - gap, f.sp * 2.2 * fw * dt); f.x += lx / ld * v; f.y += ly / ld * v; }
     } else { f.x += (dx / d * sp + f.kx) * dt; f.y += (dy / d * sp + f.ky) * dt; }
     f.kx *= Math.pow(0.03, dt); f.ky *= Math.pow(0.03, dt);
+    pushOutOfPagodas(f, f.r, !!(f.def && f.def.ignoresTerrain));   // 탑림: 걷는 적은 막히고 나는 적은 지나간다
     if (d > recycle && !f.boss) { f.x = p.x - dx / d * G.view * 0.62; f.y = p.y - dy / d * G.view * 0.62; }
     if (d < f.r + p.r * 0.8 && f.contact <= 0 && f.e >= G.tier) { f.contact = 0.4; hitPlayer(f.dmg); }
   }
@@ -1237,6 +1243,7 @@ function bossPatterns(f, dt) {
       G.fx.push({ k: 'puff', x: z.x, y: z.y, r: z.r, t: 0, life: 0.45, red: true });
       if (Math.hypot(p.x - z.x, p.y - z.y) < z.r) hitPlayer(z.dmg);
       if (z.pool) G.pools.push({ x: z.x, y: z.y, r: z.pool.r, dps: z.pool.dps, t: z.pool.t, green: z.pool.green });
+      if (z.bell) G.dropBells.push(Object.assign({ x: z.x, y: z.y }, z.bell));
     }
   }
   P.zones = P.zones.filter(z => !z.done);
@@ -1270,7 +1277,8 @@ function bossPatterns(f, dt) {
       const L = (pt.length || 10) * k, rot = rand(0, TAU), D = [[-0.5, -0.1], [-0.33, -0.05], [-0.17, -0.07], [0, 0], [0.12, 0.18], [0.36, 0.2], [0.42, -0.02]];
       for (const [u, v] of D) pts.push([p.x + (u * Math.cos(rot) - v * Math.sin(rot)) * L, p.y + (u * Math.sin(rot) + v * Math.cos(rot)) * L]);
     } else { const sp = (pt.scatter || 2.5) * k; for (let i = 0; i < pt.count; i++) pts.push([p.x + rand(-sp, sp), p.y + rand(-sp, sp)]); }
-    for (const [x, y] of pts) P.zones.push({ x, y, r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt), pool });
+    const bell = pt.leaveUses && GIM.bell ? { life: pt.leaveSeconds, uses: pt.leaveUses, touch: GIM.bell.touchRadius * k, stunR: GIM.bell.stunRadius * k } : null;   // 범종 낙하: 떨어진 자리에 종이 남는다
+    for (const [x, y] of pts) P.zones.push({ x, y, r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt), pool, bell });
     P.cur = null;
   } else if (pt.shape === 'jump_slam') {
     for (let i = 0; i < pt.count; i++) P.zones.push({ x: p.x, y: p.y, r: pt.radius * k, t: pt.telegraphSeconds, life: pt.telegraphSeconds, dmg: hurtBy(pt), delay: i * (pt.waveIntervalSeconds || 0.3), land: true, pool });
@@ -1388,6 +1396,84 @@ function fogR(fg) {   // Core PoisonFogGimmick.RadiusAt 과 같은 식
   return g.radius * fg.k * clamp(q, 0, 1);
 }
 function inFog(x, y) { for (const fg of G.fogs) if (Math.hypot(x - fg.x, y - fg.y) <= fogR(fg)) return true; return false; }
+// ───────── 숭산 기믹(RM-08): 범종·탑림. 수치는 gimmicks.json, 규칙은 Core BellGimmick·PagodaForest ─────────
+// 탑림 무더기 하나: Core PagodaForest.Layout 과 같은 순서(격자 자리마다 흔들기 x, y, 비우기)로 난수를 꺼낸다.
+// 난수기만 다르다(시안은 칸 번호로 시드를 만든 rng). 간격 판정은 축척 전 화면 m 로 하고 세계 m 로 돌려준다
+function pagodaLayout(def, rnd, scale) {
+  const stones = [], placed = [];
+  if (def.spacing <= 0) return stones;
+  const n = Math.ceil(def.patchRadius / def.spacing), minC = 2 * def.pagodaRadius + def.minGap;
+  for (let j = -n; j <= n; j++) for (let i = -n; i <= n; i++) {
+    const x = i * def.spacing + (rnd() * 2 - 1) * def.jitter, y = j * def.spacing + (rnd() * 2 - 1) * def.jitter;
+    if (rnd() < def.skipChance) continue;
+    if (Math.hypot(x, y) + def.pagodaRadius > def.patchRadius) continue;
+    if (placed.some(([px, py]) => (px - x) ** 2 + (py - y) ** 2 < minC * minC)) continue;
+    placed.push([x, y]); stones.push({ x: x * scale, y: y * scale, r: def.pagodaRadius * scale });
+  }
+  return stones;
+}
+// 지금 경지 축척으로 놓인 탑림 무더기 중 (x, y) 에 닿을 수 있는 것 하나(무더기 간격이 지름의 두 배를 넘어 하나뿐). 칸마다 한 번만 만든다.
+// 무더기는 범종 격자에서 반 칸 비킨 자리. 그 자리가 모두 지역 밖으로 나가는 경지(숭산은 절정부터: 무더기 지름 274m > 숭산 폭 약 240m)에선
+// 지역 한가운데에 하나를 놓고 가운데 범종 둘레를 비운다(7장 '절정의 범종은 숭산을 덮는 종소리'처럼 탑림도 숭산을 덮는다).
+// 어느 쪽이든 지역 땅(가장 가까운 지역이 이곳인 자리) 밖으로 나간 돌탑은 뺀다
+const regionHalfGap = r => Math.min(...REGIONS.filter(o => o !== r).map(o => Math.hypot(o.x - r.x, o.y - r.y))) / 2;
+function pagodaPatchAt(x, y) {
+  const def = GIM.pagodaForest; if (!def) return null;
+  if (G.pagodaTier !== G.tier) { G.pagodaCache.clear(); G.pagodaTier = G.tier; }
+  const r = nearestTwo(x, y).a; if (!regionHas(r, def.id)) return null;
+  const k = sc(G.tier), sp = LD.pagodaSpacing * k, center = sp * 0.5 > regionHalfGap(r);
+  const i = center ? 0 : Math.floor((x - r.x) / sp), j = center ? 0 : Math.floor((y - r.y) / sp), key = `${r.id}:${center ? 'c' : i + ',' + j}`;
+  if (G.pagodaCache.has(key)) return G.pagodaCache.get(key);
+  const cx = center ? r.x : r.x + (i + 0.5) * sp, cy = center ? r.y : r.y + (j + 0.5) * sp;
+  let patch = null;
+  if (nearestTwo(cx, cy).a === r) {
+    const seed = (G.tier * 7919 + (i + 512) * 104729 + (j + 512) * 1299709 + r.id.length * 31) >>> 0;
+    const clear = center && GIM.bell ? (GIM.bell.touchRadius + def.pagodaRadius + def.minGap) * k : 0;
+    const stones = pagodaLayout(def, rng(seed), k).map(s => ({ x: cx + s.x, y: cy + s.y, r: s.r }))
+      .filter(s => nearestTwo(s.x, s.y).a === r && Math.hypot(s.x - r.x, s.y - r.y) >= clear);
+    patch = { x: cx, y: cy, R: def.patchRadius * k, stones, center };
+  }
+  G.pagodaCache.set(key, patch);
+  return patch;
+}
+// 걷는 몸을 돌탑 밖으로 밀어낸다(Core PagodaForest.BlocksMovement: 걷는 것은 모두, 나는 적은 blocksFlying 일 때만)
+function pushOutOfPagodas(o, rad, flying) {
+  const def = GIM.pagodaForest; if (!def || (flying && !def.blocksFlying)) return;
+  const pt = pagodaPatchAt(o.x, o.y); if (!pt || Math.hypot(o.x - pt.x, o.y - pt.y) > pt.R + rad) return;
+  for (const s of pt.stones) {
+    const dx = o.x - s.x, dy = o.y - s.y, d = Math.hypot(dx, dy), m = s.r + rad;
+    if (d >= m) continue;
+    if (d < 1e-6) { o.x = s.x + m; continue; }
+    o.x = s.x + dx / d * m; o.y = s.y + dy / d * m;
+  }
+}
+// 지금 화면 근처의 숭산 범종. 칸 번호가 같으면 같은 종이라 쿨타임을 칸으로 센다(태극 바닥과 같은 방식)
+function songBells() {
+  const g = GIM.bell, out = []; if (!g) return out;
+  const k = sc(G.tier), sp = LD.bellSpacing * k, half = G.view * 0.7;
+  for (const r of REGIONS) {
+    if (!regionHas(r, g.id) || Math.hypot(r.x - G.p.x, r.y - G.p.y) > G.view * 3 + 300 * k) continue;
+    const i0 = Math.floor((G.p.x - half - r.x) / sp), i1 = Math.ceil((G.p.x + half - r.x) / sp), j0 = Math.floor((G.p.y - half - r.y) / sp), j1 = Math.ceil((G.p.y + half - r.y) / sp);
+    if ((i1 - i0) * (j1 - j0) > 400) continue;
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const x = r.x + i * sp, y = r.y + j * sp;
+      if (nearestTwo(x, y).a !== r) continue;
+      const pt = pagodaPatchAt(x, y); if (pt && !pt.center && Math.hypot(x - pt.x, y - pt.y) < pt.R + g.touchRadius * k) continue;   // 가운데 무더기는 종 둘레를 비워 두었다
+      out.push({ x, y, key: `${G.tier}:${i},${j}`, touch: g.touchRadius * k, stunR: g.stunRadius * k });
+    }
+  }
+  return out;
+}
+// 종을 울린다: 둘레 적 기절(보스는 짧게). 기절한 적은 걷지도 때리지도 않고, 보스·정예는 패턴 시계도 멈춘다
+function ringBell(b) {
+  const g = GIM.bell;
+  for (const f of G.foes) {
+    if (f.dead || Math.hypot(f.x - b.x, f.y - b.y) > b.stunR + f.r) continue;
+    f.stunT = Math.max(f.stunT || 0, f.boss ? g.bossStunSeconds : g.stunSeconds);
+  }
+  G.fx.push({ k: 'bell', x: b.x, y: b.y, r: b.stunR, t: 0, life: 0.8 });
+  G.trauma = Math.min(1, G.trauma + 0.2);
+}
 function taijiPads() {   // 지금 화면 근처의 태극 바닥(무당산). 칸 번호가 같으면 같은 바닥이라 쿨타임을 칸으로 센다
   const g = GIM.taijiFloor, out = []; if (!g) return out;
   const k = sc(G.tier), sp = LD.taijiSpacing * k, half = G.view * 0.6;
@@ -1432,6 +1518,20 @@ function regionGimmicks(dt) {
       G.fx.push({ k: 'wave', x: pad.x, y: pad.y, r: pad.r * 3, t: 0, life: 0.5 });
       setHint(`태극 바닥 · 음양 ${G.yy > 0 ? '+' : ''}${G.yy} → ${asp}의 기운 ${tj.durationSeconds}초 · 무공 피해 +${Math.round(tj.oppositeAspectDamageBonus * 100)}%`);
     }
+  }
+  // 범종(숭산): 닿으면 울리고 cooldownSeconds 동안 쉰다. 원각이 떨어뜨린 종은 leaveSeconds 동안 leaveUses 번
+  const bg = GIM.bell;
+  if (bg) {
+    if (regionHas(here, bg.id)) for (const b of songBells()) {
+      if ((G.bellCd[b.key] || 0) > G.t || Math.hypot(p.x - b.x, p.y - b.y) > b.touch + p.r) continue;
+      G.bellCd[b.key] = G.t + bg.cooldownSeconds; ringBell(b);
+      if (!G.bellHinted) { G.bellHinted = true; setHint(`범종 · 둘레 ${fmtD(bg.stunRadius)}m 적 ${bg.stunSeconds}초 기절(땅의 주인 ${bg.bossStunSeconds}초) · ${bg.cooldownSeconds}초에 한 번`); }
+    }
+    for (const b of G.dropBells) {
+      b.life -= dt;
+      if (b.uses > 0 && b.life > 0 && Math.hypot(p.x - b.x, p.y - b.y) <= b.touch + p.r) { b.uses--; ringBell(b); }
+    }
+    G.dropBells = G.dropBells.filter(b => b.life > 0 && b.uses > 0);
   }
 }
 function hitPlayer(dmg) {
@@ -1616,6 +1716,10 @@ function render() {
     if (G.insEff.periodic_block && G.blockCd <= 0) { ctx.strokeStyle = 'rgba(201,162,39,0.45)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(X, Y - s2 * 0.3, p.r * 2.1 * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }   // 금종조 준비됨
     if (G.tier >= 2) { const n = orbitCount(), R = 1.9 * sc(G.tier) * G.body.area * PPM; ctx.strokeStyle = G.tier >= 3 ? GOLD : INK; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const a = G.orbitA + i * TAU / n, bx = X + Math.cos(a) * R, by = Y + Math.sin(a) * R; ctx.beginPath(); ctx.moveTo(bx - Math.cos(a + 1.57) * 9, by - Math.sin(a + 1.57) * 9); ctx.lineTo(bx + Math.cos(a + 1.57) * 9, by + Math.sin(a + 1.57) * 9); ctx.stroke(); } }
   }
+  // 범종에 기절한 적: 머리 위 금빛 점선 고리
+  ctx.strokeStyle = 'rgba(201,162,39,0.9)'; ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
+  for (const f of G.foes) if (f.stunT > 0 && !f.dead) { const X = sx(f.x), Y = sy(f.y), R = f.r * PPM; if (X < -R || X > VW + R || Y < -R * 3 || Y > VH + R) continue; ctx.beginPath(); ctx.ellipse(X, Y - R * 1.7, R * 0.7, R * 0.25, 0, 0, TAU); ctx.stroke(); }
+  ctx.setLineDash([]);
   // 땅의 주인·정예 패턴 예고(붉은 먹)와 날아가는 것
   for (const f of G.foes) if (f.pat && !f.dead) drawPattern(f);
   drawShots();
@@ -1631,6 +1735,8 @@ function render() {
     } else if (e.k === 'wave') {
       ctx.strokeStyle = `rgba(26,26,26,${0.8 * (1 - k)})`; ctx.lineWidth = 24 * (1 - k) + 2; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k), 0, TAU); ctx.stroke();
       ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(k) * 0.97, 0, TAU); ctx.stroke();
+    } else if (e.k === 'bell') {   // 범종 소리: 금빛 고리 두 겹이 기절 반경까지 퍼진다
+      for (const q of [1, 0.75]) { ctx.strokeStyle = `rgba(201,162,39,${(1 - k) * q})`; ctx.lineWidth = 6 * (1 - k) + 1; ctx.beginPath(); ctx.arc(X, Y, R * easeOut(Math.min(1, k * 1.4)) * q, 0, TAU); ctx.stroke(); }
     } else if (e.k === 'block') {   // 금종조가 막음: 금빛 종 테두리가 퍼진다
       ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 5 * (1 - k) + 1.5;
       for (const q of [0.8, 1]) { ctx.beginPath(); ctx.arc(X, Y - R * 0.25, R * q * (0.7 + 0.5 * easeOut(k)), 0, TAU); ctx.stroke(); }
@@ -1674,6 +1780,31 @@ function drawGimmicks(now) {
     ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
     ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(X, Y, R, -Math.PI / 2, Math.PI / 2); ctx.arc(X, Y + R / 2, R / 2, Math.PI / 2, -Math.PI / 2, true); ctx.arc(X, Y - R / 2, R / 2, Math.PI / 2, -Math.PI / 2); ctx.fill();
     ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  if (GIM.pagodaForest && PPM * sc(G.tier) > 0.5) {   // 탑림: 화면 안 무더기만. 먹 그림자 위에 층층 돌탑
+    const k = sc(G.tier), sp = LD.pagodaSpacing * k, x0 = camX - VW / 2 / PPM, x1 = camX + VW / 2 / PPM, y0 = camY - VH / 2 / PPM, y1 = camY + VH / 2 / PPM;
+    const seen = new Set();
+    for (let x = x0 - sp / 2; x <= x1 + sp; x += sp / 2) for (let y = y0 - sp / 2; y <= y1 + sp; y += sp / 2) {
+      const pt = pagodaPatchAt(x, y); if (!pt || seen.has(pt)) continue; seen.add(pt);
+      for (const s of pt.stones) {
+        const X = sx(s.x), Y = sy(s.y), R = s.r * PPM; if (X < -R * 2 || X > VW + R * 2 || Y < -R * 4 || Y > VH + R * 2) continue;
+        ctx.fillStyle = 'rgba(26,26,26,0.22)'; ctx.beginPath(); ctx.ellipse(X, Y + R * 0.2, R * 1.1, R * 0.5, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#8C857A'; ctx.strokeStyle = INK; ctx.lineWidth = Math.max(1, R * 0.08);
+        for (let t = 0; t < 4; t++) { const w = R * (1.6 - t * 0.3), h = R * 0.55, yy = Y - R * 0.1 - t * h * 0.95; ctx.fillRect(X - w / 2, yy - h, w, h); ctx.strokeRect(X - w / 2, yy - h, w, h); }
+        ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(X, Y - R * 0.1 - 4 * R * 0.52 - R * 0.15, R * 0.18, 0, TAU); ctx.fill();
+      }
+    }
+  }
+  if (GIM.bell) for (const b of [...songBells().map(b => Object.assign({ ready: (G.bellCd[b.key] || 0) <= G.t }, b)), ...G.dropBells.map(b => Object.assign({ ready: true, drop: true }, b))]) {
+    const X = sx(b.x), Y = sy(b.y), R = Math.max(b.touch * PPM, 4); if (X < -R * 3 || X > VW + R * 3 || Y < -R * 3 || Y > VH + R * 3) continue;
+    ctx.globalAlpha = b.ready ? 1 : 0.4;
+    if (b.ready) { ctx.strokeStyle = 'rgba(201,162,39,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+    const bw = R * 0.75, bh = R * 1.1;   // 종: 금빛 몸통에 먹 테두리, 떨어진 종은 붉은 먹을 한 줄
+    ctx.fillStyle = b.drop ? '#A8742A' : '#B88A2E'; ctx.strokeStyle = INK; ctx.lineWidth = Math.max(1.2, R * 0.08);
+    ctx.beginPath(); ctx.moveTo(X - bw * 0.55, Y - bh); ctx.quadraticCurveTo(X - bw * 0.6, Y - bh * 0.2, X - bw, Y); ctx.lineTo(X + bw, Y); ctx.quadraticCurveTo(X + bw * 0.6, Y - bh * 0.2, X + bw * 0.55, Y - bh); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X - bw * 0.8, Y - bh * 0.25); ctx.lineTo(X + bw * 0.8, Y - bh * 0.25); ctx.stroke();
+    if (b.drop) { ctx.strokeStyle = CRIMSON; ctx.beginPath(); ctx.moveTo(X - bw * 0.6, Y - bh * 0.6); ctx.lineTo(X + bw * 0.6, Y - bh * 0.6); ctx.stroke(); }
     ctx.globalAlpha = 1;
   }
   for (const fg of G.fogs) {
@@ -1912,7 +2043,7 @@ function updateHud() {
 let last = 0, hudAcc = 0;
 function frame(ts) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  const dt = clamp((ts - last) / 1000, 0, 0.05); last = ts;   // 화면을 닫을 때 last 를 performance.now() 로 잡아서 rAF 시각보다 늦을 수 있다(음수면 효과 반경이 음수가 됐다)
   if (running && !paused && G && !G.ended) { update(dt); hudAcc += dt; if (hudAcc > 0.1) { hudAcc = 0; updateHud(); } }
   render();
 }
@@ -1988,6 +2119,10 @@ window.__ch = {
   local(id) { const f = spawnLocal(G.tier, id, { x: G.p.x + G.view * 0.2, y: G.p.y }); return f && f.def.nameKo; },
   fog() { G.fogNext = G.t; },
   yy(n) { G.yy = n; return G.yy; },
+  // 숭산 기믹(RM-08): bells() 화면 근처 범종(쿨타임 포함), pagodas() 화면 근처 탑림 무더기·돌탑 수, stunned() 기절한 적 수
+  bells: () => songBells().map(b => ({ x: Math.round(b.x), y: Math.round(b.y), touch: +b.touch.toFixed(2), stunR: +b.stunR.toFixed(2), ready: (G.bellCd[b.key] || 0) <= G.t })).concat(G.dropBells.map(b => ({ x: Math.round(b.x), y: Math.round(b.y), drop: true, life: +b.life.toFixed(1), uses: b.uses }))),
+  pagodas() { const seen = new Set(), sp = LD.pagodaSpacing * sc(G.tier); for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const pt = pagodaPatchAt(G.p.x + dx * sp, G.p.y + dy * sp); if (pt) seen.add(pt); } return [...seen].map(pt => ({ x: Math.round(pt.x), y: Math.round(pt.y), R: +pt.R.toFixed(1), stones: pt.stones.length, minGap: +Math.min(...pt.stones.flatMap((a, i) => pt.stones.slice(i + 1).map(b => Math.hypot(a.x - b.x, a.y - b.y) - a.r - b.r))).toFixed(2) })); },
+  stunned: () => G.foes.filter(f => f.stunT > 0 && !f.dead).length,
   area() { return { region: G.region, chapter: regionChapter(), localShare: localShare(), eliteN: G.eliteN, inWater: inWater(G.p.x, G.p.y), inFog: inFog(G.p.x, G.p.y), fogs: G.fogs.length, pools: G.pools.length, shots: G.shots.length, yy: G.yy, bless: G.bless, pads: taijiPads().length, kinds: G.foes.filter(f => f.kind).map(f => f.kind) }; },
   warp(id, frac) { const r = REG[id]; G.p.x = r.x + G.view * (frac == null ? 0.3 : frac); G.p.y = r.y; camX = G.p.x; camY = G.p.y; trackRegion(); return G.region; },
   end(kind) { endLife(kind || 'zuohwa'); },

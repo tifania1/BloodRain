@@ -7,7 +7,7 @@
 | M2 줄 | 기획서 | 데이터 | Core | 웹 | Unity |
 |---|---|---|---|---|---|
 | 서장 | 4장 서장 상세 흐름, 19장 | chapters.json `prologue`, cheonha.json `prologueBody` | `Run/Prologue.cs`, `Spawning/PrologueDirector.cs`, 첫 레벨업 한 장(T-43) | 없음. 1장 프로토타입은 숭산부터, 천하 시안도 첫 환혼부터 | C-06b(첫 레벨업 카드 한 장) |
-| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 1장 프로토타입: 범종만. 천하 시안: 지역·농도와 WP-01 의 기믹 틀(독안개·물·태극 바닥)은 있고 숭산 기믹은 없음 → RM-08 | TU 축척·지역 HUD 끝 |
+| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 1장 프로토타입: 범종만. 천하 시안: 범종·탑림(RM-08, 원각이 떨어뜨린 종 포함) | TU 축척·지역 HUD 끝 |
 | 원각 | 6장 땅의 주인 패턴 수치 | bosspatterns.json `wongak` | `BossPatterns`·`BossAwakening`(기혈 곡선 T-40) | 둘 다 패턴 다 나옴 | 보스 패턴 러너 |
 | 문파 3 | 5·21장 | cheonha.json sects 소림·개방·남궁(`unlock: start`), 시작 무공, 대표 인물 | `Rebirth`(후보·몸·성별), 진전 `Synergy` | 천하 시안: 몸 기혈·걸음만, 무공은 시안 셋 | TU-11 후보 카드 |
 | 축척 전환 | 7장 | cheonha.json `realmScale`·`breakthrough`·`cluster`·`crush` | `Scale`·`Breakthrough` | 천하 시안 그대로 | TU-01 축척 카메라 |
