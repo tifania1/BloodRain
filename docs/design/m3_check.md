@@ -35,7 +35,7 @@
 | 무당산 운해 | 지역 표에 이름만. 수치 없음 | regions 에 `cloud_sea` 만, gimmicks.json 에 없음 | 없음 | 없음 | 없음 | 줄 없음 |
 | 고유 적(독두꺼비·금선지네·독인 / 수귀·수적 / 흑백 쌍강시) | 6장 '지역별 고유 적'과 아래 문단 | enemies.json chapter2·3·4. 같음(`EliteDataTests.지역별_고유_적_표의_모든_줄에_데이터가_있고_수치가_같다`, `EnemyTableTests.지역_고유_적_행동_숫자_표가_데이터와_같다`·`쌍강시_되살림_숫자가_기획서_문단과_같다`) | `EnemyDef`, `RegionSpawns`(5분 10%·15분 15%) | 없음 | 없음(모든 적이 한 모양) | C-02b: 독두꺼비 장판·지네·독인 안개·수적 갈고리·쌍강시 되살림은 붙음, 수귀만 '남은 것'(물 지형) |
 | 정예 아홉 | 6장 '정예 수치'·'정예 패턴 수치' | enemies.json elites chapter2~4, bosspatterns.json elites 아홉. 같음(`EliteDataTests.정예_수치_표가_데이터와_같다`, `ElitePatternsTests.당가타_장강_무당산_정예_아홉_표가_데이터와_같다`·`장판_값은_같은_땅_적에서_왔다`) | `BossPatterns`(`CastSeconds`·`ClosingRadius`·`RingOffsets`·`InPool`), `RegionSpawns` 차례 | eliteAI 는 `jump_slam`·`projectile_fan`·`circles`(self) 셋만 알고 숭산 셋만 부름 | 데이터 정예가 아니라 24초마다 큰 일반 적 | R-01U(먼저 E-01) |
-| 땅의 주인 셋(당소혜·마천패·혈허진인) | 6장 땅의 주인 표·'땅의 주인 패턴 수치' | enemies.json bosses, bosspatterns.json bosses. 같음(`BossPatternsMoreTests.패턴_수치_표가_데이터와_같다` 외 다섯) | `BossPatterns` 시간표·2막, `BossAwakening` 기혈 배율. 흑백 구역·분열 되살림·북두칠성 자리·태극권 끌어당김·사슬 끌기 판정은 없음(데이터 칸만 읽음) | 원각만(bossAI 가 원각 숫자를 코드에 둠) | 셋 다 싸움은 되지만 패턴은 shape 넷(`cone`·`summon_ring`·`circles`·`rotating_beams`)만 앎. 마천패 물기둥, 혈허진인 칠성검진(북두칠성 대신 흩뿌린 원)만 나오고 당소혜는 몸 박치기뿐. 2막 없음 | 줄 없음(C-10 은 장삼만, 원각도 줄 없음) |
+| 땅의 주인 셋(당소혜·마천패·혈허진인) | 6장 땅의 주인 표·'땅의 주인 패턴 수치' | enemies.json bosses, bosspatterns.json bosses. 같음(`BossPatternsMoreTests.패턴_수치_표가_데이터와_같다` 외 다섯) | `BossPatterns` 시간표·2막, `BossAwakening` 기혈 배율. R-11(11-04)로 판정 함수: `SplitFieldColor`·`SplitFieldDamageTaken`(흑백·경계 회전), `BossSplit`(분열 되살림), `BigDipperOffsets`, `InhalePull`·`InBurst`, `ChainReach`·`InChain`·`ChainPullOffset`, `HalfFieldFog`(`BossFieldRulesTests`) | 원각만(bossAI 가 원각 숫자를 코드에 둠) | 셋 다 싸움은 되지만 패턴은 shape 넷(`cone`·`summon_ring`·`circles`·`rotating_beams`)만 앎. 마천패 물기둥, 혈허진인 칠성검진(북두칠성 대신 흩뿌린 원)만 나오고 당소혜는 몸 박치기뿐. 2막 없음 | 줄 없음(C-10 은 장삼만, 원각도 줄 없음) |
 
 ## 걸리는 것
 
@@ -50,7 +50,7 @@
 - **기믹 넷의 수치가 없다.** `bamboo_thicket`·`drifting_boats`·`reverse_wave`·`cloud_sea` 는 cheonha.json regions 에만 있고 gimmicks.json·Core 에 없다. 7장도 '아직 수치가 없다'(역류 파도는 '2분마다'만). 숫자 없음, 사람 결정 필요. 마천패 2막 역류 파도의 '배 위면 맞지 않음'이 떠내려오는 배에 걸려 있다. 이름도 지역 표는 '대나무 덤불', 수치 문단은 '대숲'
 - **기믹을 지역 안 어디에 몇 개 놓는지가 없다.** 독안개 샘 수, 물 구역의 모양·넓이(수귀는 물에서만 솟는다), 태극 바닥 수. Core 에 놓는 함수는 탑림 `PagodaForest.Layout` 뿐이다(숭산 범종·우물도 같다). 숫자 없음, 사람 결정 필요
 - Unity 지역 기믹은 unity_tasks 에 줄 없음(Presentation·Sim 에 `Gimmicks` 를 부르는 곳 없음). 수귀는 C-02b '남은 것'인데 물 지형이 먼저다
-- **땅의 주인 셋의 모양 판정이 Core 에 없다.** 흑백·흑백 경계(내 색, 경계 회전), 분열 되살림(`rejoinSeconds`), 칠성검진 `big_dipper` 자리, 태극권 끌어당김, 갈고리 사슬 끌기, 반쪽 독안개 쪽 고르기. `Combat/BossPatterns.cs` 에 `RingOffsets`·`InPool` 처럼 더하면 Unity·웹이 같은 셈을 쓴다. Unity 는 땅의 주인(원각 포함) 줄이 unity_tasks 에 없음
+- ~~**땅의 주인 셋의 모양 판정이 Core 에 없다.**~~ → R-11(11-04) Core 에 넣음. 웹 천하 시안은 아직 따로 셈(R-11w). 흑백·흑백 경계(내 색, 경계 회전), 분열 되살림(`rejoinSeconds`), 칠성검진 `big_dipper` 자리, 태극권 끌어당김, 갈고리 사슬 끌기, 반쪽 독안개 쪽 고르기. `Combat/BossPatterns.cs` 에 `RingOffsets`·`InPool` 처럼 더하면 Unity·웹이 같은 셈을 쓴다. Unity 는 땅의 주인(원각 포함) 줄이 unity_tasks 에 없음
 - 웹: 천하 시안에 세 지역 기믹·고유 적·데이터 정예·세 보스 패턴 대부분·2막이 없고, 1장 프로토타입은 숭산만이다. 1장 bossAI 는 원각 숫자를 코드에 박아 두어 다른 보스를 붙이려면 eliteAI 처럼 bosspatterns.json 을 읽게 해야 한다 → WP-01
 - bosspatterns.json 마천패 `_note` 의 "수귀(water_ghost)는 아직 enemies.json 에 없다(T-33에서 넣는다)"는 옛말이다. 지금은 있다. 그 문장만 지우면 된다
 

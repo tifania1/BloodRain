@@ -110,6 +110,8 @@ namespace BloodRain.Core.Data
         public float DamageTakenMultiplier;
         /// <summary>빨아들인 뒤 내뿜는 원의 반경(태극권).</summary>
         public float BurstRadius;
+        /// <summary>빨아들이는 세기: 플레이어 기본 이동속도의 몇 배로 끌려오나(태극권 0.5).</summary>
+        public float PullSpeedRatio;
         /// <summary>여러 곳의 배치 이름(big_dipper: 북두칠성 모양). 비면 흩어 놓기(scatter).</summary>
         public string Arrangement = "";
         /// <summary>시전 뒤 보스가 굳어 있는 시간(일섬 뒤 2초 경직). 공격 기회.</summary>

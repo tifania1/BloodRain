@@ -277,11 +277,12 @@
           "id": "taiji_inhale_exhale",
           "nameKo": "태극권",
           "shape": "inhale_exhale",
-          "_note": "예고 뒤 pullSeconds 동안 반경 radius 안을 보스 쪽으로 빨아들이고(플레이어 이동속도의 절반만큼 끌림), 끝에 반경 burstRadius 를 내뿜는다. 내뿜는 원 안이면 피해. 빨아들이는 동안 보스는 멈춰 선다.",
+          "_note": "예고 뒤 pullSeconds 동안 반경 radius 안을 보스 쪽으로 빨아들이고(플레이어 기본 이동속도의 pullSpeedRatio 배로 끌림, 보스 몸에 닿으면 멈춤), 끝에 반경 burstRadius 를 내뿜는다. 내뿜는 원 안이면 피해. 빨아들이는 동안 보스는 멈춰 선다.",
           "telegraphSeconds": 1.0,
           "radius": 10,
           "pullSeconds": 1.5,
           "burstRadius": 4,
+          "pullSpeedRatio": 0.5,
           "baseDamage": 18,
           "bossHolds": true
         },
