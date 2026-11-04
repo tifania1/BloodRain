@@ -1,6 +1,6 @@
 # 웹 프로토타입
 
-브라우저에서 바로 해 보는 혈우강호 1장(숭산 소림)이다. Unity 판이 나오기 전에 손맛과 숫자를 먼저 확인하려고 만들었다.
+브라우저에서 바로 해 보는 혈우강호 1장(숭산 소림)과 서장(청운진)이다. Unity 판이 나오기 전에 손맛과 숫자를 먼저 확인하려고 만들었다.
 캔버스 2D 한 장짜리 HTML이고, 무공·심법·절기·적·밸런스 숫자는 `unity/BloodRain/Assets/Resources/Data/*.json` 을 그대로 읽는다.
 
 - 공개 주소: https://bloodrain-proto.pages.dev (Cloudflare Pages, 누구나 열 수 있음. main 기준)
@@ -28,6 +28,7 @@ python tools/deploy_web_prototype.py --branch claude/dev   # 미리보기 주소
 
 ## 들어 있는 것
 
+- 서장(제목 화면 '서장', backlog M1-04): 청운진 객잔 마당 10분. chapters.json `prologue` 시간표 그대로 — 시강만, 3:30 혈인 돌진(10마리), 5:00 정예 강시 도부수(큰 도끼 부채꼴, bosspatterns.json elites)와 보갑, 8:30~9:00 생성 멈춤, 9:00 강시 포쾌 장삼. 첫 레벨업은 새 무공 한 장뿐, 범종 없음, 적 기혈 배율은 balance.json `chapterMultiplier.prologue`(0.8). 장삼 전에 쓰러지면 처음부터
 - 진소운, 시작 무공 9종(동작은 `behavior` 별로, 취선봉 포함), 심법 16종, 레벨업 3~4택(다시 고르기 2회·정진)
 - 경지 돌파 이류·일류·절정·초절정·화경과 깨달음 7종(진소운이라 4개 중 고름), 돌파 보상
 - 음양 태극 게이지(조화·편향·극성), 극성일 때 60초마다 기혈역류, 1초 안에 경공으로 끊으면 오의 +50

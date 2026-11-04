@@ -88,6 +88,13 @@ def data_blob() -> str:
         "insights": {k: v for k, v in load("insights").items() if not k.startswith("_")},
         "synergies": {k: v for k, v in load("synergies").items() if not k.startswith("_")},
         "balance": {k: v for k, v in load("balance").items() if not k.startswith("_")},
+        # 서장(backlog M1-04~06): chapters.json prologue 시간표, cheonha.json prologueBody, 장삼 패턴, 서장 대사·안내
+        "prologue": drop_notes(next(c for c in load("chapters")["chapters"] if c["id"] == "prologue")),
+        "prologueBody": drop_notes(load("cheonha")["prologueBody"]),
+        "jangSam": drop_notes(load("bosspatterns")["bosses"]["jang_sam"]),
+        "prologueDialogue": drop_notes(load("dialogue")["prologue"]),
+        "speakers": {x["id"]: x["nameKo"] for x in load("dialogue")["speakers"]},
+        "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
     return to_js(blob)
 

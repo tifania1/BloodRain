@@ -229,6 +229,7 @@ button { touch-action: manipulation; }
       <div><div class="logo">血雨江湖</div><div class="logo-ko">혈우강호</div></div>
       <p class="lead">혈마의 봉인이 깨지고 피의 비가 내린다. 객잔 심부름꾼 진소운이 되어 숭산 소림에 몰려드는 강시 떼를 버티고, 20분째에 나타나는 혈나한 원각을 쓰러뜨리자. 움직이기만 하면 무공은 알아서 나간다.</p>
       <div class="row">
+        <button class="b" id="startprologue" type="button">서장<small>10분 · 청운진 객잔 마당, 장삼까지</small></button>
         <button class="b main" id="startquick" type="button">빠른 판<small>5분 압축 · 처음이면 이것</small></button>
         <button class="b" id="startfull" type="button">정식 판<small>20분 · 기획서 그대로</small></button>
       </div>
@@ -383,6 +384,9 @@ const START_WEAPONS = DATA.weapons.filter(w => w.unlock === 'start' && PROTO_BEH
 const HIT_IFRAMES = 0.5, HOP_DUTY = 0.72, BOSS_HP = { full: 20000, quick: 12000 }, BOSS_TRASH = 60;
 // 옛 1장 흐름(20분 원각) 그대로 19분에 생성을 멈춘다. 천하 한 생에는 생성 중지가 없어 balance.json 에서 빠졌다.
 const STOP_SPAWN_AT = 19;
+// 서장(기획서 4장 '서장 상세 흐름', backlog M1-04): chapters.json prologue 시간표와 cheonha.json prologueBody 를 그대로 쓴다.
+const PRO = DATA.prologue, PROB = DATA.prologueBody;
+const isPro = () => !!G && G.mode === 'prologue';
 const ULT_MULT =((DATA.ultimates || []).find(u => u.id === 'il_geom') || { mightMultiplier: 30 }).mightMultiplier;
 const GLYPH = {
   samjae_sword: '劍', nahan_fist: '拳', flying_dagger: '刀', changcheon_qi: '氣', palm_wind: '掌', flash_finger: '指', thunder_bomb: '雷', poison_mist: '毒',
@@ -831,8 +835,9 @@ function newRun(mode) {
     yy: 0, yyHalf: false, backlashT: 0, backlash: null,
     ult: 0, ultBonus: 1, rerolls: JIN_REROLLS, banished: new Set(),
     enemies: [], projs: [], effects: [], orbs: [], drops: [], lanterns: [], splats: [], nums: [], zones: [],
-    bells: [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
-    spawnAcc: 0, lanternAcc: 0, events: makeEvents(), elitesDone: 0, boss: null, bossSpawned: false, won: false,
+    // 범종은 숭산 기믹이라 서장(청운진 객잔 마당)엔 없다
+    bells: mode === 'prologue' ? [] : [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
+    spawnAcc: 0, lanternAcc: 0, events: makeEvents(mode), firstLevelUp: mode === 'prologue', elitesDone: 0, boss: null, bossSpawned: false, won: false,
     freeze: 0, cam: { x: 0, y: 0, shake: 0, trauma: 0 }, stats: null, fps: 60, salgiBonus: 0, salgiBase: 0, pendingLevels: 0,
     syn: newSyn(), enc: newEnc(), awaken: null, glow: null, evoLog: [], demo: false,
   };
@@ -841,7 +846,9 @@ function newRun(mode) {
   G.player.hp = G.player.maxHp;
 }
 
-function makeEvents() {
+function makeEvents(mode) {
+  // 서장: chapters.json prologue events 그대로(3:30 혈인 돌진, 5:00 강시 도부수, 9:00 장삼)
+  if (mode === 'prologue') return PRO.events.map(e => e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', type: e.enemy } : { at: e.at, kind: e.kind, enemy: e.enemy });
   // 옛 1장 시간대별 흐름(천하 구조 전 기획서 7장 표). 시각은 게임 분. 지금 흐름은 chapters.json life(기획서 7장 '한 생의 시간대별 흐름').
   return [
     { at: 3.5, kind: 'charge', n: 14 }, { at: 5, kind: 'elite', type: 'dongin' },
@@ -939,11 +946,11 @@ function nearestEnemies(x, y, n, maxR, exclude) {
 
 // ───────── 적 ─────────
 // 1장 정예 셋. 기혈·걸음·접촉 피해·넉백 저항은 enemies.json 에서, 공격(첫 시각·간격·패턴)은 bosspatterns.json elites 에서.
-const ELITES = Object.fromEntries([['dongin', 'dongin'], ['gyeyul', 'gyeyul_monk'], ['abbot', 'acting_abbot']]
+const ELITES = Object.fromEntries([['dongin', 'dongin'], ['gyeyul', 'gyeyul_monk'], ['abbot', 'acting_abbot'], ['gangsi_axeman', 'gangsi_axeman']]
   .map(([key, id]) => { const d = E_BY_ID[id], ps = DATA.elitePatterns[id]; return [key, { name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] }]; }));
 function spawnEnemy(type, x, y, extra) {
   const def = E_BY_ID[type];
-  const gm = G.gm, mult = B.enemyScaling.chapterMultiplier.chapter1;
+  const gm = G.gm, mult = B.enemyScaling.chapterMultiplier[isPro() ? 'prologue' : 'chapter1'];
   const hp = def.health * (1 + B.enemyScaling.healthPerMinute * gm) * mult;
   const e = {
     type, sprite: type === 'mogin_nahan' ? 'mogin' : type === 'golden_toad' ? 'toad' : type,
@@ -980,12 +987,32 @@ function spawnBoss() {
   toast('혈나한 원각', '나한당주가 혈나한이 되어 있다');
   sfx('gong');
 }
+// 서장 보스 강시 포쾌 장삼(9분). 기혈은 enemies.json 그대로(땅의 주인 식·농도 안 씀, Core Prologue.BossMaxHealth), 몸 피해·걸음은 bosspatterns.json jang_sam.
+function spawnJangSam() {
+  const p = G.player, def = DATA.bosses.find(b => b.id === PROB.boss), J = DATA.jangSam;
+  const e = spawnEnemy('sigang', p.x, p.y - viewH() * 0.62, {
+    sprite: 'boss', boss: true, jang: true, name: def.nameKo, hp: def.health, maxHp: def.health, speed: J.moveSpeed / 100 * MOVE, dmg: J.contactDamage,
+    r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0, timer: J.firstCastSeconds, cycle: 0,
+  });
+  G.boss = e; G.bossSpawned = true;
+  toast(def.nameKo, '마을 포쾌가 강시가 되어 덮쳐 온다');
+  sfx('gong');
+}
+function jangSamAI(e, dt, dx, dy, d) {
+  e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1;
+}
 function viewW() { return VW / PPM; }
 function viewH() { return VH / PPM; }
 function viewDiag() { return Math.hypot(viewW(), viewH()); }
 
 // 시간대별 적 구성 (기획서 7장 1장 흐름)
 function pickType(gm) {
+  if (isPro()) { // chapters.json prologue bands 가중치표
+    const band = PRO.bands.find(b => gm >= b.fromMinute && gm < b.toMinute) || PRO.bands[PRO.bands.length - 1];
+    const sum = band.spawns.reduce((a, x) => a + x.weight, 0);
+    let r = Math.random() * sum; for (const x of band.spawns) { r -= x.weight; if (r <= 0) return x.enemy; }
+    return band.spawns[0].enemy;
+  }
   const table = gm < 3 ? [['sigang', 1]]
     : gm < 5 ? [['sigang', 0.7], ['hyeol_gangsi', 0.3]]
     : gm < 8 ? [['sigang', 0.35], ['hyeol_gangsi', 0.4], ['hyeol_musa', 0.17], ['mogin_nahan', 0.08]]
@@ -1370,7 +1397,7 @@ function update(dt) {
 
   // 사건과 생성
   while (G.events.length && G.gm >= G.events[0].at) runEvent(G.events.shift());
-  const stopped = G.gm >= STOP_SPAWN_AT && !G.won;
+  const stopped = G.gm >= (isPro() ? PRO.stopSpawningAtMinute : STOP_SPAWN_AT) && !G.won;
   G.spawnAcc += dt; if (G.spawnHold > 0) { G.spawnHold -= dt; G.spawnAcc = 0; }
   if (G.spawnAcc >= 1) {
     G.spawnAcc -= 1;
@@ -1415,7 +1442,7 @@ function update(dt) {
     let dx = p.x - e.x, dy = p.y - e.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const slow = 1 - e.slow; e.slow = Math.max(0, e.slow - dt * B.enemyStatus.slowFadePerSecond);
     let vx = 0, vy = 0;
-    if (e.boss) bossAI(e, dt, dx, dy, d);
+    if (e.boss) (e.jang ? jangSamAI : bossAI)(e, dt, dx, dy, d);
     else if (e.elite) eliteAI(e, dt, dx, dy, d);
     else if (e.behavior === 'hop_chase') {
       // 콩콩 뛰는 박자: 0.6초 중 72%는 뛰고 나머지는 착지. 평균 속도는 enemies.json speed 그대로.
@@ -1568,7 +1595,7 @@ function runEvent(ev) {
   } else if (ev.kind === 'elite') spawnElite(ev.type);
   else if (ev.kind === 'toad') { const [x, y] = ringPos(); spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale); toast('금두꺼비', '잡으면 은자와 진기'); }
   else if (ev.kind === 'ring') { for (let i = 0; i < ev.n; i++) { const a = i / ev.n * TAU; spawnEnemy('donggap', p.x + Math.cos(a) * diag * 0.6, p.y + Math.sin(a) * diag * 0.6); } toast('동갑시 포위', '원을 좁혀 온다'); }
-  else if (ev.kind === 'boss') spawnBoss();
+  else if (ev.kind === 'boss') { if (isPro()) spawnJangSam(); else spawnBoss(); }
 }
 
 // 정예 셋: 동인(몸통 박치기 3연타), 계율원 승려(장풍 세 갈래), 방장 대리(범종 기절). 수치는 bosspatterns.json elites.
@@ -1599,6 +1626,17 @@ function eliteAI(e, dt, dx, dy, d) {
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.5, dmg, life: P.length / sp, t: 0, kind: 'epalm' }); }
+    } });
+  } else if (P.shape === 'cone') {
+    // 강시 도부수 큰 도끼 휘두르기: 치켜들고 멈춰 섰다가 앞 부채꼴을 휩쓴다(bosspatterns.json elites gangsi_axeman)
+    const ca = Math.atan2(dy, dx), half = P.angleDegrees / 2 * Math.PI / 180;
+    if (P.bossHolds) e.windup = P.telegraphSeconds;
+    addEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: P.telegraphSeconds });
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+      if (e.dead) return;
+      addEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: 0.35, hot: true }); sfx('boom');
+      const px = G.player.x - e.x, py = G.player.y - e.y, ang = Math.abs(((Math.atan2(py, px) - ca + Math.PI * 3) % TAU) - Math.PI);
+      if (Math.hypot(px, py) < P.radius && ang < half) hurtPlayer(dmg, e);
     } });
   } else if (P.shape === 'circles' && P.aim === 'self') {
     if (P.bossHolds) e.windup = P.telegraphSeconds;
@@ -1676,6 +1714,13 @@ function candidates() {
   return list;
 }
 function rollOffers() {
+  // 서장 첫 레벨업은 새 무공 한 장뿐(4장 0:15 '고르기만 하면 됨', chapters.json prologue firstLevelUpChoices, Core Loadout.RollFirstLevelUp)
+  if (G.firstLevelUp) {
+    G.firstLevelUp = false;
+    const pool = candidates().filter(c => c.kind === 'nw'), out = [];
+    while (out.length < PRO.firstLevelUpChoices && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    if (out.length) return out;
+  }
   const n = B.levelUp.baseChoices + (Math.random() < Math.min(1, G.stats.luck / B.levelUp.luckForFourthChoice) ? 1 : 0);
   const pool = candidates(), out = [];
   // 이미 가진 것을 조금 더 자주 보여 준다(뱀서류 관례)
@@ -2276,7 +2321,7 @@ function drawEffect(fx) {
   } else if (fx.kind === 'cone') {
     ctx.fillStyle = fx.hot ? `rgba(179,38,30,${0.45 * (1 - k)})` : 'rgba(179,38,30,0.14)';
     ctx.strokeStyle = 'rgba(179,38,30,0.7)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, fx.r * PPM, fx.a - 0.55, fx.a + 0.55); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, fx.r * PPM, fx.a - (fx.half ?? 0.55), fx.a + (fx.half ?? 0.55)); ctx.closePath(); ctx.fill(); ctx.stroke();
   }
   ctx.restore();
 }
@@ -2327,7 +2372,7 @@ function updateHud(dt) {
   const bb = $('bossbar'), showBoss = !!(G.boss && !G.boss.dead);
   if (bb.hidden === showBoss) bb.hidden = !showBoss;
   if (showBoss) $('bossfill').style.width = (Math.max(0, G.boss.hp / G.boss.maxHp) * 100).toFixed(1) + '%';
-  $('phase').textContent = G.bossSpawned ? '혈나한 원각' : G.gm >= 19 ? '보스가 온다' : G.mode === 'quick' ? '숭산 소림 · 4배속' : '숭산 소림';
+  $('phase').textContent = isPro() ? (G.bossSpawned ? '강시 포쾌 장삼' : '서장 · 청운진') : G.bossSpawned ? '혈나한 원각' : G.gm >= 19 ? '보스가 온다' : G.mode === 'quick' ? '숭산 소림 · 4배속' : '숭산 소림';
   $('lv').textContent = `Lv ${G.level}`; $('realm').textContent = G.realm.nameKo;
   $('kills').textContent = `처치 ${G.kills.toLocaleString()}`; $('silver').textContent = `은자 ${G.silver}`;
   const ultPct = G.ult / B.ultimateCharge.max * 100, ub = $('btnult');
@@ -2387,10 +2432,11 @@ function endRun(won) {
   running = false; cancelAnimationFrame(rafId);
   render();
   const gs = Math.floor(G.gm * 60);
-  $('restitle').textContent = won ? '천추석 조각을 얻었다' : '쓰러졌다';
+  $('restitle').textContent = won ? (isPro() ? '장삼을 쓰러뜨렸다' : '천추석 조각을 얻었다') : '쓰러졌다';
   $('resimg').src = won ? IMG.win : IMG.over;
   $('resimg').alt = won ? '칠성봉인 컷' : '강시에 둘러싸인 진소운';
-  $('resline').textContent = won ? '원각 대사가 숨을 거두며 말했다. "봉인은… 깨진 게 아니다. 안에서… 열렸다."' : '혈우는 그치지 않는다. 객잔으로 돌아가 다시 일어서자.';
+  $('resline').textContent = isPro() ? (won ? '빌린 내공이 경맥을 태웠다.' : '장삼이 나오기 전에 쓰러지면 서장을 처음부터 다시 한다. 혼을 붙잡아 줄 사람이 아직 없다.')
+    : won ? '원각 대사가 숨을 거두며 말했다. "봉인은… 깨진 게 아니다. 안에서… 열렸다."' : '혈우는 그치지 않는다. 객잔으로 돌아가 다시 일어서자.';
   const facts = [[`${Math.floor(gs / 60)}:${String(gs % 60).padStart(2, '0')}`, '버틴 시간'], [G.kills.toLocaleString(), '처치'], [`Lv ${G.level}`, G.realm.nameKo], [G.silver, '은자']];
   $('resfacts').innerHTML = facts.map(f => `<div><b>${f[0]}</b><span>${f[1]}</span></div>`).join('');
   const total = G.weapons.reduce((a, w) => a + w.dealt, 0) || 1, max = Math.max(...G.weapons.map(w => w.dealt), 1);
@@ -2416,7 +2462,7 @@ function togglePause(force) {
 function showBest() {
   const best = store.get('best') || {}, parts = [];
   const sfxKey = settings.easy ? '_easy' : '';
-  for (const [k0, label] of [['quick', '빠른 판'], ['full', '정식 판']]) { const k = k0 + sfxKey; if (!best[k]) continue; const g = best[k].gs; parts.push(`${label} 최고 ${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}${best[k].won ? ' · 원각 격파' : ''}`); }
+  for (const [k0, label] of [['prologue', '서장'], ['quick', '빠른 판'], ['full', '정식 판']]) { const k = k0 + sfxKey; if (!best[k]) continue; const g = best[k].gs; parts.push(`${label} 최고 ${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}${best[k].won ? (k0 === 'prologue' ? ' · 장삼 격파' : ' · 원각 격파') : ''}`); }
   $('best').textContent = parts.join(' · ');
   $('dexcount').textContent = `찾은 비급 ${dex.size} / ${DEX_TOTAL}`;
 }
@@ -2519,6 +2565,7 @@ $('reroll').addEventListener('click', rerollOffers);
 $('skip').addEventListener('click', skipOffer);
 $('chestok').addEventListener('click', () => closeOverlay('chest'));
 $('startquick').addEventListener('click', () => startRun('quick'));
+$('startprologue').addEventListener('click', () => startRun('prologue'));
 $('startfull').addEventListener('click', () => startRun('full'));
 $('again').addEventListener('click', () => startRun(G ? G.mode : 'quick'));
 $('totitle').addEventListener('click', toTitle);
