@@ -258,7 +258,13 @@ def commit_and_push(dry: bool) -> None:
             log("(dry) 바뀐 파일이 있지만 커밋하지 않음")
             return
         git("add", "-A", "--", *COMMIT_PATHS)
-        git("commit", "-m", "PC 루프: 이미지 반영·Unity 작업")
+        # status 에는 보여도 올릴 게 없을 때가 있다(윈도 줄끝만 바뀐 파일 등). 그때 commit 은 실패하니 건너뛴다
+        # (2026-11-04 23:53 실행이 여기서 죽어 푸시를 못 했고, 01:41 실행이 대신 올림)
+        staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=ROOT).returncode != 0
+        if staged:
+            git("commit", "-m", "PC 루프: 이미지 반영·Unity 작업")
+        else:
+            log("status 엔 바뀐 게 보였지만 올릴 변경이 없어 커밋하지 않음")
     ahead = git("rev-list", "--count", "origin/claude/dev..HEAD", check=False) or "0"
     if ahead != "0" and not dry:
         # 클라우드 세션이 같이 올려서 자주 거절된다. pull --rebase 하고 다섯 번까지 다시
