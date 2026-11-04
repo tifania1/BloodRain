@@ -69,6 +69,9 @@ namespace BloodRain.Core.Tests
             Assert.True(build >= 0 && check > build && deploy > check);
             Assert.Contains("npx playwright install --with-deps chromium", yml);
             Assert.Contains("- tools/web_autocheck.js", yml);   // 점검 스크립트만 고쳐도 돈다
+            // ubuntu-latest(26.04)에선 Playwright 가 크로미움을 못 깔아 점검이 2초 만에 끝나고 continue-on-error 로 초록이 됐다(실행 150)
+            Assert.DoesNotContain("runs-on: ubuntu-latest", yml);
+            Assert.Contains("if: always()", yml);   // 준비가 실패해도 요약·경고는 남긴다
         }
 
         [Fact] public void 서장_점검은_장삼_뒤에_남은_화면을_닫고_컷을_본다()
