@@ -61,10 +61,11 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] BGM-04 생산 순서를 `audio_pipeline.md` 에: 회사 PC 크롬 → gemini.google.com '음악 만들기'(연주곡, 길이) → MP3 받기 → `art_inbox/audio/` → BGM-03 도구 → 귀로 듣는 검수는 사람(feedback.md). 이미지 생산 예약 작업이 이 순서도 돌게 하는 건 대화 세션이 예약 설명을 고친다(PC 승인 필요). 먼저: BGM-01·BGM-02 (하는 중: 클라우드 11-04 배경음)
 
 현지화·스토어(M3 한·영·간체, M2 끝 스토어 페이지)
-- [ ] L-01 현지화 틀: 데이터 JSON 의 한국어(nameKo·descKo 등)는 그대로 두고 영어·간체는 `Resources/Data/strings/<lang>.json`(키 = 파일.id.필드), UI 문구도 같은 파일에 키로. Core `Strings` 로 읽고 빠진 키·남는 키 테스트. 간체·영어 글꼴이 12장 글꼴로 되는지 확인 (하는 중: 클라우드 11-04 현지화)
+- [x] L-01 2026-11-04 — 틀: 데이터 JSON 한국어가 원문, 영어·간체는 `Resources/Data/strings/<lang>.json`(키 = 파일.경로.필드, 목록은 id, 끝의 Ko 뗌, `_` 칸과 한자 칸 빼고 한글 든 문자열만). UI 원문은 `strings/ko.json`(ui. 키, 레벨업 화면 31줄부터). Core `StringCatalog`·`Strings`(없으면 한국어, 그다음 키), Unity `Presentation/Loc`. 원문 496줄. 테스트 `LocalizationTests`: 남는 키는 늘 막고 빠진 키는 `_meta.complete` 갈래만, {0} 자리 같음, 한글 안 남음, 글꼴. 영어는 Noto Serif KR 라틴으로 되고 간체는 KR 로 안 돼 Noto Serif SC(OFL)를 Art/Fonts 에 넣음(12장 글꼴). TMP 대체 글꼴은 unity_tasks L-01b
 - [ ] L-02 용어집 `glossary.md`(docs/design 에 새로): 무협 용어 영어 표기 원칙(문파·경지·내공·진기·혈운·윤회의 기·땅의 주인), 특정 작가 고유 명칭 금지 규칙 그대로 (하는 중: 클라우드 11-04 현지화)
 - [ ] L-03 영어 1차: 무공·심법·절기·적·땅의 주인·지역·문파·성질·깨달음 이름과 설명, UI. 먼저: L-01·L-02 (하는 중: 클라우드 11-04 현지화)
 - [ ] L-04 간체 1차. 먼저: L-03 (하는 중: 클라우드 11-04 현지화)
+- [ ] L-05 화면 문구를 키로: Presentation 의 한글 문구(LevelUpScreen 은 ko.json 에 키가 있음, 정산·침방·장경각·연무장·상점·HUD 등)를 `strings/ko.json` 에 ui. 키로 옮기고 코드를 `Loc.T`·`Loc.F` 로 바꾼다. 데이터 이름은 `Loc.T($"weapons.{id}.name", w.NameKo)` 꼴. Core 에서 만든 글(`Rebirth` 의 '{0} 제자')도. 컴파일은 PC 세션이 본다. 먼저: L-01
 - [ ] ST-01 스팀 상점 문구 한·영 `docs/store/`: 짧은 소개, 긴 소개, 특징 다섯, 태그 후보, 시스템 사양 초안. 힘을 파는 결제 없음(16장)을 분명히 (하는 중: 클라우드 11-04 스토어)
 - [ ] ST-02 트레일러 콘티(60초)와 스크린샷 10장 목록(장면·경지·이펙트) `docs/store/`. 먼저: ST-01 (하는 중: 클라우드 11-04 스토어)
 

@@ -1,0 +1,7 @@
+{
+  "_meta": {
+    "lang": "en",
+    "complete": [],
+    "_note": "키 = 값. 원문과 키 규칙은 Core/Data/Strings.cs, 용어는 docs/design/glossary.md. complete 에 적은 갈래(키 첫 칸)는 빠진 키가 없어야 테스트가 통과한다."
+  }
+}

@@ -60,7 +60,7 @@ namespace BloodRain.Core.Tests
         }
 
         /// <summary>sfnt(TTF·OTF) 의 cmap 에서 유니코드 코드포인트만 읽는다. 형식 4·12 만.</summary>
-        static class Cmap
+        internal static class Cmap
         {
             public static HashSet<int> Read(string path)
             {

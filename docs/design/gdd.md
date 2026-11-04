@@ -1189,7 +1189,7 @@ Oct 28, 2026 · @Tifania
 ### 글꼴(상업 이용 가능한 오픈 라이선스)
 
 - 제목·연출: 나눔손글씨 붓 계열(SIL OFL)
-- 본문: 본명조(Noto Serif KR), 중국어는 Noto Serif SC·TC, 일본어는 Noto Serif JP. 저장소에는 `Assets/Art/Fonts/NotoSerifKR-Regular.otf` 가 있고, 거기 없는 한자(丐·罩)는 Yuji Boku 로 대체한다
+- 본문: 본명조(Noto Serif KR), 중국어는 Noto Serif SC·TC, 일본어는 Noto Serif JP. 저장소에는 `Assets/Art/Fonts/NotoSerifKR-Regular.otf` 가 있고, 거기 없는 한자(丐·罩)는 Yuji Boku 로 대체한다. 영어는 Noto Serif KR 의 라틴 글자를 그대로 쓰고, 간체는 `NotoSerifSC-Regular.otf`(SIL OFL)를 쓴다
 - 숫자(피해 표시): 굵은 고딕 계열로 따로 지정해 가독성 확보
 - 절기 이름(한자 붓글씨): Yuji Boku(SIL OFL). 절기 16개 이름의 번체 한자가 모두 있다. Ma Shan Zheng 같은 중국 붓글씨 글꼴은 劍·無·飛 같은 번체가 빠져 쓸 수 없다
 
@@ -1350,7 +1350,7 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 | 성능 | Jobs + Burst(적 이동·분리, 충돌 판정) |
 | 트윈 | DOTween Pro(보유 애셋) |
 | 텍스트 | TextMeshPro, Text Animator(보유 애셋, 컷신 자막) |
-| 현지화 | Unity Localization |
+| 현지화 | `Resources/Data/strings/<lang>.json`(키 = 값) + Core `Strings`. 데이터 JSON 의 한국어가 원문이고 빠진 키·남는 키는 dotnet test 가 본다. 글꼴은 TMP 대체 글꼴로 바꾼다 |
 | Steam | Steamworks.NET(업적, 클라우드 저장, 리더보드) |
 | 테스트 | 코어는 dotnet test, Unity 쪽은 Unity Test Framework |
 | 빌드 | GitHub Actions + game-ci |
