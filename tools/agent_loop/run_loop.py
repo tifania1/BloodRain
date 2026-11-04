@@ -23,6 +23,7 @@ import argparse
 import asyncio
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -43,10 +44,10 @@ def log(msg: str) -> None:
 
 
 def git(*args: str, check: bool = True) -> str:
-    r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+    r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if check and r.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)} 실패: {r.stderr.strip()}")
-    return r.stdout.strip()
+    return (r.stdout or "").strip()
 
 
 def load_json(p: Path, default: dict) -> dict:
@@ -61,9 +62,9 @@ def unity_processes() -> list[tuple[int, str]]:
     """떠 있는 Unity.exe 의 (pid, 명령줄). Unity Hub 의 `unity.exe serve` 는 뺀다."""
     ps = ("Get-CimInstance Win32_Process -Filter \"name='Unity.exe'\" | "
           "ForEach-Object { \"$($_.ProcessId)`t$($_.CommandLine)\" }")
-    r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, encoding="utf-8")
+    r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, encoding="utf-8", errors="replace")
     out = []
-    for line in r.stdout.splitlines():
+    for line in (r.stdout or "").splitlines():
         if "\t" not in line:
             continue
         pid, cmd = line.split("\t", 1)
@@ -101,8 +102,8 @@ def launch_unity(wait_seconds: int = 720) -> int | None:
         time.sleep(15)
         r = subprocess.run(["powershell", "-NoProfile", "-Command",
                             f"(Get-Process -Id {proc.pid} -ErrorAction SilentlyContinue).MainWindowTitle"],
-                           capture_output=True, text=True, encoding="utf-8")
-        if "BloodRain" in r.stdout:
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if "BloodRain" in (r.stdout or ""):
             time.sleep(90)  # 스크립트 컴파일과 MCP 다리가 붙을 시간
             return proc.pid
     log("Unity 창이 12분 안에 안 떠서 닫음")
@@ -119,7 +120,7 @@ def close_unity(pid: int) -> None:
         time.sleep(5)
         r = subprocess.run(["powershell", "-NoProfile", "-Command", f"Get-Process -Id {pid} -ErrorAction SilentlyContinue"],
                            capture_output=True, text=True)
-        if not r.stdout.strip():
+        if not (r.stdout or "").strip():
             return
     subprocess.run(["powershell", "-NoProfile", "-Command", f"Stop-Process -Id {pid} -Force"])
 
@@ -152,10 +153,12 @@ def postprocess_art(dry: bool) -> None:
     args = [sys.executable, str(ROOT / "tools" / "postprocess_art.py")]
     if dry:
         args.append("--dry-run")
-    r = subprocess.run(args, cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
-    log("이미지 후처리: " + (r.stdout.strip().splitlines() or ["(출력 없음)"])[-1])
+    # 윈도에서 자식 파이썬은 cp949 로 찍으니 UTF-8 로 맞춰 받는다(2026-11-04 dry-run 에서 깨짐)
+    child_env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+    r = subprocess.run(args, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", env=child_env)
+    log("이미지 후처리: " + ((r.stdout or "").strip().splitlines() or ["(출력 없음)"])[-1])
     if r.returncode != 0:
-        log("이미지 후처리 실패: " + r.stderr.strip()[-500:])
+        log("이미지 후처리 실패: " + (r.stderr or "").strip()[-500:])
 
 
 PROMPT = """너는 혈우강호(BloodRain) Unity 프로젝트의 PC 담당 개발자다. 저장소 루트는 {root}, Unity 프로젝트는 unity/BloodRain 이다.
@@ -236,6 +239,10 @@ def commit_and_push(dry: bool) -> None:
 
 
 def main() -> int:
+    try:
+        sys.stdout.reconfigure(errors="replace")  # 작업 스케줄러 콘솔 글꼴과 상관없이 죽지 않게
+    except Exception:
+        pass
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
