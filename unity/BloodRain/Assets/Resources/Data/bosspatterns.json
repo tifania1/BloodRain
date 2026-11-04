@@ -369,12 +369,13 @@
           "id": "twenty_four_petal_burst",
           "nameKo": "매화검기 방사",
           "shape": "radial_burst",
-          "_note": "2막이 되면 waveIntervalSeconds 마다 보스 몸에서 스물네 갈래 검기가 고르게 뻗는다. 갈래마다 7.5도라 사이로 빠져나갈 수 있다. 파마다 3.75도씩 엇갈린다.",
+          "_note": "2막이 되면 waveIntervalSeconds 마다 보스 몸에서 스물네 갈래 검기가 고르게 뻗는다. 갈래 사이가 15도라 사이로 빠져나갈 수 있다. 파마다 waveOffsetDegrees 씩 엇갈린다(파 k 는 k x 3.75도 돌아 있다).",
           "telegraphSeconds": 1.0,
           "count": 24,
           "projectileSpeed": 250,
           "length": 16,
           "waveIntervalSeconds": 5,
+          "waveOffsetDegrees": 3.75,
           "baseDamage": 12,
           "continuous": true
         }

@@ -244,7 +244,8 @@ namespace BloodRain.Core.Combat
 
         /// <summary>한 시전이 예고 시작부터 마지막 판정까지 걸리는 시간(초).
         /// jump_slam 은 Count 번 뛰는데 뛸 때마다 예고가 있어 Count × 예고 + (Count - 1) × 사이,
-        /// 여러 파(Waves)를 쏘는 것은 첫 예고 + (Waves - 1) × 사이, 태극권(inhale_exhale)은 예고 + 빨아들이는 시간. 나머지는 예고만.</summary>
+        /// 여러 파(Waves)를 쏘는 것은 첫 예고 + (Waves - 1) × 사이, 태극권(inhale_exhale)은 예고 + 빨아들이는 시간.
+        /// 꽃잎 나선은 예고 + 쏘는 시간(LeaveSeconds), 얼음 가시는 예고 + 마지막 가시까지, 순간이동은 BlinkSlamSeconds. 나머지는 예고만.</summary>
         public static float CastSeconds(BossPatternDef p)
         {
             if (p.Shape == "jump_slam")
@@ -253,6 +254,9 @@ namespace BloodRain.Core.Combat
                 return n * p.TelegraphSeconds + (n - 1) * p.WaveIntervalSeconds;
             }
             if (p.Shape == "inhale_exhale") return p.TelegraphSeconds + p.PullSeconds;
+            if (p.Shape == "spiral_bullets") return p.TelegraphSeconds + p.LeaveSeconds;
+            if (p.Shape == "chain_circles") return p.TelegraphSeconds + (Math.Max(1, p.Count) - 1) * p.WaveIntervalSeconds;
+            if (p.Shape == "blink_slam") return BlinkSlamSeconds(p);
             return p.TelegraphSeconds + (Math.Max(1, p.Waves) - 1) * p.WaveIntervalSeconds;
         }
 
@@ -381,6 +385,100 @@ namespace BloodRain.Core.Combat
         /// <summary>끌려가는 게 끝났나.</summary>
         public static bool ChainPullDone(BossPatternDef p, float elapsed) => elapsed >= p.PullSeconds;
 
+        // ---- 세 땅의 주인 판정(R4-02: 화산·곤륜 설원·십만대산). Unity·웹이 같은 셈을 쓴다 ----
+        // 각도는 도, 0도는 +x, 반시계. 자리는 모두 가운데(보스나 플레이어) 기준 (dx, dy).
+
+        /// <summary>꽃잎 나선(spiral_bullets): 판정 뒤 LeaveSeconds 동안 HitIntervalSeconds 마다 갈래마다 한 발. 갈래 하나가 쏘는 발 수.
+        /// 판정 순간(0초)에 첫 발이 나가고, LeaveSeconds 에 닿기 전까지 쏜다.</summary>
+        public static int SpiralShotsPerArm(BossPatternDef p) =>
+            p.HitIntervalSeconds > 0f ? Math.Max(1, (int)Math.Ceiling(p.LeaveSeconds / p.HitIntervalSeconds - 1e-4)) : 1;
+
+        /// <summary>꽃잎 나선 shot 번째 발(0부터)이 판정 뒤 몇 초에 나가나.</summary>
+        public static float SpiralShotSeconds(BossPatternDef p, int shot) => shot * p.HitIntervalSeconds;
+
+        /// <summary>꽃잎 나선 arm 갈래 shot 번째 발의 방향. startDegrees 는 첫 갈래의 처음 방향(부르는 쪽이 정한다, 보통 플레이어 쪽).
+        /// 갈래는 360 ÷ Count 도씩 고르게 벌어지고, 나선 전체가 초당 TurnDegreesPerSecond 로 돈다.</summary>
+        public static float SpiralShotDegrees(BossPatternDef p, float startDegrees, int arm, int shot) =>
+            Normalize(startDegrees + 360f * arm / Math.Max(1, p.Count) + p.TurnDegreesPerSecond * SpiralShotSeconds(p, shot));
+
+        /// <summary>매화검기 방사(radial_burst) wave 번째 파(0부터)의 갈래 방향 Count 개. 고르게 벌어지고 파마다 WaveOffsetDegrees 씩 엇갈린다.</summary>
+        public static float[] RadialBurstDegrees(BossPatternDef p, float startDegrees, int wave)
+        {
+            var list = new float[Math.Max(0, p.Count)];
+            for (int i = 0; i < list.Length; i++)
+                list[i] = Normalize(startDegrees + 360f * i / list.Length + p.WaveOffsetDegrees * wave);
+            return list;
+        }
+
+        /// <summary>눈보라(view_shrink): 판정 뒤 sinceResolve 초의 보이는 범위 배율. LeaveSeconds 동안 ViewScale, 그 밖은 1.</summary>
+        public static float ViewScaleAt(BossPatternDef p, float sinceResolve) =>
+            sinceResolve >= 0f && sinceResolve < p.LeaveSeconds && p.ViewScale > 0f ? p.ViewScale : 1f;
+
+        /// <summary>얼음 가시(chain_circles) i 번째(0부터)의 자리(보스 기준). 보스 발밑(0m)에서 aimDegrees 쪽 Length 까지 Count 개를 고르게.</summary>
+        public static (float x, float y) ChainCircleOffset(BossPatternDef p, float aimDegrees, int i)
+        {
+            float d = p.Count > 1 ? p.Length * i / (p.Count - 1) : 0f;
+            double a = aimDegrees * Math.PI / 180.0;
+            return ((float)(Math.Cos(a) * d), (float)(Math.Sin(a) * d));
+        }
+
+        /// <summary>얼음 가시 i 번째가 판정 뒤 몇 초에 솟나.</summary>
+        public static float ChainCircleSeconds(BossPatternDef p, int i) => i * p.WaveIntervalSeconds;
+
+        /// <summary>얼음 가시 i 번째에 맞나(그 가시 가운데 반경 Radius). 플레이어는 보스 기준 (dx, dy).</summary>
+        public static bool InChainCircle(BossPatternDef p, float aimDegrees, int i, float dx, float dy, float targetRadius = 0f)
+        {
+            var c = ChainCircleOffset(p, aimDegrees, i);
+            return InCircle(p.Radius, dx - c.x, dy - c.y, targetRadius);
+        }
+
+        /// <summary>줄어드는 싸움터(shrinking_arena) 반경을 dt 만큼 줄인다. nearSlowGimmick 이면(모닥불 곁에서 싸우면) SlowedNearMultiplier 배로 천천히.
+        /// 처음 반경은 Radius, MinRadius 에서 멈춘다. 모닥불 곁인지는 부르는 쪽이 gimmicks campfire(CampfireGimmick.Inside)로 정한다.</summary>
+        public static float ArenaRadiusStep(BossPatternDef p, float radius, float dt, bool nearSlowGimmick)
+        {
+            float speed = p.ShrinkPerSecond * (nearSlowGimmick && p.SlowedNearMultiplier > 0f ? p.SlowedNearMultiplier : 1f);
+            return Math.Max(p.MinRadius, radius - speed * Math.Max(0f, dt));
+        }
+
+        /// <summary>줄어드는 싸움터가 MinRadius 에 닿을 때까지(초). 모닥불 곁에서만 싸우면 nearSlowGimmick.</summary>
+        public static float ArenaSeconds(BossPatternDef p, bool nearSlowGimmick)
+        {
+            float speed = p.ShrinkPerSecond * (nearSlowGimmick && p.SlowedNearMultiplier > 0f ? p.SlowedNearMultiplier : 1f);
+            return speed > 0f ? Math.Max(0f, p.Radius - p.MinRadius) / speed : 0f;
+        }
+
+        /// <summary>얼음 위인가: 싸움터 가운데 기준 (dx, dy) 가 반경 radius 원 바깥. 몸이 원 안에 조금이라도 걸치면 아직 안이다.</summary>
+        public static bool OutsideArena(float radius, float dx, float dy, float targetRadius = 0f) =>
+            dx * dx + dy * dy > (radius + targetRadius) * (radius + targetRadius);
+
+        /// <summary>순간이동(blink_slam) 네 자리(플레이어 기준, 예고를 시작할 때 플레이어 자리). 반경 Scatter 원 안에서 고르게 뽑는다.
+        /// 마지막 자리에서 내려찍는다.</summary>
+        public static (float x, float y)[] BlinkOffsets(BossPatternDef p, Random rng)
+        {
+            var list = new (float x, float y)[Math.Max(0, p.Count)];
+            for (int i = 0; i < list.Length; i++) list[i] = DiscOffset(rng, p.Scatter);
+            return list;
+        }
+
+        /// <summary>순간이동 i 번째(0부터)가 시전 시작 뒤 몇 초에 옮겨 가나. 첫 번째는 시작하자마자, 그 뒤 WaveIntervalSeconds 마다.</summary>
+        public static float BlinkSeconds(BossPatternDef p, int i) => i * p.WaveIntervalSeconds;
+
+        /// <summary>내려찍기 판정까지(시전 시작 뒤 초): 마지막 순간이동 뒤 예고 TelegraphSeconds.</summary>
+        public static float BlinkSlamSeconds(BossPatternDef p) => BlinkSeconds(p, Math.Max(1, p.Count) - 1) + p.TelegraphSeconds;
+
+        /// <summary>혈월(empower)이 켜져 있으면 모든 적(보스 포함)의 피해 배율, 아니면 1.</summary>
+        public static float EmpowerDamage(BossPatternDef p, bool active) => active && p.EnemyDamageMultiplier > 0f ? p.EnemyDamageMultiplier : 1f;
+
+        /// <summary>혈월이 켜져 있으면 모든 적(보스 포함)의 이동속도 배율, 아니면 1.</summary>
+        public static float EmpowerSpeed(BossPatternDef p, bool active) => active && p.EnemySpeedMultiplier > 0f ? p.EnemySpeedMultiplier : 1f;
+
+        /// <summary>반경 r 원 안에서 고르게 한 점.</summary>
+        static (float x, float y) DiscOffset(Random rng, float r)
+        {
+            double d = r * Math.Sqrt(rng.NextDouble()), a = rng.NextDouble() * 2 * Math.PI;
+            return ((float)(Math.Cos(a) * d), (float)(Math.Sin(a) * d));
+        }
+
         static float Normalize(float deg)
         {
             float a = deg % 360f;
@@ -392,6 +490,50 @@ namespace BloodRain.Core.Combat
             float d = Math.Abs(Normalize(a) - Normalize(b));
             return d > 180f ? 360f - d : d;
         }
+    }
+
+    /// <summary>빙분신(clones, 설무향). 설무향이 Count 몸으로 갈라져 보스 둘레 반경 Scatter 안에 선다.
+    /// 그 가운데 진짜 하나만 바닥 그림자가 있다. 분신은 한 대 맞으면 깨지고 LeaveSeconds 가 지나면 남은 분신이 사라진다.
+    /// 진짜는 맞아도 깨지지 않고(보스 기혈이 깎인다) 시간이 지나도 남는다.</summary>
+    public sealed class BossClones
+    {
+        readonly BossPatternDef _def;
+        readonly bool[] _broken;
+
+        /// <summary>판정 때 만든다. 자리(보스가 갈라진 자리 기준)와 진짜를 rng 로 고른다.</summary>
+        public BossClones(BossPatternDef def, Random rng)
+        {
+            if (def.Count < 1) throw new InvalidOperationException($"{def.Id}: 분신 수(count)가 없습니다");
+            _def = def;
+            var offs = new (float x, float y)[def.Count];
+            for (int i = 0; i < offs.Length; i++)
+            {
+                double d = def.Scatter * Math.Sqrt(rng.NextDouble()), a = rng.NextDouble() * 2 * Math.PI;
+                offs[i] = ((float)(Math.Cos(a) * d), (float)(Math.Sin(a) * d));
+            }
+            Offsets = offs;
+            RealIndex = rng.Next(def.Count);
+            _broken = new bool[def.Count];
+        }
+
+        public IReadOnlyList<(float x, float y)> Offsets { get; }
+        /// <summary>진짜(그림자가 있는 몸)의 번호.</summary>
+        public int RealIndex { get; }
+
+        /// <summary>i 번째 몸이 바닥 그림자를 드리우나(진짜만).</summary>
+        public bool HasShadow(int i) => i == RealIndex;
+
+        /// <summary>i 번째 몸이 맞았다. 분신이면 깨지고 true, 진짜면 false(보스 기혈은 부르는 쪽이 깎는다).</summary>
+        public bool Hit(int i)
+        {
+            if (i == RealIndex || _broken[i]) return false;
+            _broken[i] = true;
+            return true;
+        }
+
+        /// <summary>판정 뒤 sinceResolve 초에 i 번째 몸이 서 있나.</summary>
+        public bool Standing(int i, float sinceResolve) =>
+            i == RealIndex || (!_broken[i] && sinceResolve < _def.LeaveSeconds);
     }
 
     /// <summary>반쪽 독안개(half_field). 경계는 보스를 지나는 세로줄(화면 x 가 보스와 같은 줄)이고,

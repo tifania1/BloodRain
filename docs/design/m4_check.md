@@ -28,7 +28,7 @@
 | 정예 아홉 기혈·속도·피해 | 6장 '정예 수치' | enemies.json elites chapter5~7(`EliteDataTests.정예_수치_표가_데이터와_같다`) | `RegionSpawns` 차례 | 없음 | 큰 일반 적 | 줄 없음 |
 | 정예 아홉 패턴 | 6장 '정예 패턴 수치'가 '화산·곤륜 설원·십만대산 아홉은 아직' | bosspatterns.json elites 에 없음(열셋만) | - | - | - | - |
 | 땅의 주인 셋 시간표·수치 | 6장 땅의 주인 표·'땅의 주인 패턴 수치' | enemies.json bosses, bosspatterns.json bosses(`BossPatternsMoreTests.패턴_수치_표가_데이터와_같다`·`검혼_일섬_뒤_2초_경직이_다음_패턴_전에_끝난다`·`설무향_싸움터는_모닥불_곁에서_천천히_줄고_혁련휘_혈월은_모든_적을_강화한다`) | `BossPatterns` 시간표·2막, 혁련휘 분신은 `Mimicry`(`혈영회주_분신_값이_기획서와_같다`) | 원각만 | 싸움은 되지만 일섬(`line`)·붉은 손바닥(`circles`)·소환만 나옴. 나선·방사·눈보라·빙분신·얼음 가시·축소 원·순간이동·혈월은 모양을 몰라 건너뜀 | 줄 없음 |
-| 땅의 주인 셋 모양 판정 | 같은 표(나선 세 갈래 초당 120°·0.1초, 스물네 갈래 파마다 3.75°, 빙분신 넷 6m·진짜만 그림자·한 대에 깨짐·8초, 얼음 가시 여덟 0.12초·12m, 축소 원 20m→8m 초당 0.25m·모닥불 곁 절반, 순간이동 5m 안 네 번 0.4초, 혈월 1.3·1.2배) | 칸은 다 있음(`spiral_bullets`·`radial_burst`·`view_shrink`·`clones`·`chain_circles`·`shrinking_arena`·`blink_slam`·`empower`) | **없음.** R-11 처럼 `Combat/BossPatterns.cs` 에 자리·판정 함수가 필요 → R4-02 | - | - | - |
+| 땅의 주인 셋 모양 판정 | 같은 표(나선 세 갈래 초당 120°·0.1초, 스물네 갈래 파마다 3.75°, 빙분신 넷 6m·진짜만 그림자·한 대에 깨짐·8초, 얼음 가시 여덟 0.12초·12m, 축소 원 20m→8m 초당 0.25m·모닥불 곁 절반, 순간이동 5m 안 네 번 0.4초, 혈월 1.3·1.2배) | 칸은 다 있음(`spiral_bullets`·`radial_burst`·`view_shrink`·`clones`·`chain_circles`·`shrinking_arena`·`blink_slam`·`empower`) | R4-02(11-04) 로 판정 함수: `SpiralShotDegrees`·`RadialBurstDegrees`·`ViewScaleAt`·`BossClones`·`ChainCircleOffset`·`InChainCircle`·`ArenaRadiusStep`·`OutsideArena`·`BlinkOffsets`·`BlinkSlamSeconds`·`EmpowerDamage`(`M4BossRulesTests`) | - | - | - |
 
 ## 종장(봉마곡 혈지)
 
@@ -53,7 +53,7 @@
 
 ## 걸리는 것
 
-- **땅의 주인 셋의 모양 판정이 Core 에 없다.** 수치는 6장과 bosspatterns.json 에 다 있다. 꽃잎 나선 방향, 스물네 갈래 엇갈림, 빙분신 자리와 진짜 하나, 얼음 가시 차례 자리와 시각, 줄어드는 싸움터 반경(모닥불 곁 절반), 순간이동 네 자리, 혈월 배율. 당소혜·마천패·혈허진인 때(R-11)처럼 `Combat/BossPatterns.cs` 에 더하면 웹·Unity 가 같은 셈을 쓴다 → R4-02
+- ~~**땅의 주인 셋의 모양 판정이 Core 에 없다.**~~ → 2026-11-04 R4-02 로 Core 에 넣음(웹 R4-02w, Unity R4-02U). 수치는 6장과 bosspatterns.json 에 다 있다. 꽃잎 나선 방향, 스물네 갈래 엇갈림, 빙분신 자리와 진짜 하나, 얼음 가시 차례 자리와 시각, 줄어드는 싸움터 반경(모닥불 곁 절반), 순간이동 네 자리, 혈월 배율. 당소혜·마천패·혈허진인 때(R-11)처럼 `Combat/BossPatterns.cs` 에 더하면 웹·Unity 가 같은 셈을 쓴다 → R4-02
 - **종장 단계 모양 판정이 덜 있다.** 피바다 섬 다섯의 자리와 반경, 섬 위에 서 있는지, 역병 구름 위치, 혈우 핏방울 자리. 수치는 6장 표에 있다 → R4-03
 - **엔딩을 고른 뒤가 없다.** `Soul.Endings` 는 고를 수 있는 목록만 준다. 봉인은 `Regress`, 계승은 혈마 모드 해금 기록, 진엔딩은 환혼·회귀를 닫는 기록이 필요하다. 진엔딩 조건 셋을 묶는 판정도 없고 의서 일곱 권은 데이터 칸이 없다 → R4-04. 목 노인 대화를 '끝까지' 본 것이 무엇인지는 대사 줄기가 없어 정하지 못한다(사람 결정 R4-08)
 - **모드 열림 조건이 데이터에 없다.** 일일 도전(봉인석 3개)·보스 연전(봉인 엔딩) → R4-05. 일일 도전 시드 규칙·리더보드는 Steam 몫이라 뺀다

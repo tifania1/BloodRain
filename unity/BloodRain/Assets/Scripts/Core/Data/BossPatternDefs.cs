@@ -58,6 +58,8 @@ namespace BloodRain.Core.Data
         public float TurnDegreesPerSecond;
         /// <summary>빛줄기 첫 줄이 2막 순간 플레이어 쪽에서 돌아가 있는 각도(도).</summary>
         public float StartOffsetDegrees;
+        /// <summary>파마다 갈래가 엇갈리는 각도(도). radial_burst(검혼 매화검기 방사)는 파 k 가 k × 이 값만큼 돌아 있다.</summary>
+        public float WaveOffsetDegrees;
         /// <summary>계속 닿아 있을 때 같은 대상이 다시 맞는 간격(초).</summary>
         public float HitIntervalSeconds;
         /// <summary>판정 피해(0분·혈운 농도 1 값). 0이면 피해 없는 패턴(소환 등).</summary>
