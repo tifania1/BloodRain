@@ -412,7 +412,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/DL-05b/` 의 `caption.png`
 
 - [ ] DL-03b1 객잔 귀환·마당 말풍선 · 먼저: RM-03b, DL-05b
-  - 할 것: `Soul.EndLife` 뒤 `InnDialogue.OnReturn(data, soul, record, summary, progress, facts, rng)` → 목 노인 `Mok`(많아야 둘)·운낭 `Unnang`(하나)·대표 인물 `Leader` 차례로 말풍선, `Opens` 에 haomun_board 가 오면 하오문 게시판 문을 연다. 삼류 첫걸음 때 `InnDialogue.YardLine(data, soul, body, progress, rng)` 를 대표 인물 머리 위 2초. 연무장을 열 때 `InnDialogue.Training(data, progress, "open")`.
+  - 할 것: `Soul.EndLife` 뒤 `InnDialogue.OnReturn(data, soul, record, summary, progress, facts, rng)`(`facts.MetHermit` 은 그 생에 기연 은거기인을 마쳤는지) → 목 노인 `Mok`(많아야 둘)·운낭 `Unnang`(하나)·대표 인물 `Leader` 차례로 말풍선, `Opens` 에 haomun_board 가 오면 하오문 게시판 문을 연다. 삼류 첫걸음 때 `InnDialogue.YardLine(data, soul, body, progress, rng)` 를 대표 인물 머리 위 2초. 연무장을 열 때 `InnDialogue.Training(data, progress, "open")`.
   - 쓸 것: Core `InnDialogue.OnReturn`·`YardLine`·`Training`, `ReturnFacts`, dialogue.json `speakers`
   - 메뉴: 없음(RM-03b 화면에)
   - 끝: 첫 귀환에 목 노인 둘·운낭 하나가 차례로, 저장 뒤 다시 들어오면 같은 줄이 되풀이 안 됨
