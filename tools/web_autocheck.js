@@ -96,8 +96,20 @@ async function prologueRuns(browser, base) {
     const label = `서장 ${i + 1}`;
     const p = await openPage(browser, base + '/', label);
     const r = await protoRun(p, 'prologue', 900, label);
+    // 장삼을 잡은 걸음에 구슬로 레벨업(보갑 등)이 열리면 sim 은 G.won 에서 바로 멈춰 그 화면이 남고, 컷을 기다리는 몇 초 사이에도
+    // 판이 돌아 구슬을 더 먹으면 레벨업이 또 열린다. 게임은 그 화면이 닫힐 때까지 컷을 기다리니(WP-02) 사람처럼 계속 닫아 준다.
+    // 안 닫으면 판마다 들쭉날쭉 '컷이 안 뜸'이 났다(WP-04).
+    const freeUp = () => p.page.evaluate(() => {
+      for (let k = 0; k < 40 && overlay; k++) {
+        if (overlay === 'levelup') chooseOffer(0); else if (overlay === 'brk') chooseInsight(0);
+        else if (overlay === 'chest' || overlay === 'find') closeOverlay(overlay); else if (overlay === 'evopick') choosePick(0);
+        else break;
+      }
+    });
+    await freeUp();
     // 장삼을 잡았으면 끝 컷이 떠야 한다. 실제 고리로 돌려 컷이 뜨는지 본다.
     await p.page.evaluate(() => { running = true; lastTs = performance.now(); });
+    if (r.won) for (let k = 0; k < 40 && (await p.page.evaluate(() => __hyeolu.overlay())) !== 'procut'; k++) { await p.page.waitForTimeout(200); await freeUp(); }
     const vis = await liveCheck(p, label, 2500, PROTO_SCREENS);
     const ov = await p.page.evaluate(() => __hyeolu.overlay());
     if (r.won && ov !== 'procut') problems.push(`${label}: 장삼을 잡았는데 끝 컷이 안 뜸(떠 있는 화면 ${ov})`);

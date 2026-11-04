@@ -68,6 +68,19 @@ namespace BloodRain.Core.Tests
             int deploy = yml.IndexOf("name: 올리기");
             Assert.True(build >= 0 && check > build && deploy > check);
             Assert.Contains("npx playwright install --with-deps chromium", yml);
+            Assert.Contains("- tools/web_autocheck.js", yml);   // 점검 스크립트만 고쳐도 돈다
+        }
+
+        [Fact] public void 서장_점검은_장삼_뒤에_남은_화면을_닫고_컷을_본다()
+        {
+            // 장삼을 잡은 걸음에 열린 레벨업이 남거나 컷을 기다리는 사이 또 열리면 게임은 컷을 기다린다(WP-02).
+            // 점검이 안 닫으면 판마다 '컷이 안 뜸'이 들쭉날쭉 났다(WP-04 를 CI 에 붙이며 찾음).
+            var js = ReadRepoFile("tools", "web_autocheck.js");
+            int at = js.IndexOf("async function prologueRuns(");
+            var body = js.Substring(at, js.IndexOf("\n}\n", at) - at);
+            int close = body.IndexOf("chooseOffer(0)"), live = body.IndexOf("liveCheck(");
+            Assert.True(close >= 0 && close < live);
+            Assert.Contains("!== 'procut'", body);   // 컷이 뜰 때까지 계속 닫는다
         }
     }
 }
