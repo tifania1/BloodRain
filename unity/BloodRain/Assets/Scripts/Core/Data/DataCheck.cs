@@ -49,6 +49,20 @@ namespace BloodRain.Core.Data
             // 깨지는 기믹이 은자를 떨구면 최소 ≤ 최대.
             CheckSilver(p, "gimmicks.wineJars", d.Gimmicks.WineJars);
             CheckSilver(p, "gimmicks.swordRacks", d.Gimmicks.SwordRacks);
+
+            // 글로 적은 규칙(QA-05): 코드가 아는 값이 하나뿐이라 데이터만 바꾸면 조용히 무시되던 것.
+            var c = d.Cheonha;
+            CheckKnown(p, "cheonha.cluster.xpPerCluster", c.Cluster.XpPerCluster, "one");          // 덩이 하나에 적 하나 값
+            CheckKnown(p, "cheonha.cluster.killCount", c.Cluster.KillCount, "members");             // Scale.KillCount
+            CheckKnown(p, "cheonha.cluster.drawMembers", c.Cluster.DrawMembers, "ceil_by_health");  // Scale.DrawMembers
+            CheckKnown(p, "cheonha.density.blend", c.Density.Blend, "nearest_two");                // Regions.Density
+            foreach (var r in c.Cycle.Resets)
+                if (r != "sealStones") p.Add($"cheonha.cycle.resets 에 회귀가 지울 줄 모르는 항목 {r} (Soul.Regress 는 sealStones 만)");
+            foreach (var k in c.Cycle.Keeps)
+                if (c.Cycle.Resets.Contains(k)) p.Add($"cheonha.cycle {k} 가 keeps 와 resets 에 함께 있다");
+            foreach (var i in d.Insights)
+                if (i.Effect == "periodic_block" && i.Params.TryGetValue("blocks", out var n) && n != 1f)
+                    p.Add($"insights.{i.Id}.blocks = {n} (InsightEffects.TryBlock 은 간격마다 한 번만 막는다, 1 이어야 함)");
             return p;
         }
 
@@ -66,6 +80,11 @@ namespace BloodRain.Core.Data
                 if (pts[k] == null || pts[k].Length != 2) { p.Add($"{name}[{k}] 는 [분, 값] 두 칸이어야 함"); return; }
                 if (k > 0 && !(pts[k][0] > pts[k - 1][0])) p.Add($"{name}[{k}] 분 {pts[k][0]} ≤ 앞 점 {pts[k - 1][0]} (분이 겹치거나 거꾸로)");
             }
+        }
+
+        static void CheckKnown(List<string> p, string name, string value, string known)
+        {
+            if (value != known) p.Add($"{name} = \"{value}\" (코드가 아는 값은 \"{known}\" 하나)");
         }
 
         static void CheckSilver(List<string> p, string name, BreakableGimmickDef g)

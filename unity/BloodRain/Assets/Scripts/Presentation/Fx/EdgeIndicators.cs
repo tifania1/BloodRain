@@ -45,10 +45,19 @@ namespace BloodRain.Presentation.Fx
         /// <summary>정예·금두꺼비 같은 화면 밖 표시를 이번 프레임에 더한다(매 프레임 다시 넣는다).</summary>
         public void AddMarker(System.Numerics.Vector2 world, Color color) => _markers.Add(new Marker { World = world, Color = color });
 
+        /// <summary>한 생의 땅의 주인 상태를 넘긴다(Life.Bosses). 혼의 봉인석·이번 회차 처치 기록을 들고 있어야
+        /// 혈영·봉마곡 화살표가 맞는다. 안 넘기면 Start 가 빈 기록(봉인석 0, 처치 없음)으로 시험용을 만든다.</summary>
+        public void Bind(BossAwakening boss)
+        {
+            _boss = boss;
+            _lastLevel = -1;
+            _pillarStart.Clear();
+        }
+
         void Start()
         {
             _regions = new Regions(DataBoot.Data);
-            _boss = new BossAwakening(DataBoot.Data, birthRegion, new BossRecord());
+            if (_boss == null) _boss = new BossAwakening(DataBoot.Data, birthRegion, new BossRecord());
             _quad = MakeQuad();
             _mpb = new MaterialPropertyBlock();
             _bloomMat = new Material(material) { name = "장막 번짐", renderQueue = 3100, mainTexture = MakeEdgeGradient() };
