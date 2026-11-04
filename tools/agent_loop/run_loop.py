@@ -173,6 +173,15 @@ PROMPT = """너는 혈우강호(BloodRain) Unity 프로젝트의 PC 담당 개�
 """
 
 
+def agent_env(cfg: dict) -> dict:
+    """에이전트가 쓸 환경변수. 회사 키(PC 환경변수)를 덮어쓴다.
+    워크스페이스에 묶이지 않은 키는 워크스페이스 id 머리말이 있어야 요청이 받아들여진다(2026-11-04 확인)."""
+    env = {"ANTHROPIC_API_KEY": cfg["api_key"], "CLAUDE_AGENT_SDK_CLIENT_APP": "bloodrain-pc-loop"}
+    if cfg.get("workspace_id"):
+        env["ANTHROPIC_CUSTOM_HEADERS"] = f"anthropic-workspace-id: {cfg['workspace_id']}"
+    return env
+
+
 async def run_agent(cfg: dict) -> None:
     from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query  # 필요할 때만 불러온다
 
@@ -193,7 +202,7 @@ async def run_agent(cfg: dict) -> None:
                 "args": cfg.get("unity_mcp_args", ["--from", "mcpforunityserver==10.3.0", "mcp-for-unity", "--transport", "stdio"]),
             }
         },
-        env={"ANTHROPIC_API_KEY": cfg["api_key"], "CLAUDE_AGENT_SDK_CLIENT_APP": "bloodrain-pc-loop"},
+        env=agent_env(cfg),
         **({"cli_path": cfg["cli_path"]} if cfg.get("cli_path") else {}),
     )
     prompt = PROMPT.format(root=ROOT, today=f"{dt.date.today():%Y-%m-%d}")

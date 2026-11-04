@@ -7,6 +7,7 @@ Unity 에디터가 필요한 일(`docs/unity_tasks.md`)과 이미지 후처리�
 ## 처음 한 번
 1. 개인 Claude Console 조직에서 API 키를 만든다. 월 지출 한도도 그 조직 설정에서 걸어 둔다.
 2. `config.example.json` 을 `config.json` 으로 복사하고 `api_key` 를 넣는다. 회사 키(PC의 ANTHROPIC_API_KEY)는 쓰지 않는다.
+   키가 워크스페이스에 묶여 있지 않으면(`sk-ant-usr…` 꼴) 요청이 400으로 막힌다. 그때는 Console 설정 > 워크스페이스의 id(`wrkspc_…`)를 `workspace_id` 에 넣는다. 스크립트가 `anthropic-workspace-id` 머리말로 붙여 보낸다(2026-11-04 확인, Default 워크스페이스).
 3. `pip install claude-agent-sdk pillow`
 4. 시험: `python tools/agent_loop/run_loop.py --dry-run`
 5. 예약 등록: `powershell -ExecutionPolicy Bypass -File tools\agent_loop\register_task.ps1`
