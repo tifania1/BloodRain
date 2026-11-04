@@ -89,6 +89,8 @@ namespace BloodRain.Core.Run
             Bosses = new BossAwakening(_data, body.Region.Id, _bossRecord);
             if (body.Sect?.BloodArt is { } art) BloodArt = new BloodArt(art, Loadout.Gauge, body.YinyangStart);
             InsightEffects = new InsightEffects(body.Character.StartWeapon);
+            if (body.Character.Ultimate == UltimateEffects.CheonmaHaeche)
+                Dissolution = new DemonDissolution(Ultimates.Find(_data, UltimateEffects.CheonmaHaeche));
             RegionId = body.Region.Id;
             Position = Regions.Center(body.Region);
             if (body.IsPrologue)
@@ -122,6 +124,8 @@ namespace BloodRain.Core.Run
         public BossAwakening Bosses { get; }
         /// <summary>마교 몸의 혈공(5장). 다른 몸은 null.</summary>
         public BloodArt? BloodArt { get; }
+        /// <summary>천마해체 8초(마교 몸만, 다른 몸은 null). UseUltimate 가 시작하고 Tick 이 줄인다(UltimateEffects).</summary>
+        public DemonDissolution? Dissolution { get; }
         /// <summary>고른 깨달음이 붙이는 값. 고르면 InsightEffects.Take(def, Loadout.Gauge).</summary>
         public InsightEffects InsightEffects { get; }
 
@@ -200,6 +204,7 @@ namespace BloodRain.Core.Run
             if (PrologueSpawns != null) return TickPrologue(dt, position, aliveNow);
             Director.Tick(dt);
             Awakening.TickWorld(dt);
+            Dissolution?.Tick(dt);
             Backlash.Tick(dt, Loadout.Gauge.Band == YinYangBand.Extreme);
 
             MoveTo(position);
@@ -317,12 +322,13 @@ namespace BloodRain.Core.Run
             return info;
         }
 
-        /// <summary>오의를 쓴다. 게이지가 가득 찼을 때만 비우고 true. 마교 몸이면 천마해체로 음양 게이지가 시작값으로 돌아온다(혈공).
+        /// <summary>오의를 쓴다. 게이지가 가득 찼을 때만 비우고 true. 마교 몸이면 천마해체로 음양 게이지가 시작값으로 돌아오고(혈공) 8초 Dissolution 이 켜진다.
         /// Unity 쪽은 Charge.TryUse 를 따로 부르지 말고 이걸 부른다.</summary>
         public bool UseUltimate()
         {
             if (Record != null) throw new InvalidOperationException("끝난 생입니다");
             if (!Charge.TryUse()) return false;
+            Dissolution?.Start();
             if (BloodArt != null && BloodArt.OnUltimate(Body.Character.Ultimate))
                 InsightEffects.OnDemonicReset(BloodArt.Steps); // 마공 깨달음 '심마' 공력도 사라진다
             return true;

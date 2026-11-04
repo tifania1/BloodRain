@@ -10,7 +10,7 @@
 | 몸(기혈·걸음·음양 시작·시작 무공·오의·해금) | 5장 '한눈에 보기' | cheonha.json sects `huashan`·`kunlun`·`demonic`, 마교 대표 인물 백야는 characters.json `baekya`. 같음(`CheonhaDataTests.문파_표가_데이터와_같다`) | `Rebirth`, 해금은 `Soul` 의 `boss:<지역>` | 없음(진소운만) | 아홉 문파 몸, 땅의 주인 첫 처치로 열림 | TU-11 |
 | 고유 능력 | 5장(화산 치명 +10%, 곤륜 3m 안 적 10% 느려짐, 마교 기혈이 낮을수록 공격속도·회복 -50%) | traitEffect 셋(R-04b). 마교 곡선만 없음(R-04c 사람 결정 대기) | `SectTrait`(`EnemySpeedMultiplier`·`HealingMultiplier`) | 없음 | 없음 | R-04U |
 | 마교 혈공·마공 | 5장 '마교 몸의 성장: 혈공'·마공 표 | cheonha.json sects demonic `bloodArt`, insights.json `demonicInsights` 넷 | `Progression/BloodArt.cs`, `InsightEffects`(`BloodArtTests`·`BloodArtSimTests`·`InsightEffectsTests`) | 없음 | 없음 | 줄 없음 |
-| 오의(일검·천설부·천마해체) | 5장 '오의 상세' | characters.json ultimates. 천설부·천마해체 params 있음(R-05), 일검은 숫자가 배율·관통 무한뿐이라 params 없음 | `Ultimates.HitDamage`(피해만) | 일검만 | 없음 | C-09(일검만) |
+| 오의(일검·천설부·천마해체) | 5장 '오의 상세' | characters.json ultimates. 천설부·천마해체 params 있음(R-05), 일검은 숫자가 배율·관통 무한뿐이라 params 없음 | `Ultimates.HitDamage`(한 방 피해). R4-10(11-04): 천설부 얼림·강시 계열만 피해 `UltimateEffects.FreezeSeconds`·`HitDamageOn`, 천마해체 8초 `DemonDissolution`(피해 2배·흡혈 10%·초당 기혈 2%, `Life.Dissolution`), 흡혈 셈 `LifestealHeal`(`UltimateEffectsTests`) | 일검만 | 없음 | C-09(일검만) |
 | 진전 | 20장 '진전 9문파' | synergies.json schools 아홉(`SynergyDataTests.기획서_20장_진전_표가_schools_와_같다`) | `Synergy`·`SynergyEffects` | 아홉 문파 인장 | 없음 | S-04 |
 | 시작 무공(낙화검우·뇌부·혈조) | 9장 | weapons.json. 낙화검우·혈조는 shot·knockback 없음(9장 '손으로 맞춘 뒤 채운다', m3_check 와 같은 사정) | `WeaponGrowth` | 뇌부만 | 없음 | W-01(뇌부). 낙화검우·혈조 줄 없음 |
 
