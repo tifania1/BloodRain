@@ -1,0 +1,249 @@
+{
+  "_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 원래 512px 칸 한 변이 게임에서 몇 m 인가(Pixels Per Unit = 512 / sizeMeters, 잘라도 그대로). 칸 가운데가 몸: 호(arc)는 몸을 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 몸을 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m). PNG 는 획이 있는 쪽만 자른 것: crop [x, y, w, h] 는 512 칸에서 잘라 낸 사각형(px, 위가 0, 너비·높이 4의 배수), pivot 은 잘린 그림에서 몸 위치(왼쪽 아래 0, 위로 +, 0~1 밖일 수 있음). 셰이더 _Rect = (x/512, 1-(y+h)/512, w/512, h/512). copies [[회전, 옆 밀기(m)]] 는 한 장에 같은 획을 여러 번, zig·amp 는 꺾인 찌르기(번개), links 는 찌르기 위 사슬 마디 점, 꽃잎(petals)은 반지름 Rp(m) 안에 count 장(한 장 길이·너비 petal).",
+  "weapon": "falling_petals",
+  "textures": [
+    {
+      "name": "petals_t1_1",
+      "tier": 1,
+      "seed": 1501001,
+      "kind": "petals",
+      "sizeMeters": 2.668,
+      "Rp": 0.9,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke"
+      ],
+      "crop": [
+        162,
+        107,
+        248,
+        328
+      ],
+      "pivot": [
+        0.37903,
+        0.54573
+      ]
+    },
+    {
+      "name": "petals_t1_2",
+      "tier": 1,
+      "seed": 1501002,
+      "kind": "petals",
+      "sizeMeters": 2.668,
+      "Rp": 0.9,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke"
+      ],
+      "crop": [
+        80,
+        148,
+        344,
+        296
+      ],
+      "pivot": [
+        0.51163,
+        0.63514
+      ]
+    },
+    {
+      "name": "petals_t1_3",
+      "tier": 1,
+      "seed": 1501003,
+      "kind": "petals",
+      "sizeMeters": 2.668,
+      "Rp": 0.9,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke"
+      ],
+      "crop": [
+        77,
+        87,
+        288,
+        260
+      ],
+      "pivot": [
+        0.62153,
+        0.35
+      ]
+    },
+    {
+      "name": "petals_t2_1",
+      "tier": 2,
+      "seed": 1502001,
+      "kind": "petals",
+      "sizeMeters": 2.8957,
+      "Rp": 0.999,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke",
+        "wash"
+      ],
+      "crop": [
+        47,
+        173,
+        336,
+        296
+      ],
+      "pivot": [
+        0.62202,
+        0.71959
+      ]
+    },
+    {
+      "name": "petals_t2_2",
+      "tier": 2,
+      "seed": 1502002,
+      "kind": "petals",
+      "sizeMeters": 2.8957,
+      "Rp": 0.999,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke",
+        "wash"
+      ],
+      "crop": [
+        119,
+        132,
+        320,
+        304
+      ],
+      "pivot": [
+        0.42812,
+        0.59211
+      ]
+    },
+    {
+      "name": "petals_t2_3",
+      "tier": 2,
+      "seed": 1502003,
+      "kind": "petals",
+      "sizeMeters": 2.8957,
+      "Rp": 0.999,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke",
+        "wash"
+      ],
+      "crop": [
+        104,
+        61,
+        304,
+        276
+      ],
+      "pivot": [
+        0.5,
+        0.29348
+      ]
+    },
+    {
+      "name": "petals_t3_1",
+      "tier": 3,
+      "seed": 1503001,
+      "kind": "petals",
+      "sizeMeters": 3.1441,
+      "Rp": 1.107,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        105,
+        59,
+        320,
+        384
+      ],
+      "pivot": [
+        0.47187,
+        0.48698
+      ]
+    },
+    {
+      "name": "petals_t3_2",
+      "tier": 3,
+      "seed": 1503002,
+      "kind": "petals",
+      "sizeMeters": 3.1441,
+      "Rp": 1.107,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        115,
+        89,
+        308,
+        304
+      ],
+      "pivot": [
+        0.45779,
+        0.45066
+      ]
+    },
+    {
+      "name": "petals_t3_3",
+      "tier": 3,
+      "seed": 1503003,
+      "kind": "petals",
+      "sizeMeters": 3.1441,
+      "Rp": 1.107,
+      "count": 7,
+      "petal": [
+        0.26,
+        0.14
+      ],
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        90,
+        64,
+        332,
+        384
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    }
+  ]
+}

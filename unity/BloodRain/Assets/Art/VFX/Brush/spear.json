@@ -1,0 +1,144 @@
+{
+  "_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 원래 512px 칸 한 변이 게임에서 몇 m 인가(Pixels Per Unit = 512 / sizeMeters, 잘라도 그대로). 칸 가운데가 몸: 호(arc)는 몸을 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 몸을 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m). PNG 는 획이 있는 쪽만 자른 것: crop [x, y, w, h] 는 512 칸에서 잘라 낸 사각형(px, 위가 0, 너비·높이 4의 배수), pivot 은 잘린 그림에서 몸 위치(왼쪽 아래 0, 위로 +, 0~1 밖일 수 있음). 셰이더 _Rect = (x/512, 1-(y+h)/512, w/512, h/512). copies [[회전, 옆 밀기(m)]] 는 한 장에 같은 획을 여러 번, zig·amp 는 꺾인 찌르기(번개), links 는 찌르기 위 사슬 마디 점, 꽃잎(petals)은 반지름 Rp(m) 안에 count 장(한 장 길이·너비 petal).",
+  "weapon": "pear_spear",
+  "textures": [
+    {
+      "name": "spear_t1_1",
+      "tier": 1,
+      "seed": 1301001,
+      "kind": "line",
+      "sizeMeters": 5.34,
+      "L": 4.0,
+      "thick": 0.3,
+      "layers": [
+        "stroke"
+      ],
+      "crop": [
+        49,
+        226,
+        392,
+        56
+      ],
+      "pivot": [
+        0.52806,
+        0.46429
+      ]
+    },
+    {
+      "name": "spear_t1_2",
+      "tier": 1,
+      "seed": 1301002,
+      "kind": "line",
+      "sizeMeters": 5.34,
+      "L": 4.0,
+      "thick": 0.3,
+      "layers": [
+        "stroke"
+      ],
+      "crop": [
+        50,
+        229,
+        400,
+        56
+      ],
+      "pivot": [
+        0.515,
+        0.51786
+      ]
+    },
+    {
+      "name": "spear_t2_1",
+      "tier": 2,
+      "seed": 1302001,
+      "kind": "line",
+      "sizeMeters": 5.996,
+      "L": 4.44,
+      "thick": 0.42,
+      "layers": [
+        "stroke",
+        "wash"
+      ],
+      "crop": [
+        46,
+        216,
+        404,
+        80
+      ],
+      "pivot": [
+        0.5198,
+        0.5
+      ]
+    },
+    {
+      "name": "spear_t2_2",
+      "tier": 2,
+      "seed": 1302002,
+      "kind": "line",
+      "sizeMeters": 5.996,
+      "L": 4.44,
+      "thick": 0.42,
+      "layers": [
+        "stroke",
+        "wash"
+      ],
+      "crop": [
+        47,
+        215,
+        404,
+        80
+      ],
+      "pivot": [
+        0.51733,
+        0.4875
+      ]
+    },
+    {
+      "name": "spear_t3_1",
+      "tier": 3,
+      "seed": 1303001,
+      "kind": "line",
+      "sizeMeters": 6.6218,
+      "L": 4.92,
+      "thick": 0.501,
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        34,
+        216,
+        408,
+        80
+      ],
+      "pivot": [
+        0.54412,
+        0.5
+      ]
+    },
+    {
+      "name": "spear_t3_2",
+      "tier": 3,
+      "seed": 1303002,
+      "kind": "line",
+      "sizeMeters": 6.6218,
+      "L": 4.92,
+      "thick": 0.501,
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        33,
+        212,
+        420,
+        84
+      ],
+      "pivot": [
+        0.53095,
+        0.47619
+      ]
+    }
+  ]
+}

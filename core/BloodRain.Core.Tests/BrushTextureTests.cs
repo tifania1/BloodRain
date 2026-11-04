@@ -38,18 +38,45 @@ namespace BloodRain.Core.Tests
             Assert.All(tex, t => Assert.True((double)t["sizeMeters"]! > 2 * (double)t["R"]!));
         }
 
-        [Fact] public void 시작_무공_아홉이_모두_3단까지_구워져_있다()
+        [Fact] public void 무공_열여섯이_모두_3단까지_구워져_있다()
         {
-            var weapons = TestData.Load().Weapons.Where(w => w.Unlock == "start").Select(w => w.Id).OrderBy(x => x).ToList();
-            var baked = Directory.GetFiles(Dir, "*.json").Select(f => JObject.Parse(File.ReadAllText(f))).ToList();
+            // V-02 시작 아홉, V-12 나머지 일곱. 절기 json(evolution 이 있는 것)은 따로 본다.
+            var weapons = TestData.Load().Weapons.Select(w => w.Id).OrderBy(x => x).ToList();
+            Assert.Equal(16, weapons.Count);
+            var baked = Directory.GetFiles(Dir, "*.json").Select(f => JObject.Parse(File.ReadAllText(f))).Where(m => m["evolution"] == null).ToList();
             Assert.Equal(weapons, baked.Select(m => (string)m["weapon"]!).OrderBy(x => x).ToList());
             foreach (var m in baked)
             {
                 var tex = m["textures"]!.ToArray();
                 Assert.Equal(new[] { 1, 2, 3 }, tex.Select(t => (int)t["tier"]!).Distinct().OrderBy(x => x));
                 foreach (var t in tex)
+                {
+                    // vfx.md 단계 규칙: 1단 먹, 2단 담채, 3단 금빛
+                    Assert.Equal((int)t["tier"]! switch { 1 => "stroke", 2 => "stroke,wash", _ => "stroke,wash,gold" },
+                        string.Join(",", t["layers"]!.Select(l => (string)l!)));
                     foreach (var l in t["layers"]!)
                         Assert.True(File.Exists(Path.Combine(Dir, $"{t["name"]}_{l}.png")), $"{t["name"]}_{l}");
+                }
+            }
+        }
+
+        [Fact] public void 절기_획은_있는_절기와_그_무공이고_금빛_심이_있다()
+        {
+            // V-12: 절기 획 한 단위(tier 4). 짝 무공은 evolutions.json 과 같아야 하고, 금빛은 가운데 심(goldCore)이라 늘 gold 층이 있다.
+            var evo = JObject.Parse(File.ReadAllText(Path.Combine(TestData.DataDir, "evolutions.json")))["evolutions"]!
+                .ToDictionary(e => (string)e["id"]!, e => (string)e["weapon"]!);
+            var metas = Directory.GetFiles(Dir, "*.json").Select(f => JObject.Parse(File.ReadAllText(f))).Where(m => m["evolution"] != null).ToList();
+            Assert.Contains(metas, m => (string)m["evolution"]! == "cheonjiin");
+            foreach (var m in metas)
+            {
+                var id = (string)m["evolution"]!;
+                Assert.True(evo.ContainsKey(id), $"evolutions.json 에 없는 절기 {id}");
+                Assert.Equal(evo[id], (string)m["weapon"]!);
+                foreach (var t in m["textures"]!)
+                {
+                    Assert.Equal(4, (int)t["tier"]!);
+                    Assert.Contains("gold", t["layers"]!.Select(l => (string)l!));
+                }
             }
         }
 

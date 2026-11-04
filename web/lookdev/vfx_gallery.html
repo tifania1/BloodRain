@@ -50,9 +50,9 @@ const RES = 192, FEATHER = 0.06;
 const COLORS = { stroke: [20, 20, 20], wash: [79, 127, 122], gold: [201, 162, 39], core: [255, 255, 255], shade: [20, 20, 20] };
 const ADD = { gold: true, core: true };          // AI 빛 재료는 더하기(BrushStrokeAdd)
 const ORDER = ['shade', 'wash', 'stroke', 'gold', 'core']; // 빛 재료의 먹 받침·담채가 맨 아래
-const KIND = { arc: 0, line: 1, blot: 2, radial: 2, right: 1, down: 3, up: 4, left: 5 };
-const BRUSH = ['samjae', 'nahan', 'dagger', 'changcheon', 'palm', 'flash', 'bomb', 'mist', 'staff'];
-const NAMES = { samjae: '삼재검법', nahan: '나한권', dagger: '비도술', changcheon: '창천검기', palm: '장풍', flash: '섬광지', bomb: '벽력탄', mist: '독무', staff: '취선봉', common: '공용 먹', ai: 'AI 재료' };
+const KIND = { arc: 0, line: 1, blot: 2, petals: 2, radial: 2, right: 1, down: 3, up: 4, left: 5 };
+const BRUSH = ['samjae', 'nahan', 'dagger', 'changcheon', 'palm', 'flash', 'bomb', 'mist', 'staff', 'taiji', 'chain', 'claw', 'qin', 'spear', 'talisman', 'petals', 'cheonjiin'];
+const NAMES = { samjae: '삼재검법', nahan: '나한권', dagger: '비도술', changcheon: '창천검기', palm: '장풍', flash: '섬광지', bomb: '벽력탄', mist: '독무', staff: '취선봉', taiji: '태극검', chain: '쇄겸술', claw: '혈조', qin: '음공', spear: '이화창', talisman: '뇌부', petals: '낙화검우', cheonjiin: '절기 천지인', common: '공용 먹', ai: 'AI 재료' };
 
 const $ = id => document.getElementById(id);
 const cache = new Map();
@@ -131,7 +131,7 @@ async function loadGroup(key) {
   }
   const dir = key === 'ai' ? 'AI' : 'Brush';
   const j = await (await fetch(`${BASE}${dir}/${key === 'ai' ? 'ai' : key}.json`)).json();
-  return j.textures.map(t => ({ dir, name: t.name, kind: KIND[t.progress || t.kind] ?? 2, span: t.span, crop: t.crop, layers: t.layers, note: t.use || `${t.tier}단 · ${t.kind}${t.sizeMeters ? ` · ${t.sizeMeters}m` : ''}` }));
+  return j.textures.map(t => ({ dir, name: t.name, kind: KIND[t.progress || t.kind] ?? 2, span: t.span, crop: t.crop, layers: t.layers, note: t.use || `${t.tier === 4 ? '절기' : t.tier + '단'} · ${t.kind}${t.sizeMeters ? ` · ${t.sizeMeters}m` : ''}` }));
 }
 
 let token = 0;

@@ -1,0 +1,210 @@
+{
+  "_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 원래 512px 칸 한 변이 게임에서 몇 m 인가(Pixels Per Unit = 512 / sizeMeters, 잘라도 그대로). 칸 가운데가 몸: 호(arc)는 몸을 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 몸을 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m). PNG 는 획이 있는 쪽만 자른 것: crop [x, y, w, h] 는 512 칸에서 잘라 낸 사각형(px, 위가 0, 너비·높이 4의 배수), pivot 은 잘린 그림에서 몸 위치(왼쪽 아래 0, 위로 +, 0~1 밖일 수 있음). 셰이더 _Rect = (x/512, 1-(y+h)/512, w/512, h/512). copies [[회전, 옆 밀기(m)]] 는 한 장에 같은 획을 여러 번, zig·amp 는 꺾인 찌르기(번개), links 는 찌르기 위 사슬 마디 점, 꽃잎(petals)은 반지름 Rp(m) 안에 count 장(한 장 길이·너비 petal).",
+  "weapon": "taiji_sword",
+  "textures": [
+    {
+      "name": "taiji_t1_1",
+      "tier": 1,
+      "seed": 901001,
+      "kind": "arc",
+      "sizeMeters": 4.432,
+      "R": 1.6,
+      "span": 2.2,
+      "thick": 0.24,
+      "copies": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          3.141592653589793,
+          0.0
+        ]
+      ],
+      "layers": [
+        "stroke"
+      ],
+      "crop": [
+        44,
+        77,
+        424,
+        360
+      ],
+      "pivot": [
+        0.5,
+        0.50278
+      ]
+    },
+    {
+      "name": "taiji_t1_2",
+      "tier": 1,
+      "seed": 901002,
+      "kind": "arc",
+      "sizeMeters": 4.432,
+      "R": 1.6,
+      "span": 2.2,
+      "thick": 0.24,
+      "copies": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          3.141592653589793,
+          0.0
+        ]
+      ],
+      "layers": [
+        "stroke"
+      ],
+      "crop": [
+        47,
+        78,
+        420,
+        356
+      ],
+      "pivot": [
+        0.49762,
+        0.5
+      ]
+    },
+    {
+      "name": "taiji_t2_1",
+      "tier": 2,
+      "seed": 902001,
+      "kind": "arc",
+      "sizeMeters": 4.9568,
+      "R": 1.776,
+      "span": 2.2,
+      "thick": 0.336,
+      "copies": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          3.141592653589793,
+          0.0
+        ]
+      ],
+      "layers": [
+        "stroke",
+        "wash"
+      ],
+      "crop": [
+        34,
+        62,
+        444,
+        388
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "taiji_t2_2",
+      "tier": 2,
+      "seed": 902002,
+      "kind": "arc",
+      "sizeMeters": 4.9568,
+      "R": 1.776,
+      "span": 2.2,
+      "thick": 0.336,
+      "copies": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          3.141592653589793,
+          0.0
+        ]
+      ],
+      "layers": [
+        "stroke",
+        "wash"
+      ],
+      "crop": [
+        34,
+        62,
+        444,
+        388
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "taiji_t3_1",
+      "tier": 3,
+      "seed": 903001,
+      "kind": "arc",
+      "sizeMeters": 5.4578,
+      "R": 1.968,
+      "span": 2.2,
+      "thick": 0.401,
+      "copies": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          3.141592653589793,
+          0.0
+        ]
+      ],
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        34,
+        62,
+        444,
+        388
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "taiji_t3_2",
+      "tier": 3,
+      "seed": 903002,
+      "kind": "arc",
+      "sizeMeters": 5.4578,
+      "R": 1.968,
+      "span": 2.2,
+      "thick": 0.401,
+      "copies": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          3.141592653589793,
+          0.0
+        ]
+      ],
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        33,
+        62,
+        448,
+        388
+      ],
+      "pivot": [
+        0.49777,
+        0.5
+      ]
+    }
+  ]
+}
