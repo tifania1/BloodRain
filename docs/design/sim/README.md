@@ -35,6 +35,7 @@ dotnet run --project core/BloodRain.Sim -c Release -- --secrets docs/design/sim/
 dotnet run --project core/BloodRain.Sim -c Release -- --awakenings docs/design/sim/awakenings.md # 캐릭터 여덟 명의 첫~넷째 절기 시각, 시작 무공이 첫 절기인 비율, 보갑으로 깬 몫(10초쯤)
 dotnet run --project core/BloodRain.Sim -c Release -- --mimic docs/design/sim/mimic.md           # 혈영 분신: 무공별 초당 피해, 6칸 조합이 12초 머무는 동안 합, 혈영회주 패턴과 견주기, 배율을 바꾸면
 dotnet run --project core/BloodRain.Sim -c Release -- --silver docs/design/sim/silver.md         # 한 생의 은자: 잡몹 주머니·등롱·금두꺼비, 10장 목표(20분 600~900)와 견주기(RM-06)
+dotnet run --project core/BloodRain.Sim -c Release -- --manuscript docs/design/sim/manuscript.md # 혈월 천하 의서 일곱 권까지 생 수: 등롱 확률 10~30% × 생 길이(R4-08, 5초쯤)
 dotnet run --project core/BloodRain.Sim -c Release -- --prologue docs/design/sim/prologue.md       # 서장: 첫 레벨업·오의·이류·일류·음양 시각을 4장 표와 나란히, 장삼 각성까지 초(10초쯤)
 ```
 
