@@ -29,6 +29,23 @@
     "mokOrder": ["lord", "stones", "realm", "zuohwa", "lives"],
     "unnangOrder": ["return", "confess", "facility", "letter", "lives", "chat"]
   },
+  "intro": {
+    "_note": "인트로 컷신 「혈우」 12컷(docs/story/intro.md, 기획서 19장 A). seconds 는 컷 길이, whisper 는 옅은 속삭임 글자. 컷 12 제목 붓글씨는 Unity 가 게임 이름으로 얹어 줄이 없다.",
+    "cuts": [
+      {"id": "c01", "art": "sb_intro_01", "seconds": 4, "lines": [{"speaker": null, "textKo": "삼백 년 전."}]},
+      {"id": "c02", "art": "sb_intro_02", "seconds": 6, "lines": [{"speaker": null, "textKo": "정파, 사파, 마교가 처음으로 같은 편에 섰다."}]},
+      {"id": "c03", "art": "sb_intro_03", "seconds": 6, "lines": [{"speaker": null, "textKo": "일곱 개의 돌로 혈마를 가두었다."}]},
+      {"id": "c04", "art": "sb_intro_04", "seconds": 6, "lines": [{"speaker": null, "textKo": "대운 32년, 칠월 보름."}]},
+      {"id": "c05", "art": "sb_intro_05", "seconds": 6, "lines": []},
+      {"id": "c06", "art": "sb_intro_06", "seconds": 4, "lines": [{"speaker": null, "whisper": true, "textKo": "깨어나십시오."}]},
+      {"id": "c07", "art": "sb_intro_07", "seconds": 6, "lines": []},
+      {"id": "c08", "art": "sb_intro_08", "seconds": 7, "lines": []},
+      {"id": "c09", "art": "sb_intro_09", "seconds": 6, "lines": []},
+      {"id": "c10", "art": "sb_intro_10", "seconds": 8, "lines": [{"speaker": "old_master", "textKo": "살아라… 그리고 막아라."}]},
+      {"id": "c11", "art": "sb_intro_11", "seconds": 6, "lines": []},
+      {"id": "c12", "art": "sb_intro_12", "seconds": 6, "lines": []}
+    ]
+  },
   "prologue": {
     "_note": "서장 판 안 말풍선(docs/story/prologue.md). when 은 그 일이 처음 일어나는 순간. offscreen 이면 화면 아래 가운데. cuts 는 장삼 처치 뒤 컷 두 장.",
     "_noteHints": "안내 문구(4장 '서장 상세 흐름'). 대사와 같은 사건에 걸리면 안내를 먼저 띄우고 대사는 hintFirstDelaySeconds 늦춘다. 한 사건에 대사가 여럿이면 앞 줄이 lineSeconds 동안 떠 있다 지운 뒤 다음 줄(prologue.md '쓰는 법'). 고르는 규칙은 Core Run/PrologueCues.cs. 음양 문구는 2026-11-04 클라우드 초안.",

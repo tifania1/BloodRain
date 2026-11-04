@@ -10,6 +10,8 @@ namespace BloodRain.Core.Data
     {
         public List<SpeakerDef> Speakers = new List<SpeakerDef>();
         public DialogueReturnsDef Returns = new DialogueReturnsDef();
+        /// <summary>인트로 컷신 12컷(docs/story/intro.md, 기획서 19장 A).</summary>
+        public CutSceneDef Intro = new CutSceneDef();
         public PrologueDialogueDef Prologue = new PrologueDialogueDef();
         public DialogueLinesDef Mok = new DialogueLinesDef();
         public DialogueLinesDef Bedroom = new DialogueLinesDef();
@@ -91,12 +93,21 @@ namespace BloodRain.Core.Data
         public string TextKo = "";
     }
 
+    /// <summary>차례로 넘기는 컷 묶음(인트로·종장·엔딩).</summary>
+    public sealed class CutSceneDef
+    {
+        public List<CutDef> Cuts = new List<CutDef>();
+        public float TotalSeconds => Cuts.Sum(c => c.Seconds);
+    }
+
     /// <summary>컷 한 장의 자막. Lines 가 비면 자막 없음.</summary>
     public sealed class CutDef
     {
         public string Id = "";
         /// <summary>art_queue id(있을 때만).</summary>
         public string? Art;
+        /// <summary>저절로 넘어가는 길이(초). 0 이면 누를 때까지.</summary>
+        public float Seconds;
         public List<CutLineDef> Lines = new List<CutLineDef>();
         /// <summary>조건이 맞으면 Lines 대신 쓰는 자막(무당·화산 한 쌍).</summary>
         public CutAltDef? Alt;
@@ -113,6 +124,8 @@ namespace BloodRain.Core.Data
     {
         /// <summary>speakers id. null 이면 서술 자막.</summary>
         public string? Speaker;
+        /// <summary>속삭임(옅은 글자).</summary>
+        public bool Whisper;
         public string TextKo = "";
     }
 

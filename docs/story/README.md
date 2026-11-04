@@ -4,6 +4,7 @@
 
 | 파일 | 무엇 | dialogue.json |
 | --- | --- | --- |
+| `intro.md` | 인트로 컷신 「혈우」 12컷 | `intro` |
 | `prologue.md` | 서장 판 안 말풍선, 끝 컷 두 장 | `prologue` |
 | `mok.md` | 목 노인 귀환 대사, 첫 환혼, 문파 첫 환생 | `mok`, `bedroom` |
 | `unnang.md` | 운낭 귀환 대사, 연무장 | `unnang`, `training` |

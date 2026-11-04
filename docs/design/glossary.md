@@ -218,6 +218,8 @@
 | 오대세가 | the Five Great Clans | 남궁 카드 |
 | 천마신교 | Heavenly Demon Cult | 마교 카드·혁련휘 컷 |
 | 정파 | the orthodox sects | 혁련휘 컷 |
+| 사파 | the unorthodox sects | 인트로 컷 2 |
+| 대운 32년(연호) | Year 32 of Daeun | 인트로 컷 4 |
 
 ## 번체(繁體) — 상점 글과 화면에 쓴 말 (ST-06·L-08, 2026-11-04)
 

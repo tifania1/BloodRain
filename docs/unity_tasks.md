@@ -403,6 +403,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 원각 첫 만남 2컷 → 싸움 → 2막 한 줄 → 처치 4컷. 두 번째 만남은 Echo 한 줄
   - 찍기: `docs/unity_shots/DL-06b/` 의 `wongak_meet.png`
 
+- [ ] DL-07b 인트로 컷신 「혈우」 · 먼저: 없음
+  - 할 것: 처음 실행(혼 저장이 없을 때) Boot 씬 뒤 `DataBoot.Data.Dialogue.Intro.Cuts` 를 차례로 — 그림 `Assets/Art/Cutscenes/<cut.Art>.jpg`, `cut.Seconds` 뒤 다음 컷(누르면 바로), 줄은 화면 아래 가운데(`Whisper` 면 옅게, 말하는 사람 이름은 달지 않음). 다른 말은 키 `dialogue.intro.cuts.<id>.lines.<n>.text`. 컷 12에 게임 제목 붓글씨를 Unity 글자로. 건너뛰기 단추, 제목 화면에 '인트로 다시 보기'.
+  - 쓸 것: dialogue.json `intro`, `docs/story/intro.md`(소리 칸)
+  - 메뉴: 없음
+  - 끝: 12컷이 약 71초에 끝나고 서장으로, 건너뛰면 바로 서장
+  - 찍기: `docs/unity_shots/DL-07b/` 의 `intro_06.png`, `intro_12.png`
+
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
 - [ ] R-13U 세 지역 기믹(독안개·물·태극 바닥)과 수귀 · 먼저: backlog R-10(사람 결정 대기)

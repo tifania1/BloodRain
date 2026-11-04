@@ -19,7 +19,7 @@ namespace BloodRain.Core.Tests
         static IEnumerable<DialogueLineDef> AllLines() =>
             D.Prologue.Lines.Concat(D.Mok.Lines).Concat(D.Bedroom.Lines).Concat(D.Unnang.Lines).Concat(D.Training.Lines).Concat(D.Settlement.Lines);
 
-        static IEnumerable<CutDef> AllCuts() => D.Prologue.Cuts.Concat(D.Lords.List.SelectMany(l => l.Cuts));
+        static IEnumerable<CutDef> AllCuts() => D.Intro.Cuts.Concat(D.Prologue.Cuts).Concat(D.Lords.List.SelectMany(l => l.Cuts));
 
         [Fact]
         public void 모든_문장이_대사_문서에_그대로_있다()
