@@ -71,6 +71,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 침방 카드·연무장에 영어 키가 하나도 없음, 콘솔 에러 0
   - 찍기: `docs/unity_shots/LF-03/` 의 `chimbang_ko.png`
 
+- [ ] LF-03b 정산 무공별 피해 막대가 차는지
+  - 고친 것(2026-11-05 05시 클라우드): `LifeRunner` 가 정산에 빈 `DamageByWeapon` 을 넘기던 것을 `weapons.Dealt`(WeaponRunner 가 무공 id 별로 센 합)로. 컴파일은 클라우드에서 못 봤다. 테스트 `SettlementWiringTests`
+  - 할 것: 컴파일 확인 → 천하 몸으로 무공 둘 이상 들고 1분쯤 싸운 뒤 `지금 쓰러지기` → 정산 왼쪽 막대에 무공 이름과 비중이 나오는지
+  - 끝: 막대가 빈칸이 아니고 이름이 한국어, 콘솔 에러 0
+  - 본 것으로 남길 것: Dealt 는 남은 기혈을 넘긴 몫도 센다(웹 시안은 뺌). 막대가 어색하면 EnemyField.Damage 쪽에서 깎을지 적는다
+  - 찍기: `docs/unity_shots/LF-03/` 의 `settlement_damage.png`
+
 - [ ] V-04d 웹 빌드에서 붓 획 한 장
   - 할 것: WebGL 빌드를 로컬로 띄워 삼재검법·AI 재료 무공이 브라우저에서도 에디터와 같은 색·순서로 그려지는지(셰이더가 WebGL2 에서 빠지지 않는지).
   - 쓸 것: V-04 셰이더·머티리얼, `FxSettings`

@@ -198,7 +198,10 @@ namespace BloodRain.Presentation
                 SurvivalSeconds = (float)(_life.Minutes * 60.0),
                 Kills = _kills,
                 BloodCrystal = record.BloodCrystal,
-                DamageByWeapon = new Dictionary<string, double>(), // 무공별 피해는 WeaponRunner 가 아직 안 셈
+                // 무공별 피해 막대는 WeaponRunner 가 센 합(때린 피해 × 맞은 수, 남은 기혈을 넘긴 몫도 들어감)
+                DamageByWeapon = weapons != null
+                    ? weapons.Dealt.Where(kv => kv.Value > 0f).ToDictionary(kv => kv.Key, kv => (double)kv.Value)
+                    : new Dictionary<string, double>(),
             };
             settlement.Show(record, summary, stats, soul.RebirthQi);
         }
