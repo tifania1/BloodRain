@@ -136,9 +136,11 @@ namespace BloodRain.Presentation.Meta
             Place(_balance.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - 60), new Vector2(620, 32));
             _totalAmount = res.Total;
             _balanceAfter = balanceAfter;
-            if (summary.NewlyUnlockedSects.Count > 0 || summary.NewSealStones.Count > 0)
+            if (summary.NewlyUnlockedSects.Count > 0 || summary.NewSealStones.Count > 0 || summary.NewModes.Count > 0)
             {
                 var extra = new List<string>();
+                // R4-05U 새로 열린 모드
+                if (summary.NewModes.Count > 0) extra.Add(Loc.F("ui.settle.new_modes", string.Join("·", summary.NewModes.Select(id => _data.Cheonha.Modes.FirstOrDefault(m => m.Id == id) is ModeDef md ? Loc.Mode(md) : id))));
                 if (summary.NewSealStones.Count > 0) extra.Add(Loc.F("ui.settle.seal_stones", string.Join("·", summary.NewSealStones.Select(s => regions.All.FirstOrDefault(r => r.Id == s) is RegionDef rd ? Loc.SealStone(rd) : s))));
                 if (summary.NewlyUnlockedSects.Count > 0) extra.Add(Loc.F("ui.settle.new_sects", string.Join("·", summary.NewlyUnlockedSects.Select(id => Loc.Sect(_data.Cheonha.Sect(id))))));
                 var ex = Text(right, string.Join("   ", extra), 22, FontStyles.Bold, Crimson);

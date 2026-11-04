@@ -36,6 +36,7 @@ namespace BloodRain.Presentation
         // ── 데이터 이름(키는 Core/Data/Strings.cs 규칙: 파일.경로.필드, 목록은 id). 화면 여럿이 같이 쓴다 ──
         public static string Sect(SectDef s) => T($"cheonha.sects.{s.Id}.name", s.NameKo);
         public static string Disciple(SectDef s) => F("ui.rebirth.disciple", Sect(s));
+        public static string Mode(ModeDef m) => T($"cheonha.modes.{m.Id}.name", m.NameKo);
         public static string Region(RegionDef r) => T($"cheonha.regions.{r.Id}.name", r.NameKo);
         public static string SealStone(RegionDef r) => T($"cheonha.regions.{r.Id}.sealStone", r.SealStone);
         public static string Realm(RealmDef r) => T($"balance.realms.{r.Id}.name", r.NameKo);

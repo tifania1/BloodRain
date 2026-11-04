@@ -366,6 +366,8 @@ namespace BloodRain.Presentation.Meta
         public static Soul Soul;
         /// <summary>서장에서 쓰러져 처음부터(Life.RestartPrologue) 다시 만든 생. Run 씬을 다시 열면 LifeRunner 가 이것을 쓴다.</summary>
         public static BloodRain.Core.Run.Life PendingLife;
+        /// <summary>객잔에서 고른 모드 id(R4-05U, cheonha.json modes). 고르기 화면이 안 떴으면 null(천하).</summary>
+        public static string Mode;
 
         /// <summary>생이 끝났다. 다음 Run 은 침방에서 고른 몸으로(남은 몸·생을 쓰지 않게).</summary>
         public static void ClearBody()

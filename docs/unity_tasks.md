@@ -387,7 +387,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 1회차 혼은 바로 봉인 엔딩 컷 → 회귀, 회귀한 혼은 고르기 버튼이 뜸
   - 찍기: `docs/unity_shots/R4-04U/` 의 `ending_choose.png`
 
-- [ ] R4-05U 모드 고르기(2026-11-04 클라우드 M4 지역): 객잔에서 생을 시작할 때 `Core.Meta.Modes.OpenModes(soul)` 가 둘 이상이면 모드 고르기(이름은 strings `cheonha.modes.<id>.name`). 정산 화면에 `summary.NewModes` 를 '새 모드가 열렸다'로. 혈월 천하는 `soul.IsBloodMoon` 이 이미 셈하니 고르기만, 일일 도전·보스 연전은 아직 규칙이 없어 버튼만 두고 잠가 둔다
+- [x] R4-05U 모드 고르기(2026-11-04 클라우드 M4 지역) — 2026-11-05 05:10 PC: `Presentation/Meta/ModePicker.cs` — InnFlow 가 침방 앞에 띄움(열린 모드 둘 이상일 때만, 1~4 키), 고른 id 는 `RebirthHandoff.Mode`, 일일 도전·보스 연전은 열려도 잠긴 버튼(`ModePicker.Playable`). `Loc.Mode`, 정산 화면 붉은 줄에 `summary.NewModes` → '새 모드가 열렸다'(ko.json `ui.settle.new_modes`·`ui.mode.title`·`ui.mode.soon`). 천하·혈월·일일 연 혼으로 띄워 일일은 안 눌리고 혈월을 고르면 Mode=bloodmoon 확인, 콘솔 에러 0. 정산 줄은 눈으로 못 봄. 찍음 `docs/unity_shots/R4-05U/mode_pick.png`. 원래 줄: 객잔에서 생을 시작할 때 `Core.Meta.Modes.OpenModes(soul)` 가 둘 이상이면 모드 고르기(이름은 strings `cheonha.modes.<id>.name`). 정산 화면에 `summary.NewModes` 를 '새 모드가 열렸다'로. 혈월 천하는 `soul.IsBloodMoon` 이 이미 셈하니 고르기만, 일일 도전·보스 연전은 아직 규칙이 없어 버튼만 두고 잠가 둔다
 
 - [ ] R4-13b 세 지역 기믹 중 자리가 필요 없는 셋(낙석·눈보라·붉은 달) · 먼저: LF-01
   - 할 것: 서 있는 지역(`life.RegionId`)이 화산이면 낙석 — `FallingRocksGimmick.FallsBetween` 이 1 이상인 프레임에 `Places(def, 플레이어, rng, 축척)` 세 곳에 그림자, telegraphSeconds 뒤 `Hits` 면 `Damage(def, 종류, 최대 기혈)`(잡몹은 쓰러짐). 곤륜 설원이면 눈보라 — `WeatherGimmick.ActiveAt(def, 한 생 초)` 동안 화면 가장자리 흰 덮개 `ViewScale`, 플레이어·적 걸음 `PlayerMoveSpeed`·`EnemyMoveSpeed`. 십만대산이면 붉은 달 — 같은 `WeatherGimmick` 으로 적 걸음, 하늘을 붉게. 혈제단·매화 더미·모닥불·빙판은 자리가 정해진 뒤(backlog R4-07).

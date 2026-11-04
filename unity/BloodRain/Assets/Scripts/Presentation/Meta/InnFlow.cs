@@ -28,7 +28,12 @@ namespace BloodRain.Presentation.Meta
             }
             if (chimbang == null) chimbang = FindFirstObjectByType<ChimbangScreen>();
             chimbang.Chosen += OnChosen;
-            chimbang.Open(_soul, new System.Random());
+            // 열린 모드가 둘 이상이면 침방 앞에 모드 고르기(R4-05U). 고르면 침방을 연다
+            RebirthHandoff.Mode = null;
+            var picker = new GameObject("모드 고르기").AddComponent<ModePicker>();
+            picker.font = chimbang.font;
+            if (picker.Open(_soul)) picker.Picked += _ => chimbang.Open(_soul, new System.Random());
+            else { Destroy(picker.gameObject); chimbang.Open(_soul, new System.Random()); }
             Debug.Log($"[객잔] 혼 {_soul.Lives}생, 윤회의 기 {_soul.RebirthQi:N0}, 침방을 엽니다");
         }
 
