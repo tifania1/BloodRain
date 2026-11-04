@@ -216,13 +216,13 @@ namespace BloodRain.Presentation.Hud
 
         void Refresh()
         {
-            _title.text = _banishMode ? "뺄 비급을 고르라" : $"깨달음이 온다 · {_handledLevel - _pending} 단계";
+            _title.text = _banishMode ? Loc.T("ui.levelup.title_banish") : Loc.F("ui.levelup.title", _handledLevel - _pending);
             for (int i = _cardRow.childCount - 1; i >= 0; i--) Destroy(_cardRow.GetChild(i).gameObject);
             for (int i = 0; i < _offers.Count; i++) MakeCard(i, _offers[i]);
 
-            _rerollLabel.text = $"다시 고르기 ({_charges.Rerolls})  R";
-            _banishLabel.text = _banishMode ? $"파기 취소 ({_charges.Banishes})  B" : $"파기 ({_charges.Banishes})  B";
-            _skipLabel.text = $"정진 ({_charges.Skips})  S";
+            _rerollLabel.text = Loc.F("ui.levelup.reroll", _charges.Rerolls);
+            _banishLabel.text = Loc.F(_banishMode ? "ui.levelup.banish_cancel" : "ui.levelup.banish", _charges.Banishes);
+            _skipLabel.text = Loc.F("ui.levelup.skip", _charges.Skips);
             _reroll.interactable = _charges.Can(LevelUpAction.Reroll);
             _banish.interactable = _charges.Can(LevelUpAction.Banish);
             _skip.interactable = _charges.Can(LevelUpAction.Skip);
@@ -290,7 +290,7 @@ namespace BloodRain.Presentation.Hud
                 var sealText = MakeText(seal.rectTransform, "글", 20, reaches ? PaperHot : Blood, TextAlignmentOptions.Center);
                 Stretch(sealText.rectTransform);
                 sealText.lineSpacing = -20;
-                sealText.text = $"{Short(pv.School.NameKo)}\n{pv.SchoolCountAfter}/{next}";
+                sealText.text = $"{SchoolSeal(pv.School)}\n{pv.SchoolCountAfter}/{next}";
                 if (st.LockedTiers.Count > 0) sealText.text += "?";
             }
 
@@ -305,14 +305,22 @@ namespace BloodRain.Presentation.Hud
             bt.textWrappingMode = TextWrappingModes.NoWrap;
             bt.enableAutoSizing = true; bt.fontSizeMin = 14; bt.fontSizeMax = 22;
             bt.margin = new Vector4(8, 0, 8, 0);
-            string partner = _data.Weapon(best.Partner).NameKo;
-            bt.text = best.Locked ? (best.Completes ? "? 찢긴 비급의 연환" : "? 찢긴 비급")
-                : done ? $"연환 완성 · {best.Link.NameKo}"
-                : $"연환 {best.Link.NameKo} · {partner} {best.Link.MinLevel}단계까지";
-            if (pv.Links.Count > 1) bt.text += $" 외 {pv.Links.Count - 1}";
+            string partner = WeaponName(_data.Weapon(best.Partner));
+            string linkName = Loc.T($"synergies.links.{best.Link.Id}.name", best.Link.NameKo);
+            bt.text = best.Locked ? Loc.T(best.Completes ? "ui.levelup.link.torn_complete" : "ui.levelup.link.torn")
+                : done ? Loc.F("ui.levelup.link.done", linkName)
+                : Loc.F("ui.levelup.link.need", linkName, partner, best.Link.MinLevel);
+            if (pv.Links.Count > 1) bt.text += Loc.F("ui.levelup.link.more", pv.Links.Count - 1);
         }
 
         static string Short(string name) => name.Length <= 2 ? name : name.Substring(0, 2);
+
+        // 인장 칸(72px)에는 한국어·간체는 앞 두 글자, 영어는 이름 전체(글자 크기는 TMP 가 줄인다).
+        static string SchoolSeal(SchoolDef school)
+        {
+            var name = Loc.T($"synergies.schools.{school.Id}.name", school.NameKo);
+            return Loc.Current.Lang == "en" ? name : Short(name);
+        }
 
         /// <summary>HUD 진전 인장: 화면 왼쪽 위에 단계가 켜진 문파 인장과 켜진 연환 수. 잠긴 단계·연환은 '?' 인장.</summary>
         void BuildSeals()
@@ -357,7 +365,7 @@ namespace BloodRain.Presentation.Hud
                 var t = MakeText(seal.rectTransform, "글", 18, PaperHot, TextAlignmentOptions.Center);
                 Stretch(t.rectTransform);
                 t.lineSpacing = -20;
-                t.text = s.Tier != null ? $"{Short(s.School.NameKo)}\n{s.TierCount}" : $"{Short(s.School.NameKo)}\n?";
+                t.text = s.Tier != null ? $"{SchoolSeal(s.School)}\n{s.TierCount}" : $"{SchoolSeal(s.School)}\n?";
             }
             if (syn.Links.Count + syn.LockedLinks.Count > 0)
             {
@@ -365,7 +373,7 @@ namespace BloodRain.Presentation.Hud
                 band.rectTransform.sizeDelta = new Vector2(110, 60);
                 var t = MakeText(band.rectTransform, "글", 18, Gold, TextAlignmentOptions.Center);
                 Stretch(t.rectTransform);
-                t.text = syn.LockedLinks.Count > 0 ? $"연환 {syn.Links.Count}\n<color=#E8DEC7>? {syn.LockedLinks.Count}</color>" : $"연환 {syn.Links.Count}";
+                t.text = Loc.F("ui.levelup.seal.links", syn.Links.Count) + (syn.LockedLinks.Count > 0 ? $"\n<color=#E8DEC7>? {syn.LockedLinks.Count}</color>" : "");
             }
         }
 
@@ -376,47 +384,50 @@ namespace BloodRain.Presentation.Hud
                 case OfferKind.NewWeapon:
                 {
                     var w = _data.Weapon(o.Id);
-                    return ("새 무공", w.NameKo, "1 단계", $"{Aspect(w.Yinyang)} · 짝 심법 {PassiveName(w.PairPassive)}");
+                    return (Loc.T("ui.levelup.kind.new_weapon"), WeaponName(w), Loc.T("ui.levelup.level_one"), Loc.F("ui.levelup.pair_passive", Aspect(w.Yinyang), PassiveName(w.PairPassive)));
                 }
                 case OfferKind.UpgradeWeapon:
                 {
                     var w = _data.Weapon(o.Id);
                     int lv = _loadout.Weapons[o.Id];
-                    return ("무공 정진", w.NameKo, $"{lv} → {lv + 1} 단계", Milestone(w, lv + 1));
+                    return (Loc.T("ui.levelup.kind.up_weapon"), WeaponName(w), Loc.F("ui.levelup.level_up", lv, lv + 1), Milestone(w, lv + 1));
                 }
                 case OfferKind.NewPassive:
                 {
                     var p = _data.Passive(o.Id);
-                    return ("새 심법", p.NameKo, "1 단계", Aspect(p.Yinyang));
+                    return (Loc.T("ui.levelup.kind.new_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.T("ui.levelup.level_one"), Aspect(p.Yinyang));
                 }
                 case OfferKind.UpgradePassive:
                 {
                     var p = _data.Passive(o.Id);
                     int lv = _loadout.Passives[o.Id];
-                    return ("심법 정진", p.NameKo, $"{lv} → {lv + 1} 단계", Aspect(p.Yinyang));
+                    return (Loc.T("ui.levelup.kind.up_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.F("ui.levelup.level_up", lv, lv + 1), Aspect(p.Yinyang));
                 }
                 default:
                 {
                     var fc = _data.Balance.LevelUp.FallbackCard;
-                    return ("행낭", "은자 · 음식", $"은자 {fc.Silver} · 기혈 +{fc.Heal:0}", "다른 비급 대신 행낭을 푼다");
+                    return (Loc.T("ui.levelup.kind.fallback"), Loc.T("ui.levelup.fallback.name"), Loc.F("ui.levelup.fallback.level", fc.Silver, fc.Heal.ToString("0")), Loc.T("ui.levelup.fallback.note"));
                 }
             }
         }
 
         static string Milestone(WeaponDef w, int level)
         {
-            if (w.Milestones != null && w.Milestones.TryGetValue(level.ToString(), out var m)) return $"새 동작: {m}";
-            return "위력이 오른다";
+            if (w.Milestones != null && w.Milestones.TryGetValue(level.ToString(), out var m))
+                return Loc.F("ui.levelup.milestone", Loc.T($"weapons.{w.Id}.milestones.{level}", m));
+            return Loc.T("ui.levelup.power_up");
         }
 
         string PassiveName(string id)
         {
-            if (string.IsNullOrEmpty(id)) return "없음";
-            foreach (var p in _data.Passives) if (p.Id == id) return p.NameKo;
+            if (string.IsNullOrEmpty(id)) return Loc.T("ui.levelup.none");
+            foreach (var p in _data.Passives) if (p.Id == id) return Loc.T($"passives.{p.Id}.name", p.NameKo);
             return id;
         }
 
-        static string Aspect(string yy) => yy == "yang" ? "양(陽)" : yy == "yin" ? "음(陰)" : "중(中)";
+        static string Aspect(string yy) => Loc.T(yy == "yang" ? "ui.aspect.yang" : yy == "yin" ? "ui.aspect.yin" : "ui.aspect.neutral");
+
+        static string WeaponName(WeaponDef w) => Loc.T($"weapons.{w.Id}.name", w.NameKo);
 
         Image MakeImage(Transform parent, string name, Color c)
         {

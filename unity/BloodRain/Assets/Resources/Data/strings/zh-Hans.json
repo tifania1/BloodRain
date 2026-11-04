@@ -522,5 +522,6 @@
   "ui.aspect.neutral": "中",
   "ui.rebirth.disciple": "{0}弟子",
   "ui.discovery.secret": "寻得秘传",
-  "ui.discovery.encounter": "遇到奇缘"
+  "ui.discovery.encounter": "遇到奇缘",
+  "ui.levelup.seal.links": "连环 {0}"
 }

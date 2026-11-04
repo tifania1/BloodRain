@@ -522,5 +522,6 @@
   "ui.aspect.neutral": "Neutral (中)",
   "ui.rebirth.disciple": "{0} Disciple",
   "ui.discovery.secret": "A Secret Legacy found",
-  "ui.discovery.encounter": "A Fated Encounter"
+  "ui.discovery.encounter": "A Fated Encounter",
+  "ui.levelup.seal.links": "Combo {0}"
 }

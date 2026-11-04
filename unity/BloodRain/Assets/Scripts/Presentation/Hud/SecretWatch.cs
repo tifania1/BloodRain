@@ -45,7 +45,7 @@ namespace BloodRain.Presentation.Hud
 
         public void ShowEncounter(EncounterDef e)
         {
-            if (fx != null) fx.Show(DiscoveryFx.Kind.Encounter, e.NameKo, "");
+            if (fx != null) fx.Show(DiscoveryFx.Kind.Encounter, Loc.T($"synergies.encounters.{e.Id}.name", e.NameKo), "");
         }
 
         void Update()
@@ -67,7 +67,7 @@ namespace BloodRain.Presentation.Hud
             {
                 _found.Add(s);
                 Debug.Log($"[SecretWatch] 비전 발견: {s.NameKo}({s.Id})");
-                if (fx != null) fx.Show(DiscoveryFx.Kind.Secret, s.NameKo, s.Hanja);
+                if (fx != null) fx.Show(DiscoveryFx.Kind.Secret, Loc.T($"synergies.secrets.{s.Id}.name", s.NameKo), s.Hanja);
             }
         }
     }

@@ -91,7 +91,7 @@ namespace BloodRain.Presentation.Fx
             _hanja.text = it.Hanja;
             bool secret = it.Kind == Kind.Secret;
             _sealText.text = secret ? "秘\n傳" : "奇\n緣";
-            _kindText.text = secret ? "비전을 찾았다" : "기연을 만났다";
+            _kindText.text = Loc.T(secret ? "ui.discovery.secret" : "ui.discovery.encounter");
         }
 
         static float Ease(float x) { x = Mathf.Clamp01(x); return 1f - (1f - x) * (1f - x) * (1f - x); }

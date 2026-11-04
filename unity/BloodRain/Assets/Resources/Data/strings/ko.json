@@ -33,5 +33,6 @@
   "ui.aspect.neutral": "중(中)",
   "ui.rebirth.disciple": "{0} 제자",
   "ui.discovery.secret": "비전을 찾았다",
-  "ui.discovery.encounter": "기연을 만났다"
+  "ui.discovery.encounter": "기연을 만났다",
+  "ui.levelup.seal.links": "연환 {0}"
 }

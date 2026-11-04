@@ -142,6 +142,20 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 화면_코드가_부르는_UI_키는_원문에_있다()
+        {
+            // Presentation 은 클라우드에서 컴파일하지 못하니 키 철자만이라도 여기서 본다. Loc.T("ui.…") · Loc.F("ui.…", …) 꼴의 글자 그대로인 키.
+            var dir = Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Scripts", "Presentation");
+            var used = Directory.GetFiles(dir, "*.cs", SearchOption.AllDirectories)
+                .SelectMany(f => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(f), @"Loc\.[TF]\(\s*""(ui\.[^""]+)""")
+                    .Select(m => (file: Path.GetFileName(f), key: m.Groups[1].Value)))
+                .ToList();
+            Assert.NotEmpty(used);
+            var missing = used.Where(u => !Catalog.Value.Korean.ContainsKey(u.key)).Select(u => $"{u.file}: {u.key}").Distinct().ToList();
+            Assert.True(missing.Count == 0, "strings/ko.json 에 없는 UI 키:\n" + string.Join("\n", missing));
+        }
+
+        [Fact]
         public void 자리표시는_번호만_센다()
         {
             Assert.Equal(new[] { 0, 1 }, StringCatalog.Placeholders("{1} 와 {0} 그리고 {0}"));
