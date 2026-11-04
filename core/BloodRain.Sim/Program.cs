@@ -23,6 +23,7 @@
 //   dotnet run --project core/BloodRain.Sim -c Release -- --mimic docs/design/sim/mimic.md           혈영 분신이 흉내 낸 무공의 피해(혈영회주 패턴과 견주기)
 //   dotnet run --project core/BloodRain.Sim -c Release -- --silver docs/design/sim/silver.md         한 생의 은자(잡몹 주머니·등롱·금두꺼비, 10장 목표와 견주기)
 //   dotnet run --project core/BloodRain.Sim -c Release -- --manuscript docs/design/sim/manuscript.md 혈월 천하 의서 일곱 권까지 생 수(R4-08 확률 견주기)
+//   dotnet run --project core/BloodRain.Sim -- --frenzy docs/design/sim/frenzy.md      마교 '마인의 피' 곡선 세 안의 공격 빈도(R-04c 견주기)
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
 using System.Globalization;
@@ -38,7 +39,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "", mimic = "", metaPace = "", silver = "", manuscript = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "", mimic = "", metaPace = "", silver = "", manuscript = "", frenzy = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -76,6 +77,7 @@ namespace BloodRain.Sim
                     case "--mimic": mimic = Next(); break;
                     case "--silver": silver = Next(); break;
                     case "--manuscript": manuscript = Next(); break;
+                    case "--frenzy": frenzy = Next(); break;
                     case "--crowd-radius": crowdRadius = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-density": maxDensity = double.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--arrival": arrival = double.Parse(Next(), CultureInfo.InvariantCulture); break;
@@ -83,7 +85,7 @@ namespace BloodRain.Sim
                     case "--help":
                         Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--scenario id] [--data 폴더] [--minutes 분]");
                         Console.WriteLine("  무리 가정: [--crowd-radius m] [--max-density 마리/㎡] [--arrival 초]");
-                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --meta-pace --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue --mimic --silver --manuscript");
+                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --meta-pace --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue --mimic --silver --manuscript --frenzy");
                         Console.WriteLine($"  조정 시험 id: {string.Join(", ", Scenarios.All.Select(s => s.Id))}");
                         return 0;
                     default:
@@ -141,6 +143,13 @@ namespace BloodRain.Sim
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(bloodArt))!);
                 File.WriteAllText(bloodArt, BloodArtSim.Report(data, seeds > 0 ? seeds : 5), new UTF8Encoding(false));
                 Console.WriteLine($"보고서를 썼습니다: {bloodArt}");
+                return 0;
+            }
+            if (frenzy.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(frenzy))!);
+                File.WriteAllText(frenzy, FrenzySim.Report(data), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {frenzy}");
                 return 0;
             }
             if (manuscript.Length > 0)
