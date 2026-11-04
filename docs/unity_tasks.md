@@ -352,6 +352,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R4-03U/` 의 `<단계>.png`
 
 - [ ] R4-04U 엔딩 고르기 화면 · 먼저: R4-03U, LF-03
+- [ ] R4-05U 모드 고르기(2026-11-04 클라우드 M4 지역): 객잔에서 생을 시작할 때 `Core.Meta.Modes.OpenModes(soul)` 가 둘 이상이면 모드 고르기(이름은 strings `cheonha.modes.<id>.name`). 정산 화면에 `summary.NewModes` 를 '새 모드가 열렸다'로. 혈월 천하는 `soul.IsBloodMoon` 이 이미 셈하니 고르기만, 일일 도전·보스 연전은 아직 규칙이 없어 버튼만 두고 잠가 둔다
   - 할 것: 봉인으로 생을 마친 뒤 `soul.EndingPending` 이면 정산 다음에 엔딩 고르기 `Presentation/Meta/EndingScreen.cs`. 버튼은 `soul.EndingsOpen(목 노인 대화 끝)`(1회차는 봉인 하나라 고르기 없이 바로 봉인 엔딩 컷). 고르면 `soul.ChooseEnding(id, …)` 뒤 그 엔딩 컷·곡(기획서 14장 '엔딩 3곡', 곡이 없으면 무음), 봉인이면 백중의 밤으로(회귀), 진엔딩이면 `JourneyOver` 라 침방이 닫힌 객잔으로. 진혈마 10% 컷은 `FinalFight.CheckTrueEnding(비율, soul.TrueEndingMet(…))`. 목 노인 대화 끝은 backlog R4-08 전까지 false.
   - 쓸 것: Core `Meta/Soul.cs`(EndingPending·EndingsOpen·ChooseEnding·JourneyOver·TrueEndingMet), `Combat/FinalFight.cs`
   - 메뉴: `BloodRain/Test/엔딩 앞 혼 만들기(1회차·회귀)` 를 새로

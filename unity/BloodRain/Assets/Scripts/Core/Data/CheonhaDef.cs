@@ -24,6 +24,8 @@ namespace BloodRain.Core.Data
         public LifeEndDef LifeEnd = new LifeEndDef();
         public CycleDef Cycle = new CycleDef();
         public InnDef Inn = new InnDef();
+        /// <summary>모드와 열리는 시점(기획서 7장 '모드'). Meta.Modes.</summary>
+        public List<ModeDef> Modes = new List<ModeDef>();
 
         public RegionDef Region(string id) => Regions.First(r => r.Id == id);
         public SectDef Sect(string id) => Sects.First(s => s.Id == id);
@@ -33,6 +35,23 @@ namespace BloodRain.Core.Data
     }
 
     /// <summary>청운객잔 시설(cheonha.json inn, 기획서 10장 '객잔 시설').</summary>
+    public sealed class ModeDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        public ModeRequireDef Require = new ModeRequireDef();
+    }
+
+    public sealed class ModeRequireDef
+    {
+        /// <summary>서장을 마쳐야 한다.</summary>
+        public bool Prologue;
+        /// <summary>봉인석을 이만큼 가져야 한다(한 번 열리면 회귀로 봉인석이 지워져도 닫히지 않는다).</summary>
+        public int SealStones;
+        /// <summary>이 엔딩(Soul.EndingSeal 등)을 한 번 봐야 한다.</summary>
+        public string? Ending;
+    }
+
     public sealed class InnDef
     {
         public List<FacilityDef> Facilities = new List<FacilityDef>();

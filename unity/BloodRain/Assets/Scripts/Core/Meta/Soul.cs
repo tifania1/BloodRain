@@ -143,6 +143,8 @@ namespace BloodRain.Core.Meta
         public int BloodCrystal { get; }
         /// <summary>이번 정산으로 새로 열린 객잔 시설 id(조건만 갖추면 열리는 것. 짓는 시설은 Inn.Buildable).</summary>
         public IReadOnlyList<string> NewFacilities { get; internal set; } = Array.Empty<string>();
+        /// <summary>이번 생으로 처음 열린 모드(Meta.Modes, 기획서 7장 '모드').</summary>
+        public IReadOnlyList<string> NewModes { get; internal set; } = Array.Empty<string>();
         /// <summary>이번 생으로 새로 채운 도전 과제 해금 토큰(kills_5000_one_run 같은 것, 데이터 순서). 정산 화면이 '음공을 얻었다'처럼 띄운다.</summary>
         public IReadOnlyList<string> NewUnlocks { get; internal set; } = Array.Empty<string>();
 
@@ -455,6 +457,7 @@ namespace BloodRain.Core.Meta
                 case EndingTrue: JourneyOver = true; break;
                 default: throw new InvalidOperationException($"모르는 엔딩입니다: {ending}");
             }
+            Modes.Refresh(this);
         }
 
         // ---- 장경각 비급(기획서 10·20장) ----
@@ -551,6 +554,7 @@ namespace BloodRain.Core.Meta
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
             {
                 NewFacilities = Inn.Refresh(this),
+                NewModes = Modes.Refresh(this),
                 NewUnlocks = newUnlocks,
             };
         }
