@@ -72,7 +72,7 @@
    - 모양이 무엇인지 안 읽힌다.
    - 그림체가 수묵과 동떨어졌다.
    - 그어짐 방향이 이상하다.
-8. **올리기.** `dotnet test` 가 통과하면 커밋·푸시한다. daily 에는 몇 장 뽑았고 몇 장 떨어졌는지를 한 줄로 적는다.
+8. **올리기.** 원화는 Unity 가 meta 를 만든 뒤 `python tools/fix_art_meta.py` 로 Sprite 설정을 맞춘다(B-12, 안 하면 `ArtMetaTests` 가 막는다). `dotnet test` 가 통과하면 커밋·푸시한다. daily 에는 몇 장 뽑았고 몇 장 떨어졌는지를 한 줄로 적는다.
 
 ## 적용 (Unity)
 

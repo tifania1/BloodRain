@@ -18,7 +18,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] B-10 `[U]` 2026-10-30 — PC Unity 세션: 패키지 넷 확인, Boot·Run·Inn 씬(Bootstrap 메뉴), Sim·Platform·Presentation·Editor asmdef, 입력 처리 Both
 - [x] B-11 `[U]` 2026-10-30 — PC Unity 세션: `Presentation/DataBoot.cs`, Boot 씬 플레이 때 파일 12개·무공 16종 확인. 뒤따라 Prologue·Life·FinalFight 의 CS8632 경고 6개를 `#nullable enable` 로 없애고 CI에 nullable 끈 빌드 단계를 넣음
 - [x] B-13 2026-10-28 — 인트로 컷 이미지 12장을 기획서 원본 19장 '컷 이미지'에 컷 순서대로 붙임
-- [ ] B-12 아트 시험 이미지 반영 확인(art_queue의 M0 항목 6개가 imported 되면 Sprite 설정 점검)
+- [x] B-12 2026-11-05 — 들어온 원화 meta 가 전부 Default 텍스처였다(기획서의 AssetPostprocessor 는 없었음). `tools/fix_art_meta.py` 로 7장(시강·혈강시·지형 소품·마당 타일·지도·침방 바탕·소림 산문)을 Sprite 로 바꾸고 `ArtMetaTests` 가 막음. postprocess_art.py 끝에서도 돌림. 동갑시는 아직 todo, 들어오면 같은 길. Unity 에서 다시 들여오는 확인은 unity_tasks B-12
 - [x] P-01 2026-10-28 — 웹 프로토타입(`web/prototype/`, 1장 숭산 소림 + 원각). 데이터 JSON을 그대로 읽는다. 공개 주소 https://bloodrain-proto.pages.dev
 - [x] V-00 2026-10-28 — 무공 비주얼 시안(`web/lookdev/samjae.html`, 삼재검법 1단~절기)과 단계 규칙 `docs/design/vfx.md`
 - [x] S-00 2026-10-28 — 시너지 설계(기획서 20장)와 `synergies.json`(연환 16·진전 9문파·비전 8·기연 8), 무결성 테스트 5개

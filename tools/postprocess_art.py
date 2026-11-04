@@ -191,6 +191,10 @@ def main() -> int:
     if not args.dry_run:
         QUEUE.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     print(f"{done}개 반영")
+    if not args.dry_run:
+        # Unity 가 이미 meta 를 만들어 둔 그림은 Sprite 로 맞춘다. 새 그림은 Unity 가 meta 를 만든 뒤 한 번 더 돌린다.
+        import fix_art_meta
+        fix_art_meta.main()
     return 0
 
 

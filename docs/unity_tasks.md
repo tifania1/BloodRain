@@ -477,6 +477,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 열 장면 모두 10장씩(사람이 고름)
   - 찍기: `docs/unity_shots/ST-03/<no>_<id>/`
 
+- [ ] B-12U 원화 Sprite 다시 들여오기 확인(2026-11-05 클라우드 B-12)
+  - 할 것: 클라우드가 meta 값만 바꾼 원화 7장(Enemies 둘, Props, Tiles, Map, Backgrounds, Cards)을 Unity 가 Sprite 로 다시 들여오는지 본다. spriteID 가 빈 칸이라 Unity 가 채워 meta 를 다시 쓴다(그 변경은 커밋).
+  - 쓸 것: `tools/fix_art_meta.py`(규칙은 머리글), 테스트 `ArtMetaTests`
+  - 끝: 시강·혈강시가 Run 씬에서 SpriteRenderer 로 1.28m(PPU 100) 크기, 마당 타일이 이어 깔림. 크기가 몸(1m 안팎)과 안 맞으면 PPU 를 바꾸지 말고 daily 에 적는다(기획서 13장 숫자라 사람 몫)
+  - 찍기: `docs/unity_shots/B-12/`
+
 ### 옮겨서 닫은 것(2026-11-04 UT-01)
 - [x] S-04 2026-11-04 — 레벨업 띠·인장·HUD 인장·발견 연출·장경각·정산 찢긴 비급은 이미 끝(옛 줄 원문). 남은 것을 S-04a(NoteSynergy)·S-04b(기록 알리기·기연 배치)로 옮김. 장경각을 객잔에 붙이는 것은 RM-03b·A-07
 - [x] C-06 2026-11-04 — 레벨업 화면·다시 고르기·파기·정진·행낭 카드는 끝(옛 줄 원문). 남은 '몸에 능력치 얹기'를 C-06a·C-06b·C-06c 로 쪼갬
