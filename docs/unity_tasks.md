@@ -477,7 +477,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 열 장면 모두 10장씩(사람이 고름)
   - 찍기: `docs/unity_shots/ST-03/<no>_<id>/`
 
-- [ ] B-12U 원화 Sprite 다시 들여오기 확인(2026-11-05 클라우드 B-12)
+- [ ] B-12U 원화 Sprite 다시 들여오기 확인(2026-11-05 클라우드 B-12) (진행: 2026-11-05 00:55 PC — 7장 모두 Sprite/Single/PPU 100, 밉맵·Repeat 규칙대로 들어옴, Unity 가 채운 spriteID 커밋. 남은 것: Run 씬에서 시강·혈강시 크기·마당 타일 깔림 보기. 다만 지금 적은 ClusterRenderer 덩이로 그려 원화 Sprite 를 쓰는 코드가 아직 없다 — 붙이는 일이 따로 필요한지 클라우드가 정할 것)
   - 할 것: 클라우드가 meta 값만 바꾼 원화 7장(Enemies 둘, Props, Tiles, Map, Backgrounds, Cards)을 Unity 가 Sprite 로 다시 들여오는지 본다. spriteID 가 빈 칸이라 Unity 가 채워 meta 를 다시 쓴다(그 변경은 커밋).
   - 쓸 것: `tools/fix_art_meta.py`(규칙은 머리글), 테스트 `ArtMetaTests`
   - 끝: 시강·혈강시가 Run 씬에서 SpriteRenderer 로 1.28m(PPU 100) 크기, 마당 타일이 이어 깔림. 크기가 몸(1m 안팎)과 안 맞으면 PPU 를 바꾸지 말고 daily 에 적는다(기획서 13장 숫자라 사람 몫)
