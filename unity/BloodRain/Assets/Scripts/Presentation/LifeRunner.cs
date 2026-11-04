@@ -138,6 +138,8 @@ namespace BloodRain.Presentation
             {
                 weapons.cooldownReduction = st.CooldownReduction;
                 weapons.areaMultiplier = st.Area;
+                weapons.extraAmount = st.Amount;
+                weapons.durationMultiplier = st.Duration;
             }
         }
 
@@ -173,10 +175,9 @@ namespace BloodRain.Presentation
         /// <summary>한 생을 끝내고 혼에 옮겨 저장한 뒤 정산을 연다. 정산이 끝나면 객잔(Inn) 씬.</summary>
         public void EndLife(string way)
         {
-            var levelUp = FindFirstObjectByType<LevelUpScreen>();
-            int silver = levelUp != null ? levelUp.Silver : 0;
+            // 은자는 한 생의 지갑(Life.Silver)으로 정산한다(C-06a). 행낭 카드가 GainSilver 로 넣는다
             var soul = RebirthHandoff.Soul;
-            var record = _life.End(way, silver);
+            var record = _life.End(way);
             var summary = soul.EndLife(record);
             SoulStore.Save(soul);
             RebirthHandoff.ClearBody();

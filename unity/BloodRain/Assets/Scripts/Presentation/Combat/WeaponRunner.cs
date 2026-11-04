@@ -13,7 +13,8 @@ namespace BloodRain.Presentation.Combat
     //   피해 = Core WeaponMath.DamageAt(무공, 레벨). 사거리·속도·넉백은 경지 m → WorldScale 세계 m.
     //   쿨다운은 Core WeaponGrowth.Cooldown(쿨다운 0 인 독무는 tickSeconds 마다 초당 피해 x tickSeconds, 섬광지는 초당 4→9발).
     //   레벨 성장(연타·개수·관통·범위·새 동작)은 WeaponGrowth, 탄속·반경·수명·넉백·간격은 WeaponDef(weapons.json) 에서 읽는다(C-04b).
-    //   능력치는 LifeRunner 가 넣는 cooldownReduction·areaMultiplier 만 쓴다(C-06a). 개수·지속은 아직 1.
+    //   능력치는 LifeRunner 가 넣는다(C-06a): 쾌속 cooldownReduction, 범위 areaMultiplier, 개수 extraAmount(비도·벽력탄·뇌부 개수에 더함),
+    //   지속 durationMultiplier(장풍 수명, 기획서 9장 '장풍 수명은 지속').
     // 처음 8갈래: front_arc(삼재검법), melee_combo(나한권), orbit_slash(창천검기), aura(독무),
     //   homing_dagger(비도술), slow_projectile(장풍), random_rapid(섬광지), random_bomb(벽력탄).
     // 아직 없는 것: 절기(evolved) 모양, 중독·화상·느려짐 같은 적 상태, 넉백 저항.
@@ -23,9 +24,11 @@ namespace BloodRain.Presentation.Combat
     public sealed class WeaponRunner : MonoBehaviour
     {
         // C-06a 몸 능력치(StatSheet). LifeRunner 가 넣는다. 쾌속은 쿨다운에, 범위는 휘두르는 반경·폭발 반경에 곱한다.
-        // 개수·지속(연무장 몫 포함)은 무공마다 쓰는 자리가 달라 아직 안 얹음(C-06a 진행).
+        // 개수는 여러 개를 쏘는 무공(비도술·벽력탄·뇌부)의 개수에 더하고, 지속은 장풍 수명에 곱한다(연무장 몫은 StatSheet 에 이미 들어 있음).
         [NonSerialized] public float cooldownReduction;
         [NonSerialized] public float areaMultiplier = 1f;
+        [NonSerialized] public int extraAmount;
+        [NonSerialized] public float durationMultiplier = 1f;
 
         [Serializable]
         public sealed class Slot
@@ -307,7 +310,7 @@ namespace BloodRain.Presentation.Combat
                 case "homing_dagger":
                 {
                     // 비도: 가까운 적 n 명에게(projectiles 1→4), 관통 1→3, 탄속·반경·수명·따라가기는 shot(12·0.25·1.2·6)
-                    int n = WeaponGrowth.Projectiles(s.Def, s.level);
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
                     int pierce = WeaponGrowth.Pierce(s.Def, s.level);
                     var shot = ShotOf(s);
                     float kb = ws.Speed(Knock(s));
@@ -335,7 +338,7 @@ namespace BloodRain.Presentation.Combat
                         Later(k * gap, () =>
                         {
                             float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier);
-                            Shoot(s, Mathf.Atan2(player.Facing.y, player.Facing.x), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds, 0, shot.Homing, kb,
+                            Shoot(s, Mathf.Atan2(player.Facing.y, player.Facing.x), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds * durationMultiplier, 0, shot.Homing, kb,
                                   new Color(0.95f, 0.85f, 0.55f, 0.55f));
                         });
                     break;
@@ -357,7 +360,7 @@ namespace BloodRain.Presentation.Combat
                     // 벽력탄: 7m 안 가까운 20명 가운데 무작위 자리(없으면 둘레 4m)에 0.6초 뒤 터짐, 반경 2→3m, 넉백 3.
                     // 개수 projectiles, 거리 seekRange, 퓨즈 fuseSeconds, 반경 range x areaLv8, 넉백 knockback(weapons.json).
                     // 화상(burnPerSecond·burnSeconds)은 적 상태 칸이 붙을 때(C-04 남은 것)
-                    int n = WeaponGrowth.Projectiles(s.Def, s.level);
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
                     NearestN(ws.Length(s.Def.SeekRange ?? 7f), 20, _targets);
                     float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier);
                     float fuse = s.Def.FuseSeconds ?? 0.6f, kb = ws.Speed(Knock(s));
@@ -385,8 +388,8 @@ namespace BloodRain.Presentation.Combat
                     // 뇌부(W-01, 기획서 9장 '날아가는 것과 넉백'): range(9m) 안 서로 다른 적 projectiles(2→5) 곳에 바닥 표식,
                     // fuseSeconds(0.4초) 뒤 반경 strikeRadius(1.2m) 안을 친다. 넉백 0. 적이 없으면 쓰지 않는다(쿨다운도 안 씀).
                     // Lv5 '감전'부터 맞은 적이 shockSeconds(0.5초) 멈춘다. 보스(땅의 주인)는 EnemyField 무리에 없으니 따로 막을 것이 없다 —
-                    // 보스가 무리에 들어오면 여기서 거른다. 연무장 개수·범위는 Life 가 붙을 때(C-06 남은 것)
-                    int n = WeaponGrowth.Projectiles(s.Def, s.level);
+                    // 보스가 무리에 들어오면 여기서 거른다. 연무장 개수는 extraAmount 로 더함(C-06a)
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
                     NearestN(ws.Length(s.Def.Range), 40, _targets);
                     if (_targets.Count == 0) { s.Fired--; return false; }
                     // 가까운 40 가운데 서로 다른 n 을 무작위로(부분 섞기)

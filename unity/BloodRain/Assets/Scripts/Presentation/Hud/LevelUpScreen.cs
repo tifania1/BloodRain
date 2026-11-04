@@ -29,7 +29,7 @@ namespace BloodRain.Presentation.Hud
         public OrbLayer orbs;
         public WeaponRunner weapons;
         public PlayerVitals vitals;
-        /// <summary>행낭 카드로 받은 은자(시험용 자리). Life 가 Run 씬에 붙으면(C-10) 그쪽 은자에 더한다.</summary>
+        /// <summary>행낭 카드로 받은 은자(한 생이 없는 시험 씬 자리). 한 생이 있으면 Life.GainSilver 로 간다(C-06a).</summary>
         public int Silver { get; private set; }
 
         static readonly Color Dim = new Color(0.05f, 0.04f, 0.04f, 0.72f);
@@ -162,7 +162,10 @@ namespace BloodRain.Presentation.Hud
             {
                 // 행낭 카드: 은자와 기혈을 함께(balance.json levelUp.fallbackCard, 회복에 음식 배율은 안 곱함).
                 var fc = _data.Balance.LevelUp.FallbackCard;
-                Silver += fc.Silver;
+                // 한 생이 있으면 그 지갑으로(C-06a, 혈월 배율은 GainSilver 가 곱함), 없으면(시험 씬) 여기 자리에
+                var life = LifeRunner.Instance != null ? LifeRunner.Instance.Life : null;
+                if (life != null) life.GainSilver(fc.Silver);
+                else Silver += fc.Silver;
                 if (vitals == null) vitals = FindFirstObjectByType<PlayerVitals>();
                 if (vitals != null) vitals.Heal(fc.Heal);
             }
