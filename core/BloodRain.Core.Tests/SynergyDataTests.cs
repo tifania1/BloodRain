@@ -67,6 +67,56 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        /// <summary>'열 배', '세 번' 같은 우리말 수를 숫자로 바꾼 뒤 글 속 숫자를 모은다. 기획서 칸과 데이터 desc 는 말투가 달라도 숫자는 같아야 한다.</summary>
+        static List<string> Numbers(string text)
+        {
+            var words = new Dictionary<string, string> { ["열여덟"] = "18", ["다섯"] = "5", ["열"] = "10", ["한"] = "1", ["하나"] = "1",
+                ["두"] = "2", ["둘"] = "2", ["세"] = "3", ["셋"] = "3", ["네"] = "4", ["넷"] = "4" };
+            text = Regex.Replace(text, @"(?<![가-힣])(열여덟|다섯|하나|한|두|둘|세|셋|네|넷|열)\s?(번|배|장|대)", m => words[m.Groups[1].Value] + m.Groups[2].Value);
+            return Regex.Matches(text, @"\d+(\.\d+)?").Select(m => m.Value).OrderBy(x => x, System.StringComparer.Ordinal).ToList();
+        }
+
+        /// <summary>능력치 값을 기획서 표기로(비율은 %, 호신 같은 정수는 +n).</summary>
+        static string StatText(string stat, float v) =>
+            stat == "Armor" ? $"+{v:0}" : $"{(v * 100).ToString("0.#", CultureInfo.InvariantCulture)}%";
+
+        [Fact] public void 기획서_20장_진전_표가_schools_와_같다()
+        {
+            var rows = TestData.GddTable(TestData.GddSection("진전(眞傳) 9문파"));
+            Assert.Equal(S.Schools.Count, rows.Count);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                var sc = S.Schools[i];
+                Assert.Equal($"{sc.NameKo} 「{sc.Motto}」", row[0]);
+                var names = sc.Members.Select(id => _d.Weapons.FirstOrDefault(w => w.Id == id)?.NameKo ?? _d.Passive(id).NameKo);
+                Assert.Equal(string.Join(", ", names), row[1]);
+
+                // 칸: 2개, 3개, 4·5개. 4·5 칸은 'n: 설명', 없으면 —.
+                var cells = new Dictionary<int, string>();
+                if (row[2] != "—") cells[2] = row[2];
+                if (row[3] != "—") cells[3] = row[3];
+                if (row[4] != "—")
+                {
+                    var m = Regex.Match(row[4], @"^([45]): (.+)$");
+                    Assert.True(m.Success, $"{sc.NameKo} 4·5개 칸은 'n: 설명' 꼴이어야 한다: {row[4]}");
+                    cells[int.Parse(m.Groups[1].Value)] = m.Groups[2].Value;
+                }
+                Assert.Equal(sc.Tiers.Select(t => t.Count), cells.Keys.OrderBy(k => k));
+
+                foreach (var t in sc.Tiers)
+                {
+                    var cell = cells[t.Count];
+                    var where = $"{sc.NameKo} {t.Count}단계";
+                    Assert.True(Numbers(cell).SequenceEqual(Numbers(t.Desc)),
+                        $"{where}: 기획서 숫자 [{string.Join(",", Numbers(cell))}] ↔ desc 숫자 [{string.Join(",", Numbers(t.Desc))}]");
+                    foreach (var kv in t.Stats) Assert.True(cell.Contains(StatText(kv.Key, kv.Value)), $"{where}: {kv.Key} {StatText(kv.Key, kv.Value)} 가 기획서 칸에 없음");
+                    if (t.HarmonyRange is int hr) Assert.Contains($"±{hr}", cell);
+                    if (t.ChestUpgrades > 0) Assert.Contains(t.ChestUpgrades == 1 ? "하나 더" : $"{t.ChestUpgrades}", cell);
+                }
+            }
+        }
+
         [Fact] public void 문파의_출발_캐릭터는_그_문파_무공으로_시작한다()
         {
             foreach (var sc in S.Schools.Where(s => s.Character != null))
