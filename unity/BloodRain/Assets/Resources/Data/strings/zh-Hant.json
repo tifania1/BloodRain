@@ -530,6 +530,7 @@
   "ui.yinyang.yang": "陽",
   "ui.yinyang.yin": "陰",
   "ui.yinyang.extreme": "極{0}",
+  "ui.yinyang.cut": "截斷逆流",
   "ui.merchant.title": "貨郎",
   "ui.merchant.sub": "過路的商販攤開了貨擔",
   "ui.merchant.silver": "銀兩 {0}",

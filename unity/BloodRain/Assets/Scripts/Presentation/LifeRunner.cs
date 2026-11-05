@@ -88,7 +88,33 @@ namespace BloodRain.Presentation
 
         void OnDashed()
         {
-            if (_life != null && _life.Record == null) _life.Log.Dash();
+            if (_life == null || _life.Record != null) return;
+            _life.Log.Dash();
+            _life.Backlash.OnDash(); // C-08b 역류 시작 1초 안이면 끊김(Canceled)
+        }
+
+        // ---- C-08b 기혈역류 ----
+        // Life.Tick 이 Backlash.Tick 을 이미 부른다. 여기선 사건만 받는다: 끝까지 버티면 최대 기혈 5% 피해(호신은 빼지 않음 —
+        // 웹처럼 호신만큼 더해 넘긴다), 끊으면 비전 기록(역천 판정, SecretWatch). 걸음 배율은 Update 에서, 화면 맥동·바늘은 YinYangHud.
+        SecretWatch _secrets;
+
+        void HookBacklash()
+        {
+            var b = _life.Backlash;
+            _secrets = FindFirstObjectByType<SecretWatch>();
+            b.Started += () => Debug.Log("[LifeRunner] 기혈역류 시작");
+            b.Ended += () =>
+            {
+                if (vitals != null) vitals.Hit(b.EndDamage(vitals.MaxHealth) + vitals.armor);
+                if (_secrets != null && _secrets.Record != null) _secrets.Record.MissBacklash();
+                Debug.Log("[LifeRunner] 기혈역류를 끝까지 맞음");
+            };
+            b.Canceled += () =>
+            {
+                if (_secrets != null && _secrets.Record != null) { _secrets.Record.CutBacklash(); _secrets.Poke(); }
+                _popups.Add((player != null ? (Vector2)player.position : Vector2.zero, Loc.T("ui.yinyang.cut"), Time.unscaledTime));
+                Debug.Log($"[LifeRunner] 기혈역류 끊음 · 연속 {b.CancelStreak}");
+            };
         }
 
         void Start()
@@ -111,6 +137,7 @@ namespace BloodRain.Presentation
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
             _edges = FindFirstObjectByType<BloodRain.Presentation.Fx.EdgeIndicators>();
             if (_edges != null) _edges.Bind(_life.Bosses);
+            HookBacklash();
             SyncScale();
         }
 
@@ -321,6 +348,10 @@ namespace BloodRain.Presentation
             TickInsights(dt);
             _statTimer -= Time.unscaledDeltaTime;
             if (_statTimer <= 0f) { _statTimer = 0.25f; ApplyStats(); }
+            // C-08b 역류 중 걸음 x0.5(매 프레임, 능력치 걸음에 곱함)
+            if (_pc != null && Stats != null) _pc.MoveMultiplier = Stats.MoveSpeed * _life.Backlash.MoveSpeedMultiplier;
+            // 비전 '역천'(세 번 연달아 끊기)을 얻으면 그 생 동안 역류가 다시 오지 않는다
+            if (!_life.Backlash.Immune && _secrets != null && _secrets.Found.Any(s => s.Id == "yeokcheon")) _life.Backlash.Immune = true;
             if (breakthrough == null || !breakthrough.IsPlaying) SyncScale();
         }
 

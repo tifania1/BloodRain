@@ -234,7 +234,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 양 무공만 고르면 문양이 기울고 극단 띠에서 색이 바뀜
   - 찍기: `docs/unity_shots/C-08/` 의 `yinyang.png`
 
-- [ ] C-08b 기혈역류 연출 · 먼저: C-08a
+- [x] C-08b 기혈역류 연출 · 먼저: C-08a — 2026-11-06 03:00 PC: Life.Tick 이 이미 Backlash.Tick 을 부르니 LifeRunner 는 사건만 받음 — 끝까지 맞으면 `EndDamage(최대 기혈)`(호신만큼 더해 Hit, 웹과 같음)·`MissBacklash`, 경공(PlayerController.Dashed)이면 `Backlash.OnDash()`, 끊으면 `RunRecord.CutBacklash`·SecretWatch.Poke·'역류를 끊다' 글자(`ui.yinyang.cut` 네 언어), 걸음은 매 프레임 능력치 걸음 × MoveSpeedMultiplier. 역천을 얻으면 `Backlash.Immune`. YinYangHud 에 화면 가장자리 핏빛 맥동(끊기 창 동안 빠르게)과 극성일 때 문양 둘레 바늘(다음 역류까지 한 바퀴). 게이지 85 + 역류 직전까지 시간을 넣어 역류 시작 → 걸음 x0.5, 끝까지 맞음 로그, 세 번 연달아 끊기 → 연속 3, 레벨업 화면을 닫자 비전 '역천' 발견. 콘솔 에러 0. 찍음 `docs/unity_shots/C-08/` 의 `backlash.png`(레벨업 카드 뒤로 가장자리 붉음)
   - 할 것: 극단에 머물면 역류 — 걸음 × `Backlash.MoveSpeedMultiplier`, 화면 가장자리 핏빛 맥동, 다음 역류 예고 `SecondsUntilNext` 를 문양 둘레 바늘로, 끊기 창 `CanCancel` 동안 경공으로 끊으면 SecretWatch 기록에 역류 끊기 알림(S-04 '역천').
   - 쓸 것: Core `Combat/Backlash.cs`, `Life.Backlash`, `RunRecord`(SecretWatch)
   - 메뉴: 없음

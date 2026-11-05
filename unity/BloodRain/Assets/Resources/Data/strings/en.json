@@ -530,6 +530,7 @@
   "ui.yinyang.yang": "Yang",
   "ui.yinyang.yin": "Yin",
   "ui.yinyang.extreme": "Extreme {0}",
+  "ui.yinyang.cut": "Backlash Cut",
   "ui.merchant.title": "Peddler",
   "ui.merchant.sub": "A wandering trader lays out his wares",
   "ui.merchant.silver": "Silver {0}",

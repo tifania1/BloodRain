@@ -23,7 +23,8 @@ namespace BloodRain.Presentation.Hud
         static readonly Color Blood = new Color32(170, 22, 20, 255);
 
         RectTransform _root, _symbol;
-        Image _ring;
+        Image _ring, _vignette, _needle;
+        RectTransform _needlePivot;
         TextMeshProUGUI _label;
         float _angle;
 
@@ -42,6 +43,11 @@ namespace BloodRain.Presentation.Hud
             sc.matchWidthOrHeight = 0.5f;
             _root = (RectTransform)go.transform;
 
+            // C-08b 역류 중 화면 가장자리 핏빛 맥동(가운데가 빈 둥근 그러데이션)
+            var vig = Sprite.Create(BakeVignette(128), new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+            _vignette = Img(_root, "역류 맥동", vig, new Color(0.6f, 0.03f, 0.02f, 0f));
+            var vr = _vignette.rectTransform; vr.anchorMin = Vector2.zero; vr.anchorMax = Vector2.one; vr.offsetMin = vr.offsetMax = Vector2.zero;
+
             var circle = Sprite.Create(BakeDisc(128), new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
             _ring = Img(_root, "테두리", circle, Gold);
             Place(_ring.rectTransform, new Vector2(110, 160), 150);
@@ -49,6 +55,14 @@ namespace BloodRain.Presentation.Hud
             var sym = Img(_root, "태극", taiji, Color.white);
             _symbol = sym.rectTransform;
             Place(_symbol, new Vector2(110, 160), 136);
+            // C-08b 다음 역류 예고 바늘: 극성에 머무는 동안 문양 둘레를 한 바퀴 돌면 역류
+            var pivot = new GameObject("바늘 축", typeof(RectTransform)).GetComponent<RectTransform>();
+            pivot.SetParent(_root, false);
+            Place(pivot, new Vector2(110, 160), 0);
+            _needlePivot = pivot;
+            _needle = Img(pivot, "바늘", null, Blood);
+            var nr = _needle.rectTransform; nr.anchorMin = nr.anchorMax = new Vector2(0.5f, 0.5f); nr.pivot = new Vector2(0.5f, 0f);
+            nr.anchoredPosition = new Vector2(0, 64); nr.sizeDelta = new Vector2(6, 22);
 
             var t = new GameObject("값", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
             t.transform.SetParent(_root, false);
@@ -87,6 +101,24 @@ namespace BloodRain.Presentation.Hud
             if (band == YinYangBand.Extreme) name = Loc.F("ui.yinyang.extreme", name);
             _label.text = $"{name} <size=80%>{gauge.Value:+0;-0;0} · ±{gauge.HarmonyRange}</size>";
             _label.color = c;
+
+            // C-08b 기혈역류: 바늘(극성일 때만, 다음 역류까지), 역류 중엔 화면 가장자리 맥동. 끊기 창 동안 더 빠르게
+            var b = lr.Life.Backlash;
+            var ext = def.Extreme;
+            bool showNeedle = band == YinYangBand.Extreme && !b.Immune;
+            _needle.enabled = showNeedle;
+            if (showNeedle)
+            {
+                float t = ext.BacklashIntervalSeconds > 0f ? 1f - b.SecondsUntilNext / ext.BacklashIntervalSeconds : 0f;
+                _needlePivot.localEulerAngles = new Vector3(0, 0, -t * 360f);
+            }
+            float a = 0f;
+            if (b.IsActive)
+            {
+                float speed = b.CanCancel ? 18f : 7f;
+                a = 0.35f + 0.3f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * speed));
+            }
+            var vc = _vignette.color; vc.a = Mathf.MoveTowards(vc.a, a, Time.unscaledDeltaTime * 3f); _vignette.color = vc;
         }
 
         static Image Img(Transform parent, string name, Sprite s, Color c)
@@ -103,6 +135,24 @@ namespace BloodRain.Presentation.Hud
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos;
             rt.sizeDelta = new Vector2(size, size);
+        }
+
+        // 가운데가 비고 가장자리로 갈수록 짙어지는 판(화면 비율로 늘려 쓴다)
+        static Texture2D BakeVignette(int n)
+        {
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float fx = (x + 0.5f) / n * 2f - 1f, fy = (y + 0.5f) / n * 2f - 1f;
+                    float d = Mathf.Sqrt(fx * fx + fy * fy) / 1.4142f;
+                    float v = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 1f, d));
+                    px[y * n + x] = new Color32(255, 255, 255, (byte)(v * 255));
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return tex;
         }
 
         // 꽉 찬 원(테두리 판). 가장자리 1.5칸을 부드럽게
