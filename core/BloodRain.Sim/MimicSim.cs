@@ -221,8 +221,11 @@ namespace BloodRain.Sim
 
             sb.AppendLine("## 읽는 법");
             sb.AppendLine();
-            sb.AppendLine($"- 지금 값이면 분신이 너무 아프다. 맨몸 가장 센 조합이 초당 {F1(sMax)}, 가장 약한 조합도 {F1(wMax)}로 30분 보스 패턴 한 바퀴 초당 {F1(bossDps)}의 {F1(sMax / bossDps)}배 · {F1(wMax / bossDps)}배다. 다 맞는다는 위쪽 값이지만 열에 하나만 맞아도 패턴보다 세다.");
-            sb.AppendLine("- 까닭: 플레이어 무공 피해는 무리와 보스 체력(수백~수천)을 깎도록 맞춰져 있고 몸 기혈은 100 안팎이다. 같은 숫자를 절반만 줄여 몸에 넣으면 단위가 맞지 않는다.");
+            if (sMax / bossDps > 5)
+                sb.AppendLine($"- 지금 값이면 분신이 너무 아프다. 맨몸 가장 센 조합이 초당 {F1(sMax)}, 가장 약한 조합도 {F1(wMax)}로 30분 보스 패턴 한 바퀴 초당 {F1(bossDps)}의 {F1(sMax / bossDps)}배 · {F1(wMax / bossDps)}배다. 다 맞는다는 위쪽 값이지만 열에 하나만 맞아도 패턴보다 세다.");
+            else
+                sb.AppendLine($"- 지금 값({boss.DamageScale}, 2026-11-05 사람이 backlog C-14 추천대로 정함)이면 맨몸 가장 센 조합이 초당 {F1(sMax)}, 가장 약한 조합은 {F1(wMax)}로 30분 보스 패턴 한 바퀴 초당 {F1(bossDps)}의 {F1(sMax / bossDps)}배 · {F1(wMax / bossDps)}배다. 다 맞는다는 위쪽 값이라 실제로는 패턴과 비슷한 무게다.");
+            sb.AppendLine("- 까닭: 플레이어 무공 피해는 무리와 보스 체력(수백~수천)을 깎도록 맞춰져 있고 몸 기혈은 100 안팎이다. 같은 숫자를 절반만 줄여 몸에 넣으면 단위가 맞지 않았다(옛 값 0.5).");
             sb.AppendLine($"- 호신 최대({F0(aMax)})에서 작은 타를 여러 번 넣는 무공(나한권·태극검·섬광지 등)은 대마다 최소 피해까지 깎여 크게 약해진다. 한 방이 큰 무공은 덜 깎인다. '빌드의 약점을 그대로 갖는다'는 취지와는 맞는 방향이다.");
             {
                 var cur = Dps(data, topStart, max, mob, 0);

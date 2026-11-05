@@ -57,7 +57,7 @@ namespace BloodRain.Core.Tests
             {
                 var w = _d.Weapon(m.WeaponId);
                 Assert.Equal(l.Weapons[m.WeaponId], m.Level);
-                Assert.Equal(WeaponMath.DamageAt(w, m.Level) * 0.5f, m.Damage, 4);
+                Assert.Equal(WeaponMath.DamageAt(w, m.Level) * Mirror.Mimic!.DamageScale, m.Damage, 4);
                 Assert.Equal(WeaponGrowth.Cooldown(w, m.Level), m.Cooldown, 4);
             }
         }
@@ -130,8 +130,8 @@ namespace BloodRain.Core.Tests
             Assert.NotNull(Clone.Mimic);
             Assert.False(Clone.Mimic!.AllWeapons);
             var row = GddTable(GddSection("혈영회주 혁련휘")).Single(r => r[0] == "혈영 분신");
-            Assert.Equal(0.5f, Mirror.Mimic!.DamageScale);
-            Assert.Contains("피해 절반", row[4]);
+            Assert.Equal(0.05f, Mirror.Mimic!.DamageScale);
+            Assert.Contains("피해 0.05배", row[4]);
             Assert.Equal(1f, Mirror.Mimic.CooldownScale);
             Assert.Contains("쿨다운 그대로", row[4]);
             Assert.Contains($"{Num(Mirror.LeaveSeconds)}초 뒤 사라진다", row[4]);

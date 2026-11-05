@@ -489,7 +489,7 @@
           "summon": "blood_shadow_clone",
           "center": "boss",
           "leaveSeconds": 12,
-          "mimic": { "damageScale": 0.5, "cooldownScale": 1, "allWeapons": true },
+          "mimic": { "damageScale": 0.05, "cooldownScale": 1, "allWeapons": true },
           "baseDamage": 0
         }
       ],
