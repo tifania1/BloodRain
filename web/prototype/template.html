@@ -1034,14 +1034,16 @@ function nearestEnemies(x, y, n, maxR, exclude) {
 // 1장 정예 셋. 기혈·걸음·접촉 피해·넉백 저항은 enemies.json 에서, 공격(첫 시각·간격·패턴)은 bosspatterns.json elites 에서.
 const ELITES = Object.fromEntries([['dongin', 'dongin'], ['gyeyul', 'gyeyul_monk'], ['abbot', 'acting_abbot'], ['gangsi_axeman', 'gangsi_axeman']]
   .map(([key, id]) => { const d = E_BY_ID[id], ps = DATA.elitePatterns[id]; return [key, { id, name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] }]; }));
+// 그림 이름: 1장 적은 제 그림, 그림이 아직 없는 다른 땅 고유 적은 혈무사 자리 표시(WP-13c)
+const sprOf = type => type === 'mogin_nahan' ? 'mogin' : type === 'golden_toad' ? 'toad' : KIND_SIZE[type] ? type : 'hyeol_musa';
 function spawnEnemy(type, x, y, extra) {
   const def = E_BY_ID[type];
   const gm = G.gm, mult = B.enemyScaling.chapterMultiplier[isPro() ? 'prologue' : 'chapter1'];
   const hp = def.health * (1 + B.enemyScaling.healthPerMinute * gm) * mult;
   const e = {
-    type, sprite: type === 'mogin_nahan' ? 'mogin' : type === 'golden_toad' ? 'toad' : type,
+    type, sprite: sprOf(type),
     x, y, hp, maxHp: hp, speed: def.speed / 100 * MOVE, dmg: def.contactDamage * (1 + B.enemyScaling.damagePerMinute * gm),
-    r: KIND_SIZE[type === 'mogin_nahan' ? 'mogin' : type === 'golden_toad' ? 'toad' : type] * 0.32,
+    r: KIND_SIZE[sprOf(type)] * 0.32,
     behavior: def.behavior, hop: Math.random(), flash: 0, kbx: 0, kby: 0, contact: 0, stun: 0, slow: 0, poisonT: 0, burn: 0, burnDps: 0,
     // 처치 진기(구슬 값). enemies.json에 아직 없어 프로토타입 값으로 둔다. 잘 풀린 판은 20분에 Lv60을 넘는다(B-07에서 다시 맞출 것).
     xp: { sigang: 1, hyeolin: 1, hyeol_gangsi: 2, hyeol_musa: 3, donggap: 4, mogin_nahan: 3, golden_toad: 0 }[type] ?? 1,
@@ -1612,7 +1614,7 @@ function update(dt) {
       const alive = G.enemies.length;
       const target = G.bossSpawned ? BOSS_TRASH : spawnTarget(G.gm);
       const n = Math.ceil((target - alive) * B.spawnTarget.spawnFractionPerSecond - 1e-4);
-      for (let i = 0; i < n; i++) { const [x, y] = ringPos(); spawnEnemy(pickType(Math.min(G.gm, 19)), x, y); }
+      for (let i = 0; i < n; i++) { const [x, y] = ringPos(); spawnEnemy(localFoe() || pickType(Math.min(G.gm, 19)), x, y); }
     }
   }
   G.lanternAcc += dt;
@@ -2412,7 +2414,7 @@ const HOME_M = HOME_REG ? [HOME_REG.pos[0] * WD.widthMeters, HOME_REG.pos[1] * W
 const toLocal = ([x, y]) => [x * WD.widthMeters - HOME_M[0], y * WD.heightMeters - HOME_M[1]];
 const CH_LAND = (WD.land || []).map(toLocal), CH_RIVERS = (WD.rivers || []).map(r => r.map(toLocal));
 // 봉마곡(final)은 봉인석이 모이기 전엔 보이면 안 되니 지명을 그리지 않는다(천하 시안과 같음)
-const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, x, y }; });
+const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, x, y }; });
 // 소품(WP-12): 천하 시안의 buildProps·propSprite 를 글자 그대로 옮긴 것(같은 시드라 같은 자리에 같은 나무·집·탑·산).
 // 시안 쪽을 고치면 여기도 같이 고친다 — CheonhaLandTests 가 두 판의 본문이 같은지 본다. 좌표는 중원 한 장 절대 미터.
 const CH_PROP = (() => {
@@ -2512,6 +2514,17 @@ function trackChRegion() {
   const r = chRegionAt(G.player.x, G.player.y);
   if (r && r.id !== G.chRegion) { if (G.chRegion) toast(r.nameKo, r.hanja); G.chRegion = r.id; }
   return r;
+}
+// 고유 적(WP-13c 첫 조각): 축척 모드에서 1장 밖 땅에 서면 chapters.json life.localShare(분 → 비율)만큼 그 땅 고유 적을 섞는다.
+// 아직 프로토타입에 없는 동작(water_pull 등)은 그냥 쫓아오고, 그림은 혈무사 자리 표시(sprOf). 동작·그림은 WP-13c 남은 몫.
+const LOCAL_BY = {};
+for (const e of DATA.enemies) if (e.chapter && e.family !== 'elite') (LOCAL_BY[e.chapter] = LOCAL_BY[e.chapter] || []).push(e.id);
+function localFoe() {
+  if (!SCALE_MODE || isPro() || !G.chRegion) return null;
+  const r = CH_REGS.find(x => x.id === G.chRegion), list = r && r.chapter !== 'chapter1' && LOCAL_BY[r.chapter];
+  if (!list) return null;
+  let share = 0; for (const b of DATA.lifeLocalShare || []) if (G.gm >= b.fromMinute) share = b.share;
+  return Math.random() < share ? list[Math.floor(Math.random() * list.length)] : null;
 }
 function drawCheonha() {
   if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;

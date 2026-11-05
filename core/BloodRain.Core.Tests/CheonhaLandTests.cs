@@ -67,6 +67,9 @@ namespace BloodRain.Core.Tests
             // 봉마곡(final)은 지명도 밟은 땅 판정도 빼고, 밟은 땅은 가장 가까운 지역(시안 trackRegion 과 같은 규칙)
             Assert.Contains("filter(r => !r.final)", proto);
             Assert.Contains("function trackChRegion()", proto);
+            // 다른 땅 고유 적은 한 생 비율(chapters.json life.localShare)을 빌드가 넣은 값으로 섞는다
+            Assert.Contains("DATA.lifeLocalShare", proto);
+            Assert.Contains("spawnEnemy(localFoe() || pickType(", proto);
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
             Assert.Contains("\"land\", \"rivers\"", build);
         }
