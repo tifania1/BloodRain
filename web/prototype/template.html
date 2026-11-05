@@ -768,7 +768,11 @@ function ensureAudio() {
 
 // ───────── 캔버스와 스프라이트 ─────────
 const cv = $('cv'), ctx = cv.getContext('2d');
-let VW = 0, VH = 0, DPR = 1, PPM = 40;
+let VW = 0, VH = 0, DPR = 1, PPM = 40, PPM0 = 40;   // PPM0: 화면 크기로 정한 기본 1m 픽셀 수(스프라이트·바닥을 이 크기로 굽는다)
+// 천하 축척(WP-12, 7장): 주소 끝 ?scale=1 이면 서장 밖에서 화면 대각선이 경지를 따라 2.25배씩 넓어진다.
+// '적 한 덩이'(WP-15)가 오기 전엔 적이 작게만 보여 기본은 끈다. 서장은 늘 지금 시야(4장).
+const SCALE_MODE = new URLSearchParams(location.search).get('scale') === '1';
+const WD = DATA.world;
 const sprites = {};
 let groundTile = null, vignette = null;
 
@@ -776,7 +780,7 @@ function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   VW = cv.clientWidth; VH = cv.clientHeight;
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
-  PPM = clamp(Math.min(VH / 16, VW / 9), 30, 58);
+  PPM0 = PPM = clamp(Math.min(VH / 16, VW / 9), 30, 58);
   buildSprites(); buildGround(); buildVignette();
 }
 
@@ -2356,7 +2360,7 @@ function closeOverlay(id, keepPaused) {
 // ───────── 그리기 ─────────
 function drawSprite(name, x, y, scale, flip, white, alpha, squash) {
   const s = sprites[name]; if (!s) return;
-  const w = s.size * scale, h = w * (squash || 1);
+  const w = s.size * scale * (PPM / PPM0), h = w * (squash || 1);
   const sx = (x - G.cam.x) * PPM + VW / 2, sy = (y - G.cam.y) * PPM + VH / 2;
   if (sx < -w || sx > VW + w || sy < -h * 1.5 || sy > VH + h) return;
   ctx.save(); ctx.translate(sx, sy); if (flip) ctx.scale(-1, 1);
@@ -2366,6 +2370,19 @@ function drawSprite(name, x, y, scale, flip, white, alpha, squash) {
   if (white) { ctx.globalAlpha = (alpha == null ? 1 : alpha) * (typeof white === 'number' ? white : 0.6); ctx.drawImage(s.white, -w / 2, -h * 0.82, w, h); }
   ctx.restore();
 }
+// 천하 축척(WP-12): 목표 대각선 = view0 × 2.25^(경지 순번 + 0.35 × 경지 안 진행). 로그 공간에서 부드럽게 따라간다(천하 시안과 같은 식).
+// 경지 순번은 지금 경지(G.realm), 진행은 레벨이 다음 경지 문턱까지 간 몫(balance.json realms). 끄면(또는 서장이면) 화면 크기로 정한 PPM0 그대로.
+function realmProgress() {
+  const t = Math.max(0, REALMS.indexOf(G.realm));   // 돌파 화면을 지나야 다음 경지(G.realm)
+  if (t >= REALMS.length - 1) return t;
+  return t + clamp((G.level - REALMS[t].level) / (REALMS[t + 1].level - REALMS[t].level), 0, 1) * WD.viewInRealmShare;
+}
+function scaleView() {
+  if (!SCALE_MODE || isPro()) { PPM = PPM0; G.viewD = null; return; }
+  const target = WD.view0Meters * Math.pow(WD.scalePerRealm, realmProgress()), now = G.viewD || target;
+  G.viewD = Math.exp(lerp(Math.log(now), Math.log(target), 0.04));
+  PPM = Math.hypot(VW, VH) / G.viewD;
+}
 function wx(x) { return (x - G.cam.x) * PPM + VW / 2; }
 function wy(y) { return (y - G.cam.y) * PPM + VH / 2; }
 
@@ -2373,6 +2390,7 @@ function render() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const p = G.player;
   G.cam.x = lerp(G.cam.x, p.x, 0.18); G.cam.y = lerp(G.cam.y, p.y, 0.18);
+  scaleView();
   // 흔들림: 맞을 때의 작은 떨림 + 각성 때의 큰 흔들림(트라우마 제곱 × 부드러운 잡음). 설정 배율을 따른다.
   const now = performance.now() / 1000, tr = G.cam.trauma * G.cam.trauma, k = settings.shake;
   const shx = (G.cam.shake > 0 ? rand(-1, 1) * G.cam.shake * 10 : 0) * k + tr * 18 * k * (Math.sin(now * 47.3) * 0.6 + Math.sin(now * 91.7 + 1.3) * 0.4);
@@ -2381,7 +2399,7 @@ function render() {
   if (tr > 0 && k > 0) { ctx.translate(VW / 2, VH / 2); ctx.rotate(tr * 0.03 * k * Math.sin(now * 37.1)); ctx.translate(-VW / 2, -VH / 2); }
   const zm = awakenZoom(); if (zm !== 1) { ctx.translate(VW / 2, VH / 2); ctx.scale(zm, zm); ctx.translate(-VW / 2, -VH / 2); }
   // 바닥
-  const T = groundTile.width / DPR, ox = ((-G.cam.x * PPM + VW / 2) % T + T) % T - T, oy = ((-G.cam.y * PPM + VH / 2) % T + T) % T - T;
+  const T = groundTile.width / DPR * (PPM / PPM0), ox = ((-G.cam.x * PPM + VW / 2) % T + T) % T - T, oy = ((-G.cam.y * PPM + VH / 2) % T + T) % T - T;
   for (let x = ox; x < VW; x += T) for (let y = oy; y < VH; y += T) ctx.drawImage(groundTile, x, y, T, T);
   // 먹 자국
   for (const s of G.splats) {

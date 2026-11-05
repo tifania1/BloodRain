@@ -100,6 +100,8 @@ def data_blob() -> str:
         "cutImages": {c["art"]: image_uri(f"{c['art']}.jpg", 960) for c in load("dialogue")["prologue"]["cuts"]
                       if c.get("art") and (CUTS / f"{c['art']}.jpg").exists()},
         "ui": ui_strings(),
+        # 천하 축척(WP-12): 화면 대각선 = view0Meters × scalePerRealm^(경지 순번 + viewInRealmShare × 경지 안 진행), 7장
+        "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare")},
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
     return to_js(blob)
