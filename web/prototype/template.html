@@ -1185,6 +1185,7 @@ function killEnemy(e) {
   e.dead = true; G.kills++;
   // 흑백 쌍강시(WP-13c): 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다(시안과 같음)
   if (e.behavior === 'twin_revive' && e.twin && !e.twin.dead) (G.revives = G.revives || []).push({ e, t: E_BY_ID[e.type].reviveSeconds });
+  { const D = E_BY_ID[e.type]; if (D && D.onDeath === 'poison_pool' && D.death) (G.pools = G.pools || []).push({ x: e.x, y: e.y, r: D.death.radius, dps: D.death.perSecond * dmgScale(e), t: D.death.seconds }); }
   // 당가 진전 3: 중독된 적이 쓰러지면 독이 번진다
   const psp = synEff('poison_spread'); if (psp && e.poison > 0) { addEffect('burst', e.x, e.y, { r: psp.radius, color: '#5E7F4A' }); forNear(e.x, e.y, psp.radius, o => { if (o !== e && !o.dead) { o.poison = psp.seconds; o.burn = Math.max(o.burn || 0, psp.seconds); o.burnDps = Math.max(o.burnDps || 0, psp.damagePerSecond * G.stats.dot); } }); }
   addUlt(e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill);
@@ -2534,7 +2535,7 @@ function localFoe() {
 // 고유 적 동작 넷(WP-13c): 천하 시안 localBehavior 와 같은 규칙을 1장 프로토타입 적 틀에 맞춰(거리·속도는 enemies.json 그대로 m, 축척 곱 없음 —
 // 프로토타입 적은 1m 크기 그대로라서). 독인 독기(poison_aura, 당가 몸이면 안 받음은 이 판에 문파가 없어 뺌), 매화검귀 꽃잎 탄·설인 얼음덩이(petal_shot·ice_throw),
 // 혈사자 예고 돌진 뒤 포효(charge_roar: 둘레 적 걸음 +auraBonus 를 roarSeconds 동안). 피해는 그 적 접촉 피해가 분에 따라 커진 몫을 같이 받는다.
-// 무리 넷(snake_line·twin_revive·spear_line·flank_pack)은 spawnLocalGroup 이 같이 낸다. 남은 동작(water_pull·hook_bind·mimic)은 아직 그냥 쫓아온다.
+// 무리 넷(snake_line·twin_revive·spear_line·flank_pack)은 spawnLocalGroup 이 같이 낸다. 수적 갈고리(hook_bind)·독두꺼비 독 웅덩이(onDeath)도. 남은 동작(water_pull·mimic)은 아직 그냥 쫓아온다.
 const dmgScale = e => e.dmg / (E_BY_ID[e.type].contactDamage || 1);
 const LOCAL_BEH = {
   // 금선지네: 앞 마디를 spacing 만큼 떨어져 따라간다(앞 마디가 쓰러지면 제가 머리)
@@ -2544,6 +2545,17 @@ const LOCAL_BEH = {
       if (ld <= gap) return [0, 0];
       const v = Math.min((ld - gap) / Math.max(dt, 1e-3), e.speed * 2.2); return [lx / ld * v, ly / ld * v];
     }
+    return [dx * e.speed, dy * e.speed];
+  },
+  // 수적 갈고리: range 안이면 telegraph 예고 뒤 갈고리를 던져, 맞으면 bindSeconds 묶인다(장삼 포승줄과 같은 p.rootT, 경공으로 끊음)
+  hook_bind(e, dt, dx, dy, d) {
+    const D = E_BY_ID[e.type], hk = D.hook; e.cd = (e.cd == null ? hk.interval * Math.random() : e.cd) - dt;
+    if (e.hookWind > 0) {
+      e.hookWind -= dt;
+      if (e.hookWind <= 0) G.foeShots.push({ x: e.x, y: e.y, vx: Math.cos(e.hookA) * hk.speed, vy: Math.sin(e.hookA) * hk.speed, left: hk.range, r: hk.radius, dmg: e.dmg, src: e, chain: true, root: hk.bindSeconds });
+      return [0, 0];
+    }
+    if (e.cd <= 0 && d < hk.range) { e.cd = hk.interval; e.hookWind = D.telegraph || 0.5; e.hookA = Math.atan2(dy, dx); return [0, 0]; }
     return [dx * e.speed, dy * e.speed];
   },
   // 마교도: 나올 때 정한 방향으로 줄째 곧게 걷는다
@@ -2614,7 +2626,11 @@ function foeShotsStep(dt) {
   for (const e of G.enemies) if (e.roarT > 0) e.roarT -= dt;   // 포효 걸음 몫은 아래 걸음 곱에서
   for (const b of G.foeShots) {
     const step = Math.hypot(b.vx, b.vy) * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.left -= step;
-    if (Math.hypot(p.x - b.x, p.y - b.y) < b.r + 0.4) { hurtPlayer(b.dmg, b.src); b.left = 0; }
+    if (b.chain && b.src.dead) { b.left = 0; continue; }   // 던진 수적이 쓰러지면 갈고리도 사라진다
+    if (Math.hypot(p.x - b.x, p.y - b.y) < b.r + 0.4) {
+      if (b.root && p.iframe <= 0 && p.dashT <= 0) { p.rootT = b.root; toast('갈고리', '묶였다 · 경공으로 끊는다'); }
+      hurtPlayer(b.dmg, b.src); b.left = 0;
+    }
   }
   G.foeShots = G.foeShots.filter(b => b.left > 0);
   for (const r of G.revives || []) {
@@ -2623,10 +2639,15 @@ function foeShotsStep(dt) {
     if (a && !a.dead) { const m = spawnEnemy(r.e.type, a.x + D.twin.gap, a.y); m.hp = m.maxHp * D.twin.reviveHealth; m.twin = a; a.twin = m; addEffect('ring', m.x, m.y, { r: 1, color: '#1A1A1A', life: 0.4 }); }
   }
   if (G.revives) G.revives = G.revives.filter(r => !r.done);
+  // 독두꺼비가 남긴 독 웅덩이(enemies.json onDeath poison_pool, death radius·seconds·perSecond)
+  for (const o of G.pools || []) { o.t -= dt; if (Math.hypot(p.x - o.x, p.y - o.y) < o.r + 0.2 && !G.won && !G.demo) p.hp -= o.dps * dt * (G.easy ? 0.5 : 1); }
+  if (G.pools) G.pools = G.pools.filter(o => o.t > 0);
 }
 function drawLocalFx() {
+  for (const o of G.pools || []) { ctx.fillStyle = `rgba(70,110,50,${0.28 * Math.min(1, o.t)})`; ctx.beginPath(); ctx.ellipse(wx(o.x), wy(o.y), o.r * PPM, o.r * PPM * 0.6, 0, 0, TAU); ctx.fill(); }
   for (const b of G.foeShots || []) {
-    ctx.fillStyle = b.petal ? 'rgba(200,90,110,0.85)' : 'rgba(170,200,215,0.9)';
+    if (b.chain) { ctx.strokeStyle = 'rgba(26,26,26,0.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(wx(b.src.x), wy(b.src.y)); ctx.lineTo(wx(b.x), wy(b.y)); ctx.stroke(); }
+    ctx.fillStyle = b.chain ? '#1A1A1A' : b.petal ? 'rgba(200,90,110,0.85)' : 'rgba(170,200,215,0.9)';
     ctx.beginPath(); ctx.arc(wx(b.x), wy(b.y), Math.max(2, b.r * PPM), 0, TAU); ctx.fill();
   }
   for (const e of G.enemies) {
