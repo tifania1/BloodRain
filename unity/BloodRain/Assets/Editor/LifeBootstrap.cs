@@ -68,6 +68,8 @@ namespace BloodRain.Editor
             edge.material = ClusterBootstrap.EnsureMaterial();
             EditorUtility.SetDirty(edge);
 
+            BgmBootstrap.Attach(); // BGM-06U
+
             EditorUtility.SetDirty(r);
             return r;
         }

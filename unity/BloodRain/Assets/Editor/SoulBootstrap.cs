@@ -36,6 +36,7 @@ namespace BloodRain.Editor
             screen.loadRunScene = true;
             var flow = new GameObject("객잔 흐름").AddComponent<InnFlow>();
             flow.chimbang = screen;
+            BgmBootstrap.Attach(); // BGM-06U
 
             EditorSceneManager.SaveScene(scene, InnScenePath);
             Debug.Log($"[SoulBootstrap] {InnScenePath} 다시 지음(침방 + InnFlow)");
