@@ -96,5 +96,17 @@ namespace BloodRain.Editor
 
         [MenuItem("BloodRain/Test/지금 쓰러지기(플레이 중)", true)]
         static bool FallNowValid() => Application.isPlaying;
+
+        // R-08U 시험: 이번 생 처치 수에 4,990 을 더한다(도전 과제 '한 생에서 적 5,000 처치'를 열 직전까지)
+        [MenuItem("BloodRain/Test/처치 수 채우기(플레이 중)")]
+        public static void AddKills()
+        {
+            if (LifeRunner.Instance == null || LifeRunner.Instance.Life.Record != null) { Debug.LogWarning("[SoulBootstrap] Run 씬 플레이 중에만 됩니다"); return; }
+            LifeRunner.Instance.Life.Log.Kill(4990);
+            Debug.Log($"[SoulBootstrap] 처치 수 → {LifeRunner.Instance.Life.Log.Kills:N0}");
+        }
+
+        [MenuItem("BloodRain/Test/처치 수 채우기(플레이 중)", true)]
+        static bool AddKillsValid() => Application.isPlaying;
     }
 }

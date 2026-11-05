@@ -99,6 +99,7 @@
   "ui.mode.title": "어느 천하로 들어가겠소",
   "ui.mode.soon": "아직 열리지 않은 길",
   "ui.settle.torn": "찢긴 비급 장경각에 오름",
+  "ui.settle.new_weapons": "새로 얻은 무공 · {0}",
   "ui.settle.to_inn": "객잔으로",
   "ui.inn.under_repair": "수리 중",
   "ui.settle.total": "합계  {0}",

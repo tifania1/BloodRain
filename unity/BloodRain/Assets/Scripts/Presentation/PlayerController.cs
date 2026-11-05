@@ -45,6 +45,8 @@ namespace BloodRain.Presentation
         public float BindLeft => _bindLeft;
 
         public Dash Dash { get; private set; }
+        /// <summary>경공이 실제로 시작될 때(충전이 있어 나간 때만). R-08U 도전 과제 '한 생에서 경공 N회'.</summary>
+        public event System.Action Dashed;
         public Vector2 Facing => _facing;
         public bool Invulnerable => Dash != null && Dash.Invulnerable;
 
@@ -125,7 +127,7 @@ namespace BloodRain.Presentation
             bool bound = _bindLeft > 0f;
             if (bound) { _bindLeft = Mathf.Max(0f, _bindLeft - dt); move = Vector2.zero; }
             if (move.sqrMagnitude > 1e-4f) _facing = move.normalized;
-            if (!bound && DashPressed()) Dash.TryStart(_facing.x, _facing.y);
+            if (!bound && DashPressed() && Dash.TryStart(_facing.x, _facing.y)) Dashed?.Invoke(); // R-08U 경공 수(LifeRunner 가 Log.Dash)
 
             if (_slowLeft > 0f) { _slowLeft -= dt; if (_slowLeft <= 0f) _slowMul = 1f; }
             var (ddx, ddy) = Dash.Tick(dt);

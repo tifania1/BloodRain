@@ -159,6 +159,16 @@ namespace BloodRain.Presentation.Meta
                 Place(torn.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - 140), new Vector2(620, 60));
             }
 
+            // R-08U 도전 과제로 새로 열린 무공(weapons.json unlock 이 그 토큰인 무공)
+            var unlockedWeapons = _data.Weapons.Where(w => summary.NewUnlocks.Contains(w.Unlock)).Select(w => Loc.Weapon(w)).ToList();
+            if (unlockedWeapons.Count > 0)
+            {
+                var nw = Text(right, Loc.F("ui.settle.new_weapons", string.Join("·", unlockedWeapons)), 22, FontStyles.Bold, Crimson);
+                nw.alignment = TextAlignmentOptions.Right;
+                nw.textWrappingMode = TextWrappingModes.NoWrap;
+                nw.enableAutoSizing = true; nw.fontSizeMin = 13; nw.fontSizeMax = 22;
+                Place(nw.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - (summary.NewTornManuals.Count > 0 ? 196 : 140)), new Vector2(620, 32));
+            }
             var btn = MakeButton(_root, Loc.T("ui.settle.to_inn") + "  <size=70%><alpha=#88>Enter<alpha=#FF></size>");
             Place((RectTransform)btn.transform, new Vector2(0.5f, 0f), new Vector2(0, 80), new Vector2(380, 64));
             btn.onClick.AddListener(Finish);

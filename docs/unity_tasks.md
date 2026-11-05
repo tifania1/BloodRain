@@ -160,7 +160,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 봉인석 6개 혼이면 봉마곡 표시가 안 뜨고 7개면 뜸. 쓰러뜨린 땅의 주인은 혈영 표시로
   - 찍기: `docs/unity_shots/QA-05U/` 의 `edge_7stones.png`
 
-- [ ] RM-02b 혈정 잇기 · 먼저: LF-03
+- [x] RM-02b 혈정 잇기 · 먼저: LF-03 — 2026-11-06 00:45 PC: 남궁 몸으로 Run, 정예 둘(도부수 강시·동인)을 곁에 세워 쓰러뜨리니 그 자리에 `혈정 +1` 둘, 지금 쓰러지기 → 정산 혈정 2, 혼 잔고 3 → 5. 콘솔 에러 0. 혈월 혼(1·2개 번갈아)은 혈월이 아직 안 열려 못 봄(Core 테스트가 봄). 찍음 `docs/unity_shots/RM-02b/` 의 `settlement_crystal.png`·`crystal_popup.png`
   - 할 것: 정예가 쓰러질 때 `life.KillElite()`(이번에 얻은 혈정 수) 를 부르고 둘레에 '혈정 +N' 짧게. 정산 화면 `SettlementStats.BloodCrystal` 은 전투 쪽이 세지 말고 `LifeRecord.BloodCrystal`.
   - 쓸 것: Core `Life.KillElite`, `LifeRecord.BloodCrystal`, `Soul.BloodCrystal`(저장 `bloodCrystal`), 정예인지는 `EnemyDef.Family == "elite"`
   - 메뉴: 없음
@@ -168,7 +168,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/RM-02b/` 의 `settlement_crystal.png`
   (진행: 2026-11-05 22:50 PC — LifeRunner.OnKilled 가 Family elite 면 `_life.KillElite()` 를 부르고 받은 수만큼 그 자리에 붉은 `혈정 +N`(키 ui.settle.crystal, OnGUI 1.2초)을 띄우게 씀. 정산은 원래 `record.BloodCrystal` 을 씀. 컴파일을 요청한 뒤 Unity 메인 스레드가 멈춰 unityMCP 가 응답하지 않아 에디터를 강제로 닫고, -batchmode 로 열어 컴파일 에러 0 만 확인. **플레이 확인은 못 함** — 남은 것: 정예 둘 잡고 쓰러져 정산 혈정 2·혼 잔고 +2, 찍기)
 
-- [ ] R-08U 도전 과제 셋 세기 · 먼저: LF-03
+- [x] R-08U 도전 과제 셋 세기 · 먼저: LF-03 — 2026-11-06 00:45 PC: LifeRunner.OnKilled 가 모든 처치(정예 포함)에 `Log.Kill()`, PlayerController 에 `Dashed` 이벤트(충전이 있어 실제로 나간 경공만)를 두고 LifeRunner 가 `Log.Dash()`. 정산 오른쪽에 `NewUnlocks` 로 열린 무공 줄(키 `ui.settle.new_weapons` 네 언어). 시험 메뉴 `처치 수 채우기(플레이 중)`(SoulBootstrap.cs). 혼에서 `kills_5000_one_run` 을 빼고 소림 몸으로 15 처치 + 4,990 → 쓰러지자 정산에 `새로 얻은 무공 · 음공`, 혼에 토큰 남음. 콘솔 에러 0. 남은 것: 다음 생 레벨업 풀 — LevelUpScreen 이 `unlock == "start"` 무공만 넣는다. 음공(ring_wave) 등 해금 무공 여섯은 WeaponRunner 에 아직 동작이 없어 일부러 그대로 둠. 그 동작이 붙으면 LevelUpScreen `_unlocked` 를 `RebirthHandoff.Soul.UnlockedWeapons()` 로. 찍음 `docs/unity_shots/R-08U/` 의 `new_unlock.png`
   - 할 것: 적이 쓰러질 때마다 `life.Log.Kill()`(정예·땅의 주인은 KillElite·DefeatBoss 와 따로 한 번 더), 경공을 쓸 때 `life.Log.Dash()`. 정산 화면에 `soul.EndLife` 가 돌려준 `NewUnlocks` 를 '새로 얻은 무공' 줄로(토큰을 unlock 으로 가진 무공 이름). 정신부 `life.Log.UseTalisman()` 은 C-09b 에서.
   - 쓸 것: Core `LifeLog.Kill`·`Dash`, `LifeSummary.NewUnlocks`, weapons.json `unlock`
   - 메뉴: `BloodRain/Test/처치 수 채우기(플레이 중)`(Log 에 4,990 넣기)

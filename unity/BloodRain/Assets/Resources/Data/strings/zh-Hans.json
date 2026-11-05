@@ -613,6 +613,7 @@
   "ui.mode.title": "要进入哪一个天下",
   "ui.mode.soon": "尚未开启",
   "ui.settle.torn": "残页秘笈入藏经阁",
+  "ui.settle.new_weapons": "新得武功 · {0}",
   "ui.settle.to_inn": "回客栈",
   "ui.inn.under_repair": "修缮中",
   "ui.settle.total": "合计  {0}",

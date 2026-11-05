@@ -81,6 +81,14 @@ namespace BloodRain.Presentation
             if (orbs != null) orbs.Absorbed -= OnAbsorbed;
             if (vitals != null) vitals.Died -= OnDied;
             if (enemies != null) enemies.Killed -= OnKilled;
+            if (_pc != null) _pc.Dashed -= OnDashed;
+        }
+
+        PlayerController _pc;
+
+        void OnDashed()
+        {
+            if (_life != null && _life.Record == null) _life.Log.Dash();
         }
 
         void Start()
@@ -92,6 +100,8 @@ namespace BloodRain.Presentation
                 var pc = FindFirstObjectByType<PlayerController>();
                 if (pc != null) player = pc.transform;
             }
+            _pc = player != null ? player.GetComponent<PlayerController>() : null;
+            if (_pc != null) _pc.Dashed += OnDashed;
             if (breakthrough == null) breakthrough = GetComponent<BreakthroughFx>();
             if (orbs != null) orbs.Absorbed += OnAbsorbed;
             if (vitals == null && player != null) vitals = player.GetComponent<PlayerVitals>();
@@ -109,6 +119,8 @@ namespace BloodRain.Presentation
         void OnKilled(Vector2 at, EnemyAgent a)
         {
             _kills++;
+            // R-08U 도전 과제 처치 수. 정예·땅의 주인도 여기서 한 번(KillElite·DefeatBoss 는 보상만 센다)
+            if (_life != null && _life.Record == null) _life.Log.Kill();
             // RM-02b 정예를 잡으면 혈정(Life.KillElite 가 이번에 얻은 수를 준다. 혈월이면 1·2개 번갈아). 정산은 LifeRecord.BloodCrystal
             if (_life == null || _life.Record != null || enemies == null) return;
             var def = enemies.DefOf(a.Kind);
