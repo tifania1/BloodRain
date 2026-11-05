@@ -65,7 +65,7 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 대표_인물_마당_줄은_처음_0번이고_여자_몸이면_사매_칸()
         {
-            Assert.Contains("\"leaders\": [{k: l.get(k) for k in (\"id\", \"sect\", \"yardUnknown\", \"yardKnown\", \"sister\")}", ReadRepoFile("tools", "build_web_prototype.py"));
+            Assert.Contains("\"leaders\": [{k: l.get(k) for k in (\"id\", \"sect\", \"yardUnknown\", \"yardKnown\", \"sister\", \"join\")}", ReadRepoFile("tools", "build_web_prototype.py"));
             var html = Proto;
             Assert.Contains("if (!m.seen.includes(key)) { m.seen.push(key); return kind + '.0'; }", html);
             Assert.Contains("body.female && l.sister && l.sister[slot] ? l.sister[slot] : l[kind][+i]", html);

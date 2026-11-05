@@ -1209,7 +1209,9 @@ function spawnJangSam() {
 // 기혈 = enemies.json 기준 체력 × healthCurve(싸움을 건 분). 패턴은 bosspatterns.json bosses 가운데 프로토타입 castPattern 이 아는 모양만
 // (정예와 같은 eliteShapeOk), 2막은 기혈 phase2At 아래에서 간격 phase2IntervalSeconds + 2막 패턴(아는 모양만).
 // 이미 쓰러뜨린 땅(혼 기록 봉인석·bossKills)이면 혈영 — 다시 처치 보상. 봉마곡(종장)·제 그림·보갑은 아직.
-const LR = DATA.lordRules || null, LPAT = DATA.lordPatterns || {};
+const LR = DATA.lordRules || null, LPAT = DATA.lordPatterns || {}, LLINE = DATA.lordLines || {};
+// 컷 줄 하나(boss_cuts.md): 그 컷의 첫 줄 '말한 이: 글'. 말한 이가 없으면 글만
+const lordLine = (id, cut) => { const c = ((LLINE[id] || {}).cuts || []).find(x => x.id === cut), l = c && c.lines[0]; return l ? (l.speaker ? `${(DATA.speakers || {})[l.speaker] || l.speaker}: ${l.textKo}` : l.textKo) : ''; };
 // 꽃잎 나선 셈(Core BossPatterns.SpiralShotsPerArm·SpiralShotDegrees). 천하 시안과 글자 그대로 — WebLordTests 가 본다
 const D2R = Math.PI / 180;
 const spiralShotsPerArm = pt => pt.hitIntervalSeconds > 0 ? Math.max(1, Math.ceil(pt.leaveSeconds / pt.hitIntervalSeconds - 1e-4)) : 1;
@@ -1399,7 +1401,7 @@ function lordBegin(r) {
   });
   G.lords[r.id] = 'fight'; G.lordF = e; G.boss = e;
   const bn = $('bossbar').querySelector('b'); if (bn) bn.textContent = name;
-  toast(name, `${r.nameKo}의 땅의 주인 · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분) · 몰려오는 적 ${LR.spawnTargetScale}배`);
+  toast(name, (lordLine(def.id, 'meet1') || `${r.nameKo}의 땅의 주인`) + ` · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분)`);
   sfx('boss');
   return e;
 }
@@ -1411,7 +1413,7 @@ function lordAI(e, dt, dx, dy, d) {
     const p2 = S.phase2 || [];
     for (const P of p2) if (P.continuous) lordContinuous(e, P);
     e.ps.patterns = e.ps.patterns.concat(p2.filter(P => !P.continuous && eliteShapeOk(P)));
-    toast(e.name, '2막 — 패턴이 빨라진다');
+    toast(e.name, (LLINE[e.lordBoss] || {}).phase2Ko || '2막 — 패턴이 빨라진다');
   }
   if (!e.ps.patterns.length) { e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1; return; }
   eliteAI(e, dt, dx, dy, d);
@@ -1424,6 +1426,11 @@ function lordDown(e) {
   const kill = { region: r.id, boss: def.id, name: def.nameKo, first, qi: K.rebirthQi || 0, crystal: K.bloodCrystal || 0, stone: first && LR.firstKill.sealStone ? r.sealStone : null, sect: sect ? sect.id : null };
   G.lordKills.push(kill);
   for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25);
+  G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 });   // 처치 보갑(Core BossKill.Chest)
+  // 첫 처치면 그 땅 문파 대표 인물이 합류 줄(21장 leaders join, Core BossKill.Leader). 처치 컷 첫 줄도 알림으로
+  const leader = first && r.sect ? (DATA.leaders || []).find(l => l.sect === r.sect) : null;
+  const k1 = lordLine(def.id, 'kill1'); if (k1) setTimeout(() => toast(def.nameKo, k1), 1800);
+  if (leader && leader.join) setTimeout(() => toast(`${(DATA.speakers || {})[leader.id] || leader.id} 합류`, leader.join), 4200);
   const lines = [kill.stone ? `봉인석 ${kill.stone}` : '', sect ? `${sect.nameKo}로 환생할 수 있다` : '', `윤회의 기 +${kill.qi} · 혈정 +${kill.crystal}`].filter(Boolean);
   toast(`${e.name} — 쓰러뜨렸다`, first ? lines.join(' · ') : `혈영으로 다시 일어날 것이다 · ${lines.join(' · ')}`);
 }
@@ -3053,7 +3060,7 @@ const HOME_M = HOME_REG ? [HOME_REG.pos[0] * WD.widthMeters, HOME_REG.pos[1] * W
 const toLocal = ([x, y]) => [x * WD.widthMeters - HOME_M[0], y * WD.heightMeters - HOME_M[1]];
 const CH_LAND = (WD.land || []).map(toLocal), CH_RIVERS = (WD.rivers || []).map(r => r.map(toLocal));
 // 봉마곡(final)은 봉인석이 모이기 전엔 보이면 안 되니 지명을 그리지 않는다(천하 시안과 같음)
-const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, gimmicks: r.gimmicks || [], density: r.density, boss: r.boss || null, sealStone: r.sealStone || null, x, y }; });
+const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, gimmicks: r.gimmicks || [], density: r.density, boss: r.boss || null, sealStone: r.sealStone || null, sect: r.sect || null, x, y }; });
 // 소품(WP-12): 천하 시안의 buildProps·propSprite 를 글자 그대로 옮긴 것(같은 시드라 같은 자리에 같은 나무·집·탑·산).
 // 시안 쪽을 고치면 여기도 같이 고친다 — CheonhaLandTests 가 두 판의 본문이 같은지 본다. 좌표는 중원 한 장 절대 미터.
 const CH_PROP = (() => {

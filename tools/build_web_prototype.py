@@ -107,9 +107,11 @@ def data_blob() -> str:
         "crush": drop_notes(load("cheonha")["crush"]),
         "breakthrough": drop_notes(load("cheonha")["breakthrough"]),
         # 축척 시험(WP-12)이 1장 마당을 중원 한 장의 숭산 자리에 놓고 둘레 지명을 그린다
-        "regions": [{"id": r["id"], "nameKo": r["nameKo"], "hanja": r["hanja"], "pos": r["pos"], "chapter": r.get("chapter"), "final": bool(r.get("final")), "gimmicks": r.get("gimmicks", []), "density": r["density"], "boss": r.get("boss"), "sealStone": r.get("sealStone")} for r in load("cheonha")["regions"]],
+        "regions": [{"id": r["id"], "nameKo": r["nameKo"], "hanja": r["hanja"], "pos": r["pos"], "chapter": r.get("chapter"), "final": bool(r.get("final")), "gimmicks": r.get("gimmicks", []), "density": r["density"], "boss": r.get("boss"), "sealStone": r.get("sealStone"), "sect": r.get("sect")} for r in load("cheonha")["regions"]],
         # 땅의 주인(WP-13e, 7장): 깨어남·싸움 원·기혈 배율·처치 보상(cheonha.json bosses)과 패턴(bosspatterns.json bosses, 서장 장삼은 위 jangSam)
         "lordRules": drop_notes(load("cheonha")["bosses"]),
+        # 땅의 주인 컷 줄(docs/story/boss_cuts.md): 프로토타입은 만남 첫 줄·2막 예고·처치 첫 줄만 알림으로
+        "lordLines": {l["id"]: {"cuts": drop_notes(l.get("cuts", [])), "phase2Ko": l.get("phase2Ko")} for l in load("dialogue")["lords"]["list"]},
         "lordPatterns": {k: drop_notes(v) for k, v in load("bosspatterns")["bosses"].items() if not k.startswith("_") and k != "jang_sam"},
         # 정산(WP-14c): ?life= 판이 끝나면 10장 윤회의 기 식(Core RebirthQi)으로 셈해 혼 기록에 새긴다
         "rebirthQi": {k: v for k, v in drop_notes(load("cheonha")["rebirthQi"]).items() if k != "targets"},
@@ -129,7 +131,7 @@ def data_blob() -> str:
         "bedroom": drop_notes(load("dialogue")["bedroom"]["lines"]),
         "cards": drop_notes(load("dialogue")["cards"]["list"]),
         # 대표 인물 마당 줄(21장, docs/story/leaders.md): 그 문파로 태어나면 한 줄, 여자 몸이면 sister 칸. Core InnDialogue.YardLine
-        "leaders": [{k: l.get(k) for k in ("id", "sect", "yardUnknown", "yardKnown", "sister")} for l in load("dialogue")["leaders"]["list"]],
+        "leaders": [{k: l.get(k) for k in ("id", "sect", "yardUnknown", "yardKnown", "sister", "join")} for l in load("dialogue")["leaders"]["list"]],
         "birthTraits": drop_notes(load("cheonha")["birthTraits"]),
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
