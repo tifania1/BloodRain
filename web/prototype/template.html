@@ -168,6 +168,11 @@ button { touch-action: manipulation; }
 .bars div { display: grid; grid-template-columns: 76px 1fr 64px; gap: 8px; align-items: center; }
 .bars span:last-child { text-align: right; font: 700 12px var(--font-num); font-variant-numeric: tabular-nums; }
 .bars i { display: block; height: 10px; background: var(--ink); }
+.ledger { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; margin-top: 8px; }
+.ledger td { padding: 3px 0; border-bottom: 1px solid rgba(26,26,26,.15); vertical-align: top; }
+.ledger td:last-child { text-align: right; font: 700 13px var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 8px; }
+.ledger small { display: block; opacity: .65; font-size: 11px; }
+.ledger tr.sum td { border-bottom: 0; font-weight: 700; padding-top: 6px; }
 .resimg { width: 100%; max-width: 100%; border: 2px solid var(--ink); }
 .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
 .facts div { display: grid; gap: 2px; }
@@ -349,6 +354,7 @@ button { touch-action: manipulation; }
       <p class="subtle" id="resline"></p>
       <div class="facts" id="resfacts"></div>
       <div class="bars" id="resbars"></div>
+      <table class="ledger" id="resledger" hidden></table>
       <div class="row">
         <button class="b main" id="again" type="button">다시 하기</button>
         <button class="b" id="totitle" type="button">처음으로</button>
@@ -950,6 +956,7 @@ function newRun(mode) {
   if (LIFE_SECT && mode !== 'prologue' && SCALE_MODE) {
     const reg = CH_REGS.find(r => r.id === LIFE_SECT.region), wd = W_BY_ID[LIFE_SECT.startWeapon];
     G.body = LIFE_SECT;
+    G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LIFE_SECT.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
     if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
@@ -1223,7 +1230,8 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   return crit;
 }
 function killEnemy(e, crushed) {
-  e.dead = true; G.kills += clusterOf(e);   // 처치 수는 덩이 속 사람 수(축척 시험, 7장). 진기는 덩이 하나에 적 하나 값
+  e.dead = true; G.kills += clusterOf(e);
+  if (e.elite && G.body) G.eliteKills++;   // 혈정(WP-14c)   // 처치 수는 덩이 속 사람 수(축척 시험, 7장). 진기는 덩이 하나에 적 하나 값
   // 흑백 쌍강시(WP-13c): 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다(시안과 같음)
   if (e.behavior === 'twin_revive' && e.twin && !e.twin.dead) (G.revives = G.revives || []).push({ e, t: E_BY_ID[e.type].reviveSeconds });
   { const D = E_BY_ID[e.type]; if (D && D.onDeath === 'poison_pool' && D.death) (G.pools = G.pools || []).push({ x: e.x, y: e.y, r: D.death.radius, dps: D.death.perSecond * dmgScale(e), t: D.death.seconds }); }
@@ -1812,7 +1820,7 @@ function update(dt) {
     o.t += dt;
     const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
     if (o.pull || d < mag) { o.pull = true; const sp = OP.pullSpeedBase + o.t * OP.pullSpeedPerSecond; o.x += dx / (d || 1) * sp * dt; o.y += dy / (d || 1) * sp * dt; }
-    if (d < OP.absorbRadius) { o.dead = true; G.orbRaw += o.v; gainXp(o.v); sfx('orb'); }
+    if (d < OP.absorbRadius) { o.dead = true; G.orbRaw += o.v; if (G.body) { G.orbV += o.v; G.orbW += o.v * G.dens; } gainXp(o.v); sfx('orb'); }
   }
   G.orbs = G.orbs.filter(o => !o.dead);
   // 떨어진 물건
@@ -2579,7 +2587,7 @@ const HOME_M = HOME_REG ? [HOME_REG.pos[0] * WD.widthMeters, HOME_REG.pos[1] * W
 const toLocal = ([x, y]) => [x * WD.widthMeters - HOME_M[0], y * WD.heightMeters - HOME_M[1]];
 const CH_LAND = (WD.land || []).map(toLocal), CH_RIVERS = (WD.rivers || []).map(r => r.map(toLocal));
 // 봉마곡(final)은 봉인석이 모이기 전엔 보이면 안 되니 지명을 그리지 않는다(천하 시안과 같음)
-const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, gimmicks: r.gimmicks || [], x, y }; });
+const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, gimmicks: r.gimmicks || [], density: r.density, x, y }; });
 // 소품(WP-12): 천하 시안의 buildProps·propSprite 를 글자 그대로 옮긴 것(같은 시드라 같은 자리에 같은 나무·집·탑·산).
 // 시안 쪽을 고치면 여기도 같이 고친다 — CheonhaLandTests 가 두 판의 본문이 같은지 본다. 좌표는 중원 한 장 절대 미터.
 const CH_PROP = (() => {
@@ -2677,8 +2685,54 @@ function chRegionAt(x, y) { let best = null, bd = Infinity; for (const r of CH_R
 function trackChRegion() {
   if (!SCALE_MODE || isPro() || !CH_REGS.length) { G.chRegion = null; return null; }
   const r = chRegionAt(G.player.x * worldU(), G.player.y * worldU());
-  if (r && r.id !== G.chRegion) { if (G.chRegion) toast(r.nameKo, r.hanja); G.chRegion = r.id; }
+  if (r && r.id !== G.chRegion) {
+    // 한 생(WP-14c): 처음 밟은 땅이면 윤회의 기 보너스를 알린다(혼 기록에 없는 땅, 이번 생 처음)
+    const first = G.body && !(G.soul0.visited || []).includes(r.id) && !G.stepped.includes(r.id);
+    if (G.body && !G.stepped.includes(r.id)) G.stepped.push(r.id);
+    if (first && G.t > 0.5) toast(r.nameKo, `${r.hanja} · 처음 밟은 땅 · 윤회의 기 +${QI.firstVisitRegion}`); else if (G.chRegion) toast(r.nameKo, r.hanja);
+    G.chRegion = r.id;
+  }
+  if (r) G.dens = densityAt(G.player.x * worldU(), G.player.y * worldU());
   return r;
+}
+// 혈운 농도(10장): 가장 가까운 두 지역을 거리로 섞는다 v = (v1·d2 + v2·d1) / (d1 + d2). 천하 시안 densityAt 과 같은 식
+function densityAt(x, y) {
+  let a = null, b = null, da = Infinity, db = Infinity;
+  for (const r of CH_REGS) { const d = Math.hypot(r.x - x, r.y - y); if (d < da) { b = a; db = da; a = r; da = d; } else if (d < db) { b = r; db = d; } }
+  if (!a) return 1;
+  if (!b || da + db === 0) return a.density;
+  return (a.density * db + b.density * da) / (da + db);
+}
+// 정산(WP-14c, 기획서 10장 '윤회의 기', Core RebirthQiLedger·Soul.EndLife): ?life= 판이 끝나면 윤회의 기·혈정·밟은 땅·오른 경지를 혼 기록에 새긴다.
+//   윤회의 기 = (1 + 성질 보너스) × (perOrbValue × Σ(구슬 값 × 그 자리 혈운 농도) + 보너스 + leftoverSilverRate × 남은 은자)
+//   줄마다 반올림하고 합계는 줄의 합(Core 와 같음). 이 판엔 타고난 성질·땅의 주인이 아직 없어 그 줄은 없다(성질 배율 1).
+// 혼 기록은 천하 시안과 같은 localStorage 'cheonha_meta2'(같은 사이트라 시안의 침방·연무장이 이 생의 기를 그대로 본다. WP-14d 가 침방을 옮겨 오기 전까지의 다리).
+const QI = DATA.rebirthQi || {};
+const SOUL_KEY = 'cheonha_meta2';
+function soulLoad() { try { const m = JSON.parse(localStorage.getItem(SOUL_KEY)); return m && typeof m === 'object' ? m : {}; } catch (e) { return {}; } }
+function soulSave(m) { try { localStorage.setItem(SOUL_KEY, JSON.stringify(m)); } catch (e) { /* 저장이 막혀도 정산 화면은 보인다 */ } }
+function lifeSettle() {
+  const s0 = G.soul0 || {}, top = Math.max(0, B.realms.findIndex(r => r.id === G.realm.id));
+  const newVisits = G.stepped.filter(id => !(s0.visited || []).includes(id));
+  const newRealms = B.realms.slice(1, top + 1).map(r => r.id).filter(id => !(s0.reached || []).includes(id));
+  const rows = [
+    [`진기 구슬 값 ${Math.round(G.orbV)} × 혈운 ${(G.orbV ? G.orbW / G.orbV : 1).toFixed(2)} × ${QI.perOrbValue}`, '흡수한 진기의 일부가 혼에 남는다', Math.round(QI.perOrbValue * G.orbW)],
+  ];
+  if (newVisits.length) rows.push([`처음 밟은 땅 ${newVisits.length} × ${QI.firstVisitRegion}`, newVisits.map(id => (CH_REGS.find(r => r.id === id) || { nameKo: id }).nameKo).join(', '), newVisits.length * QI.firstVisitRegion]);
+  if (newRealms.length) rows.push([`처음 오른 경지 ${newRealms.length} × ${QI.firstReachRealm}`, newRealms.map(id => B.realms.find(r => r.id === id).nameKo).join(', '), newRealms.length * QI.firstReachRealm]);
+  rows.push([`남은 은자 ${G.silver} × ${QI.leftoverSilverRate}`, '쓰지 못한 은자도 기로 남는다', Math.round(QI.leftoverSilverRate * G.silver)]);
+  const total = rows.reduce((a, r) => a + r[2], 0);
+  const crystal = Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0));   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
+  return { rows, total, crystal, top, newVisits, newRealms };
+}
+function recordLife(st) {
+  const m = soulLoad();
+  m.v = 2; m.qi = (m.qi || 0) + st.total; m.crystal = (m.crystal || 0) + st.crystal; m.lives = (m.lives || 0) + 1; m.best = Math.max(m.best || 0, st.top);
+  m.visited = Array.isArray(m.visited) ? m.visited : []; m.reached = Array.isArray(m.reached) ? m.reached : [];
+  for (const id of st.newVisits) if (!m.visited.includes(id)) m.visited.push(id);
+  for (const id of st.newRealms) if (!m.reached.includes(id)) m.reached.push(id);
+  soulSave(m);
+  return m;
 }
 // 고유 적(WP-13c 첫 조각): 축척 모드에서 1장 밖 땅에 서면 chapters.json life.localShare(분 → 비율)만큼 그 땅 고유 적을 섞는다.
 // 동작은 LOCAL_BEH, 그림은 아직 혈무사 자리 표시(sprOf).
@@ -3362,11 +3416,20 @@ function endRun(won) {
   $('resline').textContent = isPro() ? (won ? '빌린 내공이 경맥을 태웠다.' : '장삼이 나오기 전에 쓰러지면 서장을 처음부터 다시 한다. 혼을 붙잡아 줄 사람이 아직 없다.')
     : won ? '원각 대사가 숨을 거두며 말했다. "봉인은… 깨진 게 아니다. 안에서… 열렸다."' : '혈우는 그치지 않는다. 객잔으로 돌아가 다시 일어서자.';
   const facts = [[`${Math.floor(gs / 60)}:${String(gs % 60).padStart(2, '0')}`, '버틴 시간'], [G.kills.toLocaleString(), '처치'], [`Lv ${G.level}`, G.realm.nameKo], [G.silver, '은자']];
+  // 한 생(WP-14c): 윤회의 기 정산 줄을 보여 주고 혼 기록에 새긴다
+  const led = $('resledger'); led.hidden = !G.body; led.innerHTML = '';
+  if (G.body) {
+    const st = lifeSettle(), m = recordLife(st); G.settled = st;
+    $('resline').textContent = `${G.body.nameKo}의 제자는 ${G.realm.nameKo}에서 쓰러졌다. 모은 기를 들고 다른 문파의 몸으로 다시 태어난다.`;
+    facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
+    led.innerHTML = st.rows.map(r => `<tr><td>${r[0]}<small>${r[1]}</small></td><td>${r[2].toLocaleString()}</td></tr>`).join('')
+      + `<tr class="sum"><td>얻은 윤회의 기<small>혼에 남은 기 ${m.qi.toLocaleString()} · 윤회 ${m.lives}번</small></td><td>+${st.total.toLocaleString()}</td></tr>`;
+  }
   $('resfacts').innerHTML = facts.map(f => `<div><b>${f[0]}</b><span>${f[1]}</span></div>`).join('');
   const total = G.weapons.reduce((a, w) => a + w.dealt, 0) || 1, max = Math.max(...G.weapons.map(w => w.dealt), 1);
   $('resbars').innerHTML = G.weapons.slice().sort((a, b) => b.dealt - a.dealt).map(w => `<div><span>${w.evolved ? EVO_BY_W[w.id].nameKo : W_BY_ID[w.id].nameKo}</span><i style="width:${(w.dealt / max * 100).toFixed(1)}%"></i><span>${Math.round(w.dealt / total * 100)}%</span></div>`).join('');
   const best = store.get('best') || {};
-  const key = G.mode + (G.easy ? '_easy' : '');
+  const key = (G.body ? 'life' : G.mode) + (G.easy ? '_easy' : '');   // 한 생 판은 1장 최고 기록과 섞지 않는다
   if (!best[key] || gs > best[key].gs || (won && !best[key].won)) { best[key] = { gs, won, level: G.level, kills: G.kills }; store.set('best', best); }
   $('result').hidden = false; focusFirst($('again'));
   showBest();
@@ -3571,6 +3634,8 @@ window.__hyeolu = {
     return { log, evo: G.evoLog, final: { t: G.t, gm: G.gm, level: G.level, kills: G.kills, hp: G.player.hp, won: G.won, boss: G.boss ? Math.round(G.boss.hp) : null } };
   },
   state: () => G,
+  // 정산(WP-14c): settle() 지금 끝나면 받을 윤회의 기(한 생 판만), soul() 혼 기록
+  settle: () => (G && G.body ? lifeSettle() : null), soul: () => soulLoad(),
   // overlay() 지금 떠 있는 화면, overlay(v) 그 화면이 떠 있는 셈 치기(서장 끝 컷이 화면이 닫힐 때까지 기다리는지 보는 시험용)
   overlay(v) { if (v !== undefined) overlay = v; return overlay; },
 };
