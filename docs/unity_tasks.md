@@ -227,7 +227,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 십만대산에서 마교 몸이 진기를 먹으면 음양이 음으로 기울고, 돌파 깨달음 셋 중 하나가 마공
   - 찍기: `docs/unity_shots/R4-13U/` 의 `demonic_insight.png`
 
-- [ ] C-08a 음양 태극 문양 HUD · 먼저: C-06b
+- [x] C-08a 음양 태극 문양 HUD · 먼저: C-06b — 2026-11-06 02:58 PC: `Presentation/Hud/YinYangHud.cs`(왼쪽 아래, 태극 문양·테두리 원은 코드로 구움, 값/최대 × 90° 로 부드럽게 기욺, 양 = 시계 방향). 테두리는 태극 금빛·치우침 먹빛·극단 핏빛 맥동, 아래 줄 `태극 -10 · ±25`·`극양 +85 · ±25`(문구 `ui.yinyang.*` 네 언어). 메뉴 `Run 씬에 HUD 붙이기`(HudBootstrap.cs, LifeBootstrap.Attach 도 부름), `Run 씬 한 생 연결만 다시` 로 Run 씬에 넣음. 게이지를 50·85·-10 으로 놓아 치우침·극단·태극 색과 기울기 확인, 콘솔 에러 0. 진전 인장은 LevelUpScreen 안에 그대로 둠(UI-01U 때 옮김). 실제 양 무공만 골라 기울이는 건 따로 안 봄(같은 Gauge.Value). 찍음 `docs/unity_shots/C-08/` 의 `yinyang.png`
   - 할 것: `Presentation/Hud/YinYangHud.cs` — 태극 문양이 게이지 값만큼 기울고, 태극 구간(`gauge.HarmonyRange`) 안이면 금빛 테두리, 극단이면 핏빛. 지금 HUD 진전 인장이 LevelUpScreen 안에 있으면 같은 HUD 묶음으로 옮긴다.
   - 쓸 것: Core `YinYangGauge`(Value·Band·HarmonyRange·Leaning)
   - 메뉴: `BloodRain/Bootstrap/Run 씬에 HUD 붙이기` 를 새로(HudBootstrap.cs 에, RunBootstrap 도 부르게)

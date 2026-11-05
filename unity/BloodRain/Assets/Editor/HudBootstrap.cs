@@ -25,6 +25,18 @@ namespace BloodRain.Editor
 
         static readonly Color Ink = new Color(0.12f, 0.10f, 0.09f);
 
+        /// <summary>C-08a 지금 열린 씬(Run)에 전투 HUD 묶음을 붙인다. 지금은 음양 태극 문양 하나(오의 버튼은 C-09a). 있으면 그대로 두고 글꼴만 다시 건다.
+        /// LifeBootstrap.Attach 도 부른다. 씬 저장은 부르는 쪽이 한다.</summary>
+        [MenuItem("BloodRain/Bootstrap/Run 씬에 HUD 붙이기")]
+        public static void AttachRunHud()
+        {
+            var hud = Object.FindFirstObjectByType<YinYangHud>();
+            if (hud == null) hud = new GameObject("음양 HUD").AddComponent<YinYangHud>();
+            hud.font = EnsureBodyFont();
+            EditorUtility.SetDirty(hud);
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(hud.gameObject.scene);
+        }
+
         /// <summary>본문 글꼴 Noto Serif KR 동적 SDF. 대체 글꼴로 Yuji Boku 동적 SDF 를 건다(기획서 12장 '글꼴').</summary>
         [MenuItem("BloodRain/Bootstrap/본문 글꼴(Noto Serif KR SDF)")]
         public static TMP_FontAsset EnsureBodyFont()

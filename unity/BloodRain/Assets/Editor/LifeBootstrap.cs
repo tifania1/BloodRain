@@ -69,6 +69,7 @@ namespace BloodRain.Editor
             EditorUtility.SetDirty(edge);
 
             BgmBootstrap.Attach(); // BGM-06U
+            HudBootstrap.AttachRunHud(); // C-08a 음양 HUD
 
             EditorUtility.SetDirty(r);
             return r;
