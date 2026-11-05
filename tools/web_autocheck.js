@@ -276,6 +276,13 @@ async function finalRuns(browser, base) {
       for (let i = 0; i < 10 && overlay === 'ending'; i++) nextEndingCut();
       const m = soulLoad();
       if (overlay !== 'result' || m.cycle !== 2 || (m.stones || []).length || !(m.endingsSeen || []).includes('seal')) bad.push(`봉인 뒤 회귀가 안 됨(${overlay}, 회차 ${m.cycle}, 봉인석 ${(m.stones || []).length})`);
+      // 2회차(혈월 천하): 적 기혈·걸음 배율, 정산에 혈월 줄
+      startRun('full'); G.auto = true; running = false;
+      const a = spawnEnemy('sigang', G.player.x + 30, G.player.y), d = E_BY_ID.sigang;
+      if (!G.moon || Math.abs(a.speed - d.speed / 100 * MOVE * BM.enemySpeed) > 1e-6) bad.push(`혈월 배율이 안 붙음(moon ${G.moon})`);
+      if (!lifeSettle().rows.some(x => x[0].startsWith('혈월 천하'))) bad.push('혈월 정산 줄 없음');
+      names.push('혈월');
+      localStorage.removeItem('cheonha_meta2');
     } catch (err) { bad.push('오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]); }
     return { bad, names };
   });

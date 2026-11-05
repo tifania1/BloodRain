@@ -66,6 +66,18 @@ namespace BloodRain.Core.Tests
             Assert.Contains("const lordShadow = r => r.sealStone ? (G.soul0.stones || []).includes(r.sealStone)", html);
         }
 
+        [Fact] public void 혈월_회차는_데이터_배율을_적과_보상에_곱한다()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"bloodmoon\": drop_notes(load(\"cheonha\")[\"cycle\"][\"bloodmoon\"])", build);
+            var html = Proto;
+            Assert.Contains("G.moon = (G.soul0.cycle || 1) >= 2", html);   // Core Soul.IsBloodMoon => Cycle >= 2
+            Assert.Contains("e.hp *= BM.enemyHealth; e.maxHp *= BM.enemyHealth; e.speed *= BM.enemySpeed;", html);
+            // 윤회의 기 혈월 줄은 Core RebirthQiLedger.Settle 의 fromMoon 과 같은 꼴: (줄 합 + 성질) × (배율 − 1) 반올림
+            Assert.Contains("Math.round(rows.reduce((a, r) => a + r[2], 0) * (BM.rewards - 1))", html);
+            Assert.Contains("* (1 + (synStats().Greed || 0)) * moonR()", html);
+        }
+
         [Fact] public void 꽃잎_나선_셈은_시안과_글자_그대로()
         {
             var sian = ReadRepoFile("web", "lookdev", "cheonha.html");

@@ -614,7 +614,10 @@ function synEff(name) {
   for (const sc of SYN.schools) for (const t of sc.tiers) if (t.effect === name && sch(sc.id, t.count)) return t.params;
   return null;
 }
-function addSilver(v) { G.silver += Math.round(v * (1 + (synStats().Greed || 0))); }
+// 혈월 천하(2회차부터, 21장): 적 기혈·걸음 배율, 보상(은자·윤회의 기·혈정) 배율. Core Life.GainSilver 처럼 주울 때 곱해 반올림
+const BM = DATA.bloodmoon || { enemyHealth: 1, enemySpeed: 1, rewards: 1 };
+const moonR = () => (G && G.moon ? BM.rewards : 1);
+function addSilver(v) { G.silver += Math.round(v * (1 + (synStats().Greed || 0)) * moonR()); }
 function showDiscovery(seal, hanja, name, desc) {
   overlay = 'find'; overlayAt = performance.now(); sfx('gong');
   $('findseal').textContent = seal; $('findhanja').textContent = hanja; $('findname').textContent = name; $('finddesc').textContent = desc;
@@ -1062,8 +1065,9 @@ function newRun(mode) {
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
     G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
     { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
-    G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
+    G.soul0 = soulLoad(); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
     G.lords = {}; G.lordJust = []; G.lordGrace = null; G.lordF = null; G.lordKills = [];   // 땅의 주인(WP-13e): 지역별 깨어남·싸움·처치   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
+    if (G.moon) toast(`혈월 천하 · ${G.soul0.cycle}회차`, `적 기혈 ×${BM.enemyHealth} · 걸음 ×${BM.enemySpeed} · 보상 ×${BM.rewards}`);
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
     if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
@@ -1199,6 +1203,7 @@ function spawnEnemy(type, x, y, extra) {
     born: scaleOn() ? tierNow() : 0,   // 생긴 경지(WP-15): 덩이 크기와 밟힘을 이것으로 정한다
   };
   Object.assign(e, extra || {});
+  if (G.moon && !e.boss) { e.hp *= BM.enemyHealth; e.maxHp *= BM.enemyHealth; e.speed *= BM.enemySpeed; }   // 혈월 천하: 적·정예 기혈·걸음(땅의 주인 기혈은 Core 처럼 healthCurve 만)
   G.enemies.push(e);
   return e;
 }
@@ -1449,7 +1454,8 @@ function lordBegin(r) {
   });
   G.lords[r.id] = 'fight'; G.lordF = e; G.boss = e;
   const bn = $('bossbar').querySelector('b'); if (bn) bn.textContent = name;
-  const meet = shadow ? (LLINE[def.id] || {}).echoKo : lordLine(def.id, 'meet1');   // 혈영이면 메아리 줄(boss_cuts.md echo)
+  let meet = shadow ? (LLINE[def.id] || {}).echoKo : lordLine(def.id, 'meet1');   // 혈영이면 메아리 줄(boss_cuts.md echo)
+  if (!shadow && G.moon && (LLINE[def.id] || {}).bloodMoonKo) meet = (meet ? meet + ' ' : '') + LLINE[def.id].bloodMoonKo;   // 혈월 회차 만남 줄(Core LordEncounter BloodMoon)
   toast(name, (meet || `${r.nameKo}의 땅의 주인`) + ` · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분)`);
   sfx('boss');
   return e;
@@ -1550,7 +1556,7 @@ function finalStage(r, idx, si, at) {
   G.lordF = e; G.boss = e;
   if (set.phase2At >= 1) { e.p2 = true; e.ps.intervalSeconds = set.phase2IntervalSeconds || set.intervalSeconds; for (const P of set.phase2 || []) if (P.continuous) lordContinuous(e, P); }
   const bn = $('bossbar').querySelector('b'); if (bn) bn.textContent = `${name} ${st.hanja || ''}`;
-  toast(name, (DATA.finalStageLines || {})[st.id] || '');
+  toast(name, [(DATA.finalStageLines || {})[st.id], G.moon ? (DATA.finalStageMoon || {})[st.id] : null].filter(Boolean).join(' '));   // 혈월이면 단계 혈월 줄을 뒤에(Core FinalLine.BloodMoon)
   sfx('boss');
   return e;
 }
@@ -3397,8 +3403,10 @@ function lifeSettle() {
   rows.push([`남은 은자 ${G.silver} × ${QI.leftoverSilverRate}`, '쓰지 못한 은자도 기로 남는다', Math.round(QI.leftoverSilverRate * G.silver)]);
   // 타고난 성질(둔재·단명): 성질 배율 전 합 × 보너스, 반올림(Core FromTraits)
   if (G.body.qiBonus) rows.push([`타고난 성질 × ${(1 + G.body.qiBonus).toFixed(2)}`, G.body.traits.filter(id => TRAIT_BY[id].rebirthQi).map(id => `${TRAIT_BY[id].nameKo} +${Math.round(TRAIT_BY[id].rebirthQi * 100)}%`).join(', '), Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)]);
+  // 혈월 천하: (줄 합 + 성질) × (rewards − 1) 을 한 줄로 반올림(Core RebirthQiLedger.Settle fromMoon). 혈정은 땅의 주인 하나마다·정예 몫 한 번에 곱해 반올림(Core KillBoss·BloodCrystal)
+  if (G.moon) rows.push([`혈월 천하 × ${BM.rewards}`, '혈월 아래서는 혼에 남는 기도 짙다', Math.round(rows.reduce((a, r) => a + r[2], 0) * (BM.rewards - 1))]);
   const total = rows.reduce((a, r) => a + r[2], 0);
-  const crystal = LK.reduce((a, k) => a + k.crystal, 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0));   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
+  const crystal = LK.reduce((a, k) => a + Math.round(k.crystal * moonR()), 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0) * moonR());   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
   return { rows, total, crystal, top, newVisits, newRealms, lordKills: LK, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null };
 }
 function recordLife(st) {
