@@ -1214,6 +1214,27 @@ const LR = DATA.lordRules || null, LPAT = DATA.lordPatterns || {};
 const D2R = Math.PI / 180;
 const spiralShotsPerArm = pt => pt.hitIntervalSeconds > 0 ? Math.max(1, Math.ceil(pt.leaveSeconds / pt.hitIntervalSeconds - 1e-4)) : 1;
 const spiralShotDegrees = (pt, start, arm, shot) => start + 360 * arm / Math.max(1, pt.count) + pt.turnDegreesPerSecond * shot * pt.hitIntervalSeconds;
+const radialBurstDegrees = (pt, start, wave) => Array.from({ length: pt.count }, (_, i) => start + 360 * i / pt.count + (pt.waveOffsetDegrees || 0) * wave);
+// 매 프레임 도는 패턴 몸(태극권 끌어당김·반쪽 독안개·매화검기 방사). fn(dt) 가 false 를 돌려주면 끝
+function lordFx(fn) { (G.lordFxs = G.lordFxs || []).push(fn); }
+function lordFxStep(dt) {
+  if (G.lordFxs && G.lordFxs.length) G.lordFxs = G.lordFxs.filter(fn => fn(dt));
+  if (G.halfFogs) G.halfFogs = G.halfFogs.filter(F => F.left > 0);
+  if (G.viewMulT) { G.viewMulT.t -= dt; if (G.viewMulT.t <= 0) G.viewMulT = null; }
+}
+// 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous). 프로토타입은 매화검기 방사(radial_burst)만
+function lordContinuous(e, P) {
+  if (P.shape !== 'radial_burst') return false;
+  const sp = P.projectileSpeed / 100 * MOVE, a0 = Math.atan2(G.player.y - e.y, G.player.x - e.x) / D2R, dmg = P.baseDamage * (1 + B.enemyScaling.damagePerMinute * G.gm);
+  let next = P.telegraphSeconds, wave = 0;
+  lordFx(dt => {
+    if (e.dead) return false;
+    next -= dt; if (next > 0) return true;
+    for (const a of radialBurstDegrees(P, a0, wave)) G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a * D2R) * sp, vy: Math.sin(a * D2R) * sp, r: 0.4, dmg, life: P.length / sp, t: 0, kind: 'epalm' });
+    wave++; next += P.waveIntervalSeconds; return true;
+  });
+  return true;
+}
 const BOSS_BY = Object.fromEntries((DATA.bosses || []).map(b => [b.id, b]));
 const LORD_AWAKE_T = LR ? REALMS.findIndex(r => r.id === LR.awakenFrom) : -1;
 const lordsOn = () => !!(LR && G && G.body && scaleOn());
@@ -1281,7 +1302,9 @@ function lordAI(e, dt, dx, dy, d) {
   const S = e.set;
   if (!e.p2 && S.phase2At > 0 && e.hp < e.maxHp * S.phase2At) {
     e.p2 = true; e.ps.intervalSeconds = S.phase2IntervalSeconds || S.intervalSeconds;
-    e.ps.patterns = e.ps.patterns.concat((S.phase2 || []).filter(eliteShapeOk));
+    const p2 = S.phase2 || [];
+    for (const P of p2) if (P.continuous) lordContinuous(e, P);
+    e.ps.patterns = e.ps.patterns.concat(p2.filter(P => !P.continuous && eliteShapeOk(P)));
     toast(e.name, '2막 — 패턴이 빨라진다');
   }
   if (!e.ps.patterns.length) { e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1; return; }
@@ -1300,6 +1323,10 @@ function lordDown(e) {
 }
 // 기둥과 싸움 원: 깨어난 땅마다 붉은 기둥, 원은 점선(경고 중이면 진하게)
 function drawLords(now) {
+  for (const F of G.halfFogs || []) {   // 반쪽 독안개: 예고 땐 옅게, 켜지면 짙게
+    const x = wx(F.x), a = F.warm > 0 ? 0.10 + 0.08 * Math.sin(now * 10) : 0.28;
+    ctx.fillStyle = `rgba(90,130,60,${a})`; if (F.side > 0) ctx.fillRect(x, 0, VW - x + 50, VH); else ctx.fillRect(-50, 0, x + 50, VH);
+  }
   if (!lordsOn() || !G.lords) return;
   const U = worldU(), rad = lordEngageR() / U * PPM;
   for (const r of CH_REGS) {
@@ -1878,6 +1905,7 @@ function update(dt) {
   for (let i = G.zones.length - 1; i >= 0; i--) { const z = G.zones[i]; z.delay -= dt; if (z.delay <= 0) { G.zones.splice(i, 1); z.apply(); } }
 
   foeShotsStep(dt);   // 고유 적이 쏜 탄(WP-13c)
+  lordFxStep(dt);           // 땅의 주인 패턴 몸(WP-13e)
   lordTick(dt);             // 땅의 주인 깨어남·싸움 원(WP-13e)
   trackChRegion();          // 밟은 땅(그리기 고리 밖 sim 에서도 정예·무리·고유 적이 땅을 알게)
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
@@ -2170,6 +2198,41 @@ function castPattern(e, P, dmg, dx, dy) {
       }
     } });
     addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: R * 2, life: P.telegraphSeconds });
+  } else if (P.shape === 'inhale_exhale') {
+    // 태극권(WP-13e, 시안과 같음): 멈춰 서서 예고 뒤 pullSeconds 동안 radius 안을 보스 쪽으로 끌어당기고(걸음 × pullSpeedRatio, 경공 중엔 안 끌림), 다 들이쉬면 burstRadius 터짐
+    e.windup = P.telegraphSeconds + P.pullSeconds;
+    addEffect('ring', e.x, e.y, { r: P.radius, life: P.telegraphSeconds, color: '#1A1A1A' });
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+      if (e.dead) return;
+      let left = P.pullSeconds;
+      lordFx(dt => {
+        if (e.dead) return false;
+        const pl = G.player, ddx = e.x - pl.x, ddy = e.y - pl.y, d = Math.hypot(ddx, ddy) || 1, gap = e.r + 0.35;
+        if (d < P.radius && d > gap && pl.dashT <= 0) { const v = Math.min(d - gap, MOVE * P.pullSpeedRatio * dt); pl.x += ddx / d * v; pl.y += ddy / d * v; }
+        left -= dt; if (left > 0) return true;
+        addEffect('boom', e.x, e.y, { r: P.burstRadius, life: 0.4 }); sfx('boom');
+        if (d < P.burstRadius + 0.35) hurtPlayer(dmg, e);
+        return false;
+      });
+    } });
+  } else if (P.shape === 'half_field') {
+    // 반쪽 독안개(WP-13e, Core HalfFieldFog·시안과 같음): 보스를 지나는 세로줄로 나눠 처음엔 플레이어가 선 쪽, 그다음부터 번갈아(alternate).
+    // 예고 telegraphSeconds 뒤 leaveSeconds 동안 그쪽에 서 있으면 hitIntervalSeconds 마다 맞는다
+    const sg = e.hfSide && P.alternate ? -e.hfSide : (G.player.x - e.x >= 0 ? 1 : -1), fx = e.x;
+    e.hfSide = sg;
+    const F = { x: fx, side: sg, warm: P.telegraphSeconds, left: P.leaveSeconds, hit: 0 };
+    (G.halfFogs = G.halfFogs || []).push(F);
+    lordFx(dt => {
+      if (e.dead) { F.left = 0; return false; }
+      if (F.warm > 0) { F.warm -= dt; return true; }
+      F.left -= dt; F.hit -= dt;
+      if (F.hit <= 0 && Math.sign(G.player.x - F.x || 1) === F.side) { F.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
+      return F.left > 0;
+    });
+  } else if (P.shape === 'view_shrink') {
+    // 눈보라(WP-13e): 예고 뒤 leaveSeconds 동안 보이는 범위 × viewScale(시안 viewScaleAt). 축척 모드 화면 대각선에 곱한다
+    toast(P.nameKo, '앞이 좁아진다');
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => { if (!e.dead) G.viewMulT = { t: P.leaveSeconds, k: P.viewScale > 0 ? P.viewScale : 1 }; } });
   } else if (P.shape === 'line' && !P.projectileSpeed) {
     // 일섬(검혼, WP-13e, 시안과 같음): 달리지 않고 예고선 그대로 한 번에 벤다. 그 뒤 recoverySeconds 굳어 있다
     const ca = Math.atan2(dy, dx);
@@ -2834,7 +2897,7 @@ function realmProgress() {
 }
 function scaleView() {
   if (!SCALE_MODE || isPro()) { PPM = PPM0; G.viewD = null; return; }
-  const target = WD.view0Meters * Math.pow(WD.scalePerRealm, realmProgress()), now = G.viewD || target;
+  const target = WD.view0Meters * Math.pow(WD.scalePerRealm, realmProgress()) * (G.viewMulT ? G.viewMulT.k : 1), now = G.viewD || target;   // 눈보라 패턴(WP-13e)이면 좁힌다
   if (G.brk) { const k = easeInOut(clamp((G.brk.t - BRK.zoomFromSeconds) / (BRK.zoomToSeconds - BRK.zoomFromSeconds), 0, 1)); G.viewD = Math.exp(lerp(Math.log(G.brk.from), Math.log(target), k)); }   // 돌파: 천천히 출발해 천천히 멈춤
   else G.viewD = Math.exp(lerp(Math.log(now), Math.log(target), 0.04));
   PPM = Math.hypot(VW, VH) * worldU() / G.viewD;   // 싸움 좌표 1m 의 픽셀 수(세상 그림은 PPM / worldU())
@@ -3501,7 +3564,7 @@ function drawRegionGimmicks() {
 }
 // 지역 정예(WP-13d 첫 조각): 축척 모드에서 1장 밖 땅에 서 있으면 1장 정예 차례(enemies.json elites.chapter1 의 몇 번째)와 같은 자리의
 // 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.
-const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones', 'summon_ring', 'pull_line', 'spiral_bullets', 'chain_circles']);   // 뒤 넷과 멈춰 베는 line 은 땅의 주인(WP-13e)
+const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones', 'summon_ring', 'pull_line', 'spiral_bullets', 'chain_circles', 'inhale_exhale', 'half_field', 'view_shrink']);   // summon_ring 부터와 멈춰 베는 line 은 땅의 주인(WP-13e)
 const eliteShapeOk = P => !!P && ELITE_SHAPES.has(P.shape);
 // 한 생 정예(WP-14b): 서 있는 땅의 정예 표(elites.<장>)에서 nth 번째. 장 정예가 없는 땅(eliteFallback)이나 표가 짧으면 숭산 표를 돌려 쓴다.
 // 프로토타입이 아는 패턴 모양이 하나도 없으면 1장 정예 차례 그대로
