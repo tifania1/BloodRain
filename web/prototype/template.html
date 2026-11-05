@@ -202,6 +202,15 @@ button { touch-action: manipulation; }
 /* 시너지: 문파 표시, 연환 줄, 발견 낙관, 도감 */
 .card h3 em.sch { color: var(--ink); border: 1px solid rgba(26,26,26,.45); border-radius: 2px; padding: 0 4px; font-size: 10px; }
 .card p.syn { color: #7A5A10; font-weight: 700; }
+.card p.badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.card p.badges i { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 6px; border: 1px solid #7A5A10; color: #7A5A10; border-radius: 2px; }
+.luslots { display: grid; gap: 4px; width: 100%; margin-top: 10px; }
+.luslots div { display: flex; gap: 4px; justify-content: center; }
+.luslots span { width: 40px; height: 40px; border: 1.5px solid rgba(26,26,26,.35); display: grid; place-items: center; font: 900 15px var(--font-body); position: relative; background: var(--paper); }
+.luslots span small { position: absolute; right: 2px; bottom: 0; font: 700 9px var(--font-num); }
+.luslots span.on { border-color: var(--crimson); box-shadow: 0 0 0 2px rgba(179,38,30,.35); }
+.luslots span.empty { border-style: dashed; }
+#lurest { font: 700 12px var(--font-num); color: var(--crimson); }
 .schools { display: flex; flex-wrap: wrap; gap: 3px; max-width: 46vw; }
 .schools span { font: 700 10px/1.6 var(--font-body); padding: 0 5px; border: 1px solid rgba(26,26,26,.35); border-radius: 2px; background: rgba(239,230,210,.85); color: var(--ink-soft); }
 .schools span.on { color: var(--paper); background: var(--ink); border-color: var(--ink); }
@@ -294,10 +303,13 @@ button { touch-action: manipulation; }
       <div class="brush" style="font-size:44px" id="lutitle">깨달음이 온다</div>
       <div class="subtle" id="lusub">무공 하나를 고르시오</div>
       <div class="cards" id="lucards"></div>
+      <div class="luslots" id="luslots" aria-hidden="true"></div>
       <div class="row">
         <button class="b" id="reroll" type="button">다시 고르기 <small id="rerollleft">남은 2회 · R</small></button>
-        <button class="b" id="skip" type="button">정진 <small>안 고르고 오의 +20</small></button>
+        <button class="b" id="banish" type="button">파기 <small id="banishleft">남은 0회 · X</small></button>
+        <button class="b" id="skip" type="button">정진 <small>안 고르고 오의 +20 · Z</small></button>
       </div>
+      <div id="lurest"></div>
     </div>
   </div>
 
@@ -987,7 +999,8 @@ function newRun(mode) {
   if (LS && mode !== 'prologue' && SCALE_MODE) {
     const reg = CH_REGS.find(r => r.id === LS.region), wd = W_BY_ID[LS.startWeapon];
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
-    G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
+    G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);
+    { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
     G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
@@ -2124,6 +2137,7 @@ function rollOffers() {
 function offerCard(o, idx) {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'card';
   let g = '金', title = '은자 주머니', tag = '', desc = '은자 +50, 기혈 +30', synLineEvo = '';
+  const badges = [];   // 셋째 줄 배지(12장 '레벨업 카드 규칙'): [짧은 글, 긴 풀이]. 긴 풀이는 마우스를 올리면(title)
   if (o.kind === 'uw' || o.kind === 'nw') {
     const def = W_BY_ID[o.id], cur = G.weapons.find(w => w.id === o.id), lv = cur ? cur.lv : 0;
     g = GLYPH[o.id]; title = def.nameKo; b.classList.add(def.yinyang);
@@ -2131,7 +2145,7 @@ function offerCard(o, idx) {
     const d0 = cur ? lerp(def.damageLv1, def.damageLv8, (lv - 1) / 7) : 0, d1 = lerp(def.damageLv1, def.damageLv8, lv / 7);
     const ms = def.milestones && def.milestones[String(lv + 1)];
     desc = cur ? `피해 ${d0.toFixed(0)} → ${d1.toFixed(0)}${ms ? ` · ${ms}` : ''}` : BEHAVIOR_TEXT[def.behavior];
-    const evo = EVO_BY_W[o.id]; if (evo) desc += ` · 절기 짝: ${P_BY_ID[evo.passive].nameKo} Lv${EV.pairPassiveMinLevel}`;
+    const evo = EVO_BY_W[o.id]; if (evo) badges.push([`짝 ${P_BY_ID[evo.passive].nameKo}`, `절기 짝: ${P_BY_ID[evo.passive].nameKo} Lv${EV.pairPassiveMinLevel}`]);
     if (o.kind === 'uw' && lv + 1 >= B.levels.weaponMax && evo && pairLv(cur) >= EV.pairPassiveMinLevel) synLineEvo = `절기 문턱 — ${evo.nameKo}`;
     tag += ` <em>${ASPECT_KO[def.yinyang]}</em>`;
   } else if (o.kind === 'up' || o.kind === 'np') {
@@ -2139,7 +2153,7 @@ function offerCard(o, idx) {
     g = GLYPH[o.id] || def.nameKo[0]; title = def.nameKo; b.classList.add(def.yinyang);
     tag = (cur ? `Lv ${lv} → ${lv + 1}` : '<span class="new">새 심법</span>') + ` <em>${ASPECT_KO[def.yinyang]}</em>`;
     desc = def.effects.map(e => STAT_TEXT[e.stat] ? STAT_TEXT[e.stat](e.perLevel) : e.stat).join(', ');
-    const evoW = DATA.evolutions.find(e => e.passive === o.id); if (evoW && START_WEAPONS.includes(evoW.weapon)) desc += ` · ${W_BY_ID[evoW.weapon].nameKo}의 절기 짝(Lv${EV.pairPassiveMinLevel})`;
+    const evoW = DATA.evolutions.find(e => e.passive === o.id); if (evoW && START_WEAPONS.includes(evoW.weapon)) badges.push([`짝 ${W_BY_ID[evoW.weapon].nameKo}`, `${W_BY_ID[evoW.weapon].nameKo}의 절기 짝(Lv${EV.pairPassiveMinLevel})`]);
     const ww = evoW && G.weapons.find(w => w.id === evoW.weapon);
     if (ww && !ww.evolved && ww.lv >= B.levels.weaponMax && lv + 1 === EV.pairPassiveMinLevel) synLineEvo = `절기 문턱 — ${evoW.nameKo}`;
   }
@@ -2149,16 +2163,20 @@ function offerCard(o, idx) {
     const sc = SCHOOL_OF[o.id];
     if (sc) {
       tag += ` <em class="sch">${sc.nameKo}</em>`;
-      if (o.kind === 'nw' || o.kind === 'np') { const n = (G.syn.counts[sc.id] || 0) + 1, tr = sc.tiers.find(x => x.count === n); if (tr) synLine += `진전 ${sc.nameKo} ${n}: ${tr.desc}${tr.proto ? '' : ' (정식판에서)'}`; }
+      if (o.kind === 'nw' || o.kind === 'np') { const n = (G.syn.counts[sc.id] || 0) + 1, tr = sc.tiers.find(x => x.count === n); if (tr) badges.push([`진전 ${sc.nameKo} ${n}`, `진전 ${sc.nameKo} ${n}: ${tr.desc}${tr.proto ? '' : ' (정식판에서)'}`]); }
     }
     if (o.kind === 'nw' || o.kind === 'uw') for (const l of SYN.links) {
       if ((l.a !== o.id && l.b !== o.id) || G.syn.links.has(l.id)) continue;
       const other = l.a === o.id ? l.b : l.a, ol = lvOf(other); if (!ol) continue;
       const done = lvOf(o.id) + 1 >= l.minLevel && ol >= l.minLevel;
-      synLine += (synLine ? ' · ' : '') + `연환 「${l.nameKo}」 ${gwa(W_BY_ID[other].nameKo)} 둘 다 Lv${l.minLevel}${done ? ' — 이걸로 완성' : ''}`;
+      badges.push([done ? `연환 완성 「${l.nameKo}」` : `연환 「${l.nameKo}」`, `연환 「${l.nameKo}」 ${gwa(W_BY_ID[other].nameKo)} 둘 다 Lv${l.minLevel}${done ? ' — 이걸로 완성' : ''}`]);
     }
   }
-  b.innerHTML = `<span class="ic">${g}</span><span><h3>${title} ${tag}</h3><p>${desc}</p>${synLine ? `<p class="syn">${synLine}</p>` : ''}</span>`;
+  if (synLine) badges.unshift([synLine, synLine]);   // 절기 문턱
+  // 카드 세 줄(12장): 이름과 Lv a→b(처음이면 '새') / 이번에 바뀌는 수치 하나 / 배지. 긴 설명은 마우스를 올리면
+  b.innerHTML = `<span class="ic">${g}</span><span><h3>${title} ${tag}</h3><p>${desc}</p>${badges.length ? `<p class="badges">${badges.map(x => `<i title="${x[1]}">${x[0]}</i>`).join('')}</p>` : ''}</span>`;
+  b.title = [desc, ...badges.map(x => x[1])].join('\n');
+  b.dataset.lights = JSON.stringify(cardLights(o));
   b.setAttribute('aria-label', `${idx + 1}번 ${title}`);
   return b;
 }
@@ -2194,12 +2212,48 @@ function openLevelUp() {
   const box = $('lucards'); box.innerHTML = '';
   currentOffers.forEach((o, i) => { const c = offerCard(o, i); c.onclick = () => chooseOffer(i); box.appendChild(c); });
   $('rerollleft').textContent = `남은 ${G.rerolls}회 · R`; $('reroll').disabled = G.rerolls <= 0;
+  G.banishMode = false; $('banishleft').textContent = `남은 ${G.banishes || 0}회 · X`; $('banish').disabled = !(G.banishes > 0); $('banish').classList.remove('on');
+  $('lurest').textContent = G.pendingLevels > 0 ? `남은 레벨업 ${G.pendingLevels}` : '';   // 몰아 고르기: 닫지 않고 이어서(12장)
+  renderLuSlots(null);
+  for (const c of box.children) { const on = () => renderLuSlots(JSON.parse(c.dataset.lights || '[]')); c.addEventListener('mouseenter', on); c.addEventListener('focus', on); }
   $('levelup').hidden = false;
   focusFirst(box.firstChild);
 }
 function chooseOffer(i) {
   if (overlay !== 'levelup' || !currentOffers[i] || tooSoon()) return;
+  if (G.banishMode) return banishOffer(i);
   applyOffer(currentOffers[i]); closeOverlay('levelup');
+}
+// 레벨업 옆 칸(12장 '화면 편의 규칙'): 지금 무공·심법 칸, 고르려는 카드가 켜는 칸(오를 칸·새로 들어갈 칸·절기 짝 칸)을 빛낸다
+function cardLights(o) {
+  const out = [];
+  if (o.kind === 'uw') out.push('w:' + o.id); else if (o.kind === 'nw') out.push('w:+'); else if (o.kind === 'up') out.push('p:' + o.id); else if (o.kind === 'np') out.push('p:+');
+  if (o.kind === 'uw' || o.kind === 'nw') { const e = EVO_BY_W[o.id]; if (e) out.push('p:' + e.passive); }
+  if (o.kind === 'up' || o.kind === 'np') { const e = DATA.evolutions.find(x => x.passive === o.id); if (e) out.push('w:' + e.weapon); }
+  return out;
+}
+function renderLuSlots(lights) {
+  const L = new Set(lights || []), row = (kind, list, n, name) => {
+    const cells = []; let plusUsed = false;
+    for (let i = 0; i < n; i++) {
+      const it = list[i];
+      if (it) cells.push(`<span class="${L.has(kind + ':' + it.id) ? 'on' : ''}" title="${name(it)}">${GLYPH[it.id] || name(it)[0]}<small>${it.evolved ? '絶' : it.lv}</small></span>`);
+      else { const on = L.has(kind + ':+') && !plusUsed; if (on) plusUsed = true; cells.push(`<span class="empty${on ? ' on' : ''}"></span>`); }
+    }
+    return `<div>${cells.join('')}</div>`;
+  };
+  $('luslots').innerHTML = row('w', G.weapons, G.weaponSlots, w => W_BY_ID[w.id].nameKo) + row('p', G.passives, G.passiveSlots, q => P_BY_ID[q.id].nameKo);
+}
+// 파기(8장 '레벨업 규칙'): 선택지 하나를 이번 판에서 영영 뺀다. 횟수는 연무장 '파기' 레벨(한 생 판), 1장 판은 0. 누르고 카드를 고르면 그 카드가 빠지고 남은 것에서 고른다
+function toggleBanish() { if (overlay !== 'levelup' || !(G.banishes > 0) || tooSoon()) return; G.banishMode = !G.banishMode; $('banish').classList.toggle('on', G.banishMode); }
+function banishOffer(i) {
+  const o = currentOffers[i]; G.banishMode = false; $('banish').classList.remove('on');
+  if (o.kind === 'gold') return;
+  G.banished.add(o.id); G.banishes--; $('banishleft').textContent = `남은 ${G.banishes}회 · X`; $('banish').disabled = !(G.banishes > 0);
+  currentOffers.splice(i, 1);
+  if (!currentOffers.length) { G.pendingLevels++; closeOverlay('levelup', true); openLevelUp(); return; }
+  const box = $('lucards'); box.innerHTML = '';
+  currentOffers.forEach((x, k) => { const c = offerCard(x, k); c.onclick = () => chooseOffer(k); box.appendChild(c); });
 }
 function rerollOffers() { if (overlay !== 'levelup' || G.rerolls <= 0 || tooSoon()) return; G.rerolls--; G.pendingLevels++; closeOverlay('levelup', true); openLevelUp(); }
 function skipOffer() { if (overlay !== 'levelup' || tooSoon()) return; addUlt(20); closeOverlay('levelup'); }
@@ -2779,9 +2833,9 @@ const TRAIT_BY = Object.fromEntries(BT.list.map(t => [t.id, t]));
 const SECT_BY = Object.fromEntries((DATA.sects || []).map(s => [s.id, s]));
 const CARD_BY = Object.fromEntries((DATA.cards || []).map(c => [c.id, c]));
 const START_SECTS = (DATA.sects || []).filter(s => s.unlock === 'start').map(s => s.id);
-const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복', Area: '범위', Duration: '지속', ProjectileSpeed: '투사체 속도', Amount: '투사체 수', CritChance: '치명' };
-const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount']);
-const statOn = k => !!STAT_KEY[k] || k === 'Amount';   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
+const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복', Area: '범위', Duration: '지속', ProjectileSpeed: '투사체 속도', Amount: '투사체 수', CritChance: '치명', Banishes: '파기', Rerolls: '다시 고르기' };
+const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount', 'Banishes', 'Rerolls']);
+const statOn = k => !!STAT_KEY[k] || ['Amount', 'Banishes', 'Rerolls'].includes(k);   // 파기·다시 고르기는 레벨업 횟수로(UI-02)   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
 function fmtStat(k, v) {
   const sign = v > 0 ? '+' : v < 0 ? '−' : '', a = Math.abs(v);
   if (k === 'Recovery') return `${STAT_KO[k]} 초당 ${sign}${+a.toFixed(2)}`;
@@ -3793,6 +3847,8 @@ window.addEventListener('keydown', e => {
   if (overlay === 'levelup') {
     const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseOffer(n - 1);
     if (e.code === 'KeyR' && !e.repeat) rerollOffers();
+    if (e.code === 'KeyX' && !e.repeat) toggleBanish();
+    if (e.code === 'KeyZ' && !e.repeat) skipOffer();
     return;
   }
   if (overlay === 'brk') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseInsight(n - 1); return; }
@@ -3840,6 +3896,7 @@ $('resume').addEventListener('click', () => togglePause(false));
 $('quit').addEventListener('click', toTitle);
 $('reroll').addEventListener('click', rerollOffers);
 $('skip').addEventListener('click', skipOffer);
+$('banish').addEventListener('click', toggleBanish);
 $('chestok').addEventListener('click', () => closeOverlay('chest'));
 $('startquick').addEventListener('click', () => startRun('quick'));
 $('startprologue').addEventListener('click', () => startRun('prologue'));
