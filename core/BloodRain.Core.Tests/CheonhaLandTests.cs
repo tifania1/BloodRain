@@ -67,5 +67,26 @@ namespace BloodRain.Core.Tests
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
             Assert.Contains("\"land\", \"rivers\"", build);
         }
+
+        static string Body(string html, string pattern)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(html, pattern, System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.Multiline);
+            Assert.True(m.Success, pattern);
+            // 들여쓰기만 다를 수 있다
+            return string.Join("\n", m.Groups[1].Value.Split('\n').Select(l => l.Trim()));
+        }
+
+        [Fact]
+        public void 프로토타입_소품은_시안과_같은_코드로_같은_자리에_놓인다()
+        {
+            var sian = TestData.ReadRepoFile("web", "lookdev", "cheonha.html");
+            var proto = TestData.ReadRepoFile("web", "prototype", "template.html");
+            const string build = @"\(function buildProps\(\) \{\n(.*?)\n\s*\}\)\(\);";
+            const string sprite = @"^\s*(function propSprite\(kind, v\) \{\n.*?\n\s*return c;\n\s*\})";
+            const string rng = @"^\s*(function rng\(seed\).*?)$";
+            Assert.Equal(Body(sian, build), Body(proto, build));
+            Assert.Equal(Body(sian, sprite), Body(proto, sprite));
+            Assert.Equal(Body(sian, rng), Body(proto, rng));
+        }
     }
 }

@@ -2405,7 +2405,7 @@ function drawCurtain(now) {
   for (let i = 0; i < 90; i++) { const a = i / 90 * TAU + now * 0.05, rr = R + ((i * 37) % 23), x = hx + Math.cos(a) * rr, y = hy + Math.sin(a) * rr + ((now * 120 + i * 13) % 26); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 12); }
   ctx.stroke();
 }
-// 중원 한 장(WP-12): 축척 시험에서 1장 마당(원점)을 cheonha.json 숭산 자리에 놓고, 천하 시안과 같은 땅 윤곽·바다·강·지명을 그린다.
+// 중원 한 장(WP-12): 축척 시험에서 1장 마당(원점)을 cheonha.json 숭산 자리에 놓고, 천하 시안과 같은 땅 윤곽·바다·강·소품·지명을 그린다.
 // 좌표는 world.land·rivers·regions pos(비율) × widthMeters·heightMeters 에서 숭산 자리를 뺀 값(원점 = 1장 마당 가운데).
 const HOME_REG = (DATA.regions || []).find(r => r.chapter === 'chapter1');
 const HOME_M = HOME_REG ? [HOME_REG.pos[0] * WD.widthMeters, HOME_REG.pos[1] * WD.heightMeters] : [0, 0];
@@ -2413,6 +2413,97 @@ const toLocal = ([x, y]) => [x * WD.widthMeters - HOME_M[0], y * WD.heightMeters
 const CH_LAND = (WD.land || []).map(toLocal), CH_RIVERS = (WD.rivers || []).map(r => r.map(toLocal));
 // 봉마곡(final)은 봉인석이 모이기 전엔 보이면 안 되니 지명을 그리지 않는다(천하 시안과 같음)
 const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, x, y }; });
+// 소품(WP-12): 천하 시안의 buildProps·propSprite 를 글자 그대로 옮긴 것(같은 시드라 같은 자리에 같은 나무·집·탑·산).
+// 시안 쪽을 고치면 여기도 같이 고친다 — CheonhaLandTests 가 두 판의 본문이 같은지 본다. 좌표는 중원 한 장 절대 미터.
+const CH_PROP = (() => {
+  if (!WD.land) return null;
+  const W = WD.widthMeters, H = WD.heightMeters, INK = '#1A1A1A';
+  const REGIONS = (DATA.regions || []).map(r => Object.assign({}, r, { x: r.pos[0] * W, y: r.pos[1] * H }));
+  const LAND = WD.land.map(([x, y]) => [x * W, y * H]);
+  function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function inLand(x, y) {
+  let c = false;
+  for (let i = 0, j = LAND.length - 1; i < LAND.length; j = i++) {
+    const [xi, yi] = LAND[i], [xj, yj] = LAND[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+
+  const props = [];
+  (function buildProps() {
+  const r = rng(7);
+  const add = (kind, x, y, s) => { if (inLand(x, y)) props.push({ kind, x, y, s, v: Math.floor(r() * 3) }); };
+  for (const g of REGIONS) {
+    if (g.final) continue;
+    const cx = g.x, cy = g.y;
+    add('temple', cx, cy - 14, 22);
+    for (let i = 0; i < 14; i++) { const a = r() * TAU, d = 16 + r() * 34; add('house', cx + Math.cos(a) * d, cy + Math.sin(a) * d, 6 + r() * 2); }
+    for (let i = 0; i < 160; i++) { const a = r() * TAU, d = 8 + r() * 140; add('tree', cx + Math.cos(a) * d, cy + Math.sin(a) * d, 3 + r() * 2.5); }
+  }
+  for (let v = 0; v < 70; v++) {
+    const cx = r() * W, cy = r() * H; if (!inLand(cx, cy)) continue;
+    for (let i = 0; i < 6 + r() * 8; i++) { const a = r() * TAU, d = r() * 26; add('house', cx + Math.cos(a) * d, cy + Math.sin(a) * d, 6 + r() * 2); }
+  }
+  for (let i = 0; i < 6000; i++) add('tree', r() * W, r() * H, 3 + r() * 2.5);
+  const ranges = [[0.03, 0.22, 0.18, 0.62, 70], [0.30, 0.50, 0.78, 0.94, 40], [0.40, 0.52, 0.28, 0.50, 28], [0.28, 0.60, 0.10, 0.17, 26], [0.20, 0.34, 0.40, 0.52, 18]];
+  for (const [x0, x1, y0, y1, n] of ranges) for (let i = 0; i < n; i++) add('mount', lerp(x0, x1, r()) * W, lerp(y0, y1, r()) * H, 90 + r() * 230);
+  props.sort((a, b) => a.y - b.y);
+  })();
+  function propSprite(kind, v) {
+  const P = kind === 'mount' ? 256 : 96, c = off(P, P), g = c.getContext('2d'), r = rng(kind.length * 13 + v * 5 + 3);
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  if (kind === 'tree') {
+    g.fillStyle = INK; g.fillRect(P * 0.47, P * 0.55, P * 0.06, P * 0.35);
+    for (let i = 0; i < 7; i++) { g.globalAlpha = 0.55 + r() * 0.3; g.fillStyle = i % 3 ? '#3E5A3A' : '#2F4630'; g.beginPath(); g.ellipse(P * (0.5 + (r() - 0.5) * 0.4), P * (0.38 + (r() - 0.5) * 0.3), P * (0.16 + r() * 0.1), P * (0.12 + r() * 0.08), 0, 0, TAU); g.fill(); }
+  } else if (kind === 'house') {
+    g.fillStyle = '#D9CDB0'; g.strokeStyle = INK; g.lineWidth = 3; g.fillRect(P * 0.2, P * 0.5, P * 0.6, P * 0.36); g.strokeRect(P * 0.2, P * 0.5, P * 0.6, P * 0.36);
+    g.fillStyle = '#3A3A3A'; g.beginPath(); g.moveTo(P * 0.08, P * 0.54); g.quadraticCurveTo(P * 0.5, P * 0.18, P * 0.92, P * 0.54); g.lineTo(P * 0.78, P * 0.5); g.lineTo(P * 0.22, P * 0.5); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = INK; g.fillRect(P * 0.44, P * 0.66, P * 0.12, P * 0.2);
+  } else if (kind === 'temple') {
+    g.strokeStyle = INK; g.lineWidth = 3;
+    for (let k = 0; k < 4; k++) { const y = P * (0.82 - k * 0.17), w = P * (0.7 - k * 0.12); g.fillStyle = k % 2 ? '#8A3A2E' : '#D9CDB0'; g.fillRect(P / 2 - w / 2, y - P * 0.1, w, P * 0.1); g.strokeRect(P / 2 - w / 2, y - P * 0.1, w, P * 0.1); g.fillStyle = '#2A2A2A'; g.beginPath(); g.moveTo(P / 2 - w / 2 - 8, y - P * 0.1); g.quadraticCurveTo(P / 2, y - P * 0.2, P / 2 + w / 2 + 8, y - P * 0.1); g.fill(); }
+  } else { // 산: 마른 붓 세 겹
+    for (let k = 0; k < 3; k++) {
+      const base = P * (0.95 - k * 0.04), peak = P * (0.12 + k * 0.14 + r() * 0.08), cx = P * (0.5 + (r() - 0.5) * 0.3), hw = P * (0.46 - k * 0.08);
+      g.fillStyle = `rgba(${40 + k * 30},${50 + k * 30},${48 + k * 28},${0.55 - k * 0.12})`;
+      g.beginPath(); g.moveTo(cx - hw, base);
+      for (let i = 0; i <= 12; i++) { const s = i / 12, x = cx - hw + s * hw * 2, y = base - (base - peak) * Math.pow(Math.sin(s * Math.PI), 1.4) * (0.85 + r() * 0.3); g.lineTo(x, y); }
+      g.lineTo(cx + hw, base); g.closePath(); g.fill();
+    }
+    g.strokeStyle = 'rgba(26,26,26,0.7)'; g.lineWidth = 3; g.beginPath(); g.moveTo(P * 0.2, P * 0.6); g.quadraticCurveTo(P * 0.45, P * 0.15, P * 0.62, P * 0.32); g.stroke();
+  }
+  return c;
+}
+
+  const PCELL = 200, pgrid = new Map();
+  props.forEach((p, i) => { const k = Math.floor(p.x / PCELL) + ',' + Math.floor(p.y / PCELL); if (!pgrid.has(k)) pgrid.set(k, []); pgrid.get(k).push(i); });
+  const SPR = {}; for (const k of ['tree', 'house', 'temple', 'mount']) SPR[k] = [0, 1, 2].map(v => propSprite(k, v));
+  return { props, pgrid, PCELL, SPR };
+})();
+// 시안 그리기와 같은 규칙: 2픽셀보다 작으면 안 그림, 6픽셀 아래는 옅게, 화면을 덮을 만큼 크면 옅게(마당의 전각), 산은 먼 그림(시야 140m → 700m)에서 떠오름
+function drawProps() {
+  if (!CH_PROP || !SCALE_MODE || isPro() || !G.viewD) return;
+  const { props, pgrid, PCELL, SPR } = CH_PROP, lv = Math.log(G.viewD);
+  const aFar = clamp((lv - Math.log(140)) / (Math.log(700) - Math.log(140)), 0, 1);
+  const camX = G.cam.x + HOME_M[0], camY = G.cam.y + HOME_M[1];
+  const halfW = VW / 2 / PPM + 400, halfH = VH / 2 / PPM + 400;
+  const cx0 = Math.floor((camX - halfW) / PCELL), cx1 = Math.floor((camX + halfW) / PCELL), cy0 = Math.floor((camY - halfH) / PCELL), cy1 = Math.floor((camY + halfH) / PCELL);
+  const vis = [], bigProp = Math.min(VW, VH) * 0.4;
+  if ((cx1 - cx0) * (cy1 - cy0) < 900) { for (let gx = cx0; gx <= cx1; gx++) for (let gy = cy0; gy <= cy1; gy++) { const a = pgrid.get(gx + ',' + gy); if (a) for (const i of a) vis.push(i); } }
+  else for (let i = 0; i < props.length; i++) if (props[i].kind === 'mount' || props[i].kind === 'temple') vis.push(i);
+  vis.sort((a, b) => a - b);
+  for (const i of vis) {
+    const pr = props[i], size = pr.s * PPM; if (size < 2) continue;
+    let alpha = 1;
+    if (pr.kind === 'mount') alpha = aFar * 0.6; else if (size < 6) alpha = (size - 2) / 4;
+    else if (size > bigProp) alpha = clamp(1 - (size - bigProp) / bigProp, 0.25, 1);
+    if (alpha <= 0.02) continue;
+    const X = wx(pr.x - HOME_M[0]), Y = wy(pr.y - HOME_M[1]); if (X < -size || X > VW + size || Y < -size || Y > VH + size) continue;
+    ctx.globalAlpha = alpha; ctx.drawImage(SPR[pr.kind][pr.v], X - size / 2, Y - size * 0.85, size, size);
+  }
+  ctx.globalAlpha = 1;
+}
 function drawCheonha() {
   if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;
   const lv = Math.log(G.viewD), aRiver = clamp((lv - Math.log(70)) / (Math.log(220) - Math.log(70)), 0, 1);
@@ -2429,6 +2520,7 @@ function drawCheonha() {
     ctx.strokeStyle = 'rgba(70,110,120,0.45)'; ctx.lineWidth = Math.max(1.5, 22 * PPM); ctx.stroke();
     ctx.strokeStyle = 'rgba(26,26,26,0.25)'; ctx.lineWidth = Math.max(0.6, 3 * PPM); ctx.stroke(); ctx.restore();
   }
+  drawProps();
   // 지명: 화면 안에 든 땅만. 한자는 크게, 한글은 밑에.
   ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const r of CH_REGS) {
