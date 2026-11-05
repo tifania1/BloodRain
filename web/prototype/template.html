@@ -961,6 +961,12 @@ function newRun(mode) {
 function makeEvents(mode) {
   // 서장: chapters.json prologue events 그대로(3:30 혈인 돌진, 5:00 강시 도부수, 9:00 장삼)
   if (mode === 'prologue') return PRO.events.map(e => e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', type: e.enemy } : { at: e.at, kind: e.kind, enemy: e.enemy });
+  // 한 생 시험(WP-14b): chapters.json life events. 정예는 nth(서 있는 땅의 정예 표에서 몇 번째), 무리는 그 땅 고유 적.
+  // 떠돌이 상인·은 등롱은 프로토타입에 아직 없어 뺀다. 땅의 주인은 WP-13e 몫이라 30분까지 보스 없이 간다
+  if (mode !== 'prologue' && LIFE_SECT && SCALE_MODE && DATA.lifePlan) return DATA.lifePlan.events.map(e =>
+    e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', nth: e.nth }
+    : e.kind === 'toad' ? { at: rand(e.window[0], e.window[1]), kind: 'toad' } : e.kind === 'ring' ? { at: e.at, kind: 'ring', n: e.count }
+    : e.kind === 'group' ? { at: e.at, kind: 'group', enemy: e.enemy, n: e.count, local: e.local } : null).filter(Boolean).sort((a, b) => a.at - b.at);
   // 옛 1장 시간대별 흐름(천하 구조 전 기획서 7장 표). 시각은 게임 분. 지금 흐름은 chapters.json life(기획서 7장 '한 생의 시간대별 흐름').
   return [
     { at: 3.5, kind: 'charge', n: 14 }, { at: 5, kind: 'elite', type: 'dongin' },
@@ -1147,6 +1153,12 @@ function viewDiag() { return Math.hypot(viewW(), viewH()); }
 function pickType(gm) {
   if (isPro()) { // chapters.json prologue bands 가중치표
     const band = PRO.bands.find(b => gm >= b.fromMinute && gm < b.toMinute) || PRO.bands[PRO.bands.length - 1];
+    const sum = band.spawns.reduce((a, x) => a + x.weight, 0);
+    let r = Math.random() * sum; for (const x of band.spawns) { r -= x.weight; if (r <= 0) return x.enemy; }
+    return band.spawns[0].enemy;
+  }
+  if (G.body && DATA.lifePlan) {   // 한 생 시험(WP-14b): chapters.json life bands 가중치표
+    const BD = DATA.lifePlan.bands, band = BD.find(b => gm >= b.fromMinute && gm < b.toMinute) || BD[BD.length - 1];
     const sum = band.spawns.reduce((a, x) => a + x.weight, 0);
     let r = Math.random() * sum; for (const x of band.spawns) { r -= x.weight; if (r <= 0) return x.enemy; }
     return band.spawns[0].enemy;
@@ -1671,6 +1683,7 @@ function update(dt) {
   for (let i = G.zones.length - 1; i >= 0; i--) { const z = G.zones[i]; z.delay -= dt; if (z.delay <= 0) { G.zones.splice(i, 1); z.apply(); } }
 
   foeShotsStep(dt);   // 고유 적이 쏜 탄(WP-13c)
+  trackChRegion();          // 밟은 땅(그리기 고리 밖 sim 에서도 정예·무리·고유 적이 땅을 알게)
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
   eliteShapesStep(dt);      // 정예 돌진·검진 고리·분신(WP-13d)
   // 적
@@ -1846,7 +1859,13 @@ function runEvent(ev) {
     }
     toast('혈인 떼', '한 방향으로 돌진해 온다');
     cue('first_charge');
-  } else if (ev.kind === 'elite') { const ek = regionEliteKey(ev.type); spawnElite(ek); cue('elite_spawn:' + ELITES[ek].id); }
+  } else if (ev.kind === 'elite') { const ek = ev.nth ? lifeEliteKey(ev.nth) : regionEliteKey(ev.type); spawnElite(ek); cue('elite_spawn:' + ELITES[ek].id); }
+  else if (ev.kind === 'group') {   // 한 생 무리(WP-14b): 서 있는 땅 고유 적 하나를 골라 count 마리 한 덩어리로, 고유 적이 없는 땅이면 enemy
+    const r = CH_REGS.find(x => x.id === G.chRegion), list = ev.local && r && LOCAL_BY[r.chapter], type = list ? list[Math.floor(Math.random() * list.length)] : ev.enemy;
+    const a = rand(0, TAU), cx = p.x + Math.cos(a) * diag * 0.55, cy = p.y + Math.sin(a) * diag * 0.55;
+    for (let i = 0; i < ev.n; i++) spawnEnemy(type, cx + rand(-2, 2), cy + rand(-2, 2));
+    toast(E_BY_ID[type] ? E_BY_ID[type].nameKo + ' 무리' : '무리', '한 떼가 몰려온다');
+  }
   else if (ev.kind === 'toad') { const [x, y] = ringPos(); spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale); toast('금두꺼비', '잡으면 은자와 진기'); }
   else if (ev.kind === 'ring') { for (let i = 0; i < ev.n; i++) { const a = i / ev.n * TAU; spawnEnemy('donggap', p.x + Math.cos(a) * diag * 0.6, p.y + Math.sin(a) * diag * 0.6); } toast('동갑시 포위', '원을 좁혀 온다'); }
   else if (ev.kind === 'boss') { if (isPro()) spawnJangSam(); else spawnBoss(); }
@@ -2905,6 +2924,20 @@ function drawRegionGimmicks() {
 // 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.
 const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones']);
 const eliteShapeOk = P => !!P && ELITE_SHAPES.has(P.shape) && !(P.shape === 'line' && !P.projectileSpeed);
+// 한 생 정예(WP-14b): 서 있는 땅의 정예 표(elites.<장>)에서 nth 번째. 장 정예가 없는 땅(eliteFallback)이나 표가 짧으면 숭산 표를 돌려 쓴다.
+// 프로토타입이 아는 패턴 모양이 하나도 없으면 1장 정예 차례 그대로
+function lifeEliteKey(nth) {
+  const fb = DATA.eliteFallback || { regions: [] }, r = CH_REGS.find(x => x.id === G.chRegion);
+  const own = r && !fb.regions.includes(r.id) && (DATA.elites || {})[r.chapter], base = DATA.elites.chapter1 || [];
+  const list = own && own.length ? own : base, id = list.length ? list[(nth - 1) % list.length] : null;
+  const keys = Object.keys(ELITES), old = keys[(nth - 1) % keys.length];
+  if (!id) return old;
+  const have = keys.find(k => ELITES[k].id === id); if (have) return have;
+  const ps = DATA.elitePatterns[id], d = E_BY_ID[id], pat0 = ps && ps.patterns.find(eliteShapeOk);
+  if (!pat0 || !d) return old;
+  ELITES[id] = { id, name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: pat0 };
+  return id;
+}
 function regionEliteKey(key) {
   if (!SCALE_MODE || isPro() || !G.chRegion) return key;
   // 장 정예가 없는 땅(chapters.json life.eliteFallback.regions: 청운진·개방 총타·남궁세가)은 숭산 정예 그대로

@@ -111,6 +111,8 @@ def data_blob() -> str:
         # 한 생의 고유 적 비율(WP-13c): 축척 모드에서 다른 땅에 서면 그 땅 고유 적을 이 비율로 섞는다
         # 지역 기믹(WP-13b): 독안개·낙석·눈보라·붉은 달은 gimmicks.json 값 그대로(배치 간격이 필요 없는 것부터)
         "gimmicks": {k: drop_notes(v) for k, v in load("gimmicks").items() if k in ("poisonFog", "fallingRocks", "blizzard", "redMoon")},
+        # 한 생 시간표(WP-14b): ?life= 판이 1장 시간표 대신 chapters.json life 의 bands·events 를 쓴다
+        "lifePlan": {k: drop_notes(next(c for c in load("chapters")["chapters"] if c["id"] == "life")[k]) for k in ("bands", "events")},
         "lifeLocalShare": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["localShare"],
         "eliteFallback": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["eliteFallback"],
         # 한 생 시험(WP-14a): 주소 끝 ?life=<문파> 면 그 문파 몸(기혈·걸음·시작 무공·타고난 능력치)으로 그 문파 땅에서 한 생을 연다
