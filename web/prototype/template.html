@@ -172,6 +172,15 @@ button { touch-action: manipulation; }
 .ledger td { padding: 3px 0; border-bottom: 1px solid rgba(26,26,26,.15); vertical-align: top; }
 .ledger td:last-child { text-align: right; font: 700 13px var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 8px; }
 .ledger small { display: block; opacity: .65; font-size: 11px; }
+.innh { margin: 14px 0 4px; font-size: 14px; font-weight: 900; align-self: flex-start; }
+.innmeta { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; width: 100%; }
+.innmeta button { text-align: left; padding: 7px 9px; border: 1.5px solid var(--ink); background: var(--paper); font: inherit; font-size: 12px; cursor: pointer; display: grid; gap: 2px; }
+.innmeta button b { font-size: 13px; }
+.innmeta button:disabled { opacity: .45; cursor: default; }
+.innmeta button.refund { border-style: dashed; }
+.card .tr { margin: 2px 0 0; font-size: 12px; }
+.card .tr b { margin-right: 6px; color: var(--ink); }
+.card .off, .innmeta .off { opacity: .45; }
 .ledger tr.sum td { border-bottom: 0; font-weight: 700; padding-top: 6px; }
 .resimg { width: 100%; max-width: 100%; border: 2px solid var(--ink); }
 .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
@@ -258,6 +267,21 @@ button { touch-action: manipulation; }
       </div>
       <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
       <div class="subtle" id="best"></div>
+    </div>
+  </div>
+
+  <div class="screen veil" id="inn" hidden>
+    <div class="panel">
+      <div class="brush" style="font-size:52px">輪迴</div>
+      <div class="subtle" id="innsub">다음 생을 고르시오</div>
+      <div class="cards" id="inncards"></div>
+      <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button></div>
+      <div class="subtle" id="innqi"></div>
+      <h4 class="innh">침방 · 환혼 강화</h4>
+      <div class="innmeta" id="innupg"></div>
+      <h4 class="innh">연무장</h4>
+      <div class="innmeta" id="inntrain"></div>
+      <div class="row"><button class="b" id="inntitle" type="button">처음으로</button></div>
     </div>
   </div>
 
@@ -412,6 +436,8 @@ const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100
 const LIFE_SECT = (DATA.sects || []).find(s => s.id === new URLSearchParams(location.search).get('life')) || null;
 const LIFE_BEH = new Set(['aura', 'forward_claws', 'front_arc', 'homing_dagger', 'melee_combo', 'orbit_slash', 'orbiting_blades', 'petal_scatter', 'pierce_thrust', 'pull_chain', 'random_arc', 'random_bomb', 'random_rapid', 'ring_wave', 'slow_projectile']);
 const bodyOf = () => (G && G.body) || JIN;
+// 능력치 이름(Core StatKind) → 프로토타입 능력치 칸. 심법·문파 몸·연무장·타고난 성질이 같이 쓴다
+const STAT_KEY = { MaxHealth: 'maxHealth', Recovery: 'recovery', Armor: 'armor', MoveSpeed: 'moveSpeed', Might: 'might', CooldownReduction: 'cdr', Area: 'area', Duration: 'duration', ProjectileSpeed: 'projSpeed', Magnet: 'magnet', Growth: 'growth', Luck: 'luck', CritChance: 'crit', Knockback: 'knockback', BurnDamage: 'burn', DotDamage: 'dot', EliteDamage: 'elite', Lifesteal: 'lifesteal', FoodHeal: 'foodHeal', ExplosionArea: 'explosionArea' };
 const JIN_REROLLS = B.levelUp.traitRerolls?.[JIN.trait] ?? 0;
 const MOVE = B.stats.moveBase; // 신법 100% 걸음 m/s, 적 속도 100 = 이 값
 // 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟 + 취선봉 random_arc, T-36).
@@ -953,12 +979,13 @@ function newRun(mode) {
   };
   grid = new Map();
   G.home = { x: 0, y: 0 };   // 태어난 자리(절대 m, 숭산 마당 = 0,0). 혈우 장막의 가운데
-  if (LIFE_SECT && mode !== 'prologue' && SCALE_MODE) {
-    const reg = CH_REGS.find(r => r.id === LIFE_SECT.region), wd = W_BY_ID[LIFE_SECT.startWeapon];
-    G.body = LIFE_SECT;
+  const LS = curLifeSect();
+  if (LS && mode !== 'prologue' && SCALE_MODE) {
+    const reg = CH_REGS.find(r => r.id === LS.region), wd = W_BY_ID[LS.startWeapon];
+    G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
     G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
-    if (LIFE_SECT.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
+    if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
     if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
   }
   recomputeStats();
@@ -970,7 +997,7 @@ function makeEvents(mode) {
   if (mode === 'prologue') return PRO.events.map(e => e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', type: e.enemy } : { at: e.at, kind: e.kind, enemy: e.enemy });
   // 한 생 시험(WP-14b): chapters.json life events. 정예는 nth(서 있는 땅의 정예 표에서 몇 번째), 무리는 그 땅 고유 적.
   // 떠돌이 상인·은 등롱은 프로토타입에 아직 없어 뺀다. 땅의 주인은 WP-13e 몫이라 30분까지 보스 없이 간다
-  if (mode !== 'prologue' && LIFE_SECT && SCALE_MODE && DATA.lifePlan) return DATA.lifePlan.events.map(e =>
+  if (mode !== 'prologue' && curLifeSect() && SCALE_MODE && DATA.lifePlan) return DATA.lifePlan.events.map(e =>
     e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', nth: e.nth }
     : e.kind === 'toad' ? { at: rand(e.window[0], e.window[1]), kind: 'toad' } : e.kind === 'ring' ? { at: e.at, kind: 'ring', n: e.count }
     : e.kind === 'group' ? { at: e.at, kind: 'group', enemy: e.enemy, n: e.count, local: e.local } : null).filter(Boolean).sort((a, b) => a.at - b.at);
@@ -988,7 +1015,7 @@ function makeEvents(mode) {
 function recomputeStats() {
   updateSynergy();
   const s = { maxHealth: 0, recovery: 0, armor: 0, moveSpeed: 0, might: 0, cdr: 0, area: 0, amount: 0, duration: 0, projSpeed: 0, magnet: 0, growth: 0, luck: 0, crit: 0, knockback: 0, burn: 0, dot: 0, elite: 0, lifesteal: 0, foodHeal: 0, explosionArea: 0 };
-  const map = { MaxHealth: 'maxHealth', Recovery: 'recovery', Armor: 'armor', MoveSpeed: 'moveSpeed', Might: 'might', CooldownReduction: 'cdr', Area: 'area', Duration: 'duration', ProjectileSpeed: 'projSpeed', Magnet: 'magnet', Growth: 'growth', Luck: 'luck', CritChance: 'crit', Knockback: 'knockback', BurnDamage: 'burn', DotDamage: 'dot', EliteDamage: 'elite', Lifesteal: 'lifesteal', FoodHeal: 'foodHeal', ExplosionArea: 'explosionArea' };
+  const map = STAT_KEY;
   for (const p of G.passives) {
     const def = P_BY_ID[p.id];
     for (const e of def.effects) {
@@ -997,7 +1024,7 @@ function recomputeStats() {
     }
   }
   // 문파 몸의 타고난 능력치(WP-14a, traitEffect.stats)
-  for (const [k, v] of Object.entries((G.body && G.body.stats) || {})) { const key = map[k]; if (key) s[key] += v; }
+  for (const [k, v] of Object.entries((G.body && G.body.stats) || {})) { const key = map[k]; if (key) s[key] += v; else if (k === 'Amount') s.amount += v; }   // 연무장·타고난 성질도 여기로(WP-14d)
   // 진전 능력치
   for (const [k, v] of Object.entries(synStats())) { const key = map[k]; if (key) s[key] += v; }
   const rr = realmRewardSum(G.realm.level);
@@ -2721,6 +2748,8 @@ function lifeSettle() {
   if (newVisits.length) rows.push([`처음 밟은 땅 ${newVisits.length} × ${QI.firstVisitRegion}`, newVisits.map(id => (CH_REGS.find(r => r.id === id) || { nameKo: id }).nameKo).join(', '), newVisits.length * QI.firstVisitRegion]);
   if (newRealms.length) rows.push([`처음 오른 경지 ${newRealms.length} × ${QI.firstReachRealm}`, newRealms.map(id => B.realms.find(r => r.id === id).nameKo).join(', '), newRealms.length * QI.firstReachRealm]);
   rows.push([`남은 은자 ${G.silver} × ${QI.leftoverSilverRate}`, '쓰지 못한 은자도 기로 남는다', Math.round(QI.leftoverSilverRate * G.silver)]);
+  // 타고난 성질(둔재·단명): 성질 배율 전 합 × 보너스, 반올림(Core FromTraits)
+  if (G.body.qiBonus) rows.push([`타고난 성질 × ${(1 + G.body.qiBonus).toFixed(2)}`, G.body.traits.filter(id => TRAIT_BY[id].rebirthQi).map(id => `${TRAIT_BY[id].nameKo} +${Math.round(TRAIT_BY[id].rebirthQi * 100)}%`).join(', '), Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)]);
   const total = rows.reduce((a, r) => a + r[2], 0);
   const crystal = Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0));   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
   return { rows, total, crystal, top, newVisits, newRealms };
@@ -2733,6 +2762,148 @@ function recordLife(st) {
   for (const id of st.newRealms) if (!m.reached.includes(id)) m.reached.push(id);
   soulSave(m);
   return m;
+}
+
+// ───────── 침방·연무장(WP-14d, 기획서 10·21장) ─────────
+// 천하 시안 openRebirth·drawCandidates·bodyOf·trainCost 를 이 판에 옮긴 것(Core RebirthDraw·Soul.UpgradeCost·Training 과 같은 셈).
+// 혼 기록은 시안과 같은 cheonha_meta2 라 어느 쪽에서 찍어도 같다. 고르면 ?life= 없이 그 몸으로 다음 생(NEXT_LIFE).
+// 아직 없는 것: 몸 성별·대표 인물 대사(21장), 땅의 주인을 쓰러뜨려 여는 문파(이 판엔 아직 땅의 주인이 없다).
+const RB = DATA.rebirth || { candidates: 3, firstRebirth: [], upgrades: [] };
+const BT = DATA.birthTraits || { countWeights: [1], excludes: [], list: [] };
+const TRAIT_BY = Object.fromEntries(BT.list.map(t => [t.id, t]));
+const SECT_BY = Object.fromEntries((DATA.sects || []).map(s => [s.id, s]));
+const START_SECTS = (DATA.sects || []).filter(s => s.unlock === 'start').map(s => s.id);
+const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복', Area: '범위', Duration: '지속', ProjectileSpeed: '투사체 속도', Amount: '투사체 수', CritChance: '치명' };
+const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount']);
+const statOn = k => !!STAT_KEY[k] || k === 'Amount';   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
+function fmtStat(k, v) {
+  const sign = v > 0 ? '+' : v < 0 ? '−' : '', a = Math.abs(v);
+  if (k === 'Recovery') return `${STAT_KO[k]} 초당 ${sign}${+a.toFixed(2)}`;
+  if (FLAT_STAT.has(k)) return `${STAT_KO[k] || k} ${sign}${a}`;
+  return `${STAT_KO[k] || k} ${sign}${+(a * 100).toFixed(1)}%`;
+}
+// 연무장에서 이 판이 찍게 하는 항목: balance.json training 가운데 이 판 능력치가 받는 것만, 데이터 순서대로
+const TRAIN_ITEMS = B.training.items.filter(i => statOn(i.stat));
+let NEXT_LIFE = null, innCands = [], innRerolls = 0;
+const curLifeSect = () => (NEXT_LIFE ? SECT_BY[NEXT_LIFE.sect] : LIFE_SECT);
+function innMeta() {
+  const m = soulLoad();
+  for (const k of ['qi', 'spent', 'lives']) if (!(m[k] >= 0)) m[k] = 0;
+  for (const k of ['train', 'upg']) if (!m[k] || typeof m[k] !== 'object') m[k] = {};
+  if (!Array.isArray(m.unlocked)) m.unlocked = START_SECTS.slice();
+  for (const id of START_SECTS) if (!m.unlocked.includes(id)) m.unlocked.push(id);
+  return m;
+}
+const shuffleA = (a, rnd = Math.random) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clashT = (a, b) => BT.excludes.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+function rollTraits(rnd = Math.random) {
+  const w = BT.countWeights; let r = rnd(), n = w.length - 1;
+  for (let i = 0; i < w.length; i++) { if (r < w[i]) { n = i; break; } r -= w[i]; }
+  const picks = [];
+  for (const id of shuffleA(BT.list.map(t => t.id), rnd)) { if (picks.length >= n) break; if (!picks.some(p => clashT(p, id))) picks.push(id); }
+  return picks;
+}
+const upgLevel = (m, id) => m.upg[id] || 0;
+function upgCost(m, u) { const lv = upgLevel(m, u.id); return lv >= u.maxLevel ? null : u.costPerLevel ? u.baseCost * (lv + 1) : u.baseCost; }
+function upgEffect(m, key) { let sum = 0; for (const u of RB.upgrades || []) { const x = /^([a-z]+)\+(\d+)$/.exec(u.effect); if (x && x[1] === key) sum += +x[2] * upgLevel(m, u.id); } return sum; }
+function trainCost(m, it) {
+  const lv = m.train[it.stat] || 0; if (lv >= it.maxLevel) return null;
+  const bought = Object.values(m.train).reduce((a, b) => a + Math.max(0, b), 0);
+  return Math.round(it.baseCost * (lv + 1) * (1 + B.training.costGrowthPerBought * bought));
+}
+function drawCandidates(m, rnd = Math.random) {
+  if (m.lives === 0) return RB.firstRebirth.map(id => ({ sect: id, traits: RB.firstRebirthTraits ? rollTraits(rnd) : [] }));
+  const order = shuffleA(m.unlocked.filter(id => SECT_BY[id]), rnd), out = [], n = RB.candidates + upgEffect(m, 'candidates');
+  const same = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+  for (let i = 0; i < n; i++) {
+    const sect = i < order.length ? order[i] : order[Math.floor(rnd() * order.length)];   // 열린 문파가 모자라면 같은 문파가 성질만 달리해
+    let traits = rollTraits(rnd);
+    for (let k = 0; k < 30 && out.some(c => c.sect === sect && same(c.traits, traits)); k++) traits = rollTraits(rnd);
+    out.push({ sect, traits });
+  }
+  return out;
+}
+// 몸: 문파 바탕 능력치(traitEffect.stats) + 연무장 + 타고난 성질. 덧셈을 모아 recomputeStats 가 한 번에(시안 bodyOf 와 같은 방식)
+function lifeBody(sect, traits) {
+  const m = innMeta(), stats = Object.assign({}, sect.stats || {});
+  const add = (k, v) => { stats[k] = (stats[k] || 0) + v; };
+  for (const it of TRAIN_ITEMS) { const lv = Math.min(m.train[it.stat] || 0, it.maxLevel); if (lv > 0) add(it.stat, it.perLevel * lv); }
+  let qiBonus = 0;
+  for (const id of traits || []) { const t = TRAIT_BY[id]; if (!t) continue; for (const k in t.stats) add(k, t.stats[k]); qiBonus += t.rebirthQi || 0; }
+  return Object.assign({}, sect, { stats, traits: (traits || []).filter(id => TRAIT_BY[id]), qiBonus });
+}
+const NUM_KO = ['', '하나', '둘', '셋', '넷', '다섯'];
+function traitLine(id) {
+  const t = TRAIT_BY[id], parts = Object.entries(t.stats).map(([k, v]) => statOn(k) ? fmtStat(k, v) : `<span class="off">${fmtStat(k, v)}</span>`);
+  if (t.yinyangStart) parts.push(`<span class="off">음양 시작 ${t.yinyangStart > 0 ? '+' : '−'}${Math.abs(t.yinyangStart)}</span>`);
+  if (t.rebirthQi) parts.push(`윤회의 기 +${Math.round(t.rebirthQi * 100)}%`);
+  return `<p class="tr"><b>${t.nameKo}</b>${parts.join(' · ')}</p>`;
+}
+function openInn() {
+  const m = innMeta();
+  running = false; cancelAnimationFrame(rafId);
+  ['result', 'pause', 'levelup', 'brk', 'chest', 'find', 'evopick'].forEach(id => $(id).hidden = true);
+  $('hud').hidden = true; overlay = 'inn'; paused = false;
+  innRerolls = m.lives ? upgEffect(m, 'rerolls') : 0;   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
+  innCands = drawCandidates(m);
+  renderInn(); $('inn').hidden = false; $('inn').scrollTop = 0; focusFirst($('inn'));
+}
+function innReroll() { const m = innMeta(); if (overlay !== 'inn' || innRerolls <= 0 || !m.lives) return; innRerolls--; innCands = drawCandidates(m); renderInn(); }
+function innBuyUpgrade(id) {
+  const m = innMeta(), u = (RB.upgrades || []).find(x => x.id === id), c = u && upgCost(m, u);
+  if (c == null || m.qi < c) return;
+  m.qi -= c; m.upg[id] = upgLevel(m, id) + 1; soulSave(m);
+  // 침방이 후보 화면에 붙어 있어 산 것이 바로 듣는다(시안과 같음): 넷째 몸은 후보 하나 더, 다시 고르기는 이번 환혼에 하나 더
+  if (m.lives && u.effect.startsWith('rerolls')) innRerolls++;
+  if (m.lives && u.effect.startsWith('candidates')) { const more = drawCandidates(m), pick = more.find(x => !innCands.some(c2 => c2.sect === x.sect)) || more[0]; innCands = innCands.concat([pick]).slice(0, RB.candidates + upgEffect(m, 'candidates')); }
+  renderInn();
+}
+function innTrain(stat) {
+  const m = innMeta(), it = TRAIN_ITEMS.find(x => x.stat === stat), c = it && trainCost(m, it);
+  if (c == null || m.qi < c) return;
+  m.qi -= c; m.spent += c; m.train[stat] = (m.train[stat] || 0) + 1; soulSave(m); renderInn();
+}
+function innRefund() { const m = innMeta(); if (!m.spent) return; m.qi += m.spent; m.spent = 0; m.train = {}; soulSave(m); renderInn(); }
+function renderInn() {
+  const m = innMeta();
+  $('innsub').textContent = m.lives ? `${m.lives + 1}번째 생 · 목 노인이 그날 밤 숨진 제자 ${NUM_KO[innCands.length] || innCands.length}을 보여 준다` : `첫 환혼 · ${RB.firstRebirth.map(id => SECT_BY[id].nameKo).join('·')} 가운데 하나, 타고난 성질 없이`;
+  const box = $('inncards'); box.innerHTML = '';
+  innCands.forEach((c, i) => {
+    const s = SECT_BY[c.sect], r = CH_REGS.find(x => x.id === s.region), w = W_BY_ID[s.startWeapon], b = document.createElement('button');
+    b.type = 'button'; b.className = 'card';
+    const has = w && LIFE_BEH.has(w.behavior);
+    b.innerHTML = `<span class="ic">${s.nameKo[0]}</span><span><h3>${s.nameKo} 제자 <em>${r ? r.nameKo + '에서 태어난다 · 혈운 ' + r.density.toFixed(1) : ''}</em></h3>`
+      + `<p>${w ? w.nameKo : s.startWeapon}${has ? '' : '(이 판엔 동작이 없어 삼재검법)'} · 기혈 ${s.maxHealth} · 걸음 ${Math.round(s.moveSpeed * 100)}%</p>`
+      + (c.traits.length ? c.traits.map(traitLine).join('') : '<p class="tr">타고난 성질 없음</p>') + `</span><span class="k">${i + 1}</span>`;
+    b.onclick = () => chooseLife(i); box.appendChild(b);
+  });
+  const rr = $('innreroll'), have = upgEffect(m, 'rerolls');
+  rr.hidden = !m.lives || !have; rr.disabled = innRerolls <= 0;
+  rr.innerHTML = `다시 고르기 <small>남은 ${innRerolls}/${have} · R</small>`;
+  $('innqi').textContent = `윤회의 기 ${m.qi.toLocaleString()} · 혈정 ${(m.crystal || 0).toLocaleString()} · 열린 문파 ${m.unlocked.length}/${(DATA.sects || []).length}`;
+  const ub = $('innupg'); ub.innerHTML = '';
+  for (const u of RB.upgrades || []) {
+    const lv = upgLevel(m, u.id), cost = upgCost(m, u), b = document.createElement('button'); b.type = 'button';
+    b.disabled = cost == null || m.qi < cost;
+    const what = u.effect.startsWith('candidates') ? '환생 후보 +1' : u.effect.startsWith('rerolls') ? '환혼마다 후보 다시 뽑기 +1' : u.effect;
+    b.innerHTML = `<b>${u.nameKo} ${lv}/${u.maxLevel}</b><span>${what} · ${cost == null ? '다 찍음' : '기 ' + cost.toLocaleString()}</span>`;
+    b.onclick = () => innBuyUpgrade(u.id); ub.appendChild(b);
+  }
+  const tb = $('inntrain'); tb.innerHTML = '';
+  for (const it of TRAIN_ITEMS) {
+    const lv = m.train[it.stat] || 0, cost = trainCost(m, it), b = document.createElement('button'); b.type = 'button';
+    b.disabled = cost == null || m.qi < cost;
+    b.innerHTML = `<b>${STAT_KO[it.stat] || it.stat} ${lv}/${it.maxLevel}</b><span>${fmtStat(it.stat, it.perLevel).replace((STAT_KO[it.stat] || it.stat) + ' ', '')} · ${cost == null ? '다 찍음' : '기 ' + cost.toLocaleString()}</span>`;
+    b.onclick = () => innTrain(it.stat); tb.appendChild(b);
+  }
+  const rf = document.createElement('button'); rf.type = 'button'; rf.className = 'refund'; rf.disabled = !m.spent;
+  rf.innerHTML = `<b>모두 돌려받기</b><span>${m.spent ? '기 ' + m.spent.toLocaleString() + ' 환불' : '찍은 것 없음'}</span>`;
+  rf.onclick = innRefund; tb.appendChild(rf);
+}
+function chooseLife(i) {
+  if (overlay !== 'inn' || !innCands[i]) return;
+  NEXT_LIFE = innCands[i]; $('inn').hidden = true; overlay = null;
+  startRun('full');
 }
 // 고유 적(WP-13c 첫 조각): 축척 모드에서 1장 밖 땅에 서면 chapters.json life.localShare(분 → 비율)만큼 그 땅 고유 적을 섞는다.
 // 동작은 LOCAL_BEH, 그림은 아직 혈무사 자리 표시(sprOf).
@@ -3378,7 +3549,7 @@ let lastTs = 0, rafId = 0;
 function startRun(mode) {
   ensureAudio(); if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
   newRun(mode); toastQ.length = 0;
-  ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true);
+  ['title', 'result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true);
   $('cv').classList.remove('mono'); $('hud').classList.remove('cine'); $('demobar').hidden = true;
   $('hud').hidden = false; overlay = null; paused = false; running = true;
   renderSlots(); lastTs = performance.now();
@@ -3418,6 +3589,7 @@ function endRun(won) {
   const facts = [[`${Math.floor(gs / 60)}:${String(gs % 60).padStart(2, '0')}`, '버틴 시간'], [G.kills.toLocaleString(), '처치'], [`Lv ${G.level}`, G.realm.nameKo], [G.silver, '은자']];
   // 한 생(WP-14c): 윤회의 기 정산 줄을 보여 주고 혼 기록에 새긴다
   const led = $('resledger'); led.hidden = !G.body; led.innerHTML = '';
+  $('again').textContent = G.body ? '윤회 · 다음 생을 고른다' : '다시 하기';
   if (G.body) {
     const st = lifeSettle(), m = recordLife(st); G.settled = st;
     $('resline').textContent = `${G.body.nameKo}의 제자는 ${G.realm.nameKo}에서 쓰러졌다. 모은 기를 들고 다른 문파의 몸으로 다시 태어난다.`;
@@ -3453,7 +3625,7 @@ function showBest() {
   $('best').textContent = parts.join(' · ');
   $('dexcount').textContent = `찾은 비급 ${dex.size} / ${DEX_TOTAL}`;
 }
-function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); drawIdle(); }
+function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); drawIdle(); }
 
 function drawIdle() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -3500,6 +3672,7 @@ function demoReplay(long) {
 window.addEventListener('keydown', e => {
   if (e.repeat && !['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return;
   input.keys.add(e.code);
+  if (!running && overlay === 'inn') { const n = parseInt(e.key, 10); if (n >= 1 && n <= innCands.length) chooseLife(n - 1); if (e.code === 'KeyR') innReroll(); return; }   // 침방(WP-14d)
   if (!running) { if (!$('dex').hidden) { if (e.code === 'Escape') closeDex(); return; } if (e.code === 'Enter' && !$('title').hidden) startRun('quick'); return; }
   if (overlay === 'dex') { if (e.code === 'Escape' || e.code === 'Enter') closeDex(); return; }
   if (overlay === 'find') { if (['Enter', 'Space', 'Escape'].includes(e.code)) { e.preventDefault(); closeOverlay('find'); } return; }
@@ -3559,7 +3732,9 @@ $('startprologue').addEventListener('click', () => startRun('prologue'));
 $('procutnext').addEventListener('click', nextCut);
 $('profirsttitle').addEventListener('click', () => { $('profirst').hidden = true; toTitle(); });
 $('startfull').addEventListener('click', () => startRun('full'));
-$('again').addEventListener('click', () => startRun(G ? G.mode : 'quick'));
+$('again').addEventListener('click', () => (G && G.body ? openInn() : startRun(G ? G.mode : 'quick')));
+$('innreroll').addEventListener('click', () => innReroll());
+$('inntitle').addEventListener('click', () => toTitle());
 $('totitle').addEventListener('click', toTitle);
 $('dexbtn').addEventListener('click', openDex); $('dexbtn2').addEventListener('click', openDex); $('dexclose').addEventListener('click', closeDex);
 $('findok').addEventListener('click', () => closeOverlay('find'));
@@ -3636,6 +3811,8 @@ window.__hyeolu = {
   state: () => G,
   // 정산(WP-14c): settle() 지금 끝나면 받을 윤회의 기(한 생 판만), soul() 혼 기록
   settle: () => (G && G.body ? lifeSettle() : null), soul: () => soulLoad(),
+  // 침방(WP-14d): inn() 침방을 열고 후보를 돌려줌, pick(i) 그 후보로 다음 생, body() 지금 몸(문파·성질·능력치)
+  inn: () => { openInn(); return innCands; }, pick: i => chooseLife(i), body: () => (G ? G.body : null),
   // overlay() 지금 떠 있는 화면, overlay(v) 그 화면이 떠 있는 셈 치기(서장 끝 컷이 화면이 닫힐 때까지 기다리는지 보는 시험용)
   overlay(v) { if (v !== undefined) overlay = v; return overlay; },
 };

@@ -119,7 +119,10 @@ def data_blob() -> str:
         "eliteFallback": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["eliteFallback"],
         # 한 생 시험(WP-14a): 주소 끝 ?life=<문파> 면 그 문파 몸(기혈·걸음·시작 무공·타고난 능력치)으로 그 문파 땅에서 한 생을 연다
         "sects": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"], "startWeapon": s["startWeapon"], "maxHealth": s["maxHealth"], "moveSpeed": s["moveSpeed"],
-                   "stats": (s.get("traitEffect") or {}).get("stats", {})} for s in load("cheonha")["sects"]],
+                   "stats": (s.get("traitEffect") or {}).get("stats", {}), "unlock": s.get("unlock")} for s in load("cheonha")["sects"]],
+        # 침방·연무장(WP-14d, 10·21장): 환생 후보 수·첫 환혼·환혼 강화, 타고난 성질. 연무장 값은 balance.json training(위 balance 묶음)
+        "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades")},
+        "birthTraits": drop_notes(load("cheonha")["birthTraits"]),
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
     return to_js(blob)

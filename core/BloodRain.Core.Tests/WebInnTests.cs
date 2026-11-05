@@ -1,0 +1,42 @@
+using Xunit;
+using static BloodRain.Core.Tests.TestData;
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>
+    /// WP-14d: 1장 프로토타입 침방·연무장이 천하 시안과 같은 셈(후보 수·환혼 강화 값·연무장 비용 식·타고난 성질)을 데이터에서 읽는지 글로 본다.
+    /// </summary>
+    public class WebInnTests
+    {
+        static string Proto => ReadRepoFile("web", "prototype", "template.html");
+        static string Sian => ReadRepoFile("web", "lookdev", "cheonha.html");
+
+        [Fact] public void 빌드가_환혼과_타고난_성질을_넣는다()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"rebirth\": {k: v for k, v in drop_notes(load(\"cheonha\")[\"rebirth\"]).items() if k in (\"candidates\", \"firstRebirth\", \"firstRebirthTraits\", \"upgrades\")}", build);
+            Assert.Contains("\"birthTraits\": drop_notes(load(\"cheonha\")[\"birthTraits\"])", build);
+        }
+
+        [Fact] public void 연무장_비용_식이_시안과_같다()
+        {
+            Assert.Contains("Math.round(it.baseCost * (lv + 1) * (1 + B.training.costGrowthPerBought * bought))", Proto);
+            Assert.Contains("Math.round(it.baseCost * (lv + 1) * (1 + BAL.training.costGrowthPerBought * bought))", Sian);
+        }
+
+        [Fact] public void 환혼_강화_값과_후보_수가_시안과_같다()
+        {
+            Assert.Contains("lv >= u.maxLevel ? null : u.costPerLevel ? u.baseCost * (lv + 1) : u.baseCost", Proto);
+            Assert.Contains("lv >= u.maxLevel ? null : u.costPerLevel ? u.baseCost * (lv + 1) : u.baseCost", Sian);
+            Assert.Contains("RB.candidates + upgEffect(m, 'candidates')", Proto);
+            Assert.Contains("RB.firstRebirth.map(id => ({ sect: id, traits: RB.firstRebirthTraits ? rollTraits(rnd) : [] }))", Proto);
+        }
+
+        [Fact] public void 타고난_성질은_겹치지_않게_굴리고_윤회의_기_보너스를_정산에()
+        {
+            Assert.Contains("BT.excludes.some(", Proto);
+            Assert.Contains("qiBonus += t.rebirthQi || 0;", Proto);
+            Assert.Contains("Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)", Proto);
+        }
+    }
+}
