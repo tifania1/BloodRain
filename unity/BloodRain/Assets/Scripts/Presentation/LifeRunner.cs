@@ -164,6 +164,8 @@ namespace BloodRain.Presentation
         float _statTimer;
         Vector3 _lastStatPos;
 
+        int _extraSlotsGiven;
+
         void ApplyStats()
         {
             if (_life == null || _life.Record != null) return;
@@ -181,8 +183,17 @@ namespace BloodRain.Presentation
             {
                 vitals.SetMaxHealth(st.MaxHealth);
                 vitals.armor = st.Armor;
+                vitals.takenMultiplier = _life.DamageTakenMultiplier; // C-07a 일류 돌파 뒤 받는 피해 -10% 등
             }
-            if (player != null && player.TryGetComponent<PlayerController>(out var pc)) pc.MoveMultiplier = st.MoveSpeed;
+            if (player != null && player.TryGetComponent<PlayerController>(out var pc))
+            {
+                pc.MoveMultiplier = st.MoveSpeed;
+                // C-07a 경공 충전 칸 = 기본 + 몸·심법 + 경지 보상. 늘면 그만큼 바로 찬다(Dash.SetMaxCharges)
+                if (pc.Dash != null) pc.Dash.SetMaxCharges(_life.DashMaxCharges(st));
+            }
+            // C-07a 경지 보상 7칸째. 지금은 무공 칸으로(공격·심법을 고르는 건 돌파 화면 C-07b 이후)
+            int extraSlots = _life.RealmRewards.ExtraSlots;
+            while (_extraSlotsGiven < extraSlots) { _life.Loadout.AddExtraSlot(true); _extraSlotsGiven++; }
             if (orbs != null) orbs.MagnetMeters = st.Magnet;
             if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();
             if (weapons != null)
@@ -388,6 +399,15 @@ namespace BloodRain.Presentation
 
         float LevelFloat => _life.Level + (float)System.Math.Min(_life.Xp.Progress, 0.999);
 
+        /// <summary>시험 메뉴 '다음 경지까지 진기'. 한 레벨씩 구슬을 먹은 것처럼 넣어 경지가 바뀌면 멈춘다.</summary>
+        public void GiveXpToNextRealm()
+        {
+            if (_life == null || _life.Record != null) return;
+            int realm = _life.Realm;
+            for (int i = 0; i < 200 && _life.Realm == realm; i++)
+                OnAbsorbed(System.Math.Max(1.0, _life.Xp.Required - _life.Xp.Xp + 0.5), 1);
+        }
+
         void OnAbsorbed(double xp, int count)
         {
             if (_life == null || _life.Record != null) return;
@@ -395,6 +415,7 @@ namespace BloodRain.Presentation
             var r = _life.Absorb(xp, count);
             if (_edges != null) _edges.Woke(r.WokenBosses); // QA-05U 혈운 기둥
             if (r.Breakthroughs.Count == 0) return;
+            ApplyStats(); // C-07a 돌파 보상(최대 기혈·경공 칸·받는 피해·7칸째)을 바로
             var ws = WorldScale.Current;
             if (breakthrough == null || ws == null || player == null) return;
             bool revisit = r.Breakthroughs.All(i => !i.LongCinematic);
@@ -415,7 +436,8 @@ namespace BloodRain.Presentation
             {
                 var st = Stats;
                 GUI.Label(new Rect(12, 118, 1100, 22),
-                    $"능력치  최대 기혈 {st.MaxHealth:0}  호신 {st.Armor:0.#}  회복 {st.Recovery:0.#}  걸음 x{st.MoveSpeed:0.00}  공력 x{st.Might:0.00}  쾌속 {st.CooldownReduction * 100:0}%  범위 x{st.Area:0.00}  개수 +{st.Amount}  지속 x{st.Duration:0.00}  흡기 {st.Magnet:0.0}m  회피 {st.Evade * 100:0}%");
+                    $"능력치  최대 기혈 {st.MaxHealth:0}  호신 {st.Armor:0.#}  회복 {st.Recovery:0.#}  걸음 x{st.MoveSpeed:0.00}  공력 x{st.Might:0.00}  쾌속 {st.CooldownReduction * 100:0}%  범위 x{st.Area:0.00}  개수 +{st.Amount}  지속 x{st.Duration:0.00}  흡기 {st.Magnet:0.0}m  회피 {st.Evade * 100:0}%" +
+                    $"  경공 칸 {_life.DashMaxCharges(st)}  받는 피해 x{_life.DamageTakenMultiplier:0.00}  무공 칸 {_life.Loadout.WeaponSlots}");
                 // C-06b 곱하는 진전 효과
                 var fx = Effects;
                 var sword = fx.Tier("sword_damage");

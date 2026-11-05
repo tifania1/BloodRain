@@ -205,7 +205,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 ### C. 돌파·음양·오의·보갑
 
-- [ ] C-07a 경지 돌파를 Life 로, 돌파 보상 얹기 · 먼저: LF-01
+- [x] C-07a 경지 돌파를 Life 로, 돌파 보상 얹기 · 먼저: LF-01 — 2026-11-06 00:50 PC: LifeRunner.ApplyStats 가 경공 칸 `Dash.SetMaxCharges(life.DashMaxCharges(st))`, 받는 피해 `PlayerVitals.takenMultiplier = life.DamageTakenMultiplier`(호신 뺀 뒤 곱함), 7칸째 `Loadout.AddExtraSlot(true)`(지금은 무공 칸, 고르기는 C-07b 이후)를 넣고 돌파가 나면 바로 다시 부름. 시험 메뉴 `다음 경지까지 진기(플레이 중)`(SoulBootstrap.cs), 디버그 둘째 줄 끝에 경공 칸·받는 피해·무공 칸. 침방에서 고른 천하 몸으로 경지를 하나씩: 이류 최대 기혈 120 → 130, 일류 경공 칸 2 → 3(바로 참), 초절정 무공 칸 6 → 7, 화경 받는 피해 x0.90(50 맞고 호신 2 → 43.2). 이 항목의 끝 줄(이류 경공·일류 피해)은 balance.json 과 달라 데이터대로 봄. 다시 오른 경지 연출 2배는 안 봄(생 안에서 경지가 내려가지 않아 다음 생에서). 콘솔 에러 0. 찍음 `docs/unity_shots/C-07/` 의 `realm_rewards.png`
   - 할 것: 돌파 뒤 몸에 보상을 얹는다 — 최대 기혈 +10(`life.CurrentStats()` 에 이미 들어 있음, PlayerVitals 로), `Dash.SetMaxCharges(life.DashMaxCharges(stats))`, 받는 피해에 `life.DamageTakenMultiplier`(Damage.Taken 뒤), 7칸째 무공 자리. 다시 오른 경지면 연출 시계 2배(`Breakthrough.Start` revisit)가 그대로 나오는지.
   - 쓸 것: Core `World/Breakthrough.cs`, `Progression/RealmRewards.cs`, `Life.RealmRewards`·`DashMaxCharges`·`DamageTakenMultiplier`
   - 메뉴: `BloodRain/Test/다음 경지까지 진기(플레이 중)`

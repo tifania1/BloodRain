@@ -108,5 +108,18 @@ namespace BloodRain.Editor
 
         [MenuItem("BloodRain/Test/처치 수 채우기(플레이 중)", true)]
         static bool AddKillsValid() => Application.isPlaying;
+
+        // C-07a 시험: 다음 경지가 될 때까지 진기를 넣는다(돌파 줌·보상이 Life 쪽에서 나옴)
+        [MenuItem("BloodRain/Test/다음 경지까지 진기(플레이 중)")]
+        public static void NextRealm()
+        {
+            if (LifeRunner.Instance == null) { Debug.LogWarning("[SoulBootstrap] Run 씬 플레이 중에만 됩니다"); return; }
+            LifeRunner.Instance.GiveXpToNextRealm();
+            var life = LifeRunner.Instance.Life;
+            Debug.Log($"[SoulBootstrap] 레벨 {life.Level} · 경지 {life.Scale.Realms[life.Realm].NameKo} · 받는 피해 x{life.DamageTakenMultiplier:0.00}");
+        }
+
+        [MenuItem("BloodRain/Test/다음 경지까지 진기(플레이 중)", true)]
+        static bool NextRealmValid() => Application.isPlaying;
     }
 }
