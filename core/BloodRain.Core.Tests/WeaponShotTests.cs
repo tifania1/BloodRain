@@ -27,7 +27,7 @@ namespace BloodRain.Core.Tests
         public void 기획서_표와_데이터가_같다()
         {
             var rows = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백"));
-            Assert.Equal(10, rows.Count);
+            Assert.Equal(16, rows.Count);
             foreach (var r in rows)
             {
                 var w = ByName(r[0]);
@@ -144,11 +144,12 @@ namespace BloodRain.Core.Tests
             var inProto = _d.Weapons.Where(w => html.Contains($"case '{w.Behavior}':")).ToList();
             var missing = _d.Weapons.Count - inProto.Count;
             var words = new[] { "", "하나", "둘", "셋", "넷", "다섯", "여섯", "일곱", "여덟", "아홉", "열" };
-            Assert.InRange(missing, 1, words.Length - 1);
-            Assert.Contains($"아직 프로토타입에 없는 무공 {words[missing]}은", TestData.GddSection("날아가는 것과 넉백"));
-            // 표에 있는 무공 = 프로토타입 무공 + 프로토타입보다 먼저 값을 정한 것(뇌부)
+            Assert.InRange(missing, 2, words.Length);
+            // 뇌부를 뺀 나머지가 '프로토타입에 없던 무공 n' (R-17 시작값)
+            Assert.Contains($"프로토타입에 없던 무공 {words[missing - 1]}(", TestData.GddSection("날아가는 것과 넉백"));
+            // 표에는 모든 무공이 있다(프로토타입 무공 + 뇌부 + R-17 시작값 여섯)
             var rows = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백")).Select(r => r[0]).ToHashSet();
-            var expected = inProto.Select(w => w.NameKo).Append(_d.Weapons.Single(w => w.Id == "thunder_talisman").NameKo).ToHashSet();
+            var expected = _d.Weapons.Select(w => w.NameKo).ToHashSet();
             Assert.True(expected.SetEquals(rows), $"표: {string.Join(",", rows)} / 기대: {string.Join(",", expected)}");
             // 프로토타입 README 의 '시작 무공 n종' 과 '해금 무공 n종' 도 같은 수
             var readme = TestData.ReadRepoFile("web", "prototype", "README.md");
@@ -167,7 +168,7 @@ namespace BloodRain.Core.Tests
         [Fact]
         public void 날아가는_것을_쓰는_동작에는_shot_이_있다()
         {
-            var shooters = new HashSet<string> { "homing_dagger", "slow_projectile", "random_rapid" };
+            var shooters = new HashSet<string> { "homing_dagger", "slow_projectile", "random_rapid", "petal_scatter" };
             foreach (var w in _d.Weapons)
                 Assert.Equal(shooters.Contains(w.Behavior), w.Shot != null);
         }

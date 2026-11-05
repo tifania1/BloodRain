@@ -58,11 +58,17 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"기혈 {Num(Of("falling_petals").Param("healPerHit"))} 회복", Effect("falling_petals"));
         }
 
-        /// <summary>효과 칸에 숫자가 없는 흑룡탄은 params 를 지어내지 않는다(R-09). 생기면 이 테스트를 지우고 위에 더한다.</summary>
-        [Fact] public void 숫자가_없는_흑룡탄은_params_가_없다()
+        /// <summary>흑룡탄(R-17, 2026-11-05 사람이 추천대로): 모으는 반경 = 쇄겸술 사거리, 0.6초, 폭발 2.5m·한 방의 3배.</summary>
+        [Fact] public void 흑룡탄은_쇄겸술_사거리_안을_모아_터진다()
         {
-            Assert.Null(Of("chain_sickle").Params);
-            Assert.DoesNotMatch(@"\d", Effect("chain_sickle"));
+            var e = Of("chain_sickle");
+            string Num(float v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            Assert.Equal(_d.Weapon("chain_sickle").Range, e.Param("gatherRadius"));
+            Assert.Contains($"주변 {Num(e.Param("gatherRadius"))}m 안 적을 {Num(e.Param("gatherSeconds"))}초 동안", Effect("chain_sickle"));
+            Assert.Contains($"반경 {Num(e.Param("explosionRadius"))}m 폭발(한 방의 {Num(e.Param("damageMultiplier"))}배)", Effect("chain_sickle"));
+            var row = TestData.GddTable(TestData.GddSection("절기로 바뀐 뒤 날아가는 것")).Single(r => r[0] == "흑룡탄");
+            Assert.Equal($"{Num(e.Param("explosionRadius"))}m", row[3]);
+            Assert.Equal($"{Num(e.Param("damageMultiplier"))}배", row[5]);
         }
 
         /// <summary>9장 '절기로 바뀐 뒤 날아가는 것' 표 = params. 프로토타입·시뮬레이터가 이 값을 읽는다.</summary>
