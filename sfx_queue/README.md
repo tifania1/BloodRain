@@ -13,7 +13,7 @@
 | loop | 이어 돌리는 소리(빗소리) |
 | prompt | ai·layer 의 AI 몫 영어 문구. 끝은 'Single, dry, close-mic, no music, no reverb tail.'(루프는 빼고 'seamless loop') |
 | recipe | synth·layer 에서 무엇을 어떻게 만들지(한국어) |
-| layers | layer 의 재료: from ai·synth·record, what |
+| layers | layer 의 재료: from ai·synth·record, what, offset_s(늦게 시작할 초)·gain_db(이득), record 는 file(재료 경로). ai 재료 후보는 `<save_dir>/ai/` 에 둔다. 겹치기는 `python tools/layer_sfx.py`(후보 `<id>_mix_NN.wav`, todo → generated) |
 | candidates | 후보 수. ai·layer 8, synth 5(칠 때마다 조금씩 흔든 벌) |
 | seed | 첫 후보의 시드. 다음 후보는 +1 |
 | save_dir | 후보를 두는 곳 `art_inbox/sfx/<id>/`(커밋 안 함). 다듬은 후보는 그 아래 `trimmed/` |

@@ -47,6 +47,16 @@ RECIPES = {
     "sfx_low_health_heart": {"kind": "heart", "f0": 55.0, "gap_s": 0.26},
 }
 
+# 층 겹치기(route layer) 줄의 코드 합성 재료. (줄 id, layers[].what) → 굽는 법. tools/layer_sfx.py 가 부른다.
+# 작은 구리 방울: 높은 기본음에 정수배가 아닌 배음 넷이 짧게 운다. 두세 번 흔들리며 친다(shakes).
+SMALL_BELL = [(1.0, 1.0, 0.22), (2.32, 0.55, 0.11), (4.25, 0.28, 0.06), (6.63, 0.12, 0.035)]
+LAYER_RECIPES = {
+    ("sfx_enemy_gangsi_land", "방울"): {"kind": "jingle", "partials": SMALL_BELL, "f0": 2350.0, "shakes": (2, 3),
+                                       "spread_s": 0.18, "seconds": 0.6},
+    ("sfx_awaken_wave", "범종"): {"kind": "metal", "partials": TEMPLE_BELL, "f0": 130.8, "strike": 0.8, "beat_hz": 0.9,
+                                "glide": 0.0, "thump": 0.6, "seconds": 3.0},
+}
+
 
 # ---------- 소리 ----------
 
@@ -101,6 +111,41 @@ def heart(seconds: float, f0: float, gap_s: float, rng: np.random.Generator) -> 
         phase = 2 * np.pi * np.cumsum(f) / RATE
         out[on] += amp * (1 + rng.normal(0, 0.08)) * np.minimum(1, x / 0.004) * np.exp(-x / 0.07) * np.sin(phase)
     return out
+
+
+def jingle(seconds: float, partials, f0: float, shakes: tuple[int, int], spread_s: float,
+           rng: np.random.Generator) -> np.ndarray:
+    """작은 방울 두세 개가 흔들려 차례로 울린다. 방울마다 음높이가 조금 다르고, 칠 때마다 쇠 알이 구르는 짧은 잡음."""
+    t = np.arange(int(seconds * RATE)) / RATE
+    out = np.zeros_like(t)
+    n = int(rng.integers(shakes[0], shakes[1] + 1))
+    starts = np.sort(np.concatenate([[0.0], rng.uniform(0.04, spread_s, n - 1)]))
+    for k, st in enumerate(starts):
+        f = f0 * (1 + rng.normal(0, 0.04))
+        amp = (0.75 ** k) * (1 + rng.normal(0, 0.1))
+        tt = t - st
+        on = tt >= 0
+        x = tt[on]
+        for ratio, a, tau in partials:
+            r = ratio * (1 + rng.normal(0, 0.004))
+            out[on] += amp * a * _env(x, tau * (1 + rng.normal(0, 0.1)), 0.0008) * np.sin(2 * np.pi * f * r * x + rng.random() * 6.28)
+        m = min(int(0.012 * RATE), int(on.sum()))
+        i0 = int(np.argmax(on))
+        out[i0:i0 + m] += amp * 0.25 * rng.normal(0, 1, m) * np.exp(-np.arange(m) / (0.003 * RATE))
+    return out
+
+
+def bake_layer(row: dict, what: str, variant: int) -> np.ndarray:
+    """층 겹치기 줄의 코드 합성 재료 한 벌. 시드 = 줄 seed + 벌(줄의 다른 재료 후보 번호와 같이 간다)."""
+    rec = LAYER_RECIPES[(row["id"], what)]
+    rng = np.random.default_rng(int(row["seed"]) + variant)
+    sec = float(rec["seconds"])
+    if rec["kind"] == "jingle":
+        x = jingle(sec, rec["partials"], rec["f0"], tuple(rec["shakes"]), rec["spread_s"], rng)
+    else:
+        x = metal(sec, rec["partials"], rec["f0"], rec["strike"] * (1 + rng.normal(0, 0.1)), rec["beat_hz"], rng,
+                  rec.get("glide", 0.0), rec.get("decay_scale", 1.0), rec.get("thump", 0.0))
+    return x / max(1e-9, float(np.max(np.abs(x)))) * 0.89
 
 
 def note_freq(f0: float, k: int) -> float:
