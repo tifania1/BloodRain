@@ -164,7 +164,10 @@ namespace BloodRain.Presentation.Hud
                 var fc = _data.Balance.LevelUp.FallbackCard;
                 // 한 생이 있으면 그 지갑으로(C-06a, 혈월 배율은 GainSilver 가 곱함), 없으면(시험 씬) 여기 자리에
                 var life = LifeRunner.Instance != null ? LifeRunner.Instance.Life : null;
-                if (life != null) life.GainSilver(fc.Silver);
+                // R-04Ua 은자 × (1 + 탐욕). 개방 몸이면 +30%
+                var st = LifeRunner.Instance != null ? LifeRunner.Instance.Stats : null;
+                float greed = st != null ? st.Bonus[BloodRain.Core.Build.StatKind.Greed] : 0f;
+                if (life != null) life.GainSilver(Mathf.RoundToInt(fc.Silver * (1f + greed)));
                 else Silver += fc.Silver;
                 if (vitals == null) vitals = FindFirstObjectByType<PlayerVitals>();
                 if (vitals != null) vitals.Heal(fc.Heal);

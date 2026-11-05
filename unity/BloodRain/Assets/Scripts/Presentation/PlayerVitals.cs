@@ -19,6 +19,12 @@ namespace BloodRain.Presentation
         [System.NonSerialized] public float takenMultiplier = 1f;
         /// <summary>C-06b 무당 3 사량발천근. 호신을 뺀 받는 피해를 넘기면 실제로 받을 피해를 돌려준다(LifeRunner 가 넣음). 되돌림은 아직 없음.</summary>
         [System.NonSerialized] public System.Func<float, float> deflect;
+        /// <summary>R-04Ua 회피 확률(StatSheet.Evade, 수로채 움직이는 동안 15%). 피격 직전에 Evade.Roll 로 굴리고, 피하면 피해·넉백 없이 맞은 뒤 무적만 준다.</summary>
+        [System.NonSerialized] public float evadeChance;
+        /// <summary>R-04Ua 기혈 회복 전부에 곱하는 수(SectTrait.HealingMultiplier, 마교 0.5). Heal 과 초당 회복이 곱한다.</summary>
+        [System.NonSerialized] public float healingMultiplier = 1f;
+        /// <summary>R-04Ua 초당 회복(StatSheet.Recovery). LifeRunner 가 넣는다.</summary>
+        [System.NonSerialized] public float recoveryPerSecond;
         public bool refillOnDeath = true;
         public bool showStats = true;
 
@@ -26,6 +32,10 @@ namespace BloodRain.Presentation
         public float Health { get; private set; } = 100f;
         public int Hits { get; private set; }
         public float DamageTaken { get; private set; }
+        /// <summary>R-04Ua 피한 횟수(디버그 줄).</summary>
+        public int Evades { get; private set; }
+        /// <summary>R-04Ua 회복으로 실제 찬 기혈 합(디버그 줄).</summary>
+        public float Healed { get; private set; }
         public event Action Died;
 
         float _iframe;
@@ -34,6 +44,8 @@ namespace BloodRain.Presentation
         SpriteRenderer _sr;
         Color _baseColor;
         float _flash;
+        float _evadeFlash;
+        readonly System.Random _rng = new System.Random();
 
         void Awake()
         {
@@ -52,6 +64,14 @@ namespace BloodRain.Presentation
         public bool Hit(float damage)
         {
             if (Invulnerable || Health <= 0f) return false;
+            if (BloodRain.Core.Build.Evade.Roll(evadeChance, _rng))
+            {
+                // 피함: 피해·넉백 없음. 같은 접촉에 매 프레임 다시 굴리지 않게 맞은 뒤 무적은 준다(짧은 잔상)
+                Evades++;
+                _iframe = hitIframes;
+                _evadeFlash = 0.3f;
+                return false;
+            }
             float taken = Mathf.Max(_minDamage, damage - armor) * takenMultiplier;
             if (deflect != null) taken = Mathf.Max(0f, deflect(taken));
             Health -= taken;
@@ -99,7 +119,8 @@ namespace BloodRain.Presentation
         {
             if (amount <= 0f || Health <= 0f) return 0f;
             float before = Health;
-            Health = Mathf.Min(MaxHealth, Health + amount);
+            Health = Mathf.Min(MaxHealth, Health + amount * healingMultiplier);
+            Healed += Health - before;
             return Health - before;
         }
 
@@ -108,13 +129,24 @@ namespace BloodRain.Presentation
             float dt = Time.deltaTime;
             _iframe = Mathf.Max(0f, _iframe - dt);
             _flash = Mathf.Max(0f, _flash - dt);
-            if (_sr != null) _sr.color = _flash > 0f ? Color.Lerp(_baseColor, Color.white, _flash / 0.25f) : _baseColor;
+            _evadeFlash = Mathf.Max(0f, _evadeFlash - dt);
+            if (recoveryPerSecond > 0f && Health < MaxHealth) Heal(recoveryPerSecond * dt);
+            if (_sr != null)
+            {
+                if (_evadeFlash > 0f)
+                {
+                    // 피한 잔상: 옅은 청록으로 반쯤 비친다
+                    var ghost = new Color(0.55f, 0.9f, 0.95f, 0.35f);
+                    _sr.color = Color.Lerp(_baseColor, ghost, _evadeFlash / 0.3f);
+                }
+                else _sr.color = _flash > 0f ? Color.Lerp(_baseColor, Color.white, _flash / 0.25f) : _baseColor;
+            }
         }
 
         void OnGUI()
         {
             if (!showStats) return;
-            GUI.Label(new Rect(12, 32, 520, 22), $"기혈 {Health:0}/{MaxHealth:0}  맞음 {Hits}  받은 피해 {DamageTaken:0}");
+            GUI.Label(new Rect(12, 32, 520, 22), $"기혈 {Health:0}/{MaxHealth:0}  맞음 {Hits}  받은 피해 {DamageTaken:0}  피함 {Evades}  회복 {Healed:0.#}");
         }
     }
 }

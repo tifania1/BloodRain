@@ -184,6 +184,10 @@ namespace BloodRain.Presentation
                 vitals.SetMaxHealth(st.MaxHealth);
                 vitals.armor = st.Armor;
                 vitals.takenMultiplier = _life.DamageTakenMultiplier; // C-07a 일류 돌파 뒤 받는 피해 -10% 등
+                // R-04Ua 문파 고유 능력: 회피(수로채 움직이는 동안), 회복 전부에 곱하는 수(마교 절반), 초당 회복
+                vitals.evadeChance = st.Evade;
+                vitals.healingMultiplier = _life.Body.SectTrait.HealingMultiplier;
+                vitals.recoveryPerSecond = st.Recovery;
             }
             if (player != null && player.TryGetComponent<PlayerController>(out var pc))
             {
@@ -198,7 +202,8 @@ namespace BloodRain.Presentation
             if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();
             if (weapons != null)
             {
-                weapons.cooldownReduction = st.CooldownReduction;
+                // R-04Ua 태극일 때 쾌속에 조화 보너스(무당 0.2, 나머지 0.1)를 더하고 상한으로 자른다
+                weapons.cooldownReduction = Mathf.Min(_data.Balance.Stats.CooldownReductionCap, st.CooldownReduction + _life.HarmonyCooldownReduction);
                 weapons.areaMultiplier = st.Area;
                 weapons.extraAmount = st.Amount;
                 weapons.durationMultiplier = st.Duration;
@@ -429,9 +434,11 @@ namespace BloodRain.Presentation
             var realm = _life.Scale.Realms[_life.Realm];
             var region = _life.Regions.Region(_life.RegionId);
             GUI.color = Color.white;
-            GUI.Label(new Rect(12, 96, 900, 22),
+            GUI.Label(new Rect(12, 96, 1300, 22),
                 $"한 생  {_life.Minutes:0.0}분  레벨 {_life.Level} ({_life.Xp.Progress * 100:0}%)  경지 {realm.NameKo}  지역 {region.NameKo}  혈운 {_life.Density:0.00}" +
-                (_life.IsPrologue ? "  [서장]" : ""));
+                (_life.IsPrologue ? "  [서장]" : "") +
+                // R-04Ua 몸과 고유 능력
+                $"  몸 {_life.Body.Character.NameKo}  회복 배율 x{_life.Body.SectTrait.HealingMultiplier:0.0#}  태극 쾌속 +{_life.HarmonyCooldownReduction * 100:0}%");
             if (Stats != null)
             {
                 var st = Stats;
