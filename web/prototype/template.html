@@ -211,14 +211,14 @@ button { touch-action: manipulation; }
     <div class="xpbar"><i id="xpfill"></i></div>
     <div class="toprow">
       <div class="slots"><div class="slotrow" id="wslots"></div><div class="slotrow" id="pslots"></div><div class="schools" id="schools"></div></div>
-      <div class="timer"><span id="timer">0:00</span><small id="phase">숭산 소림</small><button class="pausebtn" id="pausebtn" type="button" aria-label="일시정지">止</button></div>
+      <div class="timer"><span id="timer">0:00</span><small id="phase">숭산 소림</small><button class="pausebtn" id="pausebtn" type="button" data-s-aria="ui.hud.pause" aria-label="멈춤">止</button></div>
       <div class="stats"><div><span class="lv" id="lv">Lv 1</span><span class="realm" id="realm">삼류</span></div><div class="vessel" id="vessel" hidden></div><div id="kills">처치 0</div><div id="silver">은자 0</div></div>
     </div>
     <div class="bossbar" id="bossbar" hidden><b>혈나한 원각</b><span><i id="bossfill"></i></span></div>
     <div class="taiji" id="taiji"><canvas id="taijicv" width="92" height="92"></canvas><div><b id="taijiname">태극</b><span id="taijival">조화 0</span></div></div>
     <div class="btns">
-      <button class="btn-ult" id="btnult" type="button" aria-label="오의 일검"><small>오의 E</small>一劍</button>
-      <button class="btn-dash" id="btndash" type="button" aria-label="경공"><small>경공 Space</small>輕功<span class="pips" id="pips"></span></button>
+      <button class="btn-ult" id="btnult" type="button" aria-label="오의 일검"><small><span data-s="ui.hud.ult">오의</span> E</small>一劍</button>
+      <button class="btn-dash" id="btndash" type="button" data-s-aria="ui.hud.dash" aria-label="경공"><small><span data-s="ui.hud.dash">경공</span> Space</small>輕功<span class="pips" id="pips"></span></button>
     </div>
     <div class="toast" id="toast"></div>
     <div class="debug" id="debug" hidden></div>
@@ -251,7 +251,7 @@ button { touch-action: manipulation; }
         <button class="b" id="shakebtn" type="button">화면 흔들림 100%</button>
         <button class="b" id="awakebtn" type="button">각성 연출 자동</button>
       </div>
-      <div class="keys">이동 <kbd>WASD</kbd>·<kbd>방향키</kbd> · 경공 <kbd>Space</kbd> · 오의 <kbd>E</kbd> · 정지 <kbd>Esc</kbd> · 고르기 <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
+      <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
       <div class="subtle" id="best"></div>
     </div>
   </div>
@@ -296,13 +296,13 @@ button { touch-action: manipulation; }
 
   <div class="screen veil" id="pause" hidden>
     <div class="panel">
-      <div class="brush" style="font-size:56px">운기조식</div>
-      <div class="subtle">잠시 멈춤</div>
+      <div class="brush" style="font-size:56px" data-s="ui.pause.title">운기조식</div>
+      <div class="subtle" data-s="ui.pause.sub">잠시 멈춤</div>
       <div class="cards" id="pauselist"></div>
       <div class="row">
-        <button class="b main" id="resume" type="button">계속하기</button>
+        <button class="b main" id="resume" type="button" data-s="ui.pause.resume">계속하기</button>
         <button class="b" id="dexbtn2" type="button">비급 도감</button>
-        <button class="b" id="quit" type="button">객잔으로</button>
+        <button class="b" id="quit" type="button" data-s="ui.pause.quit">객잔으로</button>
       </div>
     </div>
   </div>
@@ -362,6 +362,12 @@ button { touch-action: manipulation; }
 // 데이터는 저장소의 unity/BloodRain/Assets/Resources/Data/*.json 에서 빌드 때 들어온다 (tools/build_web_prototype.py).
 const DATA = /*__DATA__*/null;
 const IMG = { title: '__IMG_TITLE__', over: '__IMG_OVER__', win: '__IMG_WIN__' };
+// 화면 문구(WP-11): strings/ko.json 의 ui. 키를 빌드가 DATA.ui 로 넣는다. 두 웹 판(1장 프로토타입·천하 시안)이 같은 키를 읽어
+// 같은 것을 같은 말로 부른다. {0} {1} 자리는 Core Strings 와 같은 규칙. HTML 에 박힌 글은 data-s(글)·data-s-aria(읽어 주는 이름)로.
+const UI_S = (DATA && DATA.ui) || {};
+const uiT = (key, ...a) => { const s = UI_S[key]; return s == null ? key : s.replace(/\{(\d+)\}/g, (_, i) => a[i] ?? ''); };
+document.querySelectorAll('[data-s]').forEach(el => { el.textContent = uiT(el.dataset.s); });
+document.querySelectorAll('[data-s-aria]').forEach(el => { el.setAttribute('aria-label', uiT(el.dataset.sAria)); });
 
 // ───────── 기본 도구 ─────────
 const $ = id => document.getElementById(id);
@@ -2665,7 +2671,7 @@ function updateHud(dt) {
   if (showBoss) $('bossfill').style.width = (Math.max(0, G.boss.hp / G.boss.maxHp) * 100).toFixed(1) + '%';
   $('phase').textContent = isPro() ? (G.bossSpawned ? '강시 포쾌 장삼' : '서장 · 청운진') : G.bossSpawned ? '혈나한 원각' : G.gm >= 19 ? '보스가 온다' : G.mode === 'quick' ? '숭산 소림 · 4배속' : '숭산 소림';
   $('lv').textContent = `Lv ${G.level}`; $('realm').textContent = G.realm.nameKo;
-  $('kills').textContent = `처치 ${G.kills.toLocaleString()}`; $('silver').textContent = `은자 ${G.silver}`;
+  $('kills').textContent = uiT('ui.hud.kills', G.kills.toLocaleString()); $('silver').textContent = uiT('ui.hud.silver', G.silver);
   const ultPct = G.ult / B.ultimateCharge.max * 100, ub = $('btnult');
   ub.style.setProperty('--fill', ultPct + '%'); ub.classList.toggle('full', ultPct >= 100);
   const pips = $('pips'), p = G.player;

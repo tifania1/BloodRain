@@ -156,14 +156,14 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
     </div>
     <div class="hc"><b id="clock">0:00</b><span id="where"></span></div>
     <div class="hr">
-      <div class="who"><button class="pause" id="pausebtn" type="button">멈춤</button><b id="sect">소림</b></div>
+      <div class="who"><button class="pause" id="pausebtn" type="button" data-s-aria="ui.hud.pause" aria-label="멈춤">止</button><b id="sect">소림</b></div>
       <div id="kills">처치 0</div><div id="qi">윤회의 기 +0</div><div id="stones">봉인석 0/7</div>
     </div>
     <div class="bossbar" id="bossbar" hidden><span id="bossname"></span><div class="bar"><i id="bosshp"></i></div></div>
     <div class="toast" id="toast" hidden><b id="toastb"></b><span id="toasts"></span></div>
     <div class="hint" id="hint" hidden></div>
-    <button class="dash" id="dash" type="button" aria-label="경공">輕功</button>
-    <button class="dash ultb" id="ultbtn" type="button" aria-label="오의">奧義</button>
+    <button class="dash" id="dash" type="button" data-s-aria="ui.hud.dash" aria-label="경공">輕功</button>
+    <button class="dash ultb" id="ultbtn" type="button" data-s-aria="ui.hud.ult" aria-label="오의">奧義</button>
   </div>
 
   <div class="screen" id="title">
@@ -172,7 +172,7 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
       <div class="big">천하 시안</div>
       <p class="lead" id="lead">죽으면 다른 문파 제자의 몸으로 다시 태어난다. 처음엔 문파 마당 몇 걸음만 보이지만, 경지가 한 단계 오를 때마다 세상이 2.25배씩 물러나 마을이 점이 되고 산맥이 발밑에 깔린다. 절정부터는 장막 안 땅의 주인이 깨어나고, 처음 쓰러뜨리면 그 땅의 문파로 태어날 수 있다. 생이 끝나면 모은 윤회의 기로 능력치를 찍는다.</p>
       <div class="row"><button class="b main" id="start" type="button">윤회 시작<small>다음 생을 고른다</small></button><button class="b fasttg" type="button" aria-pressed="false"></button></div>
-      <div class="keys">이동 <kbd>WASD</kbd>·<kbd>방향키</kbd> · 경공 <kbd>Space</kbd> · 오의 <kbd>E</kbd> · 멈춤 <kbd>Esc</kbd> · 카드 <kbd>1</kbd>~<kbd>3</kbd><br>휴대폰은 화면을 끌어서 이동, 오른쪽 아래 버튼으로 경공, 그 위 버튼으로 오의. 공격은 알아서 나간다</div>
+      <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>3</kbd><br>휴대폰은 화면을 끌어서 이동, 오른쪽 아래 버튼으로 경공, 그 위 버튼으로 오의. 공격은 알아서 나간다</div>
       <div class="subtle" id="best"></div>
       <button class="b small" id="wipe" type="button">기록 지우기</button>
     </div>
@@ -204,7 +204,8 @@ h4 { margin: 4px 0 -4px; font: 900 14px var(--serif); color: var(--ink-soft); le
 
   <div class="screen" id="pause" hidden>
     <div class="panel">
-      <div class="big">멈춤</div>
+      <div class="big" data-s="ui.pause.title">운기조식</div>
+      <div class="subtle" data-s="ui.pause.sub">잠시 멈춤</div>
       <p class="lead" id="pline"></p>
       <div class="row"><button class="b main" id="resume" type="button">이어서<small class="kb">Esc</small></button><button class="b" id="zuohwa" type="button">좌화<small>가부좌를 틀고 생을 닫는다</small></button></div>
     </div>
@@ -235,6 +236,13 @@ if (!DATA) {
   $('start').disabled = true;
   return;
 }
+
+// 화면 문구(WP-11): strings/ko.json 의 ui. 키를 빌드가 DATA.ui 로 넣는다. 두 웹 판(1장 프로토타입·천하 시안)이 같은 키를 읽어
+// 같은 것을 같은 말로 부른다. {0} {1} 자리는 Core Strings 와 같은 규칙. HTML 에 박힌 글은 data-s(글)·data-s-aria(읽어 주는 이름)로.
+const UI_S = (DATA && DATA.ui) || {};
+const uiT = (key, ...a) => { const s = UI_S[key]; return s == null ? key : s.replace(/\{(\d+)\}/g, (_, i) => a[i] ?? ''); };
+document.querySelectorAll('[data-s]').forEach(el => { el.textContent = uiT(el.dataset.s); });
+document.querySelectorAll('[data-s-aria]').forEach(el => { el.setAttribute('aria-label', uiT(el.dataset.sAria)); });
 
 // ───────── 데이터에서 읽는 값 ─────────
 const CH = DATA.cheonha, BAL = DATA.balance;
@@ -3010,9 +3018,9 @@ function updateHud() {
   $('clock').textContent = clock(G.t);
   const r = REG[G.region], thick = G.dens >= 2;
   $('where').innerHTML = `${esc(r ? r.nameKo : '')} · <span class="${thick ? 'thick' : ''}">혈운 ${fmtD(G.dens)}</span>`;
-  $('kills').textContent = `처치 ${fmtN(G.kills)}`;
-  $('qi').textContent = `윤회의 기 +${fmtN((QI.perOrbValue * G.orbSum + G.bossFirst.length * QI.bossFirstKill + G.bossRepeat.length * QI.bossRepeatKill + G.newVisits.length * QI.firstVisitRegion + G.newRealms.length * QI.firstReachRealm) * G.body.qiMul * bmReward())}`;
-  $('stones').textContent = `봉인석 ${stonesHeld()}/${STONES_ALL}`;
+  $('kills').textContent = uiT('ui.hud.kills', fmtN(G.kills));
+  $('qi').textContent = uiT('ui.hud.rebirth_qi', fmtN((QI.perOrbValue * G.orbSum + G.bossFirst.length * QI.bossFirstKill + G.bossRepeat.length * QI.bossRepeatKill + G.newVisits.length * QI.firstVisitRegion + G.newRealms.length * QI.firstReachRealm) * G.body.qiMul * bmReward()));
+  $('stones').textContent = uiT('ui.hud.seal_stones', stonesHeld(), STONES_ALL);
   if (G.fight) { const S = G.fight.pat && G.fight.pat.split, hp = S && S.on ? S.bodies.reduce((t, b) => t + Math.max(0, b.hp), 0) : G.fight.hp; $('bosshp').style.width = (Math.max(0, hp / G.fight.maxHp) * 100).toFixed(1) + '%'; }
   measureSafe();
 }

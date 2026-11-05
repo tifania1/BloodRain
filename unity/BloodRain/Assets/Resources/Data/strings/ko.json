@@ -135,5 +135,18 @@
   "ui.library.restored": "복원함",
   "ui.library.need_stones": "봉인석 {0}개 필요",
   "ui.library.restore": "복원",
-  "ui.manual.lineage": "{0} 진전 {1}단계"
+  "ui.manual.lineage": "{0} 진전 {1}단계",
+  "ui.hud.kills": "처치 {0}",
+  "ui.hud.silver": "은자 {0}",
+  "ui.hud.rebirth_qi": "윤회의 기 +{0}",
+  "ui.hud.seal_stones": "봉인석 {0}/{1}",
+  "ui.hud.pause": "멈춤",
+  "ui.hud.ult": "오의",
+  "ui.hud.dash": "경공",
+  "ui.hud.move": "이동",
+  "ui.hud.pick": "고르기",
+  "ui.pause.title": "운기조식",
+  "ui.pause.sub": "잠시 멈춤",
+  "ui.pause.resume": "계속하기",
+  "ui.pause.quit": "객잔으로"
 }

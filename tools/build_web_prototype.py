@@ -99,9 +99,17 @@ def data_blob() -> str:
         # 서장 끝 컷 그림: Art/Cutscenes/<art id>.jpg 가 있을 때만(아직이면 먹 바탕에 자막만)
         "cutImages": {c["art"]: image_uri(f"{c['art']}.jpg", 960) for c in load("dialogue")["prologue"]["cuts"]
                       if c.get("art") and (CUTS / f"{c['art']}.jpg").exists()},
+        "ui": ui_strings(),
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
     return to_js(blob)
+
+
+def ui_strings() -> dict:
+    """화면 문구(WP-11): strings/ko.json 의 ui. 키. 프로토타입과 천하 시안이 같은 말을 쓰게 두 묶음에 다 넣는다.
+    고칠 때는 ko.json(과 en·zh)만 고치면 두 화면이 같이 바뀐다. 쓰는 쪽은 각 파일의 uiT(키, 값...)."""
+    s = json.loads((DATA / "strings" / "ko.json").read_text(encoding="utf-8"))
+    return {k: v for k, v in s.items() if k.startswith("ui.")}
 
 
 def to_js(blob) -> str:
@@ -127,6 +135,7 @@ def cheonha_blob() -> str:
     life = next(c for c in load("chapters")["chapters"] if c["id"] == "life")
     return to_js({
         "cheonha": drop_notes(load("cheonha")),
+        "ui": ui_strings(),
         "characters": [{"id": c["id"], "nameKo": c["nameKo"]} for c in chars["characters"]],
         # 문파 오의(R-16): 공력 배율·효과 숫자(params)·한 줄 설명. 게이지는 balance.json ultimateCharge
         "ultimates": [{k: u[k] for k in ("id", "nameKo", "mightMultiplier", "summary", "params") if k in u} for u in chars["ultimates"]],
