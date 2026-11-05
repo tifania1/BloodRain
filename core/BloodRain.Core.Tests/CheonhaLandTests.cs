@@ -64,6 +64,9 @@ namespace BloodRain.Core.Tests
             var proto = TestData.ReadRepoFile("web", "prototype", "template.html");
             Assert.Contains("WD.land", proto);
             Assert.Contains("r.chapter === 'chapter1'", proto);
+            // 봉마곡(final)은 지명도 밟은 땅 판정도 빼고, 밟은 땅은 가장 가까운 지역(시안 trackRegion 과 같은 규칙)
+            Assert.Contains("filter(r => !r.final)", proto);
+            Assert.Contains("function trackChRegion()", proto);
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
             Assert.Contains("\"land\", \"rivers\"", build);
         }

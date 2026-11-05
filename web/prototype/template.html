@@ -2504,6 +2504,15 @@ function drawProps() {
   }
   ctx.globalAlpha = 1;
 }
+// 지금 밟은 땅(WP-13 첫 조각): 천하 시안 trackRegion 처럼 가장 가까운 지역. 봉마곡은 아직 안 보이는 땅이라 뺀다.
+// 축척 시험에서만. 다른 땅에 들어서면 지명 알림, 위쪽 글은 그 땅 이름(1장 숭산이면 원래 글 그대로).
+function chRegionAt(x, y) { let best = null, bd = Infinity; for (const r of CH_REGS) { const d = Math.hypot(r.x - x, r.y - y); if (d < bd) { bd = d; best = r; } } return best; }
+function trackChRegion() {
+  if (!SCALE_MODE || isPro() || !CH_REGS.length) { G.chRegion = null; return null; }
+  const r = chRegionAt(G.player.x, G.player.y);
+  if (r && r.id !== G.chRegion) { if (G.chRegion) toast(r.nameKo, r.hanja); G.chRegion = r.id; }
+  return r;
+}
 function drawCheonha() {
   if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;
   const lv = Math.log(G.viewD), aRiver = clamp((lv - Math.log(70)) / (Math.log(220) - Math.log(70)), 0, 1);
@@ -2837,7 +2846,8 @@ function updateHud(dt) {
   const bb = $('bossbar'), showBoss = !!(G.boss && !G.boss.dead);
   if (bb.hidden === showBoss) bb.hidden = !showBoss;
   if (showBoss) $('bossfill').style.width = (Math.max(0, G.boss.hp / G.boss.maxHp) * 100).toFixed(1) + '%';
-  $('phase').textContent = isPro() ? (G.bossSpawned ? '강시 포쾌 장삼' : '서장 · 청운진') : G.bossSpawned ? '혈나한 원각' : G.gm >= 19 ? '보스가 온다' : G.mode === 'quick' ? '숭산 소림 · 4배속' : '숭산 소림';
+  const chR = trackChRegion();
+  $('phase').textContent = chR && chR.id !== (HOME_REG && HOME_REG.id) && !G.bossSpawned ? chR.nameKo : isPro() ? (G.bossSpawned ? '강시 포쾌 장삼' : '서장 · 청운진') : G.bossSpawned ? '혈나한 원각' : G.gm >= 19 ? '보스가 온다' : G.mode === 'quick' ? '숭산 소림 · 4배속' : '숭산 소림';
   $('lv').textContent = `Lv ${G.level}`; $('realm').textContent = G.realm.nameKo;
   $('kills').textContent = uiT('ui.hud.kills', G.kills.toLocaleString()); $('silver').textContent = uiT('ui.hud.silver', G.silver);
   const ultPct = G.ult / B.ultimateCharge.max * 100, ub = $('btnult');
