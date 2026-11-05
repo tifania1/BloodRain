@@ -50,12 +50,12 @@
 
 ### 순서
 
-1. **큐.** 배경음처럼 `sfx_queue/queue.jsonl` 한 줄에 효과음 하나(id, 길: synth/ai/layer, 문구(영어), 길이, 후보 수, 시드, 겹칠 재료, status todo→generated→picked→imported). 이번 조사에서는 만들지 않았다.
-2. **코드 합성(클라우드).** `tools/` 에 numpy 합성기(배음 표·맥놀이 쌍·배음별 감쇠·친 세기별 밝기). `bake_brush.py` 처럼 시드를 받아 같은 결과를 굽고, 칠 때마다 배음을 조금씩 흔든 변형을 4~5벌 굽는다.
+1. **큐.** 배경음처럼 `sfx_queue/queue.jsonl` 한 줄에 효과음 하나(id, 길: synth/ai/layer, 문구(영어), 길이, 후보 수, 시드, 겹칠 재료, status todo→generated→picked→imported). → 2026-11-05 만듦(SFX-01, 칸 설명 `sfx_queue/README.md`).
+2. **코드 합성(클라우드).** `tools/` 에 numpy 합성기(배음 표·맥놀이 쌍·배음별 감쇠·친 세기별 밝기). `bake_brush.py` 처럼 시드를 받아 같은 결과를 굽고, 칠 때마다 배음을 조금씩 흔든 변형을 4~5벌 굽는다. → 2026-11-05 `tools/synth_sfx.py`(SFX-02).
 3. **AI 후보(PC, 밤 API 루프나 이미지 세션 뒤).** id 마다 후보 8~12개. Stable Audio 는 ComfyUI HTTP API 에 시드만 바꿔 넣고(추정: 워크플로 JSON 그대로), ElevenLabs 는 `duration_seconds` 를 정하고 v3 로 부른다. 키는 PC API 루프의 config.json 처럼 커밋하지 않는 곳에 둔다. 문구에는 "single, dry, close-mic, no music, no reverb tail" 같은 말을 붙인다(추정: 꼬리·잡음이 줄어듦).
-4. **기계 다듬기.** `postprocess_audio.py` 를 본떠 효과음용을 만든다. 앞 무음을 잘라 첫 타격이 5ms 안에 오게(반응감), 최대 길이 자르기와 끝 페이드, 30Hz 아래 컷, 대부분 모노(탑다운 2D, 추정), 최고점 -1 dBTP, Vorbis 48kHz. 0.4초보다 짧은 소리는 통합 LUFS 가 잘 안 잡혀서 갈래별 최고점·단기 소리 크기로 맞춘다(추정).
+4. **기계 다듬기.** `postprocess_audio.py` 를 본떠 효과음용을 만든다. 앞 무음을 잘라 첫 타격이 5ms 안에 오게(반응감), 최대 길이 자르기와 끝 페이드, 30Hz 아래 컷, 대부분 모노(탑다운 2D, 추정), 최고점 -1 dBTP, Vorbis 48kHz(→ 2026-11-05 `tools/postprocess_sfx.py`, SFX-03: 최고점 -1 dBTP 로 맞추고 갈래 이득은 사람 몫으로 0 에서 시작). 0.4초보다 짧은 소리는 통합 LUFS 가 잘 안 잡혀서 갈래별 최고점·단기 소리 크기로 맞춘다(추정).
 5. **기계 검수.** 길이 범위, 잘림(클리핑), 앞 무음, 같은 id 후보 중 길이·밝기(스펙트럼 중심)가 튀는 것을 떨어뜨려 사람에게 4개만 보인다(추정 방법).
-6. **사람 귀.** 후보를 듣고 `docs/feedback.md` 에 "sfx_wpn_sword 3·5·7 고름" 식으로 적는다. 같은 화면에서 이름을 가리고 들을 수 있는 작은 청취 페이지를 웹 프로토타입 미리보기에 붙이면 빠르다.
+6. **사람 귀.** 후보를 듣고 `docs/feedback.md` 에 "sfx_wpn_sword 3·5·7 고름" 식으로 적는다. 같은 화면에서 이름을 가리고 들을 수 있는 작은 청취 페이지를 웹 프로토타입 미리보기에 붙이면 빠르다. → 2026-11-05 `web/lookdev/sfx_listen.html`(SFX-04).
 7. **층 쌓기.** 고른 AI 몸통에 Sonniss·CC0 어택과 꼬리를 겹치는 조리법(JSON: 파일, 시작 오프셋, 이득, 음높이, 필터)을 스크립트로 구워 언제든 다시 만들 수 있게 한다.
 8. **Unity.** id 마다 3~5벌을 Audio Random Container(Unity 6 기본, Shuffle 또는 Avoid Repeating Last, 음높이·음량 무작위 폭)에 넣고 기존 '0.05초 안 4개' 제한과 같이 쓴다. 진기 흡수 음계는 실행 중 음높이를 올리는 대신 미리 구운 8음을 차례로 튼다(음색이 안 뭉개짐, 추정).
 9. **섞어 듣기.** 배경음 -18 LUFS 에 맞춰 갈래별 이득 표를 사람이 게임 안에서 정한다.
