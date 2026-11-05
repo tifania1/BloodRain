@@ -14,7 +14,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 빌드가_환혼과_타고난_성질을_넣는다()
         {
             var build = ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"rebirth\": {k: v for k, v in drop_notes(load(\"cheonha\")[\"rebirth\"]).items() if k in (\"candidates\", \"firstRebirth\", \"firstRebirthTraits\", \"upgrades\")}", build);
+            Assert.Contains("\"rebirth\": {k: v for k, v in drop_notes(load(\"cheonha\")[\"rebirth\"]).items() if k in (\"candidates\", \"firstRebirth\", \"firstRebirthTraits\", \"upgrades\", \"femaleRatio\", \"maleOnlySects\")}", build);
             Assert.Contains("\"birthTraits\": drop_notes(load(\"cheonha\")[\"birthTraits\"])", build);
         }
 
@@ -37,6 +37,21 @@ namespace BloodRain.Core.Tests
             Assert.Contains("BT.excludes.some(", Proto);
             Assert.Contains("qiBonus += t.rebirthQi || 0;", Proto);
             Assert.Contains("Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)", Proto);
+        }
+
+        [Fact] public void 몸_성별과_카드_글과_목_노인_줄을_데이터에서()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"femaleRatio\", \"maleOnlySects\"", build);
+            Assert.Contains("\"bedroom\": drop_notes(load(\"dialogue\")[\"bedroom\"][\"lines\"])", build);
+            Assert.Contains("\"cards\": drop_notes(load(\"dialogue\")[\"cards\"][\"list\"])", build);
+            var html = Proto;
+            Assert.Contains("!(RB.maleOnlySects || []).includes(sect) && rnd() < (RB.femaleRatio || 0)", html);
+            Assert.Contains("c.female && (card.femaleBodiesKo || []).length > idx", html);
+            // 첫 환혼 줄은 늘, 나머지는 한 침방에 한 마디(Core BedroomTalk)
+            Assert.Contains("if (!l || talk.key || talk.extra) return false;", html);
+            Assert.Contains("bedLine('first:open')", html);
+            Assert.Contains("bedLine('pick:female')", html);
         }
     }
 }

@@ -172,6 +172,9 @@ button { touch-action: manipulation; }
 .ledger td { padding: 3px 0; border-bottom: 1px solid rgba(26,26,26,.15); vertical-align: top; }
 .ledger td:last-child { text-align: right; font: 700 13px var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 8px; }
 .ledger small { display: block; opacity: .65; font-size: 11px; }
+.mok { margin: 4px 0 8px; font-size: 14px; line-height: 1.6; text-align: center; }
+.mok b { font-weight: 900; margin-right: 6px; }
+.card .body { font-style: italic; }
 .innh { margin: 14px 0 4px; font-size: 14px; font-weight: 900; align-self: flex-start; }
 .innmeta { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; width: 100%; }
 .innmeta button { text-align: left; padding: 7px 9px; border: 1.5px solid var(--ink); background: var(--paper); font: inherit; font-size: 12px; cursor: pointer; display: grid; gap: 2px; }
@@ -274,6 +277,7 @@ button { touch-action: manipulation; }
     <div class="panel">
       <div class="brush" style="font-size:52px">輪迴</div>
       <div class="subtle" id="innsub">다음 생을 고르시오</div>
+      <p class="mok" id="innmok" hidden></p>
       <div class="cards" id="inncards"></div>
       <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button></div>
       <div class="subtle" id="innqi"></div>
@@ -983,6 +987,7 @@ function newRun(mode) {
   if (LS && mode !== 'prologue' && SCALE_MODE) {
     const reg = CH_REGS.find(r => r.id === LS.region), wd = W_BY_ID[LS.startWeapon];
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
+    G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
     G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
@@ -2772,6 +2777,7 @@ const RB = DATA.rebirth || { candidates: 3, firstRebirth: [], upgrades: [] };
 const BT = DATA.birthTraits || { countWeights: [1], excludes: [], list: [] };
 const TRAIT_BY = Object.fromEntries(BT.list.map(t => [t.id, t]));
 const SECT_BY = Object.fromEntries((DATA.sects || []).map(s => [s.id, s]));
+const CARD_BY = Object.fromEntries((DATA.cards || []).map(c => [c.id, c]));
 const START_SECTS = (DATA.sects || []).filter(s => s.unlock === 'start').map(s => s.id);
 const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복', Area: '범위', Duration: '지속', ProjectileSpeed: '투사체 속도', Amount: '투사체 수', CritChance: '치명' };
 const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount']);
@@ -2811,7 +2817,27 @@ function trainCost(m, it) {
   const bought = Object.values(m.train).reduce((a, b) => a + Math.max(0, b), 0);
   return Math.round(it.baseCost * (lv + 1) * (1 + B.training.costGrowthPerBought * bought));
 }
+// 몸 성별(21장): 성질을 다 굴린 뒤 후보 차례대로, maleOnlySects 는 늘 남자(Core RebirthDraw.RollFemale). 능력치는 같고 말만 바뀐다
+const rollFemale = (sect, rnd) => !(RB.maleOnlySects || []).includes(sect) && rnd() < (RB.femaleRatio || 0);
 function drawCandidates(m, rnd = Math.random) {
+  const out = drawSects(m, rnd);
+  for (const c of out) c.female = rollFemale(c.sect, rnd);
+  cardTexts(out, rnd);
+  return out;
+}
+// 후보 카드 글(dialogue.json cards, Core BedroomTalk.CardTexts): 문파 한 줄 소개 + '그날 밤 숨진 몸' 하나, 같은 문파 두 장이면 다른 번호, 여자 몸이면 같은 번호의 femaleBodiesKo
+function cardTexts(list, rnd = Math.random) {
+  const used = {};
+  for (const c of list) {
+    const card = CARD_BY[c.sect]; if (!card) { c.text = null; continue; }
+    const taken = used[card.id] = used[card.id] || [], all = card.bodiesKo.map((_, i) => i);
+    let free = all.filter(i => !taken.includes(i)); if (!free.length) free = all;
+    const idx = free[Math.floor(rnd() * free.length)]; taken.push(idx);
+    const fem = c.female && (card.femaleBodiesKo || []).length > idx;
+    c.text = { intro: card.introKo, body: fem ? card.femaleBodiesKo[idx] : card.bodiesKo[idx] };
+  }
+}
+function drawSects(m, rnd) {
   if (m.lives === 0) return RB.firstRebirth.map(id => ({ sect: id, traits: RB.firstRebirthTraits ? rollTraits(rnd) : [] }));
   const order = shuffleA(m.unlocked.filter(id => SECT_BY[id]), rnd), out = [], n = RB.candidates + upgEffect(m, 'candidates');
   const same = (a, b) => a.length === b.length && a.every(x => b.includes(x));
@@ -2833,6 +2859,42 @@ function lifeBody(sect, traits) {
   return Object.assign({}, sect, { stats, traits: (traits || []).filter(id => TRAIT_BY[id]), qiBonus });
 }
 const NUM_KO = ['', '하나', '둘', '셋', '넷', '다섯'];
+// 목 노인(dialogue.json bedroom, Core BedroomTalk): 첫 환혼·문파 첫 환생 줄은 늘 하고, 나머지는 한 침방에 한 마디. 그 침방에 앞 줄이 나왔으면 안 한다.
+// 본 줄은 혼 기록 seen('bedroom.<id>'), 무작위 한 마디(show)는 바로 앞에 한 줄을 피한다(lastBedroomChat)
+const BED = DATA.bedroom || [];
+const bedLine = when => BED.find(l => l.when === when) || null;
+let talk = { key: false, extra: false, rerolls: 0 };
+const talkSeen = (m, l) => (m.seen || []).includes('bedroom.' + l.id);
+function talkMark(m, l) { m.seen = Array.isArray(m.seen) ? m.seen : []; if (!m.seen.includes('bedroom.' + l.id)) m.seen.push('bedroom.' + l.id); }
+function talkKey(m, into, l) { if (!l) return; talkMark(m, l); talk.key = true; into.push(l); }
+function talkExtra(m, into, l) {
+  if (!l || talk.key || talk.extra) return false;
+  if (!l.repeat && talkSeen(m, l)) return false;
+  talkMark(m, l); talk.extra = true; into.push(l); return true;
+}
+const sameSect = () => innCands.some((c, i) => innCands.findIndex(x => x.sect === c.sect) !== i);
+function sayMok(lines) {
+  const el = $('innmok'); if (!lines.length) return;
+  el.hidden = false; el.innerHTML = lines.map(l => `<b>목 노인</b>${l.textKo}`).join('<br>');
+}
+// 고를 때(Core BedroomTalk.Pick): 문파 첫 환생 줄(첫 환혼이면 그 뒤 침 줄), 아니면 여자 몸·성질 줄, 그것도 없으면 show 가운데 무작위 한 마디
+function talkPick(m, c) {
+  const said = [], first = m.lives === 0;
+  const sl = bedLine('sect:' + c.sect); if (sl && !talkSeen(m, sl)) talkKey(m, said, sl);
+  if (first) talkKey(m, said, bedLine('first:needle'));
+  if (c.female && talkExtra(m, said, bedLine('pick:female'))) return said;
+  if (c.traits.length) {
+    if (talkExtra(m, said, bedLine('pick:trait'))) return said;
+    for (const t of c.traits) if (talkExtra(m, said, bedLine('pick:trait:' + t))) return said;
+  }
+  if (!talk.key && !talk.extra) {
+    let chats = BED.filter(l => l.when === 'show' || l.when === 'show:' + innCands.length);
+    if (chats.length > 1) chats = chats.filter(l => l.id !== m.lastBedroomChat);
+    if (chats.length) { const l = chats[Math.floor(Math.random() * chats.length)]; m.lastBedroomChat = l.id; talkExtra(m, said, l); }
+  }
+  if (first) talkKey(m, said, bedLine('first:send'));
+  return said;
+}
 function traitLine(id) {
   const t = TRAIT_BY[id], parts = Object.entries(t.stats).map(([k, v]) => statOn(k) ? fmtStat(k, v) : `<span class="off">${fmtStat(k, v)}</span>`);
   if (t.yinyangStart) parts.push(`<span class="off">음양 시작 ${t.yinyangStart > 0 ? '+' : '−'}${Math.abs(t.yinyangStart)}</span>`);
@@ -2846,9 +2908,23 @@ function openInn() {
   $('hud').hidden = true; overlay = 'inn'; paused = false;
   innRerolls = m.lives ? upgEffect(m, 'rerolls') : 0;   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
   innCands = drawCandidates(m);
+  // 열 때·보여 줄 때(Core BedroomTalk.Open·Show)
+  talk = { key: false, extra: false, rerolls: 0 }; $('innmok').hidden = true;
+  const said = [];
+  if (!m.lives) { talkKey(m, said, bedLine('first:open')); talkKey(m, said, bedLine('first:candidates')); }
+  else if (innCands.length >= 4 && talkExtra(m, said, bedLine('fourth:first'))) { /* 넷째 몸 첫 침방 */ }
+  else if (sameSect()) talkExtra(m, said, bedLine('same_sect'));
+  soulSave(m); sayMok(said);
   renderInn(); $('inn').hidden = false; $('inn').scrollTop = 0; focusFirst($('inn'));
 }
-function innReroll() { const m = innMeta(); if (overlay !== 'inn' || innRerolls <= 0 || !m.lives) return; innRerolls--; innCands = drawCandidates(m); renderInn(); }
+function innReroll() {
+  const m = innMeta(); if (overlay !== 'inn' || innRerolls <= 0 || !m.lives) return;
+  innRerolls--; talk.rerolls++; innCands = drawCandidates(m);
+  // 다시 고르기(Core BedroomTalk.Reroll): 처음 씀 → 한 침방에 둘 넘게 → 같은 문파 두 장
+  const said = [];
+  if (!talkExtra(m, said, bedLine('reroll:first')) && !(talk.rerolls > 2 && talkExtra(m, said, bedLine('reroll:many'))) && sameSect()) talkExtra(m, said, bedLine('same_sect'));
+  soulSave(m); sayMok(said); renderInn();
+}
 function innBuyUpgrade(id) {
   const m = innMeta(), u = (RB.upgrades || []).find(x => x.id === id), c = u && upgCost(m, u);
   if (c == null || m.qi < c) return;
@@ -2872,9 +2948,10 @@ function renderInn() {
     const s = SECT_BY[c.sect], r = CH_REGS.find(x => x.id === s.region), w = W_BY_ID[s.startWeapon], b = document.createElement('button');
     b.type = 'button'; b.className = 'card';
     const has = w && LIFE_BEH.has(w.behavior);
-    b.innerHTML = `<span class="ic">${s.nameKo[0]}</span><span><h3>${s.nameKo} 제자 <em>${r ? r.nameKo + '에서 태어난다 · 혈운 ' + r.density.toFixed(1) : ''}</em></h3>`
+    b.innerHTML = `<span class="ic">${s.nameKo[0]}</span><span><h3>${s.nameKo} ${c.female ? '여제자' : '제자'} <em>${i + 1} · ${r ? r.nameKo + '에서 태어난다 · 혈운 ' + r.density.toFixed(1) : ''}</em></h3>`
+      + (c.text ? `<p>${c.text.intro}</p><p class="body">${c.text.body}</p>` : '')
       + `<p>${w ? w.nameKo : s.startWeapon}${has ? '' : '(이 판엔 동작이 없어 삼재검법)'} · 기혈 ${s.maxHealth} · 걸음 ${Math.round(s.moveSpeed * 100)}%</p>`
-      + (c.traits.length ? c.traits.map(traitLine).join('') : '<p class="tr">타고난 성질 없음</p>') + `</span><span class="k">${i + 1}</span>`;
+      + (c.traits.length ? c.traits.map(traitLine).join('') : '<p class="tr">타고난 성질 없음</p>') + `</span>`;
     b.onclick = () => chooseLife(i); box.appendChild(b);
   });
   const rr = $('innreroll'), have = upgEffect(m, 'rerolls');
@@ -2902,8 +2979,10 @@ function renderInn() {
 }
 function chooseLife(i) {
   if (overlay !== 'inn' || !innCands[i]) return;
+  const m = innMeta(), said = talkPick(m, innCands[i]); soulSave(m);
   NEXT_LIFE = innCands[i]; $('inn').hidden = true; overlay = null;
   startRun('full');
+  for (const l of said) toast('목 노인', l.textKo);   // 고른 뒤 줄은 새 생 첫 화면에 자막으로
 }
 // 고유 적(WP-13c 첫 조각): 축척 모드에서 1장 밖 땅에 서면 chapters.json life.localShare(분 → 비율)만큼 그 땅 고유 적을 섞는다.
 // 동작은 LOCAL_BEH, 그림은 아직 혈무사 자리 표시(sprOf).

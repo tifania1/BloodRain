@@ -121,7 +121,10 @@ def data_blob() -> str:
         "sects": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"], "startWeapon": s["startWeapon"], "maxHealth": s["maxHealth"], "moveSpeed": s["moveSpeed"],
                    "stats": (s.get("traitEffect") or {}).get("stats", {}), "unlock": s.get("unlock")} for s in load("cheonha")["sects"]],
         # 침방·연무장(WP-14d, 10·21장): 환생 후보 수·첫 환혼·환혼 강화, 타고난 성질. 연무장 값은 balance.json training(위 balance 묶음)
-        "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades")},
+        "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades", "femaleRatio", "maleOnlySects")},
+        # 침방 목 노인 줄·후보 카드 글(21장, docs/story/mok.md·sects.md). 고르는 규칙은 Core InnDialogue BedroomTalk 와 같게
+        "bedroom": drop_notes(load("dialogue")["bedroom"]["lines"]),
+        "cards": drop_notes(load("dialogue")["cards"]["list"]),
         "birthTraits": drop_notes(load("cheonha")["birthTraits"]),
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
