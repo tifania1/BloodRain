@@ -189,6 +189,109 @@ namespace BloodRain.Core.Tests
             Assert.Equal("chapter3", _d.Enemy(call.Summon).Chapter);
         }
 
+        static readonly string[] M4Regions = { "chapter5", "chapter6", "chapter7" };
+
+        [Fact] public void 화산_곤륜_십만대산_정예_아홉_표가_데이터와_같다()
+        {
+            var section = GddSection("정예 패턴 수치");
+            var rows = GddTable(section).Where(r => r.Length == 6).ToList();
+            var stats = GddTable(GddSection("정예 수치"));
+            var song = _d.Elites["chapter1"].Select(id => _d.ElitePatternSet(id)).ToList();
+            var slam = song[0].Pattern(song[0].Order[0]);
+            int patterns = 0;
+            foreach (var c in M4Regions)
+            {
+                var list = _d.Elites[c];
+                Assert.Equal(3, list.Count);
+                for (int i = 0; i < 3; i++)
+                {
+                    var id = list[i];
+                    var set = _d.ElitePatternSet(id);
+                    Assert.Equal(3f, set.FirstCastSeconds);
+                    Assert.Equal(3.75f, set.IntervalSeconds);
+                    var name = _d.Enemies.Single(e => e.Id == id).NameKo;
+                    Assert.StartsWith(set.Pattern(set.Order[0]).NameKo, stats.Single(r => r[1] == name)[5]);
+                    var mate = song[i].Pattern(song[i].Order[0]);
+                    foreach (var pid in set.Order)
+                    {
+                        var p = set.Pattern(pid);
+                        patterns++;
+                        var row = rows.Single(r => r[0] == name && r[1] == p.NameKo);
+                        Assert.Equal($"{Num(p.TelegraphSeconds)}초", row[2]);
+                        Assert.Equal(Num(p.BaseDamage), row[4]);
+                        if (p.Radius > 0) Assert.Contains($"반경 {Num(p.Radius)}m", row[3]);
+                        if (p.Length > 0) Assert.Contains($"{Num(p.Length)}m", row[3]);
+                        if (p.ProjectileSpeed > 0) Assert.Contains($"속도 {Num(p.ProjectileSpeed)}", row[5]);
+                        // 같은 차례 숭산 정예의 예고·한 방(부르기는 장삼 호루라기와 같은 1초, 때리지 않는 것은 0)
+                        if (p.Shape == "summon") Assert.Equal(1f, p.TelegraphSeconds);
+                        else Assert.Equal(mate.TelegraphSeconds, p.TelegraphSeconds);
+                        if (p.BaseDamage > 0) Assert.Equal(i == 0 ? slam.BaseDamage : set.ContactDamage, p.BaseDamage);
+                    }
+                }
+            }
+            Assert.Equal(10, patterns);
+        }
+
+        [Fact] public void 아홉_모양은_같은_땅_값에서_왔다()
+        {
+            var raw = JObject.Parse(File.ReadAllText(Path.Combine(DataDir, "enemies.json")))["enemies"]!.Children<JObject>().ToDictionary(o => (string)o["id"]!);
+            var bosses = JObject.Parse(File.ReadAllText(Path.Combine(DataDir, "bosspatterns.json")))["bosses"]!;
+            JObject BossPattern(string boss, string pid) => bosses[boss]!["patterns"]!.Children<JObject>().Concat(bosses[boss]!["phase2"]!.Children<JObject>()).Single(o => (string?)o["id"] == pid);
+            var gim = JObject.Parse(File.ReadAllText(Path.Combine(DataDir, "gimmicks.json")));
+
+            var petal = _d.ElitePatternSet("plum_ghost_captain").Pattern("petal_fan_x5");
+            Assert.Equal(5, petal.Count);
+            Assert.Equal((float)raw["plum_sword_ghost"]!["shoot"]!["range"]!, petal.Length);
+            Assert.Equal(_d.ElitePatternSet("gyeyul_monk").Pattern("palm_triple").ProjectileSpeed, petal.ProjectileSpeed); // 둘 다 초속 6m
+            Assert.Equal(_d.ElitePatternSet("tang_dart_gangsi").Pattern("dart_fan").AngleDegrees, petal.AngleDegrees);
+
+            var rock = _d.ElitePatternSet("rockfall_mountain_ghost").Pattern("call_rockfall");
+            Assert.Equal((float)gim["fallingRocks"]!["scatter"]!, rock.Scatter);
+            Assert.Equal((float)gim["fallingRocks"]!["radius"]!, rock.Radius);
+            Assert.Equal((int)gim["fallingRocks"]!["count"]!, rock.Count);
+
+            var ice = _d.ElitePatternSet("yeti_king").Pattern("ice_boulder");
+            Assert.Equal((float)raw["yeti"]!["shoot"]!["range"]!, ice.Length);
+            Assert.Equal(2 * (float)raw["yeti"]!["shoot"]!["radius"]!, ice.Width);
+            Assert.Equal(1, ice.Count);
+
+            var clones = _d.ElitePatternSet("binghyeol_disciple").Pattern("ice_clones_x2");
+            var seol = BossPattern("seol_muhyang", "ice_clones_x4");
+            Assert.Equal("clones", clones.Shape);
+            Assert.Equal(3, clones.Count); // 진짜 하나 + 분신 둘
+            Assert.Equal((float)seol["scatter"]!, clones.Scatter);
+            Assert.Equal((float)seol["leaveSeconds"]!, clones.LeaveSeconds);
+
+            var wolves = _d.ElitePatternSet("snow_wolf_king");
+            var call = wolves.Pattern("call_wolf_pack");
+            Assert.Equal("chapter6", _d.Enemy(call.Summon).Chapter);
+            Assert.Equal((int)raw["snow_wolf"]!["group"]!["size"]!, call.Count);
+            var charge = wolves.Pattern("wolf_king_charge");
+            var shield = _d.ElitePatternSet("ironclad_fort_guard").Pattern("shield_charge");
+            Assert.Equal((shield.Length, shield.Width, shield.ProjectileSpeed, shield.RecoverySeconds, shield.TelegraphSeconds),
+                (charge.Length, charge.Width, charge.ProjectileSpeed, charge.RecoverySeconds, charge.TelegraphSeconds));
+
+            var pounce = _d.ElitePatternSet("blood_lion_elite").Pattern("pounce");
+            var dash = raw["blood_lion"]!["dash"]!;
+            Assert.Equal((float)dash["speed"]! * (float)dash["seconds"]!, pounce.Length, 3);
+            Assert.Equal((float)raw["blood_lion"]!["telegraph"]!, pounce.TelegraphSeconds);
+
+            var wave = _d.ElitePatternSet("four_guardian_gangsi").Pattern("guardian_shockwave");
+            Assert.Equal("self", wave.Aim);
+            Assert.Equal(_d.ElitePatternSet("dongin").Pattern("body_slam_x3").Radius, wave.Radius);
+
+            var blink = _d.ElitePatternSet("hyeolyeong_captain").Pattern("mark_blink_x3");
+            var hwi = BossPattern("hyeokryeon_hwi", "blink_x4_slam");
+            Assert.Equal(3, blink.Count);
+            Assert.Equal(((float)hwi["scatter"]!, (float)hwi["waveIntervalSeconds"]!, (float)hwi["radius"]!), (blink.Scatter, blink.WaveIntervalSeconds, blink.Radius));
+
+            var triple = _d.ElitePatternSet("huashan_elder_gangsi").Pattern("sword_triple");
+            var axe = _d.ElitePatternSet("gangsi_axeman").Pattern("axe_swing");
+            Assert.Equal((axe.Radius, axe.AngleDegrees), (triple.Radius, triple.AngleDegrees));
+            Assert.Equal(3, triple.Waves);
+            Assert.Equal(1f + 2 * 0.3f, BossPatterns.CastSeconds(triple), 4);
+        }
+
         [Fact] public void 검진은_검_사이로_걸어_나갈_수_있고_2초에_다_조인다()
         {
             var p = _d.ElitePatternSet("sword_array_taoist").Pattern("five_sword_array");

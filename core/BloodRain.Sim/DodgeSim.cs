@@ -211,6 +211,8 @@ namespace BloodRain.Sim
                         sb.AppendLine($"| {boss} | {p.NameKo} | 서서 무적으로 버팀: 띠({F1(p.Width)}m)가 몸을 지나는 초 | {F2(WaveOverlapSeconds(p, d, false))}초 (무적 {F1(d.Iframes)}초) |");
                         sb.AppendLine($"| {boss} | {p.NameKo} | 띠 쪽으로 경공해 뚫음 | {F2(WaveOverlapSeconds(p, d, true))}초 (무적 {F1(d.Iframes)}초) |");
                     }
+                    else if (p.Shape == "projectile_fan" && p.Count <= 1)
+                        sb.AppendLine($"| {boss} | {p.NameKo} | 한 발(지름 {F1(p.Width)}m)이 겨눈 쪽으로 곧게: 옆으로 비킬 거리 | {F2(p.Width / 2 + BodyRadius)}m |");
                     else if (p.Shape == "projectile_fan")
                         foreach (var dist in new[] { 3f, 6f, 10f })
                             sb.AppendLine($"| {boss} | {p.NameKo} | 보스에서 {F0(dist)}m, 탄 {p.Count}발 사이 틈(탄 크기 0) | {F2(FanGap(p, dist))}m (몸 너비 {F1(2 * BodyRadius)}m) |");

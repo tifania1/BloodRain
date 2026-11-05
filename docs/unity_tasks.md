@@ -373,6 +373,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 기획서 6장 줄대로
   - 찍기: `docs/unity_shots/R-01U/` 의 `<id>.png`
 
+- [ ] R4-06U 정예: 화산·곤륜 설원·십만대산 아홉 · 먼저: R-01Ub
+  - 할 것: PatternRunner 로 아홉을 돌린다. 새로 필요한 것: 화산 장로의 강시 `cone` 세 파(`Waves` 3·`WaveIntervalSeconds` 0.3, 같은 방향, 멈춰 섬), 설인 왕 `projectile_fan` 한 발(지름 `Width`), 빙혈의 제자 `clones`(설무향 빙분신을 정예에 — 진짜 하나만 그림자, Count 는 진짜 포함 3), 설랑 왕 `summon`(설랑 떼 다섯, 양옆으로 돌아 들어옴)과 `line` 돌진을 번갈아, 혈사자·설랑 왕 `line` 은 철갑 수채 무사 방패 돌진과 같은 길, 혈영회 대주 `blink_slam` 세 번, 산귀 `circles` 세 곳(±8m).
+  - 쓸 것: bosspatterns.json elites(plum_ghost_captain·rockfall_mountain_ghost·huashan_elder_gangsi·yeti_king·binghyeol_disciple·snow_wolf_king·blood_lion_elite·four_guardian_gangsi·hyeolyeong_captain), 기획서 6장 '화산·곤륜 설원·십만대산 정예 아홉'
+  - 메뉴: E-01 의 정예 부르기
+  - 끝: 아홉이 기획서 6장 줄대로
+  - 찍기: `docs/unity_shots/R4-06U/` 의 `<id>.png`
+
 - [ ] R-14Ua 당소혜(당가타) · 먼저: BR-02
   - 할 것: PatternRunner 로 `dang_sohye`(half_map_poison_fog `HalfFieldFog.Choose/Covers`, dart_fan_x3, summon_golden_centipede). 2막 `new BossSplit(p, 남은 기혈)`(몸마다 `Damage`, 매 프레임 `Tick` 이 돌려준 몸을 일으킴, 분열 동안 패턴 Tick 멈춤, 자리 `RingOffsets(p, p.Scatter, 각도)`).
   - 쓸 것: Core `BossPatterns`·`BossSplit`·`HalfFieldFog`, bosspatterns.json `dang_sohye`

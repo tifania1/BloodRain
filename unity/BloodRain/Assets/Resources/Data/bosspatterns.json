@@ -911,6 +911,274 @@
         }
       ],
       "phase2": []
+    },
+    "plum_ghost_captain": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 화산 첫째. 예고 0.6초·한 발 10은 숭산 첫째 동인과 같고, 탄은 매화검귀(공통 적) 꽃잎(초속 6m ≈ 130, 사거리 9m)을 다섯 발로 늘려 당가 암기 강시처럼 48°로 폈다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 17,
+      "moveSpeed": 65,
+      "order": [
+        "petal_fan_x5"
+      ],
+      "patterns": [
+        {
+          "id": "petal_fan_x5",
+          "nameKo": "꽃잎 탄 5발",
+          "shape": "projectile_fan",
+          "_note": "예고를 시작할 때 플레이어 쪽으로 방향을 잡고, 판정 때 꽃잎 탄 다섯 발을 부채꼴로 쏜다. 걸으면서 쏜다.",
+          "telegraphSeconds": 0.6,
+          "count": 5,
+          "angleDegrees": 48,
+          "waves": 1,
+          "projectileSpeed": 130,
+          "length": 9,
+          "baseDamage": 10,
+          "aim": "player_at_telegraph"
+        }
+      ],
+      "phase2": []
+    },
+    "rockfall_mountain_ghost": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 화산 둘째. 예고 0.4초·한 방(몸 피해 그대로)은 계율원 강시 승려와 같고, 자리·반경은 화산 낙석 기믹(플레이어 둘레 ±8m 세 곳, 반경 1.8m)과 같다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 20,
+      "moveSpeed": 45,
+      "order": [
+        "call_rockfall"
+      ],
+      "patterns": [
+        {
+          "id": "call_rockfall",
+          "nameKo": "낙석 부르기",
+          "shape": "circles",
+          "_note": "예고를 시작할 때 플레이어 둘레 가로·세로 ±scatter 안 세 곳에 그림자가 지고, 판정 때 바위가 떨어진다. 걸으면서 부른다.",
+          "telegraphSeconds": 0.4,
+          "count": 3,
+          "radius": 1.8,
+          "scatter": 8,
+          "baseDamage": 20,
+          "aim": "player_at_telegraph"
+        }
+      ],
+      "phase2": []
+    },
+    "huashan_elder_gangsi": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 화산 셋째. 예고 1초·멈춰 섬·한 방(몸 피해 그대로)은 강시 방장 대리와 같고, 부채꼴은 강시 도부수 큰 도끼(반경 3m, 120°)를 세 번, 사이는 동인 3연타의 0.3초.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 22,
+      "moveSpeed": 55,
+      "order": [
+        "sword_triple"
+      ],
+      "patterns": [
+        {
+          "id": "sword_triple",
+          "nameKo": "검 3연격",
+          "shape": "cone",
+          "_note": "예고를 시작할 때 플레이어 쪽으로 방향을 잡고 멈춰 선다. 판정 때부터 waveIntervalSeconds 마다 같은 방향 앞 부채꼴을 세 번 벤다(첫 칼을 보고 비키면 나머지는 피한다). 한 시전 1.6초.",
+          "telegraphSeconds": 1,
+          "radius": 3,
+          "angleDegrees": 120,
+          "waves": 3,
+          "waveIntervalSeconds": 0.3,
+          "baseDamage": 22,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "yeti_king": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 곤륜 설원 첫째. 예고 0.6초·한 방 10은 동인과 같고, 얼음덩이는 설인(공통 적) 것(초속 5m ≈ 107, 반경 0.6m, 사거리 10m) 그대로 한 덩이.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 20,
+      "moveSpeed": 45,
+      "order": [
+        "ice_boulder"
+      ],
+      "patterns": [
+        {
+          "id": "ice_boulder",
+          "nameKo": "얼음덩이 투척",
+          "shape": "projectile_fan",
+          "_note": "예고를 시작할 때 플레이어 쪽으로 방향을 잡고 멈춰 서서 얼음덩이를 치켜들고, 판정 때 한 덩이(지름 width)를 던진다.",
+          "telegraphSeconds": 0.6,
+          "count": 1,
+          "angleDegrees": 0,
+          "waves": 1,
+          "projectileSpeed": 107,
+          "length": 10,
+          "width": 1.2,
+          "baseDamage": 10,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "binghyeol_disciple": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 곤륜 설원 둘째. 예고 0.4초는 계율원 강시 승려와 같고, 갈라지는 모양은 설무향 빙분신(반경 6m 안, 8초)을 둘로 줄였다. 제 손으로 때리지 않는다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 17,
+      "moveSpeed": 65,
+      "order": [
+        "ice_clones_x2"
+      ],
+      "patterns": [
+        {
+          "id": "ice_clones_x2",
+          "nameKo": "빙분신",
+          "shape": "clones",
+          "_note": "제자가 셋(진짜 하나와 분신 둘)으로 갈라져 scatter 안에 선다. 진짜 하나만 바닥 그림자가 있다. 분신은 한 대 맞으면 깨지고 leaveSeconds 뒤 남은 분신이 사라진다. 분신은 몸에 닿는 피해만 있다.",
+          "telegraphSeconds": 0.4,
+          "count": 3,
+          "scatter": 6,
+          "leaveSeconds": 8,
+          "baseDamage": 0
+        }
+      ],
+      "phase2": []
+    },
+    "snow_wolf_king": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 곤륜 설원 셋째. 설랑 떼(공통 적, 다섯 마리)를 부르고(소환 예고 1초는 장삼 호루라기·수귀 무리 우두머리와 같다), 다음 차례에 철갑 수채 무사 방패 돌진과 같은 줄(예고 1초, 8m, 폭 1.6m, 속도 300, 굳는 1초)로 돌진한다. 돌진 한 방은 몸 피해 그대로.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 20,
+      "moveSpeed": 80,
+      "order": [
+        "call_wolf_pack",
+        "wolf_king_charge"
+      ],
+      "patterns": [
+        {
+          "id": "call_wolf_pack",
+          "nameKo": "설랑 떼 부르기",
+          "shape": "summon",
+          "_note": "왕 둘레 scatter 안 다섯 곳에서 설랑이 뛰어나온다. 불려 온 설랑은 설랑 떼처럼 양옆으로 돌아 들어온다.",
+          "telegraphSeconds": 1,
+          "count": 5,
+          "scatter": 3,
+          "summon": "snow_wolf",
+          "center": "boss",
+          "baseDamage": 0
+        },
+        {
+          "id": "wolf_king_charge",
+          "nameKo": "설랑 왕 돌진",
+          "shape": "line",
+          "_note": "멈춰 서서 예고선을 플레이어 쪽으로 length 까지 긋는다. 판정 때 몸째 그 줄을 따라 projectileSpeed 로 달려가 줄 위의 플레이어를 친다. 줄 끝에서 recoverySeconds 동안 굳는다.",
+          "telegraphSeconds": 1,
+          "length": 8,
+          "width": 1.6,
+          "projectileSpeed": 300,
+          "recoverySeconds": 1,
+          "baseDamage": 20,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "blood_lion_elite": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 십만대산 첫째. 예고 0.6초·한 방 10은 동인과 같고(혈사자 공통 적 예고도 0.6초), 돌진은 혈사자 것(초속 10m ≈ 214로 0.6초, 6m)과 같다. 공통 적의 포효(주변 적 강화)는 넣지 않았다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 20,
+      "moveSpeed": 75,
+      "order": [
+        "pounce"
+      ],
+      "patterns": [
+        {
+          "id": "pounce",
+          "nameKo": "덮쳐 오기",
+          "shape": "line",
+          "_note": "멈춰 서서 몸을 낮추고 예고선을 플레이어 쪽으로 length 까지 긋는다. 판정 때 몸째 그 줄을 따라 projectileSpeed 로 덮쳐 와 줄 위의 플레이어를 친다.",
+          "telegraphSeconds": 0.6,
+          "length": 6,
+          "width": 1.6,
+          "projectileSpeed": 214,
+          "baseDamage": 10,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "four_guardian_gangsi": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 십만대산 둘째. 예고 0.4초·한 방(몸 피해 그대로)은 계율원 강시 승려와 같고, 반경은 숭산 정예 동인 몸통 박치기와 같은 2m(장삼 내려찍기 2.5m 로 두면 0.4초 안에 걸어서 못 빠져나온다). 붙어 싸우던 거리(1m)에서 바로 바깥으로 걸으면 빠진다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 22,
+      "moveSpeed": 45,
+      "order": [
+        "guardian_shockwave"
+      ],
+      "patterns": [
+        {
+          "id": "guardian_shockwave",
+          "nameKo": "내려찍기 충격파",
+          "shape": "circles",
+          "_note": "멈춰 서서 두 팔을 치켜들고, 판정 때 땅을 내려찍어 제 몸 둘레 원 안의 플레이어를 때린다.",
+          "telegraphSeconds": 0.4,
+          "count": 1,
+          "radius": 2,
+          "baseDamage": 22,
+          "aim": "self",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
+    },
+    "hyeolyeong_captain": {
+      "_note": "2026-11-05 클라우드 세션이 R-01 과 같은 방식(사람이 추천대로 정함, R4-06)으로 정했다: 십만대산 셋째. 예고 1초·한 방(몸 피해 그대로)은 강시 방장 대리와 같고, 순간이동은 혁련휘 것(플레이어 둘레 5m, 0.4초 간격, 반경 3.5m)을 세 번으로 줄였다.",
+      "firstCastSeconds": 3,
+      "intervalSeconds": 3.75,
+      "phase2IntervalSeconds": 3.75,
+      "phase2At": 0,
+      "contactDamage": 22,
+      "moveSpeed": 70,
+      "order": [
+        "mark_blink_x3"
+      ],
+      "patterns": [
+        {
+          "id": "mark_blink_x3",
+          "nameKo": "표식 순간이동",
+          "shape": "blink_slam",
+          "_note": "플레이어 둘레 scatter 안에 표식을 남기며 count 번 순간이동한다(waveIntervalSeconds 간격, 피해 없음). 마지막 자리에서 예고 telegraphSeconds 뒤 반경 radius 를 내려찍는다.",
+          "telegraphSeconds": 1,
+          "count": 3,
+          "scatter": 5,
+          "waveIntervalSeconds": 0.4,
+          "radius": 3.5,
+          "baseDamage": 22,
+          "aim": "player_at_telegraph",
+          "bossHolds": true
+        }
+      ],
+      "phase2": []
     }
   }
 }
