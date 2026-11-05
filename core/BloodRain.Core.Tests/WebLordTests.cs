@@ -58,6 +58,26 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        /// <summary>종장을 뺀 땅의 주인 패턴은 1막·2막 모두 프로토타입이 그린다: 차례로 도는 것은 ELITE_SHAPES, 2막 continuous 는 lordContinuous 가 안다.</summary>
+        [Fact] public void 땅의_주인_패턴은_모두_프로토타입이_안다()
+        {
+            var html = Proto;
+            var m = Regex.Match(html, @"const ELITE_SHAPES = new Set\(\[([^\]]*)\]\)");
+            var known = Regex.Matches(m.Groups[1].Value, @"'([a-z_]+)'").Select(x => x.Groups[1].Value).ToHashSet();
+            var cont = html.Substring(html.IndexOf("function lordContinuous(e, P)"));
+            cont = cont.Substring(0, cont.IndexOf("\n}\n"));
+            var data = Load();
+            foreach (var r in data.Cheonha.BossRegions)
+            {
+                var set = data.BossPatterns[r.Boss!];
+                foreach (var p in set.Patterns.Concat(set.Phase2))
+                {
+                    bool ok = p.Continuous ? cont.Contains($"P.shape === '{p.Shape}'") : known.Contains(p.Shape);
+                    Assert.True(ok, $"{r.Boss} {p.Id}({p.Shape}) 를 프로토타입이 모른다");
+                }
+            }
+        }
+
         /// <summary>프로토타입은 아는 패턴 모양(ELITE_SHAPES)만 쓴다. 종장을 뺀 땅의 주인마다 1막에 적어도 하나는 있어야 싸움이 된다.</summary>
         [Fact] public void 땅의_주인마다_프로토타입이_아는_1막_패턴이_있다()
         {

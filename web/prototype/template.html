@@ -865,7 +865,7 @@ const worldU = () => scaleOn() ? Math.pow(WD.scalePerRealm, tierNow()) : 1;
 // 아래 경지에서 생긴 적: 닿기만 해도 쓰러지고 피해를 주지 못한다. 땅의 주인(여기선 원각)은 밟히지 않는다.
 const lowBorn = e => scaleOn() && !e.boss && (e.born || 0) < tierNow();
 // 덩이 속 사람 수 = ceil(덩이 크기 × 남은 기혈 비율), 살아 있으면 적어도 1 (Core Scale.DrawMembers)
-const clusterOf = e => scaleOn() && !e.boss ? (CL_SIZE[(REALMS[e.born || 0] || {}).id] || 1) : 1;
+const clusterOf = e => scaleOn() && !e.boss && !e.splitOf ? (CL_SIZE[(REALMS[e.born || 0] || {}).id] || 1) : 1;
 const membersOf = e => Math.max(1, Math.ceil(clusterOf(e) * Math.max(0, e.hp) / e.maxHp));
 const sprites = {};
 let groundTile = null, vignette = null;
@@ -1245,7 +1245,7 @@ function lordFxStep(dt) {
   if (G.lordDraw) G.lordDraw = G.lordDraw.filter(o => !o.e.dead && !(o.kind === 'wave' && o.left <= 0));
   if (G.viewMulT) { G.viewMulT.t -= dt; if (G.viewMulT.t <= 0) G.viewMulT = null; }
 }
-// 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous, 시안 2막 진입과 같음). 분열(split)은 아직
+// 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous, 시안 2막 진입과 같음)
 function lordContinuous(e, P) {
   const dmg = P.baseDamage * (1 + B.enemyScaling.damagePerMinute * G.gm), sp = (P.projectileSpeed || 0) / 100 * MOVE;
   const draw = o => { o.e = e; (G.lordDraw = G.lordDraw || []).push(o); return o; };
@@ -1300,7 +1300,36 @@ function lordContinuous(e, P) {
       return true;
     });
   } else if (P.shape === 'split_field') lordSplitField(e, P);
-  else if (P.shape === 'empower') {   // 혈월(Core EmpowerDamage·EmpowerSpeed): 예고 뒤 싸움이 끝날 때까지 적 피해·걸음이 오른다(프로토타입은 보스 걸음은 그대로)
+  else if (P.shape === 'split') {   // 분열(당소혜 2막, Core BossSplit·시안과 같음): 쓰러지는 몸짓(예고) 뒤 남은 기혈을 count 몸이 healthShare 씩 나눠 scatter 둘레에 선다.
+    // 갈라진 동안 본체는 싸움판에서 빠져 패턴 시계가 멈춘다(기혈 막대는 몸들의 합). 첫 몸이 쓰러지고 rejoinSeconds 안에 다 쓰러뜨리지 못하면
+    // 쓰러진 몸이 남은 몸 가운데 가장 많은 기혈로 되살아난다. 다 쓰러지면 땅의 주인 처치
+    addEffect('ring', e.x, e.y, { r: P.scatter, life: P.telegraphSeconds, color: '#5E7F4A' });
+    let warm = P.telegraphSeconds, S = null;
+    const body = (x, y, hp) => spawnEnemy('sigang', x, y, { sprite: 'elite', splitOf: e, name: e.name, hp, maxHp: hp, speed: e.speed, dmg: e.dmg, r: e.r * 0.6, kbRes: 1, xp: 0, behavior: 'chase' });
+    lordFx(dt => {
+      if (e.dead) return false;
+      if (!S) {
+        warm -= dt; if (warm > 0) return true;
+        const each = e.hp * P.healthShare, a0 = rand(0, TAU);
+        S = e.split = { bodies: [], downT: null, last: null };
+        for (let i = 0; i < P.count; i++) { const a = a0 + i * TAU / P.count; S.bodies.push(body(e.x + Math.cos(a) * P.scatter, e.y + Math.sin(a) * P.scatter, each)); }
+        G.enemies = G.enemies.filter(x => x !== e);
+        sfx('boom'); return true;
+      }
+      const alive = S.bodies.filter(b => !b.dead);
+      e.hp = alive.reduce((a, b) => a + b.hp, 0);
+      if (!alive.length) { const L = S.last || e; e.x = L.x; e.y = L.y; e.hp = 0; G.enemies.push(e); killEnemy(e); return false; }
+      if (S.downT != null) {
+        S.downT -= dt;
+        if (S.downT <= 0) {
+          const top = Math.max(...alive.map(b => b.hp));
+          S.bodies = S.bodies.map(b => { if (!b.dead) return b; const n = body(b.x, b.y, top); addEffect('ring', b.x, b.y, { r: 1.2, color: '#5E7F4A', life: 0.4 }); return n; });
+          S.downT = null; toast(e.name, '쓰러진 몸이 다시 일어났다');
+        }
+      }
+      return true;
+    });
+  } else if (P.shape === 'empower') {   // 혈월(Core EmpowerDamage·EmpowerSpeed): 예고 뒤 싸움이 끝날 때까지 적 피해·걸음이 오른다(프로토타입은 보스 걸음은 그대로)
     toast(P.nameKo, '붉은 달이 떠 적이 거세진다');
     let warm = P.telegraphSeconds;
     lordFx(dt => {
@@ -1545,6 +1574,7 @@ function killEnemy(e, crushed) {
   if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
   if (e.elite && isPro()) cue('elite_kill:' + ELITES[e.eliteKey].id);
   if (e.lord) { lordDown(e); return; }   // 땅의 주인(WP-13e): 한 생은 이어진다
+  if (e.splitOf) { const S = e.splitOf.split; if (S) { S.last = e; if (S.downT == null) S.downT = (e.splitOf.set.phase2.find(q => q.shape === 'split') || {}).rejoinSeconds || 4; } return; }   // 분열한 몸(WP-13e)
   if (e.boss && e.jang) { G.won = true; cue('boss_kill'); setTimeout(proCutsWhenFree, 1000 * (PD.lineSeconds + 0.4)); return; } // 장삼 마지막 줄을 듣고 컷으로
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
   if (e.xp > 0) dropOrb(e.x, e.y, lowBorn(e) ? e.xp * CRUSH.xpPerCrushed : e.xp);   // 아래 경지에서 생긴 적은 진기 0.3배(cheonha.json crush)
