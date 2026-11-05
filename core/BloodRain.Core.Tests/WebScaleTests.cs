@@ -13,7 +13,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 빌드가_world_축척_값을_넣는다()
         {
             var build = ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"world\": {k: v for k, v in load(\"cheonha\")[\"world\"].items() if k in (\"view0Meters\", \"scalePerRealm\", \"viewInRealmShare\", \"boundaryViewMultiple\", \"noBoundaryFrom\")}", build);
+            Assert.Contains("\"world\": {k: v for k, v in load(\"cheonha\")[\"world\"].items() if k in (\"view0Meters\", \"scalePerRealm\", \"viewInRealmShare\", \"boundaryViewMultiple\", \"noBoundaryFrom\", \"widthMeters\", \"heightMeters\", \"land\", \"rivers\")}", build);
         }
 
         [Fact] public void 시야_식을_데이터로_셈하고_서장은_그대로()

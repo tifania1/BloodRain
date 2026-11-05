@@ -1,0 +1,71 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Newtonsoft.Json.Linq;
+using Xunit;
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>중원 한 장의 땅 윤곽·강(cheonha.json world.land·rivers, WP-12).
+    /// 두 웹 판이 같은 값을 그리도록 HTML 에 박지 않고 데이터에서 읽는지도 본다.</summary>
+    public class CheonhaLandTests
+    {
+        readonly JObject _c = JObject.Parse(File.ReadAllText(Path.Combine(TestData.DataDir, "cheonha.json")));
+        JObject World => (JObject)_c["world"]!;
+
+        static List<(double x, double y)> Points(JToken t) =>
+            ((JArray)t).Select(p => ((double)p[0]!, (double)p[1]!)).ToList();
+
+        static bool Inside(List<(double x, double y)> poly, double x, double y)
+        {
+            bool c = false;
+            for (int i = 0, j = poly.Count - 1; i < poly.Count; j = i++)
+            {
+                var (xi, yi) = poly[i]; var (xj, yj) = poly[j];
+                if ((yi > y) != (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+            }
+            return c;
+        }
+
+        [Fact]
+        public void 땅은_비율_좌표_다각형이고_모든_지역이_땅_안에_있다()
+        {
+            var land = Points(World["land"]!);
+            Assert.True(land.Count >= 3);
+            Assert.All(land, p => Assert.InRange(p.x, 0, 1));
+            Assert.All(land, p => Assert.InRange(p.y, 0, 1));
+            foreach (var r in _c["regions"]!.Children<JObject>())
+            {
+                var pos = (JArray)r["pos"]!;
+                Assert.True(Inside(land, (double)pos[0]!, (double)pos[1]!), $"{r["id"]} 이 땅 밖에 있다");
+            }
+        }
+
+        [Fact]
+        public void 강은_두_점_이상_꺾은선이고_비율_좌표다()
+        {
+            var rivers = ((JArray)World["rivers"]!).ToList();
+            Assert.NotEmpty(rivers);
+            foreach (var r in rivers)
+            {
+                var pts = Points(r);
+                Assert.True(pts.Count >= 2);
+                Assert.All(pts, p => Assert.True(p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1));
+            }
+        }
+
+        [Fact]
+        public void 두_웹_판이_땅_윤곽을_데이터에서_읽는다()
+        {
+            var sian = TestData.ReadRepoFile("web", "lookdev", "cheonha.html");
+            Assert.Contains("const LAND = WD.land.map", sian);
+            Assert.Contains("const RIVERS = WD.rivers.map", sian);
+            Assert.DoesNotContain("const LAND = [[", sian);
+            var proto = TestData.ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("WD.land", proto);
+            Assert.Contains("r.chapter === 'chapter1'", proto);
+            var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"land\", \"rivers\"", build);
+        }
+    }
+}

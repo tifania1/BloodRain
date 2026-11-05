@@ -101,7 +101,9 @@ def data_blob() -> str:
                       if c.get("art") and (CUTS / f"{c['art']}.jpg").exists()},
         "ui": ui_strings(),
         # 천하 축척(WP-12): 화면 대각선 = view0Meters × scalePerRealm^(경지 순번 + viewInRealmShare × 경지 안 진행), 7장
-        "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare", "boundaryViewMultiple", "noBoundaryFrom")},
+        "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare", "boundaryViewMultiple", "noBoundaryFrom", "widthMeters", "heightMeters", "land", "rivers")},
+        # 축척 시험(WP-12)이 1장 마당을 중원 한 장의 숭산 자리에 놓고 둘레 지명을 그린다
+        "regions": [{"id": r["id"], "nameKo": r["nameKo"], "hanja": r["hanja"], "pos": r["pos"], "chapter": r.get("chapter"), "final": bool(r.get("final"))} for r in load("cheonha")["regions"]],
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
     return to_js(blob)

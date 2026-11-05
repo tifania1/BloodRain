@@ -2405,6 +2405,40 @@ function drawCurtain(now) {
   for (let i = 0; i < 90; i++) { const a = i / 90 * TAU + now * 0.05, rr = R + ((i * 37) % 23), x = hx + Math.cos(a) * rr, y = hy + Math.sin(a) * rr + ((now * 120 + i * 13) % 26); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 12); }
   ctx.stroke();
 }
+// 중원 한 장(WP-12): 축척 시험에서 1장 마당(원점)을 cheonha.json 숭산 자리에 놓고, 천하 시안과 같은 땅 윤곽·바다·강·지명을 그린다.
+// 좌표는 world.land·rivers·regions pos(비율) × widthMeters·heightMeters 에서 숭산 자리를 뺀 값(원점 = 1장 마당 가운데).
+const HOME_REG = (DATA.regions || []).find(r => r.chapter === 'chapter1');
+const HOME_M = HOME_REG ? [HOME_REG.pos[0] * WD.widthMeters, HOME_REG.pos[1] * WD.heightMeters] : [0, 0];
+const toLocal = ([x, y]) => [x * WD.widthMeters - HOME_M[0], y * WD.heightMeters - HOME_M[1]];
+const CH_LAND = (WD.land || []).map(toLocal), CH_RIVERS = (WD.rivers || []).map(r => r.map(toLocal));
+// 봉마곡(final)은 봉인석이 모이기 전엔 보이면 안 되니 지명을 그리지 않는다(천하 시안과 같음)
+const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, x, y }; });
+function drawCheonha() {
+  if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;
+  const lv = Math.log(G.viewD), aRiver = clamp((lv - Math.log(70)) / (Math.log(220) - Math.log(70)), 0, 1);
+  // 바다: 땅 밖을 옅은 청회색으로(시안 #D9E1DA). 마당 바닥 위에 덮어 해안선이 보이게.
+  ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100);
+  CH_LAND.forEach(([x, y], i) => i ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y))); ctx.closePath();
+  ctx.fillStyle = 'rgba(217,225,218,0.92)'; ctx.fill('evenodd');
+  ctx.beginPath(); CH_LAND.forEach(([x, y], i) => i ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y))); ctx.closePath();
+  ctx.strokeStyle = 'rgba(26,26,26,0.55)'; ctx.lineWidth = Math.max(1.2, 6 * PPM); ctx.stroke(); ctx.restore();
+  // 강: 마당 크기에선 화면을 다 덮으니 시안처럼 시야 70m 부터 떠오른다
+  if (aRiver > 0.01) for (const r of CH_RIVERS) {
+    ctx.save(); ctx.globalAlpha = aRiver; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); r.forEach(([x, y], i) => i ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y)));
+    ctx.strokeStyle = 'rgba(70,110,120,0.45)'; ctx.lineWidth = Math.max(1.5, 22 * PPM); ctx.stroke();
+    ctx.strokeStyle = 'rgba(26,26,26,0.25)'; ctx.lineWidth = Math.max(0.6, 3 * PPM); ctx.stroke(); ctx.restore();
+  }
+  // 지명: 화면 안에 든 땅만. 한자는 크게, 한글은 밑에.
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const r of CH_REGS) {
+    const X = wx(r.x), Y = wy(r.y);
+    if (X < -80 || X > VW + 80 || Y < -60 || Y > VH + 60) continue;
+    ctx.fillStyle = 'rgba(26,26,26,0.32)'; ctx.font = '600 22px serif'; ctx.fillText(r.hanja, X, Y - 10);
+    ctx.fillStyle = 'rgba(26,26,26,0.5)'; ctx.font = '600 12px sans-serif'; ctx.fillText(r.nameKo, X, Y + 12);
+  }
+  ctx.restore();
+}
 function wx(x) { return (x - G.cam.x) * PPM + VW / 2; }
 function wy(y) { return (y - G.cam.y) * PPM + VH / 2; }
 
@@ -2423,6 +2457,7 @@ function render() {
   // 바닥
   const T = groundTile.width / DPR * (PPM / PPM0), ox = ((-G.cam.x * PPM + VW / 2) % T + T) % T - T, oy = ((-G.cam.y * PPM + VH / 2) % T + T) % T - T;
   for (let x = ox; x < VW; x += T) for (let y = oy; y < VH; y += T) ctx.drawImage(groundTile, x, y, T, T);
+  drawCheonha();      // 중원 한 장의 바다·강·지명(축척 시험에서만)
   drawCurtain(now);   // 혈우 장막(축척 시험에서만)
   // 먹 자국
   for (const s of G.splats) {
