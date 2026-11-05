@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
+using BloodRain.Core.Meta;
 using Xunit;
 using static BloodRain.Core.Tests.TestData;
 
@@ -68,8 +69,42 @@ namespace BloodRain.Core.Tests
             Assert.False(ff.CheckTrueEnding(0.05f, trueEndingMet: false));
             Assert.False(ff.CheckTrueEnding(0.2f, trueEndingMet: true));
             Assert.True(ff.CheckTrueEnding(0.1f, trueEndingMet: true));
-            Assert.True(ff.Done);
             Assert.True(ff.CutToTrueEnding);
+            Assert.True(ff.AwaitingEndingChoice);                     // 싸움이 멈추고 고르는 화면
+            Assert.False(ff.Done);
+            Assert.Throws<InvalidOperationException>(() => ff.Defeat());
+            Assert.False(ff.ChooseAtTrueCut("true"));                 // 의심: 싸움이 거기서 끝남
+            Assert.True(ff.Done);
+            Assert.Equal("true", ff.ChosenAtTrueCut);
+        }
+
+        [Fact] public void 목_노인_컷_뒤_봉인_계승을_고르면_싸움으로_돌아가_마저_쓰러뜨린다()
+        {
+            foreach (var ending in new[] { "seal", "inherit" })
+            {
+                var ff = new FinalFight(_d);
+                for (int i = 0; i < 9; i++) ff.Defeat();
+                Assert.True(ff.CheckTrueEnding(0.08f, true));
+                Assert.True(ff.ChooseAtTrueCut(ending));
+                Assert.False(ff.Done);
+                Assert.False(ff.AwaitingEndingChoice);
+                Assert.Equal("jinhyeolma", ff.Stage!.Id);
+                Assert.False(ff.CheckTrueEnding(0.05f, true));         // 컷은 한 번만
+                ff.Defeat();
+                Assert.True(ff.Done);
+                Assert.Equal(ending, ff.ChosenAtTrueCut);
+                Assert.Throws<InvalidOperationException>(() => ff.ChooseAtTrueCut("true"));
+            }
+        }
+
+        [Fact] public void 목_노인_컷은_진엔딩_컷_1이고_의심이면_컷_2부터()
+        {
+            var first = FinalDialogue.TrueEndingInterrupt(_d);
+            Assert.Single(first);
+            Assert.Contains(first[0].Lines, l => l.TextKo.Contains("오래 앓았구나"));
+            var rest = FinalDialogue.EndingCutsAfterTrueCut(_d);
+            Assert.Equal(FinalDialogue.EndingCuts(_d, "true").Count - 1, rest.Count);
+            Assert.Equal(FinalDialogue.EndingCuts(_d, "true")[1].Id, rest[0].Id);
         }
 
         [Fact] public void 앞_단계에선_진엔딩_컷이_없다()

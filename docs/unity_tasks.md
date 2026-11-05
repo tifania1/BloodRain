@@ -476,7 +476,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/DL-07b/` 의 `intro_06.png`, `intro_12.png`
 
 - [ ] DL-10b 종장 입장 컷·상대 한 줄·엔딩 고르기 · 먼저: DL-06b
-  - 할 것: 봉마곡에 들어설 때 `FinalDialogue.FinalEnter(data, soul, progress)` 컷(비면 건너뜀). `FinalFight` 를 시작할 때와 `Defeat()` 뒤마다 `FinalDialogue.FinalOpponent(data, soul, fight)` — `Shadow` 면 이름 붓글씨 아래, 아니면 보스 머리 위 2초(시간 안 멈춤), `BloodMoon` 이 있으면 이어서 한 줄. 종장을 깨 `soul.EndingPending` 이면 `FinalDialogue.EndingChoices(data, soul, mokTalkDone)` 로 고르는 화면(1회차는 봉인 하나라 바로), 고르면 `EndingCuts(data, id)` 컷 → `soul.ChooseEnding(id, mokTalkDone)` → 저장. 계승 속삭임 줄은 `Whisper` 라 옅게. 진혈마 10% 컷 뒤 차례는 backlog DL-11(사람 결정 대기) 뒤.
+  - 할 것: 봉마곡에 들어설 때 `FinalDialogue.FinalEnter(data, soul, progress)` 컷(비면 건너뜀). `FinalFight` 를 시작할 때와 `Defeat()` 뒤마다 `FinalDialogue.FinalOpponent(data, soul, fight)` — `Shadow` 면 이름 붓글씨 아래, 아니면 보스 머리 위 2초(시간 안 멈춤), `BloodMoon` 이 있으면 이어서 한 줄. 종장을 깨 `soul.EndingPending` 이면 `FinalDialogue.EndingChoices(data, soul, mokTalkDone)` 로 고르는 화면(1회차는 봉인 하나라 바로), 고르면 `EndingCuts(data, id)` 컷 → `soul.ChooseEnding(id, mokTalkDone)` → 저장. 계승 속삭임 줄은 `Whisper` 라 옅게. 진혈마 10%(DL-11, 2026-11-05): `fight.CheckTrueEnding(기혈 비율, soul.TrueEndingMetDuringFinal(…))` 가 true 면 싸움을 멈추고 `FinalDialogue.TrueEndingInterrupt(data)` 컷 1 → 고르는 화면 → `fight.ChooseAtTrueCut(id)`. false(의심)면 `EndingCutsAfterTrueCut(data)`, true(봉인·계승)면 싸움으로 돌아가 마저 쓰러뜨린 뒤 `EndingCuts(data, id)`.
   - 쓸 것: Core `Meta/FinalDialogue.cs`, `Combat/FinalFight.cs`, dialogue.json `final`·`endings`, `docs/story/final.md`·`endings.md`
   - 메뉴: BR-01 의 땅의 주인 부르기(혈마 단목현)
   - 끝: 입장 컷 둘 → 혈영 일곱마다 혈영 줄 → 혈의·혈해·진혈마 단계 줄 → 봉인 4컷 → 2회차 객잔

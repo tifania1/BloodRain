@@ -6,7 +6,8 @@
 // 종장 상대(FinalOpponent): FinalFight 가 상대를 바꿀 때마다 머리 위 한 줄. 혈영이면 그 땅의 주인 혈영 줄(lords echo),
 //   혈마 단계면 단계 줄, 혈월 회차면 그 단계의 혈월 줄을 뒤에 더한다.
 // 엔딩(EndingChoices·EndingCuts): 고르는 화면은 Soul.EndingsOpen 차례 그대로, 컷은 엔딩마다 다 보여 준다(봉인은 회차마다 되풀이).
-//   진혈마 10% 컷 뒤 차례(진엔딩 컷 1 → 고르는 화면?)는 사람 결정 대기(backlog DL-11)라 여기서는 엔딩 컷을 통째로만 준다.
+//   진혈마 10% 컷 뒤 차례(DL-11, 2026-11-05 사람이 추천대로): TrueEndingInterrupt(진엔딩 컷 1) → 고르는 화면(EndingChoices) →
+//   의심이면 EndingCutsAfterTrueCut(컷 2부터), 봉인·계승이면 싸움으로 돌아가 마저 쓰러뜨린 뒤 EndingCuts(그 엔딩 통째). FinalFight.ChooseAtTrueCut.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,5 +72,11 @@ namespace BloodRain.Core.Meta
 
         /// <summary>엔딩 컷(현지화 키 dialogue.endings.list.&lt;엔딩&gt;.cuts.&lt;id&gt;.lines.&lt;n&gt;.text). 고른 뒤 Soul.ChooseEnding 전에 보여 준다.</summary>
         public static IReadOnlyList<LordCut> EndingCuts(GameData data, string ending) => Cuts(data.Dialogue.Ending(ending).Cuts);
+
+        /// <summary>진혈마 10% 에서 싸움을 멈추고 보여 주는 진엔딩 컷 1(목 노인 "오래 앓았구나."). 그 뒤 고르는 화면.</summary>
+        public static IReadOnlyList<LordCut> TrueEndingInterrupt(GameData data) => Cuts(data.Dialogue.Ending(Soul.EndingTrue).Cuts.Take(1));
+
+        /// <summary>목 노인 컷 뒤 의심을 골랐을 때 이어 보여 주는 진엔딩 컷(2부터). 컷 1은 이미 봤다.</summary>
+        public static IReadOnlyList<LordCut> EndingCutsAfterTrueCut(GameData data) => Cuts(data.Dialogue.Ending(Soul.EndingTrue).Cuts.Skip(1));
     }
 }

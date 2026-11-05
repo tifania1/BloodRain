@@ -60,9 +60,10 @@
 
 `Core/Meta/FinalDialogue.cs`. `EndingChoices(data, soul, mokTalkDone)` 는 `Soul.EndingsOpen` 차례 그대로 고르는 화면 칸을, `EndingCuts(data, ending)` 은 그 엔딩 컷 전부를 준다. 컷을 다 보여 준 뒤 `Soul.ChooseEnding`.
 
+진엔딩 조건을 채운 회차의 진혈마 10%(DL-11, 2026-11-05 사람이 추천대로): 싸움을 멈추고 진엔딩 컷 1(`TrueEndingInterrupt`)을 보여 준 뒤 고르는 화면을 연다. 봉인·계승을 고르면 싸움으로 돌아가 마저 쓰러뜨린 뒤 그 엔딩 컷, 의심을 고르면 컷 2부터(`EndingCutsAfterTrueCut`). 싸움 쪽은 `FinalFight.CheckTrueEnding`·`ChooseAtTrueCut`.
+
 ## 아직 정하지 않은 것
 
-- 진엔딩 조건을 채운 2회차에서 진혈마 10% 컷(6장) 뒤의 차례. 추천: 10%에서 진엔딩 컷 1을 보여 주고 고르는 화면을 연다. 봉인·계승을 고르면 싸움으로 돌아가 마저 쓰러뜨린 뒤 그 엔딩 컷, 의심을 고르면 컷 2부터 이어 간다. 기획서는 '10%에서 목 노인이 걸어 들어오며 컷신으로'와 '종장에서 셋 중 하나를 고른다'만 적었다(backlog DL-11, 사람 결정 대기).
 - 계승 뒤 어디로 돌아가는지(혈월 천하를 이어 하는지)는 4장에 없다(R4-04 와 같은 물음).
 - 크레딧 화면과 '혈마 모드가 열렸다' 알림 문구는 화면 글(strings)이지 대사가 아니라 여기 두지 않는다.
 - 컷 그림은 원화 목록(`docs/design/art_list.md`)에 아직 없다. 원화 줄기가 넣는다.
