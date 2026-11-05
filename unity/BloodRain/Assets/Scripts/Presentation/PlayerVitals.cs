@@ -21,6 +21,9 @@ namespace BloodRain.Presentation
         [System.NonSerialized] public System.Func<float, float> deflect;
         /// <summary>R-04Ua 회피 확률(StatSheet.Evade, 수로채 움직이는 동안 15%). 피격 직전에 Evade.Roll 로 굴리고, 피하면 피해·넉백 없이 맞은 뒤 무적만 준다.</summary>
         [System.NonSerialized] public float evadeChance;
+        /// <summary>C-07b 금종조. 피해 직전 참이면 막는다(InsightEffects.TryBlock).</summary>
+        [System.NonSerialized] public System.Func<bool> block;
+        public int Blocks { get; private set; }
         /// <summary>R-04Ua 기혈 회복 전부에 곱하는 수(SectTrait.HealingMultiplier, 마교 0.5). Heal 과 초당 회복이 곱한다.</summary>
         [System.NonSerialized] public float healingMultiplier = 1f;
         /// <summary>R-04Ua 초당 회복(StatSheet.Recovery). LifeRunner 가 넣는다.</summary>
@@ -68,6 +71,14 @@ namespace BloodRain.Presentation
             {
                 // 피함: 피해·넉백 없음. 같은 접촉에 매 프레임 다시 굴리지 않게 맞은 뒤 무적은 준다(짧은 잔상)
                 Evades++;
+                _iframe = hitIframes;
+                _evadeFlash = 0.3f;
+                return false;
+            }
+            if (block != null && block())
+            {
+                // C-07b 금종조: 이번 피해는 없던 일로(맞은 뒤 무적은 준다)
+                Blocks++;
                 _iframe = hitIframes;
                 _evadeFlash = 0.3f;
                 return false;

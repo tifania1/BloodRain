@@ -107,7 +107,10 @@ namespace BloodRain.Presentation.Hud
             if (level > _handledLevel) { _pending += level - _handledLevel; _handledLevel = level; }
             // 돌파 줌이 도는 동안은 열지 않는다(줌이 끝나면 카드). 줌이 끝나며 세상 시간을 1로 되돌려도 열린 동안은 멈춰 둔다.
             bool zooming = LifeRunner.Instance != null && LifeRunner.Instance.breakthrough != null && LifeRunner.Instance.breakthrough.IsPlaying;
-            if (!_open && _pending > 0 && !zooming) Open();
+            // C-07b 깨달음 화면이 먼저(열려 있거나 열릴 차례면 기다린다)
+            bool insight = LifeRunner.Instance != null && LifeRunner.Instance.InsightBusy;
+            // 연 프레임엔 키를 읽지 않는다(깨달음 카드를 고른 같은 숫자 키가 레벨업 카드까지 고르지 않게)
+            if (!_open && _pending > 0 && !zooming && !insight) { Open(); return; }
             if (!_open) return;
             if (Time.timeScale != 0f && !zooming) Time.timeScale = 0f;
 

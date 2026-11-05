@@ -178,15 +178,19 @@ namespace BloodRain.Presentation
             if (player != null) _lastStatPos = player.position;
             var st = _life.CurrentStats(extra, ratio, moving);
             Stats = st;
+            var ie = _life.InsightEffects;
 
             if (vitals != null)
             {
                 vitals.SetMaxHealth(st.MaxHealth);
                 vitals.armor = st.Armor;
-                vitals.takenMultiplier = _life.DamageTakenMultiplier; // C-07a 일류 돌파 뒤 받는 피해 -10% 등
+                // C-07a 일류 돌파 뒤 받는 피해 -10% 등, C-07b 혈광(기혈이 문턱 아래면 받는 피해 증가)
+                vitals.takenMultiplier = _life.DamageTakenMultiplier * ie.DamageTakenMultiplier(ratio);
                 // R-04Ua 문파 고유 능력: 회피(수로채 움직이는 동안), 회복 전부에 곱하는 수(마교 절반), 초당 회복
                 vitals.evadeChance = st.Evade;
-                vitals.healingMultiplier = _life.Body.SectTrait.HealingMultiplier;
+                // C-07b 흡혈대법이면 흡혈 말고 다른 회복 x0
+                vitals.healingMultiplier = _life.Body.SectTrait.HealingMultiplier * ie.OtherHealMultiplier;
+                vitals.block ??= ie.TryBlock; // 금종조(안 골랐으면 늘 false)
                 vitals.recoveryPerSecond = st.Recovery;
             }
             if (player != null && player.TryGetComponent<PlayerController>(out var pc))
@@ -198,7 +202,7 @@ namespace BloodRain.Presentation
             // C-07a 경지 보상 7칸째. 지금은 무공 칸으로(공격·심법을 고르는 건 돌파 화면 C-07b 이후)
             int extraSlots = _life.RealmRewards.ExtraSlots;
             while (_extraSlotsGiven < extraSlots) { _life.Loadout.AddExtraSlot(true); _extraSlotsGiven++; }
-            if (orbs != null) orbs.MagnetMeters = st.Magnet;
+            if (orbs != null) orbs.MagnetMeters = st.Magnet * ie.MagnetMultiplier; // C-07b 천리추종
             if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();
             if (weapons != null)
             {
@@ -207,6 +211,8 @@ namespace BloodRain.Presentation
                 weapons.areaMultiplier = st.Area;
                 weapons.extraAmount = st.Amount;
                 weapons.durationMultiplier = st.Duration;
+                weapons.insightDamage ??= ie.WeaponDamageMultiplier; // C-07b 일검파만
+                weapons.insightRange ??= ie.WeaponRangeMultiplier;   // C-07b 이기어검
             }
             ApplySynergyEffects(syn, ratio);
         }
@@ -312,6 +318,7 @@ namespace BloodRain.Presentation
             int alive = enemies != null ? enemies.Count : 0;
             var second = _life.Tick(dt, pos, alive);
             if (second != null) SpawnSecond(second);
+            TickInsights(dt);
             _statTimer -= Time.unscaledDeltaTime;
             if (_statTimer <= 0f) { _statTimer = 0.25f; ApplyStats(); }
             if (breakthrough == null || !breakthrough.IsPlaying) SyncScale();
@@ -397,6 +404,70 @@ namespace BloodRain.Presentation
             }
         }
 
+        // ---- C-07b 깨달음 ----
+        // 깨달음을 주는 경지(보상 insight_choice)를 돌파하면 후보 수를 줄에 넣고, 돌파 줌이 끝나면 InsightScreen 을 연다.
+        // 후보 수 = Insights.ChoiceCount(몸) + 올라 본 경지 덤(BreakthroughInfo.ExtraInsightChoices). 역근은 혼이 연 뒤에만(Soul.IsUnlocked).
+        // 마교 몸은 Insights.RollWithDemonic 로 DemonicInsightsPerBreakthrough 자리를 마공으로.
+        readonly Queue<int> _insightQueue = new Queue<int>();
+        InsightScreen _insightScreen;
+        Insights _insights;
+        readonly System.Random _insightRng = new System.Random();
+        bool _moving;
+        Vector3 _lastFramePos;
+
+        /// <summary>깨달음 화면이 열려 있거나 열릴 차례면 참. 레벨업 화면은 이 동안 기다린다.</summary>
+        public bool InsightBusy => _insightQueue.Count > 0 || (_insightScreen != null && _insightScreen.IsOpen);
+
+        void QueueInsights(IReadOnlyList<BreakthroughInfo> list)
+        {
+            _insights ??= Insights.From(_data);
+            foreach (var b in list)
+            {
+                var realm = _life.Scale.Realms.FirstOrDefault(x => x.Id == b.Realm);
+                if (realm == null || !_insights.OffersAt(realm)) continue;
+                _insightQueue.Enqueue(_insights.ChoiceCount(_life.Body.Character) + b.ExtraInsightChoices);
+            }
+        }
+
+        void TickInsights(float dt)
+        {
+            // 운기조식 회복·금종조 대기. 움직였나는 프레임마다
+            if (player != null) { _moving = (player.position - _lastFramePos).sqrMagnitude > 1e-6f; _lastFramePos = player.position; }
+            if (vitals != null && dt > 0f)
+            {
+                float heal = _life.InsightEffects.Tick(dt, _moving, vitals.MaxHealth);
+                if (heal > 0f) vitals.Heal(heal);
+            }
+            if (_insightQueue.Count == 0 || (breakthrough != null && breakthrough.IsPlaying)) return;
+            if (_insightScreen == null)
+            {
+                _insightScreen = FindFirstObjectByType<InsightScreen>();
+                if (_insightScreen == null)
+                {
+                    _insightScreen = new GameObject("깨달음 화면").AddComponent<InsightScreen>();
+                    var lu = FindFirstObjectByType<LevelUpScreen>();
+                    if (lu != null) _insightScreen.font = lu.font;
+                }
+            }
+            if (_insightScreen.IsOpen) return;
+            int count = _insightQueue.Dequeue();
+            var soul = RebirthHandoff.Soul;
+            System.Func<string, bool> unlocked = soul != null ? soul.IsUnlocked : (System.Func<string, bool>)null;
+            var taken = _life.InsightEffects.Taken.Select(i => i.Id);
+            var art = _life.Body.Sect?.BloodArt;
+            var cards = art != null
+                ? Insights.RollWithDemonic(_insights, _data.DemonicInsights, taken, count, art.DemonicInsightsPerBreakthrough, _insightRng, unlocked)
+                : _insights.Roll(taken, count, _insightRng, unlocked);
+            if (cards.Count == 0) return;
+            var demonic = new HashSet<string>(_data.DemonicInsights.Select(d => d.Id));
+            _insightScreen.Open(cards, d => demonic.Contains(d.Id), pick =>
+            {
+                _life.TakeInsight(pick, (int)System.Math.Min(_kills, int.MaxValue));
+                Debug.Log($"[LifeRunner] 깨달음 {pick.Id}({pick.Effect})");
+                ApplyStats();
+            });
+        }
+
         // ---- RM-05U 보부상 ----
         MerchantScreen _merchant;
 
@@ -440,6 +511,7 @@ namespace BloodRain.Presentation
             var r = _life.Absorb(xp, count);
             if (_edges != null) _edges.Woke(r.WokenBosses); // QA-05U 혈운 기둥
             if (r.Breakthroughs.Count == 0) return;
+            QueueInsights(r.Breakthroughs);
             ApplyStats(); // C-07a 돌파 보상(최대 기혈·경공 칸·받는 피해·7칸째)을 바로
             var ws = WorldScale.Current;
             if (breakthrough == null || ws == null || player == null) return;

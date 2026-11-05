@@ -229,7 +229,13 @@ namespace BloodRain.Presentation.Combat
             }
         }
 
-        float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * effects.WeaponDamageMultiplier(s.Def, healthRatio);
+        float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * effects.WeaponDamageMultiplier(s.Def, healthRatio)
+            * (insightDamage != null ? insightDamage(s.id) : 1f);
+        float RangeMul(Slot s) => insightRange != null ? insightRange(s.Def) : 1f;
+
+        // C-07b 깨달음(InsightEffects): 일검파만 무공 피해, 이기어검 근접 범위. LifeRunner 가 넣는다
+        [NonSerialized] public Func<string, float> insightDamage;
+        [NonSerialized] public Func<BloodRain.Core.Data.WeaponDef, float> insightRange;
         // 숫자는 모두 weapons.json(기획서 9장 'Lv8까지 성장'·'날아가는 것과 넉백'). 빠진 값의 기본은 옛 웹 값.
         static float Knock(Slot s) => s.Def.Knockback ?? 0f;
         static float Gap(Slot s, float fallback) => s.Def.GapSeconds ?? fallback;
@@ -291,7 +297,7 @@ namespace BloodRain.Presentation.Combat
                 }
                 case "orbit_slash":
                 {
-                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier); // Lv8 범위 +40%(areaLv8)
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s)); // Lv8 범위 +40%(areaLv8)
                     int sweeps = Has(s, "2회 회전") ? 2 : 1;
                     _fx.Add(new Fx
                     {
@@ -367,7 +373,7 @@ namespace BloodRain.Presentation.Combat
                     // 화상(burnPerSecond·burnSeconds)은 적 상태 칸이 붙을 때(C-04 남은 것)
                     int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
                     NearestN(ws.Length(s.Def.SeekRange ?? 7f), 20, _targets);
-                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier);
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s));
                     float fuse = s.Def.FuseSeconds ?? 0.6f, kb = ws.Speed(Knock(s));
                     for (int k = 0; k < n; k++)
                     {

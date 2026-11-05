@@ -213,7 +213,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 이류 돌파 뒤 경공 충전 칸이 하나 늘고, 일류 뒤 받는 피해가 10% 줄어듦(디버그 숫자)
   - 찍기: `docs/unity_shots/C-07/` 의 `realm_rewards.png`
 
-- [ ] C-07b 깨달음 3택1 화면 · 먼저: C-07a
+- [x] C-07b 깨달음 3택1 화면 · 먼저: C-07a — 2026-11-06 03:05 PC: `Presentation/Hud/InsightScreen.cs`(카드 = 큰 글자 Glyph·이름·한자·설명, 1~4 키, 마공은 붉은 테두리·'마공' 꼬리표, 문구 `ui.insight.*` 네 언어). LifeRunner 가 돌파 때 `Insights.OffersAt` 경지면 후보 수(ChoiceCount + ExtraInsightChoices)를 줄에 넣고 줌이 끝나면 엶, 마교 몸은 `RollWithDemonic`(DemonicInsightsPerBreakthrough), 역근은 `soul.IsUnlocked`. 고르면 `life.TakeInsight`. 효과: 운기조식 Tick → vitals.Heal, 금종조 `PlayerVitals.block`(TryBlock), 일검파만·이기어검 `WeaponRunner.insightDamage·insightRange`, 천리추종 흡기 곱, 흡혈대법 OtherHeal, 혈광 받는 피해. 레벨업 화면은 `LifeRunner.InsightBusy` 동안 기다리고, 연 프레임엔 키를 안 읽음. 깨달음 화면은 메뉴 없이 처음 쓸 때 만듦(레벨업 화면 글꼴). 진소운 몸 다음 경지 → 넉 장(진소운 특성), 일검파만을 고르니 삼재검법 피해 x1.4, 둘째 돌파 넉 장에서 천리추종 → 흡기 1.5 → 3m, 그 뒤 레벨업 카드. 마교 몸은 석 장 중 첫 자리가 심마환영(붉은 테두리). 콘솔 에러 0(스크린샷 도구가 EditorApplication.Step 할 때 Dash.Tick dt 음수 예외 둘 — 도구 쪽, 게임 코드 아님). 금종조·운기조식·혈광은 눈으로 따로 안 봄. 찍음 `docs/unity_shots/C-07/` 의 `insight_cards.png`·`insight_demonic.png`
   - 할 것: `Presentation/Hud/InsightScreen.cs` — 돌파 연출이 끝나는 자리(BreakthroughFx.Ended)에 시간을 멈추고 카드 석 장(한 번 깨친 경지면 넉 장), 고르면 `life.InsightEffects.Take(def, loadout.Gauge, 처치 수)`. 레벨업 카드보다 먼저 뜬다. 매 프레임 `InsightEffects.Tick(dt, 움직임, 최대 기혈)` 의 회복량을 기혈에, 피해 직전 `TryBlock()` 이 참이면 금종조로 막음, 무공 피해·범위·흡기 배율은 WeaponRunner·OrbLayer 에.
   - 쓸 것: Core `Build/Insights.cs`(`Roll`·`RollWithDemonic` — 마지막 인자에 `soul.IsUnlocked` 를 넘겨야 역근이 극성 땅의 주인 처치 뒤에만 나옴, QA-06 2026-11-05), `Soul.Breakthrough(realm)`(후보 수), `Build/InsightEffects.cs`, insights.json
   - 메뉴: `BloodRain/Bootstrap/Run 씬에 깨달음 화면 붙이기`
