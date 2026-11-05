@@ -34,6 +34,11 @@ namespace BloodRain.Editor
             if (hud == null) hud = new GameObject("음양 HUD").AddComponent<YinYangHud>();
             hud.font = EnsureBodyFont();
             EditorUtility.SetDirty(hud);
+            // C-09a 오의 버튼(오른쪽 아래)
+            var ult = Object.FindFirstObjectByType<UltimateButton>();
+            if (ult == null) ult = new GameObject("오의 버튼").AddComponent<UltimateButton>();
+            ult.font = hud.font;
+            EditorUtility.SetDirty(ult);
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(hud.gameObject.scene);
         }
 

@@ -77,7 +77,8 @@ namespace BloodRain.Presentation.Hud
             else _firstDone = true;
             // 연무장·몸의 성질 덧셈은 Life 가 붙을 때(C-10) LevelUpCharges.Start 로. 지금은 특성 몫만.
             _charges = life != null ? life.Charges : new LevelUpCharges(LevelUpCharges.TraitRerolls(_data.Balance.LevelUp, character), 0, 0);
-            _ultimate = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony);
+            // C-09a 정진은 한 생의 오의 게이지를 채운다
+            _ultimate = life != null ? life.Charge : new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony);
             foreach (var w in _data.Weapons) if (w.Unlock == "start") _unlocked.Add(w.Id);
             if (orbs == null) orbs = FindFirstObjectByType<OrbLayer>();
             if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();

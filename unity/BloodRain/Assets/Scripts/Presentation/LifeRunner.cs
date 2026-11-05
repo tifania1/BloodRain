@@ -132,6 +132,7 @@ namespace BloodRain.Presentation
             if (orbs != null) orbs.Absorbed += OnAbsorbed;
             if (vitals == null && player != null) vitals = player.GetComponent<PlayerVitals>();
             if (vitals != null) vitals.Died += OnDied;
+            if (vitals != null) vitals.Damaged += () => { if (_life != null && _life.Record == null) _life.Charge.OnHit(_life.Loadout.Gauge.Band); };
             if (enemies != null) enemies.Killed += OnKilled;
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
@@ -148,6 +149,14 @@ namespace BloodRain.Presentation
             _kills++;
             // R-08U 도전 과제 처치 수. 정예·땅의 주인도 여기서 한 번(KillElite·DefeatBoss 는 보상만 센다)
             if (_life != null && _life.Record == null) _life.Log.Kill();
+            // C-09a 오의 게이지: 처치마다(정예는 따로 더 크게), 음양 띠 배율은 Charge 가 본다
+            if (_life != null && _life.Record == null && enemies != null)
+            {
+                var band = _life.Loadout.Gauge.Band;
+                var kd = enemies.DefOf(a.Kind);
+                if (kd != null && kd.Family == "elite") _life.Charge.OnEliteKill(band);
+                else _life.Charge.OnKill(band);
+            }
             // RM-02b 정예를 잡으면 혈정(Life.KillElite 가 이번에 얻은 수를 준다. 혈월이면 1·2개 번갈아). 정산은 LifeRecord.BloodCrystal
             if (_life == null || _life.Record != null || enemies == null) return;
             var def = enemies.DefOf(a.Kind);

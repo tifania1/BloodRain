@@ -40,6 +40,8 @@ namespace BloodRain.Presentation
         /// <summary>R-04Ua 회복으로 실제 찬 기혈 합(디버그 줄).</summary>
         public float Healed { get; private set; }
         public event Action Died;
+        /// <summary>피해가 실제로 들어갔다(피함·금종조 제외). C-09a 오의 게이지가 받는다.</summary>
+        public event Action Damaged;
 
         float _iframe;
         float _minDamage = 1f;
@@ -90,6 +92,7 @@ namespace BloodRain.Presentation
             Hits++;
             _iframe = hitIframes;
             _flash = 0.25f;
+            Damaged?.Invoke();
             if (Health <= 0f)
             {
                 Health = 0f;

@@ -241,7 +241,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 극단에서 역류가 걸리고 경공으로 끊김, 세 번 연속 끊으면 역천 발견 연출
   - 찍기: `docs/unity_shots/C-08/` 의 `backlash.png`
 
-- [ ] C-09a 오의 버튼(진소운 일검) · 먼저: C-07a
+- [x] C-09a 오의 버튼(진소운 일검) · 먼저: C-07a — 2026-11-06 02:58 PC: `Presentation/Hud/UltimateButton.cs`(오른쪽 아래 둥근 버튼, 게이지만큼 아래에서 붉게 차오르고 가득 차면 금빛 테두리·'오의 Space', 문구 `ui.ultimate.ready` 네 언어). Space·버튼 → `life.UseUltimate()`, 매 프레임 `UltimatePulses × UltimateCasts` 번 화면을 덮는 원 안 적 전부에 `Ultimates.HitDamage(몸, loadout, 공력, UltimatePowerMultiplier)`. 시간이 멈춘 화면에선 안 눌림. 게이지 채우기도 처음 붙임: LifeRunner.OnKilled → `Charge.OnKill`·정예 `OnEliteKill`, PlayerVitals 새 `Damaged` 이벤트 → `OnHit`, LevelUpScreen 정진은 시험 게이지 대신 `life.Charge`. HudBootstrap `Run 씬에 HUD 붙이기` 가 오의 버튼도 놓음. 진소운 몸 14초 처치로 11.5 참, 가득 채워 쓰니 일검 한 방 360 으로 화면 안 13마리 맞고 쓰러짐, 게이지 0. 콘솔 에러 0. 절기·음양 배율(weaponMultiplier)은 아직 1. 일검 붓 획은 임시 먹빛 띠인데 0.6초라 스크린샷에 못 잡음. 찍음 `docs/unity_shots/C-09/` 의 `ultimate.png`(쓴 직후, 적이 쓸려 나간 자리)
   - 할 것: 오의 충전 HUD(`life.Charge`), 버튼(키보드 Space·휴대폰 오른쪽 아래)을 누르면 `life.UseUltimate()` 가 참일 때 `life.UltimateCasts` 번 쏜다. 한 방 피해 `Ultimates.HitDamage(data, 몸, loadout, 공력, life.UltimatePowerMultiplier, 절기·음양 배율)`. 그림은 진소운 일검 붓 획(삼재검법 3단 획을 크게) 임시.
   - 쓸 것: Core `UltimateCharge.cs`, `Combat/Ultimates.cs`, `Life.UseUltimate`·`UltimateCasts`
   - 메뉴: C-08a 의 `Run 씬에 HUD 붙이기` 가 오의 버튼도 놓게
