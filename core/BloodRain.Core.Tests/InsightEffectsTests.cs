@@ -234,6 +234,20 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 심마는_고른_때부터_센다()
+        {
+            var life = NewLife("demonic");
+            for (int i = 0; i < 20; i++) life.Absorb(200);
+            int before = life.BloodArt!.Steps;
+            Assert.True(before > 0);
+            life.TakeInsight(Demonic("simma"));
+            Assert.Equal(0f, life.InsightBonus(0)[StatKind.Might]);   // 고르기 전에 기운 횟수는 안 센다
+            for (int i = 0; i < 20 && life.BloodArt.Steps == before; i++) life.Absorb(200);
+            Assert.True(life.BloodArt.Steps > before);
+            Assert.True(life.InsightBonus(0)[StatKind.Might] > 0f);
+        }
+
+        [Fact]
         public void 마교_몸_심마_공력은_천마해체로_사라진다()
         {
             var life = NewLife("demonic");

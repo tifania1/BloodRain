@@ -11,7 +11,7 @@
 //   혈해공    might_for_health     공력 + mightBonus, 최대 기혈 - maxHealthPenalty (비율 덧셈)
 //   흡혈대법  lifesteal_no_heal    흡혈 + lifesteal, 흡혈 말고 다른 회복 × 0 (운기조식 포함)
 //   혈광      low_health_frenzy    기혈 비율 < healthThreshold 이면 쾌속 + cooldownReduction, 받는 피해 × (1 + damageTaken)
-//   심마      inner_demon_might    심마로 기운 횟수(마지막 천마해체 뒤)마다 공력 + mightPerStep (최대 mightMax)
+//   심마      inner_demon_might    고른 뒤(또는 마지막 천마해체 뒤) 심마로 기운 횟수마다 공력 + mightPerStep (최대 mightMax). 살기충천처럼 고른 때부터 센다(QA-06 나)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +43,8 @@ namespace BloodRain.Core.Build
 
         /// <summary>깨달음 하나를 얻는다. 역근처럼 고른 순간 걸리는 효과는 여기서 건다.</summary>
         /// <param name="killsNow">고른 때의 처치 수. 살기충천은 이 뒤 처치만 센다.</param>
-        public void Take(InsightDef insight, YinYangGauge gauge, int killsNow = 0)
+        /// <param name="simmaStepsNow">고른 때의 BloodArt.Steps. 심마는 이 뒤 기운 횟수만 센다(2026-11-05 사람, backlog QA-06).</param>
+        public void Take(InsightDef insight, YinYangGauge gauge, int killsNow = 0, int simmaStepsNow = 0)
         {
             if (_taken.Any(i => i.Id == insight.Id))
                 throw new InvalidOperationException($"이미 얻은 깨달음입니다: {insight.Id}");
@@ -54,6 +55,7 @@ namespace BloodRain.Core.Build
                 gauge.SetTiltMultiplier(insight.Param("tiltMultiplier"));
             }
             if (insight.Effect == "kill_stack_might") _killsAtSalgi = killsNow;
+            if (insight.Effect == "inner_demon_might") _simmaBaseline = simmaStepsNow;
         }
 
         /// <summary>그 무공 피해에 곱하는 값(일검파만).</summary>

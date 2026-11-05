@@ -126,8 +126,12 @@ namespace BloodRain.Core.Run
         public BloodArt? BloodArt { get; }
         /// <summary>천마해체 8초(마교 몸만, 다른 몸은 null). UseUltimate 가 시작하고 Tick 이 줄인다(UltimateEffects).</summary>
         public DemonDissolution? Dissolution { get; }
-        /// <summary>고른 깨달음이 붙이는 값. 고르면 InsightEffects.Take(def, Loadout.Gauge).</summary>
+        /// <summary>고른 깨달음이 붙이는 값. 고르면 TakeInsight(def, 지금 처치 수).</summary>
         public InsightEffects InsightEffects { get; }
+
+        /// <summary>깨달음 하나를 얻는다. 살기충천·심마가 고른 때부터 세도록 지금 처치 수와 심마 횟수를 함께 넘긴다.</summary>
+        public void TakeInsight(InsightDef insight, int killsNow = 0) =>
+            InsightEffects.Take(insight, Loadout.Gauge, killsNow, BloodArt?.Steps ?? 0);
 
         /// <summary>깨달음 능력치 덧셈. 심마 횟수는 혈공에서 가져온다. CurrentStats(extra) 에 넣는다.</summary>
         public StatBonus InsightBonus(int kills, float healthRatio = 1f) =>
