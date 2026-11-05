@@ -439,6 +439,7 @@ function watchCues() {
 const ULT_MULT =((DATA.ultimates || []).find(u => u.id === 'il_geom') || { mightMultiplier: 30 }).mightMultiplier;
 const GLYPH = {
   samjae_sword: '劍', nahan_fist: '拳', flying_dagger: '刀', changcheon_qi: '氣', palm_wind: '掌', flash_finger: '指', thunder_bomb: '雷', poison_mist: '毒',
+  drunken_staff: '醉', taiji_sword: '太', chain_sickle: '鎖', blood_claw: '爪', sonic_qin: '音', pear_spear: '槍', falling_petals: '花',
   cheongmyeong: '淸', geumgang: '剛', cheonsu: '手', noejeong: '霆', pasan: '破', cheollian: '眼', hwaryong: '火', mandok: '蠱',
   yangui: '儀', juseon: '酒', suryong: '水', hyeolhae: '血', cheongsim: '心', unryong: '雲', domun: '道', maehwa: '梅',
 };
@@ -1999,7 +2000,9 @@ function offerCard(o, idx) {
 const BEHAVIOR_TEXT = {
   front_arc: '바라보는 방향으로 반원을 벤다', melee_combo: '주변을 빠르게 연타하고 밀쳐낸다', homing_dagger: '가까운 적에게 비도를 던진다',
   orbit_slash: '몸 주위를 한 바퀴 휘감는 검기', slow_projectile: '느리지만 모두 꿰뚫는 장풍', random_rapid: '주변 적에게 지풍을 연사한다',
-  random_bomb: '적 사이에 벽력탄이 터지고 불이 붙는다', aura: '발밑에 독안개를 두르고 다닌다',
+  random_bomb: '적 사이에 벽력탄이 터지고 불이 붙는다', aura: '발밑에 독안개를 두르고 다닌다', random_arc: '아무 쪽으로나 크게 휘둘러 멀리 날린다',
+  orbiting_blades: '검이 몸 둘레를 돌며 벤다', pull_chain: '가장 먼 적을 사슬낫으로 끌어오고 느리게 한다', forward_claws: '가는 쪽으로 여러 갈래 할퀴고 피를 빨아들인다',
+  ring_wave: '몸에서 음파가 퍼지고 가끔 기절시킨다', pierce_thrust: '앞으로 길게 꿰뚫어 찌른다', petal_scatter: '꽃잎 검기를 흩뿌린다',
 };
 function applyOffer(o) {
   if (o.kind === 'nw') { G.weapons.push({ id: o.id, lv: 1, cd: 0.2, evolved: false, dealt: 0, n: 0 }); yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); }
