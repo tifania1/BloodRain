@@ -401,6 +401,11 @@ const OP = B.orbPickup, LIM = B.limits; // 구슬 끌기·흡수·합치기, 화
 const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver' };
 // 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
 const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100, moveSpeed: 1 };
+// 한 생 시험(WP-14a): 주소 끝 ?life=<문파 id> 면 서장 밖 판을 그 문파 제자의 몸으로 연다(cheonha.json sects: 기혈·걸음·시작 무공·traitEffect.stats).
+// 태어난 자리는 그 문파 땅, 혈우 장막도 그 자리를 가운데로. 1장 시간표(정예·원각)는 아직 그대로라 숭산 밖에서도 원각이 온다(WP-14 다음 조각).
+const LIFE_SECT = (DATA.sects || []).find(s => s.id === new URLSearchParams(location.search).get('life')) || null;
+const LIFE_BEH = new Set(['aura', 'forward_claws', 'front_arc', 'homing_dagger', 'melee_combo', 'orbit_slash', 'orbiting_blades', 'petal_scatter', 'pierce_thrust', 'pull_chain', 'random_arc', 'random_bomb', 'random_rapid', 'ring_wave', 'slow_projectile']);
+const bodyOf = () => (G && G.body) || JIN;
 const JIN_REROLLS = B.levelUp.traitRerolls?.[JIN.trait] ?? 0;
 const MOVE = B.stats.moveBase; // 신법 100% 걸음 m/s, 적 속도 100 = 이 값
 // 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟 + 취선봉 random_arc, T-36).
@@ -941,6 +946,14 @@ function newRun(mode) {
     cues: { fired: new Set(), realms: new Set([REALMS[0].id]), q: [], clock: 0 },
   };
   grid = new Map();
+  G.home = { x: 0, y: 0 };   // 태어난 자리(절대 m, 숭산 마당 = 0,0). 혈우 장막의 가운데
+  if (LIFE_SECT && mode !== 'prologue' && SCALE_MODE) {
+    const reg = CH_REGS.find(r => r.id === LIFE_SECT.region), wd = W_BY_ID[LIFE_SECT.startWeapon];
+    G.body = LIFE_SECT;
+    if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
+    if (LIFE_SECT.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
+    if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
+  }
   recomputeStats();
   G.player.hp = G.player.maxHp;
 }
@@ -970,6 +983,8 @@ function recomputeStats() {
       const key = map[e.stat]; if (key) s[key] += e.perLevel * p.lv;
     }
   }
+  // 문파 몸의 타고난 능력치(WP-14a, traitEffect.stats)
+  for (const [k, v] of Object.entries((G.body && G.body.stats) || {})) { const key = map[k]; if (key) s[key] += v; }
   // 진전 능력치
   for (const [k, v] of Object.entries(synStats())) { const key = map[k]; if (key) s[key] += v; }
   const rr = realmRewardSum(G.realm.level);
@@ -979,8 +994,8 @@ function recomputeStats() {
   s.might += G.salgiBonus;
   const insightMagnet = G.insights.includes('cheolli') ? IP.cheolli.multiplier : 1;
   G.stats = {
-    maxHp: Math.round(JIN.maxHealth * (1 + s.maxHealth) + rr.maxHealthFlat),   // Core 와 같이 비율을 곱한 뒤 이류 +10
-    recovery: s.recovery, armor: s.armor, move: MOVE * JIN.moveSpeed * (1 + s.moveSpeed), might: 1 + s.might, cdr: s.cdr,
+    maxHp: Math.round(bodyOf().maxHealth * (1 + s.maxHealth) + rr.maxHealthFlat),   // Core 와 같이 비율을 곱한 뒤 이류 +10
+    recovery: s.recovery, armor: s.armor, move: MOVE * bodyOf().moveSpeed * (1 + s.moveSpeed), might: 1 + s.might, cdr: s.cdr,
     area: 1 + s.area, amount: s.amount, duration: 1 + s.duration, projSpeed: 1 + s.projSpeed,
     magnet: B.stats.magnetBase * (1 + s.magnet) * insightMagnet, growth: 1 + s.growth, luck: s.luck, crit: s.crit,
     knockback: 1 + s.knockback, burn: 1 + s.burn, dot: 1 + s.dot, elite: 1 + s.elite, lifesteal: s.lifesteal,
@@ -1602,7 +1617,7 @@ function update(dt) {
   if (p.dashT > 0) { p.x += p.dashVx * dt; p.y += p.dashVy * dt; p.dashT -= dt; }
   else { p.x += mx * speed * dt; p.y += my * speed * dt; }
   // 혈우 장막(WP-12, 7장): 축척 시험에서만. 태어난 곳(0,0) 둘레, 반경 = 그 경지 첫 화면 대각선 × boundaryViewMultiple, 현경부터 없음
-  const cr = curtainR(dt); if (cr !== Infinity) { const d = Math.hypot(p.x, p.y) * worldU(), lim = cr - 0.5 * worldU(); if (d > lim) { p.x *= lim / d; p.y *= lim / d; } }   // 장막은 절대 m, 내 자리는 싸움 좌표(WP-15)
+  const cr = curtainR(dt); if (cr !== Infinity) { const U = worldU(), hx = G.home.x / U, hy = G.home.y / U, d = Math.hypot(p.x - hx, p.y - hy) * U, lim = cr - 0.5 * U; if (d > lim) { p.x = hx + (p.x - hx) * lim / d; p.y = hy + (p.y - hy) * lim / d; } }   // 장막은 절대 m, 내 자리는 싸움 좌표(WP-15)
   p.iframe = Math.max(0, p.iframe - dt); p.block = Math.max(0, p.block - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt);
   if (p.dashCharges < p.dashMax) { p.dashRecharge += dt; if (p.dashRecharge >= B.dash.rechargeSeconds) { p.dashRecharge = 0; p.dashCharges++; } }
   // 회복
@@ -2530,7 +2545,7 @@ function curtainR(dt) {
 }
 function drawCurtain(now) {
   if (G.curtain == null) return;
-  const hx = wx(0), hy = wy(0), R = G.curtain * PPM / worldU();
+  const hx = wx(G.home.x / worldU()), hy = wy(G.home.y / worldU()), R = G.curtain * PPM / worldU();
   ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(hx, hy, R, 0, TAU, true);
   ctx.fillStyle = 'rgba(110,22,20,0.22)'; ctx.fill('evenodd'); ctx.restore();
   ctx.strokeStyle = 'rgba(179,38,30,0.75)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.arc(hx, hy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
@@ -3282,6 +3297,7 @@ function startRun(mode) {
   renderSlots(); lastTs = performance.now();
   cancelAnimationFrame(rafId); rafId = requestAnimationFrame(frame);
   if (isPro()) { toast('서장 · 백중의 비', '청운진 객잔 마당. 움직이면 무공은 알아서 나간다'); cue('start', 'start_reply'); }
+  else if (G.body) { const r = CH_REGS.find(x => x.id === G.body.region); toast(`${G.body.nameKo} 제자`, `${r ? r.nameKo : ''}에서 눈을 떴다 · 시작 무공 ${W_BY_ID[G.weapons[0].id].nameKo}`); }
   else toast('숭산 소림', '천년고찰에 목탁 소리가 끊겼다');
 }
 // 한 걸음: 각성 중이면 연출 시계를 먼저 돌리고, 세상은 그 배율로 느리게 간다
