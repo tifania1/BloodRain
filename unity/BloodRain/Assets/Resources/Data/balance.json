@@ -100,7 +100,7 @@
     "bunHeal": 20,
     "duckHeal": 50,
     "silverBag": [10, 50],
-    "enemySilverChance": 0.012,
+    "enemySilverChance": 0.0008,
     "eliteBloodCrystal": 1,
     "jeongsinFreezeSeconds": 5,
     "lantern": [

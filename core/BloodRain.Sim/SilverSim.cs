@@ -80,14 +80,14 @@ namespace BloodRain.Sim
             L("## 요약");
             L();
             L($"- 지금 데이터로 20분 은자는 약 **{N(b.Total(20))}냥**, 목표의 {N(b.Total(20) / TargetHigh(gdd), "0.0")}배(위쪽 끝 기준). " +
-              $"거의 다 잡몹 주머니({N(b.Enemy[20] / b.Total(20) * 100, "0")}%)다: 처치 {N(b.Kills[20])} × {N(drops.EnemySilverChance * 100, "0.0")}% × 주머니 {N((drops.SilverBag[0] + drops.SilverBag[1]) / 2.0)}냥.");
+              $"잡몹 주머니 몫이 {N(b.Enemy[20] / b.Total(20) * 100, "0")}%다: 처치 {N(b.Kills[20])} × {N(drops.EnemySilverChance * 100, "0.00")}% × 주머니 {N((drops.SilverBag[0] + drops.SilverBag[1]) / 2.0)}냥.");
             L($"- 처치 진기 줄이기(P-02 안)로도 20분 처치가 {N(k.Kills[20])}마리로 {N(k.Total(20))}냥. 은자는 처치 진기와 따로 맞춰야 한다.");
             L($"- 등롱({N(b.Lantern[20])}냥)과 금두꺼비({N(b.Toad[20])}냥)만 치면 {N(b.Lantern[20] + b.Toad[20])}냥으로 목표 아래쪽 끝의 {N((b.Lantern[20] + b.Toad[20]) / TargetLow(gdd) * 100, "0")}%다. " +
-              "'잡몹이 1.2% 확률로 은자 주머니'(8장 드롭 표)는 웹 프로토타입에서 돌던 값이고, 화면 적이 수백인 무리 모형에선 처치가 2만을 넘어 주머니가 너무 많이 나온다.");
+              "웹 프로토타입에서 돌던 '잡몹 1.2%'는 화면 적이 수백인 무리 모형에서 처치가 2만을 넘어 목표의 8배가 나왔고, 2026-11-05 사람이 RM-06a (가)로 0.08% 로 낮췄다.");
             double mid = (TargetLow(gdd) + TargetHigh(gdd)) / 2;
             double bagMid = (drops.SilverBag[0] + drops.SilverBag[1]) / 2.0;
             double chance = (mid - b.Lantern[20] - b.Toad[20]) / (b.Kills[20] * bagMid);
-            L($"- 목표 가운데({N(mid)}냥)에 맞추려면 잡몹 주머니 확률이 약 {N(chance * 100, "0.000")}%(지금의 {N(chance / drops.EnemySilverChance * 100, "0")}%)여야 한다. 맞추는 안은 backlog RM-06a(사람 결정 대기).");
+            L($"- 목표 가운데({N(mid)}냥)에 맞추려면 잡몹 주머니 확률이 약 {N(chance * 100, "0.000")}%(지금의 {N(chance / drops.EnemySilverChance * 100, "0")}%)여야 한다. 확률을 바꾸면 이 보고서를 다시 만든다(RM-06a).");
             L();
             L("## 분마다(가운데값, 냥)");
             L();
@@ -105,7 +105,7 @@ namespace BloodRain.Sim
             L();
             L("| 항목 | 값 | 출처 |");
             L("|---|---|---|");
-            L($"| 잡몹 주머니 확률 | {N(drops.EnemySilverChance * 100, "0.0")}% | balance.json `drops.enemySilverChance` |");
+            L($"| 잡몹 주머니 확률 | {N(drops.EnemySilverChance * 100, "0.00")}% | balance.json `drops.enemySilverChance` |");
             L($"| 주머니 은자 | {drops.SilverBag[0]}~{drops.SilverBag[1]}(가운데 {N((drops.SilverBag[0] + drops.SilverBag[1]) / 2.0)}) | balance.json `drops.silverBag` |");
             L($"| 등롱 | {N(LanternEverySeconds)}초마다 하나, 다 부숨. 은자 주머니 {N(drops.Lantern.Where(l => l.Kind == Core.Build.Drops.SilverBag).Sum(l => l.Weight) / drops.Lantern.Sum(l => l.Weight) * 100, "0")}% | 웹 프로토타입 `template.html` 등롱 생성, balance.json `drops.lantern` |");
             L("| 금두꺼비 | 10~12분 창에 한 번, 잡는다고 봄 | chapters.json life `toad`, enemies.json `golden_toad.reward.silver` |");
