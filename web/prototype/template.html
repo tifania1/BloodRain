@@ -398,8 +398,13 @@ const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100
 const JIN_REROLLS = B.levelUp.traitRerolls?.[JIN.trait] ?? 0;
 const MOVE = B.stats.moveBase; // 신법 100% 걸음 m/s, 적 속도 100 = 이 값
 // 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟 + 취선봉 random_arc, T-36).
-const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura', 'random_arc']);
-const START_WEAPONS = DATA.weapons.filter(w => w.unlock === 'start' && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
+const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura', 'random_arc',
+  'orbiting_blades', 'pull_chain', 'forward_claws', 'ring_wave', 'pierce_thrust', 'petal_scatter']);
+// ?trial=1: 해금 조건이 있는 무공(태극검·쇄겸술·혈조·음공·이화창·낙화검우)도 처음부터 레벨업에 나온다(R-17, 사람이 손맛을 보려고). 절기 모양은 아직 없다.
+const TRIAL_WEAPONS = (() => { try { return /[?&]trial=1\b/.test(location.search); } catch (e) { return false; } })();
+const START_WEAPONS = DATA.weapons.filter(w => (w.unlock === 'start' || TRIAL_WEAPONS) && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
+// R-17 여섯 무공의 프로토타입 값(데이터에 없는 것만, 해 보고 고친다)
+const TRIAL_W = { bladeTurnPerSecond: 1.2, bladeRadius: 0.35, bladeRehitSeconds: 0.5, pullTo: 1.5, clawSpreadRad: 0.35, clawWidth: 0.35, sonicStunSeconds: 0.6, sonicSecondRingDelay: 0.3, spearWidth: 0.6, petalSpreadRad: 1.2 };
 // 프로토타입에서만 쓰는 값. 해 보고 괜찮으면 balance.json·기획서로 옮긴다.
 const HIT_IFRAMES = 0.5, HOP_DUTY = 0.72, BOSS_HP = { full: 20000, quick: 12000 }, BOSS_TRASH = 60;
 // 옛 1장 흐름(20분 원각) 그대로 19분에 생성을 멈춘다. 천하 한 생에는 생성 중지가 없어 balance.json 에서 빠졌다.
@@ -1325,6 +1330,93 @@ function fireWeapon(w) {
           hitLanterns(p.x, p.y, R);
         }
       } });
+      break;
+    }
+    case 'orbiting_blades': {
+      // 태극검(9장): 검 N자루가 지속 시간 동안 몸 둘레를 돈다. 같은 적은 bladeRehitSeconds 마다 한 번.
+      const n = Math.round(grow(def.projectiles, t)) + S.amount, life = grow(def.duration, t) * S.duration, R = def.range * S.area, a0 = rand(0, TAU), step = 0.1;
+      const last = new Map();
+      for (let k = 0; k * step < life; k++) G.zones.push({ delay: k * step, apply: () => {
+        const now = k * step;
+        for (let i = 0; i < n; i++) {
+          const a = a0 + now * TAU * TRIAL_W.bladeTurnPerSecond + i * TAU / n, bx = p.x + Math.cos(a) * R, by = p.y + Math.sin(a) * R;
+          addEffect('fist', bx, by, { r: TRIAL_W.bladeRadius, life: step * 1.2 });
+          forNear(bx, by, TRIAL_W.bladeRadius + 1, e => {
+            if (Math.hypot(e.x - bx, e.y - by) > TRIAL_W.bladeRadius + e.r || (last.get(e) ?? -9) + TRIAL_W.bladeRehitSeconds > now) return;
+            last.set(e, now); const d = Math.hypot(e.x - p.x, e.y - p.y) || 1; hurtEnemy(e, dmg, w, (e.x - p.x) / d, (e.y - p.y) / d, def.knockback);
+          });
+        }
+      } });
+      break;
+    }
+    case 'pull_chain': {
+      // 쇄겸술(9장): 사거리 안 가장 먼 적 N에게 사슬낫. 맞으면 몸 앞 pullTo 까지 끌려오고 둔화. 밀지 않는다(넉백 0).
+      const n = Math.round(grow(def.projectiles, t)) + S.amount, R = def.range * S.area, slow = grow(def.slow, t, 0);
+      const far = G.enemies.filter(e => !e.dead && Math.hypot(e.x - p.x, e.y - p.y) <= R).sort((a, b) => Math.hypot(b.x - p.x, b.y - p.y) - Math.hypot(a.x - p.x, a.y - p.y)).slice(0, n);
+      for (const e of far) {
+        addEffect('bolt', p.x, p.y, { x2: e.x, y2: e.y, life: 0.2 });
+        hurtEnemy(e, dmg, w, 0, 0, 0);
+        if (!e.boss && !e.elite && !e.dead) { const d = Math.hypot(e.x - p.x, e.y - p.y) || 1, k = Math.min(1, TRIAL_W.pullTo / d); e.x = p.x + (e.x - p.x) * k; e.y = p.y + (e.y - p.y) * k; }
+        e.slow = Math.max(e.slow || 0, slow);
+      }
+      break;
+    }
+    case 'forward_claws': {
+      // 혈조(9장): 이동(바라보는) 방향으로 N갈래 할퀴기, 준 피해의 lifesteal 만큼 기혈 회복.
+      const n = Math.round(grow(def.projectiles, t)), R = def.range * S.area * igi, ls = grow(def.lifesteal, t, 0), base = Math.atan2(fy, fx);
+      const hitSet = new Set();
+      for (let i = 0; i < n; i++) {
+        const a = base + (i - (n - 1) / 2) * TRIAL_W.clawSpreadRad, ca = Math.cos(a), sa = Math.sin(a);
+        addEffect('bolt', p.x + ca * 0.3, p.y + sa * 0.3, { x2: p.x + ca * R, y2: p.y + sa * R, life: 0.14 });
+        forNear(p.x, p.y, R + 1, e => {
+          if (hitSet.has(e)) return;
+          const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
+          if (along > 0 && along < R + e.r && perp < TRIAL_W.clawWidth + e.r) { hitSet.add(e); hurtEnemy(e, dmg, w, ca, sa, def.knockback); p.hp = Math.min(p.maxHp, p.hp + dmg * ls); }
+        });
+      }
+      hitLanterns(p.x + fx * R * 0.5, p.y + fy * R * 0.5, R * 0.5);
+      break;
+    }
+    case 'ring_wave': {
+      // 음공(9장): 몸에서 반경 R 음파, stunChance 로 기절. Lv6 '음파 2겹'은 sonicSecondRingDelay 뒤 한 번 더.
+      const R = def.range * S.area, chance = grow(def.stunChance, t, 0), rings = atMs(w, '음파 2겹') ? 2 : 1;
+      for (let k = 0; k < rings; k++) G.zones.push({ delay: k * TRIAL_W.sonicSecondRingDelay, apply: () => {
+        addEffect('boom', p.x, p.y, { r: R, life: 0.35 });
+        forNear(p.x, p.y, R, e => {
+          const d = Math.hypot(e.x - p.x, e.y - p.y) || 1; if (d > R + e.r) return;
+          hurtEnemy(e, dmg, w, (e.x - p.x) / d, (e.y - p.y) / d, def.knockback);
+          if (!e.boss && Math.random() < chance) e.stun = Math.max(e.stun || 0, TRIAL_W.sonicStunSeconds);
+        });
+        hitLanterns(p.x, p.y, R);
+      } });
+      break;
+    }
+    case 'pierce_thrust': {
+      // 이화창(9장): 앞 R 관통 찌르기 1→3회(가까운 적 쪽, 없으면 바라보는 쪽). Lv7 '회전 찌르기'는 네 방향.
+      const R = def.range * S.area * igi, hits = Math.round(grow(def.hits, t));
+      const near = nearestEnemies(p.x, p.y, 1, R * 1.25)[0], base = near ? Math.atan2(near.y - p.y, near.x - p.x) : Math.atan2(fy, fx);
+      const dirs = atMs(w, '회전 찌르기') ? [0, 1, 2, 3].map(i => base + i * Math.PI / 2) : [base];
+      for (let s = 0; s < hits; s++) G.zones.push({ delay: s * 0.15, apply: () => {
+        for (const a of dirs) {
+          const ca = Math.cos(a), sa = Math.sin(a);
+          addEffect('bolt', p.x, p.y, { x2: p.x + ca * R, y2: p.y + sa * R, life: 0.12 });
+          forNear(p.x + ca * R / 2, p.y + sa * R / 2, R / 2 + 1, e => {
+            const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
+            if (along > -0.2 && along < R + e.r && perp < TRIAL_W.spearWidth / 2 + e.r) hurtEnemy(e, dmg, w, ca, sa, def.knockback);
+          });
+          hitLanterns(p.x + ca * R / 2, p.y + sa * R / 2, R / 2);
+        }
+      } });
+      break;
+    }
+    case 'petal_scatter': {
+      // 낙화검우(9장): 꽃잎 검기 N발을 흩뿌림(가까운 적 쪽 부채꼴 안에서 무작위). 탄은 섬광지 탄(weapons.json shot), Lv6 관통 +1.
+      const n = Math.round(grow(def.projectiles, t)) + S.amount, sh = def.shot, sp = sh.speed * S.projSpeed, pierce = atMs(w, '관통 +1') ? 1 : 0;
+      const near = nearestEnemies(p.x, p.y, 1, def.range)[0], base = near ? Math.atan2(near.y - p.y, near.x - p.x) : Math.atan2(fy, fx);
+      for (let i = 0; i < n; i++) {
+        const a = base + rand(-TRIAL_W.petalSpreadRad / 2, TRIAL_W.petalSpreadRad / 2);
+        addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce, life: sh.lifeSeconds, kind: 'finger', w, kb: def.knockback });
+      }
       break;
     }
     case 'aura': {

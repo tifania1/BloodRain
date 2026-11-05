@@ -142,11 +142,10 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             var inProto = _d.Weapons.Where(w => html.Contains($"case '{w.Behavior}':")).ToList();
-            var missing = _d.Weapons.Count - inProto.Count;
-            var words = new[] { "", "하나", "둘", "셋", "넷", "다섯", "여섯", "일곱", "여덟", "아홉", "열" };
-            Assert.InRange(missing, 2, words.Length);
-            // 뇌부를 뺀 나머지가 '프로토타입에 없던 무공 n' (R-17 시작값)
-            Assert.Contains($"프로토타입에 없던 무공 {words[missing - 1]}(", TestData.GddSection("날아가는 것과 넉백"));
+            // 2026-11-05 R-17 여섯 무공이 프로토타입에 들어가(?trial=1) 빠진 것은 뇌부 하나다
+            Assert.Equal(new[] { "thunder_talisman" }, _d.Weapons.Except(inProto).Select(w => w.Id).ToArray());
+            Assert.Contains("프로토타입에 없던 무공 여섯(", TestData.GddSection("날아가는 것과 넉백"));
+            Assert.Contains("?trial=1", TestData.GddSection("날아가는 것과 넉백"));
             // 표에는 모든 무공이 있다(프로토타입 무공 + 뇌부 + R-17 시작값 여섯)
             var rows = TestData.GddTable(TestData.GddSection("날아가는 것과 넉백")).Select(r => r[0]).ToHashSet();
             var expected = _d.Weapons.Select(w => w.NameKo).ToHashSet();

@@ -16,7 +16,7 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             var names = Regex.Matches(html, @"atMs\(w, '([^']+)'\)").Select(m => m.Groups[1].Value).Distinct().ToList();
-            Assert.Equal(5, names.Count);
+            Assert.Equal(8, names.Count); // 음파 2겹·회전 찌르기·관통 +1 은 R-17(2026-11-05)
             var all = _d.Weapons.SelectMany(w => w.Milestones?.Values ?? Enumerable.Empty<string>()).ToList();
             foreach (var n in names) Assert.Contains(n, all);
             Assert.DoesNotMatch(@"w\.lv >= \d", html);
