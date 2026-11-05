@@ -80,6 +80,20 @@ M2 26개 × 후보 12개 × 평균 1.5초 × 40크레딧 ≈ 18,700크레딧, �
 5. 시험 순서: 대표 5개(검, 권격, 벼락, 독안개, 혈인 비명)를 두 AI 로 같은 문구로 뽑아 이름을 가리고 들어 보는 하룻밤 비교부터 할지.
 6. 붓·도장·종이 소리를 직접 녹음할 의향이 있는지.
 
+## 5. PC 에 깐 것 (2026-11-05 밤, SFX-07)
+
+| 무엇 | 어디 |
+|---|---|
+| ComfyUI 0.44.0 (git clone) | `E:\Unity\BloodRain-sfx\ComfyUI` |
+| 파이썬 3.12 venv(uv), torch 2.11.0+cu128, CUDA 됨(RTX 3080 Ti 12GB) | `E:\Unity\BloodRain-sfx\venv` |
+| Stable Audio 3 Small SFX 2.1GB | `ComfyUI\models\checkpoints\stable_audio_3_small_sfx.safetensors` |
+| 글 인코더 T5Gemma 1.1GB | `ComfyUI\models\text_encoders\t5gemma_b_b_ul2.safetensors` |
+
+- 모델 파일은 Comfy-Org/stable-audio-3(잠금 없음)에서 받았다. 공식 저장소 stabilityai/stable-audio-3-small-sfx 약관은 사람이 같은 날 동의했다.
+- 저장소 밖 폴더라 커밋되지 않는다. ComfyUI 는 쓸 때만 띄우고 끝나면 끈다(회사 PC GPU).
+- 부르는 도구는 `tools/sfx_sa3.py`(그래프·설정·주의점은 파일 머리에). 시험: 대표 다섯(검 휘두름·권격·벼락·독안개·혈인 비명)을 4개씩, 묶음마다 2~6초. 결과는 PC `E:\Unity\BloodRain\art_inbox\sfx\sa3_try\`(커밋 안 됨).
+- 시험에서 본 것: 원하는 길이의 두 배로 나온다(빈 잠재 노드가 SA1 비율로 셈) → 도구가 절반을 넣는다. 벼락은 최고점이 0dB 에 닿고 독안개는 -18dB 안팎으로 작다 → SFX-03 다듬기 도구가 갈래별로 맞춘다. 비명·독안개는 앞에 0.2~0.45초 빈 곳이 있다 → 앞 무음 자르기 필요.
+
 ## 출처
 
 - ElevenLabs 효과음 기능: https://elevenlabs.io/docs/overview/capabilities/sound-effects

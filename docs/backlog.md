@@ -72,9 +72,9 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] SFX-04 듣고 고르는 페이지 `sfx_listen.html`(web/lookdev 에 새로): 후보를 이름 가리고 들어 보고 번호를 골라 feedback.md 에 붙일 한 줄('sfx_wpn_sword 3·5 고름')을 만들어 준다. 웹 프로토타입 sfx() 의 발진기 소리도 SFX-02 가 구운 소리로 바꿔 바로 들리게. 먼저: SFX-02
 - [x] SFX-05 2026-11-05 — 사람(17:13): AI 효과음은 Stable Audio(PC 로컬, Stable Audio 3 Small SFX)로, 게임은 개인 명의로 낸다. Community License 는 연매출 $1M 미만 개인·작은 곳이 무료로 상업 사용. 할 일은 아래 SFX-07~09
 - [x] SFX-06 2026-11-05 — 사람이 모아 둔 효과음이 회사 PC `D:\Jin\sound` 에 있음(7,210개·68GB, Sonniss GDC 2018 포함). 라이선스로 나눈 표는 `docs/design/sfx_sources.md`. 쓸 수 있는 것: Sonniss 2018, DayDreamSound Vol.2·4·5·15·17·28
-- [ ] SFX-07 PC 에 Stable Audio 3 돌릴 자리: `E:\Unity\BloodRain-sfx\` 에 ComfyUI(포터블)와 CUDA torch 를 깐다(RTX 3080 Ti 12GB). 저장소 밖 폴더, 회사 일 시간 피해 밤에. 대화 세션이 11-05 밤에 한다(진행은 daily 에)
+- [x] SFX-07 2026-11-05 — PC `E:\Unity\BloodRain-sfx\` 에 ComfyUI 0.44 + torch 2.11(cu128, CUDA 됨) + Stable Audio 3 Small SFX·T5Gemma. 부르는 도구 `tools/sfx_sa3.py`(+테스트). 대표 다섯 × 4개 시험 생성 성공(묶음 2~6초), PC `art_inbox\sfx\sa3_try\`. 자세히는 sfx_research.md 5절
 - [x] SFX-08 2026-11-05 — 사람이 Hugging Face 에서 stabilityai/stable-audio-3-small-sfx 약관에 동의함(17:53, 대화 세션이 회사 크롬에서 'You have been granted access to this model' 확인). 모델 파일은 Comfy-Org/stable-audio-3 에서 받는다. 그쪽이 막히면 그때 사람이 읽기 토큰을 만들어 PC API 루프 config.json 의 `hf_token` 칸에 넣는다(세션은 토큰을 만지지 않음)
-- [ ] SFX-09 대표 다섯(검 휘두름·권격·벼락·독안개·혈인 비명)을 SA3 로 소리마다 후보 8개씩 뽑아 SFX-03 도구로 다듬고 SFX-04 페이지에 올려 사람이 듣게. 문구 끝에 'single, dry, close-mic, no music, no reverb tail'. 먼저: SFX-03, SFX-07
+- [ ] SFX-09 대표 다섯(검 휘두름·권격·벼락·독안개·혈인 비명)을 SA3 로 소리마다 후보 8개씩 뽑아 SFX-03 도구로 다듬고 SFX-04 페이지에 올려 사람이 듣게. 문구 끝에 'single, dry, close-mic, no music, no reverb tail'. 먼저: SFX-03, SFX-07 (진행: 2026-11-05 시험으로 다섯 소리 4개씩 뽑음. 소리마다 8개·다듬기·듣는 페이지는 아직)
 - [x] SFX-10 2026-11-05 — 사람(17:48): 라이선스를 산 것은 `D:\Jin\sound` 의 `Game_Sound`·`source` 폴더. sfx_sources.md 에서 그 둘과 DayDreamSound(안내문상 어떤 용도로든 사용 가능)만 '씀', 나머지 `효과음…` 폴더는 안 씀
 
 UI 와 웹 판 하나로(2026-11-05 사람: "UI가 다른 뱀서류에 비해 좀 불편하다", "서장~원각 판과 천하 시안이 UI·용어·시야가 달라 아예 다른 버전 같다")
