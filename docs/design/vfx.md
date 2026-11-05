@@ -75,9 +75,9 @@
 |---|---|---|---|---|
 | 천지인 삼검 | 큰 반원(세 방향은 런타임) + 관통 검기 | 시안 t4: R 3.5, 펼침 1.65, 굵기 0.72, 터럭 38 / 검기 A.wave: R 1.25, 펼침 2.1, 굵기 0.32 | 2 + 1 | 2026-11-04 |
 
-나머지 열다섯은 획 모양이 정해진 곳이 없다(기획서 8장은 효과만 적음). 아래는 제안이고 **사람 결정 대기**다. 정해지면 `bake_brush.py` `EVOLUTIONS` 에 줄만 더하면 된다(필요한 붓질은 다 있음). 값은 짝 무공 3단과 evolutions.json params 에서 셈.
+나머지 열다섯은 기획서 8장이 효과만 적어, 아래 표를 제안으로 두었다가 2026-11-05 사람이 제안대로 정했다(backlog V-12b). 같은 날 `bake_brush.py` `EVOLUTIONS` 에 넣어 구움(한 절기 2장, 파일 앞 이름은 baekbo·muyeong·cheonroe·pasan·mancheon·byeokryeok·chilbo·liangyi·palseon·heukryong·hyeolma·pacheon·baekhwa·oroe·maehwa, 미리보기 `docs/vfx_preview/brush_more.png` 아래쪽). 값은 짝 무공 3단과 evolutions.json params 에서 셈. 두 겹 원은 copies 안쪽 밀기, 혈마수는 나란한 찌르기 다섯(끝 벌어짐 대신 0.18m 간격). 번짐·꽃잎은 금빛 심 대신 둘레 금가루(goldEdge).
 
-| 절기 | 제안 획 | 값(m) |
+| 절기 | 획 | 값(m) |
 |---|---|---|
 | 백보신권 | 찌르기 굵고 짧게(권경 한 덩이, 3방향은 런타임) | 길이 1.2(projectileRadius×2), 굵기 0.9, 덜 마름 |
 | 무영비도 | 아주 가는 찌르기, 먹 옅게 금빛 심만 또렷이('보이지 않는') | 길이 1.6, 굵기 0.08, 많이 마름 |

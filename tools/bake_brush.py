@@ -85,14 +85,30 @@ WEAPONS = [
 START = 9  # WEAPONS 앞 아홉이 시작 무공(미리보기 brush_start9.png)
 
 # 절기(V-12). 한 장은 획 한 단위이고, 몇 방향으로 몇 번 긋는지는 런타임이 정한다(시안도 같은 그림을 dirs 만큼 돌려 그린다).
-# 값은 시안이 있는 것만: 천지인 삼검 = samjae.html TIERS t4(세 방향 큰 반원) + A.wave(세 번째마다 관통 검기).
-# 나머지 열다섯은 획 모양이 정해지지 않아 vfx.md '절기 획 모양(제안)' 표의 사람 결정을 기다린다.
+# 천지인 삼검 = samjae.html TIERS t4(세 방향 큰 반원) + A.wave(세 번째마다 관통 검기).
+# 나머지 열다섯은 vfx.md '절기 획' 표(2026-11-05 사람이 제안대로 정함, backlog V-12b). 크기는 표 값, 터럭·마름은 짝 무공 값을 조금 굵게.
+# 두 겹 원은 copies 옆 밀기(호에선 안쪽 -), 혈마수 다섯 손가락은 나란한 찌르기 다섯(혈조 셋과 같은 꼴, 끝 벌어짐 ±0.3rad 만큼 간격).
 # (파일 앞 이름, 절기 id, 무공 id, [(획 이름, 값, 장 수)])
 EVOLUTIONS = [
     ("cheonjiin", "cheonjiin", "samjae_sword", [
         ("main", {"R": 3.5, "span": 1.65, "thick": 0.72, "bristles": 38, "goldCore": True, "wash": True}, 2),
         ("wave", {"R": 1.25, "span": 2.1, "thick": 0.32, "bristles": 24, "goldCore": True, "wash": False}, 1),
     ]),
+    ("baekbo", "baekbo_fist", "nahan_fist", [("main", {"kind": "line", "L": 1.2, "thick": 0.9, "bristles": 30, "dry": 0.4, "goldCore": True, "wash": True}, 2)]),
+    ("muyeong", "muyeong_dagger", "flying_dagger", [("main", {"kind": "line", "L": 1.6, "thick": 0.08, "bristles": 8, "dry": 1.4, "goldCore": True, "wash": False}, 2)]),
+    ("cheonroe", "cheonroe_array", "changcheon_qi", [("main", {"R": 2.1, "span": 6.2, "thick": 0.3, "bristles": 20, "dry": 0.8, "copies": [[0.0, 0.0], [0.0, -0.45]], "goldCore": True, "wash": True}, 2)]),
+    ("pasan", "pasan_palm", "palm_wind", [("main", {"R": 1.0, "span": 2.4, "thick": 0.65, "bristles": 32, "dry": 0.6, "goldCore": True, "wash": True}, 2)]),
+    ("mancheon", "mancheon_star", "flash_finger", [("main", {"kind": "line", "L": 1.6, "thick": 0.06, "bristles": 6, "dry": 1.0, "goldCore": True, "wash": True}, 2)]),
+    ("byeokryeok", "byeokryeok_fire", "thunder_bomb", [("main", {"kind": "blot", "Rb": 1.5, "spikes": 13, "drops": 24, "goldEdge": True, "wash": True}, 2)]),
+    ("chilbo", "chilbo_mist", "poison_mist", [("main", {"kind": "blot", "Rb": 2.8, "soft": True, "lobes": 13, "drops": 10, "softAlpha": 0.7, "goldEdge": True, "wash": True}, 2)]),
+    ("liangyi", "taiji_liangyi", "taiji_sword", [("main", {"R": 1.8, "span": 0.9, "thick": 0.22, "bristles": 20, "dry": 0.8, "goldCore": True, "wash": True}, 2)]),
+    ("palseon", "eight_immortals", "drunken_staff", [("main", {"R": 1.85, "span": 2.0, "thick": 0.6, "bristles": 28, "dry": 1.3, "goldCore": True, "wash": True}, 2)]),
+    ("heukryong", "black_dragon", "chain_sickle", [("main", {"R": 2.0, "span": 5.5, "thick": 0.12, "bristles": 10, "dry": 0.6, "links": 12, "goldCore": True, "wash": True}, 2)]),
+    ("hyeolma", "blood_demon_hand", "blood_claw", [("main", {"kind": "line", "L": 2.6, "thick": 0.2, "bristles": 12, "dry": 0.9, "copies": [[0.0, -0.36], [0.0, -0.18], [0.0, 0.0], [0.0, 0.18], [0.0, 0.36]], "goldCore": True, "wash": True}, 2)]),
+    ("pacheon", "patian_qin", "sonic_qin", [("main", {"R": 2.8, "span": 6.2, "thick": 0.16, "bristles": 14, "dry": 0.5, "copies": [[0.0, 0.0], [0.0, -0.35]], "goldCore": True, "wash": True}, 2)]),
+    ("baekhwa", "hundred_flowers", "pear_spear", [("main", {"kind": "line", "L": 4.9, "thick": 0.5, "bristles": 28, "dry": 0.7, "goldCore": True, "wash": True}, 2)]),
+    ("oroe", "five_thunders", "thunder_talisman", [("main", {"kind": "line", "L": 3.6, "thick": 0.24, "bristles": 12, "dry": 0.9, "zig": 7, "amp": 0.5, "goldCore": True, "wash": True}, 2)]),
+    ("maehwa", "plum_full_bloom", "falling_petals", [("main", {"kind": "petals", "Rp": 2.0, "count": 16, "petal": [0.3, 0.16], "goldEdge": True, "wash": True}, 2)]),
 ]
 
 # 미리보기 색(samjae.html 과 같다)

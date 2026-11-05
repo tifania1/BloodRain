@@ -1,0 +1,63 @@
+{
+  "_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. sizeMeters 는 원래 512px 칸 한 변이 게임에서 몇 m 인가(Pixels Per Unit = 512 / sizeMeters, 잘라도 그대로). 칸 가운데가 몸: 호(arc)는 몸을 중심으로 반지름 R(m)·펼친 각 span(라디안, 가운데가 +x), 찌르기(line)는 몸을 지나 +x 로 길이 L(m), 번짐(blot)은 반지름 Rb(m). PNG 는 획이 있는 쪽만 자른 것: crop [x, y, w, h] 는 512 칸에서 잘라 낸 사각형(px, 위가 0, 너비·높이 4의 배수), pivot 은 잘린 그림에서 몸 위치(왼쪽 아래 0, 위로 +, 0~1 밖일 수 있음). 셰이더 _Rect = (x/512, 1-(y+h)/512, w/512, h/512). 절기 획 한 단위(tier 4). 방향·횟수는 런타임이 정한다. gold 는 가운데 심(goldCore).",
+  "weapon": "falling_petals",
+  "evolution": "plum_full_bloom",
+  "textures": [
+    {
+      "name": "maehwa_main_1",
+      "tier": 4,
+      "seed": 1051001,
+      "kind": "petals",
+      "sizeMeters": 5.29,
+      "Rp": 2.0,
+      "count": 16,
+      "petal": [
+        0.3,
+        0.16
+      ],
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        61,
+        61,
+        348,
+        376
+      ],
+      "pivot": [
+        0.56034,
+        0.48138
+      ]
+    },
+    {
+      "name": "maehwa_main_2",
+      "tier": 4,
+      "seed": 1051002,
+      "kind": "petals",
+      "sizeMeters": 5.29,
+      "Rp": 2.0,
+      "count": 16,
+      "petal": [
+        0.3,
+        0.16
+      ],
+      "layers": [
+        "stroke",
+        "wash",
+        "gold"
+      ],
+      "crop": [
+        61,
+        61,
+        404,
+        376
+      ],
+      "pivot": [
+        0.48267,
+        0.48138
+      ]
+    }
+  ]
+}
