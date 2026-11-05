@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text.RegularExpressions;
+using BloodRain.Core.Meta;
 using Xunit;
 using static BloodRain.Core.Tests.TestData;
 
@@ -44,6 +45,25 @@ namespace BloodRain.Core.Tests
             Assert.Contains("m.stones.push(k.stone)", html);
             Assert.Contains("m.unlocked.push(k.sect)", html);
             Assert.Contains("s.unlock === 'boss:' + r.id", html);
+        }
+
+        [Fact] public void 종장을_깨면_회차대로_엔딩을_고르고_혼_기록에_새긴다()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"endings\": {\"list\": drop_notes(load(\"dialogue\")[\"endings\"][\"list\"])", build);
+            Assert.Contains("(\"endingsFirst\", \"endingsSecond\", \"trueEndingDistinctSects\", \"trueEndingManuscripts\", \"resets\")", build);
+            var html = Proto;
+            // 고를 수 있는 엔딩은 Core Soul.Endings 처럼 회차로, 진엔딩은 조건 셋
+            Assert.Contains("(m.cycle || 1) >= 2 ? END.endingsSecond : END.endingsFirst", html);
+            Assert.Contains("END.trueEndingManuscripts", html);
+            Assert.Contains("END.trueEndingDistinctSects", html);
+            // 봉인은 회귀(cycle.resets 의 봉인석만 지우고 회차 +1), 계승은 혈마 모드 토큰(Soul.BloodDemonModeToken)
+            Assert.Contains("if (k === 'sealStones') m.stones = []; m.cycle = (m.cycle || 1) + 1;", html);
+            Assert.Contains("'mode:blood_demon'", html);
+            Assert.Equal(Soul.BloodDemonModeToken, "mode:blood_demon");
+            Assert.Equal(new[] { "sealStones" }, Load().Cheonha.Cycle.Resets.ToArray());
+            // 혈영은 이번 회차 봉인석으로 본다(Core KillBoss firstInCycle) — 회귀 뒤 다시 첫 처치
+            Assert.Contains("const lordShadow = r => r.sealStone ? (G.soul0.stones || []).includes(r.sealStone)", html);
         }
 
         [Fact] public void 꽃잎_나선_셈은_시안과_글자_그대로()

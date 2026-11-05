@@ -125,6 +125,8 @@ button { touch-action: manipulation; }
 .procut .cutlines b { color: #C9A227; margin-right: .6em; font-weight: 700; }
 .procut .b, .procut .b.main { color: #EFE6D2; background: transparent; border-color: #C9A227; }
 .procut .resimg { max-height: 58vh; }
+.procut .cutlines p.whisper { color: #B33A3A; font-style: italic; }
+.procut .card[disabled] { opacity: .45; cursor: default; }
 .screen.veil { background: rgba(239,230,210,.84); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 /* margin:auto 는 화면보다 길어지면 0이 되어 위가 잘리지 않고 스크롤된다 */
 .panel { margin: auto; width: min(100%, 560px); display: grid; gap: 14px; justify-items: center; text-align: center; }
@@ -401,6 +403,15 @@ button { touch-action: manipulation; }
       <img class="resimg" id="procutimg" alt="서장 끝 컷" hidden>
       <div class="cutlines" id="procutlines"></div>
       <div class="row"><button class="b main" id="procutnext" type="button">다음</button></div>
+    </div>
+  </div>
+  <div class="screen veil procut" id="ending" hidden>
+    <div class="panel">
+      <div class="brush" style="font-size:44px">엔딩</div>
+      <p class="subtle" id="endingsub"></p>
+      <div class="cards" id="endingcards"></div>
+      <div class="cutlines" id="endinglines" hidden></div>
+      <div class="row"><button class="b main" id="endingnext" type="button" hidden>다음</button></div>
     </div>
   </div>
   <div class="screen veil" id="profirst" hidden>
@@ -1379,7 +1390,8 @@ function lordHpMult(m) {
 }
 // 장막 반경(절대 m, Core Scale.BoundaryRadius). 현경부터 장막이 없으면 Infinity
 const lordBound = t => NO_BOUND >= 0 && t >= NO_BOUND ? Infinity : WD.view0Meters * Math.pow(WD.scalePerRealm, t) * WD.boundaryViewMultiple;
-const lordShadow = r => (G.soul0.stones || []).includes(r.sealStone) || ((G.soul0.bossKills || {})[r.boss] || 0) > 0;
+// 혈영인가: 이번 회차에 그 땅 봉인석을 이미 가졌나(Core Soul.KillBoss 의 firstInCycle). 봉인 엔딩으로 회귀하면 봉인석이 지워져 다시 첫 처치가 된다. 봉인석 없는 땅만 처치 수로 본다
+const lordShadow = r => r.sealStone ? (G.soul0.stones || []).includes(r.sealStone) : ((G.soul0.bossKills || {})[r.boss] || 0) > 0;
 // 종장(Core BossAwakening.ShouldBeAwake·FinalFight): 봉마곡은 봉인석 finalRequires.sealStones(혼 기록 + 이번 생에 얻은 것)과 경지 finalRequires.realm 을 다 갖추면 깨어난다.
 // 들어서면 땅의 주인 일곱의 혈영이 final.shadows 차례로(기혈 = 그 보스 기준 체력 × shadowHealthRatio × healthCurve, 패턴은 그 보스 것), 하나를 쓰러뜨리면 그 자리에서 다음.
 // 혈마 세 단계(혈의·혈해·진혈마)는 아직 — 일곱을 다 넘기면 알림만
@@ -1466,8 +1478,65 @@ function finalDown(e) {
   if (next < FB.shadows.length) return finalShadow(r, next, { x: e.x, y: e.y });
   const si = next - FB.shadows.length;
   if (si < (FB.stages || []).length) return finalStage(r, next, si, { x: e.x, y: e.y });
-  G.lords[r.id] = 'down';
-  toast(`${BOSS_BY[FB.boss] ? BOSS_BY[FB.boss].nameKo : '혈마'} — 쓰러뜨렸다`, '엔딩(봉인·계승·의심)과 진엔딩 컷은 프로토타입에 아직 없다');
+  G.lords[r.id] = 'down'; G.won = true; G.finalClear = true;   // 종장을 깸(Core LifeRecord EndWay "sealed") — 이 생은 엔딩을 고르고 끝난다
+  toast(`${BOSS_BY[FB.boss] ? BOSS_BY[FB.boss].nameKo : '혈마'} — 쓰러뜨렸다`, '비가 멎는다');
+  setTimeout(endingWhenFree, 1800);
+}
+// ───────── 엔딩 고르기(WP-13e, 기획서 4장 '엔딩 세 갈래', Core Soul.EndingsOpen·ChooseEnding, FinalDialogue.EndingChoices·EndingCuts) ─────────
+// 1회차는 봉인만(endingsFirst), 2회차부터 셋(endingsSecond). 진엔딩은 의서 trueEndingManuscripts 권·종장을 깬 문파 trueEndingDistinctSects 곳(이번 몸 포함)·목 노인 대화 끝까지.
+// 이 판엔 의서(혈월 천하 은빛 등롱)와 목 노인 의서 줄이 없어 진엔딩은 늘 닫혀 있고, 무엇이 모자란지만 흐리게 보인다(진혈마 10% 컷도 그래서 없다).
+// 고르면 그 엔딩 컷을 다 보여 준 뒤 정산. 혼 기록: 봉인 → 회귀(cycle +1, cycle.resets 의 봉인석을 지움), 계승 → 혈마 모드(modes 에 mode:blood_demon), 진엔딩 → 여정 끝(journeyOver).
+const END = DATA.endings || { list: [], endingsFirst: ['seal'], endingsSecond: [], resets: [] };
+const END_BY = Object.fromEntries(END.list.map(x => [x.id, x]));
+function trueEndingLack(m) {
+  const fc = Object.keys(m.finalClears || {}).filter(k => m.finalClears[k] > 0);
+  const sects = fc.length + (G.body && !fc.includes(G.body.id) ? 1 : 0);   // Core TrueEndingMetDuringFinal: 이번 몸 문파를 더해 본다
+  const lack = [];
+  if ((m.manuscripts || 0) < END.trueEndingManuscripts) lack.push(`의서 ${m.manuscripts || 0}/${END.trueEndingManuscripts}`);
+  if (sects < END.trueEndingDistinctSects) lack.push(`종장을 깬 문파 ${sects}/${END.trueEndingDistinctSects}`);
+  if (!m.mokTalkDone) lack.push('목 노인 대화를 끝까지');
+  return lack;
+}
+function endingsOpen(m) {
+  const list = (m.cycle || 1) >= 2 ? END.endingsSecond : END.endingsFirst;
+  return list.map(id => ({ id, lack: id === 'true' ? trueEndingLack(m) : [] })).filter(x => END_BY[x.id]);
+}
+function endingWhenFree() {
+  if (!G || !G.finalClear || G.ending || !$('title').hidden || overlay === 'ending') return;
+  if (overlay) { setTimeout(endingWhenFree, 300); return; }
+  if (!running) return;
+  running = false; cancelAnimationFrame(rafId); render();
+  overlay = 'ending'; G.endCut = -1;
+  const m = soulLoad(), box = $('endingcards'); box.innerHTML = '';
+  $('endingsub').textContent = (m.cycle || 1) >= 2 ? `${m.cycle}회차 · 혈마를 쓰러뜨렸다. 어떻게 끝낼지 고른다` : '1회차 · 일곱 조각으로 혈마를 다시 가둔다';
+  endingsOpen(m).forEach((x, i) => {
+    const d = END_BY[x.id], b = document.createElement('button'); b.type = 'button'; b.className = 'card'; b.disabled = x.lack.length > 0;
+    b.innerHTML = `<span class="ic">${d.nameKo[0]}</span><span><h3>${d.nameKo} <em>${i + 1}</em></h3><p>${d.descKo}${x.lack.length ? `<br><small>닫힘 — ${x.lack.join(' · ')}</small>` : ''}</p></span>`;
+    if (!b.disabled) b.onclick = () => chooseEnding(x.id);
+    box.appendChild(b);
+  });
+  box.hidden = false; $('endinglines').hidden = true; $('endingnext').hidden = true;
+  $('ending').hidden = false; focusFirst(box.querySelector('button:not([disabled])'));
+}
+function chooseEnding(id) {
+  if (overlay !== 'ending' || G.ending) return;
+  G.ending = id; G.endCut = 0; overlayAt = performance.now();
+  $('endingcards').hidden = true; $('endinglines').hidden = false; $('endingnext').hidden = false;
+  showEndingCut();
+}
+function showEndingCut() {
+  const cuts = END_BY[G.ending].cuts, cut = cuts[G.endCut];
+  $('endingsub').textContent = `${END_BY[G.ending].nameKo} · ${G.endCut + 1}/${cuts.length}`;
+  $('endinglines').innerHTML = cut.lines.length ? cut.lines.map(l => `<p${l.whisper ? ' class="whisper"' : ''}>${l.speaker ? `<b>${SPK[l.speaker] || l.speaker}</b>` : ''}${l.textKo}</p>`).join('') : '<p class="subtle">(그림만 있는 컷)</p>';
+  $('endingnext').textContent = G.endCut + 1 < cuts.length ? '다음' : '정산으로';
+  focusFirst($('endingnext'));
+}
+function nextEndingCut() {
+  if (overlay !== 'ending' || !G.ending || tooSoon()) return;
+  overlayAt = performance.now();
+  if (++G.endCut < END_BY[G.ending].cuts.length) return showEndingCut();
+  $('ending').hidden = true; overlay = null; running = true;   // endRun 이 running 을 보고 정산한다
+  endRun(true);
 }
 // 혈마 단계(Core FinalFight.Stage): 기혈 = 단계 health × healthCurve, 패턴은 그 단계 set. phase2At 1(혈해)이면 시작하자마자 2막 패턴(피바다)을 켠다
 function finalStage(r, idx, si, at) {
@@ -1542,7 +1611,8 @@ function lordDown(e) {
   if (e.fin != null) return finalDown(e);
   const r = CH_REGS.find(x => x.id === e.lord), def = BOSS_BY[e.lordBoss], first = !e.shadow, K = first ? LR.firstKill : LR.repeatKill;
   G.lords[r.id] = 'down'; G.lordF = null; G.boss = null; G.empower = null;   // 혈월은 싸움이 끝나면 진다
-  const sect = first && LR.firstKill.unlockSect ? (DATA.sects || []).find(s => s.unlock === 'boss:' + r.id) : null;
+  const sect0 = first && LR.firstKill.unlockSect ? (DATA.sects || []).find(s => s.unlock === 'boss:' + r.id) : null;
+  const sect = sect0 && !(G.soul0.unlocked || []).includes(sect0.id) ? sect0 : null;   // 문파는 계정 첫 처치에만 열린다(Core firstOnAccount, 회귀 뒤 다시 잡아도 안 연다)
   const kill = { region: r.id, boss: def.id, name: def.nameKo, first, qi: K.rebirthQi || 0, crystal: K.bloodCrystal || 0, stone: first && LR.firstKill.sealStone ? r.sealStone : null, sect: sect ? sect.id : null };
   G.lordKills.push(kill);
   for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25);
@@ -3329,7 +3399,7 @@ function lifeSettle() {
   if (G.body.qiBonus) rows.push([`타고난 성질 × ${(1 + G.body.qiBonus).toFixed(2)}`, G.body.traits.filter(id => TRAIT_BY[id].rebirthQi).map(id => `${TRAIT_BY[id].nameKo} +${Math.round(TRAIT_BY[id].rebirthQi * 100)}%`).join(', '), Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)]);
   const total = rows.reduce((a, r) => a + r[2], 0);
   const crystal = LK.reduce((a, k) => a + k.crystal, 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0));   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
-  return { rows, total, crystal, top, newVisits, newRealms, lordKills: LK };
+  return { rows, total, crystal, top, newVisits, newRealms, lordKills: LK, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3344,6 +3414,16 @@ function recordLife(st) {
     m.bossKills[k.boss] = (m.bossKills[k.boss] || 0) + 1;
     if (k.stone && !m.stones.includes(k.stone)) m.stones.push(k.stone);
     if (k.sect && !m.unlocked.includes(k.sect)) m.unlocked.push(k.sect);
+  }
+  // 종장을 깬 생(Core Soul.EndLife 'sealed' → ChooseEnding): 문파별 종장 수, 본 엔딩, 엔딩 효과. 봉인은 회귀 — cycle.resets(봉인석)만 지우고 회차 +1
+  if (st.finalClear && st.ending) {
+    m.finalClears = m.finalClears && typeof m.finalClears === 'object' ? m.finalClears : {};
+    if (st.sect) m.finalClears[st.sect] = (m.finalClears[st.sect] || 0) + 1;
+    m.endingsSeen = Array.isArray(m.endingsSeen) ? m.endingsSeen : [];
+    if (!m.endingsSeen.includes(st.ending)) m.endingsSeen.push(st.ending);
+    if (st.ending === 'seal') { for (const k of END.resets || []) if (k === 'sealStones') m.stones = []; m.cycle = (m.cycle || 1) + 1; }
+    else if (st.ending === 'inherit') { m.modes = Array.isArray(m.modes) ? m.modes : []; if (!m.modes.includes('mode:blood_demon')) m.modes.push('mode:blood_demon'); }
+    else if (st.ending === 'true') m.journeyOver = true;
   }
   soulSave(m);
   return m;
@@ -3540,7 +3620,7 @@ function traitLine(id) {
 function openInn() {
   const m = innMeta();
   running = false; cancelAnimationFrame(rafId);
-  ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'evopick', 'profirst', 'procut'].forEach(id => $(id).hidden = true);
+  ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'evopick', 'profirst', 'procut', 'ending'].forEach(id => $(id).hidden = true);
   $('hud').hidden = true; overlay = 'inn'; paused = false;
   innRerolls = m.lives ? upgEffect(m, 'rerolls') : 0;   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
   innCands = drawCandidates(m);
@@ -4306,7 +4386,7 @@ let lastTs = 0, rafId = 0;
 function startRun(mode) {
   ensureAudio(); if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
   newRun(mode); toastQ.length = 0;
-  ['title', 'result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true);
+  ['title', 'result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst', 'ending'].forEach(id => $(id).hidden = true);
   $('cv').classList.remove('mono'); $('hud').classList.remove('cine'); $('demobar').hidden = true;
   $('hud').hidden = false; overlay = null; paused = false; running = true;
   renderSlots(); lastTs = performance.now();
@@ -4350,6 +4430,11 @@ function endRun(won) {
   if (G.body) {
     const st = lifeSettle(), m = recordLife(st); G.settled = st;
     $('resline').textContent = `${G.body.nameKo}의 제자는 ${G.realm.nameKo}에서 쓰러졌다. 모은 기를 들고 다른 문파의 몸으로 다시 태어난다.`;
+    if (st.finalClear && st.ending) {   // 종장을 깬 생: 고른 엔딩과 그 뒤
+      $('restitle').textContent = `${END_BY[st.ending].nameKo} 엔딩`;
+      $('resline').textContent = st.ending === 'seal' ? `눈을 뜨면 다시 백중의 밤이다. 봉인석은 흩어지고 ${m.cycle}회차가 시작된다.`
+        : st.ending === 'inherit' ? '다시 태어나지 않았다. 혈마 모드가 열렸다(이 판엔 아직 없다).' : '환혼도 회귀도 여기서 끝났다.';
+    }
     facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
     led.innerHTML = st.rows.map(r => `<tr><td>${r[0]}<small>${r[1]}</small></td><td>${r[2].toLocaleString()}</td></tr>`).join('')
       + `<tr class="sum"><td>얻은 윤회의 기<small>혼에 남은 기 ${m.qi.toLocaleString()} · 윤회 ${m.lives}번</small></td><td>+${st.total.toLocaleString()}</td></tr>`;
@@ -4398,7 +4483,7 @@ function showBest() {
   $('best').textContent = parts.join(' · ');
   $('dexcount').textContent = `찾은 비급 ${dex.size} / ${DEX_TOTAL}`;
 }
-function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); drawIdle(); }
+function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst', 'ending'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); drawIdle(); }
 
 function drawIdle() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -4459,6 +4544,7 @@ window.addEventListener('keydown', e => {
   if (overlay === 'brk') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseInsight(n - 1); return; }
   if (overlay === 'evopick') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) choosePick(n - 1); return; }
   if (overlay === 'procut') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); nextCut(); } return; }
+  if (overlay === 'ending') { if (G.ending && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); nextEndingCut(); } return; }
   if (overlay === 'profirst') { const n = parseInt(e.key, 10); if (n >= 1 && n <= DATA.firstRebirth.length) firstRebirth(DATA.firstRebirth[n - 1].id); return; }
   if (overlay === 'chest') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); closeOverlay('chest'); } return; }
   if (G.awaken) return;
@@ -4506,6 +4592,7 @@ $('chestok').addEventListener('click', () => closeOverlay('chest'));
 $('startquick').addEventListener('click', () => startRun('quick'));
 $('startprologue').addEventListener('click', () => startRun('prologue'));
 $('procutnext').addEventListener('click', nextCut);
+$('endingnext').addEventListener('click', nextEndingCut);
 $('profirsttitle').addEventListener('click', () => { $('profirst').hidden = true; toTitle(); });
 $('startfull').addEventListener('click', () => startRun('full'));
 $('again').addEventListener('click', () => (G && G.body ? openInn() : startRun(G ? G.mode : 'quick')));

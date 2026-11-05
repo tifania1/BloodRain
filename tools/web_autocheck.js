@@ -88,7 +88,7 @@ async function liveCheck(p, label, ms, screens) {
 }
 async function shot(p, name) { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await p.page.screenshot({ path: path.join(SHOTS, name + '.png') }); } }
 
-const PROTO_SCREENS = ['title', 'levelup', 'brk', 'chest', 'find', 'evopick', 'pause', 'result', 'procut', 'profirst', 'inn', 'dex'];
+const PROTO_SCREENS = ['title', 'levelup', 'brk', 'chest', 'find', 'evopick', 'pause', 'result', 'procut', 'profirst', 'inn', 'dex', 'ending'];
 const CH_SCREENS = ['title', 'rebirth', 'levelup', 'pause', 'dead'];
 
 async function prologueRuns(browser, base) {
@@ -266,6 +266,16 @@ async function finalRuns(browser, base) {
         for (let i = 0; i < 3; i++) step(1 / 30);
       }
       if (G.lords[f.id] !== 'down') bad.push(`종장이 안 끝남(${G.lords[f.id]})`);
+      // 엔딩 고르기: 1회차는 봉인만 → 컷 끝까지 → 정산, 혼 기록이 회귀(2회차·봉인석 비움)
+      localStorage.removeItem('cheonha_meta2');
+      running = true; endingWhenFree();
+      if (overlay !== 'ending') bad.push(`엔딩 화면이 안 열림(${overlay})`);
+      const open = [...document.querySelectorAll('#endingcards button:not([disabled])')].length;
+      if (open !== 1) bad.push(`1회차 고를 수 있는 엔딩이 ${open}개`);
+      chooseEnding('seal'); names.push('봉인');
+      for (let i = 0; i < 10 && overlay === 'ending'; i++) nextEndingCut();
+      const m = soulLoad();
+      if (overlay !== 'result' || m.cycle !== 2 || (m.stones || []).length || !(m.endingsSeen || []).includes('seal')) bad.push(`봉인 뒤 회귀가 안 됨(${overlay}, 회차 ${m.cycle}, 봉인석 ${(m.stones || []).length})`);
     } catch (err) { bad.push('오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]); }
     return { bad, names };
   });

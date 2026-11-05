@@ -117,6 +117,9 @@ def data_blob() -> str:
         "finalBoss": {k: drop_notes(load("bosspatterns")["final"][k]) for k in ("boss", "shadows", "shadowHealthRatio", "stages")},
         "finalStageLines": {st["id"]: st["textKo"] for st in load("dialogue")["final"]["stages"]},
         "finalEnter": [c["lines"][0]["textKo"] for c in load("dialogue")["final"]["enter"]["cuts"] if c.get("lines")],
+        # 엔딩 고르기(WP-13e, 4장 '엔딩 세 갈래', Core Soul.EndingsOpen·ChooseEnding·FinalDialogue.EndingCuts): 회차별 고를 수 있는 엔딩·진엔딩 조건·회귀가 지우는 것, 엔딩 컷
+        "endings": {"list": drop_notes(load("dialogue")["endings"]["list"]),
+                    **{k: load("cheonha")["cycle"][k] for k in ("endingsFirst", "endingsSecond", "trueEndingDistinctSects", "trueEndingManuscripts", "resets")}},
         # 정산(WP-14c): ?life= 판이 끝나면 10장 윤회의 기 식(Core RebirthQi)으로 셈해 혼 기록에 새긴다
         "rebirthQi": {k: v for k, v in drop_notes(load("cheonha")["rebirthQi"]).items() if k != "targets"},
         # 한 생의 고유 적 비율(WP-13c): 축척 모드에서 다른 땅에 서면 그 땅 고유 적을 이 비율로 섞는다
