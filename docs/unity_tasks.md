@@ -468,6 +468,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 입장 컷 둘 → 혈영 일곱마다 혈영 줄 → 혈의·혈해·진혈마 단계 줄 → 봉인 4컷 → 2회차 객잔
   - 찍기: `docs/unity_shots/DL-10b/` 의 `enter.png`, `ending_choice.png`
 
+- [ ] A-07U 객잔의 장경각 문(수리 중) · 먼저: LF-03
+  - 할 것: Inn 씬 객잔 마당에 장경각 문 자리를 하나 둔다(문 그림은 아직 없으니 침방 바탕 위 글자 띠로). `Inn.IsOpen` 이 거짓이면 문을 안 보이고, 참인데 `Inn.CanEnter` 가 거짓이면 문 위에 `ui.inn.under_repair`(수리 중)를 띄우고 눌러도 안 열린다. LibraryScreen(시험 씬 LibraryTest)은 M3 까지 객잔에서 부르지 않는다.
+  - 쓸 것: Core `Meta/Inn.cs`(IsOpen·IsUnderRepair·CanEnter), cheonha.json `inn.facilities` 의 `underRepair`, 문자열 `ui.inn.under_repair`
+  - 메뉴: 시험 메뉴 `서장 마친 혼으로 저장` 뒤 원각을 쓰러뜨린 혼을 만드는 메뉴가 없으면 하나 더(`원각 잡은 혼으로 저장`)
+  - 끝: 서장만 마친 혼은 문이 안 보이고, 원각 잡은 혼은 '수리 중' 문이 보이며 눌러도 화면이 안 바뀜, 콘솔 에러 0
+  - 찍기: `docs/unity_shots/A-07U/` 의 `library_door.png`
+
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
 - [ ] R-13U 세 지역 기믹(독안개·물·태극 바닥)과 수귀 · 먼저: backlog R-10(사람 결정 대기)

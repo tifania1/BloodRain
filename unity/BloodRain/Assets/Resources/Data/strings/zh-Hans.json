@@ -603,6 +603,7 @@
   "ui.mode.soon": "尚未开启",
   "ui.settle.torn": "残页秘笈入藏经阁",
   "ui.settle.to_inn": "回客栈",
+  "ui.inn.under_repair": "修缮中",
   "ui.settle.total": "合计  {0}",
   "ui.settle.balance": "魂中留存的轮回之气 {0}",
   "ui.chimbang.name": "寝房",

@@ -77,6 +77,26 @@ namespace BloodRain.Core.Tests
             Assert.Equal("hyegong", Inn.Residents(s)[0]);
         }
 
+        [Fact] public void M2_장경각은_열려도_수리_중이라_못_들어간다()
+        {
+            var s = AfterPrologue();
+            Assert.True(Inn.CanEnter(s, "training"));
+            Assert.False(Inn.CanEnter(s, "library")); // 아직 안 열림
+            LiveAndKill(s, "shaolin", "songshan");
+            Assert.True(Inn.IsOpen(s, "library"));
+            Assert.True(Inn.IsUnderRepair(s, "library"));
+            Assert.False(Inn.CanEnter(s, "library"));
+            Assert.Contains(Inn.Token("library"), s.Unlocks); // 혼에는 남는다
+        }
+
+        [Fact] public void 수리_중인_시설은_10장_문장과_같다()
+        {
+            var m = Regex.Match(TestData.Gdd, @"M2 빌드에서 (\S+?)은 객잔에 문만 그려 두고 '수리 중'으로 잠급니다");
+            Assert.True(m.Success, "10장 객잔 시설 표 아래에 수리 중 문장이 없다");
+            var repair = C.Inn.Facilities.Where(f => f.UnderRepair).Select(f => f.NameKo).ToArray();
+            Assert.Equal(new[] { m.Groups[1].Value }, repair);
+        }
+
         [Fact] public void 약방은_봉인석_둘에_혈정_열을_써서_짓는다()
         {
             var s = AfterPrologue();

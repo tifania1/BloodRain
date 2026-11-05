@@ -604,6 +604,7 @@
   "ui.mode.soon": "Not yet open",
   "ui.settle.torn": "Torn Manuals reach the Sutra Library",
   "ui.settle.to_inn": "To the Inn",
+  "ui.inn.under_repair": "Under Repair",
   "ui.settle.total": "Total  {0}",
   "ui.settle.balance": "Samsara Qi kept by the soul {0}",
   "ui.chimbang.name": "Sleeping Quarters",

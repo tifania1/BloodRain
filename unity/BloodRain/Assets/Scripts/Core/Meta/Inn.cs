@@ -24,6 +24,16 @@ namespace BloodRain.Core.Meta
         static bool IsOpen(Soul soul, FacilityDef f) =>
             soul.Unlocks.Contains(Token(f.Id)) || (f.BuildBloodCrystal <= 0 && MeetsRequirement(soul, f));
 
+        /// <summary>'수리 중'인 시설(데이터 underRepair). 조건을 갖추면 열린 것으로 치고 혼에도 남지만 문만 보이고 들어가지 못한다.</summary>
+        public static bool IsUnderRepair(Soul soul, string facilityId) => Def(soul).Facility(facilityId).UnderRepair;
+
+        /// <summary>들어가 쓸 수 있다: 열렸고 수리 중이 아니다. 화면은 이것으로 문을 열고, 열렸는데 못 들어가면 ui.inn.under_repair 를 띄운다.</summary>
+        public static bool CanEnter(Soul soul, string facilityId)
+        {
+            var f = Def(soul).Facility(facilityId);
+            return !f.UnderRepair && IsOpen(soul, f);
+        }
+
         static bool Recorded(Soul soul, FacilityDef f) => soul.Unlocks.Contains(Token(f.Id));
 
         /// <summary>조건(서장·봉인석·땅의 주인·해금 토큰)을 갖췄다. 짓는 값은 따지지 않는다.</summary>

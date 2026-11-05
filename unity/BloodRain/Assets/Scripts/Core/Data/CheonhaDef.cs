@@ -65,6 +65,8 @@ namespace BloodRain.Core.Data
         public FacilityRequireDef Require = new FacilityRequireDef();
         /// <summary>0 이면 조건만 갖추면 저절로 열린다. 아니면 이만큼 혈정을 써서 짓는다.</summary>
         public int BuildBloodCrystal;
+        /// <summary>열려도 '수리 중'으로 잠가 들어가지 못한다(화면을 아직 안 그린 시설. M2 의 장경각, backlog A-07).</summary>
+        public bool UnderRepair;
     }
 
     public sealed class FacilityRequireDef
