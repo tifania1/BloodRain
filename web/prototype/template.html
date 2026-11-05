@@ -1029,7 +1029,8 @@ function newRun(mode) {
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
     G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
     { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
-    G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
+    G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
+    G.lords = {}; G.lordJust = []; G.lordGrace = null; G.lordF = null; G.lordKills = [];   // 땅의 주인(WP-13e): 지역별 깨어남·싸움·처치   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
     if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
@@ -1202,6 +1203,112 @@ function spawnJangSam() {
   cue('boss_warning', 'boss_spawn');
   sfx('boss');
 }
+// ───────── 땅의 주인(WP-13e 첫 조각, 기획서 7장, Core BossAwakening) ─────────
+// 한 생 판(G.body)·축척 모드에서만. 절정(lordRules.awakenFrom)부터 혈우 장막 안 보스 지역이 깨어나고(현경부터 장막이 없어 모두),
+// 지역 한가운데 혈운 기둥 원(화면 대각선 × engageViewMultiple)에 들어서면 싸움. 깨어날 때 이미 원 안이면 awakenGraceSeconds 경고 뒤.
+// 기혈 = enemies.json 기준 체력 × healthCurve(싸움을 건 분). 패턴은 bosspatterns.json bosses 가운데 프로토타입 castPattern 이 아는 모양만
+// (정예와 같은 eliteShapeOk), 2막은 기혈 phase2At 아래에서 간격 phase2IntervalSeconds + 2막 패턴(아는 모양만).
+// 이미 쓰러뜨린 땅(혼 기록 봉인석·bossKills)이면 혈영 — 다시 처치 보상. 봉마곡(종장)·제 그림·보갑은 아직.
+const LR = DATA.lordRules || null, LPAT = DATA.lordPatterns || {};
+const BOSS_BY = Object.fromEntries((DATA.bosses || []).map(b => [b.id, b]));
+const LORD_AWAKE_T = LR ? REALMS.findIndex(r => r.id === LR.awakenFrom) : -1;
+const lordsOn = () => !!(LR && G && G.body && scaleOn());
+// Core BossAwakening.HealthMultiplier: 점 사이는 곧게, 첫 점 앞은 첫 값, 마지막 점 뒤는 마지막 두 점의 기울기로
+function lordHpMult(m) {
+  const p = (LR && LR.healthCurve) || [];
+  if (!p.length) return 1;
+  if (m <= p[0][0] || p.length === 1) return p[0][1];
+  for (let i = 1; i < p.length; i++) if (m <= p[i][0]) return p[i - 1][1] + (p[i][1] - p[i - 1][1]) * (m - p[i - 1][0]) / (p[i][0] - p[i - 1][0]);
+  const a = p[p.length - 2], b = p[p.length - 1];
+  return b[1] + (b[1] - a[1]) / (b[0] - a[0]) * (m - b[0]);
+}
+// 장막 반경(절대 m, Core Scale.BoundaryRadius). 현경부터 장막이 없으면 Infinity
+const lordBound = t => NO_BOUND >= 0 && t >= NO_BOUND ? Infinity : WD.view0Meters * Math.pow(WD.scalePerRealm, t) * WD.boundaryViewMultiple;
+const lordShadow = r => (G.soul0.stones || []).includes(r.sealStone) || ((G.soul0.bossKills || {})[r.boss] || 0) > 0;
+function lordWake() {
+  if (LORD_AWAKE_T < 0 || tierNow() < LORD_AWAKE_T) return;
+  const R = lordBound(tierNow()), woke = [];
+  for (const r of CH_REGS) {
+    if (!r.boss || G.lords[r.id]) continue;
+    if (Math.hypot(r.x - G.home.x, r.y - G.home.y) <= R) { G.lords[r.id] = 'awake'; G.lordJust.push(r.id); woke.push(r); }
+  }
+  if (woke.length) toast('땅의 주인이 깨어났다', woke.map(r => `${BOSS_BY[r.boss].nameKo}(${r.nameKo})`).join(' · ') + ' — 붉은 기둥 원에 들어서면 싸움');
+}
+const lordEngageR = () => WD.view0Meters * Math.pow(WD.scalePerRealm, realmProgress()) * LR.engageViewMultiple;   // 절대 m, Core EngageRadius(그 레벨 화면 대각선 — 그리기의 부드러운 G.viewD 말고 목표 값이라 sim 에서도 같다)
+function lordTick(dt) {
+  if (!lordsOn()) return;
+  lordWake();
+  const just = G.lordJust; G.lordJust = [];   // 막 깨어난 곳은 이번 프레임에만 본다(Core QA-05)
+  if (G.lordF) return;
+  const U = worldU(), px = G.player.x * U, py = G.player.y * U, rad = lordEngageR();
+  const inside = r => Math.hypot(r.x - px, r.y - py) <= rad, reg = id => CH_REGS.find(r => r.id === id);
+  if (G.lordGrace) {
+    const g = reg(G.lordGrace.id);
+    if (!inside(g) || G.lords[g.id] !== 'awake') G.lordGrace = null;
+    else { G.lordGrace.t -= dt; if (G.lordGrace.t > 0) return; G.lordGrace = null; lordBegin(g); return; }
+  }
+  for (const id of just) {
+    const r = reg(id);
+    if (!G.lordGrace && G.lords[id] === 'awake' && inside(r)) { G.lordGrace = { id, t: LR.awakenGraceSeconds }; toast(BOSS_BY[r.boss].nameKo, `${r.nameKo}의 땅의 주인이 일어선다 · ${LR.awakenGraceSeconds}초 안에 원 밖으로 나가면 미룬다`); }
+  }
+  if (G.lordGrace) return;
+  let best = null, bd = Infinity;
+  for (const r of CH_REGS) { if (G.lords[r.id] !== 'awake') continue; const d = Math.hypot(r.x - px, r.y - py); if (d <= rad && d < bd) { best = r; bd = d; } }
+  if (best) lordBegin(best);
+}
+function lordBegin(r) {
+  const def = BOSS_BY[r.boss], set = LPAT[def.id] || { patterns: [], intervalSeconds: 4, firstCastSeconds: 2.5, moveSpeed: 50, contactDamage: 20 };
+  const base = def.phases ? def.phases.reduce((a, b) => a + b, 0) : def.health, k = lordHpMult(G.gm), hp = base * k, U = worldU(), shadow = lordShadow(r);
+  const pats = (set.patterns || []).filter(eliteShapeOk), name = shadow ? `혈영 ${def.nameKo}` : def.nameKo;
+  const sc = 1 + B.enemyScaling.damagePerMinute * G.gm;
+  const e = spawnEnemy('sigang', r.x / U, r.y / U, {
+    sprite: 'boss', boss: true, lord: r.id, lordBoss: def.id, shadow, name, hp, maxHp: hp, speed: set.moveSpeed / 100 * MOVE, dmg: set.contactDamage * sc,
+    r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
+    ps: { patterns: pats, intervalSeconds: set.intervalSeconds, firstCastSeconds: set.firstCastSeconds }, pat: pats[0] || null,
+  });
+  G.lords[r.id] = 'fight'; G.lordF = e; G.boss = e;
+  const bn = $('bossbar').querySelector('b'); if (bn) bn.textContent = name;
+  toast(name, `${r.nameKo}의 땅의 주인 · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분) · 몰려오는 적 ${LR.spawnTargetScale}배`);
+  sfx('boss');
+  return e;
+}
+// 패턴이 하나도 없으면(아는 모양이 없는 땅) 쫓아오기만. 2막은 한 번만 넘어간다
+function lordAI(e, dt, dx, dy, d) {
+  const S = e.set;
+  if (!e.p2 && S.phase2At > 0 && e.hp < e.maxHp * S.phase2At) {
+    e.p2 = true; e.ps.intervalSeconds = S.phase2IntervalSeconds || S.intervalSeconds;
+    e.ps.patterns = e.ps.patterns.concat((S.phase2 || []).filter(eliteShapeOk));
+    toast(e.name, '2막 — 패턴이 빨라진다');
+  }
+  if (!e.ps.patterns.length) { e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1; return; }
+  eliteAI(e, dt, dx, dy, d);
+}
+// 처치 보상(Core BossAwakening.Defeat): 첫 처치 = 윤회의 기·혈정·봉인석·문파 열림, 혈영 = 다시 처치 기·혈정. 혼 기록엔 정산 때 새긴다
+function lordDown(e) {
+  const r = CH_REGS.find(x => x.id === e.lord), def = BOSS_BY[e.lordBoss], first = !e.shadow, K = first ? LR.firstKill : LR.repeatKill;
+  G.lords[r.id] = 'down'; G.lordF = null; G.boss = null;
+  const sect = first && LR.firstKill.unlockSect ? (DATA.sects || []).find(s => s.unlock === 'boss:' + r.id) : null;
+  const kill = { region: r.id, boss: def.id, name: def.nameKo, first, qi: K.rebirthQi || 0, crystal: K.bloodCrystal || 0, stone: first && LR.firstKill.sealStone ? r.sealStone : null, sect: sect ? sect.id : null };
+  G.lordKills.push(kill);
+  for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25);
+  const lines = [kill.stone ? `봉인석 ${kill.stone}` : '', sect ? `${sect.nameKo}로 환생할 수 있다` : '', `윤회의 기 +${kill.qi} · 혈정 +${kill.crystal}`].filter(Boolean);
+  toast(`${e.name} — 쓰러뜨렸다`, first ? lines.join(' · ') : `혈영으로 다시 일어날 것이다 · ${lines.join(' · ')}`);
+}
+// 기둥과 싸움 원: 깨어난 땅마다 붉은 기둥, 원은 점선(경고 중이면 진하게)
+function drawLords(now) {
+  if (!lordsOn() || !G.lords) return;
+  const U = worldU(), rad = lordEngageR() / U * PPM;
+  for (const r of CH_REGS) {
+    const st = G.lords[r.id]; if (st !== 'awake') continue;
+    const x = wx(r.x / U), y = wy(r.y / U), warn = G.lordGrace && G.lordGrace.id === r.id;
+    ctx.save();
+    ctx.strokeStyle = warn ? 'rgba(179,38,30,0.9)' : 'rgba(179,38,30,0.55)'; ctx.lineWidth = warn ? 3 : 2; ctx.setLineDash([8, 6]);
+    ctx.beginPath(); ctx.arc(x, y, rad, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    const g = ctx.createLinearGradient(x, y - 120, x, y); g.addColorStop(0, 'rgba(179,38,30,0)'); g.addColorStop(1, `rgba(179,38,30,${0.55 + 0.2 * Math.sin(now * 3)})`);
+    ctx.fillStyle = g; ctx.fillRect(x - 7, y - 120, 14, 120);
+    ctx.restore();
+  }
+}
 // 장삼 패턴(bosspatterns.json jang_sam): firstCastSeconds 뒤 intervalSeconds 마다 order 차례로. 2막 없음.
 // 패턴 피해는 정예처럼 분마다 커진다(baseDamage 는 0분 값).
 function jangSamAI(e, dt, dx, dy, d) {
@@ -1317,6 +1424,7 @@ function killEnemy(e, crushed) {
   sfx('kill');
   if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
   if (e.elite && isPro()) cue('elite_kill:' + ELITES[e.eliteKey].id);
+  if (e.lord) { lordDown(e); return; }   // 땅의 주인(WP-13e): 한 생은 이어진다
   if (e.boss && e.jang) { G.won = true; cue('boss_kill'); setTimeout(proCutsWhenFree, 1000 * (PD.lineSeconds + 0.4)); return; } // 장삼 마지막 줄을 듣고 컷으로
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
   if (e.xp > 0) dropOrb(e.x, e.y, lowBorn(e) ? e.xp * CRUSH.xpPerCrushed : e.xp);   // 아래 경지에서 생긴 적은 진기 0.3배(cheonha.json crush)
@@ -1737,7 +1845,7 @@ function update(dt) {
     G.spawnAcc -= 1;
     if (!stopped || G.bossSpawned) {
       const alive = G.enemies.length;
-      const target = G.bossSpawned ? BOSS_TRASH : spawnTarget(G.gm);
+      const target = (G.bossSpawned ? BOSS_TRASH : spawnTarget(G.gm)) * (G.lordF ? LR.spawnTargetScale : 1);   // 땅의 주인과 싸우는 동안 줄인다(7장)
       const n = Math.ceil((target - alive) * B.spawnTarget.spawnFractionPerSecond - 1e-4);
       for (let i = 0; i < n; i++) { const [x, y] = ringPos(), lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(Math.min(G.gm, 19)), x, y); }
     }
@@ -1764,6 +1872,7 @@ function update(dt) {
   for (let i = G.zones.length - 1; i >= 0; i--) { const z = G.zones[i]; z.delay -= dt; if (z.delay <= 0) { G.zones.splice(i, 1); z.apply(); } }
 
   foeShotsStep(dt);   // 고유 적이 쏜 탄(WP-13c)
+  lordTick(dt);             // 땅의 주인 깨어남·싸움 원(WP-13e)
   trackChRegion();          // 밟은 땅(그리기 고리 밖 sim 에서도 정예·무리·고유 적이 땅을 알게)
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
   eliteShapesStep(dt);      // 정예 돌진·검진 고리·분신(WP-13d)
@@ -1780,7 +1889,7 @@ function update(dt) {
     let dx = p.x - e.x, dy = p.y - e.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const slow = 1 - e.slow; e.slow = Math.max(0, e.slow - dt * B.enemyStatus.slowFadePerSecond);
     let vx = 0, vy = 0;
-    if (e.boss) (e.jang ? jangSamAI : bossAI)(e, dt, dx, dy, d);
+    if (e.boss) (e.jang ? jangSamAI : e.lord ? lordAI : bossAI)(e, dt, dx, dy, d);
     else if (e.elite) eliteAI(e, dt, dx, dy, d);
     else if (e.behavior === 'hop_chase') {
       // 콩콩 뛰는 박자: 0.6초 중 72%는 뛰고 나머지는 착지. 평균 속도는 enemies.json speed 그대로.
@@ -2701,7 +2810,7 @@ const HOME_M = HOME_REG ? [HOME_REG.pos[0] * WD.widthMeters, HOME_REG.pos[1] * W
 const toLocal = ([x, y]) => [x * WD.widthMeters - HOME_M[0], y * WD.heightMeters - HOME_M[1]];
 const CH_LAND = (WD.land || []).map(toLocal), CH_RIVERS = (WD.rivers || []).map(r => r.map(toLocal));
 // 봉마곡(final)은 봉인석이 모이기 전엔 보이면 안 되니 지명을 그리지 않는다(천하 시안과 같음)
-const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, gimmicks: r.gimmicks || [], density: r.density, x, y }; });
+const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, gimmicks: r.gimmicks || [], density: r.density, boss: r.boss || null, sealStone: r.sealStone || null, x, y }; });
 // 소품(WP-12): 천하 시안의 buildProps·propSprite 를 글자 그대로 옮긴 것(같은 시드라 같은 자리에 같은 나무·집·탑·산).
 // 시안 쪽을 고치면 여기도 같이 고친다 — CheonhaLandTests 가 두 판의 본문이 같은지 본다. 좌표는 중원 한 장 절대 미터.
 const CH_PROP = (() => {
@@ -2832,14 +2941,18 @@ function lifeSettle() {
   const rows = [
     [`진기 구슬 값 ${Math.round(G.orbV)} × 혈운 ${(G.orbV ? G.orbW / G.orbV : 1).toFixed(2)} × ${QI.perOrbValue}`, '흡수한 진기의 일부가 혼에 남는다', Math.round(QI.perOrbValue * G.orbW)],
   ];
+  // 땅의 주인(WP-13e): 첫 처치·다시 처치 줄(Core 줄 순서: 구슬 → 첫 처치 → 다시 처치 → 밟은 땅 → 오른 경지 → 은자 → 성질)
+  const LK = G.lordKills || [], lk1 = LK.filter(k => k.first), lk2 = LK.filter(k => !k.first);
+  if (lk1.length) rows.push([`땅의 주인 첫 처치 ${lk1.length} × ${LR.firstKill.rebirthQi}`, lk1.map(k => k.name + (k.stone ? ` · 봉인석 ${k.stone}` : '')).join(', '), lk1.reduce((a, k) => a + k.qi, 0)]);
+  if (lk2.length) rows.push([`혈영 다시 처치 ${lk2.length} × ${LR.repeatKill.rebirthQi}`, lk2.map(k => k.name).join(', '), lk2.reduce((a, k) => a + k.qi, 0)]);
   if (newVisits.length) rows.push([`처음 밟은 땅 ${newVisits.length} × ${QI.firstVisitRegion}`, newVisits.map(id => (CH_REGS.find(r => r.id === id) || { nameKo: id }).nameKo).join(', '), newVisits.length * QI.firstVisitRegion]);
   if (newRealms.length) rows.push([`처음 오른 경지 ${newRealms.length} × ${QI.firstReachRealm}`, newRealms.map(id => B.realms.find(r => r.id === id).nameKo).join(', '), newRealms.length * QI.firstReachRealm]);
   rows.push([`남은 은자 ${G.silver} × ${QI.leftoverSilverRate}`, '쓰지 못한 은자도 기로 남는다', Math.round(QI.leftoverSilverRate * G.silver)]);
   // 타고난 성질(둔재·단명): 성질 배율 전 합 × 보너스, 반올림(Core FromTraits)
   if (G.body.qiBonus) rows.push([`타고난 성질 × ${(1 + G.body.qiBonus).toFixed(2)}`, G.body.traits.filter(id => TRAIT_BY[id].rebirthQi).map(id => `${TRAIT_BY[id].nameKo} +${Math.round(TRAIT_BY[id].rebirthQi * 100)}%`).join(', '), Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)]);
   const total = rows.reduce((a, r) => a + r[2], 0);
-  const crystal = Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0));   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
-  return { rows, total, crystal, top, newVisits, newRealms };
+  const crystal = LK.reduce((a, k) => a + k.crystal, 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0));   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
+  return { rows, total, crystal, top, newVisits, newRealms, lordKills: LK };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -2847,6 +2960,14 @@ function recordLife(st) {
   m.visited = Array.isArray(m.visited) ? m.visited : []; m.reached = Array.isArray(m.reached) ? m.reached : [];
   for (const id of st.newVisits) if (!m.visited.includes(id)) m.visited.push(id);
   for (const id of st.newRealms) if (!m.reached.includes(id)) m.reached.push(id);
+  // 땅의 주인(WP-13e): 봉인석·처치 수·열린 문파(시안 endLife 와 같은 칸)
+  m.stones = Array.isArray(m.stones) ? m.stones : []; m.bossKills = m.bossKills && typeof m.bossKills === 'object' ? m.bossKills : {};
+  if (!Array.isArray(m.unlocked)) m.unlocked = START_SECTS.slice();
+  for (const k of st.lordKills || []) {
+    m.bossKills[k.boss] = (m.bossKills[k.boss] || 0) + 1;
+    if (k.stone && !m.stones.includes(k.stone)) m.stones.push(k.stone);
+    if (k.sect && !m.unlocked.includes(k.sect)) m.unlocked.push(k.sect);
+  }
   soulSave(m);
   return m;
 }
@@ -3400,6 +3521,7 @@ function render() {
   for (let x = ox; x < VW; x += T) for (let y = oy; y < VH; y += T) ctx.drawImage(groundTile, x, y, T, T);
   drawCheonha();      // 중원 한 장의 바다·강·지명(축척 시험에서만)
   drawCurtain(now);   // 혈우 장막(축척 시험에서만)
+  drawLords(now);     // 땅의 주인 기둥·싸움 원(WP-13e)
   // 먹 자국
   for (const s of G.splats) {
     const a = Math.max(0, 0.32 - s.t / 18);

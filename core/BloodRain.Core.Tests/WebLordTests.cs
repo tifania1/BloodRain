@@ -1,0 +1,64 @@
+using System.Linq;
+using System.Text.RegularExpressions;
+using Xunit;
+using static BloodRain.Core.Tests.TestData;
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>
+    /// WP-13e 첫 조각: 1장 프로토타입 한 생 판에 땅의 주인(7장, Core BossAwakening)을 옮긴 것이
+    /// 데이터 값을 읽고 Core 와 같은 규칙(깨어남·싸움 원·기혈 배율·처치 보상)을 쓰는지 글로 본다.
+    /// </summary>
+    public class WebLordTests
+    {
+        static string Proto => ReadRepoFile("web", "prototype", "template.html");
+
+        [Fact] public void 빌드가_땅의_주인_규칙과_패턴과_지역_보스를_넣는다()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"lordRules\": drop_notes(load(\"cheonha\")[\"bosses\"])", build);
+            Assert.Contains("\"lordPatterns\":", build);
+            Assert.Contains("\"boss\": r.get(\"boss\"), \"sealStone\": r.get(\"sealStone\")", build);
+        }
+
+        [Fact] public void 규칙은_데이터_값을_쓴다()
+        {
+            var html = Proto;
+            Assert.Contains("LR.awakenFrom", html);
+            Assert.Contains("LR.engageViewMultiple", html);
+            Assert.Contains("LR.awakenGraceSeconds", html);
+            Assert.Contains("LR.spawnTargetScale", html);
+            Assert.Contains("LR.healthCurve", html);
+            Assert.Contains("LR.firstKill : LR.repeatKill", html);
+            // 장막 반경은 축척 모드 장막과 같은 식, 기혈 배율은 Core HealthMultiplier 와 같은 꼴(마지막 두 점 기울기로 늘림)
+            Assert.Contains("WD.view0Meters * Math.pow(WD.scalePerRealm, t) * WD.boundaryViewMultiple", html);
+            Assert.Contains("return b[1] + (b[1] - a[1]) / (b[0] - a[0]) * (m - b[0]);", html);
+        }
+
+        [Fact] public void 정산_줄과_혼_기록에_봉인석과_처치가_들어간다()
+        {
+            var html = Proto;
+            Assert.Contains("땅의 주인 첫 처치", html);
+            Assert.Contains("혈영 다시 처치", html);
+            Assert.Contains("m.bossKills[k.boss] = (m.bossKills[k.boss] || 0) + 1;", html);
+            Assert.Contains("m.stones.push(k.stone)", html);
+            Assert.Contains("m.unlocked.push(k.sect)", html);
+            Assert.Contains("s.unlock === 'boss:' + r.id", html);
+        }
+
+        /// <summary>프로토타입은 아는 패턴 모양(ELITE_SHAPES)만 쓴다. 종장을 뺀 땅의 주인마다 1막에 적어도 하나는 있어야 싸움이 된다.</summary>
+        [Fact] public void 땅의_주인마다_프로토타입이_아는_1막_패턴이_있다()
+        {
+            var m = Regex.Match(Proto, @"const ELITE_SHAPES = new Set\(\[([^\]]*)\]\)");
+            Assert.True(m.Success);
+            var known = Regex.Matches(m.Groups[1].Value, @"'([a-z_]+)'").Select(x => x.Groups[1].Value).ToHashSet();
+            var data = Load();
+            foreach (var r in data.Cheonha.BossRegions)
+            {
+                Assert.True(data.BossPatterns.TryGetValue(r.Boss!, out var set), r.Boss);
+                Assert.True(set!.Patterns.Any(p => known.Contains(p.Shape) && !(p.Shape == "line" && !(p.ProjectileSpeed > 0))),
+                    $"{r.Boss} 에 프로토타입이 아는 1막 패턴이 없다");
+            }
+        }
+    }
+}
