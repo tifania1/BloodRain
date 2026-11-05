@@ -65,10 +65,26 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 대표_인물_마당_줄은_처음_0번이고_여자_몸이면_사매_칸()
         {
-            Assert.Contains("\"leaders\": [{k: l.get(k) for k in (\"id\", \"sect\", \"yardUnknown\", \"yardKnown\", \"sister\", \"join\")}", ReadRepoFile("tools", "build_web_prototype.py"));
+            Assert.Contains("\"leaders\": [{k: l.get(k) for k in (\"id\", \"sect\", \"yardUnknown\", \"yardKnown\", \"sister\", \"join\", \"inn\")}", ReadRepoFile("tools", "build_web_prototype.py"));
             var html = Proto;
             Assert.Contains("if (!m.seen.includes(key)) { m.seen.push(key); return kind + '.0'; }", html);
             Assert.Contains("body.female && l.sister && l.sister[slot] ? l.sister[slot] : l[kind][+i]", html);
+        }
+
+        [Fact] public void 귀환하면_목_노인_운낭_대표_인물_줄을_Core_OnReturn_처럼()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"returns\": drop_notes(load(\"dialogue\")[\"returns\"])", build);
+            var html = Proto;
+            // 한 생에 한 번, 서장 끝 귀환엔 없음
+            Assert.Contains("if (!m.lives || m.retAt === m.lives) return [];", html);
+            // 밀린 줄을 갈래 순서 → 파일 순서로 max 개
+            Assert.Contains("retTake(m, 'mok', RET_MOK, RET.mokOrder, RET.mokMax)", html);
+            Assert.Contains("retTake(m, 'unnang', RET_UN, RET.unnangOrder, RET.unnangMax)", html);
+            // 합류는 자기 땅 봉인석, 땅의 주인 없는 문파는 그 몸으로 땅의 주인을 쓰러뜨린 생 뒤. 합류 줄이 먼저
+            Assert.Contains("if (home ? stones.includes(home.sealStone) : !!lifeSect && lifeSect.id === l.sect && ((G && G.lordKills) || []).length > 0) m.pjoin.push(l.id);", html);
+            // 처치 자리에서 하던 합류 알림은 뺐다(Core 는 귀환 때 합류)
+            Assert.DoesNotContain("합류`, leader.join)", html);
         }
     }
 }

@@ -131,7 +131,11 @@ def data_blob() -> str:
         "bedroom": drop_notes(load("dialogue")["bedroom"]["lines"]),
         "cards": drop_notes(load("dialogue")["cards"]["list"]),
         # 대표 인물 마당 줄(21장, docs/story/leaders.md): 그 문파로 태어나면 한 줄, 여자 몸이면 sister 칸. Core InnDialogue.YardLine
-        "leaders": [{k: l.get(k) for k in ("id", "sect", "yardUnknown", "yardKnown", "sister", "join")} for l in load("dialogue")["leaders"]["list"]],
+        "leaders": [{k: l.get(k) for k in ("id", "sect", "yardUnknown", "yardKnown", "sister", "join", "inn")} for l in load("dialogue")["leaders"]["list"]],
+        # 귀환 대사(WP-13e, Core InnDialogue.OnReturn): 목 노인·운낭 줄과 한 귀환에 나오는 마디 수·갈래 순서
+        "mokReturn": drop_notes(load("dialogue")["mok"]["lines"]),
+        "unnang": drop_notes(load("dialogue")["unnang"]["lines"]),
+        "returns": drop_notes(load("dialogue")["returns"]),
         "birthTraits": drop_notes(load("cheonha")["birthTraits"]),
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
