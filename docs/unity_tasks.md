@@ -166,6 +166,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: 없음
   - 끝: 정예 둘 잡고 쓰러지면 정산 혈정 2, 저장된 혼 잔고도 2 늘어남. 혈월 혼이면 1·2개 번갈아
   - 찍기: `docs/unity_shots/RM-02b/` 의 `settlement_crystal.png`
+  (진행: 2026-11-05 22:50 PC — LifeRunner.OnKilled 가 Family elite 면 `_life.KillElite()` 를 부르고 받은 수만큼 그 자리에 붉은 `혈정 +N`(키 ui.settle.crystal, OnGUI 1.2초)을 띄우게 씀. 정산은 원래 `record.BloodCrystal` 을 씀. 컴파일을 요청한 뒤 Unity 메인 스레드가 멈춰 unityMCP 가 응답하지 않아 에디터를 강제로 닫고, -batchmode 로 열어 컴파일 에러 0 만 확인. **플레이 확인은 못 함** — 남은 것: 정예 둘 잡고 쓰러져 정산 혈정 2·혼 잔고 +2, 찍기)
 
 - [ ] R-08U 도전 과제 셋 세기 · 먼저: LF-03
   - 할 것: 적이 쓰러질 때마다 `life.Log.Kill()`(정예·땅의 주인은 KillElite·DefeatBoss 와 따로 한 번 더), 경공을 쓸 때 `life.Log.Dash()`. 정산 화면에 `soul.EndLife` 가 돌려준 `NewUnlocks` 를 '새로 얻은 무공' 줄로(토큰을 unlock 으로 가진 무공 이름). 정신부 `life.Log.UseTalisman()` 은 C-09b 에서.

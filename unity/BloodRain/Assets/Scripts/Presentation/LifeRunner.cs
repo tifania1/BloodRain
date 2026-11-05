@@ -106,7 +106,40 @@ namespace BloodRain.Presentation
 
         BloodRain.Presentation.Fx.EdgeIndicators _edges;
 
-        void OnKilled(Vector2 at, EnemyAgent a) => _kills++;
+        void OnKilled(Vector2 at, EnemyAgent a)
+        {
+            _kills++;
+            // RM-02b 정예를 잡으면 혈정(Life.KillElite 가 이번에 얻은 수를 준다. 혈월이면 1·2개 번갈아). 정산은 LifeRecord.BloodCrystal
+            if (_life == null || _life.Record != null || enemies == null) return;
+            var def = enemies.DefOf(a.Kind);
+            if (def == null || def.Family != "elite") return;
+            int got = _life.KillElite();
+            if (got > 0) _popups.Add((at, $"{Loc.T("ui.settle.crystal")} +{got}", Time.unscaledTime));
+        }
+
+        // 짧은 글자(혈정 +N). 1.2초 동안 위로 뜨며 옅어진다. 글자 모양은 나중에 HUD 쪽으로 옮길 수 있게 여기선 OnGUI 로만
+        readonly List<(Vector2 at, string text, float born)> _popups = new List<(Vector2, string, float)>();
+        GUIStyle _popupStyle;
+
+        void DrawPopups()
+        {
+            if (_popups.Count == 0) return;
+            var cam = Camera.main;
+            if (cam == null) return;
+            if (_popupStyle == null)
+                _popupStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            for (int i = _popups.Count - 1; i >= 0; i--)
+            {
+                var (at, text, born) = _popups[i];
+                float t = (Time.unscaledTime - born) / 1.2f;
+                if (t >= 1f) { _popups.RemoveAt(i); continue; }
+                var sp = cam.WorldToScreenPoint(at);
+                var c = new Color(0.86f, 0.16f, 0.14f, 1f - t * t);
+                GUI.color = c;
+                GUI.Label(new Rect(sp.x - 100f, Screen.height - sp.y - 40f - t * 40f, 200f, 30f), text, _popupStyle);
+            }
+            GUI.color = Color.white;
+        }
 
         // ---- C-06a 몸 능력치 ----
         // 능력치 한 장 = life.CurrentStats(심법 시너지 덧셈 + 깨달음, 기혈 비율, 움직였나). 레벨업 선택·돌파·기혈 50% 넘나듦·멈춤↔움직임을
@@ -358,6 +391,7 @@ namespace BloodRain.Presentation
 
         void OnGUI()
         {
+            DrawPopups();
             if (!showDebug || _life == null) return;
             var realm = _life.Scale.Realms[_life.Realm];
             var region = _life.Regions.Region(_life.RegionId);
