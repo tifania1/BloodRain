@@ -291,6 +291,17 @@ async function finalRuns(browser, base) {
       const open2 = [...document.querySelectorAll('#endingcards button:not([disabled])')].length;
       if (open2 !== 3) bad.push(`진엔딩 조건을 채웠는데 열린 엔딩이 ${open2}개`);
       names.push('진엔딩 열림');
+      // 진혈마 10%: 목 노인 컷 → 고르는 화면 → 의심이면 싸움이 거기서 끝나고 진엔딩 컷 2부터 → 정산, 여정 끝
+      $('ending').hidden = true; overlay = null; G.ending = 'x';
+      const m3 = soulLoad(); m3.manuscripts = 7; soulSave(m3);
+      startRun('full'); G.auto = true; running = false;
+      const f3 = LORD_REGS.find(x => x.final), e3 = finalStage(f3, FB.shadows.length + FB.stages.length - 1, FB.stages.length - 1, { x: G.player.x + 5, y: G.player.y });
+      e3.hp = e3.maxHp * 0.05; lordTick(1 / 30);
+      if (overlay !== 'ending' || G.trueCut !== 'cut') bad.push(`진혈마 10% 에 목 노인 컷이 안 나옴(${overlay}, ${G.trueCut})`);
+      nextEndingCut(); trueCutPick('true');
+      for (let i = 0; i < 10 && overlay === 'ending'; i++) nextEndingCut();
+      if (overlay !== 'result' || !soulLoad().journeyOver) bad.push(`의심 뒤 여정이 안 끝남(${overlay})`);
+      names.push('의심');
       localStorage.removeItem('cheonha_meta2');
     } catch (err) { bad.push('오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]); }
     return { bad, names };

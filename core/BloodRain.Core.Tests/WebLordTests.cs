@@ -89,6 +89,9 @@ namespace BloodRain.Core.Tests
             // 목 노인 의서 줄(manuscript:N)과 '끝까지'(Core MokTalkDone: 본 줄 수 ≥ trueEndingManuscripts)
             Assert.Contains("kind === 'manuscript' ? (m.manuscripts || 0) >= +a[0]", html);
             Assert.Contains("(m.seen || []).includes('mok.' + l.id)).length >= END.trueEndingManuscripts;", html);
+            // 진혈마 trueEndingCutAt 에서 목 노인 컷(Core FinalFight.CheckTrueEnding), 의심이면 컷 2부터(EndingCutsAfterTrueCut)
+            Assert.Contains("!(st.trueEndingCutAt > 0) || G.trueCut || e.hp / e.maxHp > st.trueEndingCutAt", html);
+            Assert.Contains("G.ending = 'true'; G.endCut = 1;", html);
             var d = Load();
             Assert.Equal(d.Cheonha.Cycle.TrueEndingManuscripts,
                 d.Dialogue.Mok.Lines.Count(l => l.When.StartsWith("manuscript:")));

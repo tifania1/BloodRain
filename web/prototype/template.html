@@ -1425,7 +1425,7 @@ function lordTick(dt) {
   if (!lordsOn()) return;
   lordWake();
   const just = G.lordJust; G.lordJust = [];   // 막 깨어난 곳은 이번 프레임에만 본다(Core QA-05)
-  if (G.lordF) return;
+  if (G.lordF) { trueCutCheck(G.lordF); return; }
   const U = worldU(), px = G.player.x * U, py = G.player.y * U, rad = lordEngageR();
   const inside = r => Math.hypot(r.x - px, r.y - py) <= rad, reg = id => LORD_REGS.find(r => r.id === id);
   if (G.lordGrace) {
@@ -1517,16 +1517,47 @@ function endingWhenFree() {
   if (!running) return;
   running = false; cancelAnimationFrame(rafId); render();
   overlay = 'ending'; G.endCut = -1;
-  const m = soulLoad(), box = $('endingcards'); box.innerHTML = '';
+  if (G.endPre) { $('ending').hidden = false; return chooseEnding(G.endPre); }   // 목 노인 컷에서 봉인·계승을 골랐으면 마저 쓰러뜨린 뒤 그 엔딩 컷 통째(Core EndingCuts)
+  const m = soulLoad();
   $('endingsub').textContent = (m.cycle || 1) >= 2 ? `${m.cycle}회차 · 혈마를 쓰러뜨렸다. 어떻게 끝낼지 고른다` : '1회차 · 일곱 조각으로 혈마를 다시 가둔다';
+  endingCards(m, chooseEnding);
+}
+function endingCards(m, pick) {
+  const box = $('endingcards'); box.innerHTML = '';
   endingsOpen(m).forEach((x, i) => {
     const d = END_BY[x.id], b = document.createElement('button'); b.type = 'button'; b.className = 'card'; b.disabled = x.lack.length > 0;
     b.innerHTML = `<span class="ic">${d.nameKo[0]}</span><span><h3>${d.nameKo} <em>${i + 1}</em></h3><p>${d.descKo}${x.lack.length ? `<br><small>닫힘 — ${x.lack.join(' · ')}</small>` : ''}</p></span>`;
-    if (!b.disabled) b.onclick = () => chooseEnding(x.id);
+    if (!b.disabled) b.onclick = () => pick(x.id);
     box.appendChild(b);
   });
   box.hidden = false; $('endinglines').hidden = true; $('endingnext').hidden = true;
   $('ending').hidden = false; focusFirst(box.querySelector('button:not([disabled])'));
+}
+// 진혈마 기혈이 trueEndingCutAt(10%)에 닿고 진엔딩 조건을 채웠으면(Core FinalFight.CheckTrueEnding·TrueEndingMetDuringFinal) 싸움을 멈추고
+// 진엔딩 컷 1(목 노인) → 고르는 화면. 의심이면 싸움이 거기서 끝나고 컷 2부터, 봉인·계승이면 싸움으로 돌아가 마저 쓰러뜨린 뒤 그 엔딩 컷 통째(ChooseAtTrueCut). 한 싸움에 한 번
+function trueCutCheck(e) {
+  const st = e && e.stage && (FB.stages || []).find(x => x.id === e.stage);
+  if (!st || !(st.trueEndingCutAt > 0) || G.trueCut || e.hp / e.maxHp > st.trueEndingCutAt) return false;
+  const m = soulLoad(); if (trueEndingLack(m).length || !endingsOpen(m).some(x => x.id === 'true')) return false;
+  G.trueCut = 'cut'; overlay = 'ending'; overlayAt = performance.now();
+  const c1 = END_BY.true.cuts[0];
+  $('endingsub').textContent = `${END_BY.true.nameKo} · 목 노인이 걸어 들어온다`;
+  $('endinglines').innerHTML = c1.lines.map(l => `<p>${l.speaker ? `<b>${SPK[l.speaker] || l.speaker}</b>` : ''}${l.textKo}</p>`).join('');
+  $('endingcards').hidden = true; $('endinglines').hidden = false; $('endingnext').hidden = false; $('endingnext').textContent = '고른다';
+  $('ending').hidden = false; focusFirst($('endingnext'));
+  return true;
+}
+function trueCutPick(id) {
+  if (overlay !== 'ending' || G.trueCut !== 'pick') return;
+  G.trueCut = 'done'; overlayAt = performance.now();
+  if (id === 'true') {   // 의심: 싸움이 여기서 끝난다(Index = Count) — 진엔딩 컷 2부터
+    const e = G.lordF; if (e) { e.dead = true; G.lords[e.lord] = 'down'; } G.lordF = null; G.boss = null; G.empower = null;
+    G.won = true; G.finalClear = true; G.ending = 'true'; G.endCut = 1; running = true;
+    $('endingcards').hidden = true; $('endinglines').hidden = false; $('endingnext').hidden = false;
+    return showEndingCut();
+  }
+  G.endPre = id; $('ending').hidden = true; overlay = null; lastTs = performance.now();   // 봉인·계승: 진혈마 남은 기혈 그대로 싸움으로
+  toast(END_BY[id].nameKo, '목 노인이 물러선다. 마저 쓰러뜨린다');
 }
 function chooseEnding(id) {
   if (overlay !== 'ending' || G.ending) return;
@@ -1542,6 +1573,12 @@ function showEndingCut() {
   focusFirst($('endingnext'));
 }
 function nextEndingCut() {
+  if (overlay === 'ending' && G.trueCut === 'cut' && !tooSoon()) {   // 목 노인 컷 → 고르는 화면
+    G.trueCut = 'pick'; overlayAt = performance.now();
+    $('endingsub').textContent = '어떻게 끝낼지 고른다'; $('endinglines').hidden = true; $('endingnext').hidden = true;
+    endingCards(soulLoad(), trueCutPick); $('endingcards').hidden = false; focusFirst($('endingcards').querySelector('button:not([disabled])'));
+    return;
+  }
   if (overlay !== 'ending' || !G.ending || tooSoon()) return;
   overlayAt = performance.now();
   if (++G.endCut < END_BY[G.ending].cuts.length) return showEndingCut();
@@ -4567,7 +4604,7 @@ window.addEventListener('keydown', e => {
   if (overlay === 'brk') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseInsight(n - 1); return; }
   if (overlay === 'evopick') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) choosePick(n - 1); return; }
   if (overlay === 'procut') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); nextCut(); } return; }
-  if (overlay === 'ending') { if (G.ending && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); nextEndingCut(); } return; }
+  if (overlay === 'ending') { if ((G.ending || G.trueCut === 'cut') && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); nextEndingCut(); } return; }
   if (overlay === 'profirst') { const n = parseInt(e.key, 10); if (n >= 1 && n <= DATA.firstRebirth.length) firstRebirth(DATA.firstRebirth[n - 1].id); return; }
   if (overlay === 'chest') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); closeOverlay('chest'); } return; }
   if (G.awaken) return;
