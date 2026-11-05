@@ -188,7 +188,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/RM-05U/` 의 `merchant.png`
 
 - [ ] BGM-06U 배경음 재생기 · 먼저: LF-03, BGM-03a
-  - 할 것: Presentation 에 `BgmPlayer`(AudioSource 둘을 번갈아). 매 프레임 `BgmDirector.Tick(dt, state, 돌파 줌 중인가)` 를 부르고 BgmChange 가 오면 FadeSeconds 동안 등가 출력으로 섞어 넘긴다. state 는 화면(Run·Inn·정산·침방·연무장)과 `life.RegionId`·싸우는 땅의 주인 id·서장 여부로 만든다. 곡 파일은 `Assets/Audio/BGM` 의 `bgm.json`(postprocess_audio.py 가 만듦) id 로 찾고, 없으면 조용히 넘긴다(로그 한 줄).
+  - 할 것: Presentation 에 `BgmPlayer`(AudioSource 둘을 번갈아). 매 프레임 `BgmDirector.Tick(dt, state, 돌파 줌 중인가)` 를 부르고 BgmChange 가 오면 FadeSeconds 동안 등가 출력으로 섞어 넘긴다. state 는 화면(Run·Inn·정산·침방·연무장)과 `life.RegionId`·싸우는 땅의 주인 id·서장 여부, `lifeSeconds: life.LifeSeconds`(10분부터 숭산 격해진 벌, BGM-02b)로 만든다. 곡 파일은 `Assets/Audio/BGM` 의 `bgm.json`(postprocess_audio.py 가 만듦) id 로 찾고, 없으면 조용히 넘긴다(로그 한 줄).
   - 쓸 것: Core `World/Bgm.cs`(Bgm.TrackId, BgmDirector, BgmChange), balance.json `bgm`
   - 메뉴: Run·Inn 씬 Bootstrap 메뉴에 BgmPlayer 붙이기
   - 끝: 숭산 곡이 있으면 Run 에서 숭산 곡이 돌고, 원각이 나오면 1초 만에 보스 곡, 정산 화면으로 1초. 곡이 하나도 없어도 콘솔 에러 0

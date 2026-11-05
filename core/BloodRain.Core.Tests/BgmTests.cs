@@ -38,7 +38,9 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 고를_수_있는_곡과_큐의_곡이_같다()
         {
-            var picked = AllStates().Select(s => Bgm.TrackId(s)).Append(Bgm.AwakenSting).ToHashSet();
+            var rule = Load().Balance.Bgm;
+            var late = AllStates().Select(s => new BgmState(s.Screen, s.Prologue, s.RegionId, s.BossId, s.FinalStage, s.EndingId, s.FinalRegion, lifeSeconds: 3600f));
+            var picked = AllStates().Concat(late).Select(s => Bgm.TrackId(s, rule)).Append(Bgm.AwakenSting).ToHashSet();
             var queue = QueueIds();
             Assert.Empty(picked.Except(queue));   // 고르는데 큐에 없는 곡
             Assert.Empty(queue.Except(picked));   // 큐에 있는데 아무 데서도 안 부르는 곡

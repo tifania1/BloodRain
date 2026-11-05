@@ -115,7 +115,11 @@
     "_note": "배경음 바꾸기(기획서 14장 '곡 바꾸기', Core World/Bgm.cs BgmDirector). 2026-11-05 사람이 정함(backlog BGM-06). 서 있는 지역이 바뀐 뒤 regionHoldSeconds 넘게 그대로면 regionFadeSeconds 로 섞어 넘기고, 땅의 주인 싸움·종장 단계·화면 전환은 바로 quickFadeSeconds. 돌파 연출(cheonha.json breakthrough zoomToSeconds) 동안은 바꾸지 않는다.",
     "regionHoldSeconds": 4,
     "regionFadeSeconds": 3,
-    "quickFadeSeconds": 1
+    "quickFadeSeconds": 1,
+    "_intenseNote": "격해진 곡(BGM-02b, 2026-11-05 사람이 추천대로): 지역마다 기본·격해진 두 벌을 같은 대화에서 같은 빠르기·조로 뽑아 한 생 intenseAfterSeconds(10분)부터 격해진 쪽(<지역 곡 id>_intense)으로 intenseFadeSeconds(4초) 동안 섞어 넘긴다. 숭산 하나로 먼저 들어 보고 정하니 intenseRegions 에 있는 지역만 바꾼다. 서장·땅의 주인·종장은 그대로.",
+    "intenseAfterSeconds": 600,
+    "intenseFadeSeconds": 4,
+    "intenseRegions": ["songshan"]
   },
   "merchant": {
     "_note": "보부상(기획서 7장 '보부상', 12·24분은 chapters.json life 사건). 값은 2026-11-05 사람이 정함(backlog RM-04). 한 번 들를 때 품목마다 maxPerVisit 개까지. 회복약은 최대 기혈 비율(마교 회복 배율은 곱함), 다시 고르기 권은 그 판 다시 고르기 횟수 +rerolls, 취기부는 등롱 취기부와 같은 효과.",

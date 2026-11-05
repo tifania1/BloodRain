@@ -85,5 +85,45 @@ namespace BloodRain.Core.Tests
             Assert.Equal("bgm_region_songshan", d.Current);
             Assert.NotNull(d.Tick(0.016f, At("songshan", "wongak")));
         }
+
+        // ---- 격해진 벌(BGM-02b) ----
+
+        static BgmState Late(string region, float sec, string? boss = null) => new BgmState(BgmScreen.Life, regionId: region, bossId: boss, lifeSeconds: sec);
+
+        [Fact] public void 격해진_벌_값이_14장_문장과_같다()
+        {
+            var m = Regex.Match(TestData.Gdd, @"한 생 (\d+)분부터 격해진 벌로 (\d+)초 동안 섞어 넘깁니다");
+            Assert.True(m.Success);
+            Assert.Equal(R.IntenseAfterSeconds, float.Parse(m.Groups[1].Value) * 60);
+            Assert.Equal(R.IntenseFadeSeconds, float.Parse(m.Groups[2].Value));
+            Assert.Equal(new[] { "songshan" }, R.IntenseRegions);
+        }
+
+        [Fact] public void 십분부터_숭산은_격해진_벌로_기다리지_않고_4초()
+        {
+            var d = new BgmDirector(R);
+            d.Tick(0, Late("songshan", 599f));
+            Assert.Equal("bgm_region_songshan", d.Current);
+            var c = d.Tick(1f, Late("songshan", 600f));
+            Assert.NotNull(c);
+            Assert.Equal("bgm_region_songshan_intense", c!.Value.TrackId);
+            Assert.Equal(R.IntenseFadeSeconds, c.Value.FadeSeconds);
+            // 격해진 벌이 없는 지역·땅의 주인·서장은 한 벌
+            Assert.Equal("bgm_region_gaebang_hq", Bgm.TrackId(Late("gaebang_hq", 900f), R));
+            Assert.Equal("bgm_boss_wongak", Bgm.TrackId(Late("songshan", 900f, "wongak"), R));
+            Assert.Equal("bgm_prologue", Bgm.TrackId(new BgmState(BgmScreen.Life, prologue: true, regionId: "cheongun", lifeSeconds: 900f), R));
+            Assert.Equal("bgm_region_songshan", Bgm.TrackId(Late("songshan", 900f)));   // 규칙 없이 부르면 기본 벌
+        }
+
+        [Fact] public void 격해진_벌에서_다른_지역으로는_보통처럼_기다린다()
+        {
+            var d = new BgmDirector(R);
+            d.Tick(0, Late("songshan", 700f));
+            Assert.Equal("bgm_region_songshan_intense", d.Current);
+            Assert.Null(d.Tick(1f, Late("gaebang_hq", 701f)));
+            BgmChange? c = null; float t = 1f;
+            while (c == null && t < 10f) { t += 0.5f; c = d.Tick(0.5f, Late("gaebang_hq", 700f + t)); }
+            Assert.Equal(R.RegionFadeSeconds, c!.Value.FadeSeconds);
+        }
     }
 }

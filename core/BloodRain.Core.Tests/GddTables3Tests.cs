@@ -79,7 +79,8 @@ namespace BloodRain.Core.Tests
         {
             var queue = File.ReadAllLines(Path.Combine(RepoRoot, "audio_queue", "queue.jsonl")).Where(l => l.Trim().Length > 0)
                 .Select(JObject.Parse).Where(o => ((string)o["id"]!).StartsWith("bgm_") || ((string)o["id"]!).StartsWith("sting_")).ToList();
-            var ids = queue.Select(o => (string)o["id"]!).ToList();
+            // 격해진 벌(_intense, 14장 '곡 바꾸기' BGM-02b)은 그 지역 곡의 둘째 벌이라 곡 목록 표에서 따로 세지 않는다
+            var ids = queue.Select(o => (string)o["id"]!).Where(i => !i.EndsWith(BloodRain.Core.World.Bgm.IntenseSuffix)).ToList();
             var rows = GddTable(GddSection("곡 목록")).ToDictionary(r => r[0]);
 
             int Count(string prefix) => ids.Count(i => i.StartsWith(prefix));

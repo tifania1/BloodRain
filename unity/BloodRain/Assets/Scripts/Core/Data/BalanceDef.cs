@@ -323,6 +323,12 @@ namespace BloodRain.Core.Data
         public float RegionFadeSeconds = 3;
         /// <summary>땅의 주인 싸움·종장 단계·화면 전환에 섞어 넘기는 초.</summary>
         public float QuickFadeSeconds = 1;
+        /// <summary>한 생 이 초부터 지역 곡을 격해진 벌(_intense)로(BGM-02b 600). 0 이면 안 바꾼다.</summary>
+        public float IntenseAfterSeconds;
+        /// <summary>기본 → 격해진 벌로 섞어 넘기는 초(4).</summary>
+        public float IntenseFadeSeconds = 4;
+        /// <summary>격해진 벌이 있는 지역 id(먼저 숭산 하나로 시험).</summary>
+        public List<string> IntenseRegions = new List<string>();
     }
 
     /// <summary>보부상 품목 하나(balance.json merchant.items).</summary>

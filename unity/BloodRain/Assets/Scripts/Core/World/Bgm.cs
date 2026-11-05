@@ -4,6 +4,7 @@
 // Bgm.TrackId 는 '지금 어떤 곡이어야 하나'만 정한다. 언제 바꾸고 얼마나 섞어 넘길지는 BgmDirector(balance.json bgm,
 // 14장 '곡 바꾸기', backlog BGM-06): 지역 곡끼리는 새 지역에 4초 넘게 서 있으면 3초로, 나머지는 바로 1초로, 돌파 연출 동안은 그대로.
 // Unity 재생기는 매 프레임 Tick 을 불러 돌아온 BgmChange 대로 섞어 넘기기만 한다.
+// 격해진 벌(BGM-02b): 한 생 intenseAfterSeconds(10분)부터 intenseRegions 지역 곡은 '<곡 id>_intense' 로, 기본 ↔ 격해진 벌 사이는 기다리지 않고 intenseFadeSeconds(4초).
 using System;
 using System.Collections.Generic;
 using BloodRain.Core.Data;
@@ -42,12 +43,14 @@ namespace BloodRain.Core.World
         public readonly string? EndingId;
         /// <summary>그 지역이 종장 싸움터(봉마곡)인가. RegionDef.Final.</summary>
         public readonly bool FinalRegion;
+        /// <summary>이번 생이 흐른 초(Life.LifeSeconds). 격해진 벌을 고를 때만 본다.</summary>
+        public readonly float LifeSeconds;
 
         public BgmState(BgmScreen screen, bool prologue = false, string? regionId = null, string? bossId = null,
-                        int finalStage = 0, string? endingId = null, bool finalRegion = false)
+                        int finalStage = 0, string? endingId = null, bool finalRegion = false, float lifeSeconds = 0f)
         {
             Screen = screen; Prologue = prologue; RegionId = regionId; BossId = bossId;
-            FinalStage = finalStage; EndingId = endingId; FinalRegion = finalRegion;
+            FinalStage = finalStage; EndingId = endingId; FinalRegion = finalRegion; LifeSeconds = lifeSeconds;
         }
     }
 
@@ -64,6 +67,22 @@ namespace BloodRain.Core.World
             { BgmScreen.Yeonmu, "bgm_yeonmu" },
             { BgmScreen.Settle, "bgm_settle" },
         };
+
+        /// <summary>격해진 벌 곡 id 끝에 붙는 말.</summary>
+        public const string IntenseSuffix = "_intense";
+
+        /// <summary>TrackId 에 격해진 벌 규칙까지(rule 이 null 이면 기본 벌만). 서 있는 지역 곡이고 그 지역에 격해진 벌이 있고 10분이 지났으면 '_intense'.</summary>
+        public static string TrackId(in BgmState s, BgmRulesDef? rule)
+        {
+            string id = TrackId(s);
+            if (rule == null || rule.IntenseAfterSeconds <= 0f || s.Screen != BgmScreen.Life || s.Prologue || s.FinalRegion
+                || s.BossId != null || s.FinalStage > 0 || s.RegionId == null) return id;
+            return s.LifeSeconds >= rule.IntenseAfterSeconds && rule.IntenseRegions.Contains(s.RegionId) ? id + IntenseSuffix : id;
+        }
+
+        /// <summary>격해진 벌을 뗀 곡 id.</summary>
+        public static string BaseTrack(string trackId) =>
+            trackId.EndsWith(IntenseSuffix, StringComparison.Ordinal) ? trackId.Substring(0, trackId.Length - IntenseSuffix.Length) : trackId;
 
         /// <summary>지금 틀 곡 id. 우선순위: 종장 단계 → 봉마곡(혈영 행렬) → 땅의 주인 싸움 → 서장 → 서 있는 지역.</summary>
         public static string TrackId(in BgmState s)
@@ -112,10 +131,12 @@ namespace BloodRain.Core.World
         public BgmChange? Tick(float dt, in BgmState state, bool breakthrough = false)
         {
             if (dt < 0) throw new ArgumentOutOfRangeException(nameof(dt));
-            string want = Bgm.TrackId(state);
+            string want = Bgm.TrackId(state, _rule);
             if (Current == null) return Switch(want, _rule.QuickFadeSeconds);
             if (want == Current) { _pending = null; return null; }
             if (breakthrough) return null;
+            // 같은 지역의 기본 ↔ 격해진 벌: 기다리지 않고 intenseFadeSeconds
+            if (Bgm.BaseTrack(want) == Bgm.BaseTrack(Current)) return Switch(want, _rule.IntenseFadeSeconds);
             if (!IsRegionTrack(Current) || !IsRegionTrack(want)) return Switch(want, _rule.QuickFadeSeconds);
             if (_pending != want) { _pending = want; _held = 0; }
             _held += dt;
