@@ -1642,6 +1642,7 @@ function update(dt) {
   for (let i = G.zones.length - 1; i >= 0; i--) { const z = G.zones[i]; z.delay -= dt; if (z.delay <= 0) { G.zones.splice(i, 1); z.apply(); } }
 
   foeShotsStep(dt);   // 고유 적이 쏜 탄(WP-13c)
+  regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
   // 적
   rebuildGrid();
   const freezeOn = G.freeze > 0; G.freeze = Math.max(0, G.freeze - dt);
@@ -1942,6 +1943,7 @@ function pickup(dr) {
 }
 
 function gainXp(v) {
+  if (GIMW.poisonFog && G.fogs && G.fogs.length && inFogW(G.player.x, G.player.y)) v *= GIMW.poisonFog.qiMultiplier;   // 독안개 안 진기 2배(WP-13b)
   G.xp += v * G.xpMult * G.stats.growth;
   while (G.xp >= xpReq(G.level)) { G.xp -= xpReq(G.level); G.level++; G.pendingLevels++; }
 }
@@ -2420,7 +2422,7 @@ const HOME_M = HOME_REG ? [HOME_REG.pos[0] * WD.widthMeters, HOME_REG.pos[1] * W
 const toLocal = ([x, y]) => [x * WD.widthMeters - HOME_M[0], y * WD.heightMeters - HOME_M[1]];
 const CH_LAND = (WD.land || []).map(toLocal), CH_RIVERS = (WD.rivers || []).map(r => r.map(toLocal));
 // 봉마곡(final)은 봉인석이 모이기 전엔 보이면 안 되니 지명을 그리지 않는다(천하 시안과 같음)
-const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, x, y }; });
+const CH_REGS = (DATA.regions || []).filter(r => !r.final).map(r => { const [x, y] = toLocal(r.pos); return { id: r.id, nameKo: r.nameKo, hanja: r.hanja, chapter: r.chapter, gimmicks: r.gimmicks || [], x, y }; });
 // 소품(WP-12): 천하 시안의 buildProps·propSprite 를 글자 그대로 옮긴 것(같은 시드라 같은 자리에 같은 나무·집·탑·산).
 // 시안 쪽을 고치면 여기도 같이 고친다 — CheonhaLandTests 가 두 판의 본문이 같은지 본다. 좌표는 중원 한 장 절대 미터.
 const CH_PROP = (() => {
@@ -2659,6 +2661,45 @@ function drawLocalFx() {
     }
   }
 }
+// 지역 기믹 둘(WP-13b 첫 조각, 천하 시안 regionGimmicks 와 같은 규칙, gimmicks.json 값 그대로 m):
+// 독안개(당가타) — 한 생 시계로 firstSpreadSeconds 에 처음, 그 뒤 periodSeconds 마다 그 땅에 서 있으면 내 둘레 6m(시안 LD.fogOffset) 안에서 샘이 터져
+// spread·hold·fade 동안 반경 radius. 안에선 최대 기혈 healthLossPerSecond 씩 빠지고(적도, 땅의 주인은 bossImmune) 얻는 진기 qiMultiplier 배.
+// 낙석(화산) — periodSeconds 마다 내 둘레 ±scatter 안 count 곳에 그림자, telegraphSeconds 뒤 반경 radius 를 친다. 나는 최대 기혈 비율(경공 중엔 피함), 잡몹은 깔리고 정예·보스는 최대 기혈 비율.
+const GIMW = DATA.gimmicks || {};
+const hereHas = id => { const r = G.chRegion && CH_REGS.find(x => x.id === G.chRegion); return !!(r && r.gimmicks.includes(id)); };
+function fogR(f) { const g = GIMW.poisonFog, t = G.t - f.t0, q = t < g.spreadSeconds ? t / g.spreadSeconds : t < g.spreadSeconds + g.holdSeconds ? 1 : 1 - (t - g.spreadSeconds - g.holdSeconds) / g.fadeSeconds; return g.radius * clamp(q, 0, 1); }
+function inFogW(x, y) { for (const f of G.fogs || []) if (Math.hypot(x - f.x, y - f.y) <= fogR(f)) return true; return false; }
+function regionGimmicksStep(dt) {
+  if (!SCALE_MODE || isPro()) return;
+  const p = G.player, fg = GIMW.poisonFog, fr = GIMW.fallingRocks;
+  if (!G.fogs) { G.fogs = []; G.rocks = []; G.fogNext = fg ? fg.firstSpreadSeconds : Infinity; }
+  if (fg && G.t >= G.fogNext) {
+    G.fogNext += fg.periodSeconds;
+    if (hereHas(fg.id)) { const a = rand(0, TAU), d = rand(0, 6); G.fogs.push({ x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, t0: G.t }); toast(fg.nameKo, '안에선 기혈이 빠지고 얻는 진기는 두 배'); }
+  }
+  if (fg && G.fogs.length) {
+    G.fogs = G.fogs.filter(f => G.t - f.t0 < fg.spreadSeconds + fg.holdSeconds + fg.fadeSeconds);
+    if (inFogW(p.x, p.y) && !G.won && !G.demo) p.hp -= p.maxHp * fg.healthLossPerSecond * dt * (G.easy ? 0.5 : 1);
+    for (const e of G.enemies) if (!e.dead && !(e.boss && fg.bossImmune) && inFogW(e.x, e.y)) { e.hp -= e.maxHp * fg.healthLossPerSecond * dt; if (e.hp <= 0) killEnemy(e); }
+  }
+  if (fr && fr.periodSeconds > 0 && hereHas(fr.id) && Math.floor(G.t / fr.periodSeconds) > Math.floor(Math.max(0, G.t - dt) / fr.periodSeconds))
+    for (let i = 0; i < fr.count; i++) G.rocks.push({ x: p.x + rand(-1, 1) * fr.scatter, y: p.y + rand(-1, 1) * fr.scatter, r: fr.radius, t: fr.telegraphSeconds, life: fr.telegraphSeconds });
+  for (const r of G.rocks) {
+    r.t -= dt; if (r.t > 0) continue;
+    addEffect('burst', r.x, r.y, { r: r.r, color: '#5A5048' });
+    if (p.dashT <= 0 && Math.hypot(p.x - r.x, p.y - r.y) <= r.r && !G.won && !G.demo) p.hp -= p.maxHp * fr.playerDamageMaxHealthRatio * (G.easy ? 0.5 : 1);
+    for (const e of G.enemies) {
+      if (e.dead || Math.hypot(e.x - r.x, e.y - r.y) > r.r) continue;
+      if (!e.boss && !e.elite) { killEnemy(e); continue; }
+      e.hp -= e.maxHp * fr.eliteDamageMaxHealthRatio; e.flash = 0.12; if (e.hp <= 0) killEnemy(e);
+    }
+  }
+  G.rocks = G.rocks.filter(r => r.t > 0);
+}
+function drawRegionGimmicks() {
+  for (const f of G.fogs || []) { const R = fogR(f) * PPM; if (R < 1) continue; const g = ctx.createRadialGradient(wx(f.x), wy(f.y), 0, wx(f.x), wy(f.y), R); g.addColorStop(0, 'rgba(90,130,60,0.30)'); g.addColorStop(1, 'rgba(90,130,60,0.05)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(f.x), wy(f.y), R, 0, TAU); ctx.fill(); }
+  for (const r of G.rocks || []) { const q = 1 - r.t / r.life; ctx.fillStyle = `rgba(26,26,26,${0.12 + 0.3 * q})`; ctx.beginPath(); ctx.ellipse(wx(r.x), wy(r.y), r.r * PPM * (0.4 + 0.6 * q), r.r * PPM * 0.6 * (0.4 + 0.6 * q), 0, 0, TAU); ctx.fill(); }
+}
 function drawCheonha() {
   if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;
   const lv = Math.log(G.viewD), aRiver = clamp((lv - Math.log(70)) / (Math.log(220) - Math.log(70)), 0, 1);
@@ -2739,6 +2780,7 @@ function render() {
     g.addColorStop(0, w.evolved ? 'rgba(201,162,39,0.10)' : 'rgba(80,120,60,0.06)'); g.addColorStop(1, w.evolved ? 'rgba(90,40,110,0.22)' : 'rgba(60,110,70,0.20)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(p.x), wy(p.y), w.auraR * PPM, 0, TAU); ctx.fill();
   }
+  drawRegionGimmicks();   // 독안개·낙석 그림자(WP-13b)
   drawLocalFx();   // 고유 적 탄·독기·돌진 예고(WP-13c)
   // 적
   for (const e of G.enemies) {
