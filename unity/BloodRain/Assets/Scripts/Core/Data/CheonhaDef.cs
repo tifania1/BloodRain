@@ -370,5 +370,10 @@ namespace BloodRain.Core.Data
         public int TrueEndingManuscripts;
     }
 
-    public sealed class BloodmoonDef { public float EnemyHealth; public float EnemySpeed; public float Rewards; public bool ManuscriptsOnlyHere; }
+    public sealed class BloodmoonDef
+    {
+        public float EnemyHealth; public float EnemySpeed; public float Rewards; public bool ManuscriptsOnlyHere;
+        /// <summary>은빛 등롱 하나를 부술 때 의서가 나올 확률(R4-08 0.15).</summary>
+        public float ManuscriptChance;
+    }
 }

@@ -434,6 +434,13 @@ namespace BloodRain.Core.Meta
         /// <summary>진엔딩 조건 하나: 의서를 trueEndingManuscripts 권 이상 모았다.</summary>
         public bool TrueEndingManuscriptsMet => Manuscripts >= C.Cycle.TrueEndingManuscripts;
 
+        /// <summary>목 노인 진엔딩 대화에서 열린 줄 수(R4-08): 의서 한 권마다 한 줄, 일곱 권이면 일곱 줄 다.</summary>
+        public int MokManuscriptLinesOpen => Math.Min(Manuscripts, C.Cycle.TrueEndingManuscripts);
+
+        /// <summary>목 노인 대화를 끝까지 보았나: 일곱째 줄(trueEndingManuscripts 번째)까지 본 수가 linesSeen 이면.
+        /// TrueEndingMet 등의 mokTalkDone 에 이 값을 넘긴다. 본 줄 수를 혼에 남기는 것은 대화 줄이 들어올 때(backlog R4-08 진행).</summary>
+        public bool MokTalkDone(int linesSeen) => Math.Min(linesSeen, MokManuscriptLinesOpen) >= C.Cycle.TrueEndingManuscripts;
+
         /// <summary>진엔딩 조건 셋(의서·종장 문파 수·목 노인 대화)을 다 채웠나. 목 노인 대화를 끝까지 봤는지는 대사 쪽(InnDialogue)이 알려 준다.
         /// 싸움 뒤(EndLife 다음) 기준. 싸움 도중 FinalFight.CheckTrueEnding 에는 TrueEndingMetDuringFinal 을 넘긴다.</summary>
         public bool TrueEndingMet(bool mokTalkDone) => mokTalkDone && TrueEndingManuscriptsMet && TrueEndingSectsMet;
@@ -845,6 +852,13 @@ namespace BloodRain.Core.Meta
         /// <summary>이번 생에 의서가 나오나. 의서는 혈월 천하 은빛 등롱에서만(5·7장, cheonha.json cycle.bloodmoon.manuscriptsOnlyHere).
         /// 1회차면 false 라 Presentation 이 은빛 등롱을 놓지 않는다.</summary>
         public bool ManuscriptsHere { get; }
+
+        /// <summary>은빛 등롱을 부쉈다: 의서가 나오는 생이면 cycle.bloodmoon.manuscriptChance(15%)로 의서 한 권(R4-08). 나왔으면 true.</summary>
+        public bool BreakSilverLantern(Random rng)
+        {
+            if (!ManuscriptsHere) return false;
+            return rng.NextDouble() < _c.Cycle.Bloodmoon.ManuscriptChance && FindManuscript();
+        }
 
         /// <summary>은빛 등롱에서 의서가 나왔다. 의서가 안 나오는 생이면 세지 않고 false(QA-02).</summary>
         public bool FindManuscript()

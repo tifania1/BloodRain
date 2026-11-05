@@ -407,6 +407,34 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1, s.Manuscripts);
         }
 
+        [Fact] public void 은빛_등롱_하나에_의서_15퍼센트_목_노인은_한_권에_한_줄()
+        {
+            Assert.Equal(0.15f, C.Cycle.Bloodmoon.ManuscriptChance, 3);
+            Assert.Contains("15% 확률로 '단목현의 의서'", TestData.ReadRepoFile("docs", "design", "gdd.md"));
+            var s = Rich();
+            s.Regress();
+            var moon = s.BeginLife(Body("wudang"));
+            var rng = new Random(7);
+            int found = 0;
+            for (int i = 0; i < 4000; i++) if (moon.BreakSilverLantern(rng)) found++;
+            Assert.InRange(found / 4000f, 0.13f, 0.17f);
+            Assert.Equal(found, moon.Manuscripts);
+            s.EndLife(moon.Finish("fallen", 0));
+            Assert.Equal(C.Cycle.TrueEndingManuscripts, s.MokManuscriptLinesOpen);   // 일곱 줄까지만
+            Assert.True(s.MokTalkDone(7));
+            Assert.False(s.MokTalkDone(6));
+            Assert.Equal(0, Rich().MokManuscriptLinesOpen);
+            Assert.False(Rich().MokTalkDone(7));                                   // 의서 없이 본 줄은 없다
+        }
+
+        [Fact] public void 일회차_은빛_등롱엔_의서가_없다()
+        {
+            var soul = new Soul(_d);
+            var life = soul.BeginLife(Rebirth.Prologue(_d));
+            var rng = new Random(1);
+            for (int i = 0; i < 100; i++) Assert.False(life.BreakSilverLantern(rng));
+        }
+
         /// <summary>회귀해 혈월 천하에서 의서 하나를 주운 혼까지 저장한다.</summary>
         [Fact] public void 저장_문자열로_내보내고_읽으면_같은_혼이다()
         {
