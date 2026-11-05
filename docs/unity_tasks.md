@@ -78,7 +78,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 본 것으로 남길 것: Dealt 는 남은 기혈을 넘긴 몫도 센다(웹 시안은 뺌). 막대가 어색하면 EnemyField.Damage 쪽에서 깎을지 적는다
   - 찍기: `docs/unity_shots/LF-03/` 의 `settlement_damage.png`
 
-- [ ] V-04d 웹 빌드에서 붓 획 한 장
+- [x] V-04d 웹 빌드에서 붓 획 한 장 — 2026-11-06 04:40 PC: 심볼 없는 `WebGL 빌드`(46.9MB, 12분)를 GPU 크롬(헤드리스 아님, ANGLE RTX 3080 Ti D3D11, playwright channel=chrome)으로 여니 `null function` 없이 Run 이 돎 — 11-04 멈춤은 다시 안 남. 삼재검법 1단 붓 획(먹 초승달)·비도술 AI 재료·먹 자국이 에디터와 같은 색·자리로 그려짐. 브라우저 콘솔 셰이더 오류는 URP 기본 CoreCopy·HDRDebugView 둘뿐. 본 것: 레벨 1이라 7단 금빛 테두리는 웹에서 못 봄, OnGUI 디버그 줄 한글은 여전히 비어 보임(웹에 글꼴 없음). 찍음 `docs/unity_shots/V-04/webgl.png`
   - 할 것: WebGL 빌드를 로컬로 띄워 삼재검법·AI 재료 무공이 브라우저에서도 에디터와 같은 색·순서로 그려지는지(셰이더가 WebGL2 에서 빠지지 않는지).
   - 쓸 것: V-04 셰이더·머티리얼, `FxSettings`
   - 메뉴: `BloodRain/WebGL 빌드` (WebGLBuild.cs)
