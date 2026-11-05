@@ -61,5 +61,13 @@ namespace BloodRain.Core.Tests
             Assert.Contains("const blink = settings.flash && (", html);
             Assert.Contains("showBoss = !!(G.boss && !G.boss.dead) && settings.bossbar;", html);
         }
+
+        [Fact] public void 멈춤_화면_절기_조합표는_찾은_절기만_보이고_못_맞추는_조합은_흐리게()
+        {
+            var html = Proto;
+            Assert.Contains("found = all.filter(e => seenAwaken.has(e.id))", html);
+            Assert.Contains("(!hw && G.weapons.length >= G.weaponSlots) || (!hp && G.passives.length >= G.passiveSlots)", html);
+            Assert.Contains("synSummaryHtml() + evoTableHtml()", html);
+        }
     }
 }

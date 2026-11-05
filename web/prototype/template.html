@@ -208,6 +208,12 @@ button { touch-action: manipulation; }
 .wdmg summary { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; list-style: none; }
 .wdmg summary::-webkit-details-marker { display: none; }
 .wdmg .dmgline { font: 700 12px var(--font-num); color: var(--ink); }
+.evotab { width: 100%; text-align: left; font-size: 13px; margin-top: 6px; }
+.evotab summary { cursor: pointer; font-weight: 900; }
+.evotab ul { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 3px; }
+.evotab li span { display: inline-block; min-width: 92px; font-weight: 900; }
+.evotab li.have { color: var(--ink); }
+.evotab li.dead { opacity: .4; }
 .luslots { display: grid; gap: 4px; width: 100%; margin-top: 10px; }
 .luslots div { display: flex; gap: 4px; justify-content: center; }
 .luslots span { width: 40px; height: 40px; border: 1.5px solid rgba(26,26,26,.35); display: grid; place-items: center; font: 900 15px var(--font-body); position: relative; background: var(--paper); }
@@ -3796,6 +3802,18 @@ function endRun(won) {
   $('result').hidden = false; focusFirst($('again'));
   showBest();
 }
+// 절기 조합표(12장 '화면 편의 규칙'): 멈춤 화면 탭. 한 번 깨어나 본 절기(seenAwaken, 장경각처럼 계정에 남음)만 이름과 재료를 보이고,
+// 지금 가진 재료는 굵게, 이번 생에 더는 못 맞추는 조합(그 재료가 없는데 그쪽 칸이 다 참)은 흐리게
+function evoTableHtml() {
+  const all = DATA.evolutions.filter(e => W_BY_ID[e.weapon] && P_BY_ID[e.passive]), found = all.filter(e => seenAwaken.has(e.id));
+  const rows = found.map(e => {
+    const hw = G.weapons.find(w => w.id === e.weapon), hp = G.passives.find(q => q.id === e.passive);
+    const dead = (!hw && G.weapons.length >= G.weaponSlots) || (!hp && G.passives.length >= G.passiveSlots) || (hw && hw.evolved);
+    const ing = (has, name, lv) => has ? `<b>${name} Lv${lv}</b>` : name;
+    return `<li class="${dead ? 'dead' : hw || hp ? 'have' : ''}"><span>${e.nameKo}</span>${ing(hw, W_BY_ID[e.weapon].nameKo, hw && hw.lv)} + ${ing(hp, P_BY_ID[e.passive].nameKo, hp && hp.lv)}${hw && hw.evolved ? ' · 깨어남' : ''}</li>`;
+  });
+  return `<details class="evotab"><summary>절기 조합표 · 찾은 절기 ${found.length}/${all.length}</summary>${rows.length ? `<ul>${rows.join('')}</ul>` : '<p class="subtle">아직 깨어나 본 절기가 없다. 무공 Lv8 + 짝 심법이 모이면 그릇에서 깨어난다</p>'}</details>`;
+}
 function togglePause(force) {
   if (!running || (overlay && overlay !== 'pause')) return;
   paused = force != null ? force : !paused;
@@ -3808,7 +3826,7 @@ function togglePause(force) {
       return `<details class="card wdmg"><summary><span class="ic">${GLYPH[w.id]}</span><span><h3>${w.evolved ? EVO_BY_W[w.id].nameKo : d.nameKo} <em>${w.evolved ? '절기' : 'Lv ' + w.lv} · ${ASPECT_KO[d.yinyang]}</em></h3><p class="dmgline">피해 ${Math.round(w.dealt).toLocaleString()} · 초당 ${dps.toFixed(1)} · ${Math.round(w.dealt / dsum * 100)}%</p></span></summary>`
         + `<p>${BEHAVIOR_TEXT[d.behavior]} · 짝 심법 ${P_BY_ID[d.pairPassive].nameKo}${sc ? ` · 진전 ${sc.nameKo}` : ''}${ln.length ? ` · 연환 ${ln.map(l => `「${l.nameKo}」${G.syn.links.has(l.id) ? '(완성)' : ''}`).join(' ')}` : ''}</p></details>`; }).join('')
       + (G.insights.length ? `<p class="subtle">깨달음: ${G.insights.map(id => INSIGHTS.find(i => i.id === id).name).join(', ')}</p>` : '')
-      + synSummaryHtml();
+      + synSummaryHtml() + evoTableHtml();
     $('pause').hidden = false; focusFirst($('resume'));
   } else { overlay = null; $('pause').hidden = true; lastTs = performance.now(); }
 }
