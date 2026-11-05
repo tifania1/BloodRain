@@ -85,5 +85,12 @@ namespace BloodRain.Core.Tests
             Assert.True(close >= 0 && close < live);
             Assert.Contains("!== 'procut'", body);   // 컷이 뜰 때까지 계속 닫는다
         }
+
+        [Fact] public void 프로토타입_일시정지_키는_8장_조작표를_따른다()
+        {
+            // QA-11: 8장 '일시정지·무공 정보 | Esc / Tab'
+            Assert.Contains("| 일시정지·무공 정보 | Esc / Tab |", Gdd);
+            Assert.Contains("e.code === 'Escape' || e.code === 'Tab'", Proto);
+        }
     }
 }

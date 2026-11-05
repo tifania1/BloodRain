@@ -87,7 +87,7 @@ UI 와 웹 판 하나로(2026-11-05 사람: "UI가 다른 뱀서류에 비해 �
 - [ ] WP-14 한 생 흐름을 프로토타입 하나에서: 서장 끝 → 첫 환혼(후보 셋) → 한 생 → 정산 → 침방·연무장 → 다음 생. 먼저: WP-12
 - [ ] WP-15 경지 돌파 연출과 '적 한 덩이'(7장)를 프로토타입에. 먼저: WP-12
 - [ ] WP-16 마무리: 천하 시안은 '천하 지도 보기' 확인용으로 줄이거나 닫고, `tools/web_autocheck.js`·web/prototype README·CLAUDE.md 를 합친 판 기준으로. 먼저: WP-13, WP-14, WP-15
-- [ ] QA-11 문서·코드 어긋남 둘(ui_benchmark.md 끝에서 찾음): 8장은 정진이 '진기 게이지 20'을 준다는데 프로토타입은 `addUlt(20)`(오의 +20), 8장 조작표는 일시정지가 Esc/Tab 인데 프로토타입은 Esc/P. gdd_changes·daily 에서 어느 쪽이 나중 결정인지 찾아 틀린 쪽을 고친다
+- [x] QA-11 2026-11-05 끝 — 둘 다 어긋남이 아니거나 작게 맞춤: 정진의 '진기 게이지'는 5장대로 오의 게이지라 프로토타입 `addUlt(20)` 이 맞음(8장 문장에 괄호로 밝힘). 일시정지는 어느 쪽이 나중인지 기록이 없어(둘 다 한 묶음 커밋) 8장 Esc / Tab 을 따라 프로토타입에 Tab 을 더하고 P 는 남김, 테스트 하나. 문서·코드 어긋남 둘(ui_benchmark.md 끝에서 찾음): 8장은 정진이 '진기 게이지 20'을 준다는데 프로토타입은 `addUlt(20)`(오의 +20), 8장 조작표는 일시정지가 Esc/Tab 인데 프로토타입은 Esc/P. gdd_changes·daily 에서 어느 쪽이 나중 결정인지 찾아 틀린 쪽을 고친다
 
 현지화·스토어(M3 한·영·간체, M2 끝 스토어 페이지)
 - [x] L-01 2026-11-04 — 틀: 데이터 JSON 한국어가 원문, 영어·간체는 `Resources/Data/strings/<lang>.json`(키 = 파일.경로.필드, 목록은 id, 끝의 Ko 뗌, `_` 칸과 한자 칸 빼고 한글 든 문자열만). UI 원문은 `strings/ko.json`(ui. 키, 레벨업 화면 31줄부터). Core `StringCatalog`·`Strings`(없으면 한국어, 그다음 키), Unity `Presentation/Loc`. 원문 496줄. 테스트 `LocalizationTests`: 남는 키는 늘 막고 빠진 키는 `_meta.complete` 갈래만, {0} 자리 같음, 한글 안 남음, 글꼴. 영어는 Noto Serif KR 라틴으로 되고 간체는 KR 로 안 돼 Noto Serif SC(OFL)를 Art/Fonts 에 넣음(12장 글꼴). TMP 대체 글꼴은 unity_tasks L-01b

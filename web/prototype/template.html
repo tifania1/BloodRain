@@ -2702,7 +2702,8 @@ window.addEventListener('keydown', e => {
   if (overlay === 'profirst') { const n = parseInt(e.key, 10); if (n >= 1 && n <= DATA.firstRebirth.length) firstRebirth(DATA.firstRebirth[n - 1].id); return; }
   if (overlay === 'chest') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); closeOverlay('chest'); } return; }
   if (G.awaken) return;
-  if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
+  // 8장 조작표: 일시정지 Esc / Tab(브라우저 포커스 이동은 막음). P 도 그대로 둔다
+  if (e.code === 'Escape' || e.code === 'Tab' || e.code === 'KeyP') { if (e.code === 'Tab') e.preventDefault(); togglePause(); }
   if (overlay) return;
   if (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { e.preventDefault(); doDash(); }
   if (e.code === 'KeyE') useUlt();
