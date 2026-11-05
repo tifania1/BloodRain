@@ -1638,6 +1638,7 @@ function update(dt) {
   }
   for (let i = G.zones.length - 1; i >= 0; i--) { const z = G.zones[i]; z.delay -= dt; if (z.delay <= 0) { G.zones.splice(i, 1); z.apply(); } }
 
+  foeShotsStep(dt);   // 고유 적이 쏜 탄(WP-13c)
   // 적
   rebuildGrid();
   const freezeOn = G.freeze > 0; G.freeze = Math.max(0, G.freeze - dt);
@@ -1665,7 +1666,9 @@ function update(dt) {
       else { vx = e.ax * dash.speed; vy = e.ay * dash.speed; e.timer -= dt; if (e.timer <= 0) { e.state = 0; e.timer = rand(dash.restMin, dash.restMax); } }
     } else if (e.behavior === 'flee') {
       vx = -dx * e.speed; vy = -dy * e.speed; if (e.life > E_BY_ID[e.type].lifeSeconds) e.dead = true;
-    } else { vx = dx * e.speed; vy = dy * e.speed; }
+    } else if (LOCAL_BEH[e.behavior]) [vx, vy] = LOCAL_BEH[e.behavior](e, dt, dx, dy, d);
+    else { vx = dx * e.speed; vy = dy * e.speed; }
+    if (e.roarT > 0) { vx *= 1 + (e.roarBonus || 0); vy *= 1 + (e.roarBonus || 0); }   // 혈사자 포효(WP-13c)
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
     e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
@@ -2526,6 +2529,75 @@ function localFoe() {
   let share = 0; for (const b of DATA.lifeLocalShare || []) if (G.gm >= b.fromMinute) share = b.share;
   return Math.random() < share ? list[Math.floor(Math.random() * list.length)] : null;
 }
+// 고유 적 동작 넷(WP-13c): 천하 시안 localBehavior 와 같은 규칙을 1장 프로토타입 적 틀에 맞춰(거리·속도는 enemies.json 그대로 m, 축척 곱 없음 —
+// 프로토타입 적은 1m 크기 그대로라서). 독인 독기(poison_aura, 당가 몸이면 안 받음은 이 판에 문파가 없어 뺌), 매화검귀 꽃잎 탄·설인 얼음덩이(petal_shot·ice_throw),
+// 혈사자 예고 돌진 뒤 포효(charge_roar: 둘레 적 걸음 +auraBonus 를 roarSeconds 동안). 피해는 그 적 접촉 피해가 분에 따라 커진 몫을 같이 받는다.
+// 남은 동작(water_pull·hook_bind·twin_revive·snake_line·spear_line·flank_pack·mimic)은 아직 그냥 쫓아온다.
+const dmgScale = e => e.dmg / (E_BY_ID[e.type].contactDamage || 1);
+const LOCAL_BEH = {
+  poison_aura(e, dt, dx, dy, d) {
+    const D = E_BY_ID[e.type];
+    if (d < D.zoneRadius + 0.4 && !G.won && !G.demo) G.player.hp -= D.zoneDamagePerSecond * dmgScale(e) * dt * (G.easy ? 0.5 : 1);
+    return [dx * e.speed, dy * e.speed];
+  },
+  petal_shot(e, dt, dx, dy, d) { return LOCAL_BEH.ice_throw(e, dt, dx, dy, d); },
+  ice_throw(e, dt, dx, dy, d) {
+    const D = E_BY_ID[e.type], sh = D.shoot;
+    e.cd = (e.cd == null ? sh.interval * Math.random() : e.cd) - dt;
+    if (e.cd <= 0 && d < sh.range) {
+      e.cd = sh.interval;
+      const n = Math.max(1, sh.count || 1), sp = (sh.spread || 0) * Math.PI / 180, a0 = Math.atan2(dy, dx);
+      for (let i = 0; i < n; i++) {
+        const a = n === 1 ? a0 : a0 - sp / 2 + sp * i / (n - 1);
+        G.foeShots.push({ x: e.x, y: e.y, vx: Math.cos(a) * sh.speed, vy: Math.sin(a) * sh.speed, left: sh.range, r: sh.radius, dmg: (D.projectileDamage || 0) * dmgScale(e), src: e, petal: D.behavior === 'petal_shot' });
+      }
+    }
+    return [dx * e.speed, dy * e.speed];
+  },
+  charge_roar(e, dt, dx, dy, d) {
+    const D = E_BY_ID[e.type], ds = D.dash;
+    if (e.cd == null) e.cd = rand(ds.restMin, ds.restMax);
+    if (e.lunge) {
+      e.lunge.t -= dt;
+      if (e.lunge.t <= 0) {   // 돌진이 끝나면 포효: 둘레 적이 roarSeconds 동안 빨라진다
+        e.lunge = null; addEffect('ring', e.x, e.y, { r: D.auraRadius, color: '#B3261E', life: 0.5 });
+        for (const o of G.enemies) if (!o.dead && !o.boss && o !== e && Math.hypot(o.x - e.x, o.y - e.y) <= D.auraRadius) { o.roarT = D.roarSeconds; o.roarBonus = D.auraBonus; }
+        return [0, 0];
+      }
+      return [e.lunge.vx, e.lunge.vy];
+    }
+    if (e.lungeWind > 0) {
+      e.lungeWind -= dt;
+      if (e.lungeWind <= 0) e.lunge = { vx: Math.cos(e.lungeA) * ds.speed, vy: Math.sin(e.lungeA) * ds.speed, t: ds.seconds };
+      return [0, 0];
+    }
+    if ((e.cd -= dt) <= 0 && d < ds.range) { e.cd = D.telegraph + ds.seconds + rand(ds.restMin, ds.restMax); e.lungeWind = D.telegraph; e.lungeA = Math.atan2(dy, dx); return [0, 0]; }
+    return [dx * e.speed, dy * e.speed];
+  },
+};
+function foeShotsStep(dt) {
+  const p = G.player; if (!G.foeShots) G.foeShots = [];
+  for (const e of G.enemies) if (e.roarT > 0) e.roarT -= dt;   // 포효 걸음 몫은 아래 걸음 곱에서
+  for (const b of G.foeShots) {
+    const step = Math.hypot(b.vx, b.vy) * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.left -= step;
+    if (Math.hypot(p.x - b.x, p.y - b.y) < b.r + 0.4) { hurtPlayer(b.dmg, b.src); b.left = 0; }
+  }
+  G.foeShots = G.foeShots.filter(b => b.left > 0);
+}
+function drawLocalFx() {
+  for (const b of G.foeShots || []) {
+    ctx.fillStyle = b.petal ? 'rgba(200,90,110,0.85)' : 'rgba(170,200,215,0.9)';
+    ctx.beginPath(); ctx.arc(wx(b.x), wy(b.y), Math.max(2, b.r * PPM), 0, TAU); ctx.fill();
+  }
+  for (const e of G.enemies) {
+    if (e.dead) continue;
+    if (e.behavior === 'poison_aura') { const R = E_BY_ID[e.type].zoneRadius * PPM; ctx.fillStyle = 'rgba(80,120,60,0.16)'; ctx.beginPath(); ctx.arc(wx(e.x), wy(e.y), R, 0, TAU); ctx.fill(); }
+    else if (e.lungeWind > 0) {   // 돌진 예고: 갈 방향으로 붉은 선
+      const L = E_BY_ID[e.type].dash.speed * E_BY_ID[e.type].dash.seconds;
+      ctx.strokeStyle = 'rgba(179,38,30,0.55)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx(e.x), wy(e.y)); ctx.lineTo(wx(e.x + Math.cos(e.lungeA) * L), wy(e.y + Math.sin(e.lungeA) * L)); ctx.stroke();
+    }
+  }
+}
 function drawCheonha() {
   if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;
   const lv = Math.log(G.viewD), aRiver = clamp((lv - Math.log(70)) / (Math.log(220) - Math.log(70)), 0, 1);
@@ -2606,6 +2678,7 @@ function render() {
     g.addColorStop(0, w.evolved ? 'rgba(201,162,39,0.10)' : 'rgba(80,120,60,0.06)'); g.addColorStop(1, w.evolved ? 'rgba(90,40,110,0.22)' : 'rgba(60,110,70,0.20)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(p.x), wy(p.y), w.auraR * PPM, 0, TAU); ctx.fill();
   }
+  drawLocalFx();   // 고유 적 탄·독기·돌진 예고(WP-13c)
   // 적
   for (const e of G.enemies) {
     let sq = 1, lift = 0;

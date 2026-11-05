@@ -70,6 +70,9 @@ namespace BloodRain.Core.Tests
             // 다른 땅 고유 적은 한 생 비율(chapters.json life.localShare)을 빌드가 넣은 값으로 섞는다
             Assert.Contains("DATA.lifeLocalShare", proto);
             Assert.Contains("spawnEnemy(localFoe() || pickType(", proto);
+            // 고유 적 동작 넷은 enemies.json 값(zoneRadius·shoot·dash·auraBonus)을 읽는다
+            foreach (var key in new[] { "D.zoneDamagePerSecond", "sh.interval", "ds.restMin", "D.auraBonus", "else if (LOCAL_BEH[e.behavior])" })
+                Assert.Contains(key, proto);
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
             Assert.Contains("\"land\", \"rivers\"", build);
         }
