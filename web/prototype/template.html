@@ -2977,12 +2977,28 @@ function renderInn() {
   rf.innerHTML = `<b>모두 돌려받기</b><span>${m.spent ? '기 ' + m.spent.toLocaleString() + ' 환불' : '찍은 것 없음'}</span>`;
   rf.onclick = innRefund; tb.appendChild(rf);
 }
+// 대표 인물 마당 줄(21장, Core InnDialogue.YardLine): 그 문파로 태어나면 대표 인물이 한 줄. 합류 전이면 yardUnknown, 뒤면 yardKnown(합류는 땅의 주인을 쓰러뜨려야 해서
+// 이 판엔 아직 없다 — 혼 기록 joined 를 보기만 한다). 그 칸 처음은 0번, 그 뒤 무작위. 모를 때 줄이 없는 문파는 yardKnown 으로(혈월 줄은 회차가 없는 이 판엔 안 씀).
+// 여자 몸이면 sister 칸('사매')으로 바꿔 쓴다
+const LEADER_BY = Object.fromEntries((DATA.leaders || []).map(l => [l.id, l]));
+function yardLine(body) {
+  const l = body && body.leader && LEADER_BY[body.leader]; if (!l) return null;
+  const m = innMeta(); m.seen = Array.isArray(m.seen) ? m.seen : [];
+  const pick = kind => { const key = `yard.${l.id}.${kind}`; if (!m.seen.includes(key)) { m.seen.push(key); return kind + '.0'; } return kind + '.' + Math.floor(Math.random() * l[kind].length); };
+  const joined = Array.isArray(m.joined) && m.joined.includes(l.id);
+  const slot = !joined && (l.yardUnknown || []).length ? pick('yardUnknown') : (l.yardKnown || []).length ? pick('yardKnown') : null;
+  if (!slot) return null;
+  soulSave(m);
+  const [kind, i] = slot.split('.');
+  const text = body.female && l.sister && l.sister[slot] ? l.sister[slot] : l[kind][+i];
+  return { name: SPK[l.id] || (DATA.characters.find(c => c.id === l.id) || {}).nameKo || l.id, text, slot };
+}
 function chooseLife(i) {
   if (overlay !== 'inn' || !innCands[i]) return;
   const m = innMeta(), said = talkPick(m, innCands[i]); soulSave(m);
   NEXT_LIFE = innCands[i]; $('inn').hidden = true; overlay = null;
   startRun('full');
-  for (const l of said) toast('목 노인', l.textKo);   // 고른 뒤 줄은 새 생 첫 화면에 자막으로
+  if (said.length) toast('목 노인', said.map(l => l.textKo).join(' '));   // 고른 뒤 줄은 새 생 첫 화면에 자막 하나로(자막 줄은 넷까지라 마당 줄이 밀리지 않게)
 }
 // 고유 적(WP-13c 첫 조각): 축척 모드에서 1장 밖 땅에 서면 chapters.json life.localShare(분 → 비율)만큼 그 땅 고유 적을 섞는다.
 // 동작은 LOCAL_BEH, 그림은 아직 혈무사 자리 표시(sprOf).
@@ -3653,7 +3669,7 @@ function startRun(mode) {
   renderSlots(); lastTs = performance.now();
   cancelAnimationFrame(rafId); rafId = requestAnimationFrame(frame);
   if (isPro()) { toast('서장 · 백중의 비', '청운진 객잔 마당. 움직이면 무공은 알아서 나간다'); cue('start', 'start_reply'); }
-  else if (G.body) { const r = CH_REGS.find(x => x.id === G.body.region); toast(`${G.body.nameKo} 제자`, `${r ? r.nameKo : ''}에서 눈을 떴다 · 시작 무공 ${W_BY_ID[G.weapons[0].id].nameKo}`); }
+  else if (G.body) { const r = CH_REGS.find(x => x.id === G.body.region); toast(`${G.body.nameKo} ${G.body.female ? '여제자' : '제자'}`, `${r ? r.nameKo : ''}에서 눈을 떴다 · 시작 무공 ${W_BY_ID[G.weapons[0].id].nameKo}`); const y = yardLine(G.body); if (y) toast(y.name, y.text); }
   else toast('숭산 소림', '천년고찰에 목탁 소리가 끊겼다');
 }
 // 한 걸음: 각성 중이면 연출 시계를 먼저 돌리고, 세상은 그 배율로 느리게 간다

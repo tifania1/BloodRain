@@ -62,5 +62,13 @@ namespace BloodRain.Core.Tests
             Assert.Contains("Math.round(orbQi + visits.length * QI.firstVisitRegion + realms.length * QI.firstReachRealm)", Sian);
             Assert.Contains("__hyeolu.prologueEnd(900, 'ilryu')", ReadRepoFile("tools", "web_autocheck.js"));
         }
+
+        [Fact] public void 대표_인물_마당_줄은_처음_0번이고_여자_몸이면_사매_칸()
+        {
+            Assert.Contains("\"leaders\": [{k: l.get(k) for k in (\"id\", \"sect\", \"yardUnknown\", \"yardKnown\", \"sister\")}", ReadRepoFile("tools", "build_web_prototype.py"));
+            var html = Proto;
+            Assert.Contains("if (!m.seen.includes(key)) { m.seen.push(key); return kind + '.0'; }", html);
+            Assert.Contains("body.female && l.sister && l.sister[slot] ? l.sister[slot] : l[kind][+i]", html);
+        }
     }
 }
