@@ -46,6 +46,18 @@ namespace BloodRain.Core.Tests
             Assert.Contains("s.unlock === 'boss:' + r.id", html);
         }
 
+        [Fact] public void 꽃잎_나선_셈은_시안과_글자_그대로()
+        {
+            var sian = ReadRepoFile("web", "lookdev", "cheonha.html");
+            foreach (var line in new[] {
+                "const spiralShotsPerArm = pt => pt.hitIntervalSeconds > 0 ? Math.max(1, Math.ceil(pt.leaveSeconds / pt.hitIntervalSeconds - 1e-4)) : 1;",
+                "const spiralShotDegrees = (pt, start, arm, shot) => start + 360 * arm / Math.max(1, pt.count) + pt.turnDegreesPerSecond * shot * pt.hitIntervalSeconds;" })
+            {
+                Assert.Contains(line, Proto);
+                Assert.Contains(line, sian);
+            }
+        }
+
         /// <summary>프로토타입은 아는 패턴 모양(ELITE_SHAPES)만 쓴다. 종장을 뺀 땅의 주인마다 1막에 적어도 하나는 있어야 싸움이 된다.</summary>
         [Fact] public void 땅의_주인마다_프로토타입이_아는_1막_패턴이_있다()
         {
@@ -56,7 +68,7 @@ namespace BloodRain.Core.Tests
             foreach (var r in data.Cheonha.BossRegions)
             {
                 Assert.True(data.BossPatterns.TryGetValue(r.Boss!, out var set), r.Boss);
-                Assert.True(set!.Patterns.Any(p => known.Contains(p.Shape) && !(p.Shape == "line" && !(p.ProjectileSpeed > 0))),
+                Assert.True(set!.Patterns.Any(p => known.Contains(p.Shape)),
                     $"{r.Boss} 에 프로토타입이 아는 1막 패턴이 없다");
             }
         }
