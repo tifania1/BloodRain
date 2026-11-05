@@ -278,8 +278,10 @@ button { touch-action: manipulation; }
         <button class="b" id="demobtn" type="button">절기 각성 보기<small>절정 돌파 직전에서 시작</small></button>
       </div>
       <div class="row">
-        <button class="b" id="shakebtn" type="button">화면 흔들림 100%</button>
-        <button class="b" id="awakebtn" type="button">각성 연출 자동</button>
+        <button class="b" id="shakebtn" type="button" data-set="shake">화면 흔들림 100%</button>
+        <button class="b" id="awakebtn" type="button" data-set="awaken">각성 연출 자동</button>
+        <button class="b" type="button" data-set="flash">깜빡임 켜짐</button>
+        <button class="b" type="button" data-set="bossbar">체력바 보임</button>
       </div>
       <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
       <div class="subtle" id="best"></div>
@@ -352,6 +354,12 @@ button { touch-action: manipulation; }
         <button class="b main" id="resume" type="button" data-s="ui.pause.resume">계속하기</button>
         <button class="b" id="dexbtn2" type="button">비급 도감</button>
         <button class="b" id="quit" type="button" data-s="ui.pause.quit">객잔으로</button>
+      </div>
+      <div class="row setrow">
+        <button class="b" type="button" data-set="shake"></button>
+        <button class="b" type="button" data-set="awaken"></button>
+        <button class="b" type="button" data-set="flash"></button>
+        <button class="b" type="button" data-set="bossbar"></button>
       </div>
     </div>
   </div>
@@ -752,6 +760,8 @@ const settings = {
   easy: store.get('easy') === true,
   shake: store.get('shake') ?? (REDUCED ? 0 : 1),         // 화면 흔들림 1 / 0.5 / 0
   awaken: store.get('awaken') || 'auto',                  // 각성 연출: auto(그 절기 처음만 길게) / long / short
+  flash: store.get('flash') ?? !REDUCED,                  // 깜빡임(피격 번쩍임) 켜짐/꺼짐(12장 '설정은 일시정지에서도')
+  bossbar: store.get('bossbar') ?? true,                  // 땅의 주인 체력바 보이기(12장)
 };
 // 구운 효과음(SFX-02, Assets/Audio/SFX → 빌드가 lookdev/sfx 에 둠). 있으면 그걸 틀고, 못 읽으면(아티팩트 한 파일 판 등) 아래 발진기 소리.
 // 진기 흡수는 5음 음계 8음을 연속 흡수 때 차례로 올린다(14장). 벌은 5개씩 번갈아.
@@ -1011,8 +1021,8 @@ function newRun(mode) {
   if (LS && mode !== 'prologue' && SCALE_MODE) {
     const reg = CH_REGS.find(r => r.id === LS.region), wd = W_BY_ID[LS.startWeapon];
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
-    G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);
-    { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
+    G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
+    { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
     G.soul0 = soulLoad(); G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
@@ -3442,7 +3452,7 @@ function render() {
   // 적 탄
   for (const pr of G.projs) if (pr.enemy) { ctx.fillStyle = 'rgba(179,38,30,0.85)'; ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(pr.x), wy(pr.y), pr.r * PPM, 0, TAU); ctx.fill(); ctx.stroke(); }
   // 플레이어
-  const blink = p.iframe > 0 || (p.hurt > 0 && Math.floor(p.hurt * 30) % 2 === 0);
+  const blink = settings.flash && (p.iframe > 0 || (p.hurt > 0 && Math.floor(p.hurt * 30) % 2 === 0));   // 깜빡임 끄기(12장)
   drawSprite('player', p.x, p.y, 1, p.fx < 0, false, blink ? 0.55 : 1, 1);
   // 각성 여운: 금빛 기운이 몸에서 피어오른다
   if (G.glow || (G.awaken && G.awaken.t >= G.awaken.P.stamp)) {
@@ -3692,7 +3702,7 @@ function updateHud(dt) {
   $('xpfill').style.width = (G.xp / xpReq(G.level) * 100).toFixed(1) + '%';
   const gs = Math.floor(G.gm * 60), mm = Math.floor(gs / 60), ss = String(gs % 60).padStart(2, '0');
   $('timer').textContent = `${mm}:${ss}`;
-  const bb = $('bossbar'), showBoss = !!(G.boss && !G.boss.dead);
+  const bb = $('bossbar'), showBoss = !!(G.boss && !G.boss.dead) && settings.bossbar;   // 설정에서 끌 수 있다(12장)
   if (bb.hidden === showBoss) bb.hidden = !showBoss;
   if (showBoss) $('bossfill').style.width = (Math.max(0, G.boss.hp / G.boss.maxHp) * 100).toFixed(1) + '%';
   const chR = trackChRegion();
@@ -3929,8 +3939,14 @@ $('demobtn').addEventListener('click', () => { ensureAudio(); startDemo(); });
 $('demolong').addEventListener('click', () => demoReplay(true));
 $('demoshort').addEventListener('click', () => demoReplay(false));
 $('demoquit').addEventListener('click', toTitle);
-$('shakebtn').addEventListener('click', () => { settings.shake = settings.shake === 1 ? 0.5 : settings.shake === 0.5 ? 0 : 1; store.set('shake', settings.shake); syncMute(); });
-$('awakebtn').addEventListener('click', () => { settings.awaken = { auto: 'long', long: 'short', short: 'auto' }[settings.awaken] || 'auto'; store.set('awaken', settings.awaken); syncMute(); });
+// 설정 단추는 제목 화면과 멈춤 화면에 같이 있다(12장 '설정은 일시정지에서도'). data-set 으로 같은 설정을 묶는다
+const SET_TURN = {
+  shake: () => { settings.shake = settings.shake === 1 ? 0.5 : settings.shake === 0.5 ? 0 : 1; store.set('shake', settings.shake); },
+  awaken: () => { settings.awaken = { auto: 'long', long: 'short', short: 'auto' }[settings.awaken] || 'auto'; store.set('awaken', settings.awaken); },
+  flash: () => { settings.flash = !settings.flash; store.set('flash', settings.flash); },
+  bossbar: () => { settings.bossbar = !settings.bossbar; store.set('bossbar', settings.bossbar); },
+};
+for (const b of document.querySelectorAll('[data-set]')) b.addEventListener('click', () => { SET_TURN[b.dataset.set](); syncMute(); });
 $('mutebtn').addEventListener('click', () => { audio.muted = !audio.muted; store.set('muted', audio.muted); syncMute(); });
 $('easybtn').addEventListener('click', () => { settings.easy = !settings.easy; store.set('easy', settings.easy); syncMute(); showBest(); });
 // 전체 화면: 되는 브라우저에서만 버튼을 보인다(아이폰 사파리는 안 됨). 거절돼도 게임은 그대로.
@@ -3948,8 +3964,13 @@ document.addEventListener('fullscreenchange', syncFs); document.addEventListener
 function syncMute() {
   const b = $('mutebtn'); b.textContent = audio.muted ? '소리 꺼짐' : '소리 켜짐'; b.setAttribute('aria-pressed', String(audio.muted));
   const e = $('easybtn'); e.innerHTML = settings.easy ? '난이도 편하게<small>받는 피해 절반</small>' : '난이도 보통<small>기획서 그대로</small>'; e.setAttribute('aria-pressed', String(settings.easy));
-  $('shakebtn').innerHTML = `화면 흔들림 ${Math.round(settings.shake * 100)}%<small>${settings.shake ? '각성·피격 때' : '흔들지 않음'}</small>`;
-  $('awakebtn').innerHTML = { auto: '각성 연출 자동<small>그 절기 처음만 길게</small>', long: '각성 연출 길게<small>매번 3.5초</small>', short: '각성 연출 짧게<small>매번 1.5초</small>' }[settings.awaken];
+  const SET_HTML = {
+    shake: `화면 흔들림 ${Math.round(settings.shake * 100)}%<small>${settings.shake ? '각성·피격 때' : '흔들지 않음'}</small>`,
+    awaken: { auto: '각성 연출 자동<small>그 절기 처음만 길게</small>', long: '각성 연출 길게<small>매번 3.5초</small>', short: '각성 연출 짧게<small>매번 1.5초</small>' }[settings.awaken],
+    flash: settings.flash ? '깜빡임 켜짐<small>맞으면 몸이 번쩍인다</small>' : '깜빡임 꺼짐<small>번쩍이지 않는다</small>',
+    bossbar: settings.bossbar ? '체력바 보임<small>땅의 주인·원각</small>' : '체력바 숨김<small>땅의 주인·원각</small>',
+  };
+  for (const b of document.querySelectorAll('[data-set]')) { b.innerHTML = SET_HTML[b.dataset.set]; if (b.dataset.set === 'flash' || b.dataset.set === 'bossbar') b.setAttribute('aria-pressed', String(!settings[b.dataset.set])); }
 }
 
 // 조이스틱 그리기 (렌더 뒤에 덧그림)

@@ -53,5 +53,13 @@ namespace BloodRain.Core.Tests
             Assert.Contains("dps = w.dealt / Math.max(1, G.t - (w.t0 || 0))", html);
             Assert.Contains("<details class=\"card wdmg\">", html);
         }
+
+        [Fact] public void 설정은_멈춤에서도_깜빡임_끄기와_체력바_끄기()
+        {
+            var html = Proto;
+            Assert.Contains("<div class=\"row setrow\">", html);
+            Assert.Contains("const blink = settings.flash && (", html);
+            Assert.Contains("showBoss = !!(G.boss && !G.boss.dead) && settings.bossbar;", html);
+        }
     }
 }
