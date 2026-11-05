@@ -92,5 +92,22 @@ namespace BloodRain.Core.Tests
                     $"{r.Boss} 에 프로토타입이 아는 1막 패턴이 없다");
             }
         }
+
+
+        [Fact] public void 종장은_봉인석과_경지를_갖추면_깨어나고_혈영_일곱이_차례로()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"finalBoss\": {k: load(\"bosspatterns\")[\"final\"][k] for k in (\"boss\", \"shadows\", \"shadowHealthRatio\")}", build);
+            var html = Proto;
+            // Core BossAwakening.ShouldBeAwake: 봉인석 finalRequires.sealStones 와 경지 finalRequires.realm
+            Assert.Contains("if (sealHeld() < LR.finalRequires.sealStones || realmT < 0 || tierNow() < realmT) return;", html);
+            // Core FinalFight.BaseHealth: 그 보스 기준 체력 × shadowHealthRatio(실제는 healthCurve 를 더 곱함)
+            Assert.Contains("hp = base * FB.shadowHealthRatio * k", html);
+            Assert.Contains("if (next < FB.shadows.length) return finalShadow(r, next, { x: e.x, y: e.y });", html);
+            // 혈영 일곱이 모두 땅의 주인이고 프로토타입이 아는 패턴이 있다
+            var data = Load();
+            Assert.Equal(7, data.FinalBoss.Shadows.Count);
+            Assert.All(data.FinalBoss.Shadows, id => Assert.Contains(data.Cheonha.BossRegions, r => r.Boss == id));
+        }
     }
 }

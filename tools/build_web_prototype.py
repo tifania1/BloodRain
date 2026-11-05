@@ -113,6 +113,9 @@ def data_blob() -> str:
         # 땅의 주인 컷 줄(docs/story/boss_cuts.md): 프로토타입은 만남 첫 줄·2막 예고·처치 첫 줄·혈영 메아리만 알림으로
         "lordLines": {l["id"]: {"cuts": drop_notes(l.get("cuts", [])), "phase2Ko": l.get("phase2Ko"), "echoKo": l.get("echoKo")} for l in load("dialogue")["lords"]["list"]},
         "lordPatterns": {k: drop_notes(v) for k, v in load("bosspatterns")["bosses"].items() if not k.startswith("_") and k != "jang_sam"},
+        # 종장(WP-13e, 6장 '종장 보스', Core FinalFight): 혈영 일곱 차례·혈영 기혈 비율, 봉마곡에 들어설 때 컷 줄
+        "finalBoss": {k: load("bosspatterns")["final"][k] for k in ("boss", "shadows", "shadowHealthRatio")},
+        "finalEnter": [c["lines"][0]["textKo"] for c in load("dialogue")["final"]["enter"]["cuts"] if c.get("lines")],
         # 정산(WP-14c): ?life= 판이 끝나면 10장 윤회의 기 식(Core RebirthQi)으로 셈해 혼 기록에 새긴다
         "rebirthQi": {k: v for k, v in drop_notes(load("cheonha")["rebirthQi"]).items() if k != "targets"},
         # 한 생의 고유 적 비율(WP-13c): 축척 모드에서 다른 땅에 서면 그 땅 고유 적을 이 비율로 섞는다
