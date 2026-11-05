@@ -268,6 +268,7 @@ async function finalRuns(browser, base) {
       if (G.lords[f.id] !== 'down') bad.push(`종장이 안 끝남(${G.lords[f.id]})`);
       // 엔딩 고르기: 1회차는 봉인만 → 컷 끝까지 → 정산, 혼 기록이 회귀(2회차·봉인석 비움)
       localStorage.removeItem('cheonha_meta2');
+      overlay = null; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(id => $(id).hidden = true);   // 싸우는 동안 열린 레벨업은 닫고 본다(게임에선 닫힐 때까지 기다림)
       running = true; endingWhenFree();
       if (overlay !== 'ending') bad.push(`엔딩 화면이 안 열림(${overlay})`);
       const open = [...document.querySelectorAll('#endingcards button:not([disabled])')].length;
@@ -287,7 +288,7 @@ async function finalRuns(browser, base) {
       if (G.manus !== 1) bad.push(`은빛 등롱에서 의서가 안 나옴(${G.manus})`);
       const m2 = soulLoad(); m2.manuscripts = 6; m2.finalClears = { wudang: 1, huashan: 1, kunlun: 1 };
       m2.seen = (m2.seen || []).concat((DATA.mokReturn || []).filter(l => l.when.startsWith('manuscript:')).map(l => 'mok.' + l.id)); soulSave(m2);
-      G.finalClear = true; running = true; endingWhenFree();
+      G.finalClear = true; overlay = null; running = true; endingWhenFree();
       const open2 = [...document.querySelectorAll('#endingcards button:not([disabled])')].length;
       if (open2 !== 3) bad.push(`진엔딩 조건을 채웠는데 열린 엔딩이 ${open2}개`);
       names.push('진엔딩 열림');
