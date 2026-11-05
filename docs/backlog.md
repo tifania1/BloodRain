@@ -76,6 +76,8 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] SFX-08 2026-11-05 — 사람이 Hugging Face 에서 stabilityai/stable-audio-3-small-sfx 약관에 동의함(17:53, 대화 세션이 회사 크롬에서 'You have been granted access to this model' 확인). 모델 파일은 Comfy-Org/stable-audio-3 에서 받는다. 그쪽이 막히면 그때 사람이 읽기 토큰을 만들어 PC API 루프 config.json 의 `hf_token` 칸에 넣는다(세션은 토큰을 만지지 않음)
 - [ ] SFX-09 대표 다섯(검 휘두름·권격·벼락·독안개·혈인 비명)을 SA3 로 소리마다 후보 8개씩 뽑아 SFX-03 도구로 다듬고 SFX-04 페이지에 올려 사람이 듣게. 문구 끝에 'single, dry, close-mic, no music, no reverb tail'. 먼저: SFX-03, SFX-07 (진행: 2026-11-05 시험으로 다섯 소리 4개씩 뽑음. 소리마다 8개·다듬기·듣는 페이지는 아직)
 - [x] SFX-10 2026-11-05 — 사람(17:48): 라이선스를 산 것은 `D:\Jin\sound` 의 `Game_Sound`·`source` 폴더. sfx_sources.md 에서 그 둘과 DayDreamSound(안내문상 어떤 용도로든 사용 가능)만 '씀', 나머지 `효과음…` 폴더는 안 씀
+- [x] SFX-11 2026-11-05 — 층 겹치기 도구 `tools/layer_sfx.py`(sfx_research.md 4절 7): 큐 줄 layers 마다 synth 는 그 자리에서 굽고, ai 는 `<save_dir>/ai/` 후보, record 는 줄의 file 칸. offset_s·gain_db 로 겹쳐 `<id>_mix_NN.wav` 후보를 쓰고 generated 로. 합성 재료 둘: 강시 착지 방울(작은 구리 방울 2~3번, 2350Hz 배음 넷), 각성 파동 범종(숭산 범종과 같은 배음 표). 도구 테스트 4개. 남은 것: SFX-12
+- [ ] SFX-12 층 줄 재료 채우기(PC·사람): ① PC 가 `sfx_enemy_gangsi_land` 쿵을 SA3 로 8개 뽑아 `art_inbox/sfx/sfx_enemy_gangsi_land/ai/` 에(문구는 그 줄 prompt), ② 사람이 `sfx_sources.md` '씀' 묶음에서 큰북 한 방을 골라 `sfx_awaken_wave` 줄 layers 의 file 에 적음. 그 뒤 `python tools/layer_sfx.py` → `postprocess_sfx.py --candidates` → 듣기 페이지. 먼저: SFX-07
 
 UI 와 웹 판 하나로(2026-11-05 사람: "UI가 다른 뱀서류에 비해 좀 불편하다", "서장~원각 판과 천하 시안이 UI·용어·시야가 달라 아예 다른 버전 같다")
 - [x] UI-01 2026-11-05 — 기획서 12장에 '레벨업 카드 규칙'(세 줄)·'화면 편의 규칙'(개선안 2~11) 절을 새로, 화면 목록(레벨업·일시정지·설정)·HUD 표(땅의 주인 체력바)·가독성(투명도 0~100%, 적 예고 위 레이어)을 고침. 새 숫자 둘은 결정 대기로: UI-01a 닫힌 뒤 무적 시간, UI-01b 자동 고르기 순서(decisions #31·32). Unity 화면은 unity_tasks UI-01U. 웹은 UI-02
