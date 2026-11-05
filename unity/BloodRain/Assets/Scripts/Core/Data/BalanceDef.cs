@@ -314,6 +314,27 @@ namespace BloodRain.Core.Data
         public List<LanternDropDef> Lantern = new List<LanternDropDef>();
     }
 
+    /// <summary>보부상 품목 하나(balance.json merchant.items).</summary>
+    public sealed class MerchantItemDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        /// <summary>은자 값.</summary>
+        public int Price;
+        /// <summary>회복약: 최대 기혈의 이 비율만큼 회복. 0 이면 회복 없음.</summary>
+        public float HealFraction;
+        /// <summary>다시 고르기 권: 그 판 다시 고르기 횟수에 더하는 수.</summary>
+        public int Rerolls;
+    }
+
+    /// <summary>보부상(balance.json merchant, 기획서 7장 '보부상').</summary>
+    public sealed class MerchantDef
+    {
+        /// <summary>한 번 들를 때 품목마다 살 수 있는 수.</summary>
+        public int MaxPerVisit = 2;
+        public List<MerchantItemDef> Items = new List<MerchantItemDef>();
+    }
+
     /// <summary>적 상태(balance.json enemyStatus, 기획서 9장 '날아가는 것과 넉백' 아래).</summary>
     public sealed class EnemyStatusDef
     {
@@ -329,6 +350,7 @@ namespace BloodRain.Core.Data
     {
         public EnemyStatusDef EnemyStatus = new EnemyStatusDef();
         public DropsDef Drops = new DropsDef();
+        public MerchantDef Merchant = new MerchantDef();
         public LimitsDef Limits = new LimitsDef();
         public OrbValuesDef Orbs = new OrbValuesDef();
         public OrbPickupDef OrbPickup = new OrbPickupDef();

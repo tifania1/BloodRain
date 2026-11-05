@@ -173,6 +173,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 당가 몸이 독 장판 위에서 기혈이 안 줄고, 곤륜 몸 가까이 온 적이 느려짐
   - 찍기: `docs/unity_shots/R-04U/` 의 `poison_immune.png`
 
+- [ ] RM-05U 보부상 화면 · 먼저: LF-02
+  - 할 것: 생성 디렉터의 보부상 사건(12·24분, 지금은 로그만)에서 시간을 멈추고 보부상 창을 연다. 품목 셋(이름·값·남은 수·지금 은자), 사면 `MerchantVisit.Buy(id, life)`. 결과가 Bought 면 회복약은 `MerchantVisit.PotionHeal(item, 최대 기혈, SectTrait.HealingMultiplier)` 만큼 기혈을 채우고, 취기부는 등롱 취기부와 같은 길(화면 안 구슬 끌기). 다시 고르기 권은 Core 가 `life.Charges` 에 이미 더한다. 은자 모자람·품목 다 삼은 버튼을 흐리게. 닫으면 시간 되돌림.
+  - 쓸 것: Core `Build/Merchant.cs`(MerchantVisit, MerchantBuy), balance.json `merchant`, `life.Silver`, 이름 키 `balance.merchant.items.<id>.name`
+  - 메뉴: 시험 메뉴 `지금 보부상 부르기`(은자 500 넣고 창 열기)를 Run 메뉴 파일에 하나 더
+  - 끝: 500냥으로 회복약 둘을 사면 260냥이 남고 셋째는 안 눌림, 다시 고르기 권을 사면 레벨업 화면 다시 고르기 수가 하나 늚, 콘솔 에러 0
+  - 찍기: `docs/unity_shots/RM-05U/` 의 `merchant.png`
+
 ### C. 돌파·음양·오의·보갑
 
 - [ ] C-07a 경지 돌파를 Life 로, 돌파 보상 얹기 · 먼저: LF-01

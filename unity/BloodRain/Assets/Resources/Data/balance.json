@@ -111,6 +111,15 @@
       { "kind": "silver_bag", "weight": 0.13 }
     ]
   },
+  "merchant": {
+    "_note": "보부상(기획서 7장 '보부상', 12·24분은 chapters.json life 사건). 값은 2026-11-05 사람이 정함(backlog RM-04). 한 번 들를 때 품목마다 maxPerVisit 개까지. 회복약은 최대 기혈 비율(마교 회복 배율은 곱함), 다시 고르기 권은 그 판 다시 고르기 횟수 +rerolls, 취기부는 등롱 취기부와 같은 효과.",
+    "maxPerVisit": 2,
+    "items": [
+      { "id": "potion",          "nameKo": "회복약",       "price": 120, "healFraction": 0.5 },
+      { "id": "reroll_ticket",   "nameKo": "다시 고르기 권", "price": 150, "rerolls": 1 },
+      { "id": "chwigi_talisman", "nameKo": "취기부",       "price": 80 }
+    ]
+  },
   "enemyStatus": {
     "_note": "적 상태(기획서 9장 '날아가는 것과 넉백' 아래). 화상·중독 지속 피해는 burnTickSeconds 마다 초당 피해 x 그 초씩 들어간다. 둔화는 걸린 값에서 초당 slowFadePerSecond 씩 풀린다(독무 안에서는 닿을 때마다 다시 걸림). 웹 프로토타입 값.",
     "burnTickSeconds": 0.5,

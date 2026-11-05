@@ -48,6 +48,8 @@
 | 다시 고르기 | Reroll | 重选 | 선택지 새로 |
 | 행낭 | Satchel | 行囊 | 대체 카드(은자·음식) |
 | 은자 | Silver | 银两 | 판 안 화폐 |
+| 회복약 | Healing Draught | 回复药 | 보부상 품목(기혈 50%) |
+| 다시 고르기 권 | Reroll Token | 重选券 | 보부상 품목(다시 고르기 +1) |
 | 혈정 | Blood Crystal | 血晶 | 메타 화폐 |
 | 보갑(寶匣) | Treasure Chest | 宝匣 | 상자 |
 | 절기 그릇 | Pinnacle Slot | 绝技槽 | 진화 가능 수 |
