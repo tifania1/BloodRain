@@ -78,6 +78,22 @@ namespace BloodRain.Core.Tests
             Assert.Contains("* (1 + (synStats().Greed || 0)) * moonR()", html);
         }
 
+        [Fact] public void 은빛_등롱과_의서와_목_노인_줄이_진엔딩_조건을_채운다()
+        {
+            var html = Proto;
+            // 은빛 등롱은 chapters.json life 이벤트, 혈월 회차에만(Core ManuscriptsHere), 의서 확률은 cycle.bloodmoon.manuscriptChance
+            Assert.Contains("e.kind === 'silver_lantern' ? (Math.random() < (e.chance ?? 1)", html);
+            Assert.Contains("if (G.moon) { const a = rand(0, TAU)", html);
+            Assert.Contains("Math.random() < BM.manuscriptChance", html);
+            Assert.Contains("m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);", html);
+            // 목 노인 의서 줄(manuscript:N)과 '끝까지'(Core MokTalkDone: 본 줄 수 ≥ trueEndingManuscripts)
+            Assert.Contains("kind === 'manuscript' ? (m.manuscripts || 0) >= +a[0]", html);
+            Assert.Contains("(m.seen || []).includes('mok.' + l.id)).length >= END.trueEndingManuscripts;", html);
+            var d = Load();
+            Assert.Equal(d.Cheonha.Cycle.TrueEndingManuscripts,
+                d.Dialogue.Mok.Lines.Count(l => l.When.StartsWith("manuscript:")));
+        }
+
         [Fact] public void 꽃잎_나선_셈은_시안과_글자_그대로()
         {
             var sian = ReadRepoFile("web", "lookdev", "cheonha.html");

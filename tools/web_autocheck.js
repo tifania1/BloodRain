@@ -282,6 +282,15 @@ async function finalRuns(browser, base) {
       if (!G.moon || Math.abs(a.speed - d.speed / 100 * MOVE * BM.enemySpeed) > 1e-6) bad.push(`혈월 배율이 안 붙음(moon ${G.moon})`);
       if (!lifeSettle().rows.some(x => x[0].startsWith('혈월 천하'))) bad.push('혈월 정산 줄 없음');
       names.push('혈월');
+      // 은빛 등롱 → 의서, 진엔딩 조건(의서 7·종장 문파 4·목 노인 의서 줄 끝까지)을 채우면 셋 다 열림
+      const rnd = Math.random; Math.random = () => 0; G.lanterns.push({ x: G.player.x, y: G.player.y, silver: true }); breakLantern(G.lanterns[G.lanterns.length - 1]); Math.random = rnd;
+      if (G.manus !== 1) bad.push(`은빛 등롱에서 의서가 안 나옴(${G.manus})`);
+      const m2 = soulLoad(); m2.manuscripts = 6; m2.finalClears = { wudang: 1, huashan: 1, kunlun: 1 };
+      m2.seen = (m2.seen || []).concat((DATA.mokReturn || []).filter(l => l.when.startsWith('manuscript:')).map(l => 'mok.' + l.id)); soulSave(m2);
+      G.finalClear = true; running = true; endingWhenFree();
+      const open2 = [...document.querySelectorAll('#endingcards button:not([disabled])')].length;
+      if (open2 !== 3) bad.push(`진엔딩 조건을 채웠는데 열린 엔딩이 ${open2}개`);
+      names.push('진엔딩 열림');
       localStorage.removeItem('cheonha_meta2');
     } catch (err) { bad.push('오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]); }
     return { bad, names };
