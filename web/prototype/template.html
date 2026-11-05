@@ -769,10 +769,23 @@ function ensureAudio() {
 // ───────── 캔버스와 스프라이트 ─────────
 const cv = $('cv'), ctx = cv.getContext('2d');
 let VW = 0, VH = 0, DPR = 1, PPM = 40, PPM0 = 40;   // PPM0: 화면 크기로 정한 기본 1m 픽셀 수(스프라이트·바닥을 이 크기로 굽는다)
-// 천하 축척(WP-12, 7장): 주소 끝 ?scale=1 이면 서장 밖에서 화면 대각선이 경지를 따라 2.25배씩 넓어진다.
-// '적 한 덩이'(WP-15)가 오기 전엔 적이 작게만 보여 기본은 끈다. 서장은 늘 지금 시야(4장).
-const SCALE_MODE = new URLSearchParams(location.search).get('scale') === '1';
+// 천하 축척(WP-12, 7장): 서장 밖에서 화면 대각선이 경지를 따라 2.25배씩 넓어진다. 서장은 늘 지금 시야(4장).
+// '적 한 덩이'(WP-15)가 들어와 2026-11-06 부터 기본으로 켠다. 옛 고정 시야로 보려면 주소 끝 ?scale=0.
+const SCALE_MODE = new URLSearchParams(location.search).get('scale') !== '0';
 const WD = DATA.world;
+// 적 한 덩이·밟힘·돌파 연출(WP-15, 기획서 7장). 축척 시험에서는 싸움 좌표를 '지금 경지 축척의 m'로 둔다(7장 '세상이 작아지는 규칙':
+// 전투 수치는 지금 경지 m 그대로). 세상(땅·소품·장막·지명)은 삼류 축척 절대 m 이고 절대 = 싸움 좌표 × worldU().
+// 돌파하면 싸움 좌표에 있던 것(나·적·구슬·탄·장판)을 모두 1/2.25 로 줄인다 — 아래 경지에서 생긴 것이 발밑으로 작아진다.
+const CL_SIZE = DATA.clusterSize || {}, CRUSH = DATA.crush || { xpPerCrushed: 0.3, sweepViewMultiple: 0.6, sweepAtSeconds: 0.8 };
+const BRK = DATA.breakthrough || { timeScale: 0.05, zoomFromSeconds: 0.2, zoomToSeconds: 1.4 };
+const scaleOn = () => SCALE_MODE && !isPro();
+const tierNow = () => Math.max(0, REALMS.indexOf(G.realm));
+const worldU = () => scaleOn() ? Math.pow(WD.scalePerRealm, tierNow()) : 1;
+// 아래 경지에서 생긴 적: 닿기만 해도 쓰러지고 피해를 주지 못한다. 땅의 주인(여기선 원각)은 밟히지 않는다.
+const lowBorn = e => scaleOn() && !e.boss && (e.born || 0) < tierNow();
+// 덩이 속 사람 수 = ceil(덩이 크기 × 남은 기혈 비율), 살아 있으면 적어도 1 (Core Scale.DrawMembers)
+const clusterOf = e => scaleOn() && !e.boss ? (CL_SIZE[(REALMS[e.born || 0] || {}).id] || 1) : 1;
+const membersOf = e => Math.max(1, Math.ceil(clusterOf(e) * Math.max(0, e.hp) / e.maxHp));
 const sprites = {};
 let groundTile = null, vignette = null;
 
@@ -1048,6 +1061,7 @@ function spawnEnemy(type, x, y, extra) {
     // 처치 진기(구슬 값). enemies.json에 아직 없어 프로토타입 값으로 둔다. 잘 풀린 판은 20분에 Lv60을 넘는다(B-07에서 다시 맞출 것).
     xp: { sigang: 1, hyeolin: 1, hyeol_gangsi: 2, hyeol_musa: 3, donggap: 4, mogin_nahan: 3, golden_toad: 0 }[type] ?? 1,
     kbRes: def.knockbackResist || 0, dir: 1, state: 0, timer: rand(1, 3), vx: 0, vy: 0, life: 0,
+    born: scaleOn() ? tierNow() : 0,   // 생긴 경지(WP-15): 덩이 크기와 밟힘을 이것으로 정한다
   };
   Object.assign(e, extra || {});
   G.enemies.push(e);
@@ -1181,14 +1195,14 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   if (e.hp <= 0) killEnemy(e);
   return crit;
 }
-function killEnemy(e) {
-  e.dead = true; G.kills++;
+function killEnemy(e, crushed) {
+  e.dead = true; G.kills += clusterOf(e);   // 처치 수는 덩이 속 사람 수(축척 시험, 7장). 진기는 덩이 하나에 적 하나 값
   // 흑백 쌍강시(WP-13c): 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다(시안과 같음)
   if (e.behavior === 'twin_revive' && e.twin && !e.twin.dead) (G.revives = G.revives || []).push({ e, t: E_BY_ID[e.type].reviveSeconds });
   { const D = E_BY_ID[e.type]; if (D && D.onDeath === 'poison_pool' && D.death) (G.pools = G.pools || []).push({ x: e.x, y: e.y, r: D.death.radius, dps: D.death.perSecond * dmgScale(e), t: D.death.seconds }); }
   // 당가 진전 3: 중독된 적이 쓰러지면 독이 번진다
   const psp = synEff('poison_spread'); if (psp && e.poison > 0) { addEffect('burst', e.x, e.y, { r: psp.radius, color: '#5E7F4A' }); forNear(e.x, e.y, psp.radius, o => { if (o !== e && !o.dead) { o.poison = psp.seconds; o.burn = Math.max(o.burn || 0, psp.seconds); o.burnDps = Math.max(o.burnDps || 0, psp.damagePerSecond * G.stats.dot); } }); }
-  addUlt(e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill);
+  if (!crushed) addUlt(e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill);   // 기세에 눌려 쓰러진 아래 경지는 오의 게이지에 안 센다(시안과 같음)
   if (G.insights.includes('salgi')) { const sp = IP.salgi, nb = Math.min(sp.mightMax, Math.floor((G.kills - G.salgiBase) / sp.killsPerStack) * sp.mightPerStack); if (nb !== G.salgiBonus) { G.salgiBonus = nb; recomputeStats(); } }
   if (G.splats.length > 140) G.splats.shift();
   G.splats.push({ x: e.x, y: e.y, r: e.r * rand(1.4, 2.2), t: 0, red: e.sprite.startsWith('hyeol') || e.boss });
@@ -1197,7 +1211,7 @@ function killEnemy(e) {
   if (e.elite && isPro()) cue('elite_kill:' + ELITES[e.eliteKey].id);
   if (e.boss && e.jang) { G.won = true; cue('boss_kill'); setTimeout(proCutsWhenFree, 1000 * (PD.lineSeconds + 0.4)); return; } // 장삼 마지막 줄을 듣고 컷으로
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
-  if (e.xp > 0) dropOrb(e.x, e.y, e.xp);
+  if (e.xp > 0) dropOrb(e.x, e.y, lowBorn(e) ? e.xp * CRUSH.xpPerCrushed : e.xp);   // 아래 경지에서 생긴 적은 진기 0.3배(cheonha.json crush)
   if (e.type === 'mogin_nahan') { addEffect('burst', e.x, e.y, { r: 1.6, color: '#8B6A45' }); forNear(e.x, e.y, 1.6, o => { if (o !== e) hurtEnemy(o, 30, null, 0, 0, 0); }); }
   if (e.elite) { G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 }); }
   if (Math.random() < DR.enemySilverChance) G.drops.push({ x: e.x, y: e.y, kind: 'silver', t: 0 });
@@ -1588,7 +1602,7 @@ function update(dt) {
   if (p.dashT > 0) { p.x += p.dashVx * dt; p.y += p.dashVy * dt; p.dashT -= dt; }
   else { p.x += mx * speed * dt; p.y += my * speed * dt; }
   // 혈우 장막(WP-12, 7장): 축척 시험에서만. 태어난 곳(0,0) 둘레, 반경 = 그 경지 첫 화면 대각선 × boundaryViewMultiple, 현경부터 없음
-  const cr = curtainR(dt); if (cr !== Infinity) { const d = Math.hypot(p.x, p.y), lim = cr - 0.5; if (d > lim) { p.x *= lim / d; p.y *= lim / d; } }
+  const cr = curtainR(dt); if (cr !== Infinity) { const d = Math.hypot(p.x, p.y) * worldU(), lim = cr - 0.5 * worldU(); if (d > lim) { p.x *= lim / d; p.y *= lim / d; } }   // 장막은 절대 m, 내 자리는 싸움 좌표(WP-15)
   p.iframe = Math.max(0, p.iframe - dt); p.block = Math.max(0, p.block - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt);
   if (p.dashCharges < p.dashMax) { p.dashRecharge += dt; if (p.dashRecharge >= B.dash.rechargeSeconds) { p.dashRecharge = 0; p.dashCharges++; } }
   // 회복
@@ -1683,6 +1697,7 @@ function update(dt) {
       e.x = p.x + dx * diag * B.spawnTarget.recycleToDiagonal; e.y = p.y + dy * diag * B.spawnTarget.recycleToDiagonal;
     }
     // 접촉 피해
+    if (d < e.r + B.stats.playerBodyRadius && lowBorn(e)) { killEnemy(e, true); addEffect('burst', e.x, e.y, { r: e.r * 1.6, color: '#786E5F' }); continue; }   // 밟힘(WP-15)
     if (d < e.r + B.stats.playerBodyRadius && e.contact <= 0) { e.contact = B.contact.sameEnemyIntervalSeconds; hurtPlayer(e.dmg, e); }
   }
   // 밀어내기
@@ -1796,7 +1811,7 @@ function update(dt) {
 
   if (G.glow) { G.glow.t -= dt; if (G.glow.t <= 0) { G.glow = null; renderSlots(); } }
   if (isPro()) watchCues();
-  if (G.pendingLevels > 0 && !overlay && !G.awaken) openLevelUp();
+  if (G.pendingLevels > 0 && !overlay && !G.awaken && !G.brk) openLevelUp();
 }
 
 function runEvent(ev) {
@@ -2064,19 +2079,49 @@ function skipOffer() { if (overlay !== 'levelup' || tooSoon()) return; addUlt(20
 
 function openBreakthrough(realm) {
   const before = vesselsAt(G.realm.level);
+  // 축척 시험(WP-15): 세상이 2.25배 작아진다 — 싸움 좌표를 줄이고, 연출(1.4초, 세상 시간 0.05배)이 끝난 뒤에 깨달음을 띄운다
+  const brk = scaleOn() && REALMS.indexOf(realm) > tierNow();
+  if (brk) { worldShrink(Math.pow(WD.scalePerRealm, REALMS.indexOf(realm) - tierNow())); G.brk = { t: 0, from: G.viewD, name: realm.nameKo, crushed: false }; }
   G.realm = realm; recomputeStats();
   if (realm.id === 'chojeoljeong') G.weaponSlots++;
   const after = vesselsAt(realm.level);
   const reward = [REALM_REWARD[realm.id], after > before ? `절기 그릇 ${after}` : ''].filter(Boolean).join(' · ');
   const then = () => showInsightChoice(realm.nameKo, reward, '경지 돌파');
   renderSlots();
-  // 그릇이 늘어나는 돌파 순간, 문턱에 선 무공이 있으면 그 자리에서 깨어난다(기획서 8장)
-  if (after > before && EV.triggers.includes('breakthrough') && spareVessel()) {
-    const ready = G.weapons.filter(atThreshold);
-    if (ready.length === 1) return startAwaken(ready[0], { then, why: `${realm.nameKo} 돌파` });
-    if (ready.length > 1) return pickAwaken(ready, then, realm);
+  const finish = () => {
+    // 그릇이 늘어나는 돌파 순간, 문턱에 선 무공이 있으면 그 자리에서 깨어난다(기획서 8장)
+    if (after > before && EV.triggers.includes('breakthrough') && spareVessel()) {
+      const ready = G.weapons.filter(atThreshold);
+      if (ready.length === 1) return startAwaken(ready[0], { then, why: `${realm.nameKo} 돌파` });
+      if (ready.length > 1) return pickAwaken(ready, then, realm);
+    }
+    then();
+  };
+  if (brk) G.brk.finish = finish; else finish();
+}
+// 세상이 작아진다(WP-15): 싸움 좌표에 있던 것을 모두 1/k 로. 내 몸 크기·걸음·무공 사거리는 그대로라 화면에선 아래 경지 것들만 작아진다.
+// 적·구슬·탄·장판·먹 자국처럼 G 의 배열에 든 x·y 가진 것은 자리와 r·vx·vy·speed 를 같이 줄인다(경고 표시 mark 도).
+function worldShrink(k) {
+  const p = G.player; p.x /= k; p.y /= k; G.cam.x /= k; G.cam.y /= k;
+  const shrink = o => { o.x /= k; o.y /= k; for (const f of ['r', 'vx', 'vy', 'speed']) if (typeof o[f] === 'number') o[f] /= k; };
+  for (const key of Object.keys(G)) {
+    const a = G[key]; if (!Array.isArray(a)) continue;
+    for (const o of a) if (o && o !== p && typeof o.x === 'number' && typeof o.y === 'number') { shrink(o); if (o.mark && typeof o.mark.x === 'number') shrink(o.mark); else if (o.mark && typeof o.mark.r === 'number') o.mark.r /= k; }
   }
-  then();
+}
+// 돌파 연출 시계(7장 '돌파 연출', cheonha.json breakthrough): 실제 시간으로 돌고, 세상 시간은 timeScale 배.
+// sweepAtSeconds 에 화면 대각선 sweepViewMultiple 배 안의 아래 경지 적이 한꺼번에 쓸린다(밟힘, 진기 0.3). 끝나면 0.3초에 걸쳐 원래 빠르기로.
+function brkStep(rdt) {
+  const B = G.brk, z1 = BRK.zoomToSeconds;
+  B.t += rdt;
+  if (!B.crushed && B.t >= CRUSH.sweepAtSeconds) {
+    B.crushed = true; G.cam.trauma = Math.min(1, G.cam.trauma + 0.6);
+    const p = G.player, R = (G.viewD / worldU()) * CRUSH.sweepViewMultiple;
+    for (const e of G.enemies) if (!e.dead && lowBorn(e) && Math.hypot(e.x - p.x, e.y - p.y) < R) killEnemy(e, true);
+    addEffect('ring', p.x, p.y, { r: R, color: '#786E5F', life: 0.6 });
+  }
+  if (B.t >= z1 + 0.3) { G.brk = null; if (B.finish) B.finish(); return rdt; }
+  return rdt * (B.t < z1 ? BRK.timeScale : lerp(BRK.timeScale, 1, clamp((B.t - z1) / 0.3, 0, 1)));
 }
 // 깨달음 고르기: 경지 돌파와 기연 '은거기인'이 같이 쓴다
 function showInsightChoice(name, reward, label) {
@@ -2371,6 +2416,29 @@ function closeOverlay(id, keepPaused) {
 }
 
 // ───────── 그리기 ─────────
+// 적 한 덩이(WP-15, 7장 '그림은 적 한 장을 여러 번 겹쳐 그린다'): 덩이 속 사람 수만큼 해바라기 꼴로 겹친다.
+// 많이 겹치면 느려서 그리는 장 수는 9장까지, 장마다 크기를 줄여 덩이 전체 넓이는 비슷하게. 사람 수는 맞을수록 남은 기혈 비율만큼 준다.
+function drawFoe(e, lift, sc, sq) {
+  const white = e.flash > 0 ? (e.boss || e.elite ? 0.3 : 0.6) : false, alpha = e.stun > 0 || G.freeze > 0 ? 0.7 : 1, n = membersOf(e);
+  if (n <= 1) return drawSprite(e.sprite, e.x, e.y - lift, sc, e.dir < 0, white, alpha, sq);
+  const m = Math.min(n, 9), k = sc * Math.max(0.42, 1.25 / Math.sqrt(m)), R = e.r * 2.2 * sc, pts = [];
+  for (let i = 0; i < m; i++) { const a = i * 2.39996 + (e.hop || 0), d = Math.sqrt((i + 0.5) / m) * R; pts.push([Math.cos(a) * d, Math.sin(a) * d * 0.8]); }
+  pts.sort((a, b) => a[1] - b[1]);
+  if (clusterOf(e) >= 16) { ctx.fillStyle = 'rgba(26,26,26,0.10)'; ctx.beginPath(); ctx.ellipse(wx(e.x), wy(e.y), R * 1.3 * PPM, R * 1.05 * PPM, 0, 0, TAU); ctx.fill(); }   // 군단부터 먹 그림자
+  for (const [dx, dy] of pts) drawSprite(e.sprite, e.x + dx, e.y + dy - lift, k, e.dir < 0, white, alpha, sq);
+}
+// 돌파 연출 그림(WP-15): 0~0.2초 흑백 심상이 화면이 물러나는 동안 걷히고, 새 경지 글자가 낙관처럼 찍힌다
+function drawBreakthrough() {
+  const B = G.brk, z0 = BRK.zoomFromSeconds, z1 = BRK.zoomToSeconds;
+  const gray = B ? 1 - clamp((B.t - z0) / (z1 - z0), 0, 1) : 0, f = gray > 0.01 ? `grayscale(${gray.toFixed(2)})` : '';
+  if (cv.style.filter !== f) cv.style.filter = f;
+  if (!B) return;
+  const a = clamp(B.t / 0.12, 0, 1) * (1 - clamp((B.t - z1) / 0.3, 0, 1)), sz = Math.min(VW, VH) * 0.16 * (1 + 0.25 * (1 - clamp(B.t / 0.2, 0, 1)));
+  ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#B3261E'; ctx.font = `700 ${Math.round(sz)}px serif`; ctx.fillText(B.name, VW / 2, VH * 0.38);
+  ctx.strokeStyle = '#B3261E'; ctx.lineWidth = 3; const w = sz * B.name.length * 1.02 + sz * 0.3; ctx.strokeRect(VW / 2 - w / 2, VH * 0.38 - sz * 0.62, w, sz * 1.24);
+  ctx.restore();
+}
 function drawSprite(name, x, y, scale, flip, white, alpha, squash) {
   const s = sprites[name]; if (!s) return;
   const w = s.size * scale * (PPM / PPM0), h = w * (squash || 1);
@@ -2393,8 +2461,9 @@ function realmProgress() {
 function scaleView() {
   if (!SCALE_MODE || isPro()) { PPM = PPM0; G.viewD = null; return; }
   const target = WD.view0Meters * Math.pow(WD.scalePerRealm, realmProgress()), now = G.viewD || target;
-  G.viewD = Math.exp(lerp(Math.log(now), Math.log(target), 0.04));
-  PPM = Math.hypot(VW, VH) / G.viewD;
+  if (G.brk) { const k = easeInOut(clamp((G.brk.t - BRK.zoomFromSeconds) / (BRK.zoomToSeconds - BRK.zoomFromSeconds), 0, 1)); G.viewD = Math.exp(lerp(Math.log(G.brk.from), Math.log(target), k)); }   // 돌파: 천천히 출발해 천천히 멈춤
+  else G.viewD = Math.exp(lerp(Math.log(now), Math.log(target), 0.04));
+  PPM = Math.hypot(VW, VH) * worldU() / G.viewD;   // 싸움 좌표 1m 의 픽셀 수(세상 그림은 PPM / worldU())
 }
 // 장막 반경: 돌파하면 1초 남짓에 걸쳐 새 반경으로 벌어진다(천하 시안은 돌파 줌에 맞춰 같은 꼴)
 const NO_BOUND = REALMS.findIndex(r => r.id === WD.noBoundaryFrom);
@@ -2408,7 +2477,7 @@ function curtainR(dt) {
 }
 function drawCurtain(now) {
   if (G.curtain == null) return;
-  const hx = wx(0), hy = wy(0), R = G.curtain * PPM;
+  const hx = wx(0), hy = wy(0), R = G.curtain * PPM / worldU();
   ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(hx, hy, R, 0, TAU, true);
   ctx.fillStyle = 'rgba(110,22,20,0.22)'; ctx.fill('evenodd'); ctx.restore();
   ctx.strokeStyle = 'rgba(179,38,30,0.75)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.arc(hx, hy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
@@ -2497,20 +2566,20 @@ function drawProps() {
   if (!CH_PROP || !SCALE_MODE || isPro() || !G.viewD) return;
   const { props, pgrid, PCELL, SPR } = CH_PROP, lv = Math.log(G.viewD);
   const aFar = clamp((lv - Math.log(140)) / (Math.log(700) - Math.log(140)), 0, 1);
-  const camX = G.cam.x + HOME_M[0], camY = G.cam.y + HOME_M[1];
-  const halfW = VW / 2 / PPM + 400, halfH = VH / 2 / PPM + 400;
+  const U = worldU(), PA = PPM / U, camX = G.cam.x * U + HOME_M[0], camY = G.cam.y * U + HOME_M[1];   // 절대 m(WP-15)
+  const halfW = VW / 2 / PA + 400, halfH = VH / 2 / PA + 400;
   const cx0 = Math.floor((camX - halfW) / PCELL), cx1 = Math.floor((camX + halfW) / PCELL), cy0 = Math.floor((camY - halfH) / PCELL), cy1 = Math.floor((camY + halfH) / PCELL);
   const vis = [], bigProp = Math.min(VW, VH) * 0.4;
   if ((cx1 - cx0) * (cy1 - cy0) < 900) { for (let gx = cx0; gx <= cx1; gx++) for (let gy = cy0; gy <= cy1; gy++) { const a = pgrid.get(gx + ',' + gy); if (a) for (const i of a) vis.push(i); } }
   else for (let i = 0; i < props.length; i++) if (props[i].kind === 'mount' || props[i].kind === 'temple') vis.push(i);
   vis.sort((a, b) => a - b);
   for (const i of vis) {
-    const pr = props[i], size = pr.s * PPM; if (size < 2) continue;
+    const pr = props[i], size = pr.s * PA; if (size < 2) continue;
     let alpha = 1;
     if (pr.kind === 'mount') alpha = aFar * 0.6; else if (size < 6) alpha = (size - 2) / 4;
     else if (size > bigProp) alpha = clamp(1 - (size - bigProp) / bigProp, 0.25, 1);
     if (alpha <= 0.02) continue;
-    const X = wx(pr.x - HOME_M[0]), Y = wy(pr.y - HOME_M[1]); if (X < -size || X > VW + size || Y < -size || Y > VH + size) continue;
+    const X = wx((pr.x - HOME_M[0]) / U), Y = wy((pr.y - HOME_M[1]) / U); if (X < -size || X > VW + size || Y < -size || Y > VH + size) continue;
     ctx.globalAlpha = alpha; ctx.drawImage(SPR[pr.kind][pr.v], X - size / 2, Y - size * 0.85, size, size);
   }
   ctx.globalAlpha = 1;
@@ -2520,7 +2589,7 @@ function drawProps() {
 function chRegionAt(x, y) { let best = null, bd = Infinity; for (const r of CH_REGS) { const d = Math.hypot(r.x - x, r.y - y); if (d < bd) { bd = d; best = r; } } return best; }
 function trackChRegion() {
   if (!SCALE_MODE || isPro() || !CH_REGS.length) { G.chRegion = null; return null; }
-  const r = chRegionAt(G.player.x, G.player.y);
+  const r = chRegionAt(G.player.x * worldU(), G.player.y * worldU());
   if (r && r.id !== G.chRegion) { if (G.chRegion) toast(r.nameKo, r.hanja); G.chRegion = r.id; }
   return r;
 }
@@ -2738,25 +2807,26 @@ function regionEliteKey(key) {
 }
 function drawCheonha() {
   if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;
+  const U = worldU(), ax = x => wx(x / U), ay = y => wy(y / U), PA = PPM / U;   // 세상은 절대 m(WP-15)
   const lv = Math.log(G.viewD), aRiver = clamp((lv - Math.log(70)) / (Math.log(220) - Math.log(70)), 0, 1);
   // 바다: 땅 밖을 옅은 청회색으로(시안 #D9E1DA). 마당 바닥 위에 덮어 해안선이 보이게.
   ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100);
-  CH_LAND.forEach(([x, y], i) => i ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y))); ctx.closePath();
+  CH_LAND.forEach(([x, y], i) => i ? ctx.lineTo(ax(x), ay(y)) : ctx.moveTo(ax(x), ay(y))); ctx.closePath();
   ctx.fillStyle = 'rgba(217,225,218,0.92)'; ctx.fill('evenodd');
-  ctx.beginPath(); CH_LAND.forEach(([x, y], i) => i ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y))); ctx.closePath();
-  ctx.strokeStyle = 'rgba(26,26,26,0.55)'; ctx.lineWidth = Math.max(1.2, 6 * PPM); ctx.stroke(); ctx.restore();
+  ctx.beginPath(); CH_LAND.forEach(([x, y], i) => i ? ctx.lineTo(ax(x), ay(y)) : ctx.moveTo(ax(x), ay(y))); ctx.closePath();
+  ctx.strokeStyle = 'rgba(26,26,26,0.55)'; ctx.lineWidth = Math.max(1.2, 6 * PA); ctx.stroke(); ctx.restore();
   // 강: 마당 크기에선 화면을 다 덮으니 시안처럼 시야 70m 부터 떠오른다
   if (aRiver > 0.01) for (const r of CH_RIVERS) {
     ctx.save(); ctx.globalAlpha = aRiver; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath(); r.forEach(([x, y], i) => i ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y)));
-    ctx.strokeStyle = 'rgba(70,110,120,0.45)'; ctx.lineWidth = Math.max(1.5, 22 * PPM); ctx.stroke();
-    ctx.strokeStyle = 'rgba(26,26,26,0.25)'; ctx.lineWidth = Math.max(0.6, 3 * PPM); ctx.stroke(); ctx.restore();
+    ctx.beginPath(); r.forEach(([x, y], i) => i ? ctx.lineTo(ax(x), ay(y)) : ctx.moveTo(ax(x), ay(y)));
+    ctx.strokeStyle = 'rgba(70,110,120,0.45)'; ctx.lineWidth = Math.max(1.5, 22 * PA); ctx.stroke();
+    ctx.strokeStyle = 'rgba(26,26,26,0.25)'; ctx.lineWidth = Math.max(0.6, 3 * PA); ctx.stroke(); ctx.restore();
   }
   drawProps();
   // 지명: 화면 안에 든 땅만. 한자는 크게, 한글은 밑에.
   ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const r of CH_REGS) {
-    const X = wx(r.x), Y = wy(r.y);
+    const X = ax(r.x), Y = ay(r.y);
     if (X < -80 || X > VW + 80 || Y < -60 || Y > VH + 60) continue;
     ctx.fillStyle = 'rgba(26,26,26,0.32)'; ctx.font = '600 22px serif'; ctx.fillText(r.hanja, X, Y - 10);
     ctx.fillStyle = 'rgba(26,26,26,0.5)'; ctx.font = '600 12px sans-serif'; ctx.fillText(r.nameKo, X, Y + 12);
@@ -2822,8 +2892,9 @@ function render() {
   for (const e of G.enemies) {
     let sq = 1, lift = 0;
     if (e.behavior === 'hop_chase' && !e.elite && !e.boss && !(e.stun > 0) && !(G.freeze > 0)) { const h = e.hop; if (h < HOP_DUTY) { lift = Math.sin(h / HOP_DUTY * Math.PI) * 0.35; sq = 1 + lift * 0.25; } else sq = 0.86 + (h - HOP_DUTY) * 0.5; }
-    const sc = e.sprite === 'elite' || e.sprite === 'boss' ? 1 : 1;
-    drawSprite(e.sprite, e.x, e.y - lift, sc, e.dir < 0, e.flash > 0 ? (e.boss || e.elite ? 0.3 : 0.6) : false, e.stun > 0 || G.freeze > 0 ? 0.7 : 1, sq);
+    // 아래 경지에서 생긴 적은 그 축척만큼 작게(WP-15). 자리·r 은 돌파 때 이미 줄였다
+    const sc = scaleOn() && !e.boss ? Math.pow(WD.scalePerRealm, (e.born || 0) - tierNow()) : 1;
+    drawFoe(e, lift, sc, sq);
     if (e.behavior === 'telegraph_dash' && e.state === 1) {
       ctx.strokeStyle = 'rgba(179,38,30,0.8)'; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
       ctx.beginPath(); ctx.moveTo(wx(e.x), wy(e.y)); ctx.lineTo(wx(e.x + e.ax * 4.5), wy(e.y + e.ay * 4.5)); ctx.stroke(); ctx.setLineDash([]);
@@ -2877,6 +2948,7 @@ function render() {
   if (p.hp / p.maxHp < 0.3) { ctx.globalAlpha = 0.7 + Math.sin(G.t * 6) * 0.15; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
   else { ctx.globalAlpha = 0.35; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
   if (G.awaken) drawAwaken();
+  drawBreakthrough();   // 돌파 연출(WP-15, 축척 시험에서만 G.brk 가 선다)
   if (isPro()) drawTalk();
 }
 // 서장 대사: 말하는 사람 머리 위에 lineSeconds 동안(화면 밖 목소리는 아래 가운데), 안내 문구는 가운데 아래에 크게 3초
@@ -3126,7 +3198,7 @@ function frame(ts) {
   if (!running) return;
   let dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts;   // 화면을 닫을 때 lastTs 를 performance.now() 로 잡아 rAF 시각보다 늦을 수 있다(음수면 효과 반경이 음수가 됐다, WP-03)
   if (dt > 0) G.fps = lerp(G.fps, 1 / dt, 0.05);
-  if (!paused && !overlay) step(dt);
+  if (!paused && !overlay) step(G.brk ? brkStep(dt) : dt);   // 돌파 연출 중엔 세상 시간이 느리게(WP-15)
   G.cam.trauma = Math.max(0, G.cam.trauma - dt * 1.5);
   render(); updateHud(dt);
 }
@@ -3344,7 +3416,7 @@ window.__hyeolu = {
         else if (pl.hp < pl.maxHp * 0.35) doDash();
       }
       if (G.player.hp <= 0) break;
-      if (!overlay) step(dt); if (onStep) onStep(G);
+      if (!overlay) step(G.brk ? brkStep(dt) : dt); if (onStep) onStep(G);   // 돌파 연출 시계도 같이(WP-15)
       if (G.t >= next) { next += every; log.push({ t: Math.round(G.t), gm: +G.gm.toFixed(1), lv: G.level, realm: G.realm.nameKo, kills: G.kills, hp: Math.round(G.player.hp), enemies: G.enemies.length, weapons: G.weapons.map(w => w.id + ':' + w.lv + (w.evolved ? '*' : '')).join(' ') }); }
       if (!G.player.hp || G.won) break;
     }

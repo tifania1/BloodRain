@@ -102,6 +102,10 @@ def data_blob() -> str:
         "ui": ui_strings(),
         # 천하 축척(WP-12): 화면 대각선 = view0Meters × scalePerRealm^(경지 순번 + viewInRealmShare × 경지 안 진행), 7장
         "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare", "boundaryViewMultiple", "noBoundaryFrom", "widthMeters", "heightMeters", "land", "rivers")},
+        # 적 한 덩이·밟힘·돌파 연출(WP-15, 7장): 경지별 덩이 크기, 밟힌 진기·쓸림, 연출 시각
+        "clusterSize": {r["realm"]: r["clusterSize"] for r in load("cheonha")["realmScale"]},
+        "crush": drop_notes(load("cheonha")["crush"]),
+        "breakthrough": drop_notes(load("cheonha")["breakthrough"]),
         # 축척 시험(WP-12)이 1장 마당을 중원 한 장의 숭산 자리에 놓고 둘레 지명을 그린다
         "regions": [{"id": r["id"], "nameKo": r["nameKo"], "hanja": r["hanja"], "pos": r["pos"], "chapter": r.get("chapter"), "final": bool(r.get("final")), "gimmicks": r.get("gimmicks", [])} for r in load("cheonha")["regions"]],
         # 한 생의 고유 적 비율(WP-13c): 축척 모드에서 다른 땅에 서면 그 땅 고유 적을 이 비율로 섞는다
