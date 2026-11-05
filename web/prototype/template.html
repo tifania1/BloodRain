@@ -1266,7 +1266,7 @@ function lordFxStep(dt) {
   if (G.lordFxs && G.lordFxs.length) G.lordFxs = G.lordFxs.filter(fn => fn(dt));
   if (G.halfFogs) G.halfFogs = G.halfFogs.filter(F => F.left > 0);
   if (G.yyFields) G.yyFields = G.yyFields.filter(F => F.left > 0);
-  if (G.lordDraw) G.lordDraw = G.lordDraw.filter(o => !o.e.dead && !(o.kind === 'wave' && o.left <= 0));
+  if (G.lordDraw) G.lordDraw = G.lordDraw.filter(o => !o.e.dead && !((o.kind === 'wave' || o.kind === 'cloud') && o.left <= 0));
   if (G.viewMulT) { G.viewMulT.t -= dt; if (G.viewMulT.t <= 0) G.viewMulT = null; }
 }
 // 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous, 시안 2막 진입과 같음)
@@ -1464,8 +1464,65 @@ function finalDown(e) {
   G.lordF = null; G.boss = null; G.empower = null;
   for (let i = 0; i < 8; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25);
   if (next < FB.shadows.length) return finalShadow(r, next, { x: e.x, y: e.y });
+  const si = next - FB.shadows.length;
+  if (si < (FB.stages || []).length) return finalStage(r, next, si, { x: e.x, y: e.y });
   G.lords[r.id] = 'down';
-  toast(`${BOSS_BY[FB.boss] ? BOSS_BY[FB.boss].nameKo : '혈마'}가 깨어난다`, '혈마 세 단계(혈의·혈해·진혈마)는 프로토타입에 아직 없다');
+  toast(`${BOSS_BY[FB.boss] ? BOSS_BY[FB.boss].nameKo : '혈마'} — 쓰러뜨렸다`, '엔딩(봉인·계승·의심)과 진엔딩 컷은 프로토타입에 아직 없다');
+}
+// 혈마 단계(Core FinalFight.Stage): 기혈 = 단계 health × healthCurve, 패턴은 그 단계 set. phase2At 1(혈해)이면 시작하자마자 2막 패턴(피바다)을 켠다
+function finalStage(r, idx, si, at) {
+  const st = FB.stages[si], set = st.set, k = lordHpMult(G.gm), hp = st.health * k, sc = 1 + B.enemyScaling.damagePerMinute * G.gm;
+  const pats = (set.patterns || []).filter(eliteShapeOk), bn0 = BOSS_BY[FB.boss], name = `${bn0 ? bn0.nameKo : '혈마'} · ${st.nameKo}`;
+  const e = spawnEnemy('sigang', at.x, at.y, {
+    sprite: 'boss', boss: true, lord: r.id, lordBoss: FB.boss, shadow: false, fin: idx, stage: st.id, name, hp, maxHp: hp, speed: set.moveSpeed / 100 * MOVE, dmg: set.contactDamage * sc,
+    r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
+    ps: { patterns: pats, intervalSeconds: set.intervalSeconds, firstCastSeconds: set.firstCastSeconds }, pat: pats[0] || null,
+  });
+  G.lordF = e; G.boss = e;
+  if (set.phase2At >= 1) { e.p2 = true; e.ps.intervalSeconds = set.phase2IntervalSeconds || set.intervalSeconds; for (const P of set.phase2 || []) if (P.continuous) lordContinuous(e, P); }
+  const bn = $('bossbar').querySelector('b'); if (bn) bn.textContent = `${name} ${st.hanja || ''}`;
+  toast(name, (DATA.finalStageLines || {})[st.id] || '');
+  sfx('boss');
+  return e;
+}
+// 혈마 단계 패턴 셋(bosspatterns.json final.stages, 시안엔 없어 _note 대로 옮김)
+function finalPattern(e, P, dmg) {
+  if (P.shape === 'drifting_clouds') {   // 역병 구름: 플레이어 둘레 scatter 안 count 곳에 피어 플레이어 쪽으로 떠다니고, 안에 있으면 hitIntervalSeconds 마다 피해
+    const sp = (P.projectileSpeed || 0) / 100 * MOVE, px = G.player.x, py = G.player.y;
+    for (let i = 0; i < P.count; i++) {
+      const a = rand(0, TAU), d = rand(0.3, 1) * P.scatter, C = { kind: 'cloud', P, x: px + Math.cos(a) * d, y: py + Math.sin(a) * d, warm: P.telegraphSeconds, left: P.leaveSeconds, hit: 0, e };
+      (G.lordDraw = G.lordDraw || []).push(C);
+      lordFx(dt => {
+        if (e.dead || C.left <= 0) { C.left = 0; return false; }
+        if (C.warm > 0) { C.warm -= dt; return true; }
+        C.left -= dt; C.hit -= dt;
+        const dx = G.player.x - C.x, dy = G.player.y - C.y, dd = Math.hypot(dx, dy) || 1;
+        C.x += dx / dd * sp * dt; C.y += dy / dd * sp * dt;
+        if (C.hit <= 0 && dd < P.radius) { C.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
+        return true;
+      });
+    }
+  } else if (P.shape === 'rain_drops') {   // 혈우 탄막: 파마다 플레이어 자리 둘레 scatter 안에 count 방울, telegraphSeconds 그림자 뒤 떨어진다
+    for (let w = 0; w < (P.waves || 1); w++) G.zones.push({ delay: w * (P.waveIntervalSeconds || 0), apply: () => {
+      if (e.dead) return;
+      const cx = G.player.x, cy = G.player.y;
+      for (let i = 0; i < P.count; i++) {
+        const a = rand(0, TAU), d = Math.sqrt(Math.random()) * P.scatter, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+        G.zones.push({ delay: P.telegraphSeconds, mark: { x, y, r: P.radius }, apply: () => { if (Math.hypot(G.player.x - x, G.player.y - y) < P.radius) hurtPlayer(dmg, e); } });
+      }
+    } });
+  } else if (P.shape === 'summon_shadow') {   // 혈영 솟음: shadows 차례로 하나, 기혈 = 그 보스 기준 × summonHealthRatio × healthCurve, 몸으로만, leaveSeconds 뒤 녹는다
+    addEffect('ring', e.x, e.y, { r: 2, life: P.telegraphSeconds, color: '#B3261E' });
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+      if (e.dead) return;
+      const n = e.rise = (e.rise || 0), id = FB.shadows[n % FB.shadows.length], def = BOSS_BY[id], set = LPAT[id] || { contactDamage: 20, moveSpeed: 50 };
+      e.rise = n + 1;
+      const base = def.phases ? def.phases.reduce((a, b) => a + b, 0) : def.health, hp = base * P.summonHealthRatio * lordHpMult(G.gm);
+      const s = spawnEnemy('sigang', e.x + rand(-2, 2), e.y + rand(-2, 2), { sprite: 'elite', name: `혈영 ${def.nameKo}`, hp, maxHp: hp, speed: (set.moveSpeed || 50) / 100 * MOVE, dmg: (set.contactDamage || 20) * (1 + B.enemyScaling.damagePerMinute * G.gm), r: e.r * 0.6, kbRes: 1, xp: 0, behavior: 'chase' });
+      let left = P.leaveSeconds;
+      lordFx(dt => { left -= dt; if (s.dead) return false; if (left > 0 && !e.dead) return true; G.enemies = G.enemies.filter(x => x !== s); return false; });
+    } });
+  }
 }
 // 패턴이 하나도 없으면(아는 모양이 없는 땅) 쫓아오기만. 2막은 한 번만 넘어간다
 function lordAI(e, dt, dx, dy, d) {
@@ -1510,6 +1567,7 @@ function drawLords(now) {
     const P = o.P, e = o.e; ctx.save();
     if (o.kind === 'beams') { ctx.strokeStyle = o.warm > 0 ? 'rgba(179,38,30,0.25)' : 'rgba(179,38,30,0.6)'; ctx.lineWidth = Math.max(2, P.width * PPM); for (let i = 0; i < P.count; i++) { const a = o.a + i * TAU / P.count; ctx.beginPath(); ctx.moveTo(wx(e.x), wy(e.y)); ctx.lineTo(wx(e.x + Math.cos(a) * P.length), wy(e.y + Math.sin(a) * P.length)); ctx.stroke(); } }
     else if (o.kind === 'wave') { const nx = -Math.sin(o.a), ny = Math.cos(o.a), L = viewDiag(); ctx.strokeStyle = o.warm > 0 ? 'rgba(179,38,30,0.3)' : 'rgba(150,30,26,0.6)'; ctx.lineWidth = Math.max(3, P.width * PPM); ctx.beginPath(); ctx.moveTo(wx(o.x - nx * L), wy(o.y - ny * L)); ctx.lineTo(wx(o.x + nx * L), wy(o.y + ny * L)); ctx.stroke(); }
+    else if (o.kind === 'cloud') { ctx.fillStyle = o.warm > 0 ? 'rgba(110,130,70,0.15)' : 'rgba(110,130,70,0.35)'; ctx.beginPath(); ctx.arc(wx(o.x), wy(o.y), P.radius * PPM, 0, TAU); ctx.fill(); }
     else if (o.kind === 'arena') { ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(wx(o.x), wy(o.y), o.R * PPM, 0, TAU, true); ctx.fillStyle = o.warm > 0 ? 'rgba(150,190,215,0.12)' : 'rgba(150,190,215,0.32)'; ctx.fill('evenodd'); ctx.strokeStyle = 'rgba(80,120,150,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(o.x), wy(o.y), o.R * PPM, 0, TAU); ctx.stroke(); }
     ctx.restore();
   }
@@ -2301,6 +2359,7 @@ function eliteAI(e, dt, dx, dy, d) {
 }
 // 패턴 한 번(bosspatterns.json shape). 정예와 서장 장삼이 같이 쓴다.
 function castPattern(e, P, dmg, dx, dy) {
+  if (P.shape === 'drifting_clouds' || P.shape === 'rain_drops' || P.shape === 'summon_shadow') return finalPattern(e, P, dmg);
   if (P.shape === 'jump_slam') {
     // 뛸 때마다 그 순간 플레이어 자리에 그림자, telegraphSeconds 뒤 착지
     const step = P.telegraphSeconds + P.waveIntervalSeconds, R = P.radius;
@@ -2316,10 +2375,12 @@ function castPattern(e, P, dmg, dx, dy) {
       } });
     } });
   } else if (P.shape === 'projectile_fan') {
-    const a0 = Math.atan2(dy, dx), half = P.angleDegrees / 2 * Math.PI / 180, sp = P.projectileSpeed / 100 * MOVE;
-    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+    // waves 파(혈침 탄막)면 waveIntervalSeconds 마다 같은 방향으로 다시. length 가 없는 패턴은 화면 대각선 0.6 만큼 날아간다(프로토타입 값)
+    const a0 = Math.atan2(dy, dx), half = P.angleDegrees / 2 * Math.PI / 180, sp = P.projectileSpeed / 100 * MOVE, len = P.length || viewDiag() * 0.6;
+    if (P.bossHolds) e.windup = P.telegraphSeconds + Math.max(0, (P.waves || 1) - 1) * (P.waveIntervalSeconds || 0);
+    for (let w = 0; w < (P.waves || 1); w++) G.zones.push({ delay: P.telegraphSeconds + w * (P.waveIntervalSeconds || 0), apply: () => {
       if (e.dead) return;
-      for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.5, dmg, life: P.length / sp, t: 0, kind: 'epalm' }); }
+      for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.5, dmg, life: len / sp, t: 0, kind: 'epalm' }); }
     } });
   } else if (P.shape === 'cone') {
     // 강시 도부수 큰 도끼 휘두르기: 치켜들고 멈춰 섰다가 앞 부채꼴을 휩쓴다(bosspatterns.json elites gangsi_axeman)
@@ -3817,7 +3878,7 @@ function drawRegionGimmicks() {
 }
 // 지역 정예(WP-13d 첫 조각): 축척 모드에서 1장 밖 땅에 서 있으면 1장 정예 차례(enemies.json elites.chapter1 의 몇 번째)와 같은 자리의
 // 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.
-const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones', 'summon_ring', 'pull_line', 'spiral_bullets', 'chain_circles', 'inhale_exhale', 'half_field', 'view_shrink', 'split_field']);   // summon_ring 부터와 멈춰 베는 line 은 땅의 주인(WP-13e)
+const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones', 'summon_ring', 'pull_line', 'spiral_bullets', 'chain_circles', 'inhale_exhale', 'half_field', 'view_shrink', 'split_field', 'drifting_clouds', 'rain_drops', 'summon_shadow']);   // summon_ring 부터와 멈춰 베는 line 은 땅의 주인(WP-13e)
 const eliteShapeOk = P => !!P && ELITE_SHAPES.has(P.shape);
 // 한 생 정예(WP-14b): 서 있는 땅의 정예 표(elites.<장>)에서 nth 번째. 장 정예가 없는 땅(eliteFallback)이나 표가 짧으면 숭산 표를 돌려 쓴다.
 // 프로토타입이 아는 패턴 모양이 하나도 없으면 1장 정예 차례 그대로

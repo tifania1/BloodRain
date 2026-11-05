@@ -97,7 +97,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 종장은_봉인석과_경지를_갖추면_깨어나고_혈영_일곱이_차례로()
         {
             var build = ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"finalBoss\": {k: load(\"bosspatterns\")[\"final\"][k] for k in (\"boss\", \"shadows\", \"shadowHealthRatio\")}", build);
+            Assert.Contains("\"finalBoss\": {k: drop_notes(load(\"bosspatterns\")[\"final\"][k]) for k in (\"boss\", \"shadows\", \"shadowHealthRatio\", \"stages\")}", build);
             var html = Proto;
             // Core BossAwakening.ShouldBeAwake: 봉인석 finalRequires.sealStones 와 경지 finalRequires.realm
             Assert.Contains("if (sealHeld() < LR.finalRequires.sealStones || realmT < 0 || tierNow() < realmT) return;", html);
@@ -108,6 +108,11 @@ namespace BloodRain.Core.Tests
             var data = Load();
             Assert.Equal(7, data.FinalBoss.Shadows.Count);
             Assert.All(data.FinalBoss.Shadows, id => Assert.Contains(data.Cheonha.BossRegions, r => r.Boss == id));
+            // 혈마 세 단계: 단계 health × healthCurve, 단계 패턴 모양을 다 안다(피바다 shrinking_islands 는 싸움터 크기 R4-07 뒤)
+            Assert.Contains("hp = st.health * k", html);
+            foreach (var st in data.FinalBoss.Stages)
+                foreach (var p in st.Set.Patterns)
+                    Assert.Contains($"'{p.Shape}'", html);
         }
     }
 }
