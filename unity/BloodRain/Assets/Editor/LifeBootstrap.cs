@@ -62,8 +62,25 @@ namespace BloodRain.Editor
             var shadows = Object.FindFirstObjectByType<CurtainShadows>();
             if (shadows != null) { shadows.breakthrough = fx; EditorUtility.SetDirty(shadows); }
 
+            // QA-05U 화면 가장자리 표시(땅의 주인 화살표·혈운 기둥·장막 번짐). LifeRunner 가 Start 에서 이 생의 Bosses 로 묶는다
+            var edge = Object.FindFirstObjectByType<EdgeIndicators>();
+            if (edge == null) edge = new GameObject("화면 가장자리 표시").AddComponent<EdgeIndicators>();
+            edge.material = ClusterBootstrap.EnsureMaterial();
+            EditorUtility.SetDirty(edge);
+
             EditorUtility.SetDirty(r);
             return r;
+        }
+
+        /// <summary>Run 씬을 새로 짓지 않고 지금 있는 씬에 Attach 만 다시 한다(붓 획 연결 같은 다른 설정을 지키려고).</summary>
+        [MenuItem("BloodRain/Bootstrap/Run 씬 한 생 연결만 다시")]
+        public static void ReattachOnly()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.OpenScene(RunScenePath);
+            Attach();
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[LifeBootstrap] Run 씬 한 생 연결 다시 함");
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BloodRain.Core.Data;
 using BloodRain.Core.World;
 using BloodRain.Sim;
 using UnityEngine;
@@ -50,8 +51,20 @@ namespace BloodRain.Presentation.Fx
         public void Bind(BossAwakening boss)
         {
             _boss = boss;
+            _bound = true;
             _lastLevel = -1;
             _pillarStart.Clear();
+        }
+
+        // QA-05U 한 생에 묶이면 깨어남은 Life.Absorb 가 UpdateRealm 으로 맡는다(두 번 부르면 여기선 새로 깬 것이 안 보인다).
+        // 그때 LifeRunner 가 LifeAbsorb.WokenBosses 를 Woke 로 넘겨 기둥을 세운다.
+        bool _bound;
+
+        /// <summary>새로 깨어난 땅의 주인 지역 위로 혈운 기둥을 세운다(묶인 생에서 LifeRunner 가 부름).</summary>
+        public void Woke(IEnumerable<RegionDef> regions)
+        {
+            if (regions == null) return;
+            foreach (var r in regions) _pillarStart[r.Id] = Time.unscaledTime;
         }
 
         void Start()
@@ -74,7 +87,7 @@ namespace BloodRain.Presentation.Fx
 
             // 돌파·경지 변화마다 깨어남을 다시 본다
             int level = (int)ws.Level;
-            if (level != _lastLevel)
+            if (level != _lastLevel && !_bound)
             {
                 foreach (var r in _boss.UpdateRealm(level)) _pillarStart[r.Id] = Time.unscaledTime;
                 _lastLevel = level;

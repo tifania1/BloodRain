@@ -153,7 +153,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/C-06/` 의 `school_shapes_<huashan|namgung|tang|tang5|suro>.png`
   (진행: 2026-11-05 22:40 PC — 셋 붙임. 남궁 3 하늘 검기 `WeaponRunner.SkySword`(검 계열 무공 3번째 공격마다 8m 안 가장 가까운 적 자리에 0.22초 뒤 반경 1.2m, 한 방 x1.2, 그림 fx_sword_qi_glow), 당가 5 독침 `StepNeedles`(20초마다 화면 안 모든 적에 8, 그림 fx_dagger_ink 초록 먹 80개까지), 수로채 3 끌기 `PlayerController.Drag`(경공 중 1m 안 잡몹을 걸음 x0.9, LifeRunner 가 넣음). 진전 채우기 남궁·당가·수로채 뒤 15초 안에 하늘 검기 3번·독침 4마리·끌림 확인, 콘솔 에러 0. 찍음 `school_shapes_namgung.png`(순간을 맞춘 것은 아님). 남은 것: 화산 3 꽃잎은 무공에 치명타가 없어서, 당가 3 독 번짐·독침 중독은 적 중독 상태가 없어서 못 붙임 — 둘 다 그 장치가 먼저. 끌기는 Family elite·boss 를 뺌. 독침·꽃잎의 '× 공력'은 무공에 공력이 아직 안 곱해져 값 그대로)
 
-- [ ] QA-05U 화면 가장자리 땅의 주인 표시 · 먼저: LF-03
+- [x] QA-05U 화면 가장자리 땅의 주인 표시 · 먼저: LF-03 — 2026-11-05 22:45 PC: Run 씬에 EdgeIndicators 가 아예 없어서(시험 씬에만) LifeBootstrap.Attach 가 붙이게 하고, 씬을 새로 짓지 않는 메뉴 `Run 씬 한 생 연결만 다시` 로 넣음. LifeRunner.Start 가 `Bind(life.Bosses)`, 묶이면 EdgeIndicators 는 UpdateRealm 을 안 부르고 LifeRunner 가 `LifeAbsorb.WokenBosses` 를 `Woke` 로 넘겨 기둥을 세움(Life 와 둘이 부르면 새로 깬 것이 한쪽에만 보임). 메뉴 `혼에 봉인석 넣기/0·6·7`(SoulBootstrap.cs). 경지 끝까지 올려 보니 봉인석 6 → 일곱 곳만, 7 → 봉마곡까지 여덟 곳 깨어나 기둥 8, 콘솔 에러 0. 확인 못 한 것: 쓰러뜨린 땅의 주인 혈영 표시(보스 처치가 BR-01 뒤). 시험 혼은 봉인석 0 으로 되돌려 둠. 찍음 `docs/unity_shots/QA-05U/edge_7stones.png`(경지를 한꺼번에 올려 돌파 줌 도중)
   - 할 것: `Presentation/Fx/EdgeIndicators.cs` 가 빈 `new BossRecord()` 대신 `EdgeIndicators.Bind(life.Bosses)`(이미 있음)를 받게 LifeRunner 가 부른다.
   - 쓸 것: Core `Life.Bosses`(BossAwakening), `Soul.SealStoneCount`
   - 메뉴: `BloodRain/Test/혼에 봉인석 넣기(0·6·7)` 를 새로(SoulStore 를 고쳐 씀)

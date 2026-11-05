@@ -98,8 +98,13 @@ namespace BloodRain.Presentation
             if (vitals != null) vitals.Died += OnDied;
             if (enemies != null) enemies.Killed += OnKilled;
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
+            // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
+            _edges = FindFirstObjectByType<BloodRain.Presentation.Fx.EdgeIndicators>();
+            if (_edges != null) _edges.Bind(_life.Bosses);
             SyncScale();
         }
+
+        BloodRain.Presentation.Fx.EdgeIndicators _edges;
 
         void OnKilled(Vector2 at, EnemyAgent a) => _kills++;
 
@@ -343,6 +348,7 @@ namespace BloodRain.Presentation
             if (_life == null || _life.Record != null) return;
             float from = LevelFloat;
             var r = _life.Absorb(xp, count);
+            if (_edges != null) _edges.Woke(r.WokenBosses); // QA-05U 혈운 기둥
             if (r.Breakthroughs.Count == 0) return;
             var ws = WorldScale.Current;
             if (breakthrough == null || ws == null || player == null) return;

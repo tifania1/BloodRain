@@ -64,6 +64,29 @@ namespace BloodRain.Editor
             Debug.Log($"[SoulBootstrap] 서장 마친 혼 저장 · {soul.Lives}생 · 윤회의 기 {soul.RebirthQi:N0}");
         }
 
+        // QA-05U 시험: 저장된 혼의 봉인석을 n 개로(봉인석 있는 지역 앞에서부터). 봉마곡은 7개(bosses.finalRequires.sealStones)부터 깨어난다.
+        [MenuItem("BloodRain/Test/혼에 봉인석 넣기/0")] static void Seal0() => SetSealStones(0);
+        [MenuItem("BloodRain/Test/혼에 봉인석 넣기/6")] static void Seal6() => SetSealStones(6);
+        [MenuItem("BloodRain/Test/혼에 봉인석 넣기/7")] static void Seal7() => SetSealStones(7);
+
+        static void SetSealStones(int n)
+        {
+            var data = DataBoot.Load();
+            var soul = SoulStore.Load(data);
+            var stones = new System.Collections.Generic.List<string>();
+            foreach (var r in data.Cheonha.Regions)
+                if (r.SealStone != null && stones.Count < n) stones.Add(r.Id);
+            var json = Newtonsoft.Json.Linq.JObject.Parse(soul.ToJson());
+            string key = "sealStones";
+            foreach (var p in json.Properties())
+                if (string.Equals(p.Name, "sealStones", System.StringComparison.OrdinalIgnoreCase)) { key = p.Name; break; }
+            json[key] = new Newtonsoft.Json.Linq.JArray(stones);
+            soul = Soul.FromJson(data, json.ToString());
+            SoulStore.Save(soul);
+            RebirthHandoff.Soul = null;
+            Debug.Log($"[SoulBootstrap] 봉인석 {soul.SealStoneCount}개로 저장: {string.Join(", ", stones)}");
+        }
+
         [MenuItem("BloodRain/Test/지금 쓰러지기(플레이 중)")]
         public static void FallNow()
         {
