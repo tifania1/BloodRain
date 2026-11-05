@@ -130,12 +130,13 @@ HUD·멈춤 화면·조작 안내의 말은 `Resources/Data/strings/ko.json` 의
 
 ```
 python tools/build_web_prototype.py
-node tools/web_autocheck.js                     # 서장·숭산·M3 세 지역·땅의 주인 훑기·이어 받기, 3판씩(3분 남짓)
+node tools/web_autocheck.js                     # 서장·숭산·M3 세 지역·땅의 주인 훑기·종장·이어 받기, 3판씩(3분 남짓)
 node tools/web_autocheck.js --runs 5 --only m3 --shots <폴더>   # 고른 것만, 판 끝 화면을 찍어 둔다
 ```
 
 끝 줄이 `문제 0` 이면 통과, 아니면 1 로 끝난다. 바깥 주소(글꼴 등)는 막고 돈다. 보는 것:
 
+- 종장(`final`): 1장 프로토타입 한 생 판에 봉인석 일곱·현경을 쥐여 봉마곡이 깨어나는지, 혈영 일곱 → 혈마 세 단계가 차례로 이어져 끝나는지(상대마다 무적 8초)
 - 오류: `pageerror`, 콘솔 error(리소스 못 받음은 뺌)
 - 멈춤: 걸음은 도는데 판 시계가 30초 동안 안 감(처리 안 된 화면이 떠 있을 때). 떠 있는 화면 이름을 적는다
 - 숫자 깨짐: 플레이어·적·땅의 주인 위치·기혈이 NaN·무한

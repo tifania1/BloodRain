@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const RUNS = parseInt(opt('runs', '3'), 10);
 const SHOTS = opt('shots', '');
-const ONLY = (opt('only', 'prologue,songshan,m3,lords,flow')).split(',');
+const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow')).split(',');
 const SITE = path.join(__dirname, '..', 'web', 'prototype', 'site');
 if (!fs.existsSync(path.join(SITE, 'index.html'))) { console.log('X  site/ 가 없다. python tools/build_web_prototype.py 를 먼저 돌린다'); process.exit(1); }
 
@@ -244,6 +244,37 @@ async function lordRuns(browser, base) {
   await p.ctx.close();
 }
 
+// 종장(WP-13e): 프로토타입 한 생 판에서 봉인석 일곱·현경이면 봉마곡이 깨어나는지, 혈영 일곱 → 혈마 세 단계가 차례로 이어지는지.
+// 상대마다 무적으로 8초 붙어 패턴을 돌리고(그리기 포함) 쓰러뜨려 다음으로 넘긴다
+async function finalRuns(browser, base) {
+  const label = '종장';
+  const p = await openPage(browser, base + '/?life=shaolin', label);
+  const r = await p.page.evaluate(() => {
+    const bad = [], names = [];
+    try {
+      startRun('full'); G.auto = true; running = false;
+      G.soul0.stones = (DATA.regions || []).filter(x => x.sealStone).map(x => x.sealStone);
+      G.realm = REALMS.find(x => x.id === LR.finalRequires.realm); recomputeStats();
+      lordTick(1 / 30);
+      const f = LORD_REGS.find(x => x.final);
+      if (G.lords[f.id] !== 'awake') bad.push(`봉마곡이 안 깨어남(${G.lords[f.id]})`);
+      lordBegin(f);
+      for (let k = 0; k < 12 && G.boss; k++) {
+        const e = G.boss; names.push(e.name.replace(/^혈영 /, '').split(' ').pop());
+        for (let i = 0; i < 240; i++) { G.player.hp = G.player.maxHp; step(1 / 30); if (i % 15 === 0) render(); if (![e.x, e.y, e.hp].every(Number.isFinite)) { bad.push(`값 깨짐 ${e.name}`); break; } }
+        if (G.boss === e) killEnemy(e);
+        for (let i = 0; i < 3; i++) step(1 / 30);
+      }
+      if (G.lords[f.id] !== 'down') bad.push(`종장이 안 끝남(${G.lords[f.id]})`);
+    } catch (err) { bad.push('오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]); }
+    return { bad, names };
+  });
+  for (const b of r.bad) problems.push(`${label}: ${b}`);
+  flush(p, label);
+  rows.push({ what: `${label}(봉인석 7·현경, 상대마다 무적 8초)`, res: `${r.names.length}차례 — ${r.names.join('→')}` });
+  await p.ctx.close();
+}
+
 // 서장 끝 → 침방(첫 환혼) → 한 생 → 정산 → 침방, 휴대폰 화면(WP-14e: 시안 #first= 대신 합친 프로토타입 한 판에서)
 async function flowRuns(browser, base) {
   const label = '이어 받기';
@@ -284,6 +315,7 @@ async function flowRuns(browser, base) {
     if (ONLY.includes('songshan')) await songshanRuns(browser, base);
     if (ONLY.includes('m3')) await m3Runs(browser, base);
     if (ONLY.includes('lords')) await lordRuns(browser, base);
+    if (ONLY.includes('final')) await finalRuns(browser, base);
     if (ONLY.includes('flow')) await flowRuns(browser, base);
   } catch (e) { problems.push('점검 스크립트 오류: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
   await browser.close(); srv.close();
