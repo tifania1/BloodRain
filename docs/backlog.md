@@ -75,7 +75,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] SFX-07 PC 에 Stable Audio 3 돌릴 자리: `E:\Unity\BloodRain-sfx\` 에 ComfyUI(포터블)와 CUDA torch 를 깐다(RTX 3080 Ti 12GB). 저장소 밖 폴더, 회사 일 시간 피해 밤에. 대화 세션이 11-05 밤에 한다(진행은 daily 에)
 - [ ] SFX-08 (사람) Hugging Face 가입·로그인 후 https://huggingface.co/stabilityai/stable-audio-3-small-sfx 에서 약관을 읽고 'Agree' 를 누른다(공식 저장소는 동의해야 파일이 열림). 모델 파일은 ComfyUI 가 다시 묶은 Comfy-Org/stable-audio-3(따로 잠김 표시 없음, 같은 Community License)에서 받으니 토큰은 그쪽이 막힐 때만 만든다. 만들면 PC API 루프 config.json 의 `hf_token` 칸에 사람이 넣는다. 세션은 토큰·비밀번호를 만지지 않는다
 - [ ] SFX-09 대표 다섯(검 휘두름·권격·벼락·독안개·혈인 비명)을 SA3 로 소리마다 후보 8개씩 뽑아 SFX-03 도구로 다듬고 SFX-04 페이지에 올려 사람이 듣게. 문구 끝에 'single, dry, close-mic, no music, no reverb tail'. 먼저: SFX-03, SFX-07, SFX-08
-- [x] SFX-10 2026-11-05 — 사람(17:41): `D:\Jin\sound` 음원은 전부 산 것. sfx_sources.md 에서 미니언 모음(남의 캐릭터 목소리)·배경음 모음만 빼고 '씀'으로 옮김
+- [x] SFX-10 2026-11-05 — 사람(17:48): 라이선스를 산 것은 `D:\Jin\sound` 의 `Game_Sound`·`source` 폴더. sfx_sources.md 에서 그 둘과 DayDreamSound(안내문상 어떤 용도로든 사용 가능)만 '씀', 나머지 `효과음…` 폴더는 안 씀
 
 UI 와 웹 판 하나로(2026-11-05 사람: "UI가 다른 뱀서류에 비해 좀 불편하다", "서장~원각 판과 천하 시안이 UI·용어·시야가 달라 아예 다른 버전 같다")
 - [ ] UI-01 할 일(2026-11-05 사람이 추천대로 정함 — `docs/design/ui_benchmark.md` (c) 개선안 1~11 을 기획서 12장 규칙으로 넣는다. 카드 세 줄 규칙, 레벨업 옆 지금 무공·심법 칸, 일시정지 절기 조합표, 이펙트 투명도 0~100%·적 예고 위 레이어, 능력치 쉬운 말, 레벨업 입력(패드·단축키·닫힌 뒤 짧은 무적), 몰아 고르기·자동 고르기, 땅의 주인 체력바, 일시정지 무공별 피해, 일시정지에서 설정, 조준 옵션. 12 고정·13 봉인·15 중간 저장은 나중. 새 숫자(무적 시간 등)가 필요하면 지어내지 말고 결정 대기로. gdd_changes 에 한 줄씩. Unity 쪽 화면은 unity_tasks 로 옮긴다)
