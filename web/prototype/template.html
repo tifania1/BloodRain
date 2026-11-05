@@ -1582,6 +1582,8 @@ function update(dt) {
   if (p.rootT > 0) { p.rootT -= dt; speed = 0; } // 장삼 포승줄: 걷지 못하고 경공은 된다
   if (p.dashT > 0) { p.x += p.dashVx * dt; p.y += p.dashVy * dt; p.dashT -= dt; }
   else { p.x += mx * speed * dt; p.y += my * speed * dt; }
+  // 혈우 장막(WP-12, 7장): 축척 시험에서만. 태어난 곳(0,0) 둘레, 반경 = 그 경지 첫 화면 대각선 × boundaryViewMultiple, 현경부터 없음
+  const cr = curtainR(dt); if (cr !== Infinity) { const d = Math.hypot(p.x, p.y), lim = cr - 0.5; if (d > lim) { p.x *= lim / d; p.y *= lim / d; } }
   p.iframe = Math.max(0, p.iframe - dt); p.block = Math.max(0, p.block - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt);
   if (p.dashCharges < p.dashMax) { p.dashRecharge += dt; if (p.dashRecharge >= B.dash.rechargeSeconds) { p.dashRecharge = 0; p.dashCharges++; } }
   // 회복
@@ -2383,6 +2385,26 @@ function scaleView() {
   G.viewD = Math.exp(lerp(Math.log(now), Math.log(target), 0.04));
   PPM = Math.hypot(VW, VH) / G.viewD;
 }
+// 장막 반경: 돌파하면 1초 남짓에 걸쳐 새 반경으로 벌어진다(천하 시안은 돌파 줌에 맞춰 같은 꼴)
+const NO_BOUND = REALMS.findIndex(r => r.id === WD.noBoundaryFrom);
+function curtainR(dt) {
+  if (!SCALE_MODE || isPro()) { G.curtain = null; return Infinity; }
+  const t = Math.max(0, REALMS.indexOf(G.realm));
+  if (NO_BOUND >= 0 && t >= NO_BOUND) { G.curtain = null; return Infinity; }
+  const target = WD.view0Meters * Math.pow(WD.scalePerRealm, t) * WD.boundaryViewMultiple;
+  G.curtain = G.curtain == null ? target : G.curtain + (target - G.curtain) * Math.min(1, (dt || 0) * 2.5);
+  return G.curtain;
+}
+function drawCurtain(now) {
+  if (G.curtain == null) return;
+  const hx = wx(0), hy = wy(0), R = G.curtain * PPM;
+  ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(hx, hy, R, 0, TAU, true);
+  ctx.fillStyle = 'rgba(110,22,20,0.22)'; ctx.fill('evenodd'); ctx.restore();
+  ctx.strokeStyle = 'rgba(179,38,30,0.75)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.arc(hx, hy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = 'rgba(179,38,30,0.35)'; ctx.lineWidth = 1.2; ctx.beginPath();
+  for (let i = 0; i < 90; i++) { const a = i / 90 * TAU + now * 0.05, rr = R + ((i * 37) % 23), x = hx + Math.cos(a) * rr, y = hy + Math.sin(a) * rr + ((now * 120 + i * 13) % 26); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 12); }
+  ctx.stroke();
+}
 function wx(x) { return (x - G.cam.x) * PPM + VW / 2; }
 function wy(y) { return (y - G.cam.y) * PPM + VH / 2; }
 
@@ -2401,6 +2423,7 @@ function render() {
   // 바닥
   const T = groundTile.width / DPR * (PPM / PPM0), ox = ((-G.cam.x * PPM + VW / 2) % T + T) % T - T, oy = ((-G.cam.y * PPM + VH / 2) % T + T) % T - T;
   for (let x = ox; x < VW; x += T) for (let y = oy; y < VH; y += T) ctx.drawImage(groundTile, x, y, T, T);
+  drawCurtain(now);   // 혈우 장막(축척 시험에서만)
   // 먹 자국
   for (const s of G.splats) {
     const a = Math.max(0, 0.32 - s.t / 18);
