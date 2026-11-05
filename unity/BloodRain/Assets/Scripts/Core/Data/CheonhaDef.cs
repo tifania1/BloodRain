@@ -228,6 +228,10 @@ namespace BloodRain.Core.Data
         public float NearEnemySlowRadius;
         /// <summary>기혈 회복 전부(회복 능력치·음식·흡혈·영약)에 곱하는 수(마교 마인의 피 0.5). 기본 1.</summary>
         public float HealingMultiplier = 1f;
+        /// <summary>기혈이 낮을수록 붙는 쾌속의 끝값(마교 마인의 피 0.5). 기혈 100% 에서 0, lowHealthFullAt 이하에서 이 값, 그 사이 선형. 0 이면 없음.</summary>
+        public float LowHealthCooldownReduction;
+        /// <summary>쾌속이 끝값에 닿는 기혈 비율(마교 0.3).</summary>
+        public float LowHealthFullAt;
     }
 
     /// <summary>혈공(기획서 5장 '마교 몸의 성장').</summary>

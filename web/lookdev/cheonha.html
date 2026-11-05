@@ -1321,7 +1321,7 @@ function update(rdt) {
   G.t += dt;
   G.trauma = Math.max(0, G.trauma - rdt * 1.4);
   const p = G.p, s = sc(G.tier), M = G.body, pr = prog();
-  const fz = frenzy(), might = M.might + insMight() + aboveHealthMight(), cdr = Math.min(BAL.stats.cooldownReductionCap, M.cdr + (fz ? fz.cooldownReduction : 0) + harmonyCdr());
+  const fz = frenzy(), might = M.might + insMight() + aboveHealthMight(), cdr = Math.min(BAL.stats.cooldownReductionCap, M.cdr + (fz ? fz.cooldownReduction : 0) + harmonyCdr() + lowHealthCdr());
   p.r = 0.5 * s * (1 + 0.12 * pr);
   // 이동
   const [mx, my, moving] = readMove(); G.moving = moving;
@@ -2278,6 +2278,8 @@ function regionGimmicks(dt) {
   }
 }
 // 남궁 '기혈 50% 이상이면 공력 +25%'(traitEffect aboveHealthRatio·aboveHealthStats)
+// 마교 '마인의 피' 기혈이 낮을수록 쾌속(Core SectTrait.LowHealthCooldownReduction): 100% 에서 0, lowHealthFullAt 이하에서 끝값, 그 사이 선형
+function lowHealthCdr() { const te = G.body.te, p = G.p, max = te.lowHealthCooldownReduction || 0, full = te.lowHealthFullAt || 0; if (max <= 0) return 0; if (full >= 1) return max; return max * Math.min(1, Math.max(0, (1 - p.hp / p.maxHp) / (1 - full))); }
 function aboveHealthMight() { const te = G.body.te, p = G.p; return te.aboveHealthRatio > 0 && p.hp >= p.maxHp * te.aboveHealthRatio ? (te.aboveHealthStats?.Might || 0) : 0; }
 // 곤륜 '가까운 적 이동속도 -10%'(nearEnemySlow, 반경 × 축척). Core SectTrait.EnemySpeedMultiplier
 function kunlunSlow(d) { const te = G.body.te; return te.nearEnemySlow > 0 && d <= te.nearEnemySlowRadius * sc(G.tier) ? 1 - te.nearEnemySlow : 1; }

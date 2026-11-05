@@ -83,6 +83,26 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1f, Trait("gaebang").HealingMultiplier, 3);
         }
 
+        [Fact] public void 마교_마인의_피는_기혈_100에서_0_30이하에서_쾌속_0점5_선형()
+        {
+            var t = Trait("demonic");
+            Assert.Equal(0f, t.LowHealthCooldownReduction(1f), 4);
+            Assert.Equal(0.25f, t.LowHealthCooldownReduction(0.65f), 4);
+            Assert.Equal(0.5f, t.LowHealthCooldownReduction(0.3f), 4);
+            Assert.Equal(0.5f, t.LowHealthCooldownReduction(0.05f), 4);
+            Assert.Equal(0f, Trait("namgung").LowHealthCooldownReduction(0.1f), 4);
+            Assert.Equal(0.5f, Sheet("demonic", healthRatio: 0.2f).Bonus[StatKind.CooldownReduction], 3);
+            Assert.Equal(0f, Sheet("demonic", healthRatio: 1f).Bonus[StatKind.CooldownReduction], 3);
+            // 끝값·문턱은 5장 칸과 표 아래 글, sim/frenzy.md 추천안(가)과 같다
+            var e = C.Sect("demonic").TraitEffect!;
+            Assert.Contains($"{Pct(e.LowHealthFullAt)} 이하 최대 +50%", Cell("마교"));
+            Assert.Contains($"{Pct(e.LowHealthFullAt)} 이하에서 쾌속 +{e.LowHealthCooldownReduction.ToString(Inv)}", TestData.GddSection("한눈에 보기"));
+            // 웹 천하 시안도 같은 셈(쾌속 합에 더하고 상한에서 자름)
+            var html = TestData.ReadRepoFile("web", "lookdev", "cheonha.html");
+            Assert.Contains("harmonyCdr() + lowHealthCdr())", html);
+            Assert.Contains("(1 - p.hp / p.maxHp) / (1 - full)", html);
+        }
+
         [Fact] public void 아홉_문파_모두_효과_칸이_있고_능력치_이름은_모두_읽힌다()
         {
             foreach (var s in C.Sects) Assert.NotNull(s.TraitEffect);

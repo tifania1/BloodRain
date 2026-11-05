@@ -8,7 +8,8 @@
 //   무당 음양조화: 태극 구간 ±40 은 sects[].harmonyRange 가 맡고(Loadout 이 게이지에 넣는다), 조화 보너스 2배는 HarmonyBonusMultiplier.
 //   화산 매화의 눈: 치명 확률 +10%(CritChance).
 //   곤륜 설한기: 3m 안 적이 10% 느려짐(EnemySpeedMultiplier). 거리는 세계 m 이고, 축척을 따르게 하려면 부른 쪽이 scale 을 넘긴다.
-//   마교 마인의 피: 회복 효과 -50%(HealingMultiplier). 회복 능력치는 RecoveryHeal, 음식은 Drops.FoodHeal·모닥불은 CampfireGimmick.Heal 의 healingMultiplier, 흡혈은 LifestealHeal 에 넘긴다. '기혈이 낮을수록 공격속도'는 곡선이 기획서에 없어 아직 없다(backlog R-04c).
+//   마교 마인의 피: 회복 효과 -50%(HealingMultiplier). 회복 능력치는 RecoveryHeal, 음식은 Drops.FoodHeal·모닥불은 CampfireGimmick.Heal 의 healingMultiplier, 흡혈은 LifestealHeal 에 넘긴다. '기혈이 낮을수록 공격속도'는 쾌속(CooldownReduction)으로 기혈 100% 에서 0, 30% 이하에서 +0.5, 그 사이 선형(R-04c 2026-11-05 사람이 추천대로).
+//                 쾌속 상한 0.6 은 StatSheet 가 자르니 심법 쾌속과 겹치면 금방 막힌다(docs/design/sim/frenzy.md 가안).
 // 서장 진소운 몸은 None(아무것도 안 함)이다.
 using System;
 using System.Collections.Generic;
@@ -55,7 +56,19 @@ namespace BloodRain.Core.Build
             Add(b, _def.Stats);
             if (_def.AboveHealthRatio > 0f && healthRatio >= _def.AboveHealthRatio) Add(b, _def.AboveHealthStats);
             if (moving) Add(b, _def.MovingStats);
+            float frenzy = LowHealthCooldownReduction(healthRatio);
+            if (frenzy > 0f) b.Add(StatKind.CooldownReduction, frenzy);
             return b;
+        }
+
+        /// <summary>기혈이 낮을수록 붙는 쾌속(마교). 100% 에서 0, lowHealthFullAt(30%) 이하에서 끝값(0.5), 그 사이 선형. 없는 몸은 0.</summary>
+        public float LowHealthCooldownReduction(float healthRatio)
+        {
+            float max = _def.LowHealthCooldownReduction, full = _def.LowHealthFullAt;
+            if (max <= 0f) return 0f;
+            if (full >= 1f) return max;
+            float t = (1f - Math.Clamp(healthRatio, 0f, 1f)) / (1f - full);
+            return max * Math.Clamp(t, 0f, 1f);
         }
 
         /// <summary>무공이 적에게 주는 피해에 곱하는 값. 중독된 적이면 1 + poisonedTargetDamage(당가 1.2), 아니면 1.</summary>
