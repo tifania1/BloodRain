@@ -152,6 +152,16 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> Joined => _joined;
         public bool HasJoined(string leader) => _joined.Contains(leader);
         public int InnLinesSaid(string leader) => _innNext.TryGetValue(leader, out var n) ? n : 0;
+        /// <summary>목 노인 의서 줄(mok.manuscript_N)을 본 수. 진엔딩 조건은 Soul.MokTalkDone(이 값). 본 줄은 회귀해도 남는다.</summary>
+        public int MokManuscriptLinesSeen
+        {
+            get
+            {
+                int n = 0;
+                foreach (var k in _seen) if (k.StartsWith("mok.manuscript_", StringComparison.Ordinal)) n++;
+                return n;
+            }
+        }
 
         internal void See(string key) => _seen.Add(key);
         internal void Queue(string key) { if (!_seen.Contains(key) && !_pending.Contains(key)) _pending.Add(key); }
@@ -250,6 +260,7 @@ namespace BloodRain.Core.Meta
                     "realm" when a[1] == "short" => summary.NewRealms.Contains(a[0]) && !soul.HasAllSealStones,
                     "realm" when a[1] == "sealed" => record.HighestRealm == a[0] && soul.HasAllSealStones,
                     "lord" => LordKilled(soul, a[0]),
+                    "manuscript" => soul.MokManuscriptLinesOpen >= int.Parse(a[0]),   // 의서 한 권에 한 줄(5장 의서 조각)
                     _ => false,
                 };
                 if (hit) p.Queue("mok." + l.Id);

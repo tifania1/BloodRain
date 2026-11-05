@@ -27,7 +27,7 @@
     "mokMax": 2,
     "unnangMax": 1,
     "leaderMax": 1,
-    "mokOrder": ["lord", "stones", "realm", "zuohwa", "hermit", "lives"],
+    "mokOrder": ["lord", "manuscript", "stones", "realm", "zuohwa", "hermit", "lives"],
     "unnangOrder": ["return", "confess", "facility", "letter", "lives", "chat"]
   },
   "intro": {
@@ -91,7 +91,7 @@
     ]
   },
   "mok": {
-    "_note": "목 노인 귀환 대사(docs/story/mok.md). lives:N 은 N번째 생이 끝난 뒤(서장 빼고), stones:N 은 봉인석 N개, realm:<경지> 는 계정 처음 오른 경지, realm:hyeongyeong:short/sealed 는 현경에 처음 선 생에 봉인석이 모자랐는지/일곱이었는지, zuohwa:first/repeat/shadow, hermit:N 은 기연 은거기인을 마친 생마다 아직 안 한 것 앞에서 하나, lord:<땅의 주인> 은 처음 쓰러뜨린 뒤. repeat 이면 본 뒤에도 다시 나온다.",
+    "_note": "목 노인 귀환 대사(docs/story/mok.md). lives:N 은 N번째 생이 끝난 뒤(서장 빼고), stones:N 은 봉인석 N개, realm:<경지> 는 계정 처음 오른 경지, realm:hyeongyeong:short/sealed 는 현경에 처음 선 생에 봉인석이 모자랐는지/일곱이었는지, zuohwa:first/repeat/shadow, hermit:N 은 기연 은거기인을 마친 생마다 아직 안 한 것 앞에서 하나, lord:<땅의 주인> 은 처음 쓰러뜨린 뒤, manuscript:N 은 의서를 N권 모은 뒤(혈월 천하 은빛 등롱, 한 권에 한 줄, 일곱째를 보면 진엔딩 조건 '목 노인 대화를 끝까지'). repeat 이면 본 뒤에도 다시 나온다.",
     "lines": [
       {"id": "lives_1", "when": "lives:1", "textKo": "첫 몸은 다들 낯설어한다. 남의 신을 신고 뛴 셈이니."},
       {"id": "lives_3", "when": "lives:3", "textKo": "세 번째다. 맥이 처음보다 고르다."},
@@ -118,6 +118,13 @@
       {"id": "hermit_1", "when": "hermit:1", "textKo": "바둑 두는 늙은이 곁에 있었다고. 적이 몰려와도 판을 안 치우더냐. 그런 사람은 수를 길게 본다."},
       {"id": "hermit_2", "when": "hermit:2", "textKo": "한 수 물러 주더냐. 바둑판에서는 몸을 바꿔 다시 둘 수가 없지."},
       {"id": "hermit_3", "when": "hermit:3", "textKo": "그 노인 이름은 묻지 마라. 이름을 버렸으니 거기 앉아 있는 게다."},
+      {"id": "manuscript_1", "when": "manuscript:1", "textKo": "의서를 주웠구나. 글씨가 반듯하지? 밤새 등잔 아래서 쓴 글씨다."},
+      {"id": "manuscript_2", "when": "manuscript:2", "textKo": "열병 다스리는 장이구나. 그해 겨울, 이걸로 산마을 아이들을 살렸다."},
+      {"id": "manuscript_3", "when": "manuscript:3", "textKo": "여백을 봐라. '약이 모자라다.' 쪽마다 같은 말이다."},
+      {"id": "manuscript_4", "when": "manuscript:4", "textKo": "이 권은 쪽마다 붉게 번졌구나. 비를 맞은 탓이라고 해 두자."},
+      {"id": "manuscript_5", "when": "manuscript:5", "textKo": "이 처방은 끝내 못 썼다. 쓸 사람이 다 떠난 뒤에야 완성됐거든."},
+      {"id": "manuscript_6", "when": "manuscript:6", "textKo": "거의 다 모았구나. 이상하지, 읽지 않아도 다음 장이 기억난다."},
+      {"id": "manuscript_7", "when": "manuscript:7", "textKo": "일곱째 권이다. 마지막 장이 비어 있구나. 그 사람이 쓰다 만 것을, 내가 마저 써야겠지."},
       {"id": "lord_wongak", "when": "lord:wongak", "textKo": "안에서 열렸다고 하더냐. 문은 늘 안에서 먼저 열린다."},
       {"id": "lord_dang_sohye", "when": "lord:dang_sohye", "textKo": "독으로 독을 막으려 했구나. 몰라서가 아니라 급해서였을 게다."},
       {"id": "lord_ma_cheonpae", "when": "lord:ma_cheonpae", "textKo": "지킨 값을 받고 싶었던 게지. 삼백 년이면 누구라도 지친다."},

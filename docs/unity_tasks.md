@@ -423,7 +423,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R4-03U/` 의 `<단계>.png`
 
 - [ ] R4-04U 엔딩 고르기 화면 · 먼저: R4-03U, LF-03
-  - 할 것: 봉인으로 생을 마친 뒤 `soul.EndingPending` 이면 정산 다음에 엔딩 고르기 `Presentation/Meta/EndingScreen.cs`. 버튼은 `soul.EndingsOpen(목 노인 대화 끝)`(1회차는 봉인 하나라 고르기 없이 바로 봉인 엔딩 컷). 고르면 `soul.ChooseEnding(id, …)` 뒤 그 엔딩 컷·곡(기획서 14장 '엔딩 3곡', 곡이 없으면 무음), 봉인이면 백중의 밤으로(회귀), 진엔딩이면 `JourneyOver` 라 침방이 닫힌 객잔으로. 진혈마 10% 컷은 `FinalFight.CheckTrueEnding(비율, soul.TrueEndingMet(…))`. 목 노인 대화 끝은 backlog R4-08 전까지 false.
+  - 할 것: 봉인으로 생을 마친 뒤 `soul.EndingPending` 이면 정산 다음에 엔딩 고르기 `Presentation/Meta/EndingScreen.cs`. 버튼은 `soul.EndingsOpen(목 노인 대화 끝)`(1회차는 봉인 하나라 고르기 없이 바로 봉인 엔딩 컷). 고르면 `soul.ChooseEnding(id, …)` 뒤 그 엔딩 컷·곡(기획서 14장 '엔딩 3곡', 곡이 없으면 무음), 봉인이면 백중의 밤으로(회귀), 진엔딩이면 `JourneyOver` 라 침방이 닫힌 객잔으로. 진혈마 10% 컷은 `FinalFight.CheckTrueEnding(비율, soul.TrueEndingMet(…))`. 목 노인 대화 끝은 `soul.MokTalkDone(dialogueProgress.MokManuscriptLinesSeen)`(R4-08, 2026-11-05).
   - 쓸 것: Core `Meta/Soul.cs`(EndingPending·EndingsOpen·ChooseEnding·JourneyOver·TrueEndingMet), `Combat/FinalFight.cs`
   - 메뉴: `BloodRain/Test/엔딩 앞 혼 만들기(1회차·회귀)` 를 새로
   - 끝: 1회차 혼은 바로 봉인 엔딩 컷 → 회귀, 회귀한 혼은 고르기 버튼이 뜸
@@ -437,6 +437,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: `BloodRain/Bootstrap/Run 씬에 지역 기믹 붙이기`(R-13U 와 같은 메뉴, 없으면 새로)
   - 끝: 화산에서 8초마다 바위 셋, 곤륜에서 60초에 눈보라 20초, 십만대산에서 180초에 붉은 달 30초
   - 찍기: `docs/unity_shots/R4-13U/` 의 `falling_rocks.png`, `blizzard.png`, `red_moon.png`
+
+- [ ] R4-08U 은빛 등롱에서 의서 · 먼저: 없음
+  - 할 것: 혈월 천하에서 은빛 등롱을 부수면 `life.BreakSilverLantern(rng)` 를 부르고, 참이면 '단목현의 의서' 낙관 한 번(글은 strings, 새 문구면 ui. 키 네 언어). 생이 끝나면 의서 수는 LifeRecord 로 혼에 들어가고, 객잔 귀환 때 목 노인 '단목현의 의서' 줄(dialogue mok manuscript_1~7)이 InnDialogue 에서 저절로 나온다.
+  - 쓸 것: Core `Life.BreakSilverLantern`, cheonha.json `cycle.bloodmoon.manuscriptChance`(0.15), `DialogueProgress.MokManuscriptLinesSeen`
+  - 메뉴: 없음
+  - 끝: 컴파일·콘솔 에러 0. 디버그로 의서 확률을 1 로 두고 등롱을 부수면 의서 1, 객잔에서 manuscript_1 줄
+  - 찍기: 객잔 목 노인 의서 줄
 
 ### E. 객잔·대사
 

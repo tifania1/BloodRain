@@ -76,6 +76,30 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 의서_한_권에_목_노인_한_줄_일곱째를_보면_대화를_끝까지()
+        {
+            Assert.Equal(Enumerable.Range(1, C.Cycle.TrueEndingManuscripts).Select(i => "manuscript:" + i),
+                D.Mok.Lines.Where(l => l.Kind == "manuscript").Select(l => l.When));
+            Assert.Equal(D.Returns.MokOrder.IndexOf("lord") + 1, D.Returns.MokOrder.IndexOf("manuscript"));
+
+            var p = new DialogueProgress();
+            var s = AfterPrologue(p);
+            Live(s, p, "shaolin");   // 이류·일류
+            Live(s, p, "shaolin");   // 1번째 생
+            InnReturn Book(int n) {
+                var rec = new LifeRecord("shaolin", LifeEndWay.Fallen, new RebirthQiLedger(C.RebirthQi).Settle(0), Array.Empty<string>(),
+                    new[] { C.Sect("shaolin").Region }, "iryu", Array.Empty<string>(), n);
+                return InnDialogue.OnReturn(_d, s, rec, s.EndLife(rec), p, new ReturnFacts(), new Random(1));
+            }
+            Assert.Equal(new[] { "manuscript_1" }, Ids(Book(1).Mok).Where(id => id.StartsWith("manuscript")));
+            Assert.False(s.MokTalkDone(p.MokManuscriptLinesSeen));
+            Book(C.Cycle.TrueEndingManuscripts - 1);   // 나머지를 한 생에 다 모아도 한 번에 두 마디까지
+            for (int i = 0; i < 5 && p.MokManuscriptLinesSeen < C.Cycle.TrueEndingManuscripts; i++) Live(s, p, "shaolin");
+            Assert.Equal(C.Cycle.TrueEndingManuscripts, p.MokManuscriptLinesSeen);
+            Assert.True(s.MokTalkDone(p.MokManuscriptLinesSeen));
+        }
+
+        [Fact]
         public void 현경은_봉인석이_모자란_생과_일곱을_지닌_생이_따로()
         {
             var p = new DialogueProgress();
