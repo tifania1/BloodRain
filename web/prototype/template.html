@@ -1581,7 +1581,7 @@ function update(dt) {
   const [mx, my, moving] = readMove();
   p.moving = moving;
   if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; p.still = 0; } else p.still += dt;
-  let speed = S.move * (G.backlash ? 0.5 : 1);
+  let speed = S.move * (G.backlash ? 0.5 : 1) * (G.wPlayer || 1);   // 눈보라(WP-13b)
   // 기절(방장 대리 범종): 걷지도 경공도 못 한다. 무공은 그대로 나간다.
   if (p.stunT > 0) { p.stunT -= dt; speed = 0; }
   if (p.rootT > 0) { p.rootT -= dt; speed = 0; } // 장삼 포승줄: 걷지 못하고 경공은 된다
@@ -1673,6 +1673,7 @@ function update(dt) {
     } else if (LOCAL_BEH[e.behavior]) [vx, vy] = LOCAL_BEH[e.behavior](e, dt, dx, dy, d);
     else { vx = dx * e.speed; vy = dy * e.speed; }
     if (e.roarT > 0) { vx *= 1 + (e.roarBonus || 0); vy *= 1 + (e.roarBonus || 0); }   // 혈사자 포효(WP-13c)
+    if (G.wEnemy && G.wEnemy !== 1 && !e.boss) { vx *= G.wEnemy; vy *= G.wEnemy; }   // 눈보라·붉은 달(WP-13b)
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
     e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
@@ -2669,8 +2670,28 @@ const GIMW = DATA.gimmicks || {};
 const hereHas = id => { const r = G.chRegion && CH_REGS.find(x => x.id === G.chRegion); return !!(r && r.gimmicks.includes(id)); };
 function fogR(f) { const g = GIMW.poisonFog, t = G.t - f.t0, q = t < g.spreadSeconds ? t / g.spreadSeconds : t < g.spreadSeconds + g.holdSeconds ? 1 : 1 - (t - g.spreadSeconds - g.holdSeconds) / g.fadeSeconds; return g.radius * clamp(q, 0, 1); }
 function inFogW(x, y) { for (const f of G.fogs || []) if (Math.hypot(x - f.x, y - f.y) <= fogR(f)) return true; return false; }
+// 날씨(Core WeatherGimmick.ActiveAt 와 같은 식): 한 생 시계로 firstSeconds 에 처음, 그 뒤 periodSeconds 마다 durationSeconds 동안, 지금 선 땅에 그 기믹이 있을 때만.
+// 눈보라(곤륜 설원) 나·적 걸음 배율과 보이는 범위 viewScale, 붉은 달(십만대산) 적 걸음 배율.
+function weatherOnW(def) {
+  if (!def || !SCALE_MODE || isPro() || !hereHas(def.id) || G.t < def.firstSeconds) return false;
+  if (!(def.periodSeconds > 0)) return G.t < def.firstSeconds + def.durationSeconds;
+  return (G.t - def.firstSeconds) % def.periodSeconds < def.durationSeconds;
+}
+const or1 = v => v > 0 ? v : 1;
+function drawWeather() {
+  if (weatherOnW(GIMW.blizzard)) {
+    const R = Math.hypot(VW, VH) / 2, inner = R * or1(GIMW.blizzard.viewScale), g = ctx.createRadialGradient(VW / 2, VH / 2, inner * 0.7, VW / 2, VH / 2, inner);
+    g.addColorStop(0, 'rgba(244,246,248,0)'); g.addColorStop(1, 'rgba(244,246,248,0.94)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  }
+  if (weatherOnW(GIMW.redMoon)) { ctx.fillStyle = 'rgba(150,20,20,0.12)'; ctx.fillRect(0, 0, VW, VH); }
+}
 function regionGimmicksStep(dt) {
   if (!SCALE_MODE || isPro()) return;
+  const bz = weatherOnW(GIMW.blizzard), rm = weatherOnW(GIMW.redMoon);
+  G.wPlayer = bz ? or1(GIMW.blizzard.playerMoveSpeedMultiplier) : 1;
+  G.wEnemy = (bz ? or1(GIMW.blizzard.enemyMoveSpeedMultiplier) : 1) * (rm ? or1(GIMW.redMoon.enemyMoveSpeedMultiplier) : 1);
+  if (bz && !G.bzHint) { G.bzHint = true; toast(GIMW.blizzard.nameKo, '앞이 흐려지고 걸음이 느려진다'); }
+  if (rm && !G.rmHint) { G.rmHint = true; toast(GIMW.redMoon.nameKo, '적의 걸음이 빨라진다'); }
   const p = G.player, fg = GIMW.poisonFog, fr = GIMW.fallingRocks;
   if (!G.fogs) { G.fogs = []; G.rocks = []; G.fogNext = fg ? fg.firstSpreadSeconds : Infinity; }
   if (fg && G.t >= G.fogNext) {
@@ -2835,6 +2856,7 @@ function render() {
     const y = wy(n.y) - n.t * 26; ctx.strokeText(n.v, wx(n.x), y); ctx.fillText(n.v, wx(n.x), y);
   }
   ctx.restore();
+  drawWeather();   // 눈보라 덮개·붉은 달(WP-13b, 축척 시험에서만)
   // 혈우
   drawRain();
   if (p.hp / p.maxHp < 0.3) { ctx.globalAlpha = 0.7 + Math.sin(G.t * 6) * 0.15; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
