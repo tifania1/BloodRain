@@ -38,5 +38,20 @@ namespace BloodRain.Core.Tests
             // 열린 직후 0.35초 입력 막기(12장 '레벨업 입력')
             Assert.Contains("performance.now() - overlayAt < 350", html);
         }
+
+        [Fact] public void 능력치_이름은_ui_stat_에_쉬운_말을_붙인다()
+        {
+            var html = Proto;
+            Assert.Contains("const STAT_PFX = 'ui.stat.';", html);
+            Assert.Contains("Amount: '투사체', Magnet: '흡수 반경', Growth: '경험치', Area: '범위'", html);
+            Assert.Contains("const statLabel = k => STAT_EASY[k] ? `${statName(k)} · ${STAT_EASY[k]}` : statName(k);", html);
+        }
+
+        [Fact] public void 멈춤_화면에_무공별_피해와_초당_피해()
+        {
+            var html = Proto;
+            Assert.Contains("dps = w.dealt / Math.max(1, G.t - (w.t0 || 0))", html);
+            Assert.Contains("<details class=\"card wdmg\">", html);
+        }
     }
 }

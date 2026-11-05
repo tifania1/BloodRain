@@ -204,6 +204,10 @@ button { touch-action: manipulation; }
 .card p.syn { color: #7A5A10; font-weight: 700; }
 .card p.badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .card p.badges i { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 6px; border: 1px solid #7A5A10; color: #7A5A10; border-radius: 2px; }
+.wdmg { display: block; cursor: pointer; }
+.wdmg summary { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; list-style: none; }
+.wdmg summary::-webkit-details-marker { display: none; }
+.wdmg .dmgline { font: 700 12px var(--font-num); color: var(--ink); }
 .luslots { display: grid; gap: 4px; width: 100%; margin-top: 10px; }
 .luslots div { display: flex; gap: 4px; justify-content: center; }
 .luslots span { width: 40px; height: 40px; border: 1.5px solid rgba(26,26,26,.35); display: grid; place-items: center; font: 900 15px var(--font-body); position: relative; background: var(--paper); }
@@ -502,14 +506,22 @@ const GLYPH = {
   cheongmyeong: '淸', geumgang: '剛', cheonsu: '手', noejeong: '霆', pasan: '破', cheollian: '眼', hwaryong: '火', mandok: '蠱',
   yangui: '儀', juseon: '酒', suryong: '水', hyeolhae: '血', cheongsim: '心', unryong: '雲', domun: '道', maehwa: '梅',
 };
+// 능력치 이름은 ko.json ui.stat.<이름>(glossary), 옆에 쉬운 말(12장 '능력치 쉬운 말': 분광 · 투사체 +1, 흡기 · 흡수 반경, 심득 · 경험치, 기세 · 범위).
+// 쉬운 말은 아직 프로토타입에만 있다(Unity 는 UI-01U 에서 strings 로)
+const STAT_EASY = { Amount: '투사체', Magnet: '흡수 반경', Growth: '경험치', Area: '범위', Duration: '지속 시간', ProjectileSpeed: '탄 속도', CooldownReduction: '대기 시간', Might: '피해',
+  Armor: '받는 피해', Recovery: '초당 회복', MoveSpeed: '이동 속도', Luck: '행운', Greed: '은자', MaxHealth: '최대 체력', Lifesteal: '피해의 일부 회복', FoodHeal: '음식', CritChance: '치명타' };
+const STAT_PFX = 'ui.stat.';   // ko.json 의 ui.stat.<Core StatKind 이름> 묶음
+const statName = k => { const n = uiT(STAT_PFX + k); return n === STAT_PFX + k ? k : n; };
+const statLabel = k => STAT_EASY[k] ? `${statName(k)} · ${STAT_EASY[k]}` : statName(k);
+const pct = v => `${Math.round(v * 100)}%`;
 const STAT_TEXT = {
-  CooldownReduction: v => `무공 쿨다운 -${Math.round(v * 100)}%`, Armor: v => `받는 피해 -${v}`, Amount: () => `투사체 +1 (1·3·5단계)`,
-  Might: v => `공력 +${Math.round(v * 100)}%`, Knockback: v => `넉백 +${Math.round(v * 100)}%`, EliteDamage: v => `정예·보스 피해 +${Math.round(v * 100)}%`,
-  CritChance: v => `치명 확률 +${Math.round(v * 100)}%`, BurnDamage: v => `화상 피해 +${Math.round(v * 100)}%`, ExplosionArea: v => `폭발 범위 +${Math.round(v * 100)}%`,
-  DotDamage: v => `지속 피해 +${Math.round(v * 100)}%`, Area: v => `기세(범위) +${Math.round(v * 100)}%`, Duration: v => `지속시간 +${Math.round(v * 100)}%`,
-  FoodHeal: v => `음식 회복 +${Math.round(v * 100)}%`, ProjectileSpeed: v => `탄속 +${Math.round(v * 100)}%`, Magnet: v => `흡기 범위 +${Math.round(v * 100)}%`,
-  MaxHealth: v => `최대 기혈 +${Math.round(v * 100)}%`, Lifesteal: v => `흡혈 +${(v * 100).toFixed(1)}%`, Growth: v => `진기 획득 +${Math.round(v * 100)}%`,
-  MoveSpeed: v => `신법 +${Math.round(v * 100)}%`, Luck: v => `기연 +${v}`, Recovery: v => `초당 회복 +${v}`,
+  CooldownReduction: v => `${statLabel('CooldownReduction')} -${pct(v)}`, Armor: v => `${statLabel('Armor')} -${v}`, Amount: () => `${statLabel('Amount')} +1 (1·3·5단계)`,
+  Might: v => `${statLabel('Might')} +${pct(v)}`, Knockback: v => `${statLabel('Knockback')} +${pct(v)}`, EliteDamage: v => `${statLabel('EliteDamage')}(정예·보스) +${pct(v)}`,
+  CritChance: v => `${statLabel('CritChance')} +${pct(v)}`, BurnDamage: v => `${statLabel('BurnDamage')} +${pct(v)}`, ExplosionArea: v => `${statLabel('ExplosionArea')} +${pct(v)}`,
+  DotDamage: v => `${statLabel('DotDamage')} +${pct(v)}`, Area: v => `${statLabel('Area')} +${pct(v)}`, Duration: v => `${statLabel('Duration')} +${pct(v)}`,
+  FoodHeal: v => `${statLabel('FoodHeal')} +${pct(v)}`, ProjectileSpeed: v => `${statLabel('ProjectileSpeed')} +${pct(v)}`, Magnet: v => `${statLabel('Magnet')} +${pct(v)}`,
+  MaxHealth: v => `${statLabel('MaxHealth')} +${pct(v)}`, Lifesteal: v => `${statLabel('Lifesteal')} +${(v * 100).toFixed(1)}%`, Growth: v => `${statLabel('Growth')} +${pct(v)}`,
+  MoveSpeed: v => `${statLabel('MoveSpeed')} +${pct(v)}`, Luck: v => `${statLabel('Luck')} +${v}`, Recovery: v => `${statLabel('Recovery')} +${v}`,
 };
 const ASPECT_KO = { yang: '양', yin: '음', neutral: '중' };
 const batchim = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c % 28 !== 0; };
@@ -2188,7 +2200,7 @@ const BEHAVIOR_TEXT = {
   ring_wave: '몸에서 음파가 퍼지고 가끔 기절시킨다', pierce_thrust: '앞으로 길게 꿰뚫어 찌른다', petal_scatter: '꽃잎 검기를 흩뿌린다',
 };
 function applyOffer(o) {
-  if (o.kind === 'nw') { G.weapons.push({ id: o.id, lv: 1, cd: 0.2, evolved: false, dealt: 0, n: 0 }); yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); }
+  if (o.kind === 'nw') { G.weapons.push({ id: o.id, lv: 1, cd: 0.2, evolved: false, dealt: 0, n: 0, t0: G.t }); yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); }   // t0: 얻은 때(멈춤 화면 초당 피해)
   else if (o.kind === 'uw') { const w = G.weapons.find(w => w.id === o.id); w.lv++; yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); }
   else if (o.kind === 'np') { G.passives.push({ id: o.id, lv: 1 }); const d = P_BY_ID[o.id]; yyShift(d.yinyang, d.yinyangPerLevelOverride || B.yinyang.passivePerLevel); }
   else if (o.kind === 'up') { const p = G.passives.find(p => p.id === o.id); p.lv++; const d = P_BY_ID[o.id]; yyShift(d.yinyang, d.yinyangPerLevelOverride || B.yinyang.passivePerLevel); }
@@ -2833,12 +2845,12 @@ const TRAIT_BY = Object.fromEntries(BT.list.map(t => [t.id, t]));
 const SECT_BY = Object.fromEntries((DATA.sects || []).map(s => [s.id, s]));
 const CARD_BY = Object.fromEntries((DATA.cards || []).map(c => [c.id, c]));
 const START_SECTS = (DATA.sects || []).filter(s => s.unlock === 'start').map(s => s.id);
-const STAT_KO = { Might: '공력', MaxHealth: '기혈', MoveSpeed: '신법', Recovery: '회복', Magnet: '흡기', CooldownReduction: '쾌속', Growth: '심득', Luck: '기연', Greed: '탐욕', DashCharges: '경공 충전', Armor: '호신', FoodHeal: '음식 회복', Area: '범위', Duration: '지속', ProjectileSpeed: '투사체 속도', Amount: '투사체 수', CritChance: '치명', Banishes: '파기', Rerolls: '다시 고르기' };
+const STAT_KO = new Proxy({}, { get: (_, k) => statLabel(k) });   // 연무장·성질 이름도 ui.stat + 쉬운 말(UI-02)
 const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount', 'Banishes', 'Rerolls']);
 const statOn = k => !!STAT_KEY[k] || ['Amount', 'Banishes', 'Rerolls'].includes(k);   // 파기·다시 고르기는 레벨업 횟수로(UI-02)   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
 function fmtStat(k, v) {
   const sign = v > 0 ? '+' : v < 0 ? '−' : '', a = Math.abs(v);
-  if (k === 'Recovery') return `${STAT_KO[k]} 초당 ${sign}${+a.toFixed(2)}`;
+  if (k === 'Recovery') return `${STAT_KO[k]} ${sign}${+a.toFixed(2)}`;   // 쉬운 말에 '초당 회복'이 붙는다
   if (FLAT_STAT.has(k)) return `${STAT_KO[k] || k} ${sign}${a}`;
   return `${STAT_KO[k] || k} ${sign}${+(a * 100).toFixed(1)}%`;
 }
@@ -3780,7 +3792,11 @@ function togglePause(force) {
   if (paused) {
     overlay = 'pause';
     const list = $('pauselist');
-    list.innerHTML = G.weapons.map(w => { const d = W_BY_ID[w.id]; return `<div class="card" style="cursor:default"><span class="ic">${GLYPH[w.id]}</span><span><h3>${w.evolved ? EVO_BY_W[w.id].nameKo : d.nameKo} <em>${w.evolved ? '절기' : 'Lv ' + w.lv} · ${ASPECT_KO[d.yinyang]}</em></h3><p>${BEHAVIOR_TEXT[d.behavior]} · 짝 심법 ${P_BY_ID[d.pairPassive].nameKo}</p></span></div>`; }).join('')
+    const dsum = G.weapons.reduce((x, w) => x + w.dealt, 0) || 1;
+    // 무공별 피해(12장 '화면 편의 규칙'): 지금까지 피해·초당 피해(얻은 뒤 시간으로)·비중. 정산 막대와 같은 셈(w.dealt). 카드를 누르면 펼쳐 상세(짝·진전·연환)
+    list.innerHTML = G.weapons.map(w => { const d = W_BY_ID[w.id], dps = w.dealt / Math.max(1, G.t - (w.t0 || 0)), sc = SCHOOL_OF[w.id], ln = SYN.links.filter(l => l.a === w.id || l.b === w.id);
+      return `<details class="card wdmg"><summary><span class="ic">${GLYPH[w.id]}</span><span><h3>${w.evolved ? EVO_BY_W[w.id].nameKo : d.nameKo} <em>${w.evolved ? '절기' : 'Lv ' + w.lv} · ${ASPECT_KO[d.yinyang]}</em></h3><p class="dmgline">피해 ${Math.round(w.dealt).toLocaleString()} · 초당 ${dps.toFixed(1)} · ${Math.round(w.dealt / dsum * 100)}%</p></span></summary>`
+        + `<p>${BEHAVIOR_TEXT[d.behavior]} · 짝 심법 ${P_BY_ID[d.pairPassive].nameKo}${sc ? ` · 진전 ${sc.nameKo}` : ''}${ln.length ? ` · 연환 ${ln.map(l => `「${l.nameKo}」${G.syn.links.has(l.id) ? '(완성)' : ''}`).join(' ')}` : ''}</p></details>`; }).join('')
       + (G.insights.length ? `<p class="subtle">깨달음: ${G.insights.map(id => INSIGHTS.find(i => i.id === id).name).join(', ')}</p>` : '')
       + synSummaryHtml();
     $('pause').hidden = false; focusFirst($('resume'));
