@@ -2727,7 +2727,9 @@ const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line'
 const eliteShapeOk = P => !!P && (ELITE_SHAPES.has(P.shape) || (P.shape === 'circles' && P.aim === 'self'));
 function regionEliteKey(key) {
   if (!SCALE_MODE || isPro() || !G.chRegion) return key;
-  const r = CH_REGS.find(x => x.id === G.chRegion), list = r && r.chapter !== 'chapter1' && (DATA.elites || {})[r.chapter];
+  // 장 정예가 없는 땅(chapters.json life.eliteFallback.regions: 청운진·개방 총타·남궁세가)은 숭산 정예 그대로
+  const fb = DATA.eliteFallback || { regions: [] };
+  const r = CH_REGS.find(x => x.id === G.chRegion), list = r && r.chapter !== 'chapter1' && !fb.regions.includes(r.id) && (DATA.elites || {})[r.chapter];
   const nth = (DATA.elites.chapter1 || []).indexOf(ELITES[key].id), id = list && nth >= 0 ? list[nth] : null;
   const ps = id && DATA.elitePatterns[id], d = id && E_BY_ID[id];
   if (!ps || !d || !eliteShapeOk(ps.patterns[0])) return key;

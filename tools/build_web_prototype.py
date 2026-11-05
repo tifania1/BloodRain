@@ -108,6 +108,7 @@ def data_blob() -> str:
         # 지역 기믹(WP-13b): 독안개·낙석·눈보라·붉은 달은 gimmicks.json 값 그대로(배치 간격이 필요 없는 것부터)
         "gimmicks": {k: drop_notes(v) for k, v in load("gimmicks").items() if k in ("poisonFog", "fallingRocks", "blizzard", "redMoon")},
         "lifeLocalShare": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["localShare"],
+        "eliteFallback": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["eliteFallback"],
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
     return to_js(blob)
