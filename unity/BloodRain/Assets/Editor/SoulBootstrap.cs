@@ -98,6 +98,19 @@ namespace BloodRain.Editor
         [MenuItem("BloodRain/Test/지금 쓰러지기(플레이 중)", true)]
         static bool FallNowValid() => Application.isPlaying;
 
+        // RM-05U 시험: 은자를 500냥이 되게 채우고 보부상 창을 연다(12·24분을 기다리지 않고)
+        [MenuItem("BloodRain/Test/지금 보부상 부르기(플레이 중)")]
+        public static void CallMerchant()
+        {
+            var r = LifeRunner.Instance;
+            if (r == null) { Debug.LogWarning("[SoulBootstrap] Run 씬 플레이 중에만 됩니다"); return; }
+            if (r.Life.Silver < 500) r.Life.GainSilver(500 - r.Life.Silver);
+            r.OpenMerchant();
+        }
+
+        [MenuItem("BloodRain/Test/지금 보부상 부르기(플레이 중)", true)]
+        static bool CallMerchantValid() => Application.isPlaying;
+
         // R-08U 시험: 이번 생 처치 수에 4,990 을 더한다(도전 과제 '한 생에서 적 5,000 처치'를 열 직전까지)
         [MenuItem("BloodRain/Test/처치 수 채우기(플레이 중)")]
         public static void AddKills()

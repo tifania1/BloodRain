@@ -20,7 +20,7 @@ namespace BloodRain.Presentation
     //   진기: OrbLayer.Absorbed → life.Absorb. 경지를 넘으면 BreakthroughFx 로 줌.
     //   레벨업 화면은 Life 의 Level·Charges·Loadout 을 본다(LevelUpScreen 이 Life 를 찾는다).
     //   생성(LF-02): Tick 이 돌려주는 LifeSecond 의 Spawns 는 생성 고리(balance.json spawnTarget 대각선 배수)에, Events 는 종류대로 세운다.
-    //   덩이 사람 수는 EnemyField 가 지금 경지로 정한다(TU-04 덩이 길). 보부상·은빛 등롱·보스 사건은 아직 로그만(BR-01·C-09b).
+    //   덩이 사람 수는 EnemyField 가 지금 경지로 정한다(TU-04 덩이 길). 보부상 사건은 MerchantScreen 을 연다(RM-05U). 은빛 등롱·보스 사건은 아직 로그만(BR-01·C-09b).
     //   자리: Unity 좌표(1 = 세계 m, 출생지 = 0,0) ↔ 천하 좌표는 WorldCoords(PropLayer 가 Origin 을 출생지 한가운데로 둔다).
     //   쓰러짐(LF-03): 천하 몸이면 Life.End → Soul.EndLife → SoulStore 저장 → 정산 → Inn 씬(침방). 서장 몸이면 PlayerDown 대로 각성·처음부터.
     [DefaultExecutionOrder(-50)]
@@ -388,10 +388,30 @@ namespace BloodRain.Presentation
                 case WaveEventKind.Toad:
                     enemies.SpawnAt(_data.Enemy(e.Enemy), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
                     break;
+                case WaveEventKind.Merchant:
+                    OpenMerchant();
+                    break;
                 default:
                     Debug.Log($"[LifeRunner] 사건 {def.Kind} {e.Enemy} ({e.Wave.At:0.0}분) — 아직 세우지 않음");
                     break;
             }
+        }
+
+        // ---- RM-05U 보부상 ----
+        MerchantScreen _merchant;
+
+        /// <summary>보부상 창을 연다(생성 디렉터의 보부상 사건, 시험 메뉴 '지금 보부상 부르기').</summary>
+        public void OpenMerchant()
+        {
+            if (_life == null || _life.Record != null) return;
+            if (_merchant == null) _merchant = FindFirstObjectByType<MerchantScreen>();
+            if (_merchant == null)
+            {
+                _merchant = new GameObject("보부상 화면").AddComponent<MerchantScreen>();
+                var lu = FindFirstObjectByType<LevelUpScreen>();
+                if (lu != null) _merchant.font = lu.font;
+            }
+            _merchant.Open(_life, _data, vitals, orbs);
         }
 
         // 화면 축척은 레벨 + 진기 비율(경지 안에서 조금씩 넓어진다). 돌파 중엔 BreakthroughFx 가 맡는다.

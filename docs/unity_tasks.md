@@ -190,7 +190,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 당가 몸이 독 장판 위에서 기혈이 안 줄고, 곤륜 몸 가까이 온 적이 느려짐
   - 찍기: `docs/unity_shots/R-04U/` 의 `poison_immune.png`
 
-- [ ] RM-05U 보부상 화면 · 먼저: LF-02
+- [x] RM-05U 보부상 화면 · 먼저: LF-02 — 2026-11-06 02:55 PC: `Presentation/Hud/MerchantScreen.cs`(uGUI, 열면 timeScale 0, 닫으면 연 때 값으로). LifeRunner 가 디렉터의 Merchant 사건에서 `OpenMerchant()`, 사기는 `MerchantVisit.Buy`, 회복약은 `PotionHeal`(마교 배율은 PlayerVitals.Heal 이 곱함), 취기부는 `OrbLayer.Field.PullAll()`. 은자 모자람·다 산 품목은 흐리게. 문구 `ui.merchant.*` 네 언어. 시험 메뉴 `지금 보부상 부르기(플레이 중)`(SoulBootstrap.cs, 은자 500 채움). 기혈 40/100 에서 회복약 둘 → 90 → 100, 500 → 260냥, 둘째 뒤 버튼 꺼짐·셋째 안 사짐, 다시 고르기 권 → 다시 고르기 2 → 3, 닫으니 timeScale 1. 콘솔 에러 0. 12·24분 실제 사건으로 뜨는 것은 기다리지 않음(같은 OpenMerchant 길)
   - 할 것: 생성 디렉터의 보부상 사건(12·24분, 지금은 로그만)에서 시간을 멈추고 보부상 창을 연다. 품목 셋(이름·값·남은 수·지금 은자), 사면 `MerchantVisit.Buy(id, life)`. 결과가 Bought 면 회복약은 `MerchantVisit.PotionHeal(item, 최대 기혈, SectTrait.HealingMultiplier)` 만큼 기혈을 채우고, 취기부는 등롱 취기부와 같은 길(화면 안 구슬 끌기). 다시 고르기 권은 Core 가 `life.Charges` 에 이미 더한다. 은자 모자람·품목 다 삼은 버튼을 흐리게. 닫으면 시간 되돌림.
   - 쓸 것: Core `Build/Merchant.cs`(MerchantVisit, MerchantBuy), balance.json `merchant`, `life.Silver`, 이름 키 `balance.merchant.items.<id>.name`
   - 메뉴: 시험 메뉴 `지금 보부상 부르기`(은자 500 넣고 창 열기)를 Run 메뉴 파일에 하나 더
