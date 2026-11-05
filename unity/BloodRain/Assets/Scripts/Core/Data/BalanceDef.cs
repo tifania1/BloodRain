@@ -314,6 +314,17 @@ namespace BloodRain.Core.Data
         public List<LanternDropDef> Lantern = new List<LanternDropDef>();
     }
 
+    /// <summary>배경음 바꾸기(balance.json bgm, 기획서 14장 '곡 바꾸기').</summary>
+    public sealed class BgmRulesDef
+    {
+        /// <summary>지역 곡끼리는 새 지역에 이 초를 넘게 서 있어야 바꾼다(경계를 넘나들 때 곡이 왔다 갔다 하지 않게).</summary>
+        public float RegionHoldSeconds = 4;
+        /// <summary>지역 곡끼리 섞어 넘기는 초.</summary>
+        public float RegionFadeSeconds = 3;
+        /// <summary>땅의 주인 싸움·종장 단계·화면 전환에 섞어 넘기는 초.</summary>
+        public float QuickFadeSeconds = 1;
+    }
+
     /// <summary>보부상 품목 하나(balance.json merchant.items).</summary>
     public sealed class MerchantItemDef
     {
@@ -351,6 +362,7 @@ namespace BloodRain.Core.Data
         public EnemyStatusDef EnemyStatus = new EnemyStatusDef();
         public DropsDef Drops = new DropsDef();
         public MerchantDef Merchant = new MerchantDef();
+        public BgmRulesDef Bgm = new BgmRulesDef();
         public LimitsDef Limits = new LimitsDef();
         public OrbValuesDef Orbs = new OrbValuesDef();
         public OrbPickupDef OrbPickup = new OrbPickupDef();

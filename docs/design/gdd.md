@@ -1343,6 +1343,10 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 [객잔] Evening at a small roadside inn after the rain stops. Gentle guzheng and dizi, soft rain on roof tiles, warm and calm, slow 70 bpm, loopable.
 ```
 
+### 곡 바꾸기
+
+경지가 오르면 화면이 넓어져 지역 경계를 자주 넘나듭니다(7장). 그래서 지역 곡끼리는 서 있는 지역이 바뀐 뒤 4초 넘게 그대로일 때만 3초 동안 섞어 넘깁니다. 땅의 주인 싸움, 종장 단계, 화면 전환은 바로 1초로 넘깁니다. 돌파 연출 동안은 곡을 바꾸지 않습니다(값은 balance.json `bgm`).
+
 ### 효과음
 
 | 분류 | 소리 |
