@@ -129,7 +129,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 쓸 것: Core `LifeLog.NoteSynergy`, `LifeSummary.NewTornManuals`
   - 메뉴: 없음
   - 끝: 비급 층 연환을 처음 맞춘 생을 끝내면 정산에 그 비급 이름이 오름
-  - 찍기: `docs/unity_shots/S-04/` 의 `settlement_torn_real.png`
+  - 찍기: `docs/unity_shots/S-04/` 의 `settlement_torn_real.png` (진행: 2026-11-05 21:12 PC — LevelUpScreen.RefreshSeals 가 시너지가 바뀔 때 `LifeRunner.Instance.Life.Log.NoteSynergy(syn)` 를 부르게 함, 컴파일·콘솔 에러 0. 확인은 못 함: 소림 몸에 심법 여섯·나한권+장풍·음공을 4단까지 코드로 넣어도 LockedManualIds 가 비어 찢긴 비급 후보가 안 생김(복원 목록은 빈 채). 남은 것: 잠기는 조합(secret 층 연환, 예: 쌍검합벽 삼재검법+창천검기)으로 다시 맞춰 정산 줄 찍기)
 
 - [ ] C-06b 곱하는 진전 효과 · 먼저: C-06a
   - 할 것: `SynergyEffects.Of(syn)` 이 내주는 배율을 그 자리에 곱한다 — 남궁 2 검 피해, 개방 3 낮은 기혈 공력, 곤륜 2·3 정신부·강시 피해, 수로채 3 경공 거리, 무당 3 사량발천근, 마도 2 흡혈·음식. 시너지가 바뀔 때마다 `loadout.Gauge.SetSynergyHarmonyRange(Synergy.Compute(…).HarmonyRange)`.

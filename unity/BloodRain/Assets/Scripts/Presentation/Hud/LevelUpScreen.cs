@@ -378,7 +378,8 @@ namespace BloodRain.Presentation.Hud
             key.Append(syn.Links.Count).Append('/').Append(syn.LockedLinks.Count);
             if (key.ToString() == _sealKey) return;
             _sealKey = key.ToString();
-            // 시너지가 바뀌면 생 기록에 남긴다(LifeLog.NoteSynergy) — Life 가 Run 씬에 붙으면(C-10) 여기서 부른다.
+            // 시너지가 바뀌면 생 기록에 남긴다(S-04a). 잠긴 비급 조건을 갖췄으면 생이 끝날 때 찢긴 비급으로 오른다.
+            if (LifeRunner.Instance != null && LifeRunner.Instance.Life != null) LifeRunner.Instance.Life.Log.NoteSynergy(syn);
 
             for (int i = _sealRow.childCount - 1; i >= 0; i--) Destroy(_sealRow.GetChild(i).gameObject);
             foreach (var s in syn.Schools)
