@@ -88,7 +88,7 @@ async function liveCheck(p, label, ms, screens) {
 }
 async function shot(p, name) { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await p.page.screenshot({ path: path.join(SHOTS, name + '.png') }); } }
 
-const PROTO_SCREENS = ['title', 'levelup', 'brk', 'chest', 'find', 'evopick', 'pause', 'result', 'procut', 'profirst', 'dex'];
+const PROTO_SCREENS = ['title', 'levelup', 'brk', 'chest', 'find', 'evopick', 'pause', 'result', 'procut', 'profirst', 'inn', 'dex'];
 const CH_SCREENS = ['title', 'rebirth', 'levelup', 'pause', 'dead'];
 
 async function prologueRuns(browser, base) {
@@ -118,7 +118,8 @@ async function prologueRuns(browser, base) {
       // 컷을 넘겨 첫 환혼 화면까지
       for (let k = 0; k < 6 && (await p.page.evaluate(() => __hyeolu.overlay())) === 'procut'; k++) { await p.page.click('#procutnext').catch(() => {}); await p.page.waitForTimeout(700); }
       flow = await p.page.evaluate(() => __hyeolu.overlay());
-      if (flow !== 'profirst') problems.push(`${label}: 끝 컷 뒤 첫 환혼 화면이 아님(${flow})`);
+      // 합친 판(WP-14e): 끝 컷 뒤엔 이 판의 침방(첫 환혼)
+      if (flow !== 'inn') problems.push(`${label}: 끝 컷 뒤 침방(첫 환혼)이 아님(${flow})`);
       await liveCheck(p, label + ' 첫 환혼', 500, PROTO_SCREENS);
       if (i === 0) await shot(p, 'prologue_first');
     }
@@ -243,28 +244,33 @@ async function lordRuns(browser, base) {
   await p.ctx.close();
 }
 
-// 서장 → 첫 환혼 → 시안(#first=) 이어 받기와 휴대폰 화면
+// 서장 끝 → 침방(첫 환혼) → 한 생 → 정산 → 침방, 휴대폰 화면(WP-14e: 시안 #first= 대신 합친 프로토타입 한 판에서)
 async function flowRuns(browser, base) {
   const label = '이어 받기';
-  const p = await openPage(browser, base + '/lookdev/cheonha.html#first=shaolin&orb=900&realm=ilryu', label, { width: 360, height: 780 });
-  await p.page.waitForTimeout(800);
-  const st = await p.page.evaluate(() => { const G = __ch.state(); return { sect: G && G.sect && G.sect.id, prologue: __ch.prologue() }; });
-  if (st.sect !== 'shaolin') problems.push(`${label}: #first=shaolin 로 열었는데 첫 생이 시작되지 않음(${JSON.stringify(st)})`);
-  await p.page.waitForTimeout(2000);
-  await shot(p, 'cheonha_first_phone');
-  // 멈춤 화면 열고 닫기, 좌화 → 정산 → 침방
-  await p.page.evaluate(() => { __ch.pause(true); });
-  await liveCheck(p, label + ' 멈춤', 300, CH_SCREENS);
-  await p.page.evaluate(() => { __ch.pause(false); __ch.end('zuohwa'); });
-  await liveCheck(p, label + ' 정산', 300, CH_SCREENS);
-  await shot(p, 'cheonha_dead_phone');
-  await p.page.click('#again').catch(e => problems.push(`${label}: 정산 화면 '다시' 단추를 못 누름 ${e.message.split('\n')[0]}`));
+  const p = await openPage(browser, base + '/', label, { width: 360, height: 780 });
   await p.page.waitForTimeout(500);
-  const ov = (await liveCheck(p, label + ' 침방', 300, CH_SCREENS)).join('·');
-  if (ov !== 'rebirth') problems.push(`${label}: 정산 뒤 침방이 아님(${ov})`);
-  await shot(p, 'cheonha_rebirth_phone');
+  await p.page.evaluate(() => { try { localStorage.removeItem('cheonha_meta2'); } catch (e) { /* 새 혼으로 */ } });
+  const cands = await p.page.evaluate(() => __hyeolu.prologueEnd(900, 'ilryu').map(c => c.sect).join('·'));
+  const ov0 = (await liveCheck(p, label + ' 첫 환혼', 300, PROTO_SCREENS)).join('·');
+  if (ov0 !== 'inn' || cands !== 'shaolin·gaebang·namgung') problems.push(`${label}: 서장 끝 뒤 첫 환혼 침방이 아님(${ov0}, 후보 ${cands})`);
+  await shot(p, 'proto_first_inn_phone');
+  await p.page.evaluate(() => __hyeolu.pick(0));
+  await p.page.waitForTimeout(1500);
+  const st = await p.page.evaluate(() => { const b = __hyeolu.body(), s = __hyeolu.soul(); return { sect: b && b.id, prologue: s.prologue }; });
+  if (st.sect !== 'shaolin' || !st.prologue) problems.push(`${label}: 소림 첫 생이 시작되지 않았거나 서장 정산이 없음(${JSON.stringify(st)})`);
+  await shot(p, 'proto_first_life_phone');
+  await p.page.evaluate(() => __hyeolu.die());
+  await liveCheck(p, label + ' 정산', 300, PROTO_SCREENS);
+  await shot(p, 'proto_settle_phone');
+  await p.page.click('#again').catch(e => problems.push(`${label}: 정산 화면 '윤회' 단추를 못 누름 ${e.message.split('\n')[0]}`));
+  await p.page.waitForTimeout(500);
+  const ov = (await liveCheck(p, label + ' 침방', 300, PROTO_SCREENS)).join('·');
+  if (ov !== 'inn') problems.push(`${label}: 정산 뒤 침방이 아님(${ov})`);
+  const lives = await p.page.evaluate(() => __hyeolu.soul().lives);
+  if (lives !== 1) problems.push(`${label}: 첫 생을 마쳤는데 혼 기록 생 횟수가 ${lives}`);
+  await shot(p, 'proto_inn_phone');
   flush(p, label);
-  rows.push({ what: '서장 넘어옴(#first)·정산·침방 360x780', res: `${st.sect || '없음'} 첫 생, 서장 정산 ${st.prologue ? JSON.stringify(st.prologue).slice(0, 60) : '없음'} → ${ov}` });
+  rows.push({ what: '서장 끝 → 침방·첫 생·정산·침방 360x780', res: `${st.sect || '없음'} 첫 생, 서장 정산 ${st.prologue ? JSON.stringify(st.prologue).slice(0, 60) : '없음'} → ${ov}` });
   await p.ctx.close();
 }
 

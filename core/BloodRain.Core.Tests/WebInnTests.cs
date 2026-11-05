@@ -53,5 +53,14 @@ namespace BloodRain.Core.Tests
             Assert.Contains("bedLine('first:open')", html);
             Assert.Contains("bedLine('pick:female')", html);
         }
+
+        [Fact] public void 서장_끝은_이_판의_침방으로_잇고_서장_정산은_시안과_같은_셈()
+        {
+            var html = Proto;
+            Assert.Contains("if (SCALE_MODE) { $('profirst').hidden = true; overlay = null; recordPrologue(G.orbRaw, G.realm.id); openInn(); return; }", html);
+            Assert.Contains("Math.round(QI.perOrbValue * Math.max(0, orbRaw || 0) * home.density + visits.length * QI.firstVisitRegion + realms.length * QI.firstReachRealm)", html);
+            Assert.Contains("Math.round(orbQi + visits.length * QI.firstVisitRegion + realms.length * QI.firstReachRealm)", Sian);
+            Assert.Contains("__hyeolu.prologueEnd(900, 'ilryu')", ReadRepoFile("tools", "web_autocheck.js"));
+        }
     }
 }

@@ -2904,7 +2904,7 @@ function traitLine(id) {
 function openInn() {
   const m = innMeta();
   running = false; cancelAnimationFrame(rafId);
-  ['result', 'pause', 'levelup', 'brk', 'chest', 'find', 'evopick'].forEach(id => $(id).hidden = true);
+  ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'evopick', 'profirst', 'procut'].forEach(id => $(id).hidden = true);
   $('hud').hidden = true; overlay = 'inn'; paused = false;
   innRerolls = m.lives ? upgEffect(m, 'rerolls') : 0;   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
   innCands = drawCandidates(m);
@@ -3451,6 +3451,9 @@ function nextCut() {
   $('procut').hidden = true; overlay = 'profirst';
   const best = store.get('best') || {}; const key = 'prologue' + (G.easy ? '_easy' : '');
   best[key] = { gs: Math.floor(G.gm * 60), won: true, level: G.level, kills: G.kills }; store.set('best', best);
+  // 합친 판(WP-14e): 서장도 한 생이라 정산을 혼에 새기고, 침방(첫 환혼이면 소림·개방·남궁, 목 노인 첫 줄)으로 이어 이 판에서 첫 생을 연다.
+  // 옛 시야(?scale=0)는 문파 몸 판이 없으니 예전처럼 첫 환혼 화면 → 천하 시안
+  if (SCALE_MODE) { $('profirst').hidden = true; overlay = null; recordPrologue(G.orbRaw, G.realm.id); openInn(); return; }
   const box = $('profirstcards'); box.innerHTML = '';
   DATA.firstRebirth.forEach((sct, i) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'card';
@@ -3461,6 +3464,22 @@ function nextCut() {
 }
 // 고르면 천하 시안(lookdev/cheonha.html)이 그 문파 몸으로 첫 생을 연다(#first=<문파>). 시안 기록이 이미 있으면 침방부터.
 // 서장도 한 생이라(Core Soul.EndLife) 주운 진기 구슬 값과 오른 경지를 같이 넘기고, 시안이 윤회의 기·청운진·오른 경지로 혼에 새긴다(WP-02).
+// 서장 정산(WP-14e, 시안 recordPrologue 와 같은 셈): 주운 진기 구슬 값 × 청운진 혈운 농도 × 0.04 + 청운진 처음 밟음 + 처음 오른 경지(이류·일류).
+// 서장은 한 번뿐이라 이미 새겼으면 다시 셈하지 않는다. 생 횟수(lives)는 '문파 몸으로 산 생'이라 서장을 넣지 않는다(시안과 같음)
+function recordPrologue(orbRaw, realmId) {
+  const m = innMeta(); if (m.prologue) return null;
+  const home = CH_REGS.find(r => r.id === PROB.region) || { id: PROB.region, density: 1 }, top = Math.max(0, B.realms.findIndex(r => r.id === realmId));
+  m.visited = Array.isArray(m.visited) ? m.visited : []; m.reached = Array.isArray(m.reached) ? m.reached : [];
+  const realms = B.realms.slice(1, top + 1).map(r => r.id).filter(id => !m.reached.includes(id));
+  const visits = m.visited.includes(home.id) ? [] : [home.id];
+  const total = Math.round(QI.perOrbValue * Math.max(0, orbRaw || 0) * home.density + visits.length * QI.firstVisitRegion + realms.length * QI.firstReachRealm);
+  m.qi += total; m.best = Math.max(m.best || 0, top);
+  for (const id of visits) m.visited.push(id);
+  for (const id of realms) m.reached.push(id);
+  m.prologue = { qi: total, orb: Math.round(orbRaw || 0), realm: B.realms[top].id };
+  soulSave(m);
+  return { total, realms };
+}
 function firstRebirth(id) { location.href = `lookdev/cheonha.html#first=${id}&orb=${Math.round(G.orbRaw)}&realm=${G.realm.id}`; }
 
 function drawDrop(d) {
@@ -3891,7 +3910,9 @@ window.__hyeolu = {
   // 정산(WP-14c): settle() 지금 끝나면 받을 윤회의 기(한 생 판만), soul() 혼 기록
   settle: () => (G && G.body ? lifeSettle() : null), soul: () => soulLoad(),
   // 침방(WP-14d): inn() 침방을 열고 후보를 돌려줌, pick(i) 그 후보로 다음 생, body() 지금 몸(문파·성질·능력치)
-  inn: () => { openInn(); return innCands; }, pick: i => chooseLife(i), body: () => (G ? G.body : null),
+  inn: () => { openInn(); return innCands; },
+  // 서장 끝(WP-14e): prologueEnd(구슬 값, 경지 id) 서장 정산을 새기고 침방, die() 지금 판을 쓰러뜨림(정산 화면 시험용)
+  prologueEnd: (orb, realm) => { recordPrologue(orb, realm); openInn(); return innCands; }, die: () => { if (G && running) { G.player.hp = 0; endRun(false); } }, pick: i => chooseLife(i), body: () => (G ? G.body : null),
   // overlay() 지금 떠 있는 화면, overlay(v) 그 화면이 떠 있는 셈 치기(서장 끝 컷이 화면이 닫힐 때까지 기다리는지 보는 시험용)
   overlay(v) { if (v !== undefined) overlay = v; return overlay; },
 };
