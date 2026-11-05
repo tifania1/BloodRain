@@ -1,0 +1,163 @@
+<title>효과음 듣기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Noto+Serif+KR:wght@400;700&display=swap">
+<style>
+/* SFX-04 효과음 듣고 고르는 페이지. 후보를 이름(번호)을 가린 채 섞어 들려 주고, 고른 것을 feedback.md 에 붙일 한 줄로 만든다.
+   소리는 두 곳에서: 빌드가 넣은 Assets/Audio/SFX(코드 합성·들어간 소리), 사람이 여는 PC 폴더(art_inbox/sfx — AI 후보를 postprocess_sfx.py --candidates 로 다듬은 trimmed/).
+   종이·먹 화풍이라 이펙트 갤러리처럼 어두운 테마는 두지 않는다. */
+:root {
+  --paper: #EFE6D2; --ink: #1A1A1A; --ink-soft: #4A4640; --line: rgba(26,26,26,.2); --seal: #B3261E;
+  --brush: "Nanum Brush Script", "Noto Serif KR", serif;
+  --serif: "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+  --num: ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--serif); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 20px; }
+h1 { margin: 0; font: 400 clamp(40px, 8vw, 64px)/1 var(--brush); }
+.lead { margin: 0; max-width: 68ch; line-height: 1.75; font-size: 14px; color: var(--ink-soft); }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, .file { padding: 8px 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--paper); color: var(--ink); font: 700 13px/1 var(--serif); cursor: pointer; }
+button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.file input { display: none; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.card { border: 1px solid var(--line); border-radius: 4px; background: #F5EFE2; padding: 12px; display: grid; gap: 8px; }
+.card h2 { margin: 0; font: 700 15px/1.3 var(--serif); }
+.meta { font: 500 12px/1.5 var(--num); color: var(--ink-soft); }
+.cands { display: flex; flex-wrap: wrap; gap: 6px; }
+.cand { display: inline-flex; border: 2px solid var(--ink); border-radius: 3px; overflow: hidden; }
+.cand button { border: 0; border-radius: 0; padding: 7px 10px; font-family: var(--num); }
+.cand .pick { border-left: 2px solid var(--ink); }
+.cand .pick[aria-pressed="true"] { background: var(--seal); color: var(--paper); }
+.none { font: 500 12px/1.5 var(--num); color: var(--ink-soft); }
+textarea { width: 100%; box-sizing: border-box; min-height: 64px; font: 500 14px/1.6 var(--num); padding: 10px; border: 2px solid var(--ink); border-radius: 3px; background: #FBF7EE; color: var(--ink); }
+.out { position: sticky; bottom: 0; background: var(--paper); padding: 12px 0 4px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+</style>
+
+<div class="wrap">
+  <h1>효과음 듣기</h1>
+  <p class="lead">한 소리의 후보를 번호를 가리고 섞어서 들려 준다. 마음에 드는 것에 '고름'을 누르면 아래에 <code>docs/feedback.md</code> 에 붙일 줄이 생긴다(숫자는 실제 후보 번호). 코드로 구운 소리와 이미 들어간 소리는 바로 들리고, AI 후보는 PC 의 <code>art_inbox/sfx</code> 폴더를 열면 같이 뜬다.</p>
+  <div class="bar">
+    <label class="file">후보 폴더 열기<input id="dir" type="file" webkitdirectory multiple></label>
+    <button id="reveal" aria-pressed="false">번호 보기</button>
+    <button id="shuffle">다시 섞기</button>
+    <span class="meta" id="count"></span>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="out">
+    <textarea id="line" readonly aria-label="feedback.md 에 붙일 줄" placeholder="고른 것이 없다"></textarea>
+    <div class="bar"><button id="copy">줄 복사</button><span class="meta" id="copied"></span></div>
+  </div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;            // sfx_queue 의 줄(빌드가 넣음)
+const ROUTE = { synth: '코드 합성', ai: 'AI 후보', layer: '층 쌓기' };
+const cands = {};                         // id → [{n, label, url}]  n = 실제 후보 번호(1부터)
+const picks = {};                         // id → Set(n)
+const order = {};                         // id → 섞은 순서
+let reveal = false, playing = null;
+
+function addCand(id, n, url, label) {
+  (cands[id] ||= []);
+  if (cands[id].some(c => c.n === n)) cands[id] = cands[id].filter(c => c.n !== n);
+  cands[id].push({ n, url, label });
+}
+
+function shuffle(id) {
+  const a = (cands[id] || []).map((_, i) => i);
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  order[id] = a;
+}
+
+function play(urls) {
+  if (playing) playing.stop = true;
+  const run = { stop: false }; playing = run;
+  const list = Array.isArray(urls) ? urls : [urls];
+  let i = 0;
+  const next = () => {
+    if (run.stop || i >= list.length) return;
+    const a = new Audio(list[i++]);
+    // 풍경 음계는 실제 흡수처럼 촘촘하게
+    if (list.length > 1) setTimeout(next, 110);
+    a.play().catch(() => {});
+  };
+  next();
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.textContent = '';
+  if (!DATA) { grid.innerHTML = '<p class="none">빌드한 페이지에서 연다(python tools/build_web_prototype.py → site/lookdev/sfx_listen.html).</p>'; return; }
+  let total = 0;
+  // 들을 것이 있는 소리를 위로
+  for (const row of [...DATA].sort((a, b) => !!(cands[b.id] || []).length - !!(cands[a.id] || []).length)) {
+    const list = cands[row.id] || [];
+    total += list.length;
+    if (!order[row.id] || order[row.id].length !== list.length) shuffle(row.id);
+    const card = document.createElement('section'); card.className = 'card';
+    card.innerHTML = `<h2>${row.use}</h2><div class="meta">${row.id} · ${ROUTE[row.route] || row.route} · ${row.status}${row.picked ? ' · 고른 것 ' + row.picked.join('·') : ''}</div>`;
+    const box = document.createElement('div'); box.className = 'cands';
+    if (!list.length) box.innerHTML = `<span class="none">후보 없음(${row.route === 'synth' ? '코드 합성 전' : 'PC 폴더를 열면 뜬다'})</span>`;
+    order[row.id].forEach((idx, k) => {
+      const c = list[idx];
+      const w = document.createElement('span'); w.className = 'cand';
+      const p = document.createElement('button');
+      p.textContent = '▶ ' + (reveal ? c.n + (c.label ? ' ' + c.label : '') : String.fromCharCode(65 + k));
+      p.onclick = () => play(c.url);
+      const s = document.createElement('button'); s.className = 'pick';
+      const on = picks[row.id]?.has(c.n);
+      s.textContent = '고름'; s.setAttribute('aria-pressed', on ? 'true' : 'false');
+      s.onclick = () => { const set = (picks[row.id] ||= new Set()); set.has(c.n) ? set.delete(c.n) : set.add(c.n); render(); };
+      w.append(p, s); box.append(w);
+    });
+    card.append(box);
+    grid.append(card);
+  }
+  document.getElementById('count').textContent = `후보 ${total}개`;
+  const lines = DATA.filter(r => picks[r.id]?.size).map(r => `${r.id} ${[...picks[r.id]].sort((a, b) => a - b).join('·')} 고름`);
+  document.getElementById('line').value = lines.join('\n');
+}
+
+// 빌드가 넣은 소리(sfx.json). 풍경은 같은 벌 번호의 8음을 한 후보로 묶어 음계로 튼다.
+async function loadBuiltin() {
+  try {
+    const m = await (await fetch('sfx/sfx.json')).json();
+    for (const s of m.sounds) {
+      const byV = {};
+      s.variants.forEach((v, i) => {
+        const mm = v.file.match(/_(\d+)\.ogg$/);
+        const n = mm ? +mm[1] : 1;
+        (byV[n] ||= []).push('sfx/' + v.file);
+      });
+      for (const [n, urls] of Object.entries(byV)) addCand(s.id, +n, urls.length > 1 ? urls : urls[0], urls.length > 1 ? `(${urls.length}음)` : '');
+    }
+  } catch (e) { /* 아직 들어간 소리가 없다 */ }
+  render();
+}
+
+// PC 폴더: <id>_NN.ogg(trimmed/ 우선) 또는 다듬기 전 <id>_000NN.flac
+document.getElementById('dir').addEventListener('change', ev => {
+  const ids = new Set((DATA || []).map(r => r.id));
+  const files = [...ev.target.files].sort((a, b) => (b.webkitRelativePath.includes('/trimmed/') ? 1 : 0) - (a.webkitRelativePath.includes('/trimmed/') ? 1 : 0));
+  const seen = new Set();
+  for (const f of files) {
+    const m = f.name.match(/^(sfx_[a-z0-9_]+?)_(\d+)\.(ogg|flac|wav|mp3)$/);
+    if (!m || !ids.has(m[1])) continue;
+    const key = m[1] + '#' + (+m[2]);
+    if (seen.has(key)) continue; seen.add(key);
+    addCand(m[1], +m[2], URL.createObjectURL(f), f.webkitRelativePath.includes('/trimmed/') ? '' : '(다듬기 전)');
+  }
+  for (const id in order) delete order[id];
+  render();
+});
+document.getElementById('reveal').onclick = e => { reveal = !reveal; e.target.setAttribute('aria-pressed', String(reveal)); render(); };
+document.getElementById('shuffle').onclick = () => { for (const id in order) delete order[id]; render(); };
+document.getElementById('copy').onclick = async () => {
+  const t = document.getElementById('line').value;
+  try { await navigator.clipboard.writeText(t); document.getElementById('copied').textContent = t ? '복사함' : ''; }
+  catch { document.getElementById('line').select(); }
+};
+loadBuiltin();
+</script>

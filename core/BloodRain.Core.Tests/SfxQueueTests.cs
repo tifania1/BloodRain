@@ -118,5 +118,24 @@ namespace BloodRain.Core.Tests
             // 루프는 빗소리 같은 환경 소리만
             Assert.All(Rows().Where(o => (bool)o["loop"]!), o => Assert.Equal("ambient", (string)o["category"]!));
         }
+
+        [Fact] public void 웹이_트는_구운_소리와_듣기_페이지가_큐와_맞다()
+        {
+            // 프로토타입은 lookdev/sfx/<id>_<벌>.ogg 를 읽는다(빌드가 Assets/Audio/SFX 를 그리 옮김). 큐에서 들어간 코드 합성 소리여야 한다.
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            var baked = Regex.Match(html, @"const SFX_BAKED = \{([^}]*)\}").Groups[1].Value;
+            var ids = Regex.Matches(baked, @"'(sfx_[a-z0-9_]+)'").Select(m => m.Groups[1].Value).Append("sfx_xp_absorb").ToList();
+            Assert.True(ids.Count >= 4);
+            var rows = Rows().ToDictionary(o => (string)o["id"]!);
+            foreach (var id in ids)
+            {
+                Assert.Equal("synth", (string)rows[id]["route"]!);
+                Assert.True(File.Exists(Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Audio", "SFX", id == "sfx_xp_absorb" ? $"{id}_n8_5.ogg" : $"{id}_5.ogg")), $"{id}: 구운 파일이 없다");
+            }
+            Assert.Contains("const SFX_VARIANTS = 5, ORB_NOTES = 8", html);
+            // 듣기 페이지는 빌드 때 큐를 받는다
+            Assert.Contains("const DATA = /*__DATA__*/null;", ReadRepoFile("web", "lookdev", "sfx_listen.html"));
+            Assert.Contains("\"sfx_listen\": sfx_blob", ReadRepoFile("tools", "build_web_prototype.py"));
+        }
     }
 }

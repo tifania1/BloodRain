@@ -7,6 +7,7 @@ web/prototype/template.html 에 저장소 데이터 JSON과 인트로 컷 세 �
   site/lookdev/              이펙트 시안(web/lookdev/*.html)을 공개용 문서로 감싼 것.
                              시안에 데이터 자리(/*__DATA__*/null)가 있으면 LOOKDEV_DATA 의 묶음을 넣는다
   site/lookdev/vfx/          이펙트 갤러리가 읽는 Art/VFX 텍스처(Brush·Common·AI) 사본
+  site/lookdev/sfx/          효과음 듣기 페이지가 읽는 Assets/Audio/SFX 의 ogg·sfx.json 사본
 
 둘 다 빌드 결과라 커밋하지 않는다(.gitignore). 밸런스 숫자를 바꾸면 이 스크립트만 다시 돌리면 된다.
 CI(.github/workflows/web-prototype.yml)가 같은 스크립트로 묶어 배포한다.
@@ -40,6 +41,7 @@ SITE = PROTO / "site"
 ARTIFACT = PROTO / ".artifact"
 LOOKDEV = ROOT / "web" / "lookdev"
 VFX = ROOT / "unity" / "BloodRain" / "Assets" / "Art" / "VFX"
+SFX = ROOT / "unity" / "BloodRain" / "Assets" / "Audio" / "SFX"
 
 SITE_URL = "https://bloodrain-proto.pages.dev"
 TITLE = "혈우강호 프로토타입"
@@ -160,7 +162,14 @@ def cheonha_blob() -> str:
 
 
 # 시안 파일 이름(확장자 빼고) → 데이터 묶음
-LOOKDEV_DATA = {"cheonha": cheonha_blob}
+def sfx_blob() -> str:
+    """효과음 듣기 페이지(web/lookdev/sfx_listen.html)가 읽는 묶음: sfx_queue 의 줄(문구 빼고)."""
+    rows = [json.loads(l) for l in (ROOT / "sfx_queue" / "queue.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+    keep = ("id", "use", "category", "route", "candidates", "status", "picked", "note")
+    return json.dumps([{k: r[k] for k in keep if k in r} for r in rows], ensure_ascii=False)
+
+
+LOOKDEV_DATA = {"cheonha": cheonha_blob, "sfx_listen": sfx_blob}
 
 
 def jpeg_bytes(img: Image.Image, quality: int = 78) -> bytes:
@@ -288,6 +297,17 @@ def main() -> int:
                 shutil.copyfile(f, vfx_out / sub / f.name)
                 n += 1
     print(f"{vfx_out.relative_to(ROOT)} 텍스처·목록 {n}개")
+
+    # 효과음 듣기 페이지(lookdev/sfx_listen.html)가 읽는 소리: Assets/Audio/SFX 의 ogg·sfx.json 그대로(.meta 빼고)
+    sfx_out = SITE / "lookdev" / "sfx"
+    shutil.rmtree(sfx_out, ignore_errors=True)
+    n = 0
+    for f in sorted(SFX.glob("*")) if SFX.is_dir() else []:
+        if f.suffix in (".ogg", ".json"):
+            sfx_out.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(f, sfx_out / f.name)
+            n += 1
+    print(f"{sfx_out.relative_to(ROOT)} 효과음·목록 {n}개")
 
     if args.artifact:
         ARTIFACT.mkdir(parents=True, exist_ok=True)
