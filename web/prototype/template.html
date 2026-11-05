@@ -1401,7 +1401,8 @@ function lordBegin(r) {
   });
   G.lords[r.id] = 'fight'; G.lordF = e; G.boss = e;
   const bn = $('bossbar').querySelector('b'); if (bn) bn.textContent = name;
-  toast(name, (lordLine(def.id, 'meet1') || `${r.nameKo}의 땅의 주인`) + ` · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분)`);
+  const meet = shadow ? (LLINE[def.id] || {}).echoKo : lordLine(def.id, 'meet1');   // 혈영이면 메아리 줄(boss_cuts.md echo)
+  toast(name, (meet || `${r.nameKo}의 땅의 주인`) + ` · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분)`);
   sfx('boss');
   return e;
 }
