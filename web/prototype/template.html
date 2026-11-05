@@ -1215,15 +1215,37 @@ const D2R = Math.PI / 180;
 const spiralShotsPerArm = pt => pt.hitIntervalSeconds > 0 ? Math.max(1, Math.ceil(pt.leaveSeconds / pt.hitIntervalSeconds - 1e-4)) : 1;
 const spiralShotDegrees = (pt, start, arm, shot) => start + 360 * arm / Math.max(1, pt.count) + pt.turnDegreesPerSecond * shot * pt.hitIntervalSeconds;
 const radialBurstDegrees = (pt, start, wave) => Array.from({ length: pt.count }, (_, i) => start + 360 * i / pt.count + (pt.waveOffsetDegrees || 0) * wave);
+// 흑백(혈허진인, Core SplitFieldDamageTaken·시안 takenMul 과 같음): 보스를 지나는 줄로 가른다. 예고 때 플레이어 쪽이 검은(음) 구역.
+// 내 음양(태극 구간이면 0, 아니면 G.yy 부호)과 반대 색 구역에 서 있으면 받는 피해 × damageTakenMultiplier. 경계는 보스를 따라가고 초당 turnDegreesPerSecond 돈다
+function lordSplitField(e, P) {
+  const F = { e, P, x: e.x, y: e.y, a: Math.atan2(G.player.y - e.y, G.player.x - e.x), warm: P.telegraphSeconds, left: P.leaveSeconds || Infinity };
+  (G.yyFields = G.yyFields || []).push(F);
+  lordFx(dt => {
+    if (e.dead) { F.left = 0; return false; }
+    F.x = e.x; F.y = e.y;
+    if (F.warm > 0) { F.warm -= dt; return true; }
+    F.a += (P.turnDegreesPerSecond || 0) * D2R * dt; F.left -= dt;
+    return F.left > 0;
+  });
+}
+const yyFieldColor = F => (G.player.x - F.x) * Math.cos(F.a) + (G.player.y - F.y) * Math.sin(F.a) >= -1e-4 ? -1 : 1;   // -1 검은(음), +1 흰(양)
+function yyFieldMul() {
+  let m = 1;
+  if (!G.yyFields || !G.yyFields.length) return m;
+  const lean = yyBand().band === 'harmony' ? 0 : Math.sign(G.yy);
+  for (const F of G.yyFields) if (F.warm <= 0 && F.left > 0 && lean !== 0 && lean !== yyFieldColor(F)) m = Math.max(m, F.P.damageTakenMultiplier || 1);
+  return m;
+}
 // 매 프레임 도는 패턴 몸(태극권 끌어당김·반쪽 독안개·매화검기 방사). fn(dt) 가 false 를 돌려주면 끝
 function lordFx(fn) { (G.lordFxs = G.lordFxs || []).push(fn); }
 function lordFxStep(dt) {
   if (G.lordFxs && G.lordFxs.length) G.lordFxs = G.lordFxs.filter(fn => fn(dt));
   if (G.halfFogs) G.halfFogs = G.halfFogs.filter(F => F.left > 0);
+  if (G.yyFields) G.yyFields = G.yyFields.filter(F => F.left > 0);
   if (G.lordDraw) G.lordDraw = G.lordDraw.filter(o => !o.e.dead && !(o.kind === 'wave' && o.left <= 0));
   if (G.viewMulT) { G.viewMulT.t -= dt; if (G.viewMulT.t <= 0) G.viewMulT = null; }
 }
-// 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous, 시안 2막 진입과 같음). 분열(split)·흑백 구역(split_field)은 아직
+// 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous, 시안 2막 진입과 같음). 분열(split)은 아직
 function lordContinuous(e, P) {
   const dmg = P.baseDamage * (1 + B.enemyScaling.damagePerMinute * G.gm), sp = (P.projectileSpeed || 0) / 100 * MOVE;
   const draw = o => { o.e = e; (G.lordDraw = G.lordDraw || []).push(o); return o; };
@@ -1277,7 +1299,8 @@ function lordContinuous(e, P) {
       if (A.hit <= 0 && dx * dx + dy * dy > (A.R + 0.35) * (A.R + 0.35)) { A.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
       return true;
     });
-  } else if (P.shape === 'empower') {   // 혈월(Core EmpowerDamage·EmpowerSpeed): 예고 뒤 싸움이 끝날 때까지 적 피해·걸음이 오른다(프로토타입은 보스 걸음은 그대로)
+  } else if (P.shape === 'split_field') lordSplitField(e, P);
+  else if (P.shape === 'empower') {   // 혈월(Core EmpowerDamage·EmpowerSpeed): 예고 뒤 싸움이 끝날 때까지 적 피해·걸음이 오른다(프로토타입은 보스 걸음은 그대로)
     toast(P.nameKo, '붉은 달이 떠 적이 거세진다');
     let warm = P.telegraphSeconds;
     lordFx(dt => {
@@ -1380,6 +1403,11 @@ function drawLords(now) {
   for (const F of G.halfFogs || []) {   // 반쪽 독안개: 예고 땐 옅게, 켜지면 짙게
     const x = wx(F.x), a = F.warm > 0 ? 0.10 + 0.08 * Math.sin(now * 10) : 0.28;
     ctx.fillStyle = `rgba(90,130,60,${a})`; if (F.side > 0) ctx.fillRect(x, 0, VW - x + 50, VH); else ctx.fillRect(-50, 0, x + 50, VH);
+  }
+  for (const F of G.yyFields || []) {   // 흑백: 경계 한쪽(검은 쪽)을 먹빛으로
+    const nx = Math.cos(F.a), ny = Math.sin(F.a), L = viewDiag() * 2, cx = wx(F.x), cy = wy(F.y), tx = -ny, ty = nx;
+    ctx.save(); ctx.fillStyle = F.warm > 0 ? 'rgba(26,26,26,0.08)' : 'rgba(26,26,26,0.2)'; ctx.beginPath();
+    ctx.moveTo(cx + tx * L * PPM, cy + ty * L * PPM); ctx.lineTo(cx + (tx + nx) * L * PPM, cy + (ty + ny) * L * PPM); ctx.lineTo(cx + (-tx + nx) * L * PPM, cy + (-ty + ny) * L * PPM); ctx.lineTo(cx - tx * L * PPM, cy - ty * L * PPM); ctx.closePath(); ctx.fill(); ctx.restore();
   }
   for (const o of G.lordDraw || []) {   // 2막 몸: 빛줄기·물결·얼음 원
     const P = o.P, e = o.e; ctx.save();
@@ -1541,6 +1569,7 @@ function hurtPlayer(dmg, src) {
   if (p.iframe > 0 || G.won || G.demo) return;
   if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
   if (G.empower) dmg *= G.empower.dmg;   // 혈월(WP-13e): 화면 위 적 피해
+  dmg *= yyFieldMul();   // 흑백 구역(WP-13e)
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
   // 무당 진전 3 사량발천근: 태극 구간이면 20% 덜 받고, 줄인 피해의 열 배를 부딪힌 적에게
   const hdf = synEff('harmony_deflect'); if (hdf && yyBand().band === 'harmony') { const cut = taken * hdf.damageCut; taken -= cut; if (src && !src.dead) hurtEnemy(src, cut * hdf.reflectMultiplier, null, 0, 0, 0); }
@@ -2292,6 +2321,8 @@ function castPattern(e, P, dmg, dx, dy) {
       if (F.hit <= 0 && Math.sign(G.player.x - F.x || 1) === F.side) { F.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
       return F.left > 0;
     });
+  } else if (P.shape === 'split_field') {
+    lordSplitField(e, P); toast(P.nameKo, '내 음양과 다른 색 구역에선 더 아프다');
   } else if (P.shape === 'view_shrink') {
     // 눈보라(WP-13e): 예고 뒤 leaveSeconds 동안 보이는 범위 × viewScale(시안 viewScaleAt). 축척 모드 화면 대각선에 곱한다
     toast(P.nameKo, '앞이 좁아진다');
@@ -3627,7 +3658,7 @@ function drawRegionGimmicks() {
 }
 // 지역 정예(WP-13d 첫 조각): 축척 모드에서 1장 밖 땅에 서 있으면 1장 정예 차례(enemies.json elites.chapter1 의 몇 번째)와 같은 자리의
 // 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.
-const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones', 'summon_ring', 'pull_line', 'spiral_bullets', 'chain_circles', 'inhale_exhale', 'half_field', 'view_shrink']);   // summon_ring 부터와 멈춰 베는 line 은 땅의 주인(WP-13e)
+const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones', 'summon_ring', 'pull_line', 'spiral_bullets', 'chain_circles', 'inhale_exhale', 'half_field', 'view_shrink', 'split_field']);   // summon_ring 부터와 멈춰 베는 line 은 땅의 주인(WP-13e)
 const eliteShapeOk = P => !!P && ELITE_SHAPES.has(P.shape);
 // 한 생 정예(WP-14b): 서 있는 땅의 정예 표(elites.<장>)에서 nth 번째. 장 정예가 없는 땅(eliteFallback)이나 표가 짧으면 숭산 표를 돌려 쓴다.
 // 프로토타입이 아는 패턴 모양이 하나도 없으면 1장 정예 차례 그대로
