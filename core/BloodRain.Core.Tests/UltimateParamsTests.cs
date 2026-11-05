@@ -23,11 +23,19 @@ namespace BloodRain.Core.Tests
         /// <summary>오의 id → 효과 칸에 그대로 있어야 하는 글(데이터 값으로 만든다).</summary>
         Dictionary<string, string[]> Expected() => new Dictionary<string, string[]>
         {
-            ["cheonroe_rak"] = new[] { $"무작위 {N(U("cheonroe_rak").Param("strikes"))}곳", $"{N(U("cheonroe_rak").Param("shockSeconds"))}초 감전" },
-            ["saja_hu"] = new[] { $"반경 {N(U("saja_hu").Param("radius"))}m", $"{N(U("saja_hu").Param("stunSeconds"))}초 기절" },
-            ["mancheon_hwau"] = new[] { $"{N(U("mancheon_hwau").Param("durationSeconds"))}초 동안", "초당 공력 x", "중독" },
-            ["taiji_muryang"] = new[] { $"{N(U("taiji_muryang").Param("durationSeconds"))}초 동안", "받는 피해 무효" },
-            ["palbang_pungu"] = new[] { $"{N(U("palbang_pungu").Param("directions"))}방향", $"{N(U("palbang_pungu").Param("volleys"))}연타" },
+            ["cheonroe_rak"] = new[] { $"무작위 {N(U("cheonroe_rak").Param("strikes"))}곳", $"{N(U("cheonroe_rak").Param("shockSeconds"))}초 감전",
+                $"한 곳 반경 {N(U("cheonroe_rak").Param("strikeRadius"))}m" },
+            ["saja_hu"] = new[] { $"반경 {N(U("saja_hu").Param("radius"))}m", $"{N(U("saja_hu").Param("stunSeconds"))}초 기절",
+                $"{N(U("saja_hu").Param("spreadSeconds"))}초에 반경까지 퍼짐" },
+            ["mancheon_hwau"] = new[] { $"{N(U("mancheon_hwau").Param("durationSeconds"))}초 동안", "초당 공력 x",
+                $"중독({N(U("mancheon_hwau").Param("poisonSeconds"))}초 동안 {N(U("mancheon_hwau").Param("poisonTickSeconds"))}초마다 {N(U("mancheon_hwau").Param("poisonDamage"))} x 공력" },
+            ["yeokryu"] = new[] { $"폭 {N(U("yeokryu").Param("width"))}m 물살", $"속도 {N(U("yeokryu").Param("waveSpeed"))}", "화면 끝까지 한 번" },
+            ["taiji_muryang"] = new[] { $"{N(U("taiji_muryang").Param("durationSeconds"))}초 동안", "받는 피해 무효",
+                $"반경 {N(U("taiji_muryang").Param("radius"))}m 원" },
+            ["palbang_pungu"] = new[] { $"{N(U("palbang_pungu").Param("directions"))}방향", $"{N(U("palbang_pungu").Param("volleys"))}연타",
+                $"{N(U("palbang_pungu").Param("volleyGapSeconds"))}초 간격", $"초속 {N(U("palbang_pungu").Param("shotSpeed"))}m",
+                $"반경 {N(U("palbang_pungu").Param("shotRadius"))}m", $"{N(U("palbang_pungu").Param("shotLifeSeconds"))}초",
+                $"넉백 {N(U("palbang_pungu").Param("knockback"))}" },
             ["cheonseol_bu"] = new[] { $"{N(U("cheonseol_bu").Param("freezeSeconds"))}초 얼림" },
             ["cheonma_haeche"] = new[]
             {
@@ -45,12 +53,11 @@ namespace BloodRain.Core.Tests
                     Assert.Contains(piece, Effect(U(kv.Key)));
         }
 
-        [Fact] public void 숫자가_있는_오의는_params_가_있고_일검_역류만_없다()
+        [Fact] public void 숫자가_있는_오의는_params_가_있고_일검만_없다()
         {
             var withParams = _d.Ultimates.Where(u => u.Params != null).Select(u => u.Id).OrderBy(x => x).ToList();
             Assert.Equal(Expected().Keys.OrderBy(x => x).ToList(), withParams);
             Assert.Null(U("il_geom").Params);
-            Assert.Null(U("yeokryu").Params); // 물살 폭·시간은 사람 결정 대기(R-05b)
         }
 
         [Fact] public void params_는_모두_양수이고_표에_쓰인_칸만_있다()
@@ -60,6 +67,8 @@ namespace BloodRain.Core.Tests
                 "durationSeconds", "radius", "stunSeconds", "strikes", "shockSeconds", "directions", "volleys",
                 "freezeSeconds", "healthCostPerSecond", "damageMultiplier", "lifesteal", "poisons", "mightPerSecond",
                 "pulseSeconds", "blocksDamage", "reflectsProjectiles",
+                "strikeRadius", "spreadSeconds", "poisonSeconds", "poisonDamage", "poisonTickSeconds", "width", "waveSpeed",
+                "volleyGapSeconds", "knockback", "shotSpeed", "shotRadius", "shotLifeSeconds",
             };
             foreach (var u in _d.Ultimates.Where(u => u.Params != null))
                 foreach (var kv in u.Params!)
@@ -72,12 +81,20 @@ namespace BloodRain.Core.Tests
         /// <summary>숫자가 아니라 있다·없다를 뜻하는 칸, 요약 글의 '초당' 같은 말로만 드러나는 칸.</summary>
         static readonly HashSet<string> Flags = new HashSet<string> { "poisons", "mightPerSecond", "pulseSeconds", "blocksDamage", "reflectsProjectiles" };
 
+        /// <summary>모양 숫자(R-15b·R-05b). 기획서 표엔 있고, 짧은 요약 글(summary)엔 안 넣는다.</summary>
+        static readonly HashSet<string> Shape = new HashSet<string>
+        {
+            "strikeRadius", "spreadSeconds", "poisonSeconds", "poisonDamage", "poisonTickSeconds", "width", "waveSpeed",
+            "volleyGapSeconds", "knockback", "shotSpeed", "shotRadius", "shotLifeSeconds",
+        };
+
         [Fact] public void 요약_글도_같은_숫자를_쓴다()
         {
             foreach (var kv in Expected())
             {
                 var u = U(kv.Key);
-                foreach (var key in u.Params!.Keys.Where(k => !Flags.Contains(k)))
+                foreach (var key in u.Params!.Keys.Where(k => !Flags.Contains(k) && !Shape.Contains(k)
+                    && !(u.Id == "taiji_muryang" && k == "radius")))
                 {
                     float v = u.Params[key];
                     string s = key is "healthCostPerSecond" or "lifesteal" ? Pct(v) : N(v);

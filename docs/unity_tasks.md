@@ -246,7 +246,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R4-10U/` 의 `cheonseol_bu.png`, `cheonma_haeche.png`
 
 - [ ] R-15U 문파 오의 다섯(천뢰낙·사자후·만천화우·태극무량·팔방풍우) · 먼저: C-09a
-  - 할 것: C-09a 오의 버튼이 몸의 오의를 쏘게. `life.UseUltimate()` 뒤 매 프레임 `life.UltimatePulses` 만큼(한 박자마다 `UltimateCasts` 번) `life.Ultimate` 모양으로 때린다 — 천뢰낙 `StrikePoints(화면 사각형, rng)` 열두 곳·`ShockSeconds`, 사자후 `InRadius(거리, 축척)` 안·`StunSeconds`, 만천화우 화면 전체(1초마다 박자)·`Poisons`, 팔방풍우 `Directions(바라보는 쪽)` 여덟 갈래에 장풍 탄 `Volleys` 번. 태극무량은 받는 피해에 `life.DamageTakenMultiplier`(5초 동안 0)를 이미 곱하면 되고, `ReflectsProjectiles` 동안 몸 둘레 적 탄을 되돌린다. 숫자 없는 칸(원 반경·연타 간격·넉백·한 곳 반경·중독 세기)은 backlog R-15b 추천안을 임시로 쓰고 코드 맨 위에 적는다. 천설부·천마해체는 R4-10U 줄
+  - 할 것: C-09a 오의 버튼이 몸의 오의를 쏘게. `life.UseUltimate()` 뒤 매 프레임 `life.UltimatePulses` 만큼(한 박자마다 `UltimateCasts` 번) `life.Ultimate` 모양으로 때린다 — 천뢰낙 `StrikePoints(화면 사각형, rng)` 열두 곳·`ShockSeconds`, 사자후 `InRadius(거리, 축척)` 안·`StunSeconds`, 만천화우 화면 전체(1초마다 박자)·`Poisons`, 팔방풍우 `Directions(바라보는 쪽)` 여덟 갈래에 장풍 탄 `Volleys` 번. 태극무량은 받는 피해에 `life.DamageTakenMultiplier`(5초 동안 0)를 이미 곱하면 되고, `ReflectsProjectiles` 동안 몸 둘레 적 탄을 되돌린다. 모양 숫자는 2026-11-05 R-15b 로 Core 에 들어옴 — 천뢰낙 `InStrike(낙뢰 자리, 적, 축척)`, 사자후 그림 `WaveRadiusAt(경과, 축척)`, 만천화우 `PoisonTickDamage(공력)`·`PoisonTickSeconds`·`PoisonSeconds`, 태극무량 `GuardRadius(축척)`, 팔방풍우 `Shot`·`VolleyGapSeconds`·`Knockback`. 하연 몸의 역류도 같이: 바라보는 쪽 화면 끝까지 `InSweep(몸, 바라보는 쪽, 적, 화면 끝 거리, 축척)` 띠 안 적을 때리고 `WaveSpeed`(마천패 역류 파도와 같은 단위)로 끝 쪽으로 민다. 천설부·천마해체는 R4-10U 줄
   - 쓸 것: Core `Combat/UltimateCast.cs`, `Life.Ultimate`·`UltimatePulses`, `Ultimates.HitDamage`
   - 메뉴: R-04Ua 의 `몸 바꾸기(문파)` + `BloodRain/Test/오의 가득`
   - 끝: 소림·개방·남궁·당가·무당 몸에서 오의가 5장 표 모양으로 나감

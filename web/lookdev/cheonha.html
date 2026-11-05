@@ -1191,14 +1191,16 @@ function doDash() {
 const ULTS = Object.fromEntries((DATA.ultimates || []).map(u => [u.id, u]));
 const UC = BAL.ultimateCharge || { max: 100, perKill: 0.4, perHit: 3, perElite: 15 };
 const UPar = (u, k, d) => u && u.params && u.params[k] != null ? u.params[k] : d;
-// R-15b(오의 빈 숫자)·R-05b(역류 물살)가 정해지기 전 backlog 추천안 값. README '문파 오의'
-const ULT_TMP = {
-  taijiRadius: 3,      // 태극무량 몸 주위 원(m) — 태극검 도는 검 둘레쯤
-  strikeRadius: 1.2,   // 천뢰낙 한 곳 = 뇌부 낙뢰 strikeRadius
-  roarSpread: 0.3,     // 사자후 음파가 반경까지 퍼지는 초(그림만, 맞는 것은 쓰는 순간)
-  poisonSeconds: 3,    // 만천화우 중독 시간. 세기는 이 시안에 적 중독 피해가 없어 0(당가 '중독된 적 +20%'만 붙는다)
-  wind: { speed: 5, radius: 0.55, life: 2.6, gap: 0.3, knockback: 15 },   // 팔방풍우 = 장풍(palm_wind) 탄, 연타 0.3초, 넉백 15(장풍 5의 세 배)
-  flood: { width: 3, knockback: 12 },   // 역류 = 마천패 역류 파도 폭 3m 로 앞쪽 화면 끝까지 한 번. 화면 끝 쪽으로 미는 세기는 시안 값
+// 오의 모양 숫자는 characters.json params(R-15b·R-05b, 2026-11-05 사람이 추천대로). README '문파 오의'
+const UP = id => (ULTS[id] && ULTS[id].params) || {};
+const ULT_SHAPE = {
+  taijiRadius: UP('taiji_muryang').radius,          // 태극무량 몸 주위 원(m)
+  strikeRadius: UP('cheonroe_rak').strikeRadius,    // 천뢰낙 한 곳 = 뇌부 낙뢰 반경
+  roarSpread: UP('saja_hu').spreadSeconds,          // 사자후 음파가 반경까지 퍼지는 초(그림만, 맞는 것은 쓰는 순간)
+  poisonSeconds: UP('mancheon_hwau').poisonSeconds, // 만천화우 중독 시간. 세기는 이 시안에 적 중독 피해가 없어 0(당가 '중독된 적 +20%'만 붙는다)
+  wind: { speed: UP('palbang_pungu').shotSpeed, radius: UP('palbang_pungu').shotRadius, life: UP('palbang_pungu').shotLifeSeconds,
+          gap: UP('palbang_pungu').volleyGapSeconds, knockback: UP('palbang_pungu').knockback },   // 팔방풍우 = 장풍 탄
+  flood: { width: UP('yeokryu').width, knockback: 12 },   // 역류 = 폭 width 물살로 앞쪽 화면 끝까지 한 번. 화면 끝 쪽으로 미는 세기(12)는 시안 값(Core 는 waveSpeed)
 };
 const rewardAt = tok => REALMS.findIndex(r => r.reward && r.reward.split(',').some(x => x.trim().startsWith(tok)));
 const ULT_POWER_T = rewardAt('ultimate_power_'), DOUBLE_ULT_T = rewardAt('double_ultimate');
@@ -1247,7 +1249,7 @@ function tickUlt(dt) {
     if (C.done >= C.total && C.el >= C.dur) G.ultCast = null;
   }
   if (G.taiji > 0) {   // 태극무량: 몸 주위 원 안의 적 탄을 되돌려 보낸다(되돌린 탄은 플레이어를 안 맞힌다)
-    G.taiji = Math.max(0, G.taiji - dt); const R = ULT_TMP.taijiRadius * sc(G.tier);
+    G.taiji = Math.max(0, G.taiji - dt); const R = ULT_SHAPE.taijiRadius * sc(G.tier);
     for (const q of G.shots) if (!q.refl && !(q.delay > 0) && Math.hypot(q.x - p.x, q.y - p.y) < R + q.r) { q.refl = true; q.vx = -q.vx; q.vy = -q.vy; q.root = 0; q.pull = 0; }
   }
   if (G.diss > 0) {   // 천마해체: 초당 최대 기혈 2%(바닥 규칙이 없어 쓰러질 수 있다)
@@ -1267,11 +1269,11 @@ function ultPulse(u, C, c) {
   const onScreen = f => !f.dead && Math.abs(f.x - p.x) < hw + f.r && Math.abs(f.y - p.y) < hh + f.r;
   const ca = Math.cos(C.a), sa = Math.sin(C.a), edge = Math.hypot(hw, hh) * 1.1;
   if (u.id === 'il_geom' || u.id === 'yeokryu') {   // 일검: 바라보는 쪽 화면 끝까지 한 줄(관통 무한) / 역류: 폭 3m 물살로 같은 길을 쓸며 끝 쪽으로 민다
-    const half = u.id === 'il_geom' ? 0.9 * s : ULT_TMP.flood.width / 2 * s, kb = u.id === 'il_geom' ? 6 * s : ULT_TMP.flood.knockback * s;
+    const half = u.id === 'il_geom' ? 0.9 * s : ULT_SHAPE.flood.width / 2 * s, kb = u.id === 'il_geom' ? 6 * s : ULT_SHAPE.flood.knockback * s;
     for (const f of G.foes) { if (f.dead) continue; const dx = f.x - p.x, dy = f.y - p.y, al = dx * ca + dy * sa, pe = Math.abs(-dx * sa + dy * ca); if (al > -0.5 * s && al < edge && pe < half + f.r) hurt(f, hit, ca, sa, kb, 'ult'); }
     if (c === 0) G.fx.push({ k: u.id === 'il_geom' ? 'slash' : 'flood', x: p.x, y: p.y, a: C.a, r: edge, w: half, t: 0, life: 0.6 });
   } else if (u.id === 'cheonroe_rak') {   // 천뢰낙: 화면 안 무작위 strikes 곳 낙뢰, 감전(이 시안은 멈춤으로)
-    const R = ULT_TMP.strikeRadius * s, shock = UPar(u, 'shockSeconds', 0);
+    const R = ULT_SHAPE.strikeRadius * s, shock = UPar(u, 'shockSeconds', 0);
     for (let i = 0; i < UPar(u, 'strikes', 0); i++) {
       const x = p.x + rand(-hw, hw), y = p.y + rand(-hh, hh);
       for (const f of G.foes) if (!f.dead && Math.hypot(f.x - x, f.y - y) < R + f.r) { hurt(f, hit, 0, 0, 0, 'ult'); f.stunT = Math.max(f.stunT || 0, shock); }
@@ -1280,12 +1282,12 @@ function ultPulse(u, C, c) {
   } else if (u.id === 'saja_hu') {   // 사자후: 반경 6m × 축척 음파, 기절 3초
     const R = UPar(u, 'radius', 0) * s, st = UPar(u, 'stunSeconds', 0);
     for (const f of G.foes) if (!f.dead && Math.hypot(f.x - p.x, f.y - p.y) < R + f.r) { hurt(f, hit, 0, 0, 0, 'ult'); f.stunT = Math.max(f.stunT || 0, st); }
-    if (c === 0) G.fx.push({ k: 'bell', x: p.x, y: p.y, r: R, t: 0, life: ULT_TMP.roarSpread + 0.4 });
+    if (c === 0) G.fx.push({ k: 'bell', x: p.x, y: p.y, r: R, t: 0, life: ULT_SHAPE.roarSpread + 0.4 });
   } else if (u.id === 'mancheon_hwau') {   // 만천화우: 화면 전체 암기 비(1초마다), 맞은 적 중독
-    for (const f of G.foes) if (onScreen(f)) { hurt(f, hit, 0, 0, 0, 'ult'); if (UPar(u, 'poisons', 0) > 0) f.poisonUntil = G.t + ULT_TMP.poisonSeconds; }
+    for (const f of G.foes) if (onScreen(f)) { hurt(f, hit, 0, 0, 0, 'ult'); if (UPar(u, 'poisons', 0) > 0) f.poisonUntil = G.t + ULT_SHAPE.poisonSeconds; }
     if (c === 0) G.fx.push({ k: 'rain', x: p.x, y: p.y, r: Math.hypot(hw, hh), t: 0, life: 0.7, seed: Math.random() * 100 });
   } else if (u.id === 'palbang_pungu') {   // 팔방풍우: 바라보는 쪽부터 8방향 장풍을 3연타
-    const W = ULT_TMP.wind, n = UPar(u, 'directions', 8), v = W.speed * s;
+    const W = ULT_SHAPE.wind, n = UPar(u, 'directions', 8), v = W.speed * s;
     for (let vI = 0; vI < UPar(u, 'volleys', 1); vI++) for (let i = 0; i < n; i++) {
       const a = C.a + TAU * i / n, ux = Math.cos(a), uy = Math.sin(a);
       G.ultShots.push({ x: p.x, y: p.y, vx: ux * v, vy: uy * v, ux, uy, t: W.life, r: W.radius * s, dmg: hit, kb: W.knockback * s, hit: new Set(), delay: vI * W.gap + c * 0.1 });
@@ -2503,7 +2505,7 @@ function render() {
   drawShots();
   // 오의(R-16): 팔방풍우 장풍, 태극무량 원, 천마해체 붉은 기운
   for (const w of G.ultShots) { if (w.delay > 0) continue; const X = sx(w.x), Y = sy(w.y), R = w.r * PPM; ctx.fillStyle = 'rgba(122,106,74,0.35)'; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, R * 0.8, Math.atan2(w.vy, w.vx) - 1.2, Math.atan2(w.vy, w.vx) + 1.2); ctx.stroke(); }
-  if (G.taiji > 0) { const X = sx(p.x), Y = sy(p.y), R = ULT_TMP.taijiRadius * sc(G.tier) * PPM; ctx.strokeStyle = 'rgba(201,162,39,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(26,26,26,0.6)'; ctx.beginPath(); ctx.arc(X, Y - R / 2, R / 2, -Math.PI / 2, Math.PI / 2); ctx.arc(X, Y + R / 2, R / 2, -Math.PI / 2, Math.PI / 2, true); ctx.stroke(); }
+  if (G.taiji > 0) { const X = sx(p.x), Y = sy(p.y), R = ULT_SHAPE.taijiRadius * sc(G.tier) * PPM; ctx.strokeStyle = 'rgba(201,162,39,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(26,26,26,0.6)'; ctx.beginPath(); ctx.arc(X, Y - R / 2, R / 2, -Math.PI / 2, Math.PI / 2); ctx.arc(X, Y + R / 2, R / 2, -Math.PI / 2, Math.PI / 2, true); ctx.stroke(); }
   if (G.diss > 0) { const X = sx(p.x), Y = sy(p.y), R = p.r * 2.4 * PPM; ctx.strokeStyle = `rgba(179,38,30,${0.5 + 0.3 * Math.sin(now * 12)})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke(); }
   // 효과
   for (const e of G.fx) {

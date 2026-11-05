@@ -179,5 +179,65 @@ namespace BloodRain.Core.Tests
             }
             Assert.Equal(3, total);
         }
+
+        // ---- 모양 숫자(R-15b·R-05b) ----
+
+        [Fact] public void 천뢰낙_한_곳은_뇌부_낙뢰_반경이고_축척을_곱한다()
+        {
+            var c = Cast("cheonroe_rak");
+            Assert.Equal(1.2f, c.StrikeRadius(), 3);
+            Assert.True(c.InStrike(Vector2.Zero, new Vector2(1.1f, 0f)));
+            Assert.False(c.InStrike(Vector2.Zero, new Vector2(1.3f, 0f)));
+            Assert.True(c.InStrike(Vector2.Zero, new Vector2(2.5f, 0f), 2.25f));
+        }
+
+        [Fact] public void 사자후_음파는_0점3초에_반경까지_퍼진다()
+        {
+            var c = Cast("saja_hu");
+            Assert.Equal(0f, c.WaveRadiusAt(0f), 3);
+            Assert.Equal(3f, c.WaveRadiusAt(0.15f), 3);
+            Assert.Equal(6f, c.WaveRadiusAt(0.3f), 3);
+            Assert.Equal(6f, c.WaveRadiusAt(5f), 3);
+            Assert.Equal(13.5f, c.WaveRadiusAt(1f, 2.25f), 3);
+        }
+
+        [Fact] public void 만천화우_중독은_3초_동안_0점5초마다_6_곱하기_공력()
+        {
+            var c = Cast("mancheon_hwau");
+            Assert.Equal(3f, c.PoisonSeconds, 3);
+            Assert.Equal(6, c.PoisonTicks);
+            Assert.Equal(12f, c.PoisonTickDamage(2f), 3);
+            Assert.Equal(0f, Cast("saja_hu").PoisonTickDamage(2f), 3);
+        }
+
+        [Fact] public void 태극무량_원은_3m_이고_다른_오의는_없다()
+        {
+            Assert.Equal(3f, Cast("taiji_muryang").GuardRadius(), 3);
+            Assert.Equal(6.75f, Cast("taiji_muryang").GuardRadius(2.25f), 3);
+            Assert.Equal(0f, Cast("saja_hu").GuardRadius(), 3);
+        }
+
+        [Fact] public void 팔방풍우_연타는_장풍_탄을_0점3초_간격으로_넉백_15()
+        {
+            var c = Cast("palbang_pungu");
+            Assert.Equal(0.3f, c.VolleyGapSeconds, 3);
+            Assert.Equal(15f, c.Knockback, 3);
+            Assert.Equal((5f, 0.55f, 2.6f), c.Shot);
+            Assert.Contains("넉백 15", Effect("palbang_pungu"));
+        }
+
+        [Fact] public void 역류는_앞쪽_화면_끝까지_폭_3m_띠를_한_번_쓴다()
+        {
+            var c = Cast("yeokryu");
+            Assert.Equal(3f, c.WaveWidth(), 3);
+            Assert.Equal(300f, c.WaveSpeed, 3);
+            var o = Vector2.Zero; var right = Vector2.UnitX;
+            Assert.True(c.InSweep(o, right, new Vector2(5f, 1.4f), 10f));
+            Assert.False(c.InSweep(o, right, new Vector2(5f, 1.6f), 10f));   // 폭 밖
+            Assert.False(c.InSweep(o, right, new Vector2(-1f, 0f), 10f));    // 뒤쪽
+            Assert.False(c.InSweep(o, right, new Vector2(11f, 0f), 10f));    // 화면 끝 너머
+            Assert.True(c.InSweep(o, new Vector2(0f, 2f), new Vector2(1.4f, 9f), 10f));
+            Assert.True(c.InSweep(o, right, new Vector2(5f, 3f), 10f, 2.25f));
+        }
     }
 }

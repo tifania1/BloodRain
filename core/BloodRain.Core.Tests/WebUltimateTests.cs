@@ -11,7 +11,7 @@ namespace BloodRain.Core.Tests
     /// <summary>
     /// R-16: 웹 천하 시안의 문파 오의가 데이터·Core 셈을 따르는지 글로 본다(브라우저 없이).
     /// 게이지 숫자는 balance.json ultimateCharge, 오의 숫자는 characters.json params 를 빌드가 넣는다.
-    /// R-15b·R-05b 가 정해지기 전 임시 값(ULT_TMP)은 backlog 추천안대로 같은 무공 데이터에서 가져온 것인지 본다.
+    /// 오의 모양 숫자(R-15b·R-05b)도 시안이 따로 적지 않고 params 에서 읽는다.
     /// </summary>
     public class WebUltimateTests
     {
@@ -22,20 +22,6 @@ namespace BloodRain.Core.Tests
         {
             using var doc = JsonDocument.Parse(ReadRepoFile("unity", "BloodRain", "Assets", "Resources", "Data", "weapons.json"));
             return doc.RootElement.GetProperty("weapons").EnumerateArray().Single(w => w.GetProperty("id").GetString() == id).Clone();
-        }
-
-        static float TmpValue(string html, string key)
-        {
-            var m = Regex.Match(html, @"\b" + key + @":\s*([0-9.]+)");
-            Assert.True(m.Success, key);
-            return float.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-        }
-
-        static string UltTmp(string html)
-        {
-            int at = html.IndexOf("const ULT_TMP = {");
-            Assert.True(at >= 0);
-            return html.Substring(at, html.IndexOf("\n};", at) - at);
         }
 
         [Fact] public void 빌드가_오의_숫자와_게이지를_넣는다()
@@ -64,19 +50,35 @@ namespace BloodRain.Core.Tests
                 Assert.Contains(used, html);
         }
 
-        [Fact] public void 임시_값은_backlog_추천안대로_같은_무공_데이터에서_왔다()
+        [Fact] public void 오의_모양은_시안이_따로_적지_않고_데이터에서_읽는다()
         {
-            var tmp = UltTmp(Cheonha);
+            var html = Cheonha;
+            Assert.DoesNotContain("ULT_TMP", html);
+            foreach (var used in new[] { "UP('taiji_muryang').radius", "UP('cheonroe_rak').strikeRadius", "UP('saja_hu').spreadSeconds",
+                "UP('mancheon_hwau').poisonSeconds", "UP('palbang_pungu').shotSpeed", "UP('palbang_pungu').shotRadius",
+                "UP('palbang_pungu').shotLifeSeconds", "UP('palbang_pungu').volleyGapSeconds", "UP('palbang_pungu').knockback", "UP('yeokryu').width" })
+                Assert.Contains(used, html);
+        }
+
+        [Fact] public void 오의_모양_숫자는_같은_몸의_무공과_마천패_파도에서_왔다()
+        {
+            var d = Load();
+            UltimateDef U(string id) => d.Ultimates.Single(u => u.Id == id);
             var thunder = Weapon("thunder_talisman");
-            Assert.Equal(thunder.GetProperty("strikeRadius").GetSingle(), TmpValue(tmp, "strikeRadius"), 3);
+            Assert.Equal(thunder.GetProperty("strikeRadius").GetSingle(), U("cheonroe_rak").Param("strikeRadius"), 3);
             var palm = Weapon("palm_wind");
             var shot = palm.GetProperty("shot");
-            int windAt = tmp.IndexOf("wind:");
-            var wind = tmp.Substring(windAt, tmp.IndexOf('}', windAt) - windAt);
-            Assert.Equal(shot.GetProperty("speed").GetSingle(), TmpValue(wind, "speed"), 3);
-            Assert.Equal(shot.GetProperty("radius").GetSingle(), TmpValue(wind, "radius"), 3);
-            Assert.Equal(shot.GetProperty("lifeSeconds").GetSingle(), TmpValue(wind, "life"), 3);
-            Assert.Equal(palm.GetProperty("knockback").GetSingle() * 3, TmpValue(wind, "knockback"), 3);
+            var pb = U("palbang_pungu");
+            Assert.Equal(shot.GetProperty("speed").GetSingle(), pb.Param("shotSpeed"), 3);
+            Assert.Equal(shot.GetProperty("radius").GetSingle(), pb.Param("shotRadius"), 3);
+            Assert.Equal(shot.GetProperty("lifeSeconds").GetSingle(), pb.Param("shotLifeSeconds"), 3);
+            Assert.Equal(palm.GetProperty("knockback").GetSingle() * 3, pb.Param("knockback"), 3);
+            var mist = Weapon("poison_mist");
+            Assert.Equal(mist.GetProperty("damageLv1").GetSingle(), U("mancheon_hwau").Param("poisonDamage"), 3);
+            Assert.Equal(mist.GetProperty("tickSeconds").GetSingle(), U("mancheon_hwau").Param("poisonTickSeconds"), 3);
+            var wave = d.BossPatterns.Values.SelectMany(b => b.Phase2).Single(p => p.Id == "crimson_reverse_wave");
+            Assert.Equal(wave.Width, U("yeokryu").Param("width"), 3);
+            Assert.Equal(wave.ProjectileSpeed, U("yeokryu").Param("waveSpeed"), 3);
         }
 
         [Fact] public void 혈영_분신은_시안_무공_바탕_값을_플레이어와_같이_읽는다()
