@@ -2,7 +2,7 @@
 // 청운객잔 시설(기획서 10장 '객잔 시설', cheonha.json inn).
 //   조건을 갖추면 열린다. 혈정을 써서 짓는 시설(약방·대장간)은 조건을 갖춘 뒤 Build 로.
 //   한 번 열린 시설은 혼 해금 토큰 facility:<id> 로 남아, 회귀로 봉인석이 지워져도 닫히지 않는다.
-//   객잔에 머무는 대표 인물은 계정에서 처음 쓰러뜨린 땅의 주인 지역의 문파 leader(21장).
+//   객잔에 머무는 대표 인물은 대사와 같은 규칙: 이번 회차에 합류한 사람(DialogueProgress.Joined, 21장). 회귀하면 빈다.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -81,18 +81,9 @@ namespace BloodRain.Core.Meta
             return opened;
         }
 
-        /// <summary>객잔에 머무는 대표 인물 id(그 땅의 주인을 처음 쓰러뜨린 문파의 leader, 지역 데이터 순서).</summary>
-        public static IReadOnlyList<string> Residents(Soul soul)
-        {
-            var c = soul.Data.Cheonha;
-            var list = new List<string>();
-            foreach (var region in c.BossRegions)
-            {
-                if (region.Sect == null || !soul.BossesKilled.Contains(region.Id)) continue;
-                var leader = c.Sects.FirstOrDefault(s => s.Id == region.Sect)?.Leader;
-                if (!string.IsNullOrEmpty(leader) && !list.Contains(leader!)) list.Add(leader!);
-            }
-            return list;
-        }
+        /// <summary>객잔에 머무는 대표 인물 id(합류한 차례). 마당·대사와 같은 규칙 하나: 이번 회차에 합류한 사람(DialogueProgress.Joined).
+        /// 회귀하면 기억을 잃어 비고, 봉인석을 다시 가져와 객잔에 돌아오면 다시 합류한다(2026-11-05 사람, backlog QA-10b).</summary>
+        public static IReadOnlyList<string> Residents(Soul soul, DialogueProgress progress) =>
+            progress.Cycle == soul.Cycle ? progress.Joined.ToList() : new List<string>();
     }
 }

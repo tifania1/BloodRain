@@ -64,17 +64,14 @@ namespace BloodRain.Core.Tests
             var summary = s.EndLife(s.BeginLife(Rebirth.Prologue(_d)).Finish(LifeEndWay.Fallen, 0));
             Assert.Equal(new[] { "training" }, summary.NewFacilities);
             Assert.Equal(new[] { "main_hall", "training" }, Inn.OpenFacilities(s));
-            Assert.Empty(Inn.Residents(s));
         }
 
-        [Fact] public void 원각을_잡으면_장경각이_열리고_혜공이_객잔에()
+        [Fact] public void 원각을_잡으면_장경각이_열린다()
         {
             var s = AfterPrologue();
             var summary = LiveAndKill(s, "shaolin", "songshan");
             Assert.Equal(new[] { "library" }, summary.NewFacilities);
             Assert.True(Inn.IsOpen(s, "library"));
-            Assert.Equal(new[] { C.Sect("shaolin").Leader }, Inn.Residents(s));
-            Assert.Equal("hyegong", Inn.Residents(s)[0]);
         }
 
         [Fact] public void M2_장경각은_열려도_수리_중이라_못_들어간다()
@@ -148,15 +145,6 @@ namespace BloodRain.Core.Tests
             Assert.True(Inn.IsOpen(s, "cave"));
             var loaded = Soul.FromJson(_d, s.ToJson());
             Assert.Equal(Inn.OpenFacilities(s), Inn.OpenFacilities(loaded));
-        }
-
-        [Fact] public void 대표_인물이_없는_땅은_합류가_없다()
-        {
-            var s = AfterPrologue();
-            LiveAndKill(s, "shaolin", "huashan", "songshan");
-            // 화산은 대표 인물이 없다(BossAwakening 의 합류 규칙과 같음)
-            Assert.Equal(C.BossRegions.Where(r => r.Id is "songshan" or "huashan")
-                .Select(r => C.Sects.FirstOrDefault(x => x.Id == r.Sect)?.Leader).Where(l => !string.IsNullOrEmpty(l)), Inn.Residents(s));
         }
     }
 }

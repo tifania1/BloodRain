@@ -133,6 +133,22 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 객잔에_머무는_사람은_합류한_사람과_같다()
+        {
+            // QA-10b(2026-11-05 사람): 마당·대사 모두 DialogueProgress.Joined 하나로.
+            var p = new DialogueProgress();
+            var s = AfterPrologue(p);
+            Assert.Empty(Inn.Residents(s, p));
+            Live(s, p, "shaolin", "jeoljeong", new[] { "songshan", "huashan" });
+            Assert.Equal(new[] { "hyegong" }, Inn.Residents(s, p));   // 화산은 대표 인물이 없다
+            Assert.Equal(p.Joined, Inn.Residents(s, p));
+            s.Regress();
+            Assert.Empty(Inn.Residents(s, p));   // 회귀하면 기억을 잃어 객잔을 떠난다
+            Live(s, p, "shaolin", "jeoljeong", new[] { "songshan" });
+            Assert.Equal(new[] { "hyegong" }, Inn.Residents(s, p));
+        }
+
+        [Fact]
         public void 마칠과_남궁현은_그_문파_몸으로_땅의_주인을_잡아야_합류()
         {
             var p = new DialogueProgress();
