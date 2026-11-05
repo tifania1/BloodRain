@@ -94,7 +94,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: `git status` 에 .meta 가 안 바뀌거나, 바뀌면 그대로 커밋. 콘솔 에러 0
   - 찍기: 없음
 
-- [ ] SFX-02U 효과음 가져오기 확인 · 먼저: 없음
+- [x] SFX-02U 효과음 가져오기 확인 · 먼저: 없음 — 2026-11-05 21:37 PC API: 강제 새로 읽기 뒤 60개 모두 Decompress On Load(10초 넘는 것 없음)·Vorbis 70%·Force To Mono, `sfx_levelup_1` guid 그대로, Unity 가 .meta 를 다시 쓰지 않아 git 변경 0. 콘솔 에러 0(경고는 Input Manager 폐기 예고 하나뿐, 효과음과 무관)
   - 할 것: 클라우드가 Unity 없이 넣은 `Assets/Audio/SFX/*.ogg` 의 .meta(`tools/postprocess_sfx.py` 가 만듦: Decompress On Load, 10초 넘는 것만 Compressed In Memory, Vorbis 70%, Force To Mono, Normalize 끔)를 Unity 가 그대로 읽는지. Unity 가 .meta 를 다시 쓰면(serializedVersion 등) guid 가 그대로인지 보고 그 변경을 커밋. 트는 쪽(Audio Random Container, '0.05초 안 4개')은 소리가 다 모인 뒤 따로.
   - 쓸 것: `Assets/Audio/SFX` 의 `sfx.json`(id·category·variants). 지금은 코드 합성 다섯(징 둘·풍경 8음·심장·범종) 60개
   - 메뉴: 없음
@@ -131,14 +131,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 소림 심법 둘을 고르면 호신 +2·최대 기혈 +15% 가 디버그 줄에 보이고, 쾌속을 찍은 연무장 혼으로 들어가면 무공 쿨다운이 줄어듦. 콘솔 에러 0
   - 찍기: `docs/unity_shots/C-06/` 의 `stats_debug.png`
 
-- [ ] S-04a 시너지 기록 · 먼저: C-06a
+- [x] S-04a 시너지 기록 · 먼저: C-06a — 2026-11-05 21:37 PC API: 남궁 몸(서장 마친 시험 혼, 복원 비급 없음)에 삼재검법·창천검기를 4단까지 넣으니 LockedManualIds = ssanggeom, RefreshSeals 가 NoteSynergy 로 남기고 쓰러지자 정산 오른쪽에 '찢긴 비급 장경각에 오름 · 쌍검합벽'. 콘솔 에러 0. 찍음 `docs/unity_shots/S-04/settlement_torn_real.png`. 본 것: 정산 위 왼쪽 OnGUI 디버그 줄이 아직 겹침
   - 할 것: 시너지가 바뀔 때마다(레벨업 화면 RefreshSeals 자리) `life.Log.NoteSynergy(…)` 를 부른다. 정산 화면의 '찢긴 비급' 줄이 실제 생의 `LifeSummary.NewTornManuals` 로 나오는지.
   - 쓸 것: Core `LifeLog.NoteSynergy`, `LifeSummary.NewTornManuals`
   - 메뉴: 없음
   - 끝: 비급 층 연환을 처음 맞춘 생을 끝내면 정산에 그 비급 이름이 오름
   - 찍기: `docs/unity_shots/S-04/` 의 `settlement_torn_real.png` (진행: 2026-11-05 21:12 PC — LevelUpScreen.RefreshSeals 가 시너지가 바뀔 때 `LifeRunner.Instance.Life.Log.NoteSynergy(syn)` 를 부르게 함, 컴파일·콘솔 에러 0. 확인은 못 함: 소림 몸에 심법 여섯·나한권+장풍·음공을 4단까지 코드로 넣어도 LockedManualIds 가 비어 찢긴 비급 후보가 안 생김(복원 목록은 빈 채). 남은 것: 잠기는 조합(secret 층 연환, 예: 쌍검합벽 삼재검법+창천검기)으로 다시 맞춰 정산 줄 찍기)
 
-- [ ] C-06b 곱하는 진전 효과 · 먼저: C-06a
+- [x] C-06b 곱하는 진전 효과 · 먼저: C-06a — 2026-11-05 21:40 PC API: LifeRunner.ApplySynergyEffects 가 0.25초마다 `SynergyEffects.Of(syn)` 를 넣음 — 무공 한 방(WeaponRunner.Damage, 남궁 2 검·개방 3 낮은 기혈), 맞는 적(EnemyField.Damage, 곤륜 3 강시), 경공 미끄러짐(PlayerController.DashDistanceMultiplier, 수로채 3), 받는 피해(PlayerVitals.deflect, 무당 3 태극일 때), `Gauge.SetSynergyHarmonyRange`. 시험 메뉴 `진전 채우기(플레이 중)/<문파>` 아홉(SynergyTestMenu.cs). 서장 몸에 남궁을 채우니 삼재검법 한 방 12 → 13.44(x1.12), 무당을 채우니 태극 폭 25 → ±35·태극일 때 피해 10 → 8, 디버그 셋째 줄에 진전 배율. 콘솔 에러 0. 남은 것: 사량발천근 되돌림 피해(부딪힌 적을 아직 모름), 곤륜 2 정신부·마도 2 흡혈·음식은 그 장치가 없어 `LifeRunner.Effects` 만 열어 둠(C-09b 등에서 읽기), 처치 몫 Dealt 는 강시 배율 전 값. 찍음 `docs/unity_shots/C-06/school_mult.png`(디버그 글자가 종이 위라 흐림)
   - 할 것: `SynergyEffects.Of(syn)` 이 내주는 배율을 그 자리에 곱한다 — 남궁 2 검 피해, 개방 3 낮은 기혈 공력, 곤륜 2·3 정신부·강시 피해, 수로채 3 경공 거리, 무당 3 사량발천근, 마도 2 흡혈·음식. 시너지가 바뀔 때마다 `loadout.Gauge.SetSynergyHarmonyRange(Synergy.Compute(…).HarmonyRange)`.
   - 쓸 것: Core `Build/Synergy.cs` 의 `SynergyEffects`, `YinYangGauge`
   - 메뉴: `BloodRain/Test/진전 채우기(플레이 중)/<문파>` — 그 문파 심법을 단계까지 넣어 주는 시험 메뉴

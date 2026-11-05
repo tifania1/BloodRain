@@ -118,7 +118,8 @@ namespace BloodRain.Presentation
         {
             if (_life == null || _life.Record != null) return;
             var soul = RebirthHandoff.Soul;
-            var extra = BloodRain.Core.Build.Synergy.Compute(_data, _life.Loadout, null, soul != null ? soul.RestoredManuals : null).StatBonus();
+            var syn = BloodRain.Core.Build.Synergy.Compute(_data, _life.Loadout, null, soul != null ? soul.RestoredManuals : null);
+            var extra = syn.StatBonus();
             float ratio = vitals != null && vitals.MaxHealth > 0f ? vitals.Health / vitals.MaxHealth : 1f;
             extra.Add(_life.InsightBonus((int)System.Math.Min(_kills, int.MaxValue), ratio));
             bool moving = player != null && (player.position - _lastStatPos).sqrMagnitude > 1e-6f;
@@ -141,6 +142,29 @@ namespace BloodRain.Presentation
                 weapons.extraAmount = st.Amount;
                 weapons.durationMultiplier = st.Duration;
             }
+            ApplySynergyEffects(syn, ratio);
+        }
+
+        // ---- C-06b 곱하는 진전 효과 ----
+        // SynergyEffects 의 배율을 그 자리에 곱한다: 남궁 2 검·개방 3 낮은 기혈(무공 한 방) · 곤륜 3 강시(맞는 적) · 수로채 3 경공 거리 ·
+        // 무당 3 사량발천근(태극일 때 받는 피해). 무당 2 태극 폭은 Gauge 에. 곤륜 2 정신부·마도 2 흡혈·음식은 그 장치가 생기면(C-09b 등) Effects 를 읽는다.
+
+        /// <summary>지금 켜진 곱하는 진전 효과(디버그 줄·다른 장치가 본다).</summary>
+        public BloodRain.Core.Build.SynergyEffects Effects { get; private set; } = BloodRain.Core.Build.SynergyEffects.None;
+
+        void ApplySynergyEffects(BloodRain.Core.Build.SynergyState syn, float healthRatio)
+        {
+            var fx = BloodRain.Core.Build.SynergyEffects.Of(syn);
+            Effects = fx;
+            var gauge = _life.Loadout.Gauge;
+            gauge.SetSynergyHarmonyRange(syn.HarmonyRange);
+            if (weapons != null) { weapons.effects = fx; weapons.healthRatio = healthRatio; }
+            if (enemies != null) enemies.effects = fx;
+            if (player != null && player.TryGetComponent<PlayerController>(out var pc)) pc.DashDistanceMultiplier = fx.DashDistanceMultiplier;
+            if (vitals != null)
+                vitals.deflect = fx.Has("harmony_deflect")
+                    ? taken => fx.Deflect(taken, gauge.Band == BloodRain.Core.Progression.YinYangBand.Harmony).taken
+                    : (System.Func<float, float>)null;
         }
 
         // ---- LF-03 쓰러짐 ----
@@ -333,6 +357,11 @@ namespace BloodRain.Presentation
                 var st = Stats;
                 GUI.Label(new Rect(12, 118, 1100, 22),
                     $"능력치  최대 기혈 {st.MaxHealth:0}  호신 {st.Armor:0.#}  회복 {st.Recovery:0.#}  걸음 x{st.MoveSpeed:0.00}  공력 x{st.Might:0.00}  쾌속 {st.CooldownReduction * 100:0}%  범위 x{st.Area:0.00}  개수 +{st.Amount}  지속 x{st.Duration:0.00}  흡기 {st.Magnet:0.0}m  회피 {st.Evade * 100:0}%");
+                // C-06b 곱하는 진전 효과
+                var fx = Effects;
+                var sword = fx.Tier("sword_damage");
+                GUI.Label(new Rect(12, 140, 1100, 22),
+                    $"진전 배율  검 피해 x{(sword != null ? 1f + sword.Param("damageBonus") : 1f):0.00}  낮은 기혈 {(fx.Has("low_health_might") ? "켜짐" : "-")}  강시 피해 {(fx.Has("jiangshi_damage") ? "켜짐" : "-")}  경공 거리 x{fx.DashDistanceMultiplier:0.00}  태극 폭 ±{_life.Loadout.Gauge.HarmonyRange}  사량발천근 {(fx.Has("harmony_deflect") ? "켜짐" : "-")}  정신부 x{fx.FreezeMultiplier:0.00}  흡혈 x{fx.LifestealMultiplier:0.00}");
             }
         }
     }

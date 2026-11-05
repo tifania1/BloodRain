@@ -31,6 +31,8 @@ namespace BloodRain.Presentation
         public bool showStats = true;
         [Tooltip("플레이어에게 들어가는 모든 적 피해 배율. 혈마의 그림자(C-12)가 EnemyDamageMultiplier 를 넣는다.")]
         public float damageMultiplier = 1f;
+        /// <summary>C-06b 곱하는 진전 효과. 곤륜 3 강시 계열 피해(EnemyDamageMultiplier)를 맞는 적마다 곱한다. LifeRunner 가 넣는다.</summary>
+        [System.NonSerialized] public BloodRain.Core.Build.SynergyEffects effects = BloodRain.Core.Build.SynergyEffects.None;
 
         bool HitPlayer(float damage) => vitals != null && vitals.Hit(damage * damageMultiplier);
 
@@ -115,7 +117,8 @@ namespace BloodRain.Presentation
                 var a = _sim.Get(i);
                 if (a.Health <= 0f) continue;
                 if (filter != null && !filter(a)) continue;
-                a.Health -= dmg;
+                var kindDef = DefOf(a.Kind);
+                a.Health -= kindDef != null ? dmg * effects.EnemyDamageMultiplier(kindDef) : dmg;
                 if (knock > 0f)
                 {
                     var d = new Vector2(a.Pos.x - from.x, a.Pos.y - from.y);

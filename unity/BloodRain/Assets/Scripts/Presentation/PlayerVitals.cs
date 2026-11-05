@@ -15,6 +15,8 @@ namespace BloodRain.Presentation
         [Tooltip("맞은 뒤 무적(초). 웹 프로토타입 값")]
         public float hitIframes = 0.5f;
         public float armor;
+        /// <summary>C-06b 무당 3 사량발천근. 호신을 뺀 받는 피해를 넘기면 실제로 받을 피해를 돌려준다(LifeRunner 가 넣음). 되돌림은 아직 없음.</summary>
+        [System.NonSerialized] public System.Func<float, float> deflect;
         public bool refillOnDeath = true;
         public bool showStats = true;
 
@@ -49,6 +51,7 @@ namespace BloodRain.Presentation
         {
             if (Invulnerable || Health <= 0f) return false;
             float taken = Mathf.Max(_minDamage, damage - armor);
+            if (deflect != null) taken = Mathf.Max(0f, deflect(taken));
             Health -= taken;
             DamageTaken += taken;
             Hits++;

@@ -50,6 +50,8 @@ namespace BloodRain.Presentation
 
         /// <summary>몸 걸음 배율(StatSheet.MoveSpeed = 몸 × (1 + 신법)). C-06a LifeRunner 가 넣는다.</summary>
         public float MoveMultiplier { get => _moveMultiplier; set => _moveMultiplier = value; }
+        /// <summary>C-06b 경공 거리 배율(수로채 3 dash_drag). 미끄러지는 한 걸음에 곱한다. LifeRunner 가 넣는다.</summary>
+        public float DashDistanceMultiplier { get; set; } = 1f;
 
         void Awake()
         {
@@ -105,7 +107,7 @@ namespace BloodRain.Presentation
             var birth = new System.Numerics.Vector2(birthplace.x, birthplace.y);
             Vector2 step;
             if (Dash.IsDashing || ddx != 0f || ddy != 0f)
-                step = new Vector2(_ws.Length(ddx), _ws.Length(ddy)); // 대시 중엔 걸음 대신 미끄러짐(웹과 같다)
+                step = new Vector2(_ws.Length(ddx), _ws.Length(ddy)) * DashDistanceMultiplier; // 대시 중엔 걸음 대신 미끄러짐(웹과 같다)
             else
             {
                 float speed = _ws.Speed(_baseMove * _moveMultiplier * _slowMul);

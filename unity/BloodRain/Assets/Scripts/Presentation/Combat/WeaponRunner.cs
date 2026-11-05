@@ -29,6 +29,9 @@ namespace BloodRain.Presentation.Combat
         [NonSerialized] public float areaMultiplier = 1f;
         [NonSerialized] public int extraAmount;
         [NonSerialized] public float durationMultiplier = 1f;
+        // C-06b 곱하는 진전 효과(SynergyEffects). 남궁 2 검 계열·개방 3 낮은 기혈은 한 방 피해에, 곤륜 3 강시는 맞는 적에 따라 곱한다.
+        [NonSerialized] public BloodRain.Core.Build.SynergyEffects effects = BloodRain.Core.Build.SynergyEffects.None;
+        [NonSerialized] public float healthRatio = 1f;
 
         [Serializable]
         public sealed class Slot
@@ -224,7 +227,7 @@ namespace BloodRain.Presentation.Combat
             }
         }
 
-        float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level);
+        float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * effects.WeaponDamageMultiplier(s.Def, healthRatio);
         // 숫자는 모두 weapons.json(기획서 9장 'Lv8까지 성장'·'날아가는 것과 넉백'). 빠진 값의 기본은 옛 웹 값.
         static float Knock(Slot s) => s.Def.Knockback ?? 0f;
         static float Gap(Slot s, float fallback) => s.Def.GapSeconds ?? fallback;
