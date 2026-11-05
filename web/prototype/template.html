@@ -1220,19 +1220,73 @@ function lordFx(fn) { (G.lordFxs = G.lordFxs || []).push(fn); }
 function lordFxStep(dt) {
   if (G.lordFxs && G.lordFxs.length) G.lordFxs = G.lordFxs.filter(fn => fn(dt));
   if (G.halfFogs) G.halfFogs = G.halfFogs.filter(F => F.left > 0);
+  if (G.lordDraw) G.lordDraw = G.lordDraw.filter(o => !o.e.dead && !(o.kind === 'wave' && o.left <= 0));
   if (G.viewMulT) { G.viewMulT.t -= dt; if (G.viewMulT.t <= 0) G.viewMulT = null; }
 }
-// 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous). 프로토타입은 매화검기 방사(radial_burst)만
+// 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous, 시안 2막 진입과 같음). 분열(split)·흑백 구역(split_field)은 아직
 function lordContinuous(e, P) {
-  if (P.shape !== 'radial_burst') return false;
-  const sp = P.projectileSpeed / 100 * MOVE, a0 = Math.atan2(G.player.y - e.y, G.player.x - e.x) / D2R, dmg = P.baseDamage * (1 + B.enemyScaling.damagePerMinute * G.gm);
-  let next = P.telegraphSeconds, wave = 0;
-  lordFx(dt => {
-    if (e.dead) return false;
-    next -= dt; if (next > 0) return true;
-    for (const a of radialBurstDegrees(P, a0, wave)) G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a * D2R) * sp, vy: Math.sin(a * D2R) * sp, r: 0.4, dmg, life: P.length / sp, t: 0, kind: 'epalm' });
-    wave++; next += P.waveIntervalSeconds; return true;
-  });
+  const dmg = P.baseDamage * (1 + B.enemyScaling.damagePerMinute * G.gm), sp = (P.projectileSpeed || 0) / 100 * MOVE;
+  const draw = o => { o.e = e; (G.lordDraw = G.lordDraw || []).push(o); return o; };
+  if (P.shape === 'radial_burst') {   // 매화검기 방사(Core RadialBurstDegrees): 2막이 된 순간 플레이어 쪽을 첫 갈래로, 예고 뒤 waveIntervalSeconds 마다 한 파
+    const a0 = Math.atan2(G.player.y - e.y, G.player.x - e.x) / D2R;
+    let next = P.telegraphSeconds, wave = 0;
+    lordFx(dt => {
+      if (e.dead) return false;
+      next -= dt; if (next > 0) return true;
+      for (const a of radialBurstDegrees(P, a0, wave)) G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a * D2R) * sp, vy: Math.sin(a * D2R) * sp, r: 0.4, dmg, life: P.length / sp, t: 0, kind: 'epalm' });
+      wave++; next += P.waveIntervalSeconds; return true;
+    });
+  } else if (P.shape === 'rotating_beams') {   // 붉은 빛줄기(시안과 같음): 플레이어 쪽 + startOffsetDegrees 에서 count 줄이 초당 turnDegreesPerSecond 돈다
+    const Bm = draw({ kind: 'beams', P, a: Math.atan2(G.player.y - e.y, G.player.x - e.x) + (P.startOffsetDegrees || 0) * D2R, warm: P.telegraphSeconds, hit: 0 });
+    lordFx(dt => {
+      if (e.dead) return false;
+      if (Bm.warm > 0) { Bm.warm -= dt; return true; }
+      Bm.a += (P.turnDegreesPerSecond || 0) * D2R * dt; Bm.hit -= dt;
+      for (let i = 0; i < P.count && Bm.hit <= 0; i++) {
+        const a = Bm.a + i * TAU / P.count, px = G.player.x - e.x, py = G.player.y - e.y, along = px * Math.cos(a) + py * Math.sin(a), perp = Math.abs(-px * Math.sin(a) + py * Math.cos(a));
+        if (along > 0 && along < P.length && perp < P.width / 2 + 0.35) { Bm.hit = P.hitIntervalSeconds || 0.35; hurtPlayer(dmg, e); }
+      }
+      return true;
+    });
+  } else if (P.shape === 'sweep_wave') {   // 역류 파도(시안과 같음): waveIntervalSeconds 마다 화면 한쪽 끝에서 반대쪽으로 붉은 물결. 경공 무적으로 넘는다
+    let next = P.telegraphSeconds;
+    lordFx(dt => {
+      if (e.dead) return false;
+      next -= dt;
+      if (next <= 0) {
+        next = P.waveIntervalSeconds || 6;
+        const a = Math.floor(Math.random() * 4) * Math.PI / 2, L = viewDiag() * 0.55, W = draw({ kind: 'wave', P, a, x: G.player.x - Math.cos(a) * L, y: G.player.y - Math.sin(a) * L, left: L * 2, hit: false, warm: 0.6 });
+        lordFx(dt2 => {
+          if (e.dead) { W.left = 0; return false; }
+          if (W.warm > 0) { W.warm -= dt2; return true; }
+          const v = sp * dt2; W.x += Math.cos(W.a) * v; W.y += Math.sin(W.a) * v; W.left -= v;
+          const along = (G.player.x - W.x) * Math.cos(W.a) + (G.player.y - W.y) * Math.sin(W.a);
+          if (!W.hit && Math.abs(along) < P.width / 2 + 0.35) { W.hit = true; hurtPlayer(dmg, e); }
+          return W.left > 0;
+        });
+      }
+      return true;
+    });
+  } else if (P.shape === 'shrinking_arena') {   // 이동 범위 축소(Core ArenaRadiusStep·OutsideArena): 2막이 된 순간 보스 자리를 가운데로 원이 줄고, 밖에 서 있으면 맞는다. 모닥불은 프로토타입에 아직 없다
+    const A = draw({ kind: 'arena', P, x: e.x, y: e.y, R: P.radius, warm: P.telegraphSeconds, hit: 0 });
+    lordFx(dt => {
+      if (e.dead) return false;
+      if (A.warm > 0) { A.warm -= dt; return true; }
+      A.R = Math.max(P.minRadius, A.R - P.shrinkPerSecond * dt); A.hit -= dt;
+      const dx = G.player.x - A.x, dy = G.player.y - A.y;
+      if (A.hit <= 0 && dx * dx + dy * dy > (A.R + 0.35) * (A.R + 0.35)) { A.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
+      return true;
+    });
+  } else if (P.shape === 'empower') {   // 혈월(Core EmpowerDamage·EmpowerSpeed): 예고 뒤 싸움이 끝날 때까지 적 피해·걸음이 오른다(프로토타입은 보스 걸음은 그대로)
+    toast(P.nameKo, '붉은 달이 떠 적이 거세진다');
+    let warm = P.telegraphSeconds;
+    lordFx(dt => {
+      if (e.dead) { G.empower = null; return false; }
+      if (warm > 0) { warm -= dt; if (warm <= 0) G.empower = { dmg: P.enemyDamageMultiplier > 0 ? P.enemyDamageMultiplier : 1, spd: P.enemySpeedMultiplier > 0 ? P.enemySpeedMultiplier : 1 }; }
+      return true;
+    });
+  } else return false;
+  toast(e.name, P.nameKo);
   return true;
 }
 const BOSS_BY = Object.fromEntries((DATA.bosses || []).map(b => [b.id, b]));
@@ -1313,7 +1367,7 @@ function lordAI(e, dt, dx, dy, d) {
 // 처치 보상(Core BossAwakening.Defeat): 첫 처치 = 윤회의 기·혈정·봉인석·문파 열림, 혈영 = 다시 처치 기·혈정. 혼 기록엔 정산 때 새긴다
 function lordDown(e) {
   const r = CH_REGS.find(x => x.id === e.lord), def = BOSS_BY[e.lordBoss], first = !e.shadow, K = first ? LR.firstKill : LR.repeatKill;
-  G.lords[r.id] = 'down'; G.lordF = null; G.boss = null;
+  G.lords[r.id] = 'down'; G.lordF = null; G.boss = null; G.empower = null;   // 혈월은 싸움이 끝나면 진다
   const sect = first && LR.firstKill.unlockSect ? (DATA.sects || []).find(s => s.unlock === 'boss:' + r.id) : null;
   const kill = { region: r.id, boss: def.id, name: def.nameKo, first, qi: K.rebirthQi || 0, crystal: K.bloodCrystal || 0, stone: first && LR.firstKill.sealStone ? r.sealStone : null, sect: sect ? sect.id : null };
   G.lordKills.push(kill);
@@ -1326,6 +1380,13 @@ function drawLords(now) {
   for (const F of G.halfFogs || []) {   // 반쪽 독안개: 예고 땐 옅게, 켜지면 짙게
     const x = wx(F.x), a = F.warm > 0 ? 0.10 + 0.08 * Math.sin(now * 10) : 0.28;
     ctx.fillStyle = `rgba(90,130,60,${a})`; if (F.side > 0) ctx.fillRect(x, 0, VW - x + 50, VH); else ctx.fillRect(-50, 0, x + 50, VH);
+  }
+  for (const o of G.lordDraw || []) {   // 2막 몸: 빛줄기·물결·얼음 원
+    const P = o.P, e = o.e; ctx.save();
+    if (o.kind === 'beams') { ctx.strokeStyle = o.warm > 0 ? 'rgba(179,38,30,0.25)' : 'rgba(179,38,30,0.6)'; ctx.lineWidth = Math.max(2, P.width * PPM); for (let i = 0; i < P.count; i++) { const a = o.a + i * TAU / P.count; ctx.beginPath(); ctx.moveTo(wx(e.x), wy(e.y)); ctx.lineTo(wx(e.x + Math.cos(a) * P.length), wy(e.y + Math.sin(a) * P.length)); ctx.stroke(); } }
+    else if (o.kind === 'wave') { const nx = -Math.sin(o.a), ny = Math.cos(o.a), L = viewDiag(); ctx.strokeStyle = o.warm > 0 ? 'rgba(179,38,30,0.3)' : 'rgba(150,30,26,0.6)'; ctx.lineWidth = Math.max(3, P.width * PPM); ctx.beginPath(); ctx.moveTo(wx(o.x - nx * L), wy(o.y - ny * L)); ctx.lineTo(wx(o.x + nx * L), wy(o.y + ny * L)); ctx.stroke(); }
+    else if (o.kind === 'arena') { ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(wx(o.x), wy(o.y), o.R * PPM, 0, TAU, true); ctx.fillStyle = o.warm > 0 ? 'rgba(150,190,215,0.12)' : 'rgba(150,190,215,0.32)'; ctx.fill('evenodd'); ctx.strokeStyle = 'rgba(80,120,150,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(o.x), wy(o.y), o.R * PPM, 0, TAU); ctx.stroke(); }
+    ctx.restore();
   }
   if (!lordsOn() || !G.lords) return;
   const U = worldU(), rad = lordEngageR() / U * PPM;
@@ -1479,6 +1540,7 @@ function hurtPlayer(dmg, src) {
   const p = G.player;
   if (p.iframe > 0 || G.won || G.demo) return;
   if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
+  if (G.empower) dmg *= G.empower.dmg;   // 혈월(WP-13e): 화면 위 적 피해
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
   // 무당 진전 3 사량발천근: 태극 구간이면 20% 덜 받고, 줄인 피해의 열 배를 부딪힌 적에게
   const hdf = synEff('harmony_deflect'); if (hdf && yyBand().band === 'harmony') { const cut = taken * hdf.damageCut; taken -= cut; if (src && !src.dead) hurtEnemy(src, cut * hdf.reflectMultiplier, null, 0, 0, 0); }
@@ -1941,6 +2003,7 @@ function update(dt) {
     else { vx = dx * e.speed; vy = dy * e.speed; }
     if (e.roarT > 0) { vx *= 1 + (e.roarBonus || 0); vy *= 1 + (e.roarBonus || 0); }   // 혈사자 포효(WP-13c)
     if (G.wEnemy && G.wEnemy !== 1 && !e.boss) { vx *= G.wEnemy; vy *= G.wEnemy; }   // 눈보라·붉은 달(WP-13b)
+    if (G.empower && !e.boss) { vx *= G.empower.spd; vy *= G.empower.spd; }   // 혈월(WP-13e)
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
     e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
