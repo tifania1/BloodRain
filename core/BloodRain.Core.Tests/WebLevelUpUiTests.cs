@@ -69,5 +69,22 @@ namespace BloodRain.Core.Tests
             Assert.Contains("(!hw && G.weapons.length >= G.weaponSlots) || (!hp && G.passives.length >= G.passiveSlots)", html);
             Assert.Contains("synSummaryHtml() + evoTableHtml()", html);
         }
+
+        [Fact] public void 능력치_이름이_처음_나오면_한_번_풀이()
+        {
+            var html = Proto;
+            Assert.Contains("id=\"luhelp\"", html);
+            Assert.Contains("const statSeen = new Set(store.get('statSeen') || []);", html);
+            Assert.Contains("const help = statFirstHelp(currentOffers);", html);
+        }
+
+        [Fact] public void 혈우_연출_세기와_방향_표시_크기를_설정에서()
+        {
+            var html = Proto;
+            Assert.Contains("data-set=\"rain\"", html);
+            Assert.Contains("data-set=\"aim\"", html);
+            Assert.Contains("ctx.fillStyle = `rgba(110,22,20,${0.22 * settings.rain})`;", html);
+            Assert.Contains("if (settings.aim > 0) {", html);
+        }
     }
 }

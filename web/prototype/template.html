@@ -161,6 +161,7 @@ button { touch-action: manipulation; }
 .card p { margin: 3px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
 .card .k { justify-self: end; font: 700 11px var(--font-num); color: var(--wash); }
 .subtle { font-size: 13px; color: var(--ink-soft); }
+.luhelp { margin-top: 4px; color: #8a5a1e; max-width: 640px; margin-left: auto; margin-right: auto; }
 .realmname { font: 400 clamp(56px, min(22vw, 18vh), 140px)/1 var(--font-brush); color: var(--ink); }
 .realmname + p { margin: -6px 0 0; font-size: 14px; }
 .reward { font-size: 13px; color: var(--crimson); }
@@ -288,6 +289,8 @@ button { touch-action: manipulation; }
         <button class="b" id="awakebtn" type="button" data-set="awaken">각성 연출 자동</button>
         <button class="b" type="button" data-set="flash">깜빡임 켜짐</button>
         <button class="b" type="button" data-set="bossbar">체력바 보임</button>
+        <button class="b" type="button" data-set="rain">혈우 연출 100%</button>
+        <button class="b" type="button" data-set="aim">방향 표시 보통</button>
       </div>
       <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
       <div class="subtle" id="best"></div>
@@ -314,6 +317,7 @@ button { touch-action: manipulation; }
     <div class="panel">
       <div class="brush" style="font-size:44px" id="lutitle">깨달음이 온다</div>
       <div class="subtle" id="lusub">무공 하나를 고르시오</div>
+      <div class="subtle luhelp" id="luhelp" hidden></div>
       <div class="cards" id="lucards"></div>
       <div class="luslots" id="luslots" aria-hidden="true"></div>
       <div class="row">
@@ -366,6 +370,8 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="awaken"></button>
         <button class="b" type="button" data-set="flash"></button>
         <button class="b" type="button" data-set="bossbar"></button>
+        <button class="b" type="button" data-set="rain"></button>
+        <button class="b" type="button" data-set="aim"></button>
       </div>
     </div>
   </div>
@@ -524,6 +530,20 @@ const GLYPH = {
 // 쉬운 말은 아직 프로토타입에만 있다(Unity 는 UI-01U 에서 strings 로)
 const STAT_EASY = { Amount: '투사체', Magnet: '흡수 반경', Growth: '경험치', Area: '범위', Duration: '지속 시간', ProjectileSpeed: '탄 속도', CooldownReduction: '대기 시간', Might: '피해',
   Armor: '받는 피해', Recovery: '초당 회복', MoveSpeed: '이동 속도', Luck: '행운', Greed: '은자', MaxHealth: '최대 체력', Lifesteal: '피해의 일부 회복', FoodHeal: '음식', CritChance: '치명타' };
+// 이름이 처음 나올 때 한 번 띄우는 풀이(12장 '능력치 쉬운 말'). 본 이름은 store 'statSeen' 에 남아 다음 판부터는 안 뜬다
+const STAT_HELP = { Amount: '한 번에 나가는 비도·검기 같은 탄 수가 늘어난다', Magnet: '진기 구슬을 끌어오는 거리가 늘어난다', Growth: '얻는 진기가 늘어 레벨이 빨리 오른다',
+  Area: '무공이 닿는 넓이가 커진다', Duration: '무공이 남아 있는 시간이 길어진다', ProjectileSpeed: '탄이 더 빨리 날아간다', CooldownReduction: '무공을 다시 쓰기까지 기다리는 시간이 줄어든다',
+  Might: '모든 무공의 피해가 늘어난다', Armor: '맞을 때마다 받는 피해가 이만큼 줄어든다', Recovery: '1초마다 기혈이 이만큼 찬다', MoveSpeed: '걸음이 빨라진다',
+  Luck: '레벨업 카드와 보갑에서 좋은 것이 나올 확률이 오른다', Greed: '줍는 은자가 늘어난다', MaxHealth: '기혈 최대치가 늘어난다', Lifesteal: '준 피해의 일부만큼 기혈이 찬다',
+  FoodHeal: '음식으로 차는 기혈이 늘어난다', CritChance: '피해가 크게 들어갈 확률이 오른다' };
+const statSeen = new Set(store.get('statSeen') || []);
+function statFirstHelp(offers) {
+  const out = [];
+  for (const o of offers) if (o.kind === 'up' || o.kind === 'np') for (const e of P_BY_ID[o.id].effects)
+    if (STAT_HELP[e.stat] && !statSeen.has(e.stat)) { statSeen.add(e.stat); out.push(`${statLabel(e.stat)}: ${STAT_HELP[e.stat]}`); }
+  if (out.length) store.set('statSeen', [...statSeen]);
+  return out.slice(0, 2).join(' / ');
+}
 const STAT_PFX = 'ui.stat.';   // ko.json 의 ui.stat.<Core StatKind 이름> 묶음
 const statName = k => { const n = uiT(STAT_PFX + k); return n === STAT_PFX + k ? k : n; };
 const statLabel = k => STAT_EASY[k] ? `${statName(k)} · ${STAT_EASY[k]}` : statName(k);
@@ -768,6 +788,8 @@ const settings = {
   awaken: store.get('awaken') || 'auto',                  // 각성 연출: auto(그 절기 처음만 길게) / long / short
   flash: store.get('flash') ?? !REDUCED,                  // 깜빡임(피격 번쩍임) 켜짐/꺼짐(12장 '설정은 일시정지에서도')
   bossbar: store.get('bossbar') ?? true,                  // 땅의 주인 체력바 보이기(12장)
+  rain: store.get('rain') ?? (REDUCED ? 0.5 : 1),         // 혈우 연출 세기 1 / 0.5 / 0(12장): 장막 붉은 번짐·빗줄기·붉은 달. 장막 점선은 길을 알려 주니 늘 그림
+  aim: store.get('aim') ?? 1,                             // 바라보는 방향 표시 크기 1 / 1.6 / 0(12장 '조준')
 };
 // 구운 효과음(SFX-02, Assets/Audio/SFX → 빌드가 lookdev/sfx 에 둠). 있으면 그걸 틀고, 못 읽으면(아티팩트 한 파일 판 등) 아래 발진기 소리.
 // 진기 흡수는 5음 음계 8음을 연속 흡수 때 차례로 올린다(14장). 벌은 5개씩 번갈아.
@@ -2597,6 +2619,7 @@ function openLevelUp() {
   currentOffers = rollOffers();
   $('lutitle').textContent = `Lv ${lvNow}`;
   $('lusub').textContent = '무공이나 심법 하나를 고르시오';
+  const help = statFirstHelp(currentOffers); $('luhelp').textContent = help; $('luhelp').hidden = !help;   // 능력치 이름 첫 풀이(12장)
   const box = $('lucards'); box.innerHTML = '';
   currentOffers.forEach((o, i) => { const c = offerCard(o, i); c.onclick = () => chooseOffer(i); box.appendChild(c); });
   $('rerollleft').textContent = `남은 ${G.rerolls}회 · R`; $('reroll').disabled = G.rerolls <= 0;
@@ -3048,10 +3071,11 @@ function drawCurtain(now) {
   if (G.curtain == null) return;
   const hx = wx(G.home.x / worldU()), hy = wy(G.home.y / worldU()), R = G.curtain * PPM / worldU();
   ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(hx, hy, R, 0, TAU, true);
-  ctx.fillStyle = 'rgba(110,22,20,0.22)'; ctx.fill('evenodd'); ctx.restore();
+  ctx.fillStyle = `rgba(110,22,20,${0.22 * settings.rain})`; ctx.fill('evenodd'); ctx.restore();
   ctx.strokeStyle = 'rgba(179,38,30,0.75)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.arc(hx, hy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-  ctx.strokeStyle = 'rgba(179,38,30,0.35)'; ctx.lineWidth = 1.2; ctx.beginPath();
-  for (let i = 0; i < 90; i++) { const a = i / 90 * TAU + now * 0.05, rr = R + ((i * 37) % 23), x = hx + Math.cos(a) * rr, y = hy + Math.sin(a) * rr + ((now * 120 + i * 13) % 26); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 12); }
+  if (!settings.rain) return;
+  ctx.strokeStyle = `rgba(179,38,30,${0.35 * settings.rain})`; ctx.lineWidth = 1.2; ctx.beginPath();
+  for (let i = 0, n = Math.round(90 * settings.rain); i < n; i++) { const a = i / 90 * TAU + now * 0.05, rr = R + ((i * 37) % 23), x = hx + Math.cos(a) * rr, y = hy + Math.sin(a) * rr + ((now * 120 + i * 13) % 26); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 12); }
   ctx.stroke();
 }
 // 중원 한 장(WP-12): 축척 시험에서 1장 마당(원점)을 cheonha.json 숭산 자리에 놓고, 천하 시안과 같은 땅 윤곽·바다·강·소품·지명을 그린다.
@@ -3628,7 +3652,7 @@ function drawWeather() {
     const R = Math.hypot(VW, VH) / 2, inner = R * or1(GIMW.blizzard.viewScale), g = ctx.createRadialGradient(VW / 2, VH / 2, inner * 0.7, VW / 2, VH / 2, inner);
     g.addColorStop(0, 'rgba(244,246,248,0)'); g.addColorStop(1, 'rgba(244,246,248,0.94)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
   }
-  if (weatherOnW(GIMW.redMoon)) { ctx.fillStyle = 'rgba(150,20,20,0.12)'; ctx.fillRect(0, 0, VW, VH); }
+  if (weatherOnW(GIMW.redMoon)) { ctx.fillStyle = `rgba(150,20,20,${0.12 * settings.rain})`; ctx.fillRect(0, 0, VW, VH); }
 }
 // 정예 패턴 중 몇 프레임에 걸쳐 도는 것(WP-13d): 돌진(G.eDash)·검진 고리(G.eRings)·빙분신 수명(G.eClones)
 function eliteShapesStep(dt) {
@@ -3833,6 +3857,12 @@ function render() {
   // 플레이어
   const blink = settings.flash && (p.iframe > 0 || (p.hurt > 0 && Math.floor(p.hurt * 30) % 2 === 0));   // 깜빡임 끄기(12장)
   drawSprite('player', p.x, p.y, 1, p.fx < 0, false, blink ? 0.55 : 1, 1);
+  // 바라보는 방향 표시(12장 '조준'): 발밑 앞에 먹 꺾쇠 하나, 크기는 설정(끄면 없음)
+  if (settings.aim > 0) {
+    const k = settings.aim, a = Math.atan2(p.fy, p.fx), cx = wx(p.x + p.fx * 0.75 * k), cy = wy(p.y + p.fy * 0.75 * k), s = 0.22 * k * PPM;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(a); ctx.strokeStyle = 'rgba(26,26,26,0.55)'; ctx.lineWidth = Math.max(1.5, 0.06 * k * PPM); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-s * 0.6, -s); ctx.lineTo(s * 0.4, 0); ctx.lineTo(-s * 0.6, s); ctx.stroke(); ctx.restore();
+  }
   // 각성 여운: 금빛 기운이 몸에서 피어오른다
   if (G.glow || (G.awaken && G.awaken.t >= G.awaken.P.stamp)) {
     const fade = G.glow ? Math.min(1, G.glow.t / 1.5) : 1;
@@ -4336,6 +4366,8 @@ const SET_TURN = {
   awaken: () => { settings.awaken = { auto: 'long', long: 'short', short: 'auto' }[settings.awaken] || 'auto'; store.set('awaken', settings.awaken); },
   flash: () => { settings.flash = !settings.flash; store.set('flash', settings.flash); },
   bossbar: () => { settings.bossbar = !settings.bossbar; store.set('bossbar', settings.bossbar); },
+  rain: () => { settings.rain = settings.rain === 1 ? 0.5 : settings.rain === 0.5 ? 0 : 1; store.set('rain', settings.rain); },
+  aim: () => { settings.aim = settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1; store.set('aim', settings.aim); },
 };
 for (const b of document.querySelectorAll('[data-set]')) b.addEventListener('click', () => { SET_TURN[b.dataset.set](); syncMute(); });
 $('mutebtn').addEventListener('click', () => { audio.muted = !audio.muted; store.set('muted', audio.muted); syncMute(); });
@@ -4360,6 +4392,8 @@ function syncMute() {
     awaken: { auto: '각성 연출 자동<small>그 절기 처음만 길게</small>', long: '각성 연출 길게<small>매번 3.5초</small>', short: '각성 연출 짧게<small>매번 1.5초</small>' }[settings.awaken],
     flash: settings.flash ? '깜빡임 켜짐<small>맞으면 몸이 번쩍인다</small>' : '깜빡임 꺼짐<small>번쩍이지 않는다</small>',
     bossbar: settings.bossbar ? '체력바 보임<small>땅의 주인·원각</small>' : '체력바 숨김<small>땅의 주인·원각</small>',
+    rain: `혈우 연출 ${Math.round(settings.rain * 100)}%<small>${settings.rain ? '붉은 번짐·빗줄기' : '장막 점선만'}</small>`,
+    aim: { 1: '방향 표시 보통<small>바라보는 쪽 꺾쇠</small>', 1.6: '방향 표시 크게<small>바라보는 쪽 꺾쇠</small>', 0: '방향 표시 끔<small>꺾쇠 없음</small>' }[settings.aim] || '방향 표시 보통',
   };
   for (const b of document.querySelectorAll('[data-set]')) { b.innerHTML = SET_HTML[b.dataset.set]; if (b.dataset.set === 'flash' || b.dataset.set === 'bossbar') b.setAttribute('aria-pressed', String(!settings[b.dataset.set])); }
 }
