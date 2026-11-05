@@ -71,7 +71,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("DATA.lifeLocalShare", proto);
             Assert.Contains("lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(", proto);
             // 고유 적 동작 넷은 enemies.json 값(zoneRadius·shoot·dash·auraBonus)을 읽는다
-            foreach (var key in new[] { "D.zoneDamagePerSecond", "sh.interval", "ds.restMin", "D.auraBonus", "else if (LOCAL_BEH[e.behavior])", "D.group.flankAngle", "D.twin.reviveHealth", "group.commitRange", "hk.bindSeconds", "D.onDeath === 'poison_pool'", "fg.healthLossPerSecond", "fr.playerDamageMaxHealthRatio", "GIMW.poisonFog.qiMultiplier", "GIMW.blizzard.viewScale", "GIMW.redMoon.enemyMoveSpeedMultiplier" })
+            foreach (var key in new[] { "D.zoneDamagePerSecond", "sh.interval", "ds.restMin", "D.auraBonus", "else if (LOCAL_BEH[e.behavior])", "D.group.flankAngle", "D.twin.reviveHealth", "group.commitRange", "hk.bindSeconds", "D.onDeath === 'poison_pool'", "fg.healthLossPerSecond", "fr.playerDamageMaxHealthRatio", "GIMW.poisonFog.qiMultiplier", "GIMW.blizzard.viewScale", "GIMW.redMoon.enemyMoveSpeedMultiplier", "const ek = regionEliteKey(ev.type); spawnElite(ek);" })
                 Assert.Contains(key, proto);
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
             Assert.Contains("\"land\", \"rivers\"", build);

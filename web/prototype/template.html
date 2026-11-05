@@ -1815,7 +1815,7 @@ function runEvent(ev) {
     }
     toast('혈인 떼', '한 방향으로 돌진해 온다');
     cue('first_charge');
-  } else if (ev.kind === 'elite') { spawnElite(ev.type); cue('elite_spawn:' + ELITES[ev.type].id); }
+  } else if (ev.kind === 'elite') { const ek = regionEliteKey(ev.type); spawnElite(ek); cue('elite_spawn:' + ELITES[ek].id); }
   else if (ev.kind === 'toad') { const [x, y] = ringPos(); spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale); toast('금두꺼비', '잡으면 은자와 진기'); }
   else if (ev.kind === 'ring') { for (let i = 0; i < ev.n; i++) { const a = i / ev.n * TAU; spawnEnemy('donggap', p.x + Math.cos(a) * diag * 0.6, p.y + Math.sin(a) * diag * 0.6); } toast('동갑시 포위', '원을 좁혀 온다'); }
   else if (ev.kind === 'boss') { if (isPro()) spawnJangSam(); else spawnBoss(); }
@@ -2720,6 +2720,19 @@ function regionGimmicksStep(dt) {
 function drawRegionGimmicks() {
   for (const f of G.fogs || []) { const R = fogR(f) * PPM; if (R < 1) continue; const g = ctx.createRadialGradient(wx(f.x), wy(f.y), 0, wx(f.x), wy(f.y), R); g.addColorStop(0, 'rgba(90,130,60,0.30)'); g.addColorStop(1, 'rgba(90,130,60,0.05)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(f.x), wy(f.y), R, 0, TAU); ctx.fill(); }
   for (const r of G.rocks || []) { const q = 1 - r.t / r.life; ctx.fillStyle = `rgba(26,26,26,${0.12 + 0.3 * q})`; ctx.beginPath(); ctx.ellipse(wx(r.x), wy(r.y), r.r * PPM * (0.4 + 0.6 * q), r.r * PPM * 0.6 * (0.4 + 0.6 * q), 0, 0, TAU); ctx.fill(); }
+}
+// 지역 정예(WP-13d 첫 조각): 축척 모드에서 1장 밖 땅에 서 있으면 1장 정예 차례(enemies.json elites.chapter1 의 몇 번째)와 같은 자리의
+// 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.
+const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon']);
+const eliteShapeOk = P => !!P && (ELITE_SHAPES.has(P.shape) || (P.shape === 'circles' && P.aim === 'self'));
+function regionEliteKey(key) {
+  if (!SCALE_MODE || isPro() || !G.chRegion) return key;
+  const r = CH_REGS.find(x => x.id === G.chRegion), list = r && r.chapter !== 'chapter1' && (DATA.elites || {})[r.chapter];
+  const nth = (DATA.elites.chapter1 || []).indexOf(ELITES[key].id), id = list && nth >= 0 ? list[nth] : null;
+  const ps = id && DATA.elitePatterns[id], d = id && E_BY_ID[id];
+  if (!ps || !d || !eliteShapeOk(ps.patterns[0])) return key;
+  if (!ELITES[id]) ELITES[id] = { id, name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] };
+  return id;
 }
 function drawCheonha() {
   if (!SCALE_MODE || isPro() || !G.viewD || !CH_LAND.length) return;
