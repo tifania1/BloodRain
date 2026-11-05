@@ -112,5 +112,55 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0, s.Tick(Gaebang4, 1f, 79f).AlliesSpawned);
             Assert.Equal(3, s.Tick(Gaebang4, 1f, 1f).AlliesSpawned);
         }
+
+        // ---- R-07b 허상·제자 숫자 ----
+
+        [Fact] public void 허상_제자_숫자는_같은_무공과_각성_파동에서_왔고_기획서에_있다()
+        {
+            var a = T("arhat_ring"); var b = T("beggar_allies");
+            var nahan = _d.Weapons.Single(w => w.Id == "nahan_fist");
+            var palm = _d.Weapons.Single(w => w.Id == "palm_wind");
+            Assert.Equal(nahan.Range, a.Param("radius"), 3);
+            Assert.Equal(_d.Balance.Awakening.EliteKnockback, a.Param("knockback"), 3);
+            Assert.Equal(palm.DamageLv1, b.Param("damage"), 3);
+            Assert.Equal(palm.Knockback!.Value, b.Param("knockback"), 3);
+            Assert.Equal(1f, b.Param("attackSeconds"));
+            var sec = TestData.GddSection("진전(眞傳) 9문파");
+            foreach (var w in new[] { "몸 둘레 1.8m", "넉백 8", "땅의 주인은 밀리지 않습니다", "적이 노리지 않는 동료", "1초마다", "장풍 Lv1 한 대(20 x 공력, 넉백 5)" })
+                Assert.Contains(w, sec);
+        }
+
+        [Fact] public void 허상은_둘레_안_잡몹_정예만_밀고_보스는_안_민다()
+        {
+            var fx = Shaolin4;
+            var s = new SchoolSummons();
+            Assert.Equal(0f, s.ArhatPush(fx, 1f, false));          // 아직 안 켜짐
+            s.Tick(fx, 0.8f, 0.1f); s.Tick(fx, 0.4f, 0.1f);
+            Assert.True(s.ArhatActive);
+            Assert.Equal(8f, s.ArhatPush(fx, 1.7f, false), 3);
+            Assert.Equal(0f, s.ArhatPush(fx, 1.9f, false), 3);
+            Assert.Equal(8f, s.ArhatPush(fx, 4f, false, 2.25f), 3);
+            Assert.Equal(0f, s.ArhatPush(fx, 1f, true), 3);
+            s.Tick(fx, 0.4f, 5f);
+            Assert.Equal(0f, s.ArhatPush(fx, 1f, false), 3);       // 5초 뒤 꺼짐
+        }
+
+        [Fact] public void 제자는_1초마다_장풍_한_대씩_10초_동안()
+        {
+            var fx = Gaebang4;
+            var s = new SchoolSummons();
+            var e = s.Tick(fx, 1f, 180f);
+            Assert.Equal(3, e.AlliesSpawned);
+            Assert.Equal(0, e.AllyVolleys);                         // 나타난 순간엔 아직
+            Assert.Equal(3, s.AlliesPresent);
+            Assert.Equal(0, s.Tick(fx, 1f, 0.5f).AllyVolleys);
+            Assert.Equal(1, s.Tick(fx, 1f, 0.5f).AllyVolleys);      // 1초
+            int total = 1;
+            for (int i = 0; i < 100; i++) total += s.Tick(fx, 1f, 0.1f).AllyVolleys;
+            Assert.Equal(10, total);                                // 10초에 열 대
+            Assert.Equal(0, s.AlliesPresent);
+            Assert.Equal((40f, 5f), SchoolSummons.AllyShot(fx, 2f));
+            Assert.Equal((0f, 0f), SchoolSummons.AllyShot(Shaolin4, 2f));
+        }
     }
 }

@@ -302,7 +302,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
 - [ ] R-07U 진전 소림 4·개방 4 · 먼저: C-06b
-  - 할 것: 한 생에 `new Core.Build.SchoolSummons()` 하나, 프레임마다 `summons.Tick(SynergyEffects, 기혈/최대, 세상 dt)`. `ArhatStarted` 면 몸 둘레 나한 허상 `Tier("arhat_ring").Param("images")` 개를 `ArhatSecondsLeft` 동안, 닿는 적 밀어냄(R-07b 결정 전 임시 1.8m·8, 보스 제외). `AlliesSpawned` 만큼 개방 제자를 `AlliesSecondsLeft` 동안(R-07b 전 임시 장풍 Lv1 1초마다).
+  - 할 것: 한 생에 `new Core.Build.SchoolSummons()` 하나, 프레임마다 `summons.Tick(SynergyEffects, 기혈/최대, 세상 dt)`. `ArhatStarted` 면 몸 둘레 나한 허상 `Tier("arhat_ring").Param("images")` 개를 `ArhatSecondsLeft` 동안, 닿는 적은 `summons.ArhatPush(fx, 거리, 보스인가, 축척)` 만큼 밀어냄(피해 없음, 2026-11-05 R-07b 데이터). `AlliesSpawned` 만큼 개방 제자를 `AlliesSecondsLeft` 동안(적이 노리지 않음), `AllyVolleys` 만큼 제자마다 가장 가까운 적에게 장풍 Lv1 탄 한 대 — 피해·넉백은 `SchoolSummons.AllyShot(fx, 공력)`.
   - 쓸 것: Core `Build/SchoolSummons.cs`, synergies.json
   - 메뉴: C-06b 의 진전 채우기(소림·개방 4)
   - 끝: 소림 넷 + 기혈 50% 밑 → 허상, 판에 세 번까지 / 개방 넷 → 3분 뒤 셋

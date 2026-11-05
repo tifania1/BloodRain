@@ -41,7 +41,7 @@
 
 - **문파 고유 능력이 Core 에 없다.** 소림·개방·남궁·당가·수로채 다섯과 무당 '조화 보너스 2배'. 기획서 5장에 숫자가 있으니 cheonha.json sects 에 효과 칸을 더하고, Core 몸(`Meta/Rebirth.cs` 의 몸 능력치)과 기믹 인자(`poisonImmune`·`ignoresWater`)에 잇는다. 수로채 회피 15% 는 `Build/Stats.cs` `StatKind` 에 회피 칸이 없어 그것부터 필요하다. Unity 는 unity_tasks 에 줄 없음
 - **오의 모양 수치가 글로만 있다.** characters.json ultimates 에 5장 '오의 상세' 숫자(만천화우 3초·중독, 태극무량 5초, 사자후 6m·3초, 천뢰낙 12곳·1초, 팔방풍우 8방향 3연타, 천설부 3초, 천마해체 8초·2%·2배·10%)를 칸으로. 역류는 '공력 x12' 말고 물살 폭·시간이 없다: 숫자 없음, 사람 결정 필요. Unity 는 C-09 가 일검만 적고 나머지 오의 줄 없음
-- ~~진전 소림 4·개방 4 효과가 없다~~ → 2026-11-04 R-07: `arhat_ring`·`beggar_allies` + Core `SchoolSummons`. 허상이 밀쳐 내는 세기·둘레, 개방 제자의 피해·기혈은 숫자 없음, 사람 결정 R-07b
+- ~~진전 소림 4·개방 4 효과가 없다~~ → 2026-11-04 R-07: `arhat_ring`·`beggar_allies` + Core `SchoolSummons`. 2026-11-05 R-07b: 허상 1.8m·넉백 8, 제자 1초마다 장풍 Lv1(20 x 공력, 넉백 5) — params·20장 표 아래·`ArhatPush`·`AllyShot`
 - ~~기획서 20장 진전 표 ↔ synergies.json schools 를 맞추는 테스트가 없다~~ → 2026-11-04 R-06: `SynergyDataTests.기획서_20장_진전_표가_schools_와_같다`
 - **도전 과제 해금 셋을 세는 곳이 없다.** 음공(한 판 처치 5,000)·이화창(한 판 경공 300)·뇌부(정신부 누적 10)는 토큰만 있다. 한 판 기록(`Run/Life.cs` 쪽)과 혼에 쌓는 누적(`Meta/Soul.cs`)에서 세어 `Soul.Unlock` 을 부르게
 - **무공 여섯의 날아가는 것·넉백 값이 없다**(태극검·쇄겸술·혈조·음공·이화창·낙화검우, 9장 표·weapons.json `shot`·`knockback`). 기획서는 프로토타입에서 손으로 맞춘 뒤 채운다고 했다 → WP-01. 그 전까지는 숫자 없음, 사람 결정 필요

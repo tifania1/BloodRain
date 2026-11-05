@@ -57,7 +57,7 @@
         { "count": 2, "desc": "호신 +2", "proto": true, "stats": { "Armor": 2 } },
         { "count": 3, "desc": "기혈 +15%, 넉백 면역", "proto": true, "stats": { "MaxHealth": 0.15 } },
         { "count": 4, "desc": "기혈이 처음 50% 아래로 떨어지면 5초 동안 나한 허상 열여덟이 둘러싸 닿는 적을 밀쳐낸다(판마다 세 번)",
-          "effect": "arhat_ring", "params": { "healthThreshold": 0.5, "seconds": 5, "images": 18, "timesPerRun": 3 } } ] },
+          "effect": "arhat_ring", "params": { "healthThreshold": 0.5, "seconds": 5, "images": 18, "timesPerRun": 3, "radius": 1.8, "knockback": 8 } } ] },
     { "id": "wudang", "nameKo": "무당", "hanja": "武當", "motto": "태극", "character": "unhwa",
       "members": ["taiji_sword", "yangui", "unryong"],
       "tiers": [
@@ -76,7 +76,7 @@
         { "count": 2, "desc": "음식 회복 +50%", "proto": true, "stats": { "FoodHeal": 0.5 } },
         { "count": 3, "tier": "secret", "desc": "기혈 30% 이하에서 공력 +30%", "proto": true, "effect": "low_health_might", "params": { "healthThreshold": 0.3, "damageBonus": 0.3 } },
         { "count": 4, "desc": "3분마다 개방 제자 셋이 나타나 10초 동안 함께 싸운다",
-          "effect": "beggar_allies", "params": { "intervalSeconds": 180, "allies": 3, "seconds": 10 } } ] },
+          "effect": "beggar_allies", "params": { "intervalSeconds": 180, "allies": 3, "seconds": 10, "damage": 20, "attackSeconds": 1, "knockback": 5 } } ] },
     { "id": "tang", "nameKo": "사천당가", "hanja": "四川唐家", "motto": "암기", "character": "dang_yeonhwa",
       "members": ["flying_dagger", "cheonsu", "poison_mist", "mandok", "thunder_bomb"],
       "tiers": [
