@@ -1657,6 +1657,7 @@ function update(dt) {
 
   foeShotsStep(dt);   // 고유 적이 쏜 탄(WP-13c)
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
+  eliteShapesStep(dt);      // 정예 돌진·검진 고리·분신(WP-13d)
   // 적
   rebuildGrid();
   const freezeOn = G.freeze > 0; G.freeze = Math.max(0, G.freeze - dt);
@@ -1839,12 +1840,14 @@ function runEvent(ev) {
 // 정예 셋: 동인(몸통 박치기 3연타), 계율원 승려(장풍 세 갈래), 방장 대리(범종 기절). 수치는 bosspatterns.json elites.
 // 패턴 피해는 몸 피해처럼 분마다 커진다(baseDamage 는 0분 값).
 function eliteAI(e, dt, dx, dy, d) {
-  const p = G.player, P = e.pat, scale = 1 + B.enemyScaling.damagePerMinute * G.gm, dmg = P.baseDamage * scale;
+  // 패턴이 여럿이면(설랑 왕 등, WP-13d) 프로토타입이 아는 모양만 차례로 돈다
+  const list = (e.ps && e.ps.patterns || [e.pat]).filter(eliteShapeOk), P = list.length ? list[(e.pi || 0) % list.length] : e.pat;
+  const p = G.player, scale = 1 + B.enemyScaling.damagePerMinute * G.gm, dmg = P.baseDamage * scale;
   if (e.windup > 0) { e.windup -= dt; return; }
   e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1;
   e.timer -= dt;
   if (e.timer > 0) return;
-  e.timer = e.ps.intervalSeconds;
+  e.timer = e.ps.intervalSeconds; e.pi = (e.pi || 0) + 1;
   castPattern(e, P, dmg, dx, dy);
 }
 // 패턴 한 번(bosspatterns.json shape). 정예와 서장 장삼이 같이 쓴다.
@@ -1898,6 +1901,56 @@ function castPattern(e, P, dmg, dx, dy) {
       for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, P.scatter); spawnEnemy(P.summon, G.player.x + Math.cos(a) * r, G.player.y + Math.sin(a) * r); }
       sfx('gong');
     } });
+  } else if (P.shape === 'line') {
+    // 방패 돌진·설랑 왕 돌진·혈사자 덮쳐 오기(WP-13d): 예고선 뒤 그 방향으로 length 만큼 달리고, 폭 안에 닿으면 한 번 맞는다. 다 달리면 recoverySeconds 쉰다
+    const ca = Math.atan2(dy, dx), sp = P.projectileSpeed / 100 * MOVE;
+    e.windup = P.telegraphSeconds + P.length / sp + (P.recoverySeconds || 0);
+    addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
+    G.zones.push({ delay: P.telegraphSeconds, apply: () => { if (!e.dead) (G.eDash = G.eDash || []).push({ e, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, left: P.length, w: P.width, dmg, hit: false }); sfx('dash'); } });
+  } else if (P.shape === 'circles' && P.aim !== 'self') {
+    // 혈술사 장로 큰 피 웅덩이·산귀 낙석 부르기(WP-13d): 예고 순간 플레이어 둘레(scatter 안, 기본 2.5m)에 원 count 개, telegraphSeconds 뒤 떨어진다.
+    // poolRadius 가 있으면 그 자리에 leaveSeconds 동안 장판(초당 피해는 baseDamage 와 같은 비율로 분마다 커짐)
+    const sp = P.scatter || 2.5, k = dmg / (P.baseDamage || 1);
+    for (let i = 0; i < P.count; i++) {
+      const tx = G.player.x + (P.count > 1 ? rand(-sp, sp) : 0), ty = G.player.y + (P.count > 1 ? rand(-sp, sp) : 0);
+      G.zones.push({ delay: P.telegraphSeconds, mark: { x: tx, y: ty, r: P.radius }, apply: () => {
+        if (e.dead) return;
+        addEffect('boom', tx, ty, { r: P.radius, life: 0.3 }); sfx('boom');
+        if (Math.hypot(G.player.x - tx, G.player.y - ty) < P.radius) hurtPlayer(dmg, e);
+        if (P.poolRadius) (G.pools = G.pools || []).push({ x: tx, y: ty, r: P.poolRadius, dps: P.poolDamagePerSecond * k, t: P.leaveSeconds, red: true });
+      } });
+    }
+  } else if (P.shape === 'blink_slam') {
+    // 혈영대주 표식 순간이동(WP-13d): 예고 순간 플레이어 자리 둘레 scatter 원 안에 count 자리, 차례로 그 자리에 나타나 radius 안을 내리친다
+    const cx = G.player.x, cy = G.player.y, step = P.telegraphSeconds + P.waveIntervalSeconds, R = P.radius;
+    e.windup = P.count * P.telegraphSeconds + (P.count - 1) * P.waveIntervalSeconds;
+    for (let k = 0; k < P.count; k++) {
+      const a = rand(0, TAU), d = Math.sqrt(Math.random()) * P.scatter, tx = cx + Math.cos(a) * d, ty = cy + Math.sin(a) * d;
+      G.zones.push({ delay: k * step, apply: () => {
+        if (e.dead) return;
+        G.zones.push({ delay: P.telegraphSeconds, mark: { x: tx, y: ty, r: R }, apply: () => {
+          if (e.dead) return;
+          addEffect('burst', e.x, e.y, { r: 1, color: '#B3261E' }); e.x = tx; e.y = ty;
+          addEffect('boom', tx, ty, { r: R, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.12);
+          if (Math.hypot(G.player.x - tx, G.player.y - ty) < R) hurtPlayer(dmg, e);
+        } });
+      } });
+    }
+  } else if (P.shape === 'closing_ring') {
+    // 검진(WP-13d): 예고 순간 플레이어 자리에 반경 radius 의 칼 count 자루 고리, 초당 shrinkPerSecond 로 minRadius 까지 좁혀 온다.
+    // 고리 띠(폭 width) 위에 서 있으면 hitIntervalSeconds 마다 맞는다. 고리 안쪽 깊이 들어가거나 경공으로 넘으면 피한다
+    const ring = { x: G.player.x, y: G.player.y, R: P.radius, min: P.minRadius || 1, shrink: P.shrinkPerSecond, w: P.width, n: P.count, a: rand(0, TAU), hit: 0, wait: P.telegraphSeconds, gap: P.hitIntervalSeconds, dmg, e };
+    (G.eRings = G.eRings || []).push(ring);
+  } else if (P.shape === 'clones') {
+    // 빙혈 제자 빙분신(WP-13d, 시안과 같음): 자기 둘레 scatter 원 안 count 자리 가운데 하나로 옮기고 나머지엔 기혈 1 인 분신. 분신은 leaveSeconds 뒤 녹는다
+    const real = Math.floor(Math.random() * P.count), cx = e.x, cy = e.y;
+    addEffect('ring', cx, cy, { r: P.scatter, life: 0.4, color: '#96BED7' });
+    for (let i = 0; i < P.count; i++) {
+      const a = rand(0, TAU), d = Math.sqrt(Math.random()) * P.scatter, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+      if (i === real) { e.x = x; e.y = y; continue; }
+      const c = spawnEnemy('sigang', x, y, { sprite: e.sprite, name: e.name, hp: 1, maxHp: 1, speed: e.speed, dmg: e.dmg, r: e.r, xp: 0, kbRes: 1, cloneOf: e, born: e.born, behavior: 'chase' });
+      (G.eClones = G.eClones || []).push({ c, t: P.leaveSeconds });
+    }
   } else if (P.shape === 'circles' && P.aim === 'self') {
     if (P.bossHolds) e.windup = P.telegraphSeconds;
     G.zones.push({ delay: P.telegraphSeconds, mark: { follow: e, r: P.radius }, apply: () => {
@@ -2103,7 +2156,7 @@ function openBreakthrough(realm) {
 // 적·구슬·탄·장판·먹 자국처럼 G 의 배열에 든 x·y 가진 것은 자리와 r·vx·vy·speed 를 같이 줄인다(경고 표시 mark 도).
 function worldShrink(k) {
   const p = G.player; p.x /= k; p.y /= k; G.cam.x /= k; G.cam.y /= k;
-  const shrink = o => { o.x /= k; o.y /= k; for (const f of ['r', 'vx', 'vy', 'speed']) if (typeof o[f] === 'number') o[f] /= k; };
+  const shrink = o => { o.x /= k; o.y /= k; for (const f of ['r', 'vx', 'vy', 'speed', 'R', 'min', 'shrink', 'w']) if (typeof o[f] === 'number') o[f] /= k; };
   for (const key of Object.keys(G)) {
     const a = G[key]; if (!Array.isArray(a)) continue;
     for (const o of a) if (o && o !== p && typeof o.x === 'number' && typeof o.y === 'number') { shrink(o); if (o.mark && typeof o.mark.x === 'number') shrink(o.mark); else if (o.mark && typeof o.mark.r === 'number') o.mark.r /= k; }
@@ -2716,7 +2769,7 @@ function foeShotsStep(dt) {
   if (G.pools) G.pools = G.pools.filter(o => o.t > 0);
 }
 function drawLocalFx() {
-  for (const o of G.pools || []) { ctx.fillStyle = `rgba(70,110,50,${0.28 * Math.min(1, o.t)})`; ctx.beginPath(); ctx.ellipse(wx(o.x), wy(o.y), o.r * PPM, o.r * PPM * 0.6, 0, 0, TAU); ctx.fill(); }
+  for (const o of G.pools || []) { ctx.fillStyle = o.red ? `rgba(130,28,24,${0.3 * Math.min(1, o.t)})` : `rgba(70,110,50,${0.28 * Math.min(1, o.t)})`; ctx.beginPath(); ctx.ellipse(wx(o.x), wy(o.y), o.r * PPM, o.r * PPM * 0.6, 0, 0, TAU); ctx.fill(); }
   for (const b of G.foeShots || []) {
     if (b.chain) { ctx.strokeStyle = 'rgba(26,26,26,0.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(wx(b.src.x), wy(b.src.y)); ctx.lineTo(wx(b.x), wy(b.y)); ctx.stroke(); }
     ctx.fillStyle = b.chain ? '#1A1A1A' : b.petal ? 'rgba(200,90,110,0.85)' : 'rgba(170,200,215,0.9)';
@@ -2753,6 +2806,34 @@ function drawWeather() {
     g.addColorStop(0, 'rgba(244,246,248,0)'); g.addColorStop(1, 'rgba(244,246,248,0.94)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
   }
   if (weatherOnW(GIMW.redMoon)) { ctx.fillStyle = 'rgba(150,20,20,0.12)'; ctx.fillRect(0, 0, VW, VH); }
+}
+// 정예 패턴 중 몇 프레임에 걸쳐 도는 것(WP-13d): 돌진(G.eDash)·검진 고리(G.eRings)·빙분신 수명(G.eClones)
+function eliteShapesStep(dt) {
+  const p = G.player, body = B.stats.playerBodyRadius;
+  for (const D of G.eDash || []) {
+    const e = D.e, st = Math.hypot(D.vx, D.vy) * dt; if (e.dead) { D.left = 0; continue; }
+    e.x += D.vx * dt; e.y += D.vy * dt; D.left -= st; e.dir = D.vx > 0 ? 1 : -1;
+    if (!D.hit && Math.hypot(p.x - e.x, p.y - e.y) < D.w / 2 + body + e.r) { D.hit = true; hurtPlayer(D.dmg, e); }
+  }
+  if (G.eDash) G.eDash = G.eDash.filter(D => D.left > 0);
+  for (const R of G.eRings || []) {
+    if (R.e.dead) { R.R = 0; continue; }
+    if (R.wait > 0) { R.wait -= dt; continue; }
+    R.R -= R.shrink * dt; R.a += dt * 0.8; R.hit -= dt;
+    if (R.hit <= 0 && Math.abs(Math.hypot(p.x - R.x, p.y - R.y) - R.R) < R.w / 2 + body) { R.hit = R.gap; hurtPlayer(R.dmg, R.e); }
+  }
+  if (G.eRings) G.eRings = G.eRings.filter(R => R.R > R.min);
+  for (const C of G.eClones || []) { C.t -= dt; if (C.t <= 0 && !C.c.dead) { C.c.dead = true; addEffect('burst', C.c.x, C.c.y, { r: 0.8, color: '#96BED7' }); } }
+  if (G.eClones) G.eClones = G.eClones.filter(C => C.t > 0 && !C.c.dead);
+}
+function drawEliteShapes() {
+  for (const R of G.eRings || []) {
+    ctx.save(); ctx.strokeStyle = R.wait > 0 ? 'rgba(179,38,30,0.35)' : 'rgba(179,38,30,0.75)'; ctx.lineWidth = Math.max(1.5, R.w * PPM * 0.35); ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.arc(wx(R.x), wy(R.y), R.R * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5;   // 칼 count 자루
+    for (let i = 0; i < R.n; i++) { const a = R.a + i * TAU / R.n, x = wx(R.x + Math.cos(a) * R.R), y = wy(R.y + Math.sin(a) * R.R); ctx.beginPath(); ctx.moveTo(x - Math.sin(a) * 0.5 * PPM, y + Math.cos(a) * 0.5 * PPM); ctx.lineTo(x + Math.sin(a) * 0.5 * PPM, y - Math.cos(a) * 0.5 * PPM); ctx.stroke(); }
+    ctx.restore();
+  }
 }
 function regionGimmicksStep(dt) {
   if (!SCALE_MODE || isPro()) return;
@@ -2792,8 +2873,8 @@ function drawRegionGimmicks() {
 }
 // 지역 정예(WP-13d 첫 조각): 축척 모드에서 1장 밖 땅에 서 있으면 1장 정예 차례(enemies.json elites.chapter1 의 몇 번째)와 같은 자리의
 // 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.
-const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon']);
-const eliteShapeOk = P => !!P && (ELITE_SHAPES.has(P.shape) || (P.shape === 'circles' && P.aim === 'self'));
+const ELITE_SHAPES = new Set(['cone', 'jump_slam', 'projectile_fan', 'bind_line', 'summon', 'line', 'circles', 'blink_slam', 'closing_ring', 'clones']);
+const eliteShapeOk = P => !!P && ELITE_SHAPES.has(P.shape) && !(P.shape === 'line' && !P.projectileSpeed);
 function regionEliteKey(key) {
   if (!SCALE_MODE || isPro() || !G.chRegion) return key;
   // 장 정예가 없는 땅(chapters.json life.eliteFallback.regions: 청운진·개방 총타·남궁세가)은 숭산 정예 그대로
@@ -2801,8 +2882,9 @@ function regionEliteKey(key) {
   const r = CH_REGS.find(x => x.id === G.chRegion), list = r && r.chapter !== 'chapter1' && !fb.regions.includes(r.id) && (DATA.elites || {})[r.chapter];
   const nth = (DATA.elites.chapter1 || []).indexOf(ELITES[key].id), id = list && nth >= 0 ? list[nth] : null;
   const ps = id && DATA.elitePatterns[id], d = id && E_BY_ID[id];
-  if (!ps || !d || !eliteShapeOk(ps.patterns[0])) return key;
-  if (!ELITES[id]) ELITES[id] = { id, name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] };
+  const pat0 = ps && ps.patterns.find(eliteShapeOk);
+  if (!pat0 || !d) return key;
+  if (!ELITES[id]) ELITES[id] = { id, name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: pat0 };
   return id;
 }
 function drawCheonha() {
@@ -2887,6 +2969,7 @@ function render() {
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(p.x), wy(p.y), w.auraR * PPM, 0, TAU); ctx.fill();
   }
   drawRegionGimmicks();   // 독안개·낙석 그림자(WP-13b)
+  drawEliteShapes();      // 검진 고리(WP-13d)
   drawLocalFx();   // 고유 적 탄·독기·돌진 예고(WP-13c)
   // 적
   for (const e of G.enemies) {
