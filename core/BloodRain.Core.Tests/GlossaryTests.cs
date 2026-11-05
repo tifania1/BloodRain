@@ -69,7 +69,20 @@ namespace BloodRain.Core.Tests
                 yield return new object[] { "경지", "balance.realms.", lang };
                 yield return new object[] { "문파·세가", "cheonha.sects.", lang };
                 yield return new object[] { "지역", "cheonha.regions.", lang };
+                yield return new object[] { "사람(대표 인물)", "characters.", lang };
             }
+        }
+
+        [Theory]
+        [InlineData("zh-Hans")]
+        [InlineData("zh-Hant")]
+        public void 중국어_사람_이름에_로마자가_없다(string lang)
+        {
+            // L-04b(2026-11-05 사람): 간체·번체 화면의 사람 이름은 한자로. 로마자(Jin Sowoon)가 섞이면 안 된다.
+            var bad = Lang(lang).Where(kv => (kv.Key.StartsWith("characters.", StringComparison.Ordinal) || kv.Key.StartsWith("enemies.bosses.", StringComparison.Ordinal))
+                    && kv.Key.EndsWith(".name", StringComparison.Ordinal) && kv.Value.Any(ch => ch < 128 && char.IsLetter(ch)))
+                .Select(kv => $"{kv.Key}: {kv.Value}").ToList();
+            Assert.True(bad.Count == 0, string.Join("\n", bad));
         }
 
         [Theory, MemberData(nameof(Cases))]
