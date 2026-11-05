@@ -53,6 +53,32 @@ namespace BloodRain.Presentation
         /// <summary>C-06b 경공 거리 배율(수로채 3 dash_drag). 미끄러지는 한 걸음에 곱한다. LifeRunner 가 넣는다.</summary>
         public float DashDistanceMultiplier { get; set; } = 1f;
 
+        // C-06c 수로채 3 dash_drag 끌기. 경공 중 몸 DragRadius(경지 m) 안 잡몹을 미끄러진 걸음 × DragFactor 만큼 같이 옮긴다.
+        // 정예·보스(EnemyDef.Family elite·boss)는 안 끌린다. LifeRunner 가 넣는다(0 이면 끔).
+        [System.NonSerialized] public EnemyField dragField;
+        public float DragRadius { get; set; }
+        public float DragFactor { get; set; }
+        /// <summary>끌려간 적 수 합(시험·디버그용).</summary>
+        public int Dragged { get; private set; }
+        readonly System.Collections.Generic.List<int> _dragNear = new System.Collections.Generic.List<int>();
+
+        void Drag(Vector2 step)
+        {
+            if (DragRadius <= 0f || DragFactor <= 0f || dragField == null || dragField.Sim == null) return;
+            Vector2 p = transform.position;
+            dragField.Sim.QueryCircle(new Unity.Mathematics.float2(p.x, p.y), _ws.Length(DragRadius), _dragNear);
+            var move = new Unity.Mathematics.float2(step.x, step.y) * DragFactor;
+            foreach (int i in _dragNear)
+            {
+                var a = dragField.Sim.Get(i);
+                var def = dragField.DefOf(a.Kind);
+                if (def != null && (def.Family == "elite" || def.Family == "boss")) continue;
+                a.Pos += move;
+                dragField.Sim.Set(i, a);
+                Dragged++;
+            }
+        }
+
         void Awake()
         {
             var data = DataBoot.Data;
@@ -107,7 +133,10 @@ namespace BloodRain.Presentation
             var birth = new System.Numerics.Vector2(birthplace.x, birthplace.y);
             Vector2 step;
             if (Dash.IsDashing || ddx != 0f || ddy != 0f)
+            {
                 step = new Vector2(_ws.Length(ddx), _ws.Length(ddy)) * DashDistanceMultiplier; // 대시 중엔 걸음 대신 미끄러짐(웹과 같다)
+                Drag(step); // C-06c 수로채 3
+            }
             else
             {
                 float speed = _ws.Speed(_baseMove * _moveMultiplier * _slowMul);

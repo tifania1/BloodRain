@@ -160,7 +160,14 @@ namespace BloodRain.Presentation
             gauge.SetSynergyHarmonyRange(syn.HarmonyRange);
             if (weapons != null) { weapons.effects = fx; weapons.healthRatio = healthRatio; }
             if (enemies != null) enemies.effects = fx;
-            if (player != null && player.TryGetComponent<PlayerController>(out var pc)) pc.DashDistanceMultiplier = fx.DashDistanceMultiplier;
+            if (player != null && player.TryGetComponent<PlayerController>(out var pc))
+            {
+                pc.DashDistanceMultiplier = fx.DashDistanceMultiplier;
+                var drag = fx.Tier("dash_drag"); // C-06c 끌기
+                pc.dragField = enemies;
+                pc.DragRadius = drag != null ? drag.Param("dragRadius") : 0f;
+                pc.DragFactor = drag != null ? drag.Param("dragFactor") : 0f;
+            }
             if (vitals != null)
                 vitals.deflect = fx.Has("harmony_deflect")
                     ? taken => fx.Deflect(taken, gauge.Band == BloodRain.Core.Progression.YinYangBand.Harmony).taken

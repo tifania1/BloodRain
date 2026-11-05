@@ -199,6 +199,7 @@ namespace BloodRain.Presentation.Combat
                 if (s.Cooldown > 0f) continue;
                 // 겨눌 적이 없으면 쿨다운을 쓰지 않고 다음 프레임에 다시 본다(뇌부)
                 if (!Fire(s)) { s.Cooldown = 0f; continue; }
+                SkySword(s); // C-06c 남궁 3
                 // 쿨다운 0(독무처럼 상시)이면 tickSeconds 마다 한 번, 섬광지는 1 / shotsPerSecond(WeaponGrowth.Cooldown)
                 float cd = s.Def.Cooldown <= 0f && s.Def.ShotsPerSecond == null ? Tick(s)
                          : Mathf.Max(0.05f, WeaponGrowth.Cooldown(s.Def, s.level) * (1f - cooldownReduction)); // C-06a 쾌속
@@ -216,6 +217,7 @@ namespace BloodRain.Presentation.Combat
 
             StepProjectiles(dt);
             StepBrushes(dt);
+            StepNeedles(dt); // C-06c 당가 5
 
             for (int i = _fx.Count - 1; i >= 0; i--)
             {
@@ -566,6 +568,74 @@ namespace BloodRain.Presentation.Combat
                 if (d.sqrMagnitude < best) { best = d.sqrMagnitude; dir = d; }
             }
             return best < float.MaxValue && dir.sqrMagnitude > 1e-8f;
+        }
+
+        // ── C-06c 모양 있는 진전 효과(SynergyEffects.Tier 의 params, 숫자 뜻은 SynergyEffects.cs 머리 주석) ──
+        // 남궁 3 하늘 검기(sky_sword), 당가 5 독침(needle_rain). 수로채 3 끌기는 PlayerController.Drag.
+        // 아직 없음: 화산 3 꽃잎(무공에 치명타가 아직 없다), 당가 3 독 번짐과 독침의 중독 poisonSeconds(적 중독 상태가 아직 없다).
+        // 독침 damage 는 '× 공력' 인데 무공 한 방에도 공력이 아직 안 곱해져 params 값 그대로 쓴다.
+        int _swordAttacks;
+        float _needleLeft = -1f;
+        static readonly Color NeedleInk = new Color(0.20f, 0.42f, 0.16f, 1f);
+
+        void SkySword(Slot s)
+        {
+            var t = effects.Tier("sky_sword");
+            if (t == null || s.Def.Category != "sword") return;
+            _swordAttacks++;
+            int every = Mathf.Max(1, Mathf.RoundToInt(t.Param("everyAttacks")));
+            if (_swordAttacks % every != 0) return;
+            var ws = World;
+            if (!Nearest(ws.Length(t.Param("searchRange")), out var dir)) return;
+            var at = P + dir;
+            float R = ws.Length(t.Param("radius")) * areaMultiplier;
+            float dmg = Damage(s) * t.Param("damageMultiplier");
+            float delay = t.Param("delaySeconds");
+            AddFxAt(at, 0f, Mathf.PI * 2f, R, delay, new Color(0.55f, 0.75f, 0.95f, 0.25f)); // 떨어질 자리
+            Later(delay, () =>
+            {
+                if (!AddSpark("fx_sword_qi_glow", at, -Mathf.PI * 0.5f, R * 2.4f, 0.35f, 0.08f))
+                    AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.25f, new Color(0.8f, 0.9f, 1f, 0.8f));
+                enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+                Deal(s, dmg, enemies.Damage(_near, dmg, at, 0f));
+                SkySwordCount++;
+            });
+        }
+
+        /// <summary>하늘 검기가 떨어진 횟수(시험·디버그용).</summary>
+        public int SkySwordCount { get; private set; }
+        /// <summary>독침이 박힌 적 수 합(시험·디버그용).</summary>
+        public int NeedleHits { get; private set; }
+
+        void StepNeedles(float dt)
+        {
+            var t = effects.Tier("needle_rain");
+            if (t == null) { _needleLeft = -1f; return; }
+            float every = Mathf.Max(0.5f, t.Param("intervalSeconds"));
+            if (_needleLeft < 0f) _needleLeft = every;
+            _needleLeft -= dt;
+            if (_needleLeft > 0f) return;
+            _needleLeft += every;
+            var cam = Camera.main;
+            if (cam == null) return;
+            float h = cam.orthographicSize, w = h * cam.aspect;
+            Vector2 c = cam.transform.position;
+            enemies.Sim.QueryCircle(new float2(c.x, c.y), Mathf.Sqrt(w * w + h * h), _near);
+            var agents = enemies.Sim.Agents;
+            _filtered.Clear();
+            foreach (int i in _near)
+            {
+                var p = agents[i].Pos;
+                if (Mathf.Abs(p.x - c.x) <= w && Mathf.Abs(p.y - c.y) <= h) _filtered.Add(i);
+            }
+            int shown = 0;
+            foreach (int i in _filtered)
+            {
+                if (shown++ >= 80) break; // 그림만 줄인다(피해는 모두)
+                var p = agents[i].Pos;
+                AddSpark("fx_dagger_ink", new Vector2(p.x, p.y), -Mathf.PI * 0.5f, 0f, 0.3f, 0.06f, false, 0.85f, NeedleInk);
+            }
+            NeedleHits += enemies.Damage(_filtered, t.Param("damage"), c, 0f);
         }
 
         void Later(float delay, Action a)

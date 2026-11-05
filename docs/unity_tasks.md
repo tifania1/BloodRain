@@ -151,6 +151,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: C-06b 의 진전 채우기
   - 끝: 다섯이 각각 화면에서 나가고 피해가 들어감. 콘솔 에러 0
   - 찍기: `docs/unity_shots/C-06/` 의 `school_shapes_<huashan|namgung|tang|tang5|suro>.png`
+  (진행: 2026-11-05 22:40 PC — 셋 붙임. 남궁 3 하늘 검기 `WeaponRunner.SkySword`(검 계열 무공 3번째 공격마다 8m 안 가장 가까운 적 자리에 0.22초 뒤 반경 1.2m, 한 방 x1.2, 그림 fx_sword_qi_glow), 당가 5 독침 `StepNeedles`(20초마다 화면 안 모든 적에 8, 그림 fx_dagger_ink 초록 먹 80개까지), 수로채 3 끌기 `PlayerController.Drag`(경공 중 1m 안 잡몹을 걸음 x0.9, LifeRunner 가 넣음). 진전 채우기 남궁·당가·수로채 뒤 15초 안에 하늘 검기 3번·독침 4마리·끌림 확인, 콘솔 에러 0. 찍음 `school_shapes_namgung.png`(순간을 맞춘 것은 아님). 남은 것: 화산 3 꽃잎은 무공에 치명타가 없어서, 당가 3 독 번짐·독침 중독은 적 중독 상태가 없어서 못 붙임 — 둘 다 그 장치가 먼저. 끌기는 Family elite·boss 를 뺌. 독침·꽃잎의 '× 공력'은 무공에 공력이 아직 안 곱해져 값 그대로)
 
 - [ ] QA-05U 화면 가장자리 땅의 주인 표시 · 먼저: LF-03
   - 할 것: `Presentation/Fx/EdgeIndicators.cs` 가 빈 `new BossRecord()` 대신 `EdgeIndicators.Bind(life.Bosses)`(이미 있음)를 받게 LifeRunner 가 부른다.
