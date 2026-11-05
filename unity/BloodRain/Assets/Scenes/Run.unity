@@ -201,26 +201,636 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
   slots: []
   showStats: 1
-  brushMaterial: {fileID: 0}
-  samjaeTier1: []
+  brushMaterial: {fileID: 2100000, guid: 12e660c1901fa5342be9b3c1d19a456a, type: 2}
+  samjaeTier1:
+  - {fileID: 2800000, guid: 5034d5fc8ec36a44fa573032ee813fa3, type: 3}
+  - {fileID: 2800000, guid: ca740e95547153f44843860917f11742, type: 3}
+  - {fileID: 2800000, guid: 22cb4792ff0ef8c4d97faed598907f3c, type: 3}
   samjaeTier1Meters: 5.74
   samjaeTier1Span: 2.3
-  samjaeTier2: []
-  samjaeTier2Wash: []
+  samjaeTier2:
+  - {fileID: 2800000, guid: 8c91fed1f6bb443429c675e1c718a558, type: 3}
+  - {fileID: 2800000, guid: 3070893ef48e5c84c8d5a1824eaa1c84, type: 3}
+  - {fileID: 2800000, guid: 6cc932036893cd547a0d17a2a2b547a4, type: 3}
+  samjaeTier2Wash:
+  - {fileID: 2800000, guid: cc5cf28483b145b49b29736bd03a0a3a, type: 3}
+  - {fileID: 2800000, guid: 0cd4572745f055b4e94667811c56a4d2, type: 3}
+  - {fileID: 2800000, guid: 7931b28d1632f5b469b4ae0474031e71, type: 3}
   samjaeTier2Meters: 6.456
   samjaeTier2Span: 2.4
-  samjaeTier3: []
-  samjaeTier3Wash: []
-  samjaeTier3Gold: []
+  samjaeTier3:
+  - {fileID: 2800000, guid: 2ae1b94c6ef983249b18f3328b427645, type: 3}
+  - {fileID: 2800000, guid: 934ad63106c85fc49ba40676353bdefc, type: 3}
+  - {fileID: 2800000, guid: 99c7e5429f0033c4482157d56dabdeb3, type: 3}
+  samjaeTier3Wash:
+  - {fileID: 2800000, guid: f907ae8d6d551714ebb90353ab82b775, type: 3}
+  - {fileID: 2800000, guid: d2d294de367d16f4fa31018aa7ea25a0, type: 3}
+  - {fileID: 2800000, guid: 1a88bbaec1fc63c459b5ef37d6ce469c, type: 3}
+  samjaeTier3Gold:
+  - {fileID: 2800000, guid: 10784e4b5b773524e9b272c729b637fc, type: 3}
+  - {fileID: 2800000, guid: 82339961e3d344a468f10b3856c13685, type: 3}
+  - {fileID: 2800000, guid: 310130a2cac55404f9cb51cf3c90a3bf, type: 3}
   samjaeTier3Meters: 7.1
   samjaeTier3Span: 2.5
-  brushCrops: []
-  brushAddMaterial: {fileID: 0}
-  lightningShade: {fileID: 0}
-  lightningGold: {fileID: 0}
-  lightningCore: {fileID: 0}
+  brushCrops:
+  - name: baekbo_main_1
+    rect: {x: 0.20507812, y: 0.2578125, z: 0.484375, w: 0.46875}
+  - name: baekbo_main_2
+    rect: {x: 0.203125, y: 0.2890625, z: 0.4921875, w: 0.421875}
+  - name: baekhwa_main_1
+    rect: {x: 0.08203125, y: 0.41796875, z: 0.8203125, w: 0.1640625}
+  - name: baekhwa_main_2
+    rect: {x: 0.080078125, y: 0.41992188, z: 0.796875, w: 0.1640625}
+  - name: bomb_t1_1
+    rect: {x: 0.09765625, y: 0.15039062, z: 0.765625, w: 0.734375}
+  - name: bomb_t1_2
+    rect: {x: 0.060546875, y: 0.060546875, z: 0.8359375, w: 0.859375}
+  - name: bomb_t2_1
+    rect: {x: 0.080078125, y: 0.06640625, z: 0.8828125, w: 0.8984375}
+  - name: bomb_t2_2
+    rect: {x: 0.052734375, y: 0.0390625, z: 0.9375, w: 0.953125}
+  - name: bomb_t3_1
+    rect: {x: 0.041015625, y: 0.037109375, z: 0.8671875, w: 0.953125}
+  - name: bomb_t3_2
+    rect: {x: 0.083984375, y: 0.037109375, z: 0.8515625, w: 0.8984375}
+  - name: byeokryeok_main_1
+    rect: {x: 0.037109375, y: 0.044921875, z: 0.953125, w: 0.8984375}
+  - name: byeokryeok_main_2
+    rect: {x: 0.06640625, y: 0.033203125, z: 0.90625, w: 0.9296875}
+  - name: chain_t1_1
+    rect: {x: 0.12890625, y: 0.45507812, z: 0.71875, w: 0.0859375}
+  - name: chain_t1_2
+    rect: {x: 0.13867188, y: 0.45703125, z: 0.7109375, w: 0.0859375}
+  - name: chain_t2_1
+    rect: {x: 0.091796875, y: 0.42382812, z: 0.7890625, w: 0.1484375}
+  - name: chain_t2_2
+    rect: {x: 0.107421875, y: 0.42578125, z: 0.7734375, w: 0.1484375}
+  - name: chain_t3_1
+    rect: {x: 0.091796875, y: 0.42578125, z: 0.796875, w: 0.1484375}
+  - name: chain_t3_2
+    rect: {x: 0.09375, y: 0.42578125, z: 0.8125, w: 0.1484375}
+  - name: changcheon_t1_1
+    rect: {x: 0.27148438, y: 0.1015625, z: 0.640625, w: 0.8125}
+  - name: changcheon_t1_2
+    rect: {x: 0.28125, y: 0.09765625, z: 0.6328125, w: 0.8203125}
+  - name: changcheon_t2_1
+    rect: {x: 0.25585938, y: 0.0625, z: 0.6796875, w: 0.875}
+  - name: changcheon_t2_2
+    rect: {x: 0.25585938, y: 0.08984375, z: 0.6796875, w: 0.84375}
+  - name: changcheon_t3_1
+    rect: {x: 0.23242188, y: 0.064453125, z: 0.703125, w: 0.875}
+  - name: changcheon_t3_2
+    rect: {x: 0.23242188, y: 0.0625, z: 0.703125, w: 0.8828125}
+  - name: cheonjiin_main_1
+    rect: {x: 0.7050781, y: 0.18554688, z: 0.2578125, w: 0.640625}
+  - name: cheonjiin_main_2
+    rect: {x: 0.7050781, y: 0.19335938, z: 0.2578125, w: 0.6328125}
+  - name: cheonjiin_wave_1
+    rect: {x: 0.63671875, y: 0.21875, z: 0.2578125, w: 0.6015625}
+  - name: cheonroe_main_1
+    rect: {x: 0.064453125, y: 0.0625, z: 0.8984375, w: 0.8984375}
+  - name: cheonroe_main_2
+    rect: {x: 0.064453125, y: 0.06640625, z: 0.875, w: 0.875}
+  - name: chilbo_main_1
+    rect: {x: 0.12109375, y: 0.111328125, z: 0.78125, w: 0.796875}
+  - name: chilbo_main_2
+    rect: {x: 0.12109375, y: 0.009765625, z: 0.6875, w: 0.9375}
+  - name: claw_t1_1
+    rect: {x: 0.1484375, y: 0.35546875, z: 0.6796875, w: 0.296875}
+  - name: claw_t1_2
+    rect: {x: 0.15039062, y: 0.35742188, z: 0.6796875, w: 0.296875}
+  - name: claw_t2_1
+    rect: {x: 0.119140625, y: 0.33984375, z: 0.734375, w: 0.3203125}
+  - name: claw_t2_2
+    rect: {x: 0.119140625, y: 0.33789062, z: 0.734375, w: 0.3203125}
+  - name: claw_t3_1
+    rect: {x: 0.119140625, y: 0.34375, z: 0.75, w: 0.3125}
+  - name: claw_t3_2
+    rect: {x: 0.119140625, y: 0.34375, z: 0.734375, w: 0.3125}
+  - name: dagger_t1_1
+    rect: {x: 0.20117188, y: 0.42578125, z: 0.578125, w: 0.15625}
+  - name: dagger_t1_2
+    rect: {x: 0.20507812, y: 0.42578125, z: 0.546875, w: 0.140625}
+  - name: dagger_t2_1
+    rect: {x: 0.17773438, y: 0.3984375, z: 0.6171875, w: 0.203125}
+  - name: dagger_t2_2
+    rect: {x: 0.17578125, y: 0.40039062, z: 0.59375, w: 0.1796875}
+  - name: dagger_t3_1
+    rect: {x: 0.17382812, y: 0.3984375, z: 0.625, w: 0.203125}
+  - name: dagger_t3_2
+    rect: {x: 0.17382812, y: 0.39453125, z: 0.625, w: 0.2109375}
+  - name: flash_t1_1
+    rect: {x: 0.13085938, y: 0.46679688, z: 0.7109375, w: 0.0703125}
+  - name: flash_t1_2
+    rect: {x: 0.1328125, y: 0.46875, z: 0.703125, w: 0.0703125}
+  - name: flash_t2_1
+    rect: {x: 0.09375, y: 0.44921875, z: 0.734375, w: 0.125}
+  - name: flash_t2_2
+    rect: {x: 0.091796875, y: 0.42578125, z: 0.78125, w: 0.125}
+  - name: flash_t3_1
+    rect: {x: 0.09375, y: 0.42578125, z: 0.7578125, w: 0.1484375}
+  - name: flash_t3_2
+    rect: {x: 0.09375, y: 0.42578125, z: 0.7890625, w: 0.1484375}
+  - name: heukryong_main_1
+    rect: {x: 0.09375, y: 0.03515625, z: 0.8671875, w: 0.9296875}
+  - name: heukryong_main_2
+    rect: {x: 0.09375, y: 0.03515625, z: 0.8671875, w: 0.9296875}
+  - name: hyeolma_main_1
+    rect: {x: 0.11328125, y: 0.31640625, z: 0.765625, w: 0.3671875}
+  - name: hyeolma_main_2
+    rect: {x: 0.119140625, y: 0.31445312, z: 0.7578125, w: 0.3671875}
+  - name: liangyi_main_1
+    rect: {x: 0.7871094, y: 0.31445312, z: 0.1484375, w: 0.3984375}
+  - name: liangyi_main_2
+    rect: {x: 0.7871094, y: 0.31445312, z: 0.1484375, w: 0.3984375}
+  - name: maehwa_main_1
+    rect: {x: 0.119140625, y: 0.14648438, z: 0.6796875, w: 0.734375}
+  - name: maehwa_main_2
+    rect: {x: 0.119140625, y: 0.14648438, z: 0.7890625, w: 0.734375}
+  - name: mancheon_main_1
+    rect: {x: 0.15039062, y: 0.453125, z: 0.65625, w: 0.09375}
+  - name: mancheon_main_2
+    rect: {x: 0.1484375, y: 0.44726562, z: 0.671875, w: 0.1015625}
+  - name: mist_t1_1
+    rect: {x: 0.08203125, y: 0.09375, z: 0.7421875, w: 0.6953125}
+  - name: mist_t1_2
+    rect: {x: 0.1796875, y: 0.25976562, z: 0.6796875, w: 0.65625}
+  - name: mist_t2_1
+    rect: {x: 0.037109375, y: 0.064453125, z: 0.8984375, w: 0.7578125}
+  - name: mist_t2_2
+    rect: {x: 0.19335938, y: 0.25585938, z: 0.796875, w: 0.6484375}
+  - name: mist_t3_1
+    rect: {x: 0.115234375, y: 0.068359375, z: 0.859375, w: 0.7890625}
+  - name: mist_t3_2
+    rect: {x: 0.1875, y: 0.123046875, z: 0.71875, w: 0.671875}
+  - name: muyeong_main_1
+    rect: {x: 0.16992188, y: 0.44921875, z: 0.6328125, w: 0.09375}
+  - name: muyeong_main_2
+    rect: {x: 0.16796875, y: 0.44921875, z: 0.640625, w: 0.1015625}
+  - name: nahan_t1_1
+    rect: {x: 0.25585938, y: 0.28515625, z: 0.4140625, w: 0.4296875}
+  - name: nahan_t1_2
+    rect: {x: 0.26953125, y: 0.28515625, z: 0.3984375, w: 0.421875}
+  - name: nahan_t2_1
+    rect: {x: 0.23242188, y: 0.2578125, z: 0.453125, w: 0.5078125}
+  - name: nahan_t2_2
+    rect: {x: 0.23242188, y: 0.25976562, z: 0.453125, w: 0.5078125}
+  - name: nahan_t3_1
+    rect: {x: 0.23242188, y: 0.25976562, z: 0.453125, w: 0.484375}
+  - name: nahan_t3_2
+    rect: {x: 0.23046875, y: 0.2578125, z: 0.453125, w: 0.484375}
+  - name: oroe_main_1
+    rect: {x: 0.091796875, y: 0.3671875, z: 0.7890625, w: 0.2734375}
+  - name: oroe_main_2
+    rect: {x: 0.09375, y: 0.34179688, z: 0.8046875, w: 0.2890625}
+  - name: pacheon_main_1
+    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
+  - name: pacheon_main_2
+    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
+  - name: palm_t1_1
+    rect: {x: 0.55859375, y: 0.26171875, z: 0.2890625, w: 0.5234375}
+  - name: palm_t1_2
+    rect: {x: 0.5488281, y: 0.27148438, z: 0.296875, w: 0.515625}
+  - name: palm_t2_1
+    rect: {x: 0.5078125, y: 0.25976562, z: 0.375, w: 0.5625}
+  - name: palm_t2_2
+    rect: {x: 0.5078125, y: 0.25976562, z: 0.375, w: 0.5625}
+  - name: palm_t3_1
+    rect: {x: 0.5078125, y: 0.25585938, z: 0.375, w: 0.59375}
+  - name: palm_t3_2
+    rect: {x: 0.5097656, y: 0.25390625, z: 0.3671875, w: 0.5703125}
+  - name: palseon_main_1
+    rect: {x: 0.62109375, y: 0.18945312, z: 0.3125, w: 0.6640625}
+  - name: palseon_main_2
+    rect: {x: 0.62109375, y: 0.1796875, z: 0.3125, w: 0.671875}
+  - name: pasan_main_1
+    rect: {x: 0.5097656, y: 0.20898438, z: 0.3984375, w: 0.640625}
+  - name: pasan_main_2
+    rect: {x: 0.51171875, y: 0.203125, z: 0.375, w: 0.6484375}
+  - name: petals_t1_1
+    rect: {x: 0.31640625, y: 0.15039062, z: 0.484375, w: 0.640625}
+  - name: petals_t1_2
+    rect: {x: 0.15625, y: 0.1328125, z: 0.671875, w: 0.578125}
+  - name: petals_t1_3
+    rect: {x: 0.15039062, y: 0.32226562, z: 0.5625, w: 0.5078125}
+  - name: petals_t2_1
+    rect: {x: 0.091796875, y: 0.083984375, z: 0.65625, w: 0.578125}
+  - name: petals_t2_2
+    rect: {x: 0.23242188, y: 0.1484375, z: 0.625, w: 0.59375}
+  - name: petals_t2_3
+    rect: {x: 0.203125, y: 0.34179688, z: 0.59375, w: 0.5390625}
+  - name: petals_t3_1
+    rect: {x: 0.20507812, y: 0.13476562, z: 0.625, w: 0.75}
+  - name: petals_t3_2
+    rect: {x: 0.22460938, y: 0.23242188, z: 0.6015625, w: 0.59375}
+  - name: petals_t3_3
+    rect: {x: 0.17578125, y: 0.125, z: 0.6484375, w: 0.75}
+  - name: qin_t1_1
+    rect: {x: 0.068359375, y: 0.060546875, z: 0.875, w: 0.8828125}
+  - name: qin_t1_2
+    rect: {x: 0.068359375, y: 0.060546875, z: 0.875, w: 0.8828125}
+  - name: qin_t2_1
+    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
+  - name: qin_t2_2
+    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
+  - name: qin_t3_1
+    rect: {x: 0.037109375, y: 0.03515625, z: 0.9296875, w: 0.9296875}
+  - name: qin_t3_2
+    rect: {x: 0.03515625, y: 0.03515625, z: 0.9296875, w: 0.9296875}
+  - name: samjae_t1_1
+    rect: {x: 0.6425781, y: 0.14257812, z: 0.2890625, w: 0.734375}
+  - name: samjae_t1_2
+    rect: {x: 0.6386719, y: 0.15039062, z: 0.2890625, w: 0.7265625}
+  - name: samjae_t1_3
+    rect: {x: 0.64453125, y: 0.15039062, z: 0.2890625, w: 0.7265625}
+  - name: samjae_t2_1
+    rect: {x: 0.59375, y: 0.119140625, z: 0.3671875, w: 0.7890625}
+  - name: samjae_t2_2
+    rect: {x: 0.59375, y: 0.119140625, z: 0.3671875, w: 0.7890625}
+  - name: samjae_t2_3
+    rect: {x: 0.59375, y: 0.119140625, z: 0.3671875, w: 0.7890625}
+  - name: samjae_t3_1
+    rect: {x: 0.5878906, y: 0.09765625, z: 0.375, w: 0.8125}
+  - name: samjae_t3_2
+    rect: {x: 0.5644531, y: 0.103515625, z: 0.3984375, w: 0.8046875}
+  - name: samjae_t3_3
+    rect: {x: 0.58984375, y: 0.099609375, z: 0.375, w: 0.8125}
+  - name: spear_t1_1
+    rect: {x: 0.095703125, y: 0.44921875, z: 0.765625, w: 0.109375}
+  - name: spear_t1_2
+    rect: {x: 0.09765625, y: 0.44335938, z: 0.78125, w: 0.109375}
+  - name: spear_t2_1
+    rect: {x: 0.08984375, y: 0.421875, z: 0.7890625, w: 0.15625}
+  - name: spear_t2_2
+    rect: {x: 0.091796875, y: 0.42382812, z: 0.7890625, w: 0.15625}
+  - name: spear_t3_1
+    rect: {x: 0.06640625, y: 0.421875, z: 0.796875, w: 0.15625}
+  - name: spear_t3_2
+    rect: {x: 0.064453125, y: 0.421875, z: 0.8203125, w: 0.1640625}
+  - name: staff_t1_1
+    rect: {x: 0.6484375, y: 0.21679688, z: 0.2578125, w: 0.6015625}
+  - name: staff_t1_2
+    rect: {x: 0.6484375, y: 0.21289062, z: 0.2578125, w: 0.609375}
+  - name: staff_t2_1
+    rect: {x: 0.62109375, y: 0.203125, z: 0.3125, w: 0.6484375}
+  - name: staff_t2_2
+    rect: {x: 0.6171875, y: 0.20117188, z: 0.3203125, w: 0.6328125}
+  - name: staff_t3_1
+    rect: {x: 0.62109375, y: 0.1953125, z: 0.3125, w: 0.65625}
+  - name: staff_t3_2
+    rect: {x: 0.62109375, y: 0.203125, z: 0.3125, w: 0.6484375}
+  - name: taiji_t1_1
+    rect: {x: 0.0859375, y: 0.14648438, z: 0.828125, w: 0.703125}
+  - name: taiji_t1_2
+    rect: {x: 0.091796875, y: 0.15234375, z: 0.8203125, w: 0.6953125}
+  - name: taiji_t2_1
+    rect: {x: 0.06640625, y: 0.12109375, z: 0.8671875, w: 0.7578125}
+  - name: taiji_t2_2
+    rect: {x: 0.06640625, y: 0.12109375, z: 0.8671875, w: 0.7578125}
+  - name: taiji_t3_1
+    rect: {x: 0.06640625, y: 0.12109375, z: 0.8671875, w: 0.7578125}
+  - name: taiji_t3_2
+    rect: {x: 0.064453125, y: 0.12109375, z: 0.875, w: 0.7578125}
+  - name: talisman_t1_1
+    rect: {x: 0.12890625, y: 0.37304688, z: 0.703125, w: 0.2265625}
+  - name: talisman_t1_2
+    rect: {x: 0.1328125, y: 0.39453125, z: 0.703125, w: 0.203125}
+  - name: talisman_t2_1
+    rect: {x: 0.115234375, y: 0.3671875, z: 0.7578125, w: 0.2421875}
+  - name: talisman_t2_2
+    rect: {x: 0.111328125, y: 0.37109375, z: 0.7421875, w: 0.2578125}
+  - name: talisman_t3_1
+    rect: {x: 0.09375, y: 0.36523438, z: 0.7578125, w: 0.265625}
+  - name: talisman_t3_2
+    rect: {x: 0.09375, y: 0.37109375, z: 0.7578125, w: 0.265625}
+  brushAddMaterial: {fileID: 2100000, guid: c057ad4b200d2a3448f11cccf71e07b8, type: 2}
+  lightningShade: {fileID: 2800000, guid: 309c06bc46a0b1f43bb56205606ed31d, type: 3}
+  lightningGold: {fileID: 2800000, guid: 4f470859d0397564abbfacdd0051d18b, type: 3}
+  lightningCore: {fileID: 2800000, guid: 9c375989c8510be4fb1686cbeaffff29, type: 3}
   lightningMeters: 4
-  aiFx: []
+  aiFx:
+  - name: fx_aura_glow
+    meters: 3
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: e9d2d922079c79f4ba70fd6e749e9f3a, type: 3}
+    gold: {fileID: 2800000, guid: ed0508f06a1e9b34f8abb60c83296530, type: 3}
+    core: {fileID: 2800000, guid: 61548d4ea6f942347a17b43b4546f7c0, type: 3}
+  - name: fx_bomb_glow
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: fe33c4937e41d9d4298bff768a2eed7b, type: 3}
+    gold: {fileID: 2800000, guid: 8c4165fe457ad2c449230486e3cf7757, type: 3}
+    core: {fileID: 2800000, guid: 1799d60e3474dc748a5f6e586cebcc63, type: 3}
+  - name: fx_bomb_ink_1
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: a2d1c08e678d98d4b87439fdb7591fd1, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_bomb_ink_2
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: deba3107c30a0534a898b2fdcd479af0, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_claw_ink
+    meters: 2
+    kind: 1
+    stroke: {fileID: 2800000, guid: 668e010e4f954de497c0321df03aff4b, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_claw_ink_2
+    meters: 1.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: 15eabbae30f2421da0990427c3b552d5, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_dagger_ink
+    meters: 2.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: d55f2d7669352ae48beb1c9d8a5565d9, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_array_glow
+    meters: 5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: e23b303bbe6f4fa2ae2b169ce97be1c3, type: 3}
+    gold: {fileID: 2800000, guid: a088794d9eef413daf6c4c9ddb7c39b3, type: 3}
+    core: {fileID: 2800000, guid: 7a910673a9054922bfd7841bac508dac, type: 3}
+  - name: fx_evo_dagger_glow
+    meters: 1.5
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: f98b002a29c84ac0bb34d771fb5f55bc, type: 3}
+    gold: {fileID: 2800000, guid: 94936b4def124f9d834c3b7d5787fdcb, type: 3}
+    core: {fileID: 2800000, guid: 765a23b6976b4251a4f121d4f4b585f9, type: 3}
+  - name: fx_evo_dragon_ink
+    meters: 4
+    kind: 2
+    stroke: {fileID: 2800000, guid: ea4d8f2cc4e5477988fcb20413914a18, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_fire_ink
+    meters: 3
+    kind: 2
+    stroke: {fileID: 2800000, guid: 02a67216ad974f84bbd69592d3214a46, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_fist_ink
+    meters: 4
+    kind: 1
+    stroke: {fileID: 2800000, guid: 05a463fecd464f4dbba5593c1c6dca55, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_hand_ink
+    meters: 4
+    kind: 1
+    stroke: {fileID: 2800000, guid: a6c0e7cfcbcc422691a5acdf375b96aa, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_mist_ink
+    meters: 6
+    kind: 2
+    stroke: {fileID: 2800000, guid: 97b60a23419e4272a8335cd7971878ce, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_palm_ink
+    meters: 4.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: b356d4bebe254e2ab66efb7b324c24a7, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_plum_ink
+    meters: 6
+    kind: 2
+    stroke: {fileID: 2800000, guid: e373e15ad54e46c79e2c5cfeaec98435, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_qin_glow
+    meters: 5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: fb762efb973a413e8b0be037c67410e7, type: 3}
+    gold: {fileID: 2800000, guid: fbcdf2fb56a046c98903ccb16ad521b0, type: 3}
+    core: {fileID: 2800000, guid: 57d374301329427c88644007d57ec8e7, type: 3}
+  - name: fx_evo_samjae_glow
+    meters: 4
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: d02923c6819b4561a48572fb0f73c5c9, type: 3}
+    gold: {fileID: 2800000, guid: 6d1e406708ee4a9d8d2eae90644734b6, type: 3}
+    core: {fileID: 2800000, guid: 56053330bc9843ba99ddeca561720caa, type: 3}
+  - name: fx_evo_spear_ink
+    meters: 4
+    kind: 2
+    stroke: {fileID: 2800000, guid: 4454817520944ca6bfa6ad12b14da570, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_staff_ink
+    meters: 5
+    kind: 2
+    stroke: {fileID: 2800000, guid: 0689cadf92bf459ca692c655be8f9859, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_evo_star_glow
+    meters: 1.2
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 3cfe5926596f4d00aa05c6136c6e50b6, type: 3}
+    gold: {fileID: 2800000, guid: fba05202b4fd48cca09fd56ff44ac8e0, type: 3}
+    core: {fileID: 2800000, guid: 42486082352b47fa811d263b93a385ca, type: 3}
+  - name: fx_evo_taiji_glow
+    meters: 4
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: d1308506b1b140019956db2c75f1844c, type: 3}
+    gold: {fileID: 2800000, guid: 7d0c9ee45e6b464b89e46a40d2e7730f, type: 3}
+    core: {fileID: 2800000, guid: b76bc1c609fc42b782d4c5c068f4b284, type: 3}
+  - name: fx_evo_thunder_glow
+    meters: 6
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: b3235bb7b3104c18a7c8e33776a10f09, type: 3}
+    gold: {fileID: 2800000, guid: 9de2260655194a11add39425880b9ed6, type: 3}
+    core: {fileID: 2800000, guid: 2fc88ac731ce42ff9f02e4df38fc123c, type: 3}
+  - name: fx_finger_glow
+    meters: 3
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 73f89a3b74a79e346a6d4be02b25b731, type: 3}
+    gold: {fileID: 2800000, guid: d543f3c6cd6757a42ab3539ba8418f8a, type: 3}
+    core: {fileID: 2800000, guid: e9d4455280a24fd4394ba18ce4fc1fb2, type: 3}
+  - name: fx_fist_ink
+    meters: 1.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 63fcc0d728bcc6947b9f87ca73f800e6, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_lightning_glow
+    meters: 4
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 309c06bc46a0b1f43bb56205606ed31d, type: 3}
+    gold: {fileID: 2800000, guid: 4f470859d0397564abbfacdd0051d18b, type: 3}
+    core: {fileID: 2800000, guid: 9c375989c8510be4fb1686cbeaffff29, type: 3}
+  - name: fx_lightning_glow_2
+    meters: 4
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: cbd3e8710fc5d4e46885010638ce5393, type: 3}
+    gold: {fileID: 2800000, guid: c9edd555ab2fda6489f4b854bf4fa950, type: 3}
+    core: {fileID: 2800000, guid: 572be56faa874634fa3aa5c0e1da4692, type: 3}
+  - name: fx_lightning_glow_3
+    meters: 4
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 8f9d57304e894d7295621c093bde82f2, type: 3}
+    gold: {fileID: 2800000, guid: d7cf16e0f335453cabfb2608a0a59c18, type: 3}
+    core: {fileID: 2800000, guid: ab58d310629440ea9d235a301386a3c7, type: 3}
+  - name: fx_mist_ink
+    meters: 3
+    kind: 1
+    stroke: {fileID: 2800000, guid: 8f1322e0fd9e7ae4bbc0148b18621c76, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_mist_ink_2
+    meters: 3.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 760091ce56c4ba34998d277ba6f1a876, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_mist_ink_3
+    meters: 3
+    kind: 2
+    stroke: {fileID: 2800000, guid: b5b7bdf9479f25d4fbfa334a6172af2c, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_palm_ink
+    meters: 2
+    kind: 1
+    stroke: {fileID: 2800000, guid: dd6009020d3cb074c9117be1ddaae809, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_petal_glow
+    meters: 2.5
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 8e6cc875083043548556a876a6455ca5, type: 3}
+    gold: {fileID: 2800000, guid: 700fb05c5d074e27a9a455a2328ada12, type: 3}
+    core: {fileID: 2800000, guid: c8bc69933ec54ccd99904e1ad8402e44, type: 3}
+  - name: fx_petal_ink
+    meters: 2.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 0fffe59c6adf43c09d9da926987b8ba8, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_qin_glow
+    meters: 3
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 818cde5ac2f4486b8cb2d4312becb7f7, type: 3}
+    gold: {fileID: 2800000, guid: 053a7e69a1c049cf8b0eaed749e81263, type: 3}
+    core: {fileID: 2800000, guid: 6c762ddff410403dadc6f769ea590720, type: 3}
+  - name: fx_qin_ink
+    meters: 3
+    kind: 2
+    stroke: {fileID: 2800000, guid: 8a8d25b9156d4e39a9401de7e8634c37, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_sickle_glow
+    meters: 3
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 13ad7e8bf336fdf4788caf8623d63269, type: 3}
+    gold: {fileID: 2800000, guid: 8778ec1cf0758cc41babd23ed4fc43a6, type: 3}
+    core: {fileID: 2800000, guid: 9a639f20f20ad164f96aa39406640600, type: 3}
+  - name: fx_sickle_ink
+    meters: 3
+    kind: 1
+    stroke: {fileID: 2800000, guid: 0c872b1ba7ed4d1ca07e4665c9eb37f8, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_spark_glow
+    meters: 1
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 4e294b80cbec80e42bbb8c9a97bc4596, type: 3}
+    gold: {fileID: 2800000, guid: d49c6a593c0780f46963dde0765343ee, type: 3}
+    core: {fileID: 2800000, guid: 6804de3107f3df14698823a7772fc20c, type: 3}
+  - name: fx_spear_glow
+    meters: 3.5
+    kind: 1
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: f8570bfbaaa44dada5a3a69164ff6b89, type: 3}
+    gold: {fileID: 2800000, guid: 3637cf46b83b476b800ea89476c04953, type: 3}
+    core: {fileID: 2800000, guid: a0c1b00893e640ed9cf4016554618d0a, type: 3}
+  - name: fx_spear_ink
+    meters: 3.5
+    kind: 1
+    stroke: {fileID: 2800000, guid: 5aa6a650e39e4a52b07164a720f8e81f, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_staff_ink
+    meters: 3.5
+    kind: 3
+    stroke: {fileID: 2800000, guid: 95f3b3e7bba08d843a23e365a93e74ce, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_sword_qi_glow
+    meters: 3
+    kind: 3
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: 81a3c20f09fda8045bcaf813b07d0b1e, type: 3}
+    gold: {fileID: 2800000, guid: e0740b52f3f794d478469ddb6832f139, type: 3}
+    core: {fileID: 2800000, guid: ce60ea9a7e8e084429947e3e3736cf06, type: 3}
+  - name: fx_taiji_glow
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 0}
+    shade: {fileID: 2800000, guid: e27ac7c325b67d64387f4829d87217aa, type: 3}
+    gold: {fileID: 2800000, guid: 74fe27dc8e603314bb2d1e5a998f58de, type: 3}
+    core: {fileID: 2800000, guid: 6d525702bfc02414d8f7d4a86270ba8e, type: 3}
+  - name: fx_taiji_ink
+    meters: 2.5
+    kind: 2
+    stroke: {fileID: 2800000, guid: a3562e6c6d0f48829d8db7a183941339, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
+  - name: fx_talisman_ink
+    meters: 2
+    kind: 2
+    stroke: {fileID: 2800000, guid: 3d63734291d441249f14690ba179f071, type: 3}
+    shade: {fileID: 0}
+    gold: {fileID: 0}
+    core: {fileID: 0}
   fxRenderQueue: 3002
 --- !u!4 &235674134
 Transform:
@@ -1190,6 +1800,7 @@ MonoBehaviour:
   vitals: {fileID: 938528425}
   settlement: {fileID: 105931645}
   showDebug: 1
+  weapons: {fileID: 0}
 --- !u!4 &1699483552
 Transform:
   m_ObjectHideFlags: 0
