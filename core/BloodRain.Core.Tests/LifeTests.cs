@@ -117,6 +117,26 @@ namespace BloodRain.Core.Tests
             Assert.Contains("janggang", life.Log.VisitedRegions);
         }
 
+        [Fact] public void 극성으로_땅의_주인을_쓰러뜨리면_역근이_풀에_든다()
+        {
+            foreach (var extreme in new[] { false, true })
+            {
+                var (soul, life) = NewLife();
+                life.Absorb(new XpCurve(_d.Balance.XpCurve).CumulativeTo(35));
+                for (int i = 0; i < 400 && life.Phase != LifePhase.BossFight; i++) life.Tick(0.1f, life.Regions.Center("songshan"), 0);
+                Assert.Equal(LifePhase.BossFight, life.Phase);
+                life.Loadout.Gauge.ResetTo(extreme ? -80 : 0);
+                life.DefeatBoss();
+                Assert.Equal(extreme, soul.IsUnlocked(UnlockToken.BossAtExtreme));
+                var ins = BloodRain.Core.Build.Insights.From(_d);
+                var pool = ins.Roll(System.Array.Empty<string>(), 99, new System.Random(1), soul.IsUnlocked).Select(i => i.Id).ToList();
+                Assert.Equal(extreme, pool.Contains("yeokgeun"));
+            }
+            Assert.Equal("boss_at_extreme", _d.Insights.Single(i => i.Id == "yeokgeun").Unlock);
+            Assert.All(_d.Insights.Where(i => i.Id != "yeokgeun"), i => Assert.Equal("start", i.Unlock));
+            Assert.Contains("| 극성(±70 이상) 상태로 땅의 주인 처치 | 깨달음 '역근' 풀에 추가 |", TestData.Gdd);
+        }
+
         [Fact] public void 땅의_주인_싸움이면_목표_0점4배이고_쓰러뜨리면_일지에_남는다()
         {
             var (_, life) = NewLife();

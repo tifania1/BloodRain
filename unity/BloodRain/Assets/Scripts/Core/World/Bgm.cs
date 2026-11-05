@@ -43,7 +43,7 @@ namespace BloodRain.Core.World
         public readonly string? EndingId;
         /// <summary>그 지역이 종장 싸움터(봉마곡)인가. RegionDef.Final.</summary>
         public readonly bool FinalRegion;
-        /// <summary>이번 생이 흐른 초(Life.LifeSeconds). 격해진 벌을 고를 때만 본다.</summary>
+        /// <summary>이번 생이 흐른 초(Life.Minutes x 60). 격해진 벌을 고를 때만 본다.</summary>
         public readonly float LifeSeconds;
 
         public BgmState(BgmScreen screen, bool prologue = false, string? regionId = null, string? bossId = null,

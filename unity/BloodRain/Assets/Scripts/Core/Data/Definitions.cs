@@ -147,6 +147,8 @@ namespace BloodRain.Core.Data
     {
         public const string Start = "start";
         public const string BossPrefix = "boss:";
+        /// <summary>극성(음양 ±70 이상) 상태로 땅의 주인 처치(10장 해금 표 → 깨달음 '역근' 풀에 추가).</summary>
+        public const string BossAtExtreme = "boss_at_extreme";
 
         public static string? BossRegion(string token) =>
             token.StartsWith(BossPrefix, System.StringComparison.Ordinal) ? token.Substring(BossPrefix.Length) : null;
@@ -412,6 +414,8 @@ namespace BloodRain.Core.Data
         /// <summary>효과 종류. 실행하는 쪽(Unity)이 이 값으로 갈라 처리한다.</summary>
         public string Effect = "";
         public Dictionary<string, float> Params = new Dictionary<string, float>();
+        /// <summary>풀에 드는 조건(10장 해금 표). "start" 는 처음부터, 역근은 "boss_at_extreme"(극성으로 땅의 주인 처치, QA-06).</summary>
+        public string Unlock = "start";
         /// <summary>효과가 걸리는 무공 behavior(이기어검처럼 일부 무공에만 걸릴 때). 비어 있으면 해당 없음.</summary>
         public List<string> WeaponBehaviors = new List<string>();
 

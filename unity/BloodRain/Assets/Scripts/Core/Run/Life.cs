@@ -365,6 +365,8 @@ namespace BloodRain.Core.Run
                 End(LifeEndWay.Sealed, leftoverSilverIfFinal);
                 return kill;
             }
+            // 10장 해금: 극성(±70 이상)으로 땅의 주인 처치 → 깨달음 '역근' 풀에 추가(QA-06)
+            if (Loadout.Gauge.Band == YinYangBand.Extreme) _soul.Unlock(UnlockToken.BossAtExtreme);
             var info = Log.KillBoss(kill.RegionId);
             kill.First = info.FirstInCycle;
             kill.SealStone = info.SealStone;

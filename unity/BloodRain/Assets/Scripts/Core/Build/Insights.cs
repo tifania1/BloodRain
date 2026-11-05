@@ -38,12 +38,13 @@ namespace BloodRain.Core.Build
         public bool OffersAt(RealmDef realm) =>
             realm.Reward != null && realm.Reward.Split(',').Any(r => r.Trim() == _choices.RealmReward);
 
-        /// <summary>taken 을 뺀 깨달음 중에서 count 개를 겹치지 않게 뽑는다. 데이터 순서 위에서 부분 셔플.</summary>
-        public IReadOnlyList<InsightDef> Roll(IEnumerable<string> taken, int count, Random rng)
+        /// <summary>taken 을 뺀 깨달음 중에서 count 개를 겹치지 않게 뽑는다. 데이터 순서 위에서 부분 셔플.
+        /// isUnlocked 를 주면 unlock 이 "start" 가 아닌 깨달음(역근)은 그 토큰이 열린 혼일 때만 풀에 든다(Soul.IsUnlocked). 안 주면 다 든다.</summary>
+        public IReadOnlyList<InsightDef> Roll(IEnumerable<string> taken, int count, Random rng, Func<string, bool>? isUnlocked = null)
         {
             if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
             var skip = new HashSet<string>(taken);
-            var pool = _all.Where(i => !skip.Contains(i.Id)).ToList();
+            var pool = _all.Where(i => !skip.Contains(i.Id) && (isUnlocked == null || i.Unlock == UnlockToken.Start || isUnlocked(i.Unlock))).ToList();
             int n = Math.Min(count, pool.Count);
             for (int i = 0; i < n; i++)
             {
@@ -53,19 +54,19 @@ namespace BloodRain.Core.Build
             return pool.GetRange(0, n);
         }
 
-        public IReadOnlyList<InsightDef> Roll(IEnumerable<string> taken, CharacterDef character, Random rng) =>
-            Roll(taken, ChoiceCount(character), rng);
+        public IReadOnlyList<InsightDef> Roll(IEnumerable<string> taken, CharacterDef character, Random rng, Func<string, bool>? isUnlocked = null) =>
+            Roll(taken, ChoiceCount(character), rng, isUnlocked);
 
         /// <summary>
         /// 마교 몸(혈공)의 돌파: count 가운데 demonicCount 자리는 마공 목록에서, 나머지는 보통 목록에서 뽑는다.
         /// 마공이 다 떨어지면 그 자리도 보통 목록으로 채운다. 마공이 앞자리에 온다.
         /// </summary>
         public static IReadOnlyList<InsightDef> RollWithDemonic(Insights common, IReadOnlyList<InsightDef> demonic, IEnumerable<string> taken,
-            int count, int demonicCount, Random rng)
+            int count, int demonicCount, Random rng, Func<string, bool>? isUnlocked = null)
         {
             var takenSet = new HashSet<string>(taken);
-            var dem = new Insights(demonic, new InsightChoicesDef()).Roll(takenSet, Math.Min(demonicCount, count), rng);
-            var rest = common.Roll(takenSet, count - dem.Count, rng);
+            var dem = new Insights(demonic, new InsightChoicesDef()).Roll(takenSet, Math.Min(demonicCount, count), rng, isUnlocked);
+            var rest = common.Roll(takenSet, count - dem.Count, rng, isUnlocked);
             var list = new List<InsightDef>(dem);
             list.AddRange(rest);
             return list;

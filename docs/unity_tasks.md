@@ -188,7 +188,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/RM-05U/` 의 `merchant.png`
 
 - [ ] BGM-06U 배경음 재생기 · 먼저: LF-03, BGM-03a
-  - 할 것: Presentation 에 `BgmPlayer`(AudioSource 둘을 번갈아). 매 프레임 `BgmDirector.Tick(dt, state, 돌파 줌 중인가)` 를 부르고 BgmChange 가 오면 FadeSeconds 동안 등가 출력으로 섞어 넘긴다. state 는 화면(Run·Inn·정산·침방·연무장)과 `life.RegionId`·싸우는 땅의 주인 id·서장 여부, `lifeSeconds: life.LifeSeconds`(10분부터 숭산 격해진 벌, BGM-02b)로 만든다. 곡 파일은 `Assets/Audio/BGM` 의 `bgm.json`(postprocess_audio.py 가 만듦) id 로 찾고, 없으면 조용히 넘긴다(로그 한 줄).
+  - 할 것: Presentation 에 `BgmPlayer`(AudioSource 둘을 번갈아). 매 프레임 `BgmDirector.Tick(dt, state, 돌파 줌 중인가)` 를 부르고 BgmChange 가 오면 FadeSeconds 동안 등가 출력으로 섞어 넘긴다. state 는 화면(Run·Inn·정산·침방·연무장)과 `life.RegionId`·싸우는 땅의 주인 id·서장 여부, `lifeSeconds: life.Minutes * 60`(10분부터 숭산 격해진 벌, BGM-02b)로 만든다. 곡 파일은 `Assets/Audio/BGM` 의 `bgm.json`(postprocess_audio.py 가 만듦) id 로 찾고, 없으면 조용히 넘긴다(로그 한 줄).
   - 쓸 것: Core `World/Bgm.cs`(Bgm.TrackId, BgmDirector, BgmChange), balance.json `bgm`
   - 메뉴: Run·Inn 씬 Bootstrap 메뉴에 BgmPlayer 붙이기
   - 끝: 숭산 곡이 있으면 Run 에서 숭산 곡이 돌고, 원각이 나오면 1초 만에 보스 곡, 정산 화면으로 1초. 곡이 하나도 없어도 콘솔 에러 0
@@ -205,7 +205,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] C-07b 깨달음 3택1 화면 · 먼저: C-07a
   - 할 것: `Presentation/Hud/InsightScreen.cs` — 돌파 연출이 끝나는 자리(BreakthroughFx.Ended)에 시간을 멈추고 카드 석 장(한 번 깨친 경지면 넉 장), 고르면 `life.InsightEffects.Take(def, loadout.Gauge, 처치 수)`. 레벨업 카드보다 먼저 뜬다. 매 프레임 `InsightEffects.Tick(dt, 움직임, 최대 기혈)` 의 회복량을 기혈에, 피해 직전 `TryBlock()` 이 참이면 금종조로 막음, 무공 피해·범위·흡기 배율은 WeaponRunner·OrbLayer 에.
-  - 쓸 것: Core `Build/Insights.cs`(`Roll`·`RollWithDemonic`), `Soul.Breakthrough(realm)`(후보 수), `Build/InsightEffects.cs`, insights.json
+  - 쓸 것: Core `Build/Insights.cs`(`Roll`·`RollWithDemonic` — 마지막 인자에 `soul.IsUnlocked` 를 넘겨야 역근이 극성 땅의 주인 처치 뒤에만 나옴, QA-06 2026-11-05), `Soul.Breakthrough(realm)`(후보 수), `Build/InsightEffects.cs`, insights.json
   - 메뉴: `BloodRain/Bootstrap/Run 씬에 깨달음 화면 붙이기`
   - 끝: 이류 돌파 뒤 석 장이 뜨고, 일검파를 고르면 그 무공 피해가 오름. 마교 몸은 한 자리가 마공
   - 찍기: `docs/unity_shots/C-07/` 의 `insight_cards.png`
