@@ -23,6 +23,7 @@ jobs:
           done
           python3 -c "import json; [json.loads(l) for l in open('art_queue/queue.jsonl', encoding='utf-8') if l.strip()]" || { echo "::error file=art_queue/queue.jsonl::대기열 문법 오류"; exit 1; }
           python3 -c "import json; [json.loads(l) for l in open('audio_queue/queue.jsonl', encoding='utf-8') if l.strip()]" || { echo "::error file=audio_queue/queue.jsonl::대기열 문법 오류"; exit 1; }
+          python3 -c "import json; [json.loads(l) for l in open('sfx_queue/queue.jsonl', encoding='utf-8') if l.strip()]" || { echo "::error file=sfx_queue/queue.jsonl::대기열 문법 오류"; exit 1; }
       - name: 도구 테스트(파이썬)
         # ffmpeg 가 없으면 MP3 → ogg 한 바퀴 테스트는 건너뛰고 계산 테스트만 돈다
         run: python3 -m unittest discover -s tools/tests

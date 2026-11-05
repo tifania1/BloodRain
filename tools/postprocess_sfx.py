@@ -253,6 +253,63 @@ def write_manifest(out_dir: Path, entries: list[dict]) -> None:
             "sounds": sorted(by_id.values(), key=lambda t: t["id"])}
     out_dir.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_metas(out_dir, {v["file"]: v["seconds"] for t in data["sounds"] for v in t["variants"]})
+
+
+# ---------- Unity .meta ----------
+# Unity 를 열지 않고 넣으니 .meta 를 같이 만든다(MetaGuidTests). guid 는 파일 이름에서 정해져 다시 구워도 같다.
+# 가져오기 설정도 여기서 정한다: 짧은 소리는 Decompress On Load, 10초 넘는 것(빗소리)은 Compressed In Memory,
+# Vorbis 70%, 모노, Unity 정규화 끔(이 도구가 최고점을 맞췄다).
+
+def guid(key: str) -> str:
+    import hashlib
+    return hashlib.md5(("bloodrain/audio/sfx/" + key).encode("utf-8")).hexdigest()
+
+
+FOLDER_META = "fileFormatVersion: 2\nguid: {g}\nfolderAsset: yes\nDefaultImporter:\n  externalObjects: {{}}\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n"
+TEXT_META = "fileFormatVersion: 2\nguid: {g}\nTextScriptImporter:\n  externalObjects: {{}}\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n"
+AUDIO_META = """fileFormatVersion: 2
+guid: {g}
+AudioImporter:
+  externalObjects: {{}}
+  serializedVersion: 8
+  defaultSettings:
+    serializedVersion: 2
+    loadType: {load}
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
+    compressionFormat: 1
+    quality: 0.7
+    conversionMode: 0
+    preloadAudioData: 1
+  platformSettingOverrides: {{}}
+  forceToMono: 1
+  normalize: 0
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+"""
+
+
+def write_metas(out_dir: Path, seconds: dict[str, float] | None = None) -> None:
+    """out_dir(…/Assets/Audio/SFX)와 그 부모 폴더, 안의 ogg·json 에 .meta 가 없으면 만든다. 있는 것은 그대로 둔다."""
+    seconds = seconds or {}
+    for folder in (out_dir.parent, out_dir):
+        meta = folder.with_name(folder.name + ".meta")
+        if folder.name and folder.parent.name != "" and not meta.exists() and folder.parent.name in ("Assets", "Audio"):
+            meta.write_text(FOLDER_META.format(g=guid("folder/" + folder.name)), encoding="utf-8")
+    for f in sorted(out_dir.iterdir()):
+        meta = f.with_name(f.name + ".meta")
+        if f.suffix == ".meta" or meta.exists():
+            continue
+        if f.suffix == ".ogg":
+            load = 1 if seconds.get(f.name, 0.0) > 10.0 else 0
+            meta.write_text(AUDIO_META.format(g=guid(f.name), load=load), encoding="utf-8")
+        elif f.suffix == ".json":
+            meta.write_text(TEXT_META.format(g=guid(f.name)), encoding="utf-8")
 
 
 def main() -> int:

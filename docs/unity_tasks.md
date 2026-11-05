@@ -94,6 +94,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: `git status` 에 .meta 가 안 바뀌거나, 바뀌면 그대로 커밋. 콘솔 에러 0
   - 찍기: 없음
 
+- [ ] SFX-02U 효과음 가져오기 확인 · 먼저: 없음
+  - 할 것: 클라우드가 Unity 없이 넣은 `Assets/Audio/SFX/*.ogg` 의 .meta(`tools/postprocess_sfx.py` 가 만듦: Decompress On Load, 10초 넘는 것만 Compressed In Memory, Vorbis 70%, Force To Mono, Normalize 끔)를 Unity 가 그대로 읽는지. Unity 가 .meta 를 다시 쓰면(serializedVersion 등) guid 가 그대로인지 보고 그 변경을 커밋. 트는 쪽(Audio Random Container, '0.05초 안 4개')은 소리가 다 모인 뒤 따로.
+  - 쓸 것: `Assets/Audio/SFX` 의 `sfx.json`(id·category·variants). 지금은 코드 합성 다섯(징 둘·풍경 8음·심장·범종) 60개
+  - 메뉴: 없음
+  - 끝: 콘솔 에러·경고 0, 인스펙터에서 `sfx_levelup_1` 설정이 위와 같음, guid 안 바뀜
+  - 찍기: 없음
+
 ### B. 한 생 뼈대 (Run 씬에 Core Life 붙이기 — 여기서부터 아래가 풀린다)
 
 - [x] LF-01 Run 씬에 한 생(Life) 들이기 — 2026-11-05 00:50 PC: `Presentation/LifeRunner.cs`(한 생, Tick·Absorb·돌파 줌·디버그 줄) + `Editor/LifeBootstrap.cs`(메뉴 `Run 씬에 한 생 붙이기`, RunBootstrap 도 부름). 구슬 시험 RunXp 끔, LevelUpScreen 이 Life 의 Level·Loadout·Charges 를 봄. 돌파 줌 도는 동안엔 레벨업 화면을 미루고, 줌이 끝나며 세상 시간을 1로 돌려도 열린 동안은 0으로 붙잡게 고침. 서장 첫 레벨업 카드 한 장·삼류→이류 돌파 줌 확인, 콘솔 에러 0. 찍음 `docs/unity_shots/LF-01/`(life_debug·levelup·breakthrough)
