@@ -1183,6 +1183,8 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
 }
 function killEnemy(e) {
   e.dead = true; G.kills++;
+  // 흑백 쌍강시(WP-13c): 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다(시안과 같음)
+  if (e.behavior === 'twin_revive' && e.twin && !e.twin.dead) (G.revives = G.revives || []).push({ e, t: E_BY_ID[e.type].reviveSeconds });
   // 당가 진전 3: 중독된 적이 쓰러지면 독이 번진다
   const psp = synEff('poison_spread'); if (psp && e.poison > 0) { addEffect('burst', e.x, e.y, { r: psp.radius, color: '#5E7F4A' }); forNear(e.x, e.y, psp.radius, o => { if (o !== e && !o.dead) { o.poison = psp.seconds; o.burn = Math.max(o.burn || 0, psp.seconds); o.burnDps = Math.max(o.burnDps || 0, psp.damagePerSecond * G.stats.dot); } }); }
   addUlt(e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill);
@@ -1614,7 +1616,7 @@ function update(dt) {
       const alive = G.enemies.length;
       const target = G.bossSpawned ? BOSS_TRASH : spawnTarget(G.gm);
       const n = Math.ceil((target - alive) * B.spawnTarget.spawnFractionPerSecond - 1e-4);
-      for (let i = 0; i < n; i++) { const [x, y] = ringPos(); spawnEnemy(localFoe() || pickType(Math.min(G.gm, 19)), x, y); }
+      for (let i = 0; i < n; i++) { const [x, y] = ringPos(), lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(Math.min(G.gm, 19)), x, y); }
     }
   }
   G.lanternAcc += dt;
@@ -2519,7 +2521,7 @@ function trackChRegion() {
   return r;
 }
 // 고유 적(WP-13c 첫 조각): 축척 모드에서 1장 밖 땅에 서면 chapters.json life.localShare(분 → 비율)만큼 그 땅 고유 적을 섞는다.
-// 아직 프로토타입에 없는 동작(water_pull 등)은 그냥 쫓아오고, 그림은 혈무사 자리 표시(sprOf). 동작·그림은 WP-13c 남은 몫.
+// 동작은 LOCAL_BEH, 그림은 아직 혈무사 자리 표시(sprOf).
 const LOCAL_BY = {};
 for (const e of DATA.enemies) if (e.chapter && e.family !== 'elite') (LOCAL_BY[e.chapter] = LOCAL_BY[e.chapter] || []).push(e.id);
 function localFoe() {
@@ -2532,9 +2534,25 @@ function localFoe() {
 // 고유 적 동작 넷(WP-13c): 천하 시안 localBehavior 와 같은 규칙을 1장 프로토타입 적 틀에 맞춰(거리·속도는 enemies.json 그대로 m, 축척 곱 없음 —
 // 프로토타입 적은 1m 크기 그대로라서). 독인 독기(poison_aura, 당가 몸이면 안 받음은 이 판에 문파가 없어 뺌), 매화검귀 꽃잎 탄·설인 얼음덩이(petal_shot·ice_throw),
 // 혈사자 예고 돌진 뒤 포효(charge_roar: 둘레 적 걸음 +auraBonus 를 roarSeconds 동안). 피해는 그 적 접촉 피해가 분에 따라 커진 몫을 같이 받는다.
-// 남은 동작(water_pull·hook_bind·twin_revive·snake_line·spear_line·flank_pack·mimic)은 아직 그냥 쫓아온다.
+// 무리 넷(snake_line·twin_revive·spear_line·flank_pack)은 spawnLocalGroup 이 같이 낸다. 남은 동작(water_pull·hook_bind·mimic)은 아직 그냥 쫓아온다.
 const dmgScale = e => e.dmg / (E_BY_ID[e.type].contactDamage || 1);
 const LOCAL_BEH = {
+  // 금선지네: 앞 마디를 spacing 만큼 떨어져 따라간다(앞 마디가 쓰러지면 제가 머리)
+  snake_line(e, dt, dx, dy, d) {
+    if (e.lead && !e.lead.dead) {
+      const lx = e.lead.x - e.x, ly = e.lead.y - e.y, ld = Math.hypot(lx, ly) || 1, gap = E_BY_ID[e.type].group.spacing + e.r;
+      if (ld <= gap) return [0, 0];
+      const v = Math.min((ld - gap) / Math.max(dt, 1e-3), e.speed * 2.2); return [lx / ld * v, ly / ld * v];
+    }
+    return [dx * e.speed, dy * e.speed];
+  },
+  // 마교도: 나올 때 정한 방향으로 줄째 곧게 걷는다
+  spear_line(e) { return e.march ? [e.march.x * e.speed, e.march.y * e.speed] : [0, 0]; },
+  // 설랑 떼: commitRange 밖에선 양옆 flankAngle 로 돌아 들어오고, 안에선 곧장
+  flank_pack(e, dt, dx, dy, d) {
+    if (!e.flank || d <= E_BY_ID[e.type].group.commitRange) return [dx * e.speed, dy * e.speed];
+    const c = Math.cos(e.flank), sn = Math.sin(e.flank); return [(dx * c - dy * sn) * e.speed, (dx * sn + dy * c) * e.speed];
+  },
   poison_aura(e, dt, dx, dy, d) {
     const D = E_BY_ID[e.type];
     if (d < D.zoneRadius + 0.4 && !G.won && !G.demo) G.player.hp -= D.zoneDamagePerSecond * dmgScale(e) * dt * (G.easy ? 0.5 : 1);
@@ -2575,6 +2593,22 @@ const LOCAL_BEH = {
     return [dx * e.speed, dy * e.speed];
   },
 };
+// 무리로 나오는 고유 적(시안 spawnLocal 과 같은 규칙): 금선지네 한 줄, 쌍강시 둘, 마교도 가로줄, 설랑 떼
+function spawnLocalGroup(type, x, y) {
+  const D = E_BY_ID[type], p = G.player, f = spawnEnemy(type, x, y);
+  if (D.behavior === 'snake_line' && D.group) {
+    let prev = f; for (let i = 1; i < D.group.size; i++) { const m = spawnEnemy(type, x + i * D.group.spacing, y); m.lead = prev; prev = m; }
+  } else if (D.behavior === 'twin_revive' && D.twin) {
+    const m = spawnEnemy(type, x + D.twin.gap, y); f.twin = m; m.twin = f;
+  } else if (D.behavior === 'spear_line' && D.group) {
+    const a = Math.atan2(p.y - y, p.x - x), ux = Math.cos(a), uy = Math.sin(a), n = D.group.size, march = { x: ux, y: uy };
+    for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * D.group.spacing, m = i ? spawnEnemy(type, x - uy * o, y + ux * o) : f; if (!i) { f.x = x - uy * o; f.y = y + ux * o; } m.march = march; }
+  } else if (D.behavior === 'flank_pack' && D.group) {
+    const fa = D.group.flankAngle * Math.PI / 180, half = Math.ceil((D.group.size - 1) / 2); f.flank = 0;
+    for (let i = 1; i < D.group.size; i++) { const m = spawnEnemy(type, x + rand(-1, 1), y + rand(-1, 1)); m.flank = (i % 2 ? 1 : -1) * fa * Math.ceil(i / 2) / half; }
+  }
+  return f;
+}
 function foeShotsStep(dt) {
   const p = G.player; if (!G.foeShots) G.foeShots = [];
   for (const e of G.enemies) if (e.roarT > 0) e.roarT -= dt;   // 포효 걸음 몫은 아래 걸음 곱에서
@@ -2583,6 +2617,12 @@ function foeShotsStep(dt) {
     if (Math.hypot(p.x - b.x, p.y - b.y) < b.r + 0.4) { hurtPlayer(b.dmg, b.src); b.left = 0; }
   }
   G.foeShots = G.foeShots.filter(b => b.left > 0);
+  for (const r of G.revives || []) {
+    r.t -= dt; if (r.t > 0) continue; r.done = true;
+    const a = r.e.twin, D = E_BY_ID[r.e.type];
+    if (a && !a.dead) { const m = spawnEnemy(r.e.type, a.x + D.twin.gap, a.y); m.hp = m.maxHp * D.twin.reviveHealth; m.twin = a; a.twin = m; addEffect('ring', m.x, m.y, { r: 1, color: '#1A1A1A', life: 0.4 }); }
+  }
+  if (G.revives) G.revives = G.revives.filter(r => !r.done);
 }
 function drawLocalFx() {
   for (const b of G.foeShots || []) {
