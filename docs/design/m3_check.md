@@ -27,11 +27,11 @@
 | 항목 | 기획서 | 데이터 | Core | 웹 프로토타입 | 천하 시안 | Unity |
 |---|---|---|---|---|---|---|
 | 자리·농도·봉인석·땅의 주인 | 7장 '지역과 혈운 농도' | cheonha.json regions 당가타 1.3·장강 1.7·무당산 2.2. 같음(`CheonhaDataTests.지역표가_데이터와_같다`) | `Regions`, `RegionSpawns` | 한 생 판에 셋 다(WP-12·13e), 밟은 땅·농도·땅의 주인이 깨어나 싸움 | 셋 다 있음, 땅의 주인이 깨어나고 싸움이 됨 | TU-09(지역 HUD) |
-| 당가타 독안개 | 7장 지역 표·'지형 기믹 수치' | gimmicks.json `poisonFog`(id `poison_fog`). 같음(`GimmicksTests.지형_기믹_수치_표가_데이터와_같다`·`독안개는_90초마다_4초에_퍼져_20초_머물고_4초에_걷힌다`) | `PoisonFogGimmick` | 한 생 판(WP-13b), 당가 몸은 무효(WP-20) | 없음 | 줄 없음 |
+| 당가타 독안개 | 7장 지역 표·'지형 기믹 수치' | gimmicks.json `poisonFog`(id `poison_fog`). 같음(`GimmicksTests.지형_기믹_수치_표가_데이터와_같다`·`독안개는_90초마다_4초에_퍼져_20초_머물고_4초에_걷힌다`) | `PoisonFogGimmick` | 한 생 판(WP-13b), 당가 몸은 무효(WP-20) | 없음 | R-13U(R-10 뒤) |
 | 당가타 대나무 덤불 | 지역 표 '대나무 덤불', 수치 문단 '대숲'. 수치 없음 | regions 에 `bamboo_thicket` 만, gimmicks.json 에 없음 | 없음 | 없음 | 없음 | 줄 없음 |
-| 장강 물 | 7장 | gimmicks.json `water`. 같음(`물에선_플레이어든_적이든_0점7배이고_나는_적은_그대로`·`경공을_쓰고_3초는_수상비로_물에서_느려지지_않는다`) | `WaterGimmick`·`WaterWalk` | 없음 | 없음 | 줄 없음 |
+| 장강 물 | 7장 | gimmicks.json `water`. 같음(`물에선_플레이어든_적이든_0점7배이고_나는_적은_그대로`·`경공을_쓰고_3초는_수상비로_물에서_느려지지_않는다`) | `WaterGimmick`·`WaterWalk` | 없음 | 없음 | R-13U(R-10 뒤) |
 | 장강 떠내려오는 배·역류 파도 | 지역 표에 이름과 '2분마다 역류 파도'만. 수치 없음 | regions 에 `drifting_boats`·`reverse_wave` 만, gimmicks.json 에 없음 | 없음 | 없음 | 없음 | 줄 없음 |
-| 무당산 태극 바닥 | 7장 | gimmicks.json `taijiFloor`. 같음(`태극_바닥은_게이지와_반대_속성_무공을_30초_동안_30퍼센트_올린다` 외 셋) | `TaijiFloorGimmick`·`TaijiBlessing` | 없음 | 없음 | 줄 없음 |
+| 무당산 태극 바닥 | 7장 | gimmicks.json `taijiFloor`. 같음(`태극_바닥은_게이지와_반대_속성_무공을_30초_동안_30퍼센트_올린다` 외 셋) | `TaijiFloorGimmick`·`TaijiBlessing` | 없음 | 없음 | R-13U(R-10 뒤) |
 | 무당산 운해 | 지역 표에 이름만. 수치 없음 | regions 에 `cloud_sea` 만, gimmicks.json 에 없음 | 없음 | 없음 | 없음 | 줄 없음 |
 | 고유 적(독두꺼비·금선지네·독인 / 수귀·수적 / 흑백 쌍강시) | 6장 '지역별 고유 적'과 아래 문단 | enemies.json chapter2·3·4. 같음(`EliteDataTests.지역별_고유_적_표의_모든_줄에_데이터가_있고_수치가_같다`, `EnemyTableTests.지역_고유_적_행동_숫자_표가_데이터와_같다`·`쌍강시_되살림_숫자가_기획서_문단과_같다`) | `EnemyDef`, `RegionSpawns`(5분 10%·15분 15%) | 한 생 판에 섞임(WP-13c), 그림은 자리 표시 | 없음(모든 적이 한 모양) | C-02b: 독두꺼비 장판·지네·독인 안개·수적 갈고리·쌍강시 되살림은 붙음, 수귀만 '남은 것'(물 지형) |
 | 정예 아홉 | 6장 '정예 수치'·'정예 패턴 수치' | enemies.json elites chapter2~4, bosspatterns.json elites 아홉. 같음(`EliteDataTests.정예_수치_표가_데이터와_같다`, `ElitePatternsTests.당가타_장강_무당산_정예_아홉_표가_데이터와_같다`·`장판_값은_같은_땅_적에서_왔다`) | `BossPatterns`(`CastSeconds`·`ClosingRadius`·`RingOffsets`·`InPool`), `RegionSpawns` 차례 | 한 생 판 정예 차례가 그 땅 정예, 패턴 모양 다 앎(WP-13d), 그림은 1장 정예 | 데이터 정예가 아니라 24초마다 큰 일반 적 | R-01U(먼저 E-01) |
@@ -49,7 +49,7 @@
 - ~~Unity 무공 일곱(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`·`ring_wave`·`pierce_thrust`·`petal_scatter`)과 그 절기 모양은 unity_tasks 에 줄 없음(취선봉은 C-04b 에 '넣을 때' 한 마디뿐)~~ → unity_tasks R-12Ua·R-12Ub
 - **기믹 넷의 수치가 없다.** `bamboo_thicket`·`drifting_boats`·`reverse_wave`·`cloud_sea` 는 cheonha.json regions 에만 있고 gimmicks.json·Core 에 없다. 7장도 '아직 수치가 없다'(역류 파도는 '2분마다'만). 숫자 없음, 사람 결정 필요. 마천패 2막 역류 파도의 '배 위면 맞지 않음'이 떠내려오는 배에 걸려 있다. 이름도 지역 표는 '대나무 덤불', 수치 문단은 '대숲'
 - **기믹을 지역 안 어디에 몇 개 놓는지가 없다.** 독안개 샘 수, 물 구역의 모양·넓이(수귀는 물에서만 솟는다), 태극 바닥 수. Core 에 놓는 함수는 탑림 `PagodaForest.Layout` 뿐이다(숭산 범종·우물도 같다). 숫자 없음, 사람 결정 필요
-- Unity 지역 기믹은 unity_tasks 에 줄 없음(Presentation·Sim 에 `Gimmicks` 를 부르는 곳 없음). 수귀는 C-02b '남은 것'인데 물 지형이 먼저다
+- ~~Unity 지역 기믹은 unity_tasks 에 줄 없음(Presentation·Sim 에 `Gimmicks` 를 부르는 곳 없음). 수귀는 C-02b '남은 것'인데 물 지형이 먼저다~~ → unity_tasks 에 R-13U(독안개·물·태극 바닥·수귀, R-10 뒤)와 R4-13b(낙석·눈보라·붉은 달)가 있다(2026-11-07 확인)
 - ~~**땅의 주인 셋의 모양 판정이 Core 에 없다.**~~ → R-11(11-04) Core 에 넣고 웹 천하 시안도 같은 셈으로(R-11w). 흑백·흑백 경계(내 색, 경계 회전), 분열 되살림(`rejoinSeconds`), 칠성검진 `big_dipper` 자리, 태극권 끌어당김, 갈고리 사슬 끌기, 반쪽 독안개 쪽 고르기. `Combat/BossPatterns.cs` 에 `RingOffsets`·`InPool` 처럼 더하면 Unity·웹이 같은 셈을 쓴다. Unity 는 땅의 주인(원각 포함) 줄이 unity_tasks 에 없음
 - ~~웹: 천하 시안에 세 지역 기믹·고유 적·데이터 정예·세 보스 패턴 대부분·2막이 없고, 1장 프로토타입은 숭산만이다. 1장 bossAI 는 원각 숫자를 코드에 박아 두어 다른 보스를 붙이려면 eliteAI 처럼 bosspatterns.json 을 읽게 해야 한다 → WP-01~~ → 2026-11-06 웹 두 판을 합치며(WP-12~15) 1장 프로토타입 한 생 판에 지역 기믹 일부·고유 적·지역 정예·땅의 주인 일곱과 종장이 들어감. 남은 것은 backlog WP-13b~e 진행 줄
 - ~~bosspatterns.json 마천패 `_note` 의 "수귀(water_ghost)는 아직 enemies.json 에 없다"는 옛말이다.~~ → 그 문장은 이미 지워져 있다(2026-11-07 확인)
