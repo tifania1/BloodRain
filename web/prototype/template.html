@@ -649,7 +649,7 @@ function encChance(e, c) { return encCanAppear(e, c) ? Math.max(0, Math.min(1, e
 function encCtx() { const r = CH_REGS.find(x => x.id === G.chRegion); return { chapter: r ? r.chapter : null, school: r && r.sect && SCHOOL_BY[r.sect] ? r.sect : null, minute: G.gm, luck: G.stats.luck || 0 }; }
 // 고수의 유해가 진전을 하나 더 주는 문파: 한 생 판은 그 땅 문파, 1장 판은 소림
 const SCHOOL_BY = Object.fromEntries(SYN.schools.map(sc => [sc.id, sc]));
-function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약은 한 생 판만(WP-28)
+function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 }, letter: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약·밀서는 한 생 판만(WP-28·30)
 const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n;
 const link = id => !!G && !!G.syn && G.syn.links.has(id);
 const lvOf = id => { const w = G.weapons.find(x => x.id === id); if (w) return w.evolved ? 8 : w.lv; const q = G.passives.find(x => x.id === id); return q ? q.lv : 0; };
@@ -725,8 +725,8 @@ function synTick(dt) {
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
-  for (const key of ['relic', 'hermit', 'elixir']) {
-    const ev = G.enc[key]; if (ev.done || (key === 'elixir' && !G.body)) continue;
+  for (const key of ['relic', 'hermit', 'elixir', 'letter']) {
+    const ev = G.enc[key]; if (ev.done || ((key === 'elixir' || key === 'letter') && !G.body)) continue;
     if (!ev.on) {
       if (G.gm >= ev.at && !overlay && G.body && !ev.rolled) {   // 한 생 판: 나올 때가 되면 한 번 굴린다
         const c = encCtx(), e = ENC_BY[key];
@@ -734,6 +734,7 @@ function synTick(dt) {
         ev.rolled = true;
         if (!(Math.random() < encChance(e, c))) { ev.done = true; continue; }
         if (key === 'relic') ev.school = c.school;
+        if (key === 'letter') { ev.done = true; G.letterArmed = true; continue; }   // 하오문 밀서: 다음에 부수는 등롱 속에 쪽지(WP-30)
       }
       if (G.gm >= ev.at && !overlay) {
         const a = rand(0, TAU), R = key === 'hermit' ? 11 : key === 'elixir' ? 10 : 9; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
@@ -836,7 +837,7 @@ function renderDex() {
     return item(ok, `${sc.nameKo}<i>${sc.hanja} · 「${sc.motto}」</i>`, `${sc.members.map(m => (W_BY_ID[m] || P_BY_ID[m]).nameKo).join(', ')}<br>${sc.tiers.map(t => `${t.count}개: ${t.desc}`).join('<br>')}`); });
   const Sx = SYN.secrets.map(x => { const ok = dex.has('secret:' + x.id);
     return ok ? item(true, `${x.nameKo}<i>${x.hanja}</i>`, `${x.reward}<span class="lore">조건: ${x.condition}</span>`)
-              : item(false, `???<i>${x.proto ? '' : '정식판'}</i>`, `<span class="poem">${x.hint[0]}<br>${x.hint[1]}</span>`); });
+              : item(false, `???<i>${x.proto ? '' : '정식판'}</i>`, `<span class="poem">${x.hint[0]}<br>${x.hint[1]}</span>${letters.has(x.id) ? `<span class="lore">밀서: ${x.condition}</span>` : ''}`); });
   const E = SYN.encounters.map(x => { const ok = dex.has('enc:' + x.id);
     return ok ? item(true, x.nameKo, `${x.reward}<span class="lore">${x.where}</span>`) : item(false, `???<i>${x.proto ? '' : '정식판'}</i>`, x.where); });
   const cnt = pre => [...dex].filter(k => k.startsWith(pre)).length;
@@ -2262,12 +2263,22 @@ function lightning(e, dmg, w, lp) {
 function hitLanterns(x, y, R) {
   for (const l of G.lanterns) if (!l.dead && Math.hypot(l.x - x, l.y - y) <= R + 0.4) breakLantern(l);
 }
+// 하오문 밀서(20장 기연, WP-30): 아직 못 찾은 비전 하나(데이터 순서, 밀서로 안 본 것)의 조건 한 줄이 장경각 도감에 드러난다. 본 밀서는 도감처럼 계정에 남는다(store letters)
+const letters = new Set(store.get('letters') || []);
+function readLetter() {
+  discover('enc:letter');
+  const x = SYN.secrets.find(q => !dex.has('secret:' + q.id) && !letters.has(q.id));
+  if (!x) { toast('하오문 밀서', '쪽지가 비어 있다. 더 알려 줄 비전이 없다는 운낭의 장난이다'); return; }
+  letters.add(x.id); store.set('letters', [...letters]);
+  showDiscovery('奇緣', '下五門', '하오문 밀서', `등롱 속에 운낭의 글씨가 든 쪽지가 있다. 「${x.hint[0]} ${x.hint[1]}」 — ${x.condition}`);
+}
 function breakLantern(l) {
   if (l.silver) {   // 은빛 등롱: cycle.bloodmoon.manuscriptChance 로 의서 한 권(Core LifeLog.BreakSilverLantern). 안 나와도 보통 등롱처럼 한 가지는 떨군다
     if (Math.random() < BM.manuscriptChance) { G.manus = (G.manus || 0) + 1; toast('단목현의 의서', `의서 한 권 · 모두 ${(G.soul0.manuscripts || 0) + G.manus}권`); }
     addEffect('burst', l.x, l.y, { r: 1.2, color: '#C9CED6' });
   }
   l.dead = true; addEffect('burst', l.x, l.y, { r: 0.9, color: '#C8392B' });
+  if (G.letterArmed && !l.silver) { G.letterArmed = false; readLetter(); }
   // balance.json drops.lantern: 앞에서부터 깎는다(Core Drops.RollLantern 과 같은 순서)
   const tot = DR.lantern.reduce((a, l) => a + l.weight, 0);
   let r = Math.random() * tot, pick = DR.lantern[DR.lantern.length - 1].kind;
