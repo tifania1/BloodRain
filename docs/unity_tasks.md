@@ -145,7 +145,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 남궁 2단계 전후로 검 무공 한 방 피해가 배율만큼 달라짐(디버그 숫자), 무당 2단계면 태극 폭이 ±35
   - 찍기: `docs/unity_shots/C-06/` 의 `school_mult.png`
 
-- [ ] C-06c 모양 있는 진전 효과 다섯 · 먼저: C-06b
+- [x] C-06c 모양 있는 진전 효과 다섯 · 먼저: C-06b — 2026-11-06 22:55 PC: 남은 둘(화산 3 꽃잎, 당가 3 독 번짐·독침 중독)은 21:42 PC 루프 커밋이 이미 붙여 둠(EnemyField 치명타·중독 상태 StepStatus, WeaponRunner.OnCrit 꽃잎). 확인만: 당가 몸 + 진전 채우기 화산·당가 → 25초에 꽃잎 12장·독침 4마리 중독, 중독 건 적을 쓰러뜨리니 독 번짐 장판 하나, 콘솔 에러 0. 찍음 `school_shapes_huashan.png`(꽃잎 순간은 못 맞춤). 당가·당가 5·수로채 찍기는 안 함
   - 할 것: 꽃잎(화산 3)·하늘 검기(남궁 3)·독 번짐(당가 3)·독침(당가 5)·경공 끌기(수로채 3)를 WeaponRunner·PlayerController 에. 숫자는 `Tier(effect).Param(…)`(머리 주석에 뜻). 그림은 있는 AI 재료(fx_petal·fx_sword_qi 등)를 AiFxLayers 로.
   - 쓸 것: Core `SynergyEffects`·`Tier(...).Param`, synergies.json
   - 메뉴: C-06b 의 진전 채우기
@@ -182,7 +182,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 컴파일·콘솔 에러 0. 혼에 금두꺼비 9 + 한 생에 하나 잡고 정산 → 연무장 탐욕이 n/7, 한 생 음식 20개 → 정산에 '새 칭호 · 식객'
   - 찍기: `docs/unity_shots/WP-34U/` 의 `title.png`
 
-- [ ] R-04Ua 문파 고유 능력: 능력치·회피·피해·회복 · 먼저: C-06a
+- [x] R-04Ua 문파 고유 능력: 능력치·회피·피해·회복 · 먼저: C-06a — 2026-11-06 22:55 PC: 남은 (5) 중독된 적 피해는 21:42 PC 루프가 `EnemyField.poisonedTargetMultiplier = SectTrait.DamageMultiplier(true)` 로 붙여 둠(한 방·지속 피해 둘 다). 당가 몸에서 값 1.2 확인(맞은 숫자를 눈으로 견주지는 않음), 콘솔 에러 0. (6) 음식 FoodHeal 은 음식 줍기가 생기는 C-09b 할 것에 옮겨 적음
   - 할 것: (1) C-06a 의 `CurrentStats` 에 healthRatio·moving 을 제대로(남궁 공력·수로채 회피). (2) 피격 직전 `Evade.Roll(stats.Evade, rng)` 가 참이면 피해·넉백 없이 넘김(짧은 잔상). (5) 무공 피해에 `SectTrait.DamageMultiplier(적이 중독됐나)`. (6) 은자 × (1 + Bonus[Greed]), 음식 `Drops.FoodHeal(…, 1 + Bonus[FoodHeal])`. (7) 태극일 때 쾌속에 `life.HarmonyCooldownReduction` 을 더하고 상한으로 자름. (9) 마교 몸은 기혈 회복 전부에 `SectTrait.HealingMultiplier`.
   - 쓸 것: Core `Build/SectTrait.cs`, `life.Body.SectTrait`, `Evade`, `Drops.FoodHeal`
   - 메뉴: `BloodRain/Test/몸 바꾸기(문파)` — 침방 없이 그 문파 몸으로 Run
@@ -270,7 +270,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R-15U/` 의 `<오의 id>.png`
 
 - [ ] C-09b 등롱·음식·은자 주머니·정신부 · 먼저: C-06a
-  - 할 것: 등롱(맵 소품)을 깨면 `Drops.RollLantern(data.Balance.Drops, rng)` 하나 — bun·duck 은 `Drops.FoodHeal(rule, kind, stats.FoodHeal)` 회복, silver_bag 은 `RollSilverBag`(탐욕·혈월 배율은 줍는 쪽), chwigi_talisman, jeongsin_talisman 은 `Balance.Drops.JeongsinFreezeSeconds` 동안 화면 안 적 정지 + `life.Log.UseTalisman()`·`RunRecord.UseTalisman`. 잡몹 은자는 `EnemyDropsSilver`.
+  - 할 것: 등롱(맵 소품)을 깨면 `Drops.RollLantern(data.Balance.Drops, rng)` 하나 — bun·duck 은 `Drops.FoodHeal(rule, kind, stats.FoodHeal)` 회복, silver_bag 은 `RollSilverBag`(탐욕·혈월 배율은 줍는 쪽), 음식을 먹을 때마다 `life.Log.EatFood()`(칭호 식객, WP-34U)·회복 배율 `1 + Bonus[FoodHeal]`(R-04Ua (6)), chwigi_talisman, jeongsin_talisman 은 `Balance.Drops.JeongsinFreezeSeconds` 동안 화면 안 적 정지 + `life.Log.UseTalisman()`·`RunRecord.UseTalisman`. 잡몹 은자는 `EnemyDropsSilver`.
   - 쓸 것: Core `Build/Drops.cs`, balance.json drops
   - 메뉴: `BloodRain/Test/등롱 놓기(플레이 중)`
   - 끝: 등롱 열 개를 깨면 다섯 가지가 섞여 나오고 각각 효과가 듦
