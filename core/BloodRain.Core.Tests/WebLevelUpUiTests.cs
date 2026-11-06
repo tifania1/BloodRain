@@ -54,7 +54,14 @@ namespace BloodRain.Core.Tests
         {
             var html = Proto;
             Assert.Contains("const STAT_PFX = 'ui.stat.';", html);
-            Assert.Contains("Amount: '투사체', Magnet: '흡수 반경', Growth: '경험치', Area: '범위'", html);
+            Assert.Contains("const STAT_EASY_PFX = 'ui.stat_easy.', STAT_HELP_PFX = 'ui.stat_help.'", html);
+            Assert.Contains("get: (_, k) => uiOr(STAT_EASY_PFX + String(k))", html);
+            // 12장 '능력치 쉬운 말' 보기 넷(분광 · 투사체, 흡기 · 흡수 반경, 심득 · 경험치, 기세 · 범위)이 ko.json 에
+            var ko = System.Text.Json.JsonDocument.Parse(TestData.ReadRepoFile("unity", "BloodRain", "Assets", "Resources", "Data", "strings", "ko.json")).RootElement;
+            Assert.Equal("투사체", ko.GetProperty("ui.stat_easy.Amount").GetString());
+            Assert.Equal("흡수 반경", ko.GetProperty("ui.stat_easy.Magnet").GetString());
+            Assert.Equal("경험치", ko.GetProperty("ui.stat_easy.Growth").GetString());
+            Assert.Equal("범위", ko.GetProperty("ui.stat_easy.Area").GetString());
             Assert.Contains("const statLabel = k => STAT_EASY[k] ? `${statName(k)} · ${STAT_EASY[k]}` : statName(k);", html);
         }
 

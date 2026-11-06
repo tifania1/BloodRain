@@ -632,15 +632,11 @@ const GLYPH = {
   yangui: '儀', juseon: '酒', suryong: '水', hyeolhae: '血', cheongsim: '心', unryong: '雲', domun: '道', maehwa: '梅',
 };
 // 능력치 이름은 ko.json ui.stat.<이름>(glossary), 옆에 쉬운 말(12장 '능력치 쉬운 말': 분광 · 투사체 +1, 흡기 · 흡수 반경, 심득 · 경험치, 기세 · 범위).
-// 쉬운 말은 아직 프로토타입에만 있다(Unity 는 UI-01U 에서 strings 로)
-const STAT_EASY = { Amount: '투사체', Magnet: '흡수 반경', Growth: '경험치', Area: '범위', Duration: '지속 시간', ProjectileSpeed: '탄 속도', CooldownReduction: '대기 시간', Might: '피해',
-  Armor: '받는 피해', Recovery: '초당 회복', MoveSpeed: '이동 속도', Luck: '행운', Greed: '은자', MaxHealth: '최대 체력', Lifesteal: '피해의 일부 회복', FoodHeal: '음식', CritChance: '치명타' };
+// 쉬운 말·첫 풀이는 ko.json ui.stat_easy.<이름>·ui.stat_help.<이름>(Unity 와 같은 글, 2026-11-07 WP-59). 없는 이름은 쉬운 말 없이
+const STAT_EASY_PFX = 'ui.stat_easy.', STAT_HELP_PFX = 'ui.stat_help.', uiOr = key => { const s = uiT(key); return s === key ? undefined : s; };
+const STAT_EASY = new Proxy({}, { get: (_, k) => uiOr(STAT_EASY_PFX + String(k)) });
 // 이름이 처음 나올 때 한 번 띄우는 풀이(12장 '능력치 쉬운 말'). 본 이름은 store 'statSeen' 에 남아 다음 판부터는 안 뜬다
-const STAT_HELP = { Amount: '한 번에 나가는 비도·검기 같은 탄 수가 늘어난다', Magnet: '진기 구슬을 끌어오는 거리가 늘어난다', Growth: '얻는 진기가 늘어 레벨이 빨리 오른다',
-  Area: '무공이 닿는 넓이가 커진다', Duration: '무공이 남아 있는 시간이 길어진다', ProjectileSpeed: '탄이 더 빨리 날아간다', CooldownReduction: '무공을 다시 쓰기까지 기다리는 시간이 줄어든다',
-  Might: '모든 무공의 피해가 늘어난다', Armor: '맞을 때마다 받는 피해가 이만큼 줄어든다', Recovery: '1초마다 기혈이 이만큼 찬다', MoveSpeed: '걸음이 빨라진다',
-  Luck: '레벨업 카드와 보갑에서 좋은 것이 나올 확률이 오른다', Greed: '줍는 은자가 늘어난다', MaxHealth: '기혈 최대치가 늘어난다', Lifesteal: '준 피해의 일부만큼 기혈이 찬다',
-  FoodHeal: '음식으로 차는 기혈이 늘어난다', CritChance: '피해가 크게 들어갈 확률이 오른다' };
+const STAT_HELP = new Proxy({}, { get: (_, k) => uiOr(STAT_HELP_PFX + String(k)) });
 const statSeen = new Set(store.get('statSeen') || []);
 function statFirstHelp(offers) {
   const out = [];
