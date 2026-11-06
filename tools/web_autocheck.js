@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const RUNS = parseInt(opt('runs', '3'), 10);
 const SHOTS = opt('shots', '');
-const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow')).split(',');
+const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow,weapons')).split(',');
 const SITE = path.join(__dirname, '..', 'web', 'prototype', 'site');
 if (!fs.existsSync(path.join(SITE, 'index.html'))) { console.log('X  site/ 가 없다. python tools/build_web_prototype.py 를 먼저 돌린다'); process.exit(1); }
 
@@ -343,6 +343,42 @@ async function flowRuns(browser, base) {
   await p.ctx.close();
 }
 
+// 무공 해금·절기(WP-17~19): 혼 기록으로 연 무공이 한 생 판 레벨업 풀에 드는지, 정산이 도전 과제를 여는지,
+// 해금 무공 일곱(뇌부 포함)을 절기로 15초씩 돌려 피해가 나고 값이 안 깨지는지
+async function weaponRuns(browser, base) {
+  const label = '무공 해금·절기';
+  const p = await openPage(browser, base + '/?life=kunlun', label);
+  await p.page.evaluate(() => localStorage.setItem('cheonha_meta2', JSON.stringify({ v: 2, bossKills: { hyeolheo: 1 }, unlocks: ['dash_300_one_run'], talismans: 9 })));
+  await p.page.goto(base + '/?life=kunlun', { waitUntil: 'load' });
+  const r = await p.page.evaluate(() => {
+    const bad = [], dealt = {};
+    startRun('full'); G.auto = true; running = false;
+    if (G.weapons[0].id !== 'thunder_talisman') bad.push(`곤륜 시작 무공이 ${G.weapons[0].id}`);
+    for (const id of ['taiji_sword', 'pear_spear']) if (!G.wpool.includes(id)) bad.push(`해금한 ${id} 가 풀에 없음`);
+    for (const id of ['sonic_qin', 'chain_sickle']) if (G.wpool.includes(id)) bad.push(`안 연 ${id} 가 풀에 있음`);
+    G.kills = 5000; G.talis = 1; const st = lifeSettle();
+    for (const t of ['kills_5000_one_run', 'seal_talisman_10_total']) if (!st.newUnlocks.includes(t)) bad.push(`정산이 ${t} 를 안 엶`);
+    for (const id of ['thunder_talisman', 'taiji_sword', 'chain_sickle', 'blood_claw', 'sonic_qin', 'pear_spear', 'falling_petals']) {
+      startRun('full'); G.auto = true; running = false; G.t = 300; G.gm = 5;
+      G.weapons = [{ id, lv: 8, cd: 0.4, evolved: true, dealt: 0, n: 0 }];
+      for (let i = 0; i < 30 * 15; i++) {
+        G.player.hp = G.player.maxHp; step(1 / 30);
+        if (overlay) { overlay = null; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); }
+        if (i % 15 === 0) render();
+        if (![G.player.x, G.player.y].every(Number.isFinite)) { bad.push(`${id} 값 깨짐`); break; }
+      }
+      dealt[id] = Math.round(G.weapons[0].dealt);
+      if (!(dealt[id] > 0)) bad.push(`${id} 절기 피해 0`);
+    }
+    localStorage.removeItem('cheonha_meta2');
+    return { bad, dealt };
+  });
+  for (const b of r.bad) problems.push(`${label}: ${b}`);
+  flush(p, label);
+  rows.push({ what: '무공 해금·절기 일곱 15초', res: Object.entries(r.dealt).map(([k, v]) => `${k} ${v}`).join(' · ') });
+  await p.ctx.close();
+}
+
 (async () => {
   const srv = await serve();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -355,6 +391,7 @@ async function flowRuns(browser, base) {
     if (ONLY.includes('lords')) await lordRuns(browser, base);
     if (ONLY.includes('final')) await finalRuns(browser, base);
     if (ONLY.includes('flow')) await flowRuns(browser, base);
+    if (ONLY.includes('weapons')) await weaponRuns(browser, base);
   } catch (e) { problems.push('점검 스크립트 오류: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
   await browser.close(); srv.close();
   say('| 판 | 결과 |'); say('|---|---|');

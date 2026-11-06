@@ -130,7 +130,7 @@ HUD·멈춤 화면·조작 안내의 말은 `Resources/Data/strings/ko.json` 의
 
 ```
 python tools/build_web_prototype.py
-node tools/web_autocheck.js                     # 서장·숭산·M3 세 지역·땅의 주인 훑기·종장·이어 받기, 3판씩(3분 남짓)
+node tools/web_autocheck.js                     # 서장·숭산·M3 세 지역·땅의 주인 훑기·종장·이어 받기·무공 해금과 절기(weapons), 3판씩(3분 남짓)
 node tools/web_autocheck.js --runs 5 --only m3 --shots <폴더>   # 고른 것만, 판 끝 화면을 찍어 둔다
 ```
 

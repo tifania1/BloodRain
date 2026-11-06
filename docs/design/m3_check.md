@@ -46,12 +46,12 @@
 - ~~**도전 과제 해금 셋을 세는 곳이 없다.** 음공(한 판 처치 5,000)·이화창(한 판 경공 300)·뇌부(정신부 누적 10)는 토큰만 있다. 한 판 기록(`Run/Life.cs` 쪽)과 혼에 쌓는 누적(`Meta/Soul.cs`)에서 세어 `Soul.Unlock` 을 부르게~~ → Core `Soul.UnlockChallenges`(R-08), 웹 한 생 판 WP-17(2026-11-06)
 - **무공 여섯의 날아가는 것·넉백 값이 없다**(태극검·쇄겸술·혈조·음공·이화창·낙화검우, 9장 표·weapons.json `shot`·`knockback`). 기획서는 프로토타입에서 손으로 맞춘 뒤 채운다고 했다 → WP-01. 그 전까지는 숫자 없음, 사람 결정 필요
 - ~~**절기 여섯에 params 가 없다.**~~ → R-09(11-04) 다섯은 옮김, 흑룡탄은 숫자가 없어 그대로. 9장 효과 칸에 숫자가 있는 것은 evolutions.json params 로 옮기면 된다(태극양의검 검 8자루·태극 +30%, 혈마수 흡혈 4%·극음 범위 2배, 파천금음 최대 3배·기절 30%, 백화난무창 5방향, 매화만개 기혈 0.2). 흑룡탄과 여섯의 탄속·반경·수명은 숫자 없음, 사람 결정 필요. 넣으면 `EvolutionParamsTests.효과_칸의_숫자가_params_와_같다` 에 더한다
-- Unity 무공 일곱(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`·`ring_wave`·`pierce_thrust`·`petal_scatter`)과 그 절기 모양은 unity_tasks 에 줄 없음(취선봉은 C-04b 에 '넣을 때' 한 마디뿐)
+- ~~Unity 무공 일곱(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`·`ring_wave`·`pierce_thrust`·`petal_scatter`)과 그 절기 모양은 unity_tasks 에 줄 없음(취선봉은 C-04b 에 '넣을 때' 한 마디뿐)~~ → unity_tasks R-12Ua·R-12Ub
 - **기믹 넷의 수치가 없다.** `bamboo_thicket`·`drifting_boats`·`reverse_wave`·`cloud_sea` 는 cheonha.json regions 에만 있고 gimmicks.json·Core 에 없다. 7장도 '아직 수치가 없다'(역류 파도는 '2분마다'만). 숫자 없음, 사람 결정 필요. 마천패 2막 역류 파도의 '배 위면 맞지 않음'이 떠내려오는 배에 걸려 있다. 이름도 지역 표는 '대나무 덤불', 수치 문단은 '대숲'
 - **기믹을 지역 안 어디에 몇 개 놓는지가 없다.** 독안개 샘 수, 물 구역의 모양·넓이(수귀는 물에서만 솟는다), 태극 바닥 수. Core 에 놓는 함수는 탑림 `PagodaForest.Layout` 뿐이다(숭산 범종·우물도 같다). 숫자 없음, 사람 결정 필요
 - Unity 지역 기믹은 unity_tasks 에 줄 없음(Presentation·Sim 에 `Gimmicks` 를 부르는 곳 없음). 수귀는 C-02b '남은 것'인데 물 지형이 먼저다
 - ~~**땅의 주인 셋의 모양 판정이 Core 에 없다.**~~ → R-11(11-04) Core 에 넣고 웹 천하 시안도 같은 셈으로(R-11w). 흑백·흑백 경계(내 색, 경계 회전), 분열 되살림(`rejoinSeconds`), 칠성검진 `big_dipper` 자리, 태극권 끌어당김, 갈고리 사슬 끌기, 반쪽 독안개 쪽 고르기. `Combat/BossPatterns.cs` 에 `RingOffsets`·`InPool` 처럼 더하면 Unity·웹이 같은 셈을 쓴다. Unity 는 땅의 주인(원각 포함) 줄이 unity_tasks 에 없음
-- 웹: 천하 시안에 세 지역 기믹·고유 적·데이터 정예·세 보스 패턴 대부분·2막이 없고, 1장 프로토타입은 숭산만이다. 1장 bossAI 는 원각 숫자를 코드에 박아 두어 다른 보스를 붙이려면 eliteAI 처럼 bosspatterns.json 을 읽게 해야 한다 → WP-01
+- ~~웹: 천하 시안에 세 지역 기믹·고유 적·데이터 정예·세 보스 패턴 대부분·2막이 없고, 1장 프로토타입은 숭산만이다. 1장 bossAI 는 원각 숫자를 코드에 박아 두어 다른 보스를 붙이려면 eliteAI 처럼 bosspatterns.json 을 읽게 해야 한다 → WP-01~~ → 2026-11-06 웹 두 판을 합치며(WP-12~15) 1장 프로토타입 한 생 판에 지역 기믹 일부·고유 적·지역 정예·땅의 주인 일곱과 종장이 들어감. 남은 것은 backlog WP-13b~e 진행 줄
 - bosspatterns.json 마천패 `_note` 의 "수귀(water_ghost)는 아직 enemies.json 에 없다(T-33에서 넣는다)"는 옛말이다. 지금은 있다. 그 문장만 지우면 된다
 
 ## 이미 맞는 것
