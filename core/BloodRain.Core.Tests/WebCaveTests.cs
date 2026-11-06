@@ -28,5 +28,20 @@ namespace BloodRain.Core.Tests
                 Assert.Contains(w.Unlock + ":", html);   // CAVE_TOKEN_KO 에 그 토큰이 있다
             }
         }
-    }
+    
+        [Fact] public void 의상은_태극_구간을_지킨_처치만_Core_토큰으로()
+        {
+            var html = Proto;
+            var data = Load();
+            Assert.NotEmpty(data.Cheonha.Costumes);
+            // 싸우는 동안 한 번이라도 태극을 벗어나면 못 얻고(Core NoteFightHarmony), 쓰러뜨리는 순간도 본다
+            Assert.Contains("if (G.lordF.fin == null && yyBand().band !== 'harmony') G.lordF.offHarmony = true;", html);
+            Assert.Contains("if (!e.offHarmony && yyBand().band === 'harmony') for (const c of DATA.costumes || [])", html);
+            // 혼 기록 토큰은 Core CostumeDef.Token 과 같은 머리
+            Assert.Equal("costume:", BloodRain.Core.Data.UnlockToken.CostumePrefix);
+            Assert.Contains("'costume:' + id", html);
+            Assert.Contains("for (const t of st.newCostumes || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);", html);
+            Assert.Contains("tok('costume:' + c.id)", html);   // 수련동 줄
+        }
+}
 }
