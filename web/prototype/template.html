@@ -483,6 +483,14 @@ let keyboardUser = false;
 const focusFirst = el => { if (el && keyboardUser) el.focus({ preventScroll: true }); };
 window.addEventListener('keydown', () => { keyboardUser = true; }, true);
 window.addEventListener('pointerdown', () => { keyboardUser = false; }, true);
+// 레벨업 입력(12장 '화면 편의 규칙'): 방향키로 카드와 단추 사이 포커스를 옮기고 Enter·Space 로 누른다(단추 기본 동작). 패드는 Unity 몫
+function arrowFocus(e, root) {
+  const step = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.code]; if (!step || !root) return false;
+  const list = [...root.querySelectorAll('button')].filter(b => !b.disabled && b.offsetParent !== null); if (!list.length) return false;
+  const i = list.indexOf(document.activeElement);
+  e.preventDefault(); list[i < 0 ? (step > 0 ? 0 : list.length - 1) : (i + step + list.length) % list.length].focus({ preventScroll: true });
+  return true;
+}
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -5387,14 +5395,15 @@ window.addEventListener('keydown', e => {
   if (overlay === 'dex') { if (e.code === 'Escape' || e.code === 'Enter') closeDex(); return; }
   if (overlay === 'find') { if (['Enter', 'Space', 'Escape'].includes(e.code)) { e.preventDefault(); closeOverlay('find'); } return; }
   if (overlay === 'levelup') {
+    if (arrowFocus(e, $('levelup'))) return;
     const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseOffer(n - 1);
     if (e.code === 'KeyR' && !e.repeat) rerollOffers();
     if (e.code === 'KeyX' && !e.repeat) toggleBanish();
     if (e.code === 'KeyZ' && !e.repeat) skipOffer();
     return;
   }
-  if (overlay === 'brk') { const n = parseInt(e.key, 10); if (n >= 1 && n <= (G.brkMode === 'tomb' ? 9 : 4)) chooseInsight(n - 1); return; }
-  if (overlay === 'evopick') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) choosePick(n - 1); return; }
+  if (overlay === 'brk') { if (arrowFocus(e, $('brk'))) return; const n = parseInt(e.key, 10); if (n >= 1 && n <= (G.brkMode === 'tomb' ? 9 : 4)) chooseInsight(n - 1); return; }
+  if (overlay === 'evopick') { if (arrowFocus(e, $('evopick'))) return; const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) choosePick(n - 1); return; }
   if (overlay === 'procut') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); nextCut(); } return; }
   if (overlay === 'ending') { if ((G.ending || G.trueCut === 'cut') && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); nextEndingCut(); } return; }
   if (overlay === 'profirst') { const n = parseInt(e.key, 10); if (n >= 1 && n <= DATA.firstRebirth.length) firstRebirth(DATA.firstRebirth[n - 1].id); return; }

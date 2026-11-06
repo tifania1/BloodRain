@@ -3,7 +3,7 @@ using static BloodRain.Core.Tests.TestData;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>웹 조준(12장 '화면 편의 규칙' 조준, WP-52): 방향이 있는 무공이 한 곳(aimAngle)에서 가까운 적을 노리고, 설정으로 이동 방향으로 바꿀 수 있는지 글로 본다.</summary>
+    /// <summary>웹 화면 편의(12장 '화면 편의 규칙' 조준 WP-52·설정 음량 WP-53·레벨업 방향키 WP-54): 방향이 있는 무공이 한 곳(aimAngle)에서 가까운 적을 노리고, 설정으로 이동 방향으로 바꿀 수 있는지 글로 본다.</summary>
     public class WebAimTests
     {
         static string Proto => ReadRepoFile("web", "prototype", "template.html");
@@ -34,6 +34,15 @@ namespace BloodRain.Core.Tests
             Assert.DoesNotContain("connect(c.destination)", html);
             Assert.Contains("audio.master.connect(audio.ctx.destination)", html);
             Assert.Equal(2, html.Split("data-set=\"vol\"").Length - 1);
+        }
+
+        [Fact] public void 레벨업_화면은_방향키로_포커스를_옮긴다()
+        {
+            // 12장 '레벨업 입력': 방향키로 모든 카드와 단추에 포커스(깨달음·절기 고르기도 같이)
+            var html = Proto;
+            Assert.Contains("function arrowFocus(e, root) {", html);
+            Assert.Contains("if (arrowFocus(e, $('levelup'))) return;", html);
+            Assert.Contains("if (arrowFocus(e, $('brk'))) return;", html);
         }
     }
 }
