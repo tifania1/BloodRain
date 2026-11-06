@@ -59,5 +59,29 @@ namespace BloodRain.Core.Tests
             foreach (var k in new[] { "strikes", "rangeMultiplier", "radiusMultiplier", "lightningChains", "lightningRange", "lightningFalloff" })
                 Assert.True(five.Params!.ContainsKey(k), $"오뢰정법 params 에 {k} 가 없다");
         }
+        [Fact] public void 절기_여섯_모양이_params_를_읽는다()
+        {
+            // WP-19: R-17 여섯 무공의 절기(태극양의검·흑룡탄·혈마수·파천금음·백화난무창·매화만개) 모양이 evolutions.json params 칸을 쓴다
+            var html = Proto;
+            var d = Load();
+            var uses = new (string evo, string[] keys)[]
+            {
+                ("taiji_liangyi", new[] { "swords", "taijiDamageBonus" }),
+                ("black_dragon", new[] { "gatherRadius", "gatherSeconds", "explosionRadius", "damageMultiplier" }),
+                ("blood_demon_hand", new[] { "lifesteal", "extremeYinRangeMultiplier" }),
+                ("patian_qin", new[] { "stunChance" }),
+                ("hundred_flowers", new[] { "directions" }),
+                ("plum_full_bloom", new[] { "healPerHit" }),
+            };
+            foreach (var (evo, keys) in uses)
+            {
+                var e = d.Evolutions.First(x => x.Id == evo);
+                foreach (var k in keys)
+                {
+                    Assert.True(e.Params!.ContainsKey(k), $"{evo} params 에 {k} 가 없다");
+                    Assert.Contains("ep." + k, html);
+                }
+            }
+        }
     }
 }

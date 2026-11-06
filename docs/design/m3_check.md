@@ -20,7 +20,7 @@
 | 날아가는 것·넉백 | 9장 표, 여섯 무공 비어 있음('손으로 맞춘 뒤 채운다') | 태극검·쇄겸술·혈조·음공·이화창·낙화검우에 shot·knockback 없음(`WeaponShotTests.프로토타입에_없는_무공_개수가_문장과_같다`) | - | - | - | - |
 | 해금 조건 | 9장 표(음공 한 판 5,000 처치, 이화창 한 판 경공 300, 뇌부 정신부 누적 10, 태극검·쇄겸술 땅의 주인 첫 처치) | weapons.json `unlock` 같음 | `boss:` 는 `Soul` 이 판정, 도전 과제 셋은 `Soul.UnlockChallenges`(EndLife 에서 한 생 처치·경공·정신부 누적) | 한 생 판이 혼 기록으로 풀을 정하고 정산에서 도전 과제를 엶(WP-17, 2026-11-06) | - | 줄 없음 |
 | 심법 16 | 9장 '심법 16종' | passives.json 16. 같음(`GddTablesTests.심법_표가_passives_json_과_같다`) | `Stats` | 16 다 | 몸 능력치에 닿는 심법만 카드로 | C-06 '남은 것'(심법 능력치 얹기) |
-| 절기 16 | 9장 '절기 16종'·'절기로 바뀐 뒤 날아가는 것' | evolutions.json 16, params 는 열다섯(프로토타입 아홉 + 오뢰정법 + R-09 다섯은 효과 칸 숫자만). 흑룡탄만 params 없음(`EvolutionParamsTests` 넷) | `Awakening`(문턱·그릇), `EvolutionDef.Param` | 아홉 | 없음 | J-01U(각성 연출) 끝, C-09(절기 4종), C-09c(셋 효과), W-01(오뢰정법). 나머지 줄 없음 |
+| 절기 16 | 9장 '절기 16종'·'절기로 바뀐 뒤 날아가는 것' | evolutions.json 16, params 는 열다섯(프로토타입 아홉 + 오뢰정법 + R-09 다섯은 효과 칸 숫자만). 흑룡탄도 R-17 로 params 가 생김(`EvolutionParamsTests` 넷) | `Awakening`(문턱·그릇), `EvolutionDef.Param` | 열여섯 다(아홉 + 오뢰정법 WP-18 + R-17 여섯 WP-19, 숫자 없는 넷은 WP-19a) | 없음 | J-01U(각성 연출) 끝, C-09(절기 4종), C-09c(셋 효과), W-01(오뢰정법). 나머지 줄 없음 |
 
 ## 세 지역
 
