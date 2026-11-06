@@ -4825,9 +4825,36 @@ function render() {
   drawRain();
   if (p.hp / p.maxHp < 0.3) { ctx.globalAlpha = 0.7 + Math.sin(G.t * 6) * 0.15; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
   else { ctx.globalAlpha = 0.35; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
+  drawEdgeHints();   // 화면 밖 정예·땅의 주인·금두꺼비 화살표, 장막 가까운 가장자리 붉게(12장 HUD)
   if (G.awaken) drawAwaken();
   drawBreakthrough();   // 돌파 연출(WP-15, 축척 시험에서만 G.brk 가 선다)
   if (isPro()) drawTalk();
+}
+// 화면 가장자리(12장 'HUD 배치' 화면 가장자리 줄): 화면 밖 정예·땅의 주인·금두꺼비 쪽에 화살표(가까운 것 여섯까지), 혈우 장막이 화면 반 대각선 안으로 들어오면
+// 그쪽 가장자리가 붉게 번진다(가까울수록 짙게). 장막은 축척 모드에서만 선다(G.curtain)
+const EDGE_COL = { boss: '#B3261E', elite: 'rgba(26,26,26,0.8)', toad: '#C9A227' };
+function drawEdgeHints() {
+  const p = G.player, half = Math.hypot(VW, VH) / 2;
+  if (G.curtain != null) {
+    const u = worldU(), hx = wx(G.home.x / u), hy = wy(G.home.y / u), R = G.curtain * PPM / u, px = wx(p.x), py = wy(p.y);
+    const gap = R - Math.hypot(px - hx, py - hy), k = clamp(1 - gap / half, 0, 1);
+    if (k > 0) {
+      const a = Math.atan2(py - hy, px - hx), ex = VW / 2 + Math.cos(a) * VW / 2, ey = VH / 2 + Math.sin(a) * VH / 2, g = ctx.createRadialGradient(ex, ey, 0, ex, ey, Math.max(VW, VH) * 0.45);
+      g.addColorStop(0, `rgba(179,38,30,${(0.38 * k).toFixed(3)})`); g.addColorStop(1, 'rgba(179,38,30,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+    }
+  }
+  const off = [];
+  for (const e of G.enemies) {
+    const kind = e.boss ? 'boss' : e.elite ? 'elite' : e.type === 'golden_toad' ? 'toad' : null; if (!kind || e.hp <= 0) continue;
+    const x = wx(e.x), y = wy(e.y); if (x >= 0 && x <= VW && y >= 0 && y <= VH) continue;
+    off.push({ kind, x, y, d: Math.hypot(x - VW / 2, y - VH / 2) });
+  }
+  off.sort((a, b) => a.d - b.d);
+  for (const o of off.slice(0, 6)) {
+    const a = Math.atan2(o.y - VH / 2, o.x - VW / 2), ex = clamp(VW / 2 + Math.cos(a) * VW, 26, VW - 26), ey = clamp(VH / 2 + Math.sin(a) * VH, 110, VH - 110), s = o.kind === 'boss' ? 1.4 : 1;
+    ctx.save(); ctx.translate(ex, ey); ctx.rotate(a); ctx.scale(s, s); ctx.fillStyle = EDGE_COL[o.kind];
+    ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(-8, -9); ctx.lineTo(-3, 0); ctx.lineTo(-8, 9); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
 }
 // 서장 대사: 말하는 사람 머리 위에 lineSeconds 동안(화면 밖 목소리는 아래 가운데), 안내 문구는 가운데 아래에 크게 3초
 function drawTalk() {

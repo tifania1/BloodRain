@@ -49,5 +49,14 @@ namespace BloodRain.Core.Tests
             Assert.Contains("taken = !!r.sealStone && stones.has(r.sealStone)", html);
             Assert.Contains("b.onmouseenter = b.onfocus = () => drawInnMap(m, i);", html);
         }
+
+        [Fact] public void 화면_가장자리_화살표와_장막_번짐()
+        {
+            // WP-46, 12장 'HUD 배치' 화면 가장자리 줄: 정예·땅의 주인·금두꺼비 화살표, 장막이 가까우면 그쪽 가장자리가 붉게
+            var html = Proto;
+            Assert.Contains("const kind = e.boss ? 'boss' : e.elite ? 'elite' : e.type === 'golden_toad' ? 'toad' : null;", html);
+            Assert.Contains("const gap = R - Math.hypot(px - hx, py - hy), k = clamp(1 - gap / half, 0, 1);", html);
+            Assert.Contains("drawEdgeHints();", html);
+        }
     }
 }
