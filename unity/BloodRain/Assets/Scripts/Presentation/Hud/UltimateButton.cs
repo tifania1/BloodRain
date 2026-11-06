@@ -149,11 +149,13 @@ namespace BloodRain.Presentation.Hud
         // ── R-15U 문파 오의 모양(5장 오의 표, Core UltimateCast) ──
         // 천뢰낙: 화면 안 무작위 strikes 곳에 낙뢰, 한 곳 반경 StrikeRadius 안 적에 한 방 + 감전(ShockSeconds 멈춤).
         // 사자후: 몸 둘레 InRadius 안 적에 한 방 + 기절(StunSeconds). 만천화우: 박자마다 화면 전체에 한 방 + 중독(PoisonTickDamage / PoisonTickSeconds 초당).
-        // 팔방풍우·역류·태극무량 탄 되돌림은 아직(다음 차례). 감전·기절은 둘 다 EnemySim Stun 으로 멈춘다(천설부와 같은 틀).
+        // 팔방풍우: 여덟 갈래 장풍 연타. 역류: 바라보는 쪽 띠 안 적을 끝 쪽으로 민다. 태극무량 탄 되돌림은 EnemyField reflectRadius. 감전·기절은 둘 다 EnemySim Stun 으로 멈춘다(천설부와 같은 틀).
         readonly System.Random _rng = new System.Random();
         readonly System.Collections.Generic.List<int> _picked = new System.Collections.Generic.List<int>();
         /// <summary>시험용: 천뢰낙 마지막 낙뢰 자리(세계 좌표).</summary>
         public Vector2[] LastStrikePoints { get; private set; }
+        /// <summary>시험용: 역류 마지막 물살 길이(몸에서 화면 끝까지, 세계 m).</summary>
+        public float LastSweepReach { get; private set; }
 
         bool StrikeShaped(LifeRunner runner, BloodRain.Core.Data.UltimateDef ult, float dmg, Vector2 center, Camera cam)
         {
@@ -203,6 +205,39 @@ namespace BloodRain.Presentation.Hud
                         field.Poison(_near, cast.PoisonSeconds, cast.PoisonTickDamage(might) / cast.PoisonTickSeconds);
                     }
                     LastHits = field.Damage(_near, dmg, center, 0f);
+                    return true;
+                }
+                case "yeokryu":
+                {
+                    // 역류(하연): 몸에서 바라보는 쪽 화면 끝까지 폭 WaveWidth 띠(InSweep) 안 적에 한 방, 끝 쪽으로 민다.
+                    // WaveSpeed 는 플레이어 기본 이동 100 기준이라 m/s = MoveBase × WaveSpeed / 100 (× 경지 속도 축척). 넉백 속도로 준다.
+                    var me = runner.player != null ? (Vector2)runner.player.position : center;
+                    var wr = runner.weapons != null ? runner.weapons : Object.FindFirstObjectByType<WeaponRunner>();
+                    Vector2 face = wr != null ? wr.Facing : Vector2.right;
+                    if (face.sqrMagnitude < 1e-6f) face = Vector2.right;
+                    face.Normalize();
+                    float hh = cam.orthographicSize, hw = hh * cam.aspect;
+                    // 화면 끝까지 거리: 바라보는 쪽 반직선이 카메라 사각형을 나가는 곳
+                    float tx = Mathf.Abs(face.x) > 1e-5f ? ((face.x > 0 ? center.x + hw : center.x - hw) - me.x) / face.x : float.MaxValue;
+                    float ty = Mathf.Abs(face.y) > 1e-5f ? ((face.y > 0 ? center.y + hh : center.y - hh) - me.y) / face.y : float.MaxValue;
+                    float reach = Mathf.Max(0f, Mathf.Min(tx, ty));
+                    var mid = me + face * (reach * 0.5f);
+                    field.Sim.QueryCircle(new float2(mid.x, mid.y), reach * 0.5f + cast.WaveWidth(sc) + 0.01f, _near);
+                    _picked.Clear();
+                    var o = new System.Numerics.Vector2(me.x, me.y);
+                    var fv = new System.Numerics.Vector2(face.x, face.y);
+                    foreach (int i in _near)
+                    {
+                        if (i < 0 || i >= field.Sim.Count) continue;
+                        var a = field.Sim.Get(i);
+                        if (cast.InSweep(o, fv, new System.Numerics.Vector2(a.Pos.x, a.Pos.y), reach, sc)) _picked.Add(i);
+                    }
+                    var ws = BloodRain.Sim.WorldScale.Current;
+                    float waveMps = DataBoot.Data.Balance.Stats.MoveBase * cast.WaveSpeed / 100f;
+                    if (ws != null) waveMps = ws.Speed(waveMps);
+                    // 넉백은 from 에서 바깥쪽이라, from 을 몸 한참 뒤에 두면 모두 바라보는 쪽으로 나란히 밀린다
+                    LastSweepReach = reach;
+                    LastHits = field.Damage(_picked, dmg, me - face * 10000f, waveMps);
                     return true;
                 }
                 case "palbang_pungu":
