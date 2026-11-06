@@ -269,7 +269,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 소림·개방·남궁·당가·무당 몸에서 오의가 5장 표 모양으로 나감
   - 찍기: `docs/unity_shots/R-15U/` 의 `<오의 id>.png`
 
-- [ ] C-09b 등롱·음식·은자 주머니·정신부 · 먼저: C-06a
+- [x] C-09b 등롱·음식·은자 주머니·정신부 · 먼저: C-06a — 2026-11-07 02:46 PC: `Presentation/Fx/LanternLayer.cs`(LifeRunner 가 플레이 때 붙임) — 웹처럼 33초마다(넷 미만) 둘레 5~9m 에 등롱, WeaponRunner 의 맞는 자리 아홉 곳이 `LanternLayer.Strike(중심, 반경)` 로 알려 그 안 등롱을 깸(앞 베기도 반원 아닌 원으로 봄) → `Drops.RollLantern` 하나를 떨굼. 잡몹 쓰러짐은 `EnemyDropsSilver`. 1m 안에서 주움: 만두 +20·오리 +50(`FoodHeal(…, 1 + 음식 회복)`, 마교·속삭임은 vitals.Heal), 은자 `RollSilverBag × (1 + 탐욕)` → GainSilver, 취기부 `PullAll`, 정신부 화면 안 적 `Freeze(5초 × 곤륜 FreezeMultiplier)` — 11마리 멈춤. 음식·정신부는 LifeLog 와 SecretWatch RunRecord 둘 다 셈(식 2·부 1 확인). 글자 `ui.drop.*` 넷 언어. 시험 메뉴 `BloodRain/Test/등롱 놓기(플레이 중)`(LanternBootstrap.cs, 둘레 2m 열 개) — 열 개 다 깨짐(만두 7·오리 1·정신부 2, 가중치대로라 취기부·은자는 따로 불러 확인). 콘솔 에러 0. 그림은 색 동그라미·네모 임시. 찍음 `docs/unity_shots/C-09/` 의 `lantern_drops.png`(놓은 등롱)·`lantern_broken.png`
   - 할 것: 등롱(맵 소품)을 깨면 `Drops.RollLantern(data.Balance.Drops, rng)` 하나 — bun·duck 은 `Drops.FoodHeal(rule, kind, stats.FoodHeal)` 회복, silver_bag 은 `RollSilverBag`(탐욕·혈월 배율은 줍는 쪽), 음식을 먹을 때마다 `life.Log.EatFood()`(칭호 식객, WP-34U)·회복 배율 `1 + Bonus[FoodHeal]`(R-04Ua (6)), chwigi_talisman, jeongsin_talisman 은 `Balance.Drops.JeongsinFreezeSeconds` 동안 화면 안 적 정지 + `life.Log.UseTalisman()`·`RunRecord.UseTalisman`. 잡몹 은자는 `EnemyDropsSilver`.
   - 쓸 것: Core `Build/Drops.cs`, balance.json drops
   - 메뉴: `BloodRain/Test/등롱 놓기(플레이 중)`

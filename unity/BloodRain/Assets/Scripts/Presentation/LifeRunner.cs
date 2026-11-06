@@ -20,7 +20,7 @@ namespace BloodRain.Presentation
     //   진기: OrbLayer.Absorbed → life.Absorb. 경지를 넘으면 BreakthroughFx 로 줌.
     //   레벨업 화면은 Life 의 Level·Charges·Loadout 을 본다(LevelUpScreen 이 Life 를 찾는다).
     //   생성(LF-02): Tick 이 돌려주는 LifeSecond 의 Spawns 는 생성 고리(balance.json spawnTarget 대각선 배수)에, Events 는 종류대로 세운다.
-    //   덩이 사람 수는 EnemyField 가 지금 경지로 정한다(TU-04 덩이 길). 보부상 사건은 MerchantScreen 을 연다(RM-05U). 은빛 등롱·보스 사건은 아직 로그만(BR-01·C-09b).
+    //   덩이 사람 수는 EnemyField 가 지금 경지로 정한다(TU-04 덩이 길). 보부상 사건은 MerchantScreen 을 연다(RM-05U). 은빛 등롱·보스 사건은 아직 로그만(BR-01·QA-02U). 등롱·드롭은 LanternLayer(C-09b).
     //   자리: Unity 좌표(1 = 세계 m, 출생지 = 0,0) ↔ 천하 좌표는 WorldCoords(PropLayer 가 Origin 을 출생지 한가운데로 둔다).
     //   쓰러짐(LF-03): 천하 몸이면 Life.End → Soul.EndLife → SoulStore 저장 → 정산 → Inn 씬(침방). 서장 몸이면 PlayerDown 대로 각성·처음부터.
     [DefaultExecutionOrder(-50)]
@@ -134,6 +134,8 @@ namespace BloodRain.Presentation
             if (vitals != null) vitals.Died += OnDied;
             if (vitals != null) vitals.Damaged += () => { if (_life != null && _life.Record == null) _life.Charge.OnHit(_life.Loadout.Gauge.Band); };
             if (enemies != null) enemies.Killed += OnKilled;
+            // C-09b 등롱·바닥 드롭(씬에 없으면 여기서 붙인다)
+            if (GetComponent<LanternLayer>() == null) gameObject.AddComponent<LanternLayer>().runner = this;
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
             _edges = FindFirstObjectByType<BloodRain.Presentation.Fx.EdgeIndicators>();

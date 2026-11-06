@@ -292,6 +292,7 @@ namespace BloodRain.Presentation.Combat
                             if (!AddSpark("fx_fist_ink", fat, fa, 0f, 0.28f, 0.05f))
                                 AddFx(Mathf.Atan2(player.Facing.y, player.Facing.x), Mathf.PI * 2f, R * 0.6f, 0.12f, new Color(0.85f, 0.55f, 0.25f, 0.6f));
                             enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
+                            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), R); // C-09b 친 자리 안 등롱
                             Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
                         });
                     break;
@@ -316,6 +317,7 @@ namespace BloodRain.Presentation.Combat
                     if (!AddSpark("fx_mist_ink_3", Vector2.zero, UnityEngine.Random.value * Mathf.PI * 2f, R * 2.3f, tick * 2.2f, tick * 0.8f, true, 0.55f, MistWash))
                         AddFx(0f, Mathf.PI * 2f, R, tick, new Color(0.37f, 0.50f, 0.29f, 0.22f));
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
+                    BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), R); // C-09b 친 자리 안 등롱
                     Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, ws.Speed(Knock(s))));
                     break;
                 }
@@ -390,6 +392,7 @@ namespace BloodRain.Presentation.Combat
                             bool glow = AddSpark("fx_bomb_glow", at, rot, R * 2.2f, 0.35f, 0.06f);
                             if (!ink && !glow) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
                             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+                            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
                             Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
                         });
                     }
@@ -422,6 +425,7 @@ namespace BloodRain.Presentation.Combat
                         {
                             if (!AddBolt(at)) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.25f, new Color(1f, 0.92f, 0.55f, 0.8f));
                             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+                            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
                             if (shock > 0f)
                                 foreach (int i in _near)
                                 {
@@ -495,6 +499,7 @@ namespace BloodRain.Presentation.Combat
                 }
                 p.Pos += p.Vel * dt;
                 sim.QueryCircle(new float2(p.Pos.x, p.Pos.y), p.Radius, _near);
+                BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(p.Pos.x, p.Pos.y), p.Radius); // C-09b 친 자리 안 등롱
                 bool dead = p.Life <= 0f;
                 foreach (int j in _near)
                 {
@@ -545,6 +550,7 @@ namespace BloodRain.Presentation.Combat
             float from = f.Angle + f.Prev, span = turn - f.Prev;
             f.Prev = turn;
             enemies.Sim.QueryCircle(new float2(P.x, P.y), f.Radius, _near);
+            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), f.Radius); // C-09b 친 자리 안 등롱
             var agents = enemies.Sim.Agents;
             _filtered.Clear();
             foreach (int i in _near)
@@ -563,6 +569,7 @@ namespace BloodRain.Presentation.Combat
         int HitArc(Vector2 c, float R, float a, float dmg, float knock)
         {
             enemies.Sim.QueryCircle(new float2(c.x, c.y), R, _near);
+            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(c.x, c.y), R); // C-09b 친 자리 안 등롱
             float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
             var agents = enemies.Sim.Agents;
             _filtered.Clear();
@@ -616,6 +623,7 @@ namespace BloodRain.Presentation.Combat
                 if (!AddSpark("fx_sword_qi_glow", at, -Mathf.PI * 0.5f, R * 2.4f, 0.35f, 0.08f))
                     AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.25f, new Color(0.8f, 0.9f, 1f, 0.8f));
                 enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+                BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
                 Deal(s, dmg, enemies.Damage(_near, dmg, at, 0f));
                 SkySwordCount++;
             });
@@ -640,6 +648,7 @@ namespace BloodRain.Presentation.Combat
             float h = cam.orthographicSize, w = h * cam.aspect;
             Vector2 c = cam.transform.position;
             enemies.Sim.QueryCircle(new float2(c.x, c.y), Mathf.Sqrt(w * w + h * h), _near);
+            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(c.x, c.y), Mathf.Sqrt(w * w + h * h)); // C-09b 친 자리 안 등롱
             var agents = enemies.Sim.Agents;
             _filtered.Clear();
             foreach (int i in _near)
