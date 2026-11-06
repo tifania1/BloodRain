@@ -3,7 +3,7 @@ using static BloodRain.Core.Tests.TestData;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>웹 화면 편의(12장 '화면 편의 규칙' 조준 WP-52·설정 음량 WP-53·레벨업 방향키 WP-54·인트로 WP-55): 방향이 있는 무공이 한 곳(aimAngle)에서 가까운 적을 노리고, 설정으로 이동 방향으로 바꿀 수 있는지 글로 본다.</summary>
+    /// <summary>웹 화면 편의(12장 '화면 편의 규칙' 조준 WP-52·설정 음량 WP-53·레벨업 방향키 WP-54·인트로 WP-55·땅의 주인 컷 WP-56): 방향이 있는 무공이 한 곳(aimAngle)에서 가까운 적을 노리고, 설정으로 이동 방향으로 바꿀 수 있는지 글로 본다.</summary>
     public class WebAimTests
     {
         static string Proto => ReadRepoFile("web", "prototype", "template.html");
@@ -53,6 +53,15 @@ namespace BloodRain.Core.Tests
             Assert.Contains("introTimer = setTimeout(nextIntro, (cut.seconds || 4) * 1000);", html);
             var build = ReadRepoFile("tools", "build_web_prototype.py");
             Assert.Contains("\"intro\": drop_notes(load(\"dialogue\")[\"intro\"]),", build);
+        }
+
+        [Fact] public void 땅의_주인_컷은_만남은_회차_처음_처치는_계정_처음()
+        {
+            // docs/story/boss_cuts.md '고르는 코드': 만남 컷은 회차마다 처음 만날 때(혈영 아님), 처치 컷은 계정 첫 처치에만
+            var html = Proto;
+            Assert.Contains("if (!shadow && !met.includes(metKey) && lordCuts(def.id, 'meet'))", html);
+            Assert.Contains("const acctFirst = first && !((G.soul0.bossKills || {})[def.id] > 0)", html);
+            Assert.Contains("if (!cuts.length || G.auto) return false;", html);
         }
     }
 }

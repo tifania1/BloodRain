@@ -1680,6 +1680,9 @@ function lordBegin(r) {
   if (!shadow && G.moon && (LLINE[def.id] || {}).bloodMoonKo) meet = (meet ? meet + ' ' : '') + LLINE[def.id].bloodMoonKo;   // 혈월 회차 만남 줄(Core LordEncounter BloodMoon)
   toast(name, (meet || `${r.nameKo}의 땅의 주인`) + ` · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분)`);
   sfx('boss');
+  // 만남 컷(WP-56): 이번 회차에 이 땅의 주인을 처음 만날 때만(못 이기고 다시 만나면 컷 없이)
+  const metKey = `${G.soul0.cycle || 1}:${def.id}`, met = store.get('lordMet') || [];
+  if (!shadow && !met.includes(metKey) && lordCuts(def.id, 'meet')) { met.push(metKey); store.set('lordMet', met); }
   return e;
 }
 // 종장 혈영 i 번째. 자리는 봉마곡 가운데(첫째) 또는 앞 혈영이 쓰러진 자리
@@ -1890,7 +1893,9 @@ function lordDown(e) {
   for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25);
   G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 });   // 처치 보갑(Core BossKill.Chest)
   // 처치 컷 첫 줄을 알림으로. 대표 인물 합류 줄은 Core 처럼 객잔에 돌아와서(innReturn)
-  const k1 = lordLine(def.id, 'kill1'); if (k1) setTimeout(() => toast(def.nameKo, k1), 1800);
+  // 처치 컷 넷(WP-56)은 계정 첫 처치에만. 컷을 안 띄우는 때(자동 판)는 첫 줄만 알림으로
+  const acctFirst = first && !((G.soul0.bossKills || {})[def.id] > 0) && !G.lordKills.some(x => x !== kill && x.boss === def.id);
+  if (!(acctFirst && lordCuts(def.id, 'kill'))) { const k1 = lordLine(def.id, 'kill1'); if (k1) setTimeout(() => toast(def.nameKo, k1), 1800); }
   const lines = [kill.stone ? `봉인석 ${kill.stone}` : '', sect ? `${sect.nameKo}로 환생할 수 있다` : '', `윤회의 기 +${kill.qi} · 혈정 +${kill.crystal}`].filter(Boolean);
   toast(`${e.name} — 쓰러뜨렸다`, first ? lines.join(' · ') : `혈영으로 다시 일어날 것이다 · ${lines.join(' · ')}`);
 }
@@ -5029,29 +5034,40 @@ function prologueCuts() {
 }
 // 인트로 컷신 「혈우」(19장 A, dialogue.json intro, WP-55): 첫 실행에만(store introSeen), 제목 '인트로' 단추로 다시. 컷마다 seconds 뒤 저절로 넘어가고
 // Enter·Space·다음으로 넘기고 Esc·건너뛰기로 끝. 컷 12 제목 붓글씨는 데이터에 줄이 없어(Unity 가 얹음) 게임 이름을 붓글씨로. 자동 점검·주소 뒤 ?·# 판에선 저절로 안 띄운다
-const INTRO = DATA.intro || { cuts: [] }, INTRO_IMG = DATA.introImages || {};
-let introI = 0, introTimer = 0;
+const INTRO = DATA.intro || { cuts: [] }, INTRO_IMG = DATA.introImages || {}, LORD_CUT_IMG = DATA.lordCutImages || {};
+let introI = 0, introTimer = 0, cutSeq = null;
+// 땅의 주인 컷(docs/story/boss_cuts.md '고르는 코드', WP-56): 만남 2컷(meet)은 회차마다 그 땅의 주인을 처음 만날 때 한 번(혈영·다시 만남은 컷 없음),
+// 처치 4컷(kill)은 계정 첫 처치에만. 판 시계를 멈추고 이 화면을 빌려 그림(sb_<id>_meet_n·sb_<id>_down_n, 있는 것만)과 자막. 다른 화면이 떠 있으면 닫힐 때까지 기다린다.
+// 자동 판(G.auto: sim·자동 점검)은 컷을 건너뛰고 false — 부른 쪽이 알림으로 대신한다
+function lordCuts(id, kind) {
+  const cuts = ((LLINE[id] || {}).cuts || []).filter(c => c.id.startsWith(kind));
+  if (!cuts.length || G.auto) return false;
+  const go = () => { if (!running || !G) return; if (overlay) return void setTimeout(go, 300); cutSeq = { id, kind, cuts }; overlay = 'intro'; introI = 0; $('intro').hidden = false; showIntro(); };
+  go(); return true;
+}
 function openIntro() {
   if (!INTRO.cuts.length) return;
   overlay = 'intro'; introI = 0; $('intro').hidden = false; showIntro();
 }
 function showIntro() {
-  const cut = INTRO.cuts[introI], img = INTRO_IMG[cut.art]; overlayAt = performance.now();
+  const cuts = cutSeq ? cutSeq.cuts : INTRO.cuts, cut = cuts[introI]; overlayAt = performance.now();
+  const img = cutSeq ? LORD_CUT_IMG[`sb_${cutSeq.id}_${cutSeq.kind === 'kill' ? 'down' : 'meet'}_${cut.id.replace(/\D/g, '')}`] : INTRO_IMG[cut.art];
   $('introimg').hidden = !img; if (img) $('introimg').src = img;
   $('introlines').innerHTML = cut.lines.length ? cut.lines.map(l => `<p${l.whisper ? ' class="whisper"' : ''}>${l.speaker ? `<b>${SPK[l.speaker] || l.speaker}</b>` : ''}${l.textKo}</p>`).join('')
-    : introI === INTRO.cuts.length - 1 ? '<p class="brush" style="font-size:52px">血雨江湖</p><p>혈우강호</p>' : '';
-  $('intronext').textContent = introI + 1 < INTRO.cuts.length ? '다음' : '시작';
-  if (introI === INTRO.cuts.length - 1) sfx('gong');
+    : !cutSeq && introI === cuts.length - 1 ? '<p class="brush" style="font-size:52px">血雨江湖</p><p>혈우강호</p>' : '';
+  $('intronext').textContent = introI + 1 < cuts.length ? '다음' : cutSeq ? '계속' : '시작';
+  if (!cutSeq && introI === cuts.length - 1) sfx('gong');
   clearTimeout(introTimer); introTimer = setTimeout(nextIntro, (cut.seconds || 4) * 1000);
   focusFirst($('intronext'));
 }
 function nextIntro() {
   if (overlay !== 'intro' || performance.now() - overlayAt < 350) return;   // 판 밖이라 G 가 없을 수 있어 tooSoon 대신
-  if (++introI < INTRO.cuts.length) return showIntro();
+  if (++introI < (cutSeq ? cutSeq.cuts : INTRO.cuts).length) return showIntro();
   endIntro();
 }
 function endIntro() {
-  clearTimeout(introTimer); $('intro').hidden = true; if (overlay === 'intro') overlay = null; store.set('introSeen', true);
+  clearTimeout(introTimer); $('intro').hidden = true; if (overlay === 'intro') overlay = null;
+  if (cutSeq) { cutSeq = null; lastTs = performance.now(); } else store.set('introSeen', true);
 }
 function showCut() {
   const cut = PD.cuts[G.cutI], img = PRO_CUT_IMG[cut.art];

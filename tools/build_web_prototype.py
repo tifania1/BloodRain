@@ -103,6 +103,9 @@ def data_blob() -> str:
         "intro": drop_notes(load("dialogue")["intro"]),
         "introImages": {c["art"]: image_uri(f"{c['art']}.jpg", 720) for c in load("dialogue")["intro"]["cuts"]
                         if c.get("art") and (CUTS / f"{c['art']}.jpg").exists()},
+        # 땅의 주인 컷 그림(boss_cuts.md, WP-56): Art/Cutscenes/sb_<id>_meet_<n>·sb_<id>_down_<n> 이 있는 것만
+        "lordCutImages": {f.stem: image_uri(f.name, 720) for f in sorted(CUTS.glob("sb_*_*_[0-9].jpg"))
+                          if f.stem.rsplit("_", 2)[1] in ("meet", "down")},
         "ui": ui_strings(),
         # 천하 축척(WP-12): 화면 대각선 = view0Meters × scalePerRealm^(경지 순번 + viewInRealmShare × 경지 안 진행), 7장
         "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare", "boundaryViewMultiple", "noBoundaryFrom", "widthMeters", "heightMeters", "land", "rivers")},
