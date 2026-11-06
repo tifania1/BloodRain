@@ -287,6 +287,7 @@ button { touch-action: manipulation; }
         <button class="b" id="demobtn" type="button">절기 각성 보기<small>절정 돌파 직전에서 시작</small></button>
       </div>
       <div class="row">
+        <button class="b" type="button" data-set="vol">음량 100%</button>
         <button class="b" id="shakebtn" type="button" data-set="shake">화면 흔들림 100%</button>
         <button class="b" id="awakebtn" type="button" data-set="awaken">각성 연출 자동</button>
         <button class="b" type="button" data-set="flash">깜빡임 켜짐</button>
@@ -389,6 +390,7 @@ button { touch-action: manipulation; }
         <button class="b" id="quit" type="button" data-s="ui.pause.quit">객잔으로</button>
       </div>
       <div class="row setrow">
+        <button class="b" type="button" data-set="vol"></button>
         <button class="b" type="button" data-set="shake"></button>
         <button class="b" type="button" data-set="awaken"></button>
         <button class="b" type="button" data-set="flash"></button>
@@ -962,6 +964,7 @@ const settings = {
   aim: store.get('aim') ?? 1,                             // 바라보는 방향 표시 크기 1 / 1.6 / 0(12장 '조준')
   aimMode: store.get('aimMode') || 'near',                // 조준 방식: near 가까운 적(기본) / move 이동 방향(12장 '조준', aimAngle)
   nums: store.get('nums') ?? true,                        // 피해 숫자 표시 켬/끔(12장 설정)
+  vol: store.get('vol') ?? 1,                             // 음량 1 / 0.75 / 0.5 / 0.25(12장 설정 '음량'). 끄기는 소리 단추
   fx: store.get('fx') ?? 1,                               // 내 이펙트 투명도: 1 / 0.75 / 0.5 / 0.25 / 0 (12장 '0~100%')
 };
 // 구운 효과음(SFX-02, Assets/Audio/SFX → 빌드가 lookdev/sfx 에 둠). 있으면 그걸 틀고, 못 읽으면(아티팩트 한 파일 판 등) 아래 발진기 소리.
@@ -981,7 +984,7 @@ function playBaked(list, vol) {
   if (!list || !list.length) return false;
   const c = audio.ctx, src = c.createBufferSource(), g = c.createGain();
   src.buffer = list[Math.floor(Math.random() * list.length)]; g.gain.value = vol;
-  src.connect(g); g.connect(c.destination); src.start();
+  src.connect(g); g.connect(audio.master); src.start();
   return true;
 }
 function sfx(kind) {
@@ -994,7 +997,7 @@ function sfx(kind) {
   if (kind === 'orb' && playBaked(audio.buf.orb?.[audio.orbStep], 0.18)) return;
   if (SFX_BAKED[kind] && playBaked(audio.buf[kind], kind === 'level' ? 0.5 : 0.7)) return;
   if (kind === 'boss' || kind === 'bell') kind = 'gong';
-  const c = audio.ctx, g = c.createGain(); g.connect(c.destination);
+  const c = audio.ctx, g = c.createGain(); g.connect(audio.master);
   const o = c.createOscillator();
   const tone = (type, f0, f1, dur, vol) => {
     o.type = type; o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f1, now + dur);
@@ -1019,7 +1022,7 @@ function sfxAwaken(kind) {
     const o = c.createOscillator(), g = c.createGain(); o.type = type;
     o.frequency.setValueAtTime(f0, now + at); o.frequency.exponentialRampToValueAtTime(f1, now + at + dur);
     g.gain.setValueAtTime(0.0001, now + at); g.gain.exponentialRampToValueAtTime(vol, now + at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, now + at + dur);
-    o.connect(g); g.connect(c.destination); o.start(now + at); o.stop(now + at + dur + 0.05);
+    o.connect(g); g.connect(audio.master); o.start(now + at); o.stop(now + at + dur + 0.05);
   };
   const noise = (dur, vol, f0, f1, rise) => {
     const n = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate), d = n.getChannelData(0);
@@ -1028,7 +1031,7 @@ function sfxAwaken(kind) {
     f.type = 'lowpass'; f.frequency.setValueAtTime(f0, now); f.frequency.exponentialRampToValueAtTime(f1, now + dur);
     if (rise) { g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(vol, now + dur * 0.92); g.gain.linearRampToValueAtTime(0, now + dur); }
     else { g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.0001, now + dur); }
-    src.connect(f); f.connect(g); g.connect(c.destination); src.start(now); src.stop(now + dur + 0.05);
+    src.connect(f); f.connect(g); g.connect(audio.master); src.start(now); src.stop(now + dur + 0.05);
   };
   if (kind === 'in') { tone('sine', 62, 38, 1.6, 0.22); noise(0.9, 0.09, 300, 2400, true); }
   else if (kind === 'crack') { noise(0.18, 0.12, 6000, 900); tone('triangle', 1400, 380, 0.16, 0.05); }
@@ -1039,7 +1042,7 @@ function buzz(pattern) { if (settings.shake > 0 && navigator.vibrate) { try { na
 function ensureAudio() {
   if (audio.ctx) return;
   try { audio.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audio.ctx = null; }
-  if (audio.ctx) loadBakedSfx();
+  if (audio.ctx) { audio.master = audio.ctx.createGain(); audio.master.gain.value = settings.vol; audio.master.connect(audio.ctx.destination); loadBakedSfx(); }   // 음량(12장 설정)은 이 한 마디에서
 }
 
 // ───────── 캔버스와 스프라이트 ─────────
@@ -5469,6 +5472,7 @@ const SET_TURN = {
   aim: () => { settings.aim = settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1; store.set('aim', settings.aim); },
   aimMode: () => { settings.aimMode = settings.aimMode === 'move' ? 'near' : 'move'; store.set('aimMode', settings.aimMode); },
   nums: () => { settings.nums = !settings.nums; store.set('nums', settings.nums); },
+  vol: () => { settings.vol = settings.vol > 0.25 ? settings.vol - 0.25 : 1; store.set('vol', settings.vol); if (audio.master) audio.master.gain.value = settings.vol; sfx('level'); },
   fx: () => { settings.fx = settings.fx > 0 ? Math.round((settings.fx - 0.25) * 100) / 100 : 1; store.set('fx', settings.fx); },
 };
 for (const b of document.querySelectorAll('[data-set]')) b.addEventListener('click', () => { SET_TURN[b.dataset.set](); syncMute(); });
@@ -5495,6 +5499,7 @@ function syncMute() {
     flash: settings.flash ? '깜빡임 켜짐<small>맞으면 몸이 번쩍인다</small>' : '깜빡임 꺼짐<small>번쩍이지 않는다</small>',
     bossbar: settings.bossbar ? '체력바 보임<small>땅의 주인·원각</small>' : '체력바 숨김<small>땅의 주인·원각</small>',
     rain: `혈우 연출 ${Math.round(settings.rain * 100)}%<small>${settings.rain ? '붉은 번짐·빗줄기' : '장막 점선만'}</small>`,
+    vol: `음량 ${Math.round(settings.vol * 100)}%<small>${audio.muted ? '지금은 소리 꺼짐' : '효과음 전체'}</small>`,
     fx: `내 이펙트 ${Math.round(settings.fx * 100)}%<small>${settings.fx < 1 ? '적 탄·예고는 그대로' : '무공 효과 투명도'}</small>`,
     nums: settings.nums ? '피해 숫자 보임<small>때린 자리에 숫자</small>' : '피해 숫자 숨김<small>숫자 없이</small>',
     aimMode: settings.aimMode === 'move' ? '조준 이동 방향<small>움직인 쪽으로 쏜다</small>' : '조준 가까운 적<small>없으면 움직인 쪽</small>',

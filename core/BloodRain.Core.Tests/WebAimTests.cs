@@ -26,5 +26,14 @@ namespace BloodRain.Core.Tests
             Assert.Equal(2, html.Split("data-set=\"aimMode\"").Length - 1);
             Assert.Contains("aimMode: store.get('aimMode') || 'near',", html);
         }
+
+        [Fact] public void 음량은_한_마디를_거쳐_두_곳에서()
+        {
+            // 12장 설정 '음량': 모든 소리가 audio.master 하나를 거쳐 나가고, 단추는 제목·멈춤 화면 두 곳
+            var html = Proto;
+            Assert.DoesNotContain("connect(c.destination)", html);
+            Assert.Contains("audio.master.connect(audio.ctx.destination)", html);
+            Assert.Equal(2, html.Split("data-set=\"vol\"").Length - 1);
+        }
     }
 }
