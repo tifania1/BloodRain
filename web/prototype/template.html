@@ -311,6 +311,8 @@ button { touch-action: manipulation; }
       <div class="innmeta" id="innfac"></div>
       <h4 class="innh" id="inncaveh" hidden>수련동 · 도전 과제</h4>
       <div class="innmeta" id="inncave" hidden></div>
+      <h4 class="innh" id="innlibh" hidden>장경각 · 찢긴 비급</h4>
+      <div class="innmeta" id="innlib" hidden></div>
       <h4 class="innh" id="innelixh" hidden>약방 · 영약</h4>
       <div class="innmeta" id="innelix" hidden></div>
       <h4 class="innh">침방 · 환혼 강화</h4>
@@ -647,7 +649,7 @@ const PETAL = { id: 'petal', dealt: 0 };   // 화산 진전 꽃잎. 꽃잎이 �
 const DEX_TOTAL = SYN.links.length + SYN.schools.length + SYN.secrets.length + SYN.encounters.length;
 const dex = new Set(store.get('dex') || []);
 function discover(key) { if (dex.has(key)) return false; dex.add(key); store.set('dex', [...dex]); return true; }
-function newSyn() { return { links: new Set(), tier: {}, counts: {}, bonus: {}, secrets: new Set(), yeok: 0, swordN: 0, needleT: 0 }; }
+function newSyn() { return { links: new Set(), tier: {}, counts: {}, bonus: {}, locked: {}, lockedLinks: new Set(), torn: new Set(), secrets: new Set(), yeok: 0, swordN: 0, needleT: 0 }; }
 // 1장 판은 맛보기라 두 기연이 매판 나온다. 한 생 판은 Core EncounterRoller 처럼 사건마다 판에 한 번 굴린다(WP-27):
 //   확률 = chance + 기연 능력치 × luck.chancePerLuck(0~1로 자름), 나올 수 없는 형편(chapters·minMinute·needsChapterSchool)이면 굴리지 않고 1분 뒤 다시
 const ENC_BY = Object.fromEntries(SYN.encounters.map(e => [e.id, e]));
@@ -665,7 +667,7 @@ function spawnSpiritBeast(chapter) {
   toast('기연의 기척', chapter === 'chapter6' ? '눈밭에 하얀 아이 하나가 뛰어간다 — 설삼 동자다' : '하얀 학 한 마리가 낮게 날아 달아난다');
 }
 function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 }, letter: { at: rand(3, 14), on: false, done: false, prog: 0 }, whisper: { at: rand(15, 20), on: false, done: false, prog: 0 }, sword_tomb: { at: rand(3, 14), on: false, done: false, prog: 0 }, spiritbeast: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
-const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n;
+const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n && !(G.syn.locked[id] || []).includes(n);   // 잠긴 비급 단계는 건너뛴다(개방 3 이 잠겨도 4 는 켜짐)
 const link = id => !!G && !!G.syn && G.syn.links.has(id);
 const lvOf = id => { const w = G.weapons.find(x => x.id === id); if (w) return w.evolved ? 8 : w.lv; const q = G.passives.find(x => x.id === id); return q ? q.lv : 0; };
 function updateSynergy() {
@@ -674,16 +676,31 @@ function updateSynergy() {
   for (const k in S.bonus) counts[k] = (counts[k] || 0) + S.bonus[k];
   // 기본의 극: 삼재검법 Lv8이면 가장 많이 모은 문파를 하나 더 채운다
   if (lvOf(SYN.common.weapon) >= SYN.common.atLevel) { let best = null; for (const k in counts) if (!best || counts[k] > counts[best]) best = k; if (best) counts[best]++; }
-  const tier = {};
-  for (const sc of SYN.schools) { let t = 0; for (const tr of sc.tiers) if ((counts[sc.id] || 0) >= tr.count) t = tr.count; tier[sc.id] = t; }
-  const links = new Set(SYN.links.filter(l => lvOf(l.a) >= l.minLevel && lvOf(l.b) >= l.minLevel).map(l => l.id));
+  // 비급 층(20장 '비급 층과 해금', Core Synergy.Compute restored): 한 생 판(혼 기록이 있는 판)은 복원한 비급만 켠다.
+  // 조건을 갖췄는데 잠긴 것은 locked·lockedLinks 로 따로 두고('?' 표시), 한 번 갖추면 torn 에 남아 생을 마칠 때 장경각에 찢긴 비급으로 오른다(Core LifeLog.NoteSynergy).
+  // 1장·서장 판은 혼 기록이 없어 다 열림(Core restored null)
+  const restored = G.soul0 ? new Set(G.soul0.restored || []) : null;
+  const tierOpen = (sc, tr) => tr.tier !== 'secret' || !restored || restored.has(manualIdOf(sc, tr));
+  const tier = {}, locked = {};
+  for (const sc of SYN.schools) { let t = 0; for (const tr of sc.tiers) if ((counts[sc.id] || 0) >= tr.count) { if (tierOpen(sc, tr)) t = tr.count; else (locked[sc.id] = locked[sc.id] || []).push(tr.count); } tier[sc.id] = t; }
+  const met = SYN.links.filter(l => lvOf(l.a) >= l.minLevel && lvOf(l.b) >= l.minLevel);
+  const links = new Set(met.filter(l => l.tier !== 'secret' || !restored || restored.has(l.id)).map(l => l.id));
+  const lockedLinks = new Set(met.filter(l => !links.has(l.id)).map(l => l.id));
+  const lockedIds = [...lockedLinks].concat(SYN.schools.flatMap(sc => (locked[sc.id] || []).map(n => sc.id + ':' + n)));
+  for (const id of lockedIds) if (!S.torn.has(id)) { S.torn.add(id); sfx('gong'); toast('찢긴 비급', `「${manualName(id)}」의 조건을 갖췄다. 비급이 찢겨 있어 아직 듣지 않는다 — 이 생을 마치면 장경각에 오른다`); }
   for (const l of SYN.links) if (links.has(l.id) && !S.links.has(l.id)) { discover('link:' + l.id); sfx('gong'); toast(l.hanja, `연환 「${l.nameKo}」 — ${l.desc}`); }
   for (const sc of SYN.schools) if (tier[sc.id] > (S.tier[sc.id] || 0)) { discover('school:' + sc.id); const tr = sc.tiers.find(x => x.count === tier[sc.id]); toast(`${sc.nameKo} 진전 ${tier[sc.id]}`, tr.desc + (tr.proto ? '' : ' (정식판에서)')); }
-  S.counts = counts; S.tier = tier; S.links = links;
+  S.counts = counts; S.tier = tier; S.links = links; S.locked = locked; S.lockedLinks = lockedLinks;
   // 진전 단계의 harmonyRange(무당 2단계 35). 넓히기만 한다
   let hr = Math.max(B.yinyang.harmonyRange, (G && G.body && G.body.harmonyRange) || 0);   // 무당 몸 ±40(WP-20, sects harmonyRange)
   for (const sc of SYN.schools) for (const t of sc.tiers) if (t.harmonyRange && sch(sc.id, t.count)) hr = Math.max(hr, t.harmonyRange);
   G.harmonyRange = hr;
+}
+// 비급 id(Core SynergyDefs: 연환은 그 id, 진전 단계는 '문파:개수')와 이름
+const manualIdOf = (sc, tr) => sc.id + ':' + tr.count;
+function manualName(id) {
+  const l = SYN.links.find(x => x.id === id); if (l) return `연환 ${l.nameKo}`;
+  const [sid, n] = id.split(':'), sc = SCHOOL_BY[sid]; return sc ? `${sc.nameKo} 진전 ${n}` : id;
 }
 // 닿은 진전 단계의 stats 합(synergies.json, Core SynergyState.StatBonus 와 같다)
 function synStats() {
@@ -3140,12 +3157,13 @@ function offerCard(o, idx) {
     const sc = SCHOOL_OF[o.id];
     if (sc) {
       tag += ` <em class="sch">${sc.nameKo}</em>`;
-      if (o.kind === 'nw' || o.kind === 'np') { const n = (G.syn.counts[sc.id] || 0) + 1, tr = sc.tiers.find(x => x.count === n); if (tr) badges.push([`진전 ${sc.nameKo} ${n}`, `진전 ${sc.nameKo} ${n}: ${tr.desc}${tr.proto ? '' : ' (정식판에서)'}`]); }
+      if (o.kind === 'nw' || o.kind === 'np') { const n = (G.syn.counts[sc.id] || 0) + 1, tr = sc.tiers.find(x => x.count === n); if (tr) badges.push(G.soul0 && tr.tier === 'secret' && !(G.soul0.restored || []).includes(manualIdOf(sc, tr)) ? [`진전 ${sc.nameKo} ?`, `진전 ${sc.nameKo} ${n}: 찢긴 비급 — 장경각에서 복원해야 듣는다`] : [`진전 ${sc.nameKo} ${n}`, `진전 ${sc.nameKo} ${n}: ${tr.desc}${tr.proto ? '' : ' (정식판에서)'}`]); }
     }
     if (o.kind === 'nw' || o.kind === 'uw') for (const l of SYN.links) {
-      if ((l.a !== o.id && l.b !== o.id) || G.syn.links.has(l.id)) continue;
+      if ((l.a !== o.id && l.b !== o.id) || G.syn.links.has(l.id) || G.syn.lockedLinks.has(l.id)) continue;
       const other = l.a === o.id ? l.b : l.a, ol = lvOf(other); if (!ol) continue;
       const done = lvOf(o.id) + 1 >= l.minLevel && ol >= l.minLevel;
+      if (G.soul0 && l.tier === 'secret' && !(G.soul0.restored || []).includes(l.id)) { badges.push(['연환 ?', `${gwa(W_BY_ID[other].nameKo)} 둘 다 Lv${l.minLevel} — 무언가 있다. 찢긴 비급이라 장경각에서 복원해야 듣는다`]); continue; }   // 잠겨도 숨기지 않고 '?' 띠만(20장)
       badges.push([done ? `연환 완성 「${l.nameKo}」` : `연환 「${l.nameKo}」`, `연환 「${l.nameKo}」 ${gwa(W_BY_ID[other].nameKo)} 둘 다 Lv${l.minLevel}${done ? ' — 이걸로 완성' : ''}`]);
     }
   }
@@ -3887,7 +3905,9 @@ function lifeSettle() {
   // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
   const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
+  // 찢긴 비급(20장, Core LifeLog.NoteSynergy → Soul.EndLife newTorn): 이번 생에 조건을 갖춘 잠긴 비급 가운데 처음 오르는 것
+  const newTorn = [...G.syn.torn].filter(id => !(s0.torn || []).includes(id) && !(s0.restored || []).includes(id));
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, newTorn, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3910,6 +3930,7 @@ function recordLife(st) {
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
   for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);
   if (st.extremeKill && !m.unlocks.includes('boss_at_extreme')) m.unlocks.push('boss_at_extreme');   // 역근 해금(WP-35)
+  m.torn = Array.isArray(m.torn) ? m.torn : []; for (const id of st.newTorn || []) if (!m.torn.includes(id)) m.torn.push(id);   // 찢긴 비급, 회귀해도 남는다(20장)
   m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
   if (st.whisper) m.whispers = (m.whispers || 0) + 1;   // 계승 엔딩 표식(20장). 표식이 무엇을 바꾸는지는 WP-29a
   m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;
@@ -4240,6 +4261,14 @@ function innTrain(stat) {
   if (c == null || m.qi < c) return;
   m.qi -= c; m.spent += c; m.train[stat] = (m.train[stat] || 0) + 1; soulSave(m); renderInn();
 }
+// 복원 값(synergies.json secretManuals, Core SecretManualsDef.SealStonesFor·RebirthQiFor): 몇 번째 복원인지로, 표를 넘으면 마지막 값. 봉인석은 쓰지 않고 지닌 수만 본다
+function restoreCost(m) { const sm = SYN.secretManuals, k = Math.min((m.restored || []).length, sm.rebirthQi.length - 1); return [sm.sealStones[k], sm.rebirthQi[k]]; }
+function canRestore(m, id) {
+  const lf = INN_F.find(x => x.id === 'library'); if (!lf || lf.underRepair || !facOpen(m, lf)) return false;   // 들어갈 수 없으면(Core Inn.CanEnter) 못 함
+  if (!(m.torn || []).includes(id) || (m.restored || []).includes(id)) return false;
+  const [rs, rq] = restoreCost(m); return (m.stones || []).length >= rs && (m.qi || 0) >= rq;
+}
+function innRestore(id) { const m = innMeta(); if (!canRestore(m, id)) return; m.qi -= restoreCost(m)[1]; m.restored = (m.restored || []).concat([id]); soulSave(m); renderInn(); }
 function innRefund() { const m = innMeta(); if (!m.spent) return; m.qi += m.spent; m.spent = 0; m.train = {}; soulSave(m); renderInn(); }
 function renderInn() {
   const m = innMeta();
@@ -4275,6 +4304,15 @@ function renderInn() {
     const b = document.createElement('button'); b.type = 'button'; b.disabled = true; if (done) b.style.opacity = '1';
     b.innerHTML = `<b>${done ? '✓ ' : ''}${when}</b><span>${what}</span>`; cv.appendChild(b);
   }
+  // 장경각 찢긴 비급(20장, Core Soul.CanRestore·TryRestore): 열렸고 찢긴 비급이 있으면 보인다. 수리 중이면(M2, A-07) 목록만
+  const lb = $('innlib'), lf = INN_F.find(x => x.id === 'library'), torn = Array.isArray(m.torn) ? m.torn : [], ron = !!lf && facOpen(m, lf) && torn.length > 0;
+  lb.hidden = $('innlibh').hidden = !ron; lb.innerHTML = '';
+  if (ron) { const [rs, rq] = restoreCost(m); for (const id of torn) {
+    const b = document.createElement('button'), done = (m.restored || []).includes(id); b.type = 'button';
+    b.disabled = done || !canRestore(m, id);
+    b.innerHTML = `<b>${done ? '✓ ' : ''}${manualName(id)}</b><span>${done ? '복원함 · 생마다 켜진다' : lf.underRepair ? uiT('ui.inn.under_repair') : `복원 · 봉인석 ${rs}개 지님 · 기 ${rq.toLocaleString()}`}</span>`;
+    if (!done) b.onclick = () => innRestore(id); lb.appendChild(b);
+  } }
   const eb = $('innelix'), eon = elixAvail(m); eb.hidden = $('innelixh').hidden = !eon || !ELIX.length; eb.innerHTML = '';
   if (eon) for (const e of ELIX) {
     const b = document.createElement('button'), on = innElix.includes(e.id); b.type = 'button';
@@ -4947,7 +4985,8 @@ function renderSlots() {
   ps.innerHTML = G.passives.map(p => `<span class="slot p" title="${P_BY_ID[p.id].nameKo}">${GLYPH[p.id] || P_BY_ID[p.id].nameKo[0]}<b>${p.lv}</b></span>`).join('');
   // 진전은 2개 이상 모인 문파만, 연환은 켜진 것만
   $('schools').innerHTML = SYN.schools.filter(sc => (G.syn.counts[sc.id] || 0) >= 2).map(sc => `<span class="${G.syn.tier[sc.id] ? 'on' : ''}" title="${sc.nameKo} 진전">${sc.nameKo} ${G.syn.counts[sc.id]}</span>`).join('')
-    + SYN.links.filter(l => G.syn.links.has(l.id)).map(l => `<span class="link" title="연환">${l.nameKo}</span>`).join('');
+    + SYN.links.filter(l => G.syn.links.has(l.id)).map(l => `<span class="link" title="연환">${l.nameKo}</span>`).join('')
+    + [...G.syn.lockedLinks].concat(SYN.schools.flatMap(sc => (G.syn.locked[sc.id] || []).map(n => sc.id + ':' + n))).map(() => `<span class="link" title="찢긴 비급 — 장경각에서 복원">?</span>`).join('');   // 잠긴 비급 '?' 인장(20장)
 }
 function drawTaiji() {
   const c = $('taijicv'), g = c.getContext('2d'), R = 42, cx = 46, cy = 46;
@@ -5063,6 +5102,7 @@ function endRun(won) {
     }
     facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
     if ((st.newTitles || []).length) facts.push([st.newTitles.map(id => TITLE_BY[id].nameKo).join(' · '), '새 칭호']);   // WP-34
+    if ((st.newTorn || []).length) facts.push([st.newTorn.map(manualName).join(' · '), '찢긴 비급 · 장경각에 올랐다']);   // 20장 '비급 층과 해금'
     if (st.newWeapons.length) facts.push([st.newWeapons.map(id => W_BY_ID[id].nameKo).join(' · '), '새로 얻은 무공 · 다음 생부터']);   // Core LifeSummary.NewUnlocks(R-08U 정산 줄과 같은 말)
     led.innerHTML = st.rows.map(r => `<tr><td>${r[0]}<small>${r[1]}</small></td><td>${r[2].toLocaleString()}</td></tr>`).join('')
       + `<tr class="sum"><td>얻은 윤회의 기<small>혼에 남은 기 ${m.qi.toLocaleString()} · 윤회 ${m.lives}번</small></td><td>+${st.total.toLocaleString()}</td></tr>`;
