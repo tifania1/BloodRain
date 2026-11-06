@@ -649,7 +649,15 @@ function encChance(e, c) { return encCanAppear(e, c) ? Math.max(0, Math.min(1, e
 function encCtx() { const r = CH_REGS.find(x => x.id === G.chRegion); return { chapter: r ? r.chapter : null, school: r && r.sect && SCHOOL_BY[r.sect] ? r.sect : null, minute: G.gm, luck: G.stats.luck || 0 }; }
 // 고수의 유해가 진전을 하나 더 주는 문파: 한 생 판은 그 땅 문파, 1장 판은 소림
 const SCHOOL_BY = Object.fromEntries(SYN.schools.map(sc => [sc.id, sc]));
-function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 }, letter: { at: rand(3, 14), on: false, done: false, prog: 0 }, whisper: { at: rand(15, 20), on: false, done: false, prog: 0 }, sword_tomb: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약·밀서·속삭임·검총은 한 생 판만(WP-28~31)
+// 기연 영물(20장, WP-32): 무당(4장) 백학·곤륜(6장) 설삼 동자. 금두꺼비 몸(기혈·걸음·달아남·25초)을 그대로 빌려 금두꺼비 자리에 낸다(그림 전 자리 표시도 두꺼비).
+// 잡으면 영약 하나(WP-28 효과: 오의 가득·음양 0)와 혈정 — 혈정 수는 기획서에 없어 정예 몫(drops.eliteBloodCrystal)으로 둔다. 은자·구슬은 안 준다
+const BEAST_NAME = { chapter4: '백학', chapter6: '설삼 동자' };
+function spawnSpiritBeast(chapter) {
+  const p = G.player, [x, y] = ringPos(), name = BEAST_NAME[chapter] || '영물';
+  spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale, { beast: name });
+  toast('기연의 기척', chapter === 'chapter6' ? '눈밭에 하얀 아이 하나가 뛰어간다 — 설삼 동자다' : '하얀 학 한 마리가 낮게 날아 달아난다');
+}
+function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 }, letter: { at: rand(3, 14), on: false, done: false, prog: 0 }, whisper: { at: rand(15, 20), on: false, done: false, prog: 0 }, sword_tomb: { at: rand(3, 14), on: false, done: false, prog: 0 }, spiritbeast: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
 const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n;
 const link = id => !!G && !!G.syn && G.syn.links.has(id);
 const lvOf = id => { const w = G.weapons.find(x => x.id === id); if (w) return w.evolved ? 8 : w.lv; const q = G.passives.find(x => x.id === id); return q ? q.lv : 0; };
@@ -725,8 +733,8 @@ function synTick(dt) {
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
-  for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb']) {
-    const ev = G.enc[key]; if (!ev || ev.done || ((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb') && !G.body)) continue;
+  for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast']) {
+    const ev = G.enc[key]; if (!ev || ev.done || ((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb' || key === 'spiritbeast') && !G.body)) continue;
     if (!ev.on) {
       if (G.gm >= ev.at && !overlay && G.body && !ev.rolled) {   // 한 생 판: 나올 때가 되면 한 번 굴린다
         const c = encCtx(), e = ENC_BY[key];
@@ -735,6 +743,7 @@ function synTick(dt) {
         if (!(Math.random() < encChance(e, c))) { ev.done = true; continue; }
         if (key === 'relic') ev.school = c.school;
         if (key === 'letter') { ev.done = true; G.letterArmed = true; continue; }   // 하오문 밀서: 다음에 부수는 등롱 속에 쪽지(WP-30)
+        if (key === 'spiritbeast') { ev.done = true; spawnSpiritBeast(c.chapter); continue; }   // 영물: 금두꺼비처럼 달아나는 것(WP-32)
       }
       if (G.gm >= ev.at && !overlay) {
         const a = rand(0, TAU), R = key === 'hermit' ? 11 : key === 'elixir' || key === 'whisper' || key === 'sword_tomb' ? 10 : 9; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
@@ -1935,6 +1944,11 @@ function killEnemy(e, crushed) {
   if (G.splats.length > 140) G.splats.shift();
   G.splats.push({ x: e.x, y: e.y, r: e.r * rand(1.4, 2.2), t: 0, red: e.sprite.startsWith('hyeol') || e.boss });
   sfx('kill');
+  if (e.beast) {   // 영물(WP-32): 영약 하나 + 혈정(정예 몫)
+    discover('enc:spiritbeast'); G.ult = B.ultimateCharge.max; G.yy = 0; G.beastCrystal = (G.beastCrystal || 0) + ((B.drops && B.drops.eliteBloodCrystal) || 0);
+    showDiscovery('奇緣', '靈物', e.beast, `${e.beast}을(를) 붙잡았다. 품에 영약 한 뿌리가 있다 — 오의가 가득 차고 음양이 가라앉는다. 혈정 +${(B.drops && B.drops.eliteBloodCrystal) || 0}.`);
+    return;
+  }
   if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
   if (e.elite && isPro()) cue('elite_kill:' + ELITES[e.eliteKey].id);
   if (e.lord) { lordDown(e); return; }   // 땅의 주인(WP-13e): 한 생은 이어진다
@@ -3790,7 +3804,7 @@ function lifeSettle() {
   // 혈월 천하: (줄 합 + 성질) × (rewards − 1) 을 한 줄로 반올림(Core RebirthQiLedger.Settle fromMoon). 혈정은 땅의 주인 하나마다·정예 몫 한 번에 곱해 반올림(Core KillBoss·BloodCrystal)
   if (G.moon) rows.push([`혈월 천하 × ${BM.rewards}`, '혈월 아래서는 혼에 남는 기도 짙다', Math.round(rows.reduce((a, r) => a + r[2], 0) * (BM.rewards - 1))]);
   const total = rows.reduce((a, r) => a + r[2], 0);
-  const crystal = LK.reduce((a, k) => a + Math.round(k.crystal * moonR()), 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0) * moonR());   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
+  const crystal = LK.reduce((a, k) => a + Math.round(k.crystal * moonR()), 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0) * moonR()) + Math.round((G.beastCrystal || 0) * moonR());   // 영물 혈정(WP-32)   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
   // 무공 해금(WP-17, Core Soul.UnlockChallenges): 한 생 처치·경공·정신부, 정신부 누적은 혼 기록 talismans + 이번 생. 누적으로 세지 않는 처치·경공 total 은 열지 않는다
   const talisTotal = (s0.talismans || 0) + (G.talis || 0);
   const newUnlocks = CHALLENGE_TOKENS.filter(t => !(s0.unlocks || []).includes(t)).filter(t => {

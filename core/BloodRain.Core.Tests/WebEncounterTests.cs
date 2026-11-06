@@ -39,8 +39,8 @@ namespace BloodRain.Core.Tests
         [Fact] public void 영약은_한_생_판에서_오의_가득_음양_0()
         {
             var html = Proto;
-            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb'])", html);
-            Assert.Contains("((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb') && !G.body)", html);
+            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast'])", html);
+            Assert.Contains("((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb' || key === 'spiritbeast') && !G.body)", html);
             Assert.Contains("discover('enc:elixir'); G.ult = B.ultimateCharge.max; G.yy = 0;", html);
             Assert.Contains("| 영약 | 빛나는 덩굴·바위 틈(천년하수오, 공청석유) | 줍는다 | 오의 게이지 가득, 음양 0 |", Gdd);
         }
@@ -76,6 +76,19 @@ namespace BloodRain.Core.Tests
             Assert.Contains("G.weapons.splice(k, 1); G.banished.add(o.w.id); G.tombMight = (G.tombMight || 0) + lv * TOMB_PER_LEVEL;", html);
             Assert.Contains("(G.stats.might + sectBonus('Might') + (G.tombMight || 0))", html);
             Assert.Contains("if (G.weapons.length > 1) showSwordTomb();", html);
+        }
+
+        [Fact] public void 영물은_무당_곤륜에서_달아나고_잡으면_영약과_혈정()
+        {
+            string html = Proto;
+            Assert.Contains("| 영물 | 장별 영물(4장 백학, 6장 설삼 동자) | 달아나는 것을 잡는다 | 영약 하나 + 혈정 | 25% |", Gdd);
+            var e = Load().Synergies.Encounter("spiritbeast");
+            Assert.Equal(0.25f, e.Chance);
+            Assert.Equal(new[] { "chapter4", "chapter6" }, e.Chapters);
+            Assert.Contains("const BEAST_NAME = { chapter4: '백학', chapter6: '설삼 동자' };", html);
+            Assert.Contains("if (key === 'spiritbeast') { ev.done = true; spawnSpiritBeast(c.chapter); continue; }", html);
+            Assert.Contains("discover('enc:spiritbeast'); G.ult = B.ultimateCharge.max; G.yy = 0;", html);
+            Assert.Contains("+ Math.round((G.beastCrystal || 0) * moonR())", html);
         }
     }
 }
