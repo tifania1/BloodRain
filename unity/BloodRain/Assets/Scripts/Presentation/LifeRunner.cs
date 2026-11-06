@@ -212,6 +212,7 @@ namespace BloodRain.Presentation
             var extra = syn.StatBonus();
             float ratio = vitals != null && vitals.MaxHealth > 0f ? vitals.Health / vitals.MaxHealth : 1f;
             extra.Add(_life.InsightBonus((int)System.Math.Min(_kills, int.MaxValue), ratio));
+            if (debugRevivals > 0) extra.Add(BloodRain.Core.Build.StatKind.Revival, debugRevivals); // WP-42U 시험 메뉴 '재기 +1'
             bool moving = player != null && (player.position - _lastStatPos).sqrMagnitude > 1e-6f;
             if (player != null) _lastStatPos = player.position;
             var st = _life.CurrentStats(extra, ratio, moving);
@@ -319,7 +320,59 @@ namespace BloodRain.Presentation
                 SceneManager.LoadScene("Run");
                 return;
             }
+            // WP-42U 재기: 남았으면 그 비율 x 최대 기혈로 그 자리에서 일어난다(맞은 뒤 무적, 금빛 고리 한 번). 없으면 정산.
+            if (vitals != null)
+            {
+                if (Stats == null) ApplyStats();
+                var rise = Stats != null ? _life.TryRevive(Stats) : null;
+                if (rise.HasValue)
+                {
+                    vitals.Revive(rise.Value * vitals.MaxHealth);
+                    Debug.Log($"[LifeRunner] 재기 {_life.RevivalsUsed}/{Stats.Revival} → 기혈 {vitals.Health:0}");
+                    StartCoroutine(ReviveRing());
+                    return;
+                }
+            }
             EndLife(LifeEndWay.Fallen);
+        }
+
+        /// <summary>시험 메뉴 '재기 +1(플레이 중)' 이 더하는 재기 횟수(연무장 재기를 안 사도 보려고).</summary>
+        [System.NonSerialized] public int debugRevivals;
+        static Sprite _ringSprite;
+
+        // 재기 금빛 고리: 몸에서 0.6초(언스케일) 동안 커지며 옅어진다
+        System.Collections.IEnumerator ReviveRing()
+        {
+            if (player == null) yield break;
+            if (_ringSprite == null)
+            {
+                const int N = 128;
+                var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { name = "재기 고리", wrapMode = TextureWrapMode.Clamp };
+                var px = new Color32[N * N];
+                for (int y = 0; y < N; y++)
+                    for (int x = 0; x < N; x++)
+                    {
+                        float d = new Vector2(x + 0.5f - N / 2f, y + 0.5f - N / 2f).magnitude / (N / 2f);
+                        px[y * N + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(1f - Mathf.Abs(d - 0.85f) / 0.12f) * 255));
+                    }
+                tex.SetPixels32(px);
+                tex.Apply();
+                _ringSprite = Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), N);
+            }
+            var go = new GameObject("재기 고리");
+            go.transform.SetParent(player, false);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = _ringSprite;
+            sr.sortingOrder = 5;
+            float baseSize = WorldScale.Current != null ? WorldScale.Current.Length(1f) : 1f;
+            for (float t = 0f; t < 0.6f; t += Time.unscaledDeltaTime)
+            {
+                float k = t / 0.6f;
+                sr.color = new Color(0.95f, 0.78f, 0.3f, 1f - k);
+                go.transform.localScale = Vector3.one * baseSize * Mathf.Lerp(1f, 4f, k);
+                yield return null;
+            }
+            Destroy(go);
         }
 
         /// <summary>한 생을 끝내고 혼에 옮겨 저장한 뒤 정산을 연다. 정산이 끝나면 객잔(Inn) 씬.</summary>

@@ -98,6 +98,18 @@ namespace BloodRain.Editor
         [MenuItem("BloodRain/Test/지금 쓰러지기(플레이 중)", true)]
         static bool FallNowValid() => Application.isPlaying;
 
+        // WP-42U 시험: 연무장 재기를 사지 않아도 이번 생에 재기 하나를 더한다(능력치는 0.25초 뒤 다시 셈)
+        [MenuItem("BloodRain/Test/재기 +1(플레이 중)")]
+        public static void AddRevival()
+        {
+            if (LifeRunner.Instance == null) { Debug.LogWarning("[SoulBootstrap] Run 씬 플레이 중에만 됩니다"); return; }
+            LifeRunner.Instance.debugRevivals++;
+            Debug.Log($"[SoulBootstrap] 재기 +1 (시험 몫 {LifeRunner.Instance.debugRevivals})");
+        }
+
+        [MenuItem("BloodRain/Test/재기 +1(플레이 중)", true)]
+        static bool AddRevivalValid() => Application.isPlaying;
+
         // RM-05U 시험: 은자를 500냥이 되게 채우고 보부상 창을 연다(12·24분을 기다리지 않고)
         [MenuItem("BloodRain/Test/지금 보부상 부르기(플레이 중)")]
         public static void CallMerchant()

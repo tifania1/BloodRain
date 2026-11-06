@@ -290,7 +290,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 여섯 다 놓고 받으면 각 효과가 들고(속삭임 뒤 회복 절반, 검총 뒤 그 무공이 칸에서 빠지고 레벨업에 안 나옴), 정산 혈정에 영물 몫이 더해짐. 콘솔 에러 0
   - 찍기: `docs/unity_shots/WP-39U/` 의 `encounters.png`
 
-- [ ] WP-42U 재기 · 먼저: 없음
+- [x] WP-42U 재기 · 먼저: 없음 — 2026-11-07 00:58 PC: LifeRunner.OnDied 가 정산 전에 `life.TryRevive(Stats)` — 값이 오면 `vitals.Revive(비율 × 최대 기혈)`(맞은 뒤 무적)와 금빛 고리 0.6초, null 이면 그대로 End(fallen). 시험 메뉴 `BloodRain/Test/재기 +1(플레이 중)`(SoulBootstrap.cs, LifeRunner.debugRevivals 를 능력치 재기에 더함). 소림 몸 재기 1로 쓰러지니 기혈 60/120 으로 일어나고 무적, 두 번째엔 정산(Record). 콘솔 에러 0. 밀쳐내기는 WP-21a 결정 뒤. 찍음 `docs/unity_shots/WP-42U/` 의 `revive.png`(눈으로는 못 봄)
   - 할 것: 한 생(서장 아님)에서 기혈이 0이 되면 먼저 `life.TryRevive(life.CurrentStats(…))` — 값이 오면 그 비율 × 최대 기혈로 그 자리에서 일어나고(맞은 뒤 무적만큼 무적, 금빛 고리 한 번), null 이면 지금처럼 End(fallen) 정산. 주변 적 밀쳐내기는 WP-21a 결정 뒤.
   - 쓸 것: Core `Life.TryRevive`·`RevivalsUsed`, balance.json `revival`. 웹 한 생 판 `hurtPlayer` 의 재기 줄과 견줌
   - 메뉴: 시험 메뉴에 '재기 +1(플레이 중)' 하나(연무장 재기를 안 사도 볼 수 있게)
