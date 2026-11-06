@@ -49,6 +49,9 @@ namespace BloodRain.Core.Build
         public float EnemySpeedMultiplier(float distance, float scale = 1f) =>
             _def.NearEnemySlow > 0f && distance <= _def.NearEnemySlowRadius * scale ? 1f - _def.NearEnemySlow : 1f;
 
+        /// <summary>EnemySpeedMultiplier 가 느리게 하는 반경(세계 m, x scale). 곤륜이 아니면 0. 적 걸음을 잡(job) 안에서 셈하는 쪽이 쓴다.</summary>
+        public float NearEnemySlowRadius(float scale = 1f) => _def.NearEnemySlow > 0f ? _def.NearEnemySlowRadius * scale : 0f;
+
         /// <summary>지금 몸에 붙는 능력치. healthRatio 는 지금 기혈 / 최대 기혈(0~1), moving 은 이번 프레임에 움직였는가.</summary>
         public StatBonus Bonus(float healthRatio = 1f, bool moving = false)
         {

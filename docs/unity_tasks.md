@@ -190,7 +190,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R-04U/` 의 `evade.png`
   (진행: 2026-11-06 01:55 PC API — 메뉴 `BloodRain/Test/몸 바꾸기(문파)/<문파>`(Editor/SectBodyMenu.cs, 플레이 중 성질 없는 그 문파 몸으로 Run 다시 엶). (1) 은 C-06a 대로 이미 됨. (2) `PlayerVitals.evadeChance`(=StatSheet.Evade)를 피격 직전 `Evade.Roll` 로 굴려 피하면 피해·넉백 없이 맞은 뒤 무적 + 청록 잔상, 디버그 줄 '피함'. 수로채 몸으로 강시 줄 사이를 걸어 맞음 24·피함 1~2, 움직일 때 회피 15%. (6) 행낭 카드 은자 × (1 + Greed). (7) WeaponRunner 쾌속 = min(상한, 쾌속 + HarmonyCooldownReduction), 무당 몸 태극에서 0.20. (9) `healingMultiplier` 를 vitals.Heal 이 곱함, 초당 회복(StatSheet.Recovery)도 처음으로 Update 에서 채움 — 마교 몸 Heal(20) → 10. 콘솔 에러 0. 찍음 `evade.png`. 남은 것: (5) 중독된 적 피해 +20% 와 (6) 음식 FoodHeal 은 적 중독 상태·음식 줍기(C-09b)가 아직 없어서 못 붙임 — C-06c 의 독 번짐과 같은 장치가 먼저)
 
-- [ ] R-04Ub 문파 고유 능력: 독 면역·곤륜 적 걸음 · 먼저: R-04Ua
+- [x] R-04Ub 문파 고유 능력: 독 면역·곤륜 적 걸음 · 먼저: R-04Ua — 2026-11-06 23:50 PC API: EnemyField 에 `sectTrait`(LifeRunner 가 넣음). 당가면 독두꺼비 독 장판(Pool.Poison)·독인 안개 피해 0, 적 탄에 Poison 표식(아직 쏘는 적 없음, 정예 E-01 부터). 곤륜은 EnemySim.Step 에 가까운 반경·배율을 넘겨 잡 안에서 걸음·돌진 x0.9(Core 에 `SectTrait.NearEnemySlowRadius(축척)` 더함). 반경 4m 독 장판 위에서 당가 몸은 장판 몫이 안 들어가고 소림 몸은 초당 3(5 − 호신 2). 곤륜 반경 3m·x0.9, 따로 만든 EnemySim 으로 0.1초 걸음 가까운 적 0.09·먼 적 0.10. 콘솔 에러 0. 찍음 `docs/unity_shots/R-04U/` 의 `poison_immune.png`
   - 할 것: (3) 독 장판(독두꺼비)·독인 안개·독 탄 피해에 `SectTrait.PoisonImmune` 이면 0. (8) 곤륜 몸이면 적 걸음에 `SectTrait.EnemySpeedMultiplier(플레이어와 거리, 축척)`. (4) 물 걸음은 R-13U 에서.
   - 쓸 것: Core `SectTrait.PoisonImmune`·`EnemySpeedMultiplier`, `PoisonFogGimmick.HealthLoss(…, poisonImmune)`
   - 메뉴: R-04Ua 의 몸 바꾸기

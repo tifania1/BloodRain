@@ -136,7 +136,7 @@ namespace BloodRain.Sim
         /// recycleBeyond 를 넘게 멀어진 적은 플레이어 둘레 recycleTo 거리, 플레이어가 가는 쪽으로 옮긴다.
         /// knockKeepPerSecond 는 넉백 속도가 1초 뒤 남는 비율(balance.json enemyStatus.knockbackKeepPerSecond).</summary>
         public void Step(float dt, float2 player, float2 playerHeading, float cell, float recycleBeyond, float recycleTo,
-                         float speedScale = 1f, float knockKeepPerSecond = 0.02f)
+                         float speedScale = 1f, float knockKeepPerSecond = 0.02f, float nearSlowRadius = 0f, float nearSlowMultiplier = 1f)
         {
             if (_count == 0 || dt <= 0f) return; // Removed 는 그리는 쪽이 읽고 비운다
 
@@ -144,6 +144,7 @@ namespace BloodRain.Sim
             {
                 Agents = _a, Dt = dt, Player = player, Heading = playerHeading,
                 RecycleBeyond = recycleBeyond, RecycleTo = recycleTo, SpeedScale = speedScale,
+                NearSlowRadius = nearSlowRadius, NearSlowMultiplier = nearSlowMultiplier,
                 KnockKeep = math.pow(knockKeepPerSecond, dt),
             }.Schedule(_count, 64);
 
@@ -246,6 +247,8 @@ namespace BloodRain.Sim
             public float RecycleBeyond;
             public float RecycleTo;
             public float SpeedScale;
+            public float NearSlowRadius;     // 이 거리(세계 m) 안 적은 걸음 x NearSlowMultiplier(곤륜 설한기, SectTrait.EnemySpeedMultiplier). 0 이면 없음
+            public float NearSlowMultiplier;
             public float KnockKeep; // 이번 프레임 넉백이 남는 비율 = knockbackKeepPerSecond ^ Dt
 
             public void Execute(int i)
@@ -256,7 +259,8 @@ namespace BloodRain.Sim
                 float2 to = Player - e.Pos;
                 float d = math.length(to);
                 float2 dir = d > 1e-5f ? to / d : new float2(1, 0);
-                float speed = e.Speed * SpeedScale * (1f + e.Buff);
+                float near = NearSlowRadius > 0f && d <= NearSlowRadius ? NearSlowMultiplier : 1f;
+                float speed = e.Speed * SpeedScale * near * (1f + e.Buff);
                 float2 v = float2.zero;
                 if (e.Stun > 0f)
                 {
@@ -322,7 +326,7 @@ namespace BloodRain.Sim
                                 if (e.PhaseLeft <= 0f) { e.Phase = (byte)DashPhase.Dashing; e.PhaseLeft = e.DashSeconds; }
                                 break;
                             case DashPhase.Dashing:
-                                v = e.DashDir * e.DashSpeed * SpeedScale * (1f + e.Buff);
+                                v = e.DashDir * e.DashSpeed * SpeedScale * near * (1f + e.Buff);
                                 if (e.PhaseLeft <= 0f)
                                 {
                                     // 쉬는 초는 [RestMin, RestMax] 사이. Id·나이로 섞은 값이라 잡 안에서도 같은 결과

@@ -259,6 +259,7 @@ namespace BloodRain.Presentation
                 enemies.critChance = st.Bonus[BloodRain.Core.Build.StatKind.CritChance];
                 enemies.dotMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.DotDamage];
                 enemies.poisonedTargetMultiplier = _life.Body.SectTrait.DamageMultiplier(true);
+                enemies.sectTrait = _life.Body.SectTrait; // R-04Ub 당가 독 면역·곤륜 설한기
             }
             ApplySynergyEffects(syn, ratio);
         }
