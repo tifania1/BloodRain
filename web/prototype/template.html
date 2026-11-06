@@ -1913,6 +1913,7 @@ function addUlt(v, flat) {
 function hurtPlayer(dmg, src) {
   const p = G.player;
   if (p.iframe > 0 || G.won || G.demo) return;
+  if (G.taiji > 0) return;   // 태극무량: 받는 피해 무효(WP-25)
   if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
   if (G.empower) dmg *= G.empower.dmg;   // 혈월(WP-13e): 화면 위 적 피해
   dmg *= yyFieldMul();   // 흑백 구역(WP-13e)
@@ -2248,10 +2249,10 @@ function breakLantern(l) {
 // 오의: 일검
 // 오의(5장 '오의 상세', characters.json ultimates — 천하 시안 R-15·16 과 같은 셈, WP-25). 한 생 판은 몸 문파의 오의(sects ultimate), 서장·1장 판은 일검.
 // 한 방 = 시작 무공 한 방(서장·1장 판은 삼재검법) × mightMultiplier × 오의 위력. 박자는 Core UltimateCast: 쓰는 순간 한 번, mightPerSecond 가 있으면 pulseSeconds 마다(만천화우 0·1·2초),
-// 배율 0(천마해체)은 안 때린다. 현경 '오의 2연속'이면 박자마다 두 번. 아직 웹에 모양이 없는 셋(역류·팔방풍우·태극무량)은 일검으로 대신한다.
+// 배율 0(태극무량·천마해체)은 안 때린다. 현경 '오의 2연속'이면 박자마다 두 번(지속형은 새로 시작할 뿐 늘지 않음).
 const ULT_BY = Object.fromEntries((DATA.ultimates || []).map(u => [u.id, u]));
 const UPar = (u, k, d) => u && u.params && u.params[k] != null ? u.params[k] : d;
-const WEB_ULTS = new Set(['il_geom', 'saja_hu', 'cheonroe_rak', 'mancheon_hwau', 'cheonseol_bu', 'cheonma_haeche']);
+const WEB_ULTS = new Set(['il_geom', 'saja_hu', 'cheonroe_rak', 'mancheon_hwau', 'cheonseol_bu', 'cheonma_haeche', 'yeokryu', 'palbang_pungu', 'taiji_muryang']);
 function bodyUlt() { const id = G.body && G.body.ultimate; return ULT_BY[id && WEB_ULTS.has(id) ? id : 'il_geom'] || { id: 'il_geom', mightMultiplier: ULT_MULT }; }
 function ultBaseHit() {
   const sw = G.body ? G.weapons.find(w => w.id === G.body.startWeapon) : G.weapons.find(w => w.id === 'samjae_sword');
@@ -2265,6 +2266,7 @@ function useUlt() {
   const dur = UPar(u, 'durationSeconds', 0), per = dur > 0 && UPar(u, 'mightPerSecond', 0) > 0 ? UPar(u, 'pulseSeconds', 0) : 0;
   G.ultCast = { u, el: 0, done: 0, per, dur, total: u.mightMultiplier <= 0 ? 0 : per > 0 ? Math.max(1, Math.ceil(dur / per - 1e-4)) : 1, a: Math.atan2(G.player.fy, G.player.fx) };
   if (u.id === 'cheonma_haeche') G.diss = dur;
+  if (UPar(u, 'blocksDamage', 0) > 0) G.taiji = dur;   // 태극무량: 받는 피해 무효·원 안 적 탄 반사. 또 쓰면 새로 5초
   G.cam.shake = 0.35; if (u.id !== 'il_geom') toast(u.nameKo, u.summary || '');
   ultStep(0);   // 쓰는 순간 첫 박자
 }
@@ -2275,6 +2277,16 @@ function ultStep(dt) {
     while (C.done < C.total && C.done * C.per <= C.el + 1e-4) { C.done++; for (let c = 0; c < (G.stats.ultCasts || 1); c++) ultPulse(C.u, C, c); }
     if (C.done >= C.total && C.el >= C.dur) G.ultCast = null;
   }
+  if (G.taiji > 0 && dt > 0) {   // 태극무량: 몸 둘레 radius 안의 적 탄을 되돌려 보낸다(되돌린 탄은 나를 안 맞힌다 — 시안과 같음)
+    G.taiji = Math.max(0, G.taiji - dt); const p = G.player, R = UPar(ULT_BY.taiji_muryang, 'radius', 3);
+    for (const q of G.foeShots || []) if (!q.refl && Math.hypot(q.x - p.x, q.y - p.y) < R + q.r) { q.refl = true; q.vx = -q.vx; q.vy = -q.vy; q.root = 0; }
+  }
+  for (const w of G.ultShots || []) {   // 팔방풍우 장풍: 꿰뚫고 지나가며 적 하나를 한 번씩
+    const p = G.player; if (w.delay > 0) { w.delay -= dt; w.x = p.x; w.y = p.y; continue; }
+    w.x += w.vx * dt; w.y += w.vy * dt; w.t -= dt;
+    for (const e of G.enemies) if (!e.dead && !w.hit.has(e) && Math.hypot(e.x - w.x, e.y - w.y) < e.r + w.r) { w.hit.add(e); hurtEnemy(e, w.dmg, null, w.ux, w.uy, w.kb); }
+  }
+  if (G.ultShots) G.ultShots = G.ultShots.filter(w => w.t > 0);
   if (G.diss > 0 && dt > 0) {   // 천마해체: 초당 최대 기혈 healthCostPerSecond(바닥 규칙이 없어 쓰러질 수 있다 — 시안과 같음)
     const p = G.player; p.hp -= p.maxHp * UPar(ULT_BY.cheonma_haeche, 'healthCostPerSecond', 0) * Math.min(dt, G.diss); G.diss = Math.max(0, G.diss - dt);
     if (p.hp <= 0) { p.hp = 0.0001; hurtPlayer(1, null); }   // 재기·쓰러짐은 hurtPlayer 길로
@@ -2284,10 +2296,16 @@ function ultStep(dt) {
 function ultPulse(u, C, c) {
   const p = G.player, hit = ultBaseHit() * u.mightMultiplier * G.stats.ultPower, hw = viewW() / 2, hh = viewH() / 2;
   const onScreen = e => !e.dead && Math.abs(e.x - p.x) < hw + e.r && Math.abs(e.y - p.y) < hh + e.r;
-  if (u.id === 'il_geom') {   // 바라보는 쪽 화면 끝까지 한 줄, 관통 무한
-    const ca = Math.cos(C.a), sa = Math.sin(C.a), len = viewDiag();
+  if (u.id === 'il_geom' || u.id === 'yeokryu') {   // 일검: 바라보는 쪽 화면 끝까지 한 줄(관통 무한) / 역류: 폭 width 물살로 같은 길을 쓸며 끝 쪽으로 민다(미는 세기 12 는 시안 값, Core 는 waveSpeed)
+    const ca = Math.cos(C.a), sa = Math.sin(C.a), len = viewDiag(), half = u.id === 'il_geom' ? 0.9 : UPar(u, 'width', 3) / 2, kb = u.id === 'il_geom' ? 6 : 12;
     if (c === 0) addEffect('slash', p.x, p.y, { a: C.a, len, life: 0.6 });
-    for (const e of G.enemies) { if (e.dead) continue; const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca); if (along > -0.5 && along < len && perp < 0.9 + e.r) hurtEnemy(e, hit, null, ca, sa, 6); }
+    for (const e of G.enemies) { if (e.dead) continue; const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca); if (along > -0.5 && along < len && perp < half + e.r) hurtEnemy(e, hit, null, ca, sa, kb); }
+  } else if (u.id === 'palbang_pungu') {   // 바라보는 쪽부터 directions 방향 장풍을 volleys 연타(volleyGapSeconds 간격)
+    const n = UPar(u, 'directions', 8), v = UPar(u, 'shotSpeed', 5);
+    for (let k = 0; k < UPar(u, 'volleys', 1); k++) for (let i = 0; i < n; i++) {
+      const a = C.a + TAU * i / n, ux = Math.cos(a), uy = Math.sin(a);
+      (G.ultShots = G.ultShots || []).push({ x: p.x, y: p.y, vx: ux * v, vy: uy * v, ux, uy, t: UPar(u, 'shotLifeSeconds', 2.6), r: UPar(u, 'shotRadius', 0.55), dmg: hit, kb: UPar(u, 'knockback', 15), hit: new Set(), delay: k * UPar(u, 'volleyGapSeconds', 0.3) + c * 0.1 });
+    }
   } else if (u.id === 'cheonroe_rak') {   // 화면 안 무작위 strikes 곳 낙뢰 반경 strikeRadius, 감전 shockSeconds(웹은 멈춤으로)
     const R = UPar(u, 'strikeRadius', 1.2), sh = UPar(u, 'shockSeconds', 0);
     for (let i = 0; i < UPar(u, 'strikes', 0); i++) {
@@ -4124,7 +4142,7 @@ function foeShotsStep(dt) {
   for (const b of G.foeShots) {
     const step = Math.hypot(b.vx, b.vy) * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.left -= step;
     if (b.chain && b.src.dead) { b.left = 0; continue; }   // 던진 수적이 쓰러지면 갈고리도 사라진다
-    if (Math.hypot(p.x - b.x, p.y - b.y) < b.r + 0.4) {
+    if (!b.refl && Math.hypot(p.x - b.x, p.y - b.y) < b.r + 0.4) {
       if (b.root && p.iframe <= 0 && p.dashT <= 0) { p.rootT = b.root; toast('갈고리', '묶였다 · 경공으로 끊는다'); }
       hurtPlayer(b.dmg, b.src); b.left = 0;
     }
@@ -4147,6 +4165,8 @@ function drawLocalFx() {
     ctx.fillStyle = b.chain ? '#1A1A1A' : b.petal ? 'rgba(200,90,110,0.85)' : 'rgba(170,200,215,0.9)';
     ctx.beginPath(); ctx.arc(wx(b.x), wy(b.y), Math.max(2, b.r * PPM), 0, TAU); ctx.fill();
   }
+  for (const w of G.ultShots || []) if (!(w.delay > 0)) { ctx.fillStyle = 'rgba(239,230,210,0.75)'; ctx.strokeStyle = 'rgba(26,26,26,0.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(w.x), wy(w.y), w.r * PPM, 0, TAU); ctx.fill(); ctx.stroke(); }   // 팔방풍우 장풍(WP-25)
+  if (G.taiji > 0) { const p = G.player, R = UPar(ULT_BY.taiji_muryang, 'radius', 3) * PPM, X = wx(p.x), Y = wy(p.y); ctx.strokeStyle = 'rgba(201,162,39,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(26,26,26,0.6)'; ctx.beginPath(); ctx.arc(X, Y - R / 2, R / 2, -Math.PI / 2, Math.PI / 2); ctx.arc(X, Y + R / 2, R / 2, -Math.PI / 2, Math.PI / 2, true); ctx.stroke(); }   // 태극무량 원(시안 그림)
   for (const e of G.enemies) {
     if (e.dead) continue;
     if (e.behavior === 'poison_aura') { const R = E_BY_ID[e.type].zoneRadius * PPM; ctx.fillStyle = 'rgba(80,120,60,0.16)'; ctx.beginPath(); ctx.arc(wx(e.x), wy(e.y), R, 0, TAU); ctx.fill(); }

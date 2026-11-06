@@ -28,6 +28,10 @@ namespace BloodRain.Core.Tests
             foreach (var k in new[] { "'strikeRadius'", "'shockSeconds'", "'strikes'", "'radius'", "'stunSeconds'", "'poisonSeconds'", "'freezeSeconds'", "'healthCostPerSecond'", "'lifesteal'", "'damageMultiplier'" })
                 Assert.Contains(k, html);
             Assert.Contains("A.resetUltimate === u.id", html);   // 혈공은 천마해체를 쓸 때만 음양이 돌아온다
+            foreach (var k in new[] { "'width'", "'directions'", "'volleys'", "'volleyGapSeconds'", "'shotSpeed'", "'shotRadius'", "'shotLifeSeconds'", "'knockback'", "'blocksDamage'" })
+                Assert.Contains(k, html);
+            Assert.Contains("if (G.taiji > 0) return;   // 태극무량: 받는 피해 무효", html);
+            Assert.Contains("if (!b.refl && Math.hypot(p.x - b.x, p.y - b.y)", html);   // 되돌린 탄은 나를 안 맞힘
         }
     }
 }
