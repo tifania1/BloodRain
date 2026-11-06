@@ -492,7 +492,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 첫 환혼 때 목 노인 첫 줄, 여자 몸 카드에 맞는 묘사, 다시 고르면 카드 글이 바뀜
   - 찍기: `docs/unity_shots/DL-04b/` 의 `first_rebirth.png`, `female_card.png`
 
-- [ ] DL-05b 정산 자막 · 먼저: LF-03
+- [x] DL-05b 정산 자막 · 먼저: LF-03 — 2026-11-07 01:00 PC: LifeRunner.EndLife 가 `soul.EndLife` 뒤 `InnDialogue.Settlement`(facts: 그림자 단계가 0보다 크면 `FallenToShadow`, `LifeSeconds` 는 정산 생존 시간)를 불러 SettlementScreen 새 `SetCaption` 에 넘기고, Show 가 맨 아래(버튼 밑) 기울인 먹빛 한 줄로 띄움. 다른 말은 `SettlementScreen.CaptionText` — 키 `dialogue.settlement.lines.<id>.text`(혈월 `.bloodMoon`), lord_first 는 `Loc.Region`·`Loc.Boss`, 문파 줄은 `Loc.Sect`·분:초. 당가 몸으로 바로 쓰러지니 short 줄 「이 몸은 빗속에서 오래 버티지 못했다.」, 영어로 아홉 줄 다 키가 찾아짐(any_3 「…of Dang Clan endured 12:34…」). 콘솔 에러 0. 혈월 생은 회귀한 혼을 만드는 메뉴가 아직 없어 못 봄(Core 테스트가 고름). 찍음 `docs/unity_shots/DL-05b/` 의 `caption.png`(눈으로는 못 봄)
   - 할 것: 정산을 열 때 `Soul.EndLife` 바로 뒤 `InnDialogue.Settlement(data, soul, record, summary, facts, rng)`(facts 는 `ReturnFacts` 에 `FallenToShadow`·`LifeSeconds`). 화면 맨 아래 붓글씨 한 줄. 한국어는 `caption.Text`, 다른 말은 키 `dialogue.settlement.lines.<id>.text`(혈월이면 `.bloodMoon`)에 lord_first 는 `caption.Region`·`Lord`, any_3 은 `caption.Sect`·`Seconds` 를 `Loc.F` 로.
   - 쓸 것: Core `InnDialogue.Settlement`, dialogue.json settlement
   - 메뉴: 정산 시험 씬 만들기(이미 있음)

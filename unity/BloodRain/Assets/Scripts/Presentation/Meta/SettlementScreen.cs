@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BloodRain.Core.Data;
@@ -184,6 +184,13 @@ namespace BloodRain.Presentation.Meta
             var btn = MakeButton(_root, Loc.T("ui.settle.to_inn") + "  <size=70%><alpha=#88>Enter<alpha=#FF></size>");
             Place((RectTransform)btn.transform, new Vector2(0.5f, 0f), new Vector2(0, 80), new Vector2(380, 64));
             btn.onClick.AddListener(Finish);
+            if (!string.IsNullOrEmpty(_caption))
+            {
+                // DL-05b 맨 아래 서술 자막 한 줄
+                var cap = Text(_root, _caption, 24, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.75f));
+                Place(cap.rectTransform, new Vector2(0.5f, 0f), new Vector2(0, 26), new Vector2(1700, 36));
+                Caption = cap;
+            }
 
             _t = 0f;
             _showing = true;
@@ -350,6 +357,30 @@ namespace BloodRain.Presentation.Meta
             var img = go.GetComponent<Image>();
             img.color = color; img.raycastTarget = false;
             return (RectTransform)go.transform;
+        }
+
+        string _caption;
+        /// <summary>시험용: 지금 띄운 자막.</summary>
+        public TextMeshProUGUI Caption { get; private set; }
+        /// <summary>DL-05b 다음 Show 맨 아래에 띄울 서술 자막(InnDialogue.Settlement). null 이면 없음.</summary>
+        public void SetCaption(string text) => _caption = text;
+
+        /// <summary>자막 한 줄을 지금 말로. 한국어는 caption.Text 그대로, 다른 말은 dialogue.settlement.lines.&lt;id&gt;.text(혈월이면 .bloodMoon)에
+        /// lord_first 는 지역·땅의 주인 이름, 문파 줄은 문파 이름·버틴 시간(분:초)을 넣는다.</summary>
+        public static string CaptionText(BloodRain.Core.Data.GameData data, BloodRain.Core.Meta.SettlementCaption c)
+        {
+            if (c == null) return null;
+            if (Loc.Lang.StartsWith("ko")) return c.Text;
+            string key = $"dialogue.settlement.lines.{c.Line.Id}.{(c.BloodMoon ? "bloodMoon" : "text")}";
+            if (c.Region != null)
+            {
+                var r = data.Cheonha.Region(c.Region);
+                var b = data.Bosses.FirstOrDefault(x => x.Id == c.Lord);
+                return Loc.F(key, Loc.Region(r), b != null ? Loc.Boss(b) : c.Lord);
+            }
+            if (c.Sect != null)
+                return Loc.F(key, Loc.Sect(data.Cheonha.Sect(c.Sect)), $"{c.Seconds / 60}:{c.Seconds % 60:00}");
+            return Loc.T(key, c.Text);
         }
 
         TextMeshProUGUI Text(Transform parent, string text, float size, FontStyles style, Color color)

@@ -406,6 +406,14 @@ namespace BloodRain.Presentation
                     ? weapons.Dealt.Where(kv => kv.Value > 0f).ToDictionary(kv => kv.Key, kv => (double)kv.Value)
                     : new Dictionary<string, double>(),
             };
+            // DL-05b 정산 자막 한 줄(그림자가 쫓아오던 중에 쓰러졌으면 shadow 줄)
+            var facts = new BloodRain.Core.Meta.ReturnFacts
+            {
+                FallenToShadow = way == LifeEndWay.Fallen && _life.ShadowStep > 0,
+                LifeSeconds = stats.SurvivalSeconds,
+            };
+            var caption = BloodRain.Core.Meta.InnDialogue.Settlement(_data, soul, record, summary, facts, new System.Random());
+            settlement.SetCaption(SettlementScreen.CaptionText(_data, caption));
             settlement.Show(record, summary, stats, soul.RebirthQi);
         }
 
