@@ -1845,6 +1845,7 @@ function weaponDamage(w) {
 function hurtEnemy(e, dmg, w, kx, ky, kb) {
   if (e.dead) return;
   if (e.elite || e.boss) dmg *= G.stats.elite;
+  if (G.diss > 0) dmg *= UPar(ULT_BY.cheonma_haeche, 'damageMultiplier', 1);   // 천마해체: 모든 피해 2배(WP-25)
   if (e.poison > 0 && sectT().poisonedTargetDamage) dmg *= 1 + sectT().poisonedTargetDamage;   // 당가 중독된 적 +20%(WP-20)
   const jsd = synEff('jiangshi_damage'); if (jsd && (E_BY_ID[e.type] || {}).family === 'jiangshi') dmg *= 1 + jsd.damageBonus;
   let crit = false;
@@ -1855,6 +1856,7 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   if (e.jang && (!G.proAwake || G.awaken) && e.hp < floor) { dmg -= floor - e.hp; e.hp = floor; prologueAwaken('boss'); }
   if (w) w.dealt += dmg;
   if (G.stats.lifesteal > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * G.stats.lifesteal * healMul());
+  if (G.diss > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * UPar(ULT_BY.cheonma_haeche, 'lifesteal', 0) * healMul());   // 천마해체 흡혈 10%(WP-25)
   if (kb && !e.boss) { const k = kb * G.stats.knockback * (1 - e.kbRes); e.kbx += kx * k; e.kby += ky * k; }
   // 피해 숫자는 치명타와 일부만. 다 띄우면 화면이 숫자로 덮인다.
   if (crit || (dmg >= 8 && Math.random() < (e.boss || e.elite ? 0.5 : 0.18))) addNum(e.x, e.y - e.r * 2.4, dmg, crit);
@@ -2244,22 +2246,66 @@ function breakLantern(l) {
 }
 
 // 오의: 일검
+// 오의(5장 '오의 상세', characters.json ultimates — 천하 시안 R-15·16 과 같은 셈, WP-25). 한 생 판은 몸 문파의 오의(sects ultimate), 서장·1장 판은 일검.
+// 한 방 = 시작 무공 한 방(서장·1장 판은 삼재검법) × mightMultiplier × 오의 위력. 박자는 Core UltimateCast: 쓰는 순간 한 번, mightPerSecond 가 있으면 pulseSeconds 마다(만천화우 0·1·2초),
+// 배율 0(천마해체)은 안 때린다. 현경 '오의 2연속'이면 박자마다 두 번. 아직 웹에 모양이 없는 셋(역류·팔방풍우·태극무량)은 일검으로 대신한다.
+const ULT_BY = Object.fromEntries((DATA.ultimates || []).map(u => [u.id, u]));
+const UPar = (u, k, d) => u && u.params && u.params[k] != null ? u.params[k] : d;
+const WEB_ULTS = new Set(['il_geom', 'saja_hu', 'cheonroe_rak', 'mancheon_hwau', 'cheonseol_bu', 'cheonma_haeche']);
+function bodyUlt() { const id = G.body && G.body.ultimate; return ULT_BY[id && WEB_ULTS.has(id) ? id : 'il_geom'] || { id: 'il_geom', mightMultiplier: ULT_MULT }; }
+function ultBaseHit() {
+  const sw = G.body ? G.weapons.find(w => w.id === G.body.startWeapon) : G.weapons.find(w => w.id === 'samjae_sword');
+  return sw ? weaponDamage(sw) : 12 * G.stats.might;
+}
 function useUlt() {
   if (!G || G.ult < B.ultimateCharge.max || paused || overlay) return;
   G.ult = 0; sfx('ult');
-  if (bloodArt()) { G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max); G.simmaBase = G.bSteps || 0; }   // 천마해체 자리: 심마를 누르고 심마환영 공력도 사라짐(WP-23)
-  const p = G.player, a = Math.atan2(p.fy, p.fx), ca = Math.cos(a), sa = Math.sin(a), len = viewDiag();
-  // characters.json il_geom.mightMultiplier: 삼재검법 한 번 피해의 30배
-  const sword = G.weapons.find(w => w.id === 'samjae_sword');
-  const mult = ULT_MULT;
-  const dmg = (sword ? weaponDamage(sword) : 12 * G.stats.might) * mult * G.stats.ultPower;
-  addEffect('slash', p.x, p.y, { a, len, life: 0.6 });
-  G.cam.shake = 0.35;
-  // 현경 '오의 2연속': 한 번 눌러 두 번 벤다(Core Life.UltimateCasts)
-  for (let c = 0; c < (G.stats.ultCasts || 1); c++) for (const e of G.enemies) {
-    if (e.dead) continue;
-    const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
-    if (along > -0.5 && along < len && perp < 0.9 + e.r) hurtEnemy(e, dmg, null, ca, sa, 6);
+  const u = bodyUlt(), A = bloodArt();
+  if (A && A.resetUltimate === u.id) { G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max); G.simmaBase = G.bSteps || 0; }   // 천마해체: 심마를 누르고 심마환영 공력도 사라짐(WP-23, Core OnDemonicReset)
+  const dur = UPar(u, 'durationSeconds', 0), per = dur > 0 && UPar(u, 'mightPerSecond', 0) > 0 ? UPar(u, 'pulseSeconds', 0) : 0;
+  G.ultCast = { u, el: 0, done: 0, per, dur, total: u.mightMultiplier <= 0 ? 0 : per > 0 ? Math.max(1, Math.ceil(dur / per - 1e-4)) : 1, a: Math.atan2(G.player.fy, G.player.fx) };
+  if (u.id === 'cheonma_haeche') G.diss = dur;
+  G.cam.shake = 0.35; if (u.id !== 'il_geom') toast(u.nameKo, u.summary || '');
+  ultStep(0);   // 쓰는 순간 첫 박자
+}
+function ultStep(dt) {
+  const C = G.ultCast;
+  if (C) {
+    C.el += dt;
+    while (C.done < C.total && C.done * C.per <= C.el + 1e-4) { C.done++; for (let c = 0; c < (G.stats.ultCasts || 1); c++) ultPulse(C.u, C, c); }
+    if (C.done >= C.total && C.el >= C.dur) G.ultCast = null;
+  }
+  if (G.diss > 0 && dt > 0) {   // 천마해체: 초당 최대 기혈 healthCostPerSecond(바닥 규칙이 없어 쓰러질 수 있다 — 시안과 같음)
+    const p = G.player; p.hp -= p.maxHp * UPar(ULT_BY.cheonma_haeche, 'healthCostPerSecond', 0) * Math.min(dt, G.diss); G.diss = Math.max(0, G.diss - dt);
+    if (p.hp <= 0) { p.hp = 0.0001; hurtPlayer(1, null); }   // 재기·쓰러짐은 hurtPlayer 길로
+  }
+}
+// 오의 한 박자(현경이면 c = 0·1). 화면 = 지금 보이는 사각형
+function ultPulse(u, C, c) {
+  const p = G.player, hit = ultBaseHit() * u.mightMultiplier * G.stats.ultPower, hw = viewW() / 2, hh = viewH() / 2;
+  const onScreen = e => !e.dead && Math.abs(e.x - p.x) < hw + e.r && Math.abs(e.y - p.y) < hh + e.r;
+  if (u.id === 'il_geom') {   // 바라보는 쪽 화면 끝까지 한 줄, 관통 무한
+    const ca = Math.cos(C.a), sa = Math.sin(C.a), len = viewDiag();
+    if (c === 0) addEffect('slash', p.x, p.y, { a: C.a, len, life: 0.6 });
+    for (const e of G.enemies) { if (e.dead) continue; const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca); if (along > -0.5 && along < len && perp < 0.9 + e.r) hurtEnemy(e, hit, null, ca, sa, 6); }
+  } else if (u.id === 'cheonroe_rak') {   // 화면 안 무작위 strikes 곳 낙뢰 반경 strikeRadius, 감전 shockSeconds(웹은 멈춤으로)
+    const R = UPar(u, 'strikeRadius', 1.2), sh = UPar(u, 'shockSeconds', 0);
+    for (let i = 0; i < UPar(u, 'strikes', 0); i++) {
+      const x = p.x + rand(-hw, hw), y = p.y + rand(-hh, hh);
+      for (const e of G.enemies) if (!e.dead && Math.hypot(e.x - x, e.y - y) < R + e.r) { hurtEnemy(e, hit, null, 0, 0, 0); if (!e.boss) e.stun = Math.max(e.stun || 0, sh); }
+      addEffect('ring', x, y, { r: R, color: '#C9A227', life: 0.45 });
+    }
+  } else if (u.id === 'saja_hu') {   // 반경 radius 음파, 기절 stunSeconds
+    const R = UPar(u, 'radius', 6), st = UPar(u, 'stunSeconds', 0);
+    for (const e of G.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < R + e.r) { hurtEnemy(e, hit, null, 0, 0, 0); if (!e.boss) e.stun = Math.max(e.stun || 0, st); }
+    if (c === 0) addEffect('ring', p.x, p.y, { r: R, color: '#786E5F', life: UPar(u, 'spreadSeconds', 0.3) + 0.4 });
+  } else if (u.id === 'mancheon_hwau') {   // 화면 전체 암기 비(pulseSeconds 마다), 맞은 적 중독 poisonSeconds. 중독 피해는 웹에 적 중독 피해가 없어 아직 0(당가 '중독된 적 +20%'만 붙음 — 시안과 같음)
+    for (const e of G.enemies) if (onScreen(e)) { hurtEnemy(e, hit, null, 0, 0, 0); if (UPar(u, 'poisons', 0) > 0) e.poison = Math.max(e.poison || 0, UPar(u, 'poisonSeconds', 3)); }
+    if (c === 0) addEffect('ring', p.x, p.y, { r: Math.hypot(hw, hh), color: '#5E7F4A', life: 0.7 });
+  } else if (u.id === 'cheonseol_bu') {   // 화면 안 모든 적 freezeSeconds 얼림(땅의 주인도), 피해는 강시 계열(family jiangshi)만 — QA-10a 결정 전
+    const fz = UPar(u, 'freezeSeconds', 0);
+    for (const e of G.enemies) if (onScreen(e)) { e.stun = Math.max(e.stun || 0, fz); if ((E_BY_ID[e.type] || {}).family === 'jiangshi') hurtEnemy(e, hit, null, 0, 0, 0); }
+    if (c === 0) addEffect('ring', p.x, p.y, { r: Math.hypot(hw, hh), color: '#8FA8B8', life: 0.8 });
   }
 }
 function doDash() {
@@ -2403,6 +2449,7 @@ function update(dt) {
   lordTick(dt);             // 땅의 주인 깨어남·싸움 원(WP-13e)
   trackChRegion();          // 밟은 땅(그리기 고리 밖 sim 에서도 정예·무리·고유 적이 땅을 알게)
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
+  ultStep(dt);   // 오의 박자·천마해체(WP-25)
   eliteShapesStep(dt);      // 정예 돌진·검진 고리·분신(WP-13d)
   // 적
   rebuildGrid();

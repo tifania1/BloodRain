@@ -138,7 +138,7 @@ def data_blob() -> str:
                    # 고유 능력 나머지(WP-20, Core SectTrait)와 음양 시작·태극 구간
                    "trait": {k: v for k, v in (s.get("traitEffect") or {}).items() if k != "stats"},
                    "yinyangStart": s.get("yinyangStart", 0), "harmonyRange": s.get("harmonyRange"),
-                   "bloodArt": drop_notes(s["bloodArt"]) if s.get("bloodArt") else None} for s in load("cheonha")["sects"]],   # 혈공(WP-23, 마교만)
+                   "bloodArt": drop_notes(s["bloodArt"]) if s.get("bloodArt") else None, "ultimate": s.get("ultimate")} for s in load("cheonha")["sects"]],   # 혈공(WP-23, 마교만)
         # 침방·연무장(WP-14d, 10·21장): 환생 후보 수·첫 환혼·환혼 강화, 타고난 성질. 연무장 값은 balance.json training(위 balance 묶음)
         "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades", "femaleRatio", "maleOnlySects")},
         # 침방 목 노인 줄·후보 카드 글(21장, docs/story/mok.md·sects.md). 고르는 규칙은 Core InnDialogue BedroomTalk 와 같게
