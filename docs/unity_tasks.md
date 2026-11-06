@@ -335,7 +335,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] WP-52U 조준: 방향 무공이 가까운 적을 노리게 · 먼저: R-12Ub
   - 할 것: WeaponRunner 에서 `player.Facing` 을 바로 쓰는 방향 무공(장풍 탄·혈조 갈래·나한권 절기 탄·권장합일 장풍·삼재검법 절기 검기)을 한 함수 `AimAngle(닿는 거리)` 로 — 설정 '조준 방식'이 가까운 적(기본)이면 닿는 거리 안 가장 가까운 적 쪽, 없거나 '이동 방향'이면 Facing. 닿는 거리는 웹과 같게: 근접은 사거리 × 1.25, 탄은 탄속 × 수명. 삼재검법·이화창·낙화검우처럼 이미 `Nearest` 를 쓰는 곳도 같은 함수로. 패드 오른쪽 스틱을 기울이는 동안은 그쪽(12장).
-  - 쓸 것: 웹 프로토타입 `aimAngle`(template.html, WP-52), 기획서 12장 '화면 편의 규칙' 조준·8장 조작
+  - 쓸 것: Core `Combat/Aim.cs`(2026-11-07 클라우드: `Aim.Angle(방식, 위치, Facing, 적 x·y 목록, 닿는 거리, 스틱)`·`Aim.MeleeReach`·`ProjectileReach`·설정 낱말 `Aim.Parse`/`ToKey` 'near'·'move', `AimTests`), 웹 프로토타입 `aimAngle`(template.html, WP-52), 기획서 12장 '화면 편의 규칙' 조준·8장 조작
   - 메뉴: 설정 화면에 '조준 방식' 단추(가까운 적 / 이동 방향), PlayerPrefs
   - 끝: 적에게서 도망치며 움직여도 장풍·혈조가 가장 가까운 적 쪽으로 나감. '이동 방향'으로 바꾸면 움직인 쪽으로만
   - 찍기: `docs/unity_shots/WP-52U/` 의 `aim_near.png`
