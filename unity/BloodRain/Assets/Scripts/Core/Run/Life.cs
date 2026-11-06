@@ -151,6 +151,14 @@ namespace BloodRain.Core.Run
             return Log.ReadLetter(discoveredSecrets);
         }
 
+        /// <summary>혈마의 속삭임을 받았다(석상 앞에서 오의). 마도 진전 +1·회복 절반, 일지에 계승 표식. 두 번째는 false.</summary>
+        public bool AcceptWhisper()
+        {
+            if (!Encounters.AcceptWhisper()) return false;
+            Log.Whispered = true;
+            return true;
+        }
+
         /// <summary>영약을 주웠다: 오의 가득, 음양 0.</summary>
         public void TakeElixir() => Encounters.TakeElixir(Charge, Loadout.Gauge);
 

@@ -57,6 +57,18 @@ namespace BloodRain.Core.Tests
             Assert.Null(life.ReadLetter(_d.Synergies.Secrets.Select(s => s.Id)));
         }
 
+        [Fact] public void 속삭임을_받은_생을_혼이_세고_저장을_오간다()
+        {
+            var soul = AfterPrologue();
+            var life = NewLife(soul);
+            Assert.True(life.AcceptWhisper());
+            Assert.False(life.AcceptWhisper());
+            soul.EndLife(life.End(LifeEndWay.Fallen, 0));
+            soul.EndLife(NewLife(soul).End(LifeEndWay.Fallen, 0));   // 안 받은 생은 안 셈
+            Assert.Equal(1, soul.WhispersTotal);
+            Assert.Equal(1, Soul.FromJson(_d, soul.ToJson()).WhispersTotal);
+        }
+
         [Fact] public void 옛_저장은_밀서가_없다()
         {
             var json = AfterPrologue().ToJson().Replace("\"letters\": [],", "");
