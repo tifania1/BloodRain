@@ -12,7 +12,7 @@
 | 마교 혈공·마공 | 5장 '마교 몸의 성장: 혈공'·마공 표 | cheonha.json sects demonic `bloodArt`, insights.json `demonicInsights` 넷 | `Progression/BloodArt.cs`, `InsightEffects`(`BloodArtTests`·`BloodArtSimTests`·`InsightEffectsTests`) | 없음 | 혈공(R4-14, 2026-11-04): 진기 × 농도^0.25·심마(더 받은 진기 150마다 음 -1)·천마해체로 복귀, 마공 깨달음 한 자리(RM-07)와 심마환영 공력. 흡혈대법은 흡혈이 천마해체에만 있어 안 붙음 | R4-13a |
 | 오의(일검·천설부·천마해체) | 5장 '오의 상세' | characters.json ultimates. 천설부·천마해체 params 있음(R-05), 일검은 숫자가 배율·관통 무한뿐이라 params 없음 | `Ultimates.HitDamage`(한 방 피해). R4-10(11-04): 천설부 얼림·강시 계열만 피해 `UltimateEffects.FreezeSeconds`·`HitDamageOn`, 천마해체 8초 `DemonDissolution`(피해 2배·흡혈 10%·초당 기혈 2%, `Life.Dissolution`), 흡혈 셈 `LifestealHeal`(`UltimateEffectsTests`) | 일검만 | 셋 다(R-16, 2026-11-04): 일검 한 줄, 천설부 화면 얼림·강시 계열 피해, 천마해체 8초 2배·흡혈·기혈 소모 | C-09a(일검), R4-10U(천설부·천마해체) |
 | 진전 | 20장 '진전 9문파' | synergies.json schools 아홉(`SynergyDataTests.기획서_20장_진전_표가_schools_와_같다`) | `Synergy`·`SynergyEffects` | 아홉 문파 인장 | 없음 | S-04 |
-| 시작 무공(낙화검우·뇌부·혈조) | 9장 | weapons.json. 낙화검우·혈조는 shot·knockback 없음(9장 '손으로 맞춘 뒤 채운다', m3_check 와 같은 사정) | `WeaponGrowth` | 뇌부만 | 없음 | W-01(뇌부). 낙화검우·혈조 줄 없음 |
+| 시작 무공(낙화검우·뇌부·혈조) | 9장 | weapons.json. 낙화검우·혈조는 shot·knockback 없음(9장 '손으로 맞춘 뒤 채운다', m3_check 와 같은 사정) | `WeaponGrowth` | 셋 다(낙화검우·혈조 R-17, 뇌부 WP-18, 2026-11-06). 한 생 판에선 화산·곤륜·마교 몸의 시작 무공, 절기 모양도(WP-19) | 없음 | W-01(뇌부), 낙화검우·혈조는 R-12Ua·b |
 
 ## 세 지역
 
