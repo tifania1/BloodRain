@@ -307,6 +307,8 @@ button { touch-action: manipulation; }
       <div class="cards" id="inncards"></div>
       <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button></div>
       <div class="subtle" id="innqi"></div>
+      <h4 class="innh">객잔 시설</h4>
+      <div class="innmeta" id="innfac"></div>
       <h4 class="innh">침방 · 환혼 강화</h4>
       <div class="innmeta" id="innupg"></div>
       <h4 class="innh">연무장</h4>
@@ -3896,7 +3898,8 @@ function recordLife(st) {
   m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
   if (st.whisper) m.whispers = (m.whispers || 0) + 1;   // 계승 엔딩 표식(20장). 표식이 무엇을 바꾸는지는 WP-29a
   m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;
-  m.lastNewRealms = st.newRealms || []; m.lastTop = st.topId || null; m.lastLetter = !!st.letter; m.lastShadow = !!st.shadow;   // 현경 short·sealed 줄(Core LifeSummary.NewRealms·LifeRecord.HighestRealm)과 운낭 밀서 줄   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)
+  m.lastNewRealms = st.newRealms || []; m.lastTop = st.topId || null; m.lastLetter = !!st.letter; m.lastShadow = !!st.shadow;
+  m.newFac = facRefresh(m).concat(Array.isArray(m.builtFac) ? m.builtFac : []); m.builtFac = [];   // 다음 귀환 운낭 시설 줄(Core NewFacilities)   // 현경 short·sealed 줄(Core LifeSummary.NewRealms·LifeRecord.HighestRealm)과 운낭 밀서 줄   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)
   // 종장을 깬 생(Core Soul.EndLife 'sealed' → ChooseEnding): 문파별 종장 수, 본 엔딩, 엔딩 효과. 봉인은 회귀 — cycle.resets(봉인석)만 지우고 회차 +1
   if (st.finalClear && st.ending) {
     m.finalClears = m.finalClears && typeof m.finalClears === 'object' ? m.finalClears : {};
@@ -3934,6 +3937,43 @@ function fmtStat(k, v) {
 const TRAIN_ITEMS = B.training.items.filter(i => statOn(i.stat));
 let NEXT_LIFE = null, innCands = [], innRerolls = 0;
 const curLifeSect = () => (NEXT_LIFE ? SECT_BY[NEXT_LIFE.sect] : LIFE_SECT);
+// 객잔 시설(10장 '객잔 시설', cheonha.json inn, Core Inn): 조건(서장·봉인석·땅의 주인 처치 지역·해금 토큰)을 갖추면 열리고, 혈정으로 짓는 시설(약방·대장간)은 조건을 갖춘 뒤 짓는다.
+// 한 번 열리면 혼 기록 unlocks 에 facility:<id> 로 남아 회귀로 봉인석이 지워져도 열려 있다. 수리 중(underRepair)이면 문만. 시설 안 화면(영약·꾸미기·도전 과제·게시판)은 이 판에 아직 없다.
+// 정산 때 처음 조건을 갖춘 시설과 지난 귀환 뒤 지은 시설은 다음 귀환의 운낭 facility:<id> 줄로(Core LifeSummary.NewFacilities + Inn.TryBuild)
+const INN_F = DATA.innFacilities || [];
+const facTok = id => 'facility:' + id;
+function facMeets(m, f) {
+  const r = f.require || {}, un = m.unlocks || [];
+  if (r.prologue && !m.prologue) return false;
+  if ((m.stones || []).length < (r.sealStones || 0)) return false;
+  if (r.bossKilled) { const reg = (DATA.regions || []).find(x => x.id === r.bossKilled); if (!reg || !((m.bossKills || {})[reg.boss] > 0)) return false; }
+  if (r.unlock && !un.includes(r.unlock)) return false;
+  return true;
+}
+const facOpen = (m, f) => (m.unlocks || []).includes(facTok(f.id)) || (!(f.buildBloodCrystal > 0) && facMeets(m, f));
+function facRefresh(m) {   // Core Inn.Refresh
+  m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : []; const opened = [];
+  for (const f of INN_F) {
+    const r = f.require || {};
+    if (f.buildBloodCrystal > 0 || m.unlocks.includes(facTok(f.id)) || !facMeets(m, f)) continue;
+    m.unlocks.push(facTok(f.id));
+    if (r.prologue || r.sealStones || r.bossKilled || r.unlock) opened.push(f.id);   // 조건이 없는 객잔 본채는 처음부터 열려 있어 새로 친 것이 아니다
+  }
+  return opened;
+}
+function facBuild(id) {   // Core Inn.TryBuild
+  const m = innMeta(), f = INN_F.find(x => x.id === id); if (!f || !(f.buildBloodCrystal > 0) || facOpen(m, f) || !facMeets(m, f) || (m.crystal || 0) < f.buildBloodCrystal) return;
+  m.crystal -= f.buildBloodCrystal; m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : []; m.unlocks.push(facTok(f.id));
+  m.builtFac = (Array.isArray(m.builtFac) ? m.builtFac : []).concat(f.id); soulSave(m); renderInn();
+}
+function facNeed(m, f) {
+  const r = f.require || {}, out = [];
+  if (r.prologue && !m.prologue) out.push('서장');
+  if ((m.stones || []).length < (r.sealStones || 0)) out.push(`봉인석 ${(m.stones || []).length}/${r.sealStones}`);
+  if (r.bossKilled) { const reg = (DATA.regions || []).find(x => x.id === r.bossKilled); if (!reg || !((m.bossKills || {})[reg.boss] > 0)) out.push(`${reg ? reg.nameKo : r.bossKilled} 땅의 주인`); }
+  if (r.unlock && !(m.unlocks || []).includes(r.unlock)) out.push('운낭과 이야기');
+  return out.join(' · ');
+}
 function innMeta() {
   const m = soulLoad();
   for (const k of ['qi', 'spent', 'lives']) if (!(m[k] >= 0)) m[k] = 0;
@@ -4023,7 +4063,7 @@ function sayMok(lines, more) {
 }
 // 귀환 대사(Core InnDialogue.OnReturn): 생이 끝나 침방을 열 때 한 번. 목 노인 returns.mokMax·운낭 unnangMax·대표 인물 한 사람 한 마디.
 // 조건이 맞은 줄은 밀린 줄(혼 기록 pend)에 넣고 갈래 순서 → 파일 순서로 꺼내며, 못 꺼낸 줄은 다음 귀환으로. 본 줄은 seen('mok.<id>'·'unnang.<id>').
-// 이 판에 없는 것은 뺌: 시설 줄(객잔 시설이 아직 없다). 좌화 줄은 혈마의 그림자가 쫓아온 생이면 shadow(한 번). 의서 줄(manuscript:N)은 모은 권 수로.
+// 시설 줄은 정산 때 새로 연 시설·지난 귀환 뒤 지은 시설. 좌화 줄은 혈마의 그림자가 쫓아온 생이면 shadow(한 번). 의서 줄(manuscript:N)은 모은 권 수로.
 // 현경 short 는 이번 생에 처음 오른 경지인데 봉인석이 모자랄 때, sealed 는 이번 생 가장 높은 경지이고 봉인석을 다 모았을 때. 밀서 줄은 이번 생에 밀서를 주웠으면 마천패 처치 앞뒤로.
 // 은거기인 줄은 만난 생마다 아직 안 한 것 앞에서 하나, 좌화 줄은 처음이면 first, 그 뒤 repeat(본 뒤에도 다시)(WP-26)
 const RET = DATA.returns || { mokMax: 0, unnangMax: 0, leaderMax: 0, mokOrder: [], unnangOrder: [] };
@@ -4055,13 +4095,17 @@ function innReturn(m) {
   const afterMa = (kills.ma_cheonpae || 0) > 0;
   for (const l of RET_UN) {
     const { kind, args: a } = whenOf(l);
-    if ((kind === 'return' || kind === 'lives') ? m.lives >= +a[0] : kind === 'confess' ? afterMa : kind === 'letter' ? !!m.lastLetter && (a[0] === 'after') === afterMa : false) queue('unnang', l);
+    if ((kind === 'return' || kind === 'lives') ? m.lives >= +a[0] : kind === 'confess' ? afterMa : kind === 'letter' ? !!m.lastLetter && (a[0] === 'after') === afterMa : kind === 'facility' ? (m.newFac || []).includes(a[0]) : false) queue('unnang', l);
   }
+  m.newFac = [];
   let un = retTake(m, 'unnang', RET_UN, RET.unnangOrder, RET.unnangMax);
   if (!un.length && RET.unnangMax > 0) {
     const side = afterMa ? 'after' : 'before', chats = RET_UN.filter(l => l.when === 'chat:' + side && l.id !== m.lastChat);
     if (chats.length) { const c = chats[Math.floor(Math.random() * chats.length)]; m.lastChat = c.id; un = [c]; }
   }
+  // 대사로 여는 시설(confess_3 → 하오문 게시판): 그 시설이 기다리는 해금 토큰을 혼에(Core OnReturn opens)
+  m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
+  for (const l of mok.concat(un)) if (l.opens) { const f = INN_F.find(x => x.id === l.opens), tok = f && f.require && f.require.unlock; if (tok && !m.unlocks.includes(tok)) m.unlocks.push(tok); }
   // 대표 인물: 자기 땅 봉인석을 가져왔으면 합류(땅의 주인이 없는 개방·남궁은 그 문파 몸으로 땅의 주인을 쓰러뜨린 생 뒤). 합류 줄이 먼저, 그 뒤 객잔 줄 차례로
   m.joined = Array.isArray(m.joined) ? m.joined : []; m.pjoin = Array.isArray(m.pjoin) ? m.pjoin : []; m.innSaid = m.innSaid || {};
   const lifeSect = curLifeSect();
@@ -4166,6 +4210,16 @@ function renderInn() {
   rr.hidden = !m.lives || !have; rr.disabled = innRerolls <= 0;
   rr.innerHTML = `다시 고르기 <small>남은 ${innRerolls}/${have} · R</small>`;
   $('innqi').textContent = `윤회의 기 ${m.qi.toLocaleString()} · 혈정 ${(m.crystal || 0).toLocaleString()} · 열린 문파 ${m.unlocked.length}/${(DATA.sects || []).length}`;
+  const fb = $('innfac'); fb.innerHTML = '';
+  for (const f of INN_F) {
+    const b = document.createElement('button'); b.type = 'button';
+    const open = facOpen(m, f), meets = facMeets(m, f), cost = f.buildBloodCrystal || 0;
+    const what = open ? (f.underRepair ? uiT('ui.inn.under_repair') : '열림') : meets && cost ? `짓기 · 혈정 ${cost}` : `닫힘 · ${facNeed(m, f)}${cost ? ` · 혈정 ${cost}` : ''}`;
+    b.disabled = open || !meets || !cost || (m.crystal || 0) < cost;
+    b.innerHTML = `<b>${f.nameKo}</b><span>${what}</span>`;
+    if (!open && meets && cost) b.onclick = () => facBuild(f.id);
+    fb.appendChild(b);
+  }
   const ub = $('innupg'); ub.innerHTML = '';
   for (const u of RB.upgrades || []) {
     const lv = upgLevel(m, u.id), cost = upgCost(m, u), b = document.createElement('button'); b.type = 'button';
@@ -4714,6 +4768,7 @@ function recordPrologue(orbRaw, realmId) {
   for (const id of visits) m.visited.push(id);
   for (const id of realms) m.reached.push(id);
   m.prologue = { qi: total, orb: Math.round(orbRaw || 0), realm: B.realms[top].id };
+  facRefresh(m);   // 연무장(서장 끝)이 열린다. 서장 귀환엔 대사가 없어 새로 연 목록은 버린다
   soulSave(m);
   return { total, realms };
 }

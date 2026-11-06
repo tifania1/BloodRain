@@ -104,5 +104,24 @@ namespace BloodRain.Core.Tests
             Assert.Contains(d.Dialogue.Mok.Lines, l => l.Kind == "realm" && l.Args.Length == 2 && l.Args[1] == "sealed");
             Assert.Contains(d.Dialogue.Unnang.Lines, l => l.Kind == "letter");
         }
+
+        [Fact] public void 객잔_시설은_Core_Inn_처럼_열리고_지어지며_귀환_시설_줄로()
+        {
+            var build = ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"innFacilities\": drop_notes(load(\"cheonha\")[\"inn\"][\"facilities\"])", build);
+            var html = Proto;
+            // IsOpen: 혼에 남았거나, 짓지 않는 시설이고 조건을 갖춤
+            Assert.Contains("const facOpen = (m, f) => (m.unlocks || []).includes(facTok(f.id)) || (!(f.buildBloodCrystal > 0) && facMeets(m, f));", html);
+            // Refresh: 짓는 시설·이미 적은 것·조건 못 갖춘 것은 건너뛰고, 조건 없는 시설은 새로 연 것으로 치지 않는다
+            Assert.Contains("if (f.buildBloodCrystal > 0 || m.unlocks.includes(facTok(f.id)) || !facMeets(m, f)) continue;", html);
+            // TryBuild: 혈정을 쓰고 다음 귀환 시설 줄에
+            Assert.Contains("m.crystal -= f.buildBloodCrystal;", html);
+            Assert.Contains("m.newFac = facRefresh(m).concat(Array.isArray(m.builtFac) ? m.builtFac : []); m.builtFac = [];", html);
+            Assert.Contains("kind === 'facility' ? (m.newFac || []).includes(a[0])", html);
+            // 대사로 여는 시설은 그 시설이 기다리는 해금 토큰을
+            Assert.Contains("if (l.opens) { const f = INN_F.find(x => x.id === l.opens), tok = f && f.require && f.require.unlock;", html);
+            var d = Load();
+            Assert.Contains(d.Dialogue.Unnang.Lines, l => l.Kind == "facility");
+        }
     }
 }

@@ -112,6 +112,8 @@ def data_blob() -> str:
         "lordRules": drop_notes(load("cheonha")["bosses"]),
         # 혈마의 그림자(7장 '생의 끝', T-42): 현경 뒤 봉인석이 모자라면 shadowFromMinute 부터 쫓아오는 그림자 세기
         "lifeEnd": drop_notes(load("cheonha")["lifeEnd"]),
+        # 객잔 시설(10장, Core Inn): 열리는 조건·짓는 혈정·수리 중
+        "innFacilities": drop_notes(load("cheonha")["inn"]["facilities"]),
         # 칭호(WP-34, 10장 해금 표): cheonha.json titles
         "titles": [drop_notes(t) for t in load("cheonha").get("titles", [])],
         # 땅의 주인 컷 줄(docs/story/boss_cuts.md): 프로토타입은 만남 첫 줄·2막 예고·처치 첫 줄·혈영 메아리만 알림으로
