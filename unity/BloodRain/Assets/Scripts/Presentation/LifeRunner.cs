@@ -230,7 +230,7 @@ namespace BloodRain.Presentation
                 // R-04Ua 문파 고유 능력: 회피(수로채 움직이는 동안), 회복 전부에 곱하는 수(마교 절반), 초당 회복
                 vitals.evadeChance = st.Evade;
                 // C-07b 흡혈대법이면 흡혈 말고 다른 회복 x0
-                vitals.healingMultiplier = _life.Body.SectTrait.HealingMultiplier * ie.OtherHealMultiplier;
+                vitals.healingMultiplier = _life.HealingMultiplier * ie.OtherHealMultiplier; // 마교 절반 × 혈마의 속삭임 절반(QA-12)
                 vitals.block ??= ie.TryBlock; // 금종조(안 골랐으면 늘 false)
                 vitals.recoveryPerSecond = st.Recovery;
             }
@@ -713,7 +713,7 @@ namespace BloodRain.Presentation
                 $"한 생  {_life.Minutes:0.0}분  레벨 {_life.Level} ({_life.Xp.Progress * 100:0}%)  경지 {realm.NameKo}  지역 {region.NameKo}  혈운 {_life.Density:0.00}" +
                 (_life.IsPrologue ? "  [서장]" : "") +
                 // R-04Ua 몸과 고유 능력
-                $"  몸 {_life.Body.Character.NameKo}  회복 배율 x{_life.Body.SectTrait.HealingMultiplier:0.0#}  태극 쾌속 +{_life.HarmonyCooldownReduction * 100:0}%");
+                $"  몸 {_life.Body.Character.NameKo}  회복 배율 x{_life.HealingMultiplier:0.0#}  태극 쾌속 +{_life.HarmonyCooldownReduction * 100:0}%");
             if (Stats != null)
             {
                 var st = Stats;
