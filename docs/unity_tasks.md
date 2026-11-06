@@ -356,7 +356,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] UI-01U 화면 편의 규칙(기획서 12장 '레벨업 카드 규칙'·'화면 편의 규칙') · 먼저: C-06
   - 할 것: 레벨업 카드를 세 줄(이름+Lv a→b 또는 '새' / 바뀌는 수치 하나 / 배지)로, 긴 설명은 마우스 올리기·길게 누르기. 레벨업 옆(세로는 아래)에 무공 6칸·심법 6칸, 고르려는 카드가 켜는 칸을 빛냄. 패드·방향키 포커스, 다시 고르기·파기·정진 단축키 표시, '남은 N'과 이어 고르기. 땅의 주인 체력바(설정에서 끔). 일시정지에 무공별 피해·초당 피해, 설정 열기. 내 이펙트 투명도 0~100%와 적 탄·예고를 위 레이어로. 조합표 탭·자동 고르기·조준·깜빡임 끄기·혈우 연출 세기는 하나씩 따로 커밋해도 됨. 닫힌 뒤 무적·자동 고르기 순서는 backlog UI-01a·b 가 정해질 때까지 비워 둔다.
-  - 쓸 것: Presentation `LevelUpScreen`, HUD, 일시정지 화면, 설정(WP-57U), Core `Build/LevelUpView.cs`(2026-11-07 클라우드: `CardLights`(켤 칸, Id null 은 첫 빈 칸)·`EvolutionTable`(찾은 절기 줄, 가진 재료 레벨·Dead 흐리게), `LevelUpViewTests`), Core `Aim`·`GameSettings`, `WeaponRunner.Dealt`(무공별 피해), 능력치 쉬운 말 strings `ui.stat_easy.<이름>`·처음 한 번 풀이 `ui.stat_help.<이름>`(본 이름은 PlayerPrefs 에, 웹 statSeen), strings 네 언어(새 문구는 ui. 키)
+  - 쓸 것: Presentation `LevelUpScreen`, HUD, 일시정지 화면, 설정(WP-57U), Core `Build/LevelUpView.cs`(2026-11-07 클라우드: `CardLights`(켤 칸, Id null 은 첫 빈 칸)·`EvolutionTable`(찾은 절기 줄, 가진 재료 레벨·Dead 흐리게), `LevelUpViewTests`), Core `Aim`·`GameSettings`, `WeaponRunner.Dealt`(무공별 피해) + Core `Run/DamageReport`(일시정지 줄 `Lines(dealt, 판 시각, 얻은 시각)`, SettlementScreen 막대도 `ByDamage(6)` 으로 바꿔 같은 셈), 능력치 쉬운 말 strings `ui.stat_easy.<이름>`·처음 한 번 풀이 `ui.stat_help.<이름>`(본 이름은 PlayerPrefs 에, 웹 statSeen), strings 네 언어(새 문구는 ui. 키)
   - 메뉴: 없음
   - 끝: 컴파일·콘솔 에러 0, 레벨업 카드 한 장이 세 줄 안, 투명도 0% 에서 적 탄이 보임
   - 찍기: 레벨업 화면(옆 칸 보임), 일시정지 화면
