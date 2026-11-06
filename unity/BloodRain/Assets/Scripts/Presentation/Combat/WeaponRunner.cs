@@ -192,6 +192,7 @@ namespace BloodRain.Presentation.Combat
                 if (kb.digit9Key.wasPressedThisFrame) Learn(TestOrder[8]);
             }
 
+            Hook();
             float dt = Time.deltaTime;
             foreach (var s in slots)
             {
@@ -447,6 +448,7 @@ namespace BloodRain.Presentation.Combat
             public int Pierce, Target;
             public Slot Weapon;
             public Color Color;
+            public bool Petal; // 화산 3 꽃잎(Weapon 없음)
             public HashSet<int> Hit;
         }
 
@@ -494,7 +496,10 @@ namespace BloodRain.Presentation.Combat
                     p.Hit.Add(id);
                     _one1.Clear();
                     _one1.Add(j);
-                    Deal(p.Weapon, p.Damage, enemies.Damage(_one1, p.Damage, p.Pos, p.Knock));
+                    _petalHit = p.Petal;
+                    int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);
+                    _petalHit = false;
+                    if (p.Weapon != null) Deal(p.Weapon, p.Damage, got);
                     if (p.Pierce-- <= 0) dead = true;
                     break; // 한 프레임에 하나(쓰러짐으로 자리 번호가 바뀌니 다음 프레임에 다시 찾는다)
                 }
@@ -578,7 +583,7 @@ namespace BloodRain.Presentation.Combat
 
         // ── C-06c 모양 있는 진전 효과(SynergyEffects.Tier 의 params, 숫자 뜻은 SynergyEffects.cs 머리 주석) ──
         // 남궁 3 하늘 검기(sky_sword), 당가 5 독침(needle_rain). 수로채 3 끌기는 PlayerController.Drag.
-        // 아직 없음: 화산 3 꽃잎(무공에 치명타가 아직 없다), 당가 3 독 번짐과 독침의 중독 poisonSeconds(적 중독 상태가 아직 없다).
+        // 화산 3 꽃잎은 아래 OnCrit(치명타는 EnemyField.Damage), 당가 3 독 번짐·독침 중독은 EnemyField 의 중독 상태(StepStatus).
         // 독침 damage 는 '× 공력' 인데 무공 한 방에도 공력이 아직 안 곱해져 params 값 그대로 쓴다.
         int _swordAttacks;
         float _needleLeft = -1f;
@@ -641,7 +646,49 @@ namespace BloodRain.Presentation.Combat
                 var p = agents[i].Pos;
                 AddSpark("fx_dagger_ink", new Vector2(p.x, p.y), -Mathf.PI * 0.5f, 0f, 0.3f, 0.06f, false, 0.85f, NeedleInk);
             }
-            NeedleHits += enemies.Damage(_filtered, t.Param("damage"), c, 0f);
+            NeedleHits += enemies.Damage(_filtered, t.Param("damage"), c, 0f, null, t.Param("poisonSeconds"));
+        }
+
+        // 화산 3 꽃잎(crit_petals): 무공 치명타가 난 적 자리에서 petals 장이 사방으로. 꽃잎이 낸 치명타는 다시 꽃잎을 안 낸다
+        static readonly Color PetalColor = new Color(0.91f, 0.62f, 0.68f, 0.95f);
+        static readonly Color PetalInk = new Color(0.62f, 0.20f, 0.30f, 1f);
+        static readonly Color PoisonColor = new Color(0.37f, 0.50f, 0.29f, 0.45f);
+        bool _hooked, _petalHit;
+        /// <summary>꽃잎이 나간 장 수(시험·디버그용).</summary>
+        public int PetalCount { get; private set; }
+
+        void Hook()
+        {
+            if (_hooked || enemies == null) return;
+            _hooked = true;
+            enemies.Crit += OnCrit;
+            enemies.PoisonSpread += (at, r) => AddFxAt(at, 0f, Mathf.PI * 2f, r, 0.35f, PoisonColor);
+        }
+
+        void OnDestroy()
+        {
+            if (_hooked && enemies != null) enemies.Crit -= OnCrit;
+        }
+
+        void OnCrit(Vector2 at)
+        {
+            if (_petalHit) return;
+            var t = effects.Tier("crit_petals");
+            if (t == null) return;
+            var ws = World;
+            int n = Mathf.Max(1, Mathf.RoundToInt(t.Param("petals")));
+            float speed = ws.Length(t.Param("speed")), radius = ws.Length(t.Param("radius"));
+            for (int i = 0; i < n; i++)
+            {
+                if (_projs.Count >= DataBoot.Data.Balance.Limits.Projectiles) return;
+                float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                _projs.Add(new Proj
+                {
+                    Pos = at, Vel = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * speed, Radius = radius, Damage = t.Param("damage"),
+                    Life = t.Param("lifeSeconds"), Pierce = 0, Color = PetalColor, Hit = new HashSet<int>(), Petal = true,
+                });
+                PetalCount++;
+            }
         }
 
         void Later(float delay, Action a)
@@ -891,6 +938,7 @@ namespace BloodRain.Presentation.Combat
         bool ProjFx(Slot s, out AiFx f, out float realmMeters, out float radiusTimes)
         {
             realmMeters = 0f; radiusTimes = 0f; f = null;
+            if (s == null) { f = Ai("fx_petal_ink"); radiusTimes = 3.2f; return f != null; } // 화산 3 꽃잎
             switch (s.Def.Behavior)
             {
                 case "homing_dagger": f = Ai("fx_dagger_ink"); realmMeters = 1.4f; break;   // 비도 궤적
@@ -940,7 +988,7 @@ namespace BloodRain.Presentation.Combat
                 float size = rm > 0f ? World.Length(rm) : p.Radius * rt;
                 var dir = p.Vel.sqrMagnitude > 1e-8f ? p.Vel.normalized : Vector2.right;
                 float dissolve = Mathf.Clamp01(1f - p.Life / 0.15f);
-                DrawAi(pf, p.Pos - dir * size * 0.3f, Mathf.Atan2(dir.y, dir.x), size, Mathf.Clamp01(p.Age / 0.06f), dissolve, 1f, StrokeInk);
+                DrawAi(pf, p.Pos - dir * size * 0.3f, Mathf.Atan2(dir.y, dir.x), size, Mathf.Clamp01(p.Age / 0.06f), dissolve, 1f, p.Petal ? PetalInk : StrokeInk);
             }
             if (_mat == null || (_fx.Count == 0 && _projs.Count == 0)) return;
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };

@@ -250,6 +250,14 @@ namespace BloodRain.Presentation
                 weapons.insightDamage ??= ie.WeaponDamageMultiplier; // C-07b 일검파만
                 weapons.insightRange ??= ie.WeaponRangeMultiplier;   // C-07b 이기어검
             }
+            if (enemies != null)
+            {
+                // C-06c 화산 3 꽃잎이 나올 치명타(화산 몸 +10% 포함), 당가 3 독 번짐의 지속 피해 배율,
+                // R-04Ua (5) 당가 몸이면 중독된 적에 +20%
+                enemies.critChance = st.Bonus[BloodRain.Core.Build.StatKind.CritChance];
+                enemies.dotMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.DotDamage];
+                enemies.poisonedTargetMultiplier = _life.Body.SectTrait.DamageMultiplier(true);
+            }
             ApplySynergyEffects(syn, ratio);
         }
 

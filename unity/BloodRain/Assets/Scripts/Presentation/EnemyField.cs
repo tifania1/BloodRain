@@ -75,6 +75,7 @@ namespace BloodRain.Presentation
         public void Kill(int index)
         {
             var a = _sim.Get(index);
+            if (_status.TryGetValue(a.Id, out var ps) && ps.Poison > 0f && effects.Tier("poison_spread") != null) _spreads.Add(new Vector2(a.Pos.x, a.Pos.y));
             _sim.RemoveAt(index);
             var def = DefOf(a.Kind);
             if (def?.Death != null) _deaths.Add((new Vector2(a.Pos.x, a.Pos.y), def, a.BornRealm));
@@ -105,11 +106,13 @@ namespace BloodRain.Presentation
 
         /// <summary>무공 한 번(C-04). indices 자리 적에게 dmg 를 주고, from 에서 바깥쪽으로 knock(세계 m/s) 넉백.
         /// filter 가 있으면 그 적만. 기혈이 0 아래로 가면 쓰러뜨린다(자리 번호가 바뀌니 맨 끝에 뒤에서부터). 맞은 수를 돌려준다.</summary>
-        public int Damage(List<int> indices, float dmg, Vector2 from, float knock, System.Func<EnemyAgent, bool> filter = null)
+        public int Damage(List<int> indices, float dmg, Vector2 from, float knock, System.Func<EnemyAgent, bool> filter = null, float poisonSeconds = 0f)
         {
             _dead.Clear();
+            _critAt.Clear();
             int hit = 0, last = -1;
             indices.Sort();
+            float critMul = DataBoot.Data.Balance.Stats.CritDamageMultiplier;
             foreach (int i in indices)
             {
                 if (i == last) continue;
@@ -118,7 +121,17 @@ namespace BloodRain.Presentation
                 if (a.Health <= 0f) continue;
                 if (filter != null && !filter(a)) continue;
                 var kindDef = DefOf(a.Kind);
-                a.Health -= kindDef != null ? dmg * effects.EnemyDamageMultiplier(kindDef) : dmg;
+                float dd = kindDef != null ? dmg * effects.EnemyDamageMultiplier(kindDef) : dmg;
+                _status.TryGetValue(a.Id, out var st);
+                if (st.Poison > 0f) dd *= poisonedTargetMultiplier; // R-04Ua 당가 만독불침
+                if (critChance > 0f && _rng.NextDouble() < critChance)
+                {
+                    dd *= critMul;
+                    CritCount++;
+                    _critAt.Add(new Vector2(a.Pos.x, a.Pos.y));
+                }
+                a.Health -= dd;
+                if (poisonSeconds > 0f) { if (st.Poison <= 0f) PoisonedCount++; st.Poison = Mathf.Max(st.Poison, poisonSeconds); _status[a.Id] = st; }
                 if (knock > 0f)
                 {
                     var d = new Vector2(a.Pos.x - from.x, a.Pos.y - from.y);
@@ -131,7 +144,93 @@ namespace BloodRain.Presentation
             }
             for (int k = _dead.Count - 1; k >= 0; k--) Kill(_dead[k]);
             if (_dead.Count > 0) _sim.RebuildGrid(Mathf.Max(0.01f, RadiusOf(World.Realm) * 2.2f));
+            if (Crit != null) foreach (var c in _critAt) Crit(c);
             return hit;
+        }
+
+        // ── C-06c·R-04Ua 치명타·중독·지속 피해 ──
+        // 치명 확률은 StatSheet CritChance(화산 몸 +10% 포함)를 LifeRunner 가 넣고, 치명 피해는 balance.json stats.critDamageMultiplier.
+        // 중독은 Damage(…, poisonSeconds) 로 건다(당가 5 독침). 중독된 적이 쓰러지면 당가 3 독 번짐(poison_spread)이
+        // radius 안 적에게 seconds 동안 초당 damagePerSecond × 지속 피해(DotDamage)를 enemyStatus.burnTickSeconds 마다 넣고 중독도 건다(웹 hurtEnemy·killEnemy 와 같음).
+        [System.NonSerialized] public float critChance;
+        [System.NonSerialized] public float dotMultiplier = 1f;
+        /// <summary>중독된 적에게 들어가는 피해 배율(SectTrait.DamageMultiplier(true), 당가 1.2·나머지 1).</summary>
+        [System.NonSerialized] public float poisonedTargetMultiplier = 1f;
+        /// <summary>치명타가 난 적 자리(화산 3 꽃잎). Damage 가 끝난 뒤 부른다.</summary>
+        public event System.Action<Vector2> Crit;
+        /// <summary>독 번짐이 퍼진 자리와 반경(세계 m). 그림은 WeaponRunner 가.</summary>
+        public event System.Action<Vector2, float> PoisonSpread;
+        public int CritCount { get; private set; }
+        public int PoisonedCount { get; private set; }
+        public int SpreadCount { get; private set; }
+        public float DotDealt { get; private set; }
+
+        readonly List<Vector2> _critAt = new List<Vector2>();
+        readonly List<Vector2> _spreads = new List<Vector2>();
+        readonly List<int> _spreadNear = new List<int>();
+        // 상태는 EnemyAgent 밖에 Id 로 둔다(구조체를 늘리면 Burst 잡 쪽 배치와 어긋나 적이 깨지는 일이 있었다, 2026-11-06)
+        struct Status { public float Poison, DotLeft, DotDps, DotTick; }
+        readonly Dictionary<int, Status> _status = new Dictionary<int, Status>();
+        readonly List<int> _statusIds = new List<int>();
+
+        void StepStatus(float dt)
+        {
+            if (_spreads.Count > 0)
+            {
+                var t = effects.Tier("poison_spread");
+                if (t != null)
+                {
+                    float r = World.Length(t.Param("radius"));
+                    float secs = t.Param("seconds"), dps = t.Param("damagePerSecond") * dotMultiplier;
+                    foreach (var at in _spreads)
+                    {
+                        _sim.QueryCircle(new float2(at.x, at.y), r, _spreadNear);
+                        foreach (int i in _spreadNear)
+                        {
+                            if (i >= _sim.Count) continue;
+                            int id = _sim.Get(i).Id;
+                            _status.TryGetValue(id, out var st);
+                            if (st.Poison <= 0f) PoisonedCount++;
+                            st.Poison = Mathf.Max(st.Poison, secs);
+                            st.DotLeft = Mathf.Max(st.DotLeft, secs);
+                            st.DotDps = Mathf.Max(st.DotDps, dps);
+                            _status[id] = st;
+                        }
+                        SpreadCount++;
+                        PoisonSpread?.Invoke(at, r);
+                    }
+                }
+                _spreads.Clear();
+            }
+            if (_status.Count == 0) return;
+            float tick = Mathf.Max(0.05f, DataBoot.Data.Balance.EnemyStatus.BurnTickSeconds);
+            _dead.Clear();
+            for (int i = 0; i < _sim.Count; i++)
+            {
+                var a = _sim.Get(i);
+                if (!_status.TryGetValue(a.Id, out var st)) continue;
+                if (st.Poison > 0f) st.Poison -= dt;
+                if (st.DotLeft > 0f)
+                {
+                    st.DotLeft -= dt;
+                    st.DotTick -= dt;
+                    if (st.DotTick <= 0f)
+                    {
+                        st.DotTick += tick;
+                        float d = st.DotDps * tick * (st.Poison > 0f ? poisonedTargetMultiplier : 1f);
+                        a.Health -= d;
+                        DotDealt += d;
+                        _sim.Set(i, a);
+                        if (a.Health <= 0f) _dead.Add(i);
+                    }
+                }
+                _status[a.Id] = st;
+            }
+            _statusIds.Clear();
+            foreach (var kv in _status) if (kv.Value.Poison <= 0f && kv.Value.DotLeft <= 0f) _statusIds.Add(kv.Key);
+            foreach (int id in _statusIds) _status.Remove(id);
+            for (int k = _dead.Count - 1; k >= 0; k--) Kill(_dead[k]);
+            if (_dead.Count > 0) _sim.RebuildGrid(Mathf.Max(0.01f, RadiusOf(World.Realm) * 2.2f));
         }
 
         /// <summary>EnemyAgent.Kind 순번의 적 정의. 표에 없으면 null.</summary>
@@ -547,6 +646,7 @@ namespace BloodRain.Presentation
             }
 
             _watch.Restart();
+            StepStatus(dt); // C-06c 중독·독 번짐 지속 피해. Step 의 접촉 목록 자리 번호가 흐트러지지 않게 그 앞에서
             ApplyAuras(dt);
             StepFollow(new float2(p.x, p.y));
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
@@ -1188,7 +1288,7 @@ namespace BloodRain.Presentation
 
         void Sync()
         {
-            foreach (var id in _sim.Removed) { _views.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); _twinOf.Remove(id); _hookStates.Remove(id); _roars.Remove(id); }
+            foreach (var id in _sim.Removed) { _views.Remove(id); _status.Remove(id); _poolTimers.Remove(id); _marks.Remove(id); _twinOf.Remove(id); _hookStates.Remove(id); _roars.Remove(id); }
             _sim.Removed.Clear();
             if (clusters == null) return;
             clusters.Clear();
