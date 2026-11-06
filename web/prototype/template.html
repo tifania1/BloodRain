@@ -293,6 +293,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="bossbar">체력바 보임</button>
         <button class="b" type="button" data-set="rain">혈우 연출 100%</button>
         <button class="b" type="button" data-set="aim">방향 표시 보통</button>
+        <button class="b" type="button" data-set="nums">피해 숫자 보임</button>
       </div>
       <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
       <div class="subtle" id="best"></div>
@@ -392,6 +393,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="bossbar"></button>
         <button class="b" type="button" data-set="rain"></button>
         <button class="b" type="button" data-set="aim"></button>
+        <button class="b" type="button" data-set="nums"></button>
       </div>
     </div>
   </div>
@@ -954,6 +956,7 @@ const settings = {
   bossbar: store.get('bossbar') ?? true,                  // 땅의 주인 체력바 보이기(12장)
   rain: store.get('rain') ?? (REDUCED ? 0.5 : 1),         // 혈우 연출 세기 1 / 0.5 / 0(12장): 장막 붉은 번짐·빗줄기·붉은 달. 장막 점선은 길을 알려 주니 늘 그림
   aim: store.get('aim') ?? 1,                             // 바라보는 방향 표시 크기 1 / 1.6 / 0(12장 '조준')
+  nums: store.get('nums') ?? true,                        // 피해 숫자 표시 켬/끔(12장 설정)
 };
 // 구운 효과음(SFX-02, Assets/Audio/SFX → 빌드가 lookdev/sfx 에 둠). 있으면 그걸 틀고, 못 읽으면(아티팩트 한 파일 판 등) 아래 발진기 소리.
 // 진기 흡수는 5음 음계 8음을 연속 흡수 때 차례로 올린다(14장). 벌은 5개씩 번갈아.
@@ -4818,7 +4821,7 @@ function render() {
   for (const fx of G.effects) drawEffect(fx);
   // 피해 숫자
   ctx.textAlign = 'center';
-  for (const n of G.nums) {
+  if (settings.nums) for (const n of G.nums) {   // 피해 숫자 표시(12장 설정, 끄면 안 그림)
     const a = 1 - n.t / 0.7;
     ctx.font = n.crit ? '800 17px ui-sans-serif, system-ui, sans-serif' : '700 12px ui-sans-serif, system-ui, sans-serif';
     ctx.lineWidth = 3; ctx.strokeStyle = `rgba(239,230,210,${a})`; ctx.fillStyle = n.crit ? `rgba(179,38,30,${a})` : `rgba(26,26,26,${a})`;
@@ -5354,6 +5357,7 @@ const SET_TURN = {
   bossbar: () => { settings.bossbar = !settings.bossbar; store.set('bossbar', settings.bossbar); },
   rain: () => { settings.rain = settings.rain === 1 ? 0.5 : settings.rain === 0.5 ? 0 : 1; store.set('rain', settings.rain); },
   aim: () => { settings.aim = settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1; store.set('aim', settings.aim); },
+  nums: () => { settings.nums = !settings.nums; store.set('nums', settings.nums); },
 };
 for (const b of document.querySelectorAll('[data-set]')) b.addEventListener('click', () => { SET_TURN[b.dataset.set](); syncMute(); });
 $('mutebtn').addEventListener('click', () => { audio.muted = !audio.muted; store.set('muted', audio.muted); syncMute(); });
@@ -5379,9 +5383,10 @@ function syncMute() {
     flash: settings.flash ? '깜빡임 켜짐<small>맞으면 몸이 번쩍인다</small>' : '깜빡임 꺼짐<small>번쩍이지 않는다</small>',
     bossbar: settings.bossbar ? '체력바 보임<small>땅의 주인·원각</small>' : '체력바 숨김<small>땅의 주인·원각</small>',
     rain: `혈우 연출 ${Math.round(settings.rain * 100)}%<small>${settings.rain ? '붉은 번짐·빗줄기' : '장막 점선만'}</small>`,
+    nums: settings.nums ? '피해 숫자 보임<small>때린 자리에 숫자</small>' : '피해 숫자 숨김<small>숫자 없이</small>',
     aim: { 1: '방향 표시 보통<small>바라보는 쪽 꺾쇠</small>', 1.6: '방향 표시 크게<small>바라보는 쪽 꺾쇠</small>', 0: '방향 표시 끔<small>꺾쇠 없음</small>' }[settings.aim] || '방향 표시 보통',
   };
-  for (const b of document.querySelectorAll('[data-set]')) { b.innerHTML = SET_HTML[b.dataset.set]; if (b.dataset.set === 'flash' || b.dataset.set === 'bossbar') b.setAttribute('aria-pressed', String(!settings[b.dataset.set])); }
+  for (const b of document.querySelectorAll('[data-set]')) { b.innerHTML = SET_HTML[b.dataset.set]; if (b.dataset.set === 'flash' || b.dataset.set === 'bossbar' || b.dataset.set === 'nums') b.setAttribute('aria-pressed', String(!settings[b.dataset.set])); }
 }
 
 // 조이스틱 그리기 (렌더 뒤에 덧그림)

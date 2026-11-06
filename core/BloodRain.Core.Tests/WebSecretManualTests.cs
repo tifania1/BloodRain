@@ -3,7 +3,7 @@ using static BloodRain.Core.Tests.TestData;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>웹 한 생 판의 비급 층(WP-44, 20장 '비급 층과 해금')이 Core Synergy.Compute(restored)·Soul.TryRestore 와 같은 규칙인지 글로 본다.</summary>
+    /// <summary>웹 한 생 판의 비급 층(WP-44, 20장)이 Core Synergy.Compute(restored)·Soul.TryRestore 와 같은 규칙인지 글로 본다. 같은 밤 붙인 침방 지도(WP-45)·화면 가장자리(WP-46)·한 번 깨친 길(WP-47)도.</summary>
     public class WebSecretManualTests
     {
         static string Proto => ReadRepoFile("web", "prototype", "template.html");
@@ -67,6 +67,14 @@ namespace BloodRain.Core.Tests
             Assert.Contains("const speed = revisit && MASTERY.shortBreakthroughWhenRevisited && BRK.revisitSeconds > 0 ? BRK.zoomToSeconds / BRK.revisitSeconds : 1;", html);
             Assert.Contains("const more = revisit ? MASTERY.revisitInsightChoicesBonus || 0 : 0;", html);
             Assert.Contains("B.t += rdt * (B.speed || 1);", html);
+        }
+
+        [Fact] public void 피해_숫자_표시는_제목과_멈춤_두_곳에서_끈다()
+        {
+            // WP-48, 12장 설정 '피해 숫자 표시'(타이틀과 일시정지 두 곳에서)
+            var html = Proto;
+            Assert.Equal(2, html.Split("data-set=\"nums\"").Length - 1);
+            Assert.Contains("if (settings.nums) for (const n of G.nums) {", html);
         }
     }
 }
