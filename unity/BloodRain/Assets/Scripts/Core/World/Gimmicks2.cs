@@ -145,7 +145,7 @@ namespace BloodRain.Core.World
     {
         public static bool Inside(CampfireGimmickDef def, float distance, float scale = 1f) => distance <= def.Radius * scale;
 
-        /// <summary>이번 프레임 플레이어 회복량. healingMultiplier 는 SectTrait.HealingMultiplier(마교 0.5).</summary>
+        /// <summary>이번 프레임 플레이어 회복량. healingMultiplier 는 Life.HealingMultiplier(마교 0.5 × 혈마의 속삭임 0.5).</summary>
         public static float Heal(CampfireGimmickDef def, float distance, float maxHealth, float dt, float scale = 1f, float healingMultiplier = 1f) =>
             Inside(def, distance, scale) && dt > 0f ? maxHealth * def.HealPerSecondMaxHealthRatio * dt * healingMultiplier : 0f;
 

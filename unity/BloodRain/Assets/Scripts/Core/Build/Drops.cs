@@ -36,7 +36,7 @@ namespace BloodRain.Core.Build
         }
 
         /// <summary>음식 회복량. foodHeal 은 StatSheet 의 음식 회복 배율(기본 1, 개방 대식·혈공 거래 등이 곱해진 값),
-        /// healingMultiplier 는 SectTrait.HealingMultiplier(마교 0.5). 음식이 아니면 0.</summary>
+        /// healingMultiplier 는 Life.HealingMultiplier(마교 0.5 × 혈마의 속삭임 0.5). 음식이 아니면 0.</summary>
         public static float FoodHeal(DropsDef rule, string kind, float foodHeal = 1f, float healingMultiplier = 1f)
         {
             if (foodHeal < 0) throw new ArgumentOutOfRangeException(nameof(foodHeal));

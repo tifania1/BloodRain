@@ -31,7 +31,7 @@ namespace BloodRain.Core.Combat
             Damages(ult, enemyFamily) ? Ultimates.HitDamage(ult, startWeaponHit, powerMultiplier) : 0f;
 
         /// <summary>적 하나를 맞힌 피해로 채우는 기혈. lifesteal 은 능력치 흡혈 + 천마해체 몫(DemonDissolution.LifestealBonus),
-        /// lifestealMultiplier 는 SynergyEffects.LifestealMultiplier, healingMultiplier 는 SectTrait.HealingMultiplier.</summary>
+        /// lifestealMultiplier 는 SynergyEffects.LifestealMultiplier, healingMultiplier 는 Life.HealingMultiplier(문파 × 혈마의 속삭임).</summary>
         public static float LifestealHeal(float damageDealt, float lifesteal, float lifestealMultiplier = 1f, float healingMultiplier = 1f) =>
             damageDealt <= 0f || lifesteal <= 0f ? 0f : damageDealt * lifesteal * lifestealMultiplier * healingMultiplier;
     }

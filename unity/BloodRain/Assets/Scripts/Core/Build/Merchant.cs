@@ -68,7 +68,7 @@ namespace BloodRain.Core.Build
             return MerchantBuy.Bought;
         }
 
-        /// <summary>회복약 하나가 채우는 기혈. healingMultiplier 는 SectTrait.HealingMultiplier(마교 0.5).
+        /// <summary>회복약 하나가 채우는 기혈. healingMultiplier 는 Life.HealingMultiplier(문파 마교 0.5 × 혈마의 속삭임 0.5).
         /// 음식이 아니라 음식 회복 배율(개방 대식 등)은 곱하지 않는다.</summary>
         public static float PotionHeal(MerchantItemDef item, float maxHp, float healingMultiplier = 1f)
         {
