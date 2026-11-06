@@ -44,8 +44,12 @@ namespace BloodRain.Core.Progression
             _carry = 0;
         }
 
+        /// <summary>참이면 기울기·심마로 움직이지 않는다(약방 영약 태극환 '처음 10분', Life 가 켜고 끈다). 되돌리기(ResetTo)는 그대로.</summary>
+        public bool Frozen { get; set; }
+
         void Tilt(int amount)
         {
+            if (Frozen) return;
             double exact = amount * (double)TiltMultiplier + _carry;
             int whole = (int)Math.Truncate(exact);
             _carry = exact - whole;
@@ -63,7 +67,7 @@ namespace BloodRain.Core.Progression
         /// <summary>게이지를 0으로.</summary>
         public void Reset() => ResetTo(0);
         /// <summary>게이지를 그만큼 옮긴다(+ 양, - 음). 마교 혈공의 심마가 쓴다.</summary>
-        public void Shift(int delta) => Value = Clamp(Value + delta);
+        public void Shift(int delta) { if (!Frozen) Value = Clamp(Value + delta); }
         /// <summary>게이지를 그 값으로 되돌린다(천마해체: 시작값으로, 깨달음 '역근': 0으로).</summary>
         public void ResetTo(int value)
         {

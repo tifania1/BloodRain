@@ -183,6 +183,7 @@ namespace BloodRain.Core.Run
         {
             var b = Encounters.StatBonus();
             if (extra != null) b.Add(extra);
+            foreach (var e in _elixirs) if (e.MaxHealth != 0) b.Add(StatKind.MaxHealth, e.MaxHealth);   // 만년설삼
             return Body.ComputeStats(_data, Loadout.Passives, _soul.Training, b, RealmRewards.MaxHealthFlat, healthRatio, moving, _soul.GoldenToadsTotal);
         }
 
@@ -247,6 +248,7 @@ namespace BloodRain.Core.Run
 
             float dt = unscaledDt * WorldTimeScale;
             Minutes += dt / 60f;
+            if (_yinyangFreezeLeft > 0 && (_yinyangFreezeLeft -= dt) <= 0) Loadout.Gauge.Frozen = false;   // 태극환
             TickUltimate(dt);
             if (PrologueSpawns != null) return TickPrologue(dt, position, aliveNow);
             Director.Tick(dt);
@@ -297,6 +299,39 @@ namespace BloodRain.Core.Run
             return s;
         }
 
+        readonly List<ElixirDef> _elixirs = new List<ElixirDef>();
+        bool _elixirReviveUsed;
+        float _yinyangFreezeLeft;
+
+        /// <summary>이번 생에 지니고 나온 약방 영약(기획서 10장 '영약(약방)').</summary>
+        public IReadOnlyList<ElixirDef> Elixirs => _elixirs;
+
+        /// <summary>생을 시작할 때(첫 Tick 전) 한 번, Meta.Apothecary.TryPrepare 가 돌려준 영약을 건다.
+        /// 공청석유 오의 게이지, 혈정단 정예 혈정 배율, 태극환 음양 멈춤, 대환단 시작 레벨(오른 레벨만큼 레벨업 고르기를 띄우도록 AbsorbResult 를 돌려준다),
+        /// 만년설삼은 CurrentStats, 소환단은 TryRevive 가 본다.</summary>
+        public AbsorbResult TakeElixirs(IReadOnlyList<ElixirDef> elixirs)
+        {
+            if (IsPrologue) throw new InvalidOperationException("서장에는 영약을 지니고 나오지 않습니다");
+            if (Minutes > 0 || _elixirs.Count > 0) throw new InvalidOperationException("영약은 생을 시작할 때 한 번 건다");
+            _elixirs.AddRange(elixirs);
+            foreach (var e in elixirs)
+            {
+                if (e.StartUltimate > 0) Charge.AddFlat(e.StartUltimate);
+                if (e.BloodCrystalMultiplier > 0) Log.DropCrystalMultiplier *= e.BloodCrystalMultiplier;
+                if (e.YinyangFreezeSeconds > _yinyangFreezeLeft) _yinyangFreezeLeft = e.YinyangFreezeSeconds;
+            }
+            if (_yinyangFreezeLeft > 0) Loadout.Gauge.Frozen = true;
+            int from = Xp.Level, target = elixirs.Count == 0 ? 0 : elixirs.Max(e => e.StartLevel);
+            var breaks = new List<RealmDef>();
+            while (Xp.Level < target)
+            {
+                if (Xp.Growth <= 0) break;
+                var r = Xp.Absorb((Xp.Required - Xp.Xp) / Xp.Growth + 1e-6);
+                breaks.AddRange(r.Breakthroughs);
+            }
+            return new AbsorbResult(from, Xp.Level, breaks);
+        }
+
         /// <summary>이번 생에 쓴 재기 횟수.</summary>
         public int RevivalsUsed { get; private set; }
 
@@ -305,6 +340,11 @@ namespace BloodRain.Core.Run
         public float? TryRevive(StatSheet stats)
         {
             if (IsPrologue) throw new InvalidOperationException("서장은 PlayerDown 을 씁니다");
+            if (!_elixirReviveUsed && _elixirs.FirstOrDefault(e => e.ReviveHealthRatio > 0) is { } pill)
+            {
+                _elixirReviveUsed = true;   // 소환단: '첫 사망 때' 라 재기보다 먼저, 재기 횟수는 그대로
+                return pill.ReviveHealthRatio;
+            }
             if (RevivalsUsed >= stats.Revival) return null;
             RevivalsUsed++;
             return _data.Balance.Revival.HealthRatio;

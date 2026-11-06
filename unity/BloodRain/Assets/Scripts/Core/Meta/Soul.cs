@@ -914,7 +914,10 @@ namespace BloodRain.Core.Meta
 
         /// <summary>이번 생에 얻은 혈정. 정예 몫은 모은 수 × 1개 × 혈월 배율을 한 번에 반올림한다(혈월에서 정예 둘이면 3개).</summary>
         public int BloodCrystal =>
-            _bossCrystal + (int)Math.Round((double)(_eliteKills + _spiritBeasts) * _eliteCrystal * RewardMultiplier, MidpointRounding.AwayFromZero);
+            _bossCrystal + (int)Math.Round((_eliteKills * (double)DropCrystalMultiplier + _spiritBeasts) * _eliteCrystal * RewardMultiplier, MidpointRounding.AwayFromZero);
+
+        /// <summary>정예가 떨어뜨리는 혈정 배율(약방 영약 혈정단 '혈정 드롭 2배', Life.TakeElixirs 가 건다). 영물·땅의 주인 보상은 드롭이 아니라 그대로.</summary>
+        public float DropCrystalMultiplier { get; internal set; } = 1f;
 
         /// <summary>정예를 쓰러뜨렸다(balance.json drops.eliteBloodCrystal). 이번에 늘어난 혈정을 돌려준다(혈월이면 1·2개가 번갈아).</summary>
         public int KillElite()
