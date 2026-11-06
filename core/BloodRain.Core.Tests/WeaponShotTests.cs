@@ -142,8 +142,9 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             var inProto = _d.Weapons.Where(w => html.Contains($"case '{w.Behavior}':")).ToList();
-            // 2026-11-05 R-17 여섯 무공이 프로토타입에 들어가(?trial=1) 빠진 것은 뇌부 하나다
-            Assert.Equal(new[] { "thunder_talisman" }, _d.Weapons.Except(inProto).Select(w => w.Id).ToArray());
+            // 2026-11-05 R-17 여섯 무공이 프로토타입에 들어가(?trial=1), 2026-11-06 WP-18 로 뇌부도 들어가 빠진 것이 없다
+            Assert.Empty(_d.Weapons.Except(inProto).Select(w => w.Id));
+            Assert.Contains("웹 프로토타입에도 같은 값으로 붙였다", TestData.GddSection("날아가는 것과 넉백"));
             Assert.Contains("프로토타입에 없던 무공 여섯(", TestData.GddSection("날아가는 것과 넉백"));
             Assert.Contains("?trial=1", TestData.GddSection("날아가는 것과 넉백"));
             // 표에는 모든 무공이 있다(프로토타입 무공 + 뇌부 + R-17 시작값 여섯)

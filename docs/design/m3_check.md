@@ -16,9 +16,9 @@
 
 | 항목 | 기획서 | 데이터 | Core | 웹 프로토타입 | 천하 시안 | Unity |
 |---|---|---|---|---|---|---|
-| 무공 성장 | 9장 '공격 무공 16종' | weapons.json 16. 같음(`WeaponGrowthTests` 넷, `DataIntegrityTests.공격_무공_해금_칸이_데이터와_같다`) | `WeaponGrowth`·`WeaponMath`(성장 값). 맞히는 판정은 Unity·웹 몫 | behavior 아홉(`PROTO_BEHAVIORS`). 태극검·쇄겸술·혈조·음공·이화창·뇌부·낙화검우 없음 | 시안 무공 셋(검기·도는 검·먹 파동), 데이터 무공 아님 | WeaponRunner 아홉 갈래(처음 8 + 뇌부 W-01). 취선봉 `random_arc` 와 태극검·쇄겸술·혈조·음공·이화창·낙화검우는 줄 없음 |
+| 무공 성장 | 9장 '공격 무공 16종' | weapons.json 16. 같음(`WeaponGrowthTests` 넷, `DataIntegrityTests.공격_무공_해금_칸이_데이터와_같다`) | `WeaponGrowth`·`WeaponMath`(성장 값). 맞히는 판정은 Unity·웹 몫 | behavior 열여섯 다(`PROTO_BEHAVIORS`: 처음 아홉 + R-17 여섯(`?trial=1` 이거나 해금된 뒤) + 뇌부 WP-18) | 시안 무공 셋(검기·도는 검·먹 파동), 데이터 무공 아님 | WeaponRunner 아홉 갈래(처음 8 + 뇌부 W-01). 취선봉 `random_arc` 와 태극검·쇄겸술·혈조·음공·이화창·낙화검우는 줄 없음 |
 | 날아가는 것·넉백 | 9장 표, 여섯 무공 비어 있음('손으로 맞춘 뒤 채운다') | 태극검·쇄겸술·혈조·음공·이화창·낙화검우에 shot·knockback 없음(`WeaponShotTests.프로토타입에_없는_무공_개수가_문장과_같다`) | - | - | - | - |
-| 해금 조건 | 9장 표(음공 한 판 5,000 처치, 이화창 한 판 경공 300, 뇌부 정신부 누적 10, 태극검·쇄겸술 땅의 주인 첫 처치) | weapons.json `unlock` 같음 | `boss:` 는 `Soul` 이 판정. 도전 과제 셋은 `Soul.Unlock(token)` 로 받기만 하고, 세는 곳 없음 | 처음부터 쓰는 아홉만 | - | 줄 없음 |
+| 해금 조건 | 9장 표(음공 한 판 5,000 처치, 이화창 한 판 경공 300, 뇌부 정신부 누적 10, 태극검·쇄겸술 땅의 주인 첫 처치) | weapons.json `unlock` 같음 | `boss:` 는 `Soul` 이 판정, 도전 과제 셋은 `Soul.UnlockChallenges`(EndLife 에서 한 생 처치·경공·정신부 누적) | 한 생 판이 혼 기록으로 풀을 정하고 정산에서 도전 과제를 엶(WP-17, 2026-11-06) | - | 줄 없음 |
 | 심법 16 | 9장 '심법 16종' | passives.json 16. 같음(`GddTablesTests.심법_표가_passives_json_과_같다`) | `Stats` | 16 다 | 몸 능력치에 닿는 심법만 카드로 | C-06 '남은 것'(심법 능력치 얹기) |
 | 절기 16 | 9장 '절기 16종'·'절기로 바뀐 뒤 날아가는 것' | evolutions.json 16, params 는 열다섯(프로토타입 아홉 + 오뢰정법 + R-09 다섯은 효과 칸 숫자만). 흑룡탄만 params 없음(`EvolutionParamsTests` 넷) | `Awakening`(문턱·그릇), `EvolutionDef.Param` | 아홉 | 없음 | J-01U(각성 연출) 끝, C-09(절기 4종), C-09c(셋 효과), W-01(오뢰정법). 나머지 줄 없음 |
 
@@ -43,7 +43,7 @@
 - **오의 모양 수치가 글로만 있다.** characters.json ultimates 에 5장 '오의 상세' 숫자(만천화우 3초·중독, 태극무량 5초, 사자후 6m·3초, 천뢰낙 12곳·1초, 팔방풍우 8방향 3연타, 천설부 3초, 천마해체 8초·2%·2배·10%)를 칸으로. 역류는 '공력 x12' 말고 물살 폭·시간이 없다: 숫자 없음, 사람 결정 필요. Unity 는 C-09 가 일검만 적고 나머지 오의 줄 없음
 - ~~진전 소림 4·개방 4 효과가 없다~~ → 2026-11-04 R-07: `arhat_ring`·`beggar_allies` + Core `SchoolSummons`. 2026-11-05 R-07b: 허상 1.8m·넉백 8, 제자 1초마다 장풍 Lv1(20 x 공력, 넉백 5) — params·20장 표 아래·`ArhatPush`·`AllyShot`
 - ~~기획서 20장 진전 표 ↔ synergies.json schools 를 맞추는 테스트가 없다~~ → 2026-11-04 R-06: `SynergyDataTests.기획서_20장_진전_표가_schools_와_같다`
-- **도전 과제 해금 셋을 세는 곳이 없다.** 음공(한 판 처치 5,000)·이화창(한 판 경공 300)·뇌부(정신부 누적 10)는 토큰만 있다. 한 판 기록(`Run/Life.cs` 쪽)과 혼에 쌓는 누적(`Meta/Soul.cs`)에서 세어 `Soul.Unlock` 을 부르게
+- ~~**도전 과제 해금 셋을 세는 곳이 없다.** 음공(한 판 처치 5,000)·이화창(한 판 경공 300)·뇌부(정신부 누적 10)는 토큰만 있다. 한 판 기록(`Run/Life.cs` 쪽)과 혼에 쌓는 누적(`Meta/Soul.cs`)에서 세어 `Soul.Unlock` 을 부르게~~ → Core `Soul.UnlockChallenges`(R-08), 웹 한 생 판 WP-17(2026-11-06)
 - **무공 여섯의 날아가는 것·넉백 값이 없다**(태극검·쇄겸술·혈조·음공·이화창·낙화검우, 9장 표·weapons.json `shot`·`knockback`). 기획서는 프로토타입에서 손으로 맞춘 뒤 채운다고 했다 → WP-01. 그 전까지는 숫자 없음, 사람 결정 필요
 - ~~**절기 여섯에 params 가 없다.**~~ → R-09(11-04) 다섯은 옮김, 흑룡탄은 숫자가 없어 그대로. 9장 효과 칸에 숫자가 있는 것은 evolutions.json params 로 옮기면 된다(태극양의검 검 8자루·태극 +30%, 혈마수 흡혈 4%·극음 범위 2배, 파천금음 최대 3배·기절 30%, 백화난무창 5방향, 매화만개 기혈 0.2). 흑룡탄과 여섯의 탄속·반경·수명은 숫자 없음, 사람 결정 필요. 넣으면 `EvolutionParamsTests.효과_칸의_숫자가_params_와_같다` 에 더한다
 - Unity 무공 일곱(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`·`ring_wave`·`pierce_thrust`·`petal_scatter`)과 그 절기 모양은 unity_tasks 에 줄 없음(취선봉은 C-04b 에 '넣을 때' 한 마디뿐)

@@ -43,5 +43,21 @@ namespace BloodRain.Core.Tests
             Assert.Contains("for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);", html);
             Assert.Contains("'새로 얻은 무공 · 다음 생부터'", html);
         }
+
+        [Fact] public void 뇌부가_웹에도_있고_데이터_값을_쓴다()
+        {
+            // WP-18: 곤륜 시작 무공 뇌부(random_lightning)가 웹 한 생 판·레벨업 풀에 있다. 숫자는 weapons.json·evolutions.json 칸에서 읽는다
+            var html = Proto;
+            Assert.Contains("case 'random_lightning':", html);
+            Assert.Contains("'petal_scatter', 'random_lightning']);", html);
+            Assert.Contains("'random_lightning', 'ring_wave', 'slow_projectile']);", html);
+            Assert.Contains("def.strikeRadius * S.area * (w.evolved ? ep.radiusMultiplier : 1)", html);
+            Assert.Contains("delay: def.fuseSeconds", html);
+            Assert.Contains("e.stun = Math.max(e.stun || 0, def.shockSeconds)", html);
+            Assert.Contains("ep.lightningChains", html);
+            var five = Load().Evolutions.First(e => e.Id == "five_thunders");
+            foreach (var k in new[] { "strikes", "rangeMultiplier", "radiusMultiplier", "lightningChains", "lightningRange", "lightningFalloff" })
+                Assert.True(five.Params!.ContainsKey(k), $"오뢰정법 params 에 {k} 가 없다");
+        }
     }
 }
