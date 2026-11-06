@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using BloodRain.Core.Build;
 using BloodRain.Core.Data;
 using BloodRain.Presentation.Hud;
+using BloodRain.Presentation.Meta;
 using BloodRain.Sim;
 using Unity.Mathematics;
 using UnityEngine;
@@ -14,7 +15,9 @@ namespace BloodRain.Presentation.Fx
     //   줍기(플레이어 1m 안): 만두·오리구이 = Drops.FoodHeal(규칙, 종류, 1 + 음식 회복) — 마교·속삭임 배율은 PlayerVitals.Heal 이 곱한다.
     //     취기부 = 화면 안 진기 구슬 끌기(보부상 취기부와 같은 길), 정신부 = 화면 안 적을 JeongsinFreezeSeconds × 곤륜 진전 배율 동안 멈춤,
     //     은자 주머니 = RollSilverBag × (1 + 탐욕) → Life.GainSilver(혈월 배율은 Life 가). 음식은 LifeLog.EatFood·RunRecord.EatFood, 정신부는 UseTalisman 둘 다.
-    //   그림은 아직 없어(art_queue) 색 동그라미·네모로만 그린다. 은빛 등롱은 QA-02U.
+    //   은빛 등롱(QA-02U·R4-08U): 생성 디렉터의 silver_lantern 사건에 PlaceSilver. LifeLog.ManuscriptsHere(혈월 천하)일 때만 화면 안 가까이 놓고,
+    //     깨면 LifeLog.BreakSilverLantern(cycle.bloodmoon.manuscriptChance)으로 의서 한 권 + 낙관(DiscoveryFx), 비전 판정엔 RunRecord.BreakSilverLantern. 보통 드롭도 하나 떨군다(웹과 같음).
+    //   그림은 아직 없어(art_queue) 색 동그라미·네모로만 그린다.
     public sealed class LanternLayer : MonoBehaviour
     {
         public static LanternLayer Instance { get; private set; }
@@ -26,7 +29,7 @@ namespace BloodRain.Presentation.Fx
         [Tooltip("줍는 거리(경지 m)")]
         public float pickupMeters = 1f;
 
-        sealed class Lantern { public Vector2 Pos; public GameObject Go; }
+        sealed class Lantern { public Vector2 Pos; public GameObject Go; public bool Silver; }
         sealed class Drop { public Vector2 Pos; public string Kind; public GameObject Go; public float Age; }
 
         readonly List<Lantern> _lanterns = new List<Lantern>();
@@ -123,13 +126,30 @@ namespace BloodRain.Presentation.Fx
             if (Drops.EnemyDropsSilver(Rule, _rng)) AddDrop(at, Drops.SilverBag);
         }
 
-        void Place(Vector2 at)
+        void Place(Vector2 at, bool silver = false)
         {
-            var go = Make("등롱", at, _circle, new Color(0.78f, 0.22f, 0.17f), 0.9f, 6);
-            var rim = Make("테", at, _circle, new Color(0.85f, 0.69f, 0.23f), 1.05f, 5);
+            float size = silver ? 1.3f : 1f;
+            var go = Make(silver ? "은빛 등롱" : "등롱", at, _circle, silver ? new Color(0.79f, 0.81f, 0.84f) : new Color(0.78f, 0.22f, 0.17f), 0.9f * size, 6);
+            var rim = Make("테", at, _circle, silver ? new Color(0.95f, 0.96f, 1f) : new Color(0.85f, 0.69f, 0.23f), 1.05f * size, 5);
             rim.transform.SetParent(go.transform, true);
-            _lanterns.Add(new Lantern { Pos = at, Go = go });
+            _lanterns.Add(new Lantern { Pos = at, Go = go, Silver = silver });
         }
+
+        /// <summary>은빛 등롱 사건(생성 디렉터). 의서가 나오는 생(혈월 천하)이 아니면 놓지 않고 false. 웹처럼 화면 대각선 0.28 거리.</summary>
+        public bool PlaceSilver()
+        {
+            if (!Alive || !runner.Life.Log.ManuscriptsHere) return false;
+            var cam = Camera.main;
+            float diag = cam != null ? Mathf.Sqrt(Mathf.Pow(cam.orthographicSize * 2f * cam.aspect, 2f) + Mathf.Pow(cam.orthographicSize * 2f, 2f)) : 20f;
+            float a = (float)(_rng.NextDouble() * Mathf.PI * 2f);
+            var at = PlayerPos + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * diag * 0.28f;
+            Place(at, true);
+            Pop(at, Loc.T("ui.drop.silver_lantern"));
+            return true;
+        }
+
+        /// <summary>시험용: 은빛 등롱에서 나온 의서 수(이번 생).</summary>
+        public int ManuscriptsFound { get; private set; }
 
         void Break(int i)
         {
@@ -137,7 +157,22 @@ namespace BloodRain.Presentation.Fx
             _lanterns.RemoveAt(i);
             Destroy(l.Go);
             Broken++;
+            if (l.Silver) BreakSilver(l.Pos);
             AddDrop(l.Pos, Drops.RollLantern(Rule, _rng));
+        }
+
+        void BreakSilver(Vector2 at)
+        {
+            var life = runner.Life;
+            _secrets?.Record?.BreakSilverLantern();
+            _secrets?.Poke();
+            if (!life.Log.BreakSilverLantern(_rng)) return;
+            ManuscriptsFound++;
+            int total = (RebirthHandoff.Soul != null ? RebirthHandoff.Soul.Manuscripts : 0) + life.Log.Manuscripts;
+            var fx = FindFirstObjectByType<DiscoveryFx>();
+            if (fx != null) fx.Show(DiscoveryFx.Kind.Encounter, Loc.T("ui.drop.manuscript"), "醫書");
+            Pop(at, Loc.F("ui.drop.manuscript_count", total));
+            Debug.Log($"[LanternLayer] 의서 한 권 · 모두 {total}권");
         }
 
         void AddDrop(Vector2 at, string kind)

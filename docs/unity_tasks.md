@@ -276,7 +276,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 등롱 열 개를 깨면 다섯 가지가 섞여 나오고 각각 효과가 듦
   - 찍기: `docs/unity_shots/C-09/` 의 `lantern_drops.png`
 
-- [ ] QA-02U 의서 은빛 등롱 · 먼저: C-09b
+- [x] QA-02U 의서 은빛 등롱 · 먼저: C-09b — 2026-11-07 02:51 PC: LifeRunner 의 silver_lantern 사건 → `LanternLayer.PlaceSilver()`(`Life.Log.ManuscriptsHere` 일 때만, 화면 대각선 0.28 거리, 은빛 1.3배 등롱 + 'ui.drop.silver_lantern' 글자). 깨면 `RunRecord.BreakSilverLantern`(비전 판정)·Poke, `Log.BreakSilverLantern(rng)` 참이면 DiscoveryFx '단목현의 의서'(醫書)와 '의서 한 권 · 모두 N권', 보통 드롭도 하나. 시험 메뉴 `BloodRain/Test/은빛 등롱 놓기(플레이 중)`·`BloodRain/Test/혼 회귀시키기`(편집 중, 원래 저장은 soul.before_regress.json). 1회차 저장: 안 놓임. 회귀(2회차) + 확률 1: 놓이고 깨져 의서 1(Log.Manuscripts 1). 시험 뒤 PC 저장은 1회차로 되돌림. 콘솔 에러 0. 찍음 `docs/unity_shots/QA-02U/` 의 `silver_lantern.png`(깨진 자리에 은자 주머니)
   - 할 것: 은빛 등롱을 놓을 때 `lifeLog.ManuscriptsHere` 가 참일 때만(혈월 천하, cheonha.json `cycle.bloodmoon.manuscriptsOnlyHere`). 주우면 `lifeLog.FindManuscript()`(1회차면 false 라 세지 않음), 셌으면 SecretWatch 기록에 의서 알림.
   - 쓸 것: Core `LifeLog.ManuscriptsHere`·`FindManuscript`
   - 메뉴: C-09b 의 등롱 놓기 + LF-03 의 혼 저장(회귀한 혼을 만드는 시험 메뉴 `BloodRain/Test/혼 회귀시키기`)
@@ -470,7 +470,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 화산에서 8초마다 바위 셋, 곤륜에서 60초에 눈보라 20초, 십만대산에서 180초에 붉은 달 30초
   - 찍기: `docs/unity_shots/R4-13U/` 의 `falling_rocks.png`, `blizzard.png`, `red_moon.png`
 
-- [ ] R4-08U 은빛 등롱에서 의서 · 먼저: 없음
+- [ ] R4-08U 은빛 등롱에서 의서 · 먼저: 없음 (진행: 2026-11-07 02:51 PC — 부수기·의서 한 권·낙관·글자(ui.drop.manuscript·manuscript_count 네 언어)는 QA-02U 와 같이 LanternLayer.BreakSilver 로 끝. 남은 것: 의서를 든 채 생을 끝내 객잔 목 노인 manuscript_1 줄 확인과 찍기 — 이 PC 저장이 서장 몸이라 쓰러지면 서장 처음부터라 객잔까지 못 감)
   - 할 것: 혈월 천하에서 은빛 등롱을 부수면 `life.BreakSilverLantern(rng)` 를 부르고, 참이면 '단목현의 의서' 낙관 한 번(글은 strings, 새 문구면 ui. 키 네 언어). 생이 끝나면 의서 수는 LifeRecord 로 혼에 들어가고, 객잔 귀환 때 목 노인 '단목현의 의서' 줄(dialogue mok manuscript_1~7)이 InnDialogue 에서 저절로 나온다.
   - 쓸 것: Core `Life.BreakSilverLantern`, cheonha.json `cycle.bloodmoon.manuscriptChance`(0.15), `DialogueProgress.MokManuscriptLinesSeen`
   - 메뉴: 없음
