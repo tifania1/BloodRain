@@ -183,7 +183,7 @@ namespace BloodRain.Core.Run
         {
             var b = Encounters.StatBonus();
             if (extra != null) b.Add(extra);
-            return Body.ComputeStats(_data, Loadout.Passives, _soul.Training, b, RealmRewards.MaxHealthFlat, healthRatio, moving);
+            return Body.ComputeStats(_data, Loadout.Passives, _soul.Training, b, RealmRewards.MaxHealthFlat, healthRatio, moving, _soul.GoldenToadsTotal);
         }
 
         /// <summary>태극(조화) 구간이면 붙는 쾌속(기본 0.1, 무당 몸 0.2). 태극이 아니면 0. StatSheet.CooldownReduction 에 더하고 상한으로 자른다.</summary>

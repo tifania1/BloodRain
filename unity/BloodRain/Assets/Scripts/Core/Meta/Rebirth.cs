@@ -93,12 +93,12 @@ namespace BloodRain.Core.Meta
         /// healthRatio(지금 기혈 / 최대 기혈)와 moving 은 조건이 붙은 고유 능력(남궁 기혈 50% 이상 공력, 수로채 움직이는 동안 회피)만 본다.</summary>
         public StatSheet ComputeStats(GameData data, IReadOnlyDictionary<string, int> passiveLevels,
             IReadOnlyDictionary<string, int> trainingLevels, StatBonus? extra = null, float maxHealthFlat = 0f,
-            float healthRatio = 1f, bool moving = false)
+            float healthRatio = 1f, bool moving = false, int goldenToadsTotal = 0)
         {
             var b = TraitStats;
             b.Add(SectTrait.Bonus(healthRatio, moving));
             if (extra != null) b.Add(extra);
-            return Stats.Compute(data, Character, passiveLevels, trainingLevels, b, maxHealthFlat);
+            return Stats.Compute(data, Character, passiveLevels, trainingLevels, b, maxHealthFlat, goldenToadsTotal);
         }
 
         /// <summary>Synergy.Compute 에 넘길 바깥 보너스: 태어난 문파 + more(고수의 유해, 혈마의 속삭임 …)를 더한 것.</summary>

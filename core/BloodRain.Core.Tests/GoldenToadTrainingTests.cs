@@ -3,6 +3,7 @@ using System.Linq;
 using BloodRain.Core.Build;
 using BloodRain.Core.Data;
 using BloodRain.Core.Meta;
+using BloodRain.Core.Run;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -59,6 +60,18 @@ namespace BloodRain.Core.Tests
             Assert.False(s.TryBuyTraining("Greed"));
             Assert.Equal(0.70f, s.TrainingBonus()[StatKind.Greed], 3);
             Assert.Equal(5, s.TrainingMax("Might"));
+        }
+
+        [Fact] public void 해금으로_더_산_탐욕이_한_생_능력치에도_들어간다()
+        {
+            // QA-12: Life.CurrentStats 가 Stats.Compute 를 거치며 금두꺼비 누적을 안 넘겨 Lv6·7 이 5로 잘렸다
+            var s = AfterPrologue();
+            Live(s, 10);
+            s.AddRebirthQi(1_000_000);
+            for (int i = 0; i < 7; i++) Assert.True(s.TryBuyTraining("Greed"));
+            var life = new Life(s, Body("shaolin"), new System.Random(1));
+            Assert.Equal(0.70f, life.CurrentStats().Bonus[StatKind.Greed], 3);
+            Assert.Equal(0.70f, Body("shaolin").ComputeStats(_d, new Dictionary<string, int>(), s.Training, goldenToadsTotal: s.GoldenToadsTotal).Bonus[StatKind.Greed], 3);
         }
 
         [Fact] public void 누적은_저장_왕복하고_옛_저장은_0이다()

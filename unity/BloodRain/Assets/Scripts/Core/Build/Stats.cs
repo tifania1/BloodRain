@@ -140,16 +140,17 @@ namespace BloodRain.Core.Build
         public static int TrainingMax(TrainingItemDef item, int goldenToadsTotal = 0) =>
             item.MaxLevel + (item.BonusMax != null && goldenToadsTotal >= item.BonusMax.GoldenToadsTotal ? item.BonusMax.Levels : 0);
 
-        /// <summary>한 판 시작 능력치: 캐릭터 + 심법 + 연무장 (+ 깨달음·진전 같은 덧셈은 extra 로).</summary>
+        /// <summary>한 판 시작 능력치: 캐릭터 + 심법 + 연무장 (+ 깨달음·진전 같은 덧셈은 extra 로).
+        /// goldenToadsTotal 은 혼의 금두꺼비 누적(연무장 상한 해금). 안 넘기면 해금 전 상한으로 자른다.</summary>
         public static StatSheet Compute(GameData data, CharacterDef character,
             IReadOnlyDictionary<string, int> passiveLevels,
             IReadOnlyDictionary<string, int> trainingLevels,
-            StatBonus? extra = null, float maxHealthFlat = 0f)
+            StatBonus? extra = null, float maxHealthFlat = 0f, int goldenToadsTotal = 0)
         {
             var total = new StatBonus();
             foreach (var kv in passiveLevels)
                 total.Add(FromPassive(data.Passive(kv.Key), kv.Value));
-            total.Add(FromTraining(data.Balance.Training, trainingLevels));
+            total.Add(FromTraining(data.Balance.Training, trainingLevels, goldenToadsTotal));
             if (extra != null) total.Add(extra);
             return new StatSheet(character, data.Balance.Stats, total, maxHealthFlat);
         }
