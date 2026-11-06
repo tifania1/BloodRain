@@ -321,13 +321,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] R-12Ua 무공 일곱 중 넷(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`) · 먼저: C-06a
   - 할 것: WeaponRunner 에 네 갈래. 성장 숫자는 Core `WeaponGrowth`, 날아가는 것·넉백은 weapons.json(기획서 9장 '날아가는 것과 넉백'). 붓 획은 V-12c 텍스처(taiji·chain·claw). 숫자가 weapons.json 에 비어 있는 무공은 건너뛰고 `막힘:` 한 줄.
-  - 쓸 것: Core `Combat/WeaponGrowth`, weapons.json, `docs/design/m3_check.md` '무공 16·절기 16'
+  - 쓸 것: Core `Combat/WeaponGrowth`, weapons.json, `docs/design/m3_check.md` '무공 16·절기 16'. weapons.json 에 없는 모양 값(검 도는 빠르기·검 반경·같은 적 다시 맞기, 사슬 끌어오는 거리, 할퀴기 갈래 사이·폭)은 막힘으로 두지 말고 웹 프로토타입 `TRIAL_W`(template.html 562줄: 1.2바퀴/초·0.35m·0.5초, 1.5m, 0.35라디안·0.35m)와 같은 값을 WeaponRunner 한곳의 임시 상수로(주석 '프로토타입 값 R-17, 사람이 해 본 뒤 데이터로'). 2026-11-07 클라우드가 정함 — 데이터로 옮기는 것은 R-17 대로 사람이 해 본 뒤
   - 메뉴: `BloodRain/Test/무공 넣기(플레이 중)/<id>`
   - 끝: 넷이 Lv1·Lv5·Lv8 에서 웹 프로토타입과 같은 모양·개수로 나감
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
 - [ ] R-12Ub 무공 일곱 중 셋(`ring_wave`·`pierce_thrust`·`petal_scatter`) · 먼저: R-12Ua
-  - 할 것: R-12Ua 와 같은 방법. 붓 획 qin·spear·petals.
+  - 할 것: R-12Ua 와 같은 방법. 붓 획 qin·spear·petals. 데이터에 없는 값(음공 기절 0.6초·둘째 음파 0.3초 뒤, 창 폭 0.6m, 꽃잎 퍼짐 1.2라디안)도 R-12Ua 처럼 웹 `TRIAL_W` 를 임시 상수로.
   - 쓸 것: R-12Ua 와 같음
   - 메뉴: R-12Ua 의 무공 넣기
   - 끝: 셋이 웹 프로토타입과 같음
