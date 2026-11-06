@@ -59,7 +59,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("const ev = sectBonus('Evade')", html);   // 수로채 회피는 피격 직전에 굴림(Core Evade.Roll)
             Assert.Contains("B.yinyang.harmony.cooldownReduction * harmonyMul()", html);   // 무당
             Assert.Contains("B.yinyang.harmony.ultimateChargeBonus * harmonyMul()", html);
-            Assert.Contains("regen * dt * healMul()", html);   // 마교 회복 절반
+            Assert.Contains("regen * dt * otherHeal()", html);   // 마교 회복 절반(otherHeal = healMul × 흡혈대법)
             Assert.Contains("const ns = nearSlow(d)", html);   // 곤륜
             Assert.Contains("!sectT().poisonImmune) p.hp -=", html);   // 당가 독안개
             Assert.Contains("G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max)", html);   // 음양 시작

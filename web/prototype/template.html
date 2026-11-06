@@ -509,10 +509,29 @@ function sectBonus(k) {   // Core SectTrait.Bonus(healthRatio, moving) 가운데
     const full = T.lowHealthFullAt ?? 0;
     v += full >= 1 ? T.lowHealthCooldownReduction : T.lowHealthCooldownReduction * clamp((1 - clamp(hr, 0, 1)) / (1 - full), 0, 1);
   }
+  // 그때그때 바뀌는 마공(WP-23, Core InsightEffects.Bonus): 혈광 기혈 문턱 아래 쾌속, 심마환영 기운 횟수 × 공력(최대)
+  if (k === 'CooldownReduction' && G.insights.includes('hyeolgwang') && hr < IP.hyeolgwang.healthThreshold) v += IP.hyeolgwang.cooldownReduction;
+  if (k === 'Might' && G.insights.includes('simma')) v += Math.min(IP.simma.mightMax, Math.max(0, (G.bSteps || 0) - (G.simmaBase || 0)) * IP.simma.mightPerStep);
   return v;
 }
 const healMul = () => sectT().healingMultiplier ?? 1;   // 마교 0.5
 const harmonyMul = () => sectT().harmonyBonusMultiplier ?? 1;   // 무당 2
+// 혈공(WP-23, 5장, cheonha.json sects[demonic].bloodArt — Core BloodArt 그대로): 구슬 진기 × 그 자리 혈운 농도^xpDensityExponent,
+// 농도 덕에 더 받은 진기 extraXpPerStep 마다 음양이 음으로 yinPerStep(심마). 몸의 오의(천마해체)를 쓰면 음양이 시작값으로 — 웹은 오의가 아직 모든 몸 일검이라 마교 몸이 오의를 쓰면 그렇게 본다.
+// 윤회의 기는 구슬 값 그대로(G.orbV·orbW 는 o.v 로 센다).
+const bloodArt = () => (G && G.body && G.body.bloodArt) || null;
+function bloodOrbXp(v) {
+  const A = bloodArt(); if (!A || !(A.xpDensityExponent > 0)) return v;
+  const got = v * Math.pow(Math.max(0, G.dens || 1), A.xpDensityExponent), extra = got - v;
+  if (extra > 0) {
+    G.bExtra = (G.bExtra || 0) + extra;
+    const steps = A.extraXpPerStep > 0 ? Math.floor(G.bExtra / A.extraXpPerStep) : 0;
+    if (steps > (G.bSteps || 0)) { G.yy = clamp(G.yy - (steps - (G.bSteps || 0)) * A.yinPerStep, B.yinyang.min, B.yinyang.max); G.bSteps = steps; }   // Core Gauge.Shift — 기울기 배율 없음
+  }
+  return got;
+}
+const has = id => G.insights.includes(id);
+const otherHeal = () => healMul() * (has('heupyeol') ? 0 : 1);   // 흡혈대법: 흡혈 말고 다른 회복 0(운기조식·음식·회복약 포함)
 const nearSlow = d => { const T = sectT(); return T.nearEnemySlow > 0 && d <= T.nearEnemySlowRadius ? 1 - T.nearEnemySlow : 1; };   // 싸움 좌표가 지금 경지 m 라 반경은 그대로
 // 능력치 이름(Core StatKind) → 프로토타입 능력치 칸. 심법·문파 몸·연무장·타고난 성질이 같이 쓴다
 const STAT_KEY = { MaxHealth: 'maxHealth', Recovery: 'recovery', Armor: 'armor', MoveSpeed: 'moveSpeed', Might: 'might', CooldownReduction: 'cdr', Area: 'area', Duration: 'duration', ProjectileSpeed: 'projSpeed', Magnet: 'magnet', Growth: 'growth', Luck: 'luck', CritChance: 'crit', Knockback: 'knockback', BurnDamage: 'burn', DotDamage: 'dot', EliteDamage: 'elite', Lifesteal: 'lifesteal', FoodHeal: 'foodHeal', ExplosionArea: 'explosionArea' };
@@ -811,7 +830,9 @@ const REALMS = B.realms.filter(r => !r.onlyIn);
 
 // 돌파 깨달음 7종 (기획서 3장). 이름·글자·설명·수치는 insights.json 에서 읽는다(IP.<id>.<param>).
 const INSIGHTS = DATA.insights.insights.map(x => ({ id: x.id, name: x.nameKo, g: x.glyph, text: x.textKo }));
-const IP = Object.fromEntries(DATA.insights.insights.map(x => [x.id, x.params]));
+const IP = Object.fromEntries([...DATA.insights.insights, ...(DATA.insights.demonicInsights || [])].map(x => [x.id, x.params]));
+// 마공 깨달음(WP-23, 5장 '마교 몸의 성장: 혈공', insights.json demonicInsights): 마교 몸이 돌파하면 셋 가운데 demonicInsightsPerBreakthrough 자리는 마공(Core Insights.RollWithDemonic)
+const DEM_INSIGHTS = (DATA.insights.demonicInsights || []).map(x => ({ id: x.id, name: x.nameKo, g: x.glyph, text: x.textKo, demonic: true }));
 // 깨달음 후보 수: 진소운 특성(reroll_plus2_insight4)이면 4, 아니면 기본 3. insights.json choices.
 const INSIGHT_CHOICES = DATA.insights.choices.byTrait?.[JIN.trait] ?? DATA.insights.choices.base;
 // 경지 돌파 보상 낱말(balance.json realms reward)을 숫자로 모은다. Core Progression/RealmRewards 와 같은 읽기.
@@ -1162,6 +1183,8 @@ function recomputeStats() {
   s.cdr += yb.band === 'harmony' ? B.yinyang.harmony.cooldownReduction * harmonyMul() : 0;   // 무당 조화 보너스 2배(WP-20)
   s.cdr = Math.min(B.stats.cooldownReductionCap, s.cdr);
   s.might += G.salgiBonus;
+  if (G.insights.includes('hyeolhae_gong')) { s.might += IP.hyeolhae_gong.mightBonus; s.maxHealth -= IP.hyeolhae_gong.maxHealthPenalty; }   // 혈해공(WP-23)
+  if (G.insights.includes('heupyeol')) s.lifesteal += IP.heupyeol.lifesteal;   // 흡혈대법
   const insightMagnet = G.insights.includes('cheolli') ? IP.cheolli.multiplier : 1;
   G.stats = {
     maxHp: Math.round(bodyOf().maxHealth * (1 + s.maxHealth) + rr.maxHealthFlat),   // Core 와 같이 비율을 곱한 뒤 이류 +10
@@ -1893,6 +1916,7 @@ function hurtPlayer(dmg, src) {
   dmg *= yyFieldMul();   // 흑백 구역(WP-13e)
   { const ev = sectBonus('Evade'); if (ev > 0 && Math.random() < ev) { addEffect('ring', p.x, p.y, { r: 0.8, color: '#8FA8B8', life: 0.25 }); return; } }   // 수로채 움직이는 동안 회피 15%(WP-20, Core Evade.Roll)
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
+  if (G.insights.includes('hyeolgwang') && p.hp / p.maxHp < IP.hyeolgwang.healthThreshold) taken *= 1 + IP.hyeolgwang.damageTaken;   // 혈광폭주(WP-23)
   // 무당 진전 3 사량발천근: 태극 구간이면 20% 덜 받고, 줄인 피해의 열 배를 부딪힌 적에게
   const hdf = synEff('harmony_deflect'); if (hdf && yyBand().band === 'harmony') { const cut = taken * hdf.damageCut; taken -= cut; if (src && !src.dead) hurtEnemy(src, cut * hdf.reflectMultiplier, null, 0, 0, 0); }
   // 프로토타입 값: 맞은 뒤 잠깐 무적. balance.json 에는 아직 없다(시험해 보고 기획서로 옮길지 정한다).
@@ -2223,6 +2247,7 @@ function breakLantern(l) {
 function useUlt() {
   if (!G || G.ult < B.ultimateCharge.max || paused || overlay) return;
   G.ult = 0; sfx('ult');
+  if (bloodArt()) { G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max); G.simmaBase = G.bSteps || 0; }   // 천마해체 자리: 심마를 누르고 심마환영 공력도 사라짐(WP-23)
   const p = G.player, a = Math.atan2(p.fy, p.fx), ca = Math.cos(a), sa = Math.sin(a), len = viewDiag();
   // characters.json il_geom.mightMultiplier: 삼재검법 한 번 피해의 30배
   const sword = G.weapons.find(w => w.id === 'samjae_sword');
@@ -2326,7 +2351,7 @@ function update(dt) {
   // 회복
   let regen = S.recovery;
   if (G.insights.includes('ungi') && p.still >= IP.ungi.stillSeconds) regen += p.maxHp * IP.ungi.maxHealthPerSecond;
-  p.hp = Math.min(p.maxHp, p.hp + regen * dt * healMul());   // 마교 회복 절반(WP-20)
+  p.hp = Math.min(p.maxHp, p.hp + regen * dt * otherHeal());   // 마교 회복 절반(WP-20), 흡혈대법 0(WP-23)
 
   // 음양 극성: 60초마다 기혈역류
   const band = yyBand().band;
@@ -2509,7 +2534,7 @@ function update(dt) {
     o.t += dt;
     const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
     if (o.pull || d < mag) { o.pull = true; const sp = OP.pullSpeedBase + o.t * OP.pullSpeedPerSecond; o.x += dx / (d || 1) * sp * dt; o.y += dy / (d || 1) * sp * dt; }
-    if (d < OP.absorbRadius) { o.dead = true; G.orbRaw += o.v; if (G.body) { G.orbV += o.v; G.orbW += o.v * G.dens; } gainXp(o.v); sfx('orb'); }
+    if (d < OP.absorbRadius) { o.dead = true; G.orbRaw += o.v; if (G.body) { G.orbV += o.v; G.orbW += o.v * G.dens; } gainXp(bloodOrbXp(o.v)); sfx('orb'); }   // 혈공: 진기만 늘고 윤회의 기는 구슬 값 그대로(WP-23)
   }
   G.orbs = G.orbs.filter(o => !o.dead);
   // 떨어진 물건
@@ -2827,8 +2852,8 @@ function bossAI(e, dt, dx, dy, d) {
 
 function pickup(dr) {
   const p = G.player;
-  if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal * healMul()); toast('만두', `기혈 +${Math.round(DR.bunHeal * G.stats.foodHeal * healMul())}`); }
-  else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal * healMul()); toast('오리구이', `기혈 +${Math.round(DR.duckHeal * G.stats.foodHeal * healMul())}`); }
+  if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal * otherHeal()); toast('만두', `기혈 +${Math.round(DR.bunHeal * G.stats.foodHeal * otherHeal())}`); }
+  else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal * otherHeal()); toast('오리구이', `기혈 +${Math.round(DR.duckHeal * G.stats.foodHeal * otherHeal())}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
   else if (dr.kind === 'freeze') { G.talis = (G.talis || 0) + 1; G.freeze = DR.jeongsinFreezeSeconds * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
   else if (dr.kind === 'silver') { addSilver(DR.silverBag[0] + Math.floor(Math.random() * (DR.silverBag[1] - DR.silverBag[0] + 1))); }
@@ -3056,7 +3081,9 @@ function showInsightChoice(name, reward, label) {
   $('brklabel').textContent = label;
   $('brkname').textContent = name;
   $('brkreward').textContent = reward;
-  const opts = INSIGHTS.filter(x => !G.insights.includes(x.id)).sort(() => Math.random() - 0.5).slice(0, INSIGHT_CHOICES);
+  const n = G.body ? DATA.insights.choices.base : INSIGHT_CHOICES;   // 문파 몸엔 진소운 특성(깨달음 넷)이 없다
+  const ba = bloodArt(), dem = ba ? DEM_INSIGHTS.filter(x => !G.insights.includes(x.id)).sort(() => Math.random() - 0.5).slice(0, Math.min(n, ba.demonicInsightsPerBreakthrough || 0)) : [];
+  const opts = dem.concat(INSIGHTS.filter(x => !G.insights.includes(x.id)).sort(() => Math.random() - 0.5).slice(0, n - dem.length));   // 마공이 앞자리
   const box = $('brkcards'); box.innerHTML = '';
   currentOffers = opts;
   opts.forEach((o, i) => {
@@ -3072,6 +3099,7 @@ function chooseInsight(i) {
   const o = currentOffers[i]; G.insights.push(o.id);
   if (o.id === 'yeokgeun') { G.yy = IP.yeokgeun.resetTo; G.yyHalf = true; }
   if (o.id === 'salgi') G.salgiBase = G.kills; // 고른 뒤 처치만 센다(Core InsightEffects)
+  if (o.id === 'simma') G.simmaBase = G.bSteps || 0;   // 심마환영도 고른 뒤 기운 횟수만(QA-06)
   recomputeStats(); renderSlots();
   $('cv').classList.remove('mono'); closeOverlay('brk');
 }
@@ -3345,7 +3373,7 @@ function merchantBuy(id) {
   if ((V[id] || 0) >= MER.maxPerVisit || G.silver < it.price) return false;
   G.silver -= it.price; V[id] = (V[id] || 0) + 1; sfx('orb');
   const p = G.player;
-  if (id === 'potion') p.hp = Math.min(p.maxHp, p.hp + p.maxHp * it.healFraction * healMul());
+  if (id === 'potion') p.hp = Math.min(p.maxHp, p.hp + p.maxHp * it.healFraction * healMul());   // Core PotionHeal: 마교 배율만(흡혈대법은 안 봄)
   else if (id === 'reroll_ticket') G.rerolls += it.rerolls || 1;
   else if (id === 'chwigi_talisman') for (const o of G.orbs) o.pull = true;
   renderMerchant(); return true;
