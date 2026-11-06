@@ -26,14 +26,15 @@ namespace BloodRain.Core.Tests
             var html = Proto;
             Assert.Contains("G.body && !ev.rolled", html);
             Assert.Contains("if (!encCanAppear(e, c)) { ev.at = G.gm + 1; continue; }", html);
-            Assert.Contains("S.bonus[sc.id] = (S.bonus[sc.id] || 0) + 1", html);
+            Assert.Contains("S.bonus[sc.id] = (S.bonus[sc.id] || 0) + ENC_BY.relic.params.schoolBonus", html);
             Assert.DoesNotContain("S.bonus.shaolin = (S.bonus.shaolin || 0) + 1", html);
         }
 
         [Fact] public void 은거기인_곁_시간은_기획서_20장대로()
         {
             Assert.Contains("| 은거기인 | 맵 구석에서 바둑 두는 노인 | 곁에서 6초 동안 떠나지 않는다", Gdd);
-            Assert.Contains("if (ev.prog >= 6 && !overlay) { ev.done = true; ev.met = true; discover('enc:hermit');", Proto);
+            Assert.Contains("if (ev.prog >= ENC_BY.hermit.params.staySeconds && !overlay) { ev.done = true; ev.met = true; discover('enc:hermit');", Proto);
+            Assert.Equal(6f, Load().Synergies.Encounter("hermit").Param("staySeconds"));
         }
     
         [Fact] public void 영약은_한_생_판에서_오의_가득_음양_0()
@@ -59,8 +60,8 @@ namespace BloodRain.Core.Tests
         {
             var html = Proto;
             Assert.Contains("G.ult = 0; sfx('ult'); whisperUlt();", html);
-            Assert.Contains("G.syn.bonus.demonic = (G.syn.bonus.demonic || 0) + 1", html);
-            Assert.Contains("(G && G.whisperTaken ? 0.5 : 1)", html);
+            Assert.Contains("G.syn.bonus.demonic = (G.syn.bonus.demonic || 0) + ENC_BY.whisper.params.schoolBonus", html);
+            Assert.Contains("(G && G.whisperTaken ? ENC_BY.whisper.params.healingMultiplier : 1)", html);
             Assert.Contains("if (st.whisper) m.whispers = (m.whispers || 0) + 1;", html);
             Assert.Equal(15f, Load().Synergies.Encounter("whisper").MinMinute);
         }
@@ -72,7 +73,8 @@ namespace BloodRain.Core.Tests
             var e = Load().Synergies.Encounter("sword_tomb");
             Assert.Equal(0.5f, e.Chance);
             Assert.Contains("chapter5", e.Chapters!);
-            Assert.Contains("const TOMB_PER_LEVEL = 0.03;", html);
+            Assert.Contains("const TOMB_PER_LEVEL = ENC_BY.sword_tomb.params.mightPerLevel;", html);
+            Assert.Equal(0.03f, e.Param("mightPerLevel"), 5);
             Assert.Contains("G.weapons.splice(k, 1); G.banished.add(o.w.id); G.tombMight = (G.tombMight || 0) + lv * TOMB_PER_LEVEL;", html);
             Assert.Contains("(G.stats.might + sectBonus('Might') + (G.tombMight || 0))", html);
             Assert.Contains("if (G.weapons.length > 1) showSwordTomb();", html);
