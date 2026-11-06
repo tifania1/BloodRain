@@ -146,5 +146,62 @@ namespace BloodRain.Core.Tests
             var loaded = Soul.FromJson(_d, s.ToJson());
             Assert.Equal(Inn.OpenFacilities(s), Inn.OpenFacilities(loaded));
         }
+            [Fact] public void 영약_표와_데이터가_같다()
+        {
+            // 10장 '영약(약방)': 영약 | 효과(이번 생 한정) | 비용(혈정)
+            var rows = TestData.GddTable(TestData.GddSection("영약(약방)"));
+            var es = C.Inn.Elixirs;
+            Assert.Equal(rows.Count, es.Count);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var e = es[i];
+                var name = e.Hanja.Length > 0 && rows[i][0].Contains("(") ? $"{e.NameKo}({e.Hanja})" : e.NameKo;
+                Assert.Equal(rows[i][0], name);
+                Assert.Equal(rows[i][1], e.DescKo);
+                Assert.Equal(int.Parse(rows[i][2]), e.Cost);
+            }
+            // 효과 칸 숫자가 설명과 맞는다
+            Assert.Equal(0.3f, es.Single(e => e.Id == "sohwandan").ReviveHealthRatio);
+            Assert.Equal(5, es.Single(e => e.Id == "daehwandan").StartLevel);
+            Assert.Equal(100f, es.Single(e => e.Id == "gongcheong").StartUltimate);
+            Assert.Equal(0.3f, es.Single(e => e.Id == "seolsam").MaxHealth);
+            Assert.Equal(2f, es.Single(e => e.Id == "hyeoljeongdan").BloodCrystalMultiplier);
+            Assert.Equal(600f, es.Single(e => e.Id == "taegeukhwan").YinyangFreezeSeconds);
+            Assert.Equal(1, C.Inn.ElixirsPerLife);   // '약방 3단계에서 2개'는 단계가 정해진 뒤
+        }
+
+        [Fact] public void 영약은_약방이_있어야_혈정을_써서_지닌다()
+        {
+            var s = AfterPrologue();
+            s.AddBloodCrystal(50);
+            Assert.False(Apothecary.IsAvailable(s));
+            Assert.Null(Apothecary.TryPrepare(s, new[] { "sohwandan" }));
+            Assert.Equal(50, s.BloodCrystal);
+
+            LiveAndKill(s, "shaolin", "songshan", "danggata");   // 봉인석 둘
+            Assert.True(Inn.TryBuild(s, "apothecary"));
+            int before = s.BloodCrystal;
+            Assert.True(Apothecary.IsAvailable(s));
+            Assert.Null(Apothecary.TryPrepare(s, new[] { "sohwandan", "gongcheong" }));   // 한 생에 하나
+            Assert.Null(Apothecary.TryPrepare(s, new[] { "nope" }));
+            Assert.Equal(before, s.BloodCrystal);
+            var got = Apothecary.TryPrepare(s, new[] { "daehwandan" });
+            Assert.NotNull(got);
+            Assert.Equal("daehwandan", got![0].Id);
+            Assert.Equal(before - 6, s.BloodCrystal);
+            Assert.Empty(Apothecary.TryPrepare(s, Array.Empty<string>())!);
+        }
+
+        [Fact] public void 혈정이_모자라면_영약을_못_지닌다()
+        {
+            var s = AfterPrologue();
+            LiveAndKill(s, "shaolin", "songshan", "danggata");
+            Assert.True(Inn.TryBuild(s, "apothecary"));   // 혈정 0
+            s.AddBloodCrystal(5);
+            Assert.Null(Apothecary.TryPrepare(s, new[] { "daehwandan" }));
+            Assert.Equal(5, s.BloodCrystal);
+            Assert.NotNull(Apothecary.TryPrepare(s, new[] { "hyeoljeongdan" }));
+            Assert.Equal(0, s.BloodCrystal);
+        }
     }
 }

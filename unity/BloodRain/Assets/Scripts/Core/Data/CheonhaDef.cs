@@ -85,6 +85,32 @@ namespace BloodRain.Core.Data
     {
         public List<FacilityDef> Facilities = new List<FacilityDef>();
         public FacilityDef Facility(string id) => Facilities.First(f => f.Id == id);
+        /// <summary>한 생에 지니고 출발하는 영약 수(10장 '영약(약방)').</summary>
+        public int ElixirsPerLife = 1;
+        public List<ElixirDef> Elixirs = new List<ElixirDef>();
+    }
+
+    /// <summary>약방 영약 하나(10장 '영약(약방)'). 효과는 이번 생 한정이고 0 인 칸은 효과 없음.</summary>
+    public sealed class ElixirDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        public string Hanja = "";
+        public string DescKo = "";
+        /// <summary>혈정.</summary>
+        public int Cost;
+        /// <summary>첫 사망 때 이 비율의 기혈로 부활.</summary>
+        public float ReviveHealthRatio;
+        /// <summary>이 레벨로 시작.</summary>
+        public int StartLevel;
+        /// <summary>오의(진기) 게이지를 이만큼 채우고 시작.</summary>
+        public float StartUltimate;
+        /// <summary>최대 기혈 비율 더하기(0.3 = +30%).</summary>
+        public float MaxHealth;
+        /// <summary>혈정 드롭 배율(0 이면 1).</summary>
+        public float BloodCrystalMultiplier;
+        /// <summary>생 시작부터 이 초 동안 음양 게이지가 움직이지 않는다.</summary>
+        public float YinyangFreezeSeconds;
     }
 
     public sealed class FacilityDef

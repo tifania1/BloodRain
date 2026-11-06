@@ -202,6 +202,16 @@
       { "id": "smithy",      "nameKo": "대장간",        "require": {}, "buildBloodCrystal": 20 },
       { "id": "cave",        "nameKo": "수련동",        "require": { "sealStones": 3 } },
       { "id": "haomun_board", "nameKo": "하오문 게시판", "require": { "bossKilled": "janggang", "unlock": "talk:unnang_haomun" } }
+    ],
+    "_elixirs": "약방 영약(10장 '영약(약방)' 표 그대로). 약방이 열린 뒤 생을 시작할 때 혈정 cost 를 써서 elixirsPerLife 개까지 지니고 출발한다. 효과는 이번 생 한정: reviveHealthRatio 첫 사망 때 그 비율로 부활, startLevel 그 레벨로 시작, startUltimate 오의(진기) 게이지, maxHealth 최대 기혈 비율 더하기, bloodCrystalMultiplier 혈정 드롭 배율, yinyangFreezeSeconds 처음 그 초 동안 음양 게이지가 움직이지 않음. 10장의 '약방 3단계에서 2개'는 약방 단계가 기획서에 없어 아직 1(decisions 참고).",
+    "elixirsPerLife": 1,
+    "elixirs": [
+      { "id": "sohwandan", "nameKo": "소환단", "hanja": "小還丹", "descKo": "첫 사망 때 기혈 30%로 부활", "cost": 3, "reviveHealthRatio": 0.3 },
+      { "id": "daehwandan", "nameKo": "대환단", "hanja": "大還丹", "descKo": "레벨 5로 시작", "cost": 6, "startLevel": 5 },
+      { "id": "gongcheong", "nameKo": "공청석유", "hanja": "空靑石乳", "descKo": "진기 게이지 100으로 시작", "cost": 2, "startUltimate": 100 },
+      { "id": "seolsam", "nameKo": "만년설삼", "hanja": "萬年雪蔘", "descKo": "기혈 +30%", "cost": 4, "maxHealth": 0.3 },
+      { "id": "hyeoljeongdan", "nameKo": "혈정단", "hanja": "血晶丹", "descKo": "혈정 드롭 2배", "cost": 5, "bloodCrystalMultiplier": 2 },
+      { "id": "taegeukhwan", "nameKo": "태극환", "hanja": "太極丸", "descKo": "처음 10분 동안 음양 게이지가 움직이지 않음", "cost": 3, "yinyangFreezeSeconds": 600 }
     ]
   },
 
