@@ -27,7 +27,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(YinYang.Yang, BossPatterns.SplitFieldColor(f, -5f, 0f, 0f, 0f));
             Assert.Equal(YinYang.Yin, BossPatterns.SplitFieldColor(f, 0f, 7f, 0f, 0f));   // 경계 위는 검은 쪽
             Assert.Equal(YinYang.Yin, BossPatterns.SplitFieldColor(f, 0f, 5f, 90f, 0f));
-            Assert.Equal(f.TurnDegreesPerSecond, 0f);   // 1막 흑백은 돌지 않는다
+            Assert.Equal(0f, f.TurnDegreesPerSecond);   // 1막 흑백은 돌지 않는다
             Assert.Equal(YinYang.Yin, BossPatterns.SplitFieldColor(f, 5f, 0f, 0f, 9f));
         }
 
