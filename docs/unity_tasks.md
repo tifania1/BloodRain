@@ -255,7 +255,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 충전이 차면 버튼이 켜지고 화면 안 적이 그 피해로 쓰러짐. 정진(레벨업 건너뛰기)이 충전을 채움
   - 찍기: `docs/unity_shots/C-09/` 의 `ultimate.png`
 
-- [ ] R4-10U 천설부·천마해체 오의 · 먼저: C-09a, R-04Ua
+- [x] R4-10U 천설부·천마해체 오의 · 먼저: C-09a, R-04Ua — 2026-11-07 00:45 PC: 코드는 23:42 PC 루프 커밋이 붙여 둠(UltimateButton 천설부 Freeze+강시만 한 방, EnemyField `outgoingMultiplier`·`Dealt`, LifeRunner `TickDissolution`·붉은 기운, PlayerVitals `Drain`). 이번에 확인: 곤륜 몸에 혈무사 여섯을 곁에 세우고 오의 → 화면 안 19마리 멈춤, 시강 10마리 한 방 144 로 쓰러짐, 혈무사는 기혈 40 그대로·1.2초 뒤 남은 멈춤 2.1초. 마교 몸 오의 → 8초 동안 outgoingMultiplier 2, 최대 기혈 90 에서 초당 1.8 빠짐(5.3초에 9.6), 흡혈 = 낸 피해 32 × 0.1 × 회복 -50% = 1.6 참. 콘솔 에러 0. 땅의 주인 패턴 시계 멈춤은 보스가 들어오는 BR-01 몫. 마교 시작 무공 혈조(blood_claw, forward_claws)가 아직 안 때려서 시험 땐 나한권·장풍을 Learn 으로 넣음(R-12Ua). 찍음 `docs/unity_shots/R4-10U/` 의 `cheonseol_bu.png`, `cheonma_haeche.png`(눈으로는 못 봄)
   - 할 것: 곤륜 몸 천설부 — 화면 안 모든 적(땅의 주인 포함)을 `UltimateEffects.FreezeSeconds(ult)` 초 멈춤(걷기·패턴 시계 멈춤, 6장 기절과 같이), 한 방 피해는 `UltimateEffects.HitDamageOn(ult, enemy.Family, 시작 무공 한 방, life.UltimatePowerMultiplier)`(강시 계열만 들어감). 마교 몸 천마해체 — `life.UseUltimate()` 가 켠 `life.Dissolution` 이 켜져 있는 동안 플레이어 피해 × `DamageMultiplier`, 매 프레임 기혈 `HealthCostPerSecond(최대 기혈) × 세상 dt` 소모, 맞힌 피해마다 `UltimateEffects.LifestealHeal(피해, 능력치 흡혈 + LifestealBonus, SynergyEffects.LifestealMultiplier, SectTrait.HealingMultiplier)` 회복. 몸에 붉은 기운(남은 초).
   - 쓸 것: Core `Combat/UltimateEffects.cs`(R4-10), `Life.Dissolution`, characters.json ultimates `cheonseol_bu`·`cheonma_haeche`
   - 메뉴: R-04Ua 의 몸 바꾸기(곤륜·마교)
