@@ -305,6 +305,7 @@ button { touch-action: manipulation; }
       <div class="subtle" id="innsub">다음 생을 고르시오</div>
       <p class="mok" id="innmok" hidden></p>
       <div class="cards" id="inncards"></div>
+      <canvas id="innmap" width="600" height="390" style="width:100%;max-width:600px;display:block;margin:10px auto;border:1px solid #1a1a1a" role="img" aria-label="침방 벽의 중원 지도"></canvas>
       <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button></div>
       <div class="subtle" id="innqi"></div>
       <h4 class="innh">객잔 시설</h4>
@@ -4269,6 +4270,39 @@ function canRestore(m, id) {
   const [rs, rq] = restoreCost(m); return (m.stones || []).length >= rs && (m.qi || 0) >= rq;
 }
 function innRestore(id) { const m = innMeta(); if (!canRestore(m, id)) return; m.qi -= restoreCost(m)[1]; m.restored = (m.restored || []).concat([id]); soulSave(m); renderInn(); }
+// 침방 벽의 중원 지도(21장 '침방의 중원 지도', 12장 침방 줄): 한 번이라도 밟은 땅은 먹으로, 봉인석을 가져온 땅은 혈운이 걷히고 문파 깃발,
+// 못 가 본 땅은 붉은 구름 아래 지명만 흐릿하게. 후보마다 그 문파 자리에 붉은 점, 고르려는(마우스·포커스) 후보는 절정·초절정 장막 원을 먹선으로
+// (반경 = view0Meters × scalePerRealm^경지 순번 × boundaryViewMultiple, 7장 장막 식). 지도 그림(map_central_plains)은 Unity 몫이라 여기선 윤곽·강만. 봉마곡은 안 그림
+const MAP_RINGS = ['jeoljeong', 'chojeoljeong'];
+const ringMeters = id => { const i = B.realms.findIndex(r => r.id === id); return i < 0 ? 0 : WD.view0Meters * Math.pow(WD.scalePerRealm, i) * WD.boundaryViewMultiple; };
+function drawInnMap(m, hi) {
+  const cv = $('innmap'); if (!cv || !WD.land) return;
+  const c = cv.getContext('2d'), W = cv.width, H = cv.height, X = x => x * W, Y = y => y * H, M = W / WD.widthMeters;
+  const visited = new Set(m.visited || []), stones = new Set(m.stones || []);
+  c.clearRect(0, 0, W, H); c.fillStyle = '#c9d3d0'; c.fillRect(0, 0, W, H);
+  c.beginPath(); WD.land.forEach(([x, y], i) => i ? c.lineTo(X(x), Y(y)) : c.moveTo(X(x), Y(y))); c.closePath();
+  c.fillStyle = '#efe6d2'; c.fill(); c.strokeStyle = '#1a1a1a'; c.lineWidth = 1.5; c.stroke();
+  c.strokeStyle = '#6d8a99'; c.lineWidth = 1.2; for (const r of WD.rivers || []) { c.beginPath(); r.forEach(([x, y], i) => i ? c.lineTo(X(x), Y(y)) : c.moveTo(X(x), Y(y))); c.stroke(); }
+  c.textAlign = 'center'; c.font = '12px serif';
+  for (const r of (DATA.regions || []).filter(r => !r.final)) {
+    const x = X(r.pos[0]), y = Y(r.pos[1]), been = visited.has(r.id), taken = !!r.sealStone && stones.has(r.sealStone);
+    if (!been && !taken) { const g = c.createRadialGradient(x, y, 2, x, y, 30); g.addColorStop(0, 'rgba(150,30,25,0.32)'); g.addColorStop(1, 'rgba(150,30,25,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, 30, 0, TAU); c.fill(); }
+    c.fillStyle = been || taken ? '#1a1a1a' : 'rgba(26,26,26,0.35)'; c.beginPath(); c.arc(x, y, been ? 3 : 2, 0, TAU); c.fill();
+    c.fillText(r.nameKo, x, y + 15);
+    if (taken) {   // 문파 깃발: 그 땅에서 열리는 문파 첫 글자(없으면 봉)
+      const sc = r.sect && SECT_BY[r.sect]; c.strokeStyle = '#1a1a1a'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x + 4, y); c.lineTo(x + 4, y - 22); c.stroke();
+      c.fillStyle = '#efe6d2'; c.fillRect(x + 4, y - 22, 14, 12); c.strokeRect(x + 4, y - 22, 14, 12); c.fillStyle = '#1a1a1a'; c.font = '10px serif'; c.fillText(sc ? sc.nameKo[0] : '封', x + 11, y - 12.5); c.font = '12px serif';
+    }
+  }
+  innCands.forEach((cd, i) => {
+    const s = SECT_BY[cd.sect], r = s && (DATA.regions || []).find(x => x.id === s.region); if (!r) return;
+    const x = X(r.pos[0]), y = Y(r.pos[1]);
+    if (i === hi) { c.strokeStyle = '#1a1a1a'; c.setLineDash([5, 4]); c.lineWidth = 1;
+      for (const id of MAP_RINGS) { const R = ringMeters(id) * M; c.beginPath(); c.arc(x, y, R, 0, TAU); c.stroke(); c.fillStyle = '#1a1a1a'; c.fillText(B.realms.find(q => q.id === id).nameKo, x, y - R - 3); }
+      c.setLineDash([]); }
+    c.fillStyle = '#b3261e'; c.beginPath(); c.arc(x, y, i === hi ? 6 : 4, 0, TAU); c.fill();
+  });
+}
 function innRefund() { const m = innMeta(); if (!m.spent) return; m.qi += m.spent; m.spent = 0; m.train = {}; soulSave(m); renderInn(); }
 function renderInn() {
   const m = innMeta();
@@ -4282,8 +4316,9 @@ function renderInn() {
       + (c.text ? `<p>${c.text.intro}</p><p class="body">${c.text.body}</p>` : '')
       + `<p>${w ? w.nameKo : s.startWeapon}${has ? '' : '(이 판엔 동작이 없어 삼재검법)'} · 기혈 ${s.maxHealth} · 걸음 ${Math.round(s.moveSpeed * 100)}%</p>`
       + (c.traits.length ? c.traits.map(traitLine).join('') : '<p class="tr">타고난 성질 없음</p>') + `</span>`;
-    b.onclick = () => chooseLife(i); box.appendChild(b);
+    b.onclick = () => chooseLife(i); b.onmouseenter = b.onfocus = () => drawInnMap(m, i); box.appendChild(b);
   });
+  drawInnMap(m, 0);
   const rr = $('innreroll'), have = upgEffect(m, 'rerolls');
   rr.hidden = !m.lives || !have; rr.disabled = innRerolls <= 0;
   rr.innerHTML = `다시 고르기 <small>남은 ${innRerolls}/${have} · R</small>`;

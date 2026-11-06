@@ -39,5 +39,15 @@ namespace BloodRain.Core.Tests
             // 수리 중이면(Core Inn.CanEnter) 복원 못 함
             Assert.Contains("if (!lf || lf.underRepair || !facOpen(m, lf)) return false;", html);
         }
+
+        [Fact] public void 침방_벽_지도_장막_원은_7장_식()
+        {
+            // WP-45, 21장 '침방의 중원 지도': 절정·초절정 장막 원 = view0 × scalePerRealm^경지 × boundaryViewMultiple
+            var html = Proto;
+            Assert.Contains("const MAP_RINGS = ['jeoljeong', 'chojeoljeong'];", html);
+            Assert.Contains("WD.view0Meters * Math.pow(WD.scalePerRealm, i) * WD.boundaryViewMultiple", html);
+            Assert.Contains("taken = !!r.sealStone && stones.has(r.sealStone)", html);
+            Assert.Contains("b.onmouseenter = b.onfocus = () => drawInnMap(m, i);", html);
+        }
     }
 }
