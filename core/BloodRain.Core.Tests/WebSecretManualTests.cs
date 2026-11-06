@@ -58,5 +58,15 @@ namespace BloodRain.Core.Tests
             Assert.Contains("const gap = R - Math.hypot(px - hx, py - hy), k = clamp(1 - gap / half, 0, 1);", html);
             Assert.Contains("drawEdgeHints();", html);
         }
+
+        [Fact] public void 다시_오른_경지는_짧은_연출과_깨달음_하나_더()
+        {
+            // WP-47, 21장 '한 번 깨친 길'(cheonha.json mastery, Core Breakthrough.Start revisit)
+            Assert.Contains("\"mastery\": drop_notes(load(\"cheonha\")[\"mastery\"]),", ReadRepoFile("tools", "build_web_prototype.py"));
+            var html = Proto;
+            Assert.Contains("const speed = revisit && MASTERY.shortBreakthroughWhenRevisited && BRK.revisitSeconds > 0 ? BRK.zoomToSeconds / BRK.revisitSeconds : 1;", html);
+            Assert.Contains("const more = revisit ? MASTERY.revisitInsightChoicesBonus || 0 : 0;", html);
+            Assert.Contains("B.t += rdt * (B.speed || 1);", html);
+        }
     }
 }

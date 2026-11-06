@@ -28,7 +28,7 @@ namespace BloodRain.Core.Tests
             var html = Proto;
             Assert.Contains("Math.min(n, ba.demonicInsightsPerBreakthrough || 0)", html);
             Assert.Contains("const opts = dem.concat(", html);
-            Assert.Contains("const n = G.body ? DATA.insights.choices.base : INSIGHT_CHOICES", html);
+            Assert.Contains("const n = (G.body ? DATA.insights.choices.base : INSIGHT_CHOICES) + (more || 0);", html);
         }
 
         [Fact] public void 마공_효과가_데이터_값을_쓴다()
