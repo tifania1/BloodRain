@@ -75,7 +75,7 @@ namespace BloodRain.Presentation.Meta
         /// <summary>연무장 한 항목.</summary>
         public static MetaShopRow Training(Transform parent, TMP_FontAsset font, Soul soul, TrainingItemDef item, Action changed, float width = 600) =>
             new MetaShopRow(parent, font, Loc.Stat(item.Stat), Loc.F("ui.shop.per_level", FormatPerLevel(item.Stat, item.PerLevel)),
-                item.MaxLevel, () => soul.TrainingLevel(item.Stat), () => soul.TrainingCost(item.Stat), () => soul.RebirthQi,
+                soul.TrainingMax(item.Stat), () => soul.TrainingLevel(item.Stat), () => soul.TrainingCost(item.Stat), () => soul.RebirthQi,
                 () => soul.TryBuyTraining(item.Stat), changed, width);
 
         /// <summary>환혼 강화 한 줄(넷째 몸, 다시 고르기).</summary>
