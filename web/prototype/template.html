@@ -283,6 +283,7 @@ button { touch-action: manipulation; }
         <button class="b" id="fsbtn" type="button" hidden>전체 화면<small>주소창 숨기기</small></button>
       </div>
       <div class="row">
+        <button class="b" id="introbtn" type="button">인트로<small>혈우 · 12컷</small></button>
         <button class="b" id="dexbtn" type="button">비급 도감<small id="dexcount">연환·진전·비전·기연</small></button>
         <button class="b" id="demobtn" type="button">절기 각성 보기<small>절정 돌파 직전에서 시작</small></button>
       </div>
@@ -424,6 +425,13 @@ button { touch-action: manipulation; }
     </div>
   </div>
 
+  <div class="screen veil procut" id="intro" hidden>
+    <div class="panel">
+      <img class="resimg" id="introimg" alt="인트로 컷" hidden>
+      <div class="cutlines" id="introlines"></div>
+      <div class="row"><button class="b main" id="intronext" type="button">다음</button><button class="b" id="introskip" type="button">건너뛰기 <small>Esc</small></button></div>
+    </div>
+  </div>
   <div class="screen veil procut" id="procut" hidden>
     <div class="panel">
       <img class="resimg" id="procutimg" alt="서장 끝 컷" hidden>
@@ -5019,6 +5027,32 @@ function prologueCuts() {
   overlay = 'procut'; G.cutI = 0; showCut();
   $('procut').hidden = false;
 }
+// 인트로 컷신 「혈우」(19장 A, dialogue.json intro, WP-55): 첫 실행에만(store introSeen), 제목 '인트로' 단추로 다시. 컷마다 seconds 뒤 저절로 넘어가고
+// Enter·Space·다음으로 넘기고 Esc·건너뛰기로 끝. 컷 12 제목 붓글씨는 데이터에 줄이 없어(Unity 가 얹음) 게임 이름을 붓글씨로. 자동 점검·주소 뒤 ?·# 판에선 저절로 안 띄운다
+const INTRO = DATA.intro || { cuts: [] }, INTRO_IMG = DATA.introImages || {};
+let introI = 0, introTimer = 0;
+function openIntro() {
+  if (!INTRO.cuts.length) return;
+  overlay = 'intro'; introI = 0; $('intro').hidden = false; showIntro();
+}
+function showIntro() {
+  const cut = INTRO.cuts[introI], img = INTRO_IMG[cut.art]; overlayAt = performance.now();
+  $('introimg').hidden = !img; if (img) $('introimg').src = img;
+  $('introlines').innerHTML = cut.lines.length ? cut.lines.map(l => `<p${l.whisper ? ' class="whisper"' : ''}>${l.speaker ? `<b>${SPK[l.speaker] || l.speaker}</b>` : ''}${l.textKo}</p>`).join('')
+    : introI === INTRO.cuts.length - 1 ? '<p class="brush" style="font-size:52px">血雨江湖</p><p>혈우강호</p>' : '';
+  $('intronext').textContent = introI + 1 < INTRO.cuts.length ? '다음' : '시작';
+  if (introI === INTRO.cuts.length - 1) sfx('gong');
+  clearTimeout(introTimer); introTimer = setTimeout(nextIntro, (cut.seconds || 4) * 1000);
+  focusFirst($('intronext'));
+}
+function nextIntro() {
+  if (overlay !== 'intro' || performance.now() - overlayAt < 350) return;   // 판 밖이라 G 가 없을 수 있어 tooSoon 대신
+  if (++introI < INTRO.cuts.length) return showIntro();
+  endIntro();
+}
+function endIntro() {
+  clearTimeout(introTimer); $('intro').hidden = true; if (overlay === 'intro') overlay = null; store.set('introSeen', true);
+}
 function showCut() {
   const cut = PD.cuts[G.cutI], img = PRO_CUT_IMG[cut.art];
   $('procutimg').hidden = !img; if (img) $('procutimg').src = img;
@@ -5390,6 +5424,7 @@ function demoReplay(long) {
 window.addEventListener('keydown', e => {
   if (e.repeat && !['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return;
   input.keys.add(e.code);
+  if (overlay === 'intro') { if (e.code === 'Escape') endIntro(); else if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); nextIntro(); } return; }   // 인트로(WP-55)
   if (!running && overlay === 'inn') { const n = parseInt(e.key, 10); if (n >= 1 && n <= innCands.length) chooseLife(n - 1); if (e.code === 'KeyR') innReroll(); return; }   // 침방(WP-14d)
   if (!running) { if (!$('dex').hidden) { if (e.code === 'Escape') closeDex(); return; } if (e.code === 'Enter' && !$('title').hidden) startRun('quick'); return; }
   if (overlay === 'dex') { if (e.code === 'Escape' || e.code === 'Enter') closeDex(); return; }
@@ -5575,6 +5610,8 @@ window.__hyeolu = {
 $('title').style.backgroundImage = `linear-gradient(rgba(239,230,210,.25), rgba(239,230,210,.55)), url(${IMG.title})`;
 window.addEventListener('resize', () => { resize(); if (!running) drawIdle(); });
 resize(); drawIdle(); syncMute(); showBest();
+$('intronext').addEventListener('click', nextIntro); $('introskip').addEventListener('click', endIntro); $('introbtn').addEventListener('click', openIntro);
+if (!store.get('introSeen') && !location.search && !location.hash && !navigator.webdriver) openIntro();   // 첫 실행에만(12장 타이틀 줄)
 // 절기 이름 붓글씨를 미리 받아 둔다(못 받으면 명조로 대신 그린다)
 const fontsReady = document.fonts && document.fonts.load ? Promise.all([document.fonts.load('80px "Yuji Boku"', DATA.evolutions.map(e => e.hanja || '').join('') + '絶'), document.fonts.load('900 40px "Noto Serif KR"', '絶천지인')]).catch(() => {}) : Promise.resolve();
 if (location.hash === '#awaken') fontsReady.then(() => startDemo());
