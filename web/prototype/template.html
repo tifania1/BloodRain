@@ -1130,7 +1130,12 @@ function makeSprite(kind, sizeM) {
     // 사람꼴 하나(도포·머리·발)에 땅마다 표시 하나를 얹는다
     const man = (robe, face, extra) => { rect(40, 80, 7, 10, ink, 2); rect(53, 80, 7, 10, ink, 2); poly([[36, 42], [64, 42], [68, 84], [32, 84]], robe, 3); ell(50, 30, 12, 12, face, 3); if (extra) extra(); };
     const line = (pts, col, w) => { g.strokeStyle = col; g.lineWidth = w * u; g.beginPath(); pts.forEach((q, i) => i ? g.lineTo(q[0] * u, q[1] * u) : g.moveTo(q[0] * u, q[1] * u)); g.stroke(); };
-    if (kind === 'poison_toad') { ell(50, 68, 30, 18, '#4F6B3A', 3); ell(36, 54, 7, 7, '#9BB06A', 2); ell(64, 54, 7, 7, '#9BB06A', 2); ell(36, 54, 2.5, 2.5, ink, 0); ell(64, 54, 2.5, 2.5, ink, 0); for (const [x, y] of [[40, 70], [58, 64], [50, 78]]) ell(x, y, 3.5, 3, '#6E4A7A', 1); }
+    if (kind === 'bigang') { g.globalAlpha = 0.25; ell(50, 92, 20, 4, ink, 0); g.globalAlpha = 1; g.save(); g.translate(0, -10 * u); jiangshi('#5B6E6A', '#2B3E3C'); g.restore(); line([[18, 70], [30, 66]], '#9AA6A8', 2); line([[14, 78], [28, 74]], '#9AA6A8', 2); }
+    else if (kind === 'hyeol_gungsu') man('#7A2420', '#C9B39A', () => { g.strokeStyle = '#5A4630'; g.lineWidth = 3 * u; g.beginPath(); g.arc(70 * u, 52 * u, 18 * u, -1.2, 1.2); g.stroke(); line([[75, 36], [75, 68]], '#D9D2BF', 1); line([[54, 52], [88, 52]], ink, 1.8); });
+    else if (kind === 'hyeolyeong_assassin') { man('#1E1414', '#3A2A2A', () => { rect(38, 26, 24, 5, '#B3261E', 1); line([[66, 56], [90, 44]], '#9AA0A0', 2.5); }); }
+    else if (kind === 'hyeol_sulsa') man('#4A1612', '#C9B39A', () => { poly([[36, 22], [64, 22], [50, 4]], '#2A1414', 2); line([[30, 88], [26, 30]], '#5A4630', 3); ell(26, 28, 5, 5, '#B3261E', 1.5); });
+    else if (kind === 'gisu') man('#3A2A2A', '#C9B39A', () => { line([[70, 88], [70, 6]], '#5A4630', 3); poly([[70, 8], [96, 14], [70, 34]], '#B3261E', 2); });
+    else if (kind === 'poison_toad') { ell(50, 68, 30, 18, '#4F6B3A', 3); ell(36, 54, 7, 7, '#9BB06A', 2); ell(64, 54, 7, 7, '#9BB06A', 2); ell(36, 54, 2.5, 2.5, ink, 0); ell(64, 54, 2.5, 2.5, ink, 0); for (const [x, y] of [[40, 70], [58, 64], [50, 78]]) ell(x, y, 3.5, 3, '#6E4A7A', 1); }
     else if (kind === 'golden_centipede') { for (let i = 4; i >= 0; i--) { const x = 22 + i * 14, y = 66 - Math.sin(i) * 6; line([[x - 4, y + 6], [x - 9, y + 16]], ink, 2); line([[x + 4, y + 6], [x + 9, y + 16]], ink, 2); ell(x, y, 9, 8, i === 4 ? '#C9A227' : '#A8862A', 2.5); } line([[80, 58], [92, 48]], ink, 2); line([[82, 62], [96, 58]], ink, 2); }
     else if (kind === 'dogin') { g.globalAlpha = 0.3; ell(50, 60, 40, 34, '#6E4A7A', 0); g.globalAlpha = 1; man('#3E4A2E', '#8FA27A'); }
     else if (kind === 'water_ghost') { poly([[34, 40], [66, 40], [72, 88], [60, 80], [50, 90], [40, 80], [28, 88]], '#5F7F8C', 3); ell(50, 30, 12, 13, '#B9CDD4', 3); line([[38, 22], [34, 46]], ink, 2.5); line([[62, 22], [66, 46]], ink, 2.5); }
@@ -1173,7 +1178,8 @@ function makeSprite(kind, sizeM) {
 const KIND_SIZE = { sigang: 1.3, hyeol_gangsi: 1.3, donggap: 1.6, hyeolin: 1.2, hyeol_musa: 1.35, mogin: 1.5, toad: 1.0, elite: 2.6, boss: 4.2, player: 1.5, lantern: 0.9, bell: 1.6 };
 // 지역 고유 적 열셋의 먹선 자리 표시(WP-13c 남은 '제 그림'). 원화(art_queue A-09)가 들어오기 전까지 땅마다 다른 빛깔·몸꼴로만 가른다.
 // 크기는 그동안 빌려 쓰던 혈무사 그림(1.35)과 같게 둬서 몸 반지름(KIND_SIZE × 0.32)·맞는 판정은 바뀌지 않는다.
-const LOCAL_SPRITES = ['poison_toad', 'golden_centipede', 'dogin', 'water_ghost', 'water_bandit', 'twin_gangsi', 'plum_sword_ghost', 'ice_gangsi', 'snow_wolf', 'yeti', 'demon_cultist', 'blood_shadow_clone', 'blood_lion'];
+// 같은 날 숭산 공통 적 다섯(비강·혈궁수·혈영자객·혈술사·기수)도 혈무사 그림을 빌려 쓰던 것을 같은 방식으로 더함.
+const LOCAL_SPRITES = ['bigang', 'hyeol_gungsu', 'hyeolyeong_assassin', 'hyeol_sulsa', 'gisu', 'poison_toad', 'golden_centipede', 'dogin', 'water_ghost', 'water_bandit', 'twin_gangsi', 'plum_sword_ghost', 'ice_gangsi', 'snow_wolf', 'yeti', 'demon_cultist', 'blood_shadow_clone', 'blood_lion'];
 for (const k of LOCAL_SPRITES) KIND_SIZE[k] = KIND_SIZE.hyeol_musa;
 function buildSprites() { for (const k in KIND_SIZE) sprites[k] = makeSprite(k, KIND_SIZE[k]); }
 
