@@ -110,11 +110,15 @@ namespace BloodRain.Core.Meta
         public int FoodEaten { get; }
         /// <summary>공격 무공 하나만으로 땅의 주인을 쓰러뜨렸나. 칭호 '일검무적'.</summary>
         public bool SingleWeaponBoss { get; }
+        /// <summary>이번 생에 하오문 밀서로 조건을 본 비전 id(20장 기연). 혼이 계정에 남긴다.</summary>
+        public IReadOnlyList<string> Letters { get; }
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
-            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0, int goldenToads = 0, int foodEaten = 0, bool singleWeaponBoss = false)
+            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0, int goldenToads = 0, int foodEaten = 0, bool singleWeaponBoss = false,
+            IEnumerable<string>? letters = null)
         {
+            Letters = letters?.Distinct().ToList() ?? new List<string>();
             GoldenToads = goldenToads;
             FoodEaten = foodEaten;
             SingleWeaponBoss = singleWeaponBoss;
@@ -347,6 +351,9 @@ namespace BloodRain.Core.Meta
         public int GoldenToadsTotal { get; private set; }
 
         readonly HashSet<string> _titles = new HashSet<string>(StringComparer.Ordinal);
+        readonly HashSet<string> _letters = new HashSet<string>(StringComparer.Ordinal);
+        /// <summary>하오문 밀서로 조건을 본 비전 id(20장 기연). 장경각 도감이 '밀서: 조건' 한 줄을 더 보인다.</summary>
+        public IReadOnlyCollection<string> Letters => _letters;
         /// <summary>얻은 칭호 id(cheonha.json titles, 10장 해금 표). 모으기 보상이라 능력치는 없다.</summary>
         public IReadOnlyCollection<string> Titles => _titles;
 
@@ -619,6 +626,7 @@ namespace BloodRain.Core.Meta
 
             var newSects = UnlockedSects.Where(s => !sectsBefore.Contains(s)).ToList();
             var newTitles = GrantTitles(record);
+            _letters.UnionWith(record.Letters.Where(id => _data.Synergies.Secrets.Any(x => x.Id == id)));
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
             {
                 NewFacilities = Inn.Refresh(this),
@@ -695,6 +703,7 @@ namespace BloodRain.Core.Meta
             public int GoldenToads;
             /// <summary>얻은 칭호. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public List<string> Titles = new List<string>();
+            public List<string> Letters = new List<string>();
             /// <summary>엔딩(4장). 이 칸들이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public bool EndingPending;
             public List<string> EndingsSeen = new List<string>();
@@ -741,6 +750,7 @@ namespace BloodRain.Core.Meta
                 TalismansUsed = TalismansUsedTotal,
                 GoldenToads = GoldenToadsTotal,
                 Titles = Sorted(_titles),
+                Letters = Sorted(_letters),
                 EndingPending = EndingPending,
                 EndingsSeen = Sorted(_endingsSeen),
                 JourneyOver = JourneyOver,
@@ -773,6 +783,7 @@ namespace BloodRain.Core.Meta
             foreach (var kv in f.FinalClearsBySect) s._finalClears[kv.Key] = kv.Value;
             s._unlocks.UnionWith(f.Unlocks);
             s._titles.UnionWith(f.Titles.Where(id => s.C.Titles.Any(t => t.Id == id)));
+            s._letters.UnionWith(f.Letters.Where(id => data.Synergies.Secrets.Any(x => x.Id == id)));
             s._bosses.UnionWith(f.BossesKilled);
             s._sealStones.UnionWith(f.SealStones);
             s._visited.UnionWith(f.VisitedRegions);
@@ -801,6 +812,8 @@ namespace BloodRain.Core.Meta
         readonly List<string> _evolutions = new List<string>();
         readonly List<string> _torn = new List<string>();
         readonly int _eliteCrystal;
+        readonly IReadOnlyList<SecretDef> _secrets;
+        readonly HashSet<string> _lettersKnown;
         RealmDef _highest;
         int _eliteKills;
         int _spiritBeasts;
@@ -828,6 +841,8 @@ namespace BloodRain.Core.Meta
             ManuscriptsHere = soul.IsBloodMoon || !_c.Cycle.Bloodmoon.ManuscriptsOnlyHere;
             Qi = new RebirthQiLedger(_c.RebirthQi, body.RebirthQiBonus, RewardMultiplier);
             _eliteCrystal = soul.Data.Balance.Drops.EliteBloodCrystal;
+            _secrets = soul.Data.Synergies.Secrets;
+            _lettersKnown = new HashSet<string>(soul.Letters, StringComparer.Ordinal);
             Enter(body.Region.Id);
         }
 
@@ -976,6 +991,25 @@ namespace BloodRain.Core.Meta
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
             new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
-                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss);
+                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss, _letters);
+
+        readonly List<string> _letters = new List<string>();
+        /// <summary>이번 생에 밀서로 본 비전 id.</summary>
+        public IReadOnlyList<string> Letters => _letters;
+
+        /// <summary>하오문 밀서를 주웠다(20장 기연 '아직 못 찾은 비전 하나의 조건이 한 줄 더 드러난다').
+        /// 도감에서 아직 못 찾았고(discoveredSecrets 에 없음) 밀서로도 안 본 비전 중 데이터 순서로 첫째를 골라 돌려준다.
+        /// 다 봤으면 null(쪽지는 빈 종이). 도감에 '찾음'을 남기는 것은 게임 쪽이라 찾은 비전 목록을 받는다.</summary>
+        public SecretDef? ReadLetter(IEnumerable<string> discoveredSecrets)
+        {
+            var found = new HashSet<string>(discoveredSecrets, StringComparer.Ordinal);
+            foreach (var x in _secrets)
+            {
+                if (found.Contains(x.Id) || _letters.Contains(x.Id) || _lettersKnown.Contains(x.Id)) continue;
+                _letters.Add(x.Id);
+                return x;
+            }
+            return null;
+        }
     }
 }

@@ -7,7 +7,7 @@
 //   영물: 영약 효과 + 혈정(LifeLog.CatchSpiritBeast, 정예 하나 몫).
 //   혈마의 속삭임: 받으면 마도(demonic) 진전 +schoolBonus, 몸이 받는 회복 × healingMultiplier. 혈공·계승 표식은 WP-29a 결정 대기라 세기만.
 //   검총: 공격 무공 하나를 이번 생에서 버리고, 그 레벨 × mightPerLevel 을 남은 무공 공력에 더한다(여러 번 꽂으면 더함).
-//   하오문 밀서는 장경각 도감 쪽(Presentation)이라 여기 셈이 없다. 벼랑은 WP-32a 결정 대기.
+//   하오문 밀서: 고르는 셈은 LifeLog.ReadLetter(혼이 계정에 남김), 여기는 만났다는 표시만(Life.ReadLetter). 벼랑은 WP-32a 결정 대기.
 using System;
 using System.Collections.Generic;
 using BloodRain.Core.Build;
@@ -26,6 +26,7 @@ namespace BloodRain.Core.Run
         public const string SpiritBeast = "spiritbeast";
         public const string Whisper = "whisper";
         public const string SwordTomb = "sword_tomb";
+        public const string Letter = "letter";
         /// <summary>혈마의 속삭임이 올려 주는 진전(synergies.json schools 의 마교).</summary>
         public const string WhisperSchool = "demonic";
 
@@ -48,6 +49,9 @@ namespace BloodRain.Core.Run
         public bool HasMet(string id) => _met.Contains(id);
 
         void Note(string id) { if (!_met.Contains(id)) _met.Add(id); }
+
+        /// <summary>하오문 밀서를 주웠다는 표시(객잔 귀환 대사 '밀서를 주운 뒤' 줄이 본다).</summary>
+        public void NoteLetter() => Note(Letter);
 
         /// <summary>은거기인 곁에 머문 시간이 다 찼나.</summary>
         public bool HermitReady(float stayedSeconds) => stayedSeconds >= _syn.Encounter(Hermit).Param("staySeconds");

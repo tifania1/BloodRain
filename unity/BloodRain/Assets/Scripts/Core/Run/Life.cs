@@ -144,6 +144,13 @@ namespace BloodRain.Core.Run
         /// 흡혈대법 같은 깨달음 배율(InsightEffects.OtherHealMultiplier)은 Presentation 이 따로 곱한다.</summary>
         public float HealingMultiplier => Body.SectTrait.HealingMultiplier * Encounters.HealingMultiplier;
 
+        /// <summary>하오문 밀서를 주웠다. 도감에서 못 찾은 비전 하나(데이터 순서, 밀서로 안 본 것)를 돌려준다. 다 봤으면 null.</summary>
+        public SecretDef? ReadLetter(IEnumerable<string> discoveredSecrets)
+        {
+            Encounters.NoteLetter();
+            return Log.ReadLetter(discoveredSecrets);
+        }
+
         /// <summary>영약을 주웠다: 오의 가득, 음양 0.</summary>
         public void TakeElixir() => Encounters.TakeElixir(Charge, Loadout.Gauge);
 
