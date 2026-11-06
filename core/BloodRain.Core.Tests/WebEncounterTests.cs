@@ -39,8 +39,8 @@ namespace BloodRain.Core.Tests
         [Fact] public void 영약은_한_생_판에서_오의_가득_음양_0()
         {
             var html = Proto;
-            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper'])", html);
-            Assert.Contains("((key === 'elixir' || key === 'letter' || key === 'whisper') && !G.body)", html);
+            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb'])", html);
+            Assert.Contains("((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb') && !G.body)", html);
             Assert.Contains("discover('enc:elixir'); G.ult = B.ultimateCharge.max; G.yy = 0;", html);
             Assert.Contains("| 영약 | 빛나는 덩굴·바위 틈(천년하수오, 공청석유) | 줍는다 | 오의 게이지 가득, 음양 0 |", Gdd);
         }
@@ -63,6 +63,19 @@ namespace BloodRain.Core.Tests
             Assert.Contains("(G && G.whisperTaken ? 0.5 : 1)", html);
             Assert.Contains("if (st.whisper) m.whispers = (m.whispers || 0) + 1;", html);
             Assert.Equal(15f, Load().Synergies.Encounter("whisper").MinMinute);
+        }
+
+        [Fact] public void 검총은_화산에서_무공을_꽂고_레벨당_공력_3퍼센트()
+        {
+            string html = Proto;
+            Assert.Contains("| 검총 | 5장 화산 절벽 위 검 무덤 | 검 하나를 꽂는다(공격 무공 하나를 이번 판에서 버림) | 버린 무공 레벨당 남은 무공 공력 +3% | 50% |", Gdd);
+            var e = Load().Synergies.Encounter("sword_tomb");
+            Assert.Equal(0.5f, e.Chance);
+            Assert.Contains("chapter5", e.Chapters);
+            Assert.Contains("const TOMB_PER_LEVEL = 0.03;", html);
+            Assert.Contains("G.weapons.splice(k, 1); G.banished.add(o.w.id); G.tombMight = (G.tombMight || 0) + lv * TOMB_PER_LEVEL;", html);
+            Assert.Contains("(G.stats.might + sectBonus('Might') + (G.tombMight || 0))", html);
+            Assert.Contains("if (G.weapons.length > 1) showSwordTomb();", html);
         }
     }
 }

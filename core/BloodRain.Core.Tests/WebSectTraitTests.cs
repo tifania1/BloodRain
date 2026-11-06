@@ -54,7 +54,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 그때그때_바뀌는_효과가_싸움에_들어간다()
         {
             var html = Proto;
-            Assert.Contains("d *= (G.stats.might + sectBonus('Might'))", html);   // 남궁
+            Assert.Contains("d *= (G.stats.might + sectBonus('Might') + (G.tombMight || 0))", html);   // 남궁(+ 검총 WP-31)
             Assert.Contains("S.cdr + sectBonus('CooldownReduction')", html);   // 마교 쾌속, 상한은 합친 값에
             Assert.Contains("const ev = sectBonus('Evade')", html);   // 수로채 회피는 피격 직전에 굴림(Core Evade.Roll)
             Assert.Contains("B.yinyang.harmony.cooldownReduction * harmonyMul()", html);   // 무당

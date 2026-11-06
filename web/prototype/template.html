@@ -649,7 +649,7 @@ function encChance(e, c) { return encCanAppear(e, c) ? Math.max(0, Math.min(1, e
 function encCtx() { const r = CH_REGS.find(x => x.id === G.chRegion); return { chapter: r ? r.chapter : null, school: r && r.sect && SCHOOL_BY[r.sect] ? r.sect : null, minute: G.gm, luck: G.stats.luck || 0 }; }
 // 고수의 유해가 진전을 하나 더 주는 문파: 한 생 판은 그 땅 문파, 1장 판은 소림
 const SCHOOL_BY = Object.fromEntries(SYN.schools.map(sc => [sc.id, sc]));
-function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 }, letter: { at: rand(3, 14), on: false, done: false, prog: 0 }, whisper: { at: rand(15, 20), on: false, done: false, prog: 0 } }; }   // 영약·밀서·속삭임은 한 생 판만(WP-28~30)
+function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 }, letter: { at: rand(3, 14), on: false, done: false, prog: 0 }, whisper: { at: rand(15, 20), on: false, done: false, prog: 0 }, sword_tomb: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약·밀서·속삭임·검총은 한 생 판만(WP-28~31)
 const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n;
 const link = id => !!G && !!G.syn && G.syn.links.has(id);
 const lvOf = id => { const w = G.weapons.find(x => x.id === id); if (w) return w.evolved ? 8 : w.lv; const q = G.passives.find(x => x.id === id); return q ? q.lv : 0; };
@@ -725,8 +725,8 @@ function synTick(dt) {
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
-  for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper']) {
-    const ev = G.enc[key]; if (ev.done || ((key === 'elixir' || key === 'letter' || key === 'whisper') && !G.body)) continue;
+  for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb']) {
+    const ev = G.enc[key]; if (!ev || ev.done || ((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb') && !G.body)) continue;
     if (!ev.on) {
       if (G.gm >= ev.at && !overlay && G.body && !ev.rolled) {   // 한 생 판: 나올 때가 되면 한 번 굴린다
         const c = encCtx(), e = ENC_BY[key];
@@ -737,9 +737,9 @@ function synTick(dt) {
         if (key === 'letter') { ev.done = true; G.letterArmed = true; continue; }   // 하오문 밀서: 다음에 부수는 등롱 속에 쪽지(WP-30)
       }
       if (G.gm >= ev.at && !overlay) {
-        const a = rand(0, TAU), R = key === 'hermit' ? 11 : key === 'elixir' || key === 'whisper' ? 10 : 9; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
+        const a = rand(0, TAU), R = key === 'hermit' ? 11 : key === 'elixir' || key === 'whisper' || key === 'sword_tomb' ? 10 : 9; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
         const sc0 = SCHOOL_BY[ev.school || 'shaolin'];
-        toast('기연의 기척', key === 'hermit' ? '어디선가 바둑돌 놓는 소리가 들린다' : key === 'elixir' ? '바위 틈에서 은은한 빛이 샌다' : key === 'whisper' ? '빗속에 붉은 석상 하나가 서 있다. 깨어나십시오…' : sc0.id === 'shaolin' ? '쓰러진 승려 하나가 눈에 띈다' : `쓰러진 ${sc0.nameKo} 무인 하나가 눈에 띈다`);
+        toast('기연의 기척', key === 'hermit' ? '어디선가 바둑돌 놓는 소리가 들린다' : key === 'elixir' ? '바위 틈에서 은은한 빛이 샌다' : key === 'whisper' ? '빗속에 붉은 석상 하나가 서 있다. 깨어나십시오…' : key === 'sword_tomb' ? '벼랑 끝에 녹슨 검들이 꽂혀 있다' : sc0.id === 'shaolin' ? '쓰러진 승려 하나가 눈에 띈다' : `쓰러진 ${sc0.nameKo} 무인 하나가 눈에 띈다`);
       }
       continue;
     }
@@ -750,6 +750,10 @@ function synTick(dt) {
     } else if (key === 'whisper') {
       // 혈마의 속삭임(20장): 석상 앞(3m)에서 오의를 쓰면 받음(whisperUlt), 석상에 다가갔다가 8m 밖으로 떠나면 거절
       if (d < 3) ev.near = true; else if (ev.near && d > 8) { ev.done = true; toast('혈마의 속삭임', '석상을 지나쳤다. 붉은 눈이 빗속에서 꺼진다'); }
+    } else if (key === 'sword_tomb') {
+      // 검총(20장, 화산): 무덤(1.5m)에 서면 가진 무공 카드에서 하나를 골라 꽂는다. 무공이 하나뿐이면 못 꽂고, '지나친다'면 무덤을 벗어났다 다시 와야 또 뜬다
+      if (d >= 2.5) ev.near = false;
+      else if (d < 1.5 && !ev.near && !overlay) { ev.near = true; if (G.weapons.length > 1) showSwordTomb(); else toast('검총', '꽂을 검이 이것 하나뿐이다'); }
     } else if (key === 'elixir') {
       // 영약(20장): 줍는다 — 오의 게이지 가득, 음양 0
       if (d < 1.3 && !overlay) {
@@ -767,9 +771,9 @@ function synTick(dt) {
   }
 }
 function drawEncounters() {
-  for (const key of ['relic', 'hermit', 'elixir', 'whisper']) {
+  for (const key of ['relic', 'hermit', 'elixir', 'whisper', 'sword_tomb']) {
     const ev = G.enc[key]; if (!ev || !ev.on || ev.done) continue;
-    const x = wx(ev.x), y = wy(ev.y), s = PPM, ring = (key === 'hermit' ? 1.7 : key === 'whisper' ? 3 : 1.3) * s, need = key === 'hermit' ? 6 : 1;
+    const x = wx(ev.x), y = wy(ev.y), s = PPM, ring = (key === 'hermit' ? 1.7 : key === 'whisper' ? 3 : key === 'sword_tomb' ? 1.5 : 1.3) * s, need = key === 'hermit' ? 6 : 1;
     ctx.save();
     ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(26,26,26,0.4)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, ring, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     if (ev.prog > 0) { ctx.strokeStyle = '#C9A227'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, ring, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, ev.prog / need)); ctx.stroke(); }
@@ -790,6 +794,14 @@ function drawEncounters() {
       ctx.fillStyle = '#5A2A26'; ctx.fillRect(x - 0.35 * s, y - 0.9 * s, 0.7 * s, 1.3 * s); ctx.strokeRect(x - 0.35 * s, y - 0.9 * s, 0.7 * s, 1.3 * s);
       ctx.fillStyle = '#3A2A1A'; ctx.fillRect(x - 0.55 * s, y + 0.4 * s, 1.1 * s, 0.25 * s); ctx.strokeRect(x - 0.55 * s, y + 0.4 * s, 1.1 * s, 0.25 * s);
       ctx.fillStyle = '#C8392B'; for (const dx of [-0.12, 0.12]) { ctx.beginPath(); ctx.arc(x + dx * s, y - 0.6 * s, 0.06 * s, 0, TAU); ctx.fill(); }
+    } else if (key === 'sword_tomb') {   // 검 무덤(그림 전 자리 표시): 흙무더기에 비스듬히 꽂힌 검 다섯
+      ctx.fillStyle = '#8A7A62'; ctx.beginPath(); ctx.ellipse(x, y + 0.25 * s, 0.85 * s, 0.32 * s, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      for (const [dx, tilt, h] of [[-0.5, -0.25, 0.9], [-0.22, 0.1, 1.1], [0.05, -0.05, 1.25], [0.3, 0.2, 1.0], [0.55, -0.15, 0.8]]) {
+        const bx = x + dx * s, by = y + 0.2 * s, tx = bx + Math.sin(tilt) * h * s, ty = by - Math.cos(tilt) * h * s;
+        ctx.strokeStyle = '#6E6A60'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tx, ty); ctx.stroke();
+        ctx.strokeStyle = '#3A2A1A'; ctx.lineWidth = 2.5; const gx = bx + Math.sin(tilt) * (h - 0.25) * s, gy = by - Math.cos(tilt) * (h - 0.25) * s;
+        ctx.beginPath(); ctx.moveTo(gx - Math.cos(tilt) * 0.12 * s, gy - Math.sin(tilt) * 0.12 * s); ctx.lineTo(gx + Math.cos(tilt) * 0.12 * s, gy + Math.sin(tilt) * 0.12 * s); ctx.stroke();
+      }
     } else if (key === 'elixir') {   // 바위 틈 빛나는 덩굴(그림 전 자리 표시)
       const g = 0.55 + 0.25 * Math.sin(G.t * 4);
       ctx.fillStyle = `rgba(201,162,39,${(0.25 * g).toFixed(3)})`; ctx.beginPath(); ctx.arc(x, y, 0.9 * s, 0, TAU); ctx.fill();
@@ -1871,7 +1883,7 @@ function addNum(x, y, v, crit, color) {
 function weaponDamage(w) {
   const def = W_BY_ID[w.id];
   let d = lerp(def.damageLv1, def.damageLv8, (w.lv - 1) / 7);
-  d *= (G.stats.might + sectBonus('Might')) * aspectMult(def.yinyang);   // 남궁 기혈 50% 이상 공력 +25%(WP-20)
+  d *= (G.stats.might + sectBonus('Might') + (G.tombMight || 0)) * aspectMult(def.yinyang);   // 남궁 기혈 50% 이상 공력 +25%(WP-20), 검총에 꽂은 레벨 × 3%(WP-31)
   if (w.evolved) d *= B.evolution.damageMultiplier;
   if (G.glow && G.glow.w === w) d *= BA.afterglowDamageMultiplier;   // 각성 여운(balance.json awakening)
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
@@ -3196,7 +3208,7 @@ function brkStep(rdt) {
 }
 // 깨달음 고르기: 경지 돌파와 기연 '은거기인'이 같이 쓴다
 function showInsightChoice(name, reward, label) {
-  overlay = 'brk'; sfx('gong'); overlayAt = performance.now();
+  overlay = 'brk'; G.brkMode = null; sfx('gong'); overlayAt = performance.now();
   $('cv').classList.add('mono');
   $('brklabel').textContent = label;
   $('brkname').textContent = name;
@@ -3214,8 +3226,42 @@ function showInsightChoice(name, reward, label) {
   $('brk').hidden = false; focusFirst(box.firstChild);
   if (!opts.length) setTimeout(() => closeOverlay('brk'), 1200);
 }
+// 기연 검총(20장 '검 하나를 꽂는다', WP-31): 깨달음 화면 틀에 가진 무공 카드와 '지나친다'. 꽂은 무공은 이번 생에서 버리고(레벨업에도 다시 안 나옴),
+// 그 레벨(절기면 8) × 0.03 을 남은 무공 공력에 더한다(G.tombMight, weaponDamage). 여러 번 꽂을 수 있게 더하기로 둔다
+const TOMB_PER_LEVEL = 0.03;
+function showSwordTomb() {
+  overlay = 'brk'; G.brkMode = 'tomb'; sfx('gong'); overlayAt = performance.now();
+  $('cv').classList.add('mono');
+  $('brklabel').textContent = '기연'; $('brkname').textContent = '검총';
+  $('brkreward').textContent = `검 하나를 꽂는다 — 그 무공은 이번 생에서 버리고, 그 레벨 하나당 남은 무공 공력 +${Math.round(TOMB_PER_LEVEL * 100)}%`;
+  const box = $('brkcards'); box.innerHTML = '';
+  currentOffers = G.weapons.map(w => ({ w })).concat([{ pass: true }]);
+  currentOffers.forEach((o, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'card';
+    if (o.pass) b.innerHTML = `<span class="ic">行</span><span><h3>지나친다</h3><p>아무것도 꽂지 않고 떠난다(무덤을 벗어났다 오면 다시) · Enter</p></span>`;
+    else { const def = W_BY_ID[o.w.id], lv = o.w.evolved ? 8 : o.w.lv; b.innerHTML = `<span class="ic">${GLYPH[o.w.id] || def.nameKo[0]}</span><span><h3>${def.nameKo} ${o.w.evolved ? '절기' : 'Lv' + lv}</h3><p>꽂으면 남은 무공 공력 +${Math.round(lv * TOMB_PER_LEVEL * 100)}%</p></span>`; }
+    b.onclick = () => chooseInsight(i); box.appendChild(b);
+  });
+  $('brk').hidden = false; focusFirst(box.lastChild);
+}
+function chooseSwordTomb(i) {
+  const o = currentOffers[i]; G.brkMode = null;
+  if (!o.pass && G.weapons.length > 1) {
+    const k = G.weapons.indexOf(o.w), lv = o.w.evolved ? 8 : o.w.lv;
+    if (k >= 0) {
+      G.weapons.splice(k, 1); G.banished.add(o.w.id); G.tombMight = (G.tombMight || 0) + lv * TOMB_PER_LEVEL;
+      const ev = G.enc.sword_tomb; ev.done = true; discover('enc:sword_tomb');
+      recomputeStats(); renderSlots();
+      $('cv').classList.remove('mono'); closeOverlay('brk');
+      showDiscovery('奇緣', '劍塚', '검총', `${W_BY_ID[o.w.id].nameKo}을(를) 무덤에 꽂았다. 남은 무공 공력 +${Math.round(lv * TOMB_PER_LEVEL * 100)}%.`);
+      return;
+    }
+  }
+  $('cv').classList.remove('mono'); closeOverlay('brk');
+}
 function chooseInsight(i) {
   if (overlay !== 'brk' || !currentOffers[i] || tooSoon()) return;
+  if (G.brkMode === 'tomb') return chooseSwordTomb(i);
   const o = currentOffers[i]; G.insights.push(o.id);
   if (o.id === 'yeokgeun') { G.yy = IP.yeokgeun.resetTo; G.yyHalf = true; }
   if (o.id === 'salgi') G.salgiBase = G.kills; // 고른 뒤 처치만 센다(Core InsightEffects)
@@ -4921,7 +4967,7 @@ window.addEventListener('keydown', e => {
     if (e.code === 'KeyZ' && !e.repeat) skipOffer();
     return;
   }
-  if (overlay === 'brk') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) chooseInsight(n - 1); return; }
+  if (overlay === 'brk') { const n = parseInt(e.key, 10); if (n >= 1 && n <= (G.brkMode === 'tomb' ? 9 : 4)) chooseInsight(n - 1); return; }
   if (overlay === 'evopick') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) choosePick(n - 1); return; }
   if (overlay === 'procut') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); nextCut(); } return; }
   if (overlay === 'ending') { if ((G.ending || G.trueCut === 'cut') && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); nextEndingCut(); } return; }
@@ -5054,7 +5100,7 @@ window.__hyeolu = {
         const sc = pickScore || score;
         let bi = 0; currentOffers.forEach((o, i) => { if (sc(o, G) + Math.random() * 0.5 > sc(currentOffers[bi], G) + Math.random() * 0.5) bi = i; });
         chooseOffer(bi);
-      } else if (overlay === 'brk') chooseInsight(0); else if (overlay === 'chest') closeOverlay('chest'); else if (overlay === 'merchant') { if (G.player.hp < G.player.maxHp * 0.5) merchantBuy('potion'); closeOverlay('merchant'); } else if (overlay === 'find') closeOverlay('find'); else if (overlay === 'evopick') choosePick(0);
+      } else if (overlay === 'brk') chooseInsight(G.brkMode === 'tomb' ? currentOffers.length - 1 : 0); else if (overlay === 'chest') closeOverlay('chest'); else if (overlay === 'merchant') { if (G.player.hp < G.player.maxHp * 0.5) merchantBuy('potion'); closeOverlay('merchant'); } else if (overlay === 'find') closeOverlay('find'); else if (overlay === 'evopick') choosePick(0);
       if (G.ult >= 100) useUlt();
       const pl = G.player;
       if (pl.dashCharges > 0 && pl.dashT <= 0) {
