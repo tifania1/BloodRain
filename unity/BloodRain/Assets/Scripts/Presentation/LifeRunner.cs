@@ -136,6 +136,7 @@ namespace BloodRain.Presentation
             if (enemies != null) enemies.Killed += OnKilled;
             // C-09b 등롱·바닥 드롭(씬에 없으면 여기서 붙인다)
             if (GetComponent<LanternLayer>() == null) gameObject.AddComponent<LanternLayer>().runner = this;
+            if (GetComponent<EncounterLayer>() == null) gameObject.AddComponent<EncounterLayer>().runner = this; // WP-39U 기연
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
             _edges = FindFirstObjectByType<BloodRain.Presentation.Fx.EdgeIndicators>();
@@ -210,7 +211,8 @@ namespace BloodRain.Presentation
         {
             if (_life == null || _life.Record != null) return;
             var soul = RebirthHandoff.Soul;
-            var syn = BloodRain.Core.Build.Synergy.Compute(_data, _life.Loadout, null, soul != null ? soul.RestoredManuals : null);
+            // WP-39U 진전 덧셈: 몸의 문파 덤 + 기연(고수의 유해)으로 더 가진 것으로 치는 진전
+            var syn = BloodRain.Core.Build.Synergy.Compute(_data, _life.Loadout, _life.Body.SchoolExtra(_life.Encounters.SchoolExtra), soul != null ? soul.RestoredManuals : null);
             var extra = syn.StatBonus();
             float ratio = vitals != null && vitals.MaxHealth > 0f ? vitals.Health / vitals.MaxHealth : 1f;
             extra.Add(_life.InsightBonus((int)System.Math.Min(_kills, int.MaxValue), ratio));
@@ -593,6 +595,13 @@ namespace BloodRain.Presentation
 
         /// <summary>깨달음 화면이 열려 있거나 열릴 차례면 참. 레벨업 화면은 이 동안 기다린다.</summary>
         public bool InsightBusy => _insightQueue.Count > 0 || (_insightScreen != null && _insightScreen.IsOpen);
+
+        /// <summary>WP-39U 은거기인: 깨달음 고르기를 한 번 더(지금 몸의 후보 수로).</summary>
+        public void QueueExtraInsight()
+        {
+            _insights ??= Insights.From(_data);
+            _insightQueue.Enqueue(_insights.ChoiceCount(_life.Body.Character));
+        }
 
         void QueueInsights(IReadOnlyList<BreakthroughInfo> list)
         {
