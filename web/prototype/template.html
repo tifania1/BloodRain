@@ -292,6 +292,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="flash">깜빡임 켜짐</button>
         <button class="b" type="button" data-set="bossbar">체력바 보임</button>
         <button class="b" type="button" data-set="rain">혈우 연출 100%</button>
+        <button class="b" type="button" data-set="aimMode">조준 가까운 적</button>
         <button class="b" type="button" data-set="aim">방향 표시 보통</button>
         <button class="b" type="button" data-set="nums">피해 숫자 보임</button>
         <button class="b" type="button" data-set="fx">내 이펙트 100%</button>
@@ -393,6 +394,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="flash"></button>
         <button class="b" type="button" data-set="bossbar"></button>
         <button class="b" type="button" data-set="rain"></button>
+        <button class="b" type="button" data-set="aimMode"></button>
         <button class="b" type="button" data-set="aim"></button>
         <button class="b" type="button" data-set="nums"></button>
         <button class="b" type="button" data-set="fx"></button>
@@ -958,6 +960,7 @@ const settings = {
   bossbar: store.get('bossbar') ?? true,                  // 땅의 주인 체력바 보이기(12장)
   rain: store.get('rain') ?? (REDUCED ? 0.5 : 1),         // 혈우 연출 세기 1 / 0.5 / 0(12장): 장막 붉은 번짐·빗줄기·붉은 달. 장막 점선은 길을 알려 주니 늘 그림
   aim: store.get('aim') ?? 1,                             // 바라보는 방향 표시 크기 1 / 1.6 / 0(12장 '조준')
+  aimMode: store.get('aimMode') || 'near',                // 조준 방식: near 가까운 적(기본) / move 이동 방향(12장 '조준', aimAngle)
   nums: store.get('nums') ?? true,                        // 피해 숫자 표시 켬/끔(12장 설정)
   fx: store.get('fx') ?? 1,                               // 내 이펙트 투명도: 1 / 0.75 / 0.5 / 0.25 / 0 (12장 '0~100%')
 };
@@ -2126,6 +2129,14 @@ function addEffect(kind, x, y, o) { if (G.effects.length > 160) G.effects.shift(
 function foeEffect(kind, x, y, o) { addEffect(kind, x, y, Object.assign({ foe: true }, o)); }
 function addProj(o) { if (G.projs.length > LIM.projectiles) return; G.projs.push(Object.assign({ t: 0, pierce: 0, hit: new Set(), homing: 0, bounce: 0 }, o)); }
 
+// 조준(12장 '화면 편의 규칙' 조준, WP-52): 방향이 있는 무공은 기본(settings.aimMode 'near')으로 닿는 거리 안 가장 가까운 적을 노리고,
+// 없으면 바라보는 쪽. '이동 방향'(move)이면 늘 마지막으로 움직인 쪽(8장 옛 규칙). 패드 오른쪽 스틱·모바일 두 번째 손가락은 Unity 몫
+function aimAngle(reach) {
+  const p = G.player;
+  if (settings.aimMode !== 'move') { const near = nearestEnemies(p.x, p.y, 1, reach)[0]; if (near) return Math.atan2(near.y - p.y, near.x - p.x); }
+  return Math.atan2(p.fy, p.fx);
+}
+
 // 무공 실행 (weapons.json behavior 별)
 function fireWeapon(w) {
   const def = W_BY_ID[w.id], p = G.player, S = G.stats, t = (w.lv - 1) / 7;
@@ -2137,9 +2148,8 @@ function fireWeapon(w) {
   switch (def.behavior) {
     case 'front_arc': {
       const R = def.range * S.area * igi * (w.evolved ? ep.rangeMultiplier : 1);
-      // 프로토타입 결정: 사거리 안에 적이 있으면 가장 가까운 적 쪽으로 벤다(휴대폰에서 도망치며 싸우기 쉽게). 없으면 바라보는 쪽.
-      const near = nearestEnemies(p.x, p.y, 1, R * 1.25)[0];
-      const base = near ? Math.atan2(near.y - p.y, near.x - p.x) : Math.atan2(fy, fx);
+      // 사거리 안에 적이 있으면 가장 가까운 적 쪽으로 벤다(12장 조준, 휴대폰에서 도망치며 싸우기 쉽게). 없으면 바라보는 쪽.
+      const base = aimAngle(R * 1.25);
       const dirs = w.evolved ? [base, base + TAU / 3, base - TAU / 3] : (atMs(w, '앞뒤 베기') ? [base, base + Math.PI] : [base]);
       const strikes = atMs(w, '3연 베기') ? 3 : 1;
       for (let s = 0; s < strikes; s++) {
@@ -2154,7 +2164,7 @@ function fireWeapon(w) {
           }
         } });
       }
-      if (w.evolved && w.n % ep.waveEvery === 0) addProj({ x: p.x, y: p.y, vx: fx * ep.waveSpeed, vy: fy * ep.waveSpeed, r: ep.waveRadius, dmg: dmg * ep.waveDamage, pierce: 999, life: ep.waveLifeSeconds, kind: 'wave', w });
+      if (w.evolved && w.n % ep.waveEvery === 0) addProj({ x: p.x, y: p.y, vx: Math.cos(base) * ep.waveSpeed, vy: Math.sin(base) * ep.waveSpeed, r: ep.waveRadius, dmg: dmg * ep.waveDamage, pierce: 999, life: ep.waveLifeSeconds, kind: 'wave', w });
       skySword(w);
       break;
     }
@@ -2165,9 +2175,9 @@ function fireWeapon(w) {
         forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d <= R + e.r) hurtEnemy(e, dmg, w, dx / d, dy / d, def.knockback); });
         hitLanterns(p.x, p.y, R);
         // 연환 권장합일: 마지막 주먹이 짧은 장풍을 쏜다
-        if (i === hits - 1 && link('gwonjang')) { const pw = G.weapons.find(x => x.id === 'palm_wind'); if (pw) addProj({ x: p.x, y: p.y, vx: p.fx * 9, vy: p.fy * 9, r: 0.45, dmg: weaponDamage(pw) * 0.5, pierce: 999, life: 0.9, kind: 'palm', w: pw, kb: 3 }); }
+        if (i === hits - 1 && link('gwonjang')) { const pw = G.weapons.find(x => x.id === 'palm_wind'); if (pw) { const pa = aimAngle(9 * 0.9); addProj({ x: p.x, y: p.y, vx: Math.cos(pa) * 9, vy: Math.sin(pa) * 9, r: 0.45, dmg: weaponDamage(pw) * 0.5, pierce: 999, life: 0.9, kind: 'palm', w: pw, kb: 3 }); } }
       } });
-      if (w.evolved) for (let k = 0; k < ep.projectiles; k++) { const a = Math.atan2(fy, fx) + (k - (ep.projectiles - 1) / 2) * ep.projectileSpread; addProj({ x: p.x, y: p.y, vx: Math.cos(a) * ep.projectileSpeed, vy: Math.sin(a) * ep.projectileSpeed, r: ep.projectileRadius, dmg: dmg * ep.projectileDamage, pierce: 999, life: ep.projectileLifeSeconds, kind: 'fist', w }); }
+      if (w.evolved) { const a0 = aimAngle(ep.projectileSpeed * ep.projectileLifeSeconds); for (let k = 0; k < ep.projectiles; k++) { const a = a0 + (k - (ep.projectiles - 1) / 2) * ep.projectileSpread; addProj({ x: p.x, y: p.y, vx: Math.cos(a) * ep.projectileSpeed, vy: Math.sin(a) * ep.projectileSpeed, r: ep.projectileRadius, dmg: dmg * ep.projectileDamage, pierce: 999, life: ep.projectileLifeSeconds, kind: 'fist', w }); } }
       break;
     }
     case 'homing_dagger': {
@@ -2192,7 +2202,8 @@ function fireWeapon(w) {
       const shots = (atMs(w, '2연발') ? 2 : 1) + (w.evolved ? ep.extraShots : 0);
       for (let i = 0; i < shots; i++) G.zones.push({ delay: i * def.gapSeconds, apply: () => {
         const sh = def.shot, sp = sh.speed * S.projSpeed, r = sh.radius * growArea(def, t) * S.area * (w.evolved ? ep.sizeMultiplier : 1);
-        addProj({ x: p.x, y: p.y, vx: p.fx * sp, vy: p.fy * sp, r, dmg, pierce: 999, life: sh.lifeSeconds * S.duration, kind: 'palm', w, kb: def.knockback, explode: w.evolved && ep });
+        const a = aimAngle(sp * sh.lifeSeconds * S.duration);   // 장풍이 닿는 거리 안 가장 가까운 적(12장 조준)
+        addProj({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r, dmg, pierce: 999, life: sh.lifeSeconds * S.duration, kind: 'palm', w, kb: def.knockback, explode: w.evolved && ep });
       } });
       break;
     }
@@ -2289,7 +2300,7 @@ function fireWeapon(w) {
       // 혈조(9장): 이동(바라보는) 방향으로 N갈래 할퀴기, 준 피해의 lifesteal 만큼 기혈 회복.
       // 절기 혈마수(WP-19, params): 흡혈 lifesteal, 극음이면 범위 × extremeYinRangeMultiplier. 갈래 수는 Lv8 그대로
       const exYin = w.evolved && yyBand().band === 'extreme' && G.yy < 0;
-      const n = Math.round(grow(def.projectiles, t)), R = def.range * S.area * igi * (exYin ? ep.extremeYinRangeMultiplier : 1), ls = w.evolved ? ep.lifesteal : grow(def.lifesteal, t, 0), base = Math.atan2(fy, fx);
+      const n = Math.round(grow(def.projectiles, t)), R = def.range * S.area * igi * (exYin ? ep.extremeYinRangeMultiplier : 1), ls = w.evolved ? ep.lifesteal : grow(def.lifesteal, t, 0), base = aimAngle(R * 1.25);   // 12장 조준: 가까운 적 쪽(이동 방향 설정이면 바라보는 쪽)
       const hitSet = new Set();
       for (let i = 0; i < n; i++) {
         const a = base + (i - (n - 1) / 2) * TRIAL_W.clawSpreadRad, ca = Math.cos(a), sa = Math.sin(a);
@@ -2300,7 +2311,7 @@ function fireWeapon(w) {
           if (along > 0 && along < R + e.r && perp < TRIAL_W.clawWidth + e.r) { hitSet.add(e); hurtEnemy(e, dmg, w, ca, sa, def.knockback); p.hp = Math.min(p.maxHp, p.hp + dmg * ls * healMul()); }
         });
       }
-      hitLanterns(p.x + fx * R * 0.5, p.y + fy * R * 0.5, R * 0.5);
+      hitLanterns(p.x + Math.cos(base) * R * 0.5, p.y + Math.sin(base) * R * 0.5, R * 0.5);
       break;
     }
     case 'ring_wave': {
@@ -2321,7 +2332,7 @@ function fireWeapon(w) {
     case 'pierce_thrust': {
       // 이화창(9장): 앞 R 관통 찌르기 1→3회(가까운 적 쪽, 없으면 바라보는 쪽). Lv7 '회전 찌르기'는 네 방향.
       const R = def.range * S.area * igi, hits = Math.round(grow(def.hits, t));
-      const near = nearestEnemies(p.x, p.y, 1, R * 1.25)[0], base = near ? Math.atan2(near.y - p.y, near.x - p.x) : Math.atan2(fy, fx);
+      const base = aimAngle(R * 1.25);
       // 절기 백화난무창(WP-19, params): 상시 directions 방향 찌르기. '경공 경로를 따라 창격 폭풍'은 피해·폭·시간 숫자가 없어 아직 안 붙임(decisions)
       const dirs = w.evolved ? Array.from({ length: ep.directions }, (_, i) => base + i * TAU / ep.directions) : atMs(w, '회전 찌르기') ? [0, 1, 2, 3].map(i => base + i * Math.PI / 2) : [base];
       for (let s = 0; s < hits; s++) G.zones.push({ delay: s * 0.15, apply: () => {
@@ -2367,7 +2378,7 @@ function fireWeapon(w) {
     case 'petal_scatter': {
       // 낙화검우(9장): 꽃잎 검기 N발을 흩뿌림(가까운 적 쪽 부채꼴 안에서 무작위). 탄은 섬광지 탄(weapons.json shot), Lv6 관통 +1.
       const n = Math.round(grow(def.projectiles, t)) + S.amount, sh = def.shot, sp = sh.speed * S.projSpeed, pierce = atMs(w, '관통 +1') ? 1 : 0;
-      const near = nearestEnemies(p.x, p.y, 1, def.range)[0], base = near ? Math.atan2(near.y - p.y, near.x - p.x) : Math.atan2(fy, fx);
+      const base = aimAngle(def.range);
       // 절기 매화만개(WP-19, params): 꽃잎이 사방(한 바퀴 고르게)으로 퍼지고 닿을 때마다 기혈 healPerHit 회복. '화면 전체를 도는 폭풍'의 크기·도는 빠르기는 숫자가 없어 아직 안 붙임(decisions)
       for (let i = 0; i < n; i++) {
         const a = w.evolved ? base + i * TAU / n : base + rand(-TRIAL_W.petalSpreadRad / 2, TRIAL_W.petalSpreadRad / 2);
@@ -5456,6 +5467,7 @@ const SET_TURN = {
   bossbar: () => { settings.bossbar = !settings.bossbar; store.set('bossbar', settings.bossbar); },
   rain: () => { settings.rain = settings.rain === 1 ? 0.5 : settings.rain === 0.5 ? 0 : 1; store.set('rain', settings.rain); },
   aim: () => { settings.aim = settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1; store.set('aim', settings.aim); },
+  aimMode: () => { settings.aimMode = settings.aimMode === 'move' ? 'near' : 'move'; store.set('aimMode', settings.aimMode); },
   nums: () => { settings.nums = !settings.nums; store.set('nums', settings.nums); },
   fx: () => { settings.fx = settings.fx > 0 ? Math.round((settings.fx - 0.25) * 100) / 100 : 1; store.set('fx', settings.fx); },
 };
@@ -5485,6 +5497,7 @@ function syncMute() {
     rain: `혈우 연출 ${Math.round(settings.rain * 100)}%<small>${settings.rain ? '붉은 번짐·빗줄기' : '장막 점선만'}</small>`,
     fx: `내 이펙트 ${Math.round(settings.fx * 100)}%<small>${settings.fx < 1 ? '적 탄·예고는 그대로' : '무공 효과 투명도'}</small>`,
     nums: settings.nums ? '피해 숫자 보임<small>때린 자리에 숫자</small>' : '피해 숫자 숨김<small>숫자 없이</small>',
+    aimMode: settings.aimMode === 'move' ? '조준 이동 방향<small>움직인 쪽으로 쏜다</small>' : '조준 가까운 적<small>없으면 움직인 쪽</small>',
     aim: { 1: '방향 표시 보통<small>바라보는 쪽 꺾쇠</small>', 1.6: '방향 표시 크게<small>바라보는 쪽 꺾쇠</small>', 0: '방향 표시 끔<small>꺾쇠 없음</small>' }[settings.aim] || '방향 표시 보통',
   };
   for (const b of document.querySelectorAll('[data-set]')) { b.innerHTML = SET_HTML[b.dataset.set]; if (b.dataset.set === 'flash' || b.dataset.set === 'bossbar' || b.dataset.set === 'nums') b.setAttribute('aria-pressed', String(!settings[b.dataset.set])); }

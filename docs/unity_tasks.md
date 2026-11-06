@@ -333,6 +333,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 웹 프로토타입과 같음
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
+- [ ] WP-52U 조준: 방향 무공이 가까운 적을 노리게 · 먼저: R-12Ub
+  - 할 것: WeaponRunner 에서 `player.Facing` 을 바로 쓰는 방향 무공(장풍 탄·혈조 갈래·나한권 절기 탄·권장합일 장풍·삼재검법 절기 검기)을 한 함수 `AimAngle(닿는 거리)` 로 — 설정 '조준 방식'이 가까운 적(기본)이면 닿는 거리 안 가장 가까운 적 쪽, 없거나 '이동 방향'이면 Facing. 닿는 거리는 웹과 같게: 근접은 사거리 × 1.25, 탄은 탄속 × 수명. 삼재검법·이화창·낙화검우처럼 이미 `Nearest` 를 쓰는 곳도 같은 함수로. 패드 오른쪽 스틱을 기울이는 동안은 그쪽(12장).
+  - 쓸 것: 웹 프로토타입 `aimAngle`(template.html, WP-52), 기획서 12장 '화면 편의 규칙' 조준·8장 조작
+  - 메뉴: 설정 화면에 '조준 방식' 단추(가까운 적 / 이동 방향), PlayerPrefs
+  - 끝: 적에게서 도망치며 움직여도 장풍·혈조가 가장 가까운 적 쪽으로 나감. '이동 방향'으로 바꾸면 움직인 쪽으로만
+  - 찍기: `docs/unity_shots/WP-52U/` 의 `aim_near.png`
+
 - [ ] R-07U 진전 소림 4·개방 4 · 먼저: C-06b
   - 할 것: 한 생에 `new Core.Build.SchoolSummons()` 하나, 프레임마다 `summons.Tick(SynergyEffects, 기혈/최대, 세상 dt)`. `ArhatStarted` 면 몸 둘레 나한 허상 `Tier("arhat_ring").Param("images")` 개를 `ArhatSecondsLeft` 동안, 닿는 적은 `summons.ArhatPush(fx, 거리, 보스인가, 축척)` 만큼 밀어냄(피해 없음, 2026-11-05 R-07b 데이터). `AlliesSpawned` 만큼 개방 제자를 `AlliesSecondsLeft` 동안(적이 노리지 않음), `AllyVolleys` 만큼 제자마다 가장 가까운 적에게 장풍 Lv1 탄 한 대 — 피해·넉백은 `SchoolSummons.AllyShot(fx, 공력)`.
   - 쓸 것: Core `Build/SchoolSummons.cs`, synergies.json
