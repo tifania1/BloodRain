@@ -91,6 +91,7 @@ namespace BloodRain.Core.Run
             Bosses = new BossAwakening(_data, body.Region.Id, _bossRecord);
             if (body.Sect?.BloodArt is { } art) BloodArt = new BloodArt(art, Loadout.Gauge, body.YinyangStart);
             InsightEffects = new InsightEffects(body.Character.StartWeapon);
+            Encounters = new EncounterBoons(_data);
             if (body.Character.Ultimate == UltimateEffects.CheonmaHaeche)
                 Dissolution = new DemonDissolution(Ultimates.Find(_data, UltimateEffects.CheonmaHaeche));
             RegionId = body.Region.Id;
@@ -135,6 +136,20 @@ namespace BloodRain.Core.Run
         public void TakeInsight(InsightDef insight, int killsNow = 0) =>
             InsightEffects.Take(insight, Loadout.Gauge, killsNow, BloodArt?.Steps ?? 0);
 
+        /// <summary>이번 생에 만난 기연이 준 것(진전 덧셈·검총 공력·속삭임 회복 배율). 20장 '기연 사건 8'.
+        /// 검총 공력은 CurrentStats 가 저절로 더하고, 진전 덧셈은 Body.ComputeSynergy(…, Encounters.SchoolExtra) 로 넘긴다.</summary>
+        public EncounterBoons Encounters { get; }
+
+        /// <summary>몸이 받는 회복 전부에 곱하는 수: 문파 고유 능력(마교 0.5) × 혈마의 속삭임(받았으면 0.5).
+        /// 흡혈대법 같은 깨달음 배율(InsightEffects.OtherHealMultiplier)은 Presentation 이 따로 곱한다.</summary>
+        public float HealingMultiplier => Body.SectTrait.HealingMultiplier * Encounters.HealingMultiplier;
+
+        /// <summary>영약을 주웠다: 오의 가득, 음양 0.</summary>
+        public void TakeElixir() => Encounters.TakeElixir(Charge, Loadout.Gauge);
+
+        /// <summary>영물을 잡았다: 영약 효과와 혈정. 늘어난 혈정을 돌려준다.</summary>
+        public int CatchSpiritBeast() => Encounters.CatchSpiritBeast(Charge, Loadout.Gauge, Log);
+
         /// <summary>깨달음 능력치 덧셈. 심마 횟수는 혈공에서 가져온다. CurrentStats(extra) 에 넣는다.</summary>
         public StatBonus InsightBonus(int kills, float healthRatio = 1f) =>
             InsightEffects.Bonus(kills, BloodArt?.Steps ?? 0, healthRatio);
@@ -149,8 +164,12 @@ namespace BloodRain.Core.Run
         /// <summary>지금 몸의 능력치: 몸 + 지금 심법 레벨 + 연무장 + 성질 + 문파 고유 능력 + 경지 돌파 최대 기혈(이류 +10).
         /// 깨달음·진전 같은 덧셈은 extra 로. 심법을 올리거나 경지를 넘으면 다시 부른다(값을 들고 있지 않는다).
         /// healthRatio·moving 은 조건이 붙은 고유 능력(남궁 기혈 50% 이상 공력 +25%, 수로채 움직이는 동안 회피 15%)에 쓴다.</summary>
-        public StatSheet CurrentStats(StatBonus? extra = null, float healthRatio = 1f, bool moving = false) =>
-            Body.ComputeStats(_data, Loadout.Passives, _soul.Training, extra, RealmRewards.MaxHealthFlat, healthRatio, moving);
+        public StatSheet CurrentStats(StatBonus? extra = null, float healthRatio = 1f, bool moving = false)
+        {
+            var b = Encounters.StatBonus();
+            if (extra != null) b.Add(extra);
+            return Body.ComputeStats(_data, Loadout.Passives, _soul.Training, b, RealmRewards.MaxHealthFlat, healthRatio, moving);
+        }
 
         /// <summary>태극(조화) 구간이면 붙는 쾌속(기본 0.1, 무당 몸 0.2). 태극이 아니면 0. StatSheet.CooldownReduction 에 더하고 상한으로 자른다.</summary>
         public float HarmonyCooldownReduction =>

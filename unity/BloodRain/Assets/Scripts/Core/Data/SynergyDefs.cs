@@ -149,6 +149,10 @@ namespace BloodRain.Core.Data
         public float MinMinute;
         /// <summary>그 땅에 문파가 있어야 나온다(고수의 유해).</summary>
         public bool NeedsChapterSchool;
+        /// <summary>보상·조건 숫자(검총 mightPerLevel, 속삭임 healingMultiplier 등). 기획서 20장 글의 숫자만.</summary>
+        public Dictionary<string, float>? Params;
+
+        public float Param(string key) => Params != null && Params.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"{Id} params 에 {key} 가 없습니다");
     }
 
     /// <summary>비급 복원 값. n번째 복원(0부터)은 sealStones[n]·rebirthQi[n], 목록보다 많으면 마지막 값.</summary>

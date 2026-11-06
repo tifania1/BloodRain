@@ -803,6 +803,7 @@ namespace BloodRain.Core.Meta
         readonly int _eliteCrystal;
         RealmDef _highest;
         int _eliteKills;
+        int _spiritBeasts;
         int _bossCrystal;
 
         public RebirthBody Body { get; }
@@ -889,13 +890,22 @@ namespace BloodRain.Core.Meta
 
         /// <summary>이번 생에 얻은 혈정. 정예 몫은 모은 수 × 1개 × 혈월 배율을 한 번에 반올림한다(혈월에서 정예 둘이면 3개).</summary>
         public int BloodCrystal =>
-            _bossCrystal + (int)Math.Round((double)_eliteKills * _eliteCrystal * RewardMultiplier, MidpointRounding.AwayFromZero);
+            _bossCrystal + (int)Math.Round((double)(_eliteKills + _spiritBeasts) * _eliteCrystal * RewardMultiplier, MidpointRounding.AwayFromZero);
 
         /// <summary>정예를 쓰러뜨렸다(balance.json drops.eliteBloodCrystal). 이번에 늘어난 혈정을 돌려준다(혈월이면 1·2개가 번갈아).</summary>
         public int KillElite()
         {
             int before = BloodCrystal;
             _eliteKills++;
+            return BloodCrystal - before;
+        }
+
+        /// <summary>영물을 잡았다(기연, 20장 '영약 하나와 혈정'). 혈정 수는 기획서에 없어 정예 하나 몫(drops.eliteBloodCrystal)으로 친다.
+        /// 정예 처치 수에는 넣지 않는다. 이번에 늘어난 혈정을 돌려준다.</summary>
+        public int CatchSpiritBeast()
+        {
+            int before = BloodCrystal;
+            _spiritBeasts++;
             return BloodCrystal - before;
         }
 

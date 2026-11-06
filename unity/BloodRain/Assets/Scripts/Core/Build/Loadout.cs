@@ -52,6 +52,18 @@ namespace BloodRain.Core.Build
         /// <summary>파기: 이번 판에서 영영 제외.</summary>
         public void Banish(string id) => _banished.Add(id);
 
+        /// <summary>가진 무공 하나를 이번 판에서 버린다(검총). 칸에서 빼고 절기 표시도 지우고 다시 안 나오게 파기한다.
+        /// 버린 무공의 레벨을 돌려준다. 가진 무공이 아니거나 마지막 하나면 예외.</summary>
+        public int RemoveWeapon(string id)
+        {
+            if (!_weapons.TryGetValue(id, out var level)) throw new InvalidOperationException($"가진 무공이 아닙니다: {id}");
+            if (_weapons.Count <= 1) throw new InvalidOperationException("마지막 무공은 버릴 수 없습니다");
+            _weapons.Remove(id);
+            _evolved.Remove(id);
+            _banished.Add(id);
+            return level;
+        }
+
         public void Apply(Offer offer)
         {
             switch (offer.Kind)

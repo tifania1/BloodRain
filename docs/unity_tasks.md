@@ -283,6 +283,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 1회차 저장으로 들어가면 은빛 등롱이 안 보이고, 회귀한 저장에서 보임
   - 찍기: `docs/unity_shots/QA-02U/` 의 `silver_lantern.png`
 
+- [ ] WP-39U 기연 여섯(은거기인·고수의 유해·영약·영물·혈마의 속삭임·검총) · 먼저: C-09b
+  - 할 것: 판 시작과 1분마다 `EncounterRoller.RollAll(ctx)`(ctx 의 Chapter·ChapterSchool 은 서 있는 땅), 나온 사건을 플레이어 둘레 10m 고리에 자리 표시로 놓는다(그림은 art_queue `props_encounters` 가 오면). 만난 뒤는 Core `life.Encounters`: 은거기인 곁에 머문 초가 `HermitReady` 면 `MeetHermit` + 깨달음 3택1 한 번 더(C-07b 화면), 유해 앞에 멈춘 초가 `RelicReady` 면 `HonorRelic(그 땅 문파)`, 영약 `life.TakeElixir()`, 영물(금두꺼비처럼 달아남) 잡으면 `life.CatchSpiritBeast()`, 석상 3m 안에서 오의를 쓰면 `AcceptWhisper()`, 검총 1.5m 안이면 가진 무공 카드에서 골라 `PlantSword(loadout, id)`(`CanPlantSword` 가 거짓이면 '꽂을 검이 이것 하나뿐'). 진전 덧셈은 `Body.ComputeSynergy(…, life.Encounters.SchoolExtra)`, 회복 배율은 LifeRunner 의 `SectTrait.HealingMultiplier` 자리를 `life.HealingMultiplier` 로 바꾼다. 검총 공력은 `life.CurrentStats()` 가 이미 더한다.
+  - 쓸 것: Core `Spawning/Encounters.cs`·`Run/EncounterBoons.cs`·`Life.TakeElixir`·`CatchSpiritBeast`·`HealingMultiplier`, synergies.json encounters(params). 자리·반경은 웹 한 생 판(`template.html` 의 `newEnc`·기연 갱신 줄)과 같게
+  - 메뉴: `BloodRain/Test/기연 놓기(플레이 중)` — 여섯 중 하나를 골라 바로 놓기
+  - 끝: 여섯 다 놓고 받으면 각 효과가 들고(속삭임 뒤 회복 절반, 검총 뒤 그 무공이 칸에서 빠지고 레벨업에 안 나옴), 정산 혈정에 영물 몫이 더해짐. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/WP-39U/` 의 `encounters.png`
+
 - [ ] C-09d 보갑과 각성 · 먼저: C-09b
   - 할 것: 정예가 보갑을 떨군다(쌍강시 대형은 한 쌍에 하나). 열면 `Chest.Open(data, loadout, 레벨, rng, extraUpgrades)` — 강화 목록이면 짧은 목록 화면, 각성(Awakened)이면 J-01U 각성 연출(AwakeningFx) 끝에 `Loadout.Evolve`·`life.Awaken(evolution)`. 장강수로채 진전 4단계면 extraUpgrades 1.
   - 쓸 것: Core `Build/Chest.cs`, `Awakening.cs`, balance.json chest, evolutions.json
