@@ -497,6 +497,19 @@ const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'o
 // ?trial=1: 해금 조건이 있는 무공(태극검·쇄겸술·혈조·음공·이화창·낙화검우)도 처음부터 레벨업에 나온다(R-17, 사람이 손맛을 보려고). 절기 모양은 아직 없다.
 const TRIAL_WEAPONS = (() => { try { return /[?&]trial=1\b/.test(location.search); } catch (e) { return false; } })();
 const START_WEAPONS = DATA.weapons.filter(w => (w.unlock === 'start' || TRIAL_WEAPONS) && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
+// 무공 해금(WP-17, 기획서 9장 해금 칸·10장 '해금과 도전 과제', Core Soul.IsUnlocked·UnlockChallenges·UnlockToken):
+//   "start" 는 늘, "boss:<지역>" 은 그 땅의 주인을 한 번이라도 쓰러뜨렸으면(계정, 회귀해도 남음), 도전 과제 토큰은 혼 기록 unlocks 에 있으면.
+//   한 생 판은 생을 시작할 때 혼 기록(G.soul0)으로 레벨업 무공 풀을 정한다 — 이번 생에 연 것은 다음 생부터(Core 도 EndLife 에서 연다).
+const CHALLENGE_RE = /^(kills|dash|seal_talisman)_(\d+)_(one_run|total)$/;
+const BOSS_OF_REGION = Object.fromEntries((DATA.regions || []).filter(r => r.boss).map(r => [r.id, r.boss]));
+function soulUnlocked(m, token) {
+  if (!token || token === 'start') return true;
+  if (token.startsWith('boss:')) { const b = BOSS_OF_REGION[token.slice(5)]; return !!b && (((m.bossKills || {})[b]) || 0) > 0; }
+  return (m.unlocks || []).includes(token);
+}
+const weaponPoolOf = m => DATA.weapons.filter(w => (TRIAL_WEAPONS || soulUnlocked(m, w.unlock)) && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
+// 데이터(무공·인물·문파)에 나오는 도전 과제 토큰, 처음 나온 순서(Core Soul.ChallengeTokens)
+const CHALLENGE_TOKENS = [...new Set([...DATA.weapons, ...(DATA.characters || []), ...(DATA.sects || [])].map(x => x.unlock).filter(t => t && CHALLENGE_RE.test(t)))];
 // R-17 여섯 무공의 프로토타입 값(데이터에 없는 것만, 해 보고 고친다)
 const TRIAL_W = { bladeTurnPerSecond: 1.2, bladeRadius: 0.35, bladeRehitSeconds: 0.5, pullTo: 1.5, clawSpreadRad: 0.35, clawWidth: 0.35, sonicStunSeconds: 0.6, sonicSecondRingDelay: 0.3, spearWidth: 0.6, petalSpreadRad: 1.2 };
 // 프로토타입에서만 쓰는 값. 해 보고 괜찮으면 balance.json·기획서로 옮긴다.
@@ -1066,6 +1079,7 @@ function newRun(mode) {
     G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
     { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
     G.soul0 = soulLoad(); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
+    G.wpool = weaponPoolOf(G.soul0); G.dashes = 0; G.talis = 0;   // 무공 해금(WP-17): 혼 기록으로 연 무공까지 레벨업 풀에, 도전 과제 셈(경공·정신부, 처치는 G.kills)
     G.lords = {}; G.lordJust = []; G.lordGrace = null; G.lordF = null; G.lordKills = [];   // 땅의 주인(WP-13e): 지역별 깨어남·싸움·처치   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (G.moon) toast(`혈월 천하 · ${G.soul0.cycle}회차`, `적 기혈 ×${BM.enemyHealth} · 걸음 ×${BM.enemySpeed} · 보상 ×${BM.rewards}`);
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
@@ -2140,7 +2154,7 @@ function doDash() {
   if (!G || paused || overlay) return;
   const p = G.player;
   if (p.dashCharges <= 0 || p.dashT > 0 || p.stunT > 0) return;
-  p.dashCharges--; p.dashT = B.dash.duration; p.iframe = B.dash.iframes;
+  p.dashCharges--; p.dashT = B.dash.duration; p.iframe = B.dash.iframes; G.dashes = (G.dashes || 0) + 1;   // 도전 과제 dash_N_one_run(WP-17)
   if (p.rootT > 0) { p.rootT = 0; toast('포승줄을 끊었다', ''); }
   if (p.pullT > 0) p.pullT = 0;   // 갈고리 사슬도 경공으로 끊는다
   const sp = B.dash.distance * (1 + ((synEff('dash_drag') || {}).distanceBonus || 0)) / B.dash.duration; p.dashVx = p.fx * sp; p.dashVy = p.fy * sp;
@@ -2726,7 +2740,7 @@ function pickup(dr) {
   if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal); toast('만두', `기혈 +${DR.bunHeal}`); }
   else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal); toast('오리구이', `기혈 +${DR.duckHeal}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
-  else if (dr.kind === 'freeze') { G.freeze = DR.jeongsinFreezeSeconds * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
+  else if (dr.kind === 'freeze') { G.talis = (G.talis || 0) + 1; G.freeze = DR.jeongsinFreezeSeconds * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
   else if (dr.kind === 'silver') { addSilver(DR.silverBag[0] + Math.floor(Math.random() * (DR.silverBag[1] - DR.silverBag[0] + 1))); }
   else if (dr.kind === 'chest') openChest();
 }
@@ -2743,7 +2757,7 @@ function candidates() {
   const wMax = B.levels.weaponMax, pMax = B.levels.passiveMax;
   for (const w of G.weapons) if (w.lv < wMax && !w.evolved) list.push({ kind: 'uw', id: w.id });
   for (const p of G.passives) if (p.lv < pMax) list.push({ kind: 'up', id: p.id });
-  if (G.weapons.length < G.weaponSlots) for (const id of START_WEAPONS) if (!G.weapons.some(w => w.id === id) && !G.banished.has(id)) list.push({ kind: 'nw', id });
+  if (G.weapons.length < G.weaponSlots) for (const id of (G.wpool || START_WEAPONS)) if (!G.weapons.some(w => w.id === id) && !G.banished.has(id)) list.push({ kind: 'nw', id });
   if (G.passives.length < G.passiveSlots) for (const p of DATA.passives) if (!G.passives.some(x => x.id === p.id) && !G.banished.has(p.id)) list.push({ kind: 'np', id: p.id });
   return list;
 }
@@ -2786,7 +2800,7 @@ function offerCard(o, idx) {
     g = GLYPH[o.id] || def.nameKo[0]; title = def.nameKo; b.classList.add(def.yinyang);
     tag = (cur ? `Lv ${lv} → ${lv + 1}` : '<span class="new">새 심법</span>') + ` <em>${ASPECT_KO[def.yinyang]}</em>`;
     desc = def.effects.map(e => STAT_TEXT[e.stat] ? STAT_TEXT[e.stat](e.perLevel) : e.stat).join(', ');
-    const evoW = DATA.evolutions.find(e => e.passive === o.id); if (evoW && START_WEAPONS.includes(evoW.weapon)) badges.push([`짝 ${W_BY_ID[evoW.weapon].nameKo}`, `${W_BY_ID[evoW.weapon].nameKo}의 절기 짝(Lv${EV.pairPassiveMinLevel})`]);
+    const evoW = DATA.evolutions.find(e => e.passive === o.id); if (evoW && (G.wpool || START_WEAPONS).includes(evoW.weapon)) badges.push([`짝 ${W_BY_ID[evoW.weapon].nameKo}`, `${W_BY_ID[evoW.weapon].nameKo}의 절기 짝(Lv${EV.pairPassiveMinLevel})`]);
     const ww = evoW && G.weapons.find(w => w.id === evoW.weapon);
     if (ww && !ww.evolved && ww.lv >= B.levels.weaponMax && lv + 1 === EV.pairPassiveMinLevel) synLineEvo = `절기 문턱 — ${evoW.nameKo}`;
   }
@@ -3455,7 +3469,17 @@ function lifeSettle() {
   if (G.moon) rows.push([`혈월 천하 × ${BM.rewards}`, '혈월 아래서는 혼에 남는 기도 짙다', Math.round(rows.reduce((a, r) => a + r[2], 0) * (BM.rewards - 1))]);
   const total = rows.reduce((a, r) => a + r[2], 0);
   const crystal = LK.reduce((a, k) => a + Math.round(k.crystal * moonR()), 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0) * moonR());   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
-  return { rows, total, crystal, top, newVisits, newRealms, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null };
+  // 무공 해금(WP-17, Core Soul.UnlockChallenges): 한 생 처치·경공·정신부, 정신부 누적은 혼 기록 talismans + 이번 생. 누적으로 세지 않는 처치·경공 total 은 열지 않는다
+  const talisTotal = (s0.talismans || 0) + (G.talis || 0);
+  const newUnlocks = CHALLENGE_TOKENS.filter(t => !(s0.unlocks || []).includes(t)).filter(t => {
+    const [, kind, n, run] = t.match(CHALLENGE_RE), oneRun = run === 'one_run';
+    const v = kind === 'kills' ? (oneRun ? G.kills : -1) : kind === 'dash' ? (oneRun ? (G.dashes || 0) : -1) : (oneRun ? (G.talis || 0) : talisTotal);
+    return v >= +n;
+  });
+  // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
+  const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
+  const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3471,6 +3495,9 @@ function recordLife(st) {
     if (k.stone && !m.stones.includes(k.stone)) m.stones.push(k.stone);
     if (k.sect && !m.unlocked.includes(k.sect)) m.unlocked.push(k.sect);
   }
+  m.talismans = (m.talismans || 0) + (st.talis || 0);   // 정신부 누적(Core Soul.TalismansUsedTotal)
+  m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
+  for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);
   m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
   // 종장을 깬 생(Core Soul.EndLife 'sealed' → ChooseEnding): 문파별 종장 수, 본 엔딩, 엔딩 효과. 봉인은 회귀 — cycle.resets(봉인석)만 지우고 회차 +1
   if (st.finalClear && st.ending) {
@@ -4496,6 +4523,7 @@ function endRun(won) {
         : st.ending === 'inherit' ? '다시 태어나지 않았다. 혈마 모드가 열렸다(이 판엔 아직 없다).' : '환혼도 회귀도 여기서 끝났다.';
     }
     facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
+    if (st.newWeapons.length) facts.push([st.newWeapons.map(id => W_BY_ID[id].nameKo).join(' · '), '새로 얻은 무공 · 다음 생부터']);   // Core LifeSummary.NewUnlocks(R-08U 정산 줄과 같은 말)
     led.innerHTML = st.rows.map(r => `<tr><td>${r[0]}<small>${r[1]}</small></td><td>${r[2].toLocaleString()}</td></tr>`).join('')
       + `<tr class="sum"><td>얻은 윤회의 기<small>혼에 남은 기 ${m.qi.toLocaleString()} · 윤회 ${m.lives}번</small></td><td>+${st.total.toLocaleString()}</td></tr>`;
   }
