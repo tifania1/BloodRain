@@ -309,6 +309,8 @@ button { touch-action: manipulation; }
       <div class="subtle" id="innqi"></div>
       <h4 class="innh">객잔 시설</h4>
       <div class="innmeta" id="innfac"></div>
+      <h4 class="innh" id="inncaveh" hidden>수련동 · 도전 과제</h4>
+      <div class="innmeta" id="inncave" hidden></div>
       <h4 class="innh" id="innelixh" hidden>약방 · 영약</h4>
       <div class="innmeta" id="innelix" hidden></div>
       <h4 class="innh">침방 · 환혼 강화</h4>
@@ -3957,6 +3959,31 @@ const INN_F = DATA.innFacilities || [];
 // 약방 영약(10장 '영약(약방)', cheonha.json inn.elixirs, Core Apothecary·Life.TakeElixirs): 약방에 들어갈 수 있으면 elixirsPerLife 개까지 골라 몸을 고를 때 혈정을 쓰고 지니고 나간다
 const ELIX = DATA.innElixirs || [], ELIX_MAX = DATA.elixirsPerLife || 1;
 const elixAvail = m => { const f = INN_F.find(x => x.id === 'apothecary'); return !!f && !f.underRepair && facOpen(m, f); };
+// 수련동(10장 '객잔 시설' 수련동 '도전 과제 목록과 보상'·'해금과 도전 과제' 표): 혼 기록으로 이룬 것과 남은 것을 보여 주기만 한다.
+// 줄은 데이터에서 만든다 — 땅의 주인 첫 처치(그 땅으로 여는 문파·무공·대표 인물), 도전 과제 무공(weapons.json unlock 토큰), 칭호(cheonha.json titles), 역근·금두꺼비·의서.
+// 운화 의상(태극 구간만 지키며 원각 처치)은 이 판에 의상 셈이 없어 뺌
+const roKo = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00, j = c >= 0 && c < 11172 ? c % 28 : 0; return j === 0 || j === 8 ? '로' : '으로'; };   // 받침 없거나 ㄹ이면 '로'
+const CAVE_TOKEN_KO = { kills_5000_one_run: '한 생에서 적 5,000 처치', dash_300_one_run: '한 생에서 경공 300회', seal_talisman_10_total: '정신부 누적 10회 사용' };
+function caveRows(m) {
+  const rows = [], kills = m.bossKills || {}, un = m.unlocks || [], tok = t => un.includes(t);
+  rows.push(['서장 끝', '연무장, 첫 환혼', !!m.prologue]);
+  for (const r of (DATA.regions || []).filter(x => x.boss && !x.final).sort((a, b) => (a.chapter || 0) - (b.chapter || 0))) {
+    const got = [...(DATA.sects || []).filter(x => x.unlock === 'boss:' + r.id).map(x => `${x.nameKo}${roKo(x.nameKo)} 환생`),
+      ...(DATA.leaders || []).filter(l => l.sect === r.sect).map(l => `${SPK[l.id] || l.id} 합류`),
+      ...DATA.weapons.filter(w => w.unlock === 'boss:' + r.id).map(w => w.nameKo)];
+    rows.push([`${BOSS_BY[r.boss] ? BOSS_BY[r.boss].nameKo : r.boss} 첫 처치`, got.join(', ') || '봉인석', (kills[r.boss] || 0) > 0]);
+  }
+  for (const w of DATA.weapons) if (CAVE_TOKEN_KO[w.unlock]) rows.push([CAVE_TOKEN_KO[w.unlock], w.nameKo, tok(w.unlock)]);
+  for (const t of DATA.titles || []) {
+    const when = t.when === 'food_one_run' ? `한 생에서 음식 ${t.count}개` : t.when === 'boss_single_weapon' ? '무공 하나만으로 땅의 주인 처치' : t.when === 'all_sects_lived' ? `모든 문파(${(DATA.sects || []).length})로 한 번씩 환생` : t.when;
+    rows.push([when, `칭호 '${t.nameKo}'`, (m.titles || []).includes(t.id)]);
+  }
+  rows.push(['극성으로 땅의 주인 처치', "깨달음 '역근' 풀에 추가", tok('boss_at_extreme')]);
+  const greed = B.training.items.find(i => i.bonusMax);
+  if (greed) rows.push([`금두꺼비 누적 ${greed.bonusMax.goldenToadsTotal}마리`, `${STAT_KO[greed.stat] || greed.stat} 최대 레벨 +${greed.bonusMax.levels}`, (m.toads || 0) >= greed.bonusMax.goldenToadsTotal]);
+  if (END.trueEndingManuscripts) rows.push([`의서 ${END.trueEndingManuscripts}권 (${Math.min(m.manuscripts || 0, END.trueEndingManuscripts)}/${END.trueEndingManuscripts})`, '진엔딩 조건 하나', (m.manuscripts || 0) >= END.trueEndingManuscripts]);
+  return rows;
+}
 function innToggleElix(id) {
   const m = innMeta(), e = ELIX.find(x => x.id === id); if (!e || !elixAvail(m)) return;
   if (innElix.includes(id)) innElix = innElix.filter(x => x !== id);
@@ -4241,6 +4268,12 @@ function renderInn() {
     b.innerHTML = `<b>${f.nameKo}</b><span>${what}</span>`;
     if (!open && meets && cost) b.onclick = () => facBuild(f.id);
     fb.appendChild(b);
+  }
+  const cv = $('inncave'), cf = INN_F.find(x => x.id === 'cave'), con = !!cf && !cf.underRepair && facOpen(m, cf);
+  cv.hidden = $('inncaveh').hidden = !con; cv.innerHTML = '';
+  if (con) for (const [when, what, done] of caveRows(m)) {
+    const b = document.createElement('button'); b.type = 'button'; b.disabled = true; if (done) b.style.opacity = '1';
+    b.innerHTML = `<b>${done ? '✓ ' : ''}${when}</b><span>${what}</span>`; cv.appendChild(b);
   }
   const eb = $('innelix'), eon = elixAvail(m); eb.hidden = $('innelixh').hidden = !eon || !ELIX.length; eb.innerHTML = '';
   if (eon) for (const e of ELIX) {
