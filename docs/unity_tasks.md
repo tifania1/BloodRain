@@ -572,10 +572,17 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 열 장면 모두 10장씩(사람이 고름)
   - 찍기: `docs/unity_shots/ST-03/<no>_<id>/`
 
-- [ ] B-12U 원화 Sprite 다시 들여오기 확인(2026-11-05 클라우드 B-12) (진행: 2026-11-05 00:55 PC — 7장 모두 Sprite/Single/PPU 100, 밉맵·Repeat 규칙대로 들어옴, Unity 가 채운 spriteID 커밋. 남은 것: Run 씬에서 시강·혈강시 크기·마당 타일 깔림 보기. 다만 지금 적은 ClusterRenderer 덩이로 그려 원화 Sprite 를 쓰는 코드가 아직 없다 — 붙이는 일이 따로 필요한지 클라우드가 정할 것)
+- [ ] B-12Ua 적 원화를 덩이 렌더러에(2026-11-07 클라우드가 정함: 붙인다. B-12U 가 물은 것) · 먼저: 없음
+  - 할 것: 지금 `EnemyField` 가 `ClusterRenderer.atlas` 에 `MakePlaceholderAtlas()`(임시 강시) 한 장만 물려 모든 적을 같은 그림으로 겹쳐 그린다. 적 종류마다 제 원화를 쓰게 한다. 원화가 있는 것은 `Assets/Art/Enemies/` 의 `enemy_<id>.png`(sigang·hyeolin·hyeol_gangsi·hyeol_musa·donggap·bigang·hyeol_gungsu·hyeolyeong_assassin·hyeol_sulsa·gisu·golden_toad·mogin_nahan 열둘)와 `elite_<id>.png`(gangsi_axeman·dongin·gyeyul_monk·acting_abbot 넷), 모두 256px. 없는 종류(M3 땅 적들)는 지금처럼 임시 강시 + 종류 색(`TintOf(family)`). 방법은 PC 가 고른다 — 에디터 메뉴가 16장을 한 아틀라스(예: 4×4, 칸 256)로 구워 `ClusterView` 에 칸 번호를 두고 셰이더가 인스턴스마다 UV 칸을 읽거나, 종류마다 머티리얼 하나씩(DrawMeshInstanced 호출이 종류 수만큼 늘어도 1023 묶음이라 괜찮은지 TU-04 숫자로 확인). 덩이 안 사람 크기는 웹 프로토타입 `KIND_SIZE`(sigang·hyeol_gangsi 1.3, donggap 1.6, hyeolin 1.2, hyeol_musa 1.35, mogin_nahan 1.5, golden_toad 1.0, 정예 2.6 — 그 밖은 1.3)를 종류마다 `memberRealmMeters` 대신 쓴다. 원화가 색을 갖고 있으니 종류 색 얹기는 원화가 있는 종류에선 끄고, 기수 깃발(BuffTint)·돌진 예고(TelegraphTint) 깜빡임만 남긴다. 디졸브·콩콩은 그대로.
+  - 쓸 것: `Presentation/Fx/ClusterRenderer.cs`(atlas·`Add`·그리기), `Presentation/EnemyField.cs`(`_kinds`·`Kind`·`TintOf`·덩이 넘기는 곳), `enemies.json` id, `tools/fix_art_meta.py` 규칙(아틀라스를 새 png 로 굽는다면 그 파일도 규칙에 맞게)
+  - 메뉴: 아틀라스를 굽는다면 `BloodRain/Bootstrap/` 아래 새 메뉴 하나(다시 돌리면 같은 결과). Run 씬 EnemyField 에 물리는 것도 그 메뉴가
+  - 끝: Run 씬에서 시강·혈강시·동갑시·혈인이 제 그림으로 콩콩 뛰고, 원화 없는 종류는 임시 강시로 나옴. 적 300 에서 TU-04 때보다 그리기 호출·ms 가 크게 안 늘어남(숫자를 daily 에). 콘솔 에러 0
+  - 찍기: `docs/unity_shots/B-12/` 의 `enemy_art_clusters.png`
+
+- [ ] B-12U 원화 Sprite 다시 들여오기 확인(2026-11-05 클라우드 B-12) · 먼저: B-12Ua (진행: 2026-11-05 00:55 PC — 7장 모두 Sprite/Single/PPU 100, 밉맵·Repeat 규칙대로 들어옴, Unity 가 채운 spriteID 커밋. 남은 것: Run 씬에서 시강·혈강시 크기·마당 타일 깔림 보기. 다만 지금 적은 ClusterRenderer 덩이로 그려 원화 Sprite 를 쓰는 코드가 아직 없다 — 붙이는 일이 따로 필요한지 클라우드가 정할 것 → 2026-11-07 클라우드: 붙인다, B-12Ua)
   - 할 것: 클라우드가 meta 값만 바꾼 원화 7장(Enemies 둘, Props, Tiles, Map, Backgrounds, Cards)을 Unity 가 Sprite 로 다시 들여오는지 본다. spriteID 가 빈 칸이라 Unity 가 채워 meta 를 다시 쓴다(그 변경은 커밋).
   - 쓸 것: `tools/fix_art_meta.py`(규칙은 머리글), 테스트 `ArtMetaTests`
-  - 끝: 시강·혈강시가 Run 씬에서 SpriteRenderer 로 1.28m(PPU 100) 크기, 마당 타일이 이어 깔림. 크기가 몸(1m 안팎)과 안 맞으면 PPU 를 바꾸지 말고 daily 에 적는다(기획서 13장 숫자라 사람 몫)
+  - 끝: 시강·혈강시가 Run 씬에서 제 원화(B-12Ua 덩이 렌더러)로 웹 KIND_SIZE 크기, 마당 타일이 이어 깔림. 크기가 몸(1m 안팎)과 안 맞으면 PPU 를 바꾸지 말고 daily 에 적는다(기획서 13장 숫자라 사람 몫)
   - 찍기: `docs/unity_shots/B-12/`
 
 ### 옮겨서 닫은 것(2026-11-04 UT-01)
