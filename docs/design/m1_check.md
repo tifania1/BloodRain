@@ -8,12 +8,12 @@
 |---|---|---|---|---|---|
 | 이동·자동 공격 | 8장 | weapons.json `behavior` | `Combat/WeaponGrowth`, `Loadout` | 있음(시작 무공 9종 동작) | C-01·C-04 끝 |
 | 적 300마리 | 8·11장 | balance.json `spawnTarget` | `SpawnCurve` | 적 220마리 56fps(README) | C-02·C-03 끝(300마리 60fps) |
-| 레벨업 | 8장 | balance.json `levelUp`·`xpCurve` | `RunXp`, `Loadout.RollLevelUp`·`RollFirstLevelUp`, `LevelUpCharges` | 있음(3~4택, 다시 고르기·정진). 서장 첫 레벨업 한 장은 없음 | C-06 진행, C-06b 끝 |
+| 레벨업 | 8장 | balance.json `levelUp`·`xpCurve` | `RunXp`, `Loadout.RollLevelUp`·`RollFirstLevelUp`, `LevelUpCharges` | 있음(3~4택, 다시 고르기·정진). 서장 첫 레벨업은 새 무공 한 장(firstLevelUpChoices) | C-06 진행, C-06b 끝 |
 | 음양 | 8장 | balance.json `yinyang` | `YinYangGauge`, `Backlash` | 있음 | C-08 |
 | 경공 | 8장 | balance.json `dash` | `Combat/Dash` | 있음 | C-01 끝 |
 | 오의 | 8장 | characters.json `ultimates` | `UltimateCharge`, `Ultimates` | 있음(일검) | C-09 |
 | 무공 8·심법 8·절기 4 | 9장 | 무공·심법·절기 16씩(데이터는 M3 몫까지 이미 있음) | 전부 | 무공 9·심법 16·절기 그릇 | C-04 동작 8종 끝, 절기 4종은 C-09 |
-| 서장 끝까지 | 4장 '서장 상세 흐름', 21장 '서장의 절기 맛보기와 첫 환혼' | chapters.json `prologue`, cheonha.json `prologueBody`, bosspatterns.json `jang_sam`·elites `gangsi_axeman`, dialogue.json `prologue` | 조각만 있음: `Run/Prologue`(단계), `Spawning/PrologueDirector`(생성), `BossPatterns`. 한데 묶는 것이 없다 → M1-02. 안내·말풍선 차례 → M1-03 | 없음. 숭산부터 시작하고 장삼이 없다 → M1-04~M1-06 | C-10(먼저: C-01~C-09), DL-03b(3) |
+| 서장 끝까지 | 4장 '서장 상세 흐름', 21장 '서장의 절기 맛보기와 첫 환혼' | chapters.json `prologue`, cheonha.json `prologueBody`, bosspatterns.json `jang_sam`·elites `gangsi_axeman`, dialogue.json `prologue` | 조각만 있음: `Run/Prologue`(단계), `Spawning/PrologueDirector`(생성), `BossPatterns`. 한데 묶는 것이 없다 → M1-02. 안내·말풍선 차례 → M1-03 | 있음(M1-04~M1-07 끝: 0:00 서장부터 장삼·끝 컷·첫 환혼까지, 지금은 한 생 판 침방으로 이어짐 WP-14e) | C-10(먼저: C-01~C-09), DL-03b(3) |
 
 ## 걸리는 것
 
