@@ -466,6 +466,14 @@ namespace BloodRain.Presentation.Combat
             });
         }
 
+        /// <summary>R-15U 팔방풍우: 무공 칸 없이 장풍 탄 한 발(다 뚫음). angle 라디안, 속도·반경·넉백은 축척을 곱한 세계 값.</summary>
+        public void ShootFree(float angle, float speed, float radius, float dmg, float life, float knock) =>
+            Shoot(null, angle, speed, radius, dmg, 999, life, 0, 0f, knock, new Color(0.95f, 0.85f, 0.55f, 0.7f));
+        /// <summary>바라보는 쪽(단위 벡터).</summary>
+        public Vector2 Facing => player != null ? new Vector2(player.Facing.x, player.Facing.y) : Vector2.right;
+        /// <summary>시험용: 날고 있는 탄 수.</summary>
+        public int ProjectileCount => _projs.Count;
+
         void StepProjectiles(float dt)
         {
             var sim = enemies.Sim;

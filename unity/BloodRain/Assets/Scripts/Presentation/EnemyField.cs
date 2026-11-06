@@ -739,13 +739,20 @@ namespace BloodRain.Presentation
         //   EnemySim 이 Fire 를 세운 적마다 EnemyDef.Shoot 대로 플레이어 쪽으로 Count 발(Spread 도 사이에 고르게).
         //   탄은 초속 Speed, Range 날아가면 사라지고, 플레이어 몸 원에 닿으면 ProjectileDamage(무적이면 그냥 지나간다). 탄은 세계 m.
         //   그림은 이펙트가 오기 전 임시 점(종류 색).
-        struct Shot { public Vector2 Pos, Vel; public float Left, Radius, Damage; public Color Color; public bool Poison; } // Poison: 독 탄(당가 몸이면 맞아도 0, R-04Ub). 아직 쏘는 적 없음 — 정예 E-01 암기 강시부터
+        struct Shot { public Vector2 Pos, Vel; public float Left, Radius, Damage; public Color Color; public bool Poison, Reflected; } // Poison: 독 탄(당가 몸이면 맞아도 0, R-04Ub). 아직 쏘는 적 없음 — 정예 E-01 암기 강시부터
         readonly List<Shot> _shots = new List<Shot>();
         readonly List<SpriteRenderer> _shotViews = new List<SpriteRenderer>();
         Sprite _dot;
 
         /// <summary>시험용: 날아가는 적 탄 수.</summary>
         public int ShotCount => _shots.Count;
+        /// <summary>R-15U 태극무량 탄 되돌림 원 반경(세계 m, 0 이면 끔). LifeRunner 가 life.Ultimate.GuardRadius 로 넣는다.</summary>
+        [System.NonSerialized] public float reflectRadius;
+        /// <summary>시험용: 되돌린 적 탄 수와 되돌린 탄에 맞은 적 수.</summary>
+        public int Reflects { get; private set; }
+        public int ReflectHits { get; private set; }
+        readonly List<int> _reflNear = new List<int>();
+        readonly List<int> _reflOne = new List<int>(1);
 
         void FireShots()
         {
@@ -888,7 +895,20 @@ namespace BloodRain.Presentation
                 s.Pos += step;
                 s.Left -= step.magnitude;
                 bool gone = s.Left <= 0f;
-                if (!gone && vitals != null && (s.Pos - p).sqrMagnitude <= (pr + s.Radius) * (pr + s.Radius) && !vitals.Invulnerable)
+                // R-15U 태극무량: 몸 둘레 reflectRadius 안에 든 적 탄은 방향을 돌려 남은 거리만큼 되날아가고, 처음 닿는 적 하나를 그 피해로 친다
+                if (!gone && !s.Reflected && reflectRadius > 0f && (s.Pos - p).sqrMagnitude <= (reflectRadius + s.Radius) * (reflectRadius + s.Radius))
+                {
+                    s.Vel = -s.Vel; s.Reflected = true; s.Color = new Color(0.95f, 0.9f, 0.7f, s.Color.a); Reflects++;
+                }
+                if (s.Reflected)
+                {
+                    if (!gone)
+                    {
+                        _sim.QueryCircle(new float2(s.Pos.x, s.Pos.y), s.Radius, _reflNear);
+                        if (_reflNear.Count > 0) { _reflOne.Clear(); _reflOne.Add(_reflNear[0]); ReflectHits += Damage(_reflOne, s.Damage, s.Pos, 0f); gone = true; }
+                    }
+                }
+                else if (!gone && vitals != null && (s.Pos - p).sqrMagnitude <= (pr + s.Radius) * (pr + s.Radius) && !vitals.Invulnerable)
                 {
                     if (!(s.Poison && PoisonImmune)) HitPlayer(s.Damage);
                     gone = true;
@@ -944,7 +964,7 @@ namespace BloodRain.Presentation
         //   한 적이 깐 것은 Max 개까지(넘으면 오래된 것부터). 플레이어가 하나라도 밟고 있으면 1초마다 ZoneDamagePerSecond 를 한 번
         //   (겹쳐 밟아도 한 번, 무적이면 Hit 이 걸러 냄). 화면 밖(대각선 절반 너머) 혈술사는 깔지 않는다. 깐 적이 쓰러져도 웅덩이는 남는다.
         //   첫 웅덩이는 나온 뒤 0~Interval 사이. 그림은 이펙트가 오기 전 임시 핏빛 원.
-        struct Pool { public Vector2 Pos; public float Radius, Left, Damage; public int Owner; public Color Color; public bool Poison; }
+        struct Pool { public Vector2 Pos; public float Radius, Left, Damage; public int Owner; public Color Color; public bool Poison, Reflected; }
         readonly List<Pool> _pools = new List<Pool>();
         readonly List<SpriteRenderer> _poolViews = new List<SpriteRenderer>();
         readonly Dictionary<int, float> _poolTimers = new Dictionary<int, float>();

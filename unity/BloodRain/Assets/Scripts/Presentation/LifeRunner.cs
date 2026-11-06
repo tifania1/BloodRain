@@ -367,6 +367,8 @@ namespace BloodRain.Presentation
             if (second != null) SpawnSecond(second);
             TickInsights(dt);
             TickDissolution(dt);
+            // R-15U 태극무량 동안 몸 둘레 적 탄 되돌림(받는 피해 0 은 DamageTakenMultiplier 가 이미 함)
+            if (enemies != null) { var ul = _life.Ultimate; enemies.reflectRadius = ul != null && ul.ReflectsProjectiles ? ul.GuardRadius(WorldScale.Current != null ? WorldScale.Current.Length(1f) : 1f) : 0f; }
             _statTimer -= Time.unscaledDeltaTime;
             if (_statTimer <= 0f) { _statTimer = 0.25f; ApplyStats(); }
             // C-08b 역류 중 걸음 x0.5(매 프레임, 능력치 걸음에 곱함)

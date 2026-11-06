@@ -205,9 +205,35 @@ namespace BloodRain.Presentation.Hud
                     LastHits = field.Damage(_near, dmg, center, 0f);
                     return true;
                 }
+                case "palbang_pungu":
+                {
+                    var wr = runner.weapons != null ? runner.weapons : Object.FindFirstObjectByType<WeaponRunner>();
+                    if (wr == null) return false;
+                    StartCoroutine(Volleys(wr, cast, dmg, sc));
+                    LastHits = 0;
+                    return true;
+                }
             }
             return false;
         }
+
+        // 팔방풍우: 바라보는 쪽부터 Directions 여덟 갈래로 장풍 탄, VolleyGapSeconds(세상 시간)마다 Volleys 번.
+        System.Collections.IEnumerator Volleys(WeaponRunner wr, UltimateCast cast, float dmg, float sc)
+        {
+            var shot = cast.Shot;
+            var ws = BloodRain.Sim.WorldScale.Current;
+            float speed = ws != null ? ws.Speed(shot.Speed) : shot.Speed, knock = ws != null ? ws.Speed(cast.Knockback) : cast.Knockback;
+            for (int v = 0; v < cast.Volleys; v++)
+            {
+                if (v > 0) yield return new WaitForSeconds(cast.VolleyGapSeconds);
+                var f = wr.Facing;
+                foreach (var d in cast.Directions(new System.Numerics.Vector2(f.x, f.y)))
+                    wr.ShootFree(Mathf.Atan2(d.Y, d.X), speed, shot.Radius * sc, dmg, shot.LifeSeconds, knock);
+                VolleysFired++;
+            }
+        }
+        /// <summary>시험용: 팔방풍우로 쏜 연타 수(누적).</summary>
+        public int VolleysFired { get; private set; }
 
         static Texture2D Disc(int n)
         {
