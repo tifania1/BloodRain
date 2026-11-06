@@ -18,6 +18,18 @@ namespace BloodRain.Core.Data
         public int Count;
     }
 
+    /// <summary>의상 하나의 해금 조건. When: boss_in_harmony(Boss 와 싸우는 동안 음양이 태극 구간을 한 번도 안 벗어나고 처치).</summary>
+    public sealed class CostumeDef
+    {
+        public const string BossInHarmony = "boss_in_harmony";
+        public string Id = "";
+        public string Character = "";
+        public string When = "";
+        public string Boss = "";
+        /// <summary>혼 해금 토큰(Soul.IsUnlocked).</summary>
+        public string Token => UnlockToken.CostumePrefix + Id;
+    }
+
     public sealed class CheonhaDef
     {
         public WorldDef World = new WorldDef();
@@ -41,6 +53,8 @@ namespace BloodRain.Core.Data
         public List<ModeDef> Modes = new List<ModeDef>();
         /// <summary>칭호(10장 해금 표, 모으기 보상이라 능력치 없음).</summary>
         public List<TitleDef> Titles = new List<TitleDef>();
+        /// <summary>의상 해금(10장 해금 표). 그림·이름은 아트 뒤라 조건만.</summary>
+        public List<CostumeDef> Costumes = new List<CostumeDef>();
 
         public RegionDef Region(string id) => Regions.First(r => r.Id == id);
         public SectDef Sect(string id) => Sects.First(s => s.Id == id);

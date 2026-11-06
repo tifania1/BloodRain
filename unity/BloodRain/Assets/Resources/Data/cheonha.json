@@ -188,6 +188,10 @@
     { "id": "gupa_yunhoe",   "nameKo": "구파윤회", "hanja": "九派輪廻", "when": "all_sects_lived" }
   ],
 
+  "costumes": [
+    { "id": "unhwa_harmony", "character": "unhwa", "when": "boss_in_harmony", "boss": "wongak", "_note": "기획서 10장 해금 표 '태극 구간만 지키며 원각 처치 → 운화 의상'. 그 땅의 주인과 싸우는 동안 음양이 한 번도 태극 구간을 벗어나지 않고 쓰러뜨리면 혼 해금 토큰 costume:<id>(Core Life.DefeatBoss). 의상 그림·이름·고르는 화면은 M3 운화 아트 뒤" }
+  ],
+
   "inn": {
     "_note": "청운객잔 시설(10장 '객잔 시설'). require 를 모두 갖추면 열린다: prologue 서장 끝, sealStones 지닌 봉인석 수, bossKilled 계정에서 쓰러뜨린 땅의 주인 지역, unlock 해금 토큰(대화 진행 등, Soul.Unlock). buildBloodCrystal 이 있으면 조건을 갖춘 뒤 혈정을 써서 짓는다(10장 화폐 '혈정: 시설 건설'). underRepair 면 열려도 '수리 중'이라 들어가지 못한다(Inn.CanEnter). 한 번 열리면 회귀로 봉인석이 지워져도 남는다(혼 해금 facility:<id>).",
     "facilities": [

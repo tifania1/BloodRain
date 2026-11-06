@@ -62,6 +62,8 @@ namespace BloodRain.Core.Run
         // 생 도중 처치로 봉인석이 늘면 여기에 반영해 봉마곡이 그 생에서 열린다.
         readonly BossRecord _bossRecord;
         double _secondAcc;
+        // 의상 해금(cheonha.json costumes boss_in_harmony): 지금 땅의 주인 싸움 동안 음양이 태극 구간을 지켰나
+        bool _fightWas, _harmonyKept;
 
         public Life(Soul soul, RebirthBody body, Random rng) : this(soul, body, rng, 0) { }
 
@@ -222,11 +224,21 @@ namespace BloodRain.Core.Run
 
             Bosses.Tick(dt, Position, Level, Minutes);
             Director.BossFight = Bosses.InFight;
+            NoteFightHarmony();
 
             _secondAcc += dt;
             if (_secondAcc < 1.0) return null;
             _secondAcc -= 1.0; // 한 프레임이 몇 초를 건너뛰면 남은 초는 다음 프레임들이 하나씩 낸다(버리지 않는다)
             return Director.Second(Minutes, Level, RegionId, aliveNow);
+        }
+
+        /// <summary>땅의 주인 싸움이 시작되면 태극을 지켰다고 두고, 싸우는 동안 한 번이라도 태극 밖이면 지움.</summary>
+        void NoteFightHarmony()
+        {
+            bool inFight = Bosses.InFight;
+            if (inFight && !_fightWas) _harmonyKept = true;
+            if (inFight && Loadout.Gauge.Band != YinYangBand.Harmony) _harmonyKept = false;
+            _fightWas = inFight;
         }
 
         void TickUltimate(float dt)
@@ -358,6 +370,7 @@ namespace BloodRain.Core.Run
         /// 봉인석이 늘어 새로 깨어난 땅(일곱째면 봉마곡)은 kill.Woken.</summary>
         public BossKill DefeatBoss(int? leftoverSilverIfFinal = null)
         {
+            NoteFightHarmony();   // 쓰러뜨리는 순간의 음양까지 본다(의상 해금)
             var kill = Bosses.Defeat();
             Director.BossFight = false;
             if (kill.IsFinal)
@@ -369,6 +382,11 @@ namespace BloodRain.Core.Run
             if (Loadout.Gauge.Band == YinYangBand.Extreme) _soul.Unlock(UnlockToken.BossAtExtreme);
             // 10장 해금: 무공 하나만으로 땅의 주인 처치 → 칭호 '일검무적'(정산 때 Soul.EndLife 가 연다)
             if (Loadout.Weapons.Count == 1) Log.SingleWeaponBoss = true;
+            // 10장 해금: 태극 구간만 지키며 원각 처치 → 운화 의상(cheonha.json costumes)
+            string? bossId = _data.Cheonha.Regions.FirstOrDefault(r => r.Id == kill.RegionId)?.Boss;
+            foreach (var c in _data.Cheonha.Costumes)
+                if (c.When == CostumeDef.BossInHarmony && c.Boss == bossId && _harmonyKept) _soul.Unlock(c.Token);
+            _fightWas = false; _harmonyKept = false;
             var info = Log.KillBoss(kill.RegionId);
             kill.First = info.FirstInCycle;
             kill.SealStone = info.SealStone;

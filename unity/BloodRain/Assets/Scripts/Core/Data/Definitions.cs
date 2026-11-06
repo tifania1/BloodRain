@@ -149,6 +149,8 @@ namespace BloodRain.Core.Data
         public const string BossPrefix = "boss:";
         /// <summary>극성(음양 ±70 이상) 상태로 땅의 주인 처치(10장 해금 표 → 깨달음 '역근' 풀에 추가).</summary>
         public const string BossAtExtreme = "boss_at_extreme";
+        /// <summary>의상 해금 토큰 머리(cheonha.json costumes, "costume:&lt;id&gt;").</summary>
+        public const string CostumePrefix = "costume:";
 
         public static string? BossRegion(string token) =>
             token.StartsWith(BossPrefix, System.StringComparison.Ordinal) ? token.Substring(BossPrefix.Length) : null;
