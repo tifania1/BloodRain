@@ -1980,12 +1980,56 @@ function addUlt(v, flat) {
   const bonus = (1 + bodyStat('UltimateCharge')) * (yyBand().band === 'harmony' ? 1 + B.yinyang.harmony.ultimateChargeBonus * harmonyMul() : 1);
   G.ult = Math.min(B.ultimateCharge.max, G.ult + v * bonus * (G.syn.secrets.has('mumyeong') ? 2 : 1));
 }
-function hurtPlayer(dmg, src) {
+// 혈마의 그림자(7장 '생의 끝', cheonha.json lifeEnd, Core LifeDirector.ShadowStep·BloodShadow.Strength, T-42): 한 생 판에서 현경인데 봉인석(혼 기록 + 이번 생)이
+// 모자라면 shadowFromMinute 부터 죽지 않고 밀리지 않는 그림자 하나가 쫓아온다. shadowStepMinutes 마다 단계가 오르고, 2단계부터 오를 때마다 예고 뒤 몸 뒤 teleportGap 자리로 옮긴다
+// (이미 더 가까우면 그대로). 화면 위 다른 적 피해도 단계마다 커진다. 처음 나타나는 자리는 적이 생기는 고리, 몸 반지름 SHADOW_R 은 프로토타입 값(기획서에 없음)
+const LE = DATA.lifeEnd || null, SHADOW_R = 0.5;
+function shadowStep() {
+  if (!LE || !LE.shadow || !lordsOn() || !LR.finalRequires) return 0;
+  const top = REALMS.findIndex(x => x.id === LR.finalRequires.realm);
+  if (top < 0 || tierNow() < top || sealHeld() >= LR.finalRequires.sealStones || G.gm < LE.shadowFromMinute) return 0;
+  return LE.shadowStepMinutes <= 0 ? 1 : 1 + Math.floor((G.gm - LE.shadowFromMinute) / LE.shadowStepMinutes + 1e-4);
+}
+function shadowStrength(n) {
+  const d = LE.shadow, k = n - 1;
+  let speed = d.moveSpeed + d.speedPerStep * k; if (d.maxSpeed > 0) speed = Math.min(d.maxSpeed, speed);
+  return { dmg: d.contactDamage * Math.pow(d.damageGrowth, k), speed, hit: d.hitIntervalSeconds, enemyMul: 1 + d.enemyDamagePerStep * k };
+}
+function shadowTick(dt) {
+  if (G.won) return;
+  const n = shadowStep(), p = G.player;
+  if (!n) { G.shadow = null; return; }   // 봉인석을 다 모으면 사라진다
+  let S = G.shadow;
+  if (!S) {
+    const [x, y] = ringPos(); S = G.shadow = { x, y, step: n, cd: 0, warn: 0, tx: 0, ty: 0 }; G.shadowChased = true;
+    toast('혈마의 그림자', `봉인석이 모자란다(${sealHeld()}/${LR.finalRequires.sealStones}). 죽지 않는 그림자가 쫓아온다`);
+  } else if (n > S.step) {
+    const gap = LE.shadow.teleportGap || 0;
+    if (gap > 0 && S.step > 0 && Math.hypot(S.x - p.x, S.y - p.y) > gap) { S.warn = LE.shadow.teleportWarningSeconds || 0; S.tx = p.x - p.fx * gap; S.ty = p.y - p.fy * gap; }
+    S.step = n; toast(`혈마의 그림자 ${n}단계`, '더 빨라지고 더 아프다. 둘레 적도 세진다');
+  }
+  const st = shadowStrength(S.step);
+  if (S.warn > 0) { S.warn -= dt; if (S.warn <= 0) { if (Math.hypot(S.x - p.x, S.y - p.y) > (LE.shadow.teleportGap || 0)) { S.x = S.tx; S.y = S.ty; } } }
+  const dx = p.x - S.x, dy = p.y - S.y, d = Math.hypot(dx, dy) || 1, step = Math.min(d, st.speed / 100 * MOVE * dt);
+  S.x += dx / d * step; S.y += dy / d * step;
+  S.cd = Math.max(0, S.cd - dt);
+  if (Math.hypot(p.x - S.x, p.y - S.y) < SHADOW_R + B.stats.playerBodyRadius && S.cd <= 0) { S.cd = st.hit; hurtPlayer(st.dmg, null, 'shadow'); }
+}
+function drawShadow() {
+  const S = G.shadow; if (!S) return;
+  if (S.warn > 0) { ctx.strokeStyle = 'rgba(179,38,30,0.8)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(S.tx), wy(S.ty), SHADOW_R * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+  const g = ctx.createRadialGradient(wx(S.x), wy(S.y), 0, wx(S.x), wy(S.y), SHADOW_R * 1.8 * PPM);
+  g.addColorStop(0, 'rgba(20,8,8,0.95)'); g.addColorStop(0.55, 'rgba(60,10,12,0.75)'); g.addColorStop(1, 'rgba(120,20,20,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(S.x), wy(S.y), SHADOW_R * 1.8 * PPM, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#B3261E'; for (const o of [-0.15, 0.15]) { ctx.beginPath(); ctx.arc(wx(S.x + o), wy(S.y - 0.1), Math.max(1.5, 0.05 * PPM), 0, TAU); ctx.fill(); }
+}
+function hurtPlayer(dmg, src, kind) {
   const p = G.player;
   if (p.iframe > 0 || G.won || G.demo) return;
   if (G.taiji > 0) return;   // 태극무량: 받는 피해 무효(WP-25)
   if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
   if (G.empower) dmg *= G.empower.dmg;   // 혈월(WP-13e): 화면 위 적 피해
+  if (G.shadow && kind !== 'shadow' && kind !== 'self') dmg *= shadowStrength(G.shadow.step).enemyMul;   // 혈마의 그림자: 화면 위 다른 적 피해
   dmg *= yyFieldMul();   // 흑백 구역(WP-13e)
   { const ev = sectBonus('Evade'); if (ev > 0 && Math.random() < ev) { addEffect('ring', p.x, p.y, { r: 0.8, color: '#8FA8B8', life: 0.25 }); return; } }   // 수로채 움직이는 동안 회피 15%(WP-20, Core Evade.Roll)
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
@@ -2001,7 +2045,7 @@ function hurtPlayer(dmg, src) {
     if (isPro() && G.bossSpawned) { p.hp = 1; prologueAwaken('player'); return; }
     // 재기(8장, 연무장 Revival): 남았으면 기혈 50%(balance.json revival.healthRatio, Core Life.TryRevive)로 일어난다. '주변 적 밀쳐내기'는 세기 숫자가 없어 아직 뺌(decisions #35)
     if (G.body && G.revivals > 0) { G.revivals--; p.hp = p.maxHp * B.revival.healthRatio; p.iframe = Math.max(p.iframe, HIT_IFRAMES); addEffect('ring', p.x, p.y, { r: 2.5, color: '#C9A227', life: 0.6 }); toast('재기', `기혈 50%로 일어났다 · 남은 ${G.revivals}회`); return; }
-    p.hp = 0; endRun(false);
+    p.hp = 0; if (kind === 'shadow') G.shadowKilled = true; endRun(false);
   }
 }
 
@@ -2512,7 +2556,7 @@ function update(dt) {
   } else G.backlashT = 0;
   if (G.backlash) {
     G.backlash.t += dt;
-    if (G.backlash.t >= B.yinyang.extreme.backlashSeconds) { G.backlash = null; G.syn.yeok = 0; hurtPlayer(p.maxHp * B.yinyang.extreme.backlashDamageMaxHealthRatio + G.stats.armor); }
+    if (G.backlash.t >= B.yinyang.extreme.backlashSeconds) { G.backlash = null; G.syn.yeok = 0; hurtPlayer(p.maxHp * B.yinyang.extreme.backlashDamageMaxHealthRatio + G.stats.armor, null, 'self'); }
   }
 
   // 사건과 생성
@@ -2552,6 +2596,7 @@ function update(dt) {
   foeShotsStep(dt);   // 고유 적이 쏜 탄(WP-13c)
   lordFxStep(dt);           // 땅의 주인 패턴 몸(WP-13e)
   lordTick(dt);             // 땅의 주인 깨어남·싸움 원(WP-13e)
+  shadowTick(dt);           // 혈마의 그림자(현경 뒤 봉인석이 모자랄 때)
   trackChRegion();          // 밟은 땅(그리기 고리 밖 sim 에서도 정예·무리·고유 적이 땅을 알게)
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
   ultStep(dt);   // 오의 박자·천마해체(WP-25)
@@ -3825,7 +3870,7 @@ function lifeSettle() {
   // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
   const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3851,7 +3896,7 @@ function recordLife(st) {
   m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
   if (st.whisper) m.whispers = (m.whispers || 0) + 1;   // 계승 엔딩 표식(20장). 표식이 무엇을 바꾸는지는 WP-29a
   m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;
-  m.lastNewRealms = st.newRealms || []; m.lastTop = st.topId || null; m.lastLetter = !!st.letter;   // 현경 short·sealed 줄(Core LifeSummary.NewRealms·LifeRecord.HighestRealm)과 운낭 밀서 줄   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)
+  m.lastNewRealms = st.newRealms || []; m.lastTop = st.topId || null; m.lastLetter = !!st.letter; m.lastShadow = !!st.shadow;   // 현경 short·sealed 줄(Core LifeSummary.NewRealms·LifeRecord.HighestRealm)과 운낭 밀서 줄   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)
   // 종장을 깬 생(Core Soul.EndLife 'sealed' → ChooseEnding): 문파별 종장 수, 본 엔딩, 엔딩 효과. 봉인은 회귀 — cycle.resets(봉인석)만 지우고 회차 +1
   if (st.finalClear && st.ending) {
     m.finalClears = m.finalClears && typeof m.finalClears === 'object' ? m.finalClears : {};
@@ -3978,7 +4023,7 @@ function sayMok(lines, more) {
 }
 // 귀환 대사(Core InnDialogue.OnReturn): 생이 끝나 침방을 열 때 한 번. 목 노인 returns.mokMax·운낭 unnangMax·대표 인물 한 사람 한 마디.
 // 조건이 맞은 줄은 밀린 줄(혼 기록 pend)에 넣고 갈래 순서 → 파일 순서로 꺼내며, 못 꺼낸 줄은 다음 귀환으로. 본 줄은 seen('mok.<id>'·'unnang.<id>').
-// 이 판에 없는 것은 뺌: 시설 줄(객잔 시설이 아직 없다), 좌화 shadow(혈마의 그림자가 아직 없다). 의서 줄(manuscript:N)은 모은 권 수로.
+// 이 판에 없는 것은 뺌: 시설 줄(객잔 시설이 아직 없다). 좌화 줄은 혈마의 그림자가 쫓아온 생이면 shadow(한 번). 의서 줄(manuscript:N)은 모은 권 수로.
 // 현경 short 는 이번 생에 처음 오른 경지인데 봉인석이 모자랄 때, sealed 는 이번 생 가장 높은 경지이고 봉인석을 다 모았을 때. 밀서 줄은 이번 생에 밀서를 주웠으면 마천패 처치 앞뒤로.
 // 은거기인 줄은 만난 생마다 아직 안 한 것 앞에서 하나, 좌화 줄은 처음이면 first, 그 뒤 repeat(본 뒤에도 다시)(WP-26)
 const RET = DATA.returns || { mokMax: 0, unnangMax: 0, leaderMax: 0, mokOrder: [], unnangOrder: [] };
@@ -4003,7 +4048,7 @@ function innReturn(m) {
   }
   if (m.lastHermit) { const h = RET_MOK.find(l => whenOf(l).kind === 'hermit' && !m.seen.includes('mok.' + l.id) && !m.pend.includes('mok.' + l.id)); if (h) queue('mok', h); }
   if (m.lastEnd === 'zuohwa') {
-    const z = RET_MOK.find(l => l.id === (m.seen.includes('mok.zuohwa_first') ? 'zuohwa_repeat' : 'zuohwa_first'));
+    const z = RET_MOK.find(l => l.id === (m.lastShadow && !m.seen.includes('mok.zuohwa_shadow') ? 'zuohwa_shadow' : m.seen.includes('mok.zuohwa_first') ? 'zuohwa_repeat' : 'zuohwa_first'));
     if (z && z.repeat) { if (!m.pend.includes('mok.' + z.id)) m.pend.push('mok.' + z.id); } else if (z) queue('mok', z);
   }
   const mok = retTake(m, 'mok', RET_MOK, RET.mokOrder, RET.mokMax);
@@ -4523,6 +4568,7 @@ function render() {
   drawRegionGimmicks();   // 독안개·낙석 그림자(WP-13b)
   drawEliteShapes();      // 검진 고리(WP-13d)
   drawLocalFx();   // 고유 적 탄·독기·돌진 예고(WP-13c)
+  drawShadow();    // 혈마의 그림자
   // 적
   for (const e of G.enemies) {
     let sq = 1, lift = 0;
@@ -4886,6 +4932,10 @@ function endRun(won) {
       $('restitle').textContent = uiT('ui.settle.end.zuohwa');
       const cap = (DATA.settleCaps || []).find(l => l.when === 'zuohwa');
       $('resline').textContent = cap ? cap.textKo : '스스로 앉아 생을 닫았다.';
+    }
+    if (G.shadowKilled) {   // 혈마의 그림자에게 쓰러짐(Core ReturnFacts.FallenToShadow → 정산 서술 shadow 줄)
+      const cap = (DATA.settleCaps || []).find(l => l.when === 'shadow');
+      $('resline').textContent = cap ? cap.textKo : '그림자에 잡혔다.';
     }
     if (st.finalClear && st.ending) {   // 종장을 깬 생: 고른 엔딩과 그 뒤
       $('restitle').textContent = `${END_BY[st.ending].nameKo} 엔딩`;
