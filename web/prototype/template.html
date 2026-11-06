@@ -888,7 +888,10 @@ function spawnTarget(min) {
 const REALMS = B.realms.filter(r => !r.onlyIn);
 
 // 돌파 깨달음 7종 (기획서 3장). 이름·글자·설명·수치는 insights.json 에서 읽는다(IP.<id>.<param>).
-const INSIGHTS = DATA.insights.insights.map(x => ({ id: x.id, name: x.nameKo, g: x.glyph, text: x.textKo }));
+const INSIGHTS = DATA.insights.insights.map(x => ({ id: x.id, name: x.nameKo, g: x.glyph, text: x.textKo, unlock: x.unlock || 'start' }));
+// 깨달음 해금(10장 해금 표, Core Insights.Roll isUnlocked): 한 생 판은 unlock 이 start 가 아닌 깨달음(역근 boss_at_extreme)을 혼에 그 토큰이 있을 때만 풀에 넣는다.
+// 이번 생에 극성으로 땅의 주인을 쓰러뜨렸으면 그 자리에서 바로 열린다(Core Life 가 _soul.Unlock). 1장 판(진소운)은 그대로 다 든다
+const insightOpen = x => !G.body || soulUnlocked(G.soul0 || {}, x.unlock) || (x.unlock === 'boss_at_extreme' && !!G.extremeKill);
 const IP = Object.fromEntries([...DATA.insights.insights, ...(DATA.insights.demonicInsights || [])].map(x => [x.id, x.params]));
 // 마공 깨달음(WP-23, 5장 '마교 몸의 성장: 혈공', insights.json demonicInsights): 마교 몸이 돌파하면 셋 가운데 demonicInsightsPerBreakthrough 자리는 마공(Core Insights.RollWithDemonic)
 const DEM_INSIGHTS = (DATA.insights.demonicInsights || []).map(x => ({ id: x.id, name: x.nameKo, g: x.glyph, text: x.textKo, demonic: true }));
@@ -1785,6 +1788,7 @@ function lordDown(e) {
   if (e.fin != null) return finalDown(e);
   const r = CH_REGS.find(x => x.id === e.lord), def = BOSS_BY[e.lordBoss], first = !e.shadow, K = first ? LR.firstKill : LR.repeatKill;
   G.lords[r.id] = 'down'; G.lordF = null; G.boss = null; G.empower = null;   // 혈월은 싸움이 끝나면 진다
+  if (yyBand().band === 'extreme') G.extremeKill = true;   // 극성(±70)으로 처치 → 깨달음 '역근' 풀에(WP-35, Core Life UnlockToken.BossAtExtreme). 종장(finalDown)은 Core 처럼 안 셈
   const sect0 = first && LR.firstKill.unlockSect ? (DATA.sects || []).find(s => s.unlock === 'boss:' + r.id) : null;
   const sect = sect0 && !(G.soul0.unlocked || []).includes(sect0.id) ? sect0 : null;   // 문파는 계정 첫 처치에만 열린다(Core firstOnAccount, 회귀 뒤 다시 잡아도 안 연다)
   const kill = { region: r.id, boss: def.id, name: def.nameKo, first, qi: K.rebirthQi || 0, crystal: K.bloodCrystal || 0, stone: first && LR.firstKill.sealStone ? r.sealStone : null, sect: sect ? sect.id : null };
@@ -3229,7 +3233,7 @@ function showInsightChoice(name, reward, label) {
   $('brkreward').textContent = reward;
   const n = G.body ? DATA.insights.choices.base : INSIGHT_CHOICES;   // 문파 몸엔 진소운 특성(깨달음 넷)이 없다
   const ba = bloodArt(), dem = ba ? DEM_INSIGHTS.filter(x => !G.insights.includes(x.id)).sort(() => Math.random() - 0.5).slice(0, Math.min(n, ba.demonicInsightsPerBreakthrough || 0)) : [];
-  const opts = dem.concat(INSIGHTS.filter(x => !G.insights.includes(x.id)).sort(() => Math.random() - 0.5).slice(0, n - dem.length));   // 마공이 앞자리
+  const opts = dem.concat(INSIGHTS.filter(x => !G.insights.includes(x.id) && insightOpen(x)).sort(() => Math.random() - 0.5).slice(0, n - dem.length));   // 마공이 앞자리
   const box = $('brkcards'); box.innerHTML = '';
   currentOffers = opts;
   opts.forEach((o, i) => {
@@ -3815,7 +3819,7 @@ function lifeSettle() {
   // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
   const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3835,6 +3839,7 @@ function recordLife(st) {
   m.toads = (m.toads || 0) + (st.toads || 0);   // 금두꺼비 누적(Core Soul.GoldenToadsTotal, WP-33)
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
   for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);
+  if (st.extremeKill && !m.unlocks.includes('boss_at_extreme')) m.unlocks.push('boss_at_extreme');   // 역근 해금(WP-35)
   m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
   if (st.whisper) m.whispers = (m.whispers || 0) + 1;   // 계승 엔딩 표식(20장). 표식이 무엇을 바꾸는지는 WP-29a
   m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)

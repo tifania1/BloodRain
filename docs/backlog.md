@@ -125,7 +125,7 @@ UI 와 웹 판 하나로(2026-11-05 사람: "UI가 다른 뱀서류에 비해 �
 로드맵에서 채움, 2026-11-06 22시(M2 '침방과 연무장'·M4 '메타 전체' — 10장 해금 표에 적힌 것 중 아직 데이터·Core 에 없던 줄)
 - [x] WP-33 2026-11-06 — 금두꺼비 누적 10마리 → 연무장 탐욕 최대 레벨 +2: balance.json training Greed `bonusMax { goldenToadsTotal 10, levels 2 }`, Core `LifeLog.CatchGoldenToad`·`LifeRecord.GoldenToads`·`Soul.GoldenToadsTotal`(저장 칸 goldenToads, 옛 저장 0)·`Stats.TrainingMax`, 웹 한 생 판(정산이 혼 기록 toads 에 더하고 연무장 상한·값이 trainMax). `GoldenToadTrainingTests` 5개. Unity 연무장 줄(MetaShop.Training)의 상한도 Soul.TrainingMax 로
 - [ ] WP-34 칭호 셋(10장 해금 표): '식객'(한 생 음식 20개)·'일검무적'(무공 하나만으로 땅의 주인 처치)·'구파윤회'(아홉 문파로 한 번씩 환생). Core 혼에 칭호 목록·LifeRecord 에 음식 수·외무공 처치 표시, 웹 한 생 판 정산에 '새 칭호' 줄과 장경각 도감 한 줄. 칭호를 화면 어디에 걸지는 기획서에 없어 정산·도감에만 둔다
-- [ ] WP-35 극성(음양 ±70 이상)으로 땅의 주인을 쓰러뜨리면 깨달음 '역근'이 풀에 들어감(10장 해금 표): 지금 역근은 처음부터 풀에 있다. insights.json 역근에 해금 칸, Core 깨달음 후보·혼 해금, 웹 한 생 판 후보·처치 판정. 서장·1장 판(진소운)은 그대로 둘지 같이 볼 것(기획서는 해금 표만)
+- [x] WP-35 2026-11-06 — 역근 해금을 웹 한 생 판에: Core 는 이미 있었다(insights.json unlock boss_at_extreme, Insights.Roll isUnlocked, Life 가 극성 처치에 Unlock — QA-06). 웹 한 생 판 깨달음 후보가 혼 기록 unlocks 에 토큰이 있거나 이번 생에 극성으로 땅의 주인을 잡았을 때만 역근을 넣고, 정산이 토큰을 혼에 남김. 1장 판(진소운)은 그대로 다 든다. `WebInsightUnlockTests` 2개
 - [ ] WP-36 '태극 구간만 지키며 원각 처치 → 운화 의상'(10장 해금 표) 조건만 Core 에: 원각 싸움 동안 음양이 태극 구간을 벗어난 적이 없으면 혼에 해금 토큰. 의상 그림·고르는 화면은 M3 운화 아트 뒤(art_list 확인 후 큐)
 - [ ] WP-19a **사람 결정 대기** 절기 넷의 빈 숫자(태극양의검 검은 검 둔화, 파천금음 겹침, 백화난무창 경공 창격, 매화만개 폭풍 크기). 추천: 같은 무공 기존 값에서(둔화 50%, 1초 안 겹침 +1배씩 최대 3배, 경공 길 폭 0.6m 이화창 한 방, 반경 6m 로 돌림). decisions #33
 - [ ] WP-13f **사람 결정 대기** 진엔딩을 본 뒤(journeyOver) 침방을 어떻게. 추천: 엔딩 뒤 제목 화면, 혼 기록은 남기고 '새 여정'으로 처음부터(지움 확인 한 번), 정산의 '윤회' 단추 숨김. decisions #34

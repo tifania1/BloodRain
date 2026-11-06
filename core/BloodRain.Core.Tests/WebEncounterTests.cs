@@ -71,7 +71,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("| 검총 | 5장 화산 절벽 위 검 무덤 | 검 하나를 꽂는다(공격 무공 하나를 이번 판에서 버림) | 버린 무공 레벨당 남은 무공 공력 +3% | 50% |", Gdd);
             var e = Load().Synergies.Encounter("sword_tomb");
             Assert.Equal(0.5f, e.Chance);
-            Assert.Contains("chapter5", e.Chapters);
+            Assert.Contains("chapter5", e.Chapters!);
             Assert.Contains("const TOMB_PER_LEVEL = 0.03;", html);
             Assert.Contains("G.weapons.splice(k, 1); G.banished.add(o.w.id); G.tombMight = (G.tombMight || 0) + lv * TOMB_PER_LEVEL;", html);
             Assert.Contains("(G.stats.might + sectBonus('Might') + (G.tombMight || 0))", html);
