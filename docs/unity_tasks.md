@@ -340,6 +340,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 적에게서 도망치며 움직여도 장풍·혈조가 가장 가까운 적 쪽으로 나감. '이동 방향'으로 바꾸면 움직인 쪽으로만
   - 찍기: `docs/unity_shots/WP-52U/` 의 `aim_near.png`
 
+- [ ] WP-57U 설정 화면(타이틀·일시정지 두 곳) · 먼저: 없음
+  - 할 것: 12장 설정 목록 가운데 값이 정해진 열하나(흔들림·각성 연출·깜빡임·땅의 주인 체력바·혈우 연출·음량·소리 끄기·내 이펙트 투명도·피해 숫자·조준 방식·방향 표시)를 단추 하나씩, 누르면 `GameSettings.Turn(낱말)` 로 다음 값. 시작할 때 `GameSettings.Load(k => PlayerPrefs.HasKey(k) ? PlayerPrefs.GetString(k) : null, 움직임 줄이기)`, 바꿀 때 `Save(PlayerPrefs.SetString)`. 값을 쓰는 곳(흔들림·각성 연출 길이·피격 번쩍임·체력바·혈우 층·AudioListener 음량·내 이펙트 알파·피해 숫자·`Aim.Angle` 방식·방향 꺾쇠 크기)에 하나씩 잇는다. 이미 있는 FxSettings(휴대폰 효과 간소화)도 이 화면에 한 줄로. 글자는 strings `ui.settings.*`(클라우드가 넣을 차례, 없으면 한국어 그대로 두고 키만 Loc.T 로)
+  - 쓸 것: Core `Meta/GameSettings.cs`(2026-11-07 클라우드, `GameSettingsTests`), 웹 프로토타입 settings·SET_TURN·SET_HTML(template.html), 기획서 12장 화면 목록 '설정'·'화면 편의 규칙'
+  - 메뉴: 타이틀 '설정', 일시정지 화면 '설정'
+  - 끝: 열하나를 눌러 보고 게임을 껐다 켜도 값이 남음. 흔들림 0·혈우 0·내 이펙트 0 으로 판에서 그대로 바뀜
+  - 찍기: `docs/unity_shots/WP-57U/` 의 `settings.png`
+
 - [ ] R-07U 진전 소림 4·개방 4 · 먼저: C-06b
   - 할 것: 한 생에 `new Core.Build.SchoolSummons()` 하나, 프레임마다 `summons.Tick(SynergyEffects, 기혈/최대, 세상 dt)`. `ArhatStarted` 면 몸 둘레 나한 허상 `Tier("arhat_ring").Param("images")` 개를 `ArhatSecondsLeft` 동안, 닿는 적은 `summons.ArhatPush(fx, 거리, 보스인가, 축척)` 만큼 밀어냄(피해 없음, 2026-11-05 R-07b 데이터). `AlliesSpawned` 만큼 개방 제자를 `AlliesSecondsLeft` 동안(적이 노리지 않음), `AllyVolleys` 만큼 제자마다 가장 가까운 적에게 장풍 Lv1 탄 한 대 — 피해·넉백은 `SchoolSummons.AllyShot(fx, 공력)`.
   - 쓸 것: Core `Build/SchoolSummons.cs`, synergies.json
