@@ -71,6 +71,7 @@
 | 마교 | Demonic Cult | 魔教 | 문파 하나 |
 | 혈공 | Blood Art | 血功 | 마교 몸 성장 |
 | 사형 / 사매 | Senior Brother / Junior Sister | 师兄 / 师妹 | 호칭 |
+| 칭호 | Title | 称号 | 모으기 보상(식객 Wandering Gourmet·일검무적 Peerless Single Blade·구파윤회 Nine Sects Reborn) |
 
 `땅의 주인` 간체: 地主 는 '지주(땅 가진 부자)'로 읽혀 쓰지 않고 `一方之主` 로 한다.
 

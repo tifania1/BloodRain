@@ -367,6 +367,8 @@ namespace BloodRain.Core.Run
             }
             // 10장 해금: 극성(±70 이상)으로 땅의 주인 처치 → 깨달음 '역근' 풀에 추가(QA-06)
             if (Loadout.Gauge.Band == YinYangBand.Extreme) _soul.Unlock(UnlockToken.BossAtExtreme);
+            // 10장 해금: 무공 하나만으로 땅의 주인 처치 → 칭호 '일검무적'(정산 때 Soul.EndLife 가 연다)
+            if (Loadout.Weapons.Count == 1) Log.SingleWeaponBoss = true;
             var info = Log.KillBoss(kill.RegionId);
             kill.First = info.FirstInCycle;
             kill.SealStone = info.SealStone;

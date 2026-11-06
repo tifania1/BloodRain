@@ -5,6 +5,19 @@ using System.Linq;
 
 namespace BloodRain.Core.Data
 {
+    /// <summary>칭호 하나. When: food_one_run(한 생 음식 Count 개), boss_single_weapon(공격 무공 하나만 든 채 땅의 주인 처치), all_sects_lived(모든 문파로 한 번씩 환생).</summary>
+    public sealed class TitleDef
+    {
+        public const string FoodOneRun = "food_one_run";
+        public const string BossSingleWeapon = "boss_single_weapon";
+        public const string AllSectsLived = "all_sects_lived";
+        public string Id = "";
+        public string NameKo = "";
+        public string Hanja = "";
+        public string When = "";
+        public int Count;
+    }
+
     public sealed class CheonhaDef
     {
         public WorldDef World = new WorldDef();
@@ -26,6 +39,8 @@ namespace BloodRain.Core.Data
         public InnDef Inn = new InnDef();
         /// <summary>모드와 열리는 시점(기획서 7장 '모드'). Meta.Modes.</summary>
         public List<ModeDef> Modes = new List<ModeDef>();
+        /// <summary>칭호(10장 해금 표, 모으기 보상이라 능력치 없음).</summary>
+        public List<TitleDef> Titles = new List<TitleDef>();
 
         public RegionDef Region(string id) => Regions.First(r => r.Id == id);
         public SectDef Sect(string id) => Sects.First(s => s.Id == id);

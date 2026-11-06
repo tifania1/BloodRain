@@ -175,6 +175,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 처치 5,000 을 넘긴 생을 끝내면 정산에 '새로 얻은 무공 · 음공', 다음 생 레벨업 풀에 음공이 나옴
   - 찍기: `docs/unity_shots/R-08U/` 의 `new_unlock.png`
 
+- [ ] WP-34U 금두꺼비·음식 세기와 칭호 · 먼저: R-08U
+  - 할 것: 금두꺼비를 잡으면 `life.Log.CatchGoldenToad()`(영물은 빼고), 만두·오리구이를 먹으면 `life.Log.EatFood()`. 정산 화면에 `LifeSummary.NewTitles` 를 '새 칭호' 줄로(이름은 strings `cheonha.titles.<id>.name`, 줄 머리는 새 ui. 키 네 언어). 일검무적 표시는 Core Life 가 땅의 주인 처치 때 알아서 적는다. 연무장 탐욕 상한은 MetaShop 이 이미 `Soul.TrainingMax` 를 쓴다(WP-33)
+  - 쓸 것: Core `LifeLog.CatchGoldenToad`·`EatFood`, `Soul.GoldenToadsTotal`·`Titles`·`TrainingMax`, `LifeSummary.NewTitles`, cheonha.json `titles`, balance.json training Greed `bonusMax`
+  - 메뉴: 없음(시험 메뉴가 필요하면 SoulBootstrap 에 '금두꺼비 9마리 채우기')
+  - 끝: 컴파일·콘솔 에러 0. 혼에 금두꺼비 9 + 한 생에 하나 잡고 정산 → 연무장 탐욕이 n/7, 한 생 음식 20개 → 정산에 '새 칭호 · 식객'
+  - 찍기: `docs/unity_shots/WP-34U/` 의 `title.png`
+
 - [ ] R-04Ua 문파 고유 능력: 능력치·회피·피해·회복 · 먼저: C-06a
   - 할 것: (1) C-06a 의 `CurrentStats` 에 healthRatio·moving 을 제대로(남궁 공력·수로채 회피). (2) 피격 직전 `Evade.Roll(stats.Evade, rng)` 가 참이면 피해·넉백 없이 넘김(짧은 잔상). (5) 무공 피해에 `SectTrait.DamageMultiplier(적이 중독됐나)`. (6) 은자 × (1 + Bonus[Greed]), 음식 `Drops.FoodHeal(…, 1 + Bonus[FoodHeal])`. (7) 태극일 때 쾌속에 `life.HarmonyCooldownReduction` 을 더하고 상한으로 자름. (9) 마교 몸은 기혈 회복 전부에 `SectTrait.HealingMultiplier`.
   - 쓸 것: Core `Build/SectTrait.cs`, `life.Body.SectTrait`, `Evade`, `Drops.FoodHeal`

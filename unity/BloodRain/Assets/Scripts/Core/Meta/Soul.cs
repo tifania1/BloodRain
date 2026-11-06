@@ -106,12 +106,18 @@ namespace BloodRain.Core.Meta
         public int TalismansUsed { get; }
         /// <summary>이번 생에 잡은 금두꺼비 수. 혼에 누적된다(연무장 탐욕 최대 레벨 해금).</summary>
         public int GoldenToads { get; }
+        /// <summary>이번 생에 먹은 음식 수. 칭호 '식객'.</summary>
+        public int FoodEaten { get; }
+        /// <summary>공격 무공 하나만으로 땅의 주인을 쓰러뜨렸나. 칭호 '일검무적'.</summary>
+        public bool SingleWeaponBoss { get; }
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
-            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0, int goldenToads = 0)
+            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0, int goldenToads = 0, int foodEaten = 0, bool singleWeaponBoss = false)
         {
             GoldenToads = goldenToads;
+            FoodEaten = foodEaten;
+            SingleWeaponBoss = singleWeaponBoss;
             Kills = kills;
             Dashes = dashes;
             TalismansUsed = talismansUsed;
@@ -150,6 +156,8 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> NewModes { get; internal set; } = Array.Empty<string>();
         /// <summary>이번 생으로 새로 채운 도전 과제 해금 토큰(kills_5000_one_run 같은 것, 데이터 순서). 정산 화면이 '음공을 얻었다'처럼 띄운다.</summary>
         public IReadOnlyList<string> NewUnlocks { get; internal set; } = Array.Empty<string>();
+        /// <summary>이 생으로 새로 얻은 칭호 id(cheonha.json titles).</summary>
+        public IReadOnlyList<string> NewTitles { get; internal set; } = Array.Empty<string>();
 
         public LifeSummary(int rebirthQi, IReadOnlyList<string> newSealStones, IReadOnlyList<string> newlyUnlockedSects,
             IReadOnlyList<string> newRegions, IReadOnlyList<string> newRealms, IReadOnlyList<string> newEvolutions, bool finalCleared,
@@ -337,6 +345,29 @@ namespace BloodRain.Core.Meta
 
         /// <summary>지금까지 모든 생에서 잡은 금두꺼비 수(10장 해금 표 '금두꺼비 누적 10마리 → 탐욕 최대 레벨 +2', balance.json training bonusMax).</summary>
         public int GoldenToadsTotal { get; private set; }
+
+        readonly HashSet<string> _titles = new HashSet<string>(StringComparer.Ordinal);
+        /// <summary>얻은 칭호 id(cheonha.json titles, 10장 해금 표). 모으기 보상이라 능력치는 없다.</summary>
+        public IReadOnlyCollection<string> Titles => _titles;
+
+        /// <summary>이 생으로 새로 채운 칭호를 연다(데이터 순서). EndLife 가 문파별 생 수를 더한 뒤 부른다.</summary>
+        List<string> GrantTitles(LifeRecord r)
+        {
+            var opened = new List<string>();
+            foreach (var t in C.Titles)
+            {
+                if (_titles.Contains(t.Id)) continue;
+                bool ok = t.When switch
+                {
+                    TitleDef.FoodOneRun => r.FoodEaten >= t.Count,
+                    TitleDef.BossSingleWeapon => r.SingleWeaponBoss,
+                    TitleDef.AllSectsLived => C.Sects.All(s => _livesBySect.TryGetValue(s.Id, out var n) && n > 0),
+                    _ => throw new InvalidOperationException($"모르는 칭호 조건입니다: {t.When}"),
+                };
+                if (ok) { _titles.Add(t.Id); opened.Add(t.Id); }
+            }
+            return opened;
+        }
 
         /// <summary>데이터(무공·캐릭터·문파)에 나오는 도전 과제 토큰, 처음 나온 순서.</summary>
         IEnumerable<string> ChallengeTokens() =>
@@ -587,11 +618,13 @@ namespace BloodRain.Core.Meta
             }
 
             var newSects = UnlockedSects.Where(s => !sectsBefore.Contains(s)).ToList();
+            var newTitles = GrantTitles(record);
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
             {
                 NewFacilities = Inn.Refresh(this),
                 NewModes = Modes.Refresh(this),
                 NewUnlocks = newUnlocks,
+                NewTitles = newTitles,
             };
         }
 
@@ -610,7 +643,7 @@ namespace BloodRain.Core.Meta
                 if (_data.Evolutions.All(x => x.Id != e)) throw new ArgumentException($"없는 절기입니다: {e}");
             if (r.Manuscripts < 0) throw new ArgumentException("의서 권 수가 음수입니다");
             if (r.BloodCrystal < 0) throw new ArgumentException("혈정이 음수입니다");
-            if (r.Kills < 0 || r.Dashes < 0 || r.TalismansUsed < 0 || r.GoldenToads < 0) throw new ArgumentException("처치·경공·정신부·금두꺼비 수가 음수입니다");
+            if (r.Kills < 0 || r.Dashes < 0 || r.TalismansUsed < 0 || r.GoldenToads < 0 || r.FoodEaten < 0) throw new ArgumentException("처치·경공·정신부·금두꺼비·음식 수가 음수입니다");
             foreach (var m in r.TornManuals)
                 if (!_data.Synergies.IsSecretManual(m)) throw new ArgumentException($"비급 층이 아닙니다: {m}");
         }
@@ -660,6 +693,8 @@ namespace BloodRain.Core.Meta
             public int TalismansUsed;
             /// <summary>모든 생에서 잡은 금두꺼비 수. 이 칸이 생기기 전 저장은 0으로 읽는다.</summary>
             public int GoldenToads;
+            /// <summary>얻은 칭호. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
+            public List<string> Titles = new List<string>();
             /// <summary>엔딩(4장). 이 칸들이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public bool EndingPending;
             public List<string> EndingsSeen = new List<string>();
@@ -705,6 +740,7 @@ namespace BloodRain.Core.Meta
                 RestoredManuals = Sorted(_restored),
                 TalismansUsed = TalismansUsedTotal,
                 GoldenToads = GoldenToadsTotal,
+                Titles = Sorted(_titles),
                 EndingPending = EndingPending,
                 EndingsSeen = Sorted(_endingsSeen),
                 JourneyOver = JourneyOver,
@@ -736,6 +772,7 @@ namespace BloodRain.Core.Meta
             foreach (var kv in f.LivesBySect) s._livesBySect[kv.Key] = kv.Value;
             foreach (var kv in f.FinalClearsBySect) s._finalClears[kv.Key] = kv.Value;
             s._unlocks.UnionWith(f.Unlocks);
+            s._titles.UnionWith(f.Titles.Where(id => s.C.Titles.Any(t => t.Id == id)));
             s._bosses.UnionWith(f.BossesKilled);
             s._sealStones.UnionWith(f.SealStones);
             s._visited.UnionWith(f.VisitedRegions);
@@ -907,6 +944,15 @@ namespace BloodRain.Core.Meta
         /// <summary>금두꺼비를 잡았다. 은자는 GainSilver 로 따로 받는다.</summary>
         public void CatchGoldenToad() => GoldenToads++;
 
+        /// <summary>이번 생에 먹은 음식 수(만두·오리 등롱). 칭호 '식객'.</summary>
+        public int FoodEaten { get; private set; }
+
+        /// <summary>음식을 먹었다. 회복은 Life 쪽에서 따로 한다.</summary>
+        public void EatFood() => FoodEaten++;
+
+        /// <summary>공격 무공 하나만 든 채 땅의 주인을 쓰러뜨린 적이 있나(Life 가 처치 때 적음). 칭호 '일검무적'.</summary>
+        public bool SingleWeaponBoss { get; set; }
+
         /// <summary>조건은 갖췄는데 잠긴 비급(찢긴 비급 후보). 생이 끝날 때 장경각에 오른다.</summary>
         public IReadOnlyList<string> TornManuals => _torn;
 
@@ -920,6 +966,6 @@ namespace BloodRain.Core.Meta
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
             new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
-                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads);
+                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss);
     }
 }

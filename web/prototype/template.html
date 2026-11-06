@@ -548,6 +548,7 @@ const START_WEAPONS = DATA.weapons.filter(w => (w.unlock === 'start' || TRIAL_WE
 //   "start" 는 늘, "boss:<지역>" 은 그 땅의 주인을 한 번이라도 쓰러뜨렸으면(계정, 회귀해도 남음), 도전 과제 토큰은 혼 기록 unlocks 에 있으면.
 //   한 생 판은 생을 시작할 때 혼 기록(G.soul0)으로 레벨업 무공 풀을 정한다 — 이번 생에 연 것은 다음 생부터(Core 도 EndLife 에서 연다).
 const CHALLENGE_RE = /^(kills|dash|seal_talisman)_(\d+)_(one_run|total)$/;
+const TITLE_BY = Object.fromEntries((DATA.titles || []).map(t => [t.id, t]));   // 칭호(cheonha.json titles, WP-34)
 const BOSS_OF_REGION = Object.fromEntries((DATA.regions || []).filter(r => r.boss).map(r => [r.id, r.boss]));
 function soulUnlocked(m, token) {
   if (!token || token === 'start') return true;
@@ -1788,6 +1789,7 @@ function lordDown(e) {
   if (e.fin != null) return finalDown(e);
   const r = CH_REGS.find(x => x.id === e.lord), def = BOSS_BY[e.lordBoss], first = !e.shadow, K = first ? LR.firstKill : LR.repeatKill;
   G.lords[r.id] = 'down'; G.lordF = null; G.boss = null; G.empower = null;   // 혈월은 싸움이 끝나면 진다
+  if (G.weapons.length === 1) G.singleBoss = true;   // 칭호 '일검무적'(WP-34, Core Life SingleWeaponBoss)
   if (yyBand().band === 'extreme') G.extremeKill = true;   // 극성(±70)으로 처치 → 깨달음 '역근' 풀에(WP-35, Core Life UnlockToken.BossAtExtreme). 종장(finalDown)은 Core 처럼 안 셈
   const sect0 = first && LR.firstKill.unlockSect ? (DATA.sects || []).find(s => s.unlock === 'boss:' + r.id) : null;
   const sect = sect0 && !(G.soul0.unlocked || []).includes(sect0.id) ? sect0 : null;   // 문파는 계정 첫 처치에만 열린다(Core firstOnAccount, 회귀 뒤 다시 잡아도 안 연다)
@@ -3002,6 +3004,7 @@ function bossAI(e, dt, dx, dy, d) {
 
 function pickup(dr) {
   const p = G.player;
+  if (dr.kind === 'food' || dr.kind === 'meat') G.food = (G.food || 0) + 1;   // 칭호 '식객'(WP-34, Core LifeLog.EatFood)
   if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal * otherHeal()); toast('만두', `기혈 +${Math.round(DR.bunHeal * G.stats.foodHeal * otherHeal())}`); }
   else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal * otherHeal()); toast('오리구이', `기혈 +${Math.round(DR.duckHeal * G.stats.foodHeal * otherHeal())}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
@@ -3816,10 +3819,13 @@ function lifeSettle() {
     const v = kind === 'kills' ? (oneRun ? G.kills : -1) : kind === 'dash' ? (oneRun ? (G.dashes || 0) : -1) : (oneRun ? (G.talis || 0) : talisTotal);
     return v >= +n;
   });
+  // 칭호(WP-34, cheonha.json titles, Core Soul.GrantTitles): 식객·일검무적·구파윤회(이번 생 문파까지 아홉 문파를 다 살아 봄)
+  const lived = new Set(Object.keys(s0.sectLives || {}).concat(G.body ? [G.body.id] : []));
+  const newTitles = (DATA.titles || []).filter(t => !(s0.titles || []).includes(t.id) && (t.when === 'food_one_run' ? (G.food || 0) >= t.count : t.when === 'boss_single_weapon' ? !!G.singleBoss : t.when === 'all_sects_lived' ? (DATA.sects || []).every(x => lived.has(x.id)) : false)).map(t => t.id);
   // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
   const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3836,7 +3842,9 @@ function recordLife(st) {
     if (k.sect && !m.unlocked.includes(k.sect)) m.unlocked.push(k.sect);
   }
   m.talismans = (m.talismans || 0) + (st.talis || 0);   // 정신부 누적(Core Soul.TalismansUsedTotal)
-  m.toads = (m.toads || 0) + (st.toads || 0);   // 금두꺼비 누적(Core Soul.GoldenToadsTotal, WP-33)
+  m.toads = (m.toads || 0) + (st.toads || 0);
+  m.titles = Array.isArray(m.titles) ? m.titles : []; for (const t of st.newTitles || []) if (!m.titles.includes(t)) m.titles.push(t);   // 칭호(WP-34)
+  m.sectLives = m.sectLives && typeof m.sectLives === 'object' ? m.sectLives : {}; if (st.sect) m.sectLives[st.sect] = (m.sectLives[st.sect] || 0) + 1;   // 문파별 생 수(Core Soul livesBySect)   // 금두꺼비 누적(Core Soul.GoldenToadsTotal, WP-33)
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
   for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);
   if (st.extremeKill && !m.unlocks.includes('boss_at_extreme')) m.unlocks.push('boss_at_extreme');   // 역근 해금(WP-35)
@@ -4882,6 +4890,7 @@ function endRun(won) {
         : st.ending === 'inherit' ? '다시 태어나지 않았다. 혈마 모드가 열렸다(이 판엔 아직 없다).' : '환혼도 회귀도 여기서 끝났다.';
     }
     facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
+    if ((st.newTitles || []).length) facts.push([st.newTitles.map(id => TITLE_BY[id].nameKo).join(' · '), '새 칭호']);   // WP-34
     if (st.newWeapons.length) facts.push([st.newWeapons.map(id => W_BY_ID[id].nameKo).join(' · '), '새로 얻은 무공 · 다음 생부터']);   // Core LifeSummary.NewUnlocks(R-08U 정산 줄과 같은 말)
     led.innerHTML = st.rows.map(r => `<tr><td>${r[0]}<small>${r[1]}</small></td><td>${r[2].toLocaleString()}</td></tr>`).join('')
       + `<tr class="sum"><td>얻은 윤회의 기<small>혼에 남은 기 ${m.qi.toLocaleString()} · 윤회 ${m.lives}번</small></td><td>+${st.total.toLocaleString()}</td></tr>`;

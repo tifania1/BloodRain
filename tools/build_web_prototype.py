@@ -110,6 +110,8 @@ def data_blob() -> str:
         "regions": [{"id": r["id"], "nameKo": r["nameKo"], "hanja": r["hanja"], "pos": r["pos"], "chapter": r.get("chapter"), "final": bool(r.get("final")), "gimmicks": r.get("gimmicks", []), "density": r["density"], "boss": r.get("boss"), "sealStone": r.get("sealStone"), "sect": r.get("sect")} for r in load("cheonha")["regions"]],
         # 땅의 주인(WP-13e, 7장): 깨어남·싸움 원·기혈 배율·처치 보상(cheonha.json bosses)과 패턴(bosspatterns.json bosses, 서장 장삼은 위 jangSam)
         "lordRules": drop_notes(load("cheonha")["bosses"]),
+        # 칭호(WP-34, 10장 해금 표): cheonha.json titles
+        "titles": [drop_notes(t) for t in load("cheonha").get("titles", [])],
         # 땅의 주인 컷 줄(docs/story/boss_cuts.md): 프로토타입은 만남 첫 줄·2막 예고·처치 첫 줄·혈영 메아리만 알림으로
         "lordLines": {l["id"]: {"cuts": drop_notes(l.get("cuts", [])), "phase2Ko": l.get("phase2Ko"), "echoKo": l.get("echoKo"), "bloodMoonKo": l.get("bloodMoonKo")} for l in load("dialogue")["lords"]["list"]},
         "lordPatterns": {k: drop_notes(v) for k, v in load("bosspatterns")["bosses"].items() if not k.startswith("_") and k != "jang_sam"},
