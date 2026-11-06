@@ -76,5 +76,24 @@ namespace BloodRain.Core.Tests
             Assert.Equal(2, html.Split("data-set=\"nums\"").Length - 1);
             Assert.Contains("if (settings.nums) for (const n of G.nums) {", html);
         }
+
+        [Fact] public void 내_이펙트_투명도는_적_탄과_적_예고를_흐리지_않는다()
+        {
+            // WP-49, 12장 '가독성 원칙'
+            var html = Proto;
+            Assert.Equal(2, html.Split("data-set=\"fx\"").Length - 1);
+            Assert.Contains("function foeEffect(kind, x, y, o) { addEffect(kind, x, y, Object.assign({ foe: true }, o)); }", html);
+            var mine = html.IndexOf("for (const fx of G.effects) if (!fx.foe) drawEffect(fx);");
+            var foeShots = html.IndexOf("for (const pr of G.projs) if (pr.enemy) { ctx.fillStyle");
+            var foeFx = html.IndexOf("for (const fx of G.effects) if (fx.foe) drawEffect(fx);");
+            Assert.True(mine > 0 && foeShots > mine && foeFx > mine);
+            // 적 몫 함수에는 addEffect 가 남지 않는다
+            foreach (var fn in new[] { "function castPattern(", "function lordContinuous(", "function bossAI(", "function localFoe(" })
+            {
+                int a = html.IndexOf(fn), b = html.IndexOf("\n}\n", a);
+                Assert.True(a > 0, fn);
+                Assert.DoesNotContain("addEffect(", html.Substring(a, b - a));
+            }
+        }
     }
 }

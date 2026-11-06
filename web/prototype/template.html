@@ -294,6 +294,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="rain">혈우 연출 100%</button>
         <button class="b" type="button" data-set="aim">방향 표시 보통</button>
         <button class="b" type="button" data-set="nums">피해 숫자 보임</button>
+        <button class="b" type="button" data-set="fx">내 이펙트 100%</button>
       </div>
       <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
       <div class="subtle" id="best"></div>
@@ -394,6 +395,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="rain"></button>
         <button class="b" type="button" data-set="aim"></button>
         <button class="b" type="button" data-set="nums"></button>
+        <button class="b" type="button" data-set="fx"></button>
       </div>
     </div>
   </div>
@@ -957,6 +959,7 @@ const settings = {
   rain: store.get('rain') ?? (REDUCED ? 0.5 : 1),         // 혈우 연출 세기 1 / 0.5 / 0(12장): 장막 붉은 번짐·빗줄기·붉은 달. 장막 점선은 길을 알려 주니 늘 그림
   aim: store.get('aim') ?? 1,                             // 바라보는 방향 표시 크기 1 / 1.6 / 0(12장 '조준')
   nums: store.get('nums') ?? true,                        // 피해 숫자 표시 켬/끔(12장 설정)
+  fx: store.get('fx') ?? 1,                               // 내 이펙트 투명도: 1 / 0.75 / 0.5 / 0.25 / 0 (12장 '0~100%')
 };
 // 구운 효과음(SFX-02, Assets/Audio/SFX → 빌드가 lookdev/sfx 에 둠). 있으면 그걸 틀고, 못 읽으면(아티팩트 한 파일 판 등) 아래 발진기 소리.
 // 진기 흡수는 5음 음계 8음을 연속 흡수 때 차례로 올린다(14장). 벌은 5개씩 번갈아.
@@ -1512,7 +1515,7 @@ function lordContinuous(e, P) {
   else if (P.shape === 'split') {   // 분열(당소혜 2막, Core BossSplit·시안과 같음): 쓰러지는 몸짓(예고) 뒤 남은 기혈을 count 몸이 healthShare 씩 나눠 scatter 둘레에 선다.
     // 갈라진 동안 본체는 싸움판에서 빠져 패턴 시계가 멈춘다(기혈 막대는 몸들의 합). 첫 몸이 쓰러지고 rejoinSeconds 안에 다 쓰러뜨리지 못하면
     // 쓰러진 몸이 남은 몸 가운데 가장 많은 기혈로 되살아난다. 다 쓰러지면 땅의 주인 처치
-    addEffect('ring', e.x, e.y, { r: P.scatter, life: P.telegraphSeconds, color: '#5E7F4A' });
+    foeEffect('ring', e.x, e.y, { r: P.scatter, life: P.telegraphSeconds, color: '#5E7F4A' });
     let warm = P.telegraphSeconds, S = null;
     const body = (x, y, hp) => spawnEnemy('sigang', x, y, { sprite: 'elite', splitOf: e, name: e.name, hp, maxHp: hp, speed: e.speed, dmg: e.dmg, r: e.r * 0.6, kbRes: 1, xp: 0, behavior: 'chase' });
     lordFx(dt => {
@@ -1532,7 +1535,7 @@ function lordContinuous(e, P) {
         S.downT -= dt;
         if (S.downT <= 0) {
           const top = Math.max(...alive.map(b => b.hp));
-          S.bodies = S.bodies.map(b => { if (!b.dead) return b; const n = body(b.x, b.y, top); addEffect('ring', b.x, b.y, { r: 1.2, color: '#5E7F4A', life: 0.4 }); return n; });
+          S.bodies = S.bodies.map(b => { if (!b.dead) return b; const n = body(b.x, b.y, top); foeEffect('ring', b.x, b.y, { r: 1.2, color: '#5E7F4A', life: 0.4 }); return n; });
           S.downT = null; toast(e.name, '쓰러진 몸이 다시 일어났다');
         }
       }
@@ -1796,7 +1799,7 @@ function finalPattern(e, P, dmg) {
       }
     } });
   } else if (P.shape === 'summon_shadow') {   // 혈영 솟음: shadows 차례로 하나, 기혈 = 그 보스 기준 × summonHealthRatio × healthCurve, 몸으로만, leaveSeconds 뒤 녹는다
-    addEffect('ring', e.x, e.y, { r: 2, life: P.telegraphSeconds, color: '#B3261E' });
+    foeEffect('ring', e.x, e.y, { r: 2, life: P.telegraphSeconds, color: '#B3261E' });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       const n = e.rise = (e.rise || 0), id = FB.shadows[n % FB.shadows.length], def = BOSS_BY[id], set = LPAT[id] || { contactDamage: 20, moveSpeed: 50 };
@@ -2089,6 +2092,8 @@ function hurtPlayer(dmg, src, kind) {
 
 // ───────── 효과·투사체 ─────────
 function addEffect(kind, x, y, o) { if (G.effects.length > 160) G.effects.shift(); G.effects.push(Object.assign({ kind, x, y, t: 0, life: 0.3 }, o)); }
+// 적 몫 효과(땅의 주인·정예·고유 적 예고, 지역 기믹): 내 이펙트 투명도를 받지 않고 내 효과 위에 그린다(12장 '가독성 원칙')
+function foeEffect(kind, x, y, o) { addEffect(kind, x, y, Object.assign({ foe: true }, o)); }
 function addProj(o) { if (G.projs.length > LIM.projectiles) return; G.projs.push(Object.assign({ t: 0, pierce: 0, hit: new Set(), homing: 0, bounce: 0 }, o)); }
 
 // 무공 실행 (weapons.json behavior 별)
@@ -2859,7 +2864,7 @@ function castPattern(e, P, dmg, dx, dy) {
       G.zones.push({ delay: P.telegraphSeconds, mark: { x: tx, y: ty, r: R }, apply: () => {
         if (e.dead) return;
         e.x = tx; e.y = ty;
-        addEffect('boom', tx, ty, { r: R, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.12);
+        foeEffect('boom', tx, ty, { r: R, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.12);
         if (Math.hypot(G.player.x - tx, G.player.y - ty) < R) hurtPlayer(dmg, e);
       } });
     } });
@@ -2875,10 +2880,10 @@ function castPattern(e, P, dmg, dx, dy) {
     // 강시 도부수 큰 도끼 휘두르기: 치켜들고 멈춰 섰다가 앞 부채꼴을 휩쓴다(bosspatterns.json elites gangsi_axeman)
     const ca = Math.atan2(dy, dx), half = P.angleDegrees / 2 * Math.PI / 180;
     if (P.bossHolds) e.windup = P.telegraphSeconds;
-    addEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: P.telegraphSeconds });
+    foeEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: P.telegraphSeconds });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
-      addEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: 0.35, hot: true }); sfx('boom');
+      foeEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: 0.35, hot: true }); sfx('boom');
       const px = G.player.x - e.x, py = G.player.y - e.y, ang = Math.abs(((Math.atan2(py, px) - ca + Math.PI * 3) % TAU) - Math.PI);
       if (Math.hypot(px, py) < P.radius && ang < half) hurtPlayer(dmg, e);
     } });
@@ -2886,7 +2891,7 @@ function castPattern(e, P, dmg, dx, dy) {
     // 장삼 포승줄: 멈춰 서서 예고선, 줄이 날아가 맞으면 피해와 rootSeconds 동안 걷지 못함(경공으로 끊김, 무공은 그대로)
     const ca = Math.atan2(dy, dx), sp = P.projectileSpeed / 100 * MOVE;
     if (P.bossHolds) e.windup = P.telegraphSeconds;
-    addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
+    foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds });
@@ -2913,7 +2918,7 @@ function castPattern(e, P, dmg, dx, dy) {
     // 마천패 갈고리 사슬(WP-13e): 포승줄처럼 멈춰 서서 예고선, 사슬이 맞으면 피해와 함께 pullSeconds 동안 보스 쪽으로 끌려간다(경공으로 끊음)
     const ca = Math.atan2(dy, dx), sp = P.projectileSpeed / 100 * MOVE;
     if (P.bossHolds) e.windup = P.telegraphSeconds;
-    addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
+    foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', pull: P.pullSeconds, src: e });
@@ -2934,14 +2939,14 @@ function castPattern(e, P, dmg, dx, dy) {
       const bx = e.x, by = e.y;
       for (let i = 0; i < P.count; i++) {
         const d = P.count > 1 ? P.length * i / (P.count - 1) : 0, tx = bx + Math.cos(ca) * d, ty = by + Math.sin(ca) * d;
-        G.zones.push({ delay: i * P.waveIntervalSeconds, apply: () => { addEffect('boom', tx, ty, { r: R, life: 0.25 }); if (Math.hypot(G.player.x - tx, G.player.y - ty) < R) hurtPlayer(dmg, e); } });
+        G.zones.push({ delay: i * P.waveIntervalSeconds, apply: () => { foeEffect('boom', tx, ty, { r: R, life: 0.25 }); if (Math.hypot(G.player.x - tx, G.player.y - ty) < R) hurtPlayer(dmg, e); } });
       }
     } });
-    addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: R * 2, life: P.telegraphSeconds });
+    foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: R * 2, life: P.telegraphSeconds });
   } else if (P.shape === 'inhale_exhale') {
     // 태극권(WP-13e, 시안과 같음): 멈춰 서서 예고 뒤 pullSeconds 동안 radius 안을 보스 쪽으로 끌어당기고(걸음 × pullSpeedRatio, 경공 중엔 안 끌림), 다 들이쉬면 burstRadius 터짐
     e.windup = P.telegraphSeconds + P.pullSeconds;
-    addEffect('ring', e.x, e.y, { r: P.radius, life: P.telegraphSeconds, color: '#1A1A1A' });
+    foeEffect('ring', e.x, e.y, { r: P.radius, life: P.telegraphSeconds, color: '#1A1A1A' });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       let left = P.pullSeconds;
@@ -2950,7 +2955,7 @@ function castPattern(e, P, dmg, dx, dy) {
         const pl = G.player, ddx = e.x - pl.x, ddy = e.y - pl.y, d = Math.hypot(ddx, ddy) || 1, gap = e.r + 0.35;
         if (d < P.radius && d > gap && pl.dashT <= 0) { const v = Math.min(d - gap, MOVE * P.pullSpeedRatio * dt); pl.x += ddx / d * v; pl.y += ddy / d * v; }
         left -= dt; if (left > 0) return true;
-        addEffect('boom', e.x, e.y, { r: P.burstRadius, life: 0.4 }); sfx('boom');
+        foeEffect('boom', e.x, e.y, { r: P.burstRadius, life: 0.4 }); sfx('boom');
         if (d < P.burstRadius + 0.35) hurtPlayer(dmg, e);
         return false;
       });
@@ -2979,10 +2984,10 @@ function castPattern(e, P, dmg, dx, dy) {
     // 일섬(검혼, WP-13e, 시안과 같음): 달리지 않고 예고선 그대로 한 번에 벤다. 그 뒤 recoverySeconds 굳어 있다
     const ca = Math.atan2(dy, dx);
     e.windup = P.telegraphSeconds + (P.recoverySeconds || 0);
-    addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
+    foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
-      addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: 0.3, hot: true }); sfx('boom');
+      foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: 0.3, hot: true }); sfx('boom');
       const px = G.player.x - e.x, py = G.player.y - e.y, along = px * Math.cos(ca) + py * Math.sin(ca), perp = Math.abs(-px * Math.sin(ca) + py * Math.cos(ca));
       if (along >= 0 && along <= P.length && perp <= P.width / 2 + 0.35) hurtPlayer(dmg, e);
     } });
@@ -2990,7 +2995,7 @@ function castPattern(e, P, dmg, dx, dy) {
     // 방패 돌진·설랑 왕 돌진·혈사자 덮쳐 오기(WP-13d): 예고선 뒤 그 방향으로 length 만큼 달리고, 폭 안에 닿으면 한 번 맞는다. 다 달리면 recoverySeconds 쉰다
     const ca = Math.atan2(dy, dx), sp = P.projectileSpeed / 100 * MOVE;
     e.windup = P.telegraphSeconds + P.length / sp + (P.recoverySeconds || 0);
-    addEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
+    foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => { if (!e.dead) (G.eDash = G.eDash || []).push({ e, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, left: P.length, w: P.width, dmg, hit: false }); sfx('dash'); } });
   } else if (P.shape === 'circles' && P.aim !== 'self') {
     // 혈술사 장로 큰 피 웅덩이·산귀 낙석 부르기(WP-13d): 예고 순간 플레이어 둘레(scatter 안, 기본 2.5m)에 원 count 개, telegraphSeconds 뒤 떨어진다.
@@ -3000,7 +3005,7 @@ function castPattern(e, P, dmg, dx, dy) {
       const tx = G.player.x + (P.count > 1 ? rand(-sp, sp) : 0), ty = G.player.y + (P.count > 1 ? rand(-sp, sp) : 0);
       G.zones.push({ delay: P.telegraphSeconds, mark: { x: tx, y: ty, r: P.radius }, apply: () => {
         if (e.dead) return;
-        addEffect('boom', tx, ty, { r: P.radius, life: 0.3 }); sfx('boom');
+        foeEffect('boom', tx, ty, { r: P.radius, life: 0.3 }); sfx('boom');
         if (Math.hypot(G.player.x - tx, G.player.y - ty) < P.radius) hurtPlayer(dmg, e);
         if (P.poolRadius) (G.pools = G.pools || []).push({ x: tx, y: ty, r: P.poolRadius, dps: P.poolDamagePerSecond * k, t: P.leaveSeconds, red: true });
       } });
@@ -3015,8 +3020,8 @@ function castPattern(e, P, dmg, dx, dy) {
         if (e.dead) return;
         G.zones.push({ delay: P.telegraphSeconds, mark: { x: tx, y: ty, r: R }, apply: () => {
           if (e.dead) return;
-          addEffect('burst', e.x, e.y, { r: 1, color: '#B3261E' }); e.x = tx; e.y = ty;
-          addEffect('boom', tx, ty, { r: R, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.12);
+          foeEffect('burst', e.x, e.y, { r: 1, color: '#B3261E' }); e.x = tx; e.y = ty;
+          foeEffect('boom', tx, ty, { r: R, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.12);
           if (Math.hypot(G.player.x - tx, G.player.y - ty) < R) hurtPlayer(dmg, e);
         } });
       } });
@@ -3029,7 +3034,7 @@ function castPattern(e, P, dmg, dx, dy) {
   } else if (P.shape === 'clones') {
     // 빙혈 제자 빙분신(WP-13d, 시안과 같음): 자기 둘레 scatter 원 안 count 자리 가운데 하나로 옮기고 나머지엔 기혈 1 인 분신. 분신은 leaveSeconds 뒤 녹는다
     const real = Math.floor(Math.random() * P.count), cx = e.x, cy = e.y;
-    addEffect('ring', cx, cy, { r: P.scatter, life: 0.4, color: '#96BED7' });
+    foeEffect('ring', cx, cy, { r: P.scatter, life: 0.4, color: '#96BED7' });
     for (let i = 0; i < P.count; i++) {
       const a = rand(0, TAU), d = Math.sqrt(Math.random()) * P.scatter, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
       if (i === real) { e.x = x; e.y = y; continue; }
@@ -3040,7 +3045,7 @@ function castPattern(e, P, dmg, dx, dy) {
     if (P.bossHolds) e.windup = P.telegraphSeconds;
     G.zones.push({ delay: P.telegraphSeconds, mark: { follow: e, r: P.radius }, apply: () => {
       if (e.dead) return;
-      addEffect('ring', e.x, e.y, { r: P.radius, life: 0.5, color: '#B3261E' }); sfx('gong');
+      foeEffect('ring', e.x, e.y, { r: P.radius, life: 0.5, color: '#B3261E' }); sfx('gong');
       if (Math.hypot(G.player.x - e.x, G.player.y - e.y) < P.radius && G.player.iframe <= 0) {
         hurtPlayer(dmg, e);
         if (P.stunSeconds) { G.player.stunT = Math.max(G.player.stunT || 0, P.stunSeconds); toast('기절', '범종 소리에 몸이 굳었다'); }
@@ -3065,7 +3070,7 @@ function bossAI(e, dt, dx, dy, d) {
     e.windup -= dt;
     if (e.windup <= 0) {
       if (e.cur === 'cone') {
-        addEffect('cone', e.x, e.y, { a: e.ca, r: 9, life: 0.35, hot: true });
+        foeEffect('cone', e.x, e.y, { a: e.ca, r: 9, life: 0.35, hot: true });
         const px = p.x - e.x, py = p.y - e.y, dd = Math.hypot(px, py), ang = Math.abs(((Math.atan2(py, px) - e.ca + Math.PI * 3) % TAU) - Math.PI);
         if (dd < 9 && ang < 0.55) hurtPlayer(26);
       }
@@ -3076,12 +3081,12 @@ function bossAI(e, dt, dx, dy, d) {
   if (e.timer <= 0) {
     const pat = ['cone', 'arhat', 'bells'][e.cycle++ % 3];
     e.timer = e.phase2 ? 3.2 : 4.2;
-    if (pat === 'cone') { e.cur = 'cone'; e.windup = 0.8; e.ca = Math.atan2(dy, dx); addEffect('cone', e.x, e.y, { a: e.ca, r: 9, life: 0.8 }); }
+    if (pat === 'cone') { e.cur = 'cone'; e.windup = 0.8; e.ca = Math.atan2(dy, dx); foeEffect('cone', e.x, e.y, { a: e.ca, r: 9, life: 0.8 }); }
     else if (pat === 'arhat') {
       for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; spawnEnemy('mogin_nahan', p.x + Math.cos(a) * 8, p.y + Math.sin(a) * 8, { behavior: 'chase', speed: 0.5 * MOVE }); }
       toast('십팔나한진', '한 곳을 뚫고 나가라');
     } else {
-      for (let i = 0; i < 3; i++) { const bx = p.x + rand(-2.5, 2.5), by = p.y + rand(-2.5, 2.5); G.zones.push({ delay: 1.2, mark: { x: bx, y: by, r: 1.8 }, apply: () => { if (e.dead) return; addEffect('boom', bx, by, { r: 1.8, life: 0.3 }); sfx('gong'); if (Math.hypot(G.player.x - bx, G.player.y - by) < 1.8) hurtPlayer(30); } }); }
+      for (let i = 0; i < 3; i++) { const bx = p.x + rand(-2.5, 2.5), by = p.y + rand(-2.5, 2.5); G.zones.push({ delay: 1.2, mark: { x: bx, y: by, r: 1.8 }, apply: () => { if (e.dead) return; foeEffect('boom', bx, by, { r: 1.8, life: 0.3 }); sfx('gong'); if (Math.hypot(G.player.x - bx, G.player.y - by) < 1.8) hurtPlayer(30); } }); }
     }
   }
 }
@@ -4434,7 +4439,7 @@ const LOCAL_BEH = {
     e.mArc = (e.mArc == null ? cd * Math.random() : e.mArc) - dt;
     if (e.mArc <= 0 && d < R * 1.6) {
       e.mArc = cd; const a = Math.atan2(dy, dx);
-      addEffect('arc', e.x, e.y, { a, r: R, life: 0.25, red: true });
+      foeEffect('arc', e.x, e.y, { a, r: R, life: 0.25, red: true });
       if (d < R + B.stats.playerBodyRadius) hurtPlayer(lerp(def.damageLv1, def.damageLv8, (w.lv - 1) / 7) * (mm.damageScale || 0), e);
     }
     return d < R * 0.8 ? [0, 0] : [dx * e.speed, dy * e.speed];
@@ -4491,7 +4496,7 @@ const LOCAL_BEH = {
     if (e.lunge) {
       e.lunge.t -= dt;
       if (e.lunge.t <= 0) {   // 돌진이 끝나면 포효: 둘레 적이 roarSeconds 동안 빨라진다
-        e.lunge = null; addEffect('ring', e.x, e.y, { r: D.auraRadius, color: '#B3261E', life: 0.5 });
+        e.lunge = null; foeEffect('ring', e.x, e.y, { r: D.auraRadius, color: '#B3261E', life: 0.5 });
         for (const o of G.enemies) if (!o.dead && !o.boss && o !== e && Math.hypot(o.x - e.x, o.y - e.y) <= D.auraRadius) { o.roarT = D.roarSeconds; o.roarBonus = D.auraBonus; }
         return [0, 0];
       }
@@ -4537,7 +4542,7 @@ function foeShotsStep(dt) {
   for (const r of G.revives || []) {
     r.t -= dt; if (r.t > 0) continue; r.done = true;
     const a = r.e.twin, D = E_BY_ID[r.e.type];
-    if (a && !a.dead) { const m = spawnEnemy(r.e.type, a.x + D.twin.gap, a.y); m.hp = m.maxHp * D.twin.reviveHealth; m.twin = a; a.twin = m; addEffect('ring', m.x, m.y, { r: 1, color: '#1A1A1A', life: 0.4 }); }
+    if (a && !a.dead) { const m = spawnEnemy(r.e.type, a.x + D.twin.gap, a.y); m.hp = m.maxHp * D.twin.reviveHealth; m.twin = a; a.twin = m; foeEffect('ring', m.x, m.y, { r: 1, color: '#1A1A1A', life: 0.4 }); }
   }
   if (G.revives) G.revives = G.revives.filter(r => !r.done);
   // 독두꺼비가 남긴 독 웅덩이(enemies.json onDeath poison_pool, death radius·seconds·perSecond)
@@ -4601,7 +4606,7 @@ function eliteShapesStep(dt) {
     if (R.hit <= 0 && Math.abs(Math.hypot(p.x - R.x, p.y - R.y) - R.R) < R.w / 2 + body) { R.hit = R.gap; hurtPlayer(R.dmg, R.e); }
   }
   if (G.eRings) G.eRings = G.eRings.filter(R => R.R > R.min);
-  for (const C of G.eClones || []) { C.t -= dt; if (C.t <= 0 && !C.c.dead) { C.c.dead = true; addEffect('burst', C.c.x, C.c.y, { r: 0.8, color: '#96BED7' }); } }
+  for (const C of G.eClones || []) { C.t -= dt; if (C.t <= 0 && !C.c.dead) { C.c.dead = true; foeEffect('burst', C.c.x, C.c.y, { r: 0.8, color: '#96BED7' }); } }
   if (G.eClones) G.eClones = G.eClones.filter(C => C.t > 0 && !C.c.dead);
 }
 function drawEliteShapes() {
@@ -4635,7 +4640,7 @@ function regionGimmicksStep(dt) {
     for (let i = 0; i < fr.count; i++) G.rocks.push({ x: p.x + rand(-1, 1) * fr.scatter, y: p.y + rand(-1, 1) * fr.scatter, r: fr.radius, t: fr.telegraphSeconds, life: fr.telegraphSeconds });
   for (const r of G.rocks) {
     r.t -= dt; if (r.t > 0) continue;
-    addEffect('burst', r.x, r.y, { r: r.r, color: '#5A5048' });
+    foeEffect('burst', r.x, r.y, { r: r.r, color: '#5A5048' });
     if (p.dashT <= 0 && Math.hypot(p.x - r.x, p.y - r.y) <= r.r && !G.won && !G.demo) p.hp -= p.maxHp * fr.playerDamageMaxHealthRatio * (G.easy ? 0.5 : 1);
     for (const e of G.enemies) {
       if (e.dead || Math.hypot(e.x - r.x, e.y - r.y) > r.r) continue;
@@ -4787,8 +4792,6 @@ function render() {
       for (let k = 0; k < 4; k++) { const a = e.beamA + k * TAU / 4; ctx.strokeStyle = 'rgba(179,38,30,0.5)'; ctx.lineWidth = 0.8 * PPM; ctx.beginPath(); ctx.moveTo(wx(e.x), wy(e.y)); ctx.lineTo(wx(e.x + Math.cos(a) * 11), wy(e.y + Math.sin(a) * 11)); ctx.stroke(); }
     }
   }
-  // 적 탄
-  for (const pr of G.projs) if (pr.enemy) { ctx.fillStyle = 'rgba(179,38,30,0.85)'; ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(pr.x), wy(pr.y), pr.r * PPM, 0, TAU); ctx.fill(); ctx.stroke(); }
   // 플레이어
   const blink = settings.flash && (p.iframe > 0 || (p.hurt > 0 && Math.floor(p.hurt * 30) % 2 === 0));   // 깜빡임 끄기(12장)
   drawSprite('player', p.x, p.y, 1, p.fx < 0, false, blink ? 0.55 : 1, 1);
@@ -4815,10 +4818,13 @@ function render() {
   ctx.fillStyle = 'rgba(26,26,26,.3)'; ctx.fillRect(hbx, hby, hbw, 5);
   ctx.fillStyle = p.hp / p.maxHp < 0.3 ? '#B3261E' : '#2F6F6A'; ctx.fillRect(hbx, hby, hbw * p.hp / p.maxHp, 5);
   for (let i = 0; i < p.dashMax; i++) { ctx.beginPath(); ctx.arc(hbx + i * 9 + 4, hby + 12, 3, 0, TAU); ctx.fillStyle = i < p.dashCharges ? '#1A1A1A' : 'rgba(26,26,26,.2)'; ctx.fill(); }
-  // 우리 투사체
-  for (const pr of G.projs) if (!pr.enemy) drawProj(pr);
-  // 효과
-  for (const fx of G.effects) drawEffect(fx);
+  // 우리 투사체·효과: 내 이펙트 투명도(12장 설정)를 받는다
+  FXA = settings.fx; ctx.globalAlpha = FXA;
+  if (FXA > 0) { for (const pr of G.projs) if (!pr.enemy) drawProj(pr); for (const fx of G.effects) if (!fx.foe) drawEffect(fx); }
+  FXA = 1; ctx.globalAlpha = 1;
+  // 적 탄과 적 몫 효과는 내 것 위에, 투명도 없이(12장 '가독성 원칙': 투명도를 높여도 위험은 가려지지 않는다)
+  for (const pr of G.projs) if (pr.enemy) { ctx.fillStyle = 'rgba(179,38,30,0.85)'; ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(pr.x), wy(pr.y), pr.r * PPM, 0, TAU); ctx.fill(); ctx.stroke(); }
+  for (const fx of G.effects) if (fx.foe) drawEffect(fx);
   // 피해 숫자
   ctx.textAlign = 'center';
   if (settings.nums) for (const n of G.nums) {   // 피해 숫자 표시(12장 설정, 끄면 안 그림)
@@ -4957,6 +4963,7 @@ function drawDrop(d) {
   ctx.fillStyle = d.kind === 'freeze' || d.kind === 'magnet' ? '#B3261E' : '#1A1A1A';
   ctx.font = `900 ${Math.round(r * 1.2)}px "Noto Serif KR", serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(glyph, x, y + 1); ctx.textBaseline = 'alphabetic';
 }
+let FXA = 1;   // 지금 그리는 효과의 투명도 배율(내 것 = settings.fx, 적 몫 = 1). drawProj·drawEffect 안의 globalAlpha 는 이걸 곱한다
 function drawProj(pr) {
   const x = wx(pr.x), y = wy(pr.y), a = Math.atan2(pr.vy, pr.vx), gold = pr.w && pr.w.evolved;
   ctx.save(); ctx.translate(x, y); ctx.rotate(a);
@@ -4983,19 +4990,19 @@ function drawEffect(fx) {
   } else if (fx.kind === 'sweep') {
     const prog = k, ang = fx.a0 + prog * TAU * fx.sweeps;
     ctx.strokeStyle = fx.gold ? 'rgba(201,162,39,0.9)' : 'rgba(26,26,26,0.8)'; ctx.lineCap = 'round';
-    for (let i = 0; i < 4; i++) { ctx.lineWidth = 9 - i * 2; ctx.globalAlpha = 1 - i * 0.22; ctx.beginPath(); ctx.arc(x, y, fx.r * PPM, ang - 0.9 + i * 0.18, ang); ctx.stroke(); }
+    for (let i = 0; i < 4; i++) { ctx.lineWidth = 9 - i * 2; ctx.globalAlpha = FXA * (1 - i * 0.22); ctx.beginPath(); ctx.arc(x, y, fx.r * PPM, ang - 0.9 + i * 0.18, ang); ctx.stroke(); }
   } else if (fx.kind === 'boom') {
     ctx.fillStyle = `rgba(179,38,30,${0.35 * (1 - k)})`; ctx.beginPath(); ctx.arc(x, y, fx.r * PPM * (0.5 + k * 0.6), 0, TAU); ctx.fill();
     ctx.strokeStyle = `rgba(26,26,26,${0.8 * (1 - k)})`; ctx.lineWidth = 3; ctx.stroke();
   } else if (fx.kind === 'burst') {
-    ctx.fillStyle = fx.color; ctx.globalAlpha = 0.6 * (1 - k);
+    ctx.fillStyle = fx.color; ctx.globalAlpha = FXA * (0.6 * (1 - k));
     for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; ctx.beginPath(); ctx.arc(x + Math.cos(a) * fx.r * PPM * k, y + Math.sin(a) * fx.r * PPM * k, 3, 0, TAU); ctx.fill(); }
   } else if (fx.kind === 'tline') {
     ctx.translate(x, y); ctx.rotate(fx.a);
     ctx.fillStyle = `rgba(179,38,30,${0.12 + 0.25 * k})`; ctx.strokeStyle = 'rgba(179,38,30,0.7)'; ctx.lineWidth = 1.5;
     ctx.fillRect(0, -fx.w / 2 * PPM, fx.len * PPM, fx.w * PPM); ctx.strokeRect(0, -fx.w / 2 * PPM, fx.len * PPM, fx.w * PPM);
   } else if (fx.kind === 'ring') {
-    ctx.strokeStyle = fx.color || '#C9A227'; ctx.globalAlpha = 1 - k; ctx.lineWidth = 4;
+    ctx.strokeStyle = fx.color || '#C9A227'; ctx.globalAlpha = FXA * (1 - k); ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(x, y, fx.r * PPM * (0.3 + k * 0.7), 0, TAU); ctx.stroke();
   } else if (fx.kind === 'slash') {
     const len = fx.len * PPM, ca = Math.cos(fx.a), sa = Math.sin(fx.a);
@@ -5358,6 +5365,7 @@ const SET_TURN = {
   rain: () => { settings.rain = settings.rain === 1 ? 0.5 : settings.rain === 0.5 ? 0 : 1; store.set('rain', settings.rain); },
   aim: () => { settings.aim = settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1; store.set('aim', settings.aim); },
   nums: () => { settings.nums = !settings.nums; store.set('nums', settings.nums); },
+  fx: () => { settings.fx = settings.fx > 0 ? Math.round((settings.fx - 0.25) * 100) / 100 : 1; store.set('fx', settings.fx); },
 };
 for (const b of document.querySelectorAll('[data-set]')) b.addEventListener('click', () => { SET_TURN[b.dataset.set](); syncMute(); });
 $('mutebtn').addEventListener('click', () => { audio.muted = !audio.muted; store.set('muted', audio.muted); syncMute(); });
@@ -5383,6 +5391,7 @@ function syncMute() {
     flash: settings.flash ? '깜빡임 켜짐<small>맞으면 몸이 번쩍인다</small>' : '깜빡임 꺼짐<small>번쩍이지 않는다</small>',
     bossbar: settings.bossbar ? '체력바 보임<small>땅의 주인·원각</small>' : '체력바 숨김<small>땅의 주인·원각</small>',
     rain: `혈우 연출 ${Math.round(settings.rain * 100)}%<small>${settings.rain ? '붉은 번짐·빗줄기' : '장막 점선만'}</small>`,
+    fx: `내 이펙트 ${Math.round(settings.fx * 100)}%<small>${settings.fx < 1 ? '적 탄·예고는 그대로' : '무공 효과 투명도'}</small>`,
     nums: settings.nums ? '피해 숫자 보임<small>때린 자리에 숫자</small>' : '피해 숫자 숨김<small>숫자 없이</small>',
     aim: { 1: '방향 표시 보통<small>바라보는 쪽 꺾쇠</small>', 1.6: '방향 표시 크게<small>바라보는 쪽 꺾쇠</small>', 0: '방향 표시 끔<small>꺾쇠 없음</small>' }[settings.aim] || '방향 표시 보통',
   };
