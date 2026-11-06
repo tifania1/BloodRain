@@ -39,8 +39,8 @@ namespace BloodRain.Core.Tests
         [Fact] public void 영약은_한_생_판에서_오의_가득_음양_0()
         {
             var html = Proto;
-            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter'])", html);
-            Assert.Contains("((key === 'elixir' || key === 'letter') && !G.body)", html);
+            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper'])", html);
+            Assert.Contains("((key === 'elixir' || key === 'letter' || key === 'whisper') && !G.body)", html);
             Assert.Contains("discover('enc:elixir'); G.ult = B.ultimateCharge.max; G.yy = 0;", html);
             Assert.Contains("| 영약 | 빛나는 덩굴·바위 틈(천년하수오, 공청석유) | 줍는다 | 오의 게이지 가득, 음양 0 |", Gdd);
         }
@@ -53,6 +53,16 @@ namespace BloodRain.Core.Tests
             Assert.Contains("SYN.secrets.find(q => !dex.has('secret:' + q.id) && !letters.has(q.id))", html);
             Assert.Contains("letters.has(x.id) ? `<span class=\"lore\">밀서: ${x.condition}</span>`", html);
             Assert.Contains("| 하오문 밀서 | 운낭이 등롱 속에 숨긴 쪽지 | 줍는다 | 못 찾은 비전 하나의 조건이 한 줄 더 드러남 | 20% |", Gdd);
+        }
+    
+        [Fact] public void 속삭임은_석상_앞_오의로_받고_회복이_절반()
+        {
+            var html = Proto;
+            Assert.Contains("G.ult = 0; sfx('ult'); whisperUlt();", html);
+            Assert.Contains("G.syn.bonus.demonic = (G.syn.bonus.demonic || 0) + 1", html);
+            Assert.Contains("(G && G.whisperTaken ? 0.5 : 1)", html);
+            Assert.Contains("if (st.whisper) m.whispers = (m.whispers || 0) + 1;", html);
+            Assert.Equal(15f, Load().Synergies.Encounter("whisper").MinMinute);
         }
     }
 }
