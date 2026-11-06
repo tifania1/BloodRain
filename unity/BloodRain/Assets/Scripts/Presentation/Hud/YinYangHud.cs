@@ -25,8 +25,12 @@ namespace BloodRain.Presentation.Hud
         RectTransform _root, _symbol;
         Image _ring, _vignette, _needle;
         RectTransform _needlePivot;
-        TextMeshProUGUI _label;
+        TextMeshProUGUI _label, _simma;
         float _angle;
+        // R4-13a 마교 몸 심마: BloodArt.Steps 가 늘면 문양 위에 짧게 '심마 · 음으로 -N'
+        static readonly Color Simma = new Color32(196, 120, 220, 255);
+        int _simmaSteps = -1;
+        float _simmaT;
 
         void Start() => Build();
 
@@ -72,6 +76,39 @@ namespace BloodRain.Presentation.Hud
             _label = t;
             var lr = t.rectTransform; lr.anchorMin = lr.anchorMax = Vector2.zero; lr.pivot = new Vector2(0.5f, 0.5f);
             lr.anchoredPosition = new Vector2(110, 62); lr.sizeDelta = new Vector2(220, 30);
+
+            var s = new GameObject("심마", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+            s.transform.SetParent(_root, false);
+            if (font != null) s.font = font;
+            s.fontSize = 24; s.alignment = TextAlignmentOptions.Center; s.raycastTarget = false;
+            s.textWrappingMode = TextWrappingModes.NoWrap;
+            s.color = new Color(Simma.r, Simma.g, Simma.b, 0f);
+            _simma = s;
+            var sr = s.rectTransform; sr.anchorMin = sr.anchorMax = Vector2.zero; sr.pivot = new Vector2(0.5f, 0.5f);
+            sr.anchoredPosition = new Vector2(110, 255); sr.sizeDelta = new Vector2(260, 32);
+        }
+
+        void UpdateSimma(BloodRain.Core.Run.Life life)
+        {
+            var art = life.BloodArt;
+            if (art == null) { _simma.enabled = false; return; }
+            _simma.enabled = true;
+            if (_simmaSteps < 0) _simmaSteps = art.Steps; // 처음 본 값은 알리지 않는다
+            if (art.Steps > _simmaSteps)
+            {
+                int yinPer = life.Body.Sect?.BloodArt?.YinPerStep ?? 1;
+                _simma.text = Loc.F("ui.yinyang.simma", $"-{(art.Steps - _simmaSteps) * yinPer}");
+                _simmaSteps = art.Steps;
+                _simmaT = 1.6f;
+            }
+            else if (art.Steps < _simmaSteps) _simmaSteps = art.Steps;
+            _simmaT = Mathf.Max(0f, _simmaT - Time.unscaledDeltaTime);
+            float a = Mathf.Clamp01(_simmaT / 0.5f);
+            var c = Simma; c.a = a; _simma.color = c;
+            // 떠오르며 사라진다
+            _simma.rectTransform.anchoredPosition = new Vector2(110, 255 + (1.6f - _simmaT) * 14f);
+            if (_simmaT > 0f) _symbol.localScale = Vector3.one * (1f + 0.06f * Mathf.Sin(Mathf.Min(1f, (1.6f - _simmaT) / 0.3f) * Mathf.PI));
+            else _symbol.localScale = Vector3.one;
         }
 
         void Update()
@@ -119,6 +156,8 @@ namespace BloodRain.Presentation.Hud
                 a = 0.35f + 0.3f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * speed));
             }
             var vc = _vignette.color; vc.a = Mathf.MoveTowards(vc.a, a, Time.unscaledDeltaTime * 3f); _vignette.color = vc;
+
+            UpdateSimma(lr.Life);
         }
 
         static Image Img(Transform parent, string name, Sprite s, Color c)

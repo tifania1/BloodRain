@@ -220,7 +220,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 이류 돌파 뒤 석 장이 뜨고, 일검파를 고르면 그 무공 피해가 오름. 마교 몸은 한 자리가 마공
   - 찍기: `docs/unity_shots/C-07/` 의 `insight_cards.png`
 
-- [ ] R4-13a 마교 몸 혈공·마공 · 먼저: C-07b, C-08a
+- [x] R4-13a 마교 몸 혈공·마공 · 먼저: C-07b, C-08a — 2026-11-06 20:55 PC: 마공 카드(RollWithDemonic·붉은 테두리)와 `InsightBonus` 는 C-07b 때 이미 붙어 있어 남은 심마 표시만 함. YinYangHud 가 `life.BloodArt.Steps` 가 늘면 문양 위에 1.6초 `심마 · 음으로 -N`(키 `ui.yinyang.simma` 네 언어, 보랏빛, 떠오르며 사라짐) + 문양이 살짝 부풂. 마교 몸(몸 바꾸기)으로 십만대산 농도 4.3 에서 진기 400 → 더 받은 진기 176 → 심마 1, 게이지 -15 → -16, 표시 뜸. 콘솔 에러 0. 찍음 `docs/unity_shots/R4-13U/simma.png`(레벨업 카드 뒤, 왼쪽 아래). 마공 깨달음 카드 그림은 `docs/unity_shots/C-07/insight_demonic.png`
   - 할 것: 진기 배율(농도^0.25)과 심마(더 받은 진기 150마다 음 1)는 `life.Absorb` 가 이미 `life.BloodArt` 를 거쳐 하니 Unity 는 셈하지 않는다. 음양 HUD 에 심마로 기울 때 짧은 표시(`BloodArt.Steps` 가 늘면), 깨달음 화면이 마교 몸이면 `Insights.RollWithDemonic` 로 셋 중 하나를 마공으로, 능력치에 `life.InsightBonus(처치, 기혈 비율)`(심마환영은 천마해체 뒤 0부터). 마공 카드 테두리는 붉게.
   - 쓸 것: Core `Progression/BloodArt.cs`, `Build/Insights.cs`(RollWithDemonic), `Build/InsightEffects.cs`, insights.json `demonicInsights`
   - 메뉴: R-04Ua 의 몸 바꾸기(마교)
