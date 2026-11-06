@@ -607,7 +607,7 @@ function watchCues() {
 const ULT_MULT =((DATA.ultimates || []).find(u => u.id === 'il_geom') || { mightMultiplier: 30 }).mightMultiplier;
 const GLYPH = {
   samjae_sword: '劍', nahan_fist: '拳', flying_dagger: '刀', changcheon_qi: '氣', palm_wind: '掌', flash_finger: '指', thunder_bomb: '雷', poison_mist: '毒',
-  drunken_staff: '醉', taiji_sword: '太', chain_sickle: '鎖', blood_claw: '爪', sonic_qin: '音', pear_spear: '槍', falling_petals: '花',
+  drunken_staff: '醉', thunder_talisman: '符', taiji_sword: '太', chain_sickle: '鎖', blood_claw: '爪', sonic_qin: '音', pear_spear: '槍', falling_petals: '花',
   cheongmyeong: '淸', geumgang: '剛', cheonsu: '手', noejeong: '霆', pasan: '破', cheollian: '眼', hwaryong: '火', mandok: '蠱',
   yangui: '儀', juseon: '酒', suryong: '水', hyeolhae: '血', cheongsim: '心', unryong: '雲', domun: '道', maehwa: '梅',
 };
@@ -1126,6 +1126,24 @@ function makeSprite(kind, sizeM) {
     ell(50, 46, 6, 6, '#C9A227', 1.5);
     g.strokeStyle = '#B3261E'; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(44 * u, 24 * u); g.lineTo(48 * u, 28 * u); g.moveTo(56 * u, 24 * u); g.lineTo(52 * u, 28 * u); g.stroke();
   }
+  else if (LOCAL_SPRITES.includes(kind)) {
+    // 사람꼴 하나(도포·머리·발)에 땅마다 표시 하나를 얹는다
+    const man = (robe, face, extra) => { rect(40, 80, 7, 10, ink, 2); rect(53, 80, 7, 10, ink, 2); poly([[36, 42], [64, 42], [68, 84], [32, 84]], robe, 3); ell(50, 30, 12, 12, face, 3); if (extra) extra(); };
+    const line = (pts, col, w) => { g.strokeStyle = col; g.lineWidth = w * u; g.beginPath(); pts.forEach((q, i) => i ? g.lineTo(q[0] * u, q[1] * u) : g.moveTo(q[0] * u, q[1] * u)); g.stroke(); };
+    if (kind === 'poison_toad') { ell(50, 68, 30, 18, '#4F6B3A', 3); ell(36, 54, 7, 7, '#9BB06A', 2); ell(64, 54, 7, 7, '#9BB06A', 2); ell(36, 54, 2.5, 2.5, ink, 0); ell(64, 54, 2.5, 2.5, ink, 0); for (const [x, y] of [[40, 70], [58, 64], [50, 78]]) ell(x, y, 3.5, 3, '#6E4A7A', 1); }
+    else if (kind === 'golden_centipede') { for (let i = 4; i >= 0; i--) { const x = 22 + i * 14, y = 66 - Math.sin(i) * 6; line([[x - 4, y + 6], [x - 9, y + 16]], ink, 2); line([[x + 4, y + 6], [x + 9, y + 16]], ink, 2); ell(x, y, 9, 8, i === 4 ? '#C9A227' : '#A8862A', 2.5); } line([[80, 58], [92, 48]], ink, 2); line([[82, 62], [96, 58]], ink, 2); }
+    else if (kind === 'dogin') { g.globalAlpha = 0.3; ell(50, 60, 40, 34, '#6E4A7A', 0); g.globalAlpha = 1; man('#3E4A2E', '#8FA27A'); }
+    else if (kind === 'water_ghost') { poly([[34, 40], [66, 40], [72, 88], [60, 80], [50, 90], [40, 80], [28, 88]], '#5F7F8C', 3); ell(50, 30, 12, 13, '#B9CDD4', 3); line([[38, 22], [34, 46]], ink, 2.5); line([[62, 22], [66, 46]], ink, 2.5); }
+    else if (kind === 'water_bandit') man('#4A5866', '#C9B39A', () => { rect(36, 16, 28, 8, '#5A4630', 2); line([[66, 52], [92, 40]], ink, 2.5); line([[92, 40], [94, 50], [88, 52]], '#9AA0A0', 2.5); });
+    else if (kind === 'twin_gangsi') { jiangshi('#1A1A1A', '#E9E2D0'); g.globalAlpha = 0.85; poly([[50, 40], [66, 40], [70, 84], [50, 84]], '#E9E2D0', 0); g.globalAlpha = 1; }
+    else if (kind === 'plum_sword_ghost') { g.globalAlpha = 0.75; man('#D8C9C9', '#EDE4E0', () => { line([[66, 50], [94, 26]], '#6E7B86', 3); }); g.globalAlpha = 1; for (const [x, y] of [[28, 30], [74, 70], [30, 68], [80, 36]]) ell(x, y, 3.5, 3.5, '#D77A8A', 1); }
+    else if (kind === 'ice_gangsi') { jiangshi('#7FA6BA', '#4E7486'); g.globalAlpha = 0.5; ell(50, 60, 26, 30, '#DDEBF2', 0); g.globalAlpha = 1; }
+    else if (kind === 'snow_wolf') { ell(48, 64, 28, 14, '#E4E6E2', 3); ell(78, 54, 11, 9, '#E4E6E2', 3); poly([[80, 44], [86, 36], [88, 48]], '#E4E6E2', 2); for (const x of [30, 40, 56, 66]) rect(x, 74, 5, 14, '#C9CCC8', 1.5); line([[22, 60], [8, 52]], '#C9CCC8', 4); ell(84, 54, 1.8, 1.8, ink, 0); }
+    else if (kind === 'yeti') { ell(50, 60, 32, 30, '#E8ECEA', 3.5); ell(50, 28, 14, 12, '#D5DCDA', 3); rect(36, 84, 9, 7, '#9AA6A8', 2); rect(55, 84, 9, 7, '#9AA6A8', 2); ell(78, 44, 9, 9, '#BFE0F0', 2); ell(45, 28, 2, 2, ink, 0); ell(55, 28, 2, 2, ink, 0); }
+    else if (kind === 'demon_cultist') man('#2A1414', '#C9B39A', () => { rect(34, 58, 32, 5, '#B3261E', 1.5); line([[22, 88], [70, 12]], '#5A4630', 3); poly([[70, 12], [64, 18], [74, 20]], '#9AA0A0', 1.5); });
+    else if (kind === 'blood_shadow_clone') { g.globalAlpha = 0.6; man('#4A1612', '#7A2420', () => { line([[66, 52], [94, 30]], '#B3261E', 3); }); g.globalAlpha = 1; }
+    else if (kind === 'blood_lion') { ell(48, 64, 30, 16, '#7A2420', 3); g.globalAlpha = 0.9; ell(76, 50, 17, 17, '#4A1612', 3); g.globalAlpha = 1; ell(80, 52, 9, 9, '#9A3A30', 2.5); for (const x of [28, 40, 56, 66]) rect(x, 74, 6, 14, '#5A1A16', 1.5); ell(83, 50, 1.8, 1.8, '#E8D68A', 0); }
+  }
   else if (kind === 'player') {
     rect(41, 80, 7, 10, ink, 2); rect(53, 80, 7, 10, ink, 2);
     poly([[36, 42], [64, 42], [66, 82], [34, 82]], '#2F3F63', 3);
@@ -1153,6 +1171,10 @@ function makeSprite(kind, sizeM) {
 }
 
 const KIND_SIZE = { sigang: 1.3, hyeol_gangsi: 1.3, donggap: 1.6, hyeolin: 1.2, hyeol_musa: 1.35, mogin: 1.5, toad: 1.0, elite: 2.6, boss: 4.2, player: 1.5, lantern: 0.9, bell: 1.6 };
+// 지역 고유 적 열셋의 먹선 자리 표시(WP-13c 남은 '제 그림'). 원화(art_queue A-09)가 들어오기 전까지 땅마다 다른 빛깔·몸꼴로만 가른다.
+// 크기는 그동안 빌려 쓰던 혈무사 그림(1.35)과 같게 둬서 몸 반지름(KIND_SIZE × 0.32)·맞는 판정은 바뀌지 않는다.
+const LOCAL_SPRITES = ['poison_toad', 'golden_centipede', 'dogin', 'water_ghost', 'water_bandit', 'twin_gangsi', 'plum_sword_ghost', 'ice_gangsi', 'snow_wolf', 'yeti', 'demon_cultist', 'blood_shadow_clone', 'blood_lion'];
+for (const k of LOCAL_SPRITES) KIND_SIZE[k] = KIND_SIZE.hyeol_musa;
 function buildSprites() { for (const k in KIND_SIZE) sprites[k] = makeSprite(k, KIND_SIZE[k]); }
 
 // 숭산 소림 사찰 마당 바닥 (절차적, 이음새 없음)

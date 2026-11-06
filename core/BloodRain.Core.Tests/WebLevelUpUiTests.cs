@@ -10,6 +10,17 @@ namespace BloodRain.Core.Tests
     {
         static string Proto => ReadRepoFile("web", "prototype", "template.html");
 
+        // 무공·심법 칸 글자(GLYPH)가 빠지면 HUD 칸에 'undefined' 가 뜬다(2026-11-07 곤륜 뇌부에서 봄)
+        [Fact] public void 모든_무공과_심법에_칸_글자가_있다()
+        {
+            var html = Proto;
+            int at = html.IndexOf("const GLYPH = {", System.StringComparison.Ordinal);
+            var glyph = html.Substring(at, html.IndexOf("};", at, System.StringComparison.Ordinal) - at);
+            var d = Load();
+            foreach (var w in d.Weapons) Assert.Contains($" {w.Id}: '", glyph);
+            foreach (var p in d.Passives) Assert.Contains($" {p.Id}: '", glyph);
+        }
+
         [Fact] public void 카드는_세_줄이고_긴_설명은_마우스를_올리면()
         {
             var html = Proto;
