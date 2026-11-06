@@ -104,11 +104,14 @@ namespace BloodRain.Core.Meta
         public int Dashes { get; }
         /// <summary>이번 생에 쓴 정신부 수. 혼에 누적되어 도전 과제 seal_talisman_N_total.</summary>
         public int TalismansUsed { get; }
+        /// <summary>이번 생에 잡은 금두꺼비 수. 혼에 누적된다(연무장 탐욕 최대 레벨 해금).</summary>
+        public int GoldenToads { get; }
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
-            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0)
+            IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0, int goldenToads = 0)
         {
+            GoldenToads = goldenToads;
             Kills = kills;
             Dashes = dashes;
             TalismansUsed = talismansUsed;
@@ -225,7 +228,9 @@ namespace BloodRain.Core.Meta
         public int TrainingSpent => _trainingSpent;
         public int TrainingLevel(string stat) => _training.TryGetValue(stat, out var v) ? v : 0;
         /// <summary>다음 레벨 값(Stats.TrainingCost). 최대면 null, 없는 항목이면 InvalidOperationException.</summary>
-        public int? TrainingCost(string stat) => Stats.TrainingCost(_data.Balance.Training, stat, _training);
+        public int? TrainingCost(string stat) => Stats.TrainingCost(_data.Balance.Training, stat, _training, GoldenToadsTotal);
+        /// <summary>그 항목 최대 레벨(금두꺼비 누적 해금을 더한 값).</summary>
+        public int TrainingMax(string stat) => Stats.TrainingMax(_data.Balance.Training.Items.First(i => i.Stat == stat), GoldenToadsTotal);
 
         /// <summary>한 레벨 산다. 최대 레벨이거나 윤회의 기가 모자라면 false 이고 아무것도 안 바뀐다.</summary>
         public bool TryBuyTraining(string stat)
@@ -249,7 +254,7 @@ namespace BloodRain.Core.Meta
         }
 
         /// <summary>판 시작에 얹을 연무장 덧셈.</summary>
-        public StatBonus TrainingBonus() => Stats.FromTraining(_data.Balance.Training, _training);
+        public StatBonus TrainingBonus() => Stats.FromTraining(_data.Balance.Training, _training, GoldenToadsTotal);
 
         // ---- 환혼 강화(침방) ----
 
@@ -329,6 +334,9 @@ namespace BloodRain.Core.Meta
 
         /// <summary>지금까지 모든 생에서 쓴 정신부 수(도전 과제 seal_talisman_N_total).</summary>
         public int TalismansUsedTotal { get; private set; }
+
+        /// <summary>지금까지 모든 생에서 잡은 금두꺼비 수(10장 해금 표 '금두꺼비 누적 10마리 → 탐욕 최대 레벨 +2', balance.json training bonusMax).</summary>
+        public int GoldenToadsTotal { get; private set; }
 
         /// <summary>데이터(무공·캐릭터·문파)에 나오는 도전 과제 토큰, 처음 나온 순서.</summary>
         IEnumerable<string> ChallengeTokens() =>
@@ -563,6 +571,7 @@ namespace BloodRain.Core.Meta
             var newEvolutions = record.AwakenedEvolutions.Where(e => _evolutions.Add(e)).ToList();
             Manuscripts += record.Manuscripts;
             TalismansUsedTotal += record.TalismansUsed;
+            GoldenToadsTotal += record.GoldenToads;
             var newUnlocks = UnlockChallenges(record);
             var newTorn = record.TornManuals.Where(m => !_restored.Contains(m) && _torn.Add(m)).ToList();
 
@@ -601,7 +610,7 @@ namespace BloodRain.Core.Meta
                 if (_data.Evolutions.All(x => x.Id != e)) throw new ArgumentException($"없는 절기입니다: {e}");
             if (r.Manuscripts < 0) throw new ArgumentException("의서 권 수가 음수입니다");
             if (r.BloodCrystal < 0) throw new ArgumentException("혈정이 음수입니다");
-            if (r.Kills < 0 || r.Dashes < 0 || r.TalismansUsed < 0) throw new ArgumentException("처치·경공·정신부 수가 음수입니다");
+            if (r.Kills < 0 || r.Dashes < 0 || r.TalismansUsed < 0 || r.GoldenToads < 0) throw new ArgumentException("처치·경공·정신부·금두꺼비 수가 음수입니다");
             foreach (var m in r.TornManuals)
                 if (!_data.Synergies.IsSecretManual(m)) throw new ArgumentException($"비급 층이 아닙니다: {m}");
         }
@@ -649,6 +658,8 @@ namespace BloodRain.Core.Meta
             public List<string> RestoredManuals = new List<string>();
             /// <summary>모든 생에서 쓴 정신부 수. 이 칸이 생기기 전 저장은 0으로 읽는다.</summary>
             public int TalismansUsed;
+            /// <summary>모든 생에서 잡은 금두꺼비 수. 이 칸이 생기기 전 저장은 0으로 읽는다.</summary>
+            public int GoldenToads;
             /// <summary>엔딩(4장). 이 칸들이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public bool EndingPending;
             public List<string> EndingsSeen = new List<string>();
@@ -693,6 +704,7 @@ namespace BloodRain.Core.Meta
                 TornManuals = Sorted(_torn),
                 RestoredManuals = Sorted(_restored),
                 TalismansUsed = TalismansUsedTotal,
+                GoldenToads = GoldenToadsTotal,
                 EndingPending = EndingPending,
                 EndingsSeen = Sorted(_endingsSeen),
                 JourneyOver = JourneyOver,
@@ -715,6 +727,7 @@ namespace BloodRain.Core.Meta
                 Manuscripts = f.Manuscripts,
                 Cycle = Math.Max(1, f.Cycle),
                 TalismansUsedTotal = Math.Max(0, f.TalismansUsed),
+                GoldenToadsTotal = Math.Max(0, f.GoldenToads),
                 EndingPending = f.EndingPending,
                 JourneyOver = f.JourneyOver,
             };
@@ -888,6 +901,12 @@ namespace BloodRain.Core.Meta
         /// <summary>정신부를 썼다. 비전 판정용 Build.RunRecord.UseTalisman 과 따로 센다(둘 다 부른다).</summary>
         public void UseTalisman() => TalismansUsed++;
 
+        /// <summary>이번 생에 잡은 금두꺼비 수(영물은 빼고).</summary>
+        public int GoldenToads { get; private set; }
+
+        /// <summary>금두꺼비를 잡았다. 은자는 GainSilver 로 따로 받는다.</summary>
+        public void CatchGoldenToad() => GoldenToads++;
+
         /// <summary>조건은 갖췄는데 잠긴 비급(찢긴 비급 후보). 생이 끝날 때 장경각에 오른다.</summary>
         public IReadOnlyList<string> TornManuals => _torn;
 
@@ -901,6 +920,6 @@ namespace BloodRain.Core.Meta
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
             new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
-                BloodCrystal, Kills, Dashes, TalismansUsed);
+                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads);
     }
 }

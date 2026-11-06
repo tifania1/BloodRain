@@ -1949,7 +1949,7 @@ function killEnemy(e, crushed) {
     showDiscovery('奇緣', '靈物', e.beast, `${e.beast}을(를) 붙잡았다. 품에 영약 한 뿌리가 있다 — 오의가 가득 차고 음양이 가라앉는다. 혈정 +${(B.drops && B.drops.eliteBloodCrystal) || 0}.`);
     return;
   }
-  if (e.type === 'golden_toad') { const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
+  if (e.type === 'golden_toad') { G.toads = (G.toads || 0) + 1; const rw = E_BY_ID.golden_toad.reward; addSilver(rw.silver); if (rw.orbBurst) for (let i = 0; i < rw.orbs; i++) dropOrb(e.x + rand(-1.5, 1.5), e.y + rand(-1.5, 1.5), rw.orbXp); toast('금두꺼비', `은자 ${rw.silver}`); return; }
   if (e.elite && isPro()) cue('elite_kill:' + ELITES[e.eliteKey].id);
   if (e.lord) { lordDown(e); return; }   // 땅의 주인(WP-13e): 한 생은 이어진다
   if (e.splitOf) { const S = e.splitOf.split; if (S) { S.last = e; if (S.downT == null) S.downT = (e.splitOf.set.phase2.find(q => q.shape === 'split') || {}).rejoinSeconds || 4; } return; }   // 분열한 몸(WP-13e)
@@ -3815,7 +3815,7 @@ function lifeSettle() {
   // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
   const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3832,6 +3832,7 @@ function recordLife(st) {
     if (k.sect && !m.unlocked.includes(k.sect)) m.unlocked.push(k.sect);
   }
   m.talismans = (m.talismans || 0) + (st.talis || 0);   // 정신부 누적(Core Soul.TalismansUsedTotal)
+  m.toads = (m.toads || 0) + (st.toads || 0);   // 금두꺼비 누적(Core Soul.GoldenToadsTotal, WP-33)
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
   for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);
   m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
@@ -3894,8 +3895,10 @@ function rollTraits(rnd = Math.random) {
 const upgLevel = (m, id) => m.upg[id] || 0;
 function upgCost(m, u) { const lv = upgLevel(m, u.id); return lv >= u.maxLevel ? null : u.costPerLevel ? u.baseCost * (lv + 1) : u.baseCost; }
 function upgEffect(m, key) { let sum = 0; for (const u of RB.upgrades || []) { const x = /^([a-z]+)\+(\d+)$/.exec(u.effect); if (x && x[1] === key) sum += +x[2] * upgLevel(m, u.id); } return sum; }
+// 연무장 항목 최대 레벨: 금두꺼비 누적이 bonusMax 문턱 이상이면 더(10장 해금 표 '금두꺼비 누적 10마리 → 탐욕 최대 레벨 +2', Core Stats.TrainingMax, WP-33)
+const trainMax = (m, it) => it.maxLevel + (it.bonusMax && (m.toads || 0) >= it.bonusMax.goldenToadsTotal ? it.bonusMax.levels : 0);
 function trainCost(m, it) {
-  const lv = m.train[it.stat] || 0; if (lv >= it.maxLevel) return null;
+  const lv = m.train[it.stat] || 0; if (lv >= trainMax(m, it)) return null;
   const bought = Object.values(m.train).reduce((a, b) => a + Math.max(0, b), 0);
   return Math.round(it.baseCost * (lv + 1) * (1 + B.training.costGrowthPerBought * bought));
 }
@@ -3935,7 +3938,7 @@ function drawSects(m, rnd) {
 function lifeBody(sect, traits) {
   const m = innMeta(), stats = Object.assign({}, sect.stats || {});
   const add = (k, v) => { stats[k] = (stats[k] || 0) + v; };
-  for (const it of TRAIN_ITEMS) { const lv = Math.min(m.train[it.stat] || 0, it.maxLevel); if (lv > 0) add(it.stat, it.perLevel * lv); }
+  for (const it of TRAIN_ITEMS) { const lv = Math.min(m.train[it.stat] || 0, trainMax(m, it)); if (lv > 0) add(it.stat, it.perLevel * lv); }
   let qiBonus = 0, yy = sect.yinyangStart || 0;   // 음양 시작: 문파 + 음체·양체(Core Rebirth: sect.YinyangStart + 성질 합)
   for (const id of traits || []) { const t = TRAIT_BY[id]; if (!t) continue; for (const k in t.stats) add(k, t.stats[k]); qiBonus += t.rebirthQi || 0; yy += t.yinyangStart || 0; }
   return Object.assign({}, sect, { stats, traits: (traits || []).filter(id => TRAIT_BY[id]), qiBonus, yy });
@@ -4114,7 +4117,7 @@ function renderInn() {
   for (const it of TRAIN_ITEMS) {
     const lv = m.train[it.stat] || 0, cost = trainCost(m, it), b = document.createElement('button'); b.type = 'button';
     b.disabled = cost == null || m.qi < cost;
-    b.innerHTML = `<b>${STAT_KO[it.stat] || it.stat} ${lv}/${it.maxLevel}</b><span>${fmtStat(it.stat, it.perLevel).replace((STAT_KO[it.stat] || it.stat) + ' ', '')} · ${cost == null ? '다 찍음' : '기 ' + cost.toLocaleString()}</span>`;
+    b.innerHTML = `<b>${STAT_KO[it.stat] || it.stat} ${lv}/${trainMax(m, it)}</b><span>${fmtStat(it.stat, it.perLevel).replace((STAT_KO[it.stat] || it.stat) + ' ', '')} · ${cost == null ? '다 찍음' : '기 ' + cost.toLocaleString()}</span>`;
     b.onclick = () => innTrain(it.stat); tb.appendChild(b);
   }
   const rf = document.createElement('button'); rf.type = 'button'; rf.className = 'refund'; rf.disabled = !m.spent;

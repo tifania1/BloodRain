@@ -248,6 +248,15 @@ namespace BloodRain.Core.Data
         public float PerLevel;
         public int MaxLevel = 1;
         public int BaseCost;
+        /// <summary>해금으로 늘어나는 최대 레벨(기획서 10장 해금 표 '금두꺼비 누적 10마리 → 탐욕 최대 레벨 +2'). 없으면 null.</summary>
+        public TrainingBonusMaxDef? BonusMax;
+    }
+
+    /// <summary>모든 생에서 잡은 금두꺼비가 GoldenToadsTotal 마리 이상이면 그 항목 최대 레벨 + Levels.</summary>
+    public sealed class TrainingBonusMaxDef
+    {
+        public int GoldenToadsTotal;
+        public int Levels;
     }
 
     public sealed class TrainingDef

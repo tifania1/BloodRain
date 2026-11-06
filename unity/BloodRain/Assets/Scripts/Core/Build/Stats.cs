@@ -125,16 +125,20 @@ namespace BloodRain.Core.Build
         }
 
         /// <summary>연무장 레벨(stat 이름 → 산 레벨). 최대 레벨을 넘는 값은 최대로 자른다.</summary>
-        public static StatBonus FromTraining(TrainingDef training, IReadOnlyDictionary<string, int> levels)
+        public static StatBonus FromTraining(TrainingDef training, IReadOnlyDictionary<string, int> levels, int goldenToadsTotal = 0)
         {
             var b = new StatBonus();
             foreach (var item in training.Items)
             {
                 if (!levels.TryGetValue(item.Stat, out var lv) || lv <= 0) continue;
-                b.Add(Parse(item.Stat), item.PerLevel * Math.Min(lv, item.MaxLevel));
+                b.Add(Parse(item.Stat), item.PerLevel * Math.Min(lv, TrainingMax(item, goldenToadsTotal)));
             }
             return b;
         }
+
+        /// <summary>연무장 항목 최대 레벨. 금두꺼비 누적이 bonusMax 문턱 이상이면 그만큼 더(10장 해금 표).</summary>
+        public static int TrainingMax(TrainingItemDef item, int goldenToadsTotal = 0) =>
+            item.MaxLevel + (item.BonusMax != null && goldenToadsTotal >= item.BonusMax.GoldenToadsTotal ? item.BonusMax.Levels : 0);
 
         /// <summary>한 판 시작 능력치: 캐릭터 + 심법 + 연무장 (+ 깨달음·진전 같은 덧셈은 extra 로).</summary>
         public static StatSheet Compute(GameData data, CharacterDef character,
@@ -151,13 +155,13 @@ namespace BloodRain.Core.Build
         }
 
         /// <summary>연무장 다음 레벨 값. 기본가 x 다음 레벨 x (1 + 0.1 x 지금까지 산 총 레벨 수). 이미 최대면 null.</summary>
-        public static int? TrainingCost(TrainingDef training, string stat, IReadOnlyDictionary<string, int> levels)
+        public static int? TrainingCost(TrainingDef training, string stat, IReadOnlyDictionary<string, int> levels, int goldenToadsTotal = 0)
         {
             TrainingItemDef? item = null;
             foreach (var it in training.Items) if (it.Stat == stat) { item = it; break; }
             if (item == null) throw new InvalidOperationException($"연무장에 없는 항목입니다: {stat}");
             levels.TryGetValue(stat, out var current);
-            if (current >= item.MaxLevel) return null;
+            if (current >= TrainingMax(item, goldenToadsTotal)) return null;
             int bought = 0;
             foreach (var kv in levels) bought += Math.Max(0, kv.Value);
             double cost = item.BaseCost * (current + 1) * (1 + training.CostGrowthPerBought * bought);

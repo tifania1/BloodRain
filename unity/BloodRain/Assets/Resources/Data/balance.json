@@ -83,7 +83,7 @@
       { "stat": "Magnet",            "perLevel": 0.25,  "maxLevel": 2, "baseCost": 300 },
       { "stat": "Growth",            "perLevel": 0.03,  "maxLevel": 5, "baseCost": 900 },
       { "stat": "Luck",              "perLevel": 10,    "maxLevel": 3, "baseCost": 600 },
-      { "stat": "Greed",             "perLevel": 0.10,  "maxLevel": 5, "baseCost": 200 },
+      { "stat": "Greed",             "perLevel": 0.10,  "maxLevel": 5, "baseCost": 200, "bonusMax": { "goldenToadsTotal": 10, "levels": 2 } },
       { "stat": "UltimateCharge",    "perLevel": 0.05,  "maxLevel": 4, "baseCost": 400 },
       { "stat": "DashCharges",       "perLevel": 1,     "maxLevel": 1, "baseCost": 3000 },
       { "stat": "Revival",           "perLevel": 1,     "maxLevel": 1, "baseCost": 10000 },
