@@ -485,7 +485,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 새 혼은 침방·연무장만 열리고, 혈정 있는 혼은 약방 짓기 버튼이 켜져 지으면 열림
   - 찍기: `docs/unity_shots/RM-03b/` 의 `inn.png`
 
-- [ ] DL-04b 침방 대사·카드 글 · 먼저: LF-03
+- [x] DL-04b 침방 대사·카드 글 · 먼저: LF-03 — 2026-11-07 01:04 PC: ChimbangScreen.Open 이 `SoulStore.LoadDialogue()` 로 `InnDialogue.Bedroom(…, Draw, …)` 을 열어 `Open`·`Show` 줄을 목 노인 이름 아래 말풍선(기울인 한 줄)에, 다시 고르기는 `Talk.Reroll()`, 고르기는 `Talk.Pick` → `Talk.Chosen` → `Talk.Send()` 뒤 `SoulStore.SaveDialogue`. 카드 맨 위에 `Cards[i].Intro`(기울임)·`Body`(옅게), 키 `IntroKey`/`BodyKey`, 대사 키 `dialogue.bedroom.lines.<id>.text`. 시험 씬에서 첫 환혼 「네 몸은 다했다…」「오늘 밤 숨진 아이들이다…」, 다시 고르니 「마음에 안 드느냐…」와 카드 글이 바뀌고 여자 몸(개방·마교·수로채)은 「…꼬마 거지 계집아이」, 개방 고르니 「배곯던 몸이다…」. 콘솔 에러 0. 시험으로 생긴 dialogue.json 은 지움. 고른 뒤 바로 Run 으로 넘어가 고르기·보내기 줄은 화면에 오래 안 남음(연출은 나중). 카드 글이 길어 카드 아래가 넘칠 수 있음 — 눈으로 못 봐서 다음 차례에 스크린샷 확인. 찍음 `docs/unity_shots/DL-04b/` 의 `first_rebirth.png`·`female_card.png`
   - 할 것: 침방을 열 때 `var talk = InnDialogue.Bedroom(DataBoot.Data, soul.OpenRebirth(rng), progress, rng)` → `talk.Open()` → `talk.Show()` → 다시 고르기마다 `talk.Reroll()`(draw.Reroll 을 따로 부르지 않음) → 카드 `talk.Pick(i)` → 보낼 때 `talk.Send()`, 다음 판은 `talk.Chosen`. 돌려준 목 노인 줄을 말풍선에, 카드 소개·몸 묘사는 `talk.Cards[i].Intro`/`Body`(키 `IntroKey`/`BodyKey`).
   - 쓸 것: Core `Meta/InnDialogue.cs`, dialogue.json, LF-03 의 dialogue.json 저장
   - 메뉴: 침방 시험 씬 만들기(이미 있음)

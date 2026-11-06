@@ -82,6 +82,11 @@ namespace BloodRain.Presentation.Meta
                 : Loc.F("ui.chimbang.nth", soul.Lives + 1, CountWord(Draw.Count));
             _done = false;
             _soul = soul;
+            // DL-04b 목 노인 대사·카드 글: 후보·다시 고르기·고르기는 BedroomTalk 로(Draw 와 같은 것을 쓴다)
+            _progress = SoulStore.LoadDialogue();
+            Talk = InnDialogue.Bedroom(_data, Draw, _progress, rng);
+            Say(Talk.Open());
+            Say(Talk.Show(), true);
             _map.SetSoul(soul);
             BuildUpgrades(soul);
             Refresh();
@@ -123,7 +128,7 @@ namespace BloodRain.Presentation.Meta
         public void Reroll()
         {
             if (Draw == null || _done || Draw.RerollsLeft <= 0) return;
-            Draw.Reroll();
+            if (Talk != null) Say(Talk.Reroll()); else Draw.Reroll();
             Refresh();
         }
 
@@ -131,7 +136,15 @@ namespace BloodRain.Presentation.Meta
         {
             if (Draw == null || _done || index < 0 || index >= Draw.Candidates.Count) return;
             _done = true;
-            var body = Draw.Choose(index);
+            RebirthBody body;
+            if (Talk != null)
+            {
+                Say(Talk.Pick(index));
+                body = Talk.Chosen;
+                Say(Talk.Send(), true);
+                SoulStore.SaveDialogue(_progress);
+            }
+            else body = Draw.Choose(index);
             RebirthHandoff.Body = body;
             RebirthHandoff.Soul = _soul;
             Debug.Log($"[침방] {body.Sect?.NameKo} 제자로 환생 · {body.Region.NameKo}(혈운 {body.Region.Density:0.0}) · 성질 {string.Join(",", body.Traits.Select(t => t.NameKo))}");
@@ -183,6 +196,8 @@ namespace BloodRain.Presentation.Meta
             Place(_sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -125), new Vector2(1400, 40));
             // 목 노인 자리(그림이 오면 배경에 들어 있다). 지금은 이름만
             var elder = Text("목 노인", root, $"<alpha=#88>{Loc.T("ui.chimbang.elder")}<alpha=#FF>", 22, FontStyles.Italic);
+            _bubble = Text("목 노인 말", root, "", 24, FontStyles.Italic);
+            Place(_bubble.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -198), new Vector2(1500, 36));
             Place(elder.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -165), new Vector2(600, 32));
 
             _cards = Rect("후보 카드", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
@@ -236,13 +251,37 @@ namespace BloodRain.Presentation.Meta
             var key = Text("번호", rt, $"<alpha=#88>{index + 1}<alpha=#FF>", 24, FontStyles.Normal);
             Place(key.rectTransform, new Vector2(1f, 1f), new Vector2(-26, -26), new Vector2(40, 40));
 
-            var body = Text("내용", rt, CardBody(cand), 19, FontStyles.Normal);
+            var body = Text("내용", rt, CardIntro(index) + CardBody(cand), 19, FontStyles.Normal);
             body.alignment = TextAlignmentOptions.TopLeft;
             body.textWrappingMode = TextWrappingModes.Normal;
             body.lineSpacing = 6;
             var brt = body.rectTransform;
             brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, art != null ? 0.5f : 0.62f);
             brt.offsetMin = new Vector2(18, 16); brt.offsetMax = new Vector2(-18, -14);
+        }
+
+        BedroomTalk Talk;
+        DialogueProgress _progress;
+        TextMeshProUGUI _bubble;
+        /// <summary>시험용: 지금 목 노인 말풍선 글.</summary>
+        public string Bubble => _bubble != null ? _bubble.text : "";
+        /// <summary>시험용: 이번 침방의 대사·카드 글.</summary>
+        public BedroomTalk TalkNow => Talk;
+
+        // 목 노인 줄을 말풍선에(여러 줄이면 이어서). append 면 앞 줄 뒤에 붙이고, 빈 목록이면 그대로 둔다
+        void Say(IReadOnlyList<DialogueLineDef> lines, bool append = false)
+        {
+            if (_bubble == null || lines == null || lines.Count == 0) return;
+            var said = string.Join("  ", lines.Select(l => $"「{Loc.T($"dialogue.bedroom.lines.{l.Id}.text", l.TextKo)}」"));
+            _bubble.text = append && !string.IsNullOrEmpty(_bubble.text) ? _bubble.text + "  " + said : said;
+        }
+
+        // 카드 맨 위 소개·몸 묘사(BedroomTalk.Cards, 키 IntroKey/BodyKey)
+        string CardIntro(int index)
+        {
+            if (Talk == null || index >= Talk.Cards.Count) return "";
+            var c = Talk.Cards[index];
+            return $"<i>{Loc.T(c.IntroKey, c.Intro)}</i>\n<alpha=#99>{Loc.T(c.BodyKey, c.Body)}<alpha=#FF>\n";
         }
 
         string CardBody(RebirthCandidate cand)
