@@ -77,7 +77,7 @@ namespace BloodRain.Core.Tests
             // 정진·재기 기본 횟수는 0, 연무장·성질만큼(8장)
             Assert.Contains("G.skips = Math.max(0, Math.round(bodyStat('Skips')))", html);
             Assert.Contains("G.revivals = Math.max(0, Math.round(bodyStat('Revival')))", html);
-            Assert.Contains("p.hp = p.maxHp * 0.5", html);
+            Assert.Contains("p.hp = p.maxHp * B.revival.healthRatio", html);   // WP-42: balance.json revival
         }
     }
 }
