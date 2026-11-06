@@ -1681,8 +1681,9 @@ function lordBegin(r) {
   toast(name, (meet || `${r.nameKo}의 땅의 주인`) + ` · 기준 체력의 ${k.toFixed(2)}배(${Math.floor(G.gm)}분)`);
   sfx('boss');
   // 만남 컷(WP-56): 이번 회차에 이 땅의 주인을 처음 만날 때만(못 이기고 다시 만나면 컷 없이)
-  const metKey = `${G.soul0.cycle || 1}:${def.id}`, met = store.get('lordMet') || [];
-  if (!shadow && !met.includes(metKey) && lordCuts(def.id, 'meet')) { met.push(metKey); store.set('lordMet', met); }
+  // 만난 기록은 혼 기록 met(`회차:id`)에 — 정산이 혼을 새로 읽어 쓰니 판 중에 바로 새겨도 안 지워진다
+  const metKey = `${G.soul0.cycle || 1}:${def.id}`, sm = soulLoad(), met = Array.isArray(sm.met) ? sm.met : [];
+  if (!shadow && !met.includes(metKey) && lordCuts(def.id, 'meet')) { sm.met = met.concat(metKey); soulSave(sm); }
   return e;
 }
 // 종장 혈영 i 번째. 자리는 봉마곡 가운데(첫째) 또는 앞 혈영이 쓰러진 자리
