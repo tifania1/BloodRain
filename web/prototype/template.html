@@ -348,6 +348,14 @@ button { touch-action: manipulation; }
       <button class="b main" id="chestok" type="button">계속 <small>Enter</small></button>
     </div>
   </div>
+  <div class="screen veil" id="merchant" hidden>
+    <div class="panel">
+      <div class="brush" style="font-size:46px">보부상</div>
+      <p class="subtle" id="merchsilver"></p>
+      <div class="cards" id="merchlist"></div>
+      <button class="b main" id="merchok" type="button">떠난다 <small>Enter</small></button>
+    </div>
+  </div>
 
   <div class="screen veil" id="evopick" hidden>
     <div class="panel">
@@ -1116,11 +1124,12 @@ function makeEvents(mode) {
   // 서장: chapters.json prologue events 그대로(3:30 혈인 돌진, 5:00 강시 도부수, 9:00 장삼)
   if (mode === 'prologue') return PRO.events.map(e => e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', type: e.enemy } : { at: e.at, kind: e.kind, enemy: e.enemy });
   // 한 생 시험(WP-14b): chapters.json life events. 정예는 nth(서 있는 땅의 정예 표에서 몇 번째), 무리는 그 땅 고유 적.
-  // 떠돌이 상인은 프로토타입에 아직 없어 뺀다. 은빛 등롱은 window 안 무작위 시각에 chance(없으면 1)로 — 혈월 회차에만 놓는다(이벤트 쪽에서 G.moon 을 봄)
+  // 보부상은 openMerchant(WP-22). 은빛 등롱은 window 안 무작위 시각에 chance(없으면 1)로 — 혈월 회차에만 놓는다(이벤트 쪽에서 G.moon 을 봄)
   if (mode !== 'prologue' && curLifeSect() && SCALE_MODE && DATA.lifePlan) return DATA.lifePlan.events.map(e =>
     e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', nth: e.nth }
     : e.kind === 'toad' ? { at: rand(e.window[0], e.window[1]), kind: 'toad' } : e.kind === 'ring' ? { at: e.at, kind: 'ring', n: e.count }
     : e.kind === 'group' ? { at: e.at, kind: 'group', enemy: e.enemy, n: e.count, local: e.local }
+    : e.kind === 'merchant' ? { at: e.at, kind: 'merchant' }   // 보부상(WP-22)
     : e.kind === 'silver_lantern' ? (Math.random() < (e.chance ?? 1) ? { at: rand(e.window[0], e.window[1]), kind: 'silver_lantern' } : null) : null).filter(Boolean).sort((a, b) => a.at - b.at);
   // 옛 1장 시간대별 흐름(천하 구조 전 기획서 7장 표). 시각은 게임 분. 지금 흐름은 chapters.json life(기획서 7장 '한 생의 시간대별 흐름').
   return [
@@ -2554,6 +2563,7 @@ function runEvent(ev) {
     for (let i = 0; i < ev.n; i++) spawnEnemy(type, cx + rand(-2, 2), cy + rand(-2, 2));
     toast(E_BY_ID[type] ? E_BY_ID[type].nameKo + ' 무리' : '무리', '한 떼가 몰려온다');
   }
+  else if (ev.kind === 'merchant') openMerchant();
   else if (ev.kind === 'silver_lantern') {   // 은빛 등롱(7장): 혈월 천하에서만 놓는다(Core ManuscriptsHere — 1회차엔 놓지 않음). 화면 안 가까이
     if (G.moon) { const a = rand(0, TAU), R = diag * 0.28; G.lanterns.push({ x: p.x + Math.cos(a) * R, y: p.y + Math.sin(a) * R, silver: true }); toast('은빛 등롱', '부수면 의서가 나올지도 모른다'); }
   }
@@ -3325,8 +3335,39 @@ function drawAwakenName(A, px, py) {
   ctx.restore();
 }
 
+// 보부상(WP-22, 7장 '보부상'·balance.json merchant, Core MerchantVisit): 한 생 시간표 12·24분에 들러 싸움을 멈춘다.
+// 이번 생 은자로 산다(남은 은자는 절반만 윤회의 기). 한 번 들를 때 품목마다 maxPerVisit 개까지.
+// 회복약은 최대 기혈 × healFraction(마교 회복 배율은 곱함, Core PotionHeal), 다시 고르기 권은 이번 판 다시 고르기 +rerolls, 취기부는 등롱 취기부와 같이 진기 구슬을 끌어온다.
+const MER = B.merchant || { maxPerVisit: 0, items: [] };
+const MER_GLYPH = { potion: '藥', reroll_ticket: '券', chwigi_talisman: '符' };
+function merchantBuy(id) {
+  const it = MER.items.find(x => x.id === id), V = G.merch; if (!it || !V) return false;
+  if ((V[id] || 0) >= MER.maxPerVisit || G.silver < it.price) return false;
+  G.silver -= it.price; V[id] = (V[id] || 0) + 1; sfx('orb');
+  const p = G.player;
+  if (id === 'potion') p.hp = Math.min(p.maxHp, p.hp + p.maxHp * it.healFraction * healMul());
+  else if (id === 'reroll_ticket') G.rerolls += it.rerolls || 1;
+  else if (id === 'chwigi_talisman') for (const o of G.orbs) o.pull = true;
+  renderMerchant(); return true;
+}
+function renderMerchant() {
+  const list = $('merchlist'); list.innerHTML = '';
+  $('merchsilver').textContent = `가진 은자 ${G.silver}냥 · 남은 은자는 절반만 윤회의 기가 된다`;
+  MER.items.forEach((it, i) => {
+    const left = MER.maxPerVisit - (G.merch[it.id] || 0), b = document.createElement('button'); b.type = 'button'; b.className = 'card';
+    const desc = it.id === 'potion' ? `기혈 ${Math.round(it.healFraction * 100)}% 회복` : it.id === 'reroll_ticket' ? `이번 생 다시 고르기 +${it.rerolls || 1}` : '진기 구슬이 모두 끌려온다';
+    b.innerHTML = `<span class="ic">${MER_GLYPH[it.id] || '銀'}</span><span><h3>${it.nameKo} <small>${it.price}냥 · 남은 ${left} · ${i + 1}</small></h3><p>${desc}</p></span>`;
+    b.disabled = left <= 0 || G.silver < it.price; b.onclick = () => merchantBuy(it.id); list.appendChild(b);
+  });
+}
+function openMerchant() {
+  if (!G.body || !MER.items.length) return;
+  overlay = 'merchant'; overlayAt = performance.now(); G.merch = {};
+  toast('보부상', '은자로 살림을 산다'); renderMerchant();
+  $('merchant').hidden = false; focusFirst($('merchok'));
+}
 function closeOverlay(id, keepPaused) {
-  if (id === 'chest' && tooSoon()) return;
+  if ((id === 'chest' || id === 'merchant') && tooSoon()) return;
   $(id).hidden = true; overlay = null;
   if (!keepPaused) { lastTs = performance.now(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
 }
@@ -4722,6 +4763,7 @@ window.addEventListener('keydown', e => {
   if (overlay === 'ending') { if ((G.ending || G.trueCut === 'cut') && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); nextEndingCut(); } return; }
   if (overlay === 'profirst') { const n = parseInt(e.key, 10); if (n >= 1 && n <= DATA.firstRebirth.length) firstRebirth(DATA.firstRebirth[n - 1].id); return; }
   if (overlay === 'chest') { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); closeOverlay('chest'); } return; }
+  if (overlay === 'merchant') { if (e.code === 'Enter' || e.code === 'Escape') { e.preventDefault(); closeOverlay('merchant'); } else if (/^Digit[1-9]$/.test(e.code) && MER.items[+e.code.slice(5) - 1]) merchantBuy(MER.items[+e.code.slice(5) - 1].id); return; }
   if (G.awaken) return;
   // 8장 조작표: 일시정지 Esc / Tab(브라우저 포커스 이동은 막음). P 도 그대로 둔다
   if (e.code === 'Escape' || e.code === 'Tab' || e.code === 'KeyP') { if (e.code === 'Tab') e.preventDefault(); togglePause(); }
@@ -4762,6 +4804,7 @@ $('resume').addEventListener('click', () => togglePause(false));
 $('quit').addEventListener('click', toTitle);
 $('reroll').addEventListener('click', rerollOffers);
 $('skip').addEventListener('click', skipOffer);
+$('merchok').addEventListener('click', () => closeOverlay('merchant'));
 $('banish').addEventListener('click', toggleBanish);
 $('chestok').addEventListener('click', () => closeOverlay('chest'));
 $('startquick').addEventListener('click', () => startRun('quick'));
@@ -4844,7 +4887,7 @@ window.__hyeolu = {
         const sc = pickScore || score;
         let bi = 0; currentOffers.forEach((o, i) => { if (sc(o, G) + Math.random() * 0.5 > sc(currentOffers[bi], G) + Math.random() * 0.5) bi = i; });
         chooseOffer(bi);
-      } else if (overlay === 'brk') chooseInsight(0); else if (overlay === 'chest') closeOverlay('chest'); else if (overlay === 'find') closeOverlay('find'); else if (overlay === 'evopick') choosePick(0);
+      } else if (overlay === 'brk') chooseInsight(0); else if (overlay === 'chest') closeOverlay('chest'); else if (overlay === 'merchant') { if (G.player.hp < G.player.maxHp * 0.5) merchantBuy('potion'); closeOverlay('merchant'); } else if (overlay === 'find') closeOverlay('find'); else if (overlay === 'evopick') choosePick(0);
       if (G.ult >= 100) useUlt();
       const pl = G.player;
       if (pl.dashCharges > 0 && pl.dashT <= 0) {

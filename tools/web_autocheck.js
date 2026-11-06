@@ -88,7 +88,7 @@ async function liveCheck(p, label, ms, screens) {
 }
 async function shot(p, name) { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await p.page.screenshot({ path: path.join(SHOTS, name + '.png') }); } }
 
-const PROTO_SCREENS = ['title', 'levelup', 'brk', 'chest', 'find', 'evopick', 'pause', 'result', 'procut', 'profirst', 'inn', 'dex', 'ending'];
+const PROTO_SCREENS = ['title', 'levelup', 'brk', 'chest', 'merchant', 'find', 'evopick', 'pause', 'result', 'procut', 'profirst', 'inn', 'dex', 'ending'];
 const CH_SCREENS = ['title', 'rebirth', 'levelup', 'pause', 'dead'];
 
 async function prologueRuns(browser, base) {
@@ -102,7 +102,7 @@ async function prologueRuns(browser, base) {
     const freeUp = () => p.page.evaluate(() => {
       for (let k = 0; k < 40 && overlay; k++) {
         if (overlay === 'levelup') chooseOffer(0); else if (overlay === 'brk') chooseInsight(0);
-        else if (overlay === 'chest' || overlay === 'find') closeOverlay(overlay); else if (overlay === 'evopick') choosePick(0);
+        else if (overlay === 'chest' || overlay === 'merchant' || overlay === 'find') closeOverlay(overlay); else if (overlay === 'evopick') choosePick(0);
         else break;
       }
     });
