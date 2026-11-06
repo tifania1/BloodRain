@@ -140,9 +140,73 @@ namespace BloodRain.Presentation.Hud
             runner.enemies.Sim.QueryCircle(new float2(center.x, center.y), r, _near);
             if (freeze > 0f) runner.enemies.Freeze(_near, freeze);
             var field = runner.enemies;
+            if (StrikeShaped(runner, ult, dmg, center, cam)) return;
             LastHits = dmg <= 0f ? 0 : UltimateEffects.CheonseolBu == ult.Id
                 ? field.Damage(_near, dmg, center, 0f, a => UltimateEffects.Damages(ult, field.DefOf(a.Kind)?.Family ?? ""))
                 : field.Damage(_near, dmg, center, 0f);
+        }
+
+        // ── R-15U 문파 오의 모양(5장 오의 표, Core UltimateCast) ──
+        // 천뢰낙: 화면 안 무작위 strikes 곳에 낙뢰, 한 곳 반경 StrikeRadius 안 적에 한 방 + 감전(ShockSeconds 멈춤).
+        // 사자후: 몸 둘레 InRadius 안 적에 한 방 + 기절(StunSeconds). 만천화우: 박자마다 화면 전체에 한 방 + 중독(PoisonTickDamage / PoisonTickSeconds 초당).
+        // 팔방풍우·역류·태극무량 탄 되돌림은 아직(다음 차례). 감전·기절은 둘 다 EnemySim Stun 으로 멈춘다(천설부와 같은 틀).
+        readonly System.Random _rng = new System.Random();
+        readonly System.Collections.Generic.List<int> _picked = new System.Collections.Generic.List<int>();
+        /// <summary>시험용: 천뢰낙 마지막 낙뢰 자리(세계 좌표).</summary>
+        public Vector2[] LastStrikePoints { get; private set; }
+
+        bool StrikeShaped(LifeRunner runner, BloodRain.Core.Data.UltimateDef ult, float dmg, Vector2 center, Camera cam)
+        {
+            var cast = runner.Life.Ultimate;
+            if (cast == null || cast.Id != ult.Id) return false;
+            var field = runner.enemies;
+            float sc = BloodRain.Sim.WorldScale.Current != null ? BloodRain.Sim.WorldScale.Current.Length(1f) : 1f;
+            switch (ult.Id)
+            {
+                case "cheonroe_rak":
+                {
+                    float hh = cam.orthographicSize, hw = hh * cam.aspect;
+                    var pts = cast.StrikePoints(new System.Numerics.Vector2(center.x - hw, center.y - hh), new System.Numerics.Vector2(center.x + hw, center.y + hh), _rng);
+                    LastStrikePoints = new Vector2[pts.Length];
+                    int hits = 0;
+                    for (int k = 0; k < pts.Length; k++)
+                    {
+                        var at = new Vector2(pts[k].X, pts[k].Y);
+                        LastStrikePoints[k] = at;
+                        field.Sim.QueryCircle(new float2(at.x, at.y), cast.StrikeRadius(sc), _near);
+                        if (cast.ShockSeconds > 0f) field.Freeze(_near, cast.ShockSeconds);
+                        hits += field.Damage(_near, dmg, at, 0f);
+                    }
+                    LastHits = hits;
+                    return true;
+                }
+                case "saja_hu":
+                {
+                    var me = runner.player != null ? (Vector2)runner.player.position : center;
+                    field.Sim.QueryCircle(new float2(me.x, me.y), ult.Param("radius") * sc + 0.01f, _near);
+                    _picked.Clear();
+                    foreach (int i in _near)
+                    {
+                        if (i < 0 || i >= field.Sim.Count) continue;
+                        var a = field.Sim.Get(i);
+                        if (cast.InRadius(Vector2.Distance(me, new Vector2(a.Pos.x, a.Pos.y)), sc)) _picked.Add(i);
+                    }
+                    if (cast.StunSeconds > 0f) field.Freeze(_picked, cast.StunSeconds);
+                    LastHits = field.Damage(_picked, dmg, me, 0f);
+                    return true;
+                }
+                case "mancheon_hwau":
+                {
+                    if (cast.Poisons && cast.PoisonTickSeconds > 0f)
+                    {
+                        float might = runner.Stats != null ? runner.Stats.Might : 1f;
+                        field.Poison(_near, cast.PoisonSeconds, cast.PoisonTickDamage(might) / cast.PoisonTickSeconds);
+                    }
+                    LastHits = field.Damage(_near, dmg, center, 0f);
+                    return true;
+                }
+            }
+            return false;
         }
 
         static Texture2D Disc(int n)

@@ -183,6 +183,27 @@ namespace BloodRain.Presentation
         }
         /// <summary>시험용: 천설부로 멈춘 적 수(누적).</summary>
         public int FrozenCount { get; private set; }
+
+        /// <summary>R-15U 만천화우: 이 자리 번호의 적을 seconds 초 중독(초당 dps 지속 피해, 독 번짐과 같은 틀). 더 길고 센 쪽이 남는다.</summary>
+        public int Poison(List<int> indices, float seconds, float dps)
+        {
+            if (seconds <= 0f) return 0;
+            int n = 0;
+            foreach (int i in indices)
+            {
+                if (i < 0 || i >= _sim.Count) continue;
+                var a = _sim.Get(i);
+                if (a.Health <= 0f) continue;
+                _status.TryGetValue(a.Id, out var st);
+                if (st.Poison <= 0f) PoisonedCount++;
+                st.Poison = Mathf.Max(st.Poison, seconds);
+                st.DotLeft = Mathf.Max(st.DotLeft, seconds);
+                st.DotDps = Mathf.Max(st.DotDps, dps);
+                _status[a.Id] = st;
+                n++;
+            }
+            return n;
+        }
         bool PoisonImmune => sectTrait.PoisonImmune;
         /// <summary>치명타가 난 적 자리(화산 3 꽃잎). Damage 가 끝난 뒤 부른다.</summary>
         public event System.Action<Vector2> Crit;
