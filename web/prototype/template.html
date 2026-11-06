@@ -641,8 +641,15 @@ const DEX_TOTAL = SYN.links.length + SYN.schools.length + SYN.secrets.length + S
 const dex = new Set(store.get('dex') || []);
 function discover(key) { if (dex.has(key)) return false; dex.add(key); store.set('dex', [...dex]); return true; }
 function newSyn() { return { links: new Set(), tier: {}, counts: {}, bonus: {}, secrets: new Set(), yeok: 0, swordN: 0, needleT: 0 }; }
-// 프로토타입은 맛보기라 두 기연이 매판 나온다(기획서의 확률은 synergies.json chance)
-function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 } }; }
+// 1장 판은 맛보기라 두 기연이 매판 나온다. 한 생 판은 Core EncounterRoller 처럼 사건마다 판에 한 번 굴린다(WP-27):
+//   확률 = chance + 기연 능력치 × luck.chancePerLuck(0~1로 자름), 나올 수 없는 형편(chapters·minMinute·needsChapterSchool)이면 굴리지 않고 1분 뒤 다시
+const ENC_BY = Object.fromEntries(SYN.encounters.map(e => [e.id, e]));
+function encCanAppear(e, c) { return !(e.chapters && (!c.chapter || !e.chapters.includes(c.chapter))) && c.minute >= (e.minMinute || 0) && !(e.needsChapterSchool && !c.school); }
+function encChance(e, c) { return encCanAppear(e, c) ? Math.max(0, Math.min(1, e.chance + c.luck * SYN.luck.chancePerLuck)) : 0; }
+function encCtx() { const r = CH_REGS.find(x => x.id === G.chRegion); return { chapter: r ? r.chapter : null, school: r && r.sect && SCHOOL_BY[r.sect] ? r.sect : null, minute: G.gm, luck: G.stats.luck || 0 }; }
+// 고수의 유해가 진전을 하나 더 주는 문파: 한 생 판은 그 땅 문파, 1장 판은 소림
+const SCHOOL_BY = Object.fromEntries(SYN.schools.map(sc => [sc.id, sc]));
+function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약은 한 생 판만(WP-28)
 const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n;
 const link = id => !!G && !!G.syn && G.syn.links.has(id);
 const lvOf = id => { const w = G.weapons.find(x => x.id === id); if (w) return w.evolved ? 8 : w.lv; const q = G.passives.find(x => x.id === id); return q ? q.lv : 0; };
@@ -718,32 +725,47 @@ function synTick(dt) {
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
-  for (const key of ['relic', 'hermit']) {
-    const ev = G.enc[key]; if (ev.done) continue;
+  for (const key of ['relic', 'hermit', 'elixir']) {
+    const ev = G.enc[key]; if (ev.done || (key === 'elixir' && !G.body)) continue;
     if (!ev.on) {
+      if (G.gm >= ev.at && !overlay && G.body && !ev.rolled) {   // 한 생 판: 나올 때가 되면 한 번 굴린다
+        const c = encCtx(), e = ENC_BY[key];
+        if (!encCanAppear(e, c)) { ev.at = G.gm + 1; continue; }
+        ev.rolled = true;
+        if (!(Math.random() < encChance(e, c))) { ev.done = true; continue; }
+        if (key === 'relic') ev.school = c.school;
+      }
       if (G.gm >= ev.at && !overlay) {
-        const a = rand(0, TAU), R = key === 'hermit' ? 11 : 9; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
-        toast('기연의 기척', key === 'hermit' ? '어디선가 바둑돌 놓는 소리가 들린다' : '쓰러진 승려 하나가 눈에 띈다');
+        const a = rand(0, TAU), R = key === 'hermit' ? 11 : key === 'elixir' ? 10 : 9; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
+        const sc0 = SCHOOL_BY[ev.school || 'shaolin'];
+        toast('기연의 기척', key === 'hermit' ? '어디선가 바둑돌 놓는 소리가 들린다' : key === 'elixir' ? '바위 틈에서 은은한 빛이 샌다' : sc0.id === 'shaolin' ? '쓰러진 승려 하나가 눈에 띈다' : `쓰러진 ${sc0.nameKo} 무인 하나가 눈에 띈다`);
       }
       continue;
     }
     const d = Math.hypot(p.x - ev.x, p.y - ev.y);
     if (key === 'hermit') {
       if (d < 1.7) ev.prog += dt; else ev.prog = Math.max(0, ev.prog - dt * 0.5);
-      if (ev.prog >= 5 && !overlay) { ev.done = true; discover('enc:hermit'); showInsightChoice('은거기인', '노인이 바둑돌 하나를 내려놓으며 한 수 일러 준다', '기연'); }
+      if (ev.prog >= 6 && !overlay) { ev.done = true; ev.met = true; discover('enc:hermit'); showInsightChoice('은거기인', '노인이 바둑돌 하나를 내려놓으며 한 수 일러 준다', '기연'); }
+    } else if (key === 'elixir') {
+      // 영약(20장): 줍는다 — 오의 게이지 가득, 음양 0
+      if (d < 1.3 && !overlay) {
+        ev.done = true; discover('enc:elixir'); G.ult = B.ultimateCharge.max; G.yy = 0;
+        showDiscovery('奇緣', '靈藥', '영약', '바위 틈의 천년하수오를 삼켰다. 오의가 가득 차고 음양이 가라앉는다.');
+      }
     } else {
       if (d < 1.3 && !p.moving) ev.prog += dt; else ev.prog = Math.max(0, ev.prog - dt);
       if (ev.prog >= 1 && !overlay) {
-        ev.done = true; discover('enc:relic'); S.bonus.shaolin = (S.bonus.shaolin || 0) + 1; recomputeStats(); renderSlots();
-        showDiscovery('奇緣', '少林', '고수의 유해', '쓰러진 소림 승려에게 예를 갖추었다. 이번 판 동안 소림 진전을 하나 더 가진 것으로 친다.');
+        const sc = SCHOOL_BY[ev.school || 'shaolin'];
+        ev.done = true; discover('enc:relic'); S.bonus[sc.id] = (S.bonus[sc.id] || 0) + 1; recomputeStats(); renderSlots();
+        showDiscovery('奇緣', sc.hanja, '고수의 유해', `쓰러진 ${sc.nameKo} ${sc.id === 'shaolin' ? '승려' : '고수'}에게 예를 갖추었다. 이번 판 동안 ${sc.nameKo} 진전을 하나 더 가진 것으로 친다.`);
       }
     }
   }
 }
 function drawEncounters() {
-  for (const key of ['relic', 'hermit']) {
-    const ev = G.enc[key]; if (!ev.on || ev.done) continue;
-    const x = wx(ev.x), y = wy(ev.y), s = PPM, ring = (key === 'hermit' ? 1.7 : 1.3) * s, need = key === 'hermit' ? 5 : 1;
+  for (const key of ['relic', 'hermit', 'elixir']) {
+    const ev = G.enc[key]; if (!ev || !ev.on || ev.done) continue;
+    const x = wx(ev.x), y = wy(ev.y), s = PPM, ring = (key === 'hermit' ? 1.7 : 1.3) * s, need = key === 'hermit' ? 6 : 1;
     ctx.save();
     ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(26,26,26,0.4)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, ring, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     if (ev.prog > 0) { ctx.strokeStyle = '#C9A227'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, ring, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, ev.prog / need)); ctx.stroke(); }
@@ -760,6 +782,13 @@ function drawEncounters() {
       ctx.fillStyle = '#8A8478'; ctx.beginPath(); ctx.ellipse(x - 0.8 * s, y + 0.05 * s, 0.32 * s, 0.4 * s, 0, 0, TAU); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#E5D3B8'; ctx.beginPath(); ctx.arc(x - 0.8 * s, y - 0.45 * s, 0.17 * s, 0, TAU); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#F3EAD7'; ctx.beginPath(); ctx.moveTo(x - 0.9 * s, y - 0.38 * s); ctx.lineTo(x - 0.7 * s, y - 0.38 * s); ctx.lineTo(x - 0.8 * s, y - 0.08 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
+    } else if (key === 'elixir') {   // 바위 틈 빛나는 덩굴(그림 전 자리 표시)
+      const g = 0.55 + 0.25 * Math.sin(G.t * 4);
+      ctx.fillStyle = `rgba(201,162,39,${(0.25 * g).toFixed(3)})`; ctx.beginPath(); ctx.arc(x, y, 0.9 * s, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#8A8478'; ctx.beginPath(); ctx.ellipse(x - 0.35 * s, y + 0.2 * s, 0.45 * s, 0.3 * s, 0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(x + 0.35 * s, y + 0.25 * s, 0.4 * s, 0.26 * s, -0.2, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#4E6B3A'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y + 0.15 * s); ctx.quadraticCurveTo(x - 0.25 * s, y - 0.3 * s, x + 0.05 * s, y - 0.6 * s); ctx.stroke();
+      ctx.fillStyle = '#C9A227'; ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x + 0.05 * s, y - 0.62 * s, 0.13 * s, 0, TAU); ctx.fill(); ctx.stroke();
     } else {
       ctx.fillStyle = '#B8662A'; ctx.beginPath(); ctx.ellipse(x, y, 0.65 * s, 0.24 * s, 0.15, 0, TAU); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#E5D3B8'; ctx.beginPath(); ctx.arc(x + 0.72 * s, y + 0.1 * s, 0.17 * s, 0, TAU); ctx.fill(); ctx.stroke();
@@ -3701,7 +3730,7 @@ function lifeSettle() {
   // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
   const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.done) };
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3720,8 +3749,8 @@ function recordLife(st) {
   m.talismans = (m.talismans || 0) + (st.talis || 0);   // 정신부 누적(Core Soul.TalismansUsedTotal)
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
   for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);
-  m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);
-  m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
+  m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
+  m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)
   // 종장을 깬 생(Core Soul.EndLife 'sealed' → ChooseEnding): 문파별 종장 수, 본 엔딩, 엔딩 효과. 봉인은 회귀 — cycle.resets(봉인석)만 지우고 회차 +1
   if (st.finalClear && st.ending) {
     m.finalClears = m.finalClears && typeof m.finalClears === 'object' ? m.finalClears : {};
