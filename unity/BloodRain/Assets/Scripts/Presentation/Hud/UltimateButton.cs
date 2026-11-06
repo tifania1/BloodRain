@@ -125,17 +125,24 @@ namespace BloodRain.Presentation.Hud
             var life = runner.Life;
             var data = DataBoot.Data;
             float might = runner.Stats != null ? runner.Stats.Might : 1f;
+            var ult = Ultimates.Of(data, life.Body.Character);
             float dmg = Ultimates.HitDamage(data, life.Body.Character, life.Loadout, might, life.UltimatePowerMultiplier);
+            // R4-10U 천설부: 화면 안 적 전부를 FreezeSeconds 멈추고, 한 방은 강시 계열에만(UltimateEffects.HitDamageOn)
+            float freeze = UltimateEffects.FreezeSeconds(ult);
             LastDamage = dmg;
             _slashT = 0f;
-            if (dmg <= 0f || runner.enemies == null || runner.enemies.Sim == null) { LastHits = 0; return; }
+            if ((dmg <= 0f && freeze <= 0f) || runner.enemies == null || runner.enemies.Sim == null) { LastHits = 0; return; }
             var cam = Camera.main;
             if (cam == null) return;
             // 화면 안(카메라 사각형을 덮는 원) 적 전부
             var center = (Vector2)cam.transform.position;
             float r = cam.orthographicSize * Mathf.Sqrt(1f + cam.aspect * cam.aspect);
             runner.enemies.Sim.QueryCircle(new float2(center.x, center.y), r, _near);
-            LastHits = runner.enemies.Damage(_near, dmg, center, 0f);
+            if (freeze > 0f) runner.enemies.Freeze(_near, freeze);
+            var field = runner.enemies;
+            LastHits = dmg <= 0f ? 0 : UltimateEffects.CheonseolBu == ult.Id
+                ? field.Damage(_near, dmg, center, 0f, a => UltimateEffects.Damages(ult, field.DefOf(a.Kind)?.Family ?? ""))
+                : field.Damage(_near, dmg, center, 0f);
         }
 
         static Texture2D Disc(int n)

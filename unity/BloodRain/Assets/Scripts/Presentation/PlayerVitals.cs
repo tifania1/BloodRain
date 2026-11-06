@@ -128,6 +128,23 @@ namespace BloodRain.Presentation
             _iframe = hitIframes;
         }
 
+        /// <summary>R4-10U 천마해체 기혈 소모. 호신·회피·무적을 거치지 않고 그대로 뺀다(5장: 바닥까지 깎을 수 있다). 실제로 뺀 양.</summary>
+        public float Drain(float amount)
+        {
+            if (amount <= 0f || Health <= 0f) return 0f;
+            float before = Health;
+            Health = Mathf.Max(0f, Health - amount);
+            Drained += before - Health;
+            if (Health <= 0f)
+            {
+                Died?.Invoke();
+                if (refillOnDeath) Health = MaxHealth;
+            }
+            return before - Health;
+        }
+        /// <summary>시험용: Drain 으로 뺀 기혈 합.</summary>
+        public float Drained { get; private set; }
+
         /// <summary>기혈을 채운다(최대를 넘지 않음). 실제로 찬 양.</summary>
         public float Heal(float amount)
         {

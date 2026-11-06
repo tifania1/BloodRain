@@ -366,6 +366,7 @@ namespace BloodRain.Presentation
             var second = _life.Tick(dt, pos, alive);
             if (second != null) SpawnSecond(second);
             TickInsights(dt);
+            TickDissolution(dt);
             _statTimer -= Time.unscaledDeltaTime;
             if (_statTimer <= 0f) { _statTimer = 0.25f; ApplyStats(); }
             // C-08b 역류 중 걸음 x0.5(매 프레임, 능력치 걸음에 곱함)
@@ -373,6 +374,61 @@ namespace BloodRain.Presentation
             // 비전 '역천'(세 번 연달아 끊기)을 얻으면 그 생 동안 역류가 다시 오지 않는다
             if (!_life.Backlash.Immune && _secrets != null && _secrets.Found.Any(s => s.Id == "yeokcheon")) _life.Backlash.Immune = true;
             if (breakthrough == null || !breakthrough.IsPlaying) SyncScale();
+        }
+
+        // ── R4-10U 천마해체(마교 몸 오의) ──
+        // life.UseUltimate() 가 켠 Dissolution 이 켜져 있는 동안: 내는 피해 x DamageMultiplier(EnemyField.outgoingMultiplier),
+        // 기혈 HealthCostPerSecond(최대 기혈) x 세상 dt 소모, 맞힌 피해만큼 UltimateEffects.LifestealHeal(능력치 흡혈 + LifestealBonus, 마도 진전 배율).
+        // 마교 '회복 -50%' 는 vitals.Heal 이 healingMultiplier 로 곱하니 여기선 1 을 넘긴다. 몸에 붉은 기운(남은 초만큼 짙음).
+        float _dealtSeen;
+        SpriteRenderer _demonAura;
+        /// <summary>시험용: 천마해체 흡혈로 찬 기혈 합.</summary>
+        public float DissolutionHealed { get; private set; }
+
+        void TickDissolution(float dt)
+        {
+            var dis = _life.Dissolution;
+            bool on = dis != null && dis.IsActive;
+            if (enemies != null)
+            {
+                enemies.outgoingMultiplier = dis != null ? dis.DamageMultiplier : 1f;
+                float dealt = enemies.Dealt - _dealtSeen;
+                _dealtSeen = enemies.Dealt;
+                if (on && vitals != null && dealt > 0f)
+                {
+                    float ls = (Stats != null ? Stats.Bonus[BloodRain.Core.Build.StatKind.Lifesteal] : 0f) + dis.LifestealBonus;
+                    DissolutionHealed += vitals.Heal(BloodRain.Core.Combat.UltimateEffects.LifestealHeal(dealt, ls, Effects.LifestealMultiplier, 1f));
+                }
+            }
+            if (on && vitals != null && dt > 0f) vitals.Drain(dis.HealthCostPerSecond(vitals.MaxHealth) * dt);
+
+            if (!on) { if (_demonAura != null && _demonAura.enabled) _demonAura.enabled = false; return; }
+            if (_demonAura == null && player != null)
+            {
+                const int N = 64;
+                var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { name = "천마해체 기운", wrapMode = TextureWrapMode.Clamp };
+                var px = new Color32[N * N];
+                for (int y = 0; y < N; y++)
+                    for (int x = 0; x < N; x++)
+                    {
+                        float d = new Vector2(x + 0.5f - N / 2f, y + 0.5f - N / 2f).magnitude / (N / 2f);
+                        px[y * N + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(1f - d) * Mathf.Clamp01(1f - d) * 255));
+                    }
+                tex.SetPixels32(px);
+                tex.Apply();
+                var go = new GameObject("천마해체 기운");
+                go.transform.SetParent(player, false);
+                _demonAura = go.AddComponent<SpriteRenderer>();
+                _demonAura.sprite = Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), N);
+                _demonAura.sortingOrder = 4;
+            }
+            if (_demonAura == null) return;
+            _demonAura.enabled = true;
+            float left = Mathf.Clamp01(dis.SecondsLeft / 8f);
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 9f);
+            _demonAura.color = new Color(0.75f, 0.05f, 0.05f, (0.35f + 0.25f * pulse) * (0.4f + 0.6f * left));
+            float size = (WorldScale.Current != null ? WorldScale.Current.Length(2.4f) : 2.4f) * (1f + 0.08f * pulse);
+            _demonAura.transform.localScale = Vector3.one * size;
         }
 
         System.Random _spawnRng = new System.Random();

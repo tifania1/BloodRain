@@ -124,6 +124,7 @@ namespace BloodRain.Presentation
                 float dd = kindDef != null ? dmg * effects.EnemyDamageMultiplier(kindDef) : dmg;
                 _status.TryGetValue(a.Id, out var st);
                 if (st.Poison > 0f) dd *= poisonedTargetMultiplier; // R-04Ua 당가 만독불침
+                dd *= outgoingMultiplier; // R4-10U 천마해체 피해 x2
                 if (critChance > 0f && _rng.NextDouble() < critChance)
                 {
                     dd *= critMul;
@@ -131,6 +132,7 @@ namespace BloodRain.Presentation
                     _critAt.Add(new Vector2(a.Pos.x, a.Pos.y));
                 }
                 a.Health -= dd;
+                Dealt += dd;
                 if (poisonSeconds > 0f) { if (st.Poison <= 0f) PoisonedCount++; st.Poison = Mathf.Max(st.Poison, poisonSeconds); _status[a.Id] = st; }
                 if (knock > 0f)
                 {
@@ -158,6 +160,29 @@ namespace BloodRain.Presentation
         [System.NonSerialized] public float poisonedTargetMultiplier = 1f;
         /// <summary>R-04Ub 몸의 문파 고유 능력. 당가면 독 장판·독인 안개·독 탄 피해 0, 곤륜이면 가까운 적 걸음 x0.9. LifeRunner 가 넣는다.</summary>
         [System.NonSerialized] public BloodRain.Core.Build.SectTrait sectTrait = BloodRain.Core.Build.SectTrait.None;
+        /// <summary>R4-10U 플레이어가 내는 모든 피해(한 방·지속 피해)에 곱한다. 천마해체가 켜져 있으면 DemonDissolution.DamageMultiplier. LifeRunner 가 매 프레임 넣는다.</summary>
+        [System.NonSerialized] public float outgoingMultiplier = 1f;
+        /// <summary>지금까지 Damage·지속 피해로 적에게 넣은 피해 합(넘친 몫 포함). LifeRunner 가 프레임마다 늘어난 만큼 흡혈로 쓴다.</summary>
+        public float Dealt { get; private set; }
+
+        /// <summary>R4-10U 천설부: 이 자리 번호의 적을 seconds 초 멈춘다(걷기·쏘기 멈춤, EnemySim Stun). 이미 더 길게 멈춰 있으면 그대로.</summary>
+        public int Freeze(List<int> indices, float seconds)
+        {
+            if (seconds <= 0f) return 0;
+            int n = 0;
+            foreach (int i in indices)
+            {
+                if (i < 0 || i >= _sim.Count) continue;
+                var a = _sim.Get(i);
+                if (a.Health <= 0f) continue;
+                if (a.Stun < seconds) { a.Stun = seconds; _sim.Set(i, a); }
+                n++;
+            }
+            FrozenCount += n;
+            return n;
+        }
+        /// <summary>시험용: 천설부로 멈춘 적 수(누적).</summary>
+        public int FrozenCount { get; private set; }
         bool PoisonImmune => sectTrait.PoisonImmune;
         /// <summary>치명타가 난 적 자리(화산 3 꽃잎). Damage 가 끝난 뒤 부른다.</summary>
         public event System.Action<Vector2> Crit;
@@ -220,9 +245,9 @@ namespace BloodRain.Presentation
                     if (st.DotTick <= 0f)
                     {
                         st.DotTick += tick;
-                        float d = st.DotDps * tick * (st.Poison > 0f ? poisonedTargetMultiplier : 1f);
+                        float d = st.DotDps * tick * (st.Poison > 0f ? poisonedTargetMultiplier : 1f) * outgoingMultiplier;
                         a.Health -= d;
-                        DotDealt += d;
+                        DotDealt += d; Dealt += d;
                         _sim.Set(i, a);
                         if (a.Health <= 0f) _dead.Add(i);
                     }
