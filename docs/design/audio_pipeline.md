@@ -35,7 +35,7 @@
 5. **뽑기.** 도구 메뉴에서 '음악 만들기'를 켜고, `length` 가 `full` 이면 모델을 Pro(또는 Thinking)로, `short` 면 Fast 로 고른다. 문구는 `{STYLE}` 을 `audio_queue/STYLE.txt` 내용으로 바꿔 그대로 넣고, 연주곡(가사 없음)으로 해 달라는 말을 한 줄 덧붙인다. 다 만들어질 때까지 기다린다.
 6. **받기.** 곡의 다운로드 버튼에서 **MP3**(MP4 영상 말고)를 받는다. 받은 파일은 PC 다운로드 폴더에 떨어지니 PowerShell 로 `art_inbox/audio/<id>.mp3`(`save_as`)로 옮기고 그 줄을 `generated` 로 바꾼다.
 7. **기계 검수.** `ffprobe -v error -show_entries format=duration -of csv=p=0 <파일>` 로 길이를 본다. `full` 인데 90초 아래, `short` 인데 20초 아래면 다시 뽑는다(`tries` 를 1 올리고 `todo`). 가사나 말소리가 들어간 것은 기계로 못 거르니 사람 검수에 맡긴다.
-8. **올리기.** 큐만 바뀌므로 `dotnet test` 뒤 커밋·푸시한다. daily 에 몇 곡 뽑았는지 한 줄.
+8. **올리기.** 큐만 바뀌므로 `dotnet test` 뒤 커밋·푸시한다. daily 에 몇 곡 뽑았는지 한 줄. 커밋 메시지는 UTF-8 로 저장한 파일을 `git commit -F <파일>` 로 넘긴다 — 2026-11-07 01:47 세션 커밋(1237296)이 Windows 셸에서 `-m` 한글이 cp949 로 읽혀 메시지가 깨졌다(파일 내용은 멀쩡).
 9. **사람 검수(귀).** 사람이 PC 에서 `art_inbox/audio/` 를 듣고 `docs/feedback.md` 에 "bgm_… 고름 / bgm_… 다시: 이유" 로 적는다. 다음 세션이 고른 줄을 `picked`, 다시인 줄은 `rejected` + `reason`(문구를 고쳐 `todo` 로 되돌리고 `note` 에 무엇을 고쳤는지)로 바꾼다. 3번 떨어지면 그대로 두고 daily '아침에 확인할 것'에 올린다.
 10. **반영.** `picked` 가 생기면 PC 작업 폴더에서 `python tools/postprocess_audio.py --inbox E:/Unity/BloodRain/art_inbox` 를 돌려 ogg 와 `bgm.json` 을 올린다(아래 '다듬기').
 

@@ -72,7 +72,7 @@
    - 모양이 무엇인지 안 읽힌다.
    - 그림체가 수묵과 동떨어졌다.
    - 그어짐 방향이 이상하다.
-8. **올리기.** 원화는 Unity 가 meta 를 만든 뒤 `python tools/fix_art_meta.py` 로 Sprite 설정을 맞춘다(B-12, 안 하면 `ArtMetaTests` 가 막는다). `dotnet test` 가 통과하면 커밋·푸시한다. daily 에는 몇 장 뽑았고 몇 장 떨어졌는지를 한 줄로 적는다.
+8. **올리기.** 원화는 Unity 가 meta 를 만든 뒤 `python tools/fix_art_meta.py` 로 Sprite 설정을 맞춘다(B-12, 안 하면 `ArtMetaTests` 가 막는다). `dotnet test` 가 통과하면 커밋·푸시한다. daily 에는 몇 장 뽑았고 몇 장 떨어졌는지를 한 줄로 적는다. 커밋 메시지는 UTF-8 로 저장한 파일을 `git commit -F <파일>` 로 넘긴다 — 2026-11-07 01:47 세션 커밋(1237296)이 Windows 셸에서 `-m` 한글이 cp949 로 읽혀 메시지가 깨졌다(파일 내용은 멀쩡).
 
 ## 적용 (Unity)
 
