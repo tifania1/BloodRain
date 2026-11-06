@@ -1999,8 +1999,8 @@ function hurtPlayer(dmg, src) {
   if (p.hp <= 0) {
     // 서장: 장삼전에서 바닥나면 쓰러지지 않고 고정 각성, 각성 뒤에는 쓰러지지 않는다(기혈 1). 장삼 전이면 처음부터(endRun)
     if (isPro() && G.bossSpawned) { p.hp = 1; prologueAwaken('player'); return; }
-    // 재기(8장, 연무장 Revival): 남았으면 기혈 50%로 일어난다. '주변 적 밀쳐내기'는 세기 숫자가 없어 아직 뺌(decisions #35)
-    if (G.body && G.revivals > 0) { G.revivals--; p.hp = p.maxHp * 0.5; p.iframe = Math.max(p.iframe, HIT_IFRAMES); addEffect('ring', p.x, p.y, { r: 2.5, color: '#C9A227', life: 0.6 }); toast('재기', `기혈 50%로 일어났다 · 남은 ${G.revivals}회`); return; }
+    // 재기(8장, 연무장 Revival): 남았으면 기혈 50%(balance.json revival.healthRatio, Core Life.TryRevive)로 일어난다. '주변 적 밀쳐내기'는 세기 숫자가 없어 아직 뺌(decisions #35)
+    if (G.body && G.revivals > 0) { G.revivals--; p.hp = p.maxHp * B.revival.healthRatio; p.iframe = Math.max(p.iframe, HIT_IFRAMES); addEffect('ring', p.x, p.y, { r: 2.5, color: '#C9A227', life: 0.6 }); toast('재기', `기혈 50%로 일어났다 · 남은 ${G.revivals}회`); return; }
     p.hp = 0; endRun(false);
   }
 }

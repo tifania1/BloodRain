@@ -297,6 +297,19 @@ namespace BloodRain.Core.Run
             return s;
         }
 
+        /// <summary>이번 생에 쓴 재기 횟수.</summary>
+        public int RevivalsUsed { get; private set; }
+
+        /// <summary>한 생(서장 아님)에서 기혈이 0이 됐다. 재기(stats.Revival — 연무장·영약)가 남았으면 하나 쓰고
+        /// 일어날 기혈 비율(balance.json revival.healthRatio, 8장 '기혈 50%')을 돌려준다. 남지 않았으면 null — End(fallen) 로 정산.</summary>
+        public float? TryRevive(StatSheet stats)
+        {
+            if (IsPrologue) throw new InvalidOperationException("서장은 PlayerDown 을 씁니다");
+            if (RevivalsUsed >= stats.Revival) return null;
+            RevivalsUsed++;
+            return _data.Balance.Revival.HealthRatio;
+        }
+
         /// <summary>서장: 진소운의 기혈이 0이 됐다. Awaken 이면 고정 각성이 이미 시작됐고 기혈은 1로 남긴다.
         /// Restart 면 RestartPrologue 로 처음부터.</summary>
         public PrologueDown PlayerDown()

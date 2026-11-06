@@ -372,10 +372,17 @@ namespace BloodRain.Core.Data
         public float KnockbackKeepPerSecond = 0.02f;
     }
 
+    /// <summary>재기(기획서 8장): 기혈 0 에서 남은 횟수가 있으면 최대 기혈 × HealthRatio 로 일어난다.</summary>
+    public sealed class RevivalDef
+    {
+        public float HealthRatio = 0.5f;
+    }
+
     public sealed class BalanceDef
     {
         public EnemyStatusDef EnemyStatus = new EnemyStatusDef();
         public DropsDef Drops = new DropsDef();
+        public RevivalDef Revival = new RevivalDef();
         public MerchantDef Merchant = new MerchantDef();
         public BgmRulesDef Bgm = new BgmRulesDef();
         public LimitsDef Limits = new LimitsDef();

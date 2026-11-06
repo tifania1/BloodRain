@@ -290,6 +290,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 여섯 다 놓고 받으면 각 효과가 들고(속삭임 뒤 회복 절반, 검총 뒤 그 무공이 칸에서 빠지고 레벨업에 안 나옴), 정산 혈정에 영물 몫이 더해짐. 콘솔 에러 0
   - 찍기: `docs/unity_shots/WP-39U/` 의 `encounters.png`
 
+- [ ] WP-42U 재기 · 먼저: 없음
+  - 할 것: 한 생(서장 아님)에서 기혈이 0이 되면 먼저 `life.TryRevive(life.CurrentStats(…))` — 값이 오면 그 비율 × 최대 기혈로 그 자리에서 일어나고(맞은 뒤 무적만큼 무적, 금빛 고리 한 번), null 이면 지금처럼 End(fallen) 정산. 주변 적 밀쳐내기는 WP-21a 결정 뒤.
+  - 쓸 것: Core `Life.TryRevive`·`RevivalsUsed`, balance.json `revival`. 웹 한 생 판 `hurtPlayer` 의 재기 줄과 견줌
+  - 메뉴: 시험 메뉴에 '재기 +1(플레이 중)' 하나(연무장 재기를 안 사도 볼 수 있게)
+  - 끝: 재기 1로 쓰러지면 기혈 절반으로 일어나고, 두 번째엔 정산. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/WP-42U/` 의 `revive.png`
+
 - [ ] C-09d 보갑과 각성 · 먼저: C-09b
   - 할 것: 정예가 보갑을 떨군다(쌍강시 대형은 한 쌍에 하나). 열면 `Chest.Open(data, loadout, 레벨, rng, extraUpgrades)` — 강화 목록이면 짧은 목록 화면, 각성(Awakened)이면 J-01U 각성 연출(AwakeningFx) 끝에 `Loadout.Evolve`·`life.Awaken(evolution)`. 장강수로채 진전 4단계면 extraUpgrades 1.
   - 쓸 것: Core `Build/Chest.cs`, `Awakening.cs`, balance.json chest, evolutions.json
