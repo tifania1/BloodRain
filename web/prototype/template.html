@@ -2699,6 +2699,7 @@ function update(dt) {
     } else if (LOCAL_BEH[e.behavior]) [vx, vy] = LOCAL_BEH[e.behavior](e, dt, dx, dy, d);
     else { vx = dx * e.speed; vy = dy * e.speed; }
     if (e.roarT > 0) { vx *= 1 + (e.roarBonus || 0); vy *= 1 + (e.roarBonus || 0); }   // 혈사자 포효(WP-13c)
+    if (e.flagT > 0) { e.flagT -= dt; vx *= 1 + (e.flag || 0); vy *= 1 + (e.flag || 0); if (e.flagT <= 0) e.flag = 0; }   // 기수 깃발(WP-50)
     if (G.wEnemy && G.wEnemy !== 1 && !e.boss) { vx *= G.wEnemy; vy *= G.wEnemy; }   // 눈보라·붉은 달(WP-13b)
     if (G.empower && !e.boss) { vx *= G.empower.spd; vy *= G.empower.spd; }   // 혈월(WP-13e)
     { const ns = nearSlow(d); if (ns !== 1) { vx *= ns; vy *= ns; } }   // 곤륜 설한기(WP-20)
@@ -2714,7 +2715,7 @@ function update(dt) {
     if (d < e.r + B.stats.playerBodyRadius && lowBorn(e)) { killEnemy(e, true); addEffect('burst', e.x, e.y, { r: e.r * 1.6, color: '#786E5F' }); continue; }   // 밟힘(WP-15)
     if (d < e.r + B.stats.playerBodyRadius && e.contact <= 0) {
       e.contact = B.contact.sameEnemyIntervalSeconds;
-      const h0 = p.hp; hurtPlayer(e.dmg, e);
+      const h0 = p.hp; hurtPlayer(e.dmg * (1 + (e.flagT > 0 ? e.flag || 0 : 0)), e);
       const ed = E_BY_ID[e.type];
       if (ed && ed.onHitSlowSeconds > 0 && p.hp < h0) { p.chillT = ed.onHitSlowSeconds; p.chillMul = ed.onHitSlowMultiplier; addEffect('ring', p.x, p.y, { r: 0.9, color: '#96BED7', life: 0.3 }); }
     }
@@ -4505,6 +4506,54 @@ const LOCAL_BEH = {
     if (d < D.zoneRadius + 0.4 && !G.won && !G.demo) G.player.hp -= D.zoneDamagePerSecond * dmgScale(e) * dt * (G.easy ? 0.5 : 1);
     return [dx * e.speed, dy * e.speed];
   },
+  // ── 공통 적 다섯(WP-50, 6장 '공통 적' 표 아래 문단, enemies.json 값 그대로 m. Unity EnemySim·EnemyField C-02b 와 같은 규칙) ──
+  // 비강: 쫓으며 옆으로 출렁인다. 옆 자리 = amplitude·sin(2π t/period + 위상), 그 미분을 옆 속도로 더한다(앞 빠르기는 그대로)
+  fly_curve(e, dt, dx, dy, d) {
+    const c = E_BY_ID[e.type].curve; if (!c) return [dx * e.speed, dy * e.speed];
+    const w = TAU / Math.max(0.05, c.period), side = c.amplitude * w * Math.cos(w * e.life + e.hop * TAU);
+    return [dx * e.speed - dy * side, dy * e.speed + dx * side];
+  },
+  // 혈궁수: keepMin~keepMax 를 지킨다(멀면 다가오고 가까우면 물러남). 쏘는 것은 ice_throw 와 같은 shoot 값
+  kite_shoot(e, dt, dx, dy, d) {
+    const sh = E_BY_ID[e.type].shoot; LOCAL_BEH.ice_throw(e, dt, dx, dy, d);
+    return d > sh.keepMax ? [dx * e.speed, dy * e.speed] : d < sh.keepMin ? [-dx * e.speed, -dy * e.speed] : [0, 0];
+  },
+  // 혈영자객: 처음 나오면 바로, 그 뒤 interval 마다 플레이어 발밑에 표식(반경 mark.radius)을 찍고 telegraph 초 뒤 그 자리로.
+  // 그 순간 표식 안이면 접촉 피해 한 번. 걸음은 0(데이터 speed 0)
+  mark_teleport(e, dt) {
+    const D = E_BY_ID[e.type], mk = D.mark, p = G.player;
+    if (e.markLeft > 0) {
+      e.markLeft -= dt;
+      if (e.markLeft <= 0) {
+        e.x = e.markAt.x; e.y = e.markAt.y; e.kbx = e.kby = 0; foeEffect('burst', e.x, e.y, { r: mk.radius, color: '#B3261E' });
+        if (Math.hypot(p.x - e.x, p.y - e.y) <= mk.radius + B.stats.playerBodyRadius) hurtPlayer(e.dmg * (1 + (e.flag || 0)), e);
+      }
+    } else if ((e.markNext = (e.markNext || 0) - dt) <= 0) {
+      const tele = Math.max(0.05, D.telegraph || 0); e.markAt = { x: p.x, y: p.y }; e.markLeft = tele; e.markNext = Math.max(0, mk.interval - tele);
+      (G.pools = G.pools || []).push({ x: p.x, y: p.y, r: mk.radius, dps: 0, t: tele, red: true, mark: true });
+    }
+    return [0, 0];
+  },
+  // 혈술사: interval 마다(첫 번은 0~interval) 플레이어 발밑에 피 웅덩이(반경·초·한 혈술사 max 개, 넘으면 오래된 것부터). 화면 밖(대각선 절반 너머)이면 안 깐다
+  blood_pool(e, dt, dx, dy, d) {
+    const D = E_BY_ID[e.type], pl = D.pool, p = G.player;
+    e.cd = (e.cd == null ? pl.interval * Math.random() : e.cd) - dt;
+    if (e.cd <= 0) {
+      e.cd = pl.interval;
+      if (d <= Math.hypot(VW, VH) / PPM * 0.5) {
+        G.pools = G.pools || []; const mine = G.pools.filter(o => o.src === e);
+        if (pl.max > 0 && mine.length >= pl.max) G.pools.splice(G.pools.indexOf(mine[0]), 1);
+        G.pools.push({ x: p.x, y: p.y, r: pl.radius, dps: D.zoneDamagePerSecond * dmgScale(e), t: pl.seconds, red: true, src: e });
+      }
+    }
+    return [dx * e.speed, dy * e.speed];
+  },
+  // 기수: auraRadius 안 다른 적의 걸음·접촉 피해 × (1 + auraBonus). 여럿이 겹쳐도 큰 값 하나, 기수끼리는 안 받는다. 매 프레임 다시 매김
+  buff_aura(e, dt, dx, dy, d) {
+    const D = E_BY_ID[e.type];
+    for (const o of G.enemies) if (!o.dead && o !== e && o.behavior !== 'buff_aura' && Math.hypot(o.x - e.x, o.y - e.y) <= D.auraRadius) { o.flagT = 0.2; o.flag = Math.max(o.flag || 0, D.auraBonus); }
+    return [dx * e.speed, dy * e.speed];
+  },
   petal_shot(e, dt, dx, dy, d) { return LOCAL_BEH.ice_throw(e, dt, dx, dy, d); },
   ice_throw(e, dt, dx, dy, d) {
     const D = E_BY_ID[e.type], sh = D.shoot;
@@ -4575,7 +4624,8 @@ function foeShotsStep(dt) {
   }
   if (G.revives) G.revives = G.revives.filter(r => !r.done);
   // 독두꺼비가 남긴 독 웅덩이(enemies.json onDeath poison_pool, death radius·seconds·perSecond)
-  for (const o of G.pools || []) { o.t -= dt; if (Math.hypot(p.x - o.x, p.y - o.y) < o.r + 0.2 && !G.won && !G.demo) p.hp -= o.dps * dt * (G.easy ? 0.5 : 1); }
+  // 웅덩이(독두꺼비·혈술사·정예 장판)는 겹쳐 밟아도 초당 피해 한 번 — 밟은 것 가운데 큰 값 하나(6장 '겹쳐도 한 번')
+  { let dps = 0; for (const o of G.pools || []) { o.t -= dt; if (Math.hypot(p.x - o.x, p.y - o.y) < o.r + 0.2) dps = Math.max(dps, o.dps); } if (dps > 0 && !G.won && !G.demo) p.hp -= dps * dt * (G.easy ? 0.5 : 1); }
   if (G.pools) G.pools = G.pools.filter(o => o.t > 0);
 }
 function drawLocalFx() {
