@@ -3274,7 +3274,8 @@ function applyOffer(o) {
 
 let currentOffers = [], overlayAt = 0;
 // 창이 막 떴을 때 이동하던 손가락이 카드를 잘못 누르지 않게 잠깐 입력을 막는다
-const tooSoon = () => !G.auto && performance.now() - overlayAt < 350;
+const INPUT_GUARD_MS = B.levelUp.inputGuardSeconds * 1000;   // balance.json levelUp.inputGuardSeconds(12장 '레벨업 입력' 0.35초)
+const tooSoon = () => !G.auto && performance.now() - overlayAt < INPUT_GUARD_MS;
 function openLevelUp() {
   overlayAt = performance.now();
   G.pendingLevels--;
@@ -5058,7 +5059,7 @@ function showIntro() {
   focusFirst($('intronext'));
 }
 function nextIntro() {
-  if (overlay !== 'intro' || performance.now() - overlayAt < 350) return;   // 판 밖이라 G 가 없을 수 있어 tooSoon 대신
+  if (overlay !== 'intro' || performance.now() - overlayAt < INPUT_GUARD_MS) return;   // 판 밖이라 G 가 없을 수 있어 tooSoon 대신
   if (++introI < (cutSeq ? cutSeq.cuts : INTRO.cuts).length) return showIntro();
   endIntro();
 }

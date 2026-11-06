@@ -47,7 +47,10 @@ namespace BloodRain.Core.Tests
             Assert.Contains("if (e.code === 'KeyZ' && !e.repeat) skipOffer();", html);
             Assert.Contains("`남은 레벨업 ${G.pendingLevels}`", html);
             // 열린 직후 0.35초 입력 막기(12장 '레벨업 입력')
-            Assert.Contains("performance.now() - overlayAt < 350", html);
+            Assert.Contains("performance.now() - overlayAt < INPUT_GUARD_MS", html);
+            Assert.Contains("const INPUT_GUARD_MS = B.levelUp.inputGuardSeconds * 1000;", html);
+            Assert.Equal(0.35f, TestData.Load().Balance.LevelUp.InputGuardSeconds);
+            Assert.Contains("열린 직후 0.35초는 입력을 받지 않아", TestData.ReadRepoFile("docs", "design", "gdd.md"));
         }
 
         [Fact] public void 능력치_이름은_ui_stat_에_쉬운_말을_붙인다()

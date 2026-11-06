@@ -52,6 +52,8 @@ namespace BloodRain.Core.Data
         public FallbackCardDef FallbackCard = new FallbackCardDef();
         /// <summary>캐릭터 특성 → 한 판 다시 고르기 몫(진소운 reroll_plus2_insight4 는 2). 연무장 몫과 더한다.</summary>
         public Dictionary<string, int> TraitRerolls = new Dictionary<string, int>();
+        /// <summary>레벨업 화면이 열린 직후 입력을 받지 않는 초(기획서 12장 '레벨업 입력', 프로토타입 값 0.35). 싸우던 손이 카드를 잘못 누르지 않게.</summary>
+        public float InputGuardSeconds = 0.35f;
     }
 
     public sealed class FallbackCardDef
