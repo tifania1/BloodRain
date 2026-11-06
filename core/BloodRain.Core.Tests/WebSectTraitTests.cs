@@ -64,5 +64,20 @@ namespace BloodRain.Core.Tests
             Assert.Contains("!sectT().poisonImmune) p.hp -=", html);   // 당가 독안개
             Assert.Contains("G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max)", html);   // 음양 시작
         }
+
+        [Fact] public void 연무장_남은_칸이_한_생_판에_들어간다()   // WP-21
+        {
+            var html = Proto;
+            Assert.Contains("'Skips', 'DashCharges', 'UltimateCharge', 'Revival'].includes(k)", html);
+            Assert.Contains("Math.round(bodyStat('DashCharges'))", html);
+            Assert.Contains("(1 + bodyStat('UltimateCharge'))", html);
+            // 정진·역류 끊기는 배율 없이(5장, Core UltimateCharge.AddFlat)
+            Assert.Contains("addUlt(B.ultimateCharge.perSkip, true)", html);
+            Assert.Contains("addUlt(50, true)", html);
+            // 정진·재기 기본 횟수는 0, 연무장·성질만큼(8장)
+            Assert.Contains("G.skips = Math.max(0, Math.round(bodyStat('Skips')))", html);
+            Assert.Contains("G.revivals = Math.max(0, Math.round(bodyStat('Revival')))", html);
+            Assert.Contains("p.hp = p.maxHp * 0.5", html);
+        }
     }
 }

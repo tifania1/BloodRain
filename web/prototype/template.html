@@ -649,7 +649,8 @@ function synEff(name) {
 // 혈월 천하(2회차부터, 21장): 적 기혈·걸음 배율, 보상(은자·윤회의 기·혈정) 배율. Core Life.GainSilver 처럼 주울 때 곱해 반올림
 const BM = DATA.bloodmoon || { enemyHealth: 1, enemySpeed: 1, rewards: 1 };
 const moonR = () => (G && G.moon ? BM.rewards : 1);
-const bodyGreed = () => ((G.body && G.body.stats) || {}).Greed || 0;   // 몸 탐욕(개방 30%·복덕·연무장, WP-20)
+const bodyStat = k => ((G && G.body && G.body.stats) || {})[k] || 0;   // 몸(문파·연무장·성질)에 더한 값, 1장 판 0
+const bodyGreed = () => bodyStat('Greed');   // 몸 탐욕(개방 30%·복덕·연무장, WP-20)
 function addSilver(v) { G.silver += Math.round(v * (1 + (synStats().Greed || 0) + bodyGreed()) * moonR()); }
 function showDiscovery(seal, hanja, name, desc) {
   overlay = 'find'; overlayAt = performance.now(); sfx('gong');
@@ -1097,7 +1098,7 @@ function newRun(mode) {
     const reg = CH_REGS.find(r => r.id === LS.region), wd = W_BY_ID[LS.startWeapon];
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
     G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
-    { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
+    { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; G.skips = Math.max(0, Math.round(bodyStat('Skips'))); G.revivals = Math.max(0, Math.round(bodyStat('Revival'))); if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
     G.soul0 = soulLoad(); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
     G.wpool = weaponPoolOf(G.soul0); G.dashes = 0; G.talis = 0;   // 무공 해금(WP-17): 혼 기록으로 연 무공까지 레벨업 풀에, 도전 과제 셈(경공·정신부, 처치는 G.kills)
     G.lords = {}; G.lordJust = []; G.lordGrace = null; G.lordF = null; G.lordKills = [];   // 땅의 주인(WP-13e): 지역별 깨어남·싸움·처치   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
@@ -1165,7 +1166,7 @@ function recomputeStats() {
   const btr = synEff('blood_trade'); if (btr) { G.stats.lifesteal *= btr.lifestealMultiplier; G.stats.foodHeal *= btr.foodHealMultiplier; }
   const pl = G.player, before = pl.maxHp;
   pl.maxHp = G.stats.maxHp; if (pl.maxHp > before) pl.hp += pl.maxHp - before;
-  const dashMax = B.dash.charges + rr.dashCharges + (G.passives.some(p => p.id === 'unryong' && p.lv >= 5) ? 1 : 0);
+  const dashMax = B.dash.charges + rr.dashCharges + Math.round(bodyStat('DashCharges')) + (G.passives.some(p => p.id === 'unryong' && p.lv >= 5) ? 1 : 0);
   if (dashMax > pl.dashMax) pl.dashCharges += dashMax - pl.dashMax;
   pl.dashMax = dashMax;
 }
@@ -1869,8 +1870,10 @@ function dropOrb(x, y, v) {
     G.orbs = keep; const p = G.player, a = rand(0, TAU); G.orbs.push({ x: p.x + Math.cos(a) * OP.mergeDistance, y: p.y + Math.sin(a) * OP.mergeDistance, v: sum, t: 0, pull: false, big: true });
   }
 }
-function addUlt(v) {
-  const bonus = yyBand().band === 'harmony' ? 1 + B.yinyang.harmony.ultimateChargeBonus * harmonyMul() : 1;
+// 오의 게이지(5장): 처치·피격·정예는 (1 + 오의 충전) × 태극 배율, 정진·역류 끊기처럼 정해진 양(flat)은 배율 없이(Core UltimateCharge.AddFlat, WP-21)
+function addUlt(v, flat) {
+  if (flat) { G.ult = Math.min(B.ultimateCharge.max, G.ult + v); return; }
+  const bonus = (1 + bodyStat('UltimateCharge')) * (yyBand().band === 'harmony' ? 1 + B.yinyang.harmony.ultimateChargeBonus * harmonyMul() : 1);
   G.ult = Math.min(B.ultimateCharge.max, G.ult + v * bonus * (G.syn.secrets.has('mumyeong') ? 2 : 1));
 }
 function hurtPlayer(dmg, src) {
@@ -1890,6 +1893,8 @@ function hurtPlayer(dmg, src) {
   if (p.hp <= 0) {
     // 서장: 장삼전에서 바닥나면 쓰러지지 않고 고정 각성, 각성 뒤에는 쓰러지지 않는다(기혈 1). 장삼 전이면 처음부터(endRun)
     if (isPro() && G.bossSpawned) { p.hp = 1; prologueAwaken('player'); return; }
+    // 재기(8장, 연무장 Revival): 남았으면 기혈 50%로 일어난다. '주변 적 밀쳐내기'는 세기 숫자가 없어 아직 뺌(decisions #35)
+    if (G.body && G.revivals > 0) { G.revivals--; p.hp = p.maxHp * 0.5; p.iframe = Math.max(p.iframe, HIT_IFRAMES); addEffect('ring', p.x, p.y, { r: 2.5, color: '#C9A227', life: 0.6 }); toast('재기', `기혈 50%로 일어났다 · 남은 ${G.revivals}회`); return; }
     p.hp = 0; endRun(false);
   }
 }
@@ -2235,7 +2240,7 @@ function doDash() {
   sfx('dash');
   // 기혈역류를 1초 안에 경공으로 끊으면 오의 +50
   if (G.backlash && G.backlash.t < 1) {
-    G.backlash = null; addUlt(50); G.syn.yeok++;
+    G.backlash = null; addUlt(50, true); G.syn.yeok++;
     toast('역류를 끊었다', G.syn.yeok > 1 ? `오의 +50 · 연달아 ${G.syn.yeok}번` : '오의 +50');
     if (G.syn.yeok >= 3) unlockSecret('yeokcheon');
   }
@@ -2936,6 +2941,7 @@ function openLevelUp() {
   const box = $('lucards'); box.innerHTML = '';
   currentOffers.forEach((o, i) => { const c = offerCard(o, i); c.onclick = () => chooseOffer(i); box.appendChild(c); });
   $('rerollleft').textContent = `남은 ${G.rerolls}회 · R`; $('reroll').disabled = G.rerolls <= 0;
+  if (G.body) { $('skip').querySelector('small').textContent = `오의 +${B.ultimateCharge.perSkip} · 남은 ${G.skips || 0}회 · Z`; $('skip').disabled = !(G.skips > 0); }
   G.banishMode = false; $('banishleft').textContent = `남은 ${G.banishes || 0}회 · X`; $('banish').disabled = !(G.banishes > 0); $('banish').classList.remove('on');
   $('lurest').textContent = G.pendingLevels > 0 ? `남은 레벨업 ${G.pendingLevels}` : '';   // 몰아 고르기: 닫지 않고 이어서(12장)
   renderLuSlots(null);
@@ -2980,7 +2986,12 @@ function banishOffer(i) {
   currentOffers.forEach((x, k) => { const c = offerCard(x, k); c.onclick = () => chooseOffer(k); box.appendChild(c); });
 }
 function rerollOffers() { if (overlay !== 'levelup' || G.rerolls <= 0 || tooSoon()) return; G.rerolls--; G.pendingLevels++; closeOverlay('levelup', true); openLevelUp(); }
-function skipOffer() { if (overlay !== 'levelup' || tooSoon()) return; addUlt(20); closeOverlay('levelup'); }
+// 정진(8장): 한 생 판은 연무장·성질 Skips 만큼(기본 0, Core LevelUpCharges), 1장 판은 시험 판이라 그대로 늘
+function skipOffer() {
+  if (overlay !== 'levelup' || tooSoon()) return;
+  if (G.body) { if (!(G.skips > 0)) return; G.skips--; }
+  addUlt(B.ultimateCharge.perSkip, true); closeOverlay('levelup');
+}
 
 function openBreakthrough(realm) {
   const before = vesselsAt(G.realm.level);
@@ -3600,8 +3611,8 @@ const SECT_BY = Object.fromEntries((DATA.sects || []).map(s => [s.id, s]));
 const CARD_BY = Object.fromEntries((DATA.cards || []).map(c => [c.id, c]));
 const START_SECTS = (DATA.sects || []).filter(s => s.unlock === 'start').map(s => s.id);
 const STAT_KO = new Proxy({}, { get: (_, k) => statLabel(k) });   // 연무장·성질 이름도 ui.stat + 쉬운 말(UI-02)
-const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount', 'Banishes', 'Rerolls']);
-const statOn = k => !!STAT_KEY[k] || ['Amount', 'Banishes', 'Rerolls', 'Greed'].includes(k);   // 파기·다시 고르기는 레벨업 횟수로(UI-02)   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
+const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount', 'Banishes', 'Rerolls', 'Skips', 'Revival']);
+const statOn = k => !!STAT_KEY[k] || ['Amount', 'Banishes', 'Rerolls', 'Greed', 'Skips', 'DashCharges', 'UltimateCharge', 'Revival'].includes(k);   // WP-21: 정진·경공 칸·오의 충전·재기   // 파기·다시 고르기는 레벨업 횟수로(UI-02)   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
 function fmtStat(k, v) {
   const sign = v > 0 ? '+' : v < 0 ? '−' : '', a = Math.abs(v);
   if (k === 'Recovery') return `${STAT_KO[k]} ${sign}${+a.toFixed(2)}`;   // 쉬운 말에 '초당 회복'이 붙는다
