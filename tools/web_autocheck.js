@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const RUNS = parseInt(opt('runs', '3'), 10);
 const SHOTS = opt('shots', '');
-const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow,weapons')).split(',');
+const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow,weapons,manuals')).split(',');
 const SITE = path.join(__dirname, '..', 'web', 'prototype', 'site');
 if (!fs.existsSync(path.join(SITE, 'index.html'))) { console.log('X  site/ 가 없다. python tools/build_web_prototype.py 를 먼저 돌린다'); process.exit(1); }
 
@@ -379,6 +379,36 @@ async function weaponRuns(browser, base) {
   await p.ctx.close();
 }
 
+// 비급 층(WP-44): 남궁 판에서 쌍검합벽 조건을 갖추면 잠긴 채 찢긴 비급 → 정산이 혼에 올림 → 장경각 복원 → 다음 생 켜짐. 침방 벽 지도(WP-45)도 그려 봄
+async function manualRuns(browser, base) {
+  const label = '비급 층·장경각';
+  const p = await openPage(browser, base + '/?life=namgung', label);
+  await p.page.evaluate(() => localStorage.setItem('cheonha_meta2', JSON.stringify({ v: 2, prologue: true, lives: 1, qi: 9000, stones: ['a', 'b'] })));
+  await p.page.goto(base + '/?life=namgung', { waitUntil: 'load' });
+  const r = await p.page.evaluate(() => {
+    const bad = [], two = () => { for (const [id, lv] of [['samjae_sword', 4], ['changcheon_qi', 4]]) { const w = G.weapons.find(x => x.id === id); if (w) w.lv = lv; else G.weapons.push({ id, lv, cd: 0, evolved: false, dealt: 0, n: 0 }); } updateSynergy(); };
+    startRun('full'); running = false; two();
+    if (link('ssanggeom')) bad.push('복원 전 쌍검합벽이 켜짐');
+    if (!G.syn.torn.has('ssanggeom')) bad.push('찢긴 비급 후보에 안 오름');
+    const st = lifeSettle(); if (!st.newTorn.includes('ssanggeom')) bad.push('정산 newTorn 에 없음');
+    const m = recordLife(st); if (!(m.torn || []).includes('ssanggeom')) bad.push('혼 기록 torn 에 없음');
+    const lib = INN_F.find(x => x.id === 'library'), rep = lib.underRepair; lib.underRepair = false;
+    openInn(); innRestore('ssanggeom'); lib.underRepair = rep;
+    if (!(soulLoad().restored || []).includes('ssanggeom')) bad.push('장경각 복원이 안 됨');
+    const cv = $('innmap'); if (!cv || !cv.getContext('2d').getImageData(cv.width / 2, cv.height / 2, 1, 1).data[3]) bad.push('침방 지도가 비었음');
+    $('inn').hidden = true; overlay = null;
+    startRun('full'); running = false; two();
+    if (!link('ssanggeom')) bad.push('복원 뒤에도 쌍검합벽이 꺼짐');
+    for (let i = 0; i < 30 * 5; i++) { step(1 / 30); if (overlay) { overlay = null; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); } if (i % 15 === 0) render(); }
+    localStorage.removeItem('cheonha_meta2');
+    return { bad };
+  });
+  for (const b of r.bad) problems.push(`${label}: ${b}`);
+  flush(p, label);
+  rows.push({ what: '비급 잠김 → 찢긴 비급 → 복원 → 켜짐', res: r.bad.length ? '문제' : '통과' });
+  await p.ctx.close();
+}
+
 (async () => {
   const srv = await serve();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -392,6 +422,7 @@ async function weaponRuns(browser, base) {
     if (ONLY.includes('final')) await finalRuns(browser, base);
     if (ONLY.includes('flow')) await flowRuns(browser, base);
     if (ONLY.includes('weapons')) await weaponRuns(browser, base);
+    if (ONLY.includes('manuals')) await manualRuns(browser, base);
   } catch (e) { problems.push('점검 스크립트 오류: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
   await browser.close(); srv.close();
   say('| 판 | 결과 |'); say('|---|---|');
