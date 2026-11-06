@@ -158,6 +158,7 @@ namespace BloodRain.Presentation.Fx
             Destroy(l.Go);
             Broken++;
             if (l.Silver) BreakSilver(l.Pos);
+            else if (EncounterLayer.Instance != null && EncounterLayer.Instance.LetterArmed) EncounterLayer.Instance.ReadLetter(l.Pos); // WP-39U 하오문 밀서
             AddDrop(l.Pos, Drops.RollLantern(Rule, _rng));
         }
 

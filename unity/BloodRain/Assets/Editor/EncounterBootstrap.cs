@@ -16,9 +16,11 @@ namespace BloodRain.Editor
         [MenuItem(Root + "혈마의 속삭임")] static void Whisper() => Place(EncounterBoons.Whisper);
         [MenuItem(Root + "영물")] static void Beast() => Place(EncounterBoons.SpiritBeast);
         [MenuItem(Root + "검총")] static void Tomb() => Place(EncounterBoons.SwordTomb);
+        [MenuItem(Root + "하오문 밀서(다음 보통 등롱)")] static void Letter() => Place(EncounterBoons.Letter);
 
         [MenuItem(Root + "은거기인", true)] [MenuItem(Root + "고수의 유해", true)] [MenuItem(Root + "영약", true)]
         [MenuItem(Root + "혈마의 속삭임", true)] [MenuItem(Root + "영물", true)] [MenuItem(Root + "검총", true)]
+        [MenuItem(Root + "하오문 밀서(다음 보통 등롱)", true)]
         static bool Valid() => Application.isPlaying;
 
         static void Place(string id)

@@ -153,7 +153,8 @@ namespace BloodRain.Presentation
             // R-08U 도전 과제 처치 수. 정예·땅의 주인도 여기서 한 번(KillElite·DefeatBoss 는 보상만 센다)
             if (_life != null && _life.Record == null) _life.Log.Kill();
             // WP-34U 금두꺼비(golden_toad 만. 영물은 세지 않는다). 모든 생 합이 연무장 탐욕 상한을 연다
-            if (_life != null && _life.Record == null && enemies != null && enemies.DefOf(a.Kind)?.Id == "golden_toad") _life.Log.CatchGoldenToad();
+            bool beast = EncounterLayer.Instance != null && EncounterLayer.Instance.TryCatchBeast(a.Id, at); // WP-39U 영물
+            if (!beast && _life != null && _life.Record == null && enemies != null && enemies.DefOf(a.Kind)?.Id == "golden_toad") _life.Log.CatchGoldenToad();
             // C-09a 오의 게이지: 처치마다(정예는 따로 더 크게), 음양 띠 배율은 Charge 가 본다
             if (_life != null && _life.Record == null && enemies != null)
             {
@@ -173,6 +174,10 @@ namespace BloodRain.Presentation
         // 짧은 글자(혈정 +N). 1.2초 동안 위로 뜨며 옅어진다. 글자 모양은 나중에 HUD 쪽으로 옮길 수 있게 여기선 OnGUI 로만
         readonly List<(Vector2 at, string text, float born)> _popups = new List<(Vector2, string, float)>();
         GUIStyle _popupStyle;
+
+        /// <summary>떠오르는 짧은 글(기연 쪽에서 씀). at 이 없으면 플레이어 자리.</summary>
+        public void ShowPopup(string text, Vector2? at = null) =>
+            _popups.Add((at ?? (player != null ? (Vector2)player.position : Vector2.zero), text, Time.unscaledTime));
 
         void DrawPopups()
         {
@@ -685,6 +690,13 @@ namespace BloodRain.Presentation
         {
             if (enemies == null) return;
             enemies.SpawnAt(_data.Enemy("golden_toad"), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
+        }
+
+        /// <summary>WP-39U 영물: 금두꺼비처럼 이벤트 고리 자리에 부른다(웹 spawnSpiritBeast). 적 번호를 돌려준다(없으면 -1).</summary>
+        public int SpawnSpiritBeast()
+        {
+            if (enemies == null) return -1;
+            return enemies.SpawnAt(_data.Enemy("golden_toad"), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
         }
 
         /// <summary>시험 메뉴 '다음 경지까지 진기'. 한 레벨씩 구슬을 먹은 것처럼 넣어 경지가 바뀌면 멈춘다.</summary>
