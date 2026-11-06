@@ -52,7 +52,7 @@
 - Unity 지역 기믹은 unity_tasks 에 줄 없음(Presentation·Sim 에 `Gimmicks` 를 부르는 곳 없음). 수귀는 C-02b '남은 것'인데 물 지형이 먼저다
 - ~~**땅의 주인 셋의 모양 판정이 Core 에 없다.**~~ → R-11(11-04) Core 에 넣고 웹 천하 시안도 같은 셈으로(R-11w). 흑백·흑백 경계(내 색, 경계 회전), 분열 되살림(`rejoinSeconds`), 칠성검진 `big_dipper` 자리, 태극권 끌어당김, 갈고리 사슬 끌기, 반쪽 독안개 쪽 고르기. `Combat/BossPatterns.cs` 에 `RingOffsets`·`InPool` 처럼 더하면 Unity·웹이 같은 셈을 쓴다. Unity 는 땅의 주인(원각 포함) 줄이 unity_tasks 에 없음
 - ~~웹: 천하 시안에 세 지역 기믹·고유 적·데이터 정예·세 보스 패턴 대부분·2막이 없고, 1장 프로토타입은 숭산만이다. 1장 bossAI 는 원각 숫자를 코드에 박아 두어 다른 보스를 붙이려면 eliteAI 처럼 bosspatterns.json 을 읽게 해야 한다 → WP-01~~ → 2026-11-06 웹 두 판을 합치며(WP-12~15) 1장 프로토타입 한 생 판에 지역 기믹 일부·고유 적·지역 정예·땅의 주인 일곱과 종장이 들어감. 남은 것은 backlog WP-13b~e 진행 줄
-- bosspatterns.json 마천패 `_note` 의 "수귀(water_ghost)는 아직 enemies.json 에 없다(T-33에서 넣는다)"는 옛말이다. 지금은 있다. 그 문장만 지우면 된다
+- ~~bosspatterns.json 마천패 `_note` 의 "수귀(water_ghost)는 아직 enemies.json 에 없다"는 옛말이다.~~ → 그 문장은 이미 지워져 있다(2026-11-07 확인)
 
 ## 이미 맞는 것
 
