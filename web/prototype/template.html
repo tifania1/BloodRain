@@ -309,6 +309,8 @@ button { touch-action: manipulation; }
       <div class="subtle" id="innqi"></div>
       <h4 class="innh">객잔 시설</h4>
       <div class="innmeta" id="innfac"></div>
+      <h4 class="innh" id="innelixh" hidden>약방 · 영약</h4>
+      <div class="innmeta" id="innelix" hidden></div>
       <h4 class="innh">침방 · 환혼 강화</h4>
       <div class="innmeta" id="innupg"></div>
       <h4 class="innh">연무장</h4>
@@ -529,7 +531,7 @@ function bloodOrbXp(v) {
   if (extra > 0) {
     G.bExtra = (G.bExtra || 0) + extra;
     const steps = A.extraXpPerStep > 0 ? Math.floor(G.bExtra / A.extraXpPerStep) : 0;
-    if (steps > (G.bSteps || 0)) { G.yy = clamp(G.yy - (steps - (G.bSteps || 0)) * A.yinPerStep, B.yinyang.min, B.yinyang.max); G.bSteps = steps; }   // Core Gauge.Shift — 기울기 배율 없음
+    if (steps > (G.bSteps || 0) && !(G.yyFreeze > 0)) { G.yy = clamp(G.yy - (steps - (G.bSteps || 0)) * A.yinPerStep, B.yinyang.min, B.yinyang.max); G.bSteps = steps; }   // Core Gauge.Shift — 기울기 배율 없음
   }
   return got;
 }
@@ -1200,10 +1202,18 @@ function newRun(mode) {
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
     G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max);   // 음양 시작(WP-20·21)
+    // 약방 영약(Core Life.TakeElixirs): 만년설삼은 recomputeStats, 소환단은 hurtPlayer, 레벨·오의는 아래 recomputeStats 뒤
+    G.elix = (NEXT_LIFE && NEXT_LIFE.elixirs) || []; G.elixRevive = (G.elix.find(e => e.reviveHealthRatio > 0) || {}).reviveHealthRatio || 0;
+    G.elixCrystal = G.elix.reduce((a, e) => a * (e.bloodCrystalMultiplier > 0 ? e.bloodCrystalMultiplier : 1), 1); G.yyFreeze = Math.max(0, ...G.elix.map(e => e.yinyangFreezeSeconds || 0));
     if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
   }
   recomputeStats();
   G.player.hp = G.player.maxHp;
+  if (G.body && G.elix && G.elix.length) {
+    for (const e of G.elix) if (e.startUltimate > 0) G.ult = Math.min(B.ultimateCharge.max, (G.ult || 0) + e.startUltimate);   // 공청석유
+    const lv = Math.max(0, ...G.elix.map(e => e.startLevel || 0)); while (G.level < lv) { G.level++; G.pendingLevels++; }   // 대환단: 오른 만큼 레벨업 고르기
+    toast('약방 영약', G.elix.map(e => `${e.nameKo} — ${e.descKo}`).join(' · '));
+  }
 }
 
 function makeEvents(mode) {
@@ -1232,6 +1242,7 @@ function recomputeStats() {
   updateSynergy();
   const s = { maxHealth: 0, recovery: 0, armor: 0, moveSpeed: 0, might: 0, cdr: 0, area: 0, amount: 0, duration: 0, projSpeed: 0, magnet: 0, growth: 0, luck: 0, crit: 0, knockback: 0, burn: 0, dot: 0, elite: 0, lifesteal: 0, foodHeal: 0, explosionArea: 0 };
   const map = STAT_KEY;
+  for (const e of (G.elix || [])) s.maxHealth += e.maxHealth || 0;   // 만년설삼
   for (const p of G.passives) {
     const def = P_BY_ID[p.id];
     for (const e of def.effects) {
@@ -1276,7 +1287,7 @@ function yyBand() {
   return { band: 'bias', name: '편향', label: G.yy > 0 ? '양으로' : '음으로' };
 }
 function yyShift(aspect, amount) {
-  if (aspect === 'neutral') return;
+  if (aspect === 'neutral' || G.yyFreeze > 0) return;   // 태극환: 처음 10분 음양이 움직이지 않음
   const v = (aspect === 'yang' ? 1 : -1) * amount * (G.yyHalf ? IP.yeokgeun.tiltMultiplier : 1);
   G.yy = clamp(G.yy + v, B.yinyang.min, B.yinyang.max);
 }
@@ -2046,6 +2057,7 @@ function hurtPlayer(dmg, src, kind) {
     // 서장: 장삼전에서 바닥나면 쓰러지지 않고 고정 각성, 각성 뒤에는 쓰러지지 않는다(기혈 1). 장삼 전이면 처음부터(endRun)
     if (isPro() && G.bossSpawned) { p.hp = 1; prologueAwaken('player'); return; }
     // 재기(8장, 연무장 Revival): 남았으면 기혈 50%(balance.json revival.healthRatio, Core Life.TryRevive)로 일어난다. '주변 적 밀쳐내기'는 세기 숫자가 없어 아직 뺌(decisions #35)
+    if (G.body && G.elixRevive > 0) { p.hp = p.maxHp * G.elixRevive; toast('소환단', `첫 사망 — 기혈 ${Math.round(G.elixRevive * 100)}%로 일어났다`); G.elixRevive = 0; p.iframe = Math.max(p.iframe, HIT_IFRAMES); addEffect('ring', p.x, p.y, { r: 2.5, color: '#3E8E5A', life: 0.6 }); return; }   // 재기보다 먼저(Core TryRevive)
     if (G.body && G.revivals > 0) { G.revivals--; p.hp = p.maxHp * B.revival.healthRatio; p.iframe = Math.max(p.iframe, HIT_IFRAMES); addEffect('ring', p.x, p.y, { r: 2.5, color: '#C9A227', life: 0.6 }); toast('재기', `기혈 50%로 일어났다 · 남은 ${G.revivals}회`); return; }
     p.hp = 0; if (kind === 'shadow') G.shadowKilled = true; endRun(false);
   }
@@ -2528,6 +2540,7 @@ function autopilot() {
 function update(dt) {
   const realDt = dt;
   G.t += realDt; G.gm = G.t * G.timeScale / 60;
+  if (G.yyFreeze > 0) G.yyFreeze -= realDt * G.timeScale;
   const p = G.player, S = G.stats;
 
   // 이동
@@ -3858,7 +3871,7 @@ function lifeSettle() {
   // 혈월 천하: (줄 합 + 성질) × (rewards − 1) 을 한 줄로 반올림(Core RebirthQiLedger.Settle fromMoon). 혈정은 땅의 주인 하나마다·정예 몫 한 번에 곱해 반올림(Core KillBoss·BloodCrystal)
   if (G.moon) rows.push([`혈월 천하 × ${BM.rewards}`, '혈월 아래서는 혼에 남는 기도 짙다', Math.round(rows.reduce((a, r) => a + r[2], 0) * (BM.rewards - 1))]);
   const total = rows.reduce((a, r) => a + r[2], 0);
-  const crystal = LK.reduce((a, k) => a + Math.round(k.crystal * moonR()), 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0) * moonR()) + Math.round((G.beastCrystal || 0) * moonR());   // 영물 혈정(WP-32)   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
+  const crystal = LK.reduce((a, k) => a + Math.round(k.crystal * moonR()), 0) + Math.round(G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0) * (G.elixCrystal || 1) * moonR()) + Math.round((G.beastCrystal || 0) * moonR());   // 영물 혈정(WP-32)   // 땅의 주인 혈정 + 정예 몫(시안 lifeCrystal)   // 이름 있는 정예 수 × drops.eliteBloodCrystal(Core LifeLog.BloodCrystal)
   // 무공 해금(WP-17, Core Soul.UnlockChallenges): 한 생 처치·경공·정신부, 정신부 누적은 혼 기록 talismans + 이번 생. 누적으로 세지 않는 처치·경공 total 은 열지 않는다
   const talisTotal = (s0.talismans || 0) + (G.talis || 0);
   const newUnlocks = CHALLENGE_TOKENS.filter(t => !(s0.unlocks || []).includes(t)).filter(t => {
@@ -3935,12 +3948,21 @@ function fmtStat(k, v) {
 }
 // 연무장에서 이 판이 찍게 하는 항목: balance.json training 가운데 이 판 능력치가 받는 것만, 데이터 순서대로
 const TRAIN_ITEMS = B.training.items.filter(i => statOn(i.stat));
-let NEXT_LIFE = null, innCands = [], innRerolls = 0;
+let NEXT_LIFE = null, innCands = [], innRerolls = 0, innElix = [];
 const curLifeSect = () => (NEXT_LIFE ? SECT_BY[NEXT_LIFE.sect] : LIFE_SECT);
 // 객잔 시설(10장 '객잔 시설', cheonha.json inn, Core Inn): 조건(서장·봉인석·땅의 주인 처치 지역·해금 토큰)을 갖추면 열리고, 혈정으로 짓는 시설(약방·대장간)은 조건을 갖춘 뒤 짓는다.
 // 한 번 열리면 혼 기록 unlocks 에 facility:<id> 로 남아 회귀로 봉인석이 지워져도 열려 있다. 수리 중(underRepair)이면 문만. 시설 안 화면(영약·꾸미기·도전 과제·게시판)은 이 판에 아직 없다.
 // 정산 때 처음 조건을 갖춘 시설과 지난 귀환 뒤 지은 시설은 다음 귀환의 운낭 facility:<id> 줄로(Core LifeSummary.NewFacilities + Inn.TryBuild)
 const INN_F = DATA.innFacilities || [];
+// 약방 영약(10장 '영약(약방)', cheonha.json inn.elixirs, Core Apothecary·Life.TakeElixirs): 약방에 들어갈 수 있으면 elixirsPerLife 개까지 골라 몸을 고를 때 혈정을 쓰고 지니고 나간다
+const ELIX = DATA.innElixirs || [], ELIX_MAX = DATA.elixirsPerLife || 1;
+const elixAvail = m => { const f = INN_F.find(x => x.id === 'apothecary'); return !!f && !f.underRepair && facOpen(m, f); };
+function innToggleElix(id) {
+  const m = innMeta(), e = ELIX.find(x => x.id === id); if (!e || !elixAvail(m)) return;
+  if (innElix.includes(id)) innElix = innElix.filter(x => x !== id);
+  else { const next = (innElix.length >= ELIX_MAX ? innElix.slice(1) : innElix).concat(id); if (next.reduce((a, k) => a + ELIX.find(x => x.id === k).cost, 0) <= (m.crystal || 0)) innElix = next; }
+  renderInn();
+}
 const facTok = id => 'facility:' + id;
 function facMeets(m, f) {
   const r = f.require || {}, un = m.unlocks || [];
@@ -4158,7 +4180,7 @@ function openInn() {
   running = false; cancelAnimationFrame(rafId);
   ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'evopick', 'profirst', 'procut', 'ending'].forEach(id => $(id).hidden = true);
   $('hud').hidden = true; overlay = 'inn'; paused = false;
-  innRerolls = m.lives ? upgEffect(m, 'rerolls') : 0;   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
+  innRerolls = m.lives ? upgEffect(m, 'rerolls') : 0; innElix = [];   // 첫 환혼은 고정이라 다시 고르기도 없다(Core RebirthDraw)
   innCands = drawCandidates(m);
   // 열 때·보여 줄 때(Core BedroomTalk.Open·Show)
   talk = { key: false, extra: false, rerolls: 0 }; $('innmok').hidden = true;
@@ -4220,6 +4242,13 @@ function renderInn() {
     if (!open && meets && cost) b.onclick = () => facBuild(f.id);
     fb.appendChild(b);
   }
+  const eb = $('innelix'), eon = elixAvail(m); eb.hidden = $('innelixh').hidden = !eon || !ELIX.length; eb.innerHTML = '';
+  if (eon) for (const e of ELIX) {
+    const b = document.createElement('button'), on = innElix.includes(e.id); b.type = 'button';
+    b.disabled = !on && e.cost > (m.crystal || 0); b.setAttribute('aria-pressed', on ? 'true' : 'false'); if (on) b.style.background = 'var(--paper2, #eadfc8)';
+    b.innerHTML = `<b>${on ? '● ' : ''}${e.nameKo} ${e.hanja || ''}</b><span>${e.descKo} · 혈정 ${e.cost}</span>`;
+    b.onclick = () => innToggleElix(e.id); eb.appendChild(b);
+  }
   const ub = $('innupg'); ub.innerHTML = '';
   for (const u of RB.upgrades || []) {
     const lv = upgLevel(m, u.id), cost = upgCost(m, u), b = document.createElement('button'); b.type = 'button';
@@ -4258,7 +4287,9 @@ function yardLine(body) {
 function chooseLife(i) {
   if (overlay !== 'inn' || !innCands[i]) return;
   const m = innMeta(), said = talkPick(m, innCands[i]); soulSave(m);
-  NEXT_LIFE = innCands[i]; $('inn').hidden = true; overlay = null;
+  const pick = innElix.map(id => ELIX.find(x => x.id === id)).filter(Boolean), cost = pick.reduce((a, e) => a + e.cost, 0);
+  if (pick.length && elixAvail(m) && (m.crystal || 0) >= cost) { m.crystal -= cost; soulSave(m); } else pick.length = 0;   // Core Apothecary.TryPrepare: 안 되면 아무것도 안 씀
+  NEXT_LIFE = Object.assign({}, innCands[i], { elixirs: pick }); innElix = []; $('inn').hidden = true; overlay = null;
   startRun('full');
   if (said.length) toast('목 노인', said.map(l => l.textKo).join(' '));   // 고른 뒤 줄은 새 생 첫 화면에 자막 하나로(자막 줄은 넷까지라 마당 줄이 밀리지 않게)
 }
