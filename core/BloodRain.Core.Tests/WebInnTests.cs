@@ -86,5 +86,23 @@ namespace BloodRain.Core.Tests
             // 처치 자리에서 하던 합류 알림은 뺐다(Core 는 귀환 때 합류)
             Assert.DoesNotContain("합류`, leader.join)", html);
         }
+
+        [Fact] public void 귀환_현경_short_sealed_와_밀서_줄도_Core_처럼()
+        {
+            var html = Proto;
+            // Core: realm:X:short = summary.NewRealms 에 X && !HasAllSealStones, realm:X:sealed = record.HighestRealm == X && HasAllSealStones
+            Assert.Contains("kind === 'realm' && a[1] === 'short' ? newR.includes(a[0]) && !allStones", html);
+            Assert.Contains("kind === 'realm' && a[1] === 'sealed' ? m.lastTop === a[0] && allStones", html);
+            Assert.Contains("stones.length >= ((LR && LR.finalRequires && LR.finalRequires.sealStones) || 7)", html);
+            // Core: letter:<before|after> = PickedHaomunLetter && (after == 마천패 처치)
+            Assert.Contains("kind === 'letter' ? !!m.lastLetter && (a[0] === 'after') === afterMa", html);
+            Assert.Contains("G.letterPicked = true;", html);
+            Assert.Contains("m.lastNewRealms = st.newRealms || []; m.lastTop = st.topId || null; m.lastLetter = !!st.letter;", html);
+            // 데이터에 그 줄이 있어야 뜻이 있다
+            var d = TestData.Load();
+            Assert.Contains(d.Dialogue.Mok.Lines, l => l.Kind == "realm" && l.Args.Length == 2 && l.Args[1] == "short");
+            Assert.Contains(d.Dialogue.Mok.Lines, l => l.Kind == "realm" && l.Args.Length == 2 && l.Args[1] == "sealed");
+            Assert.Contains(d.Dialogue.Unnang.Lines, l => l.Kind == "letter");
+        }
     }
 }

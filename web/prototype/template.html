@@ -2305,7 +2305,7 @@ function hitLanterns(x, y, R) {
 // 하오문 밀서(20장 기연, WP-30): 아직 못 찾은 비전 하나(데이터 순서, 밀서로 안 본 것)의 조건 한 줄이 장경각 도감에 드러난다. 본 밀서는 도감처럼 계정에 남는다(store letters)
 const letters = new Set(store.get('letters') || []);
 function readLetter() {
-  discover('enc:letter');
+  discover('enc:letter'); G.letterPicked = true;   // 귀환 때 운낭 밀서 줄(Core ReturnFacts.PickedHaomunLetter)
   const x = SYN.secrets.find(q => !dex.has('secret:' + q.id) && !letters.has(q.id));
   if (!x) { toast('하오문 밀서', '쪽지가 비어 있다. 더 알려 줄 비전이 없다는 운낭의 장난이다'); return; }
   letters.add(x.id); store.set('letters', [...letters]);
@@ -3825,7 +3825,7 @@ function lifeSettle() {
   // 다음 생부터 레벨업에 나올 무공: 도전 과제로 연 것 + 이번 생 첫 처치로 연 것(boss:<지역>)
   const firstBoss = new Set(LK.filter(k => k.first).map(k => k.boss));
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
+  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met) };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -3850,7 +3850,8 @@ function recordLife(st) {
   if (st.extremeKill && !m.unlocks.includes('boss_at_extreme')) m.unlocks.push('boss_at_extreme');   // 역근 해금(WP-35)
   m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);   // 의서(혈월 천하 은빛 등롱), 회귀해도 남는다
   if (st.whisper) m.whispers = (m.whispers || 0) + 1;   // 계승 엔딩 표식(20장). 표식이 무엇을 바꾸는지는 WP-29a
-  m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)
+  m.lastEnd = st.endWay || 'fallen'; m.lastHermit = !!st.hermit;
+  m.lastNewRealms = st.newRealms || []; m.lastTop = st.topId || null; m.lastLetter = !!st.letter;   // 현경 short·sealed 줄(Core LifeSummary.NewRealms·LifeRecord.HighestRealm)과 운낭 밀서 줄   // 귀환 대사 좌화·은거기인 줄이 다음 침방에서 읽는다(Core LifeRecord.EndWay·ReturnFacts.MetHermit)
   // 종장을 깬 생(Core Soul.EndLife 'sealed' → ChooseEnding): 문파별 종장 수, 본 엔딩, 엔딩 효과. 봉인은 회귀 — cycle.resets(봉인석)만 지우고 회차 +1
   if (st.finalClear && st.ending) {
     m.finalClears = m.finalClears && typeof m.finalClears === 'object' ? m.finalClears : {};
@@ -3977,7 +3978,8 @@ function sayMok(lines, more) {
 }
 // 귀환 대사(Core InnDialogue.OnReturn): 생이 끝나 침방을 열 때 한 번. 목 노인 returns.mokMax·운낭 unnangMax·대표 인물 한 사람 한 마디.
 // 조건이 맞은 줄은 밀린 줄(혼 기록 pend)에 넣고 갈래 순서 → 파일 순서로 꺼내며, 못 꺼낸 줄은 다음 귀환으로. 본 줄은 seen('mok.<id>'·'unnang.<id>').
-// 이 판에 없는 것은 뺌: 시설·하오문 밀서 줄, 현경 short·sealed 줄, 좌화 shadow(혈마의 그림자가 아직 없다). 의서 줄(manuscript:N)은 모은 권 수로.
+// 이 판에 없는 것은 뺌: 시설 줄(객잔 시설이 아직 없다), 좌화 shadow(혈마의 그림자가 아직 없다). 의서 줄(manuscript:N)은 모은 권 수로.
+// 현경 short 는 이번 생에 처음 오른 경지인데 봉인석이 모자랄 때, sealed 는 이번 생 가장 높은 경지이고 봉인석을 다 모았을 때. 밀서 줄은 이번 생에 밀서를 주웠으면 마천패 처치 앞뒤로.
 // 은거기인 줄은 만난 생마다 아직 안 한 것 앞에서 하나, 좌화 줄은 처음이면 first, 그 뒤 repeat(본 뒤에도 다시)(WP-26)
 const RET = DATA.returns || { mokMax: 0, unnangMax: 0, leaderMax: 0, mokOrder: [], unnangOrder: [] };
 const RET_MOK = DATA.mokReturn || [], RET_UN = DATA.unnang || [];
@@ -3992,10 +3994,11 @@ function innReturn(m) {
   if (!m.lives || m.retAt === m.lives) return [];   // 서장이 끝난 귀환엔 없고(첫 환혼 줄), 한 생에 한 번
   m.retAt = m.lives; m.seen = Array.isArray(m.seen) ? m.seen : []; m.pend = Array.isArray(m.pend) ? m.pend : [];
   const kills = m.bossKills || {}, stones = m.stones || [], reached = m.reached || [];
+  const allStones = stones.length >= ((LR && LR.finalRequires && LR.finalRequires.sealStones) || 7), newR = m.lastNewRealms || [];
   const queue = (group, l) => { const k = group + '.' + l.id; if (!m.seen.includes(k) && !m.pend.includes(k)) m.pend.push(k); };
   for (const l of RET_MOK) {
     const { kind, args: a } = whenOf(l);
-    const hit = kind === 'lives' ? m.lives >= +a[0] : kind === 'stones' ? stones.length >= +a[0] : kind === 'realm' && a.length === 1 ? reached.includes(a[0]) : kind === 'lord' ? (kills[a[0]] || 0) > 0 : kind === 'manuscript' ? (m.manuscripts || 0) >= +a[0] : false;
+    const hit = kind === 'lives' ? m.lives >= +a[0] : kind === 'stones' ? stones.length >= +a[0] : kind === 'realm' && a.length === 1 ? reached.includes(a[0]) : kind === 'realm' && a[1] === 'short' ? newR.includes(a[0]) && !allStones : kind === 'realm' && a[1] === 'sealed' ? m.lastTop === a[0] && allStones : kind === 'lord' ? (kills[a[0]] || 0) > 0 : kind === 'manuscript' ? (m.manuscripts || 0) >= +a[0] : false;
     if (hit) queue('mok', l);
   }
   if (m.lastHermit) { const h = RET_MOK.find(l => whenOf(l).kind === 'hermit' && !m.seen.includes('mok.' + l.id) && !m.pend.includes('mok.' + l.id)); if (h) queue('mok', h); }
@@ -4007,7 +4010,7 @@ function innReturn(m) {
   const afterMa = (kills.ma_cheonpae || 0) > 0;
   for (const l of RET_UN) {
     const { kind, args: a } = whenOf(l);
-    if ((kind === 'return' || kind === 'lives') ? m.lives >= +a[0] : kind === 'confess' ? afterMa : false) queue('unnang', l);
+    if ((kind === 'return' || kind === 'lives') ? m.lives >= +a[0] : kind === 'confess' ? afterMa : kind === 'letter' ? !!m.lastLetter && (a[0] === 'after') === afterMa : false) queue('unnang', l);
   }
   let un = retTake(m, 'unnang', RET_UN, RET.unnangOrder, RET.unnangMax);
   if (!un.length && RET.unnangMax > 0) {
