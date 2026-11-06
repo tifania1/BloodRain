@@ -6,14 +6,14 @@
 
 | M2 줄 | 기획서 | 데이터 | Core | 웹 | Unity |
 |---|---|---|---|---|---|
-| 서장 | 4장 서장 상세 흐름, 19장 | chapters.json `prologue`, cheonha.json `prologueBody` | `Run/Prologue.cs`, `Spawning/PrologueDirector.cs`, 첫 레벨업 한 장(T-43) | 1장 프로토타입 '서장'(M1-04~06) → 끝 컷 → 첫 환혼 셋 → 천하 시안 `#first=` 로 첫 생. 서장 생 정산(윤회의 기·청운진·이류/일류)은 WP-02 | C-06b(첫 레벨업 카드 한 장) |
-| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 1장 프로토타입: 범종만. 천하 시안: 범종·탑림(RM-08, 원각이 떨어뜨린 종 포함), 목인나한 나뭇조각(RM-12), 한 생 사건(혈인 돌진·목인나한 무리·동갑시 포위, RM-14) | TU 축척·지역 HUD 끝 |
+| 서장 | 4장 서장 상세 흐름, 19장 | chapters.json `prologue`, cheonha.json `prologueBody` | `Run/Prologue.cs`, `Spawning/PrologueDirector.cs`, 첫 레벨업 한 장(T-43) | 프로토타입 서장 → 끝 컷 → 그 판 침방 첫 환혼 셋 → 첫 생(WP-14e) | C-06b(첫 레벨업 카드 한 장) |
+| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 프로토타입 한 생 판: 범종, 시간표(chapters.json life), 숭산 정예·원각(WP-13·14). 탑림은 R4-07 배치 값 뒤 | TU 축척·지역 HUD 끝 |
 | 원각 | 6장 땅의 주인 패턴 수치 | bosspatterns.json `wongak` | `BossPatterns`·`BossAwakening`(기혈 곡선 T-40) | 둘 다 패턴 다 나옴 | 보스 패턴 러너 |
-| 문파 3 | 5·21장 | cheonha.json sects 소림·개방·남궁(`unlock: start`), 시작 무공, 대표 인물 | `Rebirth`(후보·몸·성별), 진전 `Synergy` | 천하 시안: 몸 기혈·걸음만, 무공은 시안 셋 | TU-11 후보 카드 |
-| 축척 전환 | 7장 | cheonha.json `realmScale`·`breakthrough`·`cluster`·`crush` | `Scale`·`Breakthrough` | 천하 시안 그대로 | TU-01 축척 카메라 |
-| 침방 | 10장 환혼 강화, 21장 | cheonha.json `rebirth`·환혼 강화 | `Soul.TryBuyUpgrade`·`CandidateCount`·`RerollsPerRebirth` | 천하 시안: 넷째 몸·다시 고르기(RM-09) | TU-11·12 |
-| 연무장 | 10장 표 20항목 | balance.json `training` 20 | `Stats`·`Soul.TryBuyTraining`·`RefundTraining` | 천하 시안: 몸에 닿는 열 항목(RM-09) | TU-14 |
-| 정산 화면 | 10장 윤회의 기, 12장 정산 줄 | cheonha.json `rebirthQi` | `RebirthQi`(줄별 내역), `Soul.EndLife` | 천하 시안: 12장 줄(밟은 땅·무공별 피해 막대·혈정 잔고, RM-13). 은자 줄 없음(은자 자체가 없음) | TU-13. 생존 시간·처치·무공별 피해·혈정은 전투 쪽 `SettlementStats` |
+| 문파 3 | 5·21장 | cheonha.json sects 소림·개방·남궁(`unlock: start`), 시작 무공, 대표 인물 | `Rebirth`(후보·몸·성별), 진전 `Synergy` | 프로토타입 한 생 판: 몸·시작 무공·고유 능력(WP-14a·20), 대표 인물 마당 줄 | TU-11 후보 카드 |
+| 축척 전환 | 7장 | cheonha.json `realmScale`·`breakthrough`·`cluster`·`crush` | `Scale`·`Breakthrough` | 프로토타입 기본(WP-12·15, `?scale=0` 이 옛 시야) | TU-01 축척 카메라 |
+| 침방 | 10장 환혼 강화, 21장 | cheonha.json `rebirth`·환혼 강화 | `Soul.TryBuyUpgrade`·`CandidateCount`·`RerollsPerRebirth` | 프로토타입 침방(WP-14d): 후보 셋·넷째 몸·다시 고르기·목 노인 줄 | TU-11·12 |
+| 연무장 | 10장 표 20항목 | balance.json `training` 20 | `Stats`·`Soul.TryBuyTraining`·`RefundTraining` | 프로토타입 연무장: training 스무 항목 다(WP-14d·21) | TU-14 |
+| 정산 화면 | 10장 윤회의 기, 12장 정산 줄 | cheonha.json `rebirthQi` | `RebirthQi`(줄별 내역), `Soul.EndLife` | 프로토타입 정산(WP-14c): 윤회의 기 줄·은자 줄·혈정·새 무공 | TU-13. 생존 시간·처치·무공별 피해·혈정은 전투 쪽 `SettlementStats` |
 
 ## 걸리는 것
 
@@ -24,7 +24,8 @@
 - 웹 천하 시안이 M2 의 손맛을 보려면 깨달음·숭산 기믹·침방 강화가 있어야 한다 → RM-07~RM-09(끝)
 - 천하 시안 정산 화면에 12장 줄 가운데 밟은 땅·무공별 피해 막대·혈정이 없다 → RM-13(끝)
 - 천하 시안에 7장 '한 생의 시간대별 흐름' 사건(혈인 돌진·목인나한 무리·동갑시 포위)이 없다. 레벨과 정예만 시간표를 따른다 → RM-14(끝)
-- 천하 시안의 문파 몸은 시작 무공을 안 쓴다(무공은 시안 셋) → RM-15 사람 결정 대기
+- 천하 시안의 문파 몸은 시작 무공을 안 쓴다(무공은 시안 셋) → RM-15 사람 결정 대기. 합친 프로토타입 한 생 판은 시작 무공을 씀(WP-14a)
+- (WP-24, 2026-11-06) 웹 칸을 합친 프로토타입 기준으로 고침. 보부상(WP-22)도 이제 웹에 있음
 - (WP-02, 2026-11-04) 웹 한 판 이어 보기: 서장 → 첫 환혼 → 숭산 삼류–절정 → 원각이 이어진다. 서장 생이 시안 기록에 안 남던 것과 장삼 뒤 컷이 다른 화면에 막히던 것을 붙였다. 결과는 `web/prototype/README.md` 'M2 한 판 이어 보기'
 
 ## 이미 맞는 것
