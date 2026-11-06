@@ -75,7 +75,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("e.hp *= BM.enemyHealth; e.maxHp *= BM.enemyHealth; e.speed *= BM.enemySpeed;", html);
             // 윤회의 기 혈월 줄은 Core RebirthQiLedger.Settle 의 fromMoon 과 같은 꼴: (줄 합 + 성질) × (배율 − 1) 반올림
             Assert.Contains("Math.round(rows.reduce((a, r) => a + r[2], 0) * (BM.rewards - 1))", html);
-            Assert.Contains("* (1 + (synStats().Greed || 0)) * moonR()", html);
+            Assert.Contains("* (1 + (synStats().Greed || 0) + bodyGreed()) * moonR()", html);
         }
 
         [Fact] public void 은빛_등롱과_의서와_목_노인_줄이_진엔딩_조건을_채운다()

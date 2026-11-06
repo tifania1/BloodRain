@@ -487,6 +487,25 @@ const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100
 const LIFE_SECT = (DATA.sects || []).find(s => s.id === new URLSearchParams(location.search).get('life')) || null;
 const LIFE_BEH = new Set(['aura', 'forward_claws', 'front_arc', 'homing_dagger', 'melee_combo', 'orbit_slash', 'orbiting_blades', 'petal_scatter', 'pierce_thrust', 'pull_chain', 'random_arc', 'random_bomb', 'random_rapid', 'random_lightning', 'ring_wave', 'slow_projectile']);
 const bodyOf = () => (G && G.body) || JIN;
+// 문파 고유 능력(WP-20, 기획서 5장 '한눈에 보기', cheonha.json sects traitEffect — Core SectTrait 와 같은 셈). 서장 몸·1장 판은 빈 것.
+//   stats(소림 호신·개방 탐욕·음식·화산 치명)는 lifeBody 가 몸 능력치에 더하고, 여기선 그때그때 바뀌는 것만:
+//   남궁 기혈 aboveHealthRatio 이상이면 aboveHealthStats, 수로채 움직이는 동안 movingStats(회피), 마교 기혈이 낮을수록 쾌속(100% 0 → lowHealthFullAt 이하 끝값),
+//   무당 조화 보너스 × harmonyBonusMultiplier, 곤륜 nearEnemySlowRadius 안 적 걸음 × (1 − nearEnemySlow), 마교 회복 전부 × healingMultiplier, 당가 독 무효·중독된 적 피해 +poisonedTargetDamage.
+const sectT = () => (G && G.body && G.body.trait) || {};
+function sectBonus(k) {   // Core SectTrait.Bonus(healthRatio, moving) 가운데 stats 를 뺀 몫
+  const T = sectT(), p = G.player, hr = p.maxHp > 0 ? p.hp / p.maxHp : 1;
+  let v = 0;
+  if (T.aboveHealthRatio > 0 && hr >= T.aboveHealthRatio) v += (T.aboveHealthStats || {})[k] || 0;
+  if (p.moving) v += (T.movingStats || {})[k] || 0;
+  if (k === 'CooldownReduction' && T.lowHealthCooldownReduction > 0) {
+    const full = T.lowHealthFullAt ?? 0;
+    v += full >= 1 ? T.lowHealthCooldownReduction : T.lowHealthCooldownReduction * clamp((1 - clamp(hr, 0, 1)) / (1 - full), 0, 1);
+  }
+  return v;
+}
+const healMul = () => sectT().healingMultiplier ?? 1;   // 마교 0.5
+const harmonyMul = () => sectT().harmonyBonusMultiplier ?? 1;   // 무당 2
+const nearSlow = d => { const T = sectT(); return T.nearEnemySlow > 0 && d <= T.nearEnemySlowRadius ? 1 - T.nearEnemySlow : 1; };   // 싸움 좌표가 지금 경지 m 라 반경은 그대로
 // 능력치 이름(Core StatKind) → 프로토타입 능력치 칸. 심법·문파 몸·연무장·타고난 성질이 같이 쓴다
 const STAT_KEY = { MaxHealth: 'maxHealth', Recovery: 'recovery', Armor: 'armor', MoveSpeed: 'moveSpeed', Might: 'might', CooldownReduction: 'cdr', Area: 'area', Duration: 'duration', ProjectileSpeed: 'projSpeed', Magnet: 'magnet', Growth: 'growth', Luck: 'luck', CritChance: 'crit', Knockback: 'knockback', BurnDamage: 'burn', DotDamage: 'dot', EliteDamage: 'elite', Lifesteal: 'lifesteal', FoodHeal: 'foodHeal', ExplosionArea: 'explosionArea' };
 const JIN_REROLLS = B.levelUp.traitRerolls?.[JIN.trait] ?? 0;
@@ -612,7 +631,7 @@ function updateSynergy() {
   for (const sc of SYN.schools) if (tier[sc.id] > (S.tier[sc.id] || 0)) { discover('school:' + sc.id); const tr = sc.tiers.find(x => x.count === tier[sc.id]); toast(`${sc.nameKo} 진전 ${tier[sc.id]}`, tr.desc + (tr.proto ? '' : ' (정식판에서)')); }
   S.counts = counts; S.tier = tier; S.links = links;
   // 진전 단계의 harmonyRange(무당 2단계 35). 넓히기만 한다
-  let hr = B.yinyang.harmonyRange;
+  let hr = Math.max(B.yinyang.harmonyRange, (G && G.body && G.body.harmonyRange) || 0);   // 무당 몸 ±40(WP-20, sects harmonyRange)
   for (const sc of SYN.schools) for (const t of sc.tiers) if (t.harmonyRange && sch(sc.id, t.count)) hr = Math.max(hr, t.harmonyRange);
   G.harmonyRange = hr;
 }
@@ -630,7 +649,8 @@ function synEff(name) {
 // 혈월 천하(2회차부터, 21장): 적 기혈·걸음 배율, 보상(은자·윤회의 기·혈정) 배율. Core Life.GainSilver 처럼 주울 때 곱해 반올림
 const BM = DATA.bloodmoon || { enemyHealth: 1, enemySpeed: 1, rewards: 1 };
 const moonR = () => (G && G.moon ? BM.rewards : 1);
-function addSilver(v) { G.silver += Math.round(v * (1 + (synStats().Greed || 0)) * moonR()); }
+const bodyGreed = () => ((G.body && G.body.stats) || {}).Greed || 0;   // 몸 탐욕(개방 30%·복덕·연무장, WP-20)
+function addSilver(v) { G.silver += Math.round(v * (1 + (synStats().Greed || 0) + bodyGreed()) * moonR()); }
 function showDiscovery(seal, hanja, name, desc) {
   overlay = 'find'; overlayAt = performance.now(); sfx('gong');
   $('findseal').textContent = seal; $('findhanja').textContent = hanja; $('findname').textContent = name; $('finddesc').textContent = desc;
@@ -1084,6 +1104,7 @@ function newRun(mode) {
     if (G.moon) toast(`혈월 천하 · ${G.soul0.cycle}회차`, `적 기혈 ×${BM.enemyHealth} · 걸음 ×${BM.enemySpeed} · 보상 ×${BM.rewards}`);
     if (reg) { G.home = { x: reg.x, y: reg.y }; G.player.x = G.cam.x = reg.x; G.player.y = G.cam.y = reg.y; }
     if (LS.region !== 'songshan') G.bells = [];   // 범종은 숭산 마당 것
+    G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max);   // 음양 시작(WP-20·21)
     if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
   }
   recomputeStats();
@@ -1128,7 +1149,7 @@ function recomputeStats() {
   for (const [k, v] of Object.entries(synStats())) { const key = map[k]; if (key) s[key] += v; }
   const rr = realmRewardSum(G.realm.level);
   const yb = yyBand();
-  s.cdr += yb.band === 'harmony' ? B.yinyang.harmony.cooldownReduction : 0;
+  s.cdr += yb.band === 'harmony' ? B.yinyang.harmony.cooldownReduction * harmonyMul() : 0;   // 무당 조화 보너스 2배(WP-20)
   s.cdr = Math.min(B.stats.cooldownReductionCap, s.cdr);
   s.might += G.salgiBonus;
   const insightMagnet = G.insights.includes('cheolli') ? IP.cheolli.multiplier : 1;
@@ -1779,7 +1800,7 @@ function addNum(x, y, v, crit, color) {
 function weaponDamage(w) {
   const def = W_BY_ID[w.id];
   let d = lerp(def.damageLv1, def.damageLv8, (w.lv - 1) / 7);
-  d *= G.stats.might * aspectMult(def.yinyang);
+  d *= (G.stats.might + sectBonus('Might')) * aspectMult(def.yinyang);   // 남궁 기혈 50% 이상 공력 +25%(WP-20)
   if (w.evolved) d *= B.evolution.damageMultiplier;
   if (G.glow && G.glow.w === w) d *= BA.afterglowDamageMultiplier;   // 각성 여운(balance.json awakening)
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
@@ -1791,6 +1812,7 @@ function weaponDamage(w) {
 function hurtEnemy(e, dmg, w, kx, ky, kb) {
   if (e.dead) return;
   if (e.elite || e.boss) dmg *= G.stats.elite;
+  if (e.poison > 0 && sectT().poisonedTargetDamage) dmg *= 1 + sectT().poisonedTargetDamage;   // 당가 중독된 적 +20%(WP-20)
   const jsd = synEff('jiangshi_damage'); if (jsd && (E_BY_ID[e.type] || {}).family === 'jiangshi') dmg *= 1 + jsd.damageBonus;
   let crit = false;
   if (Math.random() < G.stats.crit) { dmg *= B.stats.critDamageMultiplier; crit = true; }
@@ -1799,7 +1821,7 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   const floor = e.maxHp * PROB.bossHealthFloor;
   if (e.jang && (!G.proAwake || G.awaken) && e.hp < floor) { dmg -= floor - e.hp; e.hp = floor; prologueAwaken('boss'); }
   if (w) w.dealt += dmg;
-  if (G.stats.lifesteal > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * G.stats.lifesteal);
+  if (G.stats.lifesteal > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * G.stats.lifesteal * healMul());
   if (kb && !e.boss) { const k = kb * G.stats.knockback * (1 - e.kbRes); e.kbx += kx * k; e.kby += ky * k; }
   // 피해 숫자는 치명타와 일부만. 다 띄우면 화면이 숫자로 덮인다.
   if (crit || (dmg >= 8 && Math.random() < (e.boss || e.elite ? 0.5 : 0.18))) addNum(e.x, e.y - e.r * 2.4, dmg, crit);
@@ -1848,7 +1870,7 @@ function dropOrb(x, y, v) {
   }
 }
 function addUlt(v) {
-  const bonus = yyBand().band === 'harmony' ? 1 + B.yinyang.harmony.ultimateChargeBonus : 1;
+  const bonus = yyBand().band === 'harmony' ? 1 + B.yinyang.harmony.ultimateChargeBonus * harmonyMul() : 1;
   G.ult = Math.min(B.ultimateCharge.max, G.ult + v * bonus * (G.syn.secrets.has('mumyeong') ? 2 : 1));
 }
 function hurtPlayer(dmg, src) {
@@ -1857,6 +1879,7 @@ function hurtPlayer(dmg, src) {
   if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
   if (G.empower) dmg *= G.empower.dmg;   // 혈월(WP-13e): 화면 위 적 피해
   dmg *= yyFieldMul();   // 흑백 구역(WP-13e)
+  { const ev = sectBonus('Evade'); if (ev > 0 && Math.random() < ev) { addEffect('ring', p.x, p.y, { r: 0.8, color: '#8FA8B8', life: 0.25 }); return; } }   // 수로채 움직이는 동안 회피 15%(WP-20, Core Evade.Roll)
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
   // 무당 진전 3 사량발천근: 태극 구간이면 20% 덜 받고, 줄인 피해의 열 배를 부딪힌 적에게
   const hdf = synEff('harmony_deflect'); if (hdf && yyBand().band === 'harmony') { const cut = taken * hdf.damageCut; taken -= cut; if (src && !src.dead) hurtEnemy(src, cut * hdf.reflectMultiplier, null, 0, 0, 0); }
@@ -2046,7 +2069,7 @@ function fireWeapon(w) {
         forNear(p.x, p.y, R + 1, e => {
           if (hitSet.has(e)) return;
           const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
-          if (along > 0 && along < R + e.r && perp < TRIAL_W.clawWidth + e.r) { hitSet.add(e); hurtEnemy(e, dmg, w, ca, sa, def.knockback); p.hp = Math.min(p.maxHp, p.hp + dmg * ls); }
+          if (along > 0 && along < R + e.r && perp < TRIAL_W.clawWidth + e.r) { hitSet.add(e); hurtEnemy(e, dmg, w, ca, sa, def.knockback); p.hp = Math.min(p.maxHp, p.hp + dmg * ls * healMul()); }
         });
       }
       hitLanterns(p.x + fx * R * 0.5, p.y + fy * R * 0.5, R * 0.5);
@@ -2289,7 +2312,7 @@ function update(dt) {
   // 회복
   let regen = S.recovery;
   if (G.insights.includes('ungi') && p.still >= IP.ungi.stillSeconds) regen += p.maxHp * IP.ungi.maxHealthPerSecond;
-  p.hp = Math.min(p.maxHp, p.hp + regen * dt);
+  p.hp = Math.min(p.maxHp, p.hp + regen * dt * healMul());   // 마교 회복 절반(WP-20)
 
   // 음양 극성: 60초마다 기혈역류
   const band = yyBand().band;
@@ -2330,7 +2353,7 @@ function update(dt) {
       let cd = def.cooldown || 0.5;
       if (def.behavior === 'random_rapid') cd = 1 / (grow(def.shotsPerSecond, (w.lv - 1) / 7) * (w.evolved ? EVO_BY_W[w.id].params.fireRateMultiplier : 1));
       if (def.behavior === 'aura') cd = def.tickSeconds;
-      w.cd += Math.max(0.05, cd * (1 - S.cdr));
+      w.cd += Math.max(0.05, cd * (1 - Math.min(B.stats.cooldownReductionCap, S.cdr + sectBonus('CooldownReduction'))));   // 마교 기혈이 낮을수록 쾌속(WP-20), 상한은 합친 값에
       if (w.cd < -1) w.cd = 0;
     }
   }
@@ -2374,6 +2397,7 @@ function update(dt) {
     if (e.roarT > 0) { vx *= 1 + (e.roarBonus || 0); vy *= 1 + (e.roarBonus || 0); }   // 혈사자 포효(WP-13c)
     if (G.wEnemy && G.wEnemy !== 1 && !e.boss) { vx *= G.wEnemy; vy *= G.wEnemy; }   // 눈보라·붉은 달(WP-13b)
     if (G.empower && !e.boss) { vx *= G.empower.spd; vy *= G.empower.spd; }   // 혈월(WP-13e)
+    { const ns = nearSlow(d); if (ns !== 1) { vx *= ns; vy *= ns; } }   // 곤륜 설한기(WP-20)
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
     e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
@@ -2788,8 +2812,8 @@ function bossAI(e, dt, dx, dy, d) {
 
 function pickup(dr) {
   const p = G.player;
-  if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal); toast('만두', `기혈 +${DR.bunHeal}`); }
-  else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal); toast('오리구이', `기혈 +${DR.duckHeal}`); }
+  if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal * healMul()); toast('만두', `기혈 +${Math.round(DR.bunHeal * G.stats.foodHeal * healMul())}`); }
+  else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal * healMul()); toast('오리구이', `기혈 +${Math.round(DR.duckHeal * G.stats.foodHeal * healMul())}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
   else if (dr.kind === 'freeze') { G.talis = (G.talis || 0) + 1; G.freeze = DR.jeongsinFreezeSeconds * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
   else if (dr.kind === 'silver') { addSilver(DR.silverBag[0] + Math.floor(Math.random() * (DR.silverBag[1] - DR.silverBag[0] + 1))); }
@@ -3577,7 +3601,7 @@ const CARD_BY = Object.fromEntries((DATA.cards || []).map(c => [c.id, c]));
 const START_SECTS = (DATA.sects || []).filter(s => s.unlock === 'start').map(s => s.id);
 const STAT_KO = new Proxy({}, { get: (_, k) => statLabel(k) });   // 연무장·성질 이름도 ui.stat + 쉬운 말(UI-02)
 const FLAT_STAT = new Set(['Recovery', 'Luck', 'DashCharges', 'Armor', 'Amount', 'Banishes', 'Rerolls']);
-const statOn = k => !!STAT_KEY[k] || ['Amount', 'Banishes', 'Rerolls'].includes(k);   // 파기·다시 고르기는 레벨업 횟수로(UI-02)   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
+const statOn = k => !!STAT_KEY[k] || ['Amount', 'Banishes', 'Rerolls', 'Greed'].includes(k);   // 파기·다시 고르기는 레벨업 횟수로(UI-02)   // 이 판 능력치에 실제로 들어가는 것(나머지는 흐리게)
 function fmtStat(k, v) {
   const sign = v > 0 ? '+' : v < 0 ? '−' : '', a = Math.abs(v);
   if (k === 'Recovery') return `${STAT_KO[k]} ${sign}${+a.toFixed(2)}`;   // 쉬운 말에 '초당 회복'이 붙는다
@@ -3650,9 +3674,9 @@ function lifeBody(sect, traits) {
   const m = innMeta(), stats = Object.assign({}, sect.stats || {});
   const add = (k, v) => { stats[k] = (stats[k] || 0) + v; };
   for (const it of TRAIN_ITEMS) { const lv = Math.min(m.train[it.stat] || 0, it.maxLevel); if (lv > 0) add(it.stat, it.perLevel * lv); }
-  let qiBonus = 0;
-  for (const id of traits || []) { const t = TRAIT_BY[id]; if (!t) continue; for (const k in t.stats) add(k, t.stats[k]); qiBonus += t.rebirthQi || 0; }
-  return Object.assign({}, sect, { stats, traits: (traits || []).filter(id => TRAIT_BY[id]), qiBonus });
+  let qiBonus = 0, yy = sect.yinyangStart || 0;   // 음양 시작: 문파 + 음체·양체(Core Rebirth: sect.YinyangStart + 성질 합)
+  for (const id of traits || []) { const t = TRAIT_BY[id]; if (!t) continue; for (const k in t.stats) add(k, t.stats[k]); qiBonus += t.rebirthQi || 0; yy += t.yinyangStart || 0; }
+  return Object.assign({}, sect, { stats, traits: (traits || []).filter(id => TRAIT_BY[id]), qiBonus, yy });
 }
 const NUM_KO = ['', '하나', '둘', '셋', '넷', '다섯'];
 // 목 노인(dialogue.json bedroom, Core BedroomTalk): 첫 환혼·문파 첫 환생 줄은 늘 하고, 나머지는 한 침방에 한 마디. 그 침방에 앞 줄이 나왔으면 안 한다.
@@ -4071,7 +4095,7 @@ function regionGimmicksStep(dt) {
   }
   if (fg && G.fogs.length) {
     G.fogs = G.fogs.filter(f => G.t - f.t0 < fg.spreadSeconds + fg.holdSeconds + fg.fadeSeconds);
-    if (inFogW(p.x, p.y) && !G.won && !G.demo) p.hp -= p.maxHp * fg.healthLossPerSecond * dt * (G.easy ? 0.5 : 1);
+    if (inFogW(p.x, p.y) && !G.won && !G.demo && !sectT().poisonImmune) p.hp -= p.maxHp * fg.healthLossPerSecond * dt * (G.easy ? 0.5 : 1);
     for (const e of G.enemies) if (!e.dead && !(e.boss && fg.bossImmune) && inFogW(e.x, e.y)) { e.hp -= e.maxHp * fg.healthLossPerSecond * dt; if (e.hp <= 0) killEnemy(e); }
   }
   if (fr && fr.periodSeconds > 0 && hereHas(fr.id) && Math.floor(G.t / fr.periodSeconds) > Math.floor(Math.max(0, G.t - dt) / fr.periodSeconds))

@@ -134,7 +134,10 @@ def data_blob() -> str:
         "eliteFallback": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["eliteFallback"],
         # 한 생 시험(WP-14a): 주소 끝 ?life=<문파> 면 그 문파 몸(기혈·걸음·시작 무공·타고난 능력치)으로 그 문파 땅에서 한 생을 연다
         "sects": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"], "startWeapon": s["startWeapon"], "maxHealth": s["maxHealth"], "moveSpeed": s["moveSpeed"],
-                   "stats": (s.get("traitEffect") or {}).get("stats", {}), "unlock": s.get("unlock"), "leader": s.get("leader")} for s in load("cheonha")["sects"]],
+                   "stats": (s.get("traitEffect") or {}).get("stats", {}), "unlock": s.get("unlock"), "leader": s.get("leader"),
+                   # 고유 능력 나머지(WP-20, Core SectTrait)와 음양 시작·태극 구간
+                   "trait": {k: v for k, v in (s.get("traitEffect") or {}).items() if k != "stats"},
+                   "yinyangStart": s.get("yinyangStart", 0), "harmonyRange": s.get("harmonyRange")} for s in load("cheonha")["sects"]],
         # 침방·연무장(WP-14d, 10·21장): 환생 후보 수·첫 환혼·환혼 강화, 타고난 성질. 연무장 값은 balance.json training(위 balance 묶음)
         "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades", "femaleRatio", "maleOnlySects")},
         # 침방 목 노인 줄·후보 카드 글(21장, docs/story/mok.md·sects.md). 고르는 규칙은 Core InnDialogue BedroomTalk 와 같게
