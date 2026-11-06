@@ -633,6 +633,7 @@
   "ui.mode.soon": "Not yet open",
   "ui.settle.torn": "Torn Manuals reach the Sutra Library",
   "ui.settle.new_weapons": "New Technique: {0}",
+  "ui.settle.new_titles": "New Title: {0}",
   "ui.settle.to_inn": "To the Inn",
   "ui.inn.under_repair": "Under Repair",
   "ui.settle.total": "Total  {0}",

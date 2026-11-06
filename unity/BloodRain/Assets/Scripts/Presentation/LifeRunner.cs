@@ -149,6 +149,8 @@ namespace BloodRain.Presentation
             _kills++;
             // R-08U 도전 과제 처치 수. 정예·땅의 주인도 여기서 한 번(KillElite·DefeatBoss 는 보상만 센다)
             if (_life != null && _life.Record == null) _life.Log.Kill();
+            // WP-34U 금두꺼비(golden_toad 만. 영물은 세지 않는다). 모든 생 합이 연무장 탐욕 상한을 연다
+            if (_life != null && _life.Record == null && enemies != null && enemies.DefOf(a.Kind)?.Id == "golden_toad") _life.Log.CatchGoldenToad();
             // C-09a 오의 게이지: 처치마다(정예는 따로 더 크게), 음양 띠 배율은 Charge 가 본다
             if (_life != null && _life.Record == null && enemies != null)
             {
@@ -542,6 +544,13 @@ namespace BloodRain.Presentation
         }
 
         float LevelFloat => _life.Level + (float)System.Math.Min(_life.Xp.Progress, 0.999);
+
+        /// <summary>WP-34U 시험 메뉴용: 금두꺼비 하나를 이벤트와 같은 고리 자리에 부른다.</summary>
+        public void SpawnGoldenToadNear()
+        {
+            if (enemies == null) return;
+            enemies.SpawnAt(_data.Enemy("golden_toad"), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
+        }
 
         /// <summary>시험 메뉴 '다음 경지까지 진기'. 한 레벨씩 구슬을 먹은 것처럼 넣어 경지가 바뀌면 멈춘다.</summary>
         public void GiveXpToNextRealm()

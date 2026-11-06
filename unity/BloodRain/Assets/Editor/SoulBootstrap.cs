@@ -123,6 +123,47 @@ namespace BloodRain.Editor
         [MenuItem("BloodRain/Test/처치 수 채우기(플레이 중)", true)]
         static bool AddKillsValid() => Application.isPlaying;
 
+        // WP-34U 시험: 저장된 혼의 모든 생 금두꺼비 합을 9 로(한 마리 더 잡으면 연무장 탐욕 상한이 열린다)
+        [MenuItem("BloodRain/Test/혼에 금두꺼비 9마리 넣기")]
+        public static void SetToads9()
+        {
+            var data = DataBoot.Load();
+            var soul = SoulStore.Load(data);
+            var json = Newtonsoft.Json.Linq.JObject.Parse(soul.ToJson());
+            string key = "goldenToads";
+            foreach (var p in json.Properties())
+                if (string.Equals(p.Name, "goldenToads", System.StringComparison.OrdinalIgnoreCase)) { key = p.Name; break; }
+            json[key] = 9;
+            soul = Soul.FromJson(data, json.ToString());
+            SoulStore.Save(soul);
+            RebirthHandoff.Soul = null;
+            Debug.Log($"[SoulBootstrap] 금두꺼비 합 {soul.GoldenToadsTotal} 로 저장");
+        }
+
+        // WP-34U 시험: 지금 화면에 금두꺼비 하나를 부른다(이벤트를 기다리지 않고)
+        [MenuItem("BloodRain/Test/금두꺼비 부르기(플레이 중)")]
+        public static void SpawnToad()
+        {
+            var r = LifeRunner.Instance;
+            if (r == null || r.Life.Record != null) { Debug.LogWarning("[SoulBootstrap] Run 씬 플레이 중에만 됩니다"); return; }
+            r.SpawnGoldenToadNear();
+        }
+
+        [MenuItem("BloodRain/Test/금두꺼비 부르기(플레이 중)", true)]
+        static bool SpawnToadValid() => Application.isPlaying;
+
+        // WP-34U 시험: 이번 생 음식 수에 20 을 더한다(만두·오리구이 줍기는 C-09b 에서 붙는다)
+        [MenuItem("BloodRain/Test/음식 20개 먹기(플레이 중)")]
+        public static void EatFood20()
+        {
+            if (LifeRunner.Instance == null || LifeRunner.Instance.Life.Record != null) { Debug.LogWarning("[SoulBootstrap] Run 씬 플레이 중에만 됩니다"); return; }
+            for (int i = 0; i < 20; i++) LifeRunner.Instance.Life.Log.EatFood();
+            Debug.Log($"[SoulBootstrap] 음식 → {LifeRunner.Instance.Life.Log.FoodEaten}");
+        }
+
+        [MenuItem("BloodRain/Test/음식 20개 먹기(플레이 중)", true)]
+        static bool EatFood20Valid() => Application.isPlaying;
+
         // C-07a 시험: 다음 경지가 될 때까지 진기를 넣는다(돌파 줌·보상이 Life 쪽에서 나옴)
         [MenuItem("BloodRain/Test/다음 경지까지 진기(플레이 중)")]
         public static void NextRealm()

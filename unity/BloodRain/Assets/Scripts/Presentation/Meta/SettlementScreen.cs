@@ -169,6 +169,18 @@ namespace BloodRain.Presentation.Meta
                 nw.enableAutoSizing = true; nw.fontSizeMin = 13; nw.fontSizeMax = 22;
                 Place(nw.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, qy - (summary.NewTornManuals.Count > 0 ? 196 : 140)), new Vector2(620, 32));
             }
+            // WP-34U 이 생으로 새로 얻은 칭호(cheonha.json titles). 모으기 보상이라 능력치는 없다
+            if (summary.NewTitles.Count > 0)
+            {
+                var titleNames = summary.NewTitles.Select(id => _data.Cheonha.Titles.FirstOrDefault(t => t.Id == id) is TitleDef td
+                    ? Loc.T($"cheonha.titles.{td.Id}.name", td.NameKo) : id);
+                var nt = Text(right, Loc.F("ui.settle.new_titles", string.Join("·", titleNames)), 22, FontStyles.Bold, Crimson);
+                nt.alignment = TextAlignmentOptions.Right;
+                nt.textWrappingMode = TextWrappingModes.NoWrap;
+                nt.enableAutoSizing = true; nt.fontSizeMin = 13; nt.fontSizeMax = 22;
+                float ny = qy - 140 - (summary.NewTornManuals.Count > 0 ? 56 : 0) - (unlockedWeapons.Count > 0 ? 40 : 0);
+                Place(nt.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, ny), new Vector2(620, 32));
+            }
             var btn = MakeButton(_root, Loc.T("ui.settle.to_inn") + "  <size=70%><alpha=#88>Enter<alpha=#FF></size>");
             Place((RectTransform)btn.transform, new Vector2(0.5f, 0f), new Vector2(0, 80), new Vector2(380, 64));
             btn.onClick.AddListener(Finish);

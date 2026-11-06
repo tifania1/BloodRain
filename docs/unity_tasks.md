@@ -175,7 +175,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 처치 5,000 을 넘긴 생을 끝내면 정산에 '새로 얻은 무공 · 음공', 다음 생 레벨업 풀에 음공이 나옴
   - 찍기: `docs/unity_shots/R-08U/` 의 `new_unlock.png`
 
-- [ ] WP-34U 금두꺼비·음식 세기와 칭호 · 먼저: R-08U
+- [x] WP-34U 금두꺼비·음식 세기와 칭호 · 먼저: R-08U — 2026-11-06 22:50 PC: LifeRunner.OnKilled 가 적 id `golden_toad` 면 `Log.CatchGoldenToad()`(영물은 id 가 달라 안 셈). 정산 오른쪽에 `NewTitles` 줄(새 키 `ui.settle.new_titles` 네 언어, 이름은 `cheonha.titles.<id>.name`). 시험 메뉴 `혼에 금두꺼비 9마리 넣기`·`금두꺼비 부르기(플레이 중)`·`음식 20개 먹기(플레이 중)`(SoulBootstrap.cs), LifeRunner.SpawnGoldenToadNear. 서장 마친 혼 + 금두꺼비 9 → 소림 몸으로 하나 잡고 음식 20 → 쓰러지니 정산 '새 칭호 · 식객', 혼 금두꺼비 합 10, `TrainingMax("Greed")` 5 → 7, 콘솔 에러 0. 남은 것: 만두·오리구이 줍기가 Run 에 아직 없어 `EatFood` 는 C-09b 가 부를 것(지금은 시험 메뉴만). 연무장 화면의 n/7 은 눈으로 안 봄(혼 값으로 확인). 금두꺼비 은자 100 보상이 들어오는지는 이번에 안 봄. 찍음 `docs/unity_shots/WP-34U/title.png`
   - 할 것: 금두꺼비를 잡으면 `life.Log.CatchGoldenToad()`(영물은 빼고), 만두·오리구이를 먹으면 `life.Log.EatFood()`. 정산 화면에 `LifeSummary.NewTitles` 를 '새 칭호' 줄로(이름은 strings `cheonha.titles.<id>.name`, 줄 머리는 새 ui. 키 네 언어). 일검무적 표시는 Core Life 가 땅의 주인 처치 때 알아서 적는다. 연무장 탐욕 상한은 MetaShop 이 이미 `Soul.TrainingMax` 를 쓴다(WP-33)
   - 쓸 것: Core `LifeLog.CatchGoldenToad`·`EatFood`, `Soul.GoldenToadsTotal`·`Titles`·`TrainingMax`, `LifeSummary.NewTitles`, cheonha.json `titles`, balance.json training Greed `bonusMax`
   - 메뉴: 없음(시험 메뉴가 필요하면 SoulBootstrap 에 '금두꺼비 9마리 채우기')
