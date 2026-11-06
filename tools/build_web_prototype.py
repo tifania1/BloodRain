@@ -150,6 +150,8 @@ def data_blob() -> str:
         "mokReturn": drop_notes(load("dialogue")["mok"]["lines"]),
         "unnang": drop_notes(load("dialogue")["unnang"]["lines"]),
         "returns": drop_notes(load("dialogue")["returns"]),
+        # 정산 서술 자막(WP-26 좌화 줄, Core InnDialogue.Settlement)
+        "settleCaps": drop_notes(load("dialogue")["settlement"]["lines"]),
         "birthTraits": drop_notes(load("cheonha")["birthTraits"]),
         "firstRebirth": [{"id": s["id"], "nameKo": s["nameKo"], "region": s["region"]} for s in load("cheonha")["sects"] if s["id"] in load("cheonha")["rebirth"]["firstRebirth"]],
     }
