@@ -2577,6 +2577,8 @@ function update(dt) {
   p.moving = moving;
   if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; p.still = 0; } else p.still += dt;
   let speed = S.move * (G.backlash ? 0.5 : 1) * (G.wPlayer || 1);   // 눈보라(WP-13b)
+  // 빙강시(6장, enemies.json onHitSlowSeconds·onHitSlowMultiplier, Unity EnemyField 와 같음): 닿아 맞으면 그 시간 동안 걸음 배율. 다시 맞으면 시간만 처음부터
+  if (p.chillT > 0) { p.chillT -= dt; speed *= p.chillMul || 1; }
   // 기절(방장 대리 범종): 걷지도 경공도 못 한다. 무공은 그대로 나간다.
   if (p.stunT > 0) { p.stunT -= dt; speed = 0; }
   if (p.rootT > 0) { p.rootT -= dt; speed = 0; } // 장삼 포승줄: 걷지 못하고 경공은 된다
@@ -2688,7 +2690,12 @@ function update(dt) {
     }
     // 접촉 피해
     if (d < e.r + B.stats.playerBodyRadius && lowBorn(e)) { killEnemy(e, true); addEffect('burst', e.x, e.y, { r: e.r * 1.6, color: '#786E5F' }); continue; }   // 밟힘(WP-15)
-    if (d < e.r + B.stats.playerBodyRadius && e.contact <= 0) { e.contact = B.contact.sameEnemyIntervalSeconds; hurtPlayer(e.dmg, e); }
+    if (d < e.r + B.stats.playerBodyRadius && e.contact <= 0) {
+      e.contact = B.contact.sameEnemyIntervalSeconds;
+      const h0 = p.hp; hurtPlayer(e.dmg, e);
+      const ed = E_BY_ID[e.type];
+      if (ed && ed.onHitSlowSeconds > 0 && p.hp < h0) { p.chillT = ed.onHitSlowSeconds; p.chillMul = ed.onHitSlowMultiplier; addEffect('ring', p.x, p.y, { r: 0.9, color: '#96BED7', life: 0.3 }); }
+    }
   }
   // 밀어내기
   for (const a of grid.values()) {
