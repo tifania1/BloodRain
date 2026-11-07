@@ -305,6 +305,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 재기 1로 쓰러지면 기혈 절반으로 일어나고, 두 번째엔 정산. 콘솔 에러 0
   - 찍기: `docs/unity_shots/WP-42U/` 의 `revive.png`
 
+- [ ] EN-01U 기연이 나올 때와 자리를 Core 로 · 먼저: WP-39U
+  - 할 것: `Presentation/Fx/EncounterLayer.cs` 가 지금 판 시작에 RollAll 해서 나온 사건을 0:00 에 한꺼번에 놓는다(웹은 사건마다 2~5분·5~11분·3~14분·15~20분 사이에 하나씩). 판 시작에 사건마다 `EncounterSpots.AppearMinute(def, rng)` 를 뽑아 두고, `life.Minutes` 가 그 분이 되면 `_roller.Roll(id, Context())` — 형편이 안 맞아 못 굴리면(`EncounterRoller.CanAppear` 거짓) `EncounterSpots.RetryMinutes` 뒤 다시. 나오면 `EncounterSpots.PlaceOffset` × Scale 자리에(밀서·영물은 지금 길 그대로). 손으로 적힌 거리(고리 11·10·9m, 닿기 1.7·1.3·3·1.5m, 떠나기 8·2.5m, 은거기인 줄어듦 0.5)는 `EncounterSpots.Reached`·`Left`·`Progress` 로 바꾸고, 자리 표시 둘레 원 크기도 `def.Spot.ReachRadius`. rollSeconds 칸은 지운다
+  - 쓸 것: Core `Spawning/EncounterSpots.cs`, synergies.json `encounters[].spot`(`EncounterSpotDef`, 2026-11-07 클라우드 EN-01). 웹 `newEnc`·`SPOT`·`encProg` 줄과 견줌
+  - 메뉴: WP-39U 의 `BloodRain/Test/기연 놓기(플레이 중)`(PlaceNow 는 그대로 바로 놓기)
+  - 끝: 1장 몸으로 20분 돌리면 유해가 2~5분, 은거기인이 5~11분에 따로 뜨고(로그에 분), 시험 메뉴로 놓은 것은 전처럼 바로 뜸. 콘솔 에러 0
+  - 찍기: 없음(값과 때만 바뀜)
+
 - [ ] LT-01U 등롱 서기 값을 Core 로 · 먼저: C-09b
   - 할 것: `Presentation/Fx/LanternLayer.cs` 에 손으로 적힌 값(spawnSeconds 33·maxAlive 4·5~9m 고리·등롱 몸 0.4m·줍는 거리 1m·은빛 대각선 0.28)을 Core 로 바꾼다 — `Drops.LanternDue(def, _acc, 살아 있는 수)`, `Drops.LanternOffset(def, _rng)` × Scale, `Strike` 는 `Drops.LanternHit(def, dx, dy, radius / Scale)`(또는 반경 둘 다 Scale 곱해서), 줍기는 `Drops.InPickup(def, 거리 / Scale)`, `PlaceSilver` 는 `Drops.SilverLanternDistance(def, diag)`. 인스펙터 칸 셋(spawnSeconds·maxAlive·pickupMeters)은 지운다. 줍는 거리는 웹·데이터가 0.8m 라 지금 1m 보다 조금 줄어든다. 떨어진 뒤 0.3초 줍지 않는 것은 화면 몫이라 그대로 둔다
   - 쓸 것: Core `Build/Drops.cs`(LanternDue·LanternOffset·LanternHit·InPickup·SilverLanternDistance), balance.json `drops.lanternSpawn`(`LanternSpawnDef`, 2026-11-07 클라우드 LT-01). 웹 `const LS = DR.lanternSpawn` 줄과 견줌

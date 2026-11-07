@@ -688,7 +688,9 @@ function spawnSpiritBeast(chapter) {
   spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale, { beast: name });
   toast('기연의 기척', chapter === 'chapter6' ? '눈밭에 하얀 아이 하나가 뛰어간다 — 설삼 동자다' : '하얀 학 한 마리가 낮게 날아 달아난다');
 }
-function newEnc() { return { relic: { at: rand(2, 5), on: false, done: false, prog: 0 }, hermit: { at: rand(5, 11), on: false, done: false, prog: 0 }, elixir: { at: rand(3, 14), on: false, done: false, prog: 0 }, letter: { at: rand(3, 14), on: false, done: false, prog: 0 }, whisper: { at: rand(15, 20), on: false, done: false, prog: 0 }, sword_tomb: { at: rand(3, 14), on: false, done: false, prog: 0 }, spiritbeast: { at: rand(3, 14), on: false, done: false, prog: 0 } }; }   // 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
+function newEnc() { const o = {}; for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast']) { const sp = ENC_BY[key].spot; o[key] = { at: rand(sp.appearFromMinute, sp.appearToMinute), on: false, done: false, prog: 0 }; } return o; }   // 나올 분은 synergies.json encounters[].spot(Core EncounterSpots.AppearMinute). 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
+const SPOT = Object.fromEntries(SYN.encounters.filter(e => e.spot).map(e => [e.id, e.spot]));   // 놓는 고리·닿는 거리·떠나는 거리(Core EncounterSpots)
+const encProg = (key, prog, dt, inReach) => inReach ? prog + dt : Math.max(0, prog - (SPOT[key].decayPerSecond || 0) * dt);   // Core EncounterSpots.Progress
 const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n && !(G.syn.locked[id] || []).includes(n);   // 잠긴 비급 단계는 건너뛴다(개방 3 이 잠겨도 4 는 켜짐)
 const link = id => !!G && !!G.syn && G.syn.links.has(id);
 const lvOf = id => { const w = G.weapons.find(x => x.id === id); if (w) return w.evolved ? 8 : w.lv; const q = G.passives.find(x => x.id === id); return q ? q.lv : 0; };
@@ -792,7 +794,7 @@ function synTick(dt) {
         if (key === 'spiritbeast') { ev.done = true; spawnSpiritBeast(c.chapter); continue; }   // 영물: 금두꺼비처럼 달아나는 것(WP-32)
       }
       if (G.gm >= ev.at && !overlay) {
-        const a = rand(0, TAU), R = key === 'hermit' ? 11 : key === 'elixir' || key === 'whisper' || key === 'sword_tomb' ? 10 : 9; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
+        const a = rand(0, TAU), R = ENC_BY[key].spot.ringRadius; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
         const sc0 = SCHOOL_BY[ev.school || 'shaolin'];
         toast('기연의 기척', key === 'hermit' ? '어디선가 바둑돌 놓는 소리가 들린다' : key === 'elixir' ? '바위 틈에서 은은한 빛이 샌다' : key === 'whisper' ? '빗속에 붉은 석상 하나가 서 있다. 깨어나십시오…' : key === 'sword_tomb' ? '벼랑 끝에 녹슨 검들이 꽂혀 있다' : sc0.id === 'shaolin' ? '쓰러진 승려 하나가 눈에 띈다' : `쓰러진 ${sc0.nameKo} 무인 하나가 눈에 띈다`);
       }
@@ -800,23 +802,23 @@ function synTick(dt) {
     }
     const d = Math.hypot(p.x - ev.x, p.y - ev.y);
     if (key === 'hermit') {
-      if (d < 1.7) ev.prog += dt; else ev.prog = Math.max(0, ev.prog - dt * 0.5);
+      ev.prog = encProg(key, ev.prog, dt, d < SPOT.hermit.reachRadius);
       if (ev.prog >= ENC_BY.hermit.params.staySeconds && !overlay) { ev.done = true; ev.met = true; discover('enc:hermit'); showInsightChoice('은거기인', '노인이 바둑돌 하나를 내려놓으며 한 수 일러 준다', '기연'); }
     } else if (key === 'whisper') {
       // 혈마의 속삭임(20장): 석상 앞(3m)에서 오의를 쓰면 받음(whisperUlt), 석상에 다가갔다가 8m 밖으로 떠나면 거절
-      if (d < 3) ev.near = true; else if (ev.near && d > 8) { ev.done = true; toast('혈마의 속삭임', '석상을 지나쳤다. 붉은 눈이 빗속에서 꺼진다'); }
+      if (d < SPOT.whisper.reachRadius) ev.near = true; else if (ev.near && d > SPOT.whisper.leaveRadius) { ev.done = true; toast('혈마의 속삭임', '석상을 지나쳤다. 붉은 눈이 빗속에서 꺼진다'); }
     } else if (key === 'sword_tomb') {
       // 검총(20장, 화산): 무덤(1.5m)에 서면 가진 무공 카드에서 하나를 골라 꽂는다. 무공이 하나뿐이면 못 꽂고, '지나친다'면 무덤을 벗어났다 다시 와야 또 뜬다
-      if (d >= 2.5) ev.near = false;
-      else if (d < 1.5 && !ev.near && !overlay) { ev.near = true; if (G.weapons.length > 1) showSwordTomb(); else toast('검총', '꽂을 검이 이것 하나뿐이다'); }
+      if (d > SPOT.sword_tomb.leaveRadius) ev.near = false;
+      else if (d < SPOT.sword_tomb.reachRadius && !ev.near && !overlay) { ev.near = true; if (G.weapons.length > 1) showSwordTomb(); else toast('검총', '꽂을 검이 이것 하나뿐이다'); }
     } else if (key === 'elixir') {
       // 영약(20장): 줍는다 — 오의 게이지 가득, 음양 0
-      if (d < 1.3 && !overlay) {
+      if (d < SPOT.elixir.reachRadius && !overlay) {
         ev.done = true; discover('enc:elixir'); G.ult = B.ultimateCharge.max; G.yy = 0;
         showDiscovery('奇緣', '靈藥', '영약', '바위 틈의 천년하수오를 삼켰다. 오의가 가득 차고 음양이 가라앉는다.');
       }
     } else {
-      if (d < 1.3 && !p.moving) ev.prog += dt; else ev.prog = Math.max(0, ev.prog - dt);
+      ev.prog = encProg(key, ev.prog, dt, d < SPOT.relic.reachRadius && !p.moving);
       if (ev.prog >= ENC_BY.relic.params.bowSeconds && !overlay) {
         const sc = SCHOOL_BY[ev.school || 'shaolin'];
         ev.done = true; discover('enc:relic'); S.bonus[sc.id] = (S.bonus[sc.id] || 0) + ENC_BY.relic.params.schoolBonus; recomputeStats(); renderSlots();
@@ -828,7 +830,7 @@ function synTick(dt) {
 function drawEncounters() {
   for (const key of ['relic', 'hermit', 'elixir', 'whisper', 'sword_tomb']) {
     const ev = G.enc[key]; if (!ev || !ev.on || ev.done) continue;
-    const x = wx(ev.x), y = wy(ev.y), s = PPM, ring = (key === 'hermit' ? 1.7 : key === 'whisper' ? 3 : key === 'sword_tomb' ? 1.5 : 1.3) * s, need = key === 'hermit' ? ENC_BY.hermit.params.staySeconds : ENC_BY.relic.params.bowSeconds;
+    const x = wx(ev.x), y = wy(ev.y), s = PPM, ring = SPOT[key].reachRadius * s, need = key === 'hermit' ? ENC_BY.hermit.params.staySeconds : ENC_BY.relic.params.bowSeconds;
     ctx.save();
     ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(26,26,26,0.4)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, ring, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     if (ev.prog > 0) { ctx.strokeStyle = '#C9A227'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, ring, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, ev.prog / need)); ctx.stroke(); }
@@ -2471,7 +2473,7 @@ function readLetter() {
 }
 // 혈마의 속삭임을 받음(WP-29): 마도 진전 하나·회복 절반(healMul)·혼 기록에 계승 표식(whispers). '혈공'은 마교 몸이 아니면 무엇인지 기획서에 없어 아직 뺌(WP-29a)
 function whisperUlt() {
-  const ev = G.enc && G.enc.whisper; if (!ev || !ev.on || ev.done || !G.body || Math.hypot(G.player.x - ev.x, G.player.y - ev.y) >= 3) return;
+  const ev = G.enc && G.enc.whisper; if (!ev || !ev.on || ev.done || !G.body || Math.hypot(G.player.x - ev.x, G.player.y - ev.y) >= SPOT.whisper.reachRadius) return;
   ev.done = true; G.whisperTaken = true; discover('enc:whisper');
   G.syn.bonus.demonic = (G.syn.bonus.demonic || 0) + ENC_BY.whisper.params.schoolBonus; recomputeStats(); renderSlots();
   showDiscovery('奇緣', '血魔', '혈마의 속삭임', '석상 앞에서 힘을 받아들였다. 이번 생 동안 마도 진전을 하나 더 가진 것으로 치고, 몸이 받는 회복은 절반이 된다.');

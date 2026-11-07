@@ -151,8 +151,26 @@ namespace BloodRain.Core.Data
         public bool NeedsChapterSchool;
         /// <summary>보상·조건 숫자(검총 mightPerLevel, 속삭임 healingMultiplier 등). 기획서 20장 글의 숫자만.</summary>
         public Dictionary<string, float>? Params;
+        /// <summary>판 위에 언제·어디 놓고 몇 m 에서 닿나(웹 프로토타입 값, Spawning.EncounterSpots). 없으면 놓는 자리가 없는 사건(벼랑).</summary>
+        public EncounterSpotDef? Spot;
 
         public float Param(string key) => Params != null && Params.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"{Id} params 에 {key} 가 없습니다");
+    }
+
+    /// <summary>기연 사건을 판에 놓는 값(synergies.json encounters[].spot). 길이는 경지 m, 시간은 게임 분·초. 웹 프로토타입에서 돌던 값.</summary>
+    public sealed class EncounterSpotDef
+    {
+        /// <summary>나올 때를 이 분~AppearToMinute 사이에서 고르게 뽑는다.</summary>
+        public float AppearFromMinute;
+        public float AppearToMinute;
+        /// <summary>플레이어 둘레 이 거리 고리에 놓는다. 0 이면 땅에 놓지 않는 사건(밀서는 등롱 속, 영물은 금두꺼비 고리).</summary>
+        public float RingRadius;
+        /// <summary>이 거리 안이면 닿았다(머물기·예·줍기·석상 앞·무덤에 서기).</summary>
+        public float ReachRadius;
+        /// <summary>한 번 닿은 뒤 이 거리 밖으로 가면 떠났다(속삭임 거절, 검총 다시 뜨기). 0 이면 없음.</summary>
+        public float LeaveRadius;
+        /// <summary>닿아 쌓던 초가 벗어나면 초당 이만큼 준다(은거기인 0.5, 유해 1). 0 이면 안 준다.</summary>
+        public float DecayPerSecond;
     }
 
     /// <summary>비급 복원 값. n번째 복원(0부터)은 sealStones[n]·rebirthQi[n], 목록보다 많으면 마지막 값.</summary>
