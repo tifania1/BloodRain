@@ -319,7 +319,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 등롱이 33초마다 넷까지 서고, 같은 자리에서 웹처럼 깨지고 0.8m 안에서 주워짐. 콘솔 에러 0
   - 찍기: 없음(값만 바뀜)
 
-- [ ] C-09d 보갑과 각성 · 먼저: C-09b
+- [x] C-09d 보갑과 각성 · 먼저: C-09b — 2026-11-07 22:50 PC: 새 `Presentation/Fx/ChestLayer.cs`(LifeRunner 가 붙임). 정예가 쓰러지면 그 자리에 보갑(금테 네모, 그림은 자리 표시), 쌍강시 대형은 `EnemyField.LastKillEndsPair`(둘 다 누웠을 때만 참)로 한 쌍에 하나. 닿으면(`Drops.InPickup`, 각성 중엔 기다림) `Chest.Open(…, Chest.ExtraUpgrades(진전))` — 강화면 무공은 `WeaponRunner.Learn` 으로 따라가고 세상 멈춘 짧은 목록(`ui.chest.*` 네 언어, 0.35초 뒤 Enter·Space·Esc·클릭으로 닫음), 행낭은 레벨업 행낭 카드와 같은 은자·기혈. 각성이면 `life.Awaken`(Core 주석 차례대로 연출 시작 전에 Evolve) + Run 씬에 새로 둔 AwakeningFx(메뉴 `BloodRain/Bootstrap/Run 씬 각성 연출(AwakeningFx)`, ChestBootstrap.cs) 재생, 끝나면 '절기 각성 · 이름' 떠오르는 글. 비전 판정 `RunRecord.OpenChest(기혈 비율)`. 시험 메뉴 `BloodRain/Test/보갑 놓기(플레이 중)`·`BloodRain/Test/각성 시험 몸(삼재검법 Lv8 + 짝 심법)`(보갑 레벨을 절정 35로 셈). 확인: 서장 몸 보갑 → '삼재검법 · Lv2' 목록·WeaponRunner Lv2, 시험 몸 → 천지인 삼검 긴 연출·Evolved samjae_sword, 쌍강시 대형 한 쌍 처치 → 보갑 1. 콘솔 에러 0. 남은 것: 파동(Shock) 피해 판정은 AwakeningFx 가 아직 안 함(C-09e 와 함께), AwakeningFx 는 겹 카메라 없이 주 카메라에 그림(이름·낙관도 흑백을 받음). 찍음 `docs/unity_shots/C-09/` 의 `chest_upgrade.png`·`chest_awaken.png`(연출을 0.25배 느리게 다시 틀어 찍음)
   - 할 것: 정예가 보갑을 떨군다(쌍강시 대형은 한 쌍에 하나). 열면 `Chest.Open(data, loadout, 레벨, rng, extraUpgrades)` — 강화 목록이면 짧은 목록 화면, 각성(Awakened)이면 J-01U 각성 연출(AwakeningFx) 끝에 `Loadout.Evolve`·`life.Awaken(evolution)`. 장강수로채 진전 4단계면 extraUpgrades 1.
   - 쓸 것: Core `Build/Chest.cs`, `Awakening.cs`, balance.json chest, evolutions.json
   - 메뉴: `BloodRain/Test/보갑 놓기(플레이 중)`, 각성 조건을 맞춘 시험 몸(삼재검법 Lv8 + 짝 심법)

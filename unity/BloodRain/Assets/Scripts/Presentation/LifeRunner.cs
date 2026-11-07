@@ -137,6 +137,7 @@ namespace BloodRain.Presentation
             // C-09b 등롱·바닥 드롭(씬에 없으면 여기서 붙인다)
             if (GetComponent<LanternLayer>() == null) gameObject.AddComponent<LanternLayer>().runner = this;
             if (GetComponent<EncounterLayer>() == null) gameObject.AddComponent<EncounterLayer>().runner = this; // WP-39U 기연
+            if (GetComponent<ChestLayer>() == null) gameObject.AddComponent<ChestLayer>().runner = this; // C-09d 보갑·각성
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
             _edges = FindFirstObjectByType<BloodRain.Presentation.Fx.EdgeIndicators>();

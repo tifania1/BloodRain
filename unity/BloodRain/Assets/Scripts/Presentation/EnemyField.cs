@@ -79,9 +79,12 @@ namespace BloodRain.Presentation
             _sim.RemoveAt(index);
             var def = DefOf(a.Kind);
             if (def?.Death != null) _deaths.Add((new Vector2(a.Pos.x, a.Pos.y), def, a.BornRealm));
-            if (def?.Twin != null) OnTwinKilled(a, def);
+            LastKillEndsPair = def?.Twin == null || OnTwinKilled(a, def);
             Killed?.Invoke(new Vector2(a.Pos.x, a.Pos.y), a);
         }
+
+        /// <summary>방금 Killed 로 알린 처치가 한 무리를 끝냈나. 쌍강시는 둘 다 누웠을 때만 참(C-09d 정예 한 쌍에 보갑 하나), 나머지는 늘 참.</summary>
+        public bool LastKillEndsPair { get; private set; } = true;
 
         readonly List<int> _near = new List<int>();
 
@@ -592,14 +595,16 @@ namespace BloodRain.Presentation
             return -1;
         }
 
-        void OnTwinKilled(EnemyAgent a, EnemyDef def)
+        /// <summary>쌍강시 한쪽이 쓰러졌다. 한 쌍이 다 끝났으면 true(짝이 이미 누웠거나 없음), 짝이 아직 서 있어 눕기만 했으면 false.</summary>
+        bool OnTwinKilled(EnemyAgent a, EnemyDef def)
         {
-            if (!_twinOf.TryGetValue(a.Id, out int partner)) return;
+            if (!_twinOf.TryGetValue(a.Id, out int partner)) return true;
             _twinOf.Remove(a.Id);
             int lying = _fallen.FindIndex(f => f.Partner == a.Id);
-            if (lying >= 0) { _fallen.RemoveAt(lying); _twinOf.Remove(partner); return; } // 짝이 이미 누워 있다: 둘 다 누우면 끝
-            if (IndexOfId(partner) < 0) return;
+            if (lying >= 0) { _fallen.RemoveAt(lying); _twinOf.Remove(partner); return true; } // 짝이 이미 누워 있다: 둘 다 누우면 끝
+            if (IndexOfId(partner) < 0) return true;
             _fallen.Add(new Fallen { Pos = new Vector2(a.Pos.x, a.Pos.y), Def = def, Realm = a.BornRealm, Partner = partner, Left = def.ReviveSeconds });
+            return false;
         }
 
         void StepTwins(float dt)
