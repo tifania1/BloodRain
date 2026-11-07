@@ -497,6 +497,60 @@ namespace BloodRain.Presentation.Combat
                         });
                     break;
                 }
+                case "orbiting_blades":
+                {
+                    // 태극검(R-12Ua, 9장): 검 projectiles(2→5)+개수 자루가 duration(3→5초) × 지속 동안 몸 둘레 range 를 돈다.
+                    // 같은 적은 Trial.BladeRehitSeconds 마다 한 번(Core WeaponShapes.BladeAngle·BladeCanRehit, 웹 orbiting_blades).
+                    // 절기 태극양의검: 흑백 검 swords 자루가 쿨마다 끊김 없이, 흰 검(짝수)만 밀고, 태극 구간이면 피해 × (1 + taijiDamageBonus)
+                    var evo = EvoOf(s);
+                    int n = (evo != null ? Mathf.RoundToInt(evo.Param("swords", 8f)) : WeaponGrowth.Projectiles(s.Def, s.level)) + extraAmount;
+                    float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s)), bladeR = ws.Length(WeaponShapes.Trial.BladeRadius);
+                    const float step = 0.1f;
+                    float life = evo != null ? Mathf.Max(WeaponGrowth.At(s.Def.Duration, 1, 3f) * durationMultiplier, WeaponGrowth.Cooldown(s.Def, s.level) + step)
+                                             : WeaponGrowth.At(s.Def.Duration, s.level, 3f) * durationMultiplier;
+                    var lr = LifeRunner.Instance;
+                    bool harmony = lr != null && lr.Life != null && lr.Life.Loadout.Gauge.Band == BloodRain.Core.Progression.YinYangBand.Harmony;
+                    float bdmg = evo != null && harmony ? dmg * (1f + evo.Param("taijiDamageBonus")) : dmg;
+                    float a0 = UnityEngine.Random.value * Mathf.PI * 2f, kb = ws.Speed(Knock(s));
+                    var last = new Dictionary<int, float>();
+                    var push = new List<int>(); var still = new List<int>();
+                    for (int k = 0; k * step < life; k++)
+                    {
+                        float now = k * step;
+                        Later(now, () =>
+                        {
+                            push.Clear(); still.Clear();
+                            var agents = enemies.Sim.Agents;
+                            for (int i = 0; i < n; i++)
+                            {
+                                float a = WeaponShapes.BladeAngle(a0, now, i, n);
+                                var at = P + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * R;
+                                AddFxAt(at, 0f, Mathf.PI * 2f, bladeR, step * 1.2f,
+                                    evo == null ? new Color(0.36f, 0.46f, 0.60f, 0.85f) : i % 2 == 0 ? new Color(0.96f, 0.94f, 0.88f, 0.9f) : new Color(0.12f, 0.12f, 0.14f, 0.9f));
+                                enemies.Sim.QueryCircle(new float2(at.x, at.y), bladeR, _near);
+                                BloodRain.Presentation.Fx.LanternLayer.Strike(at, bladeR); // C-09b 친 자리 안 등롱
+                                foreach (int j in _near)
+                                {
+                                    int id = agents[j].Id;
+                                    float? prev = last.TryGetValue(id, out var t0) ? t0 : (float?)null;
+                                    if (!WeaponShapes.BladeCanRehit(prev, now) || push.Contains(j) || still.Contains(j)) continue;
+                                    last[id] = now;
+                                    (WeaponShapes.BladePushes(evo != null, i) ? push : still).Add(j);
+                                }
+                            }
+                            // 검은 검(안 미는 쪽)은 id 로 들고 있다가, 미는 쪽 피해(쓰러짐으로 자리 번호가 바뀜) 뒤 번호를 다시 찾는다
+                            for (int q = 0; q < still.Count; q++) still[q] = agents[still[q]].Id;
+                            if (push.Count > 0) Deal(s, bdmg, enemies.Damage(push, bdmg, P, kb));
+                            if (still.Count > 0)
+                            {
+                                push.Clear();
+                                foreach (int id in still) { int j = IndexOf(id); if (j >= 0) push.Add(j); }
+                                if (push.Count > 0) Deal(s, bdmg, enemies.Damage(push, bdmg, P, 0f));
+                            }
+                        });
+                    }
+                    break;
+                }
                 default:
                     break; // 아직 없는 갈래
             }
