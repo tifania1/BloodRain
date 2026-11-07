@@ -67,5 +67,16 @@ namespace BloodRain.Core.Tests
                 Assert.Contains($", {p.MaxBonus} |", TestData.Gdd);
             }
         }
+        [Fact] public void 웹도_같은_글을_읽는다()
+        {
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            foreach (var p in _d.Passives.Where(p => !string.IsNullOrEmpty(p.MaxBonus)))
+            {
+                if (p.MaxBonus!.StartsWith("경공 충전 +")) Assert.Contains("/^경공 충전 \\+(\\d+)$/", html);
+                else Assert.Contains($"t === '{p.MaxBonus}'", html);
+            }
+            Assert.Contains("+ passiveMaxBonus().dash;", html);
+            Assert.Contains("!poisonImmuneNow()", html);
+        }
     }
 }

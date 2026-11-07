@@ -515,6 +515,17 @@ const store = {
 
 const W_BY_ID = Object.fromEntries(DATA.weapons.map(w => [w.id, w]));
 const P_BY_ID = Object.fromEntries(DATA.passives.map(p => [p.id, p]));
+// 심법 최대 덧붙임(9장 심법 표 '최대' 칸, Core PassiveMaxBonus, PM-02): passives.json maxBonus 글을 그대로 읽는다(금강체 넉백 면역·만독심법 독 면역·운룡보 경공 충전 +1).
+//   웹엔 플레이어를 미는 것이 없어 넉백 면역은 칸만 둔다.
+function passiveMaxBonus() {
+  const s = { kbImmune: false, poisonImmune: false, dash: 0 };
+  for (const p of (G && G.passives) || []) {
+    const t = p.lv >= B.levels.passiveMax && (P_BY_ID[p.id] || {}).maxBonus; if (!t) continue;
+    let m; if (t === '넉백 면역') s.kbImmune = true; else if (t === '독 면역') s.poisonImmune = true; else if ((m = /^경공 충전 \+(\d+)$/.exec(t))) s.dash += +m[1];
+  }
+  return s;
+}
+const poisonImmuneNow = () => !!(sectT().poisonImmune || passiveMaxBonus().poisonImmune);
 const E_BY_ID = Object.fromEntries(DATA.enemies.map(e => [e.id, e]));
 const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
@@ -1376,7 +1387,7 @@ function recomputeStats() {
   const btr = synEff('blood_trade'); if (btr) { G.stats.lifesteal *= btr.lifestealMultiplier; G.stats.foodHeal *= btr.foodHealMultiplier; }
   const pl = G.player, before = pl.maxHp;
   pl.maxHp = G.stats.maxHp; if (pl.maxHp > before) pl.hp += pl.maxHp - before;
-  const dashMax = B.dash.charges + rr.dashCharges + Math.round(bodyStat('DashCharges')) + (G.passives.some(p => p.id === 'unryong' && p.lv >= 5) ? 1 : 0);
+  const dashMax = B.dash.charges + rr.dashCharges + Math.round(bodyStat('DashCharges')) + passiveMaxBonus().dash;
   if (dashMax > pl.dashMax) pl.dashCharges += dashMax - pl.dashMax;
   pl.dashMax = dashMax;
 }
@@ -2073,7 +2084,7 @@ function killEnemy(e, crushed) {
   if (e.elite && G.body) G.eliteKills++;   // 혈정(WP-14c)   // 처치 수는 덩이 속 사람 수(축척 시험, 7장). 진기는 덩이 하나에 적 하나 값
   // 흑백 쌍강시(WP-13c): 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다(시안과 같음)
   if (e.behavior === 'twin_revive' && e.twin && !e.twin.dead) (G.revives = G.revives || []).push({ e, t: E_BY_ID[e.type].reviveSeconds });
-  { const D = E_BY_ID[e.type]; if (D && D.onDeath === 'poison_pool' && D.death) (G.pools = G.pools || []).push({ x: e.x, y: e.y, r: D.death.radius, dps: D.death.perSecond * dmgScale(e), t: D.death.seconds }); }
+  { const D = E_BY_ID[e.type]; if (D && D.onDeath === 'poison_pool' && D.death) (G.pools = G.pools || []).push({ x: e.x, y: e.y, r: D.death.radius, dps: D.death.perSecond * dmgScale(e), t: D.death.seconds, poison: true }); }
   // 당가 진전 3: 중독된 적이 쓰러지면 독이 번진다
   const psp = synEff('poison_spread'); if (psp && e.poison > 0) { addEffect('burst', e.x, e.y, { r: psp.radius, color: '#5E7F4A' }); forNear(e.x, e.y, psp.radius, o => { if (o !== e && !o.dead) { o.poison = psp.seconds; o.burn = Math.max(o.burn || 0, psp.seconds); o.burnDps = Math.max(o.burnDps || 0, psp.damagePerSecond * G.stats.dot); } }); }
   if (!crushed) addUlt(e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill);   // 기세에 눌려 쓰러진 아래 경지는 오의 게이지에 안 센다(시안과 같음)
@@ -4628,7 +4639,7 @@ const LOCAL_BEH = {
   },
   poison_aura(e, dt, dx, dy, d) {
     const D = E_BY_ID[e.type];
-    if (d < D.zoneRadius + 0.4 && !G.won && !G.demo) G.player.hp -= D.zoneDamagePerSecond * dmgScale(e) * dt * (G.easy ? 0.5 : 1);
+    if (d < D.zoneRadius + 0.4 && !G.won && !G.demo && !poisonImmuneNow()) G.player.hp -= D.zoneDamagePerSecond * dmgScale(e) * dt * (G.easy ? 0.5 : 1);
     return [dx * e.speed, dy * e.speed];
   },
   // ── 공통 적 다섯(WP-50, 6장 '공통 적' 표 아래 문단, enemies.json 값 그대로 m. Unity EnemySim·EnemyField C-02b 와 같은 규칙) ──
@@ -4750,7 +4761,7 @@ function foeShotsStep(dt) {
   if (G.revives) G.revives = G.revives.filter(r => !r.done);
   // 독두꺼비가 남긴 독 웅덩이(enemies.json onDeath poison_pool, death radius·seconds·perSecond)
   // 웅덩이(독두꺼비·혈술사·정예 장판)는 겹쳐 밟아도 초당 피해 한 번 — 밟은 것 가운데 큰 값 하나(6장 '겹쳐도 한 번')
-  { let dps = 0; for (const o of G.pools || []) { o.t -= dt; if (Math.hypot(p.x - o.x, p.y - o.y) < o.r + 0.2) dps = Math.max(dps, o.dps); } if (dps > 0 && !G.won && !G.demo) p.hp -= dps * dt * (G.easy ? 0.5 : 1); }
+  { let dps = 0; for (const o of G.pools || []) { o.t -= dt; if (Math.hypot(p.x - o.x, p.y - o.y) < o.r + 0.2 && !(o.poison && poisonImmuneNow())) dps = Math.max(dps, o.dps); } if (dps > 0 && !G.won && !G.demo) p.hp -= dps * dt * (G.easy ? 0.5 : 1); }
   if (G.pools) G.pools = G.pools.filter(o => o.t > 0);
 }
 function drawLocalFx() {
@@ -4837,7 +4848,7 @@ function regionGimmicksStep(dt) {
   }
   if (fg && G.fogs.length) {
     G.fogs = G.fogs.filter(f => G.t - f.t0 < fg.spreadSeconds + fg.holdSeconds + fg.fadeSeconds);
-    if (inFogW(p.x, p.y) && !G.won && !G.demo && !sectT().poisonImmune) p.hp -= p.maxHp * fg.healthLossPerSecond * dt * (G.easy ? 0.5 : 1);
+    if (inFogW(p.x, p.y) && !G.won && !G.demo && !poisonImmuneNow()) p.hp -= p.maxHp * fg.healthLossPerSecond * dt * (G.easy ? 0.5 : 1);
     for (const e of G.enemies) if (!e.dead && !(e.boss && fg.bossImmune) && inFogW(e.x, e.y)) { e.hp -= e.maxHp * fg.healthLossPerSecond * dt; if (e.hp <= 0) killEnemy(e); }
   }
   if (fr && fr.periodSeconds > 0 && hereHas(fr.id) && Math.floor(G.t / fr.periodSeconds) > Math.floor(Math.max(0, G.t - dt) / fr.periodSeconds))
