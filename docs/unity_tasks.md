@@ -355,6 +355,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 열하나를 눌러 보고 게임을 껐다 켜도 값이 남음. 흔들림 0·혈우 0·내 이펙트 0 으로 판에서 그대로 바뀜
   - 찍기: `docs/unity_shots/WP-57U/` 의 `settings.png`
 
+- [ ] WP-69U 조작 재설정(설정 화면 안) · 먼저: WP-57U
+  - 할 것: `Assets/Settings/Controls.inputactions`(없으면 만듦)에 행동 열(`ControlAction.All`: up·down·left·right·dash·ult·pause·reroll·banish·skip)을 두고, 시작할 때 `Controls.Load(k => PlayerPrefs.HasKey(k) ? PlayerPrefs.GetString(k) : null)` 의 `Paths(행동)` 을 바인딩으로 얹는다. PlayerController·Dash·오의·일시정지·LevelUpScreen 이 `Keyboard.current.xKey` 대신 그 행동을 읽게(지금 16곳쯤 직접 키를 읽음 — 시험 드라이버는 그대로). 설정 화면에 '조작' 칸: 행동마다 키보드 두 칸·패드 한 칸 단추, 누르면 `PerformInteractiveRebinding` 으로 다음 키를 받아 `Controls.Rebind(행동, 칸, 경로)`(false 면 '쓸 수 없는 키'), 맞바꾼 쪽 단추도 새로 그림. 글자는 `InputControlPath.ToHumanReadableString`. '기본값' 단추는 행동마다 `Reset`. 바뀌면 `Save(PlayerPrefs.SetString, PlayerPrefs.DeleteKey)`
+  - 쓸 것: Core `Meta/Controls.cs`(2026-11-07 클라우드, `ControlsTests`), 기획서 8장 '조작' 표, 12장 설정 '조작 재설정'
+  - 메뉴: 설정 → 조작
+  - 끝: 경공을 Q 로 바꾸면 Space 를 쓰던 칸이 Q 자리 행동으로 넘어가고, 껐다 켜도 남음. 1~4·Enter 는 거절. 레벨업 버튼 글자가 바꾼 키를 따라감(지금 strings 는 R·X·Z 를 글로 박아 둠 — 키를 {1} 로 넘기게 고칠 때 strings 네 언어도 같이)
+  - 찍기: `docs/unity_shots/WP-69U/` 의 `controls.png`
+
 - [ ] R-07U 진전 소림 4·개방 4 · 먼저: C-06b
   - 할 것: 한 생에 `new Core.Build.SchoolSummons()` 하나, 프레임마다 `summons.Tick(SynergyEffects, 기혈/최대, 세상 dt)`. `ArhatStarted` 면 몸 둘레 나한 허상 `Tier("arhat_ring").Param("images")` 개를 `ArhatSecondsLeft` 동안, 닿는 적은 `summons.ArhatPush(fx, 거리, 보스인가, 축척)` 만큼 밀어냄(피해 없음, 2026-11-05 R-07b 데이터). `AlliesSpawned` 만큼 개방 제자를 `AlliesSecondsLeft` 동안(적이 노리지 않음), `AllyVolleys` 만큼 제자마다 가장 가까운 적에게 장풍 Lv1 탄 한 대 — 피해·넉백은 `SchoolSummons.AllyShot(fx, 공력)`.
   - 쓸 것: Core `Build/SchoolSummons.cs`, synergies.json

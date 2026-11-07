@@ -122,8 +122,8 @@ namespace BloodRain.Presentation.Hud
             else if (kb.digit3Key.wasPressedThisFrame) Pick(2);
             else if (kb.digit4Key.wasPressedThisFrame) Pick(3);
             else if (kb.rKey.wasPressedThisFrame) Reroll();
-            else if (kb.bKey.wasPressedThisFrame) ToggleBanish();
-            else if (kb.sKey.wasPressedThisFrame) Skip();
+            else if (kb.xKey.wasPressedThisFrame) ToggleBanish();   // 단축키는 Core Meta/Controls 기본값(웹과 같은 R·X·Z)
+            else if (kb.zKey.wasPressedThisFrame) Skip();
         }
 
         void Open()
