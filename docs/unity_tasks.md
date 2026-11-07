@@ -305,6 +305,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 재기 1로 쓰러지면 기혈 절반으로 일어나고, 두 번째엔 정산. 콘솔 에러 0
   - 찍기: `docs/unity_shots/WP-42U/` 의 `revive.png`
 
+- [ ] LT-01U 등롱 서기 값을 Core 로 · 먼저: C-09b
+  - 할 것: `Presentation/Fx/LanternLayer.cs` 에 손으로 적힌 값(spawnSeconds 33·maxAlive 4·5~9m 고리·등롱 몸 0.4m·줍는 거리 1m·은빛 대각선 0.28)을 Core 로 바꾼다 — `Drops.LanternDue(def, _acc, 살아 있는 수)`, `Drops.LanternOffset(def, _rng)` × Scale, `Strike` 는 `Drops.LanternHit(def, dx, dy, radius / Scale)`(또는 반경 둘 다 Scale 곱해서), 줍기는 `Drops.InPickup(def, 거리 / Scale)`, `PlaceSilver` 는 `Drops.SilverLanternDistance(def, diag)`. 인스펙터 칸 셋(spawnSeconds·maxAlive·pickupMeters)은 지운다. 줍는 거리는 웹·데이터가 0.8m 라 지금 1m 보다 조금 줄어든다. 떨어진 뒤 0.3초 줍지 않는 것은 화면 몫이라 그대로 둔다
+  - 쓸 것: Core `Build/Drops.cs`(LanternDue·LanternOffset·LanternHit·InPickup·SilverLanternDistance), balance.json `drops.lanternSpawn`(`LanternSpawnDef`, 2026-11-07 클라우드 LT-01). 웹 `const LS = DR.lanternSpawn` 줄과 견줌
+  - 메뉴: C-09b 의 등롱 놓기
+  - 끝: 등롱이 33초마다 넷까지 서고, 같은 자리에서 웹처럼 깨지고 0.8m 안에서 주워짐. 콘솔 에러 0
+  - 찍기: 없음(값만 바뀜)
+
 - [ ] C-09d 보갑과 각성 · 먼저: C-09b
   - 할 것: 정예가 보갑을 떨군다(쌍강시 대형은 한 쌍에 하나). 열면 `Chest.Open(data, loadout, 레벨, rng, extraUpgrades)` — 강화 목록이면 짧은 목록 화면, 각성(Awakened)이면 J-01U 각성 연출(AwakeningFx) 끝에 `Loadout.Evolve`·`life.Awaken(evolution)`. 장강수로채 진전 4단계면 extraUpgrades 1.
   - 쓸 것: Core `Build/Chest.cs`, `Awakening.cs`, balance.json chest, evolutions.json

@@ -322,7 +322,28 @@ namespace BloodRain.Core.Data
         public int EliteBloodCrystal = 1;
         /// <summary>정신부가 적을 멈추는 초(곤륜 진전 '정지 시간 2배' 같은 배율을 곱하기 전). 기획서 7장 부적 드롭.</summary>
         public float JeongsinFreezeSeconds = 5;
+        /// <summary>등롱이 서는 간격·자리·깨지는 판정(Drops.LanternDue 등). 없으면 웹 프로토타입 값.</summary>
+        public LanternSpawnDef LanternSpawn = new LanternSpawnDef();
         public List<LanternDropDef> Lantern = new List<LanternDropDef>();
+    }
+
+    /// <summary>등롱 서는 규칙(balance.json drops.lanternSpawn, 기획서 8장 '드롭'). 길이는 경지 m, 초는 세상 시간. 기본값은 웹 프로토타입 값.</summary>
+    public sealed class LanternSpawnDef
+    {
+        /// <summary>새 등롱이 서는 간격(초).</summary>
+        public float IntervalSeconds = 33f;
+        /// <summary>서 있는 등롱이 이 수 아래일 때만 새로 선다.</summary>
+        public int MaxAlive = 4;
+        /// <summary>플레이어 둘레 고리 안쪽 반경(m).</summary>
+        public float RingMin = 5f;
+        /// <summary>플레이어 둘레 고리 바깥쪽 반경(m).</summary>
+        public float RingMax = 9f;
+        /// <summary>무공이 친 원 반경에 더하는 등롱 몸 반경(m).</summary>
+        public float HitPadding = 0.4f;
+        /// <summary>떨어진 것을 줍는 거리(m).</summary>
+        public float PickupRadius = 0.8f;
+        /// <summary>은빛 등롱은 화면 대각선 × 이 값 거리에 선다.</summary>
+        public float SilverViewRatio = 0.28f;
     }
 
     /// <summary>배경음 바꾸기(balance.json bgm, 기획서 14장 '곡 바꾸기').</summary>

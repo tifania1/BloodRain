@@ -520,6 +520,7 @@ const EVO_BY_W = Object.fromEntries(DATA.evolutions.map(e => [e.weapon, e]));
 const B = DATA.balance;
 const BA = B.awakening; // 절기 각성 연출·파동·여운(기획서 8장)
 const DR = B.drops; // 음식·은자·등롱(기획서 8장 '드롭')
+const LS = DR.lanternSpawn;   // 등롱 서는 간격·자리·깨짐·줍는 거리(Core Drops.LanternDue·LanternOffset·LanternHit·InPickup)
 const OP = B.orbPickup, LIM = B.limits; // 구슬 끌기·흡수·합치기, 화면 위 수 상한
 const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver' };
 // 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
@@ -2457,7 +2458,7 @@ function lightning(e, dmg, w, lp) {
   }
 }
 function hitLanterns(x, y, R) {
-  for (const l of G.lanterns) if (!l.dead && Math.hypot(l.x - x, l.y - y) <= R + 0.4) breakLantern(l);
+  for (const l of G.lanterns) if (!l.dead && Math.hypot(l.x - x, l.y - y) <= R + LS.hitPadding) breakLantern(l);
 }
 // 하오문 밀서(20장 기연, WP-30): 아직 못 찾은 비전 하나(데이터 순서, 밀서로 안 본 것)의 조건 한 줄이 장경각 도감에 드러난다. 본 밀서는 도감처럼 계정에 남는다(store letters)
 const letters = new Set(store.get('letters') || []);
@@ -2689,8 +2690,8 @@ function update(dt) {
     }
   }
   G.lanternAcc += dt;
-  if (G.lanternAcc >= 22 / G.timeScale * 1.5 && G.lanterns.filter(l => !l.dead).length < 4) {
-    G.lanternAcc = 0; const a = rand(0, TAU), R = rand(5, 9); G.lanterns.push({ x: p.x + Math.cos(a) * R, y: p.y + Math.sin(a) * R });
+  if (G.lanternAcc >= LS.intervalSeconds / G.timeScale && G.lanterns.filter(l => !l.dead).length < LS.maxAlive) {
+    G.lanternAcc = 0; const a = rand(0, TAU), R = rand(LS.ringMin, LS.ringMax); G.lanterns.push({ x: p.x + Math.cos(a) * R, y: p.y + Math.sin(a) * R });
   }
 
   // 무공
@@ -2860,7 +2861,7 @@ function update(dt) {
   for (const dr of G.drops) {
     dr.t += dt;
     const d = Math.hypot(p.x - dr.x, p.y - dr.y);
-    if (d < 0.8 && !(G.awaken && dr.kind === 'chest')) { dr.dead = true; pickup(dr); }
+    if (d < LS.pickupRadius && !(G.awaken && dr.kind === 'chest')) { dr.dead = true; pickup(dr); }
   }
   G.drops = G.drops.filter(d => !d.dead);
   G.lanterns = G.lanterns.filter(l => !l.dead);
@@ -2910,7 +2911,7 @@ function runEvent(ev) {
   }
   else if (ev.kind === 'merchant') openMerchant();
   else if (ev.kind === 'silver_lantern') {   // 은빛 등롱(7장): 혈월 천하에서만 놓는다(Core ManuscriptsHere — 1회차엔 놓지 않음). 화면 안 가까이
-    if (G.moon) { const a = rand(0, TAU), R = diag * 0.28; G.lanterns.push({ x: p.x + Math.cos(a) * R, y: p.y + Math.sin(a) * R, silver: true }); toast('은빛 등롱', '부수면 의서가 나올지도 모른다'); }
+    if (G.moon) { const a = rand(0, TAU), R = diag * LS.silverViewRatio; G.lanterns.push({ x: p.x + Math.cos(a) * R, y: p.y + Math.sin(a) * R, silver: true }); toast('은빛 등롱', '부수면 의서가 나올지도 모른다'); }
   }
   else if (ev.kind === 'toad') { const [x, y] = ringPos(); spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale); toast('금두꺼비', '잡으면 은자와 진기'); }
   else if (ev.kind === 'ring') { for (let i = 0; i < ev.n; i++) { const a = i / ev.n * TAU; spawnEnemy('donggap', p.x + Math.cos(a) * diag * 0.6, p.y + Math.sin(a) * diag * 0.6); } toast('동갑시 포위', '원을 좁혀 온다'); }

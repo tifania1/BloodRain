@@ -104,6 +104,7 @@
     "enemySilverChance": 0.0008,
     "eliteBloodCrystal": 1,
     "jeongsinFreezeSeconds": 5,
+    "lanternSpawn": { "_note": "기획서 8장 '드롭' 등롱 서는 자리. 웹 프로토타입에서 돌던 값(경지 m, 초는 세상 시간).", "intervalSeconds": 33, "maxAlive": 4, "ringMin": 5, "ringMax": 9, "hitPadding": 0.4, "pickupRadius": 0.8, "silverViewRatio": 0.28 },
     "lantern": [
       { "kind": "bun", "weight": 0.45 },
       { "kind": "duck", "weight": 0.15 },
