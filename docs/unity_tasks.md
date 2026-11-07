@@ -528,6 +528,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 봉인석 셋인 시험 혼으로 일일 도전을 두 번 열어 같은 문파·같은 성질, 콘솔 에러 0
   - 찍기: `docs/unity_shots/DD-01U/` 의 `daily.png`
 
+- [ ] EL-08U 도감 찾은 쪽 적기 · 먼저: RM-03b
+  - 할 것: 연환·진전 단계·비전이 처음 켜질 때와 기연 일곱을 받을 때 `soul.Discover(CodexKey.Link/School/Secret/Encounter(id))`(웹 `discover(...)` 를 부르는 자리와 같은 곳), true 면 발견 연출. 하오문 밀서(EncounterLayer.ReadLetter)에 넘기는 '찾은 비전'을 이번 생 SecretWatch.Found 에 `Codex.FoundSecrets(soul)` 을 더한 것으로. 장경각 화면에 `Codex.Pages(soul)` 차례로 쪽을 놓고(찾은 쪽은 이름·이야기, 못 찾은 쪽은 ??? 와 시구, 밀서로 본 비전은 조건 한 줄), 머리에 `Codex.Counts` 합.
+  - 쓸 것: Core `Meta/Codex.cs`, `Soul.Discover`·`Soul.Codex`, synergies.json, strings `synergies.*`
+  - 메뉴: 장경각 시험 씬 만들기(이미 있음)
+  - 끝: 연환 하나를 켠 혼을 저장했다 다시 열면 장경각에 그 쪽이 찾은 쪽으로, 콘솔 에러 0
+  - 찍기: `docs/unity_shots/EL-08U/` 의 `codex.png`
+
 - [x] DL-04b 침방 대사·카드 글 · 먼저: LF-03 — 2026-11-07 01:04 PC: ChimbangScreen.Open 이 `SoulStore.LoadDialogue()` 로 `InnDialogue.Bedroom(…, Draw, …)` 을 열어 `Open`·`Show` 줄을 목 노인 이름 아래 말풍선(기울인 한 줄)에, 다시 고르기는 `Talk.Reroll()`, 고르기는 `Talk.Pick` → `Talk.Chosen` → `Talk.Send()` 뒤 `SoulStore.SaveDialogue`. 카드 맨 위에 `Cards[i].Intro`(기울임)·`Body`(옅게), 키 `IntroKey`/`BodyKey`, 대사 키 `dialogue.bedroom.lines.<id>.text`. 시험 씬에서 첫 환혼 「네 몸은 다했다…」「오늘 밤 숨진 아이들이다…」, 다시 고르니 「마음에 안 드느냐…」와 카드 글이 바뀌고 여자 몸(개방·마교·수로채)은 「…꼬마 거지 계집아이」, 개방 고르니 「배곯던 몸이다…」. 콘솔 에러 0. 시험으로 생긴 dialogue.json 은 지움. 고른 뒤 바로 Run 으로 넘어가 고르기·보내기 줄은 화면에 오래 안 남음(연출은 나중). 카드 글이 길어 카드 아래가 넘칠 수 있음 — 눈으로 못 봐서 다음 차례에 스크린샷 확인. 찍음 `docs/unity_shots/DL-04b/` 의 `first_rebirth.png`·`female_card.png`
   - 할 것: 침방을 열 때 `var talk = InnDialogue.Bedroom(DataBoot.Data, soul.OpenRebirth(rng), progress, rng)` → `talk.Open()` → `talk.Show()` → 다시 고르기마다 `talk.Reroll()`(draw.Reroll 을 따로 부르지 않음) → 카드 `talk.Pick(i)` → 보낼 때 `talk.Send()`, 다음 판은 `talk.Chosen`. 돌려준 목 노인 줄을 말풍선에, 카드 소개·몸 묘사는 `talk.Cards[i].Intro`/`Body`(키 `IntroKey`/`BodyKey`).
   - 쓸 것: Core `Meta/InnDialogue.cs`, dialogue.json, LF-03 의 dialogue.json 저장

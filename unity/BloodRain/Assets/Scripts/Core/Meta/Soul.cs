@@ -355,6 +355,18 @@ namespace BloodRain.Core.Meta
 
         readonly HashSet<string> _titles = new HashSet<string>(StringComparer.Ordinal);
         readonly HashSet<string> _letters = new HashSet<string>(StringComparer.Ordinal);
+        readonly HashSet<string> _codex = new HashSet<string>(StringComparer.Ordinal);
+
+        /// <summary>장경각 비급 도감에서 찾은 쪽(20장 '장경각 비급 도감', 키는 Meta.CodexKey — link:/school:/secret:/enc: + id). 회귀해도 남는다.</summary>
+        public IReadOnlyCollection<string> Codex => _codex;
+
+        /// <summary>도감 한 쪽을 찾았다고 적는다. 처음이면 true(발견 연출·'새 쪽' 표시용). 데이터에 없는 키는 ArgumentException.
+        /// 연환·진전·비전·기연이 켜지는 그 자리에서 부른다(웹 discover 와 같음). 생 도중에 꺼도 남는 것은 웹과 같다.</summary>
+        public bool Discover(string key)
+        {
+            if (!CodexKey.IsValid(_data.Synergies, key)) throw new ArgumentException($"도감에 없는 쪽입니다: {key}");
+            return _codex.Add(key);
+        }
         /// <summary>하오문 밀서로 조건을 본 비전 id(20장 기연). 장경각 도감이 '밀서: 조건' 한 줄을 더 보인다.</summary>
         public IReadOnlyCollection<string> Letters => _letters;
         /// <summary>혈마의 속삭임을 받은 생의 수(20장 '계승 엔딩 표식'). 무엇을 바꾸는지는 WP-29a 결정 대기라 세기만 한다.</summary>
@@ -715,6 +727,8 @@ namespace BloodRain.Core.Meta
             public bool EndingPending;
             public List<string> EndingsSeen = new List<string>();
             public bool JourneyOver;
+            /// <summary>도감에서 찾은 쪽. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
+            public List<string> Codex = new List<string>();
         }
 
         static readonly JsonSerializerSettings SaveSettings = new JsonSerializerSettings
@@ -762,6 +776,7 @@ namespace BloodRain.Core.Meta
                 EndingPending = EndingPending,
                 EndingsSeen = Sorted(_endingsSeen),
                 JourneyOver = JourneyOver,
+                Codex = Sorted(_codex),
             };
             return JsonConvert.SerializeObject(f, SaveSettings);
         }
@@ -801,6 +816,7 @@ namespace BloodRain.Core.Meta
             s._torn.UnionWith(f.TornManuals);
             s._restored.UnionWith(f.RestoredManuals);
             s._endingsSeen.UnionWith(f.EndingsSeen);
+            s._codex.UnionWith(f.Codex.Where(k => CodexKey.IsValid(data.Synergies, k)));
             return s;
         }
     }
