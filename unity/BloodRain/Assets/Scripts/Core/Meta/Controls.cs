@@ -3,7 +3,8 @@
 //   키는 Unity Input System 컨트롤 경로 글자 그대로("<Keyboard>/space", "<Mouse>/rightButton", "<Gamepad>/buttonSouth").
 //   Unity 는 InputAction 에 ApplyBindingOverride(경로) 로 얹고, 화면 글은 InputControlPath.ToHumanReadableString 으로 만든다.
 //   키보드·마우스는 행동마다 두 칸(8장 'WASD / 방향키', 'Space / Shift', 'E / 마우스 오른쪽', 'Esc / Tab'), 게임패드는 한 칸.
-//   재설정: 이미 다른 행동이 쓰는 키를 고르면 둘이 키를 맞바꾼다(어떤 행동도 키를 잃지 않게). 레벨업 카드 1~4·Enter 는 못 고른다.
+//   재설정: 이미 다른 행동이 쓰는 키를 고르면 둘이 키를 맞바꾼다(같은 키가 두 행동에 걸리지 않게). 고른 칸이 비어 있었으면 상대 칸이 빈다
+//   — 키가 하나뿐인 레벨업 단축키(R·X·Z)는 키를 다 잃을 수 있으니 설정 화면이 빈 칸을 보여 준다(ControlsTests). 레벨업 카드 1~4·Enter 는 못 고른다.
 //   레벨업 단축키는 웹 프로토타입과 같은 R·X·Z(2026-11-07 — S 는 8장에서 이동 아래라 정진에 쓰지 않는다).
 //   게임패드 이동(왼쪽 스틱)과 레벨업 고르기(방향 + A)는 고정이라 여기 없다.
 //   저장은 GameSettings 처럼 낱말마다 문자열 하나: "bind.<행동>.<칸>"(칸 0·1 키보드, pad 게임패드). 기본값과 같으면 지운다.
