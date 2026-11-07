@@ -27,7 +27,7 @@ M2 가 끝나면(2027-02 말) 스토어 페이지를 연다(기획서 16·17장)
 
 ## 짧은 소개 (Short Description)
 
-검색 결과와 페이지 맨 위에 나오는 글. 영어 300자 안팎이 한도라는 것이 업계 안내서들의 공통 숫자다(Steamworks 문서 확인 필요, README). 테스트가 두 언어 모두 300자 이하인지 본다.
+검색 결과와 페이지 맨 위에 나오는 글. Steamworks 문서는 정확한 글자 수 없이 '몇백 자로 제한'(limited to a few hundred characters), 글은 꾸밈 없는 평문만이라고 적는다. 300자는 업계 안내서들의 공통 숫자라 그 안으로 맞춘다(README, 2026-11-07 확인). 테스트가 두 언어 모두 300자 이하인지 본다.
 
 ### 한국어
 
@@ -246,7 +246,7 @@ No loot boxes. No paid stats or arts. Buy the game once, and everything that mak
 | 3 | Roguelite | 생이 끝나도 윤회의 기·해금이 남음 |
 | 4 | Action Roguelike | 같은 장르 이용자가 많이 찾는 태그 |
 | 5 | Top-Down | 시점 |
-| 6 | Martial Arts | 무공(태그가 남아 있는지 확인 필요) |
+| 6 | Martial Arts | 무공(2026-05 개편 기사들의 지운·합친 목록에 없음 — 남아 있는 것으로 봄, 페이지 만들 때 태그 고르기 칸에서 확인) |
 | 7 | Hand-drawn | 수묵 채색 |
 | 8 | 2D | |
 | 9 | Zombies | 강시 떼 |
@@ -270,7 +270,7 @@ No loot boxes. No paid stats or arts. Buy the game once, and everything that mak
 
 | 항목 | 최소(추천안, 측정 대기) | 권장 |
 | --- | --- | --- |
-| 운영체제 | Windows 10 64비트 | Windows 10·11 64비트 |
+| 운영체제 | Windows 10 64비트(21H1 이상) | Windows 10·11 64비트 |
 | 프로세서 | 측정 대기 | 측정 대기 |
 | 메모리 | 측정 대기 | 측정 대기 |
 | 그래픽 | DirectX 11 지원 | GTX 1060급(1920×1080 60fps, 적 600·투사체 1,500) |
@@ -280,7 +280,7 @@ No loot boxes. No paid stats or arts. Buy the game once, and everything that mak
 
 | Item | Minimum (draft, to be measured) | Recommended |
 | --- | --- | --- |
-| OS | Windows 10 64-bit | Windows 10/11 64-bit |
+| OS | Windows 10 64-bit (21H1 or later) | Windows 10/11 64-bit |
 | Processor | TBD | TBD |
 | Memory | TBD | TBD |
 | Graphics | DirectX 11 capable | GTX 1060 class (1920x1080 at 60 fps) |
@@ -288,7 +288,7 @@ No loot boxes. No paid stats or arts. Buy the game once, and everything that mak
 | Storage | TBD | TBD |
 | Additional Notes | Gamepad recommended | Steam Deck: 1280x800 at 60 fps target |
 
-운영체제를 Windows 10 부터로 둔 것은 Unity 6 플레이어가 더 오래된 Windows 를 지원하지 않는다고 알고 있어서다. Unity 문서에서 확인 필요(README).
+운영체제를 Windows 10 21H1 부터로 둔 것은 Unity 6 플레이어 최소 사양이 'Windows 10 version 21H1 (build 19043) or newer'이기 때문이다(Unity 6.0 문서, 2026-11-07 확인, README). 같은 표의 그래픽은 DX10·DX11·DX12·Vulkan, 프로세서는 SSE2 지원 x86·x64 또는 Arm64 라 최소 칸 'DirectX 11'은 그 안에 든다. 우리 판(6000.3)도 같은지는 빌드 설정에서 한 번 더 본다.
 
 ## 언어
 

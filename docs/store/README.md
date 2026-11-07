@@ -9,18 +9,18 @@ M2 끝(2027-02 말)에 Steam 스토어 페이지를 열고 위시리스트를 �
 
 `store_text.md` 의 숫자(문파 9, 무공 16 …)와 짧은 소개 길이는 `core/BloodRain.Core.Tests/StoreCopyTests.cs` 가 데이터와 견준다. 데이터 개수가 바뀌면 상점 글도 같이 고친다.
 
-## 출처와 확인 못 한 것 (2026-11-04)
+## 출처와 확인 못 한 것 (2026-11-04, 2026-11-07 세 줄 다시 확인)
 
 이 세션(클라우드)에서는 partner.steamgames.com·store.steampowered.com 이 네트워크에서 막혀 Steamworks 문서를 직접 읽지 못했다. 아래는 기사와 검색 결과로 확인한 것이다. 페이지를 열기 전에 사람이(또는 문서를 열 수 있는 세션이) Steamworks 문서로 다시 확인한다.
 
 | 내용 | 출처 | 확인 |
 | --- | --- | --- |
 | 소개 글 칸(About This Game·Short Description·Special Announcements·Awards)에 바깥 링크와 다른 Steam 상품 링크 금지, 2024년 9월부터 | [Game Developer](https://gamedeveloper.com/marketing/valve-implementing-new-rules-to-refine-steam-store-page-written-descriptions), [PC Gamer](https://www.pcgamer.com/games/valve-issues-new-rules-outlawing-links-in-steam-page-descriptions-hopefully-bringing-an-end-to-the-plague-of-demos-pretending-theyre-prologue-games), [GamingOnLinux](https://gamingonlinux.com/2024/08/steam-store-pages-are-about-to-get-a-lot-cleaner-valve-puts-an-end-to-game-advert-spam) | 기사 |
-| 짧은 소개 300자 안팎 | 업계 안내서(공식 숫자 아님) | **문서 확인 필요** |
+| 짧은 소개 '몇백 자'(정확한 수 없음), 평문만 — 300자 안으로 맞춤 | [Steamworks 상점 소개 문서](https://partner.steamgames.com/doc/store/page/description) "limited to a few hundred characters" + 업계 안내서 300자 | 문서(2026-11-07) |
 | 태그는 20개까지, 위 다섯이 가장 중요, 일부 필터는 앞 15개 | [Steam Tags](https://partner.steamgames.com/doc/store/tags) 를 인용한 검색 결과 | 검색 요약 |
 | Bullet Heaven·Wuxia 태그 신설(2026년 5월 개편) | [PC Gamer](https://pcgamer.com/gaming-industry/its-official-steam-decrees-bullet-heaven-the-name-of-the-vampire-survivors-genre), [GamingOnLinux](https://www.gamingonlinux.com/2026/05/valve-make-adjustments-to-steam-tags-and-they-settled-the-vampire-survivor-like-argument-with-bullet-heaven/page=1/), [Instant Gaming News](https://news.instant-gaming.com/en/articles/19609-steam-has-added-merged-and-removed-several-tags) | 기사 |
-| Martial Arts 태그가 아직 있는지 | — | **확인 필요** |
-| Unity 6 플레이어 최소 Windows 버전 | — | **Unity 문서 확인 필요** |
+| Martial Arts 태그가 아직 있는지 — 2026년 5월 개편의 새 태그 17·지운 28·이름 바꾼/합친 목록 어디에도 없음(Wuxia 는 합친 것이 아니라 새로 생김). 남아 있는 것으로 봄 | [GIGAZINE](https://gigazine.net/gsc_news/en/20260519-steam-store-new-tag/), [Digital Citizen](https://www.digitalcitizen.life/steam-updates-tags-with-bullet-heaven-wuxia-capybaras-and-more-while-removing-nsfw-and-lego/) | 기사(태그 고르기 칸에서 마지막 확인) |
+| Unity 6 플레이어 Windows 최소: Windows 10 21H1(빌드 19043) 이상, x86·x64(SSE2) 또는 Arm64, DX10·DX11·DX12·Vulkan GPU | [Unity 6.0 시스템 요구 사항](https://docs.unity.com/en-us/engine/6000.0/manual/get-started/install-and-upgrade/getting-started-installing-unity/system-requirements) 'Unity Player system requirements' | 문서(2026-11-07, 6.0 판. 우리 6000.3 도 같은지 PC 에서) |
 | 캡슐·스크린샷 규격 | `docs/design/art_list.md` 7절(Steamworks 문서, 2026-11-04 다른 세션이 확인) | 문서 |
 
 ## 정할 것 (사람)
