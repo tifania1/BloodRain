@@ -49,7 +49,7 @@
 | 회차마다 고를 수 있는 엔딩 | 4장 '엔딩 세 갈래'(1회차 봉인만, 2회차 셋) | cycle `endingsFirst`·`endingsSecond` | R4-04(11-04): `Soul.EndingPending`·`EndingsOpen`·`ChooseEnding`(봉인 → 회귀, 계승 → `mode:blood_demon`, 진엔딩 → `JourneyOver`)(`EndingTests`) | 한 생 판(WP-13e): 1회차 봉인만, 2회차부터 셋, 진엔딩은 모자란 것만 흐리게 | R4-12(11-04): 봉인 뒤 정산 화면에서 고름(1회차 봉인만, 2회차 봉인·계승, 진엔딩은 조건을 못 채워 안 보임). 고르기 전엔 윤회 단추가 없음(`웹_천하_시안의_엔딩과_회귀가_Core_와_같은_규칙이다`) | R4-04U, DL-10b |
 | 진엔딩 조건 | 4장(의서 일곱 권, 목 노인 대화 끝까지, 서로 다른 문파 4곳 이상으로 종장), 10장 화폐 표 '7권' | `trueEndingDistinctSects` 4, `trueEndingManuscripts` 7(R4-04) | `Soul.TrueEndingMet(목 노인 대화)`(R4-04). 목 노인 대화 줄기는 `docs/story/mok.md` 끝에 '이 풀에 없다' | - | - | - |
 | 의서가 나오는 확률 | 4장·7장·10장 '낮은 확률' | chapters.json 은빛 등롱(15~17분 하나, 17~19분 0.5), cheonha.json cycle.bloodmoon `manuscriptChance` 0.15 | `LifeLog.FindManuscript`(혈월 천하에서만 셈) | - | - | - |
-| 일일 도전·보스 연전 열림 | 7장 '모드'(일일 도전 봉인석 3개, 보스 연전 봉인 엔딩) | cheonha.json `modes`(R4-05) | `Meta/Modes`(`ModesTests`). 일일 도전 시드 규칙·보스 연전 규칙은 아직 없음 | - | R4-12(11-04): 생을 마칠 때·엔딩을 고를 때 열림을 셈해 정산 화면에 '모드 열림'. 모드 자체는 없음 | - |
+| 일일 도전·보스 연전 열림 | 7장 '모드'(일일 도전 봉인석 3개, 보스 연전 봉인 엔딩) | cheonha.json `modes`(R4-05) | `Meta/Modes`(`ModesTests`). 일일 도전 시드·몸·한 생 난수 `Meta/DailyChallenge`(DD-01, 11-07, 보상은 DD-01a 대기). 보스 연전 규칙은 아직 없음 | - | R4-12(11-04): 생을 마칠 때·엔딩을 고를 때 열림을 셈해 정산 화면에 '모드 열림'. 모드 자체는 없음 | - |
 
 ## 걸리는 것
 

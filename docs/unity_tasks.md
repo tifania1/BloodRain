@@ -521,6 +521,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 새 혼은 다 흐리고, 서장을 마친 혼은 '서장 끝' 줄에 ✓, 원각을 잡은 혼은 '원각 첫 처치 — 혜공 합류' 에 ✓. 콘솔 에러 0
   - 찍기: `docs/unity_shots/EL-07U/` 의 `cave.png`
 
+- [ ] DD-01U 일일 도전 판 열기 · 먼저: RM-03b
+  - 할 것: 모드 고르기(12장 '모드 선택', `Modes.IsOpen(soul, "daily")` 일 때만)에서 일일 도전을 누르면 `var seed = DailyChallenge.Seed(DateTime.UtcNow)` → `Rebirth.Body(C, DailyChallenge.Body(C, seed))` 몸 카드 한 장(고르기 없음) → `new Life(soul, body, DailyChallenge.LifeRandom(seed))`. 같은 날 두 번 열면 같은 몸·같은 사건 차례. 끝나면 혼에 넘기지 않고 정산만(무엇을 남길지는 DD-01a 가 정하면 고침). 리더보드는 Steamworks 를 붙인 뒤(아직 항목 없음).
+  - 쓸 것: Core `Meta/DailyChallenge.cs`, `Meta/Modes.cs`, cheonha.json `modes`
+  - 메뉴: 없음
+  - 끝: 봉인석 셋인 시험 혼으로 일일 도전을 두 번 열어 같은 문파·같은 성질, 콘솔 에러 0
+  - 찍기: `docs/unity_shots/DD-01U/` 의 `daily.png`
+
 - [x] DL-04b 침방 대사·카드 글 · 먼저: LF-03 — 2026-11-07 01:04 PC: ChimbangScreen.Open 이 `SoulStore.LoadDialogue()` 로 `InnDialogue.Bedroom(…, Draw, …)` 을 열어 `Open`·`Show` 줄을 목 노인 이름 아래 말풍선(기울인 한 줄)에, 다시 고르기는 `Talk.Reroll()`, 고르기는 `Talk.Pick` → `Talk.Chosen` → `Talk.Send()` 뒤 `SoulStore.SaveDialogue`. 카드 맨 위에 `Cards[i].Intro`(기울임)·`Body`(옅게), 키 `IntroKey`/`BodyKey`, 대사 키 `dialogue.bedroom.lines.<id>.text`. 시험 씬에서 첫 환혼 「네 몸은 다했다…」「오늘 밤 숨진 아이들이다…」, 다시 고르니 「마음에 안 드느냐…」와 카드 글이 바뀌고 여자 몸(개방·마교·수로채)은 「…꼬마 거지 계집아이」, 개방 고르니 「배곯던 몸이다…」. 콘솔 에러 0. 시험으로 생긴 dialogue.json 은 지움. 고른 뒤 바로 Run 으로 넘어가 고르기·보내기 줄은 화면에 오래 안 남음(연출은 나중). 카드 글이 길어 카드 아래가 넘칠 수 있음 — 눈으로 못 봐서 다음 차례에 스크린샷 확인. 찍음 `docs/unity_shots/DL-04b/` 의 `first_rebirth.png`·`female_card.png`
   - 할 것: 침방을 열 때 `var talk = InnDialogue.Bedroom(DataBoot.Data, soul.OpenRebirth(rng), progress, rng)` → `talk.Open()` → `talk.Show()` → 다시 고르기마다 `talk.Reroll()`(draw.Reroll 을 따로 부르지 않음) → 카드 `talk.Pick(i)` → 보낼 때 `talk.Send()`, 다음 판은 `talk.Chosen`. 돌려준 목 노인 줄을 말풍선에, 카드 소개·몸 묘사는 `talk.Cards[i].Intro`/`Body`(키 `IntroKey`/`BodyKey`).
   - 쓸 것: Core `Meta/InnDialogue.cs`, dialogue.json, LF-03 의 dialogue.json 저장
