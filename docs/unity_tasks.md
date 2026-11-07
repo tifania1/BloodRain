@@ -340,6 +340,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 일류(덩이 9)에서 일류 적 하나 쓰러뜨리면 HUD 처치 수 +9, 삼류 때 생긴 적은 +1. 콘솔 에러 0
   - 찍기: 없음
 
+- [ ] EV-01U 돌파 순간 절기 각성(그릇이 늘 때) · 먼저: C-09d
+  - 할 것: 8장 '깨어나는 순간' 1순위 — 그릇이 늘어나는 돌파(절정·초절정·화경·현경)에 문턱 무공이 있으면 그 자리에서 깨어나고, 여럿이면 하나를 고른다. 지금 Unity 는 보갑(C-09d)으로만 깨어난다(2026-11-08 클라우드가 찾음 — Presentation 어디서도 `AwakenOnBreakthrough` 를 안 부름). 평균 빌드의 첫 절기가 절정 돌파(약 11분 반), 둘째가 초절정 돌파라 이게 빠지면 절기가 거의 안 나온다. 차례는 웹 `finish`(template.html '그릇이 늘어나는 돌파 순간')와 같게: 줌이 끝나면 각성(하나면 바로 `life.Awaken` + AwakeningFx, 여럿이면 고르기 화면) → 각성 연출이 끝난 뒤 깨달음 3택1(C-07b InsightScreen). 고르기 화면은 카드마다 절기 이름·`무공 + 심법`·요약, 1~4 키, 세상 멈춤, 열린 직후 입력 막기.
+  - 쓸 것: Core `Loadout.AwakenOnBreakthrough(이전 레벨, 새 레벨)`(그릇이 안 늘었거나 trigger 가 없으면 빈 목록), `Life.Awaken(evo)`, AwakeningFx(C-09d 가 Run 씬에 둠), strings `ui.evopick.title`·`ui.evopick.sub`({0} = `Loc.Realm`, 네 언어 2026-11-08 클라우드가 넣음)·`evolutions.<id>.name`·`summary`, `Balance.LevelUp.InputGuardSeconds`
+  - 메뉴: C-09d 의 `BloodRain/Test/각성 시험 몸(…)`(문턱에 세움) + C-07a 의 `BloodRain/Test/다음 경지까지 진기(플레이 중)` 로 일류 → 절정
+  - 끝: 시험 몸(문턱 하나)으로 절정 돌파 → 줌 뒤 각성 연출 → 깨달음 카드. 문턱 둘이면 고르기 화면이 먼저. 그릇이 안 느는 돌파(이류·일류)에서는 안 깨어남. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/EV-01U/` 의 `pick.png`
+
 - [ ] CH-01U 보갑 화면 아래 그릇 안내 한 줄 · 먼저: C-09d
   - 할 것: ChestLayer 강화 목록 화면 맨 아래(닫기 글 위)에 8장 '그릇이 차 있으면 보갑은 평소처럼 강화만 주고, 다음 그릇이 생기는 경지를 알려 줍니다' 한 줄. 웹 chestHint 와 같은 셈(2026-11-08 클라우드가 Core 로 옮김).
   - 쓸 것: `Chest.Hint(data, life.Loadout, level)` — `Kind` 가 `NoVessel` 이면 `ui.chest.hint_novessel`, `Full` 이면 `ui.chest.hint_full`, `None` 이면 안 띄움. {0} 은 `Loc.Realm(hint.Next)`, {1} 은 `hint.Next.Level`. Open 안에서 Chest.Open 을 부른 뒤에 셈(강화가 Loadout 에 들어간 뒤)

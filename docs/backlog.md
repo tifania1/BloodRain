@@ -325,6 +325,7 @@ M3 지역 콘텐츠(당가타·장강·무당산)
 - [x] CH-01 2026-11-08 (로드맵에서 채움 — 11-07 PC 보갑 C-09d 를 읽다 찾음) — 8장 '그릇이 차 있으면 보갑은 강화만 주고 다음 그릇이 생기는 경지를 알려 줍니다'가 웹(chestHint)에만 있고 Unity·Core 엔 없었음. Core `Chest.Hint`(그릇 없음·찼고 문턱 무공 있음·없음 + 다음 경지), `ui.chest.hint_novessel`·`hint_full` 네 언어, `ChestTests` 넷, unity_tasks CH-01U
 - [x] CR-01 2026-11-08 (로드맵에서 채움 — 17장 '줄이지 않는 것: 경지 돌파와 축척 전환') — Run 씬에 7장 밟힘·쓸림이 안 이어져 있음을 찾음(아래 경지 적은 피해만 0 이고 닿아도 안 쓰러짐, 돌파 쓸림을 듣는 쪽 없음, 밟힌 정예 보갑도). Core(Scale·Breakthrough·crush)는 다 있어 unity_tasks CR-01U 로만 적음
 - [x] KC-01 2026-11-08 (로드맵에서 채움 — 7장 '적 한 덩이') — Unity 처치 수가 덩이를 1 로 셈(웹은 덩이 속 사람 수). Core `Scale.KillCount` 가 이미 있어 unity_tasks KC-01U 로만. 같은 김에 CR-01U 에 아래 경지 구슬·음식·은자 지나가며 줍기·작은 등롱 밟아 깨기도 더함
+- [x] EV-01 2026-11-08 (로드맵에서 채움 — 8장 '깨어나는 순간') — Unity 가 돌파 순간 각성(그릇이 늘 때, 여럿이면 고르기)을 안 함. 평균 빌드 첫·둘째 절기가 돌파에서 나오는데 보갑으로만 깨어나던 것. Core `AwakenOnBreakthrough` 는 있어 고르기 화면 글 `ui.evopick.*` 네 언어만 넣고 unity_tasks EV-01U
 - [x] QA-10b 2026-11-05 — `Inn.Residents(soul, progress)` 가 `DialogueProgress.Joined` 를 그대로 읽게(회차가 다르면 빔). 계정 첫 처치로 셈하던 옛 규칙과 그 InnTests 셋을 지우고 `InnDialogueTests` 에 합류·회귀·재합류 한 개. unity_tasks RM-03b 의 마당 줄을 새 함수로
 - [x] DC-01 2026-11-04 — `docs/decisions.md`: 열린 사람 결정 29건(backlog 25, 스토어 README·대사 문서에만 있던 넷은 ST-01a·ST-01b·DL-03a·DL-04a 로 backlog 에 새로)을 오래된 순으로 — 한눈에 표(질문·추천·급함)와 항목마다 질문·추천·다른 안·근거·막는 일. 급한 넷은 L-04b·R-10·R4-07·V-12b. feedback '→ 반영'으로 정해졌는데 열려 있던 항목은 없었음. `DecisionListTests` 가 backlog 의 열린 결정 대기와 decisions.md 표가 같은지 봄. 오늘 daily '아침에 확인할 것' 다시 씀
 

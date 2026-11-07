@@ -566,6 +566,8 @@
   "ui.chest.awakened": "覺醒 · {0}",
   "ui.chest.hint_novessel": "須達{0}(Lv {1})方有絕技槽",
   "ui.chest.hint_full": "絕技槽已滿。達{0}(Lv {1})之時，臨門的武功將覺醒",
+  "ui.evopick.title": "何門武功覺醒",
+  "ui.evopick.sub": "{0}突破 · 多了一個絕技槽",
   "ui.encounter.tomb.sub": "插下一把劍 — 此武功本世捨棄，每級令其餘武功功力 +{0}%",
   "ui.encounter.tomb.card": "插下後其餘武功功力 +{0}%",
   "ui.encounter.tomb.pass": "走過",
