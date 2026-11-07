@@ -613,6 +613,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 서장만 마친 혼은 문이 안 보이고, 원각 잡은 혼은 '수리 중' 문이 보이며 눌러도 화면이 안 바뀜, 콘솔 에러 0
   - 찍기: `docs/unity_shots/A-07U/` 의 `library_door.png`
 
+- [ ] SV-01U 혼·대사 저장을 한 파일(save.json)로 · 먼저: 없음(LF-03 끝남)
+  - 할 것: `Presentation/Meta/SoulStore.cs` 가 `soul.json`·`dialogue.json` 두 파일 대신 `SaveGame.FileName`(save.json) 하나에 `new SaveGame(soul, dialogue).ToJson()` 을 쓴다(.tmp 에 쓰고 바꿔 끼우기·깨지면 .bad 는 그대로). 읽기는 save.json 이 있으면 `SaveGame.FromJson`, 없고 옛 soul.json 이 있으면 `SaveGame.FromLegacy(data, soul.json 내용, dialogue.json 내용 또는 null)` 로 읽어 save.json 으로 쓰고 옛 두 파일은 `.old` 로 옮김. 지금 `Load`·`LoadDialogue`·`Save`·`SaveDialogue` 를 따로 부르는 곳(LifeRunner·SettlementScreen·침방·객잔)은 한 번 읽은 `SaveGame` 을 같이 쓰고 저장도 한 번에(혼만 저장하고 대사는 옛 것을 덮어쓰는 일이 없게). `혼 저장 지우기` 메뉴는 save.json 과 옛 두 파일을 다 지움
+  - 쓸 것: Core `Meta/SaveGame.cs`(2026-11-07 클라우드 SV-01, `SaveGameTests`), 기획서 15장 '저장'
+  - 메뉴: `BloodRain/Test/혼 저장 지우기`
+  - 끝: 옛 두 파일이 있는 PC 에서 켜면 윤회의 기·대사 진행이 그대로 save.json 으로 옮겨지고, 쓰러졌다 다시 켜도 남음. persistentDataPath 에 save.json 하나만. 콘솔 에러 0
+  - 찍기: 없음(파일 목록을 daily 에 한 줄)
+  - Steam 클라우드(사람·나중): Steamworks 앱 설정 'Steam Cloud → Auto-Cloud' 에 Windows `%USERPROFILE%/AppData/LocalLow/<회사>/<제품>/save.json` 하나만 올리게(설정·조작은 PlayerPrefs 라 기기마다 따로). 앱 등록(ST-05) 뒤
+
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
 - [ ] R-13U 세 지역 기믹(독안개·물·태극 바닥)과 수귀 · 먼저: backlog R-10(사람 결정 대기)
