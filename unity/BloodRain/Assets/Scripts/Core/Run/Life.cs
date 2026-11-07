@@ -192,7 +192,10 @@ namespace BloodRain.Core.Run
             Loadout.Gauge.Band == YinYangBand.Harmony ? Body.SectTrait.HarmonyCooldownReduction(_data.Balance.Yinyang.Harmony) : 0f;
 
         /// <summary>경공 최대 충전: balance.json dash 기본 + 연무장·성질 + 경지 돌파(일류 +1). 돌파 뒤 Dash.SetMaxCharges 에 넣는다.</summary>
-        public int DashMaxCharges(StatSheet stats) => _data.Balance.Dash.Charges + stats.DashCharges + RealmRewards.DashCharges;
+        public int DashMaxCharges(StatSheet stats) => _data.Balance.Dash.Charges + stats.DashCharges + RealmRewards.DashCharges + PassiveMax.DashCharges;
+
+        /// <summary>최대 레벨 심법의 덧붙임(9장 심법 표 '최대' 칸 — 금강체 넉백 면역·만독심법 독 면역·운룡보 경공 충전 +1). 경공 칸은 DashMaxCharges 가 이미 더한다.</summary>
+        public PassiveMaxBonus PassiveMax => PassiveMaxBonus.Of(_data, Loadout);
 
         /// <summary>오의 위력 배율(절정 돌파면 1.25).</summary>
         public float UltimatePowerMultiplier => 1f + RealmRewards.UltimatePower;
