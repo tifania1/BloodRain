@@ -1997,8 +1997,8 @@ function ringPos() {
 
 // ───────── 피해 ─────────
 function addNum(x, y, v, crit, color) {
-  if (G.nums.length > LIM.damageNumbers) G.nums.shift();
-  G.nums.push({ x: x + rand(-0.2, 0.2), y, v: Math.round(v), t: 0, crit, color });
+  while (G.nums.length >= LIM.damageNumbers) G.nums.shift();   // 상한까지(Core DamageNumbers 와 같게)
+  G.nums.push({ x: x + rand(-B.damageNumber.jitterMeters, B.damageNumber.jitterMeters), y, v: Math.round(v), t: 0, crit, color });
 }
 function weaponDamage(w) {
   const def = W_BY_ID[w.id];
@@ -2029,7 +2029,8 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
   if (G.diss > 0) G.player.hp = Math.min(G.player.maxHp, G.player.hp + dmg * UPar(ULT_BY.cheonma_haeche, 'lifesteal', 0) * healMul());   // 천마해체 흡혈 10%(WP-25)
   if (kb && !e.boss) { const k = kb * G.stats.knockback * (1 - e.kbRes); e.kbx += kx * k; e.kby += ky * k; }
   // 피해 숫자는 치명타와 일부만. 다 띄우면 화면이 숫자로 덮인다.
-  if (crit || (dmg >= 8 && Math.random() < (e.boss || e.elite ? 0.5 : 0.18))) addNum(e.x, e.y - e.r * 2.4, dmg, crit);
+  const DN = B.damageNumber;   // balance.json damageNumber(Core World/DamageNumbers.ShouldShow 와 같은 셈)
+  if (crit || (dmg >= DN.minDamage && Math.random() < (e.boss || e.elite ? DN.chanceEliteBoss : DN.chance))) addNum(e.x, e.y - e.r * DN.headOffsetRadii, dmg, crit);
   sfx('hit');
   if (crit && w !== PETAL) {
     const ptl = synEff('crit_petals'); if (ptl) petals(e, ptl);
@@ -2880,7 +2881,7 @@ function update(dt) {
   for (const s of G.splats) s.t += dt;
   G.splats = G.splats.filter(s => s.t < 6);
   for (const n of G.nums) n.t += dt;
-  G.nums = G.nums.filter(n => n.t < 0.7);
+  G.nums = G.nums.filter(n => n.t < B.damageNumber.lifeSeconds);
   G.cam.shake = Math.max(0, G.cam.shake - dt);
 
   if (G.glow) { G.glow.t -= dt; if (G.glow.t <= 0) { G.glow = null; renderSlots(); } }
@@ -4998,7 +4999,7 @@ function render() {
   // 피해 숫자
   ctx.textAlign = 'center';
   if (settings.nums) for (const n of G.nums) {   // 피해 숫자 표시(12장 설정, 끄면 안 그림)
-    const a = 1 - n.t / 0.7;
+    const a = 1 - n.t / B.damageNumber.lifeSeconds;
     ctx.font = n.crit ? '800 17px ui-sans-serif, system-ui, sans-serif' : '700 12px ui-sans-serif, system-ui, sans-serif';
     ctx.lineWidth = 3; ctx.strokeStyle = `rgba(239,230,210,${a})`; ctx.fillStyle = n.crit ? `rgba(179,38,30,${a})` : `rgba(26,26,26,${a})`;
     const y = wy(n.y) - n.t * 26; ctx.strokeText(n.v, wx(n.x), y); ctx.fillText(n.v, wx(n.x), y);

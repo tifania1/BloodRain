@@ -95,6 +95,7 @@
   },
   "limits": { "enemiesPc": 600, "enemiesMobile": 400, "projectiles": 1500, "orbs": 400, "damageNumbers": 80 },
   "orbs": { "small": 1, "medium": 5, "large": 25 },
+  "damageNumber": { "_note": "피해 숫자 띄우기(12장 설정 '피해 숫자 표시', 11장 상한 limits.damageNumbers, Core World/DamageNumbers, backlog DN-01). 다 띄우면 화면이 숫자로 덮여 치명타는 늘, 나머지는 minDamage 이상일 때 chance(정예·땅의 주인은 chanceEliteBoss) 확률로만. 적 머리 위 headOffsetRadii x 몸 반지름, 가로 ±jitterMeters 흔듦, lifeSeconds 동안 떠오르며 옅어짐. 값은 웹 프로토타입 addNum·hitEnemy 에 박혀 있던 그대로.", "minDamage": 8, "chance": 0.18, "chanceEliteBoss": 0.5, "lifeSeconds": 0.7, "jitterMeters": 0.2, "headOffsetRadii": 2.4 },
   "orbPickup": { "_note": "기획서 8장 '드롭' 아래. 길이는 경지 m, 속도는 경지 m/s. 웹 프로토타입·Unity OrbField 에 박혀 있던 값을 그대로 옮김.", "absorbRadius": 0.5, "pullSpeedBase": 9, "pullSpeedPerSecond": 4, "mergeBatch": 100, "mergeDistance": 5 },
   "drops": {
     "_note": "기획서 8장 '드롭'. 음식 회복은 FoodHeal 배율을 곱하기 전 값. 등롱 표와 잡몹 은자 확률은 웹 프로토타입에서 돌던 값을 그대로 옮김(벽력탄은 아직 표에 없다).",

@@ -286,6 +286,23 @@ namespace BloodRain.Core.Data
         public float Large = 25;
     }
 
+    /// <summary>피해 숫자 띄우기(balance.json damageNumber, 12장 설정 '피해 숫자 표시'). 길이는 경지 m.</summary>
+    public sealed class DamageNumberDef
+    {
+        /// <summary>치명타가 아니면 이 피해 이상일 때만 띄울 수 있다.</summary>
+        public float MinDamage = 8;
+        /// <summary>보통 적에 띄울 확률(치명타 아님).</summary>
+        public float Chance = 0.18f;
+        /// <summary>정예·땅의 주인에 띄울 확률(치명타 아님).</summary>
+        public float ChanceEliteBoss = 0.5f;
+        /// <summary>떠 있는 시간. 이 동안 떠오르며 옅어진다.</summary>
+        public float LifeSeconds = 0.7f;
+        /// <summary>가로로 흔드는 폭(±).</summary>
+        public float JitterMeters = 0.2f;
+        /// <summary>적 몸 반지름의 이 배만큼 위에 띄운다.</summary>
+        public float HeadOffsetRadii = 2.4f;
+    }
+
     /// <summary>진기 구슬 끌기·흡수·합치기(balance.json orbPickup, 기획서 8장 '드롭' 아래). 길이는 경지 m, 속도는 경지 m/s.</summary>
     public sealed class OrbPickupDef
     {
@@ -425,6 +442,7 @@ namespace BloodRain.Core.Data
         public LimitsDef Limits = new LimitsDef();
         public OrbValuesDef Orbs = new OrbValuesDef();
         public OrbPickupDef OrbPickup = new OrbPickupDef();
+        public DamageNumberDef DamageNumber = new DamageNumberDef();
         public XpCurveDef XpCurve = new XpCurveDef();
         public List<RealmDef> Realms = new List<RealmDef>();
         public SlotsDef Slots = new SlotsDef();

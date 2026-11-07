@@ -621,6 +621,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: 없음(파일 목록을 daily 에 한 줄)
   - Steam 클라우드(사람·나중): Steamworks 앱 설정 'Steam Cloud → Auto-Cloud' 에 Windows `%USERPROFILE%/AppData/LocalLow/<회사>/<제품>/save.json` 하나만 올리게(설정·조작은 PlayerPrefs 라 기기마다 따로). 앱 등록(ST-05) 뒤
 
+- [ ] DN-01U 피해 숫자 · 먼저: 없음(무공 때리기·치명타는 있음)
+  - 할 것: Unity 엔 피해 숫자가 아직 없다. 한 생에 `new Core.World.DamageNumbers(data.Balance)` 하나. 무공이 적을 때릴 때(치명타 여부 포함) `DamageNumbers.ShouldShow(피해, 치명타, 정예·땅의 주인인가, rng)` 가 참이면 `Add(적 x, y, 몸 반지름, 피해, 치명타, rng)`, 프레임마다 `Tick(dt)`. 그리기는 `Items` 를 TMP 풀(상한 `Limits.DamageNumbers` 80, 15장 풀링)로: 자리 (X, Y + Lift), 떠오르기는 웹처럼 수명 동안 화면 높이 약 26px(1080 높이 기준 비율로), 알파 `Alpha(n)`. 보통은 먹색 굵은 작은 글, 치명타는 주홍 더 굵고 크게, 둘 다 종이색 테두리(웹 template.html '피해 숫자' 그리기와 같게). 설정 `GameSettings` 피해 숫자 끔(WP-57U)이면 그리기만 끔
+  - 쓸 것: Core `World/DamageNumbers.cs`, balance.json `damageNumber`·`limits.damageNumbers`(2026-11-07 클라우드 DN-01, `DamageNumbersTests`), 기획서 11장 '동시 피해 숫자 표시 80'·12장 설정
+  - 메뉴: 없음(판에서 바로)
+  - 끝: 숭산에서 2분 놀면 치명타마다·가끔 큰 맞음에 숫자가 뜨고 0.7초에 사라짐, 숫자가 80개를 넘지 않음, 설정에서 끄면 안 보임. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/DN-01U/` 의 `numbers.png`
+
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
 - [ ] R-13U 세 지역 기믹(독안개·물·태극 바닥)과 수귀 · 먼저: backlog R-10(사람 결정 대기)
