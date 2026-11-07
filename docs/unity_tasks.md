@@ -503,7 +503,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/WP-69U/` 의 `controls.png`
 
 - [ ] SD-01U Steam Deck 상한·1280x800 화면(16장 'Steam Deck 인증 목표, 1280x800 UI 확인', 15장 '성능 목표') · 먼저: 없음
-  - 할 것: ① `LifeRunner.Room()` 이 `Application.isMobilePlatform` 만 봐서 Deck(리눅스 PC로 잡힘)이 PC 상한 600 을 쓴다. 기기 갈래를 `PlatformTier` 로 골라 `CanSpawn(enemies.Count, tier)` 에 넘긴다 — 모바일이면 Mobile, 환경 변수 `SteamDeck` 이 "1" 이면(Deck 에서 Steam 이 켜 줌) SteamDeck, 아니면 Pc. Steamworks 를 붙인 뒤엔 `SteamUtils.IsSteamRunningOnSteamDeck()` 으로 바꿔도 된다. ② Game 뷰를 1280x800(16:10)으로 두고 타이틀·객잔·침방·연무장·장경각·Run HUD·레벨업·정산 화면을 한 장씩 찍어 넘침·잘림·작은 글자(800 높이에서 12px 아래)를 본다. 캔버스는 모두 1920x1080 기준 match 0.5 라 세로가 남는다 — 위·아래 붙은 것만 보면 된다.
+  - 할 것: ① `LifeRunner.Room()` 이 `Application.isMobilePlatform` 만 봐서 Deck(리눅스 PC로 잡힘)이 PC 상한 600 을 쓴다. 기기 갈래를 `PlatformTier` 로 골라 `CanSpawn(enemies.Count, tier)` 에 넘긴다 — 모바일이거나 WebGL 이면 Mobile(15장 'WebGL 은 적 수 상한을 낮춘 설정' — 낮춘 숫자가 따로 없어 모바일 400 을 씀), 환경 변수 `SteamDeck` 이 "1" 이면(Deck 에서 Steam 이 켜 줌) SteamDeck, 아니면 Pc. Steamworks 를 붙인 뒤엔 `SteamUtils.IsSteamRunningOnSteamDeck()` 으로 바꿔도 된다. ② Game 뷰를 1280x800(16:10)으로 두고 타이틀·객잔·침방·연무장·장경각·Run HUD·레벨업·정산 화면을 한 장씩 찍어 넘침·잘림·작은 글자(800 높이에서 12px 아래)를 본다. 캔버스는 모두 1920x1080 기준 match 0.5 라 세로가 남는다 — 위·아래 붙은 것만 보면 된다.
   - 쓸 것: Core `Data/BalanceDef.cs` `PlatformTier`·`LimitsDef.EnemyCap(tier)`·`CanSpawn(alive, tier, important)`(2026-11-08 클라우드 SD-01, `EnemyCapTests`), balance.json `limits.enemiesSteamDeck`
   - 메뉴: 없음(LifeRunner 한 줄 + 갈래 고르는 작은 정적 함수)
   - 끝: 에디터에서 `SteamDeck=1` 로 켜면 상한 400(로그 한 줄), 1280x800 사진에 잘린 글이 없거나 고친 것을 적음. 콘솔 에러 0
@@ -817,6 +817,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 쓸 것: `tools/fix_art_meta.py`(규칙은 머리글), 테스트 `ArtMetaTests`
   - 끝: 시강·혈강시가 Run 씬에서 제 원화(B-12Ua 덩이 렌더러)로 웹 KIND_SIZE 크기, 마당 타일이 이어 깔림. 크기가 몸(1m 안팎)과 안 맞으면 PPU 를 바꾸지 말고 daily 에 적는다(기획서 13장 숫자라 사람 몫)
   - 찍기: `docs/unity_shots/B-12/`
+
+- [ ] DV-01U 데이터 JSON 보기 창(15장 '계층 구조' 아래 'JSON을 읽어 보여 주는 에디터 창을 따로 만듭니다') · 먼저: 없음(급하지 않음 — 위 절이 막혔을 때)
+  - 할 것: 에디터 폴더에 `DataViewer` EditorWindow 하나. 왼쪽에 `GameData.FileNames` 목록, 고르면 Core `GameData` 로 읽은 그 파일의 항목을 표(이름·id·주요 숫자)로 보여 준다. 고치기는 하지 않는다(원본은 JSON, 고치면 테스트가 기획서와 대조). 이름 칸은 `Loc.T` 로 언어를 바꿔 볼 수 있게.
+  - 쓸 것: Core `Data/GameData.cs`(`FileNames`·`Load`), `Strings`, Resources/Data/*.json
+  - 메뉴: `BloodRain/데이터 보기` (DataViewer.cs)
+  - 끝: 무공·적·balance 세 파일을 열어 숫자가 JSON 과 같음. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/DV-01U/` 의 `viewer_weapons.png`
 
 ### 옮겨서 닫은 것(2026-11-04 UT-01)
 - [x] S-04 2026-11-04 — 레벨업 띠·인장·HUD 인장·발견 연출·장경각·정산 찢긴 비급은 이미 끝(옛 줄 원문). 남은 것을 S-04a(NoteSynergy)·S-04b(기록 알리기·기연 배치)로 옮김. 장경각을 객잔에 붙이는 것은 RM-03b·A-07
