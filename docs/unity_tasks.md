@@ -347,7 +347,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 양 무공(나한권·창천검기)만 올려 게이지가 +26 을 넘으면 그 무공 피해 숫자가 1.15배, +70 을 넘으면 1.4배, 음 무공(비도술)은 그대로. 콘솔 에러 0
   - 찍기: 없음
 
-- [x] PM-01U 심법 최대 덧붙임 셋(금강체 넉백 면역·만독심법 독 면역·운룡보 경공 +1) · 먼저: 없음 — 2026-11-08 02:55 PC: EnemyField `passivePoisonImmune`(당가 몸과 OR, 독 탄·독 장판·독안개 셋 다 같은 PoisonImmune 을 봄)·PlayerController `KnockbackImmune` 을 LifeRunner ApplyStats 가 `life.PassiveMax` 로 넣음. 플레이에서 만독·금강체·운룡보를 Lv5 로 올리니 경공 2→3, 두 표시 참. 금강체는 지금 Run 씬에 플레이어를 미는 것이 없어 표시만(BR-01 패턴 넉백이 생기면 이 값을 봄). 콘솔 에러 0
+- [x] PM-01U 심법 최대 덧붙임 셋(금강체 넉백 면역·만독심법 독 면역·운룡보 경공 +1) · 먼저: 없음 — 2026-11-08 02:40 PC: EnemyField `passivePoisonImmune`(당가 몸과 OR, 독 탄·독 장판·독안개 셋 다 같은 PoisonImmune 을 봄)·PlayerController `KnockbackImmune` 을 LifeRunner ApplyStats 가 `life.PassiveMax` 로 넣음. 플레이에서 만독·금강체·운룡보를 Lv5 로 올리니 경공 2→3, 두 표시 참. 금강체는 지금 Run 씬에 플레이어를 미는 것이 없어 표시만(BR-01 패턴 넉백이 생기면 이 값을 봄). 콘솔 에러 0
   - 할 것: 9장 심법 표 '최대' 칸이 Core·웹·Unity 어디에도 없었다(2026-11-08 클라우드, passives.json maxBonus 를 읽는 곳이 설명 글뿐). 경공 칸은 Core `Life.DashMaxCharges` 가 이제 더하니 LifeRunner 가 이미 부르는 `pc.Dash.SetMaxCharges(_life.DashMaxCharges(st))` 로 저절로 됨(레벨업 뒤에 다시 부르는지만 확인). 남은 둘: ① `life.PassiveMax.KnockbackImmune` 이면 플레이어를 미는 것(정예·땅의 주인 패턴 넉백, 기수 깃발 등 플레이어 쪽 밀림)을 끔. ② `life.PassiveMax.PoisonImmune` 이면 EnemyField `PoisonImmune`(지금은 당가 몸 `sectTrait.PoisonImmune` 만)을 둘 중 하나라도 참이면 참으로.
   - 쓸 것: Core `Build/PassiveMaxBonus`·`Life.PassiveMax`(2026-11-08 클라우드, `PassiveMaxBonusTests`)
   - 메뉴: 없음(심법 넣기 시험 메뉴로 금강체·만독심법을 Lv5 까지)
@@ -375,7 +375,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 삼류에서 적을 모은 뒤 이류 돌파 → 0.8초에 둘레 아래 경지 적이 쓸리고 진기 0.3씩, 남은 아래 경지 적은 닿으면 터지며 피해 0. 아래 경지 정예를 밟으면 보갑 하나. 콘솔 에러 0
   - 찍기: `docs/unity_shots/CR-01U/` 의 `sweep.png`
 
-- [ ] KC-01U 처치 수를 덩이 속 사람 수로 · 먼저: 없음
+- [x] KC-01U 처치 수를 덩이 속 사람 수로 · 먼저: 없음 — 2026-11-08 02:45 PC: LifeRunner `KillCountOf(a)` = `Scale.KillCount(a.BornRealm)`(땅의 주인·축척 없으면 1)를 `_kills += n`·`Log.Kill(n)` 한 곳에서, 살기 깨달음·정산도 같은 `_kills` 를 봄. 진기·혈정·오의는 그대로. 플레이에서 생긴 경지 0~5 → 1·4·9·16·28·44, 삼류 처치 7번에 7. `Kills` 속성을 HUD 몫으로 내놓음. 콘솔 에러 0
   - 할 것: 7장 '적 한 덩이' — 처치 수(HUD·업적·정산)는 덩이 속 사람 수로 센다. 지금 LifeRunner.OnKilled 는 `_kills++`·`Log.Kill()` 로 한 덩이를 1 로 센다(2026-11-08 클라우드가 찾음). 웹은 `G.kills += clusterOf(e)`(땅의 주인·분열 몸은 1).
   - 쓸 것: Core `Scale.KillCount(a.BornRealm)`(= ClusterSize, cheonha.json clusterSize), `Life.Log.Kill(count)`. `_kills` 를 같이 쓰는 살기 깨달음(`InsightBonus`·`TakeInsight`)·정산 `SettlementStats.Kills` 도 같은 수가 되게 `_kills += n` 한 곳에서. 진기·혈정·오의 게이지는 덩이 하나 값 그대로(7장 '진기는 그 적 하나 값만')
   - 메뉴: 없음(Run 씬 플레이)

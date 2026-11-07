@@ -148,11 +148,25 @@ namespace BloodRain.Presentation
 
         BloodRain.Presentation.Fx.EdgeIndicators _edges;
 
+        /// <summary>KC-01U 한 덩이를 쓰러뜨렸을 때 세는 처치 수 = Scale.KillCount(생긴 경지). 땅의 주인·축척이 없으면 1.</summary>
+        int KillCountOf(EnemyAgent a)
+        {
+            var ws = WorldScale.Current;
+            if (ws == null || ws.Scale == null) return 1;
+            if (enemies != null && enemies.DefOf(a.Kind)?.Family == "boss") return 1;
+            return Mathf.Max(1, ws.Scale.KillCount(a.BornRealm));
+        }
+
+        /// <summary>지금까지 센 처치 수(덩이 속 사람 수 합). HUD·시험이 본다.</summary>
+        public long Kills => _kills;
+
         void OnKilled(Vector2 at, EnemyAgent a)
         {
-            _kills++;
+            // KC-01U 처치 수는 덩이 속 사람 수(7장 '적 한 덩이', 웹 clusterOf). 땅의 주인은 1. 진기·혈정·오의는 덩이 하나 값 그대로
+            int n = KillCountOf(a);
+            _kills += n;
             // R-08U 도전 과제 처치 수. 정예·땅의 주인도 여기서 한 번(KillElite·DefeatBoss 는 보상만 센다)
-            if (_life != null && _life.Record == null) _life.Log.Kill();
+            if (_life != null && _life.Record == null) _life.Log.Kill(n);
             // WP-34U 금두꺼비(golden_toad 만. 영물은 세지 않는다). 모든 생 합이 연무장 탐욕 상한을 연다
             bool beast = EncounterLayer.Instance != null && EncounterLayer.Instance.TryCatchBeast(a.Id, at); // WP-39U 영물
             if (!beast && _life != null && _life.Record == null && enemies != null && enemies.DefOf(a.Kind)?.Id == "golden_toad") _life.Log.CatchGoldenToad();
