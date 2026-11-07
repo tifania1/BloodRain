@@ -77,6 +77,16 @@ namespace BloodRain.Core.Combat
             return (px + dx * k, py + dy * k);
         }
 
+        /// <summary>절기 흑룡탄: 모으는 자리 = 몸 앞(바라보는 쪽 단위 벡터) PullTo.</summary>
+        public static (float x, float y) GatherCenter(float px, float py, float facingX, float facingY) =>
+            (px + facingX * Trial.PullTo, py + facingY * Trial.PullTo);
+
+        /// <summary>흑룡탄 모으기 칸 수: gatherSeconds 를 0.1초씩(웹과 같음), 적어도 1.</summary>
+        public static int GatherSteps(float gatherSeconds) => Math.Max(1, (int)Math.Round(gatherSeconds / 0.1f, MidpointRounding.AwayFromZero));
+
+        /// <summary>흑룡탄 k 번째 칸(1부터)에 적이 모으는 자리 쪽으로 남은 거리의 몇 할을 가나: 0.9 / (남은 칸 수). 마지막 칸 뒤 폭발.</summary>
+        public static float GatherFraction(int k, int steps) => 0.9f / (steps - k + 1);
+
         // ── 혈조 ──
         /// <summary>n 갈래 할퀴기 각도: 조준 각 base 를 가운데로 ClawSpreadRad 간격.</summary>
         public static float[] ClawAngles(float baseAngle, int n) =>

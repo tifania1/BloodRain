@@ -67,6 +67,18 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 흑룡탄은_몸_앞_1_5m_로_0_1초씩_모은다()
+        {
+            Assert.Equal(1.5f, WeaponShapes.GatherCenter(0f, 0f, 1f, 0f).x, 4);
+            Assert.Equal(6, WeaponShapes.GatherSteps(0.6f));
+            Assert.Equal(0.15f, WeaponShapes.GatherFraction(1, 6), 4);
+            Assert.Equal(0.9f, WeaponShapes.GatherFraction(6, 6), 4);
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("steps = Math.max(1, Math.round(ep.gatherSeconds / 0.1))", html);
+            Assert.Contains("const f = 1 / (steps - k + 1); e.x += (cx - e.x) * f * 0.9", html);
+        }
+
+        [Fact]
         public void 혈조_갈래는_조준_각_가운데로_벌어진다()
         {
             var a = WeaponShapes.ClawAngles(0f, 3);
