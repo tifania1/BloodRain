@@ -135,7 +135,7 @@
       "effect": "boundless", "params": { "aspectDamageBonus": 0.4 },
       "hint": ["기울지 않는 저울은", "저울이 아니다"],
       "require": { "levels": { "taiji_sword": 8, "yangui": 5 }, "hold": { "counter": "gaugeZeroSeconds", "seconds": 180 } } },
-    { "id": "chwiseon", "nameKo": "취선", "hanja": "醉仙",
+    { "id": "chwiseon", "nameKo": "취선", "hanja": "醉仙", "proto": true,
       "condition": "취선봉과 주선공으로, 한 판에서 음식을 열다섯 개 먹고 기혈 20% 이하에서 보갑을 연다",
       "reward": "음식을 먹을 때마다 공력 +3%가 쌓이고, 비틀거리는 걸음으로 공격을 20% 확률로 흘린다",
       "effect": "drunken_step", "params": { "mightPerFood": 0.03, "evadeChance": 0.2 },

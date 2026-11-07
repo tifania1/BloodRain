@@ -786,6 +786,7 @@ function synTick(dt) {
     S.zeroT = G.yy === 0 && S.zeroLast === 0 ? (S.zeroT || 0) + dt : 0; S.zeroLast = G.yy;
     if (!overlay && Object.entries(mg.levels).every(([id, lv]) => lvOf(id) >= lv) && S.zeroT >= mg.hold.seconds) { unlockSecret('mugeuk'); G.yy = 0; }
   }
+  if (S.drunkPend && !overlay) { S.drunkPend = false; unlockSecret('chwiseon'); }
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
@@ -2010,10 +2011,12 @@ function addNum(x, y, v, crit, color) {
   while (G.nums.length >= LIM.damageNumbers) G.nums.shift();   // 상한까지(Core DamageNumbers 와 같게)
   G.nums.push({ x: x + rand(-B.damageNumber.jitterMeters, B.damageNumber.jitterMeters), y, v: Math.round(v), t: 0, crit, color });
 }
+// 비전 취선: 찾은 뒤 먹은 음식 하나마다 공력 +mightPerFood(Core SecretEffects.FoodMightBonus, 더하기)
+function drunkMight() { return (G.drunkFood || 0) * SECRET.chwiseon.params.mightPerFood; }
 function weaponDamage(w) {
   const def = W_BY_ID[w.id];
   let d = lerp(def.damageLv1, def.damageLv8, (w.lv - 1) / 7);
-  d *= (G.stats.might + sectBonus('Might') + (G.tombMight || 0)) * aspectMult(def.yinyang);   // 남궁 기혈 50% 이상 공력 +25%(WP-20), 검총에 꽂은 레벨 × 3%(WP-31)
+  d *= (G.stats.might + sectBonus('Might') + (G.tombMight || 0) + drunkMight()) * aspectMult(def.yinyang);   // 남궁 기혈 50% 이상 공력 +25%(WP-20), 검총에 꽂은 레벨 × 3%(WP-31)
   if (w.evolved) d *= B.evolution.damageMultiplier;
   if (G.glow && G.glow.w === w) d *= BA.afterglowDamageMultiplier;   // 각성 여운(balance.json awakening)
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
@@ -2148,6 +2151,7 @@ function hurtPlayer(dmg, src, kind) {
   if (G.shadow && kind !== 'shadow' && kind !== 'self') dmg *= shadowStrength(G.shadow.step).enemyMul;   // 혈마의 그림자: 화면 위 다른 적 피해
   dmg *= yyFieldMul();   // 흑백 구역(WP-13e)
   { const ev = sectBonus('Evade'); if (ev > 0 && Math.random() < ev) { addEffect('ring', p.x, p.y, { r: 0.8, color: '#8FA8B8', life: 0.25 }); return; } }   // 수로채 움직이는 동안 회피 15%(WP-20, Core Evade.Roll)
+  if (kind !== 'self' && G.syn.secrets.has('chwiseon') && Math.random() < SECRET.chwiseon.params.evadeChance) { addEffect('ring', p.x, p.y, { r: 0.8, color: '#C9A227', life: 0.25 }); return; }   // 취선: 비틀걸음으로 흘림(SecretEffects.Evades)
   let taken = Math.max(B.contact.minDamage, dmg - G.stats.armor) * G.stats.damageTaken;
   if (G.insights.includes('hyeolgwang') && p.hp / p.maxHp < IP.hyeolgwang.healthThreshold) taken *= 1 + IP.hyeolgwang.damageTaken;   // 혈광폭주(WP-23)
   // 무당 진전 3 사량발천근: 태극 구간이면 20% 덜 받고, 줄인 피해의 열 배를 부딪힌 적에게
@@ -3206,6 +3210,7 @@ function bossAI(e, dt, dx, dy, d) {
 function pickup(dr) {
   const p = G.player;
   if (dr.kind === 'food' || dr.kind === 'meat') G.food = (G.food || 0) + 1;   // 칭호 '식객'(WP-34, Core LifeLog.EatFood)
+  if ((dr.kind === 'food' || dr.kind === 'meat') && G.syn.secrets.has('chwiseon')) G.drunkFood = (G.drunkFood || 0) + 1;   // 비전 취선
   if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal * otherHeal()); toast('만두', `기혈 +${Math.round(DR.bunHeal * G.stats.foodHeal * otherHeal())}`); }
   else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal * otherHeal()); toast('오리구이', `기혈 +${Math.round(DR.duckHeal * G.stats.foodHeal * otherHeal())}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
@@ -3499,6 +3504,8 @@ function chooseInsight(i) {
 }
 
 function openChest() {
+  // 비전 취선: 취선봉·주선공을 지닌 채 이 판 음식 열다섯, 기혈 20% 이하에서 보갑(Core RunRecord.OpenChest 사진). 보갑 화면이 닫힌 뒤 연다(synTick)
+  { const cr = SECRET.chwiseon.require, p = G.player; if (!G.syn.secrets.has('chwiseon') && Object.keys(cr.levels).every(id => lvOf(id) >= cr.levels[id]) && (G.food || 0) >= cr.counts.foodEaten && p.hp <= p.maxHp * cr.event.maxHpRatio) G.syn.drunkPend = true; }
   // 그릇이 남았고 문턱에 선 무공이 있으면 보갑이 곧 각성이다
   const ready = EV.triggers.includes('chest') && spareVessel() ? G.weapons.find(atThreshold) : null;
   if (ready) return startAwaken(ready, { why: '보갑' });

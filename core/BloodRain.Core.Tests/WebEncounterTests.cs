@@ -76,7 +76,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("const TOMB_PER_LEVEL = ENC_BY.sword_tomb.params.mightPerLevel;", html);
             Assert.Equal(0.03f, e.Param("mightPerLevel"), 5);
             Assert.Contains("G.weapons.splice(k, 1); G.banished.add(o.w.id); G.tombMight = (G.tombMight || 0) + lv * TOMB_PER_LEVEL;", html);
-            Assert.Contains("(G.stats.might + sectBonus('Might') + (G.tombMight || 0))", html);
+            Assert.Contains("(G.stats.might + sectBonus('Might') + (G.tombMight || 0) + drunkMight())", html);
             Assert.Contains("if (G.weapons.length > 1) showSwordTomb();", html);
         }
 

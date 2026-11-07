@@ -35,5 +35,17 @@ namespace BloodRain.Core.Tests
             // 게이지가 사라짐: 움직이지 않고 HUD 를 숨김
             Assert.Contains("if (G.syn.secrets.has('mugeuk')) return;   // 무극", html);
         }
+        [Fact] public void 취선_판정과_효과가_Core_와_같은_셈()
+        {
+            var html = Proto;
+            // 보갑을 연 순간의 사진(RunRecord.OpenChest): 레벨·음식 수·기혈 비율 이하
+            Assert.Contains("(G.food || 0) >= cr.counts.foodEaten && p.hp <= p.maxHp * cr.event.maxHpRatio) G.syn.drunkPend = true;", html);
+            // SecretEffects.FoodMightBonus: 찾은 뒤 먹은 수 × mightPerFood 를 공력에 더함
+            Assert.Contains("&& G.syn.secrets.has('chwiseon')) G.drunkFood = (G.drunkFood || 0) + 1;", html);
+            Assert.Contains("function drunkMight() { return (G.drunkFood || 0) * SECRET.chwiseon.params.mightPerFood; }", html);
+            Assert.Contains("+ (G.tombMight || 0) + drunkMight())", html);
+            // SecretEffects.Evades: 기혈역류(self)는 흘리지 않음
+            Assert.Contains("kind !== 'self' && G.syn.secrets.has('chwiseon') && Math.random() < SECRET.chwiseon.params.evadeChance", html);
+        }
     }
 }
