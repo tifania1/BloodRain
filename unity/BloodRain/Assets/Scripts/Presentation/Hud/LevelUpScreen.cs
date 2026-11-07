@@ -376,7 +376,7 @@ namespace BloodRain.Presentation.Hud
             _sealRow = new GameObject("줄", typeof(RectTransform)).GetComponent<RectTransform>();
             _sealRow.SetParent(go.transform, false);
             _sealRow.anchorMin = _sealRow.anchorMax = _sealRow.pivot = new Vector2(0f, 1f);
-            _sealRow.anchoredPosition = new Vector2(24, -120); // 맨 위 줄은 시험용 글자 칸이 쓴다
+            _sealRow.anchoredPosition = new Vector2(24, -160); // 위는 TopHud 무공·심법 칸과 경지·그릇 줄(HUD-01U ③)이 쓴다
             _sealRow.sizeDelta = new Vector2(900, 64);
             var h = _sealRow.gameObject.AddComponent<HorizontalLayoutGroup>();
             h.spacing = 10; h.childAlignment = TextAnchor.UpperLeft;
