@@ -709,6 +709,7 @@
   "ui.manual.lineage": "{0} Lineage {1}",
   "ui.hud.kills": "Kills {0}",
   "ui.hud.silver": "Silver {0}",
+  "ui.hud.level": "Lv {0} · {1}",
   "ui.hud.rebirth_qi": "Samsara Qi +{0}",
   "ui.hud.seal_stones": "Seal Stones {0}/{1}",
   "ui.hud.pause": "Pause",

@@ -333,6 +333,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 넷이 Lv1·Lv5·Lv8 에서 웹 프로토타입과 같은 모양·개수로 나감
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
+- [ ] HUD-01U 전투 HUD 나머지 넷 · 먼저: 없음
+  - 할 것: 12장 '전투 HUD 배치' 가운데 위 가운데(RegionHud, TU-09)·오른쪽 아래(UltimateButton·YinYangHud)·가장자리(EdgeIndicators)만 있고 나머지 넷은 디버그 글(LifeRunner·PlayerVitals OnGUI)뿐이다(2026-11-08 클라우드가 찾음). ① 화면 맨 위 가로 진기 바(먹선 위로 금빛이 참), 오른쪽 끝 'Lv N · 경지'. ② 오른쪽 위 처치 수·은자. ③ 왼쪽 위 무공 6칸 + 심법 6칸(7칸째가 열리면 7), 문턱 무공은 테두리 금빛으로 뜀·그릇이 없으면 흐린 금빛, 절기는 금테, 경지 아래 그릇 ◆◇. 아이콘 그림이 없는 칸은 무공 이름 첫 글자(웹 GLYPH 처럼). ④ 캐릭터 머리 위 짧은 기혈 바(LH-01U 문턱 아래면 붉게)·경공 충전 점. 설정 '땅의 주인 체력바'와는 따로.
+  - 쓸 것: Core `Build/HudSlots.Build(life.Loadout, life.Level)`(칸 id·레벨·`SlotGlow` None·Ready·Waiting·Evolved, `VesselsUsed`·`VesselsTotal`, 2026-11-08 클라우드), `life.Xp.Progress`·`life.Level`·`Loc.Realm`, strings `ui.hud.level`(네 언어 2026-11-08)·`ui.hud.kills`·`ui.hud.silver`, 처치 수는 KC-01U 의 `_kills`, 은자 `life.Silver`, 경공 `Dash` 충전, `Balance.Contact.IsLowHealth`
+  - 메뉴: C-08a 의 `BloodRain/Bootstrap/Run 씬에 HUD 붙이기`(HudBootstrap.cs)에 새 HUD 를 더함
+  - 끝: 진기를 먹으면 위 바가 차고 레벨이 오르면 비고 Lv 글이 바뀜, 처치·은자 숫자가 오름, 각성 시험 몸으로 문턱 무공 칸이 일류에선 흐리고 절정에선 뜀, 깨우면 ◆. 영어·간체에서 넘치지 않음. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/HUD-01U/` 의 `hud.png`
+
 - [ ] CR-01U Run 씬 밟힘·쓸림 잇기 · 먼저: C-09d
   - 할 것: 7장 '밟히는 것들'·돌파 쓸림이 시험 씬(ScaleTest·CrushTestField, TU-03)에만 있고 Run 씬엔 안 이어져 있다(2026-11-08 클라우드가 C-09d 를 읽다 찾음 — EnemySim.Contacts 는 아래 경지 적의 접촉 피해만 거르고, 닿은 그 적을 쓰러뜨리지 않으며, BreakthroughFx.Swept 를 듣는 쪽이 Run 에 없다). ① 플레이어 원에 닿은 아래 경지 적(`Scale.Crushes(born, 지금 경지)`)은 그 자리에서 먹물로 터지며 쓰러짐(InkBurst), 진기는 구슬 대신 `cheonha.crush.xpPerCrushed`(0.3). ② 돌파 0.8초 `BreakthroughFx.Swept` 에 `bt.SelectSweep(아래 경지 적 ScaledFoe 목록)` 을 한꺼번에 같은 처리. ③ 쓰러뜨림은 `EnemyField.Kill` 을 거쳐 Killed 가 나가게 — 그러면 ChestLayer 가 아래 경지 정예에도 보갑을 놓는다(`Scale.CrushedDropsChest(true)` 가 참일 때만, 거짓이면 ChestLayer 가 밟힌 정예를 거름). OrbLayer 가 밟힌 적에 보통 구슬을 또 떨구지 않게 표시를 넘긴다. 정예·땅의 주인 거르기는 기획서대로: 땅의 주인은 밟히지 않음(`Crushes(…, boss: true)`), 정예는 밟힘. ④ 같은 문단 나머지: 아래 경지 때 떨어진 진기 구슬·음식·은자는 지나가기만 하면(몸 원에 닿으면) 주워지고, 작은 등롱은 밟으면 깨진다 — OrbLayer `Field.Drop`·LanternLayer 가 떨군 경지를 안 들고 있으니 떨굴 때 `ws.Realm` 을 같이 적어 둔다(CrushField 의 `Crushable.BornRealm` 과 같은 뜻). ①~③ 과 ④ 는 따로 커밋해도 됨.
   - 쓸 것: Core `World/Scale.cs` `Crushes`·`CrushedDropsChest`·`SelectSweep`, `World/Breakthrough.cs` `SweepRadius`·`SelectSweep`, cheonha.json `crush`, 시험 쪽 `CrushTestField.OnSwept`·`Sim/CrushField.cs`(옮겨 쓸 만한 셈), `Fx/InkBurst.cs`

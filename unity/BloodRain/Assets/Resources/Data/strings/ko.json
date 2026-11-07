@@ -180,6 +180,7 @@
   "ui.manual.lineage": "{0} 진전 {1}단계",
   "ui.hud.kills": "처치 {0}",
   "ui.hud.silver": "은자 {0}",
+  "ui.hud.level": "Lv {0} · {1}",
   "ui.hud.rebirth_qi": "윤회의 기 +{0}",
   "ui.hud.seal_stones": "봉인석 {0}/{1}",
   "ui.hud.pause": "멈춤",

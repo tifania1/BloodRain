@@ -709,6 +709,7 @@
   "ui.manual.lineage": "{0}真传 第{1}阶",
   "ui.hud.kills": "击杀 {0}",
   "ui.hud.silver": "银两 {0}",
+  "ui.hud.level": "Lv {0} · {1}",
   "ui.hud.rebirth_qi": "轮回之气 +{0}",
   "ui.hud.seal_stones": "封印石 {0}/{1}",
   "ui.hud.pause": "暂停",
