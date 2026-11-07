@@ -136,9 +136,16 @@ namespace BloodRain.Presentation.Hud
             Time.timeScale = 0f;
             _firstOpen = !_firstDone && _prologue != null;
             _firstDone = true;
-            _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, 0f, _unlocked, _prologue) : _loadout.RollLevelUp(_rng, 0f, _unlocked);
+            _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _root.gameObject.SetActive(true);
             Refresh();
+        }
+
+        // LU-01U 기연(연무장·도문심법·타고난 성질)이 넷째 카드 확률을 정한다(balance levelUp.luckForFourthChoice). 시험 씬엔 0.
+        static float Luck()
+        {
+            var st = LifeRunner.Instance != null ? LifeRunner.Instance.Stats : null;
+            return st != null ? st.Luck : 0f;
         }
 
         void Close()
@@ -186,7 +193,7 @@ namespace BloodRain.Presentation.Hud
         {
             if (!_open || _firstOpen || !_charges.Can(LevelUpAction.Reroll)) return;
             _charges.Reroll();
-            _offers = _loadout.RollLevelUp(_rng, 0f, _unlocked);
+            _offers = _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _banishMode = false;
             Refresh();
         }
