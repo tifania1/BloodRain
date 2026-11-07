@@ -1,3 +1,4 @@
+using System.Linq;
 using Xunit;
 
 namespace BloodRain.Core.Tests
@@ -17,6 +18,14 @@ namespace BloodRain.Core.Tests
             Assert.Contains("while (S.clock >= bg.intervalSeconds) { S.clock -= bg.intervalSeconds; S.allyT = bg.seconds; S.allies = bg.allies; S.atk = 0;", html);
             Assert.Contains("dmg = bg.damage * G.stats.might", html);
             Assert.Contains("schoolSummons(dt);", html);
+        }
+        [Fact] public void 이기어검은_근접_갈래만()
+        {
+            // insights.json igi weaponBehaviors(Core InsightEffects.WeaponRangeMultiplier) — 뇌부(random_lightning)엔 안 붙는다
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("G.insights.includes('igi') && IGI_BEH.includes(def.behavior)", html);
+            Assert.DoesNotContain("def.range * igi * (w.evolved ? ep.rangeMultiplier : 1), R = def.strikeRadius", html);
+            Assert.DoesNotContain("random_lightning", string.Join(",", TestData.Load().Insights.First(i => i.Id == "igi").WeaponBehaviors));
         }
     }
 }

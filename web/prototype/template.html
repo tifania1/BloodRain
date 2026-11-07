@@ -1002,6 +1002,7 @@ const INSIGHTS = DATA.insights.insights.map(x => ({ id: x.id, name: x.nameKo, g:
 // 이번 생에 극성으로 땅의 주인을 쓰러뜨렸으면 그 자리에서 바로 열린다(Core Life 가 _soul.Unlock). 1장 판(진소운)은 그대로 다 든다
 const insightOpen = x => !G.body || soulUnlocked(G.soul0 || {}, x.unlock) || (x.unlock === 'boss_at_extreme' && !!G.extremeKill);
 const IP = Object.fromEntries([...DATA.insights.insights, ...(DATA.insights.demonicInsights || [])].map(x => [x.id, x.params]));
+const IGI_BEH = (DATA.insights.insights.find(x => x.id === 'igi') || {}).weaponBehaviors || [];   // 이기어검이 닿는 근접 갈래
 // 마공 깨달음(WP-23, 5장 '마교 몸의 성장: 혈공', insights.json demonicInsights): 마교 몸이 돌파하면 셋 가운데 demonicInsightsPerBreakthrough 자리는 마공(Core Insights.RollWithDemonic)
 const DEM_INSIGHTS = (DATA.insights.demonicInsights || []).map(x => ({ id: x.id, name: x.nameKo, g: x.glyph, text: x.textKo, demonic: true }));
 // 깨달음 후보 수: 진소운 특성(reroll_plus2_insight4)이면 4, 아니면 기본 3. insights.json choices.
@@ -2247,7 +2248,7 @@ function fireWeapon(w) {
   const def = W_BY_ID[w.id], p = G.player, S = G.stats, t = (w.lv - 1) / 7;
   const ep = (EVO_BY_W[w.id] || {}).params || {}; // 절기 수치(evolutions.json params)
   const dmg = weaponDamage(w);
-  const igi = G.insights.includes('igi') ? 1 + IP.igi.rangeBonus : 1;
+  const igi = G.insights.includes('igi') && IGI_BEH.includes(def.behavior) ? 1 + IP.igi.rangeBonus : 1;   // 이기어검: 근접 다섯 갈래만(insights.json weaponBehaviors, Core InsightEffects.WeaponRangeMultiplier)
   const fx = p.fx, fy = p.fy;
   w.n++;
   switch (def.behavior) {
@@ -2458,7 +2459,7 @@ function fireWeapon(w) {
       // 절기 오뢰정법(evolutions params): 사거리 × rangeMultiplier 안 strikes 곳(연무장 개수 더함), 반경 × radiusMultiplier, 피해 1배,
       //   맞은 적마다 lightningRange 안 곁의 적으로 lightningChains 번 옮아감(옮을 때마다 lightningFalloff 배). 값은 Unity 쪽이 먼저 정한 것(9장).
       const n = (w.evolved ? ep.strikes : Math.round(grow(def.projectiles, t))) + S.amount;
-      const range = def.range * igi * (w.evolved ? ep.rangeMultiplier : 1), R = def.strikeRadius * S.area * (w.evolved ? ep.radiusMultiplier : 1);
+      const range = def.range * (w.evolved ? ep.rangeMultiplier : 1), R = def.strikeRadius * S.area * (w.evolved ? ep.radiusMultiplier : 1);
       const pool = nearestEnemies(p.x, p.y, Math.max(n * 4, 12), range), shock = w.evolved || atMs(w, '감전');
       for (let i = 0; i < n && pool.length; i++) {
         const tg = pool.splice(Math.floor(Math.random() * pool.length), 1)[0], bx = tg.x, by = tg.y;
