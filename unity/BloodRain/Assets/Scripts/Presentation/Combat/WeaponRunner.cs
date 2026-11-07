@@ -127,6 +127,7 @@ namespace BloodRain.Presentation.Combat
         readonly List<int> _near = new List<int>();
         readonly List<int> _filtered = new List<int>();
         readonly List<float> _xs = new List<float>(), _ys = new List<float>();
+        PlayerVitals _vitals; // 혈조 흡혈
         readonly Dictionary<string, float> _dealt = new Dictionary<string, float>();
         Material _mat;
         MaterialPropertyBlock _mpb;
@@ -585,6 +586,46 @@ namespace BloodRain.Presentation.Combat
                         if (!_filtered.Contains(i)) _filtered.Add(i);
                     }
                     Deal(s, dmg, enemies.Damage(_filtered, dmg, P, 0f));
+                    break;
+                }
+                case "forward_claws":
+                {
+                    // 혈조(R-12Ua, 9장): 조준(사거리 1.25배 안 가까운 적, 없으면 바라보는 쪽) 가운데로 projectiles(3→5) 갈래 할퀴기,
+                    // 준 피해의 lifesteal(1→2%) 만큼 기혈 회복. 같은 적은 한 번 쏠 때 한 갈래에만(Core WeaponShapes.ClawAngles·ClawHits, 웹 forward_claws).
+                    // 절기 혈마수: 흡혈 lifesteal(4%), 극음이면 범위 × extremeYinRangeMultiplier. 넉백은 몸에서 바깥으로(웹은 갈래 방향)
+                    var evo = EvoOf(s);
+                    var lr = LifeRunner.Instance;
+                    var gauge = lr != null && lr.Life != null ? lr.Life.Loadout.Gauge : null;
+                    bool exYin = evo != null && gauge != null && gauge.Band == BloodRain.Core.Progression.YinYangBand.Extreme && gauge.Value < 0;
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level);
+                    float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s) * (exYin ? evo.Param("extremeYinRangeMultiplier", 1f) : 1f));
+                    float ls = evo != null ? evo.Param("lifesteal") : WeaponGrowth.At(s.Def.Lifesteal, s.level, 0f);
+                    float baseA = Nearest(R * 1.25f, out var cdir) ? Mathf.Atan2(cdir.y, cdir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                    float width = ws.Length(WeaponShapes.Trial.ClawWidth);
+                    enemies.Sim.QueryCircle(new float2(P.x, P.y), R + width, _near);
+                    var agents = enemies.Sim.Agents;
+                    _filtered.Clear();
+                    foreach (var a in WeaponShapes.ClawAngles(baseA, n))
+                    {
+                        float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
+                        AddFxAt(P + new Vector2(ca, sa) * R * 0.5f, a, 0.25f, R * 0.5f, 0.14f, evo != null ? new Color(0.62f, 0.08f, 0.10f, 0.8f) : new Color(0.45f, 0.10f, 0.12f, 0.7f));
+                        foreach (int i in _near)
+                        {
+                            if (_filtered.Contains(i)) continue;
+                            var e = agents[i];
+                            // ClawHits 는 경지 m 의 Trial.ClawWidth 를 쓰니 세계 m 로 같은 셈
+                            float dx = e.Pos.x - P.x, dy = e.Pos.y - P.y, along = dx * ca + dy * sa, perp = Mathf.Abs(-dx * sa + dy * ca);
+                            if (along > 0f && along < R + e.Radius && perp < width + e.Radius) _filtered.Add(i);
+                        }
+                    }
+                    BloodRain.Presentation.Fx.LanternLayer.Strike(P + new Vector2(Mathf.Cos(baseA), Mathf.Sin(baseA)) * R * 0.5f, R * 0.5f); // C-09b 친 자리 안 등롱
+                    int got = enemies.Damage(_filtered, dmg, P, ws.Speed(Knock(s)));
+                    Deal(s, dmg, got);
+                    if (got > 0 && ls > 0f)
+                    {
+                        if (_vitals == null) _vitals = FindFirstObjectByType<PlayerVitals>();
+                        if (_vitals != null) _vitals.Heal(dmg * ls * got);
+                    }
                     break;
                 }
                 default:

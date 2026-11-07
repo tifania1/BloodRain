@@ -93,7 +93,7 @@ namespace BloodRain.Core.Tests
         }
     }
     /// <summary>무공 쪽 같은 검사: WeaponRunner 가 돌리는(또는 바로 다음에 붙일) 갈래가 읽는 칸이 weapons.json 에 있는지.
-    /// 칸 이름은 Core `WeaponDef`. 아직 숫자를 정하지 않은 갈래(혈조·음공·관통 찌르기·꽃잎)는 여기 넣지 않는다.</summary>
+    /// 칸 이름은 Core `WeaponDef`. 아직 숫자를 정하지 않은 갈래(음공·관통 찌르기·꽃잎)는 여기 넣지 않는다.</summary>
     public class WeaponBehaviorParamsTests
     {
         readonly GameData _d = Load();
@@ -104,6 +104,7 @@ namespace BloodRain.Core.Tests
             ["melee_combo"] = new (string, Func<WeaponDef, bool>)[] { ("gapSeconds", w => w.GapSeconds > 0), ("knockback", w => w.Knockback != null) },
             ["random_arc"] = new (string, Func<WeaponDef, bool>)[] { ("gapSeconds", w => w.GapSeconds > 0), ("knockback", w => w.Knockback != null) },
             ["pull_chain"] = new (string, Func<WeaponDef, bool>)[] { ("projectiles", w => w.Projectiles != null), ("slow", w => w.Slow != null), ("knockback", w => w.Knockback != null) },
+            ["forward_claws"] = new (string, Func<WeaponDef, bool>)[] { ("projectiles", w => w.Projectiles != null), ("lifesteal", w => w.Lifesteal != null), ("knockback", w => w.Knockback != null) },
             ["orbiting_blades"] = new (string, Func<WeaponDef, bool>)[] { ("projectiles", w => w.Projectiles != null), ("duration", w => w.Duration != null), ("knockback", w => w.Knockback != null) },
             ["slow_projectile"] = new (string, Func<WeaponDef, bool>)[] { ("shot", w => w.Shot != null), ("gapSeconds", w => w.GapSeconds > 0), ("knockback", w => w.Knockback != null) },
             ["homing_dagger"] = new (string, Func<WeaponDef, bool>)[] { ("shot", w => w.Shot != null), ("knockback", w => w.Knockback != null) },
