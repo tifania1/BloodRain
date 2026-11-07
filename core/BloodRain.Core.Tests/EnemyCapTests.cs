@@ -3,7 +3,7 @@ using Xunit;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>11장 '성능 상한' 동시 적 수(PC 600·모바일 400)를 생성 쪽이 묻는 판정(EN-03).</summary>
+    /// <summary>11장 '성능 상한' 동시 적 수(PC 600·Steam Deck 400·모바일 400)를 생성 쪽이 묻는 판정(EN-03).</summary>
     public class EnemyCapTests
     {
         readonly LimitsDef _l = TestData.Load().Balance.Limits;
@@ -19,6 +19,16 @@ namespace BloodRain.Core.Tests
             Assert.False(_l.CanSpawn(_l.EnemiesPc, mobile: false));
             Assert.False(_l.CanSpawn(_l.EnemiesMobile, mobile: true));
             Assert.True(_l.CanSpawn(_l.EnemiesMobile, mobile: false)); // PC 는 600 까지
+        }
+
+        [Fact] public void Steam_Deck_은_15장_성능_목표대로_400()
+        {
+            // 리눅스 PC 로 잡혀 isMobilePlatform 이 거짓이라도 Deck 은 400 에서 멈춘다(SD-01)
+            Assert.Equal(400, _l.EnemyCap(PlatformTier.SteamDeck));
+            Assert.False(_l.CanSpawn(_l.EnemiesSteamDeck, PlatformTier.SteamDeck));
+            Assert.True(_l.CanSpawn(_l.EnemiesSteamDeck - 1, PlatformTier.SteamDeck));
+            Assert.Equal(_l.EnemyCap(true), _l.EnemyCap(PlatformTier.Mobile));
+            Assert.Equal(_l.EnemyCap(false), _l.EnemyCap(PlatformTier.Pc));
         }
 
         [Fact] public void 정예_같은_것은_넘어도_세운다()

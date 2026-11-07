@@ -206,7 +206,7 @@ namespace BloodRain.Core.Tests
             var rows = TestData.GddTable(TestData.GddSection("성능 상한")).ToDictionary(r => r[0], r => r[1]);
             var l = _d.Balance.Limits;
             string N(int v) => v.ToString("#,0", CultureInfo.InvariantCulture);
-            Assert.Equal($"{N(l.EnemiesPc)}(PC), {N(l.EnemiesMobile)}(모바일)", rows["동시 적 수"]);
+            Assert.Equal($"{N(l.EnemiesPc)}(PC), {N(l.EnemiesSteamDeck)}(Steam Deck), {N(l.EnemiesMobile)}(모바일)", rows["동시 적 수"]);
             Assert.Equal(N(l.Projectiles), rows["동시 투사체"]);
             Assert.Equal($"{N(l.Orbs)}(넘으면 합침)", rows["화면 위 진기 구슬"]);
             Assert.Equal(N(l.DamageNumbers), rows["동시 피해 숫자 표시"]);

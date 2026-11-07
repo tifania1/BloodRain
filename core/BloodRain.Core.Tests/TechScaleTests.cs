@@ -29,6 +29,7 @@ namespace BloodRain.Core.Tests
             var rows = TestData.GddTable(TestData.GddSection("성능 목표"));
             Assert.Contains($"적 {l.EnemiesPc}, 투사체 {N(l.Projectiles)}", rows.Single(r => r[0].StartsWith("PC"))[3]);
             Assert.Equal($"적 {l.EnemiesMobile}", rows.Single(r => r[0].StartsWith("모바일"))[3]);
+            Assert.Equal($"적 {l.EnemiesSteamDeck}", rows.Single(r => r[0].StartsWith("Steam Deck"))[3]);
         }
 
         [Fact] public void 조작_절의_경공_문단이_데이터와_같다()
