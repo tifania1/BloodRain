@@ -215,6 +215,26 @@ namespace BloodRain.Presentation
             }
             return n;
         }
+        /// <summary>ST-02U 벽력탄 화상·비도술 독처럼 맞힌 적에 seconds 초 동안 초당 dps 지속 피해. poison 이면 중독 표시도(당가 +20%·독 번짐이 봄).
+        /// dps 는 부르는 쪽이 지속 피해 배율(dotMultiplier)까지 곱해 넣는다. 더 길고 센 쪽이 남는다.</summary>
+        public int AddDot(List<int> indices, float seconds, float dps, bool poison)
+        {
+            if (seconds <= 0f || dps <= 0f) return 0;
+            int n = 0;
+            foreach (int i in indices)
+            {
+                if (i < 0 || i >= _sim.Count) continue;
+                var a = _sim.Get(i);
+                if (a.Health <= 0f) continue;
+                _status.TryGetValue(a.Id, out var st);
+                if (poison) { if (st.Poison <= 0f) PoisonedCount++; st.Poison = Mathf.Max(st.Poison, seconds); }
+                st.DotLeft = Mathf.Max(st.DotLeft, seconds);
+                st.DotDps = Mathf.Max(st.DotDps, dps);
+                _status[a.Id] = st;
+                n++;
+            }
+            return n;
+        }
         /// <summary>PM-01U 만독심법 최대 덧붙임(Life.PassiveMax.PoisonImmune). 당가 몸과 둘 중 하나면 독 무효.</summary>
         [System.NonSerialized] public bool passivePoisonImmune;
         bool PoisonImmune => sectTrait.PoisonImmune || passivePoisonImmune;

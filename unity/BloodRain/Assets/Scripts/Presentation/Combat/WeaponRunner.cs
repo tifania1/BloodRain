@@ -17,7 +17,8 @@ namespace BloodRain.Presentation.Combat
     //   지속 durationMultiplier(장풍 수명, 기획서 9장 '장풍 수명은 지속').
     // 처음 8갈래: front_arc(삼재검법), melee_combo(나한권), orbit_slash(창천검기), aura(독무),
     //   homing_dagger(비도술), slow_projectile(장풍), random_rapid(섬광지), random_bomb(벽력탄).
-    // 아직 없는 것: 절기(evolved) 모양, 중독·화상·느려짐 같은 적 상태, 넉백 저항.
+    // 적 상태: 중독·화상은 EnemyField.AddDot·Damage(poisonSeconds), 느려짐은 EnemyAgent.Slow, 넉백 저항은 EnemyField.Damage(ST-02U).
+    // 절기 모양은 C-09e 가 하나씩 붙이는 중.
     // 그림(V-04): 삼재검법은 구운 붓 획, 나머지는 ai.json AI 재료(나한권 fx_fist_ink, 창천검기 fx_sword_qi_glow, 독무 fx_mist_ink_3,
     //   비도 fx_dagger_ink, 장풍 fx_palm_ink, 섬광지 fx_finger_glow, 벽력탄 fx_bomb_ink_1·2 + fx_bomb_glow, 뇌부 fx_lightning_glow).
     //   재료가 없으면 옛 부채꼴·원으로. 모두 renderQueue 3002(먹)·3003(빛)이라 적 덩이(3000) 위에 그린다.
@@ -32,6 +33,8 @@ namespace BloodRain.Presentation.Combat
         // ST-02U 탄속(StatSheet.ProjectileSpeed, 연무장)은 무공 탄 속도에, 폭발 범위(1 + ExplosionArea, 화룡심법)는 벽력탄 폭발 반경에 곱한다
         [NonSerialized] public float projectileSpeedMultiplier = 1f;
         [NonSerialized] public float explosionAreaMultiplier = 1f;
+        /// <summary>ST-02U 화상 배율(1 + BurnDamage, 화룡심법). 벽력탄 화상 초당 피해에 지속 피해 배율과 같이 곱한다.</summary>
+        [NonSerialized] public float burnMultiplier = 1f;
         // C-06b 곱하는 진전 효과(SynergyEffects). 남궁 2 검 계열·개방 3 낮은 기혈은 한 방 피해에, 곤륜 3 강시는 맞는 적에 따라 곱한다.
         [NonSerialized] public BloodRain.Core.Build.SynergyEffects effects = BloodRain.Core.Build.SynergyEffects.None;
         [NonSerialized] public float healthRatio = 1f;
@@ -371,7 +374,8 @@ namespace BloodRain.Presentation.Combat
                         AddFx(0f, Mathf.PI * 2f, R, tick, new Color(0.37f, 0.50f, 0.29f, 0.22f));
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                     BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), R); // C-09b 친 자리 안 등롱
-                    Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, ws.Speed(Knock(s))));
+                    // ST-02U 독무 틱마다 중독 표시(poisonSeconds) — 당가 몸 '중독된 적 +20%'·독 번짐이 본다
+                    Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, ws.Speed(Knock(s)), null, s.Def.PoisonSeconds ?? 0f));
                     break;
                 }
                 case "homing_dagger":
@@ -426,7 +430,7 @@ namespace BloodRain.Presentation.Combat
                 {
                     // 벽력탄: 7m 안 가까운 20명 가운데 무작위 자리(없으면 둘레 4m)에 0.6초 뒤 터짐, 반경 2→3m, 넉백 3.
                     // 개수 projectiles, 거리 seekRange, 퓨즈 fuseSeconds, 반경 range x areaLv8, 넉백 knockback(weapons.json).
-                    // 화상(burnPerSecond·burnSeconds)은 적 상태 칸이 붙을 때(C-04 남은 것)
+                    // 화상(burnPerSecond·burnSeconds)은 터질 때 EnemyField.AddDot 으로(ST-02U)
                     int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
                     NearestN(ws.Length(s.Def.SeekRange ?? 7f), 20, _targets);
                     float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * explosionAreaMultiplier * RangeMul(s));
@@ -446,6 +450,10 @@ namespace BloodRain.Presentation.Combat
                             if (!ink && !glow) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
                             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
                             BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
+                            // ST-02U 화상: 폭발 원 안 적에 burnPerSecond(Lv1→Lv8) × 화상 배율 × 지속 피해 배율, burnSeconds × 지속.
+                            // 맞히기 전에 건다(맞혀 쓰러뜨리면 자리 번호가 바뀐다)
+                            float burn = WeaponGrowth.At(s.Def.BurnPerSecond, s.level) * burnMultiplier * enemies.dotMultiplier;
+                            enemies.AddDot(_near, (s.Def.BurnSeconds ?? 0f) * durationMultiplier, burn, false);
                             Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
                         });
                     }
@@ -713,6 +721,9 @@ namespace BloodRain.Presentation.Combat
                     _one1.Clear();
                     _one1.Add(j);
                     _petalHit = p.Petal;
+                    // ST-02U 비도술 독: 문턱 '중독'부터 맞힌 피해 × poisonDamage 를 poisonSeconds 동안 초당 지속 피해로(맞히기 전에 건다)
+                    if (p.Weapon != null && p.Weapon.Def.PoisonDamage is float pd && Has(p.Weapon, "중독"))
+                        enemies.AddDot(_one1, p.Weapon.Def.PoisonSeconds ?? 0f, p.Damage * pd * enemies.dotMultiplier, true);
                     int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);
                     _petalHit = false;
                     if (p.Weapon != null) Deal(p.Weapon, p.Damage, got);

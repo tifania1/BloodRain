@@ -276,6 +276,7 @@ namespace BloodRain.Presentation
                 weapons.extraAmount = st.Amount;
                 weapons.durationMultiplier = st.Duration;
                 weapons.projectileSpeedMultiplier = st.ProjectileSpeed; // ST-02U
+                weapons.burnMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.BurnDamage]; // ST-02U 화룡심법 화상
                 weapons.explosionAreaMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.ExplosionArea];
                 weapons.insightDamage ??= ie.WeaponDamageMultiplier; // C-07b 일검파만
                 weapons.insightRange ??= ie.WeaponRangeMultiplier;   // C-07b 이기어검
