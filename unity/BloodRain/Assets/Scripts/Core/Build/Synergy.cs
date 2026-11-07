@@ -127,6 +127,12 @@ namespace BloodRain.Core.Build
                 .Concat(Schools.SelectMany(s => s.LockedTiers.Select(t => SynergyDefs.ManualIdOf(s.School, t))));
 
         public bool HasLink(string id) => Links.Any(l => l.Id == id);
+        /// <summary>켜진 연환의 효과 숫자. 안 켜졌으면 null(무공 실행기가 '켜졌으면 이 값'으로 쓴다). LK-01.</summary>
+        public float? LinkParam(string id, string key)
+        {
+            foreach (var l in Links) if (l.Id == id) return l.Param(key);
+            return null;
+        }
         public SchoolState School(string id) => Schools.First(s => s.School.Id == id);
         public int TierOf(string schoolId) => School(schoolId).TierCount;
         /// <summary>단계가 하나라도 켜진 문파(HUD 인장).</summary>

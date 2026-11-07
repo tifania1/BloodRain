@@ -24,6 +24,11 @@ namespace BloodRain.Core.Data
         public bool Proto;
         public string Desc = "";
         public string Lore = "";
+        /// <summary>효과 숫자(기획서 20장 연환 표에 적힌 것만: 쌍검합벽 damageBonus 0.6 등). 숫자가 없는 연환은 null. LK-01.</summary>
+        public Dictionary<string, float>? Params;
+
+        public float Param(string key) => Params != null && Params.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"연환 {Id} params 에 {key} 가 없습니다");
+        public float Param(string key, float fallback) => Params != null && Params.TryGetValue(key, out var v) ? v : fallback;
 
         public bool Has(string weaponId) => A == weaponId || B == weaponId;
         /// <summary>짝 무공. 이 연환에 없는 무공이면 null.</summary>

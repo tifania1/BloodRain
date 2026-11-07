@@ -424,6 +424,20 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 웹 프로토타입과 같음
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
+- [ ] LK-01Ua 연환 효과 다섯(웹에 있는 것: 쌍검합벽·권장합일·독비·암기연환·풍화) · 먼저: 없음
+  - 할 것: 지금 Unity 는 연환을 레벨업 카드 띠·HUD 인장·장경각에만 보이고 효과는 하나도 없다(2026-11-08 클라우드가 찾음 — WeaponRunner 어디서도 연환을 안 봄). 웹과 같은 자리에: 쌍검합벽 창천검기가 도는 동안 삼재검법 획 피해 × (1 + damageBonus)·금빛 / 권장합일 나한권 마지막 주먹에 장풍 한 발(장풍 피해 × palmDamageRatio, 관통) / 독비 비도 관통 + extraPierce(독안개 지난 비도 중독은 독무 장판이 붙은 뒤) / 암기연환 섬광지 치명타 때 그 적에게 비도 daggers 자루(비도 한 발 피해, 따라감) / 풍화 불붙은 적을 지난 장풍이 크기 × (1 + sizeBonus)·화상.
+  - 쓸 것: Core `SynergyState.LinkParam(id, key)`(켜진 연환만 값, 아니면 null — 비급 잠김도 null), `LinkDef.Param`, synergies.json `links[].params`. 시너지 상태는 LevelUpScreen.RefreshSeals 가 쓰는 것과 같은 `Synergy.Compute(data, loadout, extra, soul.RestoredManuals)`. 웹 `linkP`·`link(...)` 자리(template.html 에서 `ssanggeom`·`gwonjang`·`dokbi`·`amgi`·`punghwa` 찾기)
+  - 메뉴: R-12Ua 의 `BloodRain/Test/무공 넣기(플레이 중)/<id>` 로 두 무공을 Lv4 까지
+  - 끝: 다섯 연환을 하나씩 켜서 효과가 나고(쌍검합벽은 복원 안 한 혼에선 안 남), 끄면(한쪽 Lv3) 없어짐. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/LK-01U/` 의 `<연환 id>.png`
+
+- [ ] LK-01Ub 연환 효과 나머지 열하나 · 먼저: R-12Ub, LK-01Ua
+  - 할 것: 20장 연환 표 나머지(검화·금강후·인뢰검·점혈창·뇌화·혈독·검명·차력타력·취중매화·견인타·혈창). 표에 숫자가 있는 것은 params 로(검화 petals 3, 금강후 radiusBonus 0.4·stunChanceMultiplier 2, 점혈창 stopSeconds 0.5 + 확정 치명, 뇌화 radiusMultiplier 2, 혈독 spreadRadius 2m, 취중매화 seconds 2, 혈창 bleedSeconds 3·lifestealMultiplier 3). 표에 피해·거리가 없는 것(인뢰검·검명·차력타력·견인타, 검화 꽃잎·취중매화 회오리·혈창 출혈 피해, 뇌화 '가까이')은 backlog LK-01a 결정 뒤에 — 그전엔 모양만 붙이고 피해는 짝 무공 한 방으로 둔다.
+  - 쓸 것: LK-01Ua 와 같음
+  - 메뉴: LK-01Ua 와 같음
+  - 끝: 열하나 모두 켜면 보이고 끄면 없어짐, 콘솔 에러 0
+  - 찍기: `docs/unity_shots/LK-01U/` 의 `<연환 id>.png`
+
 - [ ] WP-52U 조준: 방향 무공이 가까운 적을 노리게 · 먼저: R-12Ub
   - 할 것: WeaponRunner 에서 `player.Facing` 을 바로 쓰는 방향 무공(장풍 탄·혈조 갈래·나한권 절기 탄·권장합일 장풍·삼재검법 절기 검기)을 한 함수 `AimAngle(닿는 거리)` 로 — 설정 '조준 방식'이 가까운 적(기본)이면 닿는 거리 안 가장 가까운 적 쪽, 없거나 '이동 방향'이면 Facing. 닿는 거리는 웹과 같게: 근접은 사거리 × 1.25, 탄은 탄속 × 수명. 삼재검법·이화창·낙화검우처럼 이미 `Nearest` 를 쓰는 곳도 같은 함수로. 패드 오른쪽 스틱을 기울이는 동안은 그쪽(12장).
   - 쓸 것: Core `Combat/Aim.cs`(2026-11-07 클라우드: `Aim.Angle(방식, 위치, Facing, 적 x·y 목록, 닿는 거리, 스틱)`·`Aim.MeleeReach`·`ProjectileReach`·설정 낱말 `Aim.Parse`/`ToKey` 'near'·'move', `AimTests`), 웹 프로토타입 `aimAngle`(template.html, WP-52), 기획서 12장 '화면 편의 규칙' 조준·8장 조작
