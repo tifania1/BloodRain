@@ -88,5 +88,17 @@ namespace BloodRain.Core.Progression
 
         /// <summary>지금 기운이 기운 쪽 속성. 태극이면 Neutral.</summary>
         public YinYang Leaning => Band == YinYangBand.Harmony ? YinYang.Neutral : (Value > 0 ? YinYang.Yang : YinYang.Yin);
+
+        /// <summary>
+        /// 무공 속성 피해 배율(기획서 3장 '음양과 주화입마' 표): 편향이면 기운 쪽 속성 무공 +15%(yinyang.bias.aspectDamageBonus),
+        /// 극성이면 +40%(extreme.aspectDamageBonus). 태극이거나 반대·중 속성이면 1.
+        /// 무극(boundless)이면 secretBonus(SecretEffects.AspectDamageBonus 가 준 값)를 음·양 무공 모두에 — 웹 aspectMult 와 같다.
+        /// </summary>
+        public float AspectDamageMultiplier(YinYang weaponAspect, float? secretBonus = null)
+        {
+            if (secretBonus is float sb) return 1f + sb;
+            if (weaponAspect == YinYang.Neutral || weaponAspect != Leaning) return 1f;
+            return 1f + (Band == YinYangBand.Extreme ? _def.Extreme.AspectDamageBonus : _def.Bias.AspectDamageBonus);
+        }
     }
 }
