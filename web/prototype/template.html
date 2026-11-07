@@ -2975,7 +2975,7 @@ function castPattern(e, P, dmg, dx, dy) {
     } });
   } else if (P.shape === 'summon') {
     // 장삼 호루라기: telegraphSeconds 뒤 그 순간 플레이어 둘레 scatter 안에서 시강이 일어난다
-    toast(P.nameKo, '시강이 땅에서 일어난다');
+    { const nm = (E_BY_ID[P.summon] || {}).nameKo || '시강', c = nm.charCodeAt(nm.length - 1) - 0xAC00; toast(P.nameKo, `${nm}${c >= 0 && c < 11172 && c % 28 ? '이' : '가'} ${P.center === 'boss' ? '곁에서' : '땅에서'} 일어난다`); }   // 부르는 적 이름으로(수귀·설랑·금선지네 등)
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       const cx = P.center === 'boss' ? e.x : G.player.x, cy = P.center === 'boss' ? e.y : G.player.y;   // center boss(수귀 우두머리·설랑 왕)면 제 둘레
