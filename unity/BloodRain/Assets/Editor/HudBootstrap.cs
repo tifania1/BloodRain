@@ -39,6 +39,8 @@ namespace BloodRain.Editor
             if (ult == null) ult = new GameObject("오의 버튼").AddComponent<UltimateButton>();
             ult.font = hud.font;
             EditorUtility.SetDirty(ult);
+            // LH-01U 기혈 30% 이하 가장자리 먹
+            if (Object.FindFirstObjectByType<LowHealthHud>() == null) new GameObject("기혈 위험 HUD").AddComponent<LowHealthHud>();
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(hud.gameObject.scene);
         }
 

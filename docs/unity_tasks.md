@@ -389,7 +389,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 시험 몸(문턱 하나)으로 절정 돌파 → 줌 뒤 각성 연출 → 깨달음 카드. 문턱 둘이면 고르기 화면이 먼저. 그릇이 안 느는 돌파(이류·일류)에서는 안 깨어남. 콘솔 에러 0
   - 찍기: `docs/unity_shots/EV-01U/` 의 `pick.png`
 
-- [ ] LH-01U 기혈 30% 이하 위험 표시 · 먼저: 없음
+- [x] LH-01U 기혈 30% 이하 위험 표시 · 먼저: 없음 — 2026-11-08 02:50 PC: `Presentation/Hud/LowHealthHud.cs`(코드로 구운 가장자리 먹 판, 경계를 노이즈로 번지게) 를 HudBootstrap `Run 씬에 HUD 붙이기` 가 붙임. `Balance.Contact.IsLowHealth` 가 참이면 진하기 0.7 ± 0.15(초당 6 라디안), 아니면 천천히 사라짐. `reduceFlashing` 칸은 WP-57U 설정이 붙으면 넣을 자리. 31% 꺼짐·30%·25% 켜짐·50% 로 회복하면 꺼짐 확인, 콘솔 에러 0. 찍음 `docs/unity_shots/LH-01U/` 의 `low_health.png`. 심장 소리는 소리가 오면
   - 할 것: 8장 '피격과 사망' — 기혈 30% 이하에선 화면 가장자리에 먹물이 번지고 심장 소리. Unity 엔 아직 없다(2026-11-08 클라우드가 찾음). 웹은 가장자리 어둠을 0.35 → 0.7 ± 0.15(초당 6 라디안 출렁임)로 올리고 판 위 체력바를 붉게(#B3261E). 먹물 그림은 V-02 먹 튐·자국 텍스처를 가장자리에 둘러 쓰거나 BreakthroughFx 의 `_AwakenVignette` 같은 전역 값 하나를 더 둔다. 깜빡임 끄기(WP-57U 설정)가 켜져 있으면 출렁임 없이 고정.
   - 쓸 것: Core `Balance.Contact.IsLowHealth(vitals.Health / vitals.MaxHealth)`(문턱 `contact.lowHealthRatio` 0.3, 2026-11-08 클라우드가 데이터로), 심장 소리는 sfx_list `sfx_low_health_heart`(아직 소리 없음 — 오면 SfxPlayer 로 켜진 동안 되풀이)
   - 메뉴: 없음(Run 씬 플레이, 맞아서 30% 아래로)
