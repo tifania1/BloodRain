@@ -791,6 +791,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 열 장면 모두 10장씩(사람이 고름)
   - 찍기: `docs/unity_shots/ST-03/<no>_<id>/`
 
+- [ ] VX-01U 적 피격 흰 번쩍임과 사라질 때 붉은 경계(13장 '움직임은 이미지 한 장 + 연출로') · 먼저: 없음
+  - 할 것: 13장 '피격: 흰색 번쩍임 셰이더. 사망: 먹물이 번지며 사라지는 디졸브 셰이더(노이즈 텍스처, 붉은 경계가 검게 식음)'. 지금 `ClusterInk.shader` 디졸브 가장자리는 늘 `_InkColor`(먹)이고 맞을 때 번쩍임은 없다(2026-11-08 클라우드가 13장을 맞대다 찾음). ① 가장자리 색: 지워지는 테두리 안쪽(막 지워진 쪽)은 주홍 #B3261E(13장 색표 '주홍(혈우)'), 바깥(아직 남은 쪽)으로 갈수록 먹으로 — `n` 이 `cut - _EdgeWidth` 에서 `cut` 으로 갈 때 주홍 → 먹. 디졸브가 끝에 가까울수록(dissolve → 1) 전체가 먹 쪽으로 식게. ② 인스턴스 값 `_Flash`(0~1) 를 더해 `col.rgb = lerp(col.rgb, 1, _Flash)`, EnemyField 가 피해를 준 사람(덩이)에 짧게 켰다 끈다(길이는 눈으로, daily 에 적기). 덩이 하나에 여럿이 겹쳐 그려지니 덩이 단위로 켜도 됨. 휴대폰 효과 간소화(FxSettings)·설정 '깜빡임 끄기'(WP-57U `GameSettings`)면 번쩍임을 끈다.
+  - 쓸 것: `Art/Shaders/ClusterInk.shader`(_Tint·_Dissolve·_EdgeWidth·_InkColor), `Presentation/Fx/ClusterRenderer.cs`(인스턴스 값 배열), `EnemyField.Damage`, 13장 색표
+  - 메뉴: 없음
+  - 끝: 아주 느리게 돌려 쓰러지는 강시 가장자리가 붉다가 검게 식는 것, 맞는 순간 하얗게 번쩍. 적 300 에서 프레임 시간이 크게 안 늘어남. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/VX-01U/` 의 `dissolve.png`·`flash.png`
+
 - [ ] B-12Ua 적 원화를 덩이 렌더러에(2026-11-07 클라우드가 정함: 붙인다. B-12U 가 물은 것) · 먼저: 없음
   - 할 것: 지금 `EnemyField` 가 `ClusterRenderer.atlas` 에 `MakePlaceholderAtlas()`(임시 강시) 한 장만 물려 모든 적을 같은 그림으로 겹쳐 그린다. 적 종류마다 제 원화를 쓰게 한다. 원화가 있는 것은 `Assets/Art/Enemies/` 의 `enemy_<id>.png`(sigang·hyeolin·hyeol_gangsi·hyeol_musa·donggap·bigang·hyeol_gungsu·hyeolyeong_assassin·hyeol_sulsa·gisu·golden_toad·mogin_nahan 열둘)와 `elite_<id>.png`(gangsi_axeman·dongin·gyeyul_monk·acting_abbot 넷), 모두 256px. 없는 종류(M3 땅 적들)는 지금처럼 임시 강시 + 종류 색(`TintOf(family)`). 방법은 PC 가 고른다 — 에디터 메뉴가 16장을 한 아틀라스(예: 4×4, 칸 256)로 구워 `ClusterView` 에 칸 번호를 두고 셰이더가 인스턴스마다 UV 칸을 읽거나, 종류마다 머티리얼 하나씩(DrawMeshInstanced 호출이 종류 수만큼 늘어도 1023 묶음이라 괜찮은지 TU-04 숫자로 확인). 덩이 안 사람 크기는 웹 프로토타입 `KIND_SIZE`(sigang·hyeol_gangsi 1.3, donggap 1.6, hyeolin 1.2, hyeol_musa 1.35, mogin_nahan 1.5, golden_toad 1.0, 정예 2.6 — 그 밖은 1.3)를 종류마다 `memberRealmMeters` 대신 쓴다. 원화가 색을 갖고 있으니 종류 색 얹기는 원화가 있는 종류에선 끄고, 기수 깃발(BuffTint)·돌진 예고(TelegraphTint) 깜빡임만 남긴다. 디졸브·콩콩은 그대로.
   - 쓸 것: `Presentation/Fx/ClusterRenderer.cs`(atlas·`Add`·그리기), `Presentation/EnemyField.cs`(`_kinds`·`Kind`·`TintOf`·덩이 넘기는 곳), `enemies.json` id, `tools/fix_art_meta.py` 규칙(아틀라스를 새 png 로 굽는다면 그 파일도 규칙에 맞게)
