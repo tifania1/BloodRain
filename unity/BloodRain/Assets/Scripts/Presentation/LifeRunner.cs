@@ -260,6 +260,8 @@ namespace BloodRain.Presentation
                 weapons.areaMultiplier = st.Area;
                 weapons.extraAmount = st.Amount;
                 weapons.durationMultiplier = st.Duration;
+                weapons.projectileSpeedMultiplier = st.ProjectileSpeed; // ST-02U
+                weapons.explosionAreaMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.ExplosionArea];
                 weapons.insightDamage ??= ie.WeaponDamageMultiplier; // C-07b 일검파만
                 weapons.insightRange ??= ie.WeaponRangeMultiplier;   // C-07b 이기어검
             }
@@ -271,6 +273,8 @@ namespace BloodRain.Presentation
                 enemies.dotMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.DotDamage];
                 enemies.poisonedTargetMultiplier = _life.Body.SectTrait.DamageMultiplier(true);
                 enemies.sectTrait = _life.Body.SectTrait; // R-04Ub 당가 독 면역·곤륜 설한기
+                enemies.eliteDamageMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.EliteDamage]; // ST-02U 파산공
+                enemies.knockbackMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.Knockback];
             }
             ApplySynergyEffects(syn, ratio);
         }

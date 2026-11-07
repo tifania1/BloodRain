@@ -29,6 +29,9 @@ namespace BloodRain.Presentation.Combat
         [NonSerialized] public float areaMultiplier = 1f;
         [NonSerialized] public int extraAmount;
         [NonSerialized] public float durationMultiplier = 1f;
+        // ST-02U 탄속(StatSheet.ProjectileSpeed, 연무장)은 무공 탄 속도에, 폭발 범위(1 + ExplosionArea, 화룡심법)는 벽력탄 폭발 반경에 곱한다
+        [NonSerialized] public float projectileSpeedMultiplier = 1f;
+        [NonSerialized] public float explosionAreaMultiplier = 1f;
         // C-06b 곱하는 진전 효과(SynergyEffects). 남궁 2 검 계열·개방 3 낮은 기혈은 한 방 피해에, 곤륜 3 강시는 맞는 적에 따라 곱한다.
         [NonSerialized] public BloodRain.Core.Build.SynergyEffects effects = BloodRain.Core.Build.SynergyEffects.None;
         [NonSerialized] public float healthRatio = 1f;
@@ -426,7 +429,7 @@ namespace BloodRain.Presentation.Combat
                     // 화상(burnPerSecond·burnSeconds)은 적 상태 칸이 붙을 때(C-04 남은 것)
                     int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
                     NearestN(ws.Length(s.Def.SeekRange ?? 7f), 20, _targets);
-                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s));
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * explosionAreaMultiplier * RangeMul(s));
                     float fuse = s.Def.FuseSeconds ?? 0.6f, kb = ws.Speed(Knock(s));
                     for (int k = 0; k < n; k++)
                     {
@@ -634,7 +637,7 @@ namespace BloodRain.Presentation.Combat
                     if (got > 0 && ls > 0f)
                     {
                         if (_vitals == null) _vitals = FindFirstObjectByType<PlayerVitals>();
-                        if (_vitals != null) _vitals.Heal(dmg * ls * got);
+                        if (_vitals != null) _vitals.Heal(dmg * ls * got * effects.LifestealMultiplier); // ST-02U 마도 2 흡혈 x2
                     }
                     break;
                 }
@@ -665,7 +668,7 @@ namespace BloodRain.Presentation.Combat
             if (_projs.Count >= DataBoot.Data.Balance.Limits.Projectiles) return;
             _projs.Add(new Proj
             {
-                Pos = P, Vel = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed, Radius = radius, Damage = dmg, Life = life,
+                Pos = P, Vel = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed * (s != null ? projectileSpeedMultiplier : 1f), Radius = radius, Damage = dmg, Life = life,
                 Homing = homing, Knock = knock, Pierce = pierce, Target = targetId, Weapon = s, Color = c, Hit = new HashSet<int>(),
             });
         }

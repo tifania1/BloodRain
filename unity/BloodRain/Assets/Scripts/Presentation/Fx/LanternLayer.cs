@@ -205,7 +205,8 @@ namespace BloodRain.Presentation.Fx
                 case Drops.Bun:
                 case Drops.Duck:
                 {
-                    float foodHeal = 1f + (st != null ? st.Bonus[StatKind.FoodHeal] : 0f);
+                    // ST-02U 마도 2 진전(blood_trade) 음식 회복 x0.5
+                    float foodHeal = (1f + (st != null ? st.Bonus[StatKind.FoodHeal] : 0f)) * runner.Effects.FoodHealMultiplier;
                     float got = vitals != null ? vitals.Heal(Drops.FoodHeal(Rule, kind, foodHeal)) : 0f;
                     life.Log.EatFood();
                     _secrets?.Record?.EatFood();

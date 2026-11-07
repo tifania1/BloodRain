@@ -128,6 +128,7 @@ namespace BloodRain.Presentation
                 float dd = kindDef != null ? dmg * effects.EnemyDamageMultiplier(kindDef) : dmg;
                 _status.TryGetValue(a.Id, out var st);
                 if (st.Poison > 0f) dd *= poisonedTargetMultiplier; // R-04Ua 당가 만독불침
+                if (kindDef != null && kindDef.Family == "elite") dd *= eliteDamageMultiplier; // ST-02U 웹 if (e.elite || e.boss) dmg *= G.stats.elite
                 dd *= outgoingMultiplier; // R4-10U 천마해체 피해 x2
                 if (critChance > 0f && _rng.NextDouble() < critChance)
                 {
@@ -142,7 +143,9 @@ namespace BloodRain.Presentation
                 {
                     var d = new Vector2(a.Pos.x - from.x, a.Pos.y - from.y);
                     float m = d.magnitude;
-                    if (m > 1e-5f) a.Knock += new float2(d.x / m, d.y / m) * knock;
+                    // ST-02U 웹 knock × 넉백 배율 × (1 − knockbackResist)
+                    float kk = knock * knockbackMultiplier * (1f - Mathf.Clamp01(kindDef != null ? kindDef.KnockbackResist : 0f));
+                    if (m > 1e-5f) a.Knock += new float2(d.x / m, d.y / m) * kk;
                 }
                 _sim.Set(i, a);
                 hit++;
@@ -166,6 +169,10 @@ namespace BloodRain.Presentation
         [System.NonSerialized] public BloodRain.Core.Build.SectTrait sectTrait = BloodRain.Core.Build.SectTrait.None;
         /// <summary>R4-10U 플레이어가 내는 모든 피해(한 방·지속 피해)에 곱한다. 천마해체가 켜져 있으면 DemonDissolution.DamageMultiplier. LifeRunner 가 매 프레임 넣는다.</summary>
         [System.NonSerialized] public float outgoingMultiplier = 1f;
+        /// <summary>ST-02U 정예에게 들어가는 무공 피해 배율(1 + StatKind.EliteDamage, 파산공). LifeRunner 가 넣는다.</summary>
+        [System.NonSerialized] public float eliteDamageMultiplier = 1f;
+        /// <summary>ST-02U 넉백 배율(1 + StatKind.Knockback, 파산공). 맞는 쪽은 enemies.json knockbackResist 만큼 덜 밀린다.</summary>
+        [System.NonSerialized] public float knockbackMultiplier = 1f;
         /// <summary>지금까지 Damage·지속 피해로 적에게 넣은 피해 합(넘친 몫 포함). LifeRunner 가 프레임마다 늘어난 만큼 흡혈로 쓴다.</summary>
         public float Dealt { get; private set; }
 
