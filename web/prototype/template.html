@@ -2624,10 +2624,11 @@ function doDash() {
   const sp = B.dash.distance * (1 + ((synEff('dash_drag') || {}).distanceBonus || 0)) / B.dash.duration; p.dashVx = p.fx * sp; p.dashVy = p.fy * sp;
   addEffect('dash', p.x, p.y, { a: Math.atan2(p.fy, p.fx), life: 0.3 });
   sfx('dash');
-  // 기혈역류를 1초 안에 경공으로 끊으면 오의 +50
-  if (G.backlash && G.backlash.t < 1) {
-    G.backlash = null; addUlt(50, true); G.syn.yeok++;
-    toast('역류를 끊었다', G.syn.yeok > 1 ? `오의 +50 · 연달아 ${G.syn.yeok}번` : '오의 +50');
+  // 기혈역류를 1초(dashCancelWindowSeconds) 안에 경공으로 끊으면 오의 +50(dashCancelUltimateCharge, Core Backlash)
+  const YX = B.yinyang.extreme;
+  if (G.backlash && G.backlash.t < YX.dashCancelWindowSeconds) {
+    G.backlash = null; addUlt(YX.dashCancelUltimateCharge, true); G.syn.yeok++;
+    toast('역류를 끊었다', G.syn.yeok > 1 ? `오의 +${YX.dashCancelUltimateCharge} · 연달아 ${G.syn.yeok}번` : `오의 +${YX.dashCancelUltimateCharge}`);
     if (G.syn.yeok >= 3) unlockSecret('yeokcheon');
   }
 }
@@ -2690,7 +2691,7 @@ function update(dt) {
   const [mx, my, moving] = readMove();
   p.moving = moving;
   if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; p.still = 0; } else p.still += dt;
-  let speed = S.move * (G.backlash ? 0.5 : 1) * (G.wPlayer || 1);   // 눈보라(WP-13b)
+  let speed = S.move * (G.backlash ? 1 - B.yinyang.extreme.backlashSlow : 1) * (G.wPlayer || 1);   // 눈보라(WP-13b)
   // 빙강시(6장, enemies.json onHitSlowSeconds·onHitSlowMultiplier, Unity EnemyField 와 같음): 닿아 맞으면 그 시간 동안 걸음 배율. 다시 맞으면 시간만 처음부터
   if (p.chillT > 0) { p.chillT -= dt; speed *= p.chillMul || 1; }
   // 기절(방장 대리 범종): 걷지도 경공도 못 한다. 무공은 그대로 나간다.
@@ -2712,7 +2713,7 @@ function update(dt) {
   const band = yyBand().band;
   if (band === 'extreme' && !G.syn.secrets.has('yeokcheon')) {
     G.backlashT += dt;
-    if (!G.backlash && G.backlashT >= B.yinyang.extreme.backlashIntervalSeconds) { G.backlashT = 0; G.backlash = { t: 0 }; toast('기혈역류', '1초 안에 경공으로 끊을 수 있다'); }
+    if (!G.backlash && G.backlashT >= B.yinyang.extreme.backlashIntervalSeconds) { G.backlashT = 0; G.backlash = { t: 0 }; toast('기혈역류', `${B.yinyang.extreme.dashCancelWindowSeconds}초 안에 경공으로 끊을 수 있다`); }
   } else G.backlashT = 0;
   if (G.backlash) {
     G.backlash.t += dt;
@@ -3269,7 +3270,7 @@ function rollOffers() {
     while (out.length < PRO.firstLevelUpChoices && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
     if (out.length) return out;
   }
-  const n = B.levelUp.baseChoices + (Math.random() < Math.min(1, G.stats.luck / B.levelUp.luckForFourthChoice) ? 1 : 0);
+  const n = Math.min(B.levelUp.maxChoices, B.levelUp.baseChoices + (Math.random() < Math.min(1, G.stats.luck / B.levelUp.luckForFourthChoice) ? 1 : 0));
   const pool = candidates(), out = [];
   // 이미 가진 것을 조금 더 자주 보여 준다(뱀서류 관례)
   while (out.length < n && pool.length) {

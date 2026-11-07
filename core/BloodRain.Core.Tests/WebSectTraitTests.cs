@@ -74,7 +74,9 @@ namespace BloodRain.Core.Tests
             Assert.Contains("(1 + bodyStat('UltimateCharge'))", html);
             // 정진·역류 끊기는 배율 없이(5장, Core UltimateCharge.AddFlat)
             Assert.Contains("addUlt(B.ultimateCharge.perSkip, true)", html);
-            Assert.Contains("addUlt(50, true)", html);
+            Assert.Contains("addUlt(YX.dashCancelUltimateCharge, true)", html);
+            Assert.Contains("G.backlash.t < YX.dashCancelWindowSeconds", html);
+            Assert.Contains("G.backlash ? 1 - B.yinyang.extreme.backlashSlow : 1", html);
             // 정진·재기 기본 횟수는 0, 연무장·성질만큼(8장)
             Assert.Contains("G.skips = Math.max(0, Math.round(bodyStat('Skips')))", html);
             Assert.Contains("G.revivals = Math.max(0, Math.round(bodyStat('Revival')))", html);
