@@ -1056,7 +1056,7 @@ const settings = {
 };
 // 구운 효과음(SFX-02, Assets/Audio/SFX → 빌드가 lookdev/sfx 에 둠). 있으면 그걸 틀고, 못 읽으면(아티팩트 한 파일 판 등) 아래 발진기 소리.
 // 진기 흡수는 5음 음계 8음을 연속 흡수 때 차례로 올린다(14장). 벌은 5개씩 번갈아.
-const SFX_BAKED = { level: 'sfx_levelup', boss: 'sfx_boss_appear', bell: 'sfx_gimmick_bell' };
+const SFX_BAKED = { level: 'sfx_levelup', boss: 'sfx_boss_appear', bell: 'sfx_gimmick_bell', heart: 'sfx_low_health_heart' };
 // 동시 재생 제한·흡수 음계(14장, balance.json sfx, Core SfxGate 와 같은 셈): 같은 소리는 창 안 몇 개까지, 흡수음은 한 프레임에 하나
 const SFXR = B.sfx, SFX_VARIANTS = 5, ORB_NOTES = SFXR.absorbNotes, ORB_RUN_GAP = SFXR.absorbRunGapSeconds;
 audio.buf = {}; audio.orbStep = 0; audio.recent = {}; audio.orbFrame = -1;
@@ -1090,7 +1090,7 @@ function sfx(kind) {
   }
   audio.last[kind] = now;
   if (kind === 'orb' && playBaked(audio.buf.orb?.[audio.orbStep], 0.18)) return;
-  if (SFX_BAKED[kind] && playBaked(audio.buf[kind], kind === 'level' ? 0.5 : 0.7)) return;
+  if (SFX_BAKED[kind] && playBaked(audio.buf[kind], kind === 'level' ? 0.5 : kind === 'heart' ? 0.6 : 0.7)) return;
   if (kind === 'boss' || kind === 'bell') kind = 'gong';
   const c = audio.ctx, g = c.createGain(); g.connect(audio.master);
   const o = c.createOscillator();
@@ -1103,6 +1103,7 @@ function sfx(kind) {
   else if (kind === 'kill') tone('square', 140, 60, 0.08, 0.025);
   else if (kind === 'orb') tone('sine', 1320, 1760, 0.05, 0.03);
   else if (kind === 'level') tone('sine', 196, 98, 1.4, 0.18);
+  else if (kind === 'heart') tone('sine', 70, 45, 0.18, 0.12);
   else if (kind === 'gong') tone('sine', 110, 82, 2.2, 0.22);
   else if (kind === 'dash') tone('sawtooth', 600, 180, 0.12, 0.03);
   else if (kind === 'hurt') tone('square', 90, 50, 0.15, 0.06);
@@ -2752,6 +2753,8 @@ function update(dt) {
   G.t += realDt; G.gm = G.t * G.timeScale / 60;
   if (G.yyFreeze > 0) G.yyFreeze -= realDt * G.timeScale;
   const p = G.player, S = G.stats;
+  // 기혈 위험 심장 소리(8장, balance.json sfx.lowHealthHeartSeconds — 들어서면 바로 한 번, 그 뒤 간격마다)
+  if (lowHp(p) && SFXR.lowHealthHeartSeconds > 0) { G.heartT = (G.heartT ?? 0) - realDt; if (G.heartT <= 0) { sfx('heart'); G.heartT = SFXR.lowHealthHeartSeconds; } } else G.heartT = 0;
 
   // 이동
   const [mx, my, moving] = readMove();

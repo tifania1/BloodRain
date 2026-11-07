@@ -405,6 +405,8 @@ namespace BloodRain.Core.Data
         public float AbsorbRunGapSeconds = 0.35f;
         /// <summary>흡수음 음 수(구운 풍경 sfx_xp_absorb_n1~n8).</summary>
         public int AbsorbNotes = 8;
+        /// <summary>기혈 위험(ContactDef.IsLowHealth)인 동안 심장 소리 sfx_low_health_heart 를 되풀이하는 간격(초, 8장 '피격과 사망'). 0 이면 안 튼다.</summary>
+        public float LowHealthHeartSeconds = 1f;
     }
 
     /// <summary>보부상 품목 하나(balance.json merchant.items).</summary>

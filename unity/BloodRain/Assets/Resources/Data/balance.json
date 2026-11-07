@@ -125,11 +125,12 @@
     "intenseRegions": ["songshan"]
   },
   "sfx": {
-    "_note": "효과음 동시 재생 제한(기획서 14장 '동시 재생 제한', Core World/Sfx.cs SfxGate, backlog SFX-14). 같은 효과음은 sameSoundWindowSeconds 안에 sameSoundMaxInWindow 개까지만, 진기 흡수음은 한 프레임에 하나. 연속 흡수 음계(14장 '보상' 줄): 앞 흡수음에서 absorbRunGapSeconds 안이면 한 음 올리고(absorbNotes 음까지), 아니면 첫 음으로. 0.35초와 8음은 웹 프로토타입 ORB_RUN_GAP·ORB_NOTES(구운 풍경 sfx_xp_absorb_n1~n8)에서 왔다.",
+    "_note": "효과음 동시 재생 제한(기획서 14장 '동시 재생 제한', Core World/Sfx.cs SfxGate, backlog SFX-14). 같은 효과음은 sameSoundWindowSeconds 안에 sameSoundMaxInWindow 개까지만, 진기 흡수음은 한 프레임에 하나. 연속 흡수 음계(14장 '보상' 줄): 앞 흡수음에서 absorbRunGapSeconds 안이면 한 음 올리고(absorbNotes 음까지), 아니면 첫 음으로. 0.35초와 8음은 웹 프로토타입 ORB_RUN_GAP·ORB_NOTES(구운 풍경 sfx_xp_absorb_n1~n8)에서 왔다. 기혈 위험(8장 '기혈 30% 이하 … 심장 소리')이면 sfx_low_health_heart 를 lowHealthHeartSeconds 마다 되풀이(2026-11-08 클라우드가 정함: 소리 0.8초보다 길게, 1분에 60번).",
     "sameSoundWindowSeconds": 0.05,
     "sameSoundMaxInWindow": 4,
     "absorbRunGapSeconds": 0.35,
-    "absorbNotes": 8
+    "absorbNotes": 8,
+    "lowHealthHeartSeconds": 1.0
   },
   "merchant": {
     "_note": "보부상(기획서 7장 '보부상', 12·24분은 chapters.json life 사건). 값은 2026-11-05 사람이 정함(backlog RM-04). 한 번 들를 때 품목마다 maxPerVisit 개까지. 회복약은 최대 기혈 비율(마교 회복 배율은 곱함), 다시 고르기 권은 그 판 다시 고르기 횟수 +rerolls, 취기부는 등롱 취기부와 같은 효과.",

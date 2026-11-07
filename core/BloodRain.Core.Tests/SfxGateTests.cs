@@ -90,5 +90,17 @@ namespace BloodRain.Core.Tests
             Assert.True(g.TryAbsorb(1, 0.1, out var n));
             Assert.Equal(0, n);
         }
+
+        [Fact] public void 심장_소리_간격은_소리보다_길고_웹이_같은_값을_읽는다()
+        {
+            Assert.True(R.LowHealthHeartSeconds > 0);
+            var line = File.ReadLines(Path.Combine(TestData.RepoRoot, "sfx_queue", "queue.jsonl")).First(l => l.Contains("\"id\": \"sfx_low_health_heart\""));
+            var sec = float.Parse(Regex.Match(line, @"""seconds"": ([\d.]+)").Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+            Assert.True(R.LowHealthHeartSeconds >= sec, $"심장 소리 {sec}초가 간격 {R.LowHealthHeartSeconds}초보다 길어 겹친다");
+            Assert.Contains("기혈 30% 이하에선 화면 가장자리에 먹물이 번지고 심장 소리가 납니다", TestData.Gdd);
+            var html = File.ReadAllText(Path.Combine(TestData.RepoRoot, "web", "prototype", "template.html"));
+            Assert.Contains("heart: 'sfx_low_health_heart'", html);
+            Assert.Contains("G.heartT = SFXR.lowHealthHeartSeconds;", html);
+        }
     }
 }

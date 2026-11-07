@@ -431,6 +431,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 기연 50 이상이면 늘 카드 넷, 0 이면 늘 셋. 카드 넷이 화면에 겹치지 않게 놓임. 콘솔 에러 0
   - 찍기: `docs/unity_shots/LU-01U/` 의 `four_cards.png`
 
+- [ ] SFX-15U 기혈 위험 심장 소리 · 먼저: 없음
+  - 할 것: 8장 '기혈 30% 이하 … 심장 소리'. 소리 `sfx_low_health_heart`(다섯 변형)는 이미 Assets/Audio/SFX 에 들어와 있는데 아무도 안 튼다(LH-01U 는 '소리가 오면'으로 남겨 둠, 2026-11-08 클라우드가 찾음). LowHealthHud 가 켜지는 같은 조건(`Balance.Contact.IsLowHealth`)인 동안 들어서는 순간 한 번, 그 뒤 `Balance.Sfx.LowHealthHeartSeconds`(1초)마다 `SfxPlayer.Instance?.Play("sfx_low_health_heart")`. 세상이 멈춘 동안(레벨업 화면)은 쉬고, 기혈이 30% 위로 오르면 바로 멈춤. 웹 template.html `G.heartT` 줄과 같음
+  - 쓸 것: balance.json `sfx.lowHealthHeartSeconds`, `ContactDef.IsLowHealth`, SfxPlayer
+  - 메뉴: 없음
+  - 끝: 기혈 30% 이하에서 1초마다 심장 소리, 31% 로 회복하면 멈춤. 콘솔 에러 0
+  - 찍기: 없음(SFX-14U 디버그 줄에 최근 소리로 보이면 `docs/unity_shots/SFX-15U/` 의 `debug.png`)
+
 - [ ] LK-01Ua 연환 효과 다섯(웹에 있는 것: 쌍검합벽·권장합일·독비·암기연환·풍화) · 먼저: 없음
   - 할 것: 지금 Unity 는 연환을 레벨업 카드 띠·HUD 인장·장경각에만 보이고 효과는 하나도 없다(2026-11-08 클라우드가 찾음 — WeaponRunner 어디서도 연환을 안 봄). 웹과 같은 자리에: 쌍검합벽 창천검기가 도는 동안 삼재검법 획 피해 × (1 + damageBonus)·금빛 / 권장합일 나한권 마지막 주먹에 장풍 한 발(장풍 피해 × palmDamageRatio, 관통) / 독비 비도 관통 + extraPierce(독안개 지난 비도 중독은 독무 장판이 붙은 뒤) / 암기연환 섬광지 치명타 때 그 적에게 비도 daggers 자루(비도 한 발 피해, 따라감) / 풍화 불붙은 적을 지난 장풍이 크기 × (1 + sizeBonus)·화상.
   - 쓸 것: Core `SynergyState.LinkParam(id, key)`(켜진 연환만 값, 아니면 null — 비급 잠김도 null), `LinkDef.Param`, synergies.json `links[].params`. 시너지 상태는 LevelUpScreen.RefreshSeals 가 쓰는 것과 같은 `Synergy.Compute(data, loadout, extra, soul.RestoredManuals)`. 웹 `linkP`·`link(...)` 자리(template.html 에서 `ssanggeom`·`gwonjang`·`dokbi`·`amgi`·`punghwa` 찾기)
