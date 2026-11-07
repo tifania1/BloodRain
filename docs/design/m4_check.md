@@ -34,7 +34,7 @@
 
 | 항목 | 기획서 | 데이터 | Core | 웹 프로토타입 | 천하 시안 | Unity |
 |---|---|---|---|---|---|---|
-| 혈영 일곱 → 세 단계 | 6장 '종장 보스' | bosspatterns.json final(`shadowHealthRatio` 0.4, shadows 일곱, stages 셋), enemies.json `danmok_hyeon` phases(`FinalStagesTests.단계_셋의_기혈이_enemies_json과_기획서와_같다`) | `Combat/FinalFight.cs`(차례·기혈·단계 시간표·진엔딩 컷 `CheckTrueEnding`, `FinalFightTests`) | 한 생 판(WP-13e): 혈영 일곱 → 세 단계, 피바다 섬은 R4-07 뒤, 진엔딩 컷은 아직 | R4-12(11-04): 혈영 일곱 → 혈의·혈해·진혈마를 차례로, 단계 모양은 R4-03 셈(섬 자리는 놀이판 값 `islandRing`). 진엔딩 컷은 의서·목 노인이 없어 안 남(`FinalStageRulesTests.웹_천하_시안이_종장_차례와_단계_모양을_Core_와_같은_셈으로_쓴다`) | R4-03U |
+| 혈영 일곱 → 세 단계 | 6장 '종장 보스' | bosspatterns.json final(`shadowHealthRatio` 0.4, shadows 일곱, stages 셋), enemies.json `danmok_hyeon` phases(`FinalStagesTests.단계_셋의_기혈이_enemies_json과_기획서와_같다`) | `Combat/FinalFight.cs`(차례·기혈·단계 시간표·진엔딩 컷 `CheckTrueEnding`, `FinalFightTests`) | 한 생 판(WP-13e): 혈영 일곱 → 세 단계, 피바다 섬은 R4-07 뒤. 진엔딩 조건을 채웠으면 진혈마 10% 에서 진엔딩 컷(`trueCutCheck`, Core `CheckTrueEnding` 과 같음) | R4-12(11-04): 혈영 일곱 → 혈의·혈해·진혈마를 차례로, 단계 모양은 R4-03 셈(섬 자리는 놀이판 값 `islandRing`). 진엔딩 컷은 의서·목 노인이 없어 안 남(`FinalStageRulesTests.웹_천하_시안이_종장_차례와_단계_모양을_Core_와_같은_셈으로_쓴다`) | R4-03U |
 | 단계 패턴 수치 | 6장 '단계 패턴 수치' | final stages[].set(`FinalStagesTests.단계_패턴_표가_기획서와_같다`) | 시간표는 `BossPatterns`. 피바다 섬 크기는 테스트(`피바다_섬은_90초쯤에_바닥에_닿는다`)만 셈 | - | - | - |
 | 단계 모양 판정 | 같은 표(맥 짚는 손 고리 9m→1.5m 초당 3.75m·폭 1.2m, 역병 구름 셋 10m 안·속도 25·12초, 섬 다섯 7m→2.5m 약 90초, 혈우 탄막 12m 안 14개 × 5파·0.6초, 혈영 솟음 10%·20초) | 칸은 다 있음(`closing_ring`·`drifting_clouds`·`shrinking_islands`·`rain_drops`·`summon_shadow`) | 고리 반경은 `ClosingRadius` 로 셈이 되고, 혈영 솟음 차례·기혈은 `FinalFight.RisingShadow`·`RisingShadowHealth`. R4-03(11-04): `InClosingRing`·`CloudDrift`·`IslandRadius`·`OnIsland`·`RainDropOffsets`(`FinalStageRulesTests`). 섬 자리만 싸움터 크기가 없어 부르는 쪽이 준다 | - | - | - |
 | 차오르는 피(기믹) | 7장 지역 표 '피가 차올라 안전 지대가 줄어든다', 수치 문단은 '아직 수치가 없습니다' | regions 봉마곡 `rising_blood`. 수치는 종장 혈해 `rising_blood_sea` 에 있음 | - | - | - | - |
@@ -57,7 +57,7 @@
 - ~~**종장 단계 모양 판정이 덜 있다.**~~ → 2026-11-04 R4-03 로 Core 에 넣음(섬 자리는 R4-07). 피바다 섬 다섯의 자리와 반경, 섬 위에 서 있는지, 역병 구름 위치, 혈우 핏방울 자리. 수치는 6장 표에 있다 → R4-03
 - ~~**엔딩을 고른 뒤가 없다.**~~ → 2026-11-04 R4-04 로 Core 에 넣음. `Soul.Endings` 는 고를 수 있는 목록만 준다. 봉인은 `Regress`, 계승은 혈마 모드 해금 기록, 진엔딩은 환혼·회귀를 닫는 기록이 필요하다. 진엔딩 조건 셋을 묶는 판정도 없고 의서 일곱 권은 데이터 칸이 없다 → R4-04. 목 노인 대화를 '끝까지' 본 것이 무엇인지는 대사 줄기가 없어 정하지 못한다(사람 결정 R4-08)
 - ~~**모드 열림 조건이 데이터에 없다.**~~ → 2026-11-04 R4-05. 일일 도전(봉인석 3개)·보스 연전(봉인 엔딩) → R4-05. 일일 도전 시드 규칙·리더보드는 Steam 몫이라 뺀다
-- ~~**정예 아홉 패턴 수치가 없다.** 기획서가 '아직'이라 적었다.~~ → 2026-11-05 R4-06 이 R-01 과 같은 방식으로 정함(6장 표, 데이터, 테스트, unity_tasks R4-06U). 웹 천하 시안엔 아직 안 붙음
+- ~~**정예 아홉 패턴 수치가 없다.** 기획서가 '아직'이라 적었다.~~ → 2026-11-05 R4-06 이 R-01 과 같은 방식으로 정함(6장 표, 데이터, 테스트, unity_tasks R4-06U). 웹은 합친 한 생 판이 패턴 모양을 다 앎(WP-13d), 천하 시안엔 안 붙음(WP-16 에서 줄일 차례)
 - **잔도 수치가 없다.** 7장이 '아직'이라 적었다. 매화 더미·모닥불을 몇 개 어디에 놓는지도 없다(M3 의 R-10 과 같은 사정) → 사람 결정 R4-07
 - ~~**의서 확률과 목 노인 진엔딩 대화가 없다** → 사람 결정 R4-08~~ → R4-08(2026-11-05 사람이 추천대로, 같은 날 끝) 의서 줄 일곱·확률, 웹 한 생 판에도(WP-13e)(2026-11-07 확인)
 - 혈월 천하 땅의 주인 새 패턴은 기획서에 말만 있다. 17장이 밀리면 '대사 한 줄만'으로 줄인다고 했으니 얼리 액세스 뒤로 미뤄도 된다 → 사람 결정 R4-09
