@@ -104,6 +104,7 @@ namespace BloodRain.Presentation.Fx
             if (count > 0)
             {
                 Absorbed?.Invoke(value, count);
+                SfxPlayer.Instance?.PlayAbsorb(); // SFX-14U
                 TestXp?.Absorb(value);
             }
         }

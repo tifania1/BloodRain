@@ -389,6 +389,7 @@ namespace BloodRain.Presentation
         {
             // 은자는 한 생의 지갑(Life.Silver)으로 정산한다(C-06a). 행낭 카드가 GainSilver 로 넣는다
             var soul = RebirthHandoff.Soul;
+            SfxPlayer.Instance?.Reset(); // SFX-14U
             var record = _life.End(way);
             var summary = soul.EndLife(record);
             SoulStore.Save(soul);

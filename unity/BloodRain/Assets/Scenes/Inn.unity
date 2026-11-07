@@ -166,6 +166,234 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &715476646
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 715476648}
+  - component: {fileID: 715476647}
+  m_Layer: 0
+  m_Name: "\uD6A8\uACFC\uC74C"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &715476647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715476646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 479bf7732c997f9469689b72c03aa996, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.SfxPlayer
+  clips:
+  - id: sfx_boss_appear
+    clip: {fileID: 8300000, guid: 90691e30c781991c58434bfd5535df8d, type: 3}
+    gainDb: -0.3
+  - id: sfx_boss_appear
+    clip: {fileID: 8300000, guid: b750ea6062a4eadee591d6befb829e24, type: 3}
+    gainDb: -0.4
+  - id: sfx_boss_appear
+    clip: {fileID: 8300000, guid: ebd5a583edf1f6feb48417fc95531e80, type: 3}
+    gainDb: 0.1
+  - id: sfx_boss_appear
+    clip: {fileID: 8300000, guid: d28cfc2cb26288d4ec09dbbe73c6a9ad, type: 3}
+    gainDb: 0.3
+  - id: sfx_boss_appear
+    clip: {fileID: 8300000, guid: 9291ada672654ceb475ce5b97745ded8, type: 3}
+    gainDb: -0.3
+  - id: sfx_gimmick_bell
+    clip: {fileID: 8300000, guid: 44ebee4ed148a68246639c7a8a876944, type: 3}
+    gainDb: -0.4
+  - id: sfx_gimmick_bell
+    clip: {fileID: 8300000, guid: ea37c8ba4c8a27559910317bfb883cc8, type: 3}
+    gainDb: 0.2
+  - id: sfx_gimmick_bell
+    clip: {fileID: 8300000, guid: 558a10b98ff4f77f627840a5dc249707, type: 3}
+    gainDb: -0.6
+  - id: sfx_gimmick_bell
+    clip: {fileID: 8300000, guid: 6b6edd7f86b1f3974d5f96060c64bee0, type: 3}
+    gainDb: 0.3
+  - id: sfx_gimmick_bell
+    clip: {fileID: 8300000, guid: c5f7d5f4e226862dad3c2ef4d1ab1271, type: 3}
+    gainDb: -0.9
+  - id: sfx_levelup
+    clip: {fileID: 8300000, guid: d0a88c3660db8b50c22abb0f21d1e91b, type: 3}
+    gainDb: 0.1
+  - id: sfx_levelup
+    clip: {fileID: 8300000, guid: 7cc2bd29ff97bd5c31f2b8f6963797d2, type: 3}
+    gainDb: -0.5
+  - id: sfx_levelup
+    clip: {fileID: 8300000, guid: 48fda320d45079b2de246eb2bb1898d2, type: 3}
+    gainDb: 0
+  - id: sfx_levelup
+    clip: {fileID: 8300000, guid: 25e85e5f59012b19256b0c4e083c6a2e, type: 3}
+    gainDb: -0.4
+  - id: sfx_levelup
+    clip: {fileID: 8300000, guid: ec32ab9a902bd62353f3e164afac603e, type: 3}
+    gainDb: 0.3
+  - id: sfx_low_health_heart
+    clip: {fileID: 8300000, guid: d4f6c4f060a7ace936612acb5ae8cdfb, type: 3}
+    gainDb: 0.4
+  - id: sfx_low_health_heart
+    clip: {fileID: 8300000, guid: d2183a82abdc12b07835670910f04274, type: 3}
+    gainDb: 0.4
+  - id: sfx_low_health_heart
+    clip: {fileID: 8300000, guid: 143961c3c329634a8f487b57b95f6ead, type: 3}
+    gainDb: 0.4
+  - id: sfx_low_health_heart
+    clip: {fileID: 8300000, guid: 7b981fa9d836760e9f6b4fc7044f2e4a, type: 3}
+    gainDb: 0.4
+  - id: sfx_low_health_heart
+    clip: {fileID: 8300000, guid: 77a5da75dc27971cbdca3ca0376f8c9f, type: 3}
+    gainDb: 0.4
+  - id: sfx_xp_absorb_n1
+    clip: {fileID: 8300000, guid: 2e950f61bd60c095a016d87badd56aa2, type: 3}
+    gainDb: -0.1
+  - id: sfx_xp_absorb_n1
+    clip: {fileID: 8300000, guid: 34015700c2536eb9963164deee895340, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n1
+    clip: {fileID: 8300000, guid: 3c381927682451afff284febb8708f90, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n1
+    clip: {fileID: 8300000, guid: 90dd10da8d4f42c6472e3b547e064bbe, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n1
+    clip: {fileID: 8300000, guid: 89b0d96fad61a7c79e6e5bc49732ba5c, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n2
+    clip: {fileID: 8300000, guid: 956fe5a17c7afdbba4792f49904cd714, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n2
+    clip: {fileID: 8300000, guid: 5ec665bda4061923e9b38c403947d149, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n2
+    clip: {fileID: 8300000, guid: 14796bbcc9601f8536273b502ccb88cc, type: 3}
+    gainDb: -0.1
+  - id: sfx_xp_absorb_n2
+    clip: {fileID: 8300000, guid: 0eb7656dc280a7c769eb95187aab8c3c, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n2
+    clip: {fileID: 8300000, guid: b22344b4b51d43333fc7b7c82465fbb8, type: 3}
+    gainDb: -0.2
+  - id: sfx_xp_absorb_n3
+    clip: {fileID: 8300000, guid: 7494c8ce4c2c3b308b5145665f6c8031, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n3
+    clip: {fileID: 8300000, guid: f7998c3cb58d2a1522fc6de5c059435e, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n3
+    clip: {fileID: 8300000, guid: 3832880b17d9af34c49272cdaa1a5637, type: 3}
+    gainDb: 0.1
+  - id: sfx_xp_absorb_n3
+    clip: {fileID: 8300000, guid: 262f6351ce05e9a819f77acf42392c4a, type: 3}
+    gainDb: -0.2
+  - id: sfx_xp_absorb_n3
+    clip: {fileID: 8300000, guid: df9725aaebf41c760ad9a37e76be7626, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n4
+    clip: {fileID: 8300000, guid: 48204873da2e6446a45784966bcecef9, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n4
+    clip: {fileID: 8300000, guid: 5ecd3845522d2f171973ea726c2062db, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n4
+    clip: {fileID: 8300000, guid: 0d66c4c6f82b3927d836611e6636549e, type: 3}
+    gainDb: -0.2
+  - id: sfx_xp_absorb_n4
+    clip: {fileID: 8300000, guid: cef82197b503957d222c3d20c0b95db6, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n4
+    clip: {fileID: 8300000, guid: 43e1ed2882d428e01c0c99a00cf4411d, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n5
+    clip: {fileID: 8300000, guid: 1daa74489ac78da2d2625b1d562a8a4a, type: 3}
+    gainDb: -0.2
+  - id: sfx_xp_absorb_n5
+    clip: {fileID: 8300000, guid: de353a97ce8f03d41ca720a6de8e1c27, type: 3}
+    gainDb: -0.2
+  - id: sfx_xp_absorb_n5
+    clip: {fileID: 8300000, guid: 5650de879a12b3ae70a0429af3873c8e, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n5
+    clip: {fileID: 8300000, guid: 953c3481ccddd6e82bba64ceaf37d173, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n5
+    clip: {fileID: 8300000, guid: 8c6ab8649a2cc07ecfc0dcfc21cf211e, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n6
+    clip: {fileID: 8300000, guid: de1f3fc07f7a971364fcdb1924da1992, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n6
+    clip: {fileID: 8300000, guid: 6906fffe999b791c1eb4f31ee0b38615, type: 3}
+    gainDb: -0.1
+  - id: sfx_xp_absorb_n6
+    clip: {fileID: 8300000, guid: a8679d9be8d748f2b171e4fa2957bdb6, type: 3}
+    gainDb: -0.2
+  - id: sfx_xp_absorb_n6
+    clip: {fileID: 8300000, guid: 4212dba11f6c078e70650fa7e556b4b5, type: 3}
+    gainDb: -0.3
+  - id: sfx_xp_absorb_n6
+    clip: {fileID: 8300000, guid: 05151645bc1649b00a3a5da3f5514ffb, type: 3}
+    gainDb: -0.1
+  - id: sfx_xp_absorb_n7
+    clip: {fileID: 8300000, guid: c22ce866a38fc0fd16a2953ea56a4a78, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n7
+    clip: {fileID: 8300000, guid: a2da603a4b13aa1cb8be2f7eed464f95, type: 3}
+    gainDb: -0.1
+  - id: sfx_xp_absorb_n7
+    clip: {fileID: 8300000, guid: 608e2b88a6a70b16c8129514b591d7f5, type: 3}
+    gainDb: -0.1
+  - id: sfx_xp_absorb_n7
+    clip: {fileID: 8300000, guid: 660c5b94b11ecca79767ccccae211ca5, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n7
+    clip: {fileID: 8300000, guid: 5933609a35423ba45b2d7c33716f774d, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n8
+    clip: {fileID: 8300000, guid: 68f9dbf5a1610d2c7245b2ab2a3163a1, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n8
+    clip: {fileID: 8300000, guid: 1b9517e41f2954541f82b3af374fd7de, type: 3}
+    gainDb: -0.2
+  - id: sfx_xp_absorb_n8
+    clip: {fileID: 8300000, guid: 69cf466eeb267d7aa99fe120079cd236, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n8
+    clip: {fileID: 8300000, guid: 9d30cd018258e20bef36b6fb2a0f54b5, type: 3}
+    gainDb: 0
+  - id: sfx_xp_absorb_n8
+    clip: {fileID: 8300000, guid: 309ad562c60e541e354f68319cd77ad4, type: 3}
+    gainDb: 0
+  volume: 0.8
+  poolSize: 16
+  showDebug: 1
+--- !u!4 &715476648
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715476646}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &862987798
 GameObject:
   m_ObjectHideFlags: 0
@@ -459,3 +687,4 @@ SceneRoots:
   - {fileID: 1869565988}
   - {fileID: 2095910847}
   - {fileID: 579583848}
+  - {fileID: 715476648}

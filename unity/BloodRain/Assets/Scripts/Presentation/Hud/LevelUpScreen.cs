@@ -129,6 +129,7 @@ namespace BloodRain.Presentation.Hud
         void Open()
         {
             _open = true;
+            SfxPlayer.Instance?.Play("sfx_levelup"); // SFX-14U
             _pending--;
             _banishMode = false;
             _savedTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
