@@ -403,6 +403,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 서장 몸(Lv 35 아래) 보갑 → '절정(Lv 35)에 올라야 …' 한 줄. 각성 시험 몸으로 절기 하나 깨운 뒤 다른 무공도 문턱에 세우고 절정에서 보갑 → '그릇이 찼다. 초절정(Lv 50)…'. 콘솔 에러 0
   - 찍기: `docs/unity_shots/CH-01U/` 의 `hint_novessel.png`
 
+- [ ] BD-01U 플레이어 몸 그림과 걷기·피격 연출(13장 '움직임은 이미지 한 장 + 연출로') · 먼저: 없음
+  - 할 것: 지금 Run 씬 플레이어는 `PlayerController.MakeDisc()` 동그라미다(2026-11-08 클라우드가 13장을 맞대다 찾음 — Characters 원화 아홉 장을 쓰는 코드가 없음). ① 한 생 몸으로 `BodyArt.SpriteIds(body)` 를 앞에서부터 찾아 있는 첫 그림을 SpriteRenderer 에(없으면 지금 동그라미). 그림은 `Assets/Art/Characters/` 에 있으니 에디터 메뉴가 아홉 장을 이름 → Sprite 목록으로 PlayerController(또는 새 `PlayerLook`)에 물린다(Resources 로 옮기지 않음). 크기는 13장 '화면에선 약 72px 높이'를 삼류 화면 기준으로 맞추고, 경지가 오르면 다른 것처럼 WorldScale 을 따른다. 발밑이 몸 원(`stats.playerBodyRadius`) 가운데에 오게 pivot. ② 걷기: 움직이는 동안 좌우로 살짝 기울고 위아래로 튀는 트윈, 왼쪽으로 가면 좌우 뒤집기(13장). 각도·높이·빠르기는 눈으로 정하고 daily 에 적는다(기획서에 숫자 없음). ③ 피격: 지금 `PlayerVitals._flash` 를 흰색 번쩍임으로(13장 '피격: 흰색 번쩍임 셰이더') — 그림 위에 흰색을 더하는 재질 하나, 피함 청록 잔상은 그대로.
+  - 쓸 것: Core `Meta/BodyArt`(`SpriteIds`, `Prologue`), `RebirthHandoff.Body ?? Rebirth.Prologue(data)`(EnemyField 혈영 분신과 같은 길), `Assets/Art/Characters/char_*.png`(256px, Sprite, PPU 100), balance.json `stats.playerBodyRadius`
+  - 메뉴: `BloodRain/Bootstrap/` 아래 새 메뉴 하나(몸 그림 목록 채우기, 다시 돌리면 같은 결과)
+  - 끝: 서장 몸이 진소운 그림, `BloodRain/Test/몸 바꾸기(문파)/<문파>` 로 소림·개방·남궁이 제 그림(그림 없는 문파는 동그라미), 걸으면 기울며 튀고 왼쪽으로 가면 뒤집힘, 맞으면 하얗게 번쩍. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/BD-01U/` 의 `prologue.png`·`gaebang.png`
+
 - [ ] PR-01U 줍는 것·부수는 것·보갑에 낱장 그림 · 먼저: 없음
   - 할 것: LanternLayer·ChestLayer 의 색 동그라미·네모 자리 표시를 `Assets/Art/Props/Parts/` 낱장으로 바꾼다(2026-11-08 클라우드가 시트를 잘라 둠, backlog PR-01). 등롱 `prop_lantern`, 은빛 등롱 `prop_lantern_silver`, 떨군 것은 drops kind 와 같은 이름(`prop_bun`·`prop_duck`·`prop_silver_bag`·`prop_chwigi_talisman`·`prop_jeongsin_talisman`), 정예 보갑 `prop_chest_closed` → 열 때 `prop_chest_open`, 혈정 `prop_blood_crystal`, 봉인석 조각 `prop_seal_stone_shard`(땅의 주인 처치 자리에 무엇이 떨어지는 칸이 있으면), 벽력탄 `prop_thunder_bomb` 은 LT-02 결정 뒤. 크기는 지금 자리 표시와 같은 경지 m(등롱 몸 `drops.lanternSpawn.hitPadding`, 떨군 것은 줍는 반경 안쪽)으로 맞추고 눈으로 본다. 수레·장독·술독·검 시렁은 부수는 소품(7장 '모든 생에 공통')이 Run 에 생길 때 — 지금은 안 씀.
   - 쓸 것: `Assets/Art/Props/Parts/*.png`(Sprite, PPU 100 — `tools/fix_art_meta.py` 규칙), balance.json `drops`, `Core/Build/Drops`. 시트 원본 `Props/props_pickups`·`props_items`·`props_breakables` 는 그대로 두되 씬에서 안 씀
