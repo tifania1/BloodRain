@@ -349,7 +349,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] WP-57U 설정 화면(타이틀·일시정지 두 곳) · 먼저: 없음
   - 할 것: 12장 설정 목록 가운데 값이 정해진 열하나(흔들림·각성 연출·깜빡임·땅의 주인 체력바·혈우 연출·음량·소리 끄기·내 이펙트 투명도·피해 숫자·조준 방식·방향 표시)를 단추 하나씩, 누르면 `GameSettings.Turn(낱말)` 로 다음 값. 시작할 때 `GameSettings.Load(k => PlayerPrefs.HasKey(k) ? PlayerPrefs.GetString(k) : null, 움직임 줄이기)`, 바꿀 때 `Save(PlayerPrefs.SetString)`. 값을 쓰는 곳(흔들림·각성 연출 길이·피격 번쩍임·체력바·혈우 층·AudioListener 음량·내 이펙트 알파·피해 숫자·`Aim.Angle` 방식·방향 꺾쇠 크기)에 하나씩 잇는다. 이미 있는 FxSettings(휴대폰 효과 간소화)도 이 화면에 한 줄로. 글자는 strings `ui.settings.*`(2026-11-07 클라우드가 네 언어로 넣음 — 값 이름은 `shake`·`awaken_auto` …, 작은 글은 `_sub`, `{0}` 은 %)
-  - 언어 단추(2026-11-07 15시 클라우드 WP-68): 열둘째 단추 `GameSettings.Lang`, 이름은 `GameSettings.LanguageNames[Language]` 를 `ui.settings.lang` 의 {0} 에. 누르면 Save 뒤 `Loc.Lang = s.Language`(캐시를 비워 바로 바뀜). Load 할 때 `systemLanguage: Application.systemLanguage.ToString()` 을 넘기고, `Loc.FromSystem` 은 `GameSettings.LanguageFor(l.ToString())` 하나로 바꿔 규칙이 두 곳에 있지 않게
+  - 언어 단추(2026-11-07 15시 클라우드 WP-68): 열둘째 단추 `GameSettings.Lang`, 이름은 `GameSettings.LanguageNames[Language]` 를 `ui.settings.lang` 의 {0} 에. 누르면 Save 뒤 `Loc.Lang = s.Language`(캐시를 비워 바로 바뀜). Load 할 때 `systemLanguage: Application.systemLanguage.ToString()` 을 넘기고, `Loc.FromSystem` 은 `GameSettings.LanguageFor(l.ToString())` 하나로 바꿔 규칙이 두 곳에 있지 않게. 목소리 단추 `GameSettings.Voice`(`ui.settings.voice` 의 {0} 에 `ui.settings.voice_ko`·`voice_zh`) — 기합 소리가 아직 없으니 값만 저장
   - 쓸 것: Core `Meta/GameSettings.cs`(2026-11-07 클라우드, `GameSettingsTests`), 웹 프로토타입 settings·SET_TURN·SET_HTML(template.html), 기획서 12장 화면 목록 '설정'·'화면 편의 규칙'
   - 메뉴: 타이틀 '설정', 일시정지 화면 '설정'
   - 끝: 열하나를 눌러 보고 게임을 껐다 켜도 값이 남음. 흔들림 0·혈우 0·내 이펙트 0 으로 판에서 그대로 바뀜

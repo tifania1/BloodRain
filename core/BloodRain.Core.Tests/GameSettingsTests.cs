@@ -66,7 +66,7 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             foreach (var k in GameSettings.Keys)
-                if (k != GameSettings.Muted && k != GameSettings.Lang) Assert.Contains($"store.set('{k}'", html);
+                if (k != GameSettings.Muted && k != GameSettings.Lang && k != GameSettings.Voice) Assert.Contains($"store.set('{k}'", html);
             Assert.Contains("settings.shake === 1 ? 0.5 : settings.shake === 0.5 ? 0 : 1", html);
             Assert.Contains("settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1", html);
             Assert.Contains("{ auto: 'long', long: 'short', short: 'auto' }", html);
@@ -93,6 +93,25 @@ namespace BloodRain.Core.Tests
 
             // 언어 단추 이름은 Strings.Languages 와 하나씩 맞는다
             Assert.Equal(BloodRain.Core.Data.Strings.Languages.OrderBy(x => x), GameSettings.LanguageNames.Keys.OrderBy(x => x));
+        }
+
+        [Fact]
+        public void 목소리는_한국어_중국어_두_벌이고_화면_언어를_따라_시작한다()
+        {
+            Assert.Equal("ko", GameSettings.Defaults(systemLanguage: "Korean").VoiceLanguage);
+            Assert.Equal("ko", GameSettings.Defaults(systemLanguage: "English").VoiceLanguage);
+            Assert.Equal("zh", GameSettings.Defaults(systemLanguage: "ChineseTraditional").VoiceLanguage);
+            var s = GameSettings.Defaults();
+            Assert.True(s.Turn(GameSettings.Voice)); Assert.Equal("zh", s.VoiceLanguage);
+            Assert.True(s.Turn(GameSettings.Voice)); Assert.Equal("ko", s.VoiceLanguage);
+
+            // 저장된 화면 언어를 따르되, 저장된 목소리가 있으면 그것
+            Assert.Equal("zh", GameSettings.Load(k => k == GameSettings.Lang ? "zh-Hans" : null, systemLanguage: "Korean").VoiceLanguage);
+            Assert.Equal("ko", GameSettings.Load(k => k == GameSettings.Lang ? "zh-Hans" : k == GameSettings.Voice ? "ko" : null).VoiceLanguage);
+            Assert.Equal("ko", GameSettings.Load(k => k == GameSettings.Voice ? "ja" : null, systemLanguage: "Korean").VoiceLanguage);
+
+            var gdd = TestData.ReadRepoFile("docs", "design", "gdd.md");
+            Assert.Contains("한국어와 중국어 두 벌을 기본으로 녹음하고 설정에서 고르게 합니다", gdd);
         }
 
         static List<string> Cycle2(string system, int n)

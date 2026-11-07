@@ -5,6 +5,7 @@
 //   '움직임 줄이기'(OS 설정)가 켜져 있으면 흔들림 0·깜빡임 끔·혈우 50% 로 시작한다(웹 REDUCED). 한 번 정한 값은 그대로.
 //   언어(lang)는 Strings.Languages 차례로 돈다. 저장 낱말 'lang' 은 Unity Presentation/Loc 이 읽는 PlayerPrefs 낱말과 같다.
 //   정한 적 없으면 기기 언어(LanguageFor: 한국어·간체·번체, 그 밖은 영어 — Loc.FromSystem 과 같음). 웹은 한국어뿐이라 언어 단추가 없다.
+//   목소리(voice)는 14장 '목소리': 오의 기합을 한국어·중국어 두 벌 가운데 고른다(ko·zh). 정한 적 없으면 화면 언어가 중국어(간체·번체)일 때 zh, 그 밖은 ko.
 //   12장 목록 가운데 색각 보정·조작 재설정·자동 고르기는 아직 값이 없다(자동 고르기는 UI-01b, 색각 보정은 UI-03 사람 결정 대기).
 using System;
 using System.Collections.Generic;
@@ -19,10 +20,10 @@ namespace BloodRain.Core.Meta
     public sealed class GameSettings
     {
         public const string Shake = "shake", Awaken = "awaken", Flash = "flash", BossBar = "bossbar", Rain = "rain",
-            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted", Lang = "lang";
+            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted", Lang = "lang", Voice = "voice";
 
-        /// <summary>저장 낱말 전부(단추 차례, 웹 SET_HTML 과 같음 + 소리 끄기 + 언어).</summary>
-        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, Muted, Lang };
+        /// <summary>저장 낱말 전부(단추 차례, 웹 SET_HTML 과 같음 + 소리 끄기 + 언어 + 목소리).</summary>
+        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, Muted, Lang, Voice };
 
         /// <summary>언어 단추에 그 언어 글자로 적는 이름(어느 화면 언어에서나 같다).</summary>
         public static readonly IReadOnlyDictionary<string, string> LanguageNames = new Dictionary<string, string>
@@ -64,10 +65,19 @@ namespace BloodRain.Core.Meta
         public bool MutedOn;
         /// <summary>화면 언어(Strings.Languages 가운데 하나).</summary>
         public string Language = "en";
+        /// <summary>오의 기합 목소리 "ko" / "zh"(VoiceLanguages).</summary>
+        public string VoiceLanguage = "ko";
+
+        /// <summary>목소리 두 벌(14장).</summary>
+        public static readonly string[] VoiceLanguages = { "ko", "zh" };
+
+        /// <summary>목소리를 정한 적 없을 때: 화면 언어가 중국어면 zh, 그 밖은 ko.</summary>
+        public static string VoiceFor(string language) => language.StartsWith("zh", StringComparison.Ordinal) ? "zh" : "ko";
 
         public static GameSettings Defaults(bool reducedMotion = false, string? systemLanguage = null) => new GameSettings
         {
             Language = LanguageFor(systemLanguage),
+            VoiceLanguage = VoiceFor(LanguageFor(systemLanguage)),
             ShakeScale = reducedMotion ? 0f : 1f,
             FlashOn = !reducedMotion,
             RainScale = reducedMotion ? 0.5f : 1f,
@@ -90,6 +100,7 @@ namespace BloodRain.Core.Meta
                 case Effects: EffectsAlpha = EffectsAlpha > 0f ? Math.Max(0f, Round2(EffectsAlpha - 0.25f)) : 1f; return true;
                 case Muted: MutedOn = !MutedOn; return true;
                 case Lang: Language = Strings.Languages[(Math.Max(0, Array.IndexOf(Strings.Languages, Language)) + 1) % Strings.Languages.Length]; return true;
+                case Voice: VoiceLanguage = VoiceLanguage == "ko" ? "zh" : "ko"; return true;
                 default: return false;
             }
         }
@@ -109,6 +120,7 @@ namespace BloodRain.Core.Meta
             Effects => Num(EffectsAlpha),
             Muted => Bool(MutedOn),
             Lang => Language,
+            Voice => VoiceLanguage,
             _ => null,
         };
 
@@ -130,6 +142,7 @@ namespace BloodRain.Core.Meta
                 case Effects: EffectsAlpha = Pick(value, EffectsAlpha, 1f, 0.75f, 0.5f, 0.25f, 0f); break;
                 case Muted: MutedOn = ReadBool(value, MutedOn); break;
                 case Lang: if (Array.IndexOf(Strings.Languages, value) >= 0) Language = value; break;
+                case Voice: if (Array.IndexOf(VoiceLanguages, value) >= 0) VoiceLanguage = value; break;
             }
         }
 
@@ -138,6 +151,7 @@ namespace BloodRain.Core.Meta
         {
             var s = Defaults(reducedMotion, systemLanguage);
             foreach (var k in Keys) s.Set(k, read(k));
+            if (read(Voice) == null) s.VoiceLanguage = VoiceFor(s.Language);   // 고른 적 없으면 저장된 화면 언어를 따른다
             return s;
         }
 
