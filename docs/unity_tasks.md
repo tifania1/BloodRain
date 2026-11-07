@@ -340,7 +340,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 숭산 몸으로 시작하자마자 시강 기혈 8(농도 1.0), 디버그로 20분을 넘기면(또는 `life.Minutes` 를 시험으로 당겨) 새로 나온 시강이 약 21. 마교 몸(십만대산 4.3)이면 처음부터 시강이 약 34, 닿는 피해 √4.3 배. 정예가 화면 가장자리 바로 바깥에서 나옴. 콘솔 에러 0
   - 찍기: 없음(디버그 줄에 새로 나온 적 기혈 한 칸을 더해 확인만)
 
-- [ ] YY-01U 음양 편향·극성 무공 피해 · 먼저: 없음
+- [x] YY-01U 음양 편향·극성 무공 피해 · 먼저: 없음 — 2026-11-08 02:05 PC: WeaponRunner `Damage` 에 `AspectDamage`(= 한 생 `Loadout.Gauge.AspectDamageMultiplier(속성, 무극 값)`), SecretWatch 가 열린 비전으로 `Effects`(SecretEffects)를 들고 `Instance` 로 내놓음. 플레이에서 취선봉(양)·쇄겸술(음)을 넣고 게이지를 바꿔 봄: +26 양 1.15·음 1, +70 양 1.4, −40 음 1.15, 무속성 삼재검법은 늘 1. 콘솔 에러 0
   - 할 것: 3장 '음양과 주화입마' 표의 피해 칸(편향 기운 쪽 속성 무공 +15%, 극성 +40%)이 Unity 에도 Core 에도 없었다(2026-11-08 클라우드가 balance.json 칸을 하나씩 찾다 봄 — yinyang.bias·extreme.aspectDamageBonus 를 읽는 곳이 웹 aspectMult 뿐). 태극 쪽 쾌속·오의 충전, 극성 역류는 이미 있음. WeaponRunner `Damage(s)` 에 `life.Loadout.Gauge.AspectDamageMultiplier(s.Def.Aspect)` 를 곱한다. 비전 무극(boundless)을 얻었으면 둘째 인자로 `SecretEffects.AspectDamageBonus(s.Def.Aspect)`(Unity 에 SecretEffects 를 아직 아무도 안 들고 있으니 한 생 비전 목록에서 하나 만들어 둠, 없으면 null).
   - 쓸 것: Core `Progression/YinYangGauge.AspectDamageMultiplier(속성, 무극 값)`(2026-11-08 클라우드, `AspectDamageTests`), `Build/SecretEffects.AspectDamageBonus`, WeaponDef `Aspect`
   - 메뉴: 없음

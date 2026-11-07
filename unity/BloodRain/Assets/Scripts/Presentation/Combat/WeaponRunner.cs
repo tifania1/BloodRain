@@ -233,7 +233,17 @@ namespace BloodRain.Presentation.Combat
         }
 
         float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * effects.WeaponDamageMultiplier(s.Def, healthRatio)
-            * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s);
+            * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s) * AspectDamage(s);
+
+        // YY-01U 음양 편향 쪽 속성 무공 +15%·극성 +40%(기획서 3장), 비전 무극이면 음·양 모두 그 값(Core YinYangGauge.AspectDamageMultiplier)
+        static float AspectDamage(Slot s)
+        {
+            var lr = LifeRunner.Instance;
+            if (lr == null || lr.Life == null) return 1f;
+            var sw = Hud.SecretWatch.Instance;
+            float? secret = sw != null ? sw.Effects.AspectDamageBonus(s.Def.Aspect) : null;
+            return lr.Life.Loadout.Gauge.AspectDamageMultiplier(s.Def.Aspect, secret);
+        }
 
         // C-09e 각성한 무공이면 그 절기(한 생의 Loadout.Evolved, C-09d 보갑이 깨움). 한 생이 없거나 아직이면 null
         static BloodRain.Core.Data.EvolutionDef EvoOf(Slot s)

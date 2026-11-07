@@ -27,6 +27,12 @@ namespace BloodRain.Presentation.Hud
         bool _poke;
 
         public RunRecord Record => _record;
+        public static SecretWatch Instance { get; private set; }
+        /// <summary>이 판에 열린 비전의 효과(YY-01U 무극 등이 읽음). 새 비전이 열릴 때마다 다시 만든다.</summary>
+        public SecretEffects Effects { get; private set; } = SecretEffects.None;
+
+        void Awake() => Instance = this;
+        void OnDestroy() { if (Instance == this) Instance = null; }
         public IReadOnlyList<SecretDef> Found => _found;
 
         void Start()
@@ -66,6 +72,7 @@ namespace BloodRain.Presentation.Hud
             foreach (var s in _checker.Check(levelUp.Loadout))
             {
                 _found.Add(s);
+                Effects = SecretEffects.Of(_data, _checker.Unlocked);
                 Debug.Log($"[SecretWatch] 비전 발견: {s.NameKo}({s.Id})");
                 if (fx != null) fx.Show(DiscoveryFx.Kind.Secret, Loc.T($"synergies.secrets.{s.Id}.name", s.NameKo), s.Hanja);
             }
