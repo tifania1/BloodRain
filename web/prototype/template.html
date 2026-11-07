@@ -749,6 +749,39 @@ function synStats() {
   return out;
 }
 // 닿은 진전 단계의 effect params(synergies.json, Core SynergyEffects 와 같다). 없으면 null
+// 소림 4 나한 허상·개방 4 제자(20장 진전 표, synergies.json arhat_ring·beggar_allies, Core SchoolSummons 와 같은 셈, SS-01).
+//   허상: 기혈이 문턱(0.5) 위였다가 아래로 떨어지는 순간 seconds 동안, 판마다 timesPerRun 번. 둘레 radius 안 잡몹·정예를 knockback 으로 밀고 피해는 없음. 땅의 주인은 안 밀림.
+//   제자: 단계가 켜져 있는 동안 시계가 돌아 intervalSeconds 마다 allies 명이 seconds 동안. 각자 attackSeconds 마다 가장 가까운 적에게 장풍 Lv1(damage × 공력, 넉백), 탄은 palm_wind shot.
+//   웹은 제자 몸을 그리지 않고 몸 둘레에서 장풍만 나간다.
+function schoolSummons(dt) {
+  const p = G.player, ar = synEff('arhat_ring'), bg = synEff('beggar_allies'), ratio = p.maxHp > 0 ? p.hp / p.maxHp : 1;
+  const S = G.summ || (G.summ = { last: 1, clock: 0, atk: 0, used: 0, arhatT: 0, allyT: 0, allies: 0, ringT: 0 });
+  let volleys = 0;
+  if (S.allyT > 0 && bg && bg.attackSeconds > 0) { S.atk += Math.min(dt, S.allyT); while (S.atk >= bg.attackSeconds - 1e-4) { S.atk -= bg.attackSeconds; volleys++; } }
+  S.arhatT = Math.max(0, S.arhatT - dt); S.allyT = Math.max(0, S.allyT - dt);
+  if (ar && S.last >= ar.healthThreshold && ratio < ar.healthThreshold && S.arhatT <= 0 && S.used < ar.timesPerRun) {
+    S.used++; S.arhatT = ar.seconds; toast('나한 허상', `나한 ${ar.images}이 몸을 둘러싼다 · 이번 판 ${ar.timesPerRun - S.used}번 남음`);
+  }
+  S.last = ratio;
+  if (bg && bg.intervalSeconds > 0) {
+    S.clock += dt;
+    while (S.clock >= bg.intervalSeconds) { S.clock -= bg.intervalSeconds; S.allyT = bg.seconds; S.allies = bg.allies; S.atk = 0; toast('개방 제자', `${bg.allies}명이 ${bg.seconds}초 함께 싸운다`); }
+  }
+  if (S.allyT <= 0) S.allies = 0;
+  if (S.arhatT > 0 && ar) {
+    forNear(p.x, p.y, ar.radius, e => { if (e.boss || e.dead) return; const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * ar.knockback; e.kby += dy / d * ar.knockback; });
+    S.ringT -= dt; if (S.ringT <= 0) { S.ringT = 0.4; addEffect('ring', p.x, p.y, { r: ar.radius, color: '#C9A227', life: 0.45 }); }
+  }
+  if (volleys && S.allies && bg) {
+    const sh = W_BY_ID.palm_wind.shot, sp = sh.speed * G.stats.projSpeed, dmg = bg.damage * G.stats.might;
+    for (let v = 0; v < volleys; v++) for (let i = 0; i < S.allies; i++) {
+      const a0 = i / S.allies * TAU + G.t, ax = p.x + Math.cos(a0) * 1.5, ay = p.y + Math.sin(a0) * 1.5, tg = nearestEnemies(ax, ay, 1, 12)[0];
+      if (!tg) continue;
+      const a = Math.atan2(tg.y - ay, tg.x - ax);
+      addProj({ x: ax, y: ay, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce: 0, life: sh.lifeSeconds, kind: 'palm', w: null, kb: bg.knockback });
+    }
+  }
+}
 function synEff(name) {
   for (const sc of SYN.schools) for (const t of sc.tiers) if (t.effect === name && sch(sc.id, t.count)) return t.params;
   return null;
@@ -794,6 +827,7 @@ function synTick(dt) {
   }
   // 수로채 진전 3: 경공으로 지나가며 적을 끌고 간다
   const drg = synEff('dash_drag'); if (drg && p.dashT > 0) forNear(p.x, p.y, drg.dragRadius, e => { if (!e.boss && !e.elite) { e.x += p.dashVx * dt * drg.dragFactor; e.y += p.dashVy * dt * drg.dragFactor; } });
+  schoolSummons(dt);   // 소림 4 나한 허상·개방 4 제자(SS-01)
   // 비전 무극: 태극검 Lv8·양의심법 Lv5 를 지닌 채 음양 게이지가 0에서 3분(Core RunRecord.Tick — 움직이면 처음부터)
   if (!S.secrets.has('mugeuk')) {
     const mg = SECRET.mugeuk.require;
