@@ -326,6 +326,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 조건이 안 맞으면 강화 목록, 맞으면 각성 연출 뒤 무공 이름이 절기로 바뀜
   - 찍기: `docs/unity_shots/C-09/` 의 `chest_upgrade.png`, `chest_awaken.png`
 
+- [ ] CR-01U Run 씬 밟힘·쓸림 잇기 · 먼저: C-09d
+  - 할 것: 7장 '밟히는 것들'·돌파 쓸림이 시험 씬(ScaleTest·CrushTestField, TU-03)에만 있고 Run 씬엔 안 이어져 있다(2026-11-08 클라우드가 C-09d 를 읽다 찾음 — EnemySim.Contacts 는 아래 경지 적의 접촉 피해만 거르고, 닿은 그 적을 쓰러뜨리지 않으며, BreakthroughFx.Swept 를 듣는 쪽이 Run 에 없다). ① 플레이어 원에 닿은 아래 경지 적(`Scale.Crushes(born, 지금 경지)`)은 그 자리에서 먹물로 터지며 쓰러짐(InkBurst), 진기는 구슬 대신 `cheonha.crush.xpPerCrushed`(0.3). ② 돌파 0.8초 `BreakthroughFx.Swept` 에 `bt.SelectSweep(아래 경지 적 ScaledFoe 목록)` 을 한꺼번에 같은 처리. ③ 쓰러뜨림은 `EnemyField.Kill` 을 거쳐 Killed 가 나가게 — 그러면 ChestLayer 가 아래 경지 정예에도 보갑을 놓는다(`Scale.CrushedDropsChest(true)` 가 참일 때만, 거짓이면 ChestLayer 가 밟힌 정예를 거름). OrbLayer 가 밟힌 적에 보통 구슬을 또 떨구지 않게 표시를 넘긴다. 정예·땅의 주인 거르기는 기획서대로: 땅의 주인은 밟히지 않음(`Crushes(…, boss: true)`), 정예는 밟힘.
+  - 쓸 것: Core `World/Scale.cs` `Crushes`·`CrushedDropsChest`·`SelectSweep`, `World/Breakthrough.cs` `SweepRadius`·`SelectSweep`, cheonha.json `crush`, 시험 쪽 `CrushTestField.OnSwept`·`Sim/CrushField.cs`(옮겨 쓸 만한 셈), `Fx/InkBurst.cs`
+  - 메뉴: 없음(Run 씬 플레이). 시험 키로 레벨을 올려 돌파
+  - 끝: 삼류에서 적을 모은 뒤 이류 돌파 → 0.8초에 둘레 아래 경지 적이 쓸리고 진기 0.3씩, 남은 아래 경지 적은 닿으면 터지며 피해 0. 아래 경지 정예를 밟으면 보갑 하나. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/CR-01U/` 의 `sweep.png`
+
 - [ ] CH-01U 보갑 화면 아래 그릇 안내 한 줄 · 먼저: C-09d
   - 할 것: ChestLayer 강화 목록 화면 맨 아래(닫기 글 위)에 8장 '그릇이 차 있으면 보갑은 평소처럼 강화만 주고, 다음 그릇이 생기는 경지를 알려 줍니다' 한 줄. 웹 chestHint 와 같은 셈(2026-11-08 클라우드가 Core 로 옮김).
   - 쓸 것: `Chest.Hint(data, life.Loadout, level)` — `Kind` 가 `NoVessel` 이면 `ui.chest.hint_novessel`, `Full` 이면 `ui.chest.hint_full`, `None` 이면 안 띄움. {0} 은 `Loc.Realm(hint.Next)`, {1} 은 `hint.Next.Level`. Open 안에서 Chest.Open 을 부른 뒤에 셈(강화가 Loadout 에 들어간 뒤)
