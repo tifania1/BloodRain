@@ -574,7 +574,7 @@ const MOVE = B.stats.moveBase; // 신법 100% 걸음 m/s, 적 속도 100 = 이 �
 // 프로토타입이 그릴 줄 아는 무공 동작(1장 판에 쓰던 여덟 + 취선봉 random_arc, T-36).
 const PROTO_BEHAVIORS = new Set(['front_arc', 'melee_combo', 'homing_dagger', 'orbit_slash', 'slow_projectile', 'random_rapid', 'random_bomb', 'aura', 'random_arc',
   'orbiting_blades', 'pull_chain', 'forward_claws', 'ring_wave', 'pierce_thrust', 'petal_scatter', 'random_lightning']);   // 뇌부(WP-18)
-// ?trial=1: 해금 조건이 있는 무공(태극검·쇄겸술·혈조·음공·이화창·낙화검우)도 처음부터 레벨업에 나온다(R-17, 사람이 손맛을 보려고). 절기 모양은 아직 없다.
+// ?trial=1: 해금 조건이 있는 무공(태극검·쇄겸술·혈조·음공·이화창·낙화검우)도 처음부터 레벨업에 나온다(R-17, 사람이 손맛을 보려고). 절기 모양은 WP-19 에서 붙임(숫자가 없는 몇 가지는 decisions).
 const TRIAL_WEAPONS = (() => { try { return /[?&]trial=1\b/.test(location.search); } catch (e) { return false; } })();
 const START_WEAPONS = DATA.weapons.filter(w => (w.unlock === 'start' || TRIAL_WEAPONS) && PROTO_BEHAVIORS.has(w.behavior)).map(w => w.id);
 // 무공 해금(WP-17, 기획서 9장 해금 칸·10장 '해금과 도전 과제', Core Soul.IsUnlocked·UnlockChallenges·UnlockToken):
@@ -1266,7 +1266,7 @@ function newRun(mode) {
   if (LS && mode !== 'prologue' && SCALE_MODE) {
     const reg = CH_REGS.find(r => r.id === LS.region), wd = W_BY_ID[LS.startWeapon];
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
-    G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(아직 대사 없음)
+    G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(sister 줄, 후보 카드 femaleBodiesKo)
     { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; G.skips = Math.max(0, Math.round(bodyStat('Skips'))); G.revivals = Math.max(0, Math.round(bodyStat('Revival'))); if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
     G.soul0 = soulLoad(); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
     G.wpool = weaponPoolOf(G.soul0); G.dashes = 0; G.talis = 0;   // 무공 해금(WP-17): 혼 기록으로 연 무공까지 레벨업 풀에, 도전 과제 셈(경공·정신부, 처치는 G.kills)
@@ -1712,7 +1712,7 @@ function finalDown(e) {
 }
 // ───────── 엔딩 고르기(WP-13e, 기획서 4장 '엔딩 세 갈래', Core Soul.EndingsOpen·ChooseEnding, FinalDialogue.EndingChoices·EndingCuts) ─────────
 // 1회차는 봉인만(endingsFirst), 2회차부터 셋(endingsSecond). 진엔딩은 의서 trueEndingManuscripts 권·종장을 깬 문파 trueEndingDistinctSects 곳(이번 몸 포함)·목 노인 대화 끝까지.
-// 의서는 혈월 천하 은빛 등롱에서, 목 노인 의서 줄은 귀환 대사에서. 모자라면 진엔딩 칸은 흐리게 무엇이 모자란지만 보인다. 진혈마 10% 진엔딩 컷은 아직 없다(조건을 채워도 싸움 뒤에 고름).
+// 의서는 혈월 천하 은빛 등롱에서, 목 노인 의서 줄은 귀환 대사에서. 모자라면 진엔딩 칸은 흐리게 무엇이 모자란지만 보인다. 조건을 채웠으면 진혈마 10% 에서 진엔딩 컷(아래 trueCutCheck).
 // 고르면 그 엔딩 컷을 다 보여 준 뒤 정산. 혼 기록: 봉인 → 회귀(cycle +1, cycle.resets 의 봉인석을 지움), 계승 → 혈마 모드(modes 에 mode:blood_demon), 진엔딩 → 여정 끝(journeyOver).
 const END = DATA.endings || { list: [], endingsFirst: ['seal'], endingsSecond: [], resets: [] };
 const END_BY = Object.fromEntries(END.list.map(x => [x.id, x]));
@@ -3951,7 +3951,7 @@ function densityAt(x, y) {
 }
 // 정산(WP-14c, 기획서 10장 '윤회의 기', Core RebirthQiLedger·Soul.EndLife): ?life= 판이 끝나면 윤회의 기·혈정·밟은 땅·오른 경지를 혼 기록에 새긴다.
 //   윤회의 기 = (1 + 성질 보너스) × (perOrbValue × Σ(구슬 값 × 그 자리 혈운 농도) + 보너스 + leftoverSilverRate × 남은 은자)
-//   줄마다 반올림하고 합계는 줄의 합(Core 와 같음). 이 판엔 타고난 성질·땅의 주인이 아직 없어 그 줄은 없다(성질 배율 1).
+//   줄마다 반올림하고 합계는 줄의 합(Core 와 같음). 땅의 주인 처치 줄과 타고난 성질 배율 줄도 Core 와 같은 차례로.
 // 혼 기록은 천하 시안과 같은 localStorage 'cheonha_meta2'(같은 사이트라 시안의 침방·연무장이 이 생의 기를 그대로 본다. WP-14d 가 침방을 옮겨 오기 전까지의 다리).
 const QI = DATA.rebirthQi || {};
 const SOUL_KEY = 'cheonha_meta2';
@@ -4041,7 +4041,7 @@ function recordLife(st) {
 // ───────── 침방·연무장(WP-14d, 기획서 10·21장) ─────────
 // 천하 시안 openRebirth·drawCandidates·bodyOf·trainCost 를 이 판에 옮긴 것(Core RebirthDraw·Soul.UpgradeCost·Training 과 같은 셈).
 // 혼 기록은 시안과 같은 cheonha_meta2 라 어느 쪽에서 찍어도 같다. 고르면 ?life= 없이 그 몸으로 다음 생(NEXT_LIFE).
-// 아직 없는 것: 몸 성별·대표 인물 대사(21장), 땅의 주인을 쓰러뜨려 여는 문파(이 판엔 아직 땅의 주인이 없다).
+// 몸 성별(rollFemale)·후보 카드 글·땅의 주인 첫 처치로 여는 문파도 Core 와 같은 규칙으로.
 const RB = DATA.rebirth || { candidates: 3, firstRebirth: [], upgrades: [] };
 const BT = DATA.birthTraits || { countWeights: [1], excludes: [], list: [] };
 const TRAIT_BY = Object.fromEntries(BT.list.map(t => [t.id, t]));
@@ -4062,7 +4062,7 @@ const TRAIN_ITEMS = B.training.items.filter(i => statOn(i.stat));
 let NEXT_LIFE = null, innCands = [], innRerolls = 0, innElix = [];
 const curLifeSect = () => (NEXT_LIFE ? SECT_BY[NEXT_LIFE.sect] : LIFE_SECT);
 // 객잔 시설(10장 '객잔 시설', cheonha.json inn, Core Inn): 조건(서장·봉인석·땅의 주인 처치 지역·해금 토큰)을 갖추면 열리고, 혈정으로 짓는 시설(약방·대장간)은 조건을 갖춘 뒤 짓는다.
-// 한 번 열리면 혼 기록 unlocks 에 facility:<id> 로 남아 회귀로 봉인석이 지워져도 열려 있다. 수리 중(underRepair)이면 문만. 시설 안 화면(영약·꾸미기·도전 과제·게시판)은 이 판에 아직 없다.
+// 한 번 열리면 혼 기록 unlocks 에 facility:<id> 로 남아 회귀로 봉인석이 지워져도 열려 있다. 수리 중(underRepair)이면 문만. 시설 안 화면은 약방 영약(EL-03)·수련동 도전 과제(EL-05)만 있고 대장간 꾸미기·하오문 게시판은 아직 없다.
 // 정산 때 처음 조건을 갖춘 시설과 지난 귀환 뒤 지은 시설은 다음 귀환의 운낭 facility:<id> 줄로(Core LifeSummary.NewFacilities + Inn.TryBuild)
 const INN_F = DATA.innFacilities || [];
 // 약방 영약(10장 '영약(약방)', cheonha.json inn.elixirs, Core Apothecary·Life.TakeElixirs): 약방에 들어갈 수 있으면 elixirsPerLife 개까지 골라 몸을 고를 때 혈정을 쓰고 지니고 나간다
@@ -4462,8 +4462,8 @@ function renderInn() {
   rf.innerHTML = `<b>모두 돌려받기</b><span>${m.spent ? '기 ' + m.spent.toLocaleString() + ' 환불' : '찍은 것 없음'}</span>`;
   rf.onclick = innRefund; tb.appendChild(rf);
 }
-// 대표 인물 마당 줄(21장, Core InnDialogue.YardLine): 그 문파로 태어나면 대표 인물이 한 줄. 합류 전이면 yardUnknown, 뒤면 yardKnown(합류는 땅의 주인을 쓰러뜨려야 해서
-// 이 판엔 아직 없다 — 혼 기록 joined 를 보기만 한다). 그 칸 처음은 0번, 그 뒤 무작위. 모를 때 줄이 없는 문파는 yardKnown 으로(혈월 줄은 회차가 없는 이 판엔 안 씀).
+// 대표 인물 마당 줄(21장, Core InnDialogue.YardLine): 그 문파로 태어나면 대표 인물이 한 줄. 합류 전이면 yardUnknown, 뒤면 yardKnown(합류는 땅의 주인 첫 처치 뒤
+// 귀환 대사가 혼 기록 joined 에 넣는다 — 위 innReturn). 그 칸 처음은 0번, 그 뒤 무작위. 모를 때 줄이 없는 문파는 yardKnown 으로(혈월 줄은 회차가 없는 이 판엔 안 씀).
 // 여자 몸이면 sister 칸('사매')으로 바꿔 쓴다
 const LEADER_BY = Object.fromEntries((DATA.leaders || []).map(l => [l.id, l]));
 function yardLine(body) {
