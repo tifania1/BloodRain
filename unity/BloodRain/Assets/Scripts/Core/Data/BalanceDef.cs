@@ -208,6 +208,11 @@ namespace BloodRain.Core.Data
     {
         public float SameEnemyIntervalSeconds = 0.35f;
         public float MinDamage = 1;
+        /// <summary>기혈이 이 비율 이하면 화면 가장자리 먹물 번짐·심장 소리(8장 '피격과 사망' 30%). 판 위 체력바도 이 아래에서 붉게.</summary>
+        public float LowHealthRatio = 0.3f;
+
+        /// <summary>위험 표시를 켤까(기혈 비율이 LowHealthRatio 이하, 0 보다 큼).</summary>
+        public bool IsLowHealth(float healthRatio) => healthRatio > 0f && healthRatio <= LowHealthRatio;
     }
 
     /// <summary>경공 대시(기획서 8장). 움직임은 Unity 쪽이고 Core 는 숫자만 들고 있다.</summary>

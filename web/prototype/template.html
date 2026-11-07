@@ -1101,6 +1101,8 @@ const worldU = () => scaleOn() ? Math.pow(WD.scalePerRealm, tierNow()) : 1;
 const lowBorn = e => scaleOn() && !e.boss && (e.born || 0) < tierNow();
 // 덩이 속 사람 수 = ceil(덩이 크기 × 남은 기혈 비율), 살아 있으면 적어도 1 (Core Scale.DrawMembers)
 const clusterOf = e => scaleOn() && !e.boss && !e.splitOf ? (CL_SIZE[(REALMS[e.born || 0] || {}).id] || 1) : 1;
+// 기혈 위험 표시(8장 '피격과 사망' 30% 이하, balance.json contact.lowHealthRatio — Core ContactDef.IsLowHealth 와 같음)
+const lowHp = p => p.hp > 0 && p.hp / p.maxHp <= B.contact.lowHealthRatio;
 const membersOf = e => Math.max(1, Math.ceil(clusterOf(e) * Math.max(0, e.hp) / e.maxHp));
 const sprites = {};
 let groundTile = null, vignette = null;
@@ -5011,7 +5013,7 @@ function render() {
   // 기혈 바와 경공 점
   const hbw = 1.2 * PPM, hbx = wx(p.x) - hbw / 2, hby = wy(p.y) + 0.3 * PPM;
   ctx.fillStyle = 'rgba(26,26,26,.3)'; ctx.fillRect(hbx, hby, hbw, 5);
-  ctx.fillStyle = p.hp / p.maxHp < 0.3 ? '#B3261E' : '#2F6F6A'; ctx.fillRect(hbx, hby, hbw * p.hp / p.maxHp, 5);
+  ctx.fillStyle = lowHp(p) ? '#B3261E' : '#2F6F6A'; ctx.fillRect(hbx, hby, hbw * p.hp / p.maxHp, 5);
   for (let i = 0; i < p.dashMax; i++) { ctx.beginPath(); ctx.arc(hbx + i * 9 + 4, hby + 12, 3, 0, TAU); ctx.fillStyle = i < p.dashCharges ? '#1A1A1A' : 'rgba(26,26,26,.2)'; ctx.fill(); }
   // 우리 투사체·효과: 내 이펙트 투명도(12장 설정)를 받는다
   FXA = settings.fx; ctx.globalAlpha = FXA;
@@ -5032,7 +5034,7 @@ function render() {
   drawWeather();   // 눈보라 덮개·붉은 달(WP-13b, 축척 시험에서만)
   // 혈우
   drawRain();
-  if (p.hp / p.maxHp < 0.3) { ctx.globalAlpha = 0.7 + Math.sin(G.t * 6) * 0.15; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
+  if (lowHp(p)) { ctx.globalAlpha = 0.7 + Math.sin(G.t * 6) * 0.15; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
   else { ctx.globalAlpha = 0.35; ctx.drawImage(vignette, 0, 0, VW, VH); ctx.globalAlpha = 1; }
   drawEdgeHints();   // 화면 밖 정예·땅의 주인·금두꺼비 화살표, 장막 가까운 가장자리 붉게(12장 HUD)
   if (G.awaken) drawAwaken();

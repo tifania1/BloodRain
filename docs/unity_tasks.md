@@ -347,6 +347,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 시험 몸(문턱 하나)으로 절정 돌파 → 줌 뒤 각성 연출 → 깨달음 카드. 문턱 둘이면 고르기 화면이 먼저. 그릇이 안 느는 돌파(이류·일류)에서는 안 깨어남. 콘솔 에러 0
   - 찍기: `docs/unity_shots/EV-01U/` 의 `pick.png`
 
+- [ ] LH-01U 기혈 30% 이하 위험 표시 · 먼저: 없음
+  - 할 것: 8장 '피격과 사망' — 기혈 30% 이하에선 화면 가장자리에 먹물이 번지고 심장 소리. Unity 엔 아직 없다(2026-11-08 클라우드가 찾음). 웹은 가장자리 어둠을 0.35 → 0.7 ± 0.15(초당 6 라디안 출렁임)로 올리고 판 위 체력바를 붉게(#B3261E). 먹물 그림은 V-02 먹 튐·자국 텍스처를 가장자리에 둘러 쓰거나 BreakthroughFx 의 `_AwakenVignette` 같은 전역 값 하나를 더 둔다. 깜빡임 끄기(WP-57U 설정)가 켜져 있으면 출렁임 없이 고정.
+  - 쓸 것: Core `Balance.Contact.IsLowHealth(vitals.Health / vitals.MaxHealth)`(문턱 `contact.lowHealthRatio` 0.3, 2026-11-08 클라우드가 데이터로), 심장 소리는 sfx_list `sfx_low_health_heart`(아직 소리 없음 — 오면 SfxPlayer 로 켜진 동안 되풀이)
+  - 메뉴: 없음(Run 씬 플레이, 맞아서 30% 아래로)
+  - 끝: 31% 에선 없고 30% 에서 가장자리가 짙어지며 출렁임, 회복해 넘으면 사라짐. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/LH-01U/` 의 `low_health.png`
+
 - [ ] CH-01U 보갑 화면 아래 그릇 안내 한 줄 · 먼저: C-09d
   - 할 것: ChestLayer 강화 목록 화면 맨 아래(닫기 글 위)에 8장 '그릇이 차 있으면 보갑은 평소처럼 강화만 주고, 다음 그릇이 생기는 경지를 알려 줍니다' 한 줄. 웹 chestHint 와 같은 셈(2026-11-08 클라우드가 Core 로 옮김).
   - 쓸 것: `Chest.Hint(data, life.Loadout, level)` — `Kind` 가 `NoVessel` 이면 `ui.chest.hint_novessel`, `Full` 이면 `ui.chest.hint_full`, `None` 이면 안 띄움. {0} 은 `Loc.Realm(hint.Next)`, {1} 은 `hint.Next.Level`. Open 안에서 Chest.Open 을 부른 뒤에 셈(강화가 Loadout 에 들어간 뒤)

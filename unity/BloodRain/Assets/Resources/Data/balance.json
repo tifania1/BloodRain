@@ -54,7 +54,7 @@
   "ultimateCharge": { "max": 100, "perKill": 0.4, "perHit": 3, "perElite": 15, "perSkip": 20 },
   "revival": { "_note": "재기(연무장·영약): 기혈 0 에서 남은 횟수가 있으면 그 자리에서 이 비율로 일어난다. 기획서 8장. 주변 적 밀쳐내기 세기는 decisions #35(WP-21a)", "healthRatio": 0.5 },
   "dash": { "distance": 4.0, "duration": 0.25, "iframes": 0.2, "charges": 2, "rechargeSeconds": 4 },
-  "contact": { "sameEnemyIntervalSeconds": 0.35, "minDamage": 1 },
+  "contact": { "sameEnemyIntervalSeconds": 0.35, "minDamage": 1, "lowHealthRatio": 0.3 },
   "enemyScaling": {
     "healthPerMinute": 0.08,
     "damagePerMinute": 0.03,
