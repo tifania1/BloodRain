@@ -2011,7 +2011,7 @@ function weaponDamage(w) {
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
   const swd = synEff('sword_damage'); if (swd && def.category === 'sword') d *= 1 + swd.damageBonus;
   const lhm = synEff('low_health_might'); if (lhm && G.player.hp < G.player.maxHp * lhm.healthThreshold) d *= 1 + lhm.damageBonus;
-  if (w.id === 'samjae_sword' && G.syn.secrets.has('mumyeong')) d *= 1.5;
+  if (G.syn.secrets.has('mumyeong') && w.id === SECRET.mumyeong.target) d *= 1 + SECRET.mumyeong.params.damageBonus;
   return d;
 }
 function hurtEnemy(e, dmg, w, kx, ky, kb) {
@@ -2086,7 +2086,7 @@ function dropOrb(x, y, v) {
 function addUlt(v, flat) {
   if (flat) { G.ult = Math.min(B.ultimateCharge.max, G.ult + v); return; }
   const bonus = (1 + bodyStat('UltimateCharge')) * (yyBand().band === 'harmony' ? 1 + B.yinyang.harmony.ultimateChargeBonus * harmonyMul() : 1);
-  G.ult = Math.min(B.ultimateCharge.max, G.ult + v * bonus * (G.syn.secrets.has('mumyeong') ? 2 : 1));
+  G.ult = Math.min(B.ultimateCharge.max, G.ult + v * bonus * (G.syn.secrets.has('mumyeong') ? SECRET.mumyeong.params.ultimateChargeMultiplier : 1));
 }
 // 혈마의 그림자(7장 '생의 끝', cheonha.json lifeEnd, Core LifeDirector.ShadowStep·BloodShadow.Strength, T-42): 한 생 판에서 현경인데 봉인석(혼 기록 + 이번 생)이
 // 모자라면 shadowFromMinute 부터 죽지 않고 밀리지 않는 그림자 하나가 쫓아온다. shadowStepMinutes 마다 단계가 오르고, 2단계부터 오를 때마다 예고 뒤 몸 뒤 teleportGap 자리로 옮긴다

@@ -130,6 +130,13 @@ namespace BloodRain.Core.Data
         public string Reward = "";
         public List<string> Hint = new List<string>();
         public SecretRequireDef Require = new SecretRequireDef();
+        /// <summary>얻는 것을 코드가 읽는 이름(Build/SecretEffects.Known). reward 글의 숫자는 Params 에.</summary>
+        public string Effect = "";
+        /// <summary>효과가 붙는 무공 id(낙매검선의 피 낙화검우, 매화삼롱 음공, 무명검 삼재검법). 없으면 null.</summary>
+        public string? Target;
+        public Dictionary<string, float> Params = new Dictionary<string, float>();
+
+        public float Param(string key) => Params.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"비전 {Id} params 에 {key} 가 없습니다");
     }
 
     /// <summary>기연 사건. Where 는 글, Chapters·MinMinute·NeedsChapterSchool 은 그 글을 규칙으로 옮긴 것.</summary>
