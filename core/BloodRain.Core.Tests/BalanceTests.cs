@@ -157,7 +157,7 @@ namespace BloodRain.Core.Tests
 
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             foreach (var use in new[] { "OP.pullSpeedBase + o.t * OP.pullSpeedPerSecond", "d < OP.absorbRadius", "G.orbs.slice(OP.mergeBatch)",
-                                        "* OP.mergeDistance", "G.orbs.length > LIM.orbs", "G.projs.length > LIM.projectiles", "G.nums.length >= LIM.damageNumbers" })
+                                        "* OP.mergeDistance", "G.orbs.length > LIM.orbs", "G.projs.length >= LIM.projectiles", "G.nums.length >= LIM.damageNumbers" })
                 Assert.Contains(use, html);
             Assert.DoesNotContain("9 + o.t * 4", html);
         }

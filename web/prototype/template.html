@@ -2160,7 +2160,8 @@ function hurtPlayer(dmg, src, kind) {
 function addEffect(kind, x, y, o) { if (G.effects.length > 160) G.effects.shift(); G.effects.push(Object.assign({ kind, x, y, t: 0, life: 0.3 }, o)); }
 // 적 몫 효과(땅의 주인·정예·고유 적 예고, 지역 기믹): 내 이펙트 투명도를 받지 않고 내 효과 위에 그린다(12장 '가독성 원칙')
 function foeEffect(kind, x, y, o) { addEffect(kind, x, y, Object.assign({ foe: true }, o)); }
-function addProj(o) { if (G.projs.length > LIM.projectiles) return; G.projs.push(Object.assign({ t: 0, pierce: 0, hit: new Set(), homing: 0, bounce: 0 }, o)); }
+function addProj(o) { if (G.projs.length >= LIM.projectiles) return;   // 상한까지(Unity WeaponRunner 와 같게)
+  G.projs.push(Object.assign({ t: 0, pierce: 0, hit: new Set(), homing: 0, bounce: 0 }, o)); }
 
 // 조준(12장 '화면 편의 규칙' 조준, WP-52): 방향이 있는 무공은 기본(settings.aimMode 'near')으로 닿는 거리 안 가장 가까운 적을 노리고,
 // 없으면 바라보는 쪽. '이동 방향'(move)이면 늘 마지막으로 움직인 쪽(8장 옛 규칙). 패드 오른쪽 스틱·모바일 두 번째 손가락은 Unity 몫
