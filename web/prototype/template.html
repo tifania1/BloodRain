@@ -2858,12 +2858,13 @@ function update(dt) {
   G.lanterns = G.lanterns.filter(l => !l.dead);
   // 범종: 닿으면 반경 8m 적 2초 기절
   for (const b of G.bells) {
-    b.cd = Math.max(0, b.cd - dt);
+    b.cd = Math.max(0, b.cd - dt); if (b.life != null) b.life -= dt;
     if (b.cd <= 0 && Math.hypot(p.x - b.x, p.y - b.y) < 1.4) {
-      b.cd = Math.max(20, 60 / G.timeScale); addEffect('ring', b.x, b.y, { r: 8, life: 0.8, color: '#C9A227' }); sfx('bell');
+      b.cd = Math.max(20, 60 / G.timeScale); if (b.uses != null) b.uses--; addEffect('ring', b.x, b.y, { r: 8, life: 0.8, color: '#C9A227' }); sfx('bell');
       forNear(b.x, b.y, 8, e => { if (!e.boss) e.stun = 2; else e.stun = 0.6; });
     }
   }
+  G.bells = G.bells.filter(b => !(b.life != null && b.life <= 0) && b.uses !== 0);   // 떨어진 종: 수명·횟수가 다하면 치운다(Core BellGimmick.Gone)
   synTick(dt);
   for (const s of G.splats) s.t += dt;
   G.splats = G.splats.filter(s => s.t < 6);
@@ -3085,6 +3086,8 @@ function castPattern(e, P, dmg, dx, dy) {
         foeEffect('boom', tx, ty, { r: P.radius, life: 0.3 }); sfx('boom');
         if (Math.hypot(G.player.x - tx, G.player.y - ty) < P.radius) hurtPlayer(dmg, e);
         if (P.poolRadius) (G.pools = G.pools || []).push({ x: tx, y: ty, r: P.poolRadius, dps: P.poolDamagePerSecond * k, t: P.leaveSeconds, red: true });
+        // 원각 범종 낙하: 떨어진 종이 leaveSeconds 동안 남고 leaveUses 번 울릴 수 있는 범종(gimmicks.json bell, Core BellGimmick.FromBossDrop)
+        if (P.leaveGimmick === 'bell') G.bells.push({ x: tx, y: ty, cd: 0, life: P.leaveSeconds || null, uses: P.leaveUses || null, drop: true });
       } });
     }
   } else if (P.shape === 'blink_slam') {
@@ -3172,7 +3175,7 @@ function bossAI(e, dt, dx, dy, d) {
       for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; spawnEnemy('mogin_nahan', p.x + Math.cos(a) * 8, p.y + Math.sin(a) * 8, { behavior: 'chase', speed: 0.5 * MOVE }); }
       toast('십팔나한진', '한 곳을 뚫고 나가라');
     } else {
-      for (let i = 0; i < 3; i++) { const bx = p.x + rand(-2.5, 2.5), by = p.y + rand(-2.5, 2.5); G.zones.push({ delay: 1.2, mark: { x: bx, y: by, r: 1.8 }, apply: () => { if (e.dead) return; foeEffect('boom', bx, by, { r: 1.8, life: 0.3 }); sfx('gong'); if (Math.hypot(G.player.x - bx, G.player.y - by) < 1.8) hurtPlayer(30); } }); }
+      for (let i = 0; i < 3; i++) { const bx = p.x + rand(-2.5, 2.5), by = p.y + rand(-2.5, 2.5); G.zones.push({ delay: 1.2, mark: { x: bx, y: by, r: 1.8 }, apply: () => { if (e.dead) return; foeEffect('boom', bx, by, { r: 1.8, life: 0.3 }); sfx('gong'); if (Math.hypot(G.player.x - bx, G.player.y - by) < 1.8) hurtPlayer(30); const BD = ((DATA.lordPatterns || {}).wongak || { patterns: [] }).patterns.find(x => x.leaveGimmick === 'bell'); if (BD) G.bells.push({ x: bx, y: by, cd: 0, life: BD.leaveSeconds || null, uses: BD.leaveUses || null, drop: true }); } }); }   // 떨어진 범종이 남는다(6장 범종 낙하 줄, bosspatterns.json bell_drop_x3)
     }
   }
 }

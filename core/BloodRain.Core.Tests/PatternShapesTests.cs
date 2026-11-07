@@ -137,5 +137,15 @@ namespace BloodRain.Core.Tests
             Assert.True(Elite("poison_toad_king", "poison_hop_x3").PoolRadius > 0f);
             Assert.True(Elite("dogin_elder", "fog_expand").PoolRadius > 0f);
         }
+
+        [Fact] public void 원각_범종_낙하는_웹에서도_종을_남긴다()
+        {
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            var bell = Boss("wongak", "bell_drop_x3");
+            Assert.Equal("bell", bell.LeaveGimmick);
+            Assert.True(bell.LeaveSeconds > 0f && bell.LeaveUses > 0);
+            Assert.Contains("if (P.leaveGimmick === 'bell') G.bells.push({ x: tx, y: ty, cd: 0, life: P.leaveSeconds || null, uses: P.leaveUses || null", html);
+            Assert.Contains("G.bells = G.bells.filter(b => !(b.life != null && b.life <= 0) && b.uses !== 0)", html);
+        }
     }
 }
