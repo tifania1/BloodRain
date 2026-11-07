@@ -9,8 +9,9 @@ using UnityEngine;
 namespace BloodRain.Presentation.Fx
 {
     // WP-39U 기연 사건(기획서 20장, synergies.json encounters). 웹 한 생 판(template.html 기연 갱신 줄)과 같은 셈.
-    //   판 시작과 1분마다 EncounterRoller.RollAll(ctx) — ctx 의 Chapter·ChapterSchool 은 서 있는 땅(cheonha regions[].chapter·sect).
-    //   나온 사건은 플레이어 둘레 고리(은거기인 11m, 영약·속삭임·검총 10m, 유해 9m — 웹 R)에 자리 표시로 놓는다(그림은 art_queue props_encounters 가 오면).
+    //   판 시작에 사건마다 나올 분(EncounterSpots.AppearMinute)을 뽑고, 그 분이 되면 EncounterRoller.Roll(id, ctx) — 형편이 안 맞으면 RetryMinutes 뒤 다시(EN-01U).
+    //   ctx 의 Chapter·ChapterSchool 은 서 있는 땅(cheonha regions[].chapter·sect). 거리(고리·닿기·떠나기·줄어듦)는 synergies.json encounters[].spot.
+    //   나온 사건은 플레이어 둘레 고리(EncounterSpots.PlaceOffset)에 자리 표시로 놓는다(그림은 art_queue props_encounters 가 오면).
     //   은거기인: 1.7m 안에 머문 초(벗어나면 초당 0.5 씩 줄어듦)가 HermitReady 면 MeetHermit + 깨달음 고르기 한 번 더.
     //   유해: 1.3m 안에서 멈춰 선 초(움직이면 줄어듦)가 RelicReady 면 HonorRelic(그 땅 문파) — 진전 덧셈은 LifeRunner.ApplyStats 가 SchoolExtra 로.
     //   영약: 1.3m 안이면 TakeElixir(오의 가득·음양 0). 속삭임: 석상 3m 안에서 오의를 쓰면 AcceptWhisper, 다가갔다가 8m 밖으로 떠나면 거절.
@@ -23,16 +24,15 @@ namespace BloodRain.Presentation.Fx
         public static EncounterLayer Instance { get; private set; }
 
         public LifeRunner runner;
-        [Tooltip("다시 굴리는 간격(게임 시간 초)")]
-        public float rollSeconds = 60f;
 
         sealed class Spot { public EncounterDef Def; public Vector2 Pos; public GameObject Go; public SpriteRenderer Ring; public float Prog; public bool Near; public string School; }
 
         readonly List<Spot> _spots = new List<Spot>();
         readonly System.Random _rng = new System.Random();
         EncounterRoller _roller;
-        float _acc;
-        bool _first = true;
+        // EN-01U 사건마다 나올 게임 분(판 시작에 EncounterSpots.AppearMinute 로 뽑음). 굴렸으면 지운다
+        Dictionary<string, float> _due;
+        readonly List<string> _dueKeys = new List<string>();
         Vector2 _lastPos;
         Sprite _circle, _square;
         SecretWatch _secrets;
@@ -77,14 +77,7 @@ namespace BloodRain.Presentation.Fx
             if (!Alive || Time.timeScale <= 0f) return;
             float dt = Time.deltaTime;
             _roller ??= new EncounterRoller(DataBoot.Data, _rng);
-            _acc += dt;
-            if (_first || _acc >= rollSeconds)
-            {
-                _first = false;
-                _acc = 0f;
-                var ctx = Context();
-                foreach (var e in _roller.RollAll(ctx)) Appear(e, ctx.ChapterSchool);
-            }
+            RollDue();
 
             // 오의를 쓴 순간: 사자후처럼 한 박자로 끝나는 오의는 Ultimate 가 같은 프레임에 지워질 수 있어 게이지가 비는 것도 본다
             var ul = Life.Ultimate;
@@ -105,7 +98,7 @@ namespace BloodRain.Presentation.Fx
                 switch (s.Def.Id)
                 {
                     case EncounterBoons.Hermit:
-                        if (d < 1.7f) s.Prog += dt; else s.Prog = Mathf.Max(0f, s.Prog - dt * 0.5f);
+                        s.Prog = EncounterSpots.Progress(s.Def, s.Prog, dt, EncounterSpots.Reached(s.Def, d));
                         SetRing(s, s.Prog / syn.Encounter(EncounterBoons.Hermit).Param("staySeconds"));
                         if (Life.Encounters.HermitReady(s.Prog))
                         {
@@ -115,7 +108,7 @@ namespace BloodRain.Presentation.Fx
                         }
                         break;
                     case EncounterBoons.Relic:
-                        if (d < 1.3f && !moving) s.Prog += dt; else s.Prog = Mathf.Max(0f, s.Prog - dt);
+                        s.Prog = EncounterSpots.Progress(s.Def, s.Prog, dt, EncounterSpots.Reached(s.Def, d) && !moving);
                         SetRing(s, s.Prog / syn.Encounter(EncounterBoons.Relic).Param("bowSeconds"));
                         if (Life.Encounters.RelicReady(s.Prog))
                         {
@@ -124,20 +117,20 @@ namespace BloodRain.Presentation.Fx
                         }
                         break;
                     case EncounterBoons.Elixir:
-                        if (d < 1.3f) { Life.TakeElixir(); done = true; }
+                        if (EncounterSpots.Reached(s.Def, d)) { Life.TakeElixir(); done = true; }
                         break;
                     case EncounterBoons.Whisper:
-                        if (d < 3f)
+                        if (EncounterSpots.Reached(s.Def, d))
                         {
                             s.Near = true;
                             if (ultNow && Life.AcceptWhisper()) done = true;
                         }
-                        else if (s.Near && d > 8f) { Debug.Log("[EncounterLayer] 혈마의 속삭임 — 석상을 지나쳤다"); Remove(i); continue; }
+                        else if (s.Near && EncounterSpots.Left(s.Def, d)) { Debug.Log("[EncounterLayer] 혈마의 속삭임 — 석상을 지나쳤다"); Remove(i); continue; }
                         break;
                     case EncounterBoons.SwordTomb:
                         // 무덤 1.5m 안에 서면 가진 무공 카드에서 골라 꽂는다. 지나쳤으면 2.5m 밖으로 벗어났다 와야 다시 뜬다(웹과 같음)
-                        if (d >= 2.5f) s.Near = false;
-                        else if (d < 1.5f && !s.Near && !TombOpen)
+                        if (EncounterSpots.Left(s.Def, d)) s.Near = false;
+                        else if (EncounterSpots.Reached(s.Def, d) && !s.Near && !TombOpen)
                         {
                             s.Near = true;
                             if (EncounterBoons.CanPlantSword(Life.Loadout, FirstWeapon())) OpenTomb(s);
@@ -260,9 +253,38 @@ namespace BloodRain.Presentation.Fx
                 Debug.Log("[EncounterLayer] 하오문 밀서 — 다음 보통 등롱 속에");
                 return;
             }
-            float R = e.Id == EncounterBoons.Hermit ? 11f : e.Id == EncounterBoons.Relic ? 9f : 10f;
-            float a = (float)(_rng.NextDouble() * Mathf.PI * 2f);
-            Place(e, PlayerPos + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * R * Scale, school);
+            var (ox, oy) = EncounterSpots.PlaceOffset(e, _rng);
+            Place(e, PlayerPos + new Vector2(ox, oy) * Scale, school);
+        }
+
+        /// <summary>EN-01U 나올 분이 된 사건을 굴린다. 형편이 안 맞으면 RetryMinutes 뒤 다시(웹 newEnc·ev.at).</summary>
+        void RollDue()
+        {
+            var syn = DataBoot.Data.Synergies;
+            if (_due == null)
+            {
+                _due = new Dictionary<string, float>();
+                foreach (var e in syn.Encounters) _due[e.Id] = EncounterSpots.AppearMinute(e, _rng);
+                var plan = new System.Text.StringBuilder();
+                foreach (var kv in _due) plan.Append($" {kv.Key} {kv.Value:0.0}분");
+                Debug.Log($"[EncounterLayer] 기연 나올 때:{plan}");
+            }
+            if (_due.Count == 0) return;
+            float now = Life.Minutes;
+            _dueKeys.Clear();
+            foreach (var kv in _due) if (now >= kv.Value) _dueKeys.Add(kv.Key);
+            if (_dueKeys.Count == 0) return;
+            var ctx = Context();
+            foreach (var id in _dueKeys)
+            {
+                var e = syn.Encounter(id);
+                if (_roller.HasRolled(id)) { _due.Remove(id); continue; } // 시험 메뉴·비전이 이미 놓음
+                if (!EncounterRoller.CanAppear(e, ctx)) { _due[id] = now + EncounterSpots.RetryMinutes; continue; }
+                _due.Remove(id);
+                bool hit = _roller.Roll(id, ctx);
+                Debug.Log($"[EncounterLayer] {now:0.0}분 {id} 굴림 → {(hit ? "나옴" : "안 나옴")}");
+                if (hit) Appear(e, ctx.ChapterSchool);
+            }
         }
 
         /// <summary>시험 메뉴: 그 사건을 굴리지 않고 플레이어 앞 2m 에 바로 놓는다.</summary>
@@ -294,7 +316,7 @@ namespace BloodRain.Presentation.Fx
                 case EncounterBoons.SwordTomb: body.sprite = _circle; body.color = new Color32(0x6B, 0x5A, 0x44, 255); go.transform.localScale = new Vector3(1.1f, 0.55f, 1f) * sc; AddBlades(go.transform); break;
             }
             // 닿는 원(점선 대신 옅은 원)
-            float ring = e.Id == EncounterBoons.Hermit ? 1.7f : e.Id == EncounterBoons.Whisper ? 3f : e.Id == EncounterBoons.SwordTomb ? 1.5f : 1.3f;
+            float ring = e.Spot != null && e.Spot.ReachRadius > 0f ? e.Spot.ReachRadius : 1.3f;
             var rg = new GameObject("원");
             rg.transform.SetParent(go.transform, false);
             rg.transform.localScale = new Vector3(ring * 2f * sc / go.transform.localScale.x, ring * 2f * sc / go.transform.localScale.y, 1f);
