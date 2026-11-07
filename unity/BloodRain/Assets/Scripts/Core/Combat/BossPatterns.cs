@@ -687,4 +687,91 @@ namespace BloodRain.Core.Combat
             return revived;
         }
     }
+
+    /// <summary>역류 파도(sweep_wave, 마천패 2막). 웹 프로토타입 lordContinuous 'sweep_wave' 와 같은 규칙이다.
+    ///   - 2막 패턴이 켜진 순간(Resolve)부터 WaveIntervalSeconds 마다 한 파(첫 파는 켜진 순간). WaveSeconds(p, k).
+    ///   - 한 파는 그 순간 플레이어 자리에서 진행 방향 반대쪽으로 화면 대각선 × StartViewMultiple 떨어진 곳에서 생겨,
+    ///     WarnSeconds 동안 서 있다가(붉은 물결 예고) 초당 MetersPerSecond(ProjectileSpeed, 이동 기준) 로 대각선 × 2 × StartViewMultiple 만큼 간다.
+    ///   - 폭 Width 띠(진행 방향에 수직인 무한 줄)가 플레이어를 지나면 한 번 맞는다. 경공 무적이면 넘는다(부르는 쪽이 무적을 본다).
+    ///   - 방향: 기획서 6장은 '하류에서 상류로'. 장강 물길 방향을 아는 쪽(Unity 지도)이 degrees 를 정하고,
+    ///     모르면 RandomDegrees(웹처럼 네 방향 가운데 하나). 배 위에 있으면 안 맞는 것도 부르는 쪽이 본다(배는 장강 지형 기믹).
+    /// 길이는 화면 기준 m. 세계에 놓을 때 지금 경지 축척 배율을 곱한다(viewDiagonal 도 같은 기준).</summary>
+    public sealed class SweepWave
+    {
+        /// <summary>파가 생겨 움직이기 전 예고 시간(웹 값 0.6초, 데이터에 없음).</summary>
+        public const float WarnSeconds = 0.6f;
+        /// <summary>출발점이 플레이어에서 떨어진 거리 = 화면 대각선 × 이 값(웹 값 0.55). 가는 거리는 그 두 배.</summary>
+        public const float StartViewMultiple = 0.55f;
+
+        readonly BossPatternDef _def;
+        readonly float _cos, _sin, _speed, _length;
+        float _warn, _moved;
+
+        /// <summary>wave 번째 파(0부터)가 패턴이 켜진 뒤 몇 초에 생기나.</summary>
+        public static float WaveSeconds(BossPatternDef p, int wave) => wave * (p.WaveIntervalSeconds > 0f ? p.WaveIntervalSeconds : 6f);
+
+        /// <summary>물길 방향을 모를 때: 0·90·180·270도 가운데 하나(웹과 같다).</summary>
+        public static float RandomDegrees(Random rng) => rng.Next(4) * 90f;
+
+        /// <summary>파 하나를 띄운다. (playerX, playerY) 는 이 순간 플레이어 자리, degrees 는 파가 나아가는 쪽, moveBase 는 이동 기준(m/초).</summary>
+        public SweepWave(BossPatternDef def, float playerX, float playerY, float degrees, float viewDiagonal, float moveBase)
+        {
+            _def = def;
+            double a = degrees * Math.PI / 180.0;
+            _cos = (float)Math.Cos(a);
+            _sin = (float)Math.Sin(a);
+            Degrees = degrees;
+            float back = viewDiagonal * StartViewMultiple;
+            X = playerX - _cos * back;
+            Y = playerY - _sin * back;
+            _length = back * 2f;
+            _speed = BossPatterns.MetersPerSecond(def.ProjectileSpeed, moveBase);
+            _warn = WarnSeconds;
+        }
+
+        public float Degrees { get; }
+        /// <summary>띠 가운데 줄이 지나는 지금 자리.</summary>
+        public float X { get; private set; }
+        public float Y { get; private set; }
+        /// <summary>아직 예고 중인가(움직이지 않고 맞히지 않는다).</summary>
+        public bool Warning => _warn > 0f;
+        /// <summary>끝까지 갔다(지워도 된다).</summary>
+        public bool Done => _moved >= _length;
+        /// <summary>이 파가 이미 플레이어를 맞혔다.</summary>
+        public bool HasHit { get; private set; }
+
+        /// <summary>시간을 민다. 아직 남아 있으면 true.</summary>
+        public bool Step(float dt)
+        {
+            if (Done || dt <= 0f) return !Done;
+            if (_warn > 0f)
+            {
+                float w = Math.Min(_warn, dt);
+                _warn -= w;
+                dt -= w;
+                if (dt <= 0f) return true;
+            }
+            float v = Math.Min(_speed * dt, _length - _moved);
+            X += _cos * v;
+            Y += _sin * v;
+            _moved += v;
+            return !Done;
+        }
+
+        /// <summary>(px, py) 가 띠 안인가. 예고 중이거나 끝났으면 false.</summary>
+        public bool Covers(float px, float py, float targetRadius = 0f)
+        {
+            if (Warning || Done) return false;
+            float along = (px - X) * _cos + (py - Y) * _sin;
+            return Math.Abs(along) < _def.Width / 2f + targetRadius;
+        }
+
+        /// <summary>이번에 처음 맞혔으면 true(한 파는 한 번만 맞는다). 경공 무적·배 위는 부르는 쪽이 거르고 부른다.</summary>
+        public bool TryHit(float px, float py, float targetRadius = 0f)
+        {
+            if (HasHit || !Covers(px, py, targetRadius)) return false;
+            HasHit = true;
+            return true;
+        }
+    }
 }

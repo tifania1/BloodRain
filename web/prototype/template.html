@@ -1528,7 +1528,7 @@ function lordContinuous(e, P) {
       }
       return true;
     });
-  } else if (P.shape === 'sweep_wave') {   // 역류 파도(시안과 같음): waveIntervalSeconds 마다 화면 한쪽 끝에서 반대쪽으로 붉은 물결. 경공 무적으로 넘는다
+  } else if (P.shape === 'sweep_wave') {   // 역류 파도(시안과 같음): waveIntervalSeconds 마다 화면 한쪽 끝에서 반대쪽으로 붉은 물결. 경공 무적으로 넘는다(Core SweepWave 와 같은 셈)
     let next = P.telegraphSeconds;
     lordFx(dt => {
       if (e.dead) return false;

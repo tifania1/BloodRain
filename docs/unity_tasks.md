@@ -427,8 +427,8 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/R-14U/` 의 `dang_sohye.png`
 
 - [ ] R-14Ub 마천패(장강) · 먼저: R-14Ua
-  - 할 것: `ma_cheonpae`(chain_hook_pull `ChainReach`·`InChain`·`ChainPullOffset` — 경공이면 끊김, water_pillar, summon_water_ghost).
-  - 쓸 것: Core `BossPatterns`, bosspatterns.json `ma_cheonpae`
+  - 할 것: `ma_cheonpae`(chain_hook_pull `ChainReach`·`InChain`·`ChainPullOffset` — 경공이면 끊김, water_pillar, summon_water_ghost). 2막 역류 파도(crimson_reverse_wave)는 켜진 뒤 `SweepWave.WaveSeconds(p, k)` 마다 `new SweepWave(p, 플레이어 x·y, 방향, 화면 대각선, 이동 기준)` 하나, 매 프레임 `Step` → 경공 무적·배 위가 아니면 `TryHit(플레이어, 몸 반경)`. 방향은 장강 물길 하류→상류를 알면 그것, 모르면 `RandomDegrees`.
+  - 쓸 것: Core `BossPatterns`·`SweepWave`(2026-11-07 클라우드, 웹 sweep_wave 와 같은 셈), bosspatterns.json `ma_cheonpae`
   - 메뉴: 땅의 주인 부르기/ma_cheonpae
   - 끝: 세 패턴이 천하 시안과 같음
   - 찍기: `docs/unity_shots/R-14U/` 의 `ma_cheonpae.png`
