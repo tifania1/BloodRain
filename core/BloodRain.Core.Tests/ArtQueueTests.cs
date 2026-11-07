@@ -131,19 +131,20 @@ namespace BloodRain.Core.Tests
             }
         }
 
-        /// <summary>M3 그림 목록(art_list_m3.md, A-08~A-11)의 표 줄과 큐에서 note 가 'art_list_m3' 로 시작하는 줄이 빠짐없이 같고, chat 도 같다.
-        /// 목록에 없는 그림은 뽑지 않는다는 art_list.md 규칙을 M3 몫에도 지키게 한다.</summary>
-        [Fact] public void M3_그림_목록과_큐가_같다()
+        /// <summary>M3·M4 그림 목록(art_list_m3.md A-08~A-11, art_list_m4.md A-13~)의 표 줄과 큐에서 note 가 'art_list_mN' 으로 시작하는 줄이 빠짐없이 같고, chat 도 같다.
+        /// 목록에 없는 그림은 뽑지 않는다는 art_list.md 규칙을 M3·M4 몫에도 지키게 한다.</summary>
+        [Theory, InlineData("art_list_m3"), InlineData("art_list_m4")]
+        public void 단계별_그림_목록과_큐가_같다(string list)
         {
-            var md = ReadRepoFile("docs", "design", "art_list_m3.md");
+            var md = ReadRepoFile("docs", "design", list + ".md");
             var listed = Regex.Matches(md, @"^\| [^|]+ \| ([a-z0-9_]+) \| [^|]+ \| ([^|]+) \|", RegexOptions.Multiline)
                 .Where(m => m.Groups[1].Value != "id").ToDictionary(m => m.Groups[1].Value, m => m.Groups[2].Value.Trim());
             Assert.NotEmpty(listed);
-            var rows = Rows().Where(o => ((string?)o["note"] ?? "").StartsWith("art_list_m3 ")).ToDictionary(o => (string)o["id"]!);
+            var rows = Rows().Where(o => ((string?)o["note"] ?? "").StartsWith(list + " ")).ToDictionary(o => (string)o["id"]!);
             Assert.Equal(listed.Keys.OrderBy(x => x), rows.Keys.OrderBy(x => x));
             foreach (var (id, chat) in listed) Assert.True(chat == (string)rows[id]["chat"]!, $"{id}: 목록 chat '{chat}' 과 큐 chat '{rows[id]["chat"]}' 이 다르다");
             var total = Regex.Match(md, @"^\| 합계 \| (\d+) \|", RegexOptions.Multiline);
-            Assert.True(total.Success, "art_list_m3.md 에 합계 줄이 없다");
+            Assert.True(total.Success, $"{list}.md 에 합계 줄이 없다");
             Assert.Equal(rows.Count, int.Parse(total.Groups[1].Value));
         }
 
