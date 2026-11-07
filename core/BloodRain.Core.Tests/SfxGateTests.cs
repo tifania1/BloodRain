@@ -23,10 +23,12 @@ namespace BloodRain.Core.Tests
         [Fact] public void 흡수음_음계는_웹과_구운_소리와_같다()
         {
             var html = File.ReadAllText(Path.Combine(TestData.RepoRoot, "web", "prototype", "template.html"));
-            var m = Regex.Match(html, @"ORB_NOTES = (\d+), ORB_RUN_GAP = ([\d.]+);");
-            Assert.True(m.Success, "웹 ORB_NOTES·ORB_RUN_GAP 이 없다");
-            Assert.Equal(R.AbsorbNotes, int.Parse(m.Groups[1].Value));
-            Assert.Equal(R.AbsorbRunGapSeconds, float.Parse(m.Groups[2].Value));
+            // 웹도 같은 값(balance.json sfx)을 읽어 같은 셈을 한다.
+            Assert.Contains("const SFXR = B.sfx, SFX_VARIANTS = 5, ORB_NOTES = SFXR.absorbNotes, ORB_RUN_GAP = SFXR.absorbRunGapSeconds;", html);
+            Assert.Contains("if (q.length >= SFXR.sameSoundMaxInWindow) return;", html);
+            Assert.Contains("if (audio.orbFrame === lastTs) return;", html);
+            Assert.Equal(8, R.AbsorbNotes);
+            Assert.Equal(0.35f, R.AbsorbRunGapSeconds);
             // 구운 풍경 n1~n8 이 있어야 재생기가 고를 수 있다.
             var dir = Path.Combine(TestData.RepoRoot, "unity", "BloodRain", "Assets", "Audio", "SFX");
             for (int n = 0; n < R.AbsorbNotes; n++)

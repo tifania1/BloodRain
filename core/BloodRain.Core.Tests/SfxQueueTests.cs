@@ -132,7 +132,7 @@ namespace BloodRain.Core.Tests
                 Assert.Equal("synth", (string)rows[id]["route"]!);
                 Assert.True(File.Exists(Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Audio", "SFX", id == "sfx_xp_absorb" ? $"{id}_n8_5.ogg" : $"{id}_5.ogg")), $"{id}: 구운 파일이 없다");
             }
-            Assert.Contains("const SFX_VARIANTS = 5, ORB_NOTES = 8", html);
+            Assert.Contains("SFX_VARIANTS = 5, ORB_NOTES = SFXR.absorbNotes", html);   // 8음은 balance.json sfx(SfxGateTests)
             // 듣기 페이지는 빌드 때 큐를 받는다
             Assert.Contains("const DATA = /*__DATA__*/null;", ReadRepoFile("web", "lookdev", "sfx_listen.html"));
             Assert.Contains("\"sfx_listen\": sfx_blob", ReadRepoFile("tools", "build_web_prototype.py"));

@@ -982,8 +982,9 @@ const settings = {
 // 구운 효과음(SFX-02, Assets/Audio/SFX → 빌드가 lookdev/sfx 에 둠). 있으면 그걸 틀고, 못 읽으면(아티팩트 한 파일 판 등) 아래 발진기 소리.
 // 진기 흡수는 5음 음계 8음을 연속 흡수 때 차례로 올린다(14장). 벌은 5개씩 번갈아.
 const SFX_BAKED = { level: 'sfx_levelup', boss: 'sfx_boss_appear', bell: 'sfx_gimmick_bell' };
-const SFX_VARIANTS = 5, ORB_NOTES = 8, ORB_RUN_GAP = 0.35;
-audio.buf = {}; audio.orbStep = 0;
+// 동시 재생 제한·흡수 음계(14장, balance.json sfx, Core SfxGate 와 같은 셈): 같은 소리는 창 안 몇 개까지, 흡수음은 한 프레임에 하나
+const SFXR = B.sfx, SFX_VARIANTS = 5, ORB_NOTES = SFXR.absorbNotes, ORB_RUN_GAP = SFXR.absorbRunGapSeconds;
+audio.buf = {}; audio.orbStep = 0; audio.recent = {}; audio.orbFrame = -1;
 function loadBakedSfx() {
   const c = audio.ctx, get = (name, put) => fetch(`lookdev/sfx/${name}.ogg`)
     .then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => c.decodeAudioData(b)).then(put).catch(() => {});
@@ -1002,9 +1003,16 @@ function playBaked(list, vol) {
 function sfx(kind) {
   if (audio.muted || !audio.ctx) return;
   const now = audio.ctx.currentTime;
-  const gap = { hit: 0.05, kill: 0.07, orb: 0.06 }[kind] || 0;
-  if (gap && audio.last[kind] && now - audio.last[kind] < gap) return;
-  if (kind === 'orb') audio.orbStep = audio.last.orb && now - audio.last.orb < ORB_RUN_GAP ? Math.min(ORB_NOTES - 1, audio.orbStep + 1) : 0;
+  if (kind === 'orb') {
+    if (audio.orbFrame === lastTs) return;   // 한 프레임에 하나(SfxGate.TryAbsorb)
+    audio.orbFrame = lastTs;
+    audio.orbStep = audio.last.orb !== undefined && now - audio.last.orb < ORB_RUN_GAP ? Math.min(ORB_NOTES - 1, audio.orbStep + 1) : 0;
+  } else {
+    const q = (audio.recent[kind] ||= []);   // 같은 소리는 창 안 sameSoundMaxInWindow 개까지(SfxGate.TryPlay)
+    while (q.length && now - q[0] >= SFXR.sameSoundWindowSeconds) q.shift();
+    if (q.length >= SFXR.sameSoundMaxInWindow) return;
+    q.push(now);
+  }
   audio.last[kind] = now;
   if (kind === 'orb' && playBaked(audio.buf.orb?.[audio.orbStep], 0.18)) return;
   if (SFX_BAKED[kind] && playBaked(audio.buf[kind], kind === 'level' ? 0.5 : 0.7)) return;
