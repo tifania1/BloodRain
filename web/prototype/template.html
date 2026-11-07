@@ -2936,6 +2936,8 @@ function castPattern(e, P, dmg, dx, dy) {
         e.x = tx; e.y = ty;
         foeEffect('boom', tx, ty, { r: R, life: 0.3 }); sfx('boom'); G.cam.shake = Math.max(G.cam.shake, 0.12);
         if (Math.hypot(G.player.x - tx, G.player.y - ty) < R) hurtPlayer(dmg, e);
+        // 독두꺼비 왕: 착지마다 poolRadius 독 장판이 leaveSeconds(초당 피해는 baseDamage 와 같은 비율로 분마다 커짐, 겹쳐도 한 번)
+        if (P.poolRadius) (G.pools = G.pools || []).push({ x: tx, y: ty, r: P.poolRadius, dps: P.poolDamagePerSecond * dmg / (P.baseDamage || 1), t: P.leaveSeconds });
       } });
     } });
   } else if (P.shape === 'projectile_fan') {
@@ -2948,10 +2950,11 @@ function castPattern(e, P, dmg, dx, dy) {
     } });
   } else if (P.shape === 'cone') {
     // 강시 도부수 큰 도끼 휘두르기: 치켜들고 멈춰 섰다가 앞 부채꼴을 휩쓴다(bosspatterns.json elites gangsi_axeman)
-    const ca = Math.atan2(dy, dx), half = P.angleDegrees / 2 * Math.PI / 180;
-    if (P.bossHolds) e.windup = P.telegraphSeconds;
+    // waves 파(화산 장로의 강시 검 3연격)면 판정부터 waveIntervalSeconds 마다 같은 방향을 다시 벤다(Core PatternShapes.WaveSeconds)
+    const ca = Math.atan2(dy, dx), half = P.angleDegrees / 2 * Math.PI / 180, waves = P.waves || 1;
+    if (P.bossHolds) e.windup = P.telegraphSeconds + (waves - 1) * (P.waveIntervalSeconds || 0);
     foeEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: P.telegraphSeconds });
-    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+    for (let w = 0; w < waves; w++) G.zones.push({ delay: P.telegraphSeconds + w * (P.waveIntervalSeconds || 0), apply: () => {
       if (e.dead) return;
       foeEffect('cone', e.x, e.y, { a: ca, r: P.radius, half, life: 0.35, hot: true }); sfx('boom');
       const px = G.player.x - e.x, py = G.player.y - e.y, ang = Math.abs(((Math.atan2(py, px) - ca + Math.PI * 3) % TAU) - Math.PI);
@@ -2959,12 +2962,14 @@ function castPattern(e, P, dmg, dx, dy) {
     } });
   } else if (P.shape === 'bind_line') {
     // 장삼 포승줄: 멈춰 서서 예고선, 줄이 날아가 맞으면 피해와 rootSeconds 동안 걷지 못함(경공으로 끊김, 무공은 그대로)
-    const ca = Math.atan2(dy, dx), sp = P.projectileSpeed / 100 * MOVE;
-    if (P.bossHolds) e.windup = P.telegraphSeconds;
+    // waves 파(수적 두목 갈고리 3연)면 waveIntervalSeconds 마다 다시 던지되, 둘째부터는 던지는 순간 플레이어 쪽으로 겨눈다
+    const ca = Math.atan2(dy, dx), sp = P.projectileSpeed / 100 * MOVE, waves = P.waves || 1;
+    if (P.bossHolds) e.windup = P.telegraphSeconds + (waves - 1) * (P.waveIntervalSeconds || 0);
     foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
-    G.zones.push({ delay: P.telegraphSeconds, apply: () => {
+    for (let w = 0; w < waves; w++) G.zones.push({ delay: P.telegraphSeconds + w * (P.waveIntervalSeconds || 0), apply: () => {
       if (e.dead) return;
-      G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds });
+      const a = w ? Math.atan2(G.player.y - e.y, G.player.x - e.x) : ca;
+      G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds });
       sfx('dash');
     } });
   } else if (P.shape === 'summon') {
@@ -2972,7 +2977,8 @@ function castPattern(e, P, dmg, dx, dy) {
     toast(P.nameKo, '시강이 땅에서 일어난다');
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
-      for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, Math.max(1.5, P.scatter || 0)); spawnEnemy(P.summon, G.player.x + Math.cos(a) * r, G.player.y + Math.sin(a) * r); }
+      const cx = P.center === 'boss' ? e.x : G.player.x, cy = P.center === 'boss' ? e.y : G.player.y;   // center boss(수귀 우두머리·설랑 왕)면 제 둘레
+      for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, Math.max(1.5, P.scatter || 0)); spawnEnemy(P.summon, cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
       sfx('gong');
     } });
   } else if (P.shape === 'summon_ring') {
@@ -3121,6 +3127,8 @@ function castPattern(e, P, dmg, dx, dy) {
         hurtPlayer(dmg, e);
         if (P.stunSeconds) { G.player.stunT = Math.max(G.player.stunT || 0, P.stunSeconds); toast('기절', '범종 소리에 몸이 굳었다'); }
       }
+      // 독인 장로 독안개 확장: 그 자리에 poolRadius 안개가 leaveSeconds
+      if (P.poolRadius) (G.pools = G.pools || []).push({ x: e.x, y: e.y, r: P.poolRadius, dps: P.poolDamagePerSecond * dmg / (P.baseDamage || 1), t: P.leaveSeconds });
     } });
   }
 }

@@ -400,7 +400,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] R-01Ua 정예: 장판·갈고리 세 파·방패 돌진 · 먼저: E-01
   - 할 것: PatternRunner 에 더함 — 착지·판정 자리에 남는 장판(`PoolRadius`·`PoolDamagePerSecond`·`LeaveSeconds`, 겹쳐도 한 번, `BossPatterns.InPool`), 수적 두목 `bind_line` 세 파(`Waves`·`WaveIntervalSeconds`, 파마다 다시 겨눔), 철갑 수채 무사 `line` 방패 돌진(몸째 `ProjectileSpeed` 로 달리고 `RecoverySeconds` 굳음).
-  - 쓸 것: bosspatterns.json elites(poison_toad_king·tang_dart_gangsi·dogin_elder·pirate_chief·ironclad_fort_guard), 기획서 6장 '정예 패턴 수치', `Combat/PatternShapes`(line 돌진 `LineHoldSeconds`, circles `CircleCenters`, projectile_fan 파마다 `FanWaveSeconds`, WP-64)
+  - 쓸 것: bosspatterns.json elites(poison_toad_king·tang_dart_gangsi·dogin_elder·pirate_chief·ironclad_fort_guard), 기획서 6장 '정예 패턴 수치', `Combat/PatternShapes`(line 돌진 `LineHoldSeconds`, circles `CircleCenters`, projectile_fan·cone·bind_line 파마다 `WaveSeconds`·`WaveReaims`, summon 가운데 `SummonAroundCaster`, WP-64)
   - 메뉴: E-01 의 정예 부르기
   - 끝: 다섯이 기획서 6장 줄대로
   - 찍기: `docs/unity_shots/R-01U/` 의 `<id>.png`

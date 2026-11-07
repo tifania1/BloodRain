@@ -3,6 +3,7 @@
 // 웹 프로토타입 castPattern 의 같은 shape 칸과 같은 규칙이다(unity_tasks BR-01·C-10a·E-01·R-01Ua·R4-06U 의 PatternRunner 가 쓴다).
 //   projectile_fan 부채 탄 · jump_slam 뛰어 내려찍기 · circles 플레이어 둘레 원 · summon 부르기 · line 돌진·일섬
 // 시간표(언제 예고·판정하나)는 BossPatterns, 여기는 '어느 쪽, 어디, 몇 초 서 있나'만. 길이는 화면 기준 m, 각도는 도.
+// 장판(poolRadius)은 jump_slam 착지·circles 판정 자리에 남고 BossPatterns.InPool 로 판정, 초당 피해는 baseDamage 와 같은 비율로 커진다.
 // 데이터에 값이 없을 때 쓰는 기본값 넷은 웹 프로토타입 값이다(DefaultShotRadius 등). 데이터로 옮기는 것은 사람이 해 본 뒤(P-02 와 같이).
 using System;
 using BloodRain.Core.Data;
@@ -45,8 +46,14 @@ namespace BloodRain.Core.Combat
             return sp > 0f ? FanFlightLength(p, viewDiagonal) / sp : 0f;
         }
 
-        /// <summary>wave 번째 파(0부터)가 나가는 초(예고 시작부터). 방향은 예고 때 잡은 것 그대로.</summary>
-        public static float FanWaveSeconds(BossPatternDef p, int wave) => p.TelegraphSeconds + wave * p.WaveIntervalSeconds;
+        /// <summary>
+        /// wave 번째 파(0부터)가 나가는 초(예고 시작부터). projectile_fan·cone(화산 장로의 강시 3연격)은 예고 때 잡은 방향 그대로,
+        /// bind_line(수적 두목 갈고리 3연)은 둘째부터 던지는 순간 플레이어 쪽으로 다시 겨눈다. 마지막 파 = BossPatterns.CastSeconds.
+        /// </summary>
+        public static float WaveSeconds(BossPatternDef p, int wave) => p.TelegraphSeconds + wave * p.WaveIntervalSeconds;
+
+        /// <summary>bind_line 의 wave 번째 파가 예고 방향을 쓰나(첫 파만), 아니면 던질 때 다시 겨누나.</summary>
+        public static bool WaveReaims(BossPatternDef p, int wave) => p.Shape == "bind_line" && wave > 0;
 
         // ── jump_slam ──
         /// <summary>k 번째 뜀(0부터)이 시작되는 초(예고 시작부터). 이때 플레이어 자리에 그림자를 잡는다.</summary>
@@ -72,7 +79,10 @@ namespace BloodRain.Core.Combat
         }
 
         // ── summon ──
-        /// <summary>판정 때 그 순간 플레이어 둘레에 Count 마리 자리: 무작위 쪽, 거리 SummonMinDistance~Scatter(Scatter 가 더 작거나 없으면 SummonMinDistance).</summary>
+        /// <summary>부르는 자리 가운데가 부른 몸인가(center boss — 수귀 우두머리·설랑 왕). 아니면 판정 순간 플레이어 자리.</summary>
+        public static bool SummonAroundCaster(BossPatternDef p) => p.Center == "boss";
+
+        /// <summary>판정 때 가운데(SummonAroundCaster) 둘레에 Count 마리 자리: 무작위 쪽, 거리 SummonMinDistance~Scatter(Scatter 가 더 작거나 없으면 SummonMinDistance).</summary>
         public static (float x, float y)[] SummonOffsets(BossPatternDef p, Random rng)
         {
             float far = Math.Max(SummonMinDistance, p.Scatter);

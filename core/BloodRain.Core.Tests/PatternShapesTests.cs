@@ -62,7 +62,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(palm.Length, PatternShapes.FanFlightLength(palm, 20f));
             float mb = _d.Balance.Stats.MoveBase;
             Assert.Equal(palm.Length / (palm.ProjectileSpeed / 100f * mb), PatternShapes.FanFlightSeconds(palm, 20f, mb), 3);
-            Assert.Equal(palm.TelegraphSeconds, PatternShapes.FanWaveSeconds(palm, 0));
+            Assert.Equal(palm.TelegraphSeconds, PatternShapes.WaveSeconds(palm, 0));
         }
 
         [Fact] public void 뛰어_내려찍기_마지막_착지가_CastSeconds_와_같다()
@@ -112,6 +112,30 @@ namespace BloodRain.Core.Tests
             var slash = _d.BossPatterns.Values.SelectMany(s => s.Patterns.Concat(s.Phase2)).First(p => p.Id == "screen_slash");
             Assert.Equal(0f, PatternShapes.ChargeRunSeconds(slash, mb));
             Assert.Equal(slash.TelegraphSeconds + slash.RecoverySeconds, PatternShapes.LineHoldSeconds(slash, mb), 3);
+        }
+
+        [Fact] public void 여러_파는_마지막_파가_CastSeconds_와_같고_갈고리만_다시_겨눈다()
+        {
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("const a = w ? Math.atan2(G.player.y - e.y, G.player.x - e.x) : ca;", html);
+            Assert.Contains("const cx = P.center === 'boss' ? e.x : G.player.x", html);
+            var sword = Elite("huashan_elder_gangsi", "sword_triple");
+            var hook = Elite("pirate_chief", "hook_x3");
+            foreach (var p in new[] { sword, hook, Boss("dang_sohye", "dart_fan_x3") })
+                Assert.Equal(BossPatterns.CastSeconds(p), PatternShapes.WaveSeconds(p, p.Waves - 1), 3);
+            Assert.False(PatternShapes.WaveReaims(hook, 0));
+            Assert.True(PatternShapes.WaveReaims(hook, 1));
+            Assert.False(PatternShapes.WaveReaims(sword, 1));
+            Assert.True(PatternShapes.SummonAroundCaster(Elite("water_ghost_chief", "call_water_ghosts")));
+            Assert.False(PatternShapes.SummonAroundCaster(Boss("jang_sam", "whistle_summon")));
+        }
+
+        [Fact] public void 장판이_있는_정예_패턴은_웹도_남긴다()
+        {
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            Assert.Equal(3, System.Text.RegularExpressions.Regex.Matches(html, @"if \(P\.poolRadius\) \(G\.pools = G\.pools \|\| \[\]\)\.push").Count);  // circles·jump_slam·circles self
+            Assert.True(Elite("poison_toad_king", "poison_hop_x3").PoolRadius > 0f);
+            Assert.True(Elite("dogin_elder", "fog_expand").PoolRadius > 0f);
         }
     }
 }
