@@ -4097,13 +4097,13 @@ const ELIX = DATA.innElixirs || [], ELIX_MAX = DATA.elixirsPerLife || 1;
 const elixAvail = m => { const f = INN_F.find(x => x.id === 'apothecary'); return !!f && !f.underRepair && facOpen(m, f); };
 // 수련동(10장 '객잔 시설' 수련동 '도전 과제 목록과 보상'·'해금과 도전 과제' 표): 혼 기록으로 이룬 것과 남은 것을 보여 주기만 한다.
 // 줄은 데이터에서 만든다 — 땅의 주인 첫 처치(그 땅으로 여는 문파·무공·대표 인물), 도전 과제 무공(weapons.json unlock 토큰), 칭호(cheonha.json titles), 역근·금두꺼비·의서.
-// 의상(태극 구간만 지키며 원각 처치)은 혼 기록 unlocks 의 costume:<id>. 그림은 아트 뒤라 이름만
+// 의상(태극 구간만 지키며 원각 처치)은 혼 기록 unlocks 의 costume:<id>. 그림은 아트 뒤라 이름만. Unity 는 같은 줄을 Core Meta/CaveList 로 만든다(EL-07)
 const roKo = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00, j = c >= 0 && c < 11172 ? c % 28 : 0; return j === 0 || j === 8 ? '로' : '으로'; };   // 받침 없거나 ㄹ이면 '로'
 const CAVE_TOKEN_KO = { kills_5000_one_run: '한 생에서 적 5,000 처치', dash_300_one_run: '한 생에서 경공 300회', seal_talisman_10_total: '정신부 누적 10회 사용' };
 function caveRows(m) {
   const rows = [], kills = m.bossKills || {}, un = m.unlocks || [], tok = t => un.includes(t);
   rows.push(['서장 끝', '연무장, 첫 환혼', !!m.prologue]);
-  for (const r of (DATA.regions || []).filter(x => x.boss && !x.final).sort((a, b) => (a.chapter || 0) - (b.chapter || 0))) {
+  for (const r of (DATA.regions || []).filter(x => x.boss && !x.final)) {   // 데이터 차례(= 장 차례, Core CaveList). chapter 는 'chapter1' 같은 글이라 빼서 정렬할 수 없다
     const got = [...(DATA.sects || []).filter(x => x.unlock === 'boss:' + r.id).map(x => `${x.nameKo}${roKo(x.nameKo)} 환생`),
       ...(DATA.leaders || []).filter(l => l.sect === r.sect).map(l => `${SPK[l.id] || l.id} 합류`),
       ...DATA.weapons.filter(w => w.unlock === 'boss:' + r.id).map(w => w.nameKo)];
