@@ -52,11 +52,8 @@ namespace BloodRain.Presentation
         /// <summary>이름 옆에 붙이는 한자. 중국어(간체·번체) 화면에선 이름이 이미 한자라 겹치니 뺀다.</summary>
         public static string Hanja(string hanja) => Current.Lang.StartsWith("zh") ? "" : hanja ?? "";
 
-        static string FromSystem(SystemLanguage l) =>
-            l == SystemLanguage.Korean ? "ko"
-            : l == SystemLanguage.ChineseSimplified || l == SystemLanguage.Chinese ? "zh-Hans"
-            : l == SystemLanguage.ChineseTraditional ? "zh-Hant"
-            : "en";
+        // 기기 언어 규칙은 Core GameSettings.LanguageFor 한곳(설정 화면 기본값과 같게). 저장 낱말 "lang" 도 GameSettings.Lang 과 같다.
+        static string FromSystem(SystemLanguage l) => BloodRain.Core.Meta.GameSettings.LanguageFor(l.ToString());
 
         static Strings Load(string lang)
         {
