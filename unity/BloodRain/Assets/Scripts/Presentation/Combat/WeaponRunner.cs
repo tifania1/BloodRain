@@ -476,6 +476,27 @@ namespace BloodRain.Presentation.Combat
                     }
                     break;
                 }
+                case "random_arc":
+                {
+                    // 취선봉(R-12Ua, 9장): 무작위 방향 큰 원호, 큰 넉백. 휘두르기 hits(1→3)회를 gapSeconds 간격, 범위 range × areaLv8.
+                    // 절기 팔선과해: 한 번에 directions 갈래 사방, 맞은 적 stunSeconds 기절(웹 random_arc, Core WeaponShapes.ArcDirections)
+                    var evo = EvoOf(s);
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s));
+                    int swings = evo != null ? 1 : WeaponGrowth.Hits(s.Def, s.level);
+                    int dirN = evo != null ? Mathf.RoundToInt(evo.Param("directions", 8f)) : 1;
+                    float stun = evo != null ? evo.Param("stunSeconds") : 0f;
+                    float gap = Gap(s, 0.18f), kb = ws.Speed(Knock(s));
+                    for (int k = 0; k < swings; k++)
+                        Later(k * gap, () =>
+                        {
+                            foreach (var a in WeaponShapes.ArcDirections(evo != null, dirN, () => UnityEngine.Random.value))
+                            {
+                                AddFx(a, Mathf.PI, R, 0.26f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.80f, 0.62f, 0.38f, 0.7f));
+                                Deal(s, dmg, HitArc(P, R, a, dmg, kb, stun));
+                            }
+                        });
+                    break;
+                }
                 default:
                     break; // 아직 없는 갈래
             }
@@ -604,7 +625,7 @@ namespace BloodRain.Presentation.Combat
             Deal(f.Weapon, f.Damage, enemies.Damage(_filtered, f.Damage, P, World.Speed(Knock(f.Weapon))));
         }
 
-        int HitArc(Vector2 c, float R, float a, float dmg, float knock)
+        int HitArc(Vector2 c, float R, float a, float dmg, float knock, float stun = 0f)
         {
             enemies.Sim.QueryCircle(new float2(c.x, c.y), R, _near);
             BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(c.x, c.y), R); // C-09b 친 자리 안 등롱
@@ -617,6 +638,13 @@ namespace BloodRain.Presentation.Combat
                 float dx = e.Pos.x - c.x, dy = e.Pos.y - c.y, d = Mathf.Sqrt(dx * dx + dy * dy);
                 if (dx * ca + dy * sa >= -0.1f * d) _filtered.Add(i); // 웹과 같은 반원 판정
             }
+            if (stun > 0f) // 팔선과해 기절: 피해(쓰러짐으로 자리 번호가 바뀜) 전에 건다. 땅의 주인은 무리에 없다
+                foreach (int i in _filtered)
+                {
+                    var e = enemies.Sim.Get(i);
+                    e.Stun = Mathf.Max(e.Stun, stun);
+                    enemies.Sim.Set(i, e);
+                }
             return enemies.Damage(_filtered, dmg, c, knock);
         }
 
