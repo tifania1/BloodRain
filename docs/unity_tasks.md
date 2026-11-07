@@ -424,6 +424,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 웹 프로토타입과 같음
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
+- [ ] LU-01U 기연 능력치로 넷째 레벨업 카드 · 먼저: 없음
+  - 할 것: LevelUpScreen 이 `RollLevelUp(_rng, 0f, …)`·`RollFirstLevelUp(_rng, 0f, …)` 로 기연을 늘 0 으로 넘겨, 연무장 '기연'·도문심법(기연 +10/Lv)·타고난 성질을 올려도 넷째 카드가 안 나온다(2026-11-08 클라우드가 찾음, 3장 용어표 '기연: 희귀 선택지'). 열 때·다시 고를 때 둘 다 `LifeRunner.Instance.Stats.Luck`(없으면 0)을 넘긴다. 서장 첫 레벨업(RollFirstLevelUp)은 무공 하나뿐이라 그대로 0 이어도 되지만 같은 값을 넘겨도 무방.
+  - 쓸 것: Core `Loadout.RollLevelUp(rng, luck, unlocked)`(카드 수 = baseChoices + (rng < luck / balance.levelUp.luckForFourthChoice 이면 1), 최대 maxChoices), `LifeRunner.Stats.Luck`. 웹 template.html `luckForFourthChoice` 줄과 같음
+  - 메뉴: 없음(시험은 도문심법을 무공 넣기로 Lv5 → 기연 50)
+  - 끝: 기연 50 이상이면 늘 카드 넷, 0 이면 늘 셋. 카드 넷이 화면에 겹치지 않게 놓임. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/LU-01U/` 의 `four_cards.png`
+
 - [ ] LK-01Ua 연환 효과 다섯(웹에 있는 것: 쌍검합벽·권장합일·독비·암기연환·풍화) · 먼저: 없음
   - 할 것: 지금 Unity 는 연환을 레벨업 카드 띠·HUD 인장·장경각에만 보이고 효과는 하나도 없다(2026-11-08 클라우드가 찾음 — WeaponRunner 어디서도 연환을 안 봄). 웹과 같은 자리에: 쌍검합벽 창천검기가 도는 동안 삼재검법 획 피해 × (1 + damageBonus)·금빛 / 권장합일 나한권 마지막 주먹에 장풍 한 발(장풍 피해 × palmDamageRatio, 관통) / 독비 비도 관통 + extraPierce(독안개 지난 비도 중독은 독무 장판이 붙은 뒤) / 암기연환 섬광지 치명타 때 그 적에게 비도 daggers 자루(비도 한 발 피해, 따라감) / 풍화 불붙은 적을 지난 장풍이 크기 × (1 + sizeBonus)·화상.
   - 쓸 것: Core `SynergyState.LinkParam(id, key)`(켜진 연환만 값, 아니면 null — 비급 잠김도 null), `LinkDef.Param`, synergies.json `links[].params`. 시너지 상태는 LevelUpScreen.RefreshSeals 가 쓰는 것과 같은 `Synergy.Compute(data, loadout, extra, soul.RestoredManuals)`. 웹 `linkP`·`link(...)` 자리(template.html 에서 `ssanggeom`·`gwonjang`·`dokbi`·`amgi`·`punghwa` 찾기)
