@@ -365,7 +365,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] BR-01 패턴 러너 틀과 원각 1막 · 먼저: LF-02
   - 할 것: `Presentation/Combat/PatternRunner.cs` — `BossPatterns` 시간표를 돌려 예고(바닥 그림자·선·원)와 판정을 그리는 틀 하나. 땅의 주인·정예·장삼이 모두 이걸 쓴다. `life.Bosses.Fight` 가 생기면 원각(`data.BossPatternSet("wongak")`: vajra_cone·eighteen_arhat_ring·bell_drop_x3)을 `Fight.MaxHealth` 로 세운다. 무공 피해가 보스에 들어가게(감전·넉백은 보스 제외 — W-01 남은 것).
-  - 쓸 것: Core `BossPatterns`, `World/BossAwakening.cs`(Fight·InFight·SpawnTargetScale), bosspatterns.json `wongak`
+  - 쓸 것: Core `BossPatterns`, `World/BossAwakening.cs`(Fight·InFight·SpawnTargetScale), bosspatterns.json `wongak`, `Combat/PatternShapes`(circles 원 자리 `CircleCenters` — 범종 낙하 셋, summon `SummonOffsets`, 2026-11-07 WP-64)
   - 메뉴: `BloodRain/Test/땅의 주인 부르기(플레이 중)/wongak`
   - 끝: 원각 1막 세 패턴이 웹 시안 순서·예고 시간대로 돌고 맞으면 피해. 보스전 동안 잡몹 목표가 줄어듦
   - 찍기: `docs/unity_shots/BR-01/` 의 `wongak_<패턴>.png`
@@ -379,7 +379,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] C-10a 강시 포쾌 장삼 · 먼저: BR-01
   - 할 것: PatternRunner 로 `jang_sam`(rope_throw `bind_line` — 맞으면 `RootSeconds` 걷기 못함, 경공으로 끊김 / whistle_summon 시강 소환 / triple_slam `jump_slam` — Count 번, 뛸 때마다 그 순간 플레이어 자리 그림자). 최대 기혈 `Prologue.BossMaxHealth(boss)`, 2막 없음.
-  - 쓸 것: Core `Run/Prologue.cs`, bosspatterns.json `jang_sam`, `PlayerController.Bind`(이미 있음)
+  - 쓸 것: Core `Run/Prologue.cs`, bosspatterns.json `jang_sam`, `PlayerController.Bind`(이미 있음), `Combat/PatternShapes`(jump_slam `JumpTakeoffSeconds`·`JumpLandSeconds`, summon `SummonOffsets`, WP-64)
   - 메뉴: `BloodRain/Test/땅의 주인 부르기(플레이 중)/jang_sam`
   - 끝: 세 패턴이 웹 프로토타입 장삼과 같은 순서·간격
   - 찍기: `docs/unity_shots/C-10/` 의 `jang_sam.png`
@@ -393,14 +393,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] E-01 숭산 정예 셋 · 먼저: BR-01
   - 할 것: PatternRunner 로 동인(`jump_slam` 3연타), 계율원 강시 승려(`projectile_fan` 세 갈래, 걸으며 쏨), 강시 방장 대리(`circles` + Aim `self`, 맞으면 `StunSeconds` 걷기·경공 못 함, 무공은 나감). LF-02 가 정예 사건으로 세운 적에 붙인다.
-  - 쓸 것: `data.ElitePatternSet("dongin"|"gyeyul_monk"|"acting_abbot")`, bosspatterns.json elites
+  - 쓸 것: `data.ElitePatternSet("dongin"|"gyeyul_monk"|"acting_abbot")`, bosspatterns.json elites, `Combat/PatternShapes`(jump_slam 뜀·착지 초, projectile_fan `FanDegrees`·`FanShotRadius`·`FanFlightSeconds`, WP-64)
   - 메뉴: `BloodRain/Test/정예 부르기(플레이 중)/<id>`
   - 끝: 셋이 웹 프로토타입 eliteAI 와 같은 모양
   - 찍기: `docs/unity_shots/E-01/` 의 `<id>.png`
 
 - [ ] R-01Ua 정예: 장판·갈고리 세 파·방패 돌진 · 먼저: E-01
   - 할 것: PatternRunner 에 더함 — 착지·판정 자리에 남는 장판(`PoolRadius`·`PoolDamagePerSecond`·`LeaveSeconds`, 겹쳐도 한 번, `BossPatterns.InPool`), 수적 두목 `bind_line` 세 파(`Waves`·`WaveIntervalSeconds`, 파마다 다시 겨눔), 철갑 수채 무사 `line` 방패 돌진(몸째 `ProjectileSpeed` 로 달리고 `RecoverySeconds` 굳음).
-  - 쓸 것: bosspatterns.json elites(poison_toad_king·tang_dart_gangsi·dogin_elder·pirate_chief·ironclad_fort_guard), 기획서 6장 '정예 패턴 수치'
+  - 쓸 것: bosspatterns.json elites(poison_toad_king·tang_dart_gangsi·dogin_elder·pirate_chief·ironclad_fort_guard), 기획서 6장 '정예 패턴 수치', `Combat/PatternShapes`(line 돌진 `LineHoldSeconds`, circles `CircleCenters`, projectile_fan 파마다 `FanWaveSeconds`, WP-64)
   - 메뉴: E-01 의 정예 부르기
   - 끝: 다섯이 기획서 6장 줄대로
   - 찍기: `docs/unity_shots/R-01U/` 의 `<id>.png`
@@ -414,14 +414,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] R4-06U 정예: 화산·곤륜 설원·십만대산 아홉 · 먼저: R-01Ub
   - 할 것: PatternRunner 로 아홉을 돌린다. 새로 필요한 것: 화산 장로의 강시 `cone` 세 파(`Waves` 3·`WaveIntervalSeconds` 0.3, 같은 방향, 멈춰 섬), 설인 왕 `projectile_fan` 한 발(지름 `Width`), 빙혈의 제자 `clones`(설무향 빙분신을 정예에 — 진짜 하나만 그림자, Count 는 진짜 포함 3), 설랑 왕 `summon`(설랑 떼 다섯, 양옆으로 돌아 들어옴)과 `line` 돌진을 번갈아, 혈사자·설랑 왕 `line` 은 철갑 수채 무사 방패 돌진과 같은 길, 혈영회 대주 `blink_slam` 세 번, 산귀 `circles` 세 곳(±8m).
-  - 쓸 것: bosspatterns.json elites(plum_ghost_captain·rockfall_mountain_ghost·huashan_elder_gangsi·yeti_king·binghyeol_disciple·snow_wolf_king·blood_lion_elite·four_guardian_gangsi·hyeolyeong_captain), 기획서 6장 '화산·곤륜 설원·십만대산 정예 아홉'
+  - 쓸 것: bosspatterns.json elites(plum_ghost_captain·rockfall_mountain_ghost·huashan_elder_gangsi·yeti_king·binghyeol_disciple·snow_wolf_king·blood_lion_elite·four_guardian_gangsi·hyeolyeong_captain), 기획서 6장 '화산·곤륜 설원·십만대산 정예 아홉', `Combat/PatternShapes`(설인 왕 얼음덩이 반경 `FanShotRadius` = 지름 1.2m 의 절반, line·summon·circles, WP-64)
   - 메뉴: E-01 의 정예 부르기
   - 끝: 아홉이 기획서 6장 줄대로
   - 찍기: `docs/unity_shots/R4-06U/` 의 `<id>.png`
 
 - [ ] R-14Ua 당소혜(당가타) · 먼저: BR-02
   - 할 것: PatternRunner 로 `dang_sohye`(half_map_poison_fog `HalfFieldFog.Choose/Covers`, dart_fan_x3, summon_golden_centipede). 2막 `new BossSplit(p, 남은 기혈)`(몸마다 `Damage`, 매 프레임 `Tick` 이 돌려준 몸을 일으킴, 분열 동안 패턴 Tick 멈춤, 자리 `RingOffsets(p, p.Scatter, 각도)`).
-  - 쓸 것: Core `BossPatterns`·`BossSplit`·`HalfFieldFog`, bosspatterns.json `dang_sohye`
+  - 쓸 것: Core `BossPatterns`·`BossSplit`·`HalfFieldFog`, bosspatterns.json `dang_sohye`, `Combat/PatternShapes`(summon·projectile_fan·circles — 칠성검진은 `CircleCenters` 가 북두칠성으로, WP-64)
   - 메뉴: BR-01 의 땅의 주인 부르기/dang_sohye
   - 끝: 1막 셋·2막 분열이 천하 시안과 같음
   - 찍기: `docs/unity_shots/R-14U/` 의 `dang_sohye.png`

@@ -2944,7 +2944,7 @@ function castPattern(e, P, dmg, dx, dy) {
     if (P.bossHolds) e.windup = P.telegraphSeconds + Math.max(0, (P.waves || 1) - 1) * (P.waveIntervalSeconds || 0);
     for (let w = 0; w < (P.waves || 1); w++) G.zones.push({ delay: P.telegraphSeconds + w * (P.waveIntervalSeconds || 0), apply: () => {
       if (e.dead) return;
-      for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.5, dmg, life: len / sp, t: 0, kind: 'epalm' }); }
+      for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width ? P.width / 2 : 0.5, dmg, life: len / sp, t: 0, kind: 'epalm' }); }
     } });
   } else if (P.shape === 'cone') {
     // 강시 도부수 큰 도끼 휘두르기: 치켜들고 멈춰 섰다가 앞 부채꼴을 휩쓴다(bosspatterns.json elites gangsi_axeman)
@@ -2972,7 +2972,7 @@ function castPattern(e, P, dmg, dx, dy) {
     toast(P.nameKo, '시강이 땅에서 일어난다');
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
-      for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, P.scatter); spawnEnemy(P.summon, G.player.x + Math.cos(a) * r, G.player.y + Math.sin(a) * r); }
+      for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, Math.max(1.5, P.scatter || 0)); spawnEnemy(P.summon, G.player.x + Math.cos(a) * r, G.player.y + Math.sin(a) * r); }
       sfx('gong');
     } });
   } else if (P.shape === 'summon_ring') {
@@ -3069,10 +3069,11 @@ function castPattern(e, P, dmg, dx, dy) {
     G.zones.push({ delay: P.telegraphSeconds, apply: () => { if (!e.dead) (G.eDash = G.eDash || []).push({ e, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, left: P.length, w: P.width, dmg, hit: false }); sfx('dash'); } });
   } else if (P.shape === 'circles' && P.aim !== 'self') {
     // 혈술사 장로 큰 피 웅덩이·산귀 낙석 부르기(WP-13d): 예고 순간 플레이어 둘레(scatter 안, 기본 2.5m)에 원 count 개, telegraphSeconds 뒤 떨어진다.
+    // arrangement big_dipper(혈허진인 칠성검진)면 플레이어를 국자 끝에 둔 북두칠성(Core PatternShapes.CircleCenters·BossPatterns.BigDipperOffsets, 시안과 같은 BIG_DIPPER)
     // poolRadius 가 있으면 그 자리에 leaveSeconds 동안 장판(초당 피해는 baseDamage 와 같은 비율로 분마다 커짐)
-    const sp = P.scatter || 2.5, k = dmg / (P.baseDamage || 1);
+    const sp = P.scatter || 2.5, k = dmg / (P.baseDamage || 1), dip = P.arrangement === 'big_dipper' ? bigDipperAt(G.player.x, G.player.y, Math.atan2(e.y - G.player.y, e.x - G.player.x), P.length) : null;
     for (let i = 0; i < P.count; i++) {
-      const tx = G.player.x + (P.count > 1 ? rand(-sp, sp) : 0), ty = G.player.y + (P.count > 1 ? rand(-sp, sp) : 0);
+      const tx = dip ? dip[i][0] : G.player.x + (P.count > 1 ? rand(-sp, sp) : 0), ty = dip ? dip[i][1] : G.player.y + (P.count > 1 ? rand(-sp, sp) : 0);
       G.zones.push({ delay: P.telegraphSeconds, mark: { x: tx, y: ty, r: P.radius }, apply: () => {
         if (e.dead) return;
         foeEffect('boom', tx, ty, { r: P.radius, life: 0.3 }); sfx('boom');
@@ -3122,6 +3123,13 @@ function castPattern(e, P, dmg, dx, dy) {
       }
     } });
   }
+}
+
+// 칠성검진 일곱 자리(Core BossPatterns.BigDipperOffsets): 손잡이가 보스 쪽(bossA), 일곱째(국자 끝)가 (px, py). 시안 BIG_DIPPER 와 같은 값
+const BIG_DIPPER = [[0, 0], [0.18, 0.05], [0.36, 0.03], [0.54, 0.11], [0.67, 0.3], [0.93, 0.33], [1, 0.09]];
+function bigDipperAt(px, py, bossA, L) {
+  const rot = bossA + Math.PI, E = BIG_DIPPER[BIG_DIPPER.length - 1], c = Math.cos(rot), s = Math.sin(rot);
+  return BIG_DIPPER.map(([u0, v0]) => { const u = (u0 - E[0]) * L, v = (v0 - E[1]) * L; return [px + u * c - v * s, py + u * s + v * c]; });
 }
 
 function bossAI(e, dt, dx, dy, d) {
