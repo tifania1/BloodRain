@@ -35,6 +35,8 @@
   "ui.chest.fallback": "행낭 · 은자 +{0}냥 · 기혈 +{1}",
   "ui.chest.close": "Enter · 닫기",
   "ui.chest.awakened": "절기 각성 · {0}",
+  "ui.chest.hint_novessel": "{0}(Lv {1})에 올라야 절기를 담을 그릇이 생긴다",
+  "ui.chest.hint_full": "그릇이 찼다. {0}(Lv {1})에 오르는 순간 문턱의 무공이 깨어난다",
   "ui.encounter.tomb.sub": "검 하나를 꽂는다 — 그 무공은 이번 생에서 버리고, 레벨 하나당 남은 무공 공력 +{0}%",
   "ui.encounter.tomb.card": "꽂으면 남은 무공 공력 +{0}%",
   "ui.encounter.tomb.pass": "지나친다",

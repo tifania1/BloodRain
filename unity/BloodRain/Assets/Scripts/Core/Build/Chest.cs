@@ -4,6 +4,7 @@
 // 2) 아니면 가진 무공·심법 강화 n개. n 은 balance.json chest.upgradeCountWeights(1개·2개·3개… 가중치)로 뽑고,
 //    장강수로채 진전 4단계 같은 덧셈은 extraUpgrades 로 더한다(ExtraUpgrades(synergy) 가 synergies.json 에서 센다). 강화할 것이 없으면 그 몫은 은자·음식(Fallback).
 // 각성 연출은 Combat.Awakening, 그릇 수는 Loadout.Vessels 가 맡는다.
+// 3) 각성이 아니면 Hint 로 다음 그릇이 생기는 경지를 알려 준다(8장 '그릇이 차 있으면 … 다음 그릇이 생기는 경지를 알려 줍니다', 웹 chestHint 와 같은 셈).
 using System;
 using System.Collections.Generic;
 using BloodRain.Core.Data;
@@ -18,8 +19,44 @@ namespace BloodRain.Core.Build
         public readonly List<Offer> Upgrades = new List<Offer>();
     }
 
+    public enum ChestHintKind
+    {
+        /// <summary>알릴 것이 없다(그릇이 남았거나 문턱 무공이 없거나 더 생길 그릇이 없음).</summary>
+        None,
+        /// <summary>아직 절정 전이라 그릇이 하나도 없다.</summary>
+        NoVessel,
+        /// <summary>문턱에 선 무공이 있는데 그릇이 다 찼다. 다음 경지에 오르면 깨어난다.</summary>
+        Full,
+    }
+
+    public readonly struct ChestHint
+    {
+        public readonly ChestHintKind Kind;
+        /// <summary>다음 그릇이 생기는 경지(Kind 가 None 이면 null).</summary>
+        public readonly RealmDef? Next;
+        public ChestHint(ChestHintKind kind, RealmDef? next) { Kind = kind; Next = next; }
+    }
+
     public static class Chest
     {
+        /// <summary>보갑 화면 아래 한 줄. 이미 깨운 절기 수보다 그릇이 많아지는 첫 경지를 다음 경지로 본다.</summary>
+        public static ChestHint Hint(GameData data, Loadout loadout, int playerLevel, string mode = "normal")
+        {
+            var vessels = data.Balance.Evolution.Vessels;
+            int used = loadout.Evolved.Count;
+            RealmDef? next = null;
+            foreach (var r in data.Balance.Realms)
+            {
+                if (r.OnlyIn != null && !r.OnlyIn.Contains(mode)) continue;
+                if (vessels.TryGetValue(r.Id, out var v) && v > used) { next = r; break; }
+            }
+            if (next == null) return new ChestHint(ChestHintKind.None, null);
+            int have = loadout.Vessels(playerLevel, mode);
+            if (have == 0) return new ChestHint(ChestHintKind.NoVessel, next);
+            if (used >= have && loadout.AtThreshold().Count > 0) return new ChestHint(ChestHintKind.Full, next);
+            return new ChestHint(ChestHintKind.None, null);
+        }
+
         /// <summary>가중치대로 강화 개수(1부터)를 뽑는다.</summary>
         public static int RollUpgradeCount(ChestDef rule, Random rng)
         {

@@ -107,5 +107,63 @@ namespace BloodRain.Core.Tests
             Assert.Contains("보갑", tiers[0].t.Desc);
             Assert.Contains("정예 보갑에서 무공 강화가 하나 더", TestData.Gdd);
         }
+
+        Loadout AtThresholdJin()
+        {
+            var evo = _d.Evolutions.First(e => e.Weapon == "samjae_sword");
+            var lo = Jin();
+            while (lo.Weapons["samjae_sword"] < _d.Balance.Levels.WeaponMax) lo.Apply(new Offer(OfferKind.UpgradeWeapon, "samjae_sword"));
+            lo.Apply(new Offer(OfferKind.NewPassive, evo.Passive));
+            while (lo.Passives[evo.Passive] < _d.Balance.Evolution.PairPassiveMinLevel) lo.Apply(new Offer(OfferKind.UpgradePassive, evo.Passive));
+            return lo;
+        }
+
+        [Fact] public void 그릇이_없으면_첫_그릇_경지를_알려_준다()
+        {
+            var h = Chest.Hint(_d, Jin(), 1);
+            Assert.Equal(ChestHintKind.NoVessel, h.Kind);
+            Assert.Equal("jeoljeong", h.Next!.Id); // 8장: 절정1·초절정2·화경3·현경4
+        }
+
+        [Fact] public void 그릇이_찼고_문턱이면_다음_경지를_알려_준다()
+        {
+            var lo = AtThresholdJin();
+            int jeoljeong = _d.Balance.Realms.First(x => x.Id == "jeoljeong").Level;
+            Assert.Equal(ChestHintKind.None, Chest.Hint(_d, lo, jeoljeong).Kind); // 그릇이 남았다(보갑이 곧 각성)
+            lo.Evolve(_d.Evolutions.First(e => e.Weapon == "samjae_sword"));
+            Assert.Equal(ChestHintKind.None, Chest.Hint(_d, lo, jeoljeong).Kind); // 찼지만 문턱 무공이 없다
+            var two = _d.Evolutions.First(e => e.Weapon != "samjae_sword");
+            lo.Apply(new Offer(OfferKind.NewWeapon, two.Weapon));
+            while (lo.Weapons[two.Weapon] < _d.Balance.Levels.WeaponMax) lo.Apply(new Offer(OfferKind.UpgradeWeapon, two.Weapon));
+            if (!lo.Passives.ContainsKey(two.Passive)) lo.Apply(new Offer(OfferKind.NewPassive, two.Passive));
+            while (lo.Passives[two.Passive] < _d.Balance.Evolution.PairPassiveMinLevel) lo.Apply(new Offer(OfferKind.UpgradePassive, two.Passive));
+            var h = Chest.Hint(_d, lo, jeoljeong);
+            Assert.Equal(ChestHintKind.Full, h.Kind);
+            Assert.Equal("chojeoljeong", h.Next!.Id);
+            Assert.Null(Chest.Open(_d, lo, jeoljeong, new Random(1)).Awakened); // 안내와 같이 강화만
+        }
+
+        [Fact] public void 그릇이_더_생길_경지가_없으면_말하지_않는다()
+        {
+            var lo = Jin();
+            int most = _d.Balance.Evolution.Vessels.Values.Max();
+            foreach (var e in _d.Evolutions.Take(most)) lo.Evolve(e);
+            Assert.Equal(ChestHintKind.None, Chest.Hint(_d, lo, 999).Kind);
+        }
+
+        [Fact] public void 보갑_안내_글은_네_언어에_있고_자리_둘()
+        {
+            foreach (var lang in new[] { "ko", "en", "zh-Hans", "zh-Hant" })
+            {
+                var json = System.IO.File.ReadAllText(System.IO.Path.Combine(TestData.DataDir, "strings", lang + ".json"));
+                foreach (var key in new[] { "ui.chest.hint_novessel", "ui.chest.hint_full" })
+                {
+                    var m = Regex.Match(json, "\"" + Regex.Escape(key) + "\": \"([^\"]*)\"");
+                    Assert.True(m.Success, lang + " " + key);
+                    Assert.Contains("{0}", m.Groups[1].Value);
+                    Assert.Contains("{1}", m.Groups[1].Value);
+                }
+            }
+        }
     }
 }

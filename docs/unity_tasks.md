@@ -326,6 +326,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 조건이 안 맞으면 강화 목록, 맞으면 각성 연출 뒤 무공 이름이 절기로 바뀜
   - 찍기: `docs/unity_shots/C-09/` 의 `chest_upgrade.png`, `chest_awaken.png`
 
+- [ ] CH-01U 보갑 화면 아래 그릇 안내 한 줄 · 먼저: C-09d
+  - 할 것: ChestLayer 강화 목록 화면 맨 아래(닫기 글 위)에 8장 '그릇이 차 있으면 보갑은 평소처럼 강화만 주고, 다음 그릇이 생기는 경지를 알려 줍니다' 한 줄. 웹 chestHint 와 같은 셈(2026-11-08 클라우드가 Core 로 옮김).
+  - 쓸 것: `Chest.Hint(data, life.Loadout, level)` — `Kind` 가 `NoVessel` 이면 `ui.chest.hint_novessel`, `Full` 이면 `ui.chest.hint_full`, `None` 이면 안 띄움. {0} 은 `Loc.Realm(hint.Next)`, {1} 은 `hint.Next.Level`. Open 안에서 Chest.Open 을 부른 뒤에 셈(강화가 Loadout 에 들어간 뒤)
+  - 메뉴: C-09d 의 `BloodRain/Test/보갑 놓기(플레이 중)`
+  - 끝: 서장 몸(Lv 35 아래) 보갑 → '절정(Lv 35)에 올라야 …' 한 줄. 각성 시험 몸으로 절기 하나 깨운 뒤 다른 무공도 문턱에 세우고 절정에서 보갑 → '그릇이 찼다. 초절정(Lv 50)…'. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/CH-01U/` 의 `hint_novessel.png`
+
 - [ ] C-09e 절기 모양 넷과 오뢰정법 · 먼저: C-09d (진행: 2026-11-07 22:55 PC — WeaponRunner `EvoOf`(한 생 Loadout.Evolved)·`EvoDamage`(balance evolution.damageMultiplier × 각성 여운 Awakening.DamageMultiplier)를 모든 무공 피해에. 천지인 삼검: 사거리 × rangeMultiplier, `FrontArcDirections` 세 방향 금빛, `SendsWave` 마다 관통 검기. 백보신권: 연타 뒤 `FanAngles` 세 갈래 권경(탄속 × 수명 안 가까운 적 조준). 둘 다 시험 몸으로 봄, 콘솔 에러 0, 찍음 `docs/unity_shots/C-09/` 의 `evolved_cheonjiin.png`·`evolved_baekbo_fist.png`. 남은 것: 무영비도(NextBounce)·칠보단혼무(PoisonExecutes)·흑룡탄·팔선과해·오뢰정법. 시험 몸 메뉴를 다시 누르면 다음 절기로 넘어감)
   - 할 것: WeaponRunner 에 각성한 무공의 절기 모양을 붙인다. 숫자는 `EvolutionDef.Param`(waveSpeed·waveRadius·waveLifeSeconds, projectileSpread·Speed·Radius·LifeSeconds, bounceRange, explodeRadius·Damage, chainDelaySeconds·chainShrink·chainDamage). 기획서 9장 '절기로 바뀐 뒤 날아가는 것' 표에 있는 시작 무공 짝 넷부터, 다음으로 뇌부 절기 오뢰정법(사거리 ×1.5 안 서로 다른 적 `strikes`+연무장 개수 곳, 반경 ×`radiusMultiplier`, 맞은 적마다 `lightningRange` 안 다음 적으로 `lightningChains` 번 `lightningFalloff` 배, 늘 감전).
   - 쓸 것: Core `EvolutionDef.Param`, `Combat/EvolvedHits`(천지인 삼검 `FrontArcDirections`·`SendsWave`, 백보신권 `FanAngles`, 칠보독무 `PoisonExecutes`, 무영비도 `NextBounce`, 오뢰정법 `FiveThunders` — 옮아가는 차례·배율), `Combat/WeaponShapes`(흑룡탄 `GatherCenter`·`GatherSteps`·`GatherFraction`, 팔선과해 `ArcDirections`), evolutions.json params, 웹 프로토타입 같은 이름 함수

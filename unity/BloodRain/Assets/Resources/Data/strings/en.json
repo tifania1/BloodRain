@@ -564,6 +564,8 @@
   "ui.chest.fallback": "Satchel · Silver +{0} · Vitality +{1}",
   "ui.chest.close": "Enter · Close",
   "ui.chest.awakened": "Pinnacle Art Awakened · {0}",
+  "ui.chest.hint_novessel": "Reach {0} (Lv {1}) to gain a Pinnacle Slot",
+  "ui.chest.hint_full": "Pinnacle Slots are full. The art at its threshold awakens the moment you reach {0} (Lv {1})",
   "ui.encounter.tomb.sub": "Plant one sword — that art is lost for this life, and each of its levels gives your other arts +{0}% Might",
   "ui.encounter.tomb.card": "Plant it: other arts +{0}% Might",
   "ui.encounter.tomb.pass": "Walk on",
