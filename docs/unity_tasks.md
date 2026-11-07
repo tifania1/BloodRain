@@ -211,6 +211,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 숭산 곡이 있으면 Run 에서 숭산 곡이 돌고, 원각이 나오면 1초 만에 보스 곡, 정산 화면으로 1초. 곡이 하나도 없어도 콘솔 에러 0
   - 찍기: `docs/unity_shots/BGM-06U/` 의 `bgm_debug.png`(디버그 줄에 지금 곡 id)
 
+- [ ] SFX-14U 효과음 재생기(동시 재생 제한·흡수 음계) · 먼저: 없음
+  - 할 것: Presentation 에 `SfxPlayer`(BgmPlayer 옆, DontDestroyOnLoad, AudioSource 풀 16개쯤 돌려 씀). `Play(id)` 는 Core `SfxGate.TryPlay(id, Time.unscaledTimeAsDouble)` 가 참일 때만 sfx.json 그 id 의 variants 하나를 무작위로(gainDb 를 볼륨으로) 튼다. 진기 흡수는 `PlayAbsorb()` — `SfxGate.TryAbsorb(Time.frameCount, 실제 초, out note)` 가 참이면 `SfxGate.AbsorbSoundId(note)` 를 같은 식으로. 지금 붙일 자리는 구운 소리가 있는 넷뿐: OrbLayer 가 구슬을 먹을 때 흡수음, 레벨업 화면이 열릴 때 sfx_levelup, 땅의 주인 경고(BR-01 뒤면 그때) sfx_boss_appear, 탑림 범종 sfx_gimmick_bell. 한 생이 끝나면 `Reset()`. 설정 음량(WP-57U 가 생기면 GameSettings `audio.master`)을 곱한다.
+  - 쓸 것: Core `World/Sfx.cs`(SfxGate), balance.json `sfx`, `Assets/Audio/SFX/sfx.json`(id·variants·gainDb)
+  - 메뉴: `BloodRain/Bootstrap/효과음 재생기 붙이기(Run·Inn)`(BgmBootstrap 처럼 sfx.json 의 ogg 를 AudioClip 목록으로 채움, LifeBootstrap.Attach 도 부름)
+  - 끝: Run 에서 구슬 무더기를 한꺼번에 먹으면 풍경 소리가 한 번씩 음계를 타고 오르다 8번째 음에 머묾, 레벨업에 징, 같은 소리를 한 프레임에 30번 불러도 4번만(디버그 줄에 '버린 수'), 콘솔 에러 0
+  - 찍기: `docs/unity_shots/SFX-14U/` 의 `sfx_debug.png`(디버그 줄)
+
 ### C. 돌파·음양·오의·보갑
 
 - [x] C-07a 경지 돌파를 Life 로, 돌파 보상 얹기 · 먼저: LF-01 — 2026-11-06 00:50 PC: LifeRunner.ApplyStats 가 경공 칸 `Dash.SetMaxCharges(life.DashMaxCharges(st))`, 받는 피해 `PlayerVitals.takenMultiplier = life.DamageTakenMultiplier`(호신 뺀 뒤 곱함), 7칸째 `Loadout.AddExtraSlot(true)`(지금은 무공 칸, 고르기는 C-07b 이후)를 넣고 돌파가 나면 바로 다시 부름. 시험 메뉴 `다음 경지까지 진기(플레이 중)`(SoulBootstrap.cs), 디버그 둘째 줄 끝에 경공 칸·받는 피해·무공 칸. 침방에서 고른 천하 몸으로 경지를 하나씩: 이류 최대 기혈 120 → 130, 일류 경공 칸 2 → 3(바로 참), 초절정 무공 칸 6 → 7, 화경 받는 피해 x0.90(50 맞고 호신 2 → 43.2). 이 항목의 끝 줄(이류 경공·일류 피해)은 balance.json 과 달라 데이터대로 봄. 다시 오른 경지 연출 2배는 안 봄(생 안에서 경지가 내려가지 않아 다음 생에서). 콘솔 에러 0. 찍음 `docs/unity_shots/C-07/` 의 `realm_rewards.png`

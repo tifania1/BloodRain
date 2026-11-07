@@ -11,6 +11,7 @@
 
 - 같은 효과음은 0.05초 안에 최대 4개만 재생한다.
 - 진기 흡수음은 한 프레임에 하나로 합친다.
+- 셈은 Core `World/Sfx.cs` `SfxGate`, 값은 balance.json `sfx`(연속 흡수 음계 0.35초·8음 포함). Unity 재생기는 unity_tasks SFX-14U.
 
 ## 무공 (9장, M2 에서 처음부터 레벨업에 나오는 것)
 

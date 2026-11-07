@@ -342,6 +342,19 @@ namespace BloodRain.Core.Data
         public List<string> IntenseRegions = new List<string>();
     }
 
+    /// <summary>효과음 동시 재생 제한과 연속 흡수 음계(balance.json sfx, 기획서 14장 '동시 재생 제한').</summary>
+    public sealed class SfxRulesDef
+    {
+        /// <summary>같은 효과음을 세는 창(초).</summary>
+        public float SameSoundWindowSeconds = 0.05f;
+        /// <summary>그 창 안에 같은 효과음을 몇 개까지 울리나.</summary>
+        public int SameSoundMaxInWindow = 4;
+        /// <summary>앞 진기 흡수음에서 이 초 안이면 음계를 하나 올린다(웹 ORB_RUN_GAP).</summary>
+        public float AbsorbRunGapSeconds = 0.35f;
+        /// <summary>흡수음 음 수(구운 풍경 sfx_xp_absorb_n1~n8).</summary>
+        public int AbsorbNotes = 8;
+    }
+
     /// <summary>보부상 품목 하나(balance.json merchant.items).</summary>
     public sealed class MerchantItemDef
     {
@@ -387,6 +400,7 @@ namespace BloodRain.Core.Data
         public RevivalDef Revival = new RevivalDef();
         public MerchantDef Merchant = new MerchantDef();
         public BgmRulesDef Bgm = new BgmRulesDef();
+        public SfxRulesDef Sfx = new SfxRulesDef();
         public LimitsDef Limits = new LimitsDef();
         public OrbValuesDef Orbs = new OrbValuesDef();
         public OrbPickupDef OrbPickup = new OrbPickupDef();

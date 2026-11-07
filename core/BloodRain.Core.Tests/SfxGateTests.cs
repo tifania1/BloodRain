@@ -1,0 +1,92 @@
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using BloodRain.Core.Data;
+using BloodRain.Core.World;
+using Xunit;
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>효과음 동시 재생 제한(14장 '동시 재생 제한', balance.json sfx, backlog SFX-14).</summary>
+    public class SfxGateTests
+    {
+        readonly SfxRulesDef R = TestData.Load().Balance.Sfx;
+
+        [Fact] public void 값이_14장_문장과_같다()
+        {
+            var m = Regex.Match(TestData.Gdd, @"같은 효과음은 ([\d.]+)초 안에 최대 (\d+)개만 재생하고, 진기 흡수음은 한 프레임에 하나로 합칩니다");
+            Assert.True(m.Success, "14장 '동시 재생 제한' 문장이 없다");
+            Assert.Equal(R.SameSoundWindowSeconds, float.Parse(m.Groups[1].Value));
+            Assert.Equal(R.SameSoundMaxInWindow, int.Parse(m.Groups[2].Value));
+        }
+
+        [Fact] public void 흡수음_음계는_웹과_구운_소리와_같다()
+        {
+            var html = File.ReadAllText(Path.Combine(TestData.RepoRoot, "web", "prototype", "template.html"));
+            var m = Regex.Match(html, @"ORB_NOTES = (\d+), ORB_RUN_GAP = ([\d.]+);");
+            Assert.True(m.Success, "웹 ORB_NOTES·ORB_RUN_GAP 이 없다");
+            Assert.Equal(R.AbsorbNotes, int.Parse(m.Groups[1].Value));
+            Assert.Equal(R.AbsorbRunGapSeconds, float.Parse(m.Groups[2].Value));
+            // 구운 풍경 n1~n8 이 있어야 재생기가 고를 수 있다.
+            var dir = Path.Combine(TestData.RepoRoot, "unity", "BloodRain", "Assets", "Audio", "SFX");
+            for (int n = 0; n < R.AbsorbNotes; n++)
+                Assert.True(Directory.GetFiles(dir, SfxGate.AbsorbSoundId(n) + "_*.ogg").Any(), SfxGate.AbsorbSoundId(n));
+        }
+
+        [Fact] public void 같은_소리는_창_안에_넷까지()
+        {
+            var g = new SfxGate(R);
+            int played = Enumerable.Range(0, 30).Count(_ => g.TryPlay("sfx_hit", 1.0));
+            Assert.Equal(4, played);
+            Assert.False(g.TryPlay("sfx_hit", 1.04));
+            // 다른 소리는 따로 센다.
+            Assert.True(g.TryPlay("sfx_kill", 1.04));
+            // 창이 지나면 다시 넷.
+            Assert.Equal(4, Enumerable.Range(0, 10).Count(_ => g.TryPlay("sfx_hit", 1.051)));
+        }
+
+        [Fact] public void 창은_미끄러진다()
+        {
+            var g = new SfxGate(R);
+            Assert.True(g.TryPlay("a", 0.00));
+            Assert.True(g.TryPlay("a", 0.02));
+            Assert.True(g.TryPlay("a", 0.03));
+            Assert.True(g.TryPlay("a", 0.04));
+            Assert.False(g.TryPlay("a", 0.045));
+            Assert.True(g.TryPlay("a", 0.051));   // 0.00 이 빠짐
+            Assert.False(g.TryPlay("a", 0.052));
+        }
+
+        [Fact] public void 흡수음은_한_프레임에_하나()
+        {
+            var g = new SfxGate(R);
+            Assert.True(g.TryAbsorb(10, 1.0, out var n0));
+            Assert.Equal(0, n0);
+            Assert.False(g.TryAbsorb(10, 1.0, out _));
+            Assert.False(g.TryAbsorb(10, 1.0, out _));
+            Assert.True(g.TryAbsorb(11, 1.016, out var n1));
+            Assert.Equal(1, n1);
+        }
+
+        [Fact] public void 이어_먹으면_음계가_오르고_끝음에서_멈추고_틈이_벌면_처음부터()
+        {
+            var g = new SfxGate(R);
+            var notes = Enumerable.Range(0, 12).Select(i => { g.TryAbsorb(i, i * 0.1, out var n); return n; }).ToArray();
+            Assert.Equal(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7 }, notes);
+            g.TryAbsorb(100, 1.1 + R.AbsorbRunGapSeconds + 0.01, out var again);
+            Assert.Equal(0, again);
+            Assert.Equal("sfx_xp_absorb_n1", SfxGate.AbsorbSoundId(again));
+        }
+
+        [Fact] public void 비우면_처음처럼()
+        {
+            var g = new SfxGate(R);
+            for (int i = 0; i < 4; i++) g.TryPlay("a", 0);
+            g.TryAbsorb(1, 0, out _); g.TryAbsorb(2, 0.1, out _);
+            g.Reset();
+            Assert.True(g.TryPlay("a", 0));
+            Assert.True(g.TryAbsorb(1, 0.1, out var n));
+            Assert.Equal(0, n);
+        }
+    }
+}
