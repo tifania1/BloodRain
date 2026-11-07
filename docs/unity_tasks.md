@@ -307,14 +307,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] C-09e 절기 모양 넷과 오뢰정법 · 먼저: C-09d
   - 할 것: WeaponRunner 에 각성한 무공의 절기 모양을 붙인다. 숫자는 `EvolutionDef.Param`(waveSpeed·waveRadius·waveLifeSeconds, projectileSpread·Speed·Radius·LifeSeconds, bounceRange, explodeRadius·Damage, chainDelaySeconds·chainShrink·chainDamage). 기획서 9장 '절기로 바뀐 뒤 날아가는 것' 표에 있는 시작 무공 짝 넷부터, 다음으로 뇌부 절기 오뢰정법(사거리 ×1.5 안 서로 다른 적 `strikes`+연무장 개수 곳, 반경 ×`radiusMultiplier`, 맞은 적마다 `lightningRange` 안 다음 적으로 `lightningChains` 번 `lightningFalloff` 배, 늘 감전).
-  - 쓸 것: Core `EvolutionDef.Param`, evolutions.json params, 웹 프로토타입 같은 이름 함수
+  - 쓸 것: Core `EvolutionDef.Param`, `Combat/EvolvedHits`(무영비도 `NextBounce`, 오뢰정법 `FiveThunders` — 옮아가는 차례·배율), evolutions.json params, 웹 프로토타입 같은 이름 함수
   - 메뉴: C-09d 의 시험 몸
   - 끝: 각성 뒤 다섯 절기가 웹 프로토타입과 같은 모양으로 나감
   - 찍기: `docs/unity_shots/C-09/` 의 `evolved_<id>.png`
 
 - [ ] C-09c 절기 셋 효과 · 먼저: C-09e
   - 할 것: 벽력천화 마지막 연쇄 폭발 자리에 `fireSeconds` 불바다(반경 = 폭발 × `fireRadiusMultiplier`, 안의 적 화상 다시 채움), 천뢰검진 검기 원에 닿은 적마다 `lightningChance` 로 낙뢰(× `lightningDamage`, `lightningRange` 안 `lightningChains` 번 `lightningFalloff` 배 — 오뢰정법과 같은 그리기), 만천성지 폭발은 치명타일 때만(`explodeOnCrit`).
-  - 쓸 것: Core `EvolutionDef.Param`, 웹 프로토타입 `fireField`·`lightning`
+  - 쓸 것: Core `EvolutionDef.Param`, `Combat/EvolvedHits`(`ChainBombs`·`FireField` 벽력천화, `SkyLightningRolls`·`SkyLightning` 천뢰검진, `Explodes` 만천성지), 웹 프로토타입 `fireField`·`lightning`
   - 메뉴: C-09d 의 시험 몸(세 절기 각각)
   - 끝: 셋이 웹 프로토타입과 같은 효과
   - 찍기: `docs/unity_shots/C-09/` 의 `evo_effects.png`

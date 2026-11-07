@@ -123,6 +123,8 @@ namespace BloodRain.Core.Data
         public Dictionary<string, float>? Params;
         /// <summary>params 값. 없으면 예외(데이터 빠짐을 바로 알게).</summary>
         public float Param(string key) => Params != null && Params.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"{Id} params 에 {key} 가 없습니다");
+        /// <summary>params 값. 없으면 fallback(있어도 없어도 되는 값: explodeOnCrit·fireSeconds 등).</summary>
+        public float Param(string key, float fallback) => Params != null && Params.TryGetValue(key, out var v) ? v : fallback;
     }
 
     public sealed class CharacterDef
