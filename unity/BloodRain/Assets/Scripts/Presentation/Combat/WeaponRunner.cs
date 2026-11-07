@@ -231,7 +231,29 @@ namespace BloodRain.Presentation.Combat
         }
 
         float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * effects.WeaponDamageMultiplier(s.Def, healthRatio)
-            * (insightDamage != null ? insightDamage(s.id) : 1f);
+            * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s);
+
+        // C-09e 각성한 무공이면 그 절기(한 생의 Loadout.Evolved, C-09d 보갑이 깨움). 한 생이 없거나 아직이면 null
+        static BloodRain.Core.Data.EvolutionDef EvoOf(Slot s)
+        {
+            var lr = LifeRunner.Instance;
+            if (lr == null || lr.Life == null) return null;
+            bool on = false;
+            foreach (var id in lr.Life.Loadout.Evolved) if (id == s.id) { on = true; break; }
+            if (!on) return null;
+            foreach (var e in DataBoot.Data.Evolutions) if (e.Weapon == s.id) return e;
+            return null;
+        }
+
+        // 절기 피해 배율(balance.json evolution.damageMultiplier) × 각성 여운(Core Awakening.DamageMultiplier, 깨어난 뒤 그 절기 1.5배)
+        static float EvoDamage(Slot s)
+        {
+            var lr = LifeRunner.Instance;
+            if (lr == null || lr.Life == null) return 1f;
+            float m = lr.Life.Awakening.DamageMultiplier(s.id);
+            if (EvoOf(s) != null) m *= DataBoot.Data.Balance.Evolution.DamageMultiplier;
+            return m;
+        }
         float RangeMul(Slot s) => insightRange != null ? insightRange(s.Def) : 1f;
 
         // C-07b 깨달음(InsightEffects): 일검파만 무공 피해, 이기어검 근접 범위. LifeRunner 가 넣는다
@@ -261,10 +283,12 @@ namespace BloodRain.Presentation.Combat
             {
                 case "front_arc":
                 {
-                    float R = ws.Length(s.Def.Range);
+                    // C-09e 천지인 삼검(절기): 사거리 × rangeMultiplier, 조준 각과 ±120° 세 방향, waveEvery 번째마다 조준 쪽 관통 검기(웹 front_arc)
+                    var evo = EvoOf(s);
+                    float R = ws.Length(s.Def.Range * (evo != null ? evo.Param("rangeMultiplier", 1f) : 1f));
                     // 웹 결정: 사거리 1.25배 안에 적이 있으면 가장 가까운 적 쪽, 없으면 바라보는 쪽
                     float baseA = Nearest(R * 1.25f, out var dir) ? Mathf.Atan2(dir.y, dir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
-                    var dirs = Has(s, "앞뒤 베기") ? new[] { baseA, baseA + Mathf.PI } : new[] { baseA };
+                    var dirs = EvolvedHits.FrontArcDirections(baseA, evo != null, Has(s, "앞뒤 베기"));
                     int strikes = Has(s, "3연 베기") ? 3 : 1;
                     float gap = Gap(s, 0.12f), kb = ws.Speed(Knock(s));
                     for (int k = 0; k < strikes; k++)
@@ -272,10 +296,14 @@ namespace BloodRain.Presentation.Combat
                         {
                             foreach (var a in dirs)
                             {
-                                if (!AddBrush(s, a)) AddFx(a, Mathf.PI, R, 0.22f, new Color(0.95f, 0.93f, 0.85f, 0.75f));
+                                // 절기면 금빛 부채꼴을 붓 획 위에 한 겹 더(웹 gold)
+                                if (!AddBrush(s, a) || evo != null) AddFx(a, Mathf.PI, R, 0.22f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.95f, 0.93f, 0.85f, 0.75f));
                                 Deal(s, dmg, HitArc(P, R, a, dmg, kb));
                             }
                         });
+                    if (evo != null && EvolvedHits.SendsWave(evo, s.Fired))
+                        Shoot(s, baseA, ws.Speed(evo.Param("waveSpeed")), ws.Length(evo.Param("waveRadius")), dmg * evo.Param("waveDamage"), 999,
+                              evo.Param("waveLifeSeconds"), 0, 0f, kb, new Color(1f, 0.82f, 0.38f, 0.85f));
                     break;
                 }
                 case "melee_combo":
@@ -295,6 +323,16 @@ namespace BloodRain.Presentation.Combat
                             BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), R); // C-09b 친 자리 안 등롱
                             Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
                         });
+                    // C-09e 백보신권(절기): 조준 각 가운데로 projectiles 발 갈래 권경, 다 뚫음. 조준은 탄속 × 수명 안 가장 가까운 적(웹 melee_combo)
+                    var fistEvo = EvoOf(s);
+                    if (fistEvo != null)
+                    {
+                        float spd = fistEvo.Param("projectileSpeed"), life = fistEvo.Param("projectileLifeSeconds");
+                        float a0 = Nearest(ws.Length(spd * life), out var fd) ? Mathf.Atan2(fd.y, fd.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                        foreach (var a in EvolvedHits.FanAngles(fistEvo, a0))
+                            Shoot(s, a, ws.Speed(spd), ws.Length(fistEvo.Param("projectileRadius")), dmg * fistEvo.Param("projectileDamage"), 999, life, 0, 0f, kb,
+                                  new Color(1f, 0.82f, 0.38f, 0.8f));
+                    }
                     break;
                 }
                 case "orbit_slash":
