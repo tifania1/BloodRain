@@ -326,6 +326,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 조건이 안 맞으면 강화 목록, 맞으면 각성 연출 뒤 무공 이름이 절기로 바뀜
   - 찍기: `docs/unity_shots/C-09/` 의 `chest_upgrade.png`, `chest_awaken.png`
 
+- [ ] R-12Ua 무공 일곱 중 넷(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`) · 먼저: C-06a
+  - 할 것: WeaponRunner 에 네 갈래. **취선봉 `random_arc` 부터**(2026-11-08 클라우드: 개방 몸 시작 무공이고 레벨업에 처음부터 나오는 무공이라, 지금 개방으로 환생하면 시작 무공이 `default: break` 로 안 나가고 레벨업에서 고른 취선봉도 그렇다. M2 문파 셋 가운데 하나라 이 갈래만 먼저 커밋해도 됨). 성장 숫자는 Core `WeaponGrowth`, 날아가는 것·넉백은 weapons.json(기획서 9장 '날아가는 것과 넉백'). 붓 획은 V-12c 텍스처(taiji·chain·claw). 숫자가 weapons.json 에 비어 있는 무공은 건너뛰고 `막힘:` 한 줄.
+  - 쓸 것: Core `Combat/WeaponGrowth`, `Combat/WeaponShapes`(갈래 방향·누가 맞나·끌려가는 자리·검 다시 맞기, 2026-11-07 WP-63), weapons.json, `docs/design/m3_check.md` '무공 16·절기 16'. weapons.json 에 없는 모양 값(검 도는 빠르기·검 반경·같은 적 다시 맞기, 사슬 끌어오는 거리, 할퀴기 갈래 사이·폭)은 막힘으로 두지 말고 `WeaponShapes.Trial` 상수를 쓴다(웹 `TRIAL_W` 와 같은 값, 테스트가 확인). WeaponRunner 에 따로 상수를 두지 않는다. 데이터로 옮기는 것은 R-17 대로 사람이 해 본 뒤
+  - 메뉴: `BloodRain/Test/무공 넣기(플레이 중)/<id>`
+  - 끝: 넷이 Lv1·Lv5·Lv8 에서 웹 프로토타입과 같은 모양·개수로 나감
+  - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
+
 - [ ] CR-01U Run 씬 밟힘·쓸림 잇기 · 먼저: C-09d
   - 할 것: 7장 '밟히는 것들'·돌파 쓸림이 시험 씬(ScaleTest·CrushTestField, TU-03)에만 있고 Run 씬엔 안 이어져 있다(2026-11-08 클라우드가 C-09d 를 읽다 찾음 — EnemySim.Contacts 는 아래 경지 적의 접촉 피해만 거르고, 닿은 그 적을 쓰러뜨리지 않으며, BreakthroughFx.Swept 를 듣는 쪽이 Run 에 없다). ① 플레이어 원에 닿은 아래 경지 적(`Scale.Crushes(born, 지금 경지)`)은 그 자리에서 먹물로 터지며 쓰러짐(InkBurst), 진기는 구슬 대신 `cheonha.crush.xpPerCrushed`(0.3). ② 돌파 0.8초 `BreakthroughFx.Swept` 에 `bt.SelectSweep(아래 경지 적 ScaledFoe 목록)` 을 한꺼번에 같은 처리. ③ 쓰러뜨림은 `EnemyField.Kill` 을 거쳐 Killed 가 나가게 — 그러면 ChestLayer 가 아래 경지 정예에도 보갑을 놓는다(`Scale.CrushedDropsChest(true)` 가 참일 때만, 거짓이면 ChestLayer 가 밟힌 정예를 거름). OrbLayer 가 밟힌 적에 보통 구슬을 또 떨구지 않게 표시를 넘긴다. 정예·땅의 주인 거르기는 기획서대로: 땅의 주인은 밟히지 않음(`Crushes(…, boss: true)`), 정예는 밟힘. ④ 같은 문단 나머지: 아래 경지 때 떨어진 진기 구슬·음식·은자는 지나가기만 하면(몸 원에 닿으면) 주워지고, 작은 등롱은 밟으면 깨진다 — OrbLayer `Field.Drop`·LanternLayer 가 떨군 경지를 안 들고 있으니 떨굴 때 `ws.Realm` 을 같이 적어 둔다(CrushField 의 `Crushable.BornRealm` 과 같은 뜻). ①~③ 과 ④ 는 따로 커밋해도 됨.
   - 쓸 것: Core `World/Scale.cs` `Crushes`·`CrushedDropsChest`·`SelectSweep`, `World/Breakthrough.cs` `SweepRadius`·`SelectSweep`, cheonha.json `crush`, 시험 쪽 `CrushTestField.OnSwept`·`Sim/CrushField.cs`(옮겨 쓸 만한 셈), `Fx/InkBurst.cs`
@@ -374,13 +381,6 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: C-09d 의 시험 몸(세 절기 각각)
   - 끝: 셋이 웹 프로토타입과 같은 효과
   - 찍기: `docs/unity_shots/C-09/` 의 `evo_effects.png`
-
-- [ ] R-12Ua 무공 일곱 중 넷(`random_arc`·`orbiting_blades`·`pull_chain`·`forward_claws`) · 먼저: C-06a
-  - 할 것: WeaponRunner 에 네 갈래. 성장 숫자는 Core `WeaponGrowth`, 날아가는 것·넉백은 weapons.json(기획서 9장 '날아가는 것과 넉백'). 붓 획은 V-12c 텍스처(taiji·chain·claw). 숫자가 weapons.json 에 비어 있는 무공은 건너뛰고 `막힘:` 한 줄.
-  - 쓸 것: Core `Combat/WeaponGrowth`, `Combat/WeaponShapes`(갈래 방향·누가 맞나·끌려가는 자리·검 다시 맞기, 2026-11-07 WP-63), weapons.json, `docs/design/m3_check.md` '무공 16·절기 16'. weapons.json 에 없는 모양 값(검 도는 빠르기·검 반경·같은 적 다시 맞기, 사슬 끌어오는 거리, 할퀴기 갈래 사이·폭)은 막힘으로 두지 말고 `WeaponShapes.Trial` 상수를 쓴다(웹 `TRIAL_W` 와 같은 값, 테스트가 확인). WeaponRunner 에 따로 상수를 두지 않는다. 데이터로 옮기는 것은 R-17 대로 사람이 해 본 뒤
-  - 메뉴: `BloodRain/Test/무공 넣기(플레이 중)/<id>`
-  - 끝: 넷이 Lv1·Lv5·Lv8 에서 웹 프로토타입과 같은 모양·개수로 나감
-  - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
 - [ ] R-12Ub 무공 일곱 중 셋(`ring_wave`·`pierce_thrust`·`petal_scatter`) · 먼저: R-12Ua
   - 할 것: R-12Ua 와 같은 방법. 붓 획 qin·spear·petals. 데이터에 없는 값(음공 기절 0.6초·둘째 음파 0.3초 뒤, 창 폭 0.6m, 꽃잎 퍼짐 1.2라디안)도 `WeaponShapes.Trial` 에서(`RingDelays`·`RingStuns`·`ThrustDirections`·`ThrustHits`·`PetalAngles`).

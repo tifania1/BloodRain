@@ -327,6 +327,7 @@ M3 지역 콘텐츠(당가타·장강·무당산)
 - [x] KC-01 2026-11-08 (로드맵에서 채움 — 7장 '적 한 덩이') — Unity 처치 수가 덩이를 1 로 셈(웹은 덩이 속 사람 수). Core `Scale.KillCount` 가 이미 있어 unity_tasks KC-01U 로만. 같은 김에 CR-01U 에 아래 경지 구슬·음식·은자 지나가며 줍기·작은 등롱 밟아 깨기도 더함
 - [x] EV-01 2026-11-08 (로드맵에서 채움 — 8장 '깨어나는 순간') — Unity 가 돌파 순간 각성(그릇이 늘 때, 여럿이면 고르기)을 안 함. 평균 빌드 첫·둘째 절기가 돌파에서 나오는데 보갑으로만 깨어나던 것. Core `AwakenOnBreakthrough` 는 있어 고르기 화면 글 `ui.evopick.*` 네 언어만 넣고 unity_tasks EV-01U
 - [x] LH-01 2026-11-08 (로드맵에서 채움 — 8장 '피격과 사망') — 기혈 30% 위험 표시가 웹에 0.3 으로 박혀 있고 Unity 엔 없음. balance.json `contact.lowHealthRatio` + Core `ContactDef.IsLowHealth`, 웹이 데이터를 읽게(`lowHp`), `LowHealthTests` 셋, unity_tasks LH-01U. web_autocheck 숭산 문제 0
+- [x] RW-01 2026-11-08 (로드맵에서 채움 — 17장 M2 '문파 3(소림·개방·남궁)') — 무공 열여섯 갈래를 WeaponRunner 와 맞대 보니 일곱이 없고, 그 가운데 취선봉 `random_arc` 는 개방 몸 시작 무공·처음부터 나오는 무공이라 개방 생은 시작 무공이 안 나감(스토어 장면 store_shots 도 취선봉을 씀). unity_tasks R-12Ua 를 '할 차례' C 절 맨 앞으로 올리고 취선봉부터 하라고 적음
 - [x] QA-10b 2026-11-05 — `Inn.Residents(soul, progress)` 가 `DialogueProgress.Joined` 를 그대로 읽게(회차가 다르면 빔). 계정 첫 처치로 셈하던 옛 규칙과 그 InnTests 셋을 지우고 `InnDialogueTests` 에 합류·회귀·재합류 한 개. unity_tasks RM-03b 의 마당 줄을 새 함수로
 - [x] DC-01 2026-11-04 — `docs/decisions.md`: 열린 사람 결정 29건(backlog 25, 스토어 README·대사 문서에만 있던 넷은 ST-01a·ST-01b·DL-03a·DL-04a 로 backlog 에 새로)을 오래된 순으로 — 한눈에 표(질문·추천·급함)와 항목마다 질문·추천·다른 안·근거·막는 일. 급한 넷은 L-04b·R-10·R4-07·V-12b. feedback '→ 반영'으로 정해졌는데 열려 있던 항목은 없었음. `DecisionListTests` 가 backlog 의 열린 결정 대기와 decisions.md 표가 같은지 봄. 오늘 daily '아침에 확인할 것' 다시 씀
 
