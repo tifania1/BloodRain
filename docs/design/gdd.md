@@ -1357,7 +1357,7 @@ STYLE: Wuxia ink-wash painting. Bold black sumi-e brush outlines, light watercol
 ### 후처리(자동)
 
 1. 받은 파일을 `art_inbox/`에 모음
-2. 단색 배경 제거(색 키 우선, 안 되면 rembg). UI 바탕은 그림 가장자리에서 이어진 배경만 지운다
+2. 단색 배경 제거(색 키). 그림 가장자리에서 이어진 배경만 지워 얼굴·흰 옷처럼 배경색과 비슷한 안쪽은 남긴다. 스프라이트는 안쪽에 갇힌 배경색 그대로인 넓은 빈 곳(팔과 몸 사이)도 지우고, UI 바탕은 틀 안쪽 종이를 남긴다. 소품 묶음 시트는 낱장으로 자른다(`tools/split_props.py`)
 3. 여백 자르고 정사각 패딩, 규격 크기로 줄이기
 4. 바닥 타일은 오른쪽 가장자리 일부를 왼쪽에 겹쳐 섞어 이음새 제거(위아래도 같은 방식)
 5. `Assets/Art/{종류}/`로 복사. Unity가 meta 를 만들면 `tools/fix_art_meta.py` 가 Sprite 설정(Single, PPU 100, 배경 지운 그림은 알파 투명, 세상에 깔리는 그림만 밉맵, 타일만 Repeat)으로 바꾼다. 테스트(`ArtMetaTests`)가 확인

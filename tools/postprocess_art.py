@@ -1,8 +1,9 @@
 """받은 이미지를 게임용으로 다듬어 Unity Assets/Art 로 옮긴다.
 
 art_queue/queue.jsonl 에서 status 가 picked 인 줄을 찾아, save_as 경로의 원본을
-  1) 단색 배경(#F2EBDD) 제거 (스프라이트·아이콘만)
-     UI 바탕(ui)은 그림 가장자리에서 이어진 배경만 지워 틀 안쪽 종이를 남긴다
+  1) 단색 배경(#F2EBDD) 제거 (스프라이트·초상·소품·UI)
+     그림 가장자리에서 이어진 배경만 지운다. 스프라이트는 안쪽에 갇힌 배경색 그대로인 넓은 덩이(팔 사이 등)도 지우고,
+     UI 바탕(ui)은 틀 안쪽 종이를 남긴다. 예전 remove_bg(배경색과 비슷하면 어디든 지움)는 얼굴·흰 옷을 뚫어 안 쓴다
   2) 여백 자르고 정사각 패딩 (ui 는 정사각으로 만들지 않고 여백만 자름)
   3) 규격 크기로 줄이기
   4) 바닥 타일은 좌우·위아래 이음새를 크로스페이드로 지움
@@ -90,6 +91,47 @@ def remove_bg_edges(img: Image.Image, tol: int = 28) -> Image.Image:
     return img
 
 
+POCKET_MIN = 0.002  # 안쪽 빈 종이(팔과 몸 사이·수레바퀴 살 사이)로 볼 최소 넓이(그림 넓이 비율)
+
+
+def remove_bg_sprite(img: Image.Image, tol: int = 28) -> Image.Image:
+    """스프라이트·초상·소품용(2026-11-08 클라우드, backlog PR-02).
+    remove_bg 는 배경색과 비슷한 픽셀을 그림 안쪽까지 지워 얼굴·흰 옷·만두 속·등롱 종이가 비쳤다(초상 셋 넓이의 27~34%).
+    그래서 가장자리에서 이어진 배경만 지우고(remove_bg_edges), 안쪽에 갇힌 곳은 '배경색 그대로인 넓은 덩이'만 지운다.
+    그림 속 밝은 곳은 붓 결이 있어 배경색 tol/2 안에 넓게 고르지 않다는 것을 기댄 것이다."""
+    out = remove_bg_edges(img, tol)
+    rgb = img.convert("RGB")
+    r, g, b = ImageChops.difference(rgb, Image.new("RGB", rgb.size, BG)).split()
+    d = ImageChops.lighter(ImageChops.lighter(r, g), b)
+    a = out.getchannel("A")
+    # 안쪽(알파가 남은 곳)이면서 배경색에 아주 가까운 픽셀
+    flat = ImageChops.multiply(d.point(lambda v: 255 if v <= tol // 2 else 0), a.point(lambda v: 255 if v >= 250 else 0))
+    w, h = flat.size
+    need = max(16, int(w * h * POCKET_MIN))
+    cut = Image.new("L", flat.size, 0)
+    # 씨앗은 5px 로 깎아도 남는 곳에서만 고른다 — 붓 결 사이 가는 틈·점은 여기서 빠져 반복이 적다
+    seeds = flat.filter(ImageFilter.MinFilter(5))
+    while True:
+        box = seeds.getbbox()
+        if not box:
+            break
+        sp = seeds.load()
+        seed = next((x, y) for y in range(box[1], box[3]) for x in range(box[0], box[2]) if sp[x, y] == 255)
+        if flat.getpixel(seed) != 255:
+            seeds.putpixel(seed, 0)
+            continue
+        ImageDraw.floodfill(flat, seed, 128)
+        one = flat.point(lambda v: 255 if v == 128 else 0)
+        if one.histogram()[255] >= need:
+            cut = ImageChops.lighter(cut, one)
+        flat = ImageChops.subtract(flat, flat.point(lambda v: 127 if v == 128 else 0))  # 128 → 1(다시 안 봄)
+        seeds = ImageChops.subtract(seeds, one)
+    if cut.getbbox():
+        a = ImageChops.subtract(a, cut.filter(ImageFilter.GaussianBlur(0.6)))
+        out.putalpha(a)
+    return out
+
+
 def trim(img: Image.Image, margin: float = 0.02) -> Image.Image:
     """알파가 있는 곳만 남기고 가장자리 여백을 조금 둔다. 비율은 그대로."""
     bbox = img.getchannel("A").getbbox()
@@ -137,6 +179,35 @@ def make_seamless(img: Image.Image, band_ratio: float = 0.0625) -> Image.Image:
     return out
 
 
+def redo_bg(row: dict, dry: bool, from_assets: bool) -> Path | None:
+    """이미 들인 스프라이트의 배경 제거를 remove_bg_sprite 로 다시 한다(backlog PR-02).
+    원본(save_as)이 있으면 process 와 똑같이 다시 만들고, 없고 from_assets 면 지금 Assets 그림을 배경색 위에 얹어 다시 지운다
+    (예전 remove_bg 가 지운 자리는 색이 안 남아 배경색 종이로 채워진다 — 원본으로 하는 편이 낫다)."""
+    kind = row["kind"]
+    if kind not in KINDS or kind == "ui" or kind.startswith("vfx_") or not KINDS[kind][2]:
+        return None
+    if (ROOT / row["save_as"]).exists():
+        return process(row, dry)
+    folder, size, _ = KINDS[kind]
+    dst = ART / folder / (row["id"] + ".png")
+    if not from_assets or not dst.exists():
+        print(f"  없음 {row['id']}: 원본도 없고 --from-assets 도 아님")
+        return None
+    cur = Image.open(dst).convert("RGBA")
+    flat = Image.new("RGBA", cur.size, BG + (255,))
+    flat.alpha_composite(cur)
+    img = remove_bg_sprite(flat.convert("RGB"))
+    if kind != "props":  # 소품 시트는 split_props.py 가 칸을 찾으니 크기·자리를 그대로
+        img = trim_and_square(img)
+        img.thumbnail((size, size), Image.LANCZOS)
+    if dry:
+        print(f"  (dry) {row['id']} → {dst.relative_to(ROOT)} {img.size} (Assets 에서)")
+        return dst
+    img.save(dst, optimize=True)
+    print(f"  다시 {row['id']} → {dst.relative_to(ROOT)} {img.size} (Assets 에서)")
+    return dst
+
+
 def process(row: dict, dry: bool) -> Path | None:
     kind = row["kind"]
     if kind not in KINDS:
@@ -154,7 +225,7 @@ def process(row: dict, dry: bool) -> Path | None:
     if kind == "ui":
         img = trim(remove_bg_edges(img))
     elif cut_bg:
-        img = trim_and_square(remove_bg(img))
+        img = trim_and_square(remove_bg_sprite(img))
     if kind == "tile":
         img = make_seamless(img)
     img.thumbnail((size, size), Image.LANCZOS)
@@ -176,9 +247,17 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--only")
+    ap.add_argument("--redo-bg", action="store_true", help="imported 스프라이트의 배경 제거를 다시(PR-02)")
+    ap.add_argument("--from-assets", action="store_true", help="--redo-bg 에서 원본이 없으면 Assets 그림으로")
     args = ap.parse_args()
 
     rows = [json.loads(l) for l in QUEUE.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if args.redo_bg:
+        n = sum(1 for row in rows
+                if row.get("status") == "imported" and (not args.only or row["id"] == args.only)
+                and redo_bg(row, args.dry_run, args.from_assets))
+        print(f"{n}개 다시 지움")
+        return 0
     done = 0
     for row in rows:
         if args.only and row["id"] != args.only:
