@@ -4061,6 +4061,7 @@ function recordLife(st) {
     else if (st.ending === 'inherit') { m.modes = Array.isArray(m.modes) ? m.modes : []; if (!m.modes.includes('mode:blood_demon')) m.modes.push('mode:blood_demon'); }
     else if (st.ending === 'true') m.journeyOver = true;
   }
+  m.newModes = modeRefresh(m);   // Core LifeSummary.NewModes(EndLife·ChooseEnding 뒤 Modes.Refresh)
   soulSave(m);
   return m;
 }
@@ -4137,6 +4138,21 @@ function facMeets(m, f) {
   return true;
 }
 const facOpen = (m, f) => (m.unlocks || []).includes(facTok(f.id)) || (!(f.buildBloodCrystal > 0) && facMeets(m, f));
+// 모드 열림(7장 '모드', cheonha.json modes, Core Meta/Modes.Refresh, WP-67): 조건(서장·봉인석·본 엔딩)을 처음 갖추면 혼 기록 unlocks 에 mode:<id>.
+// 한 번 열리면 회귀로 봉인석이 지워져도 남는다. Core 처럼 생을 마칠 때(엔딩을 고른 뒤 포함) 부르고, 새로 연 것은 정산 '새 모드'. 모드 자체(혈월 천하·일일 도전·보스 연전)는 이 판에 없다
+const MODES = DATA.modes || [];
+function modeMeets(m, d) {
+  const r = d.require || {};
+  if (r.prologue && !m.prologue) return false;
+  if ((m.stones || []).length < (r.sealStones || 0)) return false;
+  if (r.ending && !(m.endingsSeen || []).includes(r.ending)) return false;
+  return true;
+}
+function modeRefresh(m) {
+  m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : []; const opened = [];
+  for (const d of MODES) { const t = 'mode:' + d.id; if (m.unlocks.includes(t) || !modeMeets(m, d)) continue; m.unlocks.push(t); opened.push(d.id); }
+  return opened;
+}
 function facRefresh(m) {   // Core Inn.Refresh
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : []; const opened = [];
   for (const f of INN_F) {
@@ -5135,6 +5151,7 @@ function recordPrologue(orbRaw, realmId) {
   for (const id of realms) m.reached.push(id);
   m.prologue = { qi: total, orb: Math.round(orbRaw || 0), realm: B.realms[top].id };
   facRefresh(m);   // 연무장(서장 끝)이 열린다. 서장 귀환엔 대사가 없어 새로 연 목록은 버린다
+  modeRefresh(m);   // 천하 모드(서장 끝, Core EndLife 의 Modes.Refresh)
   soulSave(m);
   return { total, realms };
 }
@@ -5367,6 +5384,7 @@ function endRun(won) {
     }
     facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
     if ((st.newTitles || []).length) facts.push([st.newTitles.map(id => TITLE_BY[id].nameKo).join(' · '), '새 칭호']);   // WP-34
+    if ((m.newModes || []).length) facts.push([m.newModes.map(id => (MODES.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 모드 · 이 판엔 아직 없다']);   // WP-67
     if ((st.newCostumes || []).length) facts.push([st.newCostumes.map(t => { const c = (DATA.costumes || []).find(x => 'costume:' + x.id === t); return c ? `${SPK[c.character] || c.character} 의상` : t; }).join(' · '), '새 의상 · 그림은 아직']);   // WP-51
     if ((st.newTorn || []).length) facts.push([st.newTorn.map(manualName).join(' · '), '찢긴 비급 · 장경각에 올랐다']);   // 20장 '비급 층과 해금'
     if (st.newWeapons.length) facts.push([st.newWeapons.map(id => W_BY_ID[id].nameKo).join(' · '), '새로 얻은 무공 · 다음 생부터']);   // Core LifeSummary.NewUnlocks(R-08U 정산 줄과 같은 말)
