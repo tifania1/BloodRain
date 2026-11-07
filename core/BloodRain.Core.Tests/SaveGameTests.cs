@@ -61,6 +61,15 @@ namespace BloodRain.Core.Tests
             Assert.False(s.Dialogue.HasJoined("hyegong"));
         }
 
+        [Fact] public void 대사가_깨져도_혼은_살림()
+        {
+            var o = JObject.Parse(new SaveGame(SomeSoul(), SomeDialogue()).ToJson());
+            o["dialogue"]!["Cycle"] = "셋";   // 숫자 칸에 글자
+            var s = SaveGame.FromJson(_d, o.ToString());
+            Assert.Equal(1234, s.Soul.RebirthQi);
+            Assert.False(s.Dialogue.HasJoined("hyegong"));
+        }
+
         [Fact] public void 혼이_없거나_새_형식이면_예외()
         {
             Assert.Throws<FormatException>(() => SaveGame.FromJson(_d, "{\"version\":1}"));

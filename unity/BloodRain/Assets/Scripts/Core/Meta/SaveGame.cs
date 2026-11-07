@@ -46,7 +46,7 @@ namespace BloodRain.Core.Meta
         }
 
         /// <summary>저장 문자열을 읽는다. 혼이 없으면 FormatException, 더 새 형식이면 NotSupportedException.
-        /// 대사 진행이 빠졌으면 처음부터(혼은 살린다).</summary>
+        /// 대사 진행이 빠졌거나 깨졌으면 처음부터(혼은 살린다 — 대사 한 덩이 때문에 부른 쪽이 파일 전체를 .bad 로 옮기지 않게, FromLegacy 와 같음).</summary>
         public static SaveGame FromJson(GameData data, string json)
         {
             if (string.IsNullOrWhiteSpace(json)) throw new FormatException("저장 문자열이 비었습니다");
@@ -55,8 +55,8 @@ namespace BloodRain.Core.Meta
             if (version > SaveVersion) throw new NotSupportedException($"이 판보다 새 저장 형식입니다: {version}");
             if (!(o["soul"] is JObject soul)) throw new FormatException("저장에 혼이 없습니다");
             var soulJson = soul.ToString(Formatting.None);
-            var dialogue = o["dialogue"] is JObject d ? DialogueProgress.FromJson(d.ToString(Formatting.None)) : new DialogueProgress();
-            return new SaveGame(Soul.FromJson(data, soulJson), dialogue);
+            var parsedSoul = Soul.FromJson(data, soulJson);
+            return new SaveGame(parsedSoul, ReadDialogue(o["dialogue"] is JObject d ? d.ToString(Formatting.None) : null));
         }
 
         /// <summary>옛 두 파일(soul.json·dialogue.json)의 내용으로 만든다. 없는 쪽은 null — 새로 시작.
@@ -64,10 +64,15 @@ namespace BloodRain.Core.Meta
         public static SaveGame FromLegacy(GameData data, string? soulJson, string? dialogueJson)
         {
             var soul = string.IsNullOrWhiteSpace(soulJson) ? new Soul(data) : Soul.FromJson(data, soulJson!);
-            DialogueProgress dialogue;
-            try { dialogue = string.IsNullOrWhiteSpace(dialogueJson) ? new DialogueProgress() : DialogueProgress.FromJson(dialogueJson!); }
-            catch (Exception e) when (e is JsonException || e is FormatException) { dialogue = new DialogueProgress(); }
-            return new SaveGame(soul, dialogue);
+            return new SaveGame(soul, ReadDialogue(dialogueJson));
+        }
+
+        /// <summary>대사 진행 문자열. 없거나 깨졌으면 처음부터. 더 새 형식(NotSupportedException)은 그대로 던진다 — 새 판에서 쓴 저장을 옛 판이 덮어쓰지 않게.</summary>
+        static DialogueProgress ReadDialogue(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new DialogueProgress();
+            try { return DialogueProgress.FromJson(json!); }
+            catch (Exception e) when (e is JsonException || e is FormatException || e is InvalidCastException || e is ArgumentException) { return new DialogueProgress(); }
         }
     }
 }
