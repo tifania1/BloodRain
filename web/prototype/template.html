@@ -522,6 +522,9 @@ const BA = B.awakening; // 절기 각성 연출·파동·여운(기획서 8장)
 const DR = B.drops; // 음식·은자·등롱(기획서 8장 '드롭')
 const LS = DR.lanternSpawn;   // 등롱 서는 간격·자리·깨짐·줍는 거리(Core Drops.LanternDue·LanternOffset·LanternHit·InPickup)
 const OP = B.orbPickup, LIM = B.limits; // 구슬 끌기·흡수·합치기, 화면 위 수 상한
+// 동시 적 수 상한(11장 '성능 상한', Core LimitsDef.CanSpawn, EN-03): 닿으면 생성 고리 보통 적·사건 무리만 건너뛴다. 정예·땅의 주인·금두꺼비는 그대로 세운다
+const ENEMY_CAP = (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) ? LIM.enemiesMobile : LIM.enemiesPc;
+const roomForFoe = () => G.enemies.length < ENEMY_CAP;
 const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver' };
 // 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
 const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100, moveSpeed: 1 };
@@ -2715,7 +2718,7 @@ function update(dt) {
       const alive = G.enemies.length;
       const target = (G.bossSpawned ? BOSS_TRASH : spawnTarget(G.gm)) * (G.lordF ? LR.spawnTargetScale : 1);   // 땅의 주인과 싸우는 동안 줄인다(7장)
       const n = Math.ceil((target - alive) * B.spawnTarget.spawnFractionPerSecond - 1e-4);
-      for (let i = 0; i < n; i++) { const [x, y] = ringPos(), lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(G.body ? G.gm : Math.min(G.gm, 19)), x, y); }
+      for (let i = 0; i < n && roomForFoe(); i++) { const [x, y] = ringPos(), lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(G.body ? G.gm : Math.min(G.gm, 19)), x, y); }
     }
   }
   G.lanternAcc += dt;
@@ -2924,6 +2927,7 @@ function runEvent(ev) {
     const gapAt = Math.floor(rand(ev.n * 0.25, ev.n * 0.75));
     for (let i = 0; i < ev.n; i++) {
       if (i === gapAt || i === gapAt + 1) continue;
+      if (!roomForFoe()) break;
       const off = (i - ev.n / 2) * 1.2;
       const x = p.x - ax * diag * 0.6 + (ay !== 0 ? off : rand(-0.5, 0.5));
       const y = p.y - ay * diag * 0.6 + (ax !== 0 ? off : rand(-0.5, 0.5));
@@ -2935,7 +2939,7 @@ function runEvent(ev) {
   else if (ev.kind === 'group') {   // 한 생 무리(WP-14b): 서 있는 땅 고유 적 하나를 골라 count 마리 한 덩어리로, 고유 적이 없는 땅이면 enemy
     const r = CH_REGS.find(x => x.id === G.chRegion), list = ev.local && r && LOCAL_BY[r.chapter], type = list ? list[Math.floor(Math.random() * list.length)] : ev.enemy;
     const a = rand(0, TAU), cx = p.x + Math.cos(a) * diag * 0.55, cy = p.y + Math.sin(a) * diag * 0.55;
-    for (let i = 0; i < ev.n; i++) spawnEnemy(type, cx + rand(-2, 2), cy + rand(-2, 2));
+    for (let i = 0; i < ev.n && roomForFoe(); i++) spawnEnemy(type, cx + rand(-2, 2), cy + rand(-2, 2));
     toast(E_BY_ID[type] ? E_BY_ID[type].nameKo + ' 무리' : '무리', '한 떼가 몰려온다');
   }
   else if (ev.kind === 'merchant') openMerchant();

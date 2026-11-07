@@ -281,6 +281,15 @@ namespace BloodRain.Core.Data
         /// <summary>바닥 진기 구슬. 넘으면 오래된 것부터 하나로 합친다.</summary>
         public int Orbs = 400;
         public int DamageNumbers = 80;
+
+        /// <summary>동시 적 수 상한(11장 '성능 상한': PC 600, 모바일 400).</summary>
+        public int EnemyCap(bool mobile) => mobile ? EnemiesMobile : EnemiesPc;
+
+        /// <summary>
+        /// 적 하나를 더 세워도 되나. 상한에 닿으면 생성 고리의 보통 적·사건 무리만 건너뛴다.
+        /// 정예·땅의 주인·금두꺼비·보부상처럼 판의 흐름이 걸린 것(important)은 상한을 넘어도 세운다 — 하나뿐이고 놓치면 그 생의 사건이 사라진다.
+        /// </summary>
+        public bool CanSpawn(int alive, bool mobile, bool important = false) => important || alive < EnemyCap(mobile);
     }
 
     /// <summary>진기 구슬 크기별 값(balance.json orbs).</summary>
