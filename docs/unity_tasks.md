@@ -396,7 +396,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 31% 에선 없고 30% 에서 가장자리가 짙어지며 출렁임, 회복해 넘으면 사라짐. 콘솔 에러 0
   - 찍기: `docs/unity_shots/LH-01U/` 의 `low_health.png`
 
-- [ ] CH-01U 보갑 화면 아래 그릇 안내 한 줄 · 먼저: C-09d
+- [x] CH-01U 보갑 화면 아래 그릇 안내 한 줄 · 먼저: C-09d — 2026-11-08 04:58 PC: ChestLayer.Open 이 강화를 넣은 뒤 `Chest.Hint` 로 셈해 목록 아래(닫기 위)에 금빛 19px 한 줄(줄바꿈 됨), 닫으면 지움. 서장 몸 Lv2 보갑 → '절정(Lv 35)에 올라야 절기를 담을 그릇이 생긴다' 확인, 콘솔 에러 0, 찍음 `docs/unity_shots/CH-01U/` 의 `hint_novessel.png`. '그릇이 찼다' 줄(Full)은 절정까지 플레이로 못 가 눈으로는 못 봄(같은 길로 그림)
   - 할 것: ChestLayer 강화 목록 화면 맨 아래(닫기 글 위)에 8장 '그릇이 차 있으면 보갑은 평소처럼 강화만 주고, 다음 그릇이 생기는 경지를 알려 줍니다' 한 줄. 웹 chestHint 와 같은 셈(2026-11-08 클라우드가 Core 로 옮김).
   - 쓸 것: `Chest.Hint(data, life.Loadout, level)` — `Kind` 가 `NoVessel` 이면 `ui.chest.hint_novessel`, `Full` 이면 `ui.chest.hint_full`, `None` 이면 안 띄움. {0} 은 `Loc.Realm(hint.Next)`, {1} 은 `hint.Next.Level`. Open 안에서 Chest.Open 을 부른 뒤에 셈(강화가 Loadout 에 들어간 뒤)
   - 메뉴: C-09d 의 `BloodRain/Test/보갑 놓기(플레이 중)`

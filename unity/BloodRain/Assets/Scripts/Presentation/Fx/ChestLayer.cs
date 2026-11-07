@@ -34,7 +34,8 @@ namespace BloodRain.Presentation.Fx
         readonly System.Random _rng = new System.Random();
         readonly List<(Vector2 at, string text, float born)> _popups = new List<(Vector2, string, float)>();
         Sprite _square;
-        GUIStyle _style, _listStyle, _titleStyle;
+        GUIStyle _style, _listStyle, _titleStyle, _hintStyle;
+        string _hint; // CH-01U 그릇 안내(없으면 null)
         SecretWatch _secrets;
 
         // 열린 목록 화면
@@ -196,7 +197,12 @@ namespace BloodRain.Presentation.Fx
                     }
                 }
             }
-            Debug.Log($"[ChestLayer] 보갑 → 강화 {result.Upgrades.Count}개(진전 덤 {extra}): {string.Join(", ", lines)}");
+            // CH-01U 그릇 안내 한 줄(8장, 웹 chestHint): 강화가 Loadout 에 들어간 뒤에 센다
+            var hint = Chest.Hint(Data, life.Loadout, level);
+            _hint = hint.Kind == ChestHintKind.NoVessel ? Loc.F("ui.chest.hint_novessel", Loc.Realm(hint.Next), hint.Next.Level)
+                  : hint.Kind == ChestHintKind.Full ? Loc.F("ui.chest.hint_full", Loc.Realm(hint.Next), hint.Next.Level)
+                  : null;
+            Debug.Log($"[ChestLayer] 보갑 → 강화 {result.Upgrades.Count}개(진전 덤 {extra}): {string.Join(", ", lines)}{(_hint != null ? " · " + _hint : "")}");
             _lines = lines;
             _savedTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
             Time.timeScale = 0f;
@@ -206,6 +212,7 @@ namespace BloodRain.Presentation.Fx
         void CloseList()
         {
             _lines = null;
+            _hint = null;
             Time.timeScale = _savedTimeScale;
         }
 
@@ -238,7 +245,9 @@ namespace BloodRain.Presentation.Fx
             // 짧은 목록 화면: 가운데 종이 한 장(그림 오기 전 임시)
             _titleStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 30, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.55f, 0.10f, 0.08f) } };
             _listStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 24, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.12f, 0.10f, 0.09f) } };
-            float w = 460f, h = 130f + _lines.Count * 40f;
+            _hintStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 19, wordWrap = true, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.55f, 0.36f, 0.06f) } };
+            float hintH = _hint != null ? 56f : 0f;
+            float w = 460f, h = 130f + _lines.Count * 40f + hintH;
             var r = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             GUI.color = new Color(0.05f, 0.04f, 0.04f, 0.6f);
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
@@ -248,6 +257,7 @@ namespace BloodRain.Presentation.Fx
             GUI.Label(new Rect(r.x, r.y + 14f, w, 40f), Loc.T("ui.chest.title"), _titleStyle);
             for (int i = 0; i < _lines.Count; i++)
                 GUI.Label(new Rect(r.x, r.y + 64f + i * 40f, w, 36f), _lines[i], _listStyle);
+            if (_hint != null) GUI.Label(new Rect(r.x + 20f, r.yMax - 46f - hintH, w - 40f, hintH), _hint, _hintStyle);
             GUI.Label(new Rect(r.x, r.yMax - 46f, w, 34f), Loc.T("ui.chest.close"), _listStyle);
         }
 
