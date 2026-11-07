@@ -288,7 +288,7 @@ No loot boxes. No paid stats or arts. Buy the game once, and everything that mak
 | Storage | TBD | TBD |
 | Additional Notes | Gamepad recommended | Steam Deck: 1280x800 at 60 fps target |
 
-운영체제를 Windows 10 21H1 부터로 둔 것은 Unity 6 플레이어 최소 사양이 'Windows 10 version 21H1 (build 19043) or newer'이기 때문이다(Unity 6.0 문서, 2026-11-07 확인, README). 같은 표의 그래픽은 DX10·DX11·DX12·Vulkan, 프로세서는 SSE2 지원 x86·x64 또는 Arm64 라 최소 칸 'DirectX 11'은 그 안에 든다. 우리 판(6000.3)도 같은지는 빌드 설정에서 한 번 더 본다.
+운영체제를 Windows 10 21H1 부터로 둔 것은 Unity 6 플레이어 최소 사양이 'Windows 10 version 21H1 (build 19043) or newer'이기 때문이다(Unity 6.3(6000.3) 문서, 2026-11-07 확인, README). 같은 표의 그래픽은 DX10·DX11·DX12·Vulkan, 프로세서는 SSE2 지원 x86·x64 또는 Arm64 라 최소 칸 'DirectX 11'은 그 안에 든다.
 
 ## 언어
 
