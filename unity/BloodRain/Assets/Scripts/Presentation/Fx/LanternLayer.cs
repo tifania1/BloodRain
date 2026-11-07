@@ -10,9 +10,10 @@ using UnityEngine;
 namespace BloodRain.Presentation.Fx
 {
     // C-09b 등롱과 바닥에 떨어지는 것(기획서 8장 '드롭', balance.json drops). 웹 프로토타입 breakLantern·드롭 줍기와 같은 셈.
-    //   등롱: 22초 × 1.5 마다(살아 있는 등롱 넷 미만일 때) 플레이어 둘레 5~9m(경지 m)에 하나. 무공이 친 자리(WeaponRunner 가 Strike 로 알림) 안이면 깨진다.
+    //   등롱: Drops.LanternDue(살아 있는 등롱이 MaxAlive 미만, IntervalSeconds 마다) 때 플레이어 둘레 LanternOffset(경지 m)에 하나 — 값은 balance.json drops.lanternSpawn(LT-01U).
+    //     무공이 친 자리(WeaponRunner 가 Strike 로 알림)가 LanternHit 이면 깨진다. 줍기는 InPickup, 은빛 등롱 거리는 SilverLanternDistance.
     //   깨지면 Drops.RollLantern 하나를 그 자리에 떨군다. 잡몹이 쓰러지면 Drops.EnemyDropsSilver 로 은자 주머니.
-    //   줍기(플레이어 1m 안): 만두·오리구이 = Drops.FoodHeal(규칙, 종류, 1 + 음식 회복) — 마교·속삭임 배율은 PlayerVitals.Heal 이 곱한다.
+    //   줍기(플레이어 PickupRadius 안): 만두·오리구이 = Drops.FoodHeal(규칙, 종류, 1 + 음식 회복) — 마교·속삭임 배율은 PlayerVitals.Heal 이 곱한다.
     //     취기부 = 화면 안 진기 구슬 끌기(보부상 취기부와 같은 길), 정신부 = 화면 안 적을 JeongsinFreezeSeconds × 곤륜 진전 배율 동안 멈춤,
     //     은자 주머니 = RollSilverBag × (1 + 탐욕) → Life.GainSilver(혈월 배율은 Life 가). 음식은 LifeLog.EatFood·RunRecord.EatFood, 정신부는 UseTalisman 둘 다.
     //   은빛 등롱(QA-02U·R4-08U): 생성 디렉터의 silver_lantern 사건에 PlaceSilver. LifeLog.ManuscriptsHere(혈월 천하)일 때만 화면 안 가까이 놓고,
@@ -23,11 +24,6 @@ namespace BloodRain.Presentation.Fx
         public static LanternLayer Instance { get; private set; }
 
         public LifeRunner runner;
-        [Tooltip("등롱이 새로 서는 간격(초). 웹 22 / timeScale × 1.5")]
-        public float spawnSeconds = 33f;
-        public int maxAlive = 4;
-        [Tooltip("줍는 거리(경지 m)")]
-        public float pickupMeters = 1f;
 
         sealed class Lantern { public Vector2 Pos; public GameObject Go; public bool Silver; }
         sealed class Drop { public Vector2 Pos; public string Kind; public GameObject Go; public float Age; }
@@ -48,6 +44,7 @@ namespace BloodRain.Presentation.Fx
 
         static float Scale => WorldScale.Current != null ? WorldScale.Current.Length(1f) : 1f;
         DropsDef Rule => DataBoot.Data.Balance.Drops;
+        LanternSpawnDef Spawn => DataBoot.Data.Balance.Drops.LanternSpawn;
 
         void Awake()
         {
@@ -74,9 +71,13 @@ namespace BloodRain.Presentation.Fx
         {
             var l = Instance;
             if (l == null || l._lanterns.Count == 0) return;
-            float r = radius + 0.4f * Scale;
+            float sc = Scale;
+            var s = l.Spawn;
             for (int i = l._lanterns.Count - 1; i >= 0; i--)
-                if ((l._lanterns[i].Pos - center).sqrMagnitude <= r * r) l.Break(i);
+            {
+                var d = (l._lanterns[i].Pos - center) / sc; // 경지 m
+                if (Drops.LanternHit(s, d.x, d.y, radius / sc)) l.Break(i);
+            }
         }
 
         /// <summary>시험 메뉴: 플레이어 둘레에 등롱 n 개를 고리로 놓는다.</summary>
@@ -98,20 +99,21 @@ namespace BloodRain.Presentation.Fx
             if (!Alive || Time.timeScale <= 0f) return;
             float dt = Time.deltaTime;
             _acc += dt;
-            if (_acc >= spawnSeconds && _lanterns.Count < maxAlive)
+            var spawn = Spawn;
+            float sc = Scale;
+            if (Drops.LanternDue(spawn, _acc, _lanterns.Count))
             {
                 _acc = 0f;
-                float a = (float)(_rng.NextDouble() * Mathf.PI * 2f), R = Mathf.Lerp(5f, 9f, (float)_rng.NextDouble()) * Scale;
-                Place(PlayerPos + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * R);
+                var (ox, oy) = Drops.LanternOffset(spawn, _rng);
+                Place(PlayerPos + new Vector2(ox, oy) * sc);
             }
             var me = PlayerPos;
-            float pick = pickupMeters * Scale;
             for (int i = _drops.Count - 1; i >= 0; i--)
             {
                 var d = _drops[i];
                 d.Age += dt;
                 // 떨어진 뒤 0.3초는 그대로(깨진 자리에서 보이게), 그 뒤 닿으면 줍는다
-                if (d.Age < 0.3f || (d.Pos - me).sqrMagnitude > pick * pick) continue;
+                if (d.Age < 0.3f || !Drops.InPickup(spawn, Vector2.Distance(d.Pos, me) / sc)) continue;
                 Destroy(d.Go);
                 _drops.RemoveAt(i);
                 PickUp(d.Kind, d.Pos);
@@ -142,7 +144,7 @@ namespace BloodRain.Presentation.Fx
             var cam = Camera.main;
             float diag = cam != null ? Mathf.Sqrt(Mathf.Pow(cam.orthographicSize * 2f * cam.aspect, 2f) + Mathf.Pow(cam.orthographicSize * 2f, 2f)) : 20f;
             float a = (float)(_rng.NextDouble() * Mathf.PI * 2f);
-            var at = PlayerPos + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * diag * 0.28f;
+            var at = PlayerPos + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * Drops.SilverLanternDistance(Spawn, diag);
             Place(at, true);
             Pop(at, Loc.T("ui.drop.silver_lantern"));
             return true;
