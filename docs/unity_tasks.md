@@ -333,6 +333,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 넷이 Lv1·Lv5·Lv8 에서 웹 프로토타입과 같은 모양·개수로 나감
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
+- [ ] EN-02U 적 능력치 증가(11장)와 정예 거리 · 먼저: 없음
+  - 할 것: Run 씬 적이 시간·혈운 농도로 세지지 않는다(2026-11-08 클라우드가 11장을 맞대다 찾음 — `EnemyField.SpawnAt` 이 기혈 `def.Health × 혈월 배율`, 닿는 피해 `def.ContactDamage` 그대로이고 주석의 'C-10 디렉터가 곱한다'는 어디에도 없다. 그래서 숭산 20분 시강이 8 그대로, 십만대산 적도 숭산과 같은 기혈). ① `SpawnAt` 에서 한 생이 있으면 기혈 = `life.EnemyHealth(def.Health)`(분·지금 자리 농도·혈월 배율을 다 곱함 — `_healthMul` 은 이걸로 바꿈), 닿는 피해 = `life.EnemyDamage(def.ContactDamage)`. 쏘는 탄·독 장판·정예 패턴 피해도 나올 때 `life.EnemyDamage(기준)` 로(정예 패턴은 bosspatterns.json baseDamage). 이미 나온 적은 그대로(웹과 같음). 시험 씬(한 생 없음)은 지금대로 1. 땅의 주인은 BossAwakening 기혈 배율을 쓰니 건드리지 않음. ② 정예 사건(`WaveEventKind.Elite`)은 생성 고리(0.6~0.75)가 아니라 `balance.spawnTarget.eliteDiagonal`(0.62) 거리 원 위에(11장 '정예는 대각선 0.62배 거리에… 바로 보입니다', 웹 spawnElite 와 같음).
+  - 쓸 것: Core `Run/Life.cs` `EnemyHealth(기준)`·`EnemyDamage(기준)`(2026-11-08 클라우드, `LifeEnemyScalingTests`), `Combat/EnemyScaling`, balance.json `enemyScaling`·`spawnTarget.eliteDiagonal`. 웹 `foeHpMul`·`foeDmgMul` 이 같은 식
+  - 메뉴: 없음
+  - 끝: 숭산 몸으로 시작하자마자 시강 기혈 8(농도 1.0), 디버그로 20분을 넘기면(또는 `life.Minutes` 를 시험으로 당겨) 새로 나온 시강이 약 21. 마교 몸(십만대산 4.3)이면 처음부터 시강이 약 34, 닿는 피해 √4.3 배. 정예가 화면 가장자리 바로 바깥에서 나옴. 콘솔 에러 0
+  - 찍기: 없음(디버그 줄에 새로 나온 적 기혈 한 칸을 더해 확인만)
+
 - [ ] HUD-01U 전투 HUD 나머지 넷 · 먼저: 없음
   - 할 것: 12장 '전투 HUD 배치' 가운데 위 가운데(RegionHud, TU-09)·오른쪽 아래(UltimateButton·YinYangHud)·가장자리(EdgeIndicators)만 있고 나머지 넷은 디버그 글(LifeRunner·PlayerVitals OnGUI)뿐이다(2026-11-08 클라우드가 찾음). ① 화면 맨 위 가로 진기 바(먹선 위로 금빛이 참), 오른쪽 끝 'Lv N · 경지'. ② 오른쪽 위 처치 수·은자. ③ 왼쪽 위 무공 6칸 + 심법 6칸(7칸째가 열리면 7), 문턱 무공은 테두리 금빛으로 뜀·그릇이 없으면 흐린 금빛, 절기는 금테, 경지 아래 그릇 ◆◇. 아이콘 그림이 없는 칸은 무공 이름 첫 글자(웹 GLYPH 처럼). ④ 캐릭터 머리 위 짧은 기혈 바(LH-01U 문턱 아래면 붉게)·경공 충전 점. 설정 '땅의 주인 체력바'와는 따로.
   - 쓸 것: Core `Build/HudSlots.Build(life.Loadout, life.Level)`(칸 id·레벨·`SlotGlow` None·Ready·Waiting·Evolved, `VesselsUsed`·`VesselsTotal`, 2026-11-08 클라우드), `life.Xp.Progress`·`life.Level`·`Loc.Realm`, strings `ui.hud.level`(네 언어 2026-11-08)·`ui.hud.kills`·`ui.hud.silver`, 처치 수는 KC-01U 의 `_kills`, 은자 `life.Silver`, 경공 `Dash` 충전, `Balance.Contact.IsLowHealth`

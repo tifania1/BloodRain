@@ -1434,13 +1434,16 @@ const ELITES = Object.fromEntries([['dongin', 'dongin'], ['gyeyul', 'gyeyul_monk
   .map(([key, id]) => { const d = E_BY_ID[id], ps = DATA.elitePatterns[id]; return [key, { id, name: d.nameKo, hp: d.health, speed: d.speed, dmg: d.contactDamage, kbRes: d.knockbackResist ?? 0.85, ps, pat: ps.patterns[0] }]; }));
 // 그림 이름: 1장 적은 제 그림, 그림이 아직 없는 다른 땅 고유 적은 혈무사 자리 표시(WP-13c)
 const sprOf = type => type === 'mogin_nahan' ? 'mogin' : type === 'golden_toad' ? 'toad' : KIND_SIZE[type] ? type : 'hyeol_musa';
+// 적 능력치 증가(11장, Core Life.EnemyHealth·EnemyDamage, EN-02): 한 생 판은 지금 자리 혈운 농도 — 기혈 × 농도, 피해 × √농도.
+//   1장·서장 판은 장 배율을 기혈에만(옛 판 그대로). 땅의 주인은 healthCurve 를 따로 쓴다.
+const foeHpMul = () => (1 + B.enemyScaling.healthPerMinute * G.gm) * (G.body ? Math.max(0, G.dens || 1) : B.enemyScaling.chapterMultiplier[isPro() ? 'prologue' : 'chapter1']);
+const foeDmgMul = () => (1 + B.enemyScaling.damagePerMinute * G.gm) * (G.body ? Math.sqrt(Math.max(0, G.dens || 1)) : 1);
 function spawnEnemy(type, x, y, extra) {
   const def = E_BY_ID[type];
-  const gm = G.gm, mult = B.enemyScaling.chapterMultiplier[isPro() ? 'prologue' : 'chapter1'];
-  const hp = def.health * (1 + B.enemyScaling.healthPerMinute * gm) * mult;
+  const hp = def.health * foeHpMul();
   const e = {
     type, sprite: sprOf(type),
-    x, y, hp, maxHp: hp, speed: def.speed / 100 * MOVE, dmg: def.contactDamage * (1 + B.enemyScaling.damagePerMinute * gm),
+    x, y, hp, maxHp: hp, speed: def.speed / 100 * MOVE, dmg: def.contactDamage * foeDmgMul(),
     r: KIND_SIZE[sprOf(type)] * 0.32,
     behavior: def.behavior, hop: Math.random(), flash: 0, kbx: 0, kby: 0, contact: 0, stun: 0, slow: 0, poisonT: 0, burn: 0, burnDps: 0,
     // 처치 진기(구슬 값). enemies.json에 아직 없어 프로토타입 값으로 둔다. 잘 풀린 판은 20분에 Lv60을 넘는다(B-07에서 다시 맞출 것).
@@ -1455,9 +1458,9 @@ function spawnEnemy(type, x, y, extra) {
 }
 function spawnElite(key) {
   const d = ELITES[key], p = G.player, a = rand(0, TAU), R = viewDiag() * B.spawnTarget.eliteDiagonal;
-  const hp = d.hp * (1 + B.enemyScaling.healthPerMinute * G.gm);
+  const hp = d.hp * foeHpMul();
   const e = spawnEnemy('sigang', p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, {
-    sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * (1 + B.enemyScaling.damagePerMinute * G.gm),
+    sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * foeDmgMul(),
     r: KIND_SIZE.elite * 0.3, kbRes: d.kbRes, xp: 25, ps: d.ps, pat: d.pat, timer: d.ps.firstCastSeconds,
   });
   toast(d.name, '정예가 나타났다 · 쓰러뜨리면 보갑');
@@ -2949,7 +2952,7 @@ function runEvent(ev) {
 function eliteAI(e, dt, dx, dy, d) {
   // 패턴이 여럿이면(설랑 왕 등, WP-13d) 프로토타입이 아는 모양만 차례로 돈다
   const list = (e.ps && e.ps.patterns || [e.pat]).filter(eliteShapeOk), P = list.length ? list[(e.pi || 0) % list.length] : e.pat;
-  const p = G.player, scale = 1 + B.enemyScaling.damagePerMinute * G.gm, dmg = P.baseDamage * scale;
+  const p = G.player, scale = foeDmgMul(), dmg = P.baseDamage * scale;
   if (e.windup > 0) { e.windup -= dt; return; }
   e.x += dx * e.speed * dt; e.y += dy * e.speed * dt; e.dir = dx > 0 ? 1 : -1;
   e.timer -= dt;
