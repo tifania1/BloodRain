@@ -215,7 +215,9 @@ namespace BloodRain.Presentation
             }
             return n;
         }
-        bool PoisonImmune => sectTrait.PoisonImmune;
+        /// <summary>PM-01U 만독심법 최대 덧붙임(Life.PassiveMax.PoisonImmune). 당가 몸과 둘 중 하나면 독 무효.</summary>
+        [System.NonSerialized] public bool passivePoisonImmune;
+        bool PoisonImmune => sectTrait.PoisonImmune || passivePoisonImmune;
         /// <summary>치명타가 난 적 자리(화산 3 꽃잎). Damage 가 끝난 뒤 부른다.</summary>
         public event System.Action<Vector2> Crit;
         /// <summary>독 번짐이 퍼진 자리와 반경(세계 m). 그림은 WeaponRunner 가.</summary>

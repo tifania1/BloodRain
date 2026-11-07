@@ -54,6 +54,9 @@ namespace BloodRain.Presentation
         public float MoveMultiplier { get => _moveMultiplier; set => _moveMultiplier = value; }
         /// <summary>C-06b 경공 거리 배율(수로채 3 dash_drag). 미끄러지는 한 걸음에 곱한다. LifeRunner 가 넣는다.</summary>
         public float DashDistanceMultiplier { get; set; } = 1f;
+        /// <summary>PM-01U 금강체 최대 덧붙임(넉백 면역). 지금 Run 씬엔 플레이어를 미는 것이 없어 표시만 둔다.
+        /// 정예·땅의 주인 패턴 넉백(BR-01)·기수 깃발 등 플레이어를 미는 쪽이 생기면 이 값이 참일 때 밀지 않는다.</summary>
+        public bool KnockbackImmune { get; set; }
 
         // C-06c 수로채 3 dash_drag 끌기. 경공 중 몸 DragRadius(경지 m) 안 잡몹을 미끄러진 걸음 × DragFactor 만큼 같이 옮긴다.
         // 정예·보스(EnemyDef.Family elite·boss)는 안 끌린다. LifeRunner 가 넣는다(0 이면 끔).

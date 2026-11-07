@@ -245,6 +245,7 @@ namespace BloodRain.Presentation
             if (player != null && player.TryGetComponent<PlayerController>(out var pc))
             {
                 pc.MoveMultiplier = st.MoveSpeed;
+                pc.KnockbackImmune = _life.PassiveMax.KnockbackImmune; // PM-01U 금강체 Lv5
                 // C-07a 경공 충전 칸 = 기본 + 몸·심법 + 경지 보상. 늘면 그만큼 바로 찬다(Dash.SetMaxCharges)
                 if (pc.Dash != null) pc.Dash.SetMaxCharges(_life.DashMaxCharges(st));
             }
@@ -273,6 +274,7 @@ namespace BloodRain.Presentation
                 enemies.dotMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.DotDamage];
                 enemies.poisonedTargetMultiplier = _life.Body.SectTrait.DamageMultiplier(true);
                 enemies.sectTrait = _life.Body.SectTrait; // R-04Ub 당가 독 면역·곤륜 설한기
+                enemies.passivePoisonImmune = _life.PassiveMax.PoisonImmune; // PM-01U 만독심법 Lv5
                 enemies.eliteDamageMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.EliteDamage]; // ST-02U 파산공
                 enemies.knockbackMultiplier = 1f + st.Bonus[BloodRain.Core.Build.StatKind.Knockback];
             }

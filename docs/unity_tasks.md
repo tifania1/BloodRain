@@ -347,7 +347,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 양 무공(나한권·창천검기)만 올려 게이지가 +26 을 넘으면 그 무공 피해 숫자가 1.15배, +70 을 넘으면 1.4배, 음 무공(비도술)은 그대로. 콘솔 에러 0
   - 찍기: 없음
 
-- [ ] PM-01U 심법 최대 덧붙임 셋(금강체 넉백 면역·만독심법 독 면역·운룡보 경공 +1) · 먼저: 없음
+- [x] PM-01U 심법 최대 덧붙임 셋(금강체 넉백 면역·만독심법 독 면역·운룡보 경공 +1) · 먼저: 없음 — 2026-11-08 02:55 PC: EnemyField `passivePoisonImmune`(당가 몸과 OR, 독 탄·독 장판·독안개 셋 다 같은 PoisonImmune 을 봄)·PlayerController `KnockbackImmune` 을 LifeRunner ApplyStats 가 `life.PassiveMax` 로 넣음. 플레이에서 만독·금강체·운룡보를 Lv5 로 올리니 경공 2→3, 두 표시 참. 금강체는 지금 Run 씬에 플레이어를 미는 것이 없어 표시만(BR-01 패턴 넉백이 생기면 이 값을 봄). 콘솔 에러 0
   - 할 것: 9장 심법 표 '최대' 칸이 Core·웹·Unity 어디에도 없었다(2026-11-08 클라우드, passives.json maxBonus 를 읽는 곳이 설명 글뿐). 경공 칸은 Core `Life.DashMaxCharges` 가 이제 더하니 LifeRunner 가 이미 부르는 `pc.Dash.SetMaxCharges(_life.DashMaxCharges(st))` 로 저절로 됨(레벨업 뒤에 다시 부르는지만 확인). 남은 둘: ① `life.PassiveMax.KnockbackImmune` 이면 플레이어를 미는 것(정예·땅의 주인 패턴 넉백, 기수 깃발 등 플레이어 쪽 밀림)을 끔. ② `life.PassiveMax.PoisonImmune` 이면 EnemyField `PoisonImmune`(지금은 당가 몸 `sectTrait.PoisonImmune` 만)을 둘 중 하나라도 참이면 참으로.
   - 쓸 것: Core `Build/PassiveMaxBonus`·`Life.PassiveMax`(2026-11-08 클라우드, `PassiveMaxBonusTests`)
   - 메뉴: 없음(심법 넣기 시험 메뉴로 금강체·만독심법을 Lv5 까지)
