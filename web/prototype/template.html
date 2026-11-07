@@ -2778,7 +2778,7 @@ function update(dt) {
       if (pr.t > pr.life) pr.dead = true;
       else if (Math.hypot(p.x - pr.x, p.y - pr.y) < pr.r + 0.35) {
         pr.dead = true;
-        if (pr.root && p.iframe <= 0 && p.dashT <= 0) { p.rootT = pr.root; toast('포승줄', '묶였다 · 경공으로 끊는다'); }
+        if (pr.root && p.iframe <= 0 && p.dashT <= 0) { p.rootT = pr.root; toast(pr.rootName || '포승줄', '묶였다 · 경공으로 끊는다'); }
         if (pr.pull && pr.src && p.iframe <= 0 && p.dashT <= 0) { p.pullT = pr.pull; p.pullSrc = pr.src; toast('갈고리 사슬', '끌려간다 · 경공으로 끊는다'); }   // 마천패(WP-13e)
         hurtPlayer(pr.dmg);
       }
@@ -2970,7 +2970,7 @@ function castPattern(e, P, dmg, dx, dy) {
     for (let w = 0; w < waves; w++) G.zones.push({ delay: P.telegraphSeconds + w * (P.waveIntervalSeconds || 0), apply: () => {
       if (e.dead) return;
       const a = w ? Math.atan2(G.player.y - e.y, G.player.x - e.x) : ca;
-      G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds });
+      G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds, rootName: P.nameKo });
       sfx('dash');
     } });
   } else if (P.shape === 'summon') {
