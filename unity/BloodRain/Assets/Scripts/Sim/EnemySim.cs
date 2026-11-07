@@ -54,6 +54,8 @@ namespace BloodRain.Sim
         public byte Fire;
         // 감전(뇌부 Lv5 '감전', weapons.json shockSeconds) 같은 멈춤. 남은 초 동안 걷지도 쏘지도 않는다(넉백은 받는다).
         public float Stun;
+        // 둔화(쇄겸술 weapons.json slow). 걸음 x (1 - Slow), 초당 balance.json enemyStatus.slowFadePerSecond 만큼 풀린다
+        public float Slow;
         // fly_curve(비강, EnemyDef.Curve): 옆 흔들림 폭(세계 m)과 주기(초). 위상은 Hop 자리(0~1)를 같이 쓴다
         public float CurveAmp, CurvePeriod;
         // flank_pack(설랑, EnemyDef.Group): 비껴 드는 각(라디안, 부호가 왼쪽·오른쪽)과 곧장 덮치는 거리(세계 m)
@@ -136,7 +138,8 @@ namespace BloodRain.Sim
         /// recycleBeyond 를 넘게 멀어진 적은 플레이어 둘레 recycleTo 거리, 플레이어가 가는 쪽으로 옮긴다.
         /// knockKeepPerSecond 는 넉백 속도가 1초 뒤 남는 비율(balance.json enemyStatus.knockbackKeepPerSecond).</summary>
         public void Step(float dt, float2 player, float2 playerHeading, float cell, float recycleBeyond, float recycleTo,
-                         float speedScale = 1f, float knockKeepPerSecond = 0.02f, float nearSlowRadius = 0f, float nearSlowMultiplier = 1f)
+                         float speedScale = 1f, float knockKeepPerSecond = 0.02f, float nearSlowRadius = 0f, float nearSlowMultiplier = 1f,
+                         float slowFadePerSecond = 0.6f)
         {
             if (_count == 0 || dt <= 0f) return; // Removed 는 그리는 쪽이 읽고 비운다
 
@@ -145,7 +148,7 @@ namespace BloodRain.Sim
                 Agents = _a, Dt = dt, Player = player, Heading = playerHeading,
                 RecycleBeyond = recycleBeyond, RecycleTo = recycleTo, SpeedScale = speedScale,
                 NearSlowRadius = nearSlowRadius, NearSlowMultiplier = nearSlowMultiplier,
-                KnockKeep = math.pow(knockKeepPerSecond, dt),
+                KnockKeep = math.pow(knockKeepPerSecond, dt), SlowFade = slowFadePerSecond,
             }.Schedule(_count, 64);
 
             _grid.Clear();
@@ -250,6 +253,7 @@ namespace BloodRain.Sim
             public float NearSlowRadius;     // 이 거리(세계 m) 안 적은 걸음 x NearSlowMultiplier(곤륜 설한기, SectTrait.EnemySpeedMultiplier). 0 이면 없음
             public float NearSlowMultiplier;
             public float KnockKeep; // 이번 프레임 넉백이 남는 비율 = knockbackKeepPerSecond ^ Dt
+            public float SlowFade;  // 둔화가 초당 풀리는 양
 
             public void Execute(int i)
             {
@@ -260,7 +264,8 @@ namespace BloodRain.Sim
                 float d = math.length(to);
                 float2 dir = d > 1e-5f ? to / d : new float2(1, 0);
                 float near = NearSlowRadius > 0f && d <= NearSlowRadius ? NearSlowMultiplier : 1f;
-                float speed = e.Speed * SpeedScale * near * (1f + e.Buff);
+                float speed = e.Speed * SpeedScale * near * (1f + e.Buff) * (1f - math.clamp(e.Slow, 0f, 1f));
+                e.Slow = math.max(0f, e.Slow - SlowFade * Dt);
                 float2 v = float2.zero;
                 if (e.Stun > 0f)
                 {

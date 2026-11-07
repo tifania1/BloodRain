@@ -707,7 +707,7 @@ namespace BloodRain.Presentation
             _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
                       1f, DataBoot.Data.Balance.EnemyStatus.KnockbackKeepPerSecond,
-                      sectTrait.NearEnemySlowRadius(ws.RealmFactor), sectTrait.EnemySpeedMultiplier(0f)); // R-04Ub 곤륜 설한기: 몸 가까운 적 느려짐
+                      sectTrait.NearEnemySlowRadius(ws.RealmFactor), sectTrait.EnemySpeedMultiplier(0f), DataBoot.Data.Balance.EnemyStatus.SlowFadePerSecond); // R-04Ub 곤륜 설한기: 몸 가까운 적 느려짐
             // 접촉 피해(C-03): 플레이어 원에 닿은 적, 같은 적은 contact.sameEnemyIntervalSeconds 마다 한 번
             if (vitals != null)
             {

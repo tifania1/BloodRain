@@ -126,6 +126,7 @@ namespace BloodRain.Presentation.Combat
         readonly List<Fx> _fx = new List<Fx>();
         readonly List<int> _near = new List<int>();
         readonly List<int> _filtered = new List<int>();
+        readonly List<float> _xs = new List<float>(), _ys = new List<float>();
         readonly Dictionary<string, float> _dealt = new Dictionary<string, float>();
         Material _mat;
         MaterialPropertyBlock _mpb;
@@ -549,6 +550,41 @@ namespace BloodRain.Presentation.Combat
                             }
                         });
                     }
+                    break;
+                }
+                case "pull_chain":
+                {
+                    // 쇄겸술(R-12Ua, 9장): 사거리 안 가장 먼 적 projectiles(1→3)+개수에게 사슬낫. 맞은 적은 몸에서 Trial.PullTo 까지 끌려오고
+                    // slow(0.3→0.5) 둔화(EnemyAgent.Slow, enemyStatus.slowFadePerSecond 로 풀림). 넉백 0. 정예·보스(Weight 0.1)는 안 끌림.
+                    // Core WeaponShapes.FarthestWithin, 끌려가는 자리는 PulledTo 와 같은 셈을 세계 m 로(웹 pull_chain). 절기 흑룡탄은 아직(C-09e)
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount;
+                    float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s));
+                    float slow = WeaponGrowth.At(s.Def.Slow, s.level, 0f);
+                    enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
+                    if (_near.Count == 0) { s.Fired--; return false; }
+                    var agents = enemies.Sim.Agents;
+                    _xs.Clear(); _ys.Clear();
+                    foreach (int i in _near) { _xs.Add(agents[i].Pos.x); _ys.Add(agents[i].Pos.y); }
+                    var far = WeaponShapes.FarthestWithin(P.x, P.y, _xs, _ys, R, n);
+                    float pull = ws.Length(WeaponShapes.Trial.PullTo);
+                    _filtered.Clear();
+                    foreach (int k in far)
+                    {
+                        int i = _near[k];
+                        var a = enemies.Sim.Get(i);
+                        AddFxAt(new Vector2(a.Pos.x, a.Pos.y), 0f, Mathf.PI * 2f, a.Radius + ws.Length(0.2f), 0.2f, new Color(0.22f, 0.20f, 0.24f, 0.75f)); // 사슬이 걸린 자리
+                        a.Slow = Mathf.Max(a.Slow, slow);
+                        if (a.Weight >= 0.5f)
+                        {
+                            // PulledTo 는 경지 m 의 Trial.PullTo 를 쓰니 세계 m 로 같은 셈을 한다
+                            float dx = a.Pos.x - P.x, dy = a.Pos.y - P.y, d = Mathf.Sqrt(dx * dx + dy * dy); if (d == 0f) d = 1f;
+                            float kk = Mathf.Min(1f, pull / d);
+                            a.Pos = new float2(P.x + dx * kk, P.y + dy * kk);
+                        }
+                        enemies.Sim.Set(i, a);
+                        if (!_filtered.Contains(i)) _filtered.Add(i);
+                    }
+                    Deal(s, dmg, enemies.Damage(_filtered, dmg, P, 0f));
                     break;
                 }
                 default:
