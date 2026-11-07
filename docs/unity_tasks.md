@@ -473,7 +473,21 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 적에게서 도망치며 움직여도 장풍·혈조가 가장 가까운 적 쪽으로 나감. '이동 방향'으로 바꾸면 움직인 쪽으로만
   - 찍기: `docs/unity_shots/WP-52U/` 의 `aim_near.png`
 
-- [ ] WP-57U 설정 화면(타이틀·일시정지 두 곳) · 먼저: 없음
+- [ ] TT-01U 타이틀 화면(12장 화면 목록 '타이틀') · 먼저: 없음
+  - 할 것: Unity 에 타이틀 화면이 없다(2026-11-08 클라우드가 12장 화면 목록을 맞대다 찾음 — Boot 씬이 바로 넘어가고, WP-57U·DL-07b 가 '타이틀의 설정·인트로 다시 보기' 단추를 기대함). Boot 씬 뒤 첫 화면으로: 바탕은 `Assets/Art/Backgrounds/bg_title` 이 들어오면 그것(art_queue `bg_title`, 아직 todo — 그 전엔 선지 #EFE6D2 바탕에 ScreenRain 붉은 비), 제목은 Unity 글자(붓 글꼴)로 '혈우강호' 낙관, 단추 넷: 시작(혼 저장이 없으면 인트로 DL-07b → 서장, 있으면 객잔) · 이어하기(혼 저장이 있을 때만 보임 — `SoulStore.Load` 가 새 혼이 아닌지) · 설정(WP-57U 화면) · 인트로 다시 보기. 곡은 메인 테마(audio_queue, 없으면 무음).
+  - 쓸 것: strings `ui.title.start`·`ui.title.continue`·`ui.title.intro`(2026-11-08 클라우드, 네 언어)·`ui.settings.title`, `Presentation/Meta/SoulStore`, `Hud/ScreenRain`, 웹 프로토타입 `#title` 화면(template.html)
+  - 메뉴: `BloodRain/Bootstrap/` 아래 새 메뉴(타이틀 화면 짓기, 다시 돌리면 같은 결과)
+  - 끝: 혼 저장 없이 켜면 이어하기가 없고 시작 → 서장, 서장을 마친 뒤 다시 켜면 이어하기 → 객잔. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/TT-01U/` 의 `title.png`
+
+- [ ] PS-01U 일시정지 화면(12장 화면 목록 '일시정지') · 먼저: 없음
+  - 할 것: Run 씬에 일시정지 화면이 없다(같은 맞대기 — UI-01U·WP-57U 가 '일시정지 화면'에 붙인다고 적었지만 화면 자체가 없음). Esc·패드 Start 로 세상 멈춤(레벨업·각성·보갑 화면이 떠 있으면 안 열림), 머리 `ui.pause.title`·`ui.pause.sub`, 단추 계속하기·설정(WP-57U)·객잔으로(지금 생을 끝내지 않고 나가면 무엇이 되는지는 웹 프로토타입 `#quit` 과 같게 — 쓰러짐과 같은 정산). 본문 12장 그대로: 지닌 무공·심법 칸과 절기 문턱·그릇(`HudSlots.Build`, TopHud 와 같은 셈), 능력치(이름 `ui.stat.*` + 쉬운 말 `ui.stat_easy.*`), 무공별 지금까지 피해·초당 피해(`DamageReport.Lines(weapons.Dealt, 판 시각, 얻은 시각)`, 누르면 짝·진전·연환). 절기 조합표 탭은 UI-01U 몫이라 자리만.
+  - 쓸 것: strings `ui.pause.*`, Core `Build/HudSlots`·`Run/DamageReport`·`Build/LevelUpView.EvolutionTable`, `WeaponRunner.Dealt`, 웹 프로토타입 `#pause` 화면
+  - 메뉴: 없음(LifeRunner 가 붙임) 또는 HudBootstrap `Run 씬에 HUD 붙이기` 에 한 줄
+  - 끝: 판 중 Esc 로 열리고 세상이 멈추며, 무공 줄의 피해 합이 정산 막대와 같은 셈. 계속하기로 닫으면 그대로 이어짐. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/PS-01U/` 의 `pause.png`
+
+- [ ] WP-57U 설정 화면(타이틀·일시정지 두 곳) · 먼저: 없음(단추를 다는 자리는 TT-01U·PS-01U — 둘이 아직이면 설정 화면만 만들고 시험 메뉴로 연다)
   - 할 것: 12장 설정 목록 가운데 값이 정해진 열하나(흔들림·각성 연출·깜빡임·땅의 주인 체력바·혈우 연출·음량·소리 끄기·내 이펙트 투명도·피해 숫자·조준 방식·방향 표시)를 단추 하나씩, 누르면 `GameSettings.Turn(낱말)` 로 다음 값. 시작할 때 `GameSettings.Load(k => PlayerPrefs.HasKey(k) ? PlayerPrefs.GetString(k) : null, 움직임 줄이기)`, 바꿀 때 `Save(PlayerPrefs.SetString)`. 값을 쓰는 곳(흔들림·각성 연출 길이·피격 번쩍임·체력바·혈우 층·AudioListener 음량·내 이펙트 알파·피해 숫자·`Aim.Angle` 방식·방향 꺾쇠 크기)에 하나씩 잇는다. 이미 있는 FxSettings(휴대폰 효과 간소화)도 이 화면에 한 줄로. 글자는 strings `ui.settings.*`(2026-11-07 클라우드가 네 언어로 넣음 — 값 이름은 `shake`·`awaken_auto` …, 작은 글은 `_sub`, `{0}` 은 %)
   - 언어 단추(2026-11-07 15시 클라우드 WP-68): 열둘째 단추 `GameSettings.Lang`, 이름은 `GameSettings.LanguageNames[Language]` 를 `ui.settings.lang` 의 {0} 에. 누르면 Save 뒤 `Loc.Lang = s.Language`(캐시를 비워 바로 바뀜). Load 할 때 `systemLanguage: Application.systemLanguage.ToString()` 을 넘기고(`Loc.FromSystem` 은 2026-11-07 클라우드가 이미 `GameSettings.LanguageFor` 로 바꿈 — 컴파일만 확인). 목소리 단추 `GameSettings.Voice`(`ui.settings.voice` 의 {0} 에 `ui.settings.voice_ko`·`voice_zh`) — 기합 소리가 아직 없으니 값만 저장
   - 쓸 것: Core `Meta/GameSettings.cs`(2026-11-07 클라우드, `GameSettingsTests`), 웹 프로토타입 settings·SET_TURN·SET_HTML(template.html), 기획서 12장 화면 목록 '설정'·'화면 편의 규칙'
