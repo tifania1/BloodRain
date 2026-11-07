@@ -787,6 +787,10 @@ function synTick(dt) {
     if (!overlay && Object.entries(mg.levels).every(([id, lv]) => lvOf(id) >= lv) && S.zeroT >= mg.hold.seconds) { unlockSecret('mugeuk'); G.yy = 0; }
   }
   if (S.drunkPend && !overlay) { S.drunkPend = false; unlockSecret('chwiseon'); }
+  if (S.bloodPend && !overlay) {   // 혈해마공 잔편: 그 판에 혈마의 속삭임이 반드시 나타남(SecretEffects.WhisperGuaranteed) — 굴림 없이 지금, 지나쳤어도 다시
+    S.bloodPend = false; unlockSecret('hyeolhae_janpyeon');
+    const wv = G.enc && G.enc.whisper; if (wv && !G.whisperTaken && !wv.on) { wv.done = false; wv.rolled = true; wv.near = false; wv.at = G.gm; }
+  }
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
@@ -2498,6 +2502,8 @@ function breakLantern(l) {
   if (l.silver) {   // 은빛 등롱: cycle.bloodmoon.manuscriptChance 로 의서 한 권(Core LifeLog.BreakSilverLantern). 안 나와도 보통 등롱처럼 한 가지는 떨군다
     if (Math.random() < BM.manuscriptChance) { G.manus = (G.manus || 0) + 1; toast('단목현의 의서', `의서 한 권 · 모두 ${(G.soul0.manuscripts || 0) + G.manus}권`); }
     addEffect('burst', l.x, l.y, { r: 1.2, color: '#C9CED6' });
+    // 비전 혈해마공 잔편: 혈조·혈해심법을 지닌 채 의서(혼 기록 + 이번 생, 이 등롱 것 포함) 세 권 이상에서 은빛 등롱(Core RunRecord.BreakSilverLantern). 화면이 비면 연다(synTick)
+    { const hr = SECRET.hyeolhae_janpyeon.require; if (!G.syn.secrets.has('hyeolhae_janpyeon') && Object.keys(hr.levels).every(id => lvOf(id) >= hr.levels[id]) && (G.soul0.manuscripts || 0) + (G.manus || 0) >= hr.counts.medicalBooks) G.syn.bloodPend = true; }
   }
   l.dead = true; addEffect('burst', l.x, l.y, { r: 0.9, color: '#C8392B' });
   if (G.letterArmed && !l.silver) { G.letterArmed = false; readLetter(); }

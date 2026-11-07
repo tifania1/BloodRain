@@ -147,7 +147,7 @@
       "effect": "no_backlash",
       "hint": ["거꾸로 흐르는 피를", "세 번 거스른 자"],
       "require": { "counts": { "backlashCutsInRow": 3 } } },
-    { "id": "hyeolhae_janpyeon", "nameKo": "혈해마공 잔편", "hanja": "血海魔功殘篇",
+    { "id": "hyeolhae_janpyeon", "nameKo": "혈해마공 잔편", "hanja": "血海魔功殘篇", "proto": true,
       "condition": "혈조와 혈해심법을 지닌 채 의서를 세 권 이상 모은 상태로 은빛 등롱을 부순다",
       "reward": "그 판에 '혈마의 속삭임'이 반드시 나타난다. 받아들이면 혈공을 얻고 이야기가 계승 엔딩 쪽으로 기운다",
       "effect": "blood_whisper",

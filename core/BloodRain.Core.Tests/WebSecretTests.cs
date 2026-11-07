@@ -47,5 +47,13 @@ namespace BloodRain.Core.Tests
             // SecretEffects.Evades: 기혈역류(self)는 흘리지 않음
             Assert.Contains("kind !== 'self' && G.syn.secrets.has('chwiseon') && Math.random() < SECRET.chwiseon.params.evadeChance", html);
         }
+        [Fact] public void 혈해마공_잔편은_은빛_등롱에서_열리고_속삭임을_부른다()
+        {
+            var html = Proto;
+            Assert.Contains("(G.soul0.manuscripts || 0) + (G.manus || 0) >= hr.counts.medicalBooks) G.syn.bloodPend = true;", html);
+            Assert.Contains("if (wv && !G.whisperTaken && !wv.on) { wv.done = false; wv.rolled = true; wv.near = false; wv.at = G.gm; }", html);
+            // 판정은 은빛 등롱을 깰 때만
+            Assert.True(html.IndexOf("G.syn.bloodPend = true") > html.IndexOf("function breakLantern(l)"));
+        }
     }
 }
