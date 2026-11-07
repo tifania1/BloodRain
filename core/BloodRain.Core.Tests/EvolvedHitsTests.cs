@@ -84,6 +84,32 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 천지인_삼검은_세_방향에_세_번째마다_검기()
+        {
+            var d = EvolvedHits.FrontArcDirections(0f, true, false);
+            Assert.Equal(new[] { 0f, 2.0944f, -2.0944f }, d.Select(v => (float)Math.Round(v, 4)));
+            Assert.Equal(2, EvolvedHits.FrontArcDirections(0f, false, true).Length);
+            var e = Evo("cheonjiin");
+            Assert.Equal(new[] { 3, 6 }, Enumerable.Range(1, 7).Where(n => EvolvedHits.SendsWave(e, n)));
+        }
+
+        [Fact]
+        public void 백보신권은_세_갈래_0_5라디안()
+        {
+            var a = EvolvedHits.FanAngles(Evo("baekbo_fist"), 1f);
+            Assert.Equal(new[] { 0.5f, 1f, 1.5f }, a.Select(v => (float)Math.Round(v, 4)));
+        }
+
+        [Fact]
+        public void 칠보독무는_7초_머물면_처형_정예는_안_됨()
+        {
+            var e = Evo("chilbo_mist");
+            Assert.False(EvolvedHits.PoisonExecutes(e, 6.9f, false));
+            Assert.True(EvolvedHits.PoisonExecutes(e, 7f, false));
+            Assert.False(EvolvedHits.PoisonExecutes(e, 99f, true));
+        }
+
+        [Fact]
         public void 같은_거리면_앞_번호()
         {
             Assert.Equal(0, EvolvedHits.NearestExcept(0f, 0f, new[] { 1f, -1f }, new[] { 0f, 0f }, 5f, null));
@@ -97,6 +123,10 @@ namespace BloodRain.Core.Tests
             Assert.Contains("d *= ep.lightningFalloff; hit.add(nx);", html);
             Assert.Contains("bomb(x + Math.cos(a) * R, y + Math.sin(a) * R, R * ep.chainShrink, dmg * ep.chainDamage", html);
             Assert.Contains("nearestEnemies(pr.x, pr.y, 1, pr.bounceRange, pr.hit)", html);
+            Assert.Contains("w.evolved ? [base, base + TAU / 3, base - TAU / 3]", html);
+            Assert.Contains("w.n % ep.waveEvery === 0", html);
+            Assert.Contains("a0 + (k - (ep.projectiles - 1) / 2) * ep.projectileSpread", html);
+            Assert.Contains("e.poisonT >= ep.executeSeconds", html);
         }
     }
 }

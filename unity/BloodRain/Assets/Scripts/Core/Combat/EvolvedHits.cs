@@ -96,6 +96,35 @@ namespace BloodRain.Core.Combat
             return hops;
         }
 
+        /// <summary>삼재검법 베는 방향: 절기(천지인 삼검)면 조준 각과 ±120°, Lv '앞뒤 베기'면 앞뒤, 아니면 조준 각 하나. 웹 front_arc.</summary>
+        public static float[] FrontArcDirections(float baseAngle, bool evolved, bool frontBack)
+        {
+            float third = (float)(2 * Math.PI / 3);
+            return evolved ? new[] { baseAngle, baseAngle + third, baseAngle - third }
+                 : frontBack ? new[] { baseAngle, baseAngle + (float)Math.PI } : new[] { baseAngle };
+        }
+
+        /// <summary>천지인 삼검: attackCount 번째 공격(1부터, 웹 w.n)에 바라보는 쪽 관통 검기가 나가나(waveEvery 마다).</summary>
+        public static bool SendsWave(EvolutionDef evo, int attackCount)
+        {
+            int every = (int)evo.Param("waveEvery");
+            return every > 0 && attackCount % every == 0;
+        }
+
+        /// <summary>백보신권 등 갈래 탄: projectiles 발을 조준 각 가운데로 projectileSpread 간격. 웹 melee_combo 절기.</summary>
+        public static float[] FanAngles(EvolutionDef evo, float baseAngle)
+        {
+            int n = (int)evo.Param("projectiles");
+            float spread = evo.Param("projectileSpread");
+            var a = new float[Math.Max(0, n)];
+            for (int k = 0; k < a.Length; k++) a[k] = baseAngle + (k - (n - 1) / 2f) * spread;
+            return a;
+        }
+
+        /// <summary>독무 절기: 안개 안에 머문 누적 초가 executeSeconds 를 넘으면 처형(정예·땅의 주인은 안 됨). 웹 aura 절기.</summary>
+        public static bool PoisonExecutes(EvolutionDef evo, float secondsInside, bool eliteOrBoss) =>
+            !eliteOrBoss && secondsInside >= evo.Param("executeSeconds");
+
         /// <summary>무영비도: 맞힌 자리 (x, y) 에서 다음으로 튈 적. hit 은 이 비도가 이미 맞힌 적.</summary>
         public static int NextBounce(EvolutionDef evo, float x, float y, IReadOnlyList<float> xs, IReadOnlyList<float> ys, ICollection<int> hit) =>
             NearestExcept(x, y, xs, ys, evo.Param("bounceRange"), hit);
