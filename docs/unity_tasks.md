@@ -530,7 +530,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 찍기: `docs/unity_shots/EL-07U/` 의 `cave.png`
 
 - [ ] DD-01U 일일 도전 판 열기 · 먼저: RM-03b
-  - 할 것: 모드 고르기(12장 '모드 선택', `Modes.IsOpen(soul, "daily")` 일 때만)에서 일일 도전을 누르면 `var seed = DailyChallenge.Seed(DateTime.UtcNow)` → `Rebirth.Body(C, DailyChallenge.Body(C, seed))` 몸 카드 한 장(고르기 없음) → `new Life(soul, body, DailyChallenge.LifeRandom(seed))`. 같은 날 두 번 열면 같은 몸·같은 사건 차례. 끝나면 혼에 넘기지 않고 정산만(무엇을 남길지는 DD-01a 가 정하면 고침). 리더보드는 Steamworks 를 붙인 뒤(아직 항목 없음).
+  - 할 것: 모드 고르기(12장 '모드 선택', `Modes.IsOpen(soul, "daily")` 일 때만)에서 일일 도전을 누르면 `var seed = DailyChallenge.Seed(DateTime.UtcNow)` → `Rebirth.Body(C, DailyChallenge.Body(C, seed))` 몸 카드 한 장(고르기 없음) → `new Life(soul, body, DailyChallenge.LifeRandom(seed))`. 같은 날 두 번 열면 같은 몸·같은 사건 차례. 끝나면 혼에 넘기지 않고 정산만(무엇을 남길지는 WP-37 이 정하면 고침). 리더보드는 Steamworks 를 붙인 뒤(아직 항목 없음).
   - 쓸 것: Core `Meta/DailyChallenge.cs`, `Meta/Modes.cs`, cheonha.json `modes`
   - 메뉴: 없음
   - 끝: 봉인석 셋인 시험 혼으로 일일 도전을 두 번 열어 같은 문파·같은 성질, 콘솔 에러 0
