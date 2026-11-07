@@ -597,7 +597,9 @@ const TRIAL_W = { bladeTurnPerSecond: 1.2, bladeRadius: 0.35, bladeRehitSeconds:
 // 프로토타입에서만 쓰는 값. 해 보고 괜찮으면 balance.json·기획서로 옮긴다.
 const HIT_IFRAMES = 0.5, HOP_DUTY = 0.72, BOSS_HP = { full: 20000, quick: 12000 }, BOSS_TRASH = 60;
 // 옛 1장 흐름(20분 원각) 그대로 19분에 생성을 멈춘다. 천하 한 생에는 생성 중지가 없어 balance.json 에서 빠졌다.
+// 한 생 판(G.body)은 멈추지 않고 가중치표도 끝(22~30분 줄)까지 쓴다 — chapters.json life openEnded, Core LifeDirector 와 같게.
 const STOP_SPAWN_AT = 19;
+const spawnStopAt = () => isPro() ? PRO.stopSpawningAtMinute : G.body ? Infinity : STOP_SPAWN_AT;
 // 서장(기획서 4장 '서장 상세 흐름', backlog M1-04): chapters.json prologue 시간표와 cheonha.json prologueBody 를 그대로 쓴다.
 const PRO = DATA.prologue, PROB = DATA.prologueBody;
 const isPro = () => !!G && G.mode === 'prologue';
@@ -2682,7 +2684,7 @@ function update(dt) {
 
   // 사건과 생성
   while (G.events.length && G.gm >= G.events[0].at) runEvent(G.events.shift());
-  const stopped = G.gm >= (isPro() ? PRO.stopSpawningAtMinute : STOP_SPAWN_AT) && !G.won;
+  const stopped = G.gm >= spawnStopAt() && !G.won;
   G.spawnAcc += dt; if (G.spawnHold > 0) { G.spawnHold -= dt; G.spawnAcc = 0; }
   if (G.spawnAcc >= 1) {
     G.spawnAcc -= 1;
@@ -2690,7 +2692,7 @@ function update(dt) {
       const alive = G.enemies.length;
       const target = (G.bossSpawned ? BOSS_TRASH : spawnTarget(G.gm)) * (G.lordF ? LR.spawnTargetScale : 1);   // 땅의 주인과 싸우는 동안 줄인다(7장)
       const n = Math.ceil((target - alive) * B.spawnTarget.spawnFractionPerSecond - 1e-4);
-      for (let i = 0; i < n; i++) { const [x, y] = ringPos(), lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(Math.min(G.gm, 19)), x, y); }
+      for (let i = 0; i < n; i++) { const [x, y] = ringPos(), lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(G.body ? G.gm : Math.min(G.gm, 19)), x, y); }
     }
   }
   G.lanternAcc += dt;
@@ -5296,7 +5298,7 @@ function updateHud(dt) {
   if (bb.hidden === showBoss) bb.hidden = !showBoss;
   if (showBoss) $('bossfill').style.width = (Math.max(0, G.boss.hp / G.boss.maxHp) * 100).toFixed(1) + '%';
   const chR = trackChRegion();
-  $('phase').textContent = chR && chR.id !== (HOME_REG && HOME_REG.id) && !G.bossSpawned ? chR.nameKo : isPro() ? (G.bossSpawned ? '강시 포쾌 장삼' : '서장 · 청운진') : G.bossSpawned ? '혈나한 원각' : G.gm >= 19 ? '보스가 온다' : G.mode === 'quick' ? '숭산 소림 · 4배속' : '숭산 소림';
+  $('phase').textContent = chR && chR.id !== (HOME_REG && HOME_REG.id) && !G.bossSpawned ? chR.nameKo : isPro() ? (G.bossSpawned ? '강시 포쾌 장삼' : '서장 · 청운진') : G.bossSpawned ? '혈나한 원각' : G.gm >= 19 && !G.body ? '보스가 온다' : G.mode === 'quick' ? '숭산 소림 · 4배속' : '숭산 소림';
   $('lv').textContent = `Lv ${G.level}`; $('realm').textContent = G.realm.nameKo;
   $('kills').textContent = uiT('ui.hud.kills', G.kills.toLocaleString()); $('silver').textContent = uiT('ui.hud.silver', G.silver);
   const ultPct = G.ult / B.ultimateCharge.max * 100, ub = $('btnult');
