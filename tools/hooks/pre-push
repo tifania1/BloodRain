@@ -25,6 +25,10 @@ need=$(printf '%s\n' "$changed" | grep -v '^$' | grep -Ev '^docs/(session_lock\.
 [ -z "$need" ] && exit 0
 
 export PATH="$HOME/.dotnet:$PATH"
+# PC(Windows)의 python3 는 스토어 바로가기라 실행이 안 될 수 있다(exit 49). 되는 쪽을 쓴다.
+PY=python3
+$PY -c '' >/dev/null 2>&1 || PY=python
+export PYTHONUTF8=1
 if ! command -v dotnet >/dev/null 2>&1; then
   echo "pre-push: dotnet 이 없다. CLAUDE.md 의 설치 줄을 먼저 돌린다." >&2
   exit 1
@@ -46,14 +50,14 @@ if printf '%s\n' "$need" | grep -q '^unity/BloodRain/Assets/Scripts/Core/'; then
 fi
 
 if printf '%s\n' "$need" | grep -Eq '^tools/(postprocess_audio\.py|postprocess_sfx\.py|synth_sfx\.py|sfx_sa3\.py|tests/)'; then
-  if ! python3 -m unittest discover -s tools/tests >&2; then
+  if ! $PY -m unittest discover -s tools/tests >&2; then
     echo "pre-push: 도구 테스트(tools/tests) 실패." >&2
     exit 1
   fi
 fi
 
 if printf '%s\n' "$need" | grep -Eq '^(web/|tools/build_web_prototype\.py|unity/BloodRain/Assets/Resources/Data/)'; then
-  if ! python3 tools/build_web_prototype.py >/dev/null; then
+  if ! $PY tools/build_web_prototype.py >/dev/null; then
     echo "pre-push: 웹 프로토타입 빌드 실패." >&2
     exit 1
   fi
