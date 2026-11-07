@@ -3,11 +3,14 @@
 //   값마다 저장 낱말(Key)이 웹 store 이름과 같다. Unity 는 PlayerPrefs 에 이 낱말로 문자열을 넣고 Load/Save 로 읽고 쓴다.
 //   단추를 누르면 Turn(key) 로 다음 값으로 돈다(웹 SET_TURN 그대로).
 //   '움직임 줄이기'(OS 설정)가 켜져 있으면 흔들림 0·깜빡임 끔·혈우 50% 로 시작한다(웹 REDUCED). 한 번 정한 값은 그대로.
-//   12장 목록 가운데 색각 보정·조작 재설정·언어·자동 고르기는 아직 값이 없다(자동 고르기는 UI-01b 사람 결정 대기).
+//   언어(lang)는 Strings.Languages 차례로 돈다. 저장 낱말 'lang' 은 Unity Presentation/Loc 이 읽는 PlayerPrefs 낱말과 같다.
+//   정한 적 없으면 기기 언어(LanguageFor: 한국어·간체·번체, 그 밖은 영어 — Loc.FromSystem 과 같음). 웹은 한국어뿐이라 언어 단추가 없다.
+//   12장 목록 가운데 색각 보정·조작 재설정·자동 고르기는 아직 값이 없다(자동 고르기는 UI-01b, 색각 보정은 UI-03 사람 결정 대기).
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using BloodRain.Core.Combat;
+using BloodRain.Core.Data;
 
 namespace BloodRain.Core.Meta
 {
@@ -16,10 +19,28 @@ namespace BloodRain.Core.Meta
     public sealed class GameSettings
     {
         public const string Shake = "shake", Awaken = "awaken", Flash = "flash", BossBar = "bossbar", Rain = "rain",
-            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted";
+            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted", Lang = "lang";
 
-        /// <summary>저장 낱말 전부(단추 차례, 웹 SET_HTML 과 같음 + 소리 끄기).</summary>
-        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, Muted };
+        /// <summary>저장 낱말 전부(단추 차례, 웹 SET_HTML 과 같음 + 소리 끄기 + 언어).</summary>
+        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, Muted, Lang };
+
+        /// <summary>언어 단추에 그 언어 글자로 적는 이름(어느 화면 언어에서나 같다).</summary>
+        public static readonly IReadOnlyDictionary<string, string> LanguageNames = new Dictionary<string, string>
+        {
+            ["ko"] = "한국어", ["en"] = "English", ["zh-Hans"] = "简体中文", ["zh-Hant"] = "繁體中文",
+        };
+
+        /// <summary>기기 언어 → 화면 언어. Unity SystemLanguage 이름(Korean·ChineseSimplified·Chinese·ChineseTraditional)이나
+        /// 언어 태그(ko-KR·zh-CN·zh-TW·zh-Hant…)를 받는다. 그 밖은 영어.</summary>
+        public static string LanguageFor(string? system)
+        {
+            var s = (system ?? "").Trim();
+            var low = s.ToLowerInvariant();
+            if (low == "korean" || low == "ko" || low.StartsWith("ko-")) return "ko";
+            if (low == "chinesetraditional" || low.StartsWith("zh-hant") || low == "zh-tw" || low == "zh-hk" || low == "zh-mo") return "zh-Hant";
+            if (low == "chinesesimplified" || low == "chinese" || low == "zh" || low.StartsWith("zh-")) return "zh-Hans";
+            return "en";
+        }
 
         /// <summary>화면 흔들림 1 / 0.5 / 0.</summary>
         public float ShakeScale = 1f;
@@ -41,9 +62,12 @@ namespace BloodRain.Core.Meta
         /// <summary>내 이펙트 투명도 1 / 0.75 / 0.5 / 0.25 / 0(적 탄·적 예고는 그대로).</summary>
         public float EffectsAlpha = 1f;
         public bool MutedOn;
+        /// <summary>화면 언어(Strings.Languages 가운데 하나).</summary>
+        public string Language = "en";
 
-        public static GameSettings Defaults(bool reducedMotion = false) => new GameSettings
+        public static GameSettings Defaults(bool reducedMotion = false, string? systemLanguage = null) => new GameSettings
         {
+            Language = LanguageFor(systemLanguage),
             ShakeScale = reducedMotion ? 0f : 1f,
             FlashOn = !reducedMotion,
             RainScale = reducedMotion ? 0.5f : 1f,
@@ -65,6 +89,7 @@ namespace BloodRain.Core.Meta
                 case Volume: VolumeScale = VolumeScale > 0.25f ? Round2(VolumeScale - 0.25f) : 1f; return true;
                 case Effects: EffectsAlpha = EffectsAlpha > 0f ? Math.Max(0f, Round2(EffectsAlpha - 0.25f)) : 1f; return true;
                 case Muted: MutedOn = !MutedOn; return true;
+                case Lang: Language = Strings.Languages[(Math.Max(0, Array.IndexOf(Strings.Languages, Language)) + 1) % Strings.Languages.Length]; return true;
                 default: return false;
             }
         }
@@ -83,6 +108,7 @@ namespace BloodRain.Core.Meta
             Volume => Num(VolumeScale),
             Effects => Num(EffectsAlpha),
             Muted => Bool(MutedOn),
+            Lang => Language,
             _ => null,
         };
 
@@ -103,13 +129,14 @@ namespace BloodRain.Core.Meta
                 case Volume: VolumeScale = Pick(value, VolumeScale, 1f, 0.75f, 0.5f, 0.25f); break;
                 case Effects: EffectsAlpha = Pick(value, EffectsAlpha, 1f, 0.75f, 0.5f, 0.25f, 0f); break;
                 case Muted: MutedOn = ReadBool(value, MutedOn); break;
+                case Lang: if (Array.IndexOf(Strings.Languages, value) >= 0) Language = value; break;
             }
         }
 
         /// <summary>읽기: 낱말마다 read(key) 가 준 문자열(없으면 null)을 기본값 위에 얹는다.</summary>
-        public static GameSettings Load(Func<string, string?> read, bool reducedMotion = false)
+        public static GameSettings Load(Func<string, string?> read, bool reducedMotion = false, string? systemLanguage = null)
         {
-            var s = Defaults(reducedMotion);
+            var s = Defaults(reducedMotion, systemLanguage);
             foreach (var k in Keys) s.Set(k, read(k));
             return s;
         }

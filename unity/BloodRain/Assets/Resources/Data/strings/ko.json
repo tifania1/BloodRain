@@ -226,6 +226,8 @@
   "ui.settings.fx_simple_on": "효과 간소화 켬",
   "ui.settings.fx_simple_off": "효과 간소화 끔",
   "ui.settings.fx_simple_sub": "휴대폰 성능용",
+  "ui.settings.lang": "언어 {0}",
+  "ui.settings.lang_sub": "화면 글·이름",
   "ui.settings.back": "돌아가기",
   "ui.stat_easy.Amount": "투사체",
   "ui.stat_easy.Magnet": "흡수 반경",

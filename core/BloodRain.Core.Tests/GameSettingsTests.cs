@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Meta;
 using Xunit;
@@ -65,11 +66,41 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             foreach (var k in GameSettings.Keys)
-                if (k != GameSettings.Muted) Assert.Contains($"store.set('{k}'", html);
+                if (k != GameSettings.Muted && k != GameSettings.Lang) Assert.Contains($"store.set('{k}'", html);
             Assert.Contains("settings.shake === 1 ? 0.5 : settings.shake === 0.5 ? 0 : 1", html);
             Assert.Contains("settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1", html);
             Assert.Contains("{ auto: 'long', long: 'short', short: 'auto' }", html);
             Assert.Contains("store.set('muted'", html);
+        }
+
+        [Fact]
+        public void 언어는_네_언어를_돌고_기기_언어로_시작한다()
+        {
+            Assert.Equal(new[] { "ko", "en", "zh-Hans", "zh-Hant", "ko" }, Cycle2("Korean", 4));
+            Assert.Equal("ko", GameSettings.LanguageFor("ko-KR"));
+            Assert.Equal("zh-Hans", GameSettings.LanguageFor("ChineseSimplified"));
+            Assert.Equal("zh-Hans", GameSettings.LanguageFor("Chinese"));
+            Assert.Equal("zh-Hans", GameSettings.LanguageFor("zh-CN"));
+            Assert.Equal("zh-Hant", GameSettings.LanguageFor("ChineseTraditional"));
+            Assert.Equal("zh-Hant", GameSettings.LanguageFor("zh-TW"));
+            Assert.Equal("zh-Hant", GameSettings.LanguageFor("zh-Hant-HK"));
+            Assert.Equal("en", GameSettings.LanguageFor("Japanese"));
+            Assert.Equal("en", GameSettings.LanguageFor(null));
+
+            // 저장된 값이 있으면 기기 언어보다 앞서고, 모르는 언어는 버린다
+            Assert.Equal("zh-Hant", GameSettings.Load(k => k == GameSettings.Lang ? "zh-Hant" : null, systemLanguage: "Korean").Language);
+            Assert.Equal("ko", GameSettings.Load(k => k == GameSettings.Lang ? "ja" : null, systemLanguage: "Korean").Language);
+
+            // 언어 단추 이름은 Strings.Languages 와 하나씩 맞는다
+            Assert.Equal(BloodRain.Core.Data.Strings.Languages.OrderBy(x => x), GameSettings.LanguageNames.Keys.OrderBy(x => x));
+        }
+
+        static List<string> Cycle2(string system, int n)
+        {
+            var s = GameSettings.Defaults(systemLanguage: system);
+            var seen = new List<string> { s.Get(GameSettings.Lang)! };
+            for (int i = 0; i < n; i++) { Assert.True(s.Turn(GameSettings.Lang)); seen.Add(s.Get(GameSettings.Lang)!); }
+            return seen;
         }
     }
 }

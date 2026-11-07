@@ -1116,6 +1116,8 @@
   "ui.settings.fx_simple_on": "简化特效 开",
   "ui.settings.fx_simple_off": "简化特效 关",
   "ui.settings.fx_simple_sub": "用于手机性能",
+  "ui.settings.lang": "语言 {0}",
+  "ui.settings.lang_sub": "界面文字与名称",
   "ui.settings.back": "返回",
   "ui.stat_easy.Amount": "弹数",
   "ui.stat_easy.Magnet": "吸收范围",
