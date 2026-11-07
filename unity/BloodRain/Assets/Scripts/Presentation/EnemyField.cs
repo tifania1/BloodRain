@@ -62,7 +62,8 @@ namespace BloodRain.Presentation
         readonly Dictionary<int, ClusterView> _views = new Dictionary<int, ClusterView>();
         System.Random _rng = new System.Random(20261101);
         float _moveBase = 4.6f;
-        float _healthMul = 1f, _speedMul = 1f;
+        float _speedMul = 1f;
+        Life _life; // EN-02U 한 생이 있으면 나오는 적의 기혈·피해를 11장 식으로(없으면 시험 씬 — 데이터 값 그대로)
         Vector2 _lastPlayer;
         Vector2 _heading;
         readonly Stopwatch _watch = new Stopwatch();
@@ -292,12 +293,21 @@ namespace BloodRain.Presentation
         public int Count => _sim?.Count ?? 0;
         public float LastSimMs => _simMs;
 
-        /// <summary>혈월 천하(회귀)면 적 기혈·속도에 곱할 값을 Life 에서 받는다. 이미 나온 적에는 안 붙는다.</summary>
+        /// <summary>
+        /// 한 생을 받는다. 그 뒤 나오는 적의 기혈은 Life.EnemyHealth(분·지금 자리 혈운 농도·혈월), 닿는 피해·탄·장판은
+        /// Life.EnemyDamage(분·√농도)로 나오는 순간 한 번 셈한다(EN-02U, 기획서 11장). 이미 나온 적은 그대로.
+        /// </summary>
         public void UseLife(Life life)
         {
-            _healthMul = life.EnemyHealthMultiplier;
+            _life = life;
             _speedMul = life.EnemySpeedMultiplier;
         }
+
+        float SpawnHealth(float b) => _life != null ? _life.EnemyHealth(b) : b;
+        float SpawnDamage(float b) => _life != null ? _life.EnemyDamage(b) : b;
+
+        /// <summary>EN-02U 디버그: 마지막으로 나온 적의 이름·기혈·닿는 피해.</summary>
+        public string LastSpawnInfo { get; private set; } = "";
 
         void Awake()
         {
@@ -383,13 +393,14 @@ namespace BloodRain.Presentation
                 Radius = RadiusOf(realm),
                 Weight = 1f,
                 Hop = (float)_rng.NextDouble(),
-                Health = def.Health * _healthMul,
-                MaxHealth = def.Health * _healthMul,
+                Health = SpawnHealth(def.Health),
+                MaxHealth = SpawnHealth(def.Health),
                 MaxLife = def.LifeSeconds, // 혈인 14·금두꺼비 25(enemies.json lifeSeconds), 0 이면 끝까지
-                ContactDamage = def.ContactDamage, // 시간에 따른 배율(enemyScaling.damagePerMinute)은 C-10 디렉터가 곱한다
+                ContactDamage = SpawnDamage(def.ContactDamage), // 11장 분·√농도 배율(EN-02U)
                 BornRealm = realm,
                 Move = (byte)move,
             };
+            LastSpawnInfo = $"{def.Id} 기혈 {a.MaxHealth:0.#} 닿는 피해 {a.ContactDamage:0.##}";
             if (move == EnemyMove.Dash)
             {
                 // 혈무사 돌진(enemies.json telegraph·dash, 기획서 6장): 경지 m → 세계 m
@@ -786,7 +797,7 @@ namespace BloodRain.Presentation
                     _shots.Add(new Shot
                     {
                         Pos = from, Vel = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * speed,
-                        Left = a.ShootRange, Radius = ws.Length(sh.Radius, a.BornRealm), Damage = def.ProjectileDamage * (1f + a.Buff),
+                        Left = a.ShootRange, Radius = ws.Length(sh.Radius, a.BornRealm), Damage = SpawnDamage(def.ProjectileDamage) * (1f + a.Buff),
                         Color = _kinds[a.Kind].Tint,
                     });
                 }
@@ -860,7 +871,7 @@ namespace BloodRain.Presentation
                     cd[k] -= dt;
                     if (cd[k] > 0f) continue;
                     var w = data.Weapon(mw.WeaponId);
-                    float dmg = mw.Damage * (1f + a.Buff);
+                    float dmg = SpawnDamage(mw.Damage) * (1f + a.Buff);
                     if (mw.Aura)
                     {
                         if (dist > ws.Length(w.Range, a.BornRealm) + pr) { cd[k] = 0f; continue; }
@@ -1004,7 +1015,7 @@ namespace BloodRain.Presentation
                         _pools.Add(new Pool
                         {
                             Pos = p, Radius = ws.Length(pool.Radius, a.BornRealm), Left = pool.Seconds,
-                            Damage = def.ZoneDamagePerSecond * (1f + a.Buff), Owner = a.Id, Color = PoolColor,
+                            Damage = SpawnDamage(def.ZoneDamagePerSecond) * (1f + a.Buff), Owner = a.Id, Color = PoolColor,
                         });
                     }
                     t += pool.Interval;
@@ -1070,7 +1081,7 @@ namespace BloodRain.Presentation
                         _sim.Set(i, a);
                         TeleportCount++;
                         float r = ws.Length(mk.Radius, a.BornRealm) + pr;
-                        if (vitals != null && (p - s.At).sqrMagnitude <= r * r) HitPlayer(def.ContactDamage * (1f + a.Buff));
+                        if (vitals != null && (p - s.At).sqrMagnitude <= r * r) HitPlayer(a.ContactDamage * (1f + a.Buff));
                     }
                 }
                 else
@@ -1224,13 +1235,13 @@ namespace BloodRain.Presentation
                     _sim.QueryCircle(new float2(pos.x, pos.y), r, _splinterHits);
                     _splinterHits.RemoveAll(i => i >= _sim.Count); // 격자에 남은 걷어 낸 자리
                     if (d.EnemyDamage > 0f && _splinterHits.Count > 0) Damage(_splinterHits, d.EnemyDamage, pos, 0f);
-                    if (d.PlayerDamage > 0f && vitals != null && (pos - p).sqrMagnitude <= (r + pr) * (r + pr)) HitPlayer(d.PlayerDamage);
+                    if (d.PlayerDamage > 0f && vitals != null && (pos - p).sqrMagnitude <= (r + pr) * (r + pr)) HitPlayer(SpawnDamage(d.PlayerDamage));
                     // 터진 자리를 0.3초 비춘다(이펙트 오기 전 임시)
                     _pools.Add(new Pool { Pos = pos, Radius = r, Left = 0.3f, Damage = 0f, Owner = -1, Color = SplinterColor });
                 }
                 else if (def.OnDeath == "poison_pool" && d.Seconds > 0f)
                 {
-                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = d.Seconds, Damage = d.PerSecond, Owner = -1, Color = PoisonColor, Poison = true });
+                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = d.Seconds, Damage = SpawnDamage(d.PerSecond), Owner = -1, Color = PoisonColor, Poison = true });
                 }
             }
         }

@@ -133,7 +133,7 @@ namespace BloodRain.Presentation
             if (vitals == null && player != null) vitals = player.GetComponent<PlayerVitals>();
             if (vitals != null) vitals.Died += OnDied;
             if (vitals != null) vitals.Damaged += () => { if (_life != null && _life.Record == null) _life.Charge.OnHit(_life.Loadout.Gauge.Band); };
-            if (enemies != null) enemies.Killed += OnKilled;
+            if (enemies != null) { enemies.Killed += OnKilled; enemies.UseLife(_life); } // EN-02U 적 기혈·피해 11장 배율, 혈월 걸음
             // C-09b 등롱·바닥 드롭(씬에 없으면 여기서 붙인다)
             if (GetComponent<LanternLayer>() == null) gameObject.AddComponent<LanternLayer>().runner = this;
             if (GetComponent<EncounterLayer>() == null) gameObject.AddComponent<EncounterLayer>().runner = this; // WP-39U 기연
@@ -516,12 +516,27 @@ namespace BloodRain.Presentation
             return (Vector2)player.position + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * rad;
         }
 
+        // EN-03/EN-02U 동시 적 수 상한(11장 '성능 상한' PC 600·모바일 400). 보통 적·사건 무리만 막고
+        // 정예·금두꺼비·보부상 같은 중요한 것은 넘쳐도 세운다(important).
+        bool Room() => _data.Balance.Limits.CanSpawn(enemies.Count, Application.isMobilePlatform);
+
+        /// <summary>EN-02U 정예 자리: 화면 대각선 × spawnTarget.eliteDiagonal(0.62) 원 위 — 화면 가장자리 바로 바깥(웹 spawnElite).</summary>
+        Vector2 ElitePos()
+        {
+            float diag = WorldScale.Current != null ? WorldScale.Current.ViewDiagonal : 30f;
+            float ang = (float)(_spawnRng.NextDouble() * Mathf.PI * 2);
+            return (Vector2)player.position + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * diag * _data.Balance.SpawnTarget.EliteDiagonal;
+        }
+
         void SpawnSecond(LifeSecond s)
         {
             if (enemies == null || player == null) return;
             if (!s.Held)
                 foreach (var sp in s.Spawns)
+                {
+                    if (!Room()) break;
                     enemies.SpawnAt(_data.Enemy(sp.Enemy), RingPos());
+                }
             foreach (var e in s.Events) SpawnEvent(e);
         }
 
@@ -546,6 +561,7 @@ namespace BloodRain.Presentation
                     for (int i = 0; i < n; i++)
                     {
                         if (i == gap || i == gap + 1) continue;
+                        if (!Room()) break;
                         enemies.SpawnAt(enemy, p - ax * diag * 0.6f + along * (i - n / 2f) * step);
                     }
                     break;
@@ -555,6 +571,7 @@ namespace BloodRain.Presentation
                     var enemy = _data.Enemy(string.IsNullOrEmpty(e.Enemy) ? "donggap" : e.Enemy);
                     for (int i = 0; i < n; i++)
                     {
+                        if (!Room()) break;
                         float a = i / (float)n * Mathf.PI * 2f;
                         enemies.SpawnAt(enemy, p + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * diag * 0.6f);
                     }
@@ -566,12 +583,12 @@ namespace BloodRain.Presentation
                     var enemy = _data.Enemy(e.Enemy);
                     var at = RingPos();
                     float spread = diag * 0.08f;
-                    for (int i = 0; i < n; i++)
+                    for (int i = 0; i < n && Room(); i++)
                         enemies.SpawnAt(enemy, at + Random.insideUnitCircle * spread);
                     break;
                 }
                 case WaveEventKind.Elite:
-                    enemies.SpawnAt(_data.Enemy(e.Enemy), RingPos());
+                    enemies.SpawnAt(_data.Enemy(e.Enemy), ElitePos());
                     break;
                 case WaveEventKind.Toad:
                     enemies.SpawnAt(_data.Enemy(e.Enemy), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
@@ -737,6 +754,9 @@ namespace BloodRain.Presentation
                 (_life.IsPrologue ? "  [서장]" : "") +
                 // R-04Ua 몸과 고유 능력
                 $"  몸 {_life.Body.Character.NameKo}  회복 배율 x{_life.HealingMultiplier:0.0#}  태극 쾌속 +{_life.HarmonyCooldownReduction * 100:0}%");
+            // EN-02U 새로 나온 적 한 칸(기혈·닿는 피해가 분·혈운으로 세지는지 보는 용)
+            if (enemies != null)
+                GUI.Label(new Rect(12, 162, 1100, 22), $"적 {enemies.Count}/{_data.Balance.Limits.EnemyCap(Application.isMobilePlatform)}  새로 나온 적 {enemies.LastSpawnInfo}");
             if (Stats != null)
             {
                 var st = Stats;
