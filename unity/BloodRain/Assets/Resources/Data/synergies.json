@@ -129,7 +129,7 @@
       "effect": "plum_storm", "target": "sonic_qin", "params": { "everyWaves": 3 },
       "hint": ["거문고가 세 번 울면", "매화도 세 번 핀다"],
       "require": { "levels": { "sonic_qin": 5, "falling_petals": 5, "maehwa": 5 } } },
-    { "id": "mugeuk", "nameKo": "무극", "hanja": "無極",
+    { "id": "mugeuk", "nameKo": "무극", "hanja": "無極", "proto": true,
       "condition": "태극검 Lv8, 양의심법 Lv5를 지닌 채 음양 게이지를 0에서 3분 동안 한 칸도 움직이지 않는다",
       "reward": "음양 게이지가 사라지고 모든 무공이 음·양 보너스를 함께 받는다(+40%)",
       "effect": "boundless", "params": { "aspectDamageBonus": 0.4 },

@@ -561,7 +561,7 @@ function bloodOrbXp(v) {
   if (extra > 0) {
     G.bExtra = (G.bExtra || 0) + extra;
     const steps = A.extraXpPerStep > 0 ? Math.floor(G.bExtra / A.extraXpPerStep) : 0;
-    if (steps > (G.bSteps || 0) && !(G.yyFreeze > 0)) { G.yy = clamp(G.yy - (steps - (G.bSteps || 0)) * A.yinPerStep, B.yinyang.min, B.yinyang.max); G.bSteps = steps; }   // Core Gauge.Shift — 기울기 배율 없음
+    if (steps > (G.bSteps || 0) && !(G.yyFreeze > 0) && !G.syn.secrets.has('mugeuk')) { G.yy = clamp(G.yy - (steps - (G.bSteps || 0)) * A.yinPerStep, B.yinyang.min, B.yinyang.max); G.bSteps = steps; }   // Core Gauge.Shift — 기울기 배율 없음
   }
   return got;
 }
@@ -780,6 +780,12 @@ function synTick(dt) {
   }
   // 수로채 진전 3: 경공으로 지나가며 적을 끌고 간다
   const drg = synEff('dash_drag'); if (drg && p.dashT > 0) forNear(p.x, p.y, drg.dragRadius, e => { if (!e.boss && !e.elite) { e.x += p.dashVx * dt * drg.dragFactor; e.y += p.dashVy * dt * drg.dragFactor; } });
+  // 비전 무극: 태극검 Lv8·양의심법 Lv5 를 지닌 채 음양 게이지가 0에서 3분(Core RunRecord.Tick — 움직이면 처음부터)
+  if (!S.secrets.has('mugeuk')) {
+    const mg = SECRET.mugeuk.require;
+    S.zeroT = G.yy === 0 && S.zeroLast === 0 ? (S.zeroT || 0) + dt : 0; S.zeroLast = G.yy;
+    if (!overlay && Object.entries(mg.levels).every(([id, lv]) => lvOf(id) >= lv) && S.zeroT >= mg.hold.seconds) { unlockSecret('mugeuk'); G.yy = 0; }
+  }
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
@@ -1374,10 +1380,12 @@ function yyBand() {
 }
 function yyShift(aspect, amount) {
   if (aspect === 'neutral' || G.yyFreeze > 0) return;   // 태극환: 처음 10분 음양이 움직이지 않음
+  if (G.syn.secrets.has('mugeuk')) return;   // 무극: 게이지가 사라짐(0 에 묶음)
   const v = (aspect === 'yang' ? 1 : -1) * amount * (G.yyHalf ? IP.yeokgeun.tiltMultiplier : 1);
   G.yy = clamp(G.yy + v, B.yinyang.min, B.yinyang.max);
 }
 function aspectMult(aspect) {
+  if (G.syn.secrets.has('mugeuk')) return aspect === 'neutral' ? 1 : 1 + SECRET.mugeuk.params.aspectDamageBonus;   // 무극: 음·양 무공 모두(Core SecretEffects.AspectDamageBonus)
   const b = yyBand(); if (b.band === 'harmony' || aspect === 'neutral') return 1;
   const lean = G.yy > 0 ? 'yang' : 'yin';
   if (aspect !== lean) return 1;
@@ -5308,6 +5316,7 @@ function updateHud(dt) {
   [...pips.children].forEach((el, i) => el.classList.toggle('on', i < p.dashCharges));
   const b = yyBand(); $('taijiname').textContent = b.name; $('taijival').textContent = `${b.label} ${G.yy > 0 ? '+' : ''}${Math.round(G.yy)}`;
   $('taiji').classList.toggle('extreme', b.band === 'extreme');
+  const tj = $('taiji'), noGauge = G.syn.secrets.has('mugeuk'); if (tj.hidden !== noGauge) tj.hidden = noGauge;   // 무극: 음양 게이지가 사라짐
   drawTaiji();
   const dbg = $('debug'); if (!dbg.hidden) dbg.textContent = `fps ${G.fps.toFixed(0)} · 적 ${G.enemies.length} · 투사체 ${G.projs.length} · 구슬 ${G.orbs.length}\n게임 ${G.gm.toFixed(2)}분 · 목표 적 ${spawnTarget(G.gm).toFixed(0)} · 다음 레벨 ${Math.ceil(xpReq(G.level) - G.xp)}`;
 }
