@@ -462,7 +462,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 - [ ] SC-01U 비전 얻는 것을 Core `SecretEffects` 로 · 먼저: 없음(SecretWatch·역천은 붙어 있음)
   - 할 것: `SecretWatch` 가 비전이 열릴 때마다 `SecretEffects.Of(data, checker.Unlocked)` 를 새로 만들어 내놓고, 쓰는 곳이 그걸 읽게. 숫자 효과부터: 무기 피해 × `WeaponDamageMultiplier(무공 id)`(무명검 삼재검법), 오의 충전 × `UltimateChargeMultiplier`, `NoBacklash` 면 `Backlash.Immune`(LifeRunner 448 줄의 id 비교를 이것으로), 무극 `GaugeRemoved` 면 음양 HUD 숨기고 속성 보너스는 `AspectDamageBonus(속성)`, 취선 공력 `FoodMightBonus(찾은 뒤 먹은 수)`·받는 공격 `Evades(난수)`. 모양 있는 것(어강술 `Thrall`·`CanTakeThrall`, 매화삼롱 `IsPlumStormWave`, 낙매일검 `IsPlumBranchSword`·`UltimateBends`, 혈해마공 `WhisperGuaranteed`)은 하나씩 따로 커밋해도 됨. 매화 폭풍 크기·피해, 속삭임을 받은 뒤는 기획서에 없어 비워 둔다(backlog WP-29a).
-  - 쓸 것: Core `Build/SecretEffects.cs`(2026-11-07 클라우드), synergies.json `secrets[].effect·target·params`, `SecretEffectsTests`
+  - 쓸 것: Core `Build/SecretEffects.cs`(2026-11-07 클라우드), synergies.json `secrets[].effect·target·params`, `SecretEffectsTests`, 낙매일검 오의 길 `Combat/UltimateEffects.PlumBranchPath`·`PlumBranchHits`(세 번 꺾임, 토막마다 ±30°, 2026-11-08 클라우드 — 웹 il_geom 과 같은 셈, 낙화검우 이름은 '낙매일검'으로)
   - 메뉴: 없음
   - 끝: 컴파일·콘솔 에러 0, 무명검을 연 판에서 삼재검법 피해 숫자가 1.5배, 오의 게이지가 두 배로 참
   - 찍기: `docs/unity_shots/SC-01U/` 의 `mumyeong.png`

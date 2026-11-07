@@ -803,6 +803,12 @@ function unlockSecret(id) {
   G.syn.secrets.add(id); discover('secret:' + id);
   const x = SECRET[id]; recomputeStats(); showDiscovery('秘傳', x.hanja, x.nameKo, x.reward);
 }
+function nakmaeReady() {
+  const r = SECRET.nakmae_geomseon.require;
+  if (r.sect && G.body.id !== r.sect) return false;
+  if (!Object.entries(r.levels).every(([id, lv]) => lvOf(id) >= lv)) return false;
+  return (r.cleared || []).every(ch => { const reg = (DATA.regions || []).find(x => x.chapter === ch); return !!reg && (((G.soul0.bossKills || {})[reg.boss] || 0) > 0 || G.lordKills.some(k => k.boss === reg.boss)); });
+}
 function petals(e, P) {
   for (let i = 0; i < P.petals; i++) { const a = rand(0, TAU); addProj({ x: e.x, y: e.y, vx: Math.cos(a) * P.speed, vy: Math.sin(a) * P.speed, r: P.radius, dmg: P.damage * G.stats.might, pierce: 1, life: P.lifeSeconds, kind: 'petal', w: PETAL }); }
 }
@@ -839,6 +845,8 @@ function synTick(dt) {
     S.bloodPend = false; unlockSecret('hyeolhae_janpyeon');
     const wv = G.enc && G.enc.whisper; if (wv && !G.whisperTaken && !wv.on) { wv.done = false; wv.rolled = true; wv.near = false; wv.at = G.gm; }
   }
+  // 비전 낙매검선의 피: 화산 몸으로 낙화검우 Lv8·매화심법 Lv5, 화산(5장 땅) 땅의 주인을 쓰러뜨린 적이 있음(혼 기록이든 이번 생이든 — Core Secrets require.cleared)
+  if (!S.secrets.has('nakmae_geomseon') && !overlay && G.body && nakmaeReady()) unlockSecret('nakmae_geomseon');
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
@@ -2615,12 +2623,33 @@ function ultStep(dt) {
     if (p.hp <= 0) { p.hp = 0.0001; hurtPlayer(1, null); }   // 재기·쓰러짐은 hurtPlayer 길로
   }
 }
+// 낙매일검 길(Core UltimateEffects.PlumBranchPath): bends + 1 토막, 토막마다 +30°·−30° 번갈아. 점은 [x, y]
+const PLUM_BEND = 30 * Math.PI / 180;
+function plumBranchPath(x, y, a, len, bends) {
+  const n = Math.max(1, bends + 1), seg = len / n, pts = [[x, y]];
+  for (let i = 0; i < n; i++) { const b = n === 1 ? a : a + (i % 2 === 0 ? PLUM_BEND : -PLUM_BEND), q = pts[i]; pts.push([q[0] + Math.cos(b) * seg, q[1] + Math.sin(b) * seg]); }
+  return pts;
+}
+function plumBranchHits(path, ex, ey, er, half) {
+  for (let i = 0; i + 1 < path.length; i++) {
+    const dx = path[i + 1][0] - path[i][0], dy = path[i + 1][1] - path[i][1], l = Math.hypot(dx, dy); if (l <= 0) continue;
+    const ca = dx / l, sa = dy / l, rx = ex - path[i][0], ry = ey - path[i][1], along = rx * ca + ry * sa, perp = Math.abs(-rx * sa + ry * ca);
+    if (along > -0.5 && along < l && perp < half + er) return true;
+  }
+  return false;
+}
 // 오의 한 박자(현경이면 c = 0·1). 화면 = 지금 보이는 사각형
 function ultPulse(u, C, c) {
   const p = G.player, hit = ultBaseHit() * u.mightMultiplier * G.stats.ultPower, hw = viewW() / 2, hh = viewH() / 2;
   const onScreen = e => !e.dead && Math.abs(e.x - p.x) < hw + e.r && Math.abs(e.y - p.y) < hh + e.r;
   if (u.id === 'il_geom' || u.id === 'yeokryu') {   // 일검: 바라보는 쪽 화면 끝까지 한 줄(관통 무한) / 역류: 폭 width 물살로 같은 길을 쓸며 끝 쪽으로 민다(미는 세기 12 는 시안 값, Core 는 waveSpeed)
     const ca = Math.cos(C.a), sa = Math.sin(C.a), len = viewDiag(), half = u.id === 'il_geom' ? 0.9 : UPar(u, 'width', 3) / 2, kb = u.id === 'il_geom' ? 6 : 12;
+    if (u.id === 'il_geom' && G.syn.secrets.has('nakmae_geomseon')) {   // 낙매검선의 피: 같은 길이를 ultimateBends 번 꺾어 매화 가지처럼(Core UltimateEffects.PlumBranchPath·PlumBranchHits)
+      const path = plumBranchPath(p.x, p.y, C.a, len, SECRET.nakmae_geomseon.params.ultimateBends);
+      if (c === 0) for (let i = 0; i + 1 < path.length; i++) addEffect('slash', path[i][0], path[i][1], { a: Math.atan2(path[i + 1][1] - path[i][1], path[i + 1][0] - path[i][0]), len: Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]), life: 0.6, plum: true });
+      for (const e of G.enemies) if (!e.dead && plumBranchHits(path, e.x, e.y, e.r, half)) hurtEnemy(e, hit, null, ca, sa, kb);
+      return;
+    }
     if (c === 0) addEffect('slash', p.x, p.y, { a: C.a, len, life: 0.6 });
     for (const e of G.enemies) { if (e.dead) continue; const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca); if (along > -0.5 && along < len && perp < half + e.r) hurtEnemy(e, hit, null, ca, sa, kb); }
   } else if (u.id === 'palbang_pungu') {   // 바라보는 쪽부터 directions 방향 장풍을 volleys 연타(volleyGapSeconds 간격)
@@ -5298,7 +5327,7 @@ function drawEffect(fx) {
     ctx.lineCap = 'round';
     ctx.strokeStyle = `rgba(26,26,26,${1 - k})`; ctx.lineWidth = 34 * (1 - k * 0.6);
     ctx.beginPath(); ctx.moveTo(x - ca * 20, y - sa * 20); ctx.lineTo(x + ca * len, y + sa * len); ctx.stroke();
-    ctx.strokeStyle = `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 6;
+    ctx.strokeStyle = fx.plum ? `rgba(232,138,160,${1 - k})` : `rgba(201,162,39,${1 - k})`; ctx.lineWidth = 6;   // 낙매일검은 매화 빛
     ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + ca * len, y + sa * len); ctx.stroke();
   } else if (fx.kind === 'dash') {
     ctx.strokeStyle = `rgba(26,26,26,${0.4 * (1 - k)})`; ctx.lineWidth = 10; ctx.lineCap = 'round';
@@ -5478,7 +5507,7 @@ function endRun(won) {
   }
   $('resfacts').innerHTML = facts.map(f => `<div><b>${f[0]}</b><span>${f[1]}</span></div>`).join('');
   const total = G.weapons.reduce((a, w) => a + w.dealt, 0) || 1, max = Math.max(...G.weapons.map(w => w.dealt), 1);
-  $('resbars').innerHTML = G.weapons.slice().sort((a, b) => b.dealt - a.dealt).map(w => `<div><span>${w.evolved ? EVO_BY_W[w.id].nameKo : W_BY_ID[w.id].nameKo}</span><i style="width:${(w.dealt / max * 100).toFixed(1)}%"></i><span>${Math.round(w.dealt / total * 100)}%</span></div>`).join('');
+  $('resbars').innerHTML = G.weapons.slice().sort((a, b) => b.dealt - a.dealt).map(w => `<div><span>${w.evolved ? EVO_BY_W[w.id].nameKo : G.syn.secrets.has('nakmae_geomseon') && w.id === SECRET.nakmae_geomseon.target ? '낙매일검' : W_BY_ID[w.id].nameKo}</span><i style="width:${(w.dealt / max * 100).toFixed(1)}%"></i><span>${Math.round(w.dealt / total * 100)}%</span></div>`).join('');
   const best = store.get('best') || {};
   const key = (G.body ? 'life' : G.mode) + (G.easy ? '_easy' : '');   // 한 생 판은 1장 최고 기록과 섞지 않는다
   if (!best[key] || gs > best[key].gs || (won && !best[key].won)) { best[key] = { gs, won, level: G.level, kills: G.kills }; store.set('best', best); }

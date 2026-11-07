@@ -34,6 +34,42 @@ namespace BloodRain.Core.Combat
         /// lifestealMultiplier 는 SynergyEffects.LifestealMultiplier, healingMultiplier 는 Life.HealingMultiplier(문파 × 혈마의 속삭임).</summary>
         public static float LifestealHeal(float damageDealt, float lifesteal, float lifestealMultiplier = 1f, float healingMultiplier = 1f) =>
             damageDealt <= 0f || lifesteal <= 0f ? 0f : damageDealt * lifesteal * lifestealMultiplier * healingMultiplier;
+
+        /// <summary>
+        /// 비전 낙매검선의 피(20장): 오의 일검이 매화 가지처럼 bends 번 꺾여 나가는 길(SecretEffects.UltimateBends).
+        /// 곧은 일검과 같은 길이(화면 대각선)를 bends + 1 토막으로 나누고, 토막마다 바라보는 쪽에서 +각·−각을 번갈아 꺾는다
+        /// (첫 토막 +, 끝 토막은 bends 가 홀수면 −). 꺾는 각은 기획서에 없어 30도로 정함(2026-11-08 클라우드) — 가지가 갈라지는 느낌이 나면서
+        /// 화면 끝까지 대체로 바라보는 쪽으로 가는 값. 돌려주는 점은 bends + 2 개(시작점 포함). bends 0 이면 곧은 한 줄.
+        /// </summary>
+        public const float PlumBendDegrees = 30f;
+
+        public static (float x, float y)[] PlumBranchPath(float x, float y, float facingAngle, float length, int bends)
+        {
+            int n = bends < 0 ? 1 : bends + 1;
+            var pts = new (float x, float y)[n + 1];
+            pts[0] = (x, y);
+            float seg = length / n, bend = PlumBendDegrees * (float)System.Math.PI / 180f;
+            for (int i = 0; i < n; i++)
+            {
+                float a = n == 1 ? facingAngle : facingAngle + (i % 2 == 0 ? bend : -bend);
+                pts[i + 1] = (pts[i].x + (float)System.Math.Cos(a) * seg, pts[i].y + (float)System.Math.Sin(a) * seg);
+            }
+            return pts;
+        }
+
+        /// <summary>적(중심 ex·ey, 반경 er)이 그 길 어느 토막에든 닿는가. halfWidth 는 일검 반폭(웹 0.9m). 토막 시작 0.5m 뒤까지 봄(곧은 일검과 같음).</summary>
+        public static bool PlumBranchHits((float x, float y)[] path, float ex, float ey, float er, float halfWidth)
+        {
+            for (int i = 0; i + 1 < path.Length; i++)
+            {
+                float dx = path[i + 1].x - path[i].x, dy = path[i + 1].y - path[i].y, len = (float)System.Math.Sqrt(dx * dx + dy * dy);
+                if (len <= 0f) continue;
+                float ca = dx / len, sa = dy / len, rx = ex - path[i].x, ry = ey - path[i].y;
+                float along = rx * ca + ry * sa, perp = System.Math.Abs(-rx * sa + ry * ca);
+                if (along > -0.5f && along < len && perp < halfWidth + er) return true;
+            }
+            return false;
+        }
     }
 
     /// <summary>천마해체 8초. Life 가 마교 몸이면 들고, UseUltimate 때 시작하고 Tick 이 세상 시간으로 줄인다.

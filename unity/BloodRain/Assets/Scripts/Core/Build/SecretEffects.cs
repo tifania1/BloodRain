@@ -3,7 +3,7 @@
 //   판정(언제 열리나)은 Build/Secrets.cs, 열린 뒤 무엇이 바뀌나는 여기. SecretChecker.Unlocked 가 바뀔 때마다
 //   SecretEffects.Of(data, checker.Unlocked) 로 새로 만든다. 비전은 판마다 새로 채워야 켜진다.
 //
-//   plum_branch_sword  낙매검선의 피  target 낙화검우가 낙매일검으로, 오의 일검이 ultimateBends 번 꺾여 나감(모양은 Unity)
+//   plum_branch_sword  낙매검선의 피  target 낙화검우가 낙매일검으로, 오의 일검이 ultimateBends 번 꺾여 나감(길은 Combat/UltimateEffects.PlumBranchPath)
 //   jiangshi_thrall    어강술        멈춘 강시를 사슬로 끌어오면 seconds 초 동안 내 편, 최대 maxAllies
 //   plum_storm         매화삼롱      target 음공 음파 everyWaves 번째마다 화면 가득 매화 폭풍(크기·피해는 기획서에 없음)
 //   boundless          무극          음양 게이지가 사라지고 모든 무공이 음·양 보너스 aspectDamageBonus 를 함께 받음

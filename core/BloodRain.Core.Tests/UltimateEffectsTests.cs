@@ -112,5 +112,45 @@ namespace BloodRain.Core.Tests
             Assert.Null(NewLife("kunlun").Dissolution);
             Assert.Null(NewLife("shaolin").Dissolution);
         }
+    
+        [Fact] public void 낙매일검_길은_세_번_꺾이고_길이는_곧은_일검과_같다()
+        {
+            var path = UltimateEffects.PlumBranchPath(0f, 0f, 0f, 20f, 3);
+            Assert.Equal(5, path.Length);
+            float total = 0f;
+            for (int i = 0; i + 1 < path.Length; i++)
+            {
+                float dx = path[i + 1].x - path[i].x, dy = path[i + 1].y - path[i].y;
+                total += (float)System.Math.Sqrt(dx * dx + dy * dy);
+                // +30, -30 번갈아
+                float deg = (float)(System.Math.Atan2(dy, dx) * 180 / System.Math.PI);
+                Assert.Equal(i % 2 == 0 ? UltimateEffects.PlumBendDegrees : -UltimateEffects.PlumBendDegrees, deg, 3);
+            }
+            Assert.Equal(20f, total, 3);
+            Assert.Equal(0f, path[4].y, 3);   // 짝수 토막이면 바라보는 줄로 돌아온다
+            // 꺾지 않으면 곧은 한 줄
+            var straight = UltimateEffects.PlumBranchPath(1f, 2f, 0f, 10f, 0);
+            Assert.Equal(2, straight.Length);
+            Assert.Equal(11f, straight[1].x, 3);
+        }
+
+        [Fact] public void 낙매일검_맞기는_토막_어디든()
+        {
+            var path = UltimateEffects.PlumBranchPath(0f, 0f, 0f, 20f, 3);
+            // 첫 토막 가운데(꺾인 위쪽)
+            var mid = ((path[0].x + path[1].x) / 2, (path[0].y + path[1].y) / 2);
+            Assert.True(UltimateEffects.PlumBranchHits(path, mid.Item1, mid.Item2, 0.3f, 0.9f));
+            // 곧은 일검 줄 위지만 꺾인 길에서 먼 곳은 안 맞음
+            Assert.False(UltimateEffects.PlumBranchHits(path, 5f, -3f, 0.3f, 0.9f));
+            // 뒤쪽은 안 맞음
+            Assert.False(UltimateEffects.PlumBranchHits(path, -3f, 0f, 0.3f, 0.9f));
+        }
+
+        [Fact] public void 낙매검선의_피_꺾임_수는_데이터에서()
+        {
+            var d = TestData.Load();
+            var fx = BloodRain.Core.Build.SecretEffects.Of(d, new[] { "nakmae_geomseon" });
+            Assert.Equal(3, fx.UltimateBends);
+        }
     }
 }

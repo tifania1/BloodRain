@@ -55,5 +55,16 @@ namespace BloodRain.Core.Tests
             // 판정은 은빛 등롱을 깰 때만
             Assert.True(html.IndexOf("G.syn.bloodPend = true") > html.IndexOf("function breakLantern(l)"));
         }
+            [Fact] public void 낙매검선의_피_판정과_오의_길이_Core_와_같은_셈()
+        {
+            var html = Proto;
+            // Secrets require: 몸 문파·레벨·깬 땅(혼 기록 bossKills 또는 이번 생 처치)
+            Assert.Contains("if (r.sect && G.body.id !== r.sect) return false;", html);
+            Assert.Contains("(((G.soul0.bossKills || {})[reg.boss] || 0) > 0 || G.lordKills.some(k => k.boss === reg.boss))", html);
+            // UltimateEffects.PlumBranchPath: 30도 번갈아, 꺾임 수는 데이터
+            Assert.Contains($"const PLUM_BEND = {(int)BloodRain.Core.Combat.UltimateEffects.PlumBendDegrees} * Math.PI / 180;", html);
+            Assert.Contains("plumBranchPath(p.x, p.y, C.a, len, SECRET.nakmae_geomseon.params.ultimateBends)", html);
+            Assert.Contains("if (along > -0.5 && along < l && perp < half + er) return true;", html);
+        }
     }
 }
