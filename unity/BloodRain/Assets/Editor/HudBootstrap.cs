@@ -41,6 +41,11 @@ namespace BloodRain.Editor
             EditorUtility.SetDirty(ult);
             // LH-01U 기혈 30% 이하 가장자리 먹
             if (Object.FindFirstObjectByType<LowHealthHud>() == null) new GameObject("기혈 위험 HUD").AddComponent<LowHealthHud>();
+            // HUD-01U ①② 맨 위 진기 바·Lv·처치·은자
+            var top = Object.FindFirstObjectByType<TopHud>();
+            if (top == null) top = new GameObject("위 HUD").AddComponent<TopHud>();
+            top.font = hud.font;
+            EditorUtility.SetDirty(top);
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(hud.gameObject.scene);
         }
 

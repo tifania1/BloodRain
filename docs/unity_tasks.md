@@ -361,7 +361,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 화룡심법 Lv5 를 넣으면 벽력탄 폭발 원이 25% 커지고 화상 숫자가 오름, 파산공을 넣으면 정예에게 들어가는 숫자만 오름, 연무장 탄속을 산 혼이면 장풍이 더 빨리 날아감. 콘솔 에러 0
   - 찍기: 없음
 
-- [ ] HUD-01U 전투 HUD 나머지 넷 · 먼저: 없음
+- [ ] HUD-01U 전투 HUD 나머지 넷 · 먼저: 없음 (진행: 2026-11-08 02:55 PC — ①② 붙임. `Presentation/Hud/TopHud.cs`: 맨 위 10px 진기 바(옅은 종이 바탕·먹선 위로 금빛이 `Xp.Progress` 만큼, 레벨이 오르면 비우고 다시 참), 오른쪽 위 'Lv N · 경지'·처치(`LifeRunner.Kills`)·은자. HudBootstrap `Run 씬에 HUD 붙이기` 가 붙임, Run 씬 저장. 플레이에서 처치 0→17·Lv 1→2 바뀜 확인, 콘솔 에러 0, 찍음 `docs/unity_shots/HUD-01U/` 의 `hud_top.png`. 남은 것 ③ 무공·심법 칸, ④ 머리 위 기혈 바·경공 점, 영어·간체 넘침 확인)
   - 할 것: 12장 '전투 HUD 배치' 가운데 위 가운데(RegionHud, TU-09)·오른쪽 아래(UltimateButton·YinYangHud)·가장자리(EdgeIndicators)만 있고 나머지 넷은 디버그 글(LifeRunner·PlayerVitals OnGUI)뿐이다(2026-11-08 클라우드가 찾음). ① 화면 맨 위 가로 진기 바(먹선 위로 금빛이 참), 오른쪽 끝 'Lv N · 경지'. ② 오른쪽 위 처치 수·은자. ③ 왼쪽 위 무공 6칸 + 심법 6칸(7칸째가 열리면 7), 문턱 무공은 테두리 금빛으로 뜀·그릇이 없으면 흐린 금빛, 절기는 금테, 경지 아래 그릇 ◆◇. 아이콘 그림이 없는 칸은 무공 이름 첫 글자(웹 GLYPH 처럼). ④ 캐릭터 머리 위 짧은 기혈 바(LH-01U 문턱 아래면 붉게)·경공 충전 점. 설정 '땅의 주인 체력바'와는 따로.
   - 쓸 것: Core `Build/HudSlots.Build(life.Loadout, life.Level)`(칸 id·레벨·`SlotGlow` None·Ready·Waiting·Evolved, `VesselsUsed`·`VesselsTotal`, 2026-11-08 클라우드), `life.Xp.Progress`·`life.Level`·`Loc.Realm`, strings `ui.hud.level`(네 언어 2026-11-08)·`ui.hud.kills`·`ui.hud.silver`, 처치 수는 KC-01U 의 `_kills`, 은자 `life.Silver`, 경공 `Dash` 충전, `Balance.Contact.IsLowHealth`
   - 메뉴: C-08a 의 `BloodRain/Bootstrap/Run 씬에 HUD 붙이기`(HudBootstrap.cs)에 새 HUD 를 더함
