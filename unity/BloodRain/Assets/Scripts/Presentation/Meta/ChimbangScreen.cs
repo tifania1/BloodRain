@@ -253,6 +253,17 @@ namespace BloodRain.Presentation.Meta
             var paper = Rect("글 바탕", rt, Vector2.zero, new Vector2(1, TextTop)).gameObject.AddComponent<Image>();
             paper.color = new Color(Paper.r, Paper.g, Paper.b, 0.94f);
             paper.raycastTarget = false;
+            if (art != null)
+            {
+                // 산문 그림 위 검은 이름이 묻혀 안 읽힘(QA-18, SD-01U 침방 사진의 소림 카드) — 이름 자리에만 옅은 종이 띠
+                var band = Rect("이름 띠", rt, new Vector2(0, 1), Vector2.one);
+                band.pivot = new Vector2(0.5f, 0.5f);
+                band.anchoredPosition = new Vector2(0, -78);
+                band.sizeDelta = new Vector2(0, 64);
+                var bandImg = band.gameObject.AddComponent<Image>();
+                bandImg.color = new Color(Paper.r, Paper.g, Paper.b, 0.8f);
+                bandImg.raycastTarget = false;
+            }
 
             var name = Text("이름", rt, $"{Loc.Disciple(sect)}{(cand.Female ? $" <size=70%>{Loc.T("ui.chimbang.female")}</size>" : "")}", 40, FontStyles.Bold);
             // 번호(오른쪽 위 40px)와 겹치지 않게 이름 칸은 번호 아래로, 양옆 20px 여백(L-01b3 영어 'Mount Hua Disciple')

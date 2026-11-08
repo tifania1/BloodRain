@@ -527,6 +527,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: 없음(LifeRunner 한 줄 + 갈래 고르는 작은 정적 함수)
   - 끝: 에디터에서 `SteamDeck=1` 로 켜면 상한 400(로그 한 줄), 1280x800 사진에 잘린 글이 없거나 고친 것을 적음. 콘솔 에러 0
   - 찍기: `docs/unity_shots/SD-01U/` 의 화면별 `deck_<화면>.png`
+  - 확인(2026-11-09 05시 클라우드 QA-18): 침방 산문 그림 카드의 이름 뒤에 옅은 종이 띠('이름 띠')를 깔았다. 다음에 침방을 열 때 소림 카드 이름이 읽히는지, 콘솔 에러 없는지 한 번 봐 줄 것
 
 - [ ] R-07U 진전 소림 4·개방 4 · 먼저: C-06b
   - 할 것: 한 생에 `new Core.Build.SchoolSummons()` 하나, 프레임마다 `summons.Tick(SynergyEffects, 기혈/최대, 세상 dt)`. `ArhatStarted` 면 몸 둘레 나한 허상 `Tier("arhat_ring").Param("images")` 개를 `ArhatSecondsLeft` 동안, 닿는 적은 `summons.ArhatPush(fx, 거리, 보스인가, 축척)` 만큼 밀어냄(피해 없음, 2026-11-05 R-07b 데이터). `AlliesSpawned` 만큼 개방 제자를 `AlliesSecondsLeft` 동안(적이 노리지 않음), `AllyVolleys` 만큼 제자마다 가장 가까운 적에게 장풍 Lv1 탄 한 대 — 피해·넉백은 `SchoolSummons.AllyShot(fx, 공력)`.
