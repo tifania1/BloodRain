@@ -1730,7 +1730,7 @@ namespace BloodRain.Presentation.Combat
             _brushProps.SetFloat(IdDissolve, dissolve);
             _brushProps.SetFloat(IdSpan, span);
             _brushProps.SetFloat(IdKind, 0f);
-            _brushProps.SetFloat(IdAlpha, alpha);
+            _brushProps.SetFloat(IdAlpha, alpha * _mine);
             _brushProps.SetVector(IdRect, rect);
             Graphics.RenderMesh(rp, _quad, 0, m);
         }
@@ -1781,7 +1781,7 @@ namespace BloodRain.Presentation.Combat
             _brushProps.SetFloat(IdProgress, progress);
             _brushProps.SetFloat(IdDissolve, dissolve);
             _brushProps.SetFloat(IdKind, kind); // 뇌부는 ai.json progress "down"(3)
-            _brushProps.SetFloat(IdAlpha, alpha);
+            _brushProps.SetFloat(IdAlpha, alpha * _mine);
             var rp = new RenderParams(mat) { matProps = _brushProps, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             Graphics.RenderMesh(rp, _quad, 0, m);
         }
@@ -1878,9 +1878,14 @@ namespace BloodRain.Presentation.Combat
         void AddFxAt(Vector2 at, float angle, float span, float radius, float life, Color c) =>
             _fx.Add(new Fx { Angle = angle, Span = span, Radius = radius, Life = life, Color = c, Fixed = true, Center = at });
 
+        // WP-57U 설정 '내 이펙트 투명도'(1·0.75·0.5·0.25·0). 여기서 그리는 것은 다 내 무공이라 셋(DrawBrushLayer·Layer·Draw) 알파에 곱한다.
+        // 적 탄·예고는 다른 층이라 그대로.
+        float _mine = 1f;
+
         void LateUpdate()
         {
             if (player == null) return;
+            _mine = Mathf.Clamp01(BloodRain.Presentation.Meta.SettingsScreen.Current.EffectsAlpha);
             DrawBrushes();
             DrawBolts(Time.deltaTime);
             DrawSparks(Time.deltaTime);
@@ -1925,6 +1930,7 @@ namespace BloodRain.Presentation.Combat
         void Draw(RenderParams rp, Mesh mesh, Vector3 pos, float angle, float radius, Color col)
         {
             _one[0] = Matrix4x4.TRS(pos, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), new Vector3(radius, radius, 1f));
+            col.a *= _mine;
             _tint[0] = col;
             _dis[0] = 0f;
             _mpb.Clear();
