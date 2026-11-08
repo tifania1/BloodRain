@@ -1495,6 +1495,7 @@ MonoBehaviour:
   barHeight: 10
   follow: 10
   headOffset: 46
+  headOffsetWithArt: 84
 --- !u!4 &1271029690
 Transform:
   m_ObjectHideFlags: 0
@@ -2288,6 +2289,7 @@ GameObject:
   - component: {fileID: 1699483552}
   - component: {fileID: 1699483551}
   - component: {fileID: 1699483550}
+  - component: {fileID: 1699483553}
   m_Layer: 0
   m_Name: "\uD55C \uC0DD"
   m_TagString: Untagged
@@ -2347,6 +2349,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1699483553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1699483549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4778d64dd092cd4429a60bbe9c9a7c4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.PropArt
+  names:
+  - prop_blood_crystal
+  - prop_bun
+  - prop_cart
+  - prop_chest_closed
+  - prop_chest_open
+  - prop_chwigi_talisman
+  - prop_duck
+  - prop_jeongsin_talisman
+  - prop_lantern
+  - prop_lantern_silver
+  - prop_seal_stone_shard
+  - prop_silver_bag
+  - prop_storage_jar
+  - prop_sword_rack
+  - prop_thunder_bomb
+  - prop_wine_jar
+  sprites:
+  - {fileID: 21300000, guid: b7e7fc4136924c37ab4b4753e9212d57, type: 3}
+  - {fileID: 21300000, guid: 6f72840fd6814b4d880cd0a65478898d, type: 3}
+  - {fileID: 21300000, guid: a34058c1a50a4a8aa0a43584281ec224, type: 3}
+  - {fileID: 21300000, guid: d1541ed99bbd4c22a265c9885ad5d891, type: 3}
+  - {fileID: 21300000, guid: 508eac2d33d4483ab606f7538463cd62, type: 3}
+  - {fileID: 21300000, guid: b6c3d3b1b4c8488bb49a08b0ff237d7e, type: 3}
+  - {fileID: 21300000, guid: ce2c34ee6f5147ebb4cf7c30ab22a4aa, type: 3}
+  - {fileID: 21300000, guid: f10e710ca24d4358b8344fe64ca06c7a, type: 3}
+  - {fileID: 21300000, guid: d75aab99b897455cade68f5fe2b51fb6, type: 3}
+  - {fileID: 21300000, guid: 2315c06016d74d19b6b6fa768310df54, type: 3}
+  - {fileID: 21300000, guid: 6c31a754973c4888a23c65edfd5ee830, type: 3}
+  - {fileID: 21300000, guid: c401985236444296a9450cda3b0293c0, type: 3}
+  - {fileID: 21300000, guid: 004bd5efdfbe4f9cbfe5a7c4b7b551be, type: 3}
+  - {fileID: 21300000, guid: ebe0747e23f5451c855a70656a79f1ee, type: 3}
+  - {fileID: 21300000, guid: f401fdfa1bc24625b53416f1269107ee, type: 3}
+  - {fileID: 21300000, guid: 97fb31992eee49fc83a06efcacde56cc, type: 3}
 --- !u!1 &1700858264
 GameObject:
   m_ObjectHideFlags: 0

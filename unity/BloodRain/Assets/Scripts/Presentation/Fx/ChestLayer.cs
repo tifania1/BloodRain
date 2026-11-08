@@ -93,6 +93,9 @@ namespace BloodRain.Presentation.Fx
         /// <summary>보갑 하나를 놓는다(정예 처치·시험 메뉴).</summary>
         public void Place(Vector2 at)
         {
+            // PR-01U 닫힌 보갑 그림(긴 변 = 지금 금테 너비 1.2 × 0.95), 없으면 색 네모 + 금테
+            var art = PropArt.Make(transform, "보갑", "prop_chest_closed", at, 1.15f * Scale, 6);
+            if (art != null) { _boxes.Add(new Box { Pos = at, Go = art }); Dropped++; return; }
             var go = Make("보갑", at, new Color(0.45f, 0.20f, 0.12f), 0.8f, 6);
             var rim = Make("금테", at, new Color(0.85f, 0.69f, 0.23f), 0.95f, 5);
             rim.transform.SetParent(go.transform, true);
@@ -133,7 +136,7 @@ namespace BloodRain.Presentation.Fx
                 var b = _boxes[i];
                 b.Age += Time.deltaTime;
                 if (b.Age < 0.3f || !Drops.InPickup(spawn, Vector2.Distance(b.Pos, me) / sc)) continue;
-                Destroy(b.Go);
+                ShowOpened(b.Go);
                 _boxes.RemoveAt(i);
                 Open(b.Pos);
                 return; // 한 번에 한 상자씩(목록 화면이 열리면 세상이 멈춘다)
@@ -261,6 +264,18 @@ namespace BloodRain.Presentation.Fx
                 GUI.Label(new Rect(r.x, r.y + 64f + i * 40f, w, 36f), _lines[i], _listStyle);
             if (_hint != null) GUI.Label(new Rect(r.x + 20f, r.yMax - 46f - hintH, w - 40f, hintH), _hint, _hintStyle);
             GUI.Label(new Rect(r.x, r.yMax - 46f, w, 34f), Loc.T("ui.chest.close"), _listStyle);
+        }
+
+        // PR-01U 연 보갑: 그림이 있으면 열린 그림으로 바꿔 목록을 닫은 뒤 잠깐(세상 시간 0.8초) 두었다 지운다. 없으면 바로 지움
+        void ShowOpened(GameObject go)
+        {
+            var sp = PropArt.Instance != null ? PropArt.Instance.Get("prop_chest_open") : null;
+            var sr = go != null ? go.GetComponent<SpriteRenderer>() : null;
+            if (sp == null || sr == null || go.transform.childCount > 0) { Destroy(go); return; }
+            float size = Mathf.Max(sr.sprite.rect.width, sr.sprite.rect.height) / sr.sprite.pixelsPerUnit * go.transform.localScale.x;
+            sr.sprite = sp;
+            PropArt.Fit(go.transform, sp, size * 1.1f); // 열린 그림은 뚜껑이 서서 세로로 길다
+            Destroy(go, 0.8f);
         }
 
         GameObject Make(string name, Vector2 at, Color color, float realmMeters, int order)

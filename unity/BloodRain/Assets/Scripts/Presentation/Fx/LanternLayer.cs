@@ -151,6 +151,9 @@ namespace BloodRain.Presentation.Fx
         void Place(Vector2 at, bool silver = false)
         {
             float size = silver ? 1.3f : 1f;
+            // PR-01U 낱장 그림이 있으면 그것(긴 변 = 지금 테 지름), 없으면 색 동그라미 + 테
+            var art = PropArt.Make(transform, silver ? "은빛 등롱" : "등롱", silver ? "prop_lantern_silver" : "prop_lantern", at, 1.05f * size * Scale, 6);
+            if (art != null) { _lanterns.Add(new Lantern { Pos = at, Go = art, Silver = silver, Realm = RealmNow }); return; }
             var go = Make(silver ? "은빛 등롱" : "등롱", at, _circle, silver ? new Color(0.79f, 0.81f, 0.84f) : new Color(0.78f, 0.22f, 0.17f), 0.9f * size, 6);
             var rim = Make("테", at, _circle, silver ? new Color(0.95f, 0.96f, 1f) : new Color(0.85f, 0.69f, 0.23f), 1.05f * size, 5);
             rim.transform.SetParent(go.transform, true);
@@ -201,6 +204,9 @@ namespace BloodRain.Presentation.Fx
         void AddDrop(Vector2 at, string kind)
         {
             bool talisman = kind == Drops.ChwigiTalisman || kind == Drops.JeongsinTalisman;
+            // PR-01U 떨군 것 그림은 drops kind 와 같은 이름(prop_bun …). 긴 변은 자리 표시보다 조금 크게(부적은 세로 0.44m 와 비슷)
+            var art = PropArt.Make(transform, kind, "prop_" + kind, at, (talisman ? 0.5f : 0.6f) * Scale, 7);
+            if (art != null) { _drops.Add(new Drop { Pos = at, Kind = kind, Go = art, Realm = RealmNow }); return; }
             Color c = kind switch
             {
                 Drops.Bun => new Color(0.94f, 0.90f, 0.82f),
