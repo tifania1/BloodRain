@@ -85,6 +85,14 @@ namespace BloodRain.Presentation.Fx
             Shader.SetGlobalFloat(IdInvert, 0f);
         }
 
+        /// <summary>WP-57U 설정 '각성 연출'(자동·길게·짧게)을 Core 길이 낱말로.</summary>
+        public static AwakeningLength SettingLength => BloodRain.Presentation.Meta.SettingsScreen.Current.AwakenMode switch
+        {
+            BloodRain.Core.Meta.AwakenScene.Long => AwakeningLength.Long,
+            BloodRain.Core.Meta.AwakenScene.Short => AwakeningLength.Short,
+            _ => AwakeningLength.Auto,
+        };
+
         /// <summary>각성 연출을 시작한다. forceLong 은 시연·서장처럼 늘 길게 보여 줄 때.</summary>
         public void Play(EvolutionDef evolution, Transform target, bool firstOnAccount,
             AwakeningLength setting = AwakeningLength.Auto, bool? forceLong = null)
@@ -192,7 +200,7 @@ namespace BloodRain.Presentation.Fx
 
         void ApplyShake(float dt)
         {
-            float scale = reduceMotion ? 0f : shakeSetting;
+            float scale = reduceMotion ? 0f : shakeSetting * BloodRain.Presentation.Meta.SettingsScreen.Current.ShakeScale; // WP-57U 설정 '흔들림'
             float s = _trauma * _trauma * scale;
             float time = Time.unscaledTime * 22f;
             float amp = cam.orthographicSize * 0.06f;

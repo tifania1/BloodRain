@@ -160,11 +160,12 @@ namespace BloodRain.Presentation.Fx
             if (result.Awakened != null)
             {
                 var evo = result.Awakened;
-                var info = life.Awaken(evo);
+                var len = AwakeningFx.SettingLength; // WP-57U 설정 '각성 연출'
+                var info = life.Awaken(evo, len);
                 Awakened++;
                 _awakening = evo;
                 if (_fx == null) _fx = FindFirstObjectByType<AwakeningFx>();
-                if (_fx != null && runner.player != null) _fx.Play(evo, runner.player, info.LongByDefault);
+                if (_fx != null && runner.player != null) _fx.Play(evo, runner.player, info.LongByDefault, len);
                 Debug.Log($"[ChestLayer] 보갑 → 절기 각성 {evo.NameKo}({evo.Weapon}) · 길게 {info.LongByDefault} · 레벨 {level}{(_fx == null ? " · 씬에 AwakeningFx 없음" : "")}");
                 return;
             }

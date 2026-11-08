@@ -710,10 +710,11 @@ namespace BloodRain.Presentation
         void AwakenNow(EvolutionDef evo)
         {
             if (_life == null || _life.Record != null) return;
-            var info = _life.Awaken(evo);
+            var len = AwakeningFx.SettingLength; // WP-57U 설정 '각성 연출'
+            var info = _life.Awaken(evo, len);
             BreakthroughAwakened++;
             if (_awakenFx == null) _awakenFx = FindFirstObjectByType<AwakeningFx>();
-            if (_awakenFx != null && player != null) _awakenFx.Play(evo, player, info.LongByDefault);
+            if (_awakenFx != null && player != null) _awakenFx.Play(evo, player, info.LongByDefault, len);
             ApplyStats();
             Debug.Log($"[LifeRunner] 돌파 → 절기 각성 {evo.NameKo}({evo.Weapon}) · 길게 {info.LongByDefault}{(_awakenFx == null ? " · 씬에 AwakeningFx 없음" : "")}");
         }

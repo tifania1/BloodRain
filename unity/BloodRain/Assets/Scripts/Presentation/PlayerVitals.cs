@@ -93,7 +93,7 @@ namespace BloodRain.Presentation
             DamageTaken += taken;
             Hits++;
             _iframe = hitIframes;
-            _flash = 0.25f;
+            _flash = SettingsScreen.Current.FlashOn ? 0.25f : 0f; // WP-57U 설정 '피격 번쩍임'
             Damaged?.Invoke();
             if (Health <= 0f)
             {

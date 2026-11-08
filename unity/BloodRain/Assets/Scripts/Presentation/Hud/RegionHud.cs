@@ -47,7 +47,7 @@ namespace BloodRain.Presentation.Hud
                     if (regionText != null) regionText.text = RegionLine(Loc.Region(region), Loc.Hanja(region.Hanja), Density);
                 }
             }
-            if (rain != null) rain.density = Density;
+            if (rain != null) rain.density = Density * BloodRain.Presentation.Meta.SettingsScreen.Current.RainScale; // WP-57U 설정 '혈우 연출'
 
             int sec = Mathf.FloorToInt(elapsedOverride >= 0f ? elapsedOverride : Time.timeSinceLevelLoad);
             if (sec != _shownSeconds && clockText != null)

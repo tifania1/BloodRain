@@ -63,7 +63,7 @@ namespace BloodRain.Presentation.Meta
             if (background != null) Cover(bg.rectTransform, background);
 
             var rain = Child("붉은 비", root).gameObject.AddComponent<ScreenRain>();
-            rain.density = 1f;
+            rain.density = SettingsScreen.Current.RainScale; // WP-57U 설정 '혈우 연출'
             Stretch(rain.rectTransform);
 
             var title = Text("제목", root, "血雨江湖", 150, FontStyles.Normal, Ink, brushFont != null ? brushFont : font);
