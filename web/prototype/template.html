@@ -2292,7 +2292,7 @@ function fireWeapon(w) {
         forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d <= R + e.r) hurtEnemy(e, dmg, w, dx / d, dy / d, def.knockback); });
         hitLanterns(p.x, p.y, R);
         // 연환 권장합일: 마지막 주먹이 짧은 장풍을 쏜다
-        if (i === hits - 1 && link('gwonjang')) { const pw = G.weapons.find(x => x.id === 'palm_wind'); if (pw) { const pa = aimAngle(9 * 0.9); addProj({ x: p.x, y: p.y, vx: Math.cos(pa) * 9, vy: Math.sin(pa) * 9, r: 0.45, dmg: weaponDamage(pw) * linkP('gwonjang', 'palmDamageRatio'), pierce: 999, life: 0.9, kind: 'palm', w: pw, kb: 3 }); } }
+        if (i === hits - 1 && link('gwonjang')) { const pw = G.weapons.find(x => x.id === 'palm_wind'); if (pw) { const ps = linkP('gwonjang', 'palmSpeed'), pl = linkP('gwonjang', 'palmLifeSeconds'), pa = aimAngle(ps * pl); addProj({ x: p.x, y: p.y, vx: Math.cos(pa) * ps, vy: Math.sin(pa) * ps, r: linkP('gwonjang', 'palmRadius'), dmg: weaponDamage(pw) * linkP('gwonjang', 'palmDamageRatio'), pierce: 999, life: pl, kind: 'palm', w: pw, kb: 3 }); } }
       } });
       if (w.evolved) { const a0 = aimAngle(ep.projectileSpeed * ep.projectileLifeSeconds); for (let k = 0; k < ep.projectiles; k++) { const a = a0 + (k - (ep.projectiles - 1) / 2) * ep.projectileSpread; addProj({ x: p.x, y: p.y, vx: Math.cos(a) * ep.projectileSpeed, vy: Math.sin(a) * ep.projectileSpeed, r: ep.projectileRadius, dmg: dmg * ep.projectileDamage, pierce: 999, life: ep.projectileLifeSeconds, kind: 'fist', w }); } }
       break;
@@ -2923,7 +2923,7 @@ function update(dt) {
         if (pr.poison && !e.dead) { const wd = W_BY_ID[pr.w.id]; e.burn = wd.poisonSeconds; e.burnDps = pr.dmg * wd.poisonDamage * G.stats.dot; e.burnW = pr.w; e.poison = wd.poisonSeconds; }
         // 연환 풍화: 불붙은 적을 지난 장풍은 불을 싣는다
         if (pr.kind === 'palm' && link('punghwa') && !pr.fire && e.fire > 0) { pr.fire = true; pr.r *= 1 + linkP('punghwa', 'sizeBonus'); }
-        if (pr.fire && !e.dead) { e.burn = 2 * G.stats.duration; e.burnDps = Math.max(e.burnDps || 0, 6 * G.stats.burn); e.burnW = pr.w; e.fire = 2; }
+        if (pr.fire && !e.dead) { const fs = linkP('punghwa', 'burnSeconds'); e.burn = fs * G.stats.duration; e.burnDps = Math.max(e.burnDps || 0, linkP('punghwa', 'burnDps') * G.stats.burn); e.burnW = pr.w; e.fire = fs; }
         if (pr.explode && (!pr.explode.explodeOnCrit || crit)) { const X = pr.explode; addEffect('boom', pr.x, pr.y, { r: X.explodeRadius, life: 0.25 }); forNear(pr.x, pr.y, X.explodeRadius, o => { if (o !== e) hurtEnemy(o, pr.dmg * X.explodeDamage, pr.w, 0, 0, 0); }); }
         if (pr.bounce > 0) {
           pr.bounce--; const nx = nearestEnemies(pr.x, pr.y, 1, pr.bounceRange, pr.hit)[0];

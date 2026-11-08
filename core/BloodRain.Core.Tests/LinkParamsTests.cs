@@ -11,16 +11,16 @@ namespace BloodRain.Core.Tests
     {
         readonly GameData _d = TestData.Load();
 
-        // 연환 id → (params 키, 값, 기획서 그 줄에 있어야 할 글)
+        // 연환 id → (params 키, 값, 기획서 그 줄에 있어야 할 글). @ 로 시작하면 표 아래 '표에 없는 세부 값' 줄에서 찾는다.
         static readonly Dictionary<string, (string Key, float Value, string Text)[]> Expected = new Dictionary<string, (string, float, string)[]>
         {
             ["ssanggeom"] = new[] { ("damageBonus", 0.6f, "피해 +60%") },
             ["geomhwa"] = new[] { ("petals", 3f, "꽃잎 세 장") },
-            ["gwonjang"] = new[] { ("palmDamageRatio", 0.5f, "장풍 피해 50%") },
+            ["gwonjang"] = new[] { ("palmDamageRatio", 0.5f, "장풍 피해 50%"), ("palmSpeed", 9f, "@권장합일 장풍은 초속 9m"), ("palmLifeSeconds", 0.9f, "@9m·0.9초"), ("palmRadius", 0.45f, "@0.9초·반경 0.45m") },
             ["geumganghu"] = new[] { ("radiusBonus", 0.4f, "음파 반경 +40%"), ("stunChanceMultiplier", 2f, "기절 확률 2배") },
             ["dokbi"] = new[] { ("extraPierce", 1f, "관통 +1") },
             ["amgi"] = new[] { ("daggers", 1f, "비도 한 자루") },
-            ["punghwa"] = new[] { ("sizeBonus", 0.3f, "크기 +30%") },
+            ["punghwa"] = new[] { ("sizeBonus", 0.3f, "크기 +30%"), ("burnSeconds", 2f, "@풍화 화상은 2초"), ("burnDps", 6f, "@2초·초당 6") },
             ["jeomhyeol"] = new[] { ("stopSeconds", 0.5f, "0.5초 멈추고") },
             ["noehwa"] = new[] { ("radiusMultiplier", 2f, "두 배 범위") },
             ["hyeoldok"] = new[] { ("spreadRadius", 2f, "주변 2m") },
@@ -30,6 +30,8 @@ namespace BloodRain.Core.Tests
 
         /// <summary>표에 숫자가 없어 params 를 안 둔 연환(LK-01a 사람 결정 대기).</summary>
         static readonly string[] NoNumbers = { "inroe", "geommyeong", "charyeok", "gyeonin" };
+
+        static string DetailLine => TestData.Gdd.Split('\n').Single(x => x.StartsWith("표에 없는 세부 값: 권장합일"));
 
         static string GddRow(LinkDef l)
         {
@@ -49,7 +51,8 @@ namespace BloodRain.Core.Tests
                 foreach (var (key, value, text) in Expected[l.Id])
                 {
                     Assert.Equal(value, l.Param(key), 3);
-                    Assert.Contains(text, row);
+                    if (text.StartsWith("@")) Assert.Contains(text.Substring(1), DetailLine);
+                    else Assert.Contains(text, row);
                 }
             }
         }
