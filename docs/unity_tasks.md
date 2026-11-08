@@ -473,7 +473,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 적에게서 도망치며 움직여도 장풍·혈조가 가장 가까운 적 쪽으로 나감. '이동 방향'으로 바꾸면 움직인 쪽으로만
   - 찍기: `docs/unity_shots/WP-52U/` 의 `aim_near.png`
 
-- [ ] TT-01U 타이틀 화면(12장 화면 목록 '타이틀') · 먼저: 없음
+- [x] TT-01U 타이틀 화면(12장 화면 목록 '타이틀') · 먼저: 없음 — 2026-11-08 23:55 PC API: `Presentation/Meta/TitleScreen.cs` 를 Boot 씬(빌드 0번)에. 바탕 bg_title(cover) 위 ScreenRain 붉은 비, 붓 글꼴(Yuji Boku 동적) '血雨江湖' + 붉은 낙관 '血', 아래 '혈우강호'(본문 글꼴 — Yuji Boku 엔 한글이 없음). 단추 시작·이어하기·설정·인트로 다시 보기. 이어하기는 혼 저장이 있고 `PrologueDone` 이거나 `Lives > 0` 일 때만. 시작은 저장 없으면 Run(서장), 있으면 Inn. 설정(WP-57U)·인트로(DL-07b)는 화면이 없어 잠긴 단추로 자리만 — 생기면 TitleScreen 에 잇는다. 메인 테마(bgm_title)는 Unity 에 아직 없어 무음. 메뉴 `BloodRain/Bootstrap/타이틀 화면 짓기(Boot 씬)`(TitleBootstrap.cs). 플레이: 이 PC 저장(21생, 서장 마침)으로 이어하기 → 객잔 침방, 저장을 잠시 비켜 두니 이어하기가 없고 시작 → Run(저장은 그대로 되돌림). 콘솔 에러 0. 찍음 `docs/unity_shots/TT-01U/` 의 `title.png`
   - 할 것: Unity 에 타이틀 화면이 없다(2026-11-08 클라우드가 12장 화면 목록을 맞대다 찾음 — Boot 씬이 바로 넘어가고, WP-57U·DL-07b 가 '타이틀의 설정·인트로 다시 보기' 단추를 기대함). Boot 씬 뒤 첫 화면으로: 바탕은 `Assets/Art/Backgrounds/bg_title` 이 들어오면 그것(art_queue `bg_title`, 아직 todo — 그 전엔 선지 #EFE6D2 바탕에 ScreenRain 붉은 비), 제목은 Unity 글자(붓 글꼴)로 '혈우강호' 낙관, 단추 넷: 시작(혼 저장이 없으면 인트로 DL-07b → 서장, 있으면 객잔) · 이어하기(혼 저장이 있을 때만 보임 — `SoulStore.Load` 가 새 혼이 아닌지) · 설정(WP-57U 화면) · 인트로 다시 보기. 곡은 메인 테마(audio_queue, 없으면 무음).
   - 쓸 것: strings `ui.title.start`·`ui.title.continue`·`ui.title.intro`(2026-11-08 클라우드, 네 언어)·`ui.settings.title`, `Presentation/Meta/SoulStore`, `Hud/ScreenRain`, 웹 프로토타입 `#title` 화면(template.html)
   - 메뉴: `BloodRain/Bootstrap/` 아래 새 메뉴(타이틀 화면 짓기, 다시 돌리면 같은 결과)
@@ -492,6 +492,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 언어 단추(2026-11-07 15시 클라우드 WP-68): 열둘째 단추 `GameSettings.Lang`, 이름은 `GameSettings.LanguageNames[Language]` 를 `ui.settings.lang` 의 {0} 에. 누르면 Save 뒤 `Loc.Lang = s.Language`(캐시를 비워 바로 바뀜). Load 할 때 `systemLanguage: Application.systemLanguage.ToString()` 을 넘기고(`Loc.FromSystem` 은 2026-11-07 클라우드가 이미 `GameSettings.LanguageFor` 로 바꿈 — 컴파일만 확인). 목소리 단추 `GameSettings.Voice`(`ui.settings.voice` 의 {0} 에 `ui.settings.voice_ko`·`voice_zh`) — 기합 소리가 아직 없으니 값만 저장
   - 쓸 것: Core `Meta/GameSettings.cs`(2026-11-07 클라우드, `GameSettingsTests`), 웹 프로토타입 settings·SET_TURN·SET_HTML(template.html), 기획서 12장 화면 목록 '설정'·'화면 편의 규칙'
   - 메뉴: 타이틀 '설정', 일시정지 화면 '설정'
+  - 타이틀 '설정' 단추(2026-11-08 PC TT-01U): TitleScreen.Build 의 잠긴 '설정' 단추를 interactable 로 바꾸고 이 화면을 열게
   - 조준 방식 단추(2026-11-08 PC WP-52U): 값은 이미 `WeaponRunner.AimMode` 가 PlayerPrefs `aimMode` 로 읽음 — 단추는 `GameSettings.Turn` 뒤 `WeaponRunner.SetAimMode(s.Aim)` 만 부르면 됨. 시험 메뉴 `BloodRain/Test/조준 방식/` 는 그때 지워도 됨
   - 끝: 열하나를 눌러 보고 게임을 껐다 켜도 값이 남음. 흔들림 0·혈우 0·내 이펙트 0 으로 판에서 그대로 바뀜
   - 찍기: `docs/unity_shots/WP-57U/` 의 `settings.png`
@@ -737,6 +738,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 할 것: 처음 실행(혼 저장이 없을 때) Boot 씬 뒤 `DataBoot.Data.Dialogue.Intro.Cuts` 를 차례로 — 그림 `Assets/Art/Cutscenes/<cut.Art>.jpg`, `cut.Seconds` 뒤 다음 컷(누르면 바로), 줄은 화면 아래 가운데(`Whisper` 면 옅게, 말하는 사람 이름은 달지 않음). 다른 말은 키 `dialogue.intro.cuts.<id>.lines.<n>.text`. 컷 12에 게임 제목 붓글씨를 Unity 글자로. 건너뛰기 단추, 제목 화면에 '인트로 다시 보기'.
   - 쓸 것: dialogue.json `intro`, `docs/story/intro.md`(소리 칸)
   - 메뉴: 없음
+  - 타이틀(2026-11-08 PC TT-01U): `TitleScreen.StartGame` 이 저장 없을 때 바로 Run 으로 감 — 인트로를 그 사이에, '인트로' 단추는 잠긴 채로 자리만 있음
   - 끝: 12컷이 약 71초에 끝나고 서장으로, 건너뛰면 바로 서장
   - 찍기: `docs/unity_shots/DL-07b/` 의 `intro_06.png`, `intro_12.png`
 
