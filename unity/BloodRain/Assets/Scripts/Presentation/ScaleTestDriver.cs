@@ -215,7 +215,7 @@ namespace BloodRain.Presentation
             }
         }
 
-        static Sprite MakeCircle()
+        internal static Sprite MakeCircle()
         {
             const int n = 64;
             var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };

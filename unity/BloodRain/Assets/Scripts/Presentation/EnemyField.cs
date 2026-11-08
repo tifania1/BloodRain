@@ -73,15 +73,105 @@ namespace BloodRain.Presentation
         public event System.Action<Vector2, EnemyAgent> Killed;
 
         /// <summary>index 자리 적을 쓰러뜨린다(무공 C-04 가 기혈을 0으로 만들면 이걸 부른다).</summary>
-        public void Kill(int index)
+        public void Kill(int index) => Kill(index, false);
+
+        /// <summary>crushed 면 밟힘·쓸림(CR-01U): 죽을 때 터지는 것(Death)·독 번짐은 없고, 듣는 쪽은 LastKillCrushed 로 안다.</summary>
+        public void Kill(int index, bool crushed)
         {
             var a = _sim.Get(index);
-            if (_status.TryGetValue(a.Id, out var ps) && ps.Poison > 0f && effects.Tier("poison_spread") != null) _spreads.Add(new Vector2(a.Pos.x, a.Pos.y));
+            if (!crushed && _status.TryGetValue(a.Id, out var ps) && ps.Poison > 0f && effects.Tier("poison_spread") != null) _spreads.Add(new Vector2(a.Pos.x, a.Pos.y));
             _sim.RemoveAt(index);
             var def = DefOf(a.Kind);
-            if (def?.Death != null) _deaths.Add((new Vector2(a.Pos.x, a.Pos.y), def, a.BornRealm));
+            if (!crushed && def?.Death != null) _deaths.Add((new Vector2(a.Pos.x, a.Pos.y), def, a.BornRealm));
             LastKillEndsPair = def?.Twin == null || OnTwinKilled(a, def);
+            LastKillCrushed = crushed;
             Killed?.Invoke(new Vector2(a.Pos.x, a.Pos.y), a);
+            LastKillCrushed = false;
+        }
+
+        /// <summary>CR-01U 방금 Killed 로 알린 처치가 밟힘·쓸림인가. 참이면 구슬 대신 진기 Scale.CrushXp, 정예 보갑은 Scale.CrushedDropsChest 일 때만.</summary>
+        public bool LastKillCrushed { get; private set; }
+
+        /// <summary>밟힘·쓸림으로 쓰러뜨린 덩이 수(시험·디버그 줄).</summary>
+        public int CrushedCount { get; private set; }
+
+        // ── CR-01U 밟힘과 쓸림(7장 '밟히는 것들') ──
+        //   플레이어 원에 닿은 아래 경지 적은 그 자리에서 먹물로 터지며 쓰러진다(땅의 주인은 안 밟힘, 정예는 밟힘).
+        //   돌파 0.8초 BreakthroughFx.Swept 에 쓸림 반경 안 아래 경지 적을 한꺼번에(Breakthrough.SelectSweep).
+        InkBurst _ink;
+        readonly List<int> _crushIdx = new List<int>();
+        readonly List<BloodRain.Core.World.ScaledFoe> _foes = new List<BloodRain.Core.World.ScaledFoe>();
+
+        bool IsBoss(in EnemyAgent a) => DefOf(a.Kind)?.Family == "boss";
+
+        InkBurst Ink
+        {
+            get
+            {
+                if (_ink != null) return _ink;
+                _ink = gameObject.AddComponent<InkBurst>();
+                var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+                _ink.Init(ScaleTestDriver.MakeCircle(), new Material(shader) { name = "밟힘 먹물" });
+                return _ink;
+            }
+        }
+
+        /// <summary>_crushIdx 자리 적을 뒤에서부터 밟힘으로 쓰러뜨린다. awayFrom 이 있으면 먹물이 그 반대쪽으로 쓸려 나간다.</summary>
+        int CrushIndices(Vector2? awayFrom)
+        {
+            if (_crushIdx.Count == 0) return 0;
+            _crushIdx.Sort();
+            int n = 0, last = -1;
+            for (int k = _crushIdx.Count - 1; k >= 0; k--)
+            {
+                int i = _crushIdx[k];
+                if (i == last) continue; // 해시 칸이 겹쳐 같은 적이 두 번 나올 수 있다
+                last = i;
+                var a = _sim.Get(i);
+                Ink.Burst(new Vector2(a.Pos.x, a.Pos.y), a.Radius * 2f, InkBurst.Ink, awayFrom);
+                Kill(i, true);
+                n++;
+            }
+            CrushedCount += n;
+            _sim.RebuildGrid(Mathf.Max(0.01f, RadiusOf(World.Realm) * 2.2f));
+            return n;
+        }
+
+        /// <summary>플레이어 원(center, 반경 세계 m)에 닿은 아래 경지 적을 밟는다.</summary>
+        int CrushTouching(Vector2 center, float radius)
+        {
+            var ws = World;
+            _sim.QueryCircle(new float2(center.x, center.y), radius, _near);
+            _crushIdx.Clear();
+            foreach (int i in _near)
+            {
+                var a = _sim.Get(i);
+                if (a.Health > 0f && ws.Scale.Crushes(a.BornRealm, ws.Realm, IsBoss(a))) _crushIdx.Add(i);
+            }
+            return CrushIndices(null);
+        }
+
+        /// <summary>돌파 쓸림: center 둘레 bt.SweepRadius 안에서 bt.SelectSweep 이 고른 적을 한꺼번에 밟는다. 쓸린 수를 돌려준다.</summary>
+        public int Sweep(BloodRain.Core.World.Breakthrough bt, Vector2 center)
+        {
+            if (_sim == null || _sim.Count == 0) return 0;
+            _sim.QueryCircle(new float2(center.x, center.y), bt.SweepRadius, _near);
+            _near.Sort();
+            _foes.Clear();
+            _crushIdx.Clear();
+            var idx = new List<int>(_near.Count);
+            int last = -1;
+            foreach (int i in _near)
+            {
+                if (i == last) continue;
+                last = i;
+                var a = _sim.Get(i);
+                if (a.Health <= 0f) continue;
+                idx.Add(i);
+                _foes.Add(new BloodRain.Core.World.ScaledFoe(a.BornRealm, Vector2.Distance(center, new Vector2(a.Pos.x, a.Pos.y)), IsBoss(a)));
+            }
+            foreach (int k in bt.SelectSweep(_foes)) _crushIdx.Add(idx[k]);
+            return CrushIndices(center);
         }
 
         /// <summary>방금 Killed 로 알린 처치가 한 무리를 끝냈나. 쌍강시는 둘 다 누웠을 때만 참(C-09d 정예 한 쌍에 보갑 하나), 나머지는 늘 참.</summary>
@@ -764,6 +854,7 @@ namespace BloodRain.Presentation
                     if (kind >= 0 && kind < _kinds.Count && _kinds[kind].Def.OnHitSlowSeconds > 0f && _playerMove != null)
                         _playerMove.Slow(_kinds[kind].Def.OnHitSlowSeconds, _kinds[kind].Def.OnHitSlowMultiplier);
                 }
+                CrushTouching(p, pr); // CR-01U 닿은 아래 경지 적은 밟혀 쓰러짐(피해는 위 Contacts 가 이미 거름)
             }
             FireShots();
             StepMimics(dt, p);

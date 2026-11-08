@@ -85,6 +85,8 @@ namespace BloodRain.Presentation.Fx
             var def = runner.enemies.DefOf(a.Kind);
             if (def == null || def.Family != "elite") return;
             if (!runner.enemies.LastKillEndsPair) return; // 쌍강시 대형: 짝이 아직 서 있다
+            // CR-01U 밟힌 아래 경지 정예는 cheonha.json crush.eliteChestWhenCrushed 일 때만
+            if (runner.enemies.LastKillCrushed && (WorldScale.Current == null || !WorldScale.Current.Scale.CrushedDropsChest(true))) return;
             Place(at);
         }
 

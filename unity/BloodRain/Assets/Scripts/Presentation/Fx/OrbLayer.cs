@@ -74,6 +74,7 @@ namespace BloodRain.Presentation.Fx
         {
             var ws = WorldScale.Current;
             if (ws == null || player == null) return;
+            if (enemies != null && enemies.LastKillCrushed) return; // CR-01U 밟힌 적은 구슬 대신 진기 Scale.CrushXp 를 LifeRunner 가 바로 넣는다
             if (a.NoDrop != 0) return; // 쌍강시 되살아난 몸은 구슬을 다시 떨구지 않는다(기획서 6장)
             var def = enemies != null ? enemies.DefOf(a.Kind) : null;
             var reward = def?.Reward;

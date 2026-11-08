@@ -129,6 +129,7 @@ namespace BloodRain.Presentation
             _pc = player != null ? player.GetComponent<PlayerController>() : null;
             if (_pc != null) _pc.Dashed += OnDashed;
             if (breakthrough == null) breakthrough = GetComponent<BreakthroughFx>();
+            if (breakthrough != null) breakthrough.Swept += OnSwept; // CR-01U 돌파 0.8초 쓸림
             if (orbs != null) orbs.Absorbed += OnAbsorbed;
             if (vitals == null && player != null) vitals = player.GetComponent<PlayerVitals>();
             if (vitals != null) vitals.Died += OnDied;
@@ -148,6 +149,14 @@ namespace BloodRain.Presentation
 
         BloodRain.Presentation.Fx.EdgeIndicators _edges;
 
+        /// <summary>CR-01U 돌파 쓸림: 쓸림 반경 안 아래 경지 적을 한꺼번에 밟는다(진기·보갑은 OnKilled 가 밟힘 처치로 받음).</summary>
+        void OnSwept(BloodRain.Core.World.Breakthrough bt)
+        {
+            if (enemies == null || player == null) return;
+            int n = enemies.Sweep(bt, player.position);
+            Debug.Log($"[LifeRunner] 쓸림 {n}덩이, 반경 {bt.SweepRadius:0.0}m");
+        }
+
         /// <summary>KC-01U 한 덩이를 쓰러뜨렸을 때 세는 처치 수 = Scale.KillCount(생긴 경지). 땅의 주인·축척이 없으면 1.</summary>
         int KillCountOf(EnemyAgent a)
         {
@@ -165,6 +174,8 @@ namespace BloodRain.Presentation
             // KC-01U 처치 수는 덩이 속 사람 수(7장 '적 한 덩이', 웹 clusterOf). 땅의 주인은 1. 진기·혈정·오의는 덩이 하나 값 그대로
             int n = KillCountOf(a);
             _kills += n;
+            // CR-01U 밟힘·쓸림: 구슬 대신 진기 cheonha.json crush.xpPerCrushed 를 바로(OrbLayer 는 이 처치에 구슬을 안 떨굼)
+            if (enemies != null && enemies.LastKillCrushed && WorldScale.Current != null) OnAbsorbed(WorldScale.Current.Scale.CrushXp, 1);
             // R-08U 도전 과제 처치 수. 정예·땅의 주인도 여기서 한 번(KillElite·DefeatBoss 는 보상만 센다)
             if (_life != null && _life.Record == null) _life.Log.Kill(n);
             // WP-34U 금두꺼비(golden_toad 만. 영물은 세지 않는다). 모든 생 합이 연무장 탐욕 상한을 연다
