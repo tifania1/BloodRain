@@ -214,6 +214,9 @@ namespace BloodRain.Presentation.Combat
                 // 쿨다운 0(독무처럼 상시)이면 tickSeconds 마다 한 번, 섬광지는 1 / shotsPerSecond(WeaponGrowth.Cooldown)
                 float cd = s.Def.Cooldown <= 0f && s.Def.ShotsPerSecond == null ? Tick(s)
                          : Mathf.Max(0.05f, WeaponGrowth.Cooldown(s.Def, s.level) * (1f - cooldownReduction)); // C-06a 쾌속
+                // C-09c 만천성지: 초당 발 수 × fireRateMultiplier(웹 random_rapid 쿨다운)
+                if (s.Def.ShotsPerSecond != null && EvoOf(s) is BloodRain.Core.Data.EvolutionDef rateEvo)
+                    cd = Mathf.Max(0.02f, cd / Mathf.Max(0.01f, rateEvo.Param("fireRateMultiplier", 1f)));
                 s.Cooldown += cd;
                 if (s.Cooldown < -1f) s.Cooldown = 0f;
             }
@@ -357,12 +360,14 @@ namespace BloodRain.Presentation.Combat
                 }
                 case "orbit_slash":
                 {
-                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s)); // Lv8 범위 +40%(areaLv8)
-                    int sweeps = Has(s, "2회 회전") ? 2 : 1;
+                    // C-09c 절기 천뢰검진: 범위 × rangeMultiplier, sweeps 겹, 금빛. 닿은 적마다 낙뢰는 SweepHits(웹 orbit_slash)
+                    var arrayEvo = EvoOf(s);
+                    float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s) * (arrayEvo != null ? arrayEvo.Param("rangeMultiplier", 1f) : 1f)); // Lv8 범위 +40%(areaLv8)
+                    int sweeps = arrayEvo != null ? Mathf.Max(1, (int)arrayEvo.Param("sweeps", 1f)) : Has(s, "2회 회전") ? 2 : 1;
                     _fx.Add(new Fx
                     {
                         Angle = UnityEngine.Random.value * Mathf.PI * 2f, Span = 0.6f, Radius = R, Life = (s.Def.SweepSeconds ?? 0.36f) * sweeps,
-                        Color = new Color(0.55f, 0.75f, 0.95f, 0.8f), Sweep = true, Sweeps = sweeps, Weapon = s, Damage = dmg, Hit = new HashSet<int>(),
+                        Color = arrayEvo != null ? new Color(0.95f, 0.82f, 0.40f, 0.85f) : new Color(0.55f, 0.75f, 0.95f, 0.8f), Sweep = true, Sweeps = sweeps, Weapon = s, Damage = dmg, Hit = new HashSet<int>(),
                     });
                     break;
                 }
@@ -457,9 +462,14 @@ namespace BloodRain.Presentation.Combat
                     if (_targets.Count == 0) break;
                     var shot = ShotOf(s);
                     var e = enemies.Sim.Agents[_targets[UnityEngine.Random.Range(0, _targets.Count)]];
+                    int before = _projs.Count;
                     Shoot(s, Mathf.Atan2(e.Pos.y - P.y, e.Pos.x - P.x), ws.Speed(shot.Speed), ws.Length(shot.Radius), dmg,
                           WeaponGrowth.Pierce(s.Def, s.level), shot.LifeSeconds, 0, shot.Homing, ws.Speed(Knock(s)),
                           new Color(1f, 0.95f, 0.6f, 1f));
+                    if (EvoOf(s) is BloodRain.Core.Data.EvolutionDef starEvo && _projs.Count > before)
+                    {
+                        var pr = _projs[_projs.Count - 1]; pr.Explode = starEvo; _projs[_projs.Count - 1] = pr; // C-09c 만천성지
+                    }
                     break;
                 }
                 case "random_bomb":
@@ -467,7 +477,10 @@ namespace BloodRain.Presentation.Combat
                     // 벽력탄: 7m 안 가까운 20명 가운데 무작위 자리(없으면 둘레 4m)에 0.6초 뒤 터짐, 반경 2→3m, 넉백 3.
                     // 개수 projectiles, 거리 seekRange, 퓨즈 fuseSeconds, 반경 range x areaLv8, 넉백 knockback(weapons.json).
                     // 화상(burnPerSecond·burnSeconds)은 터질 때 EnemyField.AddDot 으로(ST-02U)
-                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
+                    // C-09c 절기 벽력천화: + extraProjectiles 개, 한 개마다 Core EvolvedHits.ChainBombs 로 chain 번 이어 터지고
+                    //   마지막 폭발 자리에 FireField(반경 × fireRadiusMultiplier) 불바다 fireSeconds 초(웹 bomb·fireField)
+                    var bombEvo = EvoOf(s);
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount + (bombEvo != null ? (int)bombEvo.Param("extraProjectiles", 0f) : 0); // C-06a 개수
                     NearestN(ws.Length(s.Def.SeekRange ?? 7f), 20, _targets);
                     float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * explosionAreaMultiplier * RangeMul(s));
                     float fuse = s.Def.FuseSeconds ?? 0.6f, kb = ws.Speed(Knock(s));
@@ -477,21 +490,16 @@ namespace BloodRain.Presentation.Combat
                         if (_targets.Count > 0) { var e = enemies.Sim.Agents[_targets[UnityEngine.Random.Range(0, _targets.Count)]]; at = new Vector2(e.Pos.x, e.Pos.y); }
                         else at = P + new Vector2(UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-4f, 4f)) * ws.Length(1f);
                         AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.70f, 0.15f, 0.12f, 0.18f)); // 떨어질 자리 표시
-                        Later(fuse, () =>
+                        if (bombEvo == null) { Later(fuse, () => BombBlast(s, at, R, dmg, kb)); continue; }
+                        var chain = EvolvedHits.ChainBombs(bombEvo, at.x, at.y, R, () => UnityEngine.Random.value);
+                        foreach (var b in chain)
                         {
-                            // 벽력탄: 터진 자리에 먹 번짐(fx_bomb_ink_1·2 번갈아) 위로 불꽃 빛(fx_bomb_glow)
-                            float rot = UnityEngine.Random.value * Mathf.PI * 2f;
-                            bool ink = AddSpark(s.Fired % 2 == 0 ? "fx_bomb_ink_1" : "fx_bomb_ink_2", at, rot, R * 2.4f, 0.55f, 0.08f);
-                            bool glow = AddSpark("fx_bomb_glow", at, rot, R * 2.2f, 0.35f, 0.06f);
-                            if (!ink && !glow) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
-                            enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
-                            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
-                            // ST-02U 화상: 폭발 원 안 적에 burnPerSecond(Lv1→Lv8) × 화상 배율 × 지속 피해 배율, burnSeconds × 지속.
-                            // 맞히기 전에 건다(맞혀 쓰러뜨리면 자리 번호가 바뀐다)
-                            float burn = WeaponGrowth.At(s.Def.BurnPerSecond, s.level) * burnMultiplier * enemies.dotMultiplier;
-                            enemies.AddDot(_near, (s.Def.BurnSeconds ?? 0f) * durationMultiplier, burn, false);
-                            Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
-                        });
+                            var bb = b;
+                            Later(fuse + bb.Delay, () => BombBlast(s, new Vector2(bb.X, bb.Y), bb.Radius, dmg * bb.DamageScale, kb));
+                        }
+                        var last = chain[chain.Count - 1];
+                        var (fr, fs) = EvolvedHits.FireField(bombEvo, last);
+                        if (fs > 0f) Later(fuse + last.Delay, () => BurnField(s, new Vector2(last.X, last.Y), fr, fs * durationMultiplier));
                     }
                     break;
                 }
@@ -711,6 +719,7 @@ namespace BloodRain.Presentation.Combat
             public int Bounce;                                  // C-09e 무영비도: 남은 튕김 수
             public BloodRain.Core.Data.EvolutionDef BounceEvo;  // 튕김 거리(bounceRange)를 읽는 절기
             public bool Poison;                                 // 절기면 '중독' 문턱 없이도 독
+            public BloodRain.Core.Data.EvolutionDef Explode;    // C-09c 만천성지: 맞힌 자리 작은 폭발(explodeOnCrit 이면 치명타일 때만)
         }
 
         readonly List<Proj> _projs = new List<Proj>();
@@ -770,9 +779,22 @@ namespace BloodRain.Presentation.Combat
                     // ST-02U 비도술 독: 문턱 '중독'부터 맞힌 피해 × poisonDamage 를 poisonSeconds 동안 초당 지속 피해로(맞히기 전에 건다)
                     if (p.Weapon != null && p.Weapon.Def.PoisonDamage is float pd && (p.Poison || Has(p.Weapon, "중독")))
                         enemies.AddDot(_one1, p.Weapon.Def.PoisonSeconds ?? 0f, p.Damage * pd * enemies.dotMultiplier, true);
+                    int critsBefore = enemies.CritCount;
                     int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);
                     _petalHit = false;
                     if (p.Weapon != null) Deal(p.Weapon, p.Damage, got);
+                    // C-09c 만천성지: 맞힌 자리 explodeRadius 폭발, 맞은 적 말고 둘레에 한 방 × explodeDamage(웹 pr.explode)
+                    if (p.Explode != null && got > 0 && EvolvedHits.Explodes(p.Explode, enemies.CritCount > critsBefore))
+                    {
+                        float er = World.Length(p.Explode.Param("explodeRadius"));
+                        float ed = p.Damage * p.Explode.Param("explodeDamage");
+                        if (!AddSpark("fx_bomb_glow", p.Pos, UnityEngine.Random.value * Mathf.PI * 2f, er * 2.2f, 0.25f, 0.05f))
+                            AddFxAt(p.Pos, 0f, Mathf.PI * 2f, er, 0.25f, new Color(1f, 0.92f, 0.55f, 0.75f));
+                        sim.QueryCircle(new float2(p.Pos.x, p.Pos.y), er, _bounceNear);
+                        _bounceEx.Clear();
+                        foreach (int k in _bounceNear) if (sim.Agents[k].Id != id) _bounceEx.Add(k);
+                        if (p.Weapon != null) Deal(p.Weapon, ed, enemies.Damage(_bounceEx, ed, p.Pos, 0f));
+                    }
                     // C-09e 무영비도: 맞힌 자리에서 bounceRange 안 아직 안 맞힌 가장 가까운 적으로 튕김(관통을 안 씀). 웹 pr.bounce
                     if (p.Bounce > 0 && p.BounceEvo != null)
                     {
@@ -815,6 +837,34 @@ namespace BloodRain.Presentation.Combat
             }
             int got = EvolvedHits.NextBounce(p.BounceEvo, p.Pos.x / unit, p.Pos.y / unit, _bxs, _bys, _bounceEx);
             return got >= 0 ? _bounceNear[got] : -1;
+        }
+
+        // ── 벽력탄 폭발 한 번(C-09c 벽력천화 연쇄도 같은 것) ──
+        void BombBlast(Slot s, Vector2 at, float R, float dmg, float kb)
+        {
+            // 벽력탄: 터진 자리에 먹 번짐(fx_bomb_ink_1·2 번갈아) 위로 불꽃 빛(fx_bomb_glow)
+            float rot = UnityEngine.Random.value * Mathf.PI * 2f;
+            bool ink = AddSpark(s.Fired % 2 == 0 ? "fx_bomb_ink_1" : "fx_bomb_ink_2", at, rot, R * 2.4f, 0.55f, 0.08f);
+            bool glow = AddSpark("fx_bomb_glow", at, rot, R * 2.2f, 0.35f, 0.06f);
+            if (!ink && !glow) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
+            enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+            BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
+            // ST-02U 화상: 폭발 원 안 적에 burnPerSecond(Lv1→Lv8) × 화상 배율 × 지속 피해 배율, burnSeconds × 지속.
+            // 맞히기 전에 건다(맞혀 쓰러뜨리면 자리 번호가 바뀐다)
+            enemies.AddDot(_near, (s.Def.BurnSeconds ?? 0f) * durationMultiplier, BurnDps(s), false);
+            Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
+        }
+
+        float BurnDps(Slot s) => WeaponGrowth.At(s.Def.BurnPerSecond, s.level) * burnMultiplier * enemies.dotMultiplier;
+
+        /// <summary>C-09c 벽력천화 불바다: left 초 동안 burnTickSeconds 마다 원 안 적의 화상을 다시 채운다(웹 fireField).</summary>
+        void BurnField(Slot s, Vector2 at, float R, float left)
+        {
+            float tick = DataBoot.Data.Balance.EnemyStatus.BurnTickSeconds;
+            AddFxAt(at, 0f, Mathf.PI * 2f, R, tick * 1.2f, new Color(0.90f, 0.35f, 0.12f, 0.22f));
+            enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
+            enemies.AddDot(_near, (s.Def.BurnSeconds ?? 0f) * durationMultiplier, BurnDps(s), false);
+            if (left > tick) Later(tick, () => BurnField(s, at, R, left - tick));
         }
 
         // ── C-09e 흑룡탄 ──
@@ -908,7 +958,8 @@ namespace BloodRain.Presentation.Combat
                 var to = new Vector2(a.Pos.x, a.Pos.y);
                 // 옮아가는 줄기: 앞 적에서 다음 적 쪽으로 가는 금빛 부채꼴(아주 좁게), 다음 적 자리에 작은 낙뢰
                 Vector2 d = to - from;
-                AddFxAt(from, Mathf.Atan2(d.y, d.x), 0.06f, Mathf.Max(d.magnitude, ws.Length(0.2f)), 0.2f, new Color(1f, 0.90f, 0.45f, 0.85f));
+                if (d.sqrMagnitude > 1e-4f) // 천뢰검진 첫 줄기(하늘에서)는 줄기 선 없이 낙뢰만
+                    AddFxAt(from, Mathf.Atan2(d.y, d.x), 0.06f, d.magnitude, 0.2f, new Color(1f, 0.90f, 0.45f, 0.85f));
                 if (!AddBolt(to)) AddFxAt(to, 0f, Mathf.PI * 2f, ws.Length(0.5f), 0.2f, new Color(1f, 0.92f, 0.55f, 0.8f));
                 if (shock > 0f) { a.Stun = Mathf.Max(a.Stun, shock); enemies.Sim.Set(i, a); }
                 _one1.Clear(); _one1.Add(i);
@@ -959,7 +1010,37 @@ namespace BloodRain.Presentation.Combat
                 float slack = d > 1e-4f ? a.Radius / d : Mathf.PI; // 덩이 반경만큼 각을 넓힌다
                 if (rel <= span + slack || rel >= Mathf.PI * 2f - slack) { _filtered.Add(i); f.Hit.Add(a.Id); }
             }
+            // C-09c 천뢰검진: 닿은 적마다 lightningChance 로 낙뢰(× lightningDamage), 곁의 적으로 옮아감 — 맞히기 전에 Id 로 정해 둔다
+            var skyEvo = f.Weapon != null ? EvoOf(f.Weapon) : null;
+            _thHops.Clear();
+            if (skyEvo != null && skyEvo.Param("lightningChance", 0f) > 0f)
+                foreach (int i in _filtered)
+                    if (EvolvedHits.SkyLightningRolls(skyEvo, UnityEngine.Random.value)) PlanSkyLightning(skyEvo, i);
+            _skyPlan.Clear(); _skyPlan.AddRange(_thHops);
             Deal(f.Weapon, f.Damage, enemies.Damage(_filtered, f.Damage, P, World.Speed(Knock(f.Weapon))));
+            if (_skyPlan.Count > 0) { _thHops.Clear(); _thHops.AddRange(_skyPlan); StrikeThunderChains(f.Weapon, f.Damage, 0f); }
+        }
+
+        readonly List<(int id, float scale, Vector2 from)> _skyPlan = new List<(int, float, Vector2)>();
+
+        /// <summary>천뢰검진 낙뢰 한 줄기(first 는 시뮬 자리 번호)를 _thHops 뒤에 덧붙인다. 첫 줄기는 from = 그 적 자리(줄기 선 없음).</summary>
+        void PlanSkyLightning(BloodRain.Core.Data.EvolutionDef evo, int first)
+        {
+            var ws = World;
+            float unit = ws.Length(1f);
+            var agents = enemies.Sim.Agents;
+            var c = agents[first].Pos;
+            float reach = evo.Param("lightningRange") * unit * Mathf.Max(1f, evo.Param("lightningChains"));
+            enemies.Sim.QueryCircle(c, reach, _thCand);
+            int local = _thCand.IndexOf(first);
+            if (local < 0) { _thCand.Add(first); local = _thCand.Count - 1; }
+            _bxs.Clear(); _bys.Clear();
+            foreach (int k in _thCand) { _bxs.Add(agents[k].Pos.x / unit); _bys.Add(agents[k].Pos.y / unit); }
+            foreach (var h in EvolvedHits.SkyLightning(evo, local, _bxs, _bys))
+            {
+                int from = h.From < 0 ? h.To : h.From;
+                _thHops.Add((agents[_thCand[h.To]].Id, h.DamageScale, new Vector2(_bxs[from] * unit, _bys[from] * unit)));
+            }
         }
 
         int HitArc(Vector2 c, float R, float a, float dmg, float knock, float stun = 0f)

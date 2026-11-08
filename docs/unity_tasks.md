@@ -424,7 +424,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 각성 뒤 다섯 절기가 웹 프로토타입과 같은 모양으로 나감
   - 찍기: `docs/unity_shots/C-09/` 의 `evolved_<id>.png`
 
-- [ ] C-09c 절기 셋 효과 · 먼저: C-09e
+- [x] C-09c 절기 셋 효과 · 먼저: C-09e — 2026-11-08 21:00 PC: 세 절기의 모양까지 같이 붙임(전엔 셋 다 절기 모양이 없었음), 콘솔 에러 0. 벽력천화: + extraProjectiles 개, 한 개마다 `EvolvedHits.ChainBombs` 대로 이어 터지고(폭발은 새 `BombBlast` 하나로 — 옛 벽력탄도 이걸 씀) 마지막 자리에 `FireField` 반경 불바다 fireSeconds × 지속 동안 burnTickSeconds 마다 화상 다시 채움(`BurnField`). 천뢰검진: 범위 × rangeMultiplier, sweeps 겹, 금빛, SweepHits 에서 닿은 적마다 `SkyLightningRolls` → `SkyLightning`(오뢰정법과 같은 `StrikeThunderChains` 그리기). 만천성지: 초당 발 수 × fireRateMultiplier, 탄이 맞힐 때 그 한 방이 치명타였으면(EnemyField.CritCount 로 앎) `Explodes` → explodeRadius 안 둘레 적에 × explodeDamage. 시험 몸에 치명 확률이 0 이라 폭발은 플레이로 못 봄(LifeRunner 가 critChance 를 매 프레임 다시 씀). 찍음 `docs/unity_shots/C-09/` 의 `evo_effects.png`(연쇄 폭발·불바다)·`evo_effects_chain.png`
   - 할 것: 벽력천화 마지막 연쇄 폭발 자리에 `fireSeconds` 불바다(반경 = 폭발 × `fireRadiusMultiplier`, 안의 적 화상 다시 채움), 천뢰검진 검기 원에 닿은 적마다 `lightningChance` 로 낙뢰(× `lightningDamage`, `lightningRange` 안 `lightningChains` 번 `lightningFalloff` 배 — 오뢰정법과 같은 그리기), 만천성지 폭발은 치명타일 때만(`explodeOnCrit`).
   - 쓸 것: Core `EvolutionDef.Param`, `Combat/EvolvedHits`(`ChainBombs`·`FireField` 벽력천화, `SkyLightningRolls`·`SkyLightning` 천뢰검진, `Explodes` 만천성지), 웹 프로토타입 `fireField`·`lightning`
   - 메뉴: C-09d 의 시험 몸(세 절기 각각)
