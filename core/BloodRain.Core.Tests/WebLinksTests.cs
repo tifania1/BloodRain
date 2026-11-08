@@ -31,6 +31,19 @@ namespace BloodRain.Core.Tests
             Assert.Contains("${l.proto ? '' : ' (정식판에서)'}", html);
         }
 
+        [Fact] public void 진전_효과와_기연도_proto_와_웹이_맞는다()
+        {
+            // 웹에 들어간 것을 도감·알림이 '정식판'이라 적지 않게(소림 4·개방 4 는 SS-01, 영약·밀서·속삭임·검총·영물은 WP-28~32 에서 들어감)
+            var html = Html;
+            var syn = TestData.Load().Synergies;
+            foreach (var sc in syn.Schools)
+                foreach (var t in sc.Tiers.Where(t => !string.IsNullOrEmpty(t.Effect)))
+                    Assert.True(t.Proto == html.Contains($"synEff('{t.Effect}')"), $"{sc.Id} {t.Count} {t.Effect}: proto {t.Proto} 인데 웹과 다르다");
+            var newEnc = html.Substring(html.IndexOf("function newEnc()"), 300);
+            foreach (var e in syn.Encounters)
+                Assert.True(e.Proto == newEnc.Contains($"'{e.Id}'"), $"기연 {e.Id}: proto {e.Proto} 인데 웹 newEnc 와 다르다");
+        }
+
         [Fact] public void 금강후_점혈창_혈독()
         {
             var html = Html;

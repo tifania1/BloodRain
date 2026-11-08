@@ -975,9 +975,9 @@ function closeDex() {
   dexReturn = null; showBest();
 }
 function renderDex() {
-  const start = new Set(START_WEAPONS), item = (ok, title, body) => `<div class="dexitem${ok ? '' : ' no'}"><b>${title}</b><br>${body}</div>`;
+  const item = (ok, title, body) => `<div class="dexitem${ok ? '' : ' no'}"><b>${title}</b><br>${body}</div>`;
   const grp = (name, list, found) => `<div class="dexgrp"><h3>${name} <small>${found} / ${list.length}</small></h3>${list.join('')}</div>`;
-  const L = SYN.links.map(l => { const ok = dex.has('link:' + l.id), inProto = start.has(l.a) && start.has(l.b);
+  const L = SYN.links.map(l => { const ok = dex.has('link:' + l.id), inProto = l.proto;   // 웹에 들어간 연환(synergies.json proto, WebLinksTests)
     return ok ? item(true, `${l.nameKo}<i>${l.hanja}</i>`, `${W_BY_ID[l.a].nameKo} + ${W_BY_ID[l.b].nameKo}. ${l.desc}<span class="lore">${l.lore}</span>`)
               : item(false, `???<i>${inProto ? '' : '정식판'}</i>`, `「${W_BY_ID[l.a].nameKo}」${batchim(W_BY_ID[l.a].nameKo) ? '이' : '가'} 누군가를 만나면…`); });
   const C = SYN.schools.map(sc => { const ok = dex.has('school:' + sc.id);
