@@ -262,13 +262,21 @@ namespace BloodRain.Presentation.Combat
         BloodRain.Presentation.Hud.LevelUpScreen _levelUp;
         float? Link(string id, string key)
         {
-            if (Time.unscaledTime >= _linkAt)
-            {
-                _linkAt = Time.unscaledTime + 0.5f;
-                if (_levelUp == null) _levelUp = FindFirstObjectByType<BloodRain.Presentation.Hud.LevelUpScreen>();
-                try { _linkState = _levelUp != null ? _levelUp.Synergy : null; } catch (Exception) { _linkState = null; }
-            }
+            RefreshLinks();
             return _linkState?.LinkParam(id, key);
+        }
+        /// <summary>LK-01Ub 값(params)이 없는 연환이 켜져 있나(인뢰검·검명·차력타력·견인타).</summary>
+        bool LinkOn(string id)
+        {
+            RefreshLinks();
+            return _linkState != null && _linkState.HasLink(id);
+        }
+        void RefreshLinks()
+        {
+            if (Time.unscaledTime < _linkAt) return;
+            _linkAt = Time.unscaledTime + 0.5f;
+            if (_levelUp == null) _levelUp = FindFirstObjectByType<BloodRain.Presentation.Hud.LevelUpScreen>();
+            try { _linkState = _levelUp != null ? _levelUp.Synergy : null; } catch (Exception) { _linkState = null; }
         }
 
         // LK-01Ub 연환 나머지가 들고 있는 판 상태(세상 시각 Time.time). 표에 '언제까지'가 없는 것은 짝 무공 쿨 한 번·1초로 둔다(backlog LK-01a 결정 전)
@@ -284,6 +292,38 @@ namespace BloodRain.Presentation.Combat
         /// <summary>시험용: 연환 효과가 난 횟수(연환 id → 번). LinkTestMenu 가 찍는다.</summary>
         public readonly Dictionary<string, int> LinkFires = new Dictionary<string, int>();
         void Fired(string link) { LinkFires.TryGetValue(link, out int n); LinkFires[link] = n + 1; }
+
+        readonly Dictionary<int, float> _pulled = new Dictionary<int, float>();              // 차력타력·견인타: 사슬에 끌려온 적 Id → 1초 동안
+        readonly List<Vector2> _bladeAt = new List<Vector2>();                               // 검명: 지금 도는 태극검 자리
+        float _bladeAtTime = -1f;
+        readonly List<int> _rebound = new List<int>(), _reboundNear = new List<int>();
+        const float PulledSeconds = 1f, ReboundKnockTimes = 3f;                              // 끌려온 적을 받아칠 수 있는 시간, 되튕길 때 넉백 배수(모양만, LK-01a 결정 전)
+
+        /// <summary>LK-01Ub 차력타력·견인타: 끌려온 적(Id)을 몸 바깥으로 크게 튕기고(넉백 × ReboundKnockTimes), 그 자리 1m 안 다른 적과 부딪혀 둘 다 피해(짝 무공 한 방).</summary>
+        void Rebound(List<int> ids, Slot by, float dmg, string link)
+        {
+            var ws = World;
+            float kb = ws.Speed(Mathf.Max(Knock(by), 3f) * ReboundKnockTimes);
+            foreach (int id in ids)
+            {
+                _pulled.Remove(id);
+                int i = IndexOf(id);
+                if (i < 0) continue;
+                var at = enemies.Sim.Agents[i].Pos;
+                var at2 = new Vector2(at.x, at.y);
+                enemies.Sim.QueryCircle(at, ws.Length(1f), _reboundNear);
+                _reboundNear.Remove(i);
+                AddFxAt(at2, 0f, Mathf.PI * 2f, ws.Length(1f), 0.25f, new Color(0.95f, 0.90f, 0.80f, 0.55f));
+                _one1.Clear(); _one1.Add(i);
+                // 부딪힌 쪽 먼저(튕길 적이 쓰러지면 자리 번호가 바뀐다)
+                if (_reboundNear.Count > 0) Deal(by, dmg, enemies.Damage(_reboundNear, dmg, at2, kb * 0.3f));
+                i = IndexOf(id);
+                if (i < 0) continue;
+                _one1.Clear(); _one1.Add(i);
+                Deal(by, dmg, enemies.Damage(_one1, dmg, P, kb));
+                Fired(link);
+            }
+        }
 
         static void Trim(Dictionary<int, float> d)
         {
@@ -441,6 +481,32 @@ namespace BloodRain.Presentation.Combat
                         Angle = UnityEngine.Random.value * Mathf.PI * 2f, Span = 0.6f, Radius = R, Life = (s.Def.SweepSeconds ?? 0.36f) * sweeps,
                         Color = arrayEvo != null ? new Color(0.95f, 0.82f, 0.40f, 0.85f) : new Color(0.55f, 0.75f, 0.95f, 0.8f), Sweep = true, Sweeps = sweeps, Weapon = s, Damage = dmg, Hit = new HashSet<int>(),
                     });
+                    // LK-01Ub 연환 인뢰검: 낙뢰가 검기 원을 타고 한 바퀴(뇌부 개수만큼 고르게, 검기 한 바퀴 시간 동안) 돌고, 다 돈 뒤 원 안 적 감전.
+                    // 낙뢰 하나 = 뇌부 한 방·뇌부 반경, 감전 = 뇌부 shockSeconds(표에 피해가 없어 LK-01a 결정 전)
+                    if (LinkOn("inroe") && SlotOf("thunder_talisman") is Slot tal)
+                    {
+                        int bolts = Mathf.Max(1, WeaponGrowth.Projectiles(tal.Def, tal.level));
+                        float round = (s.Def.SweepSeconds ?? 0.36f) * sweeps, a0 = UnityEngine.Random.value * Mathf.PI * 2f;
+                        float br = ws.Length(tal.Def.StrikeRadius ?? 1.2f), shock = tal.Def.ShockSeconds ?? 0.5f, tdmg = Damage(tal);
+                        for (int k = 0; k < bolts; k++)
+                        {
+                            float ba = a0 + Mathf.PI * 2f * k / bolts;
+                            Later(round * k / bolts, () =>
+                            {
+                                var at = P + new Vector2(Mathf.Cos(ba), Mathf.Sin(ba)) * R;
+                                if (!AddBolt(at)) AddFxAt(at, 0f, Mathf.PI * 2f, br, 0.25f, new Color(1f, 0.92f, 0.55f, 0.8f));
+                                enemies.Sim.QueryCircle(new float2(at.x, at.y), br, _reboundNear);
+                                Deal(tal, tdmg, enemies.Damage(_reboundNear, tdmg, at, 0f));
+                            });
+                        }
+                        Later(round, () =>
+                        {
+                            AddFxAt(P, 0f, Mathf.PI * 2f, R, 0.3f, new Color(1f, 0.92f, 0.55f, 0.25f));
+                            enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _reboundNear);
+                            foreach (int i in _reboundNear) { var ea = enemies.Sim.Get(i); ea.Stun = Mathf.Max(ea.Stun, shock); enemies.Sim.Set(i, ea); }
+                            Fired("inroe");
+                        });
+                    }
                     break;
                 }
                 case "aura":
@@ -642,6 +708,14 @@ namespace BloodRain.Presentation.Combat
                                 AddFx(a, Mathf.PI, R, 0.26f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.80f, 0.62f, 0.38f, 0.7f));
                                 Deal(s, dmg, HitArc(P, R, a, dmg, kb, stun));
                             }
+                            // LK-01Ub 연환 견인타: 봉이 닿는 원(R) 안 끌려오는 적을 받아쳐 날려 보냄, 부딪히면 둘 다 피해(취선봉 한 방, LK-01a 결정 전)
+                            if (_pulled.Count > 0 && LinkOn("gyeonin"))
+                            {
+                                _rebound.Clear();
+                                enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _reboundNear);
+                                foreach (int j in _reboundNear) { int pid = enemies.Sim.Agents[j].Id; if (_pulled.TryGetValue(pid, out var pu) && pu > Time.time && !_rebound.Contains(pid)) _rebound.Add(pid); }
+                                if (_rebound.Count > 0) Rebound(_rebound, s, dmg, "gyeonin");
+                            }
                             // LK-01Ub 연환 취중매화: 봉이 닿는 원(R) 안 낙화검우 꽃잎을 감아 seconds 초 몸 둘레 회오리로(피해는 꽃잎 한 방 그대로 — LK-01a 결정 전)
                             if (Link("chwijung", "seconds") is float ws_)
                                 for (int q = 0; q < _projs.Count; q++)
@@ -681,10 +755,20 @@ namespace BloodRain.Presentation.Combat
                         {
                             push.Clear(); still.Clear();
                             var agents = enemies.Sim.Agents;
+                            _bladeAt.Clear(); _bladeAtTime = Time.time; // LK-01Ub 검명이 보는 검 자리
+                            bool charyeok = LinkOn("charyeok");
+                            _rebound.Clear();
                             for (int i = 0; i < n; i++)
                             {
                                 float a = WeaponShapes.BladeAngle(a0, now, i, n);
                                 var at = P + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * R;
+                                _bladeAt.Add(at);
+                                // LK-01Ub 연환 차력타력: 끌려온 적이 검에 닿으면 되튕겨 뒤의 적과 충돌(태극검 한 방, LK-01a 결정 전)
+                                if (charyeok && _pulled.Count > 0)
+                                {
+                                    enemies.Sim.QueryCircle(new float2(at.x, at.y), bladeR, _reboundNear);
+                                    foreach (int j in _reboundNear) { int pid = agents[j].Id; if (_pulled.TryGetValue(pid, out var pu) && pu > Time.time && !_rebound.Contains(pid)) _rebound.Add(pid); }
+                                }
                                 AddFxAt(at, 0f, Mathf.PI * 2f, bladeR, step * 1.2f,
                                     evo == null ? new Color(0.36f, 0.46f, 0.60f, 0.85f) : i % 2 == 0 ? new Color(0.96f, 0.94f, 0.88f, 0.9f) : new Color(0.12f, 0.12f, 0.14f, 0.9f));
                                 enemies.Sim.QueryCircle(new float2(at.x, at.y), bladeR, _near);
@@ -707,6 +791,7 @@ namespace BloodRain.Presentation.Combat
                                 foreach (int id in still) { int j = IndexOf(id); if (j >= 0) push.Add(j); }
                                 if (push.Count > 0) Deal(s, bdmg, enemies.Damage(push, bdmg, P, 0f));
                             }
+                            if (_rebound.Count > 0) Rebound(_rebound, s, bdmg, "charyeok");
                         });
                     }
                     break;
@@ -737,6 +822,8 @@ namespace BloodRain.Presentation.Combat
                         a.Slow = Mathf.Max(a.Slow, slow);
                         if (a.Weight >= 0.5f)
                         {
+                            Trim(_pulled);
+                            _pulled[a.Id] = Time.time + PulledSeconds; // LK-01Ub 차력타력·견인타가 보는 '끌려온 적'
                             // PulledTo 는 경지 m 의 Trial.PullTo 를 쓰니 세계 m 로 같은 셈을 한다
                             float dx = a.Pos.x - P.x, dy = a.Pos.y - P.y, d = Mathf.Sqrt(dx * dx + dy * dy); if (d == 0f) d = 1f;
                             float kk = Mathf.Min(1f, pull / d);
@@ -840,6 +927,16 @@ namespace BloodRain.Presentation.Combat
                                     enemies.Sim.Set(i, a);
                                 }
                             Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
+                            // LK-01Ub 연환 검명: 음파 안에서 도는 태극검마다 작은 음파 한 번 더(반경 절반·음공 한 방 — 표에 크기·피해가 없어 LK-01a 결정 전)
+                            if (Time.time - _bladeAtTime < 0.2f && _bladeAt.Count > 0 && LinkOn("geommyeong"))
+                                foreach (var bat in _bladeAt)
+                                {
+                                    if ((bat - P).magnitude > R) continue;
+                                    AddFxAt(bat, 0f, Mathf.PI * 2f, R * 0.5f, 0.3f, new Color(0.80f, 0.85f, 0.95f, 0.35f));
+                                    enemies.Sim.QueryCircle(new float2(bat.x, bat.y), R * 0.5f, _reboundNear);
+                                    Deal(s, dmg, enemies.Damage(_reboundNear, dmg, bat, kb * 0.5f));
+                                    Fired("geommyeong");
+                                }
                         });
                     break;
                 }

@@ -34,7 +34,7 @@ namespace BloodRain.Editor
                 }
             }
             var ls = Object.FindFirstObjectByType<LevelUpScreen>();
-            bool on = ls != null && ls.Synergy.LinkParam(linkId, link.Params.Keys.First()) != null;
+            bool on = ls != null && ls.Synergy.HasLink(linkId);
             var msg = $"[연환 시험] {link.NameKo}: {link.A} Lv{lo.Weapons[link.A]} · {link.B} Lv{lo.Weapons[link.B]} · 켜짐 {on}";
             Debug.Log(msg);
             return msg;
@@ -91,5 +91,13 @@ namespace BloodRain.Editor
         [MenuItem(Root + "취중매화 Lv4", true)] static bool ChwijungV() => Playing();
         [MenuItem(Root + "혈창 Lv4")] static void Hyeolchang() => Raise("hyeolchang", 4);
         [MenuItem(Root + "혈창 Lv4", true)] static bool HyeolchangV() => Playing();
+        [MenuItem(Root + "인뢰검 Lv4")] static void Inroe() => Raise("inroe", 4);
+        [MenuItem(Root + "인뢰검 Lv4", true)] static bool InroeV() => Playing();
+        [MenuItem(Root + "검명 Lv4")] static void Geommyeong() => Raise("geommyeong", 4);
+        [MenuItem(Root + "검명 Lv4", true)] static bool GeommyeongV() => Playing();
+        [MenuItem(Root + "차력타력 Lv4")] static void Charyeok() => Raise("charyeok", 4);
+        [MenuItem(Root + "차력타력 Lv4", true)] static bool CharyeokV() => Playing();
+        [MenuItem(Root + "견인타 Lv4")] static void Gyeonin() => Raise("gyeonin", 4);
+        [MenuItem(Root + "견인타 Lv4", true)] static bool GyeoninV() => Playing();
     }
 }
