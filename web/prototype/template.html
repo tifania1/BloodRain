@@ -730,7 +730,7 @@ function updateSynergy() {
   const lockedLinks = new Set(met.filter(l => !links.has(l.id)).map(l => l.id));
   const lockedIds = [...lockedLinks].concat(SYN.schools.flatMap(sc => (locked[sc.id] || []).map(n => sc.id + ':' + n)));
   for (const id of lockedIds) if (!S.torn.has(id)) { S.torn.add(id); sfx('gong'); toast('찢긴 비급', `「${manualName(id)}」의 조건을 갖췄다. 비급이 찢겨 있어 아직 듣지 않는다 — 이 생을 마치면 장경각에 오른다`); }
-  for (const l of SYN.links) if (links.has(l.id) && !S.links.has(l.id)) { discover('link:' + l.id); sfx('gong'); toast(l.hanja, `연환 「${l.nameKo}」 — ${l.desc}`); }
+  for (const l of SYN.links) if (links.has(l.id) && !S.links.has(l.id)) { discover('link:' + l.id); sfx('gong'); toast(l.hanja, `연환 「${l.nameKo}」 — ${l.desc}${l.proto ? '' : ' (정식판에서)'}`); }
   for (const sc of SYN.schools) if (tier[sc.id] > (S.tier[sc.id] || 0)) { discover('school:' + sc.id); const tr = sc.tiers.find(x => x.count === tier[sc.id]); toast(`${sc.nameKo} 진전 ${tier[sc.id]}`, tr.desc + (tr.proto ? '' : ' (정식판에서)')); }
   S.counts = counts; S.tier = tier; S.links = links; S.locked = locked; S.lockedLinks = lockedLinks;
   // 진전 단계의 harmonyRange(무당 2단계 35). 넓히기만 한다
@@ -2094,14 +2094,14 @@ function weaponDamage(w) {
   if (G.syn.secrets.has('mumyeong') && w.id === SECRET.mumyeong.target) d *= 1 + SECRET.mumyeong.params.damageBonus;
   return d;
 }
-function hurtEnemy(e, dmg, w, kx, ky, kb) {
+function hurtEnemy(e, dmg, w, kx, ky, kb, sureCrit) {   // sureCrit: 반드시 치명타(연환 점혈창, Unity enemies.sureCrit)
   if (e.dead) return;
   if (e.elite || e.boss) dmg *= G.stats.elite;
   if (G.diss > 0) dmg *= UPar(ULT_BY.cheonma_haeche, 'damageMultiplier', 1);   // 천마해체: 모든 피해 2배(WP-25)
   if (e.poison > 0 && sectT().poisonedTargetDamage) dmg *= 1 + sectT().poisonedTargetDamage;   // 당가 중독된 적 +20%(WP-20)
   const jsd = synEff('jiangshi_damage'); if (jsd && (E_BY_ID[e.type] || {}).family === 'jiangshi') dmg *= 1 + jsd.damageBonus;
   let crit = false;
-  if (Math.random() < G.stats.crit) { dmg *= B.stats.critDamageMultiplier; crit = true; }
+  if (sureCrit || Math.random() < G.stats.crit) { dmg *= B.stats.critDamageMultiplier; crit = true; }
   e.hp -= dmg; e.flash = 0.08;
   // 서장 장삼: 각성이 끝나기 전엔 기혈 바닥(cheonha.json prologueBody.bossHealthFloor)에서 멈추고, 처음 닿는 순간 고정 각성(Core Prologue.ApplyBossDamage)
   const floor = e.maxHp * PROB.bossHealthFloor;
@@ -2119,7 +2119,7 @@ function hurtEnemy(e, dmg, w, kx, ky, kb) {
     // 연환 암기연환: 섬광지 치명타를 비도가 따라간다
     if (w && w.id === 'flash_finger' && link('amgi')) {
       const dw = G.weapons.find(x => x.id === 'flying_dagger');
-      if (dw) { const p = G.player, a = Math.atan2(e.y - p.y, e.x - p.x); addProj({ x: p.x, y: p.y, vx: Math.cos(a) * 14, vy: Math.sin(a) * 14, r: 0.25, dmg: weaponDamage(dw), pierce: 1, life: 1, kind: 'dagger', w: dw, target: e, homing: 8 }); }
+      if (dw) for (let k = 0; k < linkP('amgi', 'daggers'); k++) { const p = G.player, a = Math.atan2(e.y - p.y, e.x - p.x) + (k - (linkP('amgi', 'daggers') - 1) / 2) * 0.15; addProj({ x: p.x, y: p.y, vx: Math.cos(a) * 14, vy: Math.sin(a) * 14, r: 0.25, dmg: weaponDamage(dw), pierce: 1, life: 1, kind: 'dagger', w: dw, target: e, homing: 8 }); }
     }
   }
   if (e.hp <= 0) killEnemy(e);
@@ -2287,6 +2287,7 @@ function fireWeapon(w) {
     }
     case 'melee_combo': {
       const R = def.range * S.area * igi, hits = Math.round(grow(def.hits, t));
+      G.fistUntil = G.t + hits * def.gapSeconds + (def.cooldown || 0.5);   // 연환 금강후가 보는 '나한권으로 때리는 동안'(마지막 연타 + 쿨 한 번, Unity _fistUntil)
       for (let i = 0; i < hits; i++) G.zones.push({ delay: i * def.gapSeconds, apply: () => {
         addEffect('fist', p.x + fx * R * 0.5, p.y + fy * R * 0.5, { r: R * 0.6, life: 0.12 });
         forNear(p.x, p.y, R, e => { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d <= R + e.r) hurtEnemy(e, dmg, w, dx / d, dy / d, def.knockback); });
@@ -2418,23 +2419,30 @@ function fireWeapon(w) {
       // 절기 혈마수(WP-19, params): 흡혈 lifesteal, 극음이면 범위 × extremeYinRangeMultiplier. 갈래 수는 Lv8 그대로
       const exYin = w.evolved && yyBand().band === 'extreme' && G.yy < 0;
       const n = Math.round(grow(def.projectiles, t)), R = def.range * S.area * igi * (exYin ? ep.extremeYinRangeMultiplier : 1), ls = w.evolved ? ep.lifesteal : grow(def.lifesteal, t, 0), base = aimAngle(R * 1.25);   // 12장 조준: 가까운 적 쪽(이동 방향 설정이면 바라보는 쪽)
-      const hitSet = new Set();
+      const hitSet = new Set(), spreadAt = [];
       for (let i = 0; i < n; i++) {
         const a = base + (i - (n - 1) / 2) * TRIAL_W.clawSpreadRad, ca = Math.cos(a), sa = Math.sin(a);
         addEffect('bolt', p.x + ca * 0.3, p.y + sa * 0.3, { x2: p.x + ca * R, y2: p.y + sa * R, life: 0.14 });
         forNear(p.x, p.y, R + 1, e => {
           if (hitSet.has(e)) return;
           const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
-          if (along > 0 && along < R + e.r && perp < TRIAL_W.clawWidth + e.r) { hitSet.add(e); hurtEnemy(e, dmg, w, ca, sa, def.knockback); p.hp = Math.min(p.maxHp, p.hp + dmg * ls * healMul()); }
+          if (along > 0 && along < R + e.r && perp < TRIAL_W.clawWidth + e.r) { hitSet.add(e); if (e.poison > 0) spreadAt.push([e.x, e.y]); hurtEnemy(e, dmg, w, ca, sa, def.knockback); p.hp = Math.min(p.maxHp, p.hp + dmg * ls * healMul()); }
         });
       }
+      // 연환 혈독: 중독된 적을 할퀴면 그 자리 spreadRadius 안으로 독이 번진다(독무의 중독 초·독무 한 방을 초당으로 — Unity 와 같은 임시 셈, 피해는 LK-01a 결정 전)
+      const mist = link('hyeoldok') && G.weapons.find(x => x.id === 'poison_mist');
+      if (mist) { const sr = linkP('hyeoldok', 'spreadRadius'), ps = W_BY_ID.poison_mist.poisonSeconds * G.stats.duration, pd = weaponDamage(mist) * G.stats.dot;
+        for (const [x, y] of spreadAt) { addEffect('burst', x, y, { r: sr, color: '#6B3A4C' }); forNear(x, y, sr, o => { if (o.dead || Math.hypot(o.x - x, o.y - y) > sr + o.r) return; o.poison = Math.max(o.poison || 0, ps); o.burn = Math.max(o.burn || 0, ps); o.burnDps = Math.max(o.burnDps || 0, pd); o.burnW = mist; }); } }
       hitLanterns(p.x + Math.cos(base) * R * 0.5, p.y + Math.sin(base) * R * 0.5, R * 0.5);
       break;
     }
     case 'ring_wave': {
       // 음공(9장): 몸에서 반경 R 음파, stunChance 로 기절. Lv6 '음파 2겹'은 sonicSecondRingDelay 뒤 한 번 더.
       // 절기 파천금음(WP-19, params): 기절 stunChance. '겹칠수록 피해 증폭(최대 stackDamageMax 배)'은 몇 초 안에 겹쳐야 하는지·한 겹에 얼마인지 숫자가 없어 아직 안 붙임(decisions)
-      const R = def.range * S.area, chance = w.evolved ? ep.stunChance : grow(def.stunChance, t, 0), rings = atMs(w, '음파 2겹') ? 2 : 1;
+      let R = def.range * S.area, chance = w.evolved ? ep.stunChance : grow(def.stunChance, t, 0);
+      const rings = atMs(w, '음파 2겹') ? 2 : 1;
+      // 연환 금강후: 나한권으로 때리는 동안 음파 반경 × (1 + radiusBonus), 기절 확률 × stunChanceMultiplier
+      if (link('geumganghu') && G.t < (G.fistUntil || 0)) { R *= 1 + linkP('geumganghu', 'radiusBonus'); chance *= linkP('geumganghu', 'stunChanceMultiplier'); }
       for (let k = 0; k < rings; k++) G.zones.push({ delay: k * TRIAL_W.sonicSecondRingDelay, apply: () => {
         addEffect('boom', p.x, p.y, { r: R, life: 0.35 });
         forNear(p.x, p.y, R, e => {
@@ -2458,7 +2466,7 @@ function fireWeapon(w) {
           addEffect('bolt', p.x, p.y, { x2: p.x + ca * R, y2: p.y + sa * R, life: 0.12 });
           forNear(p.x + ca * R / 2, p.y + sa * R / 2, R / 2 + 1, e => {
             const dx = e.x - p.x, dy = e.y - p.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
-            if (along > -0.2 && along < R + e.r && perp < TRIAL_W.spearWidth / 2 + e.r) hurtEnemy(e, dmg, w, ca, sa, def.knockback);
+            if (along > -0.2 && along < R + e.r && perp < TRIAL_W.spearWidth / 2 + e.r) hurtEnemy(e, dmg, w, ca, sa, def.knockback, link('jeomhyeol') && (e.pressed || 0) > G.t);   // 연환 점혈창: 혈도가 짚힌 적은 반드시 치명타
           });
           hitLanterns(p.x + ca * R / 2, p.y + sa * R / 2, R / 2);
         }
@@ -2918,6 +2926,8 @@ function update(dt) {
       if (Math.hypot(e.x - pr.x, e.y - pr.y) <= pr.r + e.r) {
         pr.hit.add(e);
         const sp = Math.hypot(pr.vx, pr.vy) || 1;
+        // 연환 점혈창: 섬광지에 맞은 적은 stopSeconds 혈도가 짚혀 멈춘다(땅의 주인 빼고, 이화창 확정 치명은 pierce_thrust 에서)
+        if (pr.kind === 'finger' && pr.w && pr.w.id === 'flash_finger' && link('jeomhyeol') && !e.boss) { const st = linkP('jeomhyeol', 'stopSeconds'); e.stun = Math.max(e.stun || 0, st); e.pressed = G.t + st; }
         const crit = hurtEnemy(e, pr.dmg, pr.w, pr.vx / sp, pr.vy / sp, pr.kb || 1.2);
         if (pr.heal) G.player.hp = Math.min(G.player.maxHp, G.player.hp + pr.heal);   // 매화만개(WP-19)
         if (pr.poison && !e.dead) { const wd = W_BY_ID[pr.w.id]; e.burn = wd.poisonSeconds; e.burnDps = pr.dmg * wd.poisonDamage * G.stats.dot; e.burnW = pr.w; e.poison = wd.poisonSeconds; }
