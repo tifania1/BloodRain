@@ -93,7 +93,7 @@ namespace BloodRain.Core.Tests
         }
     }
     /// <summary>무공 쪽 같은 검사: WeaponRunner 가 돌리는(또는 바로 다음에 붙일) 갈래가 읽는 칸이 weapons.json 에 있는지.
-    /// 칸 이름은 Core `WeaponDef`. 아직 숫자를 정하지 않은 갈래(음공·관통 찌르기·꽃잎)는 여기 넣지 않는다.</summary>
+    /// 칸 이름은 Core `WeaponDef`. 음공·관통 찌르기·꽃잎은 R-12Ub 에서 붙임(모양 값은 WeaponShapes.Trial).</summary>
     public class WeaponBehaviorParamsTests
     {
         readonly GameData _d = Load();
@@ -113,6 +113,10 @@ namespace BloodRain.Core.Tests
             ["aura"] = new (string, Func<WeaponDef, bool>)[] { ("tickSeconds", w => w.TickSeconds > 0), ("poisonSeconds", w => w.PoisonSeconds > 0) },
             ["random_bomb"] = new (string, Func<WeaponDef, bool>)[] { ("fuseSeconds", w => w.FuseSeconds > 0), ("seekRange", w => w.SeekRange > 0), ("burnSeconds", w => w.BurnSeconds > 0) },
             ["random_lightning"] = new (string, Func<WeaponDef, bool>)[] { ("fuseSeconds", w => w.FuseSeconds > 0), ("strikeRadius", w => w.StrikeRadius > 0), ("shockSeconds", w => w.ShockSeconds > 0), ("knockback", w => w.Knockback != null) },
+            // R-12Ub(2026-11-08 PC): 기절 시간·둘째 음파·창 폭·꽃잎 퍼짐은 데이터가 아니라 WeaponShapes.Trial
+            ["ring_wave"] = new (string, Func<WeaponDef, bool>)[] { ("stunChance", w => w.StunChance != null), ("knockback", w => w.Knockback != null) },
+            ["pierce_thrust"] = new (string, Func<WeaponDef, bool>)[] { ("hits", w => w.Hits != null), ("knockback", w => w.Knockback != null) },
+            ["petal_scatter"] = new (string, Func<WeaponDef, bool>)[] { ("projectiles", w => w.Projectiles != null), ("shot", w => w.Shot != null), ("knockback", w => w.Knockback != null) },
         };
 
         [Fact] public void 돌리는_갈래마다_필요한_숫자_칸이_있다()

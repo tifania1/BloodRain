@@ -431,7 +431,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 웹 프로토타입과 같은 효과
   - 찍기: `docs/unity_shots/C-09/` 의 `evo_effects.png`
 
-- [ ] R-12Ub 무공 일곱 중 셋(`ring_wave`·`pierce_thrust`·`petal_scatter`) · 먼저: R-12Ua
+- [x] R-12Ub 무공 일곱 중 셋(`ring_wave`·`pierce_thrust`·`petal_scatter`) · 먼저: R-12Ua — 2026-11-08 21:05 PC: 셋 다 WeaponRunner 에, 콘솔 에러 0, 시험으로 셋 다 피해가 들어감. 음공: 반경 range 음파, `RingDelays`(Lv6 2겹)·`RingStuns`(stunChance, 절기 파천금음 30%)로 SonicStunSeconds 기절. 이화창: 가까운 적 쪽(사거리 1.25배, 없으면 바라보는 쪽) hits 번 ThrustGapSeconds 간격, `ThrustDirections`(Lv7 네 방향, 절기 백화난무창 directions)·`ThrustHits` 관통. 낙화검우: `PetalAngles`(절기 매화만개는 한 바퀴 고르게) 탄, Lv6 관통 +1, 매화만개는 맞힐 때마다 기혈 healPerHit. 웹처럼 숫자 없는 것(파천금음 겹침 증폭·창격 폭풍·꽃잎 폭풍)은 안 붙임. 붓 획(qin·spear·petals)은 아직 — 지금 붓 획은 삼재검법만 그리는 틀이라 자리 표시 부채꼴·원·탄 색으로 둠. 찍음 `docs/unity_shots/R-12U/` 의 `ring_wave_pierce_thrust_petal_scatter.png`·`evolved_plum_full_bloom.png`
   - 할 것: R-12Ua 와 같은 방법. 붓 획 qin·spear·petals. 데이터에 없는 값(음공 기절 0.6초·둘째 음파 0.3초 뒤, 창 폭 0.6m, 꽃잎 퍼짐 1.2라디안)도 `WeaponShapes.Trial` 에서(`RingDelays`·`RingStuns`·`ThrustDirections`·`ThrustHits`·`PetalAngles`).
   - 쓸 것: R-12Ua 와 같음
   - 메뉴: R-12Ua 의 무공 넣기

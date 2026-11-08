@@ -700,6 +700,88 @@ namespace BloodRain.Presentation.Combat
                     }
                     break;
                 }
+                case "ring_wave":
+                {
+                    // 음공(R-12Ub, 9장): 몸에서 반경 range 음파, stunChance(5→15%) 로 SonicStunSeconds 기절, 넉백 knockback.
+                    // Lv6 '음파 2겹'은 SonicSecondRingDelay 뒤 한 번 더(Core WeaponShapes.RingDelays·RingStuns, 웹 ring_wave).
+                    // 절기 파천금음: 기절 stunChance(30%). '겹칠수록 피해 증폭(stackDamageMax)'은 숫자가 없어 웹처럼 아직 안 붙임
+                    var qinEvo = EvoOf(s);
+                    float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s));
+                    float chance = qinEvo != null ? qinEvo.Param("stunChance") : WeaponGrowth.At(s.Def.StunChance, s.level, 0f);
+                    float kb = ws.Speed(Knock(s));
+                    foreach (var delay in WeaponShapes.RingDelays(Has(s, "음파 2겹")))
+                        Later(delay, () =>
+                        {
+                            AddFxAt(P, 0f, Mathf.PI * 2f, R, 0.35f, qinEvo != null ? new Color(0.95f, 0.82f, 0.40f, 0.35f) : new Color(0.55f, 0.62f, 0.80f, 0.30f));
+                            enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
+                            BloodRain.Presentation.Fx.LanternLayer.Strike(P, R); // C-09b 친 자리 안 등롱
+                            foreach (int i in _near) // 기절은 피해(쓰러짐으로 자리 번호가 바뀜) 전에. 땅의 주인은 무리에 없다
+                                if (WeaponShapes.RingStuns(false, chance, UnityEngine.Random.value))
+                                {
+                                    var a = enemies.Sim.Get(i);
+                                    a.Stun = Mathf.Max(a.Stun, WeaponShapes.Trial.SonicStunSeconds);
+                                    enemies.Sim.Set(i, a);
+                                }
+                            Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
+                        });
+                    break;
+                }
+                case "pierce_thrust":
+                {
+                    // 이화창(R-12Ub, 9장): 앞 range 관통 찌르기 hits(1→3)회를 ThrustGapSeconds 간격, 가까운 적 쪽(사거리 1.25배 안, 없으면 바라보는 쪽).
+                    // Lv7 '회전 찌르기'는 네 방향, 절기 백화난무창은 directions 방향(Core WeaponShapes.ThrustDirections·ThrustHits, 웹 pierce_thrust).
+                    // '경공 경로를 따라 창격 폭풍'은 숫자가 없어 웹처럼 아직 안 붙임
+                    var spearEvo = EvoOf(s);
+                    float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s));
+                    int hits = Mathf.Max(1, Mathf.RoundToInt(WeaponGrowth.At(s.Def.Hits, s.level, 1f)));
+                    float baseA = Nearest(R * 1.25f, out var sdir) ? Mathf.Atan2(sdir.y, sdir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                    var dirs = WeaponShapes.ThrustDirections(baseA, spearEvo != null, spearEvo != null ? (int)spearEvo.Param("directions", 1f) : 1, Has(s, "회전 찌르기"));
+                    float kb = ws.Speed(Knock(s)), unit = ws.Length(1f);
+                    for (int h = 0; h < hits; h++)
+                        Later(h * WeaponShapes.ThrustGapSeconds, () =>
+                        {
+                            _filtered.Clear();
+                            foreach (var a in dirs)
+                            {
+                                float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
+                                var mid = P + new Vector2(ca, sa) * R * 0.5f;
+                                AddFxAt(P, a, 0.10f, R, 0.12f, spearEvo != null ? new Color(1f, 0.82f, 0.38f, 0.8f) : new Color(0.85f, 0.85f, 0.90f, 0.8f));
+                                enemies.Sim.QueryCircle(new float2(mid.x, mid.y), R * 0.5f + unit, _near);
+                                BloodRain.Presentation.Fx.LanternLayer.Strike(mid, R * 0.5f);
+                                var agents = enemies.Sim.Agents;
+                                foreach (int i in _near)
+                                {
+                                    if (_filtered.Contains(i)) continue;
+                                    var e = agents[i];
+                                    // ThrustHits 는 경지 m 이라 세계 좌표를 축척으로 나눠 넘긴다
+                                    if (WeaponShapes.ThrustHits((e.Pos.x - P.x) / unit, (e.Pos.y - P.y) / unit, e.Radius / unit, a, R / unit)) _filtered.Add(i);
+                                }
+                            }
+                            Deal(s, dmg, enemies.Damage(_filtered, dmg, P, kb));
+                        });
+                    break;
+                }
+                case "petal_scatter":
+                {
+                    // 낙화검우(R-12Ub, 9장): 꽃잎 검기 projectiles(6→14)+개수 발을 가까운 적 쪽 PetalSpreadRad 부채꼴 안 무작위로. 탄은 shot.
+                    // Lv6 '관통 +1'. 절기 매화만개: 한 바퀴 고르게, 맞힐 때마다 기혈 healPerHit(Core WeaponShapes.PetalAngles, 웹 petal_scatter)
+                    var petalEvo = EvoOf(s);
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount;
+                    var shot = ShotOf(s);
+                    int pierce = Has(s, "관통 +1") ? 1 : 0;
+                    float baseA = Nearest(ws.Length(s.Def.Range), out var pdir) ? Mathf.Atan2(pdir.y, pdir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                    foreach (var a in WeaponShapes.PetalAngles(baseA, n, petalEvo != null, () => UnityEngine.Random.value))
+                    {
+                        int before = _projs.Count;
+                        Shoot(s, a, ws.Speed(shot.Speed), ws.Length(shot.Radius), dmg, pierce, shot.LifeSeconds, 0, 0f, ws.Speed(Knock(s)),
+                              petalEvo != null ? new Color(0.95f, 0.55f, 0.62f, 0.9f) : new Color(0.92f, 0.70f, 0.75f, 0.9f));
+                        if (petalEvo != null && _projs.Count > before)
+                        {
+                            var pr = _projs[_projs.Count - 1]; pr.Heal = petalEvo.Param("healPerHit"); _projs[_projs.Count - 1] = pr;
+                        }
+                    }
+                    break;
+                }
                 default:
                     break; // 아직 없는 갈래
             }
@@ -720,6 +802,7 @@ namespace BloodRain.Presentation.Combat
             public BloodRain.Core.Data.EvolutionDef BounceEvo;  // 튕김 거리(bounceRange)를 읽는 절기
             public bool Poison;                                 // 절기면 '중독' 문턱 없이도 독
             public BloodRain.Core.Data.EvolutionDef Explode;    // C-09c 만천성지: 맞힌 자리 작은 폭발(explodeOnCrit 이면 치명타일 때만)
+            public float Heal;                                  // R-12Ub 매화만개: 맞힐 때마다 기혈 회복(healPerHit)
         }
 
         readonly List<Proj> _projs = new List<Proj>();
@@ -783,6 +866,11 @@ namespace BloodRain.Presentation.Combat
                     int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);
                     _petalHit = false;
                     if (p.Weapon != null) Deal(p.Weapon, p.Damage, got);
+                    if (p.Heal > 0f && got > 0) // R-12Ub 매화만개(웹 pr.heal)
+                    {
+                        if (_vitals == null) _vitals = FindFirstObjectByType<PlayerVitals>();
+                        if (_vitals != null) _vitals.Heal(p.Heal);
+                    }
                     // C-09c 만천성지: 맞힌 자리 explodeRadius 폭발, 맞은 적 말고 둘레에 한 방 × explodeDamage(웹 pr.explode)
                     if (p.Explode != null && got > 0 && EvolvedHits.Explodes(p.Explode, enemies.CritCount > critsBefore))
                     {
