@@ -25,8 +25,9 @@ namespace BloodRain.Presentation.Fx
 
         public LifeRunner runner;
 
-        sealed class Lantern { public Vector2 Pos; public GameObject Go; public bool Silver; }
-        sealed class Drop { public Vector2 Pos; public string Kind; public GameObject Go; public float Age; }
+        // Realm: 놓이거나 떨어질 때 경지(CR-01U). 지금 경지보다 아래면 몸 원에 닿기만 해도 등롱은 깨지고 떨군 것은 주워진다(기획서 7장 '밟히는 것들').
+        sealed class Lantern { public Vector2 Pos; public GameObject Go; public bool Silver; public int Realm; }
+        sealed class Drop { public Vector2 Pos; public string Kind; public GameObject Go; public float Age; public int Realm; }
 
         readonly List<Lantern> _lanterns = new List<Lantern>();
         readonly List<Drop> _drops = new List<Drop>();
@@ -43,6 +44,9 @@ namespace BloodRain.Presentation.Fx
         public readonly Dictionary<string, int> Picked = new Dictionary<string, int>();
 
         static float Scale => WorldScale.Current != null ? WorldScale.Current.Length(1f) : 1f;
+        static int RealmNow => WorldScale.Current != null ? WorldScale.Current.Realm : 0;
+        /// <summary>시험용: 밟아 깬 등롱 수.</summary>
+        public int Crushed { get; private set; }
         DropsDef Rule => DataBoot.Data.Balance.Drops;
         LanternSpawnDef Spawn => DataBoot.Data.Balance.Drops.LanternSpawn;
 
@@ -108,12 +112,28 @@ namespace BloodRain.Presentation.Fx
                 Place(PlayerPos + new Vector2(ox, oy) * sc);
             }
             var me = PlayerPos;
+            int realm = RealmNow;
+            var ws = WorldScale.Current;
+            float body = ws != null ? ws.Length(DataBoot.Data.Balance.Stats.PlayerBodyRadius) : 0f;
+            // CR-01U 아래 경지 등롱은 몸 원(+ 그 등롱이 놓인 경지의 hitPadding)에 닿으면 밟혀 깨진다
+            if (ws != null)
+                for (int i = _lanterns.Count - 1; i >= 0; i--)
+                {
+                    var l = _lanterns[i];
+                    if (l.Realm >= realm) continue;
+                    float r = body + ws.Length(spawn.HitPadding, l.Realm);
+                    if ((l.Pos - me).sqrMagnitude > r * r) continue;
+                    Crushed++;
+                    Break(i);
+                }
             for (int i = _drops.Count - 1; i >= 0; i--)
             {
                 var d = _drops[i];
                 d.Age += dt;
-                // 떨어진 뒤 0.3초는 그대로(깨진 자리에서 보이게), 그 뒤 닿으면 줍는다
-                if (d.Age < 0.3f || !Drops.InPickup(spawn, Vector2.Distance(d.Pos, me) / sc)) continue;
+                // 떨어진 뒤 0.3초는 그대로(깨진 자리에서 보이게), 그 뒤 닿으면 줍는다. 아래 경지 것은 몸 원에 닿기만 해도 바로(CR-01U)
+                float dist = Vector2.Distance(d.Pos, me);
+                bool stepped = d.Realm < realm && dist < body;
+                if (!stepped && (d.Age < 0.3f || !Drops.InPickup(spawn, dist / sc))) continue;
                 Destroy(d.Go);
                 _drops.RemoveAt(i);
                 PickUp(d.Kind, d.Pos);
@@ -134,7 +154,7 @@ namespace BloodRain.Presentation.Fx
             var go = Make(silver ? "은빛 등롱" : "등롱", at, _circle, silver ? new Color(0.79f, 0.81f, 0.84f) : new Color(0.78f, 0.22f, 0.17f), 0.9f * size, 6);
             var rim = Make("테", at, _circle, silver ? new Color(0.95f, 0.96f, 1f) : new Color(0.85f, 0.69f, 0.23f), 1.05f * size, 5);
             rim.transform.SetParent(go.transform, true);
-            _lanterns.Add(new Lantern { Pos = at, Go = go, Silver = silver });
+            _lanterns.Add(new Lantern { Pos = at, Go = go, Silver = silver, Realm = RealmNow });
         }
 
         /// <summary>은빛 등롱 사건(생성 디렉터). 의서가 나오는 생(혈월 천하)이 아니면 놓지 않고 false. 웹처럼 화면 대각선 0.28 거리.</summary>
@@ -191,7 +211,7 @@ namespace BloodRain.Presentation.Fx
             };
             var go = Make(kind, at, talisman ? _square : _circle, c, talisman ? 0.55f : 0.5f, 7);
             if (talisman) go.transform.localScale = new Vector3(0.45f, 0.8f, 1f) * Scale;
-            _drops.Add(new Drop { Pos = at, Kind = kind, Go = go });
+            _drops.Add(new Drop { Pos = at, Kind = kind, Go = go, Realm = RealmNow });
         }
 
         void PickUp(string kind, Vector2 at)

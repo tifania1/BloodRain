@@ -12,6 +12,7 @@ namespace BloodRain.Sim
         public float Age;
         public bool Pulled;   // 한 번 끌리기 시작하면 끝까지 따라온다
         public bool Big;      // 합쳐진 큰 구슬
+        public int Realm;     // 떨어질 때 경지(CR-01U). 지금 경지보다 아래면 몸 원에 닿기만 해도 주워진다(기획서 7장 '밟히는 것들')
     }
 
     // 진기 구슬(C-05). 웹 프로토타입 dropOrb·구슬 흡수와 같은 규칙:
@@ -40,31 +41,34 @@ namespace BloodRain.Sim
         }
 
         /// <summary>구슬 하나를 떨어뜨린다. 넘치면 오래된 MergeBatch 개를 합쳐 player 둘레 mergeDistance(세계 m)에 큰 구슬 하나로.</summary>
-        public void Drop(Vector2 pos, double value, Vector2 player, float mergeDistance)
+        public void Drop(Vector2 pos, double value, Vector2 player, float mergeDistance, int realm = 0)
         {
-            _orbs.Add(new Orb { Pos = pos, Value = value });
+            _orbs.Add(new Orb { Pos = pos, Value = value, Realm = realm });
             if (_orbs.Count <= Limit) return;
             int n = Math.Min(MergeBatch, _orbs.Count);
             double sum = 0;
             for (int i = 0; i < n; i++) sum += _orbs[i].Value;
             _orbs.RemoveRange(0, n);
             float a = (float)(_rng.NextDouble() * Math.PI * 2);
-            _orbs.Add(new Orb { Pos = player + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * mergeDistance, Value = sum, Big = true });
+            _orbs.Add(new Orb { Pos = player + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * mergeDistance, Value = sum, Big = true, Realm = realm });
             Merges++;
         }
 
         /// <summary>한 프레임. 길이·속도는 모두 세계 단위. 흡수한 진기 합과 구슬 수를 돌려준다.</summary>
-        public (double value, int count) Step(float dt, Vector2 player, float magnet, float absorb, float pullBase, float pullPerSecond)
+        /// <summary>realm 은 지금 경지, body 는 몸 반지름(세계 m). 아래 경지 구슬은 몸 원 안이면 끌림 없이 바로 흡수(CR-01U).</summary>
+        public (double value, int count) Step(float dt, Vector2 player, float magnet, float absorb, float pullBase, float pullPerSecond,
+                                              int realm = 0, float body = 0f)
         {
             double gained = 0;
             int taken = 0;
-            float m2 = magnet * magnet, a2 = absorb * absorb;
+            float m2 = magnet * magnet, a2 = absorb * absorb, b2 = body * body;
             for (int i = _orbs.Count - 1; i >= 0; i--)
             {
                 var o = _orbs[i];
                 o.Age += dt;
                 var to = player - o.Pos;
                 float d2 = to.sqrMagnitude;
+                if (o.Realm < realm && d2 < b2) d2 = 0f; // 아래 경지 구슬은 지나가기만 해도 주움
                 if (o.Pulled || d2 < m2)
                 {
                     o.Pulled = true;

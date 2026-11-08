@@ -38,6 +38,7 @@ namespace BloodRain.Presentation.Fx
         /// <summary>자석 반경(경지 m, StatSheet.Magnet = magnetBase × (1 + 흡기)). C-06a LifeRunner 가 넣는다.</summary>
         public float MagnetMeters { get => _magnet; set => _magnet = value; }
         double _small = 1, _medium = 5, _large = 25;
+        float _bodyRadius = 0.4f; // stats.playerBodyRadius(경지 m) — 아래 경지 구슬 밟아 줍기(CR-01U)
         Material _mat;
         Mesh _quad;
         MaterialPropertyBlock _mpb;
@@ -55,6 +56,7 @@ namespace BloodRain.Presentation.Fx
             pullPerSecond = pick.PullSpeedPerSecond;
             mergeRealmMeters = pick.MergeDistance;
             _magnet = data.Balance.Stats.MagnetBase;
+            _bodyRadius = data.Balance.Stats.PlayerBodyRadius;
             _small = data.Balance.Orbs.Small;
             _medium = data.Balance.Orbs.Medium;
             _large = data.Balance.Orbs.Large;
@@ -85,11 +87,11 @@ namespace BloodRain.Presentation.Fx
                 for (int i = 0; i < reward.Orbs; i++)
                 {
                     float ang = UnityEngine.Random.value * Mathf.PI * 2f, d = Mathf.Sqrt(UnityEngine.Random.value) * r;
-                    Field.Drop(pos + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * d, reward.OrbXp, player.position, ws.Length(mergeRealmMeters));
+                    Field.Drop(pos + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * d, reward.OrbXp, player.position, ws.Length(mergeRealmMeters), ws.Realm);
                 }
                 return;
             }
-            Field.Drop(pos, _small, player.position, ws.Length(mergeRealmMeters));
+            Field.Drop(pos, _small, player.position, ws.Length(mergeRealmMeters), ws.Realm);
         }
 
         void Update()
@@ -101,7 +103,7 @@ namespace BloodRain.Presentation.Fx
             if (kb != null && kb.mKey.wasPressedThisFrame) Field.PullAll();
 
             var (value, count) = Field.Step(Time.deltaTime, player.position, ws.Length(_magnet), ws.Length(absorbRealmMeters),
-                                            ws.Speed(pullBase), ws.Speed(pullPerSecond));
+                                            ws.Speed(pullBase), ws.Speed(pullPerSecond), ws.Realm, ws.Length(_bodyRadius));
             if (count > 0)
             {
                 Absorbed?.Invoke(value, count);
@@ -119,7 +121,7 @@ namespace BloodRain.Presentation.Fx
             for (int i = 0; i < n; i++)
             {
                 var off = new Vector2((float)(rng.NextDouble() * 2 - 1), (float)(rng.NextDouble() * 2 - 1)) * r;
-                Field.Drop((Vector2)player.position + off, _small, player.position, ws.Length(mergeRealmMeters));
+                Field.Drop((Vector2)player.position + off, _small, player.position, ws.Length(mergeRealmMeters), ws.Realm);
             }
         }
 
