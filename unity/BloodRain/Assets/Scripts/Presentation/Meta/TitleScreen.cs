@@ -28,6 +28,7 @@ namespace BloodRain.Presentation.Meta
         /// <summary>새 혼이 아닌 혼 저장이 있는가(이어하기를 보일지).</summary>
         public bool CanContinue { get; private set; }
         bool _leaving;
+        ScreenRain _rain; // 설정을 닫으면 '혈우 연출' 세기를 다시 건다
 
         void Start()
         {
@@ -64,6 +65,7 @@ namespace BloodRain.Presentation.Meta
 
             var rain = Child("붉은 비", root).gameObject.AddComponent<ScreenRain>();
             rain.density = SettingsScreen.Current.RainScale; // WP-57U 설정 '혈우 연출'
+            _rain = rain;
             Stretch(rain.rectTransform);
 
             var title = Text("제목", root, "血雨江湖", 150, FontStyles.Normal, Ink, brushFont != null ? brushFont : font);
@@ -102,6 +104,8 @@ namespace BloodRain.Presentation.Meta
             if (_leaving || SettingsScreen.AnyOpen) return;
             SettingsScreen.Show(font, langChanged =>
             {
+                // QA-16: 언어가 그대로여도 '혈우 연출'을 바꿨으면 뒤의 비를 바로 맞춘다(전엔 다음에 타이틀을 열 때까지 그대로)
+                if (_rain != null) _rain.density = SettingsScreen.Current.RainScale;
                 if (!langChanged) return;
                 for (int i = transform.childCount - 1; i >= 0; i--) Destroy(transform.GetChild(i).gameObject);
                 Build();

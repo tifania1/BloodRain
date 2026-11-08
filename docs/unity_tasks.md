@@ -512,6 +512,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 조준 방식 단추(2026-11-08 PC WP-52U): 값은 이미 `WeaponRunner.AimMode` 가 PlayerPrefs `aimMode` 로 읽음 — 단추는 `GameSettings.Turn` 뒤 `WeaponRunner.SetAimMode(s.Aim)` 만 부르면 됨. 시험 메뉴 `BloodRain/Test/조준 방식/` 는 그때 지워도 됨
   - 끝: 열하나를 눌러 보고 게임을 껐다 켜도 값이 남음. 흔들림 0·혈우 0·내 이펙트 0 으로 판에서 그대로 바뀜
   - 찍기: `docs/unity_shots/WP-57U/` 의 `settings.png`
+  - 2026-11-09 클라우드(QA-16): 타이틀에서 설정을 열어 '혈우 연출'만 바꾸고 닫으면 뒤의 비가 다음 타이틀까지 그대로였음 → TitleScreen 이 비를 `_rain` 으로 들고 닫힐 때 density 를 다시 건다(4줄). 다음에 타이틀을 열 때 컴파일·비 세기만 봐 주면 됨
 
 - [ ] WP-69U 조작 재설정(설정 화면 안) · 먼저: WP-57U
   - 할 것: `Assets/Settings/Controls.inputactions`(없으면 만듦)에 행동 열(`ControlAction.All`: up·down·left·right·dash·ult·pause·reroll·banish·skip)을 두고, 시작할 때 `Controls.Load(k => PlayerPrefs.HasKey(k) ? PlayerPrefs.GetString(k) : null)` 의 `Paths(행동)` 을 바인딩으로 얹는다. PlayerController·Dash·오의·일시정지·LevelUpScreen 이 `Keyboard.current.xKey` 대신 그 행동을 읽게(지금 16곳쯤 직접 키를 읽음 — 시험 드라이버는 그대로). 설정 화면에 '조작' 칸: 행동마다 키보드 두 칸·패드 한 칸 단추, 누르면 `PerformInteractiveRebinding` 으로 다음 키를 받아 `Controls.Rebind(행동, 칸, 경로)`(false 면 '쓸 수 없는 키'), 맞바꾼 쪽 단추도 새로 그림(빈 칸에 남의 키를 가져오면 상대 칸이 비니 빈 단추는 '없음'으로 — 단축키 R·X·Z 는 키가 하나뿐이라 아예 없어질 수 있음). 글자는 `InputControlPath.ToHumanReadableString`. '기본값' 단추는 행동마다 `Reset`. 바뀌면 `Save(PlayerPrefs.SetString, PlayerPrefs.DeleteKey)`
