@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.InputSystem.Utilities;
 using UnityEngine.UI;
 
 namespace BloodRain.Presentation.Meta
@@ -91,15 +92,20 @@ namespace BloodRain.Presentation.Meta
 
         void OnDestroy()
         {
+            _listenSub?.Dispose(); _listenSub = null;
             if (_root != null) _openCount = Mathf.Max(0, _openCount - 1);
         }
 
         void Update()
         {
             if (!IsOpen) return;
+            if (_listen != null || _listenEndedFrame == Time.frameCount) return; // 키를 받는 중엔 Esc 도 키로 받는다
             var kb = Keyboard.current; var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame)))
-                Close();
+            {
+                if (_controlsPage) { _controlsPage = false; Refill(); }
+                else Close();
+            }
         }
 
         // ---------------------------------------------------------------- 값 걸기
@@ -189,6 +195,7 @@ namespace BloodRain.Presentation.Meta
         void Refill()
         {
             for (int i = _list.childCount - 1; i >= 0; i--) Destroy(_list.GetChild(i).gameObject);
+            if (_controlsPage) { FillControls(); return; }
             var s = Current;
             var title = Text(_list, Loc.T("ui.settings.title"), 50, FontStyles.Bold, Paper);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -90), new Vector2(1000, 66));
@@ -204,7 +211,84 @@ namespace BloodRain.Presentation.Meta
                 var (label, sub) = Label(s, key);
                 Item(pos, new Vector2(w, h), label, sub, () => Turn(key));
             }
-            Item(new Vector2(0, -400), new Vector2(320, 66), Loc.T("ui.settings.back"), "", Close);
+            Item(new Vector2(-180, -400), new Vector2(320, 66), Loc.T("ui.settings.controls"), "", () => { _controlsPage = true; _refused = null; Refill(); });
+            Item(new Vector2(180, -400), new Vector2(320, 66), Loc.T("ui.settings.back"), "", Close);
+        }
+
+        // ---------------------------------------------------------------- 조작 재설정(WP-69U)
+        //   행동마다 키보드 두 칸·게임패드 한 칸·기본값. 칸을 누르면 다음에 누른 단추를 받아 Controls.Rebind(맞바꿈),
+        //   못 고르는 키(1~4·Enter, 칸과 기기가 다름)면 '쓸 수 없는 키'. 바뀌면 ControlInput.Apply 가 얹고 저장한다.
+
+        bool _controlsPage;
+        string _listen;      // 키를 받는 행동(null 이면 안 받음)
+        int _listenSlot;
+        int _listenStartFrame, _listenEndedFrame = -1;
+        IDisposable _listenSub;
+        string _refused;     // 방금 거절된 키 글
+
+        void FillControls()
+        {
+            var c = ControlInput.Current;
+            var title = Text(_list, Loc.T("ui.controls.title"), 50, FontStyles.Bold, Paper);
+            Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -90), new Vector2(1000, 66));
+            if (_refused != null)
+            {
+                var r = Text(_list, $"{Loc.T("ui.controls.refused")} · {_refused}", 26, FontStyles.Normal, new Color(0.95f, 0.45f, 0.4f));
+                Place(r.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -140), new Vector2(1000, 36));
+            }
+            const float h = 58, gapY = 10, top = 330;
+            var acts = ControlAction.All;
+            for (int i = 0; i < acts.Count; i++)
+            {
+                string a = acts[i];
+                float y = top - i * (h + gapY);
+                var name = Text(_list, Loc.T($"ui.controls.{a}"), 30, FontStyles.Bold, Paper);
+                name.alignment = TextAlignmentOptions.Right;
+                Place(name.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-560, y), new Vector2(360, h));
+                for (int slot = 0; slot <= Controls.Pad; slot++)
+                {
+                    int sl = slot;
+                    string label = _listen == a && _listenSlot == slot ? Loc.T("ui.controls.listen")
+                        : ControlInput.Label(a, slot) ?? Loc.T("ui.controls.none");
+                    Item(new Vector2(-230 + slot * 290, y), new Vector2(270, h), label, "", () => Listen(a, sl));
+                }
+                Item(new Vector2(640, y), new Vector2(180, h), Loc.T("ui.controls.reset"), "", () =>
+                {
+                    StopListen();
+                    var cc = ControlInput.Current; cc.Reset(a); ControlInput.Apply(cc);
+                    _refused = null; Refill();
+                });
+            }
+            Item(new Vector2(0, -400), new Vector2(320, 66), Loc.T("ui.settings.back"), "", () => { StopListen(); _controlsPage = false; Refill(); });
+        }
+
+        void Listen(string action, int slot)
+        {
+            StopListen();
+            _listen = action; _listenSlot = slot; _listenStartFrame = Time.frameCount; _refused = null;
+            // 다음에 누른 단추 하나. 칸을 누른 그 마우스 왼쪽은 넘기고, 마우스 왼쪽을 다시 누르면 그만둔다(UI 를 눌러야 하니)
+            _listenSub = InputSystem.onAnyButtonPress.Call(ctrl =>
+            {
+                if (_listen == null || Time.frameCount == _listenStartFrame) return;
+                string dev = ctrl.device is Keyboard ? "Keyboard" : ctrl.device is Mouse ? "Mouse" : ctrl.device is Gamepad ? "Gamepad" : null;
+                string act = _listen; int sl = _listenSlot;
+                StopListen();
+                if (dev == null || (ctrl.device is Mouse && ctrl.name == "leftButton")) { Refill(); return; }
+                // "/XInputControllerWindows/dpad/up" 꼴에서 기기 몫을 떼어 "<Gamepad>/dpad/up" 으로
+                string p = $"<{dev}>{ctrl.path.Substring(ctrl.device.path.Length)}";
+                var c = ControlInput.Current;
+                if (c.Rebind(act, sl, p)) ControlInput.Apply(c);
+                else _refused = InputControlPath.ToHumanReadableString(p, InputControlPath.HumanReadableStringOptions.OmitDevice);
+                Refill();
+            });
+            Refill();
+        }
+
+        void StopListen()
+        {
+            if (_listen != null) _listenEndedFrame = Time.frameCount;
+            _listen = null;
+            _listenSub?.Dispose(); _listenSub = null;
         }
 
         void Item(Vector2 pos, Vector2 size, string label, string sub, Action onClick)

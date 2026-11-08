@@ -253,9 +253,10 @@ namespace BloodRain.Presentation.Hud
             for (int i = _cardRow.childCount - 1; i >= 0; i--) Destroy(_cardRow.GetChild(i).gameObject);
             for (int i = 0; i < _offers.Count; i++) MakeCard(i, _offers[i]);
 
-            _rerollLabel.text = Loc.F("ui.levelup.reroll", _charges.Rerolls);
-            _banishLabel.text = Loc.F(_banishMode ? "ui.levelup.banish_cancel" : "ui.levelup.banish", _charges.Banishes);
-            _skipLabel.text = Loc.F("ui.levelup.skip", _charges.Skips);
+            // {1} 은 조작 재설정한 단축키(WP-69U, 키를 잃었으면 빈 칸)
+            _rerollLabel.text = Loc.F("ui.levelup.reroll", _charges.Rerolls, ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Reroll) ?? "");
+            _banishLabel.text = Loc.F(_banishMode ? "ui.levelup.banish_cancel" : "ui.levelup.banish", _charges.Banishes, ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Banish) ?? "");
+            _skipLabel.text = Loc.F("ui.levelup.skip", _charges.Skips, ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Skip) ?? "");
             _reroll.interactable = _charges.Can(LevelUpAction.Reroll);
             _banish.interactable = _charges.Can(LevelUpAction.Banish);
             _skip.interactable = _charges.Can(LevelUpAction.Skip);

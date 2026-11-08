@@ -36,12 +36,12 @@ namespace BloodRain.Core.Tests
             Assert.Contains("e.code === 'KeyR' && !e.repeat) rerollOffers()", html);
             Assert.Contains("e.code === 'KeyX' && !e.repeat) toggleBanish()", html);
             Assert.Contains("e.code === 'KeyZ' && !e.repeat) skipOffer()", html);
-            // 버튼 글자도 같은 키
+            // 버튼 글자는 조작 재설정한 키를 {1} 로 받는다(2026-11-09 WP-69U — 전엔 R·X·Z 를 글로 박아 둠)
             foreach (var lang in new[] { "ko", "en", "zh-Hans", "zh-Hant" })
             {
                 var s = TestData.ReadRepoFile("unity", "BloodRain", "Assets", "Resources", "Data", "strings", lang + ".json");
-                Assert.Matches("\"ui\\.levelup\\.banish\": \"[^\"]*  X\"", s);
-                Assert.Matches("\"ui\\.levelup\\.skip\": \"[^\"]*  Z\"", s);
+                foreach (var key in new[] { "reroll", "banish", "banish_cancel", "skip" })
+                    Assert.Matches("\"ui\\.levelup\\." + key + "\": \"[^\"]*  \\{1\\}\"", s);
             }
         }
 
