@@ -1134,6 +1134,7 @@ GameObject:
   - component: {fileID: 938528428}
   - component: {fileID: 938528427}
   - component: {fileID: 938528425}
+  - component: {fileID: 938528429}
   m_Layer: 0
   m_Name: "\uD50C\uB808\uC774\uC5B4"
   m_TagString: Untagged
@@ -1245,6 +1246,65 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
+--- !u!114 &938528429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938528424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28cf055c73b74bd4a9916c9d50445d52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.PlayerLook
+  names:
+  - char_gaebang_f
+  - char_gaebang_m
+  - char_hyegong
+  - char_jinsowoon
+  - char_machil
+  - char_namgung_f
+  - char_namgung_hyeon
+  - char_namgung_m
+  - char_shaolin_m
+  sprites:
+  - {fileID: 21300000, guid: 75ebfe15a29844cd854810d663d15398, type: 3}
+  - {fileID: 21300000, guid: d13ba6483932492bb4a521f46b1faf23, type: 3}
+  - {fileID: 21300000, guid: f6c3a6b7382b45a7a91d76a66734cea1, type: 3}
+  - {fileID: 21300000, guid: 0a1f0104865a4648acf559f35391fe86, type: 3}
+  - {fileID: 21300000, guid: 0a34c371139d49ddb86911e94f58d0cf, type: 3}
+  - {fileID: 21300000, guid: c062ab7ec88b4005a52af84fdc533a4e, type: 3}
+  - {fileID: 21300000, guid: a879a2f21b2f46b881ecc448f1d81cc0, type: 3}
+  - {fileID: 21300000, guid: fd0933cf6a85447791e7f2e470bbbb82, type: 3}
+  - {fileID: 21300000, guid: f3964026b2c843c08f6f5ab0c6ae9824, type: 3}
+  footV:
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  bodyV:
+  - 0.88671875
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  flashMaterial: {fileID: 2100000, guid: 7628fe4df47e9d246bfa0a74d96012dd, type: 2}
+  screenPixels: 72
+  referenceScreenHeight: 1080
+  tiltDegrees: 6
+  bobHeight: 0.06
+  stepsPerSecond: 4
+  settleSpeed: 12
 --- !u!1 &1102430066
 GameObject:
   m_ObjectHideFlags: 0
@@ -1434,6 +1494,7 @@ MonoBehaviour:
   font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
   barHeight: 10
   follow: 10
+  headOffset: 46
 --- !u!4 &1271029690
 Transform:
   m_ObjectHideFlags: 0

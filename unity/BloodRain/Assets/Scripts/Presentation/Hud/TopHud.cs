@@ -21,6 +21,8 @@ namespace BloodRain.Presentation.Hud
         public float follow = 10f;
         [Tooltip("머리 위 기혈 바를 캐릭터 화면 자리에서 얼마나 위로(기준 px)")]
         public float headOffset = 46f;
+        [Tooltip("몸 그림(PlayerLook)이 있을 때. 발밑이 자리이고 사람 높이가 약 72px(13장)라 그 위로(기준 px)")]
+        public float headOffsetWithArt = 84f;
 
         static readonly Color Gold = new Color32(214, 170, 72, 255);
         static readonly Color InkLine = new Color(0.10f, 0.08f, 0.07f, 0.75f);
@@ -43,6 +45,7 @@ namespace BloodRain.Presentation.Hud
         HudSlotsView _view;
         float _slotTimer;
         PlayerController _player;
+        PlayerLook _look;
         PlayerVitals _vitals;
 
         RectTransform _fill;
@@ -191,13 +194,15 @@ namespace BloodRain.Presentation.Hud
         {
             if (_player == null) _player = FindFirstObjectByType<PlayerController>();
             if (_vitals == null) _vitals = FindFirstObjectByType<PlayerVitals>();
+            if (_look == null && _player != null) _look = _player.GetComponent<PlayerLook>();
             var cam = Camera.main;
             if (_player == null || _vitals == null || cam == null) { _head.gameObject.SetActive(false); return; }
             Vector3 sp = cam.WorldToScreenPoint(_player.transform.position);
             if (sp.z < 0f) { _head.gameObject.SetActive(false); return; }
             _head.gameObject.SetActive(true);
             RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, sp, null, out var local);
-            _head.anchoredPosition = local + new Vector2(0, headOffset);
+            float off = _look != null && _look.Renderer != null ? headOffsetWithArt : headOffset;
+            _head.anchoredPosition = local + new Vector2(0, off);
             float ratio = _vitals.MaxHealth > 0f ? Mathf.Clamp01(_vitals.Health / _vitals.MaxHealth) : 0f;
             _hpFill.anchorMax = new Vector2(ratio, 1);
             _hpFill.offsetMin = new Vector2(1, 1); _hpFill.offsetMax = new Vector2(-1, -1);

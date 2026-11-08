@@ -47,6 +47,7 @@ namespace BloodRain.Presentation
         float _minDamage = 1f;
         PlayerController _move;
         SpriteRenderer _sr;
+        PlayerLook _look; // BD-01U 몸 그림이 있으면 그쪽에 흰 번쩍임(셰이더)·청록 잔상
         Color _baseColor;
         float _flash;
         float _evadeFlash;
@@ -61,6 +62,7 @@ namespace BloodRain.Presentation
             _move = GetComponent<PlayerController>();
             _sr = GetComponent<SpriteRenderer>();
             if (_sr != null) _baseColor = _sr.color;
+            _look = GetComponent<PlayerLook>();
         }
 
         public bool Invulnerable => _iframe > 0f || (_move != null && _move.Invulnerable);
@@ -171,6 +173,13 @@ namespace BloodRain.Presentation
                     _sr.color = Color.Lerp(_baseColor, ghost, _evadeFlash / 0.3f);
                 }
                 else _sr.color = _flash > 0f ? Color.Lerp(_baseColor, Color.white, _flash / 0.25f) : _baseColor;
+            }
+            if (_look != null && _look.Renderer != null)
+            {
+                // 13장 '피격: 흰색 번쩍임 셰이더'. 피함·금종조는 지금처럼 청록으로 반쯤 비침
+                var ghost = new Color(0.55f, 0.9f, 0.95f, 0.35f);
+                _look.Renderer.color = _evadeFlash > 0f ? Color.Lerp(Color.white, ghost, _evadeFlash / 0.3f) : Color.white;
+                _look.Flash = _evadeFlash > 0f ? 0f : _flash / 0.25f;
             }
         }
 
