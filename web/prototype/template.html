@@ -1340,7 +1340,7 @@ function newRun(mode) {
     passives: [], insights: [], realm: REALMS[0], weaponSlots: B.slots.weapons, passiveSlots: B.slots.passives,
     yy: 0, yyHalf: false, backlashT: 0, backlash: null,
     ult: 0, ultBonus: 1, rerolls: JIN_REROLLS, banished: new Set(), orbRaw: 0,   // orbRaw: 주운 진기 구슬 값의 합(심득·빠른 판 배율 전). 서장이면 천하 시안이 윤회의 기로 셈
-    enemies: [], projs: [], effects: [], orbs: [], drops: [], lanterns: [], splats: [], nums: [], zones: [],
+    enemies: [], projs: [], myProjN: 0, foeProjN: 0, effects: [], orbs: [], drops: [], lanterns: [], splats: [], nums: [], zones: [],
     // 범종은 숭산 기믹이라 서장(청운진 객잔 마당)엔 없다
     bells: mode === 'prologue' ? [] : [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
     spawnAcc: 0, lanternAcc: 0, events: makeEvents(mode), firstLevelUp: mode === 'prologue', elitesDone: 0, boss: null, bossSpawned: false, won: false,
@@ -1606,7 +1606,7 @@ function lordContinuous(e, P) {
     lordFx(dt => {
       if (e.dead) return false;
       next -= dt; if (next > 0) return true;
-      for (const a of radialBurstDegrees(P, a0, wave)) G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a * D2R) * sp, vy: Math.sin(a * D2R) * sp, r: 0.4, dmg, life: P.length / sp, t: 0, kind: 'epalm' });
+      for (const a of radialBurstDegrees(P, a0, wave)) addFoeProj({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a * D2R) * sp, vy: Math.sin(a * D2R) * sp, r: 0.4, dmg, life: P.length / sp, t: 0, kind: 'epalm' });
       wave++; next += P.waveIntervalSeconds; return true;
     });
   } else if (P.shape === 'rotating_beams') {   // 붉은 빛줄기(시안과 같음): 플레이어 쪽 + startOffsetDegrees 에서 count 줄이 초당 turnDegreesPerSecond 돈다
@@ -2245,8 +2245,11 @@ function hurtPlayer(dmg, src, kind) {
 function addEffect(kind, x, y, o) { if (G.effects.length > 160) G.effects.shift(); G.effects.push(Object.assign({ kind, x, y, t: 0, life: 0.3 }, o)); }
 // 적 몫 효과(땅의 주인·정예·고유 적 예고, 지역 기믹): 내 이펙트 투명도를 받지 않고 내 효과 위에 그린다(12장 '가독성 원칙')
 function foeEffect(kind, x, y, o) { addEffect(kind, x, y, Object.assign({ foe: true }, o)); }
-function addProj(o) { if (G.projs.length >= LIM.projectiles) return;   // 상한까지(Unity WeaponRunner 와 같게)
+// 동시 투사체 상한(11장 '성능 상한' 1,500): Unity 처럼 내 것(WeaponRunner)과 적 것(EnemyField)을 따로 센다.
+// 한 배열(G.projs)에 같이 들지만 적 탄이 차도 내 탄이 막히지 않게(QA-16). 수는 넣을 때 하나씩 더하고 걸러 낼 때 다시 센다
+function addProj(o) { if (G.myProjN >= LIM.projectiles) return; G.myProjN++;
   G.projs.push(Object.assign({ t: 0, pierce: 0, hit: new Set(), homing: 0, bounce: 0 }, o)); }
+function addFoeProj(o) { if (G.foeProjN >= LIM.projectiles) return; G.foeProjN++; G.projs.push(o); }
 
 // 조준(12장 '화면 편의 규칙' 조준, WP-52): 방향이 있는 무공은 기본(settings.aimMode 'near')으로 닿는 거리 안 가장 가까운 적을 노리고,
 // 없으면 바라보는 쪽. '이동 방향'(move)이면 늘 마지막으로 움직인 쪽(8장 옛 규칙). 패드 오른쪽 스틱·모바일 두 번째 손가락은 Unity 몫
@@ -2947,6 +2950,7 @@ function update(dt) {
     for (const l of G.lanterns) if (!l.dead && Math.hypot(l.x - pr.x, l.y - pr.y) < pr.r + 0.4) breakLantern(l);
   }
   G.projs = G.projs.filter(pr => !pr.dead);
+  G.myProjN = 0; G.foeProjN = 0; for (const pr of G.projs) { if (pr.enemy) G.foeProjN++; else G.myProjN++; }
 
   // 회전 검기
   for (const fx of G.effects) {
@@ -3082,7 +3086,7 @@ function castPattern(e, P, dmg, dx, dy) {
     if (P.bossHolds) e.windup = P.telegraphSeconds + Math.max(0, (P.waves || 1) - 1) * (P.waveIntervalSeconds || 0);
     for (let w = 0; w < (P.waves || 1); w++) G.zones.push({ delay: P.telegraphSeconds + w * (P.waveIntervalSeconds || 0), apply: () => {
       if (e.dead) return;
-      for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width ? P.width / 2 : 0.5, dmg, life: len / sp, t: 0, kind: 'epalm' }); }
+      for (let i = 0; i < P.count; i++) { const a = a0 + (P.count > 1 ? -half + 2 * half * i / (P.count - 1) : 0); addFoeProj({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width ? P.width / 2 : 0.5, dmg, life: len / sp, t: 0, kind: 'epalm' }); }
     } });
   } else if (P.shape === 'cone') {
     // 강시 도부수 큰 도끼 휘두르기: 치켜들고 멈춰 섰다가 앞 부채꼴을 휩쓴다(bosspatterns.json elites gangsi_axeman)
@@ -3105,7 +3109,7 @@ function castPattern(e, P, dmg, dx, dy) {
     for (let w = 0; w < waves; w++) G.zones.push({ delay: P.telegraphSeconds + w * (P.waveIntervalSeconds || 0), apply: () => {
       if (e.dead) return;
       const a = w ? Math.atan2(G.player.y - e.y, G.player.x - e.x) : ca;
-      G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds, rootName: P.nameKo });
+      addFoeProj({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', root: P.rootSeconds, rootName: P.nameKo });
       sfx('dash');
     } });
   } else if (P.shape === 'summon') {
@@ -3133,7 +3137,7 @@ function castPattern(e, P, dmg, dx, dy) {
     foeEffect('tline', e.x, e.y, { a: ca, len: P.length, w: P.width, life: P.telegraphSeconds });
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
-      G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', pull: P.pullSeconds, src: e });
+      addFoeProj({ enemy: true, x: e.x, y: e.y, vx: Math.cos(ca) * sp, vy: Math.sin(ca) * sp, r: P.width / 2, dmg, life: P.length / sp, t: 0, kind: 'rope', pull: P.pullSeconds, src: e });
       sfx('dash');
     } });
   } else if (P.shape === 'spiral_bullets') {
@@ -3141,7 +3145,7 @@ function castPattern(e, P, dmg, dx, dy) {
     const a0 = Math.atan2(dy, dx) / D2R, sp = P.projectileSpeed / 100 * MOVE, n = spiralShotsPerArm(P);
     for (let s = 0; s < n; s++) G.zones.push({ delay: P.telegraphSeconds + s * P.hitIntervalSeconds, apply: () => {
       if (e.dead) return;
-      for (let arm = 0; arm < P.count; arm++) { const a = spiralShotDegrees(P, a0, arm, s) * D2R; G.projs.push({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.4, dmg, life: P.length / sp, t: 0, kind: 'epalm' }); }
+      for (let arm = 0; arm < P.count; arm++) { const a = spiralShotDegrees(P, a0, arm, s) * D2R; addFoeProj({ enemy: true, x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 0.4, dmg, life: P.length / sp, t: 0, kind: 'epalm' }); }
     } });
   } else if (P.shape === 'chain_circles') {
     // 얼음 가시(WP-13e, Core ChainCircleOffset): 예고 때 잡은 방향으로, 판정 순간 보스 발밑부터 length 까지 count 자리가 waveIntervalSeconds 차례로 솟는다
