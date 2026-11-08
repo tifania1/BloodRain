@@ -16,7 +16,7 @@ namespace BloodRain.Presentation.Hud
     // Esc·패드 Start 로 연다. 레벨업·깨달음·보갑·각성 같은 다른 화면이 세상을 멈춰 두었으면(timeScale 0) 열지 않는다.
     // 본문: 왼쪽 지닌 무공·심법 칸과 경지·그릇(HudSlots.Build, TopHud 와 같은 셈), 가운데 능력치(이름 + 쉬운 말),
     //       오른쪽 무공별 지금까지 피해·초당 피해(DamageReport.Lines — 정산 막대와 같은 WeaponRunner.Dealt 합).
-    // 단추: 계속하기 · 설정(WP-57U 화면이 생기면 잇는다, 지금은 잠금) · 좌화(LifeRunner.EndLife(Zuohwa), 서장 몸이면 잠금).
+    // 단추: 계속하기 · 설정(WP-57U SettingsScreen) · 좌화(LifeRunner.EndLife(Zuohwa), 서장 몸이면 잠금).
     // 절기 조합표 탭은 UI-01U 몫이라 자리만. 무공 줄을 눌러 짝·진전·연환을 펼치는 것도 UI-01U 때.
     public sealed class PauseScreen : MonoBehaviour
     {
@@ -221,7 +221,7 @@ namespace BloodRain.Presentation.Hud
                 ("MoveSpeed", Ratio(st.MoveSpeed)),
                 ("Magnet", st.Magnet.ToString("0.#")),
                 ("Growth", Ratio(st.Growth)),
-                ("Luck", "+" + Percent(st.Luck)),
+                ("Luck", "+" + st.Luck.ToString("0")),   // 기연은 그대로 더하는 수(도문심법·연무장 +10, 50이면 넷째 선택지) — % 가 아님
                 ("Revival", st.Revival.ToString()),
             };
             var sb = new StringBuilder();
