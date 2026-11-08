@@ -26,6 +26,8 @@ namespace BloodRain.Presentation.Fx
         public BreakthroughFx breakthrough;
         [Tooltip("갈라짐이 가장 클 때 값(0~1).")]
         [Range(0f, 1f)] public float splitPeak = 1f;
+        [Tooltip("설정 '혈우 연출'이 0 일 때 남기는 장막 진하기(경계는 보여야 하니 0 으로 두지 않는다).")]
+        [Range(0f, 1f)] public float rainFloor = 0.4f;
 
         MeshRenderer _mr;
         MaterialPropertyBlock _mpb;
@@ -81,7 +83,9 @@ namespace BloodRain.Presentation.Fx
             _mpb.SetVector(IdCenter, new Vector4(birthplace.x, birthplace.y, 0f, 0f));
             _mpb.SetFloat(IdRadius, radius);
             _mpb.SetFloat(IdSplit, split);
-            _mpb.SetFloat(IdAlpha, alpha);
+            // WP-57U 설정 '혈우 연출'(빗줄기·붉은 번짐): 장막은 경계라 꺼도 아주 지우지 않고 rainFloor 까지만 옅게
+            float rain = Mathf.Clamp01(BloodRain.Presentation.Meta.SettingsScreen.Current.RainScale);
+            _mpb.SetFloat(IdAlpha, alpha * Mathf.Lerp(rainFloor, 1f, rain));
             _mpb.SetFloat(IdClock, Time.unscaledTime);
             _mr.SetPropertyBlock(_mpb);
         }
