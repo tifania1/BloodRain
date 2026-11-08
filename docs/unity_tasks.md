@@ -382,7 +382,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 일류(덩이 9)에서 일류 적 하나 쓰러뜨리면 HUD 처치 수 +9, 삼류 때 생긴 적은 +1. 콘솔 에러 0
   - 찍기: 없음
 
-- [ ] EV-01U 돌파 순간 절기 각성(그릇이 늘 때) · 먼저: C-09d
+- [x] EV-01U 돌파 순간 절기 각성(그릇이 늘 때) · 먼저: C-09d — 2026-11-08 12:40 PC 루프: LifeRunner.OnAbsorbed 가 `Loadout.AwakenOnBreakthrough(이전 레벨, 새 레벨)` 후보를 담아 두고, 돌파 줌이 끝나면 하나는 바로 `life.Awaken` + AwakeningFx, 여럿이면 새 `Presentation/Hud/EvolutionPickScreen.cs`(절기 한자·이름·`무공 + 심법`·요약, 1~4 키, 세상 멈춤, `InputGuardSeconds` 입력 막기). 각성 연출이 끝나야 깨달음 화면이 열리고 레벨업 화면도 `InsightBusy` 로 기다림. 플레이: 시험 몸(문턱 하나)으로 절정 돌파 → 천지인 삼검 각성 → 깨달음, 문턱 둘(삼재검법·나한권)이면 고르기 화면 → 백보신권 고르니 연출 → 깨달음. 이류·일류 돌파는 후보 없음. 찍음 `docs/unity_shots/EV-01U/` 의 `pick.png`. 콘솔 에러는 MCP 스크린샷이 프레임을 억지로 넘길 때 나는 `Dash.Tick` dt 하나뿐(이번 변경과 무관)
   - 할 것: 8장 '깨어나는 순간' 1순위 — 그릇이 늘어나는 돌파(절정·초절정·화경·현경)에 문턱 무공이 있으면 그 자리에서 깨어나고, 여럿이면 하나를 고른다. 지금 Unity 는 보갑(C-09d)으로만 깨어난다(2026-11-08 클라우드가 찾음 — Presentation 어디서도 `AwakenOnBreakthrough` 를 안 부름). 평균 빌드의 첫 절기가 절정 돌파(약 11분 반), 둘째가 초절정 돌파라 이게 빠지면 절기가 거의 안 나온다. 차례는 웹 `finish`(template.html '그릇이 늘어나는 돌파 순간')와 같게: 줌이 끝나면 각성(하나면 바로 `life.Awaken` + AwakeningFx, 여럿이면 고르기 화면) → 각성 연출이 끝난 뒤 깨달음 3택1(C-07b InsightScreen). 고르기 화면은 카드마다 절기 이름·`무공 + 심법`·요약, 1~4 키, 세상 멈춤, 열린 직후 입력 막기.
   - 쓸 것: Core `Loadout.AwakenOnBreakthrough(이전 레벨, 새 레벨)`(그릇이 안 늘었거나 trigger 가 없으면 빈 목록), `Life.Awaken(evo)`, AwakeningFx(C-09d 가 Run 씬에 둠), strings `ui.evopick.title`·`ui.evopick.sub`({0} = `Loc.Realm`, 네 언어 2026-11-08 클라우드가 넣음)·`evolutions.<id>.name`·`summary`, `Balance.LevelUp.InputGuardSeconds`
   - 메뉴: C-09d 의 `BloodRain/Test/각성 시험 몸(…)`(문턱에 세움) + C-07a 의 `BloodRain/Test/다음 경지까지 진기(플레이 중)` 로 일류 → 절정

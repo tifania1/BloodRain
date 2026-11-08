@@ -650,7 +650,47 @@ namespace BloodRain.Presentation
         Vector3 _lastFramePos;
 
         /// <summary>깨달음 화면이 열려 있거나 열릴 차례면 참. 레벨업 화면은 이 동안 기다린다.</summary>
-        public bool InsightBusy => _insightQueue.Count > 0 || (_insightScreen != null && _insightScreen.IsOpen);
+        public bool InsightBusy => _insightQueue.Count > 0 || (_insightScreen != null && _insightScreen.IsOpen) || AwakenBusy;
+
+        // ---- EV-01U 그릇이 늘어나는 돌파 순간의 절기 각성(기획서 8장 '깨어나는 순간' 1순위) ----
+        // OnAbsorbed 가 Loadout.AwakenOnBreakthrough 로 후보를 담아 두고, 돌파 줌이 끝나면 하나는 바로 life.Awaken + AwakeningFx,
+        // 여럿이면 EvolutionPickScreen 으로 고른다. 각성 연출이 끝난 뒤에야 깨달음 화면이 열린다(웹 finish 와 같은 차례).
+        List<EvolutionDef> _awakenPending;
+        EvolutionPickScreen _evoPick;
+        AwakeningFx _awakenFx;
+        RealmDef _awakenRealm;
+
+        bool AwakenBusy => _awakenPending != null || (_evoPick != null && _evoPick.IsOpen) || (_awakenFx != null && _awakenFx.IsPlaying);
+
+        /// <summary>시험용: 돌파 순간에 깨운 절기 수.</summary>
+        public int BreakthroughAwakened { get; private set; }
+
+        void TickAwakening()
+        {
+            if (_awakenPending == null || (breakthrough != null && breakthrough.IsPlaying)) return;
+            if (_evoPick != null && _evoPick.IsOpen) return;
+            var list = _awakenPending;
+            _awakenPending = null;
+            if (list.Count == 1) { AwakenNow(list[0]); return; }
+            if (_evoPick == null)
+            {
+                _evoPick = new GameObject("절기 고르기 화면").AddComponent<EvolutionPickScreen>();
+                var lu = FindFirstObjectByType<LevelUpScreen>();
+                if (lu != null) _evoPick.font = lu.font;
+            }
+            _evoPick.Open(list, _awakenRealm != null ? Loc.Realm(_awakenRealm) : "", AwakenNow);
+        }
+
+        void AwakenNow(EvolutionDef evo)
+        {
+            if (_life == null || _life.Record != null) return;
+            var info = _life.Awaken(evo);
+            BreakthroughAwakened++;
+            if (_awakenFx == null) _awakenFx = FindFirstObjectByType<AwakeningFx>();
+            if (_awakenFx != null && player != null) _awakenFx.Play(evo, player, info.LongByDefault);
+            ApplyStats();
+            Debug.Log($"[LifeRunner] 돌파 → 절기 각성 {evo.NameKo}({evo.Weapon}) · 길게 {info.LongByDefault}{(_awakenFx == null ? " · 씬에 AwakeningFx 없음" : "")}");
+        }
 
         /// <summary>WP-39U 은거기인: 깨달음 고르기를 한 번 더(지금 몸의 후보 수로).</summary>
         public void QueueExtraInsight()
@@ -679,7 +719,8 @@ namespace BloodRain.Presentation
                 float heal = _life.InsightEffects.Tick(dt, _moving, vitals.MaxHealth);
                 if (heal > 0f) vitals.Heal(heal);
             }
-            if (_insightQueue.Count == 0 || (breakthrough != null && breakthrough.IsPlaying)) return;
+            TickAwakening();
+            if (_insightQueue.Count == 0 || (breakthrough != null && breakthrough.IsPlaying) || AwakenBusy) return;
             if (_insightScreen == null)
             {
                 _insightScreen = FindFirstObjectByType<InsightScreen>();
@@ -763,10 +804,13 @@ namespace BloodRain.Presentation
         {
             if (_life == null || _life.Record != null) return;
             float from = LevelFloat;
+            int fromLevel = _life.Level;
             var r = _life.Absorb(xp, count);
             if (_edges != null) _edges.Woke(r.WokenBosses); // QA-05U 혈운 기둥
             if (r.Breakthroughs.Count == 0) return;
             QueueInsights(r.Breakthroughs);
+            var awaken = _life.Loadout.AwakenOnBreakthrough(fromLevel, _life.Level);
+            if (awaken.Count > 0) { _awakenPending = awaken; _awakenRealm = _life.Scale.Realms[_life.Realm]; }
             ApplyStats(); // C-07a 돌파 보상(최대 기혈·경공 칸·받는 피해·7칸째)을 바로
             var ws = WorldScale.Current;
             if (breakthrough == null || ws == null || player == null) return;
