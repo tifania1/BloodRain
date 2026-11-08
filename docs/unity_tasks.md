@@ -431,7 +431,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 웹 프로토타입과 같은 효과
   - 찍기: `docs/unity_shots/C-09/` 의 `evo_effects.png`
 
-- [ ] EV-01U 절기 파산장(장풍)·독무 둔화·팔선과해 땅의 주인 기절 · 먼저: 없음
+- [ ] EV-01U 절기 파산장(장풍)·독무 둔화·팔선과해 땅의 주인 기절 · 먼저: 없음 (진행: 2026-11-09 02:50 PC — ①·③ 끝. WeaponRunner slow_projectile: 각성이면 발 수 + extraShots, 반경 × sizeMultiplier, 탄에 pr.Explode = 파산장(맞힐 때마다 터짐), 금빛. aura: 틱마다 안 적 Slow = max(Slow, slow). 플레이: 장풍 Lv8 + 파산장 각성 시험 몸으로 한 번에 탄 셋·반경 1.232(0.55 × 1.6 × 1.4)·셋 다 Explode, 독무 Lv1 안 적 Slow 0.15. 콘솔 에러 0. 찍음 `docs/unity_shots/C-09/` 의 `evolved_pasan.png`. 남은 것: ② 팔선과해 bossStunSeconds — BR-01 로 땅의 주인이 Run 씬에 붙은 뒤)
   - 할 것: 2026-11-09 클라우드가 evolutions.json params 를 WeaponRunner 와 맞대다 찾음 — 장풍 `slow_projectile` 갈래가 각성을 안 본다(C-09e 넷·C-09c 셋에 파산장이 빠짐). ① 각성했으면 발 수 + `extraShots`, 반경 × `sizeMultiplier`, 탄에 `pr.Explode = evo`(만천성지와 같은 길 — `EvolvedHits.Explodes` 가 explodeOnCrit 없으면 맞힐 때마다 터짐, 둘레 explodeRadius 1.1m 에 한 방 × explodeDamage 0.5). 웹 `case 'slow_projectile'` 과 같은 셈. ② 팔선과해 `bossStunSeconds`(0.6초)는 지금 HitArc 가 무리(Sim)만 기절시켜 아무도 안 읽는다. 땅의 주인이 Run 씬에 붙어 있으면(BR-01 뒤) 원호 안 땅의 주인에게 0.6초 기절 — 기절한 동안 패턴 시계가 멈춤(bosspatterns.json 머리 주석). 땅의 주인이 아직이면 ①·③만 하고 ②는 (진행:)에 남긴다. ③ 독무 `aura` 갈래가 둔화를 안 건다(9장 표 '둔화 15→30%', weapons.json poison_mist `slow` [0.15, 0.30]). 틱마다 맞은 적 `EnemyAgent.Slow = max(Slow, WeaponGrowth.At(s.Def.Slow, s.level, 0))` — 쇄겸술 pull_chain 과 같은 칸, 풀림은 enemyStatus.slowFadePerSecond. 웹 `case 'aura'` 는 `e.slow = Math.max(e.slow, slow)`
   - 쓸 것: Core `EvolutionDef.Param`(pasan_palm: extraShots·sizeMultiplier·explodeRadius·explodeDamage, eight_immortals: bossStunSeconds), `Combat/EvolvedHits.Explodes`, 웹 프로토타입 `case 'slow_projectile'`·`case 'random_arc'`
   - 메뉴: C-09d 의 시험 몸(파산장·팔선과해)

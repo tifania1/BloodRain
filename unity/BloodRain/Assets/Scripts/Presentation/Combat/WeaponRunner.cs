@@ -536,6 +536,10 @@ namespace BloodRain.Presentation.Combat
                             if (EvolvedHits.PoisonExecutes(mistEvo, t1, ag[i].Weight < 0.5f)) _executeIds.Add(id);
                         }
                     }
+                    // EV-01U 독무 둔화: 틱마다 안 적 Slow = max(Slow, slow 15→30%) — 쇄겸술과 같은 칸, 풀림은 slowFadePerSecond(웹 e.slow)
+                    float mistSlow = WeaponGrowth.At(s.Def.Slow, s.level, 0f);
+                    if (mistSlow > 0f)
+                        foreach (int i in _near) { var sa = enemies.Sim.Get(i); sa.Slow = Mathf.Max(sa.Slow, mistSlow); enemies.Sim.Set(i, sa); }
                     Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, ws.Speed(Knock(s)), null, s.Def.PoisonSeconds ?? 0f));
                     foreach (int id in _executeIds)
                     {
@@ -583,16 +587,25 @@ namespace BloodRain.Presentation.Combat
                 case "slow_projectile":
                 {
                     // 장풍: 바라보는 쪽으로 shot(초속 5m, 반경 0.55m x areaLv8 1.6, 2.6초), 다 뚫고(pierce 999), 넉백 5. Lv6 2연발
-                    int shots = Has(s, "2연발") ? 2 : 1;
+                    // EV-01U 절기 파산장: 발 수 + extraShots, 반경 × sizeMultiplier, 맞힐 때마다 explodeRadius 폭발(만천성지와 같은 pr.Explode 길,
+                    //   explodeOnCrit 이 없으니 늘 터짐). 웹 case 'slow_projectile' 의 w.evolved 갈래와 같은 셈
+                    var palmEvo = EvoOf(s);
+                    int shots = (Has(s, "2연발") ? 2 : 1) + (palmEvo != null ? (int)palmEvo.Param("extraShots", 0f) : 0);
+                    float size = palmEvo != null ? palmEvo.Param("sizeMultiplier", 1f) : 1f;
                     var shot = ShotOf(s);
                     int pierce = WeaponGrowth.Pierce(s.Def, s.level);
                     float gap = Gap(s, 0.15f), kb = ws.Speed(Knock(s));
                     for (int k = 0; k < shots; k++)
                         Later(k * gap, () =>
                         {
-                            float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier);
+                            float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * size);
+                            int before = _projs.Count;
                             Shoot(s, AimAngle(ws.Length(Aim.ProjectileReach(shot.Speed, shot.LifeSeconds * durationMultiplier))), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds * durationMultiplier, 0, shot.Homing, kb,
-                                  new Color(0.95f, 0.85f, 0.55f, 0.55f));
+                                  palmEvo != null ? new Color(1f, 0.80f, 0.35f, 0.65f) : new Color(0.95f, 0.85f, 0.55f, 0.55f));
+                            if (palmEvo != null && _projs.Count > before)
+                            {
+                                var pr = _projs[_projs.Count - 1]; pr.Explode = palmEvo; _projs[_projs.Count - 1] = pr;
+                            }
                         });
                     break;
                 }
