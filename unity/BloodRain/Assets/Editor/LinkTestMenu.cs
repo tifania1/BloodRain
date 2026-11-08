@@ -76,5 +76,20 @@ namespace BloodRain.Editor
         [MenuItem(Root + "암기연환 Lv4", true)] static bool AmgiV() => Playing();
         [MenuItem(Root + "풍화 Lv4")] static void Pung() => Raise("punghwa", 4);
         [MenuItem(Root + "풍화 Lv4", true)] static bool PungV() => Playing();
+        // LK-01Ub
+        [MenuItem(Root + "검화 Lv4")] static void Geomhwa() => Raise("geomhwa", 4);
+        [MenuItem(Root + "검화 Lv4", true)] static bool GeomhwaV() => Playing();
+        [MenuItem(Root + "금강후 Lv4")] static void Geumgang() => Raise("geumganghu", 4);
+        [MenuItem(Root + "금강후 Lv4", true)] static bool GeumgangV() => Playing();
+        [MenuItem(Root + "점혈창 Lv4")] static void Jeomhyeol() => Raise("jeomhyeol", 4);
+        [MenuItem(Root + "점혈창 Lv4", true)] static bool JeomhyeolV() => Playing();
+        [MenuItem(Root + "뇌화 Lv4")] static void Noehwa() => Raise("noehwa", 4);
+        [MenuItem(Root + "뇌화 Lv4", true)] static bool NoehwaV() => Playing();
+        [MenuItem(Root + "혈독 Lv4")] static void Hyeoldok() => Raise("hyeoldok", 4);
+        [MenuItem(Root + "혈독 Lv4", true)] static bool HyeoldokV() => Playing();
+        [MenuItem(Root + "취중매화 Lv4")] static void Chwijung() => Raise("chwijung", 4);
+        [MenuItem(Root + "취중매화 Lv4", true)] static bool ChwijungV() => Playing();
+        [MenuItem(Root + "혈창 Lv4")] static void Hyeolchang() => Raise("hyeolchang", 4);
+        [MenuItem(Root + "혈창 Lv4", true)] static bool HyeolchangV() => Playing();
     }
 }

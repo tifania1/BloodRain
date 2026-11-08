@@ -221,7 +221,8 @@ namespace BloodRain.Presentation
                 if (kindDef != null && kindDef.Family == "elite") dd *= eliteDamageMultiplier; // ST-02U 웹 if (e.elite || e.boss) dmg *= G.stats.elite
                 dd *= outgoingMultiplier; // R4-10U 천마해체 피해 x2
                 float cc = critChance + testCritBonus;
-                if (cc > 0f && _rng.NextDouble() < cc)
+                bool sure = sureCrit != null && sureCrit(a.Id); // LK-01Ub 점혈창
+                if (sure || (cc > 0f && _rng.NextDouble() < cc))
                 {
                     dd *= critMul;
                     CritCount++;
@@ -255,6 +256,8 @@ namespace BloodRain.Presentation
         [System.NonSerialized] public float critChance;
         /// <summary>시험 메뉴(LinkTestMenu)가 얹는 치명 확률. LifeRunner 가 critChance 를 다시 매겨도 남는다.</summary>
         [System.NonSerialized] public float testCritBonus;
+        /// <summary>LK-01Ub 연환 점혈창: 이 적(Id)이면 늘 치명타. WeaponRunner 가 이화창 한 번 앞뒤로만 넣고 비운다.</summary>
+        [System.NonSerialized] public System.Func<int, bool> sureCrit;
         [System.NonSerialized] public float dotMultiplier = 1f;
         /// <summary>중독된 적에게 들어가는 피해 배율(SectTrait.DamageMultiplier(true), 당가 1.2·나머지 1).</summary>
         [System.NonSerialized] public float poisonedTargetMultiplier = 1f;
@@ -310,7 +313,9 @@ namespace BloodRain.Presentation
         }
         /// <summary>ST-02U 벽력탄 화상·비도술 독처럼 맞힌 적에 seconds 초 동안 초당 dps 지속 피해. poison 이면 중독 표시도(당가 +20%·독 번짐이 봄).
         /// dps 는 부르는 쪽이 지속 피해 배율(dotMultiplier)까지 곱해 넣는다. 더 길고 센 쪽이 남는다.</summary>
-        public int AddDot(List<int> indices, float seconds, float dps, bool poison)
+        public int AddDot(List<int> indices, float seconds, float dps, bool poison) => AddDot(indices, seconds, dps, poison, !poison);
+        /// <summary>fire 가 false 면 '불붙음'(풍화가 봄) 없이 지속 피해만 — LK-01Ub 혈창 출혈.</summary>
+        public int AddDot(List<int> indices, float seconds, float dps, bool poison, bool fire)
         {
             if (seconds <= 0f || dps <= 0f) return 0;
             int n = 0;
@@ -321,7 +326,7 @@ namespace BloodRain.Presentation
                 if (a.Health <= 0f) continue;
                 _status.TryGetValue(a.Id, out var st);
                 if (poison) { if (st.Poison <= 0f) PoisonedCount++; st.Poison = Mathf.Max(st.Poison, seconds); }
-                else st.FireUntil = Mathf.Max(st.FireUntil, Time.time + seconds); // LK-01Ua 풍화가 보는 '불붙음'
+                else if (fire) st.FireUntil = Mathf.Max(st.FireUntil, Time.time + seconds); // LK-01Ua 풍화가 보는 '불붙음'
                 st.DotLeft = Mathf.Max(st.DotLeft, seconds);
                 st.DotDps = Mathf.Max(st.DotDps, dps);
                 _status[a.Id] = st;
@@ -349,6 +354,8 @@ namespace BloodRain.Presentation
 
         /// <summary>LK-01Ua 이 적(Id)이 화상 중인가(독이 아닌 AddDot 이 건 시간 안, 세상 시간). 연환 풍화가 본다.</summary>
         public bool IsBurning(int id) => _status.TryGetValue(id, out var st) && st.FireUntil > Time.time;
+        /// <summary>LK-01Ub 이 적(Id)이 중독 중인가. 연환 혈독이 본다.</summary>
+        public bool IsPoisoned(int id) => _status.TryGetValue(id, out var st) && st.Poison > 0f;
         readonly Dictionary<int, Status> _status = new Dictionary<int, Status>();
         readonly List<int> _statusIds = new List<int>();
 
