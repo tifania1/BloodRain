@@ -431,11 +431,11 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 웹 프로토타입과 같은 효과
   - 찍기: `docs/unity_shots/C-09/` 의 `evo_effects.png`
 
-- [ ] EV-01U 절기 파산장(장풍)과 팔선과해 땅의 주인 기절 · 먼저: 없음
-  - 할 것: 2026-11-09 클라우드가 evolutions.json params 를 WeaponRunner 와 맞대다 찾음 — 장풍 `slow_projectile` 갈래가 각성을 안 본다(C-09e 넷·C-09c 셋에 파산장이 빠짐). ① 각성했으면 발 수 + `extraShots`, 반경 × `sizeMultiplier`, 탄에 `pr.Explode = evo`(만천성지와 같은 길 — `EvolvedHits.Explodes` 가 explodeOnCrit 없으면 맞힐 때마다 터짐, 둘레 explodeRadius 1.1m 에 한 방 × explodeDamage 0.5). 웹 `case 'slow_projectile'` 과 같은 셈. ② 팔선과해 `bossStunSeconds`(0.6초)는 지금 HitArc 가 무리(Sim)만 기절시켜 아무도 안 읽는다. 땅의 주인이 Run 씬에 붙어 있으면(BR-01 뒤) 원호 안 땅의 주인에게 0.6초 기절 — 기절한 동안 패턴 시계가 멈춤(bosspatterns.json 머리 주석). 땅의 주인이 아직이면 ①만 하고 ②는 (진행:)에 남긴다
+- [ ] EV-01U 절기 파산장(장풍)·독무 둔화·팔선과해 땅의 주인 기절 · 먼저: 없음
+  - 할 것: 2026-11-09 클라우드가 evolutions.json params 를 WeaponRunner 와 맞대다 찾음 — 장풍 `slow_projectile` 갈래가 각성을 안 본다(C-09e 넷·C-09c 셋에 파산장이 빠짐). ① 각성했으면 발 수 + `extraShots`, 반경 × `sizeMultiplier`, 탄에 `pr.Explode = evo`(만천성지와 같은 길 — `EvolvedHits.Explodes` 가 explodeOnCrit 없으면 맞힐 때마다 터짐, 둘레 explodeRadius 1.1m 에 한 방 × explodeDamage 0.5). 웹 `case 'slow_projectile'` 과 같은 셈. ② 팔선과해 `bossStunSeconds`(0.6초)는 지금 HitArc 가 무리(Sim)만 기절시켜 아무도 안 읽는다. 땅의 주인이 Run 씬에 붙어 있으면(BR-01 뒤) 원호 안 땅의 주인에게 0.6초 기절 — 기절한 동안 패턴 시계가 멈춤(bosspatterns.json 머리 주석). 땅의 주인이 아직이면 ①·③만 하고 ②는 (진행:)에 남긴다. ③ 독무 `aura` 갈래가 둔화를 안 건다(9장 표 '둔화 15→30%', weapons.json poison_mist `slow` [0.15, 0.30]). 틱마다 맞은 적 `EnemyAgent.Slow = max(Slow, WeaponGrowth.At(s.Def.Slow, s.level, 0))` — 쇄겸술 pull_chain 과 같은 칸, 풀림은 enemyStatus.slowFadePerSecond. 웹 `case 'aura'` 는 `e.slow = Math.max(e.slow, slow)`
   - 쓸 것: Core `EvolutionDef.Param`(pasan_palm: extraShots·sizeMultiplier·explodeRadius·explodeDamage, eight_immortals: bossStunSeconds), `Combat/EvolvedHits.Explodes`, 웹 프로토타입 `case 'slow_projectile'`·`case 'random_arc'`
   - 메뉴: C-09d 의 시험 몸(파산장·팔선과해)
-  - 끝: 각성한 장풍이 세 발(2연발 + 1), 1.4배 크기로 맞힐 때마다 작은 폭발. 팔선과해가 땅의 주인을 0.6초 세움(②를 했으면). 콘솔 에러 0
+  - 끝: 각성한 장풍이 세 발(2연발 + 1), 1.4배 크기로 맞힐 때마다 작은 폭발. 독무 안 적이 느려짐(Lv1 15%, Lv8 30%). 팔선과해가 땅의 주인을 0.6초 세움(②를 했으면). 콘솔 에러 0
   - 찍기: `docs/unity_shots/C-09/` 의 `evolved_pasan.png`
 
 - [x] R-12Ub 무공 일곱 중 셋(`ring_wave`·`pierce_thrust`·`petal_scatter`) · 먼저: R-12Ua — 2026-11-08 21:05 PC: 셋 다 WeaponRunner 에, 콘솔 에러 0, 시험으로 셋 다 피해가 들어감. 음공: 반경 range 음파, `RingDelays`(Lv6 2겹)·`RingStuns`(stunChance, 절기 파천금음 30%)로 SonicStunSeconds 기절. 이화창: 가까운 적 쪽(사거리 1.25배, 없으면 바라보는 쪽) hits 번 ThrustGapSeconds 간격, `ThrustDirections`(Lv7 네 방향, 절기 백화난무창 directions)·`ThrustHits` 관통. 낙화검우: `PetalAngles`(절기 매화만개는 한 바퀴 고르게) 탄, Lv6 관통 +1, 매화만개는 맞힐 때마다 기혈 healPerHit. 웹처럼 숫자 없는 것(파천금음 겹침 증폭·창격 폭풍·꽃잎 폭풍)은 안 붙임. 붓 획(qin·spear·petals)은 아직 — 지금 붓 획은 삼재검법만 그리는 틀이라 자리 표시 부채꼴·원·탄 색으로 둠. 찍음 `docs/unity_shots/R-12U/` 의 `ring_wave_pierce_thrust_petal_scatter.png`·`evolved_plum_full_bloom.png`
