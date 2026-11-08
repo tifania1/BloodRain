@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const RUNS = parseInt(opt('runs', '3'), 10);
 const SHOTS = opt('shots', '');
-const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow,weapons,manuals')).split(',');
+const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow,weapons,manuals,links')).split(',');
 const SITE = path.join(__dirname, '..', 'web', 'prototype', 'site');
 if (!fs.existsSync(path.join(SITE, 'index.html'))) { console.log('X  site/ 가 없다. python tools/build_web_prototype.py 를 먼저 돌린다'); process.exit(1); }
 
@@ -409,6 +409,40 @@ async function manualRuns(browser, base) {
   await p.ctx.close();
 }
 
+// 연환 셋(LK-02): 금강후·점혈창·혈독을 1장 판(혼 기록 없음 → 비급 층도 열림)에서 켜고 몇 초 돌려 실제로 일이 나는지
+async function linkRuns(browser, base) {
+  const label = '연환 금강후·점혈창·혈독';
+  const p = await openPage(browser, base + '/', label);
+  const r = await p.page.evaluate(() => {
+    const bad = [], seen = { roar: 0, pressed: 0, spread: 0 };
+    startRun('full'); running = false;
+    G.weapons = [];
+    for (const id of ['nahan_fist', 'sonic_qin', 'flash_finger', 'pear_spear', 'poison_mist', 'blood_claw']) G.weapons.push({ id, lv: 4, cd: 0, evolved: false, dealt: 0, n: 0 });
+    updateSynergy();
+    for (const id of ['geumganghu', 'jeomhyeol', 'hyeoldok']) if (!link(id)) bad.push(`${id} 가 안 켜짐`);
+    const ae = addEffect; addEffect = (k, x, y, o) => { if (k === 'burst' && o && o.color === '#6B3A4C') seen.spread++; return ae(k, x, y, o); };
+    // 적을 몸 둘레에 촘촘히 세워 둔다(시간이 짧아 스폰만으로는 모자람)
+    G.player.hp = G.player.maxHp = 1e9;
+    for (let i = 0; i < 20 * 10; i++) {
+      if (i % 10 === 0) for (let k = 0; k < 12; k++) { const a = Math.random() * Math.PI * 2, d = 1 + Math.random() * 3; spawnEnemy('sigang', G.player.x + Math.cos(a) * d, G.player.y + Math.sin(a) * d); }
+      step(1 / 20);
+      if (overlay) { overlay = null; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); }
+      if (G.t < (G.fistUntil || 0)) seen.roar++;
+      if (G.enemies.some(e => (e.pressed || 0) > G.t)) seen.pressed++;
+      if (i % 15 === 0) render();
+    }
+    addEffect = ae;
+    if (!seen.roar) bad.push('나한권 때리는 동안(fistUntil)이 한 번도 안 섬');
+    if (!seen.pressed) bad.push('섬광지가 혈도를 짚은 적이 없음');
+    if (!seen.spread) bad.push('혈독 번짐이 한 번도 안 남');
+    return { bad, seen };
+  });
+  for (const b of r.bad) problems.push(`${label}: ${b}`);
+  flush(p, label);
+  rows.push({ what: '연환 금강후·점혈창·혈독 10초', res: r.bad.length ? '문제' : `통과(금강후 ${r.seen.roar}·혈도 ${r.seen.pressed}·혈독 번짐 ${r.seen.spread})` });
+  await p.ctx.close();
+}
+
 (async () => {
   const srv = await serve();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -423,6 +457,7 @@ async function manualRuns(browser, base) {
     if (ONLY.includes('flow')) await flowRuns(browser, base);
     if (ONLY.includes('weapons')) await weaponRuns(browser, base);
     if (ONLY.includes('manuals')) await manualRuns(browser, base);
+    if (ONLY.includes('links')) await linkRuns(browser, base);
   } catch (e) { problems.push('점검 스크립트 오류: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
   await browser.close(); srv.close();
   say('| 판 | 결과 |'); say('|---|---|');
