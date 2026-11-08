@@ -505,7 +505,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 경공을 Q 로 바꾸면 Space 를 쓰던 칸이 Q 자리 행동으로 넘어가고, 껐다 켜도 남음. 1~4·Enter 는 거절. 레벨업 버튼 글자가 바꾼 키를 따라감(지금 strings 는 R·X·Z 를 글로 박아 둠 — 키를 {1} 로 넘기게 고칠 때 strings 네 언어도 같이)
   - 찍기: `docs/unity_shots/WP-69U/` 의 `controls.png`
 
-- [ ] SD-01U Steam Deck 상한·1280x800 화면(16장 'Steam Deck 인증 목표, 1280x800 UI 확인', 15장 '성능 목표') · 먼저: 없음
+- [ ] SD-01U Steam Deck 상한·1280x800 화면(16장 'Steam Deck 인증 목표, 1280x800 UI 확인', 15장 '성능 목표') · 먼저: 없음 (진행: 2026-11-09 00:51 PC — ① 끝: `LifeRunner.Tier`(모바일·WebGL→Mobile, 환경 변수 SteamDeck=1→SteamDeck, 그 밖 Pc)를 Room()·디버그 줄이 씀, 에디터에서 SteamDeck=1 로 켜니 로그 `기기 갈래 SteamDeck · 적 상한 400`. ② Run 쪽 넷만 찍음 `docs/unity_shots/SD-01U/` 의 `deck_run.png`·`deck_levelup.png`·`deck_pause.png`·`deck_settings.png` — 잘린 글 없음, 일시정지 능력치 쉬운 말이 800 높이에서 12px 아래라 75%→82% 로 키움. Game 뷰 1280x800 은 execute_code 로 GameViewSizes 에 'Deck' 크기를 더해 고름. 남은 것: 타이틀·객잔·침방·연무장·장경각·정산 여섯 장)
   - 할 것: ① `LifeRunner.Room()` 이 `Application.isMobilePlatform` 만 봐서 Deck(리눅스 PC로 잡힘)이 PC 상한 600 을 쓴다. 기기 갈래를 `PlatformTier` 로 골라 `CanSpawn(enemies.Count, tier)` 에 넘긴다 — 모바일이거나 WebGL 이면 Mobile(15장 'WebGL 은 적 수 상한을 낮춘 설정' — 낮춘 숫자가 따로 없어 모바일 400 을 씀), 환경 변수 `SteamDeck` 이 "1" 이면(Deck 에서 Steam 이 켜 줌) SteamDeck, 아니면 Pc. Steamworks 를 붙인 뒤엔 `SteamUtils.IsSteamRunningOnSteamDeck()` 으로 바꿔도 된다. ② Game 뷰를 1280x800(16:10)으로 두고 타이틀·객잔·침방·연무장·장경각·Run HUD·레벨업·정산 화면을 한 장씩 찍어 넘침·잘림·작은 글자(800 높이에서 12px 아래)를 본다. 캔버스는 모두 1920x1080 기준 match 0.5 라 세로가 남는다 — 위·아래 붙은 것만 보면 된다.
   - 쓸 것: Core `Data/BalanceDef.cs` `PlatformTier`·`LimitsDef.EnemyCap(tier)`·`CanSpawn(alive, tier, important)`(2026-11-08 클라우드 SD-01, `EnemyCapTests`), balance.json `limits.enemiesSteamDeck`
   - 메뉴: 없음(LifeRunner 한 줄 + 갈래 고르는 작은 정적 함수)

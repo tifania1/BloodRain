@@ -229,7 +229,7 @@ namespace BloodRain.Presentation.Hud
             {
                 string easy = Loc.T($"ui.stat_easy.{key}"); // 없는 키는 키 그대로 나오니 아래에서 거른다
                 sb.Append("<b>").Append(Loc.Stat(key)).Append("</b>");
-                if (!string.IsNullOrEmpty(easy) && !easy.StartsWith("ui.")) sb.Append(" <size=75%><alpha=#99>").Append(easy).Append("<alpha=#FF></size>");
+                if (!string.IsNullOrEmpty(easy) && !easy.StartsWith("ui.")) sb.Append(" <size=82%><alpha=#99>") /* SD-01U 1280x800 에서 12px 넘게 */.Append(easy).Append("<alpha=#FF></size>");
                 sb.Append("<pos=78%>").Append(value).Append('\n');
             }
             Body(sheet, sb.ToString(), 22);

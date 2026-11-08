@@ -558,7 +558,25 @@ namespace BloodRain.Presentation
 
         // EN-03/EN-02U 동시 적 수 상한(11장 '성능 상한' PC 600·모바일 400). 보통 적·사건 무리만 막고
         // 정예·금두꺼비·보부상 같은 중요한 것은 넘쳐도 세운다(important).
-        bool Room() => _data.Balance.Limits.CanSpawn(enemies.Count, Application.isMobilePlatform);
+        bool Room() => _data.Balance.Limits.CanSpawn(enemies.Count, Tier);
+
+        // SD-01U 기기 갈래(15장 성능 목표·16장 Steam Deck). 모바일·WebGL 은 Mobile(WebGL 은 따로 정한 수가 없어 모바일 수),
+        // 환경 변수 SteamDeck=1(Deck 에서 Steam 이 켜 줌)이면 SteamDeck, 아니면 Pc. Steamworks 를 붙이면 IsSteamRunningOnSteamDeck 으로.
+        static PlatformTier? _tier;
+        public static PlatformTier Tier => _tier ??= PickTier();
+        static PlatformTier PickTier()
+        {
+            PlatformTier t;
+            if (Application.isMobilePlatform || Application.platform == RuntimePlatform.WebGLPlayer) t = PlatformTier.Mobile;
+            else if (System.Environment.GetEnvironmentVariable("SteamDeck") == "1") t = PlatformTier.SteamDeck;
+            else t = PlatformTier.Pc;
+            Debug.Log($"[LifeRunner] 기기 갈래 {t} · 적 상한 {DataBoot.Data.Balance.Limits.EnemyCap(t)}");
+            return t;
+        }
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetTier() => _tier = null;
+#endif
 
         /// <summary>EN-02U 정예 자리: 화면 대각선 × spawnTarget.eliteDiagonal(0.62) 원 위 — 화면 가장자리 바로 바깥(웹 spawnElite).</summary>
         Vector2 ElitePos()
@@ -840,7 +858,7 @@ namespace BloodRain.Presentation
                 $"  몸 {_life.Body.Character.NameKo}  회복 배율 x{_life.HealingMultiplier:0.0#}  태극 쾌속 +{_life.HarmonyCooldownReduction * 100:0}%");
             // EN-02U 새로 나온 적 한 칸(기혈·닿는 피해가 분·혈운으로 세지는지 보는 용)
             if (enemies != null)
-                GUI.Label(new Rect(12, 162, 1100, 22), $"적 {enemies.Count}/{_data.Balance.Limits.EnemyCap(Application.isMobilePlatform)}  새로 나온 적 {enemies.LastSpawnInfo}");
+                GUI.Label(new Rect(12, 162, 1100, 22), $"적 {enemies.Count}/{_data.Balance.Limits.EnemyCap(Tier)}  새로 나온 적 {enemies.LastSpawnInfo}");
             if (Stats != null)
             {
                 var st = Stats;
