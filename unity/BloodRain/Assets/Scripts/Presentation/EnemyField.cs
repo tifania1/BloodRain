@@ -318,6 +318,7 @@ namespace BloodRain.Presentation
                 if (a.Health <= 0f) continue;
                 _status.TryGetValue(a.Id, out var st);
                 if (poison) { if (st.Poison <= 0f) PoisonedCount++; st.Poison = Mathf.Max(st.Poison, seconds); }
+                else st.FireUntil = Mathf.Max(st.FireUntil, Time.time + seconds); // LK-01Ua 풍화가 보는 '불붙음'
                 st.DotLeft = Mathf.Max(st.DotLeft, seconds);
                 st.DotDps = Mathf.Max(st.DotDps, dps);
                 _status[a.Id] = st;
@@ -341,7 +342,10 @@ namespace BloodRain.Presentation
         readonly List<Vector2> _spreads = new List<Vector2>();
         readonly List<int> _spreadNear = new List<int>();
         // 상태는 EnemyAgent 밖에 Id 로 둔다(구조체를 늘리면 Burst 잡 쪽 배치와 어긋나 적이 깨지는 일이 있었다, 2026-11-06)
-        struct Status { public float Poison, DotLeft, DotDps, DotTick; }
+        struct Status { public float Poison, DotLeft, DotDps, DotTick, FireUntil; }
+
+        /// <summary>LK-01Ua 이 적(Id)이 화상 중인가(독이 아닌 AddDot 이 건 시간 안, 세상 시간). 연환 풍화가 본다.</summary>
+        public bool IsBurning(int id) => _status.TryGetValue(id, out var st) && st.FireUntil > Time.time;
         readonly Dictionary<int, Status> _status = new Dictionary<int, Status>();
         readonly List<int> _statusIds = new List<int>();
 

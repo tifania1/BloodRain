@@ -256,6 +256,33 @@ namespace BloodRain.Presentation.Combat
             return lr.Life.Loadout.Gauge.AspectDamageMultiplier(s.Def.Aspect, secret);
         }
 
+        // LK-01Ua 연환: 켜진 연환의 값(아니면 null — 비급 잠김도 null). 상태는 LevelUpScreen.Synergy(복원한 비급까지 넘기는 같은 셈)를 0.5초마다 다시 셈
+        BloodRain.Core.Build.SynergyState _linkState;
+        float _linkAt = -1f;
+        BloodRain.Presentation.Hud.LevelUpScreen _levelUp;
+        float? Link(string id, string key)
+        {
+            if (Time.unscaledTime >= _linkAt)
+            {
+                _linkAt = Time.unscaledTime + 0.5f;
+                if (_levelUp == null) _levelUp = FindFirstObjectByType<BloodRain.Presentation.Hud.LevelUpScreen>();
+                try { _linkState = _levelUp != null ? _levelUp.Synergy : null; } catch (Exception) { _linkState = null; }
+            }
+            return _linkState?.LinkParam(id, key);
+        }
+
+        bool SweepActive()
+        {
+            foreach (var f in _fx) if (f.Sweep && f.Age < f.Life) return true;
+            return false;
+        }
+
+        Slot SlotOf(string id)
+        {
+            foreach (var s in slots) if (s.id == id) return s;
+            return null;
+        }
+
         // C-09e 각성한 무공이면 그 절기(한 생의 Loadout.Evolved, C-09d 보갑이 깨움). 한 생이 없거나 아직이면 null
         static BloodRain.Core.Data.EvolutionDef EvoOf(Slot s)
         {
@@ -317,11 +344,14 @@ namespace BloodRain.Presentation.Combat
                     for (int k = 0; k < strikes; k++)
                         Later(k * gap, () =>
                         {
+                            // LK-01Ua 연환 쌍검합벽: 창천검기가 도는 동안 삼재검법 피해 × (1 + damageBonus)·금빛(웹 front_arc sg)
+                            bool sg = Link("ssanggeom", "damageBonus") is float sgb && SweepActive();
+                            float d2 = sg ? dmg * (1f + Link("ssanggeom", "damageBonus").Value) : dmg;
                             foreach (var a in dirs)
                             {
                                 // 절기면 금빛 부채꼴을 붓 획 위에 한 겹 더(웹 gold)
-                                if (!AddBrush(s, a) || evo != null) AddFx(a, Mathf.PI, R, 0.22f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.95f, 0.93f, 0.85f, 0.75f));
-                                Deal(s, dmg, HitArc(P, R, a, dmg, kb));
+                                if (!AddBrush(s, a) || evo != null || sg) AddFx(a, Mathf.PI, R, 0.22f, evo != null || sg ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.95f, 0.93f, 0.85f, 0.75f));
+                                Deal(s, d2, HitArc(P, R, a, d2, kb));
                             }
                         });
                     if (evo != null && EvolvedHits.SendsWave(evo, s.Fired))
@@ -334,6 +364,13 @@ namespace BloodRain.Presentation.Combat
                     float R = ws.Length(s.Def.Range);
                     int hits = WeaponGrowth.Hits(s.Def, s.level); // weapons.json hits [3, 5]
                     float gap = Gap(s, 0.08f), kb = ws.Speed(Knock(s));
+                    // LK-01Ua 연환 권장합일: 마지막 주먹에 장풍 한 발(장풍 한 방 × palmDamageRatio, 관통, 초속 9m·반경 0.45m·0.9초 — 웹 값)
+                    if (Link("gwonjang", "palmDamageRatio") is float pdr && SlotOf("palm_wind") is Slot palm)
+                        Later((hits - 1) * gap, () =>
+                        {
+                            float pa = Nearest(ws.Length(9f * 0.9f), out var pd) ? Mathf.Atan2(pd.y, pd.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                            Shoot(palm, pa, ws.Speed(9f), ws.Length(0.45f), Damage(palm) * pdr, 999, 0.9f, 0, 0f, ws.Speed(3f), new Color(0.95f, 0.85f, 0.55f, 0.6f));
+                        });
                     for (int k = 0; k < hits; k++)
                         Later(k * gap, () =>
                         {
@@ -416,7 +453,9 @@ namespace BloodRain.Presentation.Combat
                     // C-09e 절기 무영비도: + extraProjectiles 자루, 자루마다 bounces 번 튕기고 늘 중독(웹 homing_dagger 절기)
                     var daggerEvo = EvoOf(s);
                     int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount + (daggerEvo != null ? (int)daggerEvo.Param("extraProjectiles", 0f) : 0); // C-06a 개수
-                    int pierce = WeaponGrowth.Pierce(s.Def, s.level);
+                    // LK-01Ua 연환 독비: 관통 + extraPierce, 늘 중독(웹 homing_dagger)
+                    float? dokbi = Link("dokbi", "extraPierce");
+                    int pierce = WeaponGrowth.Pierce(s.Def, s.level) + (dokbi != null ? Mathf.RoundToInt(dokbi.Value) : 0);
                     var shot = ShotOf(s);
                     float kb = ws.Speed(Knock(s));
                     NearestN(ws.Length(s.Def.Range * 1.4f), n, _targets);
@@ -430,10 +469,11 @@ namespace BloodRain.Presentation.Combat
                         int before = _projs.Count;
                         Shoot(s, a, ws.Speed(shot.Speed), ws.Length(shot.Radius), dmg, pierce, shot.LifeSeconds, tg >= 0 ? agents[tg].Id : 0, shot.Homing, kb,
                               daggerEvo != null ? new Color(0.62f, 0.80f, 0.95f, 0.75f) : new Color(0.80f, 0.82f, 0.88f, 1f));
-                        if (daggerEvo != null && _projs.Count > before)
+                        if ((daggerEvo != null || dokbi != null) && _projs.Count > before)
                         {
                             var pr = _projs[_projs.Count - 1];
-                            pr.Bounce = (int)daggerEvo.Param("bounces"); pr.BounceEvo = daggerEvo; pr.Poison = true;
+                            if (daggerEvo != null) { pr.Bounce = (int)daggerEvo.Param("bounces"); pr.BounceEvo = daggerEvo; }
+                            pr.Poison = true;
                             _projs[_projs.Count - 1] = pr;
                         }
                     }
@@ -803,6 +843,7 @@ namespace BloodRain.Presentation.Combat
             public bool Poison;                                 // 절기면 '중독' 문턱 없이도 독
             public BloodRain.Core.Data.EvolutionDef Explode;    // C-09c 만천성지: 맞힌 자리 작은 폭발(explodeOnCrit 이면 치명타일 때만)
             public float Heal;                                  // R-12Ub 매화만개: 맞힐 때마다 기혈 회복(healPerHit)
+            public bool Fire;                                   // LK-01Ua 풍화: 불붙은 적을 지난 장풍이 불을 실음
         }
 
         readonly List<Proj> _projs = new List<Proj>();
@@ -862,10 +903,27 @@ namespace BloodRain.Presentation.Combat
                     // ST-02U 비도술 독: 문턱 '중독'부터 맞힌 피해 × poisonDamage 를 poisonSeconds 동안 초당 지속 피해로(맞히기 전에 건다)
                     if (p.Weapon != null && p.Weapon.Def.PoisonDamage is float pd && (p.Poison || Has(p.Weapon, "중독")))
                         enemies.AddDot(_one1, p.Weapon.Def.PoisonSeconds ?? 0f, p.Damage * pd * enemies.dotMultiplier, true);
+                    // LK-01Ua 연환 풍화: 불붙은 적을 지난 장풍은 크기 × (1 + sizeBonus) 로 불을 싣고, 그 뒤 맞는 적은 화상 2초·초당 6(웹 값, × 지속·화상 배율)
+                    if (p.Weapon != null && p.Weapon.id == "palm_wind" && !p.Fire && enemies.IsBurning(id) && Link("punghwa", "sizeBonus") is float sb)
+                    {
+                        p.Fire = true; p.Radius *= 1f + sb; p.Color = new Color(0.98f, 0.55f, 0.22f, 0.7f);
+                    }
+                    if (p.Fire) enemies.AddDot(_one1, 2f * durationMultiplier, 6f * burnMultiplier * enemies.dotMultiplier, false);
                     int critsBefore = enemies.CritCount;
+                    var hitAt = sim.Agents[j].Pos; // 맞히면 쓰러져 자리 번호가 바뀔 수 있으니 먼저
                     int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);
                     _petalHit = false;
                     if (p.Weapon != null) Deal(p.Weapon, p.Damage, got);
+                    // LK-01Ua 연환 암기연환: 섬광지 치명타면 그 적에게 비도 한 자루(비도 한 방, 따라감 — 초속 14m·0.25m·1초·따라가기 8, 웹 값)
+                    if (p.Weapon != null && p.Weapon.id == "flash_finger" && enemies.CritCount > critsBefore && Link("amgi", "daggers") is float dn && SlotOf("flying_dagger") is Slot dag)
+                    {
+                        // 탄 목록 끝에 붙이니 뒤에서부터 도는 이 줄의 i 는 그대로다
+                        var ws2 = World;
+                        float da = Mathf.Atan2(hitAt.y - P.y, hitAt.x - P.x);
+                        int nd = Mathf.Max(1, Mathf.RoundToInt(dn));
+                        for (int q = 0; q < nd; q++)
+                            Shoot(dag, da + (q - (nd - 1) / 2f) * 0.15f, ws2.Speed(14f), ws2.Length(0.25f), Damage(dag), 1, 1f, id, 8f, 0f, new Color(0.80f, 0.82f, 0.88f, 1f));
+                    }
                     if (p.Heal > 0f && got > 0) // R-12Ub 매화만개(웹 pr.heal)
                     {
                         if (_vitals == null) _vitals = FindFirstObjectByType<PlayerVitals>();
