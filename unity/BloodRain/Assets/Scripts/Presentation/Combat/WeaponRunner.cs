@@ -364,13 +364,16 @@ namespace BloodRain.Presentation.Combat
                     float R = ws.Length(s.Def.Range);
                     int hits = WeaponGrowth.Hits(s.Def, s.level); // weapons.json hits [3, 5]
                     float gap = Gap(s, 0.08f), kb = ws.Speed(Knock(s));
-                    // LK-01Ua 연환 권장합일: 마지막 주먹에 장풍 한 발(장풍 한 방 × palmDamageRatio, 관통, 초속 9m·반경 0.45m·0.9초 — 웹 값)
+                    // LK-01Ua 연환 권장합일: 마지막 주먹에 장풍 한 발(장풍 한 방 × palmDamageRatio, 관통, 속도·반경·수명은 synergies.json params)
                     if (Link("gwonjang", "palmDamageRatio") is float pdr && SlotOf("palm_wind") is Slot palm)
+                    {
+                        float pSpeed = Link("gwonjang", "palmSpeed") ?? 9f, pLife = Link("gwonjang", "palmLifeSeconds") ?? 0.9f, pRad = Link("gwonjang", "palmRadius") ?? 0.45f;
                         Later((hits - 1) * gap, () =>
                         {
-                            float pa = Nearest(ws.Length(9f * 0.9f), out var pd) ? Mathf.Atan2(pd.y, pd.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
-                            Shoot(palm, pa, ws.Speed(9f), ws.Length(0.45f), Damage(palm) * pdr, 999, 0.9f, 0, 0f, ws.Speed(3f), new Color(0.95f, 0.85f, 0.55f, 0.6f));
+                            float pa = Nearest(ws.Length(pSpeed * pLife), out var pd) ? Mathf.Atan2(pd.y, pd.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                            Shoot(palm, pa, ws.Speed(pSpeed), ws.Length(pRad), Damage(palm) * pdr, 999, pLife, 0, 0f, ws.Speed(3f), new Color(0.95f, 0.85f, 0.55f, 0.6f));
                         });
+                    }
                     for (int k = 0; k < hits; k++)
                         Later(k * gap, () =>
                         {
@@ -903,12 +906,12 @@ namespace BloodRain.Presentation.Combat
                     // ST-02U 비도술 독: 문턱 '중독'부터 맞힌 피해 × poisonDamage 를 poisonSeconds 동안 초당 지속 피해로(맞히기 전에 건다)
                     if (p.Weapon != null && p.Weapon.Def.PoisonDamage is float pd && (p.Poison || Has(p.Weapon, "중독")))
                         enemies.AddDot(_one1, p.Weapon.Def.PoisonSeconds ?? 0f, p.Damage * pd * enemies.dotMultiplier, true);
-                    // LK-01Ua 연환 풍화: 불붙은 적을 지난 장풍은 크기 × (1 + sizeBonus) 로 불을 싣고, 그 뒤 맞는 적은 화상 2초·초당 6(웹 값, × 지속·화상 배율)
+                    // LK-01Ua 연환 풍화: 불붙은 적을 지난 장풍은 크기 × (1 + sizeBonus) 로 불을 싣고, 그 뒤 맞는 적은 화상 burnSeconds·초당 burnDps(params, × 지속·화상 배율)
                     if (p.Weapon != null && p.Weapon.id == "palm_wind" && !p.Fire && enemies.IsBurning(id) && Link("punghwa", "sizeBonus") is float sb)
                     {
                         p.Fire = true; p.Radius *= 1f + sb; p.Color = new Color(0.98f, 0.55f, 0.22f, 0.7f);
                     }
-                    if (p.Fire) enemies.AddDot(_one1, 2f * durationMultiplier, 6f * burnMultiplier * enemies.dotMultiplier, false);
+                    if (p.Fire) enemies.AddDot(_one1, (Link("punghwa", "burnSeconds") ?? 2f) * durationMultiplier, (Link("punghwa", "burnDps") ?? 6f) * burnMultiplier * enemies.dotMultiplier, false);
                     int critsBefore = enemies.CritCount;
                     var hitAt = sim.Agents[j].Pos; // 맞히면 쓰러져 자리 번호가 바뀔 수 있으니 먼저
                     int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);

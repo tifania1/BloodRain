@@ -220,7 +220,8 @@ namespace BloodRain.Presentation
                 if (st.Poison > 0f) dd *= poisonedTargetMultiplier; // R-04Ua 당가 만독불침
                 if (kindDef != null && kindDef.Family == "elite") dd *= eliteDamageMultiplier; // ST-02U 웹 if (e.elite || e.boss) dmg *= G.stats.elite
                 dd *= outgoingMultiplier; // R4-10U 천마해체 피해 x2
-                if (critChance > 0f && _rng.NextDouble() < critChance)
+                float cc = critChance + testCritBonus;
+                if (cc > 0f && _rng.NextDouble() < cc)
                 {
                     dd *= critMul;
                     CritCount++;
@@ -252,6 +253,8 @@ namespace BloodRain.Presentation
         // 중독은 Damage(…, poisonSeconds) 로 건다(당가 5 독침). 중독된 적이 쓰러지면 당가 3 독 번짐(poison_spread)이
         // radius 안 적에게 seconds 동안 초당 damagePerSecond × 지속 피해(DotDamage)를 enemyStatus.burnTickSeconds 마다 넣고 중독도 건다(웹 hurtEnemy·killEnemy 와 같음).
         [System.NonSerialized] public float critChance;
+        /// <summary>시험 메뉴(LinkTestMenu)가 얹는 치명 확률. LifeRunner 가 critChance 를 다시 매겨도 남는다.</summary>
+        [System.NonSerialized] public float testCritBonus;
         [System.NonSerialized] public float dotMultiplier = 1f;
         /// <summary>중독된 적에게 들어가는 피해 배율(SectTrait.DamageMultiplier(true), 당가 1.2·나머지 1).</summary>
         [System.NonSerialized] public float poisonedTargetMultiplier = 1f;
