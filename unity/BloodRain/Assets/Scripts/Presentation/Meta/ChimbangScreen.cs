@@ -106,6 +106,13 @@ namespace BloodRain.Presentation.Meta
             _upgrades.anchorMin = _upgrades.anchorMax = new Vector2(1f, 0f);
             _upgrades.anchoredPosition = new Vector2(-360, 215);
             _upgrades.sizeDelta = new Vector2(640, 120);
+            // 배경 탁자 그림 위라 글이 묻힘(SD-01U) — 카드와 같은 종이 바탕을 깐다
+            var back = new GameObject("바탕", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            back.transform.SetParent(_upgrades, false);
+            var backRt = (RectTransform)back.transform;
+            backRt.anchorMin = new Vector2(0, 1); backRt.anchorMax = new Vector2(1, 1); backRt.pivot = new Vector2(0.5f, 1f);
+            backRt.anchoredPosition = new Vector2(0, 22); backRt.sizeDelta = new Vector2(24, 44 + 44 * _data.Cheonha.Rebirth.Upgrades.Count);
+            var backImg = back.GetComponent<Image>(); backImg.color = new Color(Paper.r, Paper.g, Paper.b, 0.9f); backImg.raycastTarget = false;
             var head = Text("환혼 강화 제목", _upgrades, UpgradeHead(soul), 22, FontStyles.Bold);
             Place(head.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, 0), new Vector2(640, 32));
             float y = -40;
@@ -219,6 +226,9 @@ namespace BloodRain.Presentation.Meta
             _reroll.onClick.AddListener(Reroll);
         }
 
+        /// <summary>카드에서 글 바탕이 차지하는 높이(아래부터). 위는 산문 그림·이름.</summary>
+        const float TextTop = 0.6f;
+
         void BuildCard(RebirthCandidate cand, int index)
         {
             var sect = cand.Sect;
@@ -237,10 +247,10 @@ namespace BloodRain.Presentation.Meta
             var art = sectArt.FirstOrDefault(a => a.sectId == sect.Id).art;
             if (art != null)
             {
-                var img = Rect("산문", rt, new Vector2(0, 0.5f), Vector2.one).gameObject.AddComponent<Image>();
+                var img = Rect("산문", rt, new Vector2(0, TextTop), Vector2.one).gameObject.AddComponent<Image>();
                 img.sprite = art; img.preserveAspect = false; img.raycastTarget = false;
             }
-            var paper = Rect("글 바탕", rt, Vector2.zero, new Vector2(1, art != null ? 0.5f : 0.62f)).gameObject.AddComponent<Image>();
+            var paper = Rect("글 바탕", rt, Vector2.zero, new Vector2(1, TextTop)).gameObject.AddComponent<Image>();
             paper.color = new Color(Paper.r, Paper.g, Paper.b, 0.94f);
             paper.raycastTarget = false;
 
@@ -255,8 +265,10 @@ namespace BloodRain.Presentation.Meta
             body.alignment = TextAlignmentOptions.TopLeft;
             body.textWrappingMode = TextWrappingModes.Normal;
             body.lineSpacing = 6;
+            // 글이 길면 줄여서 카드 안에 둔다(SD-01U: 소림·남궁 카드 끝 줄이 카드 밖으로 나갔음). 17 은 1280x800 에서 12px 언저리
+            body.enableAutoSizing = true; body.fontSizeMin = 17; body.fontSizeMax = 19;
             var brt = body.rectTransform;
-            brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, art != null ? 0.5f : 0.62f);
+            brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, TextTop);
             brt.offsetMin = new Vector2(18, 16); brt.offsetMax = new Vector2(-18, -14);
         }
 
