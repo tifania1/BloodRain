@@ -541,7 +541,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 컴파일·콘솔 에러 0, 레벨업 카드 한 장이 세 줄 안, 투명도 0% 에서 적 탄이 보임
   - 찍기: 레벨업 화면(옆 칸 보임), 일시정지 화면
 
-- [ ] SC-01U 비전 얻는 것을 Core `SecretEffects` 로 · 먼저: 없음(SecretWatch·역천은 붙어 있음)
+- [ ] SC-01U 비전 얻는 것을 Core `SecretEffects` 로 · 먼저: 없음(SecretWatch·역천은 붙어 있음) (진행: 2026-11-09 03:20 PC — SecretWatch 는 이미 비전이 열릴 때 `Effects` 를 새로 만들어 둠. 이은 것: WeaponRunner.Damage 에 `SecretDamage`(WeaponDamageMultiplier), LifeRunner 에서 역천 id 비교를 `Effects.NoBacklash` 로, 무명검 오의 충전은 `Charge.ChargeBonus = (1 + 보너스) × UltimateChargeMultiplier − 1` 을 한 생에 한 번. 플레이로 Effects 를 무명검으로 바꾸니 삼재검법 Damage 12 → 18, ChargeBonus 0 → 1(충전 2배). 콘솔 에러 0. 찍기는 아직(무명검을 실제로 여는 판이 필요). 남은 것: 무극 GaugeRemoved(음양 HUD 숨김), 취선 FoodMightBonus·Evades, 모양 있는 것 넷)
   - 할 것: `SecretWatch` 가 비전이 열릴 때마다 `SecretEffects.Of(data, checker.Unlocked)` 를 새로 만들어 내놓고, 쓰는 곳이 그걸 읽게. 숫자 효과부터: 무기 피해 × `WeaponDamageMultiplier(무공 id)`(무명검 삼재검법), 오의 충전 × `UltimateChargeMultiplier`, `NoBacklash` 면 `Backlash.Immune`(LifeRunner 448 줄의 id 비교를 이것으로), 무극 `GaugeRemoved` 면 음양 HUD 숨기고 속성 보너스는 `AspectDamageBonus(속성)`, 취선 공력 `FoodMightBonus(찾은 뒤 먹은 수)`·받는 공격 `Evades(난수)`. 모양 있는 것(어강술 `Thrall`·`CanTakeThrall`, 매화삼롱 `IsPlumStormWave`, 낙매일검 `IsPlumBranchSword`·`UltimateBends`, 혈해마공 `WhisperGuaranteed`)은 하나씩 따로 커밋해도 됨. 매화 폭풍 크기·피해, 속삭임을 받은 뒤는 기획서에 없어 비워 둔다(backlog WP-29a).
   - 쓸 것: Core `Build/SecretEffects.cs`(2026-11-07 클라우드), synergies.json `secrets[].effect·target·params`, `SecretEffectsTests`, 낙매일검 오의 길 `Combat/UltimateEffects.PlumBranchPath`·`PlumBranchHits`(세 번 꺾임, 토막마다 ±30°, 2026-11-08 클라우드 — 웹 il_geom 과 같은 셈, 낙화검우 이름은 '낙매일검'으로)
   - 메뉴: 없음

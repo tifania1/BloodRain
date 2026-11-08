@@ -97,6 +97,7 @@ namespace BloodRain.Presentation
         // Life.Tick 이 Backlash.Tick 을 이미 부른다. 여기선 사건만 받는다: 끝까지 버티면 최대 기혈 5% 피해(호신은 빼지 않음 —
         // 웹처럼 호신만큼 더해 넘긴다), 끊으면 비전 기록(역천 판정, SecretWatch). 걸음 배율은 Update 에서, 화면 맥동·바늘은 YinYangHud.
         SecretWatch _secrets;
+        bool _chargeSecretApplied; // SC-01U 무명검 충전 배율을 이 생에 걸었나
 
         void HookBacklash()
         {
@@ -486,7 +487,19 @@ namespace BloodRain.Presentation
             // C-08b 역류 중 걸음 x0.5(매 프레임, 능력치 걸음에 곱함)
             if (_pc != null && Stats != null) _pc.MoveMultiplier = Stats.MoveSpeed * _life.Backlash.MoveSpeedMultiplier;
             // 비전 '역천'(세 번 연달아 끊기)을 얻으면 그 생 동안 역류가 다시 오지 않는다
-            if (!_life.Backlash.Immune && _secrets != null && _secrets.Found.Any(s => s.Id == "yeokcheon")) _life.Backlash.Immune = true;
+            // SC-01U: id 비교 대신 Core SecretEffects.NoBacklash
+            if (!_life.Backlash.Immune && _secrets != null && _secrets.Effects.NoBacklash) _life.Backlash.Immune = true;
+            // SC-01U 비전 무명검: 오의 충전 × UltimateChargeMultiplier. Rate = (1 + ChargeBonus) 라 처음 보너스에서 다시 셈(한 번만)
+            if (_secrets != null && !_chargeSecretApplied)
+            {
+                float cm = _secrets.Effects.UltimateChargeMultiplier;
+                if (cm != 1f)
+                {
+                    _life.Charge.ChargeBonus = (1f + _life.Charge.ChargeBonus) * cm - 1f;
+                    _chargeSecretApplied = true;
+                    Debug.Log($"[LifeRunner] 비전 무명검 · 오의 충전 x{cm} → 보너스 {_life.Charge.ChargeBonus:0.##}");
+                }
+            }
             if (breakthrough == null || !breakthrough.IsPlaying) SyncScale();
         }
 

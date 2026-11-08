@@ -244,7 +244,14 @@ namespace BloodRain.Presentation.Combat
         }
 
         float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * effects.WeaponDamageMultiplier(s.Def, healthRatio)
-            * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s) * AspectDamage(s);
+            * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s) * AspectDamage(s) * SecretDamage(s);
+
+        // SC-01U 비전 무명검: 대상 무공(삼재검법) 피해 × (1 + damageBonus)(Core SecretEffects.WeaponDamageMultiplier)
+        static float SecretDamage(Slot s)
+        {
+            var sw = Hud.SecretWatch.Instance;
+            return sw != null ? sw.Effects.WeaponDamageMultiplier(s.id) : 1f;
+        }
 
         // YY-01U 음양 편향 쪽 속성 무공 +15%·극성 +40%(기획서 3장), 비전 무극이면 음·양 모두 그 값(Core YinYangGauge.AspectDamageMultiplier)
         static float AspectDamage(Slot s)
