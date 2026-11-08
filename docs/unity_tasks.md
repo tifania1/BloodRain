@@ -480,7 +480,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 혼 저장 없이 켜면 이어하기가 없고 시작 → 서장, 서장을 마친 뒤 다시 켜면 이어하기 → 객잔. 콘솔 에러 0
   - 찍기: `docs/unity_shots/TT-01U/` 의 `title.png`
 
-- [ ] PS-01U 일시정지 화면(12장 화면 목록 '일시정지') · 먼저: 없음
+- [x] PS-01U 일시정지 화면(12장 화면 목록 '일시정지') · 먼저: 없음 — 2026-11-09 00:40 PC: `Presentation/Hud/PauseScreen.cs` 를 LifeRunner 가 붙임(메뉴 없음). Esc·패드 Start 로 열고 닫음, 세상이 이미 멈췄거나(레벨업·깨달음·보갑·보부상) 같은 Esc 로 다른 화면이 닫힌 그 프레임·LevelUpScreen.IsOpen·InsightBusy 면 안 열림(레벨업이 떠 있을 때 CanOpen=false 확인). 세 판: 경지·그릇 + 무공·심법 칸(HudSlots.Build), 능력치 14줄(이름 + 쉬운 말), 무공별 피해·초당 피해(DamageReport.Lines, WeaponRunner.Dealt — 정산 막대와 같은 합, 얻은 시각은 이 화면이 1초마다 Loadout 을 보고 적음). 단추 계속하기 · 설정(잠금, WP-57U 몫) · 좌화(`EndLife(Zuohwa)`, 서장 몸이면 잠금). 닫으면 timeScale 1 로 이어짐, 콘솔 에러 0. 남긴 것: 무공 줄 눌러 짝·진전·연환 펼치기와 절기 조합표 탭은 UI-01U 때. 이 PC 저장이 서장 몸이라 좌화 정산은 눌러 보지 못함(쓰러짐과 같은 EndLife 길). 찍음 `docs/unity_shots/PS-01U/` 의 `pause.png`
   - 할 것: Run 씬에 일시정지 화면이 없다(같은 맞대기 — UI-01U·WP-57U 가 '일시정지 화면'에 붙인다고 적었지만 화면 자체가 없음). Esc·패드 Start 로 세상 멈춤(레벨업·각성·보갑 화면이 떠 있으면 안 열림), 머리 `ui.pause.title`·`ui.pause.sub`, 단추 계속하기·설정(WP-57U)·좌화(7장 '생이 끝나는 세 가지', 글 `ui.settle.end.zuohwa`) — 누르면 `EndLife(LifeEndWay.Zuohwa)`(쓰러짐과 같은 정산, 목 노인 좌화 대사가 이걸 봄). 웹 프로토타입 `#zuohwa`·`#quit` 과 같게. 본문 12장 그대로: 지닌 무공·심법 칸과 절기 문턱·그릇(`HudSlots.Build`, TopHud 와 같은 셈), 능력치(이름 `ui.stat.*` + 쉬운 말 `ui.stat_easy.*`), 무공별 지금까지 피해·초당 피해(`DamageReport.Lines(weapons.Dealt, 판 시각, 얻은 시각)`, 누르면 짝·진전·연환). 절기 조합표 탭은 UI-01U 몫이라 자리만.
   - 쓸 것: strings `ui.pause.*`, Core `Build/HudSlots`·`Run/DamageReport`·`Build/LevelUpView.EvolutionTable`, `WeaponRunner.Dealt`, 웹 프로토타입 `#pause` 화면
   - 메뉴: 없음(LifeRunner 가 붙임) 또는 HudBootstrap `Run 씬에 HUD 붙이기` 에 한 줄
@@ -492,6 +492,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 언어 단추(2026-11-07 15시 클라우드 WP-68): 열둘째 단추 `GameSettings.Lang`, 이름은 `GameSettings.LanguageNames[Language]` 를 `ui.settings.lang` 의 {0} 에. 누르면 Save 뒤 `Loc.Lang = s.Language`(캐시를 비워 바로 바뀜). Load 할 때 `systemLanguage: Application.systemLanguage.ToString()` 을 넘기고(`Loc.FromSystem` 은 2026-11-07 클라우드가 이미 `GameSettings.LanguageFor` 로 바꿈 — 컴파일만 확인). 목소리 단추 `GameSettings.Voice`(`ui.settings.voice` 의 {0} 에 `ui.settings.voice_ko`·`voice_zh`) — 기합 소리가 아직 없으니 값만 저장
   - 쓸 것: Core `Meta/GameSettings.cs`(2026-11-07 클라우드, `GameSettingsTests`), 웹 프로토타입 settings·SET_TURN·SET_HTML(template.html), 기획서 12장 화면 목록 '설정'·'화면 편의 규칙'
   - 메뉴: 타이틀 '설정', 일시정지 화면 '설정'
+  - 일시정지 '설정' 단추(2026-11-09 PC PS-01U): PauseScreen.Build 의 잠긴 '설정' 단추(enabled false, onClick null)를 이 화면을 열게
   - 타이틀 '설정' 단추(2026-11-08 PC TT-01U): TitleScreen.Build 의 잠긴 '설정' 단추를 interactable 로 바꾸고 이 화면을 열게
   - 조준 방식 단추(2026-11-08 PC WP-52U): 값은 이미 `WeaponRunner.AimMode` 가 PlayerPrefs `aimMode` 로 읽음 — 단추는 `GameSettings.Turn` 뒤 `WeaponRunner.SetAimMode(s.Aim)` 만 부르면 됨. 시험 메뉴 `BloodRain/Test/조준 방식/` 는 그때 지워도 됨
   - 끝: 열하나를 눌러 보고 게임을 껐다 켜도 값이 남음. 흔들림 0·혈우 0·내 이펙트 0 으로 판에서 그대로 바뀜

@@ -139,6 +139,13 @@ namespace BloodRain.Presentation
             if (GetComponent<LanternLayer>() == null) gameObject.AddComponent<LanternLayer>().runner = this;
             if (GetComponent<EncounterLayer>() == null) gameObject.AddComponent<EncounterLayer>().runner = this; // WP-39U 기연
             if (GetComponent<ChestLayer>() == null) gameObject.AddComponent<ChestLayer>().runner = this; // C-09d 보갑·각성
+            if (GetComponent<PauseScreen>() == null) // PS-01U 일시정지(Esc·Start)
+            {
+                var ps = gameObject.AddComponent<PauseScreen>();
+                ps.runner = this;
+                var lu = FindFirstObjectByType<LevelUpScreen>();
+                if (lu != null) ps.font = lu.font;
+            }
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
             _edges = FindFirstObjectByType<BloodRain.Presentation.Fx.EdgeIndicators>();
