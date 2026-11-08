@@ -42,6 +42,7 @@ namespace BloodRain.Core.Tests
             var g = At(0);
             Assert.Equal(1.3f, g.AspectDamageMultiplier(YinYang.Yang, 0.3f), 4);
             Assert.Equal(1f, g.AspectDamageMultiplier(YinYang.Neutral, 0f), 4);
+            Assert.Equal(1f, g.AspectDamageMultiplier(YinYang.Neutral, 0.3f), 4);   // 무극이어도 중 속성은 그대로(웹 aspectMult)
         }
 
         [Fact] public void 기획서_표와_같다()

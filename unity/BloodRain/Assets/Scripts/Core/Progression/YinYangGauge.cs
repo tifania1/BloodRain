@@ -92,12 +92,13 @@ namespace BloodRain.Core.Progression
         /// <summary>
         /// 무공 속성 피해 배율(기획서 3장 '음양과 주화입마' 표): 편향이면 기운 쪽 속성 무공 +15%(yinyang.bias.aspectDamageBonus),
         /// 극성이면 +40%(extreme.aspectDamageBonus). 태극이거나 반대·중 속성이면 1.
-        /// 무극(boundless)이면 secretBonus(SecretEffects.AspectDamageBonus 가 준 값)를 음·양 무공 모두에 — 웹 aspectMult 와 같다.
+        /// 무극(boundless)이면 secretBonus(SecretEffects.AspectDamageBonus 가 준 값)를 음·양 무공 모두에(중 속성은 1) — 웹 aspectMult 와 같다.
         /// </summary>
         public float AspectDamageMultiplier(YinYang weaponAspect, float? secretBonus = null)
         {
+            if (weaponAspect == YinYang.Neutral) return 1f;   // 무극이어도 중 속성은 그대로(웹 aspectMult 와 같음, QA-14)
             if (secretBonus is float sb) return 1f + sb;
-            if (weaponAspect == YinYang.Neutral || weaponAspect != Leaning) return 1f;
+            if (weaponAspect != Leaning) return 1f;
             return 1f + (Band == YinYangBand.Extreme ? _def.Extreme.AspectDamageBonus : _def.Bias.AspectDamageBonus);
         }
     }
