@@ -61,9 +61,7 @@ namespace BloodRain.Presentation.Hud
 
         static bool PressedPause()
         {
-            var kb = Keyboard.current;
-            var pad = Gamepad.current;
-            return (kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.startButton.wasPressedThisFrame);
+            return ControlInput.Pressed(BloodRain.Core.Meta.ControlAction.Pause); // WP-69U 조작 재설정을 따름
         }
 
         bool CanOpen()

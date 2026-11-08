@@ -158,15 +158,7 @@ namespace BloodRain.Presentation
 
         static Vector2 ReadMove()
         {
-            var v = Vector2.zero;
-            var kb = Keyboard.current;
-            if (kb != null)
-            {
-                if (kb.wKey.isPressed || kb.upArrowKey.isPressed) v.y += 1;
-                if (kb.sKey.isPressed || kb.downArrowKey.isPressed) v.y -= 1;
-                if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) v.x -= 1;
-                if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) v.x += 1;
-            }
+            var v = ControlInput.Move(); // WP-69U 조작 재설정을 따름
             var pad = Gamepad.current;
             if (pad != null) v += pad.leftStick.ReadValue();
             return Vector2.ClampMagnitude(v, 1f);
@@ -174,10 +166,7 @@ namespace BloodRain.Presentation
 
         static bool DashPressed()
         {
-            var kb = Keyboard.current;
-            var pad = Gamepad.current;
-            return (kb != null && (kb.spaceKey.wasPressedThisFrame || kb.leftShiftKey.wasPressedThisFrame))
-                || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            return ControlInput.Pressed(BloodRain.Core.Meta.ControlAction.Dash);
         }
     }
 }

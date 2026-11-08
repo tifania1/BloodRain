@@ -93,12 +93,12 @@ namespace BloodRain.Presentation.Hud
             var c = life.Charge;
             _fill.fillAmount = c.Fraction;
             _ring.color = c.IsFull ? Color.Lerp(Gold, Color.white, 0.25f + 0.25f * Mathf.Sin(Time.unscaledTime * 5f)) : Dim;
-            _label.text = c.IsFull ? $"{Loc.T("ui.ultimate.ready")}\n<size=55%>Space</size>" : $"<size=70%>{c.Value:0}</size>";
+            _label.text = c.IsFull ? $"{Loc.T("ui.ultimate.ready")}\n<size=55%>{ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Ultimate) ?? ""}</size>" : $"<size=70%>{c.Value:0}</size>";
             _label.color = c.IsFull ? new Color(0.12f, 0.10f, 0.09f) : new Color(1f, 0.95f, 0.85f);
 
             // 세상 시간이 멈춘 화면(레벨업·깨달음·보부상)에선 누르지 않는다
-            var kb = Keyboard.current;
-            if (kb != null && kb.spaceKey.wasPressedThisFrame && Time.timeScale > 0f) Use();
+            // WP-69U: 오의 키는 조작 재설정을 따른다(8장 기본 E·마우스 오른쪽·RT — 전엔 Space 를 경공과 같이 썼음)
+            if (ControlInput.Pressed(BloodRain.Core.Meta.ControlAction.Ultimate) && Time.timeScale > 0f) Use();
 
             for (int p = 0; p < life.UltimatePulses; p++)
                 for (int k = 0; k < life.UltimateCasts; k++) Strike(runner);
