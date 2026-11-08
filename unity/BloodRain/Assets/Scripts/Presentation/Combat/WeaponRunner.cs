@@ -133,6 +133,8 @@ namespace BloodRain.Presentation.Combat
         readonly List<int> _near = new List<int>();
         readonly List<int> _filtered = new List<int>();
         readonly List<float> _xs = new List<float>(), _ys = new List<float>();
+        readonly Dictionary<int, float> _mistSeconds = new Dictionary<int, float>(); // C-09e 칠보단혼무: 적 Id → 안개 안에 머문 초
+        readonly List<int> _executeIds = new List<int>();
         PlayerVitals _vitals; // 혈조 흡혈
         readonly Dictionary<string, float> _dealt = new Dictionary<string, float>();
         Material _mat;
@@ -366,7 +368,8 @@ namespace BloodRain.Presentation.Combat
                 }
                 case "aura":
                 {
-                    float R = ws.Length(WeaponGrowth.Range(s.Def, s.level)); // range → rangeLv8(2 → 3.5m)
+                    var mistEvo = EvoOf(s); // C-09e 절기 칠보단혼무: 반경 × rangeMultiplier, 안에 executeSeconds 머문 일반 적 즉사
+                    float R = ws.Length(WeaponGrowth.Range(s.Def, s.level) * (mistEvo != null ? mistEvo.Param("rangeMultiplier", 1f) : 1f)); // range → rangeLv8(2 → 3.5m)
                     float tick = Tick(s);
                     float hitDmg = dmg * tick;                                 // tickSeconds 마다 초당 피해 x tickSeconds
                     // 독무: 몸 둘레 안개(fx_mist_ink_3, 가운데서 번짐)를 틱마다 새로 피워 두 장씩 겹치게, 청회 담채색으로 옅게
@@ -375,13 +378,39 @@ namespace BloodRain.Presentation.Combat
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                     BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), R); // C-09b 친 자리 안 등롱
                     // ST-02U 독무 틱마다 중독 표시(poisonSeconds) — 당가 몸 '중독된 적 +20%'·독 번짐이 본다
+                    // 칠보단혼무: 틱마다 안에 있는 적의 머문 초를 더해 두고(웹 e.poisonT), 맞힌 뒤 살아 있으면 처형. 정예·보스(Weight 0.1)는 안 됨
+                    _executeIds.Clear();
+                    if (mistEvo != null)
+                    {
+                        if (_mistSeconds.Count > 4096) _mistSeconds.Clear();
+                        var ag = enemies.Sim.Agents;
+                        foreach (int i in _near)
+                        {
+                            int id = ag[i].Id;
+                            _mistSeconds.TryGetValue(id, out float t0);
+                            float t1 = t0 + tick;
+                            _mistSeconds[id] = t1;
+                            if (EvolvedHits.PoisonExecutes(mistEvo, t1, ag[i].Weight < 0.5f)) _executeIds.Add(id);
+                        }
+                    }
                     Deal(s, hitDmg, enemies.Damage(_near, hitDmg, P, ws.Speed(Knock(s)), null, s.Def.PoisonSeconds ?? 0f));
+                    foreach (int id in _executeIds)
+                    {
+                        int i = IndexOf(id);
+                        if (i < 0) continue;
+                        var at = enemies.Sim.Agents[i].Pos;
+                        AddFxAt(new Vector2(at.x, at.y), 0f, Mathf.PI * 2f, ws.Length(0.6f), 0.4f, new Color(0.25f, 0.38f, 0.18f, 0.7f));
+                        _mistSeconds.Remove(id);
+                        enemies.Kill(i);
+                    }
                     break;
                 }
                 case "homing_dagger":
                 {
                     // 비도: 가까운 적 n 명에게(projectiles 1→4), 관통 1→3, 탄속·반경·수명·따라가기는 shot(12·0.25·1.2·6)
-                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
+                    // C-09e 절기 무영비도: + extraProjectiles 자루, 자루마다 bounces 번 튕기고 늘 중독(웹 homing_dagger 절기)
+                    var daggerEvo = EvoOf(s);
+                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount + (daggerEvo != null ? (int)daggerEvo.Param("extraProjectiles", 0f) : 0); // C-06a 개수
                     int pierce = WeaponGrowth.Pierce(s.Def, s.level);
                     var shot = ShotOf(s);
                     float kb = ws.Speed(Knock(s));
@@ -393,8 +422,15 @@ namespace BloodRain.Presentation.Combat
                         float a = tg >= 0 ? Mathf.Atan2(agents[tg].Pos.y - P.y, agents[tg].Pos.x - P.x)
                                           : Mathf.Atan2(player.Facing.y, player.Facing.x) + (k - n / 2f) * 0.25f;
                         a += UnityEngine.Random.Range(-0.08f, 0.08f);
+                        int before = _projs.Count;
                         Shoot(s, a, ws.Speed(shot.Speed), ws.Length(shot.Radius), dmg, pierce, shot.LifeSeconds, tg >= 0 ? agents[tg].Id : 0, shot.Homing, kb,
-                              new Color(0.80f, 0.82f, 0.88f, 1f));
+                              daggerEvo != null ? new Color(0.62f, 0.80f, 0.95f, 0.75f) : new Color(0.80f, 0.82f, 0.88f, 1f));
+                        if (daggerEvo != null && _projs.Count > before)
+                        {
+                            var pr = _projs[_projs.Count - 1];
+                            pr.Bounce = (int)daggerEvo.Param("bounces"); pr.BounceEvo = daggerEvo; pr.Poison = true;
+                            _projs[_projs.Count - 1] = pr;
+                        }
                     }
                     break;
                 }
@@ -465,8 +501,11 @@ namespace BloodRain.Presentation.Combat
                     // fuseSeconds(0.4초) 뒤 반경 strikeRadius(1.2m) 안을 친다. 넉백 0. 적이 없으면 쓰지 않는다(쿨다운도 안 씀).
                     // Lv5 '감전'부터 맞은 적이 shockSeconds(0.5초) 멈춘다. 보스(땅의 주인)는 EnemyField 무리에 없으니 따로 막을 것이 없다 —
                     // 보스가 무리에 들어오면 여기서 거른다. 연무장 개수는 extraAmount 로 더함(C-06a)
-                    int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount; // C-06a 개수
-                    NearestN(ws.Length(s.Def.Range), 40, _targets);
+                    // C-09e 절기 오뢰정법: 사거리 × rangeMultiplier 안 strikes(+개수) 곳, 반경 × radiusMultiplier, 늘 감전,
+                    //   맞은 적마다 lightningRange 안 곁의 적으로 lightningChains 번(옮을 때 lightningFalloff 배) — Core EvolvedHits.FiveThunders
+                    var thEvo = EvoOf(s);
+                    int n = (thEvo != null ? (int)thEvo.Param("strikes") : WeaponGrowth.Projectiles(s.Def, s.level)) + extraAmount; // C-06a 개수
+                    NearestN(ws.Length(s.Def.Range * (thEvo != null ? thEvo.Param("rangeMultiplier", 1f) : 1f)), Mathf.Max(40, n * 4), _targets);
                     if (_targets.Count == 0) { s.Fired--; return false; }
                     // 가까운 40 가운데 서로 다른 n 을 무작위로(부분 섞기)
                     for (int k = 0; k < Mathf.Min(n, _targets.Count); k++)
@@ -474,9 +513,9 @@ namespace BloodRain.Presentation.Combat
                         int j = UnityEngine.Random.Range(k, _targets.Count);
                         (_targets[k], _targets[j]) = (_targets[j], _targets[k]);
                     }
-                    float R = ws.Length(s.Def.StrikeRadius ?? 1.2f);
+                    float R = ws.Length((s.Def.StrikeRadius ?? 1.2f) * (thEvo != null ? thEvo.Param("radiusMultiplier", 1f) : 1f));
                     float fuse = s.Def.FuseSeconds ?? 0.4f, kb = ws.Speed(Knock(s));
-                    float shock = Has(s, "감전") ? s.Def.ShockSeconds ?? 0.5f : 0f;
+                    float shock = (thEvo != null || Has(s, "감전")) ? s.Def.ShockSeconds ?? 0.5f : 0f;
                     for (int k = 0; k < Mathf.Min(n, _targets.Count); k++)
                     {
                         var e = enemies.Sim.Agents[_targets[k]];
@@ -494,7 +533,9 @@ namespace BloodRain.Presentation.Combat
                                     a.Stun = Mathf.Max(a.Stun, shock);
                                     enemies.Sim.Set(i, a);
                                 }
+                            if (thEvo != null) PlanThunderChains(thEvo, at, R);
                             Deal(s, dmg, enemies.Damage(_near, dmg, at, kb));
+                            if (thEvo != null) StrikeThunderChains(s, dmg, shock);
                         });
                     }
                     break;
@@ -578,10 +619,12 @@ namespace BloodRain.Presentation.Combat
                 {
                     // 쇄겸술(R-12Ua, 9장): 사거리 안 가장 먼 적 projectiles(1→3)+개수에게 사슬낫. 맞은 적은 몸에서 Trial.PullTo 까지 끌려오고
                     // slow(0.3→0.5) 둔화(EnemyAgent.Slow, enemyStatus.slowFadePerSecond 로 풀림). 넉백 0. 정예·보스(Weight 0.1)는 안 끌림.
-                    // Core WeaponShapes.FarthestWithin, 끌려가는 자리는 PulledTo 와 같은 셈을 세계 m 로(웹 pull_chain). 절기 흑룡탄은 아직(C-09e)
+                    // Core WeaponShapes.FarthestWithin, 끌려가는 자리는 PulledTo 와 같은 셈을 세계 m 로(웹 pull_chain). 절기 흑룡탄은 BlackDragon(C-09e)
                     int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount;
                     float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s));
                     float slow = WeaponGrowth.At(s.Def.Slow, s.level, 0f);
+                    var chainEvo = EvoOf(s);
+                    if (chainEvo != null) return BlackDragon(s, chainEvo, dmg, slow);
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                     if (_near.Count == 0) { s.Fired--; return false; }
                     var agents = enemies.Sim.Agents;
@@ -665,6 +708,9 @@ namespace BloodRain.Presentation.Combat
             public Color Color;
             public bool Petal; // 화산 3 꽃잎(Weapon 없음)
             public HashSet<int> Hit;
+            public int Bounce;                                  // C-09e 무영비도: 남은 튕김 수
+            public BloodRain.Core.Data.EvolutionDef BounceEvo;  // 튕김 거리(bounceRange)를 읽는 절기
+            public bool Poison;                                 // 절기면 '중독' 문턱 없이도 독
         }
 
         readonly List<Proj> _projs = new List<Proj>();
@@ -722,17 +768,153 @@ namespace BloodRain.Presentation.Combat
                     _one1.Add(j);
                     _petalHit = p.Petal;
                     // ST-02U 비도술 독: 문턱 '중독'부터 맞힌 피해 × poisonDamage 를 poisonSeconds 동안 초당 지속 피해로(맞히기 전에 건다)
-                    if (p.Weapon != null && p.Weapon.Def.PoisonDamage is float pd && Has(p.Weapon, "중독"))
+                    if (p.Weapon != null && p.Weapon.Def.PoisonDamage is float pd && (p.Poison || Has(p.Weapon, "중독")))
                         enemies.AddDot(_one1, p.Weapon.Def.PoisonSeconds ?? 0f, p.Damage * pd * enemies.dotMultiplier, true);
                     int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);
                     _petalHit = false;
                     if (p.Weapon != null) Deal(p.Weapon, p.Damage, got);
+                    // C-09e 무영비도: 맞힌 자리에서 bounceRange 안 아직 안 맞힌 가장 가까운 적으로 튕김(관통을 안 씀). 웹 pr.bounce
+                    if (p.Bounce > 0 && p.BounceEvo != null)
+                    {
+                        p.Bounce--;
+                        int nx = BounceTarget(p);
+                        if (nx >= 0)
+                        {
+                            var ne = sim.Agents[nx];
+                            p.Vel = (new Vector2(ne.Pos.x, ne.Pos.y) - p.Pos).normalized * p.Vel.magnitude;
+                            p.Target = ne.Id;
+                            p.Life = Mathf.Max(p.Life, 0.6f);
+                            AddFxAt(p.Pos, 0f, Mathf.PI * 2f, p.Radius * 2.5f, 0.15f, new Color(0.70f, 0.85f, 0.95f, 0.6f));
+                            break;
+                        }
+                    }
                     if (p.Pierce-- <= 0) dead = true;
                     break; // 한 프레임에 하나(쓰러짐으로 자리 번호가 바뀌니 다음 프레임에 다시 찾는다)
                 }
                 if (dead) _projs.RemoveAt(i);
                 else _projs[i] = p;
             }
+        }
+
+        readonly List<int> _bounceNear = new List<int>(), _bounceEx = new List<int>();
+        readonly List<float> _bxs = new List<float>(), _bys = new List<float>();
+
+        /// <summary>C-09e 무영비도 다음 튕길 적(시뮬 자리 번호, 없으면 -1). Core EvolvedHits.NextBounce 는 경지 m 라 세계 좌표를 축척으로 나눠 넘긴다.</summary>
+        int BounceTarget(Proj p)
+        {
+            var ws = World;
+            float unit = ws.Length(1f);
+            enemies.Sim.QueryCircle(new float2(p.Pos.x, p.Pos.y), p.BounceEvo.Param("bounceRange") * unit, _bounceNear);
+            var agents = enemies.Sim.Agents;
+            _bxs.Clear(); _bys.Clear(); _bounceEx.Clear();
+            for (int k = 0; k < _bounceNear.Count; k++)
+            {
+                var a = agents[_bounceNear[k]];
+                _bxs.Add(a.Pos.x / unit); _bys.Add(a.Pos.y / unit);
+                if (p.Hit.Contains(a.Id) || a.Health <= 0f) _bounceEx.Add(k);
+            }
+            int got = EvolvedHits.NextBounce(p.BounceEvo, p.Pos.x / unit, p.Pos.y / unit, _bxs, _bys, _bounceEx);
+            return got >= 0 ? _bounceNear[got] : -1;
+        }
+
+        // ── C-09e 흑룡탄 ──
+        readonly List<int> _gather = new List<int>();
+
+        /// <summary>절기 흑룡탄(웹 pull_chain 절기): gatherRadius 안 적을 gatherSeconds 동안 몸 앞 Trial.PullTo 한곳으로 모은 뒤
+        /// (정예·보스는 안 끌림) 반경 explosionRadius 폭발, 한 방의 damageMultiplier 배. 모으는 칸은 Core WeaponShapes.GatherSteps·GatherFraction.</summary>
+        bool BlackDragon(Slot s, BloodRain.Core.Data.EvolutionDef evo, float dmg, float slow)
+        {
+            var ws = World;
+            float GR = ws.Length(evo.Param("gatherRadius") * areaMultiplier);
+            enemies.Sim.QueryCircle(new float2(P.x, P.y), GR, _gather);
+            if (_gather.Count == 0) { s.Fired--; return false; }
+            var f = Facing;
+            var (cxk, cyk) = WeaponShapes.GatherCenter(0f, 0f, f.x, f.y); // 몸에서 경지 m 만큼 앞
+            Vector2 c = P + new Vector2(cxk, cyk) * ws.Length(1f);
+            float secs = evo.Param("gatherSeconds");
+            int steps = WeaponShapes.GatherSteps(secs);
+            // 사슬: 몸에서 가까운 적 여덟에게 어두운 줄기
+            var agents = enemies.Sim.Agents;
+            int shown = 0;
+            foreach (int i in _gather)
+            {
+                if (shown++ >= 8) break;
+                var e = agents[i]; Vector2 d = new Vector2(e.Pos.x, e.Pos.y) - P;
+                AddFxAt(P, Mathf.Atan2(d.y, d.x), 0.05f, d.magnitude, secs, new Color(0.12f, 0.10f, 0.16f, 0.8f));
+            }
+            AddFxAt(c, 0f, Mathf.PI * 2f, ws.Length(0.8f), secs, new Color(0.15f, 0.08f, 0.20f, 0.35f)); // 모이는 자리
+            for (int k = 1; k <= steps; k++)
+            {
+                int kk = k;
+                Later(kk * secs / steps, () =>
+                {
+                    float frac = WeaponShapes.GatherFraction(kk, steps);
+                    enemies.Sim.QueryCircle(new float2(c.x, c.y), GR, _gather);
+                    foreach (int i in _gather)
+                    {
+                        var a = enemies.Sim.Get(i);
+                        if (a.Weight < 0.5f || a.Health <= 0f) continue;
+                        a.Pos = new float2(a.Pos.x + (c.x - a.Pos.x) * frac, a.Pos.y + (c.y - a.Pos.y) * frac);
+                        a.Slow = Mathf.Max(a.Slow, slow);
+                        enemies.Sim.Set(i, a);
+                    }
+                    if (kk != steps) return;
+                    float ER = ws.Length(evo.Param("explosionRadius") * areaMultiplier * explosionAreaMultiplier);
+                    float rot = UnityEngine.Random.value * Mathf.PI * 2f;
+                    bool ink = AddSpark("fx_bomb_ink_1", c, rot, ER * 2.4f, 0.55f, 0.08f, false, 1f, new Color(0.10f, 0.06f, 0.14f, 1f));
+                    if (!ink) AddFxAt(c, 0f, Mathf.PI * 2f, ER, 0.35f, new Color(0.20f, 0.10f, 0.28f, 0.75f));
+                    enemies.Sim.QueryCircle(new float2(c.x, c.y), ER, _gather);
+                    BloodRain.Presentation.Fx.LanternLayer.Strike(c, ER);
+                    float hit = dmg * evo.Param("damageMultiplier", 1f);
+                    Deal(s, hit, enemies.Damage(_gather, hit, c, 0f));
+                });
+            }
+            return true;
+        }
+
+        // ── C-09e 오뢰정법 번개 옮김 ──
+        readonly List<int> _thCand = new List<int>(), _thStruck = new List<int>();
+        readonly List<(int id, float scale, Vector2 from)> _thHops = new List<(int, float, Vector2)>();
+
+        /// <summary>낙뢰 한 곳(_near 가 맞은 적)에서 옮아갈 적을 맞히기 전에 정해 둔다(맞혀 쓰러뜨리면 자리 번호가 바뀌니 Id 로).</summary>
+        void PlanThunderChains(BloodRain.Core.Data.EvolutionDef evo, Vector2 at, float R)
+        {
+            var ws = World;
+            _thHops.Clear();
+            if (_near.Count == 0) return;
+            float unit = ws.Length(1f);
+            float reach = R + evo.Param("lightningRange") * unit * Mathf.Max(1f, evo.Param("lightningChains"));
+            enemies.Sim.QueryCircle(new float2(at.x, at.y), reach, _thCand);
+            var agents = enemies.Sim.Agents;
+            _bxs.Clear(); _bys.Clear(); _thStruck.Clear();
+            for (int k = 0; k < _thCand.Count; k++)
+            {
+                var a = agents[_thCand[k]];
+                _bxs.Add(a.Pos.x / unit); _bys.Add(a.Pos.y / unit);
+                if (_near.Contains(_thCand[k])) _thStruck.Add(k);
+            }
+            foreach (var h in EvolvedHits.FiveThunders(evo, _thStruck, _bxs, _bys))
+                _thHops.Add((agents[_thCand[h.To]].Id, h.DamageScale, new Vector2(_bxs[h.From] * unit, _bys[h.From] * unit)));
+        }
+
+        void StrikeThunderChains(Slot s, float dmg, float shock)
+        {
+            var ws = World;
+            foreach (var (id, scale, from) in _thHops)
+            {
+                int i = IndexOf(id);
+                if (i < 0) continue;
+                var a = enemies.Sim.Get(i);
+                var to = new Vector2(a.Pos.x, a.Pos.y);
+                // 옮아가는 줄기: 앞 적에서 다음 적 쪽으로 가는 금빛 부채꼴(아주 좁게), 다음 적 자리에 작은 낙뢰
+                Vector2 d = to - from;
+                AddFxAt(from, Mathf.Atan2(d.y, d.x), 0.06f, Mathf.Max(d.magnitude, ws.Length(0.2f)), 0.2f, new Color(1f, 0.90f, 0.45f, 0.85f));
+                if (!AddBolt(to)) AddFxAt(to, 0f, Mathf.PI * 2f, ws.Length(0.5f), 0.2f, new Color(1f, 0.92f, 0.55f, 0.8f));
+                if (shock > 0f) { a.Stun = Mathf.Max(a.Stun, shock); enemies.Sim.Set(i, a); }
+                _one1.Clear(); _one1.Add(i);
+                Deal(s, dmg * scale, enemies.Damage(_one1, dmg * scale, from, 0f));
+            }
+            _thHops.Clear();
         }
 
         int IndexOf(int id)
