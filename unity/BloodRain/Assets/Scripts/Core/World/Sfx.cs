@@ -7,6 +7,9 @@
 // - 진기 흡수음은 한 프레임에 하나. 구슬 열 개를 한 프레임에 먹어도 소리는 한 번.
 // - 연속 흡수 음계(14장 '보상' 줄 '연속 흡수 때 음계가 올라감'): 앞 흡수음에서 absorbRunGapSeconds 안이면 한 음 올리고
 //   absorbNotes 째 음에서 멈춘다. 틈이 벌어지면 첫 음부터. 웹 프로토타입 sfx('orb') 와 같은 셈.
+// - 돌파 연출(14장 '연출' 줄 '경지 돌파 때 모든 소리가 끊기고 붓 긋는 소리 한 번', 7장 '돌파 연출'): Hush 로 연출 길이만큼
+//   효과음을 다 막고 붓 소리(BreakthroughBrush) 하나만 통과시킨다. 배경음은 BgmVolume 배를 곱한다 — 연출 동안 0,
+//   끝나면 returnFadeSeconds 동안 1 로 돌아온다(재생기가 bgm.quickFadeSeconds 를 넘김, 2026-11-09 클라우드가 정함: 화면 전환과 같은 1초).
 // 시간은 실제 초(멈춤·돌파 연출로 게임 시간이 느려져도 소리 창은 실제 시간)로 넘긴다.
 using System;
 using System.Collections.Generic;
@@ -21,12 +24,36 @@ namespace BloodRain.Core.World
         long _absorbFrame = long.MinValue;
         double _lastAbsorb = double.NegativeInfinity;
         int _absorbStep;
+        double _hushUntil = double.NegativeInfinity;
+
+        /// <summary>돌파 연출 동안에도 울리는 붓 긋는 소리(sfx_list.md, sfx_queue).</summary>
+        public const string BreakthroughBrush = "sfx_breakthrough_brush";
 
         public SfxGate(SfxRulesDef rules) { _r = rules; }
+
+        /// <summary>돌파 연출이 시작됐다: now 부터 seconds(실제 초 — 연출 길이, 다시 오른 경지면 줄어든 길이) 동안 소리를 끊는다.
+        /// 연출 도중 또 넘으면 연출은 그대로 이어지므로(7장) 끝을 앞당기지 않고 더 늦은 쪽만 남긴다.</summary>
+        public void Hush(double now, double seconds)
+        {
+            if (seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+            _hushUntil = Math.Max(_hushUntil, now + seconds);
+        }
+
+        /// <summary>지금 돌파 연출로 소리가 끊긴 중인가.</summary>
+        public bool Hushed(double now) => now < _hushUntil;
+
+        /// <summary>배경음에 곱할 배(0~1). 끊긴 동안 0, 끝난 뒤 returnFadeSeconds 동안 곧게 1 로. 0 초면 바로 1.</summary>
+        public float BgmVolume(double now, float returnFadeSeconds)
+        {
+            if (Hushed(now)) return 0f;
+            if (returnFadeSeconds <= 0f || double.IsNegativeInfinity(_hushUntil)) return 1f;
+            return (float)Math.Min(1.0, (now - _hushUntil) / returnFadeSeconds);
+        }
 
         /// <summary>같은 효과음 id 를 지금(now 초) 울려도 되면 참이고 그 한 번을 센다. 거짓이면 이번 것은 버린다.</summary>
         public bool TryPlay(string id, double now)
         {
+            if (Hushed(now) && id != BreakthroughBrush) return false;
             if (!_recent.TryGetValue(id, out var q)) _recent[id] = q = new Queue<double>();
             // 창 밖으로 나간 것을 지운다. 창 끝(정확히 window 초 전)은 이미 지난 것으로 본다.
             while (q.Count > 0 && now - q.Peek() >= _r.SameSoundWindowSeconds) q.Dequeue();
@@ -39,7 +66,7 @@ namespace BloodRain.Core.World
         public bool TryAbsorb(long frame, double now, out int note)
         {
             note = _absorbStep;
-            if (frame == _absorbFrame) return false;
+            if (frame == _absorbFrame || Hushed(now)) return false;
             _absorbFrame = frame;
             _absorbStep = now - _lastAbsorb < _r.AbsorbRunGapSeconds
                 ? Math.Min(Math.Max(1, _r.AbsorbNotes) - 1, _absorbStep + 1)
@@ -59,6 +86,7 @@ namespace BloodRain.Core.World
             _absorbFrame = long.MinValue;
             _lastAbsorb = double.NegativeInfinity;
             _absorbStep = 0;
+            _hushUntil = double.NegativeInfinity;
         }
     }
 }

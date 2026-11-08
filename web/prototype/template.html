@@ -1077,6 +1077,7 @@ function playBaked(list, vol) {
 }
 function sfx(kind) {
   if (audio.muted || !audio.ctx) return;
+  if (typeof G !== 'undefined' && G && G.brk) return;   // 돌파 연출 동안 소리 끊김(SfxGate.Hush) — 14장 '경지 돌파 때 모든 소리가 끊기고 붓 긋는 소리 한 번'
   const now = audio.ctx.currentTime;
   if (kind === 'orb') {
     if (audio.orbFrame === lastTs) return;   // 한 프레임에 하나(SfxGate.TryAbsorb)
@@ -1132,6 +1133,7 @@ function sfxAwaken(kind) {
   if (kind === 'in') { tone('sine', 62, 38, 1.6, 0.22); noise(0.9, 0.09, 300, 2400, true); }
   else if (kind === 'crack') { noise(0.18, 0.12, 6000, 900); tone('triangle', 1400, 380, 0.16, 0.05); }
   else if (kind === 'stamp') { tone('square', 74, 38, 0.28, 0.12); noise(0.22, 0.2, 500, 80); }
+  else if (kind === 'brush') { noise(0.55, 0.11, 700, 5200, true); noise(0.3, 0.05, 2600, 400); }   // 돌파 붓 획(구운 sfx_breakthrough_brush 가 오기 전 자리)
   else if (kind === 'shock') { tone('sine', 52, 28, 1.6, 0.32); tone('sine', 110, 82, 2.4, 0.2, 0.03); tone('triangle', 330, 247, 1.8, 0.05, 0.05); noise(0.9, 0.16, 1600, 90); }
 }
 function buzz(pattern) { if (settings.shake > 0 && navigator.vibrate) { try { navigator.vibrate(pattern); } catch (e) { /* 막혀 있어도 그만 */ } } }
@@ -3502,6 +3504,7 @@ function openBreakthrough(realm) {
   // 한 번 깨친 길(21장, Core Soul.Breakthrough·Breakthrough.Start revisit): 한 생 판에서 혼이 이미 올라 본 경지면 같은 순서를 revisitSeconds 로(시계를 zoomTo/revisit 배로) 줄이고 깨달음 선택지 하나 더
   const revisit = !!G.soul0 && (G.soul0.reached || []).includes(realm.id);
   const speed = revisit && MASTERY.shortBreakthroughWhenRevisited && BRK.revisitSeconds > 0 ? BRK.zoomToSeconds / BRK.revisitSeconds : 1;
+  if (brk && !G.brk) sfxAwaken('brush');   // 연출 도중 또 넘으면 연출이 이어지니 붓 소리도 한 번(14장)
   if (brk) { worldShrink(Math.pow(WD.scalePerRealm, REALMS.indexOf(realm) - tierNow())); G.brk = { t: 0, from: G.viewD, name: realm.nameKo, crushed: false, speed }; }
   G.realm = realm; recomputeStats();
   if (realm.id === 'chojeoljeong') G.weaponSlots++;

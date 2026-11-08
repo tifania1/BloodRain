@@ -102,5 +102,36 @@ namespace BloodRain.Core.Tests
             Assert.Contains("heart: 'sfx_low_health_heart'", html);
             Assert.Contains("G.heartT = SFXR.lowHealthHeartSeconds;", html);
         }
+
+        [Fact] public void 돌파_연출_동안은_붓_소리만_울리고_배경음은_0에서_돌아온다()
+        {
+            Assert.Contains("경지 돌파 때 모든 소리가 끊기고 붓 긋는 소리 한 번", TestData.Gdd);
+            var data = TestData.Load();
+            var g = new SfxGate(R);
+            Assert.Equal(1f, g.BgmVolume(0, data.Balance.Bgm.QuickFadeSeconds));
+            float len = data.Cheonha.Breakthrough.ZoomToSeconds;   // 1.4초
+            double end = 10.0 + len;
+            g.Hush(10, len);
+            Assert.False(g.TryPlay("sfx_enemy_kill", 10.5));
+            Assert.False(g.TryAbsorb(1, 10.5, out _));
+            Assert.True(g.TryPlay(SfxGate.BreakthroughBrush, 10));
+            Assert.Equal(0f, g.BgmVolume(11, 1f));
+            // 연출 도중 또 넘어도(7장 '처음부터 다시 하지 않고') 끝은 늦출 수만 있다
+            g.Hush(10.5, 0.2);
+            Assert.True(g.Hushed(11.3));
+            Assert.False(g.Hushed(end));
+            Assert.True(g.TryPlay("sfx_enemy_kill", end));
+            Assert.True(g.TryAbsorb(2, end, out var n));
+            Assert.Equal(0, n);
+            Assert.Equal(0.5f, g.BgmVolume(end + 0.5, 1f), 3);
+            Assert.Equal(1f, g.BgmVolume(end + 2, 1f));
+            Assert.Equal(1f, g.BgmVolume(end, 0f));
+            g.Hush(20, 1); g.Reset();
+            Assert.False(g.Hushed(20.5));
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => g.Hush(0, -1));
+            var html = File.ReadAllText(Path.Combine(TestData.RepoRoot, "web", "prototype", "template.html"));
+            Assert.Contains("if (typeof G !== 'undefined' && G && G.brk) return;   // 돌파 연출 동안 소리 끊김(SfxGate.Hush)", html);
+            Assert.Contains("sfxAwaken('brush')", html);
+        }
     }
 }
