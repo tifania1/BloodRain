@@ -44,6 +44,8 @@ namespace BloodRain.Presentation.Hud
             if (IsOpen)
             {
                 if (Time.timeScale != 0f) Time.timeScale = 0f;
+                // 설정 화면이 떠 있거나 같은 Esc 로 방금 닫혔으면 그 Esc 는 설정 몫
+                if (BloodRain.Presentation.Meta.SettingsScreen.AnyOpen || BloodRain.Presentation.Meta.SettingsScreen.ClosedFrame == Time.frameCount) return;
                 if (PressedPause()) Close();
                 return;
             }
@@ -101,6 +103,19 @@ namespace BloodRain.Presentation.Hud
             Time.timeScale = _prevScale;
         }
 
+        /// <summary>WP-57U 설정 화면. 언어가 바뀌었으면 닫힌 뒤 이 화면을 새 글로 다시 그린다.</summary>
+        public void OpenSettings()
+        {
+            if (!IsOpen || BloodRain.Presentation.Meta.SettingsScreen.AnyOpen) return;
+            BloodRain.Presentation.Meta.SettingsScreen.Show(font, langChanged =>
+            {
+                if (!langChanged || !IsOpen) return;
+                Destroy(_root.gameObject);
+                _root = null;
+                Build();
+            });
+        }
+
         void Zuohwa()
         {
             if (!IsOpen) return;
@@ -144,7 +159,7 @@ namespace BloodRain.Presentation.Hud
 
             // 단추 줄
             Button(Loc.T("ui.pause.resume"), new Vector2(-300, 70), Gold, true, Close);
-            Button(Loc.T("ui.settings.title"), new Vector2(0, 70), Gold, false, null); // WP-57U 설정 화면이 생기면 연다
+            Button(Loc.T("ui.settings.title"), new Vector2(0, 70), Gold, true, OpenSettings); // WP-57U
             Button(Loc.T("ui.settle.end.zuohwa"), new Vector2(300, 70), Blood, !life.IsPrologue, Zuohwa);
         }
 

@@ -32,6 +32,7 @@ namespace BloodRain.Presentation.Meta
         void Start()
         {
             var data = DataBoot.Data;
+            SettingsScreen.Apply(SettingsScreen.Current); // WP-57U 저장된 음량·언어·조준을 처음에 건다
             if (SoulStore.HasSoul)
             {
                 var soul = SoulStore.Load(data);
@@ -81,7 +82,7 @@ namespace BloodRain.Presentation.Meta
             float y = -60;
             Button("시작", root, Loc.T("ui.title.start"), ref y, true, StartGame);
             if (CanContinue) Button("이어하기", root, Loc.T("ui.title.continue"), ref y, true, ContinueGame);
-            Button("설정", root, Loc.T("ui.settings.title"), ref y, false, null);        // WP-57U 가 열면 잇는다
+            Button("설정", root, Loc.T("ui.settings.title"), ref y, true, OpenSettings); // WP-57U
             Button("인트로", root, Loc.T("ui.title.intro"), ref y, false, null);         // DL-07b 가 생기면 잇는다
         }
 
@@ -93,6 +94,18 @@ namespace BloodRain.Presentation.Meta
             string scene = SoulStore.HasSoul ? "Inn" : "Run";
             Debug.Log($"[타이틀] 시작 → {scene}");
             SceneManager.LoadScene(scene);
+        }
+
+        /// <summary>WP-57U 설정. 언어가 바뀌면 타이틀을 새 글로 다시 그린다.</summary>
+        public void OpenSettings()
+        {
+            if (_leaving || SettingsScreen.AnyOpen) return;
+            SettingsScreen.Show(font, langChanged =>
+            {
+                if (!langChanged) return;
+                for (int i = transform.childCount - 1; i >= 0; i--) Destroy(transform.GetChild(i).gameObject);
+                Build();
+            });
         }
 
         public void ContinueGame()
