@@ -399,7 +399,7 @@ namespace BloodRain.Presentation.Combat
                     var evo = EvoOf(s);
                     float R = ws.Length(s.Def.Range * (evo != null ? evo.Param("rangeMultiplier", 1f) : 1f));
                     // 웹 결정: 사거리 1.25배 안에 적이 있으면 가장 가까운 적 쪽, 없으면 바라보는 쪽
-                    float baseA = Nearest(R * 1.25f, out var dir) ? Mathf.Atan2(dir.y, dir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                    float baseA = AimAngle(Aim.MeleeReach(R)); // WP-52U
                     var dirs = EvolvedHits.FrontArcDirections(baseA, evo != null, Has(s, "앞뒤 베기"));
                     int strikes = Has(s, "3연 베기") ? 3 : 1;
                     float gap = Gap(s, 0.12f), kb = ws.Speed(Knock(s));
@@ -442,7 +442,7 @@ namespace BloodRain.Presentation.Combat
                         float pSpeed = Link("gwonjang", "palmSpeed") ?? 9f, pLife = Link("gwonjang", "palmLifeSeconds") ?? 0.9f, pRad = Link("gwonjang", "palmRadius") ?? 0.45f;
                         Later((hits - 1) * gap, () =>
                         {
-                            float pa = Nearest(ws.Length(pSpeed * pLife), out var pd) ? Mathf.Atan2(pd.y, pd.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                            float pa = AimAngle(ws.Length(Aim.ProjectileReach(pSpeed, pLife))); // WP-52U
                             Shoot(palm, pa, ws.Speed(pSpeed), ws.Length(pRad), Damage(palm) * pdr, 999, pLife, 0, 0f, ws.Speed(3f), new Color(0.95f, 0.85f, 0.55f, 0.6f));
                         });
                     }
@@ -463,7 +463,7 @@ namespace BloodRain.Presentation.Combat
                     if (fistEvo != null)
                     {
                         float spd = fistEvo.Param("projectileSpeed"), life = fistEvo.Param("projectileLifeSeconds");
-                        float a0 = Nearest(ws.Length(spd * life), out var fd) ? Mathf.Atan2(fd.y, fd.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                        float a0 = AimAngle(ws.Length(Aim.ProjectileReach(spd, life))); // WP-52U
                         foreach (var a in EvolvedHits.FanAngles(fistEvo, a0))
                             Shoot(s, a, ws.Speed(spd), ws.Length(fistEvo.Param("projectileRadius")), dmg * fistEvo.Param("projectileDamage"), 999, life, 0, 0f, kb,
                                   new Color(1f, 0.82f, 0.38f, 0.8f));
@@ -591,7 +591,7 @@ namespace BloodRain.Presentation.Combat
                         Later(k * gap, () =>
                         {
                             float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier);
-                            Shoot(s, Mathf.Atan2(player.Facing.y, player.Facing.x), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds * durationMultiplier, 0, shot.Homing, kb,
+                            Shoot(s, AimAngle(ws.Length(Aim.ProjectileReach(shot.Speed, shot.LifeSeconds * durationMultiplier))), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds * durationMultiplier, 0, shot.Homing, kb,
                                   new Color(0.95f, 0.85f, 0.55f, 0.55f));
                         });
                     break;
@@ -847,7 +847,7 @@ namespace BloodRain.Presentation.Combat
                     int n = WeaponGrowth.Projectiles(s.Def, s.level);
                     float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s) * (exYin ? evo.Param("extremeYinRangeMultiplier", 1f) : 1f));
                     float ls = evo != null ? evo.Param("lifesteal") : WeaponGrowth.At(s.Def.Lifesteal, s.level, 0f);
-                    float baseA = Nearest(R * 1.25f, out var cdir) ? Mathf.Atan2(cdir.y, cdir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                    float baseA = AimAngle(Aim.MeleeReach(R)); // WP-52U
                     float width = ws.Length(WeaponShapes.Trial.ClawWidth);
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R + width, _near);
                     var agents = enemies.Sim.Agents;
@@ -948,7 +948,7 @@ namespace BloodRain.Presentation.Combat
                     var spearEvo = EvoOf(s);
                     float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s));
                     int hits = Mathf.Max(1, Mathf.RoundToInt(WeaponGrowth.At(s.Def.Hits, s.level, 1f)));
-                    float baseA = Nearest(R * 1.25f, out var sdir) ? Mathf.Atan2(sdir.y, sdir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                    float baseA = AimAngle(Aim.MeleeReach(R)); // WP-52U
                     var dirs = WeaponShapes.ThrustDirections(baseA, spearEvo != null, spearEvo != null ? (int)spearEvo.Param("directions", 1f) : 1, Has(s, "회전 찌르기"));
                     float kb = ws.Speed(Knock(s)), unit = ws.Length(1f);
                     for (int h = 0; h < hits; h++)
@@ -994,7 +994,7 @@ namespace BloodRain.Presentation.Combat
                     int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount;
                     var shot = ShotOf(s);
                     int pierce = Has(s, "관통 +1") ? 1 : 0;
-                    float baseA = Nearest(ws.Length(s.Def.Range), out var pdir) ? Mathf.Atan2(pdir.y, pdir.x) : Mathf.Atan2(player.Facing.y, player.Facing.x);
+                    float baseA = AimAngle(ws.Length(s.Def.Range)); // WP-52U(웹 petal_scatter 와 같은 사거리 안)
                     foreach (var a in WeaponShapes.PetalAngles(baseA, n, petalEvo != null, () => UnityEngine.Random.value))
                     {
                         int before = _projs.Count;
@@ -1051,6 +1051,39 @@ namespace BloodRain.Presentation.Combat
             Shoot(null, angle, speed, radius, dmg, 999, life, 0, 0f, knock, new Color(0.95f, 0.85f, 0.55f, 0.7f));
         /// <summary>바라보는 쪽(단위 벡터).</summary>
         public Vector2 Facing => player != null ? new Vector2(player.Facing.x, player.Facing.y) : Vector2.right;
+
+        // WP-52U 조준(기획서 12장 '화면 편의 규칙' 조준, Core Aim, 웹 aimAngle). 설정 낱말 GameSettings.AimModeKey("aimMode")를 PlayerPrefs 에 둔다.
+        // 설정 화면(WP-57U)이 생기면 그 단추가 SetAimMode 를 부른다. 지금은 시험 메뉴 '조준 방식 바꾸기'.
+        static AimMode _aimMode = AimMode.Nearest;
+        static bool _aimLoaded;
+        public static AimMode AimMode
+        {
+            get
+            {
+                if (!_aimLoaded) { _aimLoaded = true; _aimMode = Aim.Parse(PlayerPrefs.GetString(BloodRain.Core.Meta.GameSettings.AimModeKey, "near")); }
+                return _aimMode;
+            }
+        }
+        public static void SetAimMode(AimMode mode)
+        {
+            _aimMode = mode; _aimLoaded = true;
+            PlayerPrefs.SetString(BloodRain.Core.Meta.GameSettings.AimModeKey, Aim.ToKey(mode));
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>방향 무공이 나갈 각도. 오른쪽 스틱 &gt; (가까운 적 방식이면) reach(화면 길이) 안 가장 가까운 적 &gt; 바라보는 쪽.
+        /// reach 는 근접이면 Aim.MeleeReach(사거리), 탄이면 Aim.ProjectileReach(탄속, 수명)을 화면 길이로 바꾼 값.</summary>
+        public float AimAngle(float reach)
+        {
+            var f = Facing;
+            Vector2 stick = Gamepad.current != null ? Gamepad.current.rightStick.ReadValue() : Vector2.zero; // 데드존은 Input System 프로세서가 거름
+            var mode = AimMode;
+            Vector2 d = Vector2.zero;
+            bool has = mode == AimMode.Nearest && stick == Vector2.zero && Nearest(reach, out d);
+            return LastAim = Aim.Angle(mode, 0f, 0f, f.x, f.y, has, d.x, d.y, stick.x, stick.y);
+        }
+        /// <summary>시험용: 마지막으로 고른 조준 각(라디안).</summary>
+        public float LastAim { get; private set; }
         /// <summary>시험용: 날고 있는 탄 수.</summary>
         public int ProjectileCount => _projs.Count;
 

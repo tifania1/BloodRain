@@ -466,7 +466,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 열하나 모두 켜면 보이고 끄면 없어짐, 콘솔 에러 0
   - 찍기: `docs/unity_shots/LK-01U/` 의 `<연환 id>.png`
 
-- [ ] WP-52U 조준: 방향 무공이 가까운 적을 노리게 · 먼저: R-12Ub
+- [x] WP-52U 조준: 방향 무공이 가까운 적을 노리게 · 먼저: R-12Ub — 2026-11-08 23:40 PC API: WeaponRunner.AimAngle(닿는 거리) 하나로 — 오른쪽 스틱(Gamepad.rightStick, 데드존은 Input System) > 가까운 적(방식 Nearest) > Facing, 셈은 Core `Aim.Angle`. 장풍·권장합일 장풍·백보신권 권경은 `Aim.ProjectileReach`, 삼재검법(천지인 삼검)·혈조·이화창은 `Aim.MeleeReach`, 낙화검우는 전처럼 사거리 안. 방식은 PlayerPrefs `aimMode`(GameSettings.AimModeKey)를 `WeaponRunner.AimMode`·`SetAimMode` 로. 설정 화면이 아직 없어 단추 대신 시험 메뉴 `BloodRain/Test/조준 방식/` 가까운 적·이동 방향(AimTestMenu.cs) — 설정 단추는 WP-57U 가 `SetAimMode` 로 잇는다. 플레이: 바라보는 쪽 0° 인데 장풍이 -58°·-75°(가까운 적 쪽), AimAngle = 가까운 적 각 103.8°, 이동 방향으로 바꾸니 장풍 0°. 나한권 먹 자국·비도 빈 과녁 갈래는 그대로 Facing(겉모양·과녁이 이미 있음). 콘솔 에러 0. 찍음 `docs/unity_shots/WP-52U/` 의 `aim_near.png`
   - 할 것: WeaponRunner 에서 `player.Facing` 을 바로 쓰는 방향 무공(장풍 탄·혈조 갈래·나한권 절기 탄·권장합일 장풍·삼재검법 절기 검기)을 한 함수 `AimAngle(닿는 거리)` 로 — 설정 '조준 방식'이 가까운 적(기본)이면 닿는 거리 안 가장 가까운 적 쪽, 없거나 '이동 방향'이면 Facing. 닿는 거리는 웹과 같게: 근접은 사거리 × 1.25, 탄은 탄속 × 수명. 삼재검법·이화창·낙화검우처럼 이미 `Nearest` 를 쓰는 곳도 같은 함수로. 패드 오른쪽 스틱을 기울이는 동안은 그쪽(12장).
   - 쓸 것: Core `Combat/Aim.cs`(2026-11-07 클라우드: `Aim.Angle(방식, 위치, Facing, 적 x·y 목록, 닿는 거리, 스틱)`·`Aim.MeleeReach`·`ProjectileReach`·설정 낱말 `Aim.Parse`/`ToKey` 'near'·'move', `AimTests`), 웹 프로토타입 `aimAngle`(template.html, WP-52), 기획서 12장 '화면 편의 규칙' 조준·8장 조작
   - 메뉴: 설정 화면에 '조준 방식' 단추(가까운 적 / 이동 방향), PlayerPrefs
@@ -492,6 +492,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 언어 단추(2026-11-07 15시 클라우드 WP-68): 열둘째 단추 `GameSettings.Lang`, 이름은 `GameSettings.LanguageNames[Language]` 를 `ui.settings.lang` 의 {0} 에. 누르면 Save 뒤 `Loc.Lang = s.Language`(캐시를 비워 바로 바뀜). Load 할 때 `systemLanguage: Application.systemLanguage.ToString()` 을 넘기고(`Loc.FromSystem` 은 2026-11-07 클라우드가 이미 `GameSettings.LanguageFor` 로 바꿈 — 컴파일만 확인). 목소리 단추 `GameSettings.Voice`(`ui.settings.voice` 의 {0} 에 `ui.settings.voice_ko`·`voice_zh`) — 기합 소리가 아직 없으니 값만 저장
   - 쓸 것: Core `Meta/GameSettings.cs`(2026-11-07 클라우드, `GameSettingsTests`), 웹 프로토타입 settings·SET_TURN·SET_HTML(template.html), 기획서 12장 화면 목록 '설정'·'화면 편의 규칙'
   - 메뉴: 타이틀 '설정', 일시정지 화면 '설정'
+  - 조준 방식 단추(2026-11-08 PC WP-52U): 값은 이미 `WeaponRunner.AimMode` 가 PlayerPrefs `aimMode` 로 읽음 — 단추는 `GameSettings.Turn` 뒤 `WeaponRunner.SetAimMode(s.Aim)` 만 부르면 됨. 시험 메뉴 `BloodRain/Test/조준 방식/` 는 그때 지워도 됨
   - 끝: 열하나를 눌러 보고 게임을 껐다 켜도 값이 남음. 흔들림 0·혈우 0·내 이펙트 0 으로 판에서 그대로 바뀜
   - 찍기: `docs/unity_shots/WP-57U/` 의 `settings.png`
 
