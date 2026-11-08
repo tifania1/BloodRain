@@ -26,7 +26,10 @@ jobs:
           python3 -c "import json; [json.loads(l) for l in open('sfx_queue/queue.jsonl', encoding='utf-8') if l.strip()]" || { echo "::error file=sfx_queue/queue.jsonl::대기열 문법 오류"; exit 1; }
       - name: 도구 테스트(파이썬)
         # ffmpeg 가 없으면 MP3 → ogg 한 바퀴 테스트는 건너뛰고 계산 테스트만 돈다
-        run: python3 -m unittest discover -s tools/tests
+        # test_postprocess_art(PR-02)가 PIL 을 쓴다. 러너 기본 파이썬엔 없어서 깐다(11-08 하루 내내 이걸로 실패)
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 -m unittest discover -s tools/tests
       - name: 테스트
         run: dotnet test core/BloodRain.sln --nologo
       - name: Unity 조건 빌드(nullable 꺼짐)
