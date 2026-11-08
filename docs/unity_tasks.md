@@ -438,7 +438,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 셋이 웹 프로토타입과 같음
   - 찍기: `docs/unity_shots/R-12U/` 의 `<id>.png`
 
-- [ ] LU-01U 기연 능력치로 넷째 레벨업 카드 · 먼저: 없음
+- [x] LU-01U 기연 능력치로 넷째 레벨업 카드 · 먼저: 없음 — 2026-11-08 21:10 PC: 코드는 이미 붙어 있었음(LevelUpScreen `Luck()` = LifeRunner.Stats.Luck 를 열 때·다시 고를 때 넘김). 확인만: Core RollLevelUp 200번씩 굴려 기연 50 이면 200/200 넷, 0 이면 25/200(전부 새 무공일 때 붙는 은자·음식 카드 — 기연과 무관). 네 장 화면 겹침 없음, 콘솔 에러 0. 찍음 `docs/unity_shots/LU-01U/` 의 `four_cards.png`
   - 할 것: LevelUpScreen 이 `RollLevelUp(_rng, 0f, …)`·`RollFirstLevelUp(_rng, 0f, …)` 로 기연을 늘 0 으로 넘겨, 연무장 '기연'·도문심법(기연 +10/Lv)·타고난 성질을 올려도 넷째 카드가 안 나온다(2026-11-08 클라우드가 찾음, 3장 용어표 '기연: 희귀 선택지'). 열 때·다시 고를 때 둘 다 `LifeRunner.Instance.Stats.Luck`(없으면 0)을 넘긴다. 서장 첫 레벨업(RollFirstLevelUp)은 무공 하나뿐이라 그대로 0 이어도 되지만 같은 값을 넘겨도 무방.
   - 쓸 것: Core `Loadout.RollLevelUp(rng, luck, unlocked)`(카드 수 = baseChoices + (rng < luck / balance.levelUp.luckForFourthChoice 이면 1), 최대 maxChoices), `LifeRunner.Stats.Luck`. 웹 template.html `luckForFourthChoice` 줄과 같음
   - 메뉴: 없음(시험은 도문심법을 무공 넣기로 Lv5 → 기연 50)
