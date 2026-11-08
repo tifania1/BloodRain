@@ -67,18 +67,20 @@ namespace BloodRain.Presentation
             var change = _director.Tick(dt, CurrentState(out bool breakthrough), breakthrough);
             if (change.HasValue) Switch(change.Value);
 
+            // BT-01U 돌파 연출 동안 0, 끝나고 bgm.quickFadeSeconds 에 걸쳐 돌아옴(Core SfxGate.BgmVolume)
+            float v = volume * (SfxPlayer.Instance != null ? SfxPlayer.Instance.BgmVolume(data.Balance.Bgm.QuickFadeSeconds) : 1f);
             if (_fadeLeft > 0f)
             {
                 _fadeLeft = Mathf.Max(0f, _fadeLeft - dt);
                 float t = _fade > 0f ? 1f - _fadeLeft / _fade : 1f;
                 // 등가 출력: 들어오는 곡 sin, 나가는 곡 cos
-                _a.volume = volume * Mathf.Sin(t * Mathf.PI * 0.5f);
-                _b.volume = volume * Mathf.Cos(t * Mathf.PI * 0.5f);
+                _a.volume = v * Mathf.Sin(t * Mathf.PI * 0.5f);
+                _b.volume = v * Mathf.Cos(t * Mathf.PI * 0.5f);
                 if (_fadeLeft <= 0f) { _b.Stop(); _b.clip = null; }
             }
             else
             {
-                _a.volume = volume;
+                _a.volume = v;
             }
         }
 

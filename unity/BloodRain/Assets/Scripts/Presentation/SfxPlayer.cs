@@ -89,6 +89,22 @@ namespace BloodRain.Presentation
             PlayClip(SfxGate.AbsorbSoundId(note));
         }
 
+        /// <summary>BT-01U 경지 돌파 연출이 시작됐다: seconds(실제 초) 동안 효과음을 끊고 붓 긋는 소리를 한 번(14장).
+        /// 연출 도중 또 불리면 끊는 끝만 늦추고 붓 소리는 다시 안 튼다.</summary>
+        public void Hush(float seconds)
+        {
+            var g = Gate();
+            if (g == null) return;
+            double now = Time.unscaledTimeAsDouble;
+            bool already = g.Hushed(now);
+            g.Hush(now, Mathf.Max(0f, seconds));
+            if (!already) Play(SfxGate.BreakthroughBrush);
+        }
+
+        /// <summary>배경음에 곱할 배: 돌파 연출 동안 0, 끝나고 returnFadeSeconds 에 걸쳐 1(Core SfxGate.BgmVolume).</summary>
+        public float BgmVolume(float returnFadeSeconds)
+            => _gate == null ? 1f : _gate.BgmVolume(Time.unscaledTimeAsDouble, returnFadeSeconds);
+
         /// <summary>한 생이 끝나면 비운다.</summary>
         public void Reset()
         {

@@ -84,6 +84,8 @@ namespace BloodRain.Presentation.Fx
             _center = center;
             _bt = new Breakthrough(ws.Scale, data.Cheonha.Breakthrough, data.Cheonha.Crush);
             _bt.Start(fromLevel, toLevel, revisit);
+            // BT-01U 연출 길이(1.4초, 다시 오른 경지면 0.7초 — Core DurationSeconds, 실제 초) 동안 소리 끊고 붓 소리 한 번
+            BloodRain.Presentation.SfxPlayer.Instance?.Hush(_bt.DurationSeconds);
             _factorExpFrom = _bt.FromRealm;
             _factorExpTo = _bt.ToRealm;
             _hasCurtain = _bt.FromBoundaryRadius.HasValue;

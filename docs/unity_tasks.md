@@ -459,7 +459,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 기혈 30% 이하에서 1초마다 심장 소리, 31% 로 회복하면 멈춤. 콘솔 에러 0
   - 찍기: 없음(SFX-14U 디버그 줄에 최근 소리로 보이면 `docs/unity_shots/SFX-15U/` 의 `debug.png`)
 
-- [ ] BT-01U 돌파 연출 동안 소리 끊기 · 먼저: SFX-14U
+- [x] BT-01U 돌파 연출 동안 소리 끊기 · 먼저: SFX-14U — 2026-11-09 03:00 PC: BreakthroughFx.Play(새 연출일 때만, Extend 는 아님)가 `SfxPlayer.Hush(_bt.DurationSeconds)` — 처음 끊을 때만 붓 소리 한 번(파일이 아직 없어 로그 `소리 파일이 아직 없음: sfx_breakthrough_brush`). BgmPlayer 는 매 프레임 volume × `SfxPlayer.BgmVolume(bgm.quickFadeSeconds)`. 플레이: `다음 경지까지 진기` 로 돌파 → 연출 1.40초, 그 사이 칼 소리 셋·흡수음 하나 다 버림(버린 수 +4), 배경음 배 0 → 끝나고 1. 콘솔 에러 0. 찍기 없음
   - 할 것: 14장 '경지 돌파 때 모든 소리가 끊기고 붓 긋는 소리 한 번'. 돌파 연출(BreakthroughFx)이 시작될 때 `SfxPlayer` 의 SfxGate 에 `Hush(Time.unscaledTimeAsDouble, 연출 길이)`(1.4초, 다시 오른 경지면 revisitSeconds 0.7초 — Core Breakthrough 가 쓰는 길이 그대로)를 걸고 `sfx_breakthrough_brush` 를 한 번 튼다(소리 파일이 아직 없으면 SfxPlayer 가 그냥 넘김). 연출 도중 또 넘으면 붓 소리는 다시 안 틈. BgmPlayer 는 매 프레임 볼륨에 `gate.BgmVolume(now, bgm.quickFadeSeconds)` 를 곱한다(연출 동안 0, 끝나고 1초에 걸쳐 돌아옴). 지금은 쓸림(0.8초) 처치음·흡수음이 연출 한가운데 몰려 울린다
   - 쓸 것: Core `World/Sfx.cs` `SfxGate.Hush`·`Hushed`·`BgmVolume`·`BreakthroughBrush`(2026-11-09 클라우드, `SfxGateTests.돌파_연출_동안은_…`), cheonha.json `breakthrough.zoomToSeconds`·`revisitSeconds`, balance.json `bgm.quickFadeSeconds`, 웹 프로토타입 sfx() 맨 앞 `G.brk` 줄
   - 메뉴: 없음(Run 씬에서 경지 돌파)
