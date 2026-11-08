@@ -8,7 +8,7 @@ namespace BloodRain.Presentation.Hud
     //   baseAlpha ± pulseAlpha 로 초당 pulseSpeed 라디안 출렁인다(웹: 가장자리 어둠 0.35 → 0.7 ± 0.15, 초당 6 라디안).
     //   먹 판은 코드로 굽는다: 가운데가 비고 가장자리로 갈수록 짙어지며, 경계가 노이즈로 번진 먹물처럼 들쭉날쭉하다.
     //   깜빡임 끄기 설정(WP-57U)이 Unity 에 붙으면 reduceFlashing 을 참으로 넣어 출렁임 없이 고정한다.
-    //   심장 소리 sfx_low_health_heart 는 아직 소리가 없다(오면 켜진 동안 SfxPlayer 로 되풀이).
+    //   심장 소리 sfx_low_health_heart 는 켜진 동안 SfxPlayer 로 되풀이(SFX-15U, 아래 Heart).
     public sealed class LowHealthHud : MonoBehaviour
     {
         [Tooltip("켜졌을 때 가장자리 먹의 가운데 진하기")]
@@ -60,6 +60,7 @@ namespace BloodRain.Presentation.Hud
             if (_vitals == null) _vitals = FindFirstObjectByType<PlayerVitals>();
             float ratio = _vitals != null && _vitals.MaxHealth > 0f ? _vitals.Health / _vitals.MaxHealth : 1f;
             Active = DataBoot.Data != null && DataBoot.Data.Balance.Contact.IsLowHealth(ratio);
+            Heart();
             float target = 0f;
             if (Active)
                 target = reduceFlashing ? baseAlpha : baseAlpha + pulseAlpha * Mathf.Sin(Time.unscaledTime * pulseSpeed);
@@ -67,6 +68,24 @@ namespace BloodRain.Presentation.Hud
             // 켜질 때·꺼질 때만 천천히, 켜진 동안의 출렁임은 그대로 따라간다
             c.a = Active && c.a >= baseAlpha - pulseAlpha - 0.01f ? target : Mathf.MoveTowards(c.a, target, Time.unscaledDeltaTime * fade);
             _ink.color = c;
+        }
+
+        // SFX-15U 심장 소리: 위험에 들어서는 순간 한 번, 그 뒤 balance sfx.lowHealthHeartSeconds 마다(웹 G.heartT).
+        // 세상 시간(deltaTime)으로 세니 레벨업 화면처럼 세상이 멈춘 동안은 쉰다. 위험을 벗어나면 바로 멈추고 다음에 다시 처음부터.
+        float _heartT;
+        bool _heartOn;
+
+        void Heart()
+        {
+            float every = DataBoot.Data != null ? DataBoot.Data.Balance.Sfx.LowHealthHeartSeconds : 0f;
+            if (!Active || every <= 0f) { _heartOn = false; return; }
+            if (Time.timeScale <= 0f) return;
+            if (!_heartOn) { _heartOn = true; _heartT = 0f; }
+            _heartT -= Time.deltaTime;
+            if (_heartT > 0f) return;
+            _heartT += every;
+            if (_heartT < 0f) _heartT = every;
+            SfxPlayer.Instance?.Play("sfx_low_health_heart");
         }
 
         // 가장자리 먹 판. 거리(화면 비율로 늘려 씀)에 낮은 주파수 값 노이즈를 더해 경계가 번진 먹처럼 들쭉날쭉하게.
