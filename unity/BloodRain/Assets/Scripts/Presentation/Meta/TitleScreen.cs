@@ -12,6 +12,7 @@ namespace BloodRain.Presentation.Meta
     //   바탕 bg_title(없으면 선지 #EFE6D2) 위에 ScreenRain 붉은 비, 붓 글꼴 '血雨江湖' + 낙관, 아래 단추 넷.
     //   시작: 혼 저장이 없으면 서장(Run), 있으면 객잔(Inn — 서장을 안 마친 혼이면 InnFlow 가 다시 서장으로 보냄).
     //   이어하기: 새 혼이 아닐 때만 보임 → 객잔.
+    //   크레딧(TT-02U)은 CreditsScreen 두루마리.
     //   설정(WP-57U)·인트로 다시 보기(DL-07b)는 그 화면이 아직 없어 잠근 단추로 자리만. 생기면 OpenSettings·OpenIntro 를 잇는다.
     //   메인 테마는 bgm_title 이 Unity 에 들어오면 붙인다(지금 없어 무음).
     public sealed class TitleScreen : MonoBehaviour
@@ -81,10 +82,11 @@ namespace BloodRain.Presentation.Meta
             var sealText = Text("낙관 글", seal.transform, "血", 44, FontStyles.Normal, PaperBg, brushFont != null ? brushFont : font);
             Stretch(sealText.rectTransform);
 
-            float y = -60;
+            float y = -20; // 단추가 여섯(이어하기 포함)이라 화면 안에 들게
             Button("시작", root, Loc.T("ui.title.start"), ref y, true, StartGame);
             if (CanContinue) Button("이어하기", root, Loc.T("ui.title.continue"), ref y, true, ContinueGame);
             Button("설정", root, Loc.T("ui.settings.title"), ref y, true, OpenSettings); // WP-57U
+            Button("크레딧", root, Loc.T("ui.title.credits"), ref y, true, OpenCredits);  // TT-02U
             Button("인트로", root, Loc.T("ui.title.intro"), ref y, false, null);         // DL-07b 가 생기면 잇는다
         }
 
@@ -101,7 +103,7 @@ namespace BloodRain.Presentation.Meta
         /// <summary>WP-57U 설정. 언어가 바뀌면 타이틀을 새 글로 다시 그린다.</summary>
         public void OpenSettings()
         {
-            if (_leaving || SettingsScreen.AnyOpen) return;
+            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen) return;
             SettingsScreen.Show(font, langChanged =>
             {
                 // QA-16: 언어가 그대로여도 '혈우 연출'을 바꿨으면 뒤의 비를 바로 맞춘다(전엔 다음에 타이틀을 열 때까지 그대로)
@@ -110,6 +112,13 @@ namespace BloodRain.Presentation.Meta
                 for (int i = transform.childCount - 1; i >= 0; i--) Destroy(transform.GetChild(i).gameObject);
                 Build();
             });
+        }
+
+        /// <summary>TT-02U 크레딧 두루마리. 끝나거나 Esc 면 타이틀로 돌아온다.</summary>
+        public void OpenCredits()
+        {
+            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen) return;
+            CreditsScreen.Show(font, brushFont, () => Debug.Log("[타이틀] 크레딧 닫음"));
         }
 
         public void ContinueGame()
@@ -136,7 +145,7 @@ namespace BloodRain.Presentation.Meta
             var t = Text("글", go.transform, label, 32, FontStyles.Bold, Ink, font);
             if (!enabled) t.alpha = 0.55f;
             Stretch(t.rectTransform);
-            y -= 92;
+            y -= 86;
         }
 
         // 바탕 그림을 화면 비율에 맞춰 넘치게(cover) — 1920x1080 기준 캔버스 안에서 그림 비율을 지킨다
