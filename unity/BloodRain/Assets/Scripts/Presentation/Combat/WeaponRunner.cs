@@ -1069,6 +1069,9 @@ namespace BloodRain.Presentation.Combat
         /// <summary>R-15U 팔방풍우: 무공 칸 없이 장풍 탄 한 발(다 뚫음). angle 라디안, 속도·반경·넉백은 축척을 곱한 세계 값.</summary>
         public void ShootFree(float angle, float speed, float radius, float dmg, float life, float knock) =>
             Shoot(null, angle, speed, radius, dmg, 999, life, 0, 0f, knock, new Color(0.95f, 0.85f, 0.55f, 0.7f));
+        /// <summary>R-07U 개방 제자: 몸이 아닌 자리(from)에서 장풍 탄 한 발.</summary>
+        public void ShootFreeFrom(Vector2 from, float angle, float speed, float radius, float dmg, float life, float knock) =>
+            Shoot(null, angle, speed, radius, dmg, 999, life, 0, 0f, knock, new Color(0.80f, 0.62f, 0.38f, 0.7f), from);
         /// <summary>바라보는 쪽(단위 벡터).</summary>
         public Vector2 Facing => player != null ? new Vector2(player.Facing.x, player.Facing.y) : Vector2.right;
 

@@ -574,7 +574,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/SD-01U/` 의 화면별 `deck_<화면>.png`
   - 확인(2026-11-09 05시 클라우드 QA-18): 침방 산문 그림 카드의 이름 뒤에 옅은 종이 띠('이름 띠')를 깔았다. 다음에 침방을 열 때 소림 카드 이름이 읽히는지, 콘솔 에러 없는지 한 번 봐 줄 것
 
-- [ ] R-07U 진전 소림 4·개방 4 · 먼저: C-06b
+- [x] R-07U 진전 소림 4·개방 4 · 먼저: C-06b — 2026-11-09 22:47 PC: `Presentation/Combat/SchoolSummonRunner.cs` 를 LifeRunner 가 한 생에 하나 붙이고 Update 마다 `Step(기혈 비율, dt)` → Core `SchoolSummons.Tick(LifeRunner.Effects, …)`. 허상: images 개 금빛 점이 radius × 축척 둘레를 돎, 0.1초마다 둘레 안 적에게 `ArhatPush` 넉백(family boss 제외, knockbackResist 반영, 피해 없음). 제자: AlliesPresent 명이 몸 곁 세 자리에(적 표적 아님), AllyVolleys 마다 제자 자리에서 가장 가까운 적으로 장풍 shot 그대로 한 발 — WeaponRunner 에 `ShootFreeFrom(from, …)` 을 더함, 피해·넉백은 `AllyShot(fx, 1)`(공력 따로 안 곱함 — ShootFree 와 같은 길). 플레이: 시험으로 `testEffects` 에 소림·개방 4 를 넣고 기혈 0.4 로 떨어뜨리니 허상 켜짐, 다섯 번 시도에 3번까지만(2a 3a 3- 3-), 180초 흘리니 제자 셋·10초, 2초 안에 밀기 4번·장풍 16발, 처치 5 → 35. 콘솔 에러 0. 그림은 아직 단색 점(허상·제자 그림이 art_queue 에 생기면 바꿀 것). 진전 채우기 시험 메뉴는 만들지 않음(execute_code 로 `Summons.testEffects`). 찍음 `docs/unity_shots/R-07U/` 의 `arhat.png`·`allies.png`
   - 할 것: 한 생에 `new Core.Build.SchoolSummons()` 하나, 프레임마다 `summons.Tick(SynergyEffects, 기혈/최대, 세상 dt)`. `ArhatStarted` 면 몸 둘레 나한 허상 `Tier("arhat_ring").Param("images")` 개를 `ArhatSecondsLeft` 동안, 닿는 적은 `summons.ArhatPush(fx, 거리, 보스인가, 축척)` 만큼 밀어냄(피해 없음, 2026-11-05 R-07b 데이터). `AlliesSpawned` 만큼 개방 제자를 `AlliesSecondsLeft` 동안(적이 노리지 않음), `AllyVolleys` 만큼 제자마다 가장 가까운 적에게 장풍 Lv1 탄 한 대 — 피해·넉백은 `SchoolSummons.AllyShot(fx, 공력)`.
   - 쓸 것: Core `Build/SchoolSummons.cs`, synergies.json
   - 메뉴: C-06b 의 진전 채우기(소림·개방 4)

@@ -345,6 +345,23 @@ namespace BloodRain.Presentation
                     : (System.Func<float, float>)null;
         }
 
+        // ---- R-07U 진전 소림 4·개방 4 ----
+        /// <summary>한 생에 하나(SchoolSummons 를 들고 있음). 시험 메뉴·디버그가 본다.</summary>
+        public Combat.SchoolSummonRunner Summons { get; private set; }
+
+        void TickSummons(float dt)
+        {
+            if (Summons == null)
+            {
+                Summons = new GameObject("진전 소환", typeof(Combat.SchoolSummonRunner)).GetComponent<Combat.SchoolSummonRunner>();
+                Summons.transform.SetParent(transform, false);
+                Summons.life = this; Summons.weapons = weapons; Summons.enemies = enemies; Summons.player = player;
+            }
+            if (Summons.weapons == null) Summons.weapons = weapons;
+            float ratio = vitals != null && vitals.MaxHealth > 0f ? vitals.Health / vitals.MaxHealth : 1f;
+            Summons.Step(ratio, dt);
+        }
+
         // ---- LF-03 쓰러짐 ----
 
         /// <summary>시험 메뉴 '지금 쓰러지기'.</summary>
@@ -480,6 +497,7 @@ namespace BloodRain.Presentation
             if (second != null) SpawnSecond(second);
             TickInsights(dt);
             TickDissolution(dt);
+            TickSummons(dt);
             // R-15U 태극무량 동안 몸 둘레 적 탄 되돌림(받는 피해 0 은 DamageTakenMultiplier 가 이미 함)
             if (enemies != null) { var ul = _life.Ultimate; enemies.reflectRadius = ul != null && ul.ReflectsProjectiles ? ul.GuardRadius(WorldScale.Current != null ? WorldScale.Current.Length(1f) : 1f) : 0f; }
             _statTimer -= Time.unscaledDeltaTime;
