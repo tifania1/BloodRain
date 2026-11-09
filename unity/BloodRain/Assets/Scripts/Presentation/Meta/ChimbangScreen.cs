@@ -90,8 +90,101 @@ namespace BloodRain.Presentation.Meta
             Say(Talk.Show(), true);
             _map.SetSoul(soul);
             BuildUpgrades(soul);
+            ClosePinPicker();
+            RefreshPin();
             Refresh();
         }
+
+        // ---- 바라는 문파(SV-02U, 기획서 21장 환혼 강화 '바라는 문파') ----
+        // 강화를 샀고 첫 환혼이 아닐 때만 후보 위에 한 줄. 바꾸면 혼에 저장하고 다음 생 뽑기부터 반영(지금 Draw 는 그대로).
+        TextMeshProUGUI _pinLabel;
+        Button _pinButton;
+        RectTransform _pinPicker;
+        RectTransform _root;
+        /// <summary>시험용: 바라는 문파 줄이 보이는가.</summary>
+        public bool PinLineVisible => _pinLabel != null && _pinLabel.gameObject.activeSelf;
+        /// <summary>시험용: 바라는 문파 줄 글.</summary>
+        public string PinLine => _pinLabel != null ? _pinLabel.text : "";
+
+        void BuildPinLine(RectTransform root)
+        {
+            _pinLabel = Text("바라는 문파", root, "", 24, FontStyles.Normal);
+            Place(_pinLabel.rectTransform, new Vector2(0.5f, 1f), new Vector2(-430, -238), new Vector2(760, 34));
+            _pinLabel.alignment = TextAlignmentOptions.Right;
+            _pinButton = MakeButton("바라는 문파 바꾸기", root, new Color(0.25f, 0.20f, 0.17f), out var l, 22, Paper);
+            l.text = Loc.T("ui.chimbang.pin_change");
+            Place((RectTransform)_pinButton.transform, new Vector2(0.5f, 1f), new Vector2(40, -238), new Vector2(150, 36));
+            _pinButton.onClick.AddListener(OpenPinPicker);
+        }
+
+        void RefreshPin()
+        {
+            if (_pinLabel == null) return;
+            bool show = _soul != null && _soul.HasSectPin && Draw != null && !Draw.IsFirst;
+            _pinLabel.gameObject.SetActive(show);
+            _pinButton.gameObject.SetActive(show);
+            if (!show) return;
+            var id = _soul.ActivePinnedSect;
+            var sect = id != null ? _data.Cheonha.Sect(id) : null;
+            string name = sect != null ? $"<b>{Loc.Sect(sect)}</b>" : $"<color={MutedHex}>{Loc.T("ui.chimbang.pin_none")}</color>";
+            _pinLabel.text = Loc.F("ui.chimbang.pin", name);
+        }
+
+        /// <summary>해금한 문파 목록을 띄운다. 문파 이름 + 대표 인물(얼굴 그림이 생기면 그 자리에).</summary>
+        public void OpenPinPicker()
+        {
+            if (_soul == null || !_soul.HasSectPin || _done) return;
+            ClosePinPicker();
+            _pinPicker = Rect("바라는 문파 고르기", _root, Vector2.zero, Vector2.one);
+            var dim = _pinPicker.gameObject.AddComponent<Image>();
+            dim.color = new Color(0, 0, 0, 0.55f);
+            var shut = _pinPicker.gameObject.AddComponent<Button>();
+            shut.transition = Selectable.Transition.None;
+            shut.onClick.AddListener(ClosePinPicker);
+
+            var sects = _soul.UnlockedSects.Select(id => _data.Cheonha.Sect(id)).Where(s => s != null).ToList();
+            int cols = 4, rows = (sects.Count + cols - 1) / cols;
+            var panel = Rect("판", _pinPicker, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
+            panel.sizeDelta = new Vector2(cols * 250 + 60, rows * 92 + 120);
+            var pimg = panel.gameObject.AddComponent<Image>();
+            pimg.color = new Color(Paper.r, Paper.g, Paper.b, 0.97f);
+            var head = Text("머리", panel, Loc.T("ui.chimbang.pin_pick"), 26, FontStyles.Bold);
+            Place(head.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -40), new Vector2(cols * 250, 40));
+            for (int i = 0; i < sects.Count; i++)
+            {
+                var s = sects[i];
+                bool on = _soul.ActivePinnedSect == s.Id;
+                var b = MakeButton(s.Id, panel, on ? new Color(0.70f, 0.20f, 0.16f) : SectColor(s.Id), out var lab, 22, Paper);
+                var lc = s.Leader != null ? _data.Characters.FirstOrDefault(c => c.Id == s.Leader) : null;
+                string leader = lc != null ? $"\n<size=70%><alpha=#CC>{Loc.Character(lc)}<alpha=#FF></size>" : "";
+                lab.text = $"{Loc.Sect(s)}{leader}";
+                lab.enableAutoSizing = true; lab.fontSizeMin = 14; lab.fontSizeMax = 22;
+                var rt = (RectTransform)b.transform;
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.sizeDelta = new Vector2(230, 78);
+                rt.anchoredPosition = new Vector2((i % cols - (cols - 1) / 2f) * 250, -110 - (i / cols) * 92);
+                string id = s.Id;
+                b.onClick.AddListener(() => PickPin(id));
+            }
+        }
+
+        /// <summary>바라는 문파를 고른다. 혼에 남기고 저장, 줄 글만 새로 쓴다(지금 후보는 그대로).</summary>
+        public bool PickPin(string sectId)
+        {
+            if (_soul == null || !_soul.TryPinSect(sectId)) return false;
+            SoulStore.Save(_soul);
+            ClosePinPicker();
+            RefreshPin();
+            return true;
+        }
+
+        public void ClosePinPicker()
+        {
+            if (_pinPicker != null) Destroy(_pinPicker.gameObject);
+            _pinPicker = null;
+        }
+
+        public bool PinPickerOpen => _pinPicker != null;
 
         Soul _soul;
         readonly List<MetaShopRow> _upgradeRows = new List<MetaShopRow>();
@@ -119,7 +212,7 @@ namespace BloodRain.Presentation.Meta
             float y = -40;
             foreach (var up in _data.Cheonha.Rebirth.Upgrades)
             {
-                var row = MetaShopRow.Upgrade(_upgrades, font, soul, up, () => { foreach (var r in _upgradeRows) r.Refresh(); head.text = UpgradeHead(soul); }, 640);
+                var row = MetaShopRow.Upgrade(_upgrades, font, soul, up, () => { foreach (var r in _upgradeRows) r.Refresh(); head.text = UpgradeHead(soul); RefreshPin(); }, 640);
                 row.Rect.anchorMin = row.Rect.anchorMax = new Vector2(0.5f, 1f);
                 row.Rect.anchoredPosition = new Vector2(0, y);
                 _upgradeRows.Add(row);
@@ -164,6 +257,11 @@ namespace BloodRain.Presentation.Meta
         {
             var kb = Keyboard.current;
             if (kb == null || Draw == null) return;
+            if (_pinPicker != null)
+            {
+                if (kb.escapeKey.wasPressedThisFrame) ClosePinPicker();
+                return;
+            }
             Key[] keys = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4 };
             for (int i = 0; i < keys.Length; i++)
                 if (kb[keys[i]].wasPressedThisFrame) Choose(i);
@@ -191,6 +289,7 @@ namespace BloodRain.Presentation.Meta
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
             var root = (RectTransform)canvasGo.transform;
+            _root = root;
 
             var bg = Rect("배경", root, Vector2.zero, Vector2.one).gameObject.AddComponent<Image>();
             bg.sprite = background;
@@ -225,6 +324,7 @@ namespace BloodRain.Presentation.Meta
             _reroll = MakeButton("다시 고르기", root, new Color(0.25f, 0.20f, 0.17f), out _rerollLabel, 26, Paper);
             Place((RectTransform)_reroll.transform, new Vector2(0.5f, 0f), new Vector2(0, 80), new Vector2(420, 64));
             _reroll.onClick.AddListener(Reroll);
+            BuildPinLine(root);
         }
 
         /// <summary>카드에서 글 바탕이 차지하는 높이(아래부터). 위는 산문 그림·이름.</summary>
@@ -272,6 +372,17 @@ namespace BloodRain.Presentation.Meta
             name.enableAutoSizing = true; name.fontSizeMin = 22; name.fontSizeMax = 38;
             var key = Text("번호", rt, $"<alpha=#88>{index + 1}<alpha=#FF>", 24, FontStyles.Normal);
             Place(key.rectTransform, new Vector2(1f, 1f), new Vector2(-26, -26), new Vector2(40, 40));
+            if (cand.Pinned)
+            {
+                // 바라는 문파로 든 후보(SV-02U): 왼쪽 위에 붉은 낙관 한 자
+                var sealBack = Rect("願 낙관", rt, new Vector2(0, 1), new Vector2(0, 1));
+                sealBack.pivot = new Vector2(0.5f, 0.5f);
+                sealBack.anchoredPosition = new Vector2(30, -30); sealBack.sizeDelta = new Vector2(42, 42);
+                var si = sealBack.gameObject.AddComponent<Image>(); si.color = new Color(0.70f, 0.15f, 0.12f, 0.92f); si.raycastTarget = false;
+                var seal = Text("글", sealBack, Loc.T("ui.chimbang.pin_seal"), 28, FontStyles.Bold);
+                seal.color = Paper;
+                var srt = seal.rectTransform; srt.anchorMin = Vector2.zero; srt.anchorMax = Vector2.one; srt.offsetMin = srt.offsetMax = Vector2.zero;
+            }
 
             var body = Text("내용", rt, CardIntro(index) + CardBody(cand), 19, FontStyles.Normal);
             body.alignment = TextAlignmentOptions.TopLeft;
