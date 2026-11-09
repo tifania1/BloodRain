@@ -1,3 +1,4 @@
+using System.Linq;
 using BloodRain.Presentation.Hud;
 using TMPro;
 using UnityEngine;
@@ -10,8 +11,8 @@ namespace BloodRain.Presentation.Meta
 {
     // TT-01U 타이틀 화면(기획서 12장 화면 목록 '타이틀'). Boot 씬에 붙어 게임을 켜면 처음 보이는 화면.
     //   바탕 bg_title(없으면 선지 #EFE6D2) 위에 ScreenRain 붉은 비, 붓 글꼴 '血雨江湖' + 낙관, 아래 단추 넷.
-    //   시작: 혼 저장이 없으면 서장(Run), 있으면 객잔(Inn — 서장을 안 마친 혼이면 InnFlow 가 다시 서장으로 보냄).
-    //   이어하기: 새 혼이 아닐 때만 보임 → 객잔.
+    //   시작: 저장 칸 고르기(SV-01Ub, SlotSelectScreen) — 빈 칸은 서장(Run), 혼이 든 칸은 객잔(Inn).
+    //   이어하기: 혼이 든 칸이 있을 때만 보임 → 마지막으로 쓴 칸(SoulSlots.ContinueSlot)의 객잔.
     //   크레딧(TT-02U)은 CreditsScreen 두루마리.
     //   설정(WP-57U)·인트로 다시 보기(DL-07b)는 그 화면이 아직 없어 잠근 단추로 자리만. 생기면 OpenSettings·OpenIntro 를 잇는다.
     //   메인 테마는 bgm_title 이 Unity 에 들어오면 붙인다(지금 없어 무음).
@@ -29,19 +30,17 @@ namespace BloodRain.Presentation.Meta
         /// <summary>새 혼이 아닌 혼 저장이 있는가(이어하기를 보일지).</summary>
         public bool CanContinue { get; private set; }
         bool _leaving;
+        int? _continueSlot;
         ScreenRain _rain; // 설정을 닫으면 '혈우 연출' 세기를 다시 건다
 
         void Start()
         {
             var data = DataBoot.Data;
             SettingsScreen.Apply(SettingsScreen.Current); // WP-57U 저장된 음량·언어·조준을 처음에 건다
-            if (SoulStore.HasSoul)
-            {
-                var soul = SoulStore.Load(data);
-                CanContinue = soul.PrologueDone || soul.Lives > 0;
-            }
+            _continueSlot = SlotSelectScreen.ContinueSlot(); // SV-01Ub 마지막으로 쓴 칸(없으면 가장 늦게 한 칸)
+            CanContinue = _continueSlot != null;
             Build();
-            Debug.Log($"[타이틀] 혼 저장 {(SoulStore.HasSoul ? "있음" : "없음")}, 이어하기 {CanContinue}");
+            Debug.Log($"[타이틀] 이어하기 칸 {(_continueSlot?.ToString() ?? "없음")}");
         }
 
         void Build()
@@ -90,20 +89,18 @@ namespace BloodRain.Presentation.Meta
             Button("인트로", root, Loc.T("ui.title.intro"), ref y, false, null);         // DL-07b 가 생기면 잇는다
         }
 
+        /// <summary>SV-01Ub 시작 → 저장 칸 고르기. 칸을 고르면 그 화면이 서장·객잔으로 보낸다.</summary>
         public void StartGame()
         {
-            if (_leaving) return;
-            _leaving = true;
-            // 인트로 컷신(DL-07b)이 생기면 혼 저장이 없을 때 그것부터
-            string scene = SoulStore.HasSoul ? "Inn" : "Run";
-            Debug.Log($"[타이틀] 시작 → {scene}");
-            SceneManager.LoadScene(scene);
+            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen || SlotSelectScreen.AnyOpen) return;
+            // 인트로 컷신(DL-07b)이 생기면 빈 칸을 골랐을 때 그것부터
+            SlotSelectScreen.Show(font, () => Debug.Log("[타이틀] 칸 고르기 닫음"));
         }
 
         /// <summary>WP-57U 설정. 언어가 바뀌면 타이틀을 새 글로 다시 그린다.</summary>
         public void OpenSettings()
         {
-            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen) return;
+            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen || SlotSelectScreen.AnyOpen) return;
             SettingsScreen.Show(font, langChanged =>
             {
                 // QA-16: 언어가 그대로여도 '혈우 연출'을 바꿨으면 뒤의 비를 바로 맞춘다(전엔 다음에 타이틀을 열 때까지 그대로)
@@ -117,16 +114,17 @@ namespace BloodRain.Presentation.Meta
         /// <summary>TT-02U 크레딧 두루마리. 끝나거나 Esc 면 타이틀로 돌아온다.</summary>
         public void OpenCredits()
         {
-            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen) return;
+            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen || SlotSelectScreen.AnyOpen) return;
             CreditsScreen.Show(font, brushFont, () => Debug.Log("[타이틀] 크레딧 닫음"));
         }
 
         public void ContinueGame()
         {
-            if (_leaving || !CanContinue) return;
+            if (_leaving || !CanContinue || SlotSelectScreen.AnyOpen) return;
             _leaving = true;
-            Debug.Log("[타이틀] 이어하기 → Inn");
-            SceneManager.LoadScene("Inn");
+            int n = _continueSlot.Value;
+            Debug.Log($"[타이틀] 이어하기 → {n}번 칸");
+            SlotSelectScreen.Enter(SlotSelectScreen.ReadSlots().First(x => x.Slot == n));
         }
 
         void Button(string name, RectTransform root, string label, ref float y, bool enabled, UnityEngine.Events.UnityAction onClick)
