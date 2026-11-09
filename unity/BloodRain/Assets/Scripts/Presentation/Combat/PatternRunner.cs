@@ -227,10 +227,10 @@ namespace BloodRain.Presentation.Combat
             var life = runner.Life;
             if (_prologue)
             {
-                // 서장 끝(KillPrologueBoss → 컷 → 첫 환혼)은 C-10b
                 Debug.Log($"[PatternRunner] 서장 {_fight.Boss.NameKo} 쓰러짐");
                 LastEvent = "쓰러짐";
                 EndFight();
+                runner.EndPrologue(); // C-10b KillPrologueBoss → 컷 → 객잔 침방 첫 환혼
                 return;
             }
             Debug.Log($"[PatternRunner] {_fight.Boss.NameKo} 쓰러짐");

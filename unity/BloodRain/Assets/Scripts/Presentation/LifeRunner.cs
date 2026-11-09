@@ -33,6 +33,8 @@ namespace BloodRain.Presentation
         public PlayerVitals vitals;
         [Tooltip("생이 끝나면 여는 정산 화면(loadInnScene 켬)")]
         public SettlementScreen settlement;
+        /// <summary>C-10b 서장 끝 컷(없으면 컷 없이 바로 객잔).</summary>
+        public CutScreen cuts;
         public bool showDebug = true;
 
         long _kills;
@@ -156,6 +158,7 @@ namespace BloodRain.Presentation
                 if (lu != null) ps.font = lu.font;
             }
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
+            if (cuts == null) cuts = FindFirstObjectByType<CutScreen>();
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
             _edges = FindFirstObjectByType<BloodRain.Presentation.Fx.EdgeIndicators>();
             if (_edges != null) _edges.Bind(_life.Bosses);
@@ -388,7 +391,8 @@ namespace BloodRain.Presentation
                 // 서장: 정산으로 가지 않는다. 각성이면 기혈 1로 이어서, 아니면 같은 혼·몸으로 처음부터(서장 끝은 C-10b)
                 var down = _life.PlayerDown();
                 Debug.Log($"[LifeRunner] 서장에서 쓰러짐 → {down}");
-                if (down == PrologueDown.Awaken)
+                // 각성·각성 뒤(Hold)와 장삼을 쓰러뜨린 뒤(Ignore)는 쓰러지지 않는다(기혈 1). 처음부터는 Restart 일 때만(C-10b: 전엔 Hold 도 처음부터로 빠졌음)
+                if (down != PrologueDown.Restart)
                 {
                     if (vitals != null) vitals.Revive(1f);
                     return;
@@ -450,6 +454,24 @@ namespace BloodRain.Presentation
                 yield return null;
             }
             Destroy(go);
+        }
+
+        /// <summary>C-10b 서장 끝: 장삼을 쓰러뜨렸다. KillPrologueBoss → Soul.EndLife(PrologueDone) → 저장 → 끝 컷 → 객잔(침방 첫 환혼).
+        /// 정산은 열지 않는다(서장은 윤회의 기를 남기지 않는 판, 21장).</summary>
+        public void EndPrologue()
+        {
+            if (_life == null || !_life.IsPrologue || _life.Record != null) return;
+            var soul = RebirthHandoff.Soul;
+            SfxPlayer.Instance?.Reset();
+            var record = _life.KillPrologueBoss();
+            soul.EndLife(record);
+            SoulStore.Save(soul);
+            RebirthHandoff.ClearBody();
+            Debug.Log($"[LifeRunner] 서장 끝 · 혼 PrologueDone {soul.PrologueDone} · 컷 {_life.Prologue.Step}");
+            Time.timeScale = 0f;
+            void ToInn() { Time.timeScale = 1f; SceneManager.LoadScene("Inn"); }
+            if (cuts == null) { Debug.LogWarning("[LifeRunner] 컷 화면이 없어 바로 객잔으로"); ToInn(); return; }
+            cuts.Play(_life.Prologue, ToInn);
         }
 
         /// <summary>한 생을 끝내고 혼에 옮겨 저장한 뒤 정산을 연다. 정산이 끝나면 객잔(Inn) 씬.</summary>

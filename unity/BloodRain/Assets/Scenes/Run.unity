@@ -1060,6 +1060,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &670523073
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 670523075}
+  - component: {fileID: 670523074}
+  m_Layer: 0
+  m_Name: "\uC11C\uC7A5 \uB05D \uCEF7"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &670523074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670523073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0d96b1737c6c04438dbcbd37e697c29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Meta.CutScreen
+  font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
+  art:
+  - {fileID: 2800000, guid: c05242b4dc964e90808a90ee47e3bb38, type: 3}
+  - {fileID: 2800000, guid: 2edc38293eb04079afd3469a6cc7e783, type: 3}
+  inputGuardSeconds: 0.6
+--- !u!4 &670523075
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670523073}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &680656953
 GameObject:
   m_ObjectHideFlags: 0
@@ -2332,6 +2381,7 @@ MonoBehaviour:
   breakthrough: {fileID: 1699483550}
   vitals: {fileID: 938528425}
   settlement: {fileID: 105931645}
+  cuts: {fileID: 670523074}
   showDebug: 1
   weapons: {fileID: 0}
 --- !u!4 &1699483552
@@ -2935,3 +2985,4 @@ SceneRoots:
   - {fileID: 1102430068}
   - {fileID: 1700858266}
   - {fileID: 1271029690}
+  - {fileID: 670523075}
