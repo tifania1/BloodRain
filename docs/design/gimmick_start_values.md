@@ -209,5 +209,5 @@
 
 1. gimmicks.json 에 `bambooThicket`·`driftingBoats`·`reverseWave`·`cloudSea`·`cliffPath` 와 배치 값 묶음(`layout`: 간격·반폭·굽이·고리)을 넣는다. 7장 '지형 기믹 수치' 표에 1절 끝 다섯 줄, '아직 수치가 없습니다' 문장, `docs/design/gdd_changes.md` 한 줄. 지역 표의 '떠내려오는 배'와 수치 문장의 '떠내려가는 배'가 다르게 적혀 있으니 같이 맞춘다.
 2. Core `World/Gimmicks` 에 판정·배치 함수(탑림 `Layout` 꼴)와 테스트. `GimmicksTests.지역의_기믹_이름은_데이터나_아직_목록에_있다` 의 아직 목록에서 다섯을 빼고, 수치 표 테스트(`Gimmicks2Tests.수치_표가_데이터와_같다` 꼴)에 다섯 줄.
-3. 웹 시안 `LD` 놀이판 값을 gimmicks.json 에서 읽게 바꾸고, 프로토타입 WP-13b 남은 것(물길·태극 바닥·모닥불·범종 격자·탑림·혈제단)을 이 값으로.
+3. 웹 시안 `LD` 놀이판 값과 프로토타입 `CHG_LD`(template.html, 시안 LD 를 옮긴 것 — `CheonhaGimmickTests.놓는_간격은_시안_LD_놀이판_값과_같다`)를 gimmicks.json `layout` 에서 읽게 바꾼다. 프로토타입 물길·태극 바닥·모닥불·탑림은 2026-11-09 WP-13b 가 시안 함수를 글자 그대로 옮겨 이미 붙였으니, 6절에서 바뀐 규칙(빙판 띠 위 모닥불 빼기, 반 칸 격자가 지역 밖일 때 한가운데 하나 등)은 시안 함수를 고치고 template.html `CHG` 에 같은 본문을 옮긴다. 남은 범종 격자·혈제단은 이 값으로.
 4. unity_tasks R-13U·R4-13b 의 '먼저:' 를 푼다.
