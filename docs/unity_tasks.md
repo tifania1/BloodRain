@@ -516,6 +516,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 끝: 1번 칸에 옛 저장이 그대로 보이고, 2번 칸 새 혼으로 서장 → 정산까지 가도 1번 칸이 안 바뀜, 지운 칸은 '새 혼'. 콘솔 에러 0
   - 찍기: `docs/unity_shots/SV-01U/` 의 `slots.png`
 
+- [ ] SV-02U 침방 '바라는 문파' 고르기 · 먼저: SV-02
+  - 할 것: 침방 화면 후보 셋 위에 작은 줄 '바라는 문파: <이름> (바꾸기)'. 환혼 강화 '바라는 문파'를 샀을 때만 보인다. 바꾸기를 누르면 해금한 문파 목록(문파 이름·대표 인물 얼굴 작은 그림)에서 하나를 고른다. 고르면 후보를 다시 뽑지 않고 다음 생 뽑기부터 반영. 고정 문파로 든 후보 카드에는 작은 '願' 낙관.
+  - 쓸 것: SV-02 의 Core 후보 뽑기·`cheonha.json` 환혼 강화 줄·strings 키, `Presentation/Meta/ChimbangScreen`·`TrainingScreen`(환혼 강화 줄은 MetaShopRow 그대로)
+  - 메뉴: 없음(객잔 장면 짓는 메뉴가 이미 침방을 붙이면 그것 다시)
+  - 끝: 강화를 산 혼으로 침방을 세 번 다시 고르기 해도 고른 문파가 늘 한 칸에 있음, 사지 않은 혼은 줄이 안 보임. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/SV-02U/` 의 `pin_sect.png`
+
 - [x] PS-01U 일시정지 화면(12장 화면 목록 '일시정지') · 먼저: 없음 — 2026-11-09 00:40 PC: `Presentation/Hud/PauseScreen.cs` 를 LifeRunner 가 붙임(메뉴 없음). Esc·패드 Start 로 열고 닫음, 세상이 이미 멈췄거나(레벨업·깨달음·보갑·보부상) 같은 Esc 로 다른 화면이 닫힌 그 프레임·LevelUpScreen.IsOpen·InsightBusy 면 안 열림(레벨업이 떠 있을 때 CanOpen=false 확인). 세 판: 경지·그릇 + 무공·심법 칸(HudSlots.Build), 능력치 14줄(이름 + 쉬운 말), 무공별 피해·초당 피해(DamageReport.Lines, WeaponRunner.Dealt — 정산 막대와 같은 합, 얻은 시각은 이 화면이 1초마다 Loadout 을 보고 적음). 단추 계속하기 · 설정(잠금, WP-57U 몫) · 좌화(`EndLife(Zuohwa)`, 서장 몸이면 잠금). 닫으면 timeScale 1 로 이어짐, 콘솔 에러 0. 남긴 것: 무공 줄 눌러 짝·진전·연환 펼치기와 절기 조합표 탭은 UI-01U 때. 이 PC 저장이 서장 몸이라 좌화 정산은 눌러 보지 못함(쓰러짐과 같은 EndLife 길). 찍음 `docs/unity_shots/PS-01U/` 의 `pause.png`
   - 할 것: Run 씬에 일시정지 화면이 없다(같은 맞대기 — UI-01U·WP-57U 가 '일시정지 화면'에 붙인다고 적었지만 화면 자체가 없음). Esc·패드 Start 로 세상 멈춤(레벨업·각성·보갑 화면이 떠 있으면 안 열림), 머리 `ui.pause.title`·`ui.pause.sub`, 단추 계속하기·설정(WP-57U)·좌화(7장 '생이 끝나는 세 가지', 글 `ui.settle.end.zuohwa`) — 누르면 `EndLife(LifeEndWay.Zuohwa)`(쓰러짐과 같은 정산, 목 노인 좌화 대사가 이걸 봄). 웹 프로토타입 `#zuohwa`·`#quit` 과 같게. 본문 12장 그대로: 지닌 무공·심법 칸과 절기 문턱·그릇(`HudSlots.Build`, TopHud 와 같은 셈), 능력치(이름 `ui.stat.*` + 쉬운 말 `ui.stat_easy.*`), 무공별 지금까지 피해·초당 피해(`DamageReport.Lines(weapons.Dealt, 판 시각, 얻은 시각)`, 누르면 짝·진전·연환). 절기 조합표 탭은 UI-01U 몫이라 자리만.
   - 쓸 것: strings `ui.pause.*`, Core `Build/HudSlots`·`Run/DamageReport`·`Build/LevelUpView.EvolutionTable`, `WeaponRunner.Dealt`, 웹 프로토타입 `#pause` 화면
