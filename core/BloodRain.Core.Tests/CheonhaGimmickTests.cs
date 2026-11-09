@@ -5,7 +5,7 @@ using Xunit;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>바닥에 깔린 지역 기믹(물길·태극 바닥·모닥불·탑림, WP-13b). 1장 프로토타입(template.html)이
+    /// <summary>바닥에 깔린 지역 기믹(물길·태극 바닥·모닥불·탑림·범종 격자, WP-13b). 1장 프로토타입(template.html)이
     /// 천하 시안(cheonha.html)의 배치·판정·그림 함수를 글자 그대로 옮겨 쓰는지 본다. 시안을 고치면 프로토타입도 같이 고쳐야 통과한다.</summary>
     public class CheonhaGimmickTests
     {
@@ -36,6 +36,7 @@ namespace BloodRain.Core.Tests
         [InlineData("pagodaPatchAt")]
         [InlineData("pushOutOfPagodas")]
         [InlineData("taijiPads")]
+        [InlineData("songBells")]
         [InlineData("campfires")]
         [InlineData("drawCampfires")]
         [InlineData("drawWaterways")]
@@ -63,7 +64,7 @@ namespace BloodRain.Core.Tests
             var ld = Regex.Match(Proto, @"const CHG_LD = \{(.*?)\};");
             Assert.True(ld.Success);
             var pairs = Regex.Matches(ld.Groups[1].Value, @"(\w+): ([\d.]+)");
-            Assert.Equal(7, pairs.Count);
+            Assert.Equal(8, pairs.Count);
             foreach (Match p in pairs)
             {
                 var key = p.Groups[1].Value;
@@ -82,7 +83,7 @@ namespace BloodRain.Core.Tests
                 "or1(gw.moveSpeedMultiplier)", "p.walkT = GIMW.water.waterWalkSeconds", "!sectT().ignoresWater", "e.type !== 'water_ghost' && !(E_BY_ID[e.type] || {}).ignoresTerrain && inWaterC(e.x, e.y)",
                 "const aspect = gv > 0 ? 'yin' : 'yang'", "G.taijiCd[pad.key] = G.t + tj.cooldownSeconds; G.bless = { aspect, t: tj.durationSeconds }", "aspectMult(def.yinyang) * taijiBlessMul(def.yinyang)", "1 + GIMW.taijiFloor.oppositeAspectDamageBonus",
                 "cf.healPerSecondMaxHealthRatio * dt * otherHeal()", "(E_BY_ID[e.type] || {}).family === GIMW.campfire.slowedFamily && nearCampfireC(e.x, e.y)", "or1(GIMW.campfire.slowedMoveSpeedMultiplier)", "P.slowedNear === 'campfire' && G.campOn && nearCampfireC(G.player.x, G.player.y) ? P.slowedNearMultiplier : 1",
-                "pushPagodaC(p, B.stats.playerBodyRadius, false)", "pushPagodaC(e, e.r, !!(E_BY_ID[e.type] || {}).ignoresTerrain)", "drawGroundGimmicks(now);",
+                "pushPagodaC(p, B.stats.playerBodyRadius, false)", "G.bellCd[b.key] = G.t + bg.cooldownSeconds", "e.boss ? bg.bossStunSeconds : bg.stunSeconds", "bells: mode === 'prologue' || SCALE_MODE ? [] :", "pushPagodaC(e, e.r, !!(E_BY_ID[e.type] || {}).ignoresTerrain)", "drawGroundGimmicks(now);",
             })
                 Assert.Contains(key, Proto);
             // 수귀(WP-13c): 물에서만 솟고(onlyInWater), 물 위 수귀가 pull 값으로 끌어당긴다(한 걸음에 한 번)

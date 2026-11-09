@@ -1342,7 +1342,8 @@ function newRun(mode) {
     ult: 0, ultBonus: 1, rerolls: JIN_REROLLS, banished: new Set(), orbRaw: 0,   // orbRaw: 주운 진기 구슬 값의 합(심득·빠른 판 배율 전). 서장이면 천하 시안이 윤회의 기로 셈
     enemies: [], projs: [], myProjN: 0, foeProjN: 0, effects: [], orbs: [], drops: [], lanterns: [], splats: [], nums: [], zones: [],
     // 범종은 숭산 기믹이라 서장(청운진 객잔 마당)엔 없다
-    bells: mode === 'prologue' ? [] : [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
+    // 축척 모드에선 숭산 범종 30m 격자(CHG.songBells, 7장 '지금 경지 축척으로 생깁니다')가 대신하고, 여기엔 원각이 떨어뜨린 종만 들어온다
+    bells: mode === 'prologue' || SCALE_MODE ? [] : [{ x: 9, y: -6, cd: 0 }, { x: -10, y: 7, cd: 0 }, { x: 4, y: 14, cd: 0 }],
     spawnAcc: 0, lanternAcc: 0, events: makeEvents(mode), firstLevelUp: mode === 'prologue', elitesDone: 0, boss: null, bossSpawned: false, won: false,
     freeze: 0, cam: { x: 0, y: 0, shake: 0, trauma: 0 }, stats: null, fps: 60, salgiBonus: 0, salgiBase: 0, pendingLevels: 0,
     syn: newSyn(), enc: newEnc(), awaken: null, glow: null, evoLog: [], demo: false,
@@ -4990,6 +4991,17 @@ function regionGimmicksStep(dt) {
     if (!G.cfHint) { G.cfHint = true; toast(cf.nameKo, `곁에선 기혈이 차오르고 빙강시가 느려진다`); }
   }
   if (G.waterOn && !G.waterHint && G.wWater !== 1) { G.waterHint = true; toast(gw.nameKo, '물 위에선 걸음이 느려진다 · 경공 뒤 잠깐은 물 위를 달린다'); }
+  // 범종 격자(숭산, 시안 songBells): 닿으면 울려 둘레 stunRadius 안 적 기절(보스는 짧게), 칸마다 cooldownSeconds. 자리·반경은 절대 m 이라 싸움 좌표로는 / U
+  const bg = GIMW.bell;
+  if (bg && hereHas(bg.id)) {
+    G.bellCd = G.bellCd || {};
+    for (const b of CHG.songBells()) {
+      if ((G.bellCd[b.key] || 0) > G.t || Math.hypot(ax - b.x, ay - b.y) > b.touch) continue;
+      G.bellCd[b.key] = G.t + bg.cooldownSeconds; addEffect('ring', b.x / U, b.y / U, { r: b.stunR / U, life: 0.8, color: '#C9A227' }); sfx('bell');
+      forNear(b.x / U, b.y / U, b.stunR / U, e => { e.stun = Math.max(e.stun || 0, e.boss ? bg.bossStunSeconds : bg.stunSeconds); });
+      if (!G.bellHint) { G.bellHint = true; toast(bg.nameKo, `둘레 ${bg.stunRadius}m 적 ${bg.stunSeconds}초 기절 · ${bg.cooldownSeconds}초에 한 번`); }
+    }
+  }
   if (G.pagodaOn && !G.pagodaHint) { const pt = CHG.pagodaPatchAt(ax, ay); if (pt && Math.hypot(ax - pt.x, ay - pt.y) < pt.R) { G.pagodaHint = true; toast(GIMW.pagodaForest.nameKo, '돌탑 사이 좁은 길 · 걷는 것은 모두 막힌다'); } }
 }
 function drawRegionGimmicks() {
@@ -5003,7 +5015,7 @@ function drawRegionGimmicks() {
 // 수치는 gimmicks.json(water·taijiFloor·campfire·pagodaForest, 탑림이 가운데 종 둘레를 비울 때 bell.touchRadius).
 // 놓는 간격(물길 간격·반폭·굽이, 태극 바닥·모닥불·탑림 무더기 간격)은 gimmicks.json 에 아직 없어 시안 LD 의 놀이판 값을 그대로 쓴다
 // (gimmick_draft.md 2절 안과 같은 값. R-10·R4-07 이 데이터에 넣으면 두 판 다 거기서 읽게 바꿀 것 — CheonhaGimmickTests 가 시안 LD 와 같은지 본다).
-const CHG_LD = { waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7, taijiSpacing: 16, campfireSpacing: 28, pagodaSpacing: 60 };
+const CHG_LD = { waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7, taijiSpacing: 16, campfireSpacing: 28, pagodaSpacing: 60, bellSpacing: 30 };
 const CHG_G = {   // 시안 함수 안의 G 자리. 이 판의 한 판 상태(G)를 그때그때 읽는다
   get tier() { return tierNow(); },
   get t() { return G.t; },
@@ -5075,6 +5087,23 @@ const CHG = ((G, GIM, LD, REGIONS) => {
       if (d < 1e-6) { o.x = s.x + m; continue; }
       o.x = s.x + dx / d * m; o.y = s.y + dy / d * m;
     }
+  }
+  // 지금 화면 근처의 숭산 범종. 칸 번호가 같으면 같은 종이라 쿨타임을 칸으로 센다(태극 바닥과 같은 방식)
+  function songBells() {
+    const g = GIM.bell, out = []; if (!g) return out;
+    const k = sc(G.tier), sp = LD.bellSpacing * k, half = G.view * 0.7;
+    for (const r of REGIONS) {
+      if (!regionHas(r, g.id) || Math.hypot(r.x - G.p.x, r.y - G.p.y) > G.view * 3 + 300 * k) continue;
+      const i0 = Math.floor((G.p.x - half - r.x) / sp), i1 = Math.ceil((G.p.x + half - r.x) / sp), j0 = Math.floor((G.p.y - half - r.y) / sp), j1 = Math.ceil((G.p.y + half - r.y) / sp);
+      if ((i1 - i0) * (j1 - j0) > 400) continue;
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const x = r.x + i * sp, y = r.y + j * sp;
+        if (nearestTwo(x, y).a !== r) continue;
+        const pt = pagodaPatchAt(x, y); if (pt && !pt.center && Math.hypot(x - pt.x, y - pt.y) < pt.R + g.touchRadius * k) continue;   // 가운데 무더기는 종 둘레를 비워 두었다
+        out.push({ x, y, key: `${G.tier}:${i},${j}`, touch: g.touchRadius * k, stunR: g.stunRadius * k });
+      }
+    }
+    return out;
   }
   function taijiPads() {   // 지금 화면 근처의 태극 바닥(무당산). 칸 번호가 같으면 같은 바닥이라 쿨타임을 칸으로 센다
     const g = GIM.taijiFloor, out = []; if (!g) return out;
@@ -5162,7 +5191,7 @@ const CHG = ((G, GIM, LD, REGIONS) => {
       }
     }
   }
-  return { sync, inWater, pagodaPatchAt, pushOutOfPagodas, taijiPads, campfires, nearCampfire, drawCampfires, drawWaterways, drawTaijiPads, drawPagodas };
+  return { sync, inWater, pagodaPatchAt, pushOutOfPagodas, taijiPads, songBells, campfires, nearCampfire, drawCampfires, drawWaterways, drawTaijiPads, drawPagodas };
 })(CHG_G, GIMW, CHG_LD, LORD_REGS);
 // 싸움 좌표로 부르는 다리: 시안 함수는 절대 m 를 받는다
 const inWaterC = (x, y) => CHG.inWater(x * worldU(), y * worldU());
@@ -5267,6 +5296,7 @@ function render() {
   }
   // 범종
   for (const b of G.bells) { drawSprite('bell', b.x, b.y, 1, false, false, b.cd > 0 ? 0.45 : 1); }
+  if (SCALE_MODE && !isPro() && GIMW.bell && hereHas(GIMW.bell.id)) { const U = worldU(); for (const b of CHG.songBells()) drawSprite('bell', b.x / U, b.y / U, 1, false, false, (G.bellCd && G.bellCd[b.key] || 0) > G.t ? 0.45 : 1); }   // 범종 격자
   // 경고 표시
   for (const z of G.zones) if (z.mark) {
     const m = z.mark; if (m.follow && m.follow.dead) continue;
