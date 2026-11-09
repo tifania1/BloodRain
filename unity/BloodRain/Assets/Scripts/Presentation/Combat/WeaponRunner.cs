@@ -721,6 +721,7 @@ namespace BloodRain.Presentation.Combat
                     int swings = evo != null ? 1 : WeaponGrowth.Hits(s.Def, s.level);
                     int dirN = evo != null ? Mathf.RoundToInt(evo.Param("directions", 8f)) : 1;
                     float stun = evo != null ? evo.Param("stunSeconds") : 0f;
+                    float bossStun = evo != null ? evo.Param("bossStunSeconds") : 0f; // EV-01U 땅의 주인은 따로 0.6초(패턴 시계도 멈춤)
                     float gap = Gap(s, 0.18f), kb = ws.Speed(Knock(s));
                     for (int k = 0; k < swings; k++)
                         Later(k * gap, () =>
@@ -728,7 +729,7 @@ namespace BloodRain.Presentation.Combat
                             foreach (var a in WeaponShapes.ArcDirections(evo != null, dirN, () => UnityEngine.Random.value))
                             {
                                 AddFx(a, Mathf.PI, R, 0.26f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.80f, 0.62f, 0.38f, 0.7f));
-                                Deal(s, dmg, HitArc(P, R, a, dmg, kb, stun));
+                                Deal(s, dmg, HitArc(P, R, a, dmg, kb, stun, bossStun));
                             }
                             // LK-01Ub 연환 견인타: 봉이 닿는 원(R) 안 끌려오는 적을 받아쳐 날려 보냄, 부딪히면 둘 다 피해(취선봉 한 방, LK-01a 결정 전)
                             if (_pulled.Count > 0 && LinkOn("gyeonin"))
@@ -1468,7 +1469,7 @@ namespace BloodRain.Presentation.Combat
             }
         }
 
-        int HitArc(Vector2 c, float R, float a, float dmg, float knock, float stun = 0f)
+        int HitArc(Vector2 c, float R, float a, float dmg, float knock, float stun = 0f, float bossStun = 0f)
         {
             enemies.Sim.QueryCircle(new float2(c.x, c.y), R, _near);
             BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(c.x, c.y), R); // C-09b 친 자리 안 등롱
@@ -1481,10 +1482,13 @@ namespace BloodRain.Presentation.Combat
                 float dx = e.Pos.x - c.x, dy = e.Pos.y - c.y, d = Mathf.Sqrt(dx * dx + dy * dy);
                 if (dx * ca + dy * sa >= -0.1f * d) _filtered.Add(i); // 웹과 같은 반원 판정
             }
-            if (stun > 0f) // 팔선과해 기절: 피해(쓰러짐으로 자리 번호가 바뀜) 전에 건다. 땅의 주인은 무리에 없다
+            if (stun > 0f || bossStun > 0f) // 팔선과해 기절: 피해(쓰러짐으로 자리 번호가 바뀜) 전에 건다
                 foreach (int i in _filtered)
                 {
                     var e = enemies.Sim.Get(i);
+                    var pr = PatternRunner.Instance;
+                    if (pr != null && pr.InFight && e.Id == pr.BossId) { if (bossStun > 0f) pr.Stun(bossStun); continue; } // EV-01U 땅의 주인은 bossStunSeconds
+                    if (stun <= 0f) continue;
                     e.Stun = Mathf.Max(e.Stun, stun);
                     enemies.Sim.Set(i, e);
                 }
