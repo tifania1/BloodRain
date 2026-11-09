@@ -293,7 +293,8 @@ namespace BloodRain.Presentation
                 // R-04Ua 태극일 때 쾌속에 조화 보너스(무당 0.2, 나머지 0.1)를 더하고 상한으로 자른다
                 weapons.cooldownReduction = Mathf.Min(_data.Balance.Stats.CooldownReductionCap, st.CooldownReduction + _life.HarmonyCooldownReduction);
                 weapons.areaMultiplier = st.Area;
-                weapons.mightMultiplier = st.Might; // MT-01 공력이 무공 피해에 안 곱해지고 있었음(오의만 썼음)
+                // MT-01 공력이 무공 피해에 안 곱해지고 있었음(오의만 썼음). SC-01U 취선 음식 공력은 더한다(웹 weaponDamage 의 drunkMight)
+                weapons.mightMultiplier = st.Might + (_secrets != null ? _secrets.FoodMightBonus : 0f);
                 weapons.extraAmount = st.Amount;
                 weapons.durationMultiplier = st.Duration;
                 weapons.projectileSpeedMultiplier = st.ProjectileSpeed; // ST-02U

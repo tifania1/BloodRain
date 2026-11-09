@@ -35,6 +35,13 @@ namespace BloodRain.Presentation.Hud
         void OnDestroy() { if (Instance == this) Instance = null; }
         public IReadOnlyList<SecretDef> Found => _found;
 
+        /// <summary>SC-01U 취선을 얻은 뒤 먹은 음식 수(웹 G.drunkFood). 취선이 없을 때 먹은 것은 안 센다.</summary>
+        public int FoodEatenSinceDrunken { get; private set; }
+        /// <summary>취선 공력 보너스(더하기, Core SecretEffects.FoodMightBonus). LifeRunner 가 무공 공력에 더한다.</summary>
+        public float FoodMightBonus => Effects.FoodMightBonus(FoodEatenSinceDrunken);
+        /// <summary>음식(만두·오리)을 먹을 때 LanternLayer 가 부른다.</summary>
+        public void AteFood() { if (Effects.FoodMightBonus(1) > 0f) FoodEatenSinceDrunken++; }
+
         void Start()
         {
             _data = DataBoot.Data;

@@ -236,6 +236,7 @@ namespace BloodRain.Presentation.Fx
                     float got = vitals != null ? vitals.Heal(Drops.FoodHeal(Rule, kind, foodHeal)) : 0f;
                     life.Log.EatFood();
                     _secrets?.Record?.EatFood();
+                    _secrets?.AteFood(); // SC-01U 취선: 얻은 뒤 먹은 음식마다 공력 +mightPerFood
                     Pop(at, Loc.F(kind == Drops.Bun ? "ui.drop.bun" : "ui.drop.duck", Mathf.RoundToInt(got)));
                     break;
                 }
