@@ -49,7 +49,7 @@ if printf '%s\n' "$need" | grep -q '^unity/BloodRain/Assets/Scripts/Core/'; then
   fi
 fi
 
-if printf '%s\n' "$need" | grep -Eq '^tools/(postprocess_audio\.py|postprocess_sfx\.py|synth_sfx\.py|sfx_sa3\.py|tests/)'; then
+if printf '%s\n' "$need" | grep -Eq '^tools/(postprocess_audio\.py|postprocess_sfx\.py|synth_sfx\.py|sfx_sa3\.py|split_webgl_data\.py|tests/)'; then
   if ! $PY -m unittest discover -s tools/tests >&2; then
     echo "pre-push: 도구 테스트(tools/tests) 실패." >&2
     exit 1

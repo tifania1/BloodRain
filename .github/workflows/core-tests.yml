@@ -27,8 +27,9 @@ jobs:
       - name: 도구 테스트(파이썬)
         # ffmpeg 가 없으면 MP3 → ogg 한 바퀴 테스트는 건너뛰고 계산 테스트만 돈다
         # test_postprocess_art(PR-02)가 PIL 을 쓴다. 러너 기본 파이썬엔 없어서 깐다(11-08 하루 내내 이걸로 실패)
+        # test_split_webgl_data 는 brotli 를 쓴다(없으면 조각 나누기 테스트만 건너뜀)
         run: |
-          python3 -m pip install --quiet pillow
+          python3 -m pip install --quiet pillow brotli
           python3 -m unittest discover -s tools/tests
       - name: 테스트
         run: dotnet test core/BloodRain.sln --nologo
