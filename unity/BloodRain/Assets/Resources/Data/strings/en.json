@@ -554,6 +554,8 @@
   "ui.levelup.banish": "Discard ({0})  {1}",
   "ui.levelup.banish_cancel": "Cancel Discard ({0})  {1}",
   "ui.levelup.skip": "Train ({0})  {1}",
+  "ui.levelup.slots_weapon": "Techniques",
+  "ui.levelup.slots_passive": "Heart Methods",
   "ui.insight.title": "Insight",
   "ui.insight.sub": "At the breakthrough, one truth becomes clear",
   "ui.insight.demonic": "Demonic Art",

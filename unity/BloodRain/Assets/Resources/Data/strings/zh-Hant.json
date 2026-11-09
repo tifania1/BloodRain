@@ -554,6 +554,8 @@
   "ui.levelup.banish": "廢棄（{0}）  {1}",
   "ui.levelup.banish_cancel": "取消廢棄（{0}）  {1}",
   "ui.levelup.skip": "精進（{0}）  {1}",
+  "ui.levelup.slots_weapon": "武功",
+  "ui.levelup.slots_passive": "心法",
   "ui.insight.title": "頓悟",
   "ui.insight.sub": "突破之際，悟得一道",
   "ui.insight.demonic": "魔功",

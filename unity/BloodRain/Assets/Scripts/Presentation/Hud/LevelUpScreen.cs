@@ -117,6 +117,7 @@ namespace BloodRain.Presentation.Hud
 
             var kb = Keyboard.current;
             if (kb == null) return;
+            if (Guarded) return;   // UI-01U 열린 직후 입력 막기
             if (kb.digit1Key.wasPressedThisFrame) Pick(0);
             else if (kb.digit2Key.wasPressedThisFrame) Pick(1);
             else if (kb.digit3Key.wasPressedThisFrame) Pick(2);
@@ -139,8 +140,93 @@ namespace BloodRain.Presentation.Hud
             _firstDone = true;
             _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _root.gameObject.SetActive(true);
+            _openedAt = Time.unscaledTime;
             Refresh();
         }
+
+        // ── UI-01U 열린 직후 입력 막기 · 옆 칸(기획서 12장 '레벨업 카드 규칙') ─────────────
+        // 세상 시간이 멈춰 있으니 실제 시간으로 balance levelUp.inputGuardSeconds 동안 카드·단추를 안 받는다(달리며 누르던 키·클릭이 카드를 고르지 않게).
+        float _openedAt = -999f;
+        bool Guarded => Time.unscaledTime - _openedAt < _data.Balance.LevelUp.InputGuardSeconds;
+        RectTransform _slotPanel;
+        readonly List<(bool weapon, string id, Image img)> _slotCells = new List<(bool, string, Image)>();
+        static readonly Color CellEmpty = new Color(0.20f, 0.17f, 0.15f, 0.85f);
+        static readonly Color CellFull = new Color(0.32f, 0.27f, 0.22f, 0.95f);
+        static readonly Color CellLit = new Color(0.79f, 0.64f, 0.16f, 1f);
+
+        /// <summary>카드 줄 오른쪽에 무공 6칸·심법 6칸(HudSlots.Build, TopHud 와 같은 셈). 고르려는 카드가 켜는 칸은 LightSlots 가 금빛으로.</summary>
+        void BuildSlotPanel()
+        {
+            if (_slotPanel != null) Destroy(_slotPanel.gameObject);
+            _slotCells.Clear();
+            _slotPanel = new GameObject("옆 칸", typeof(RectTransform)).GetComponent<RectTransform>();
+            _slotPanel.SetParent(_root, false);
+            // 카드 줄 바로 오른쪽(카드 넷이어도 16:10 1280x800 에서 안 잘리게 카드 수에 맞춰 붙인다)
+            int n = Mathf.Max(1, _offers.Count);
+            float half = (n * 330 + (n - 1) * 36) * 0.5f;
+            Place(_slotPanel, new Vector2(0.5f, 0.5f), new Vector2(half + 95, 10), new Vector2(150, 420));
+            int lvl = LifeRunner.Instance != null && LifeRunner.Instance.Life != null ? LifeRunner.Instance.Life.Level : _handledLevel;
+            var view = HudSlots.Build(_loadout, lvl);
+            Column(view.Weapons, true, -38, Loc.T("ui.levelup.slots_weapon"));
+            Column(view.Passives, false, 38, Loc.T("ui.levelup.slots_passive"));
+        }
+
+        void Column(List<HudSlot> slots, bool weapon, float x, string head)
+        {
+            var h = MakeText(_slotPanel, "머리", 18, Paper, TextAlignmentOptions.Center);
+            Place(h.rectTransform, new Vector2(0.5f, 1f), new Vector2(x, -12), new Vector2(74, 26));
+            h.text = head;
+            h.enableAutoSizing = true; h.fontSizeMin = 9; h.fontSizeMax = 18;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var s = slots[i];
+                var cell = MakeImage(_slotPanel, $"{(weapon ? "무공" : "심법")} {i + 1}", s.Id != null ? CellFull : CellEmpty);
+                Place(cell.rectTransform, new Vector2(0.5f, 1f), new Vector2(x, -58 - i * 62), new Vector2(66, 56));
+                var t = MakeText(cell.rectTransform, "글", 15, Paper, TextAlignmentOptions.Center);
+                Stretch(t.rectTransform);
+                t.enableAutoSizing = true; t.fontSizeMin = 10; t.fontSizeMax = 16;
+                t.margin = new Vector4(2, 2, 2, 2);
+                if (s.Id != null)
+                {
+                    string name = weapon ? WeaponName(_data.Weapon(s.Id)) : SlotPassiveName(s.Id);
+                    t.text = $"{Short(name)}\n<size=80%>Lv{s.Level}</size>";
+                }
+                _slotCells.Add((weapon, s.Id, cell));
+            }
+        }
+
+        string SlotPassiveName(string id)
+        {
+            foreach (var p in _data.Passives) if (p.Id == id) return Loc.T($"passives.{p.Id}.name", p.NameKo);
+            return id;
+        }
+
+        /// <summary>그 카드가 켜는 칸을 빛낸다(null 이면 끔). Core LevelUpView.CardLights — Id null 은 첫 빈 칸.</summary>
+        void LightSlots(Offer? o)
+        {
+            var lights = o.HasValue && o.Value.Kind != OfferKind.Fallback ? LevelUpView.CardLights(_data, _loadout, o.Value) : new List<SlotLight>();
+            var usedEmpty = new HashSet<bool>();
+            foreach (var c in _slotCells) c.img.color = c.id != null ? CellFull : CellEmpty;
+            foreach (var l in lights)
+                for (int i = 0; i < _slotCells.Count; i++)
+                {
+                    var c = _slotCells[i];
+                    if (c.weapon != l.Weapon) continue;
+                    if (l.Id != null ? c.id == l.Id : (c.id == null && !usedEmpty.Contains(l.Weapon)))
+                    {
+                        if (l.Id == null) usedEmpty.Add(l.Weapon);
+                        c.img.color = CellLit;
+                        break;
+                    }
+                }
+            LitCount = 0;
+            foreach (var c in _slotCells) if (c.img.color == CellLit) LitCount++;
+        }
+
+        /// <summary>시험용: 지금 빛나는 칸 수.</summary>
+        public int LitCount { get; private set; }
+        /// <summary>시험용: 그 카드에 커서를 둔 것처럼.</summary>
+        public void Hover(int index) => LightSlots(index >= 0 && index < _offers.Count ? _offers[index] : (Offer?)null);
 
         // LU-01U 기연(연무장·도문심법·타고난 성질)이 넷째 카드 확률을 정한다(balance levelUp.luckForFourthChoice). 시험 씬엔 0.
         static float Luck()
@@ -158,7 +244,7 @@ namespace BloodRain.Presentation.Hud
 
         void Pick(int i)
         {
-            if (!_open || i < 0 || i >= _offers.Count) return;
+            if (!_open || i < 0 || i >= _offers.Count || Guarded) return;
             var o = _offers[i];
             if (_banishMode)
             {
@@ -252,6 +338,8 @@ namespace BloodRain.Presentation.Hud
             _title.text = _banishMode ? Loc.T("ui.levelup.title_banish") : Loc.F("ui.levelup.title", _handledLevel - _pending);
             for (int i = _cardRow.childCount - 1; i >= 0; i--) Destroy(_cardRow.GetChild(i).gameObject);
             for (int i = 0; i < _offers.Count; i++) MakeCard(i, _offers[i]);
+            BuildSlotPanel();
+            LightSlots(null);
 
             // {1} 은 조작 재설정한 단축키(WP-69U, 키를 잃었으면 빈 칸)
             _rerollLabel.text = Loc.F("ui.levelup.reroll", _charges.Rerolls, ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Reroll) ?? "");
@@ -277,6 +365,13 @@ namespace BloodRain.Presentation.Hud
             btn.colors = cols;
             int i = index;
             btn.onClick.AddListener(() => Pick(i));
+            // UI-01U 커서가 가면 이 카드가 켜는 옆 칸을 빛낸다
+            var trig = card.gameObject.AddComponent<EventTrigger>();
+            var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+            enter.callback.AddListener(_ => LightSlots(o));
+            var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+            exit.callback.AddListener(_ => LightSlots(null));
+            trig.triggers.Add(enter); trig.triggers.Add(exit);
 
             var spine = MakeImage(card.rectTransform, "책등", _banishMode && o.Kind != OfferKind.Fallback ? Blood : Ink);
             Place(spine.rectTransform, new Vector2(0f, 0.5f), new Vector2(9, 0), new Vector2(18, 460));

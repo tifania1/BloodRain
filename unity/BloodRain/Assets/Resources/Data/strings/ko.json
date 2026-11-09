@@ -9,6 +9,8 @@
   "ui.levelup.banish": "파기 ({0})  {1}",
   "ui.levelup.banish_cancel": "파기 취소 ({0})  {1}",
   "ui.levelup.skip": "정진 ({0})  {1}",
+  "ui.levelup.slots_weapon": "무공",
+  "ui.levelup.slots_passive": "심법",
   "ui.insight.title": "깨달음",
   "ui.insight.sub": "돌파의 순간, 한 가지를 깨친다",
   "ui.insight.demonic": "마공",
