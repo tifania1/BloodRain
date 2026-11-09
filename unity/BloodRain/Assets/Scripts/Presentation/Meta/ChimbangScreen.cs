@@ -76,7 +76,8 @@ namespace BloodRain.Presentation.Meta
             var c = _data.Cheonha;
             var sects = allSects ? c.Sects.Select(s => s.Id).ToList() : soul.UnlockedSects.ToList();
             bool first = firstRebirth || soul.IsFirstRebirth;
-            Draw = new RebirthDraw(c, sects, soul.CandidateCount + extraCandidates, soul.RerollsPerRebirth + extraRerolls, first, rng);
+            Draw = new RebirthDraw(c, sects, soul.CandidateCount + extraCandidates, soul.RerollsPerRebirth + extraRerolls, first, rng,
+                soul.ActivePinnedSect);   // 바라는 문파(SV-02). Soul.OpenRebirth 와 같은 값 — 이 화면은 디버그 칸(extra·allSects) 때문에 RebirthDraw 를 직접 만든다
             _sub.text = first
                 ? Loc.F("ui.chimbang.first", string.Join("·", c.Rebirth.FirstRebirth.Select(id => Loc.Sect(c.Sect(id)))))
                 : Loc.F("ui.chimbang.nth", soul.Lives + 1, CountWord(Draw.Count));
