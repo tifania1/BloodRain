@@ -10,6 +10,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 - 다른 세션이 새 항목을 넣을 때는 '할 차례'의 알맞은 절(의존 순서 자리)에 같은 꼴(첫 줄 `먼저:`, 밑줄 다섯 칸)로 넣는다. 맨 아래나 '끝난 것'에 붙이지 않는다. 앞으로 생길 스크린샷·파일은 `폴더/` 의 `이름` 처럼 떼어 적는다(DocLinkTests 가 없는 경로를 막는다).
 - 화면에 임시로 띄우는 글자는 `Loc.T`·`Loc.F` 로. 새 화면 클래스는 Presentation 의 기존 갈래(Hud·Fx·Meta·Combat)에 둔다.
 - 움직임은 웹 프로토타입(`web/prototype/template.html`)·천하 시안(`web/lookdev/cheonha.html`)과 나란히 놓고 견준다.
+- 밤 웹 빌드(2026-11-09 사람이 '진짜 게임을 해 볼 곳'을 원함): **04:37 차례**는 항목보다 먼저, 지난 24시간 안에 `unity/BloodRain/Assets` 를 바꾼 커밋이 있으면 WebGL 을 새로 빌드해 https://dev.bloodrain.pages.dev 에 올린다. 방법은 WG-01U 결과 줄 그대로(WG-01U 가 아직이면 그 항목을 한다). 실패하면 오래 붙잡지 말고 daily 에 한 줄 남기고 항목으로 넘어간다. daily 에 '웹 빌드: 올림 <커밋 7자리> <크기>MB' 또는 '바뀐 것 없어 건너뜀'.
 - 핵심 줄기: Run 씬에 Core `Life` 가 아직 없다(레벨은 OrbLayer 시험 RunXp, 적은 EnemyField 시험 생성, 혼은 저장 안 됨). 'B. 한 생 뼈대'가 끝나야 그 아래 대부분이 풀린다. A 를 끝내면 B 부터.
 
 ## 할 차례
