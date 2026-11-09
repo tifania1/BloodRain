@@ -16,6 +16,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
 
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
+- [ ] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?")
+  - 할 것: https://dev.bloodrain.pages.dev 는 11-01 에 올린 Run 씬만 있는 옛 판이다. `WebGLBuild.cs` 가 이제 빌드 설정 순서(Boot → Run → Inn)대로 묶어 타이틀부터 연다(2026-11-09 클라우드가 고침). 저장소 최신으로 받고 → `BloodRain/WebGL 빌드`(릴리스, 12~15분) → 저장소 루트에서 `web/_headers` 를 결과 폴더에 복사 → `npx wrangler pages deploy build/WebGL/BloodRain --project-name=bloodrain --branch=dev`. GPU 크롬(V-04d 처럼 playwright channel=chrome, 헤드리스 아님)으로 열어 타이틀 → 시작 → 서장 → 쓰러짐 → 정산 → 객잔 → 침방 → 다음 생까지 한 바퀴. 새로고침한 뒤 이어하기가 보이는지(혼 저장이 브라우저 IndexedDB 에 남는지) 본다. 안 남으면 그 사실과 고칠 자리(SoulStore.Write 뒤 동기화)를 `막힘:` 말고 결과 줄에 적는다. 빌드가 끝나면 활성 플랫폼이 바뀌었는지 보고 바뀌었으면 원래대로.
+  - 쓸 것: `Assets/Editor/WebGLBuild.cs`, `web/_headers`, PC 에 로그인된 wrangler(`%APPDATA%\xdg.config\.wrangler`)
+  - 메뉴: `BloodRain/WebGL 빌드`
+  - 끝: dev.bloodrain.pages.dev 에서 타이틀이 뜨고 한 바퀴가 돎, 브라우저 콘솔에 붉은 오류 없음(URP 기본 셰이더 경고 둘은 V-04d 대로 괜찮음). 결과 줄에 크기·걸린 시간·올린 시각
+  - 찍기: `docs/unity_shots/WG-01U/` 의 `title_web.png`·`inn_web.png`
+
 - [x] V-10b 붓 획 자른 텍스처 확인 — 2026-11-04 메뉴 다시 돌림, brushCrops 107줄(새 붓 획 포함, 27은 옛 수), 레벨 7 획이 V-04 화면과 같은 반지름·담채·금빛, 콘솔 에러 0
   - 할 것: 컴파일 확인 → 메뉴를 다시 돌려 Run 씬 WeaponRunner 에 brushCrops 가 채워지는지 → 삼재검법 1·2·3단이 전과 같은 자리·크기로 그어지는지 본다. 메뉴를 안 돌리면 잘린 그림이 512 칸 크기로 늘어나 보인다.
   - 쓸 것: `Art/VFX/Brush/*.json` 의 `crop`·`pivot`, `BrushStroke.shader` `_Rect`, `WeaponRunner.brushCrops`·`CropOf`·`CropMatrix`, `VfxBootstrap`
@@ -493,6 +500,20 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(20:
   - 메뉴: `BloodRain/Bootstrap/` 아래 새 메뉴(타이틀 화면 짓기, 다시 돌리면 같은 결과)
   - 끝: 혼 저장 없이 켜면 이어하기가 없고 시작 → 서장, 서장을 마친 뒤 다시 켜면 이어하기 → 객잔. 콘솔 에러 0
   - 찍기: `docs/unity_shots/TT-01U/` 의 `title.png`
+
+- [ ] TT-02U 크레딧 화면 · 먼저: TT-02
+  - 할 것: 타이틀 단추에 '크레딧'(설정 아래, 인트로 다시 보기 위). 누르면 선지 바탕에 글이 천천히 위로 흐르는 두루마리 — 머리 '血雨江湖', 만든 사람, 쓴 것(글꼴·엔진·소리·음악) 고지, 끝에 '플레이해 주셔서 고맙습니다'. 아무 키·클릭이면 빨리 감기, Esc·패드 B 는 타이틀로. 곡은 메인 테마가 있으면 그것.
+  - 쓸 것: TT-02 가 만든 credits 데이터와 strings 키(`Loc.T`), `Presentation/Meta/TitleScreen`, 본문 글꼴(SC·TC 대체 목록 그대로)
+  - 메뉴: `BloodRain/Bootstrap/타이틀 화면 짓기(Boot 씬)` 다시
+  - 끝: 크레딧이 끝까지 흐르고 타이틀로 돌아옴, 영어·간체로 바꿔도 두부 없음, 콘솔 에러 0
+  - 찍기: `docs/unity_shots/TT-02U/` 의 `credits.png`
+
+- [ ] SV-01U 혼 저장 세 칸과 칸 고르기 화면 · 먼저: SV-01
+  - 할 것: SoulStore 를 칸 셋으로(`soul_1.json`~`soul_3.json`, 대화 진행도 칸마다). 옛 `soul.json` 이 있으면 처음 열 때 1번 칸으로 옮기고 원본은 `soul.json.bak` 으로 남긴다(지우지 않음). 타이틀: 시작 → 칸 고르기 화면(칸 카드 셋: 몇 번째 생·가장 높은 경지·봉인석·밟은 땅·연무장 합·마지막으로 한 날, 빈 칸은 '새 혼') → 빈 칸이면 서장, 있는 칸이면 객잔. 이어하기는 마지막으로 쓴 칸(PlayerPrefs)으로 바로. 칸 지우기는 카드의 작은 단추 + 화면 안에서 두 번 묻기(confirm 창 없음).
+  - 쓸 것: Core `SoulSlotSummary.From(Soul)`(SV-01), `Presentation/Meta/SoulStore`·`TitleScreen`, strings 키(SV-01)
+  - 메뉴: 타이틀 화면 짓기 다시
+  - 끝: 1번 칸에 옛 저장이 그대로 보이고, 2번 칸 새 혼으로 서장 → 정산까지 가도 1번 칸이 안 바뀜, 지운 칸은 '새 혼'. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/SV-01U/` 의 `slots.png`
 
 - [x] PS-01U 일시정지 화면(12장 화면 목록 '일시정지') · 먼저: 없음 — 2026-11-09 00:40 PC: `Presentation/Hud/PauseScreen.cs` 를 LifeRunner 가 붙임(메뉴 없음). Esc·패드 Start 로 열고 닫음, 세상이 이미 멈췄거나(레벨업·깨달음·보갑·보부상) 같은 Esc 로 다른 화면이 닫힌 그 프레임·LevelUpScreen.IsOpen·InsightBusy 면 안 열림(레벨업이 떠 있을 때 CanOpen=false 확인). 세 판: 경지·그릇 + 무공·심법 칸(HudSlots.Build), 능력치 14줄(이름 + 쉬운 말), 무공별 피해·초당 피해(DamageReport.Lines, WeaponRunner.Dealt — 정산 막대와 같은 합, 얻은 시각은 이 화면이 1초마다 Loadout 을 보고 적음). 단추 계속하기 · 설정(잠금, WP-57U 몫) · 좌화(`EndLife(Zuohwa)`, 서장 몸이면 잠금). 닫으면 timeScale 1 로 이어짐, 콘솔 에러 0. 남긴 것: 무공 줄 눌러 짝·진전·연환 펼치기와 절기 조합표 탭은 UI-01U 때. 이 PC 저장이 서장 몸이라 좌화 정산은 눌러 보지 못함(쓰러짐과 같은 EndLife 길). 찍음 `docs/unity_shots/PS-01U/` 의 `pause.png`
   - 할 것: Run 씬에 일시정지 화면이 없다(같은 맞대기 — UI-01U·WP-57U 가 '일시정지 화면'에 붙인다고 적었지만 화면 자체가 없음). Esc·패드 Start 로 세상 멈춤(레벨업·각성·보갑 화면이 떠 있으면 안 열림), 머리 `ui.pause.title`·`ui.pause.sub`, 단추 계속하기·설정(WP-57U)·좌화(7장 '생이 끝나는 세 가지', 글 `ui.settle.end.zuohwa`) — 누르면 `EndLife(LifeEndWay.Zuohwa)`(쓰러짐과 같은 정산, 목 노인 좌화 대사가 이걸 봄). 웹 프로토타입 `#zuohwa`·`#quit` 과 같게. 본문 12장 그대로: 지닌 무공·심법 칸과 절기 문턱·그릇(`HudSlots.Build`, TopHud 와 같은 셈), 능력치(이름 `ui.stat.*` + 쉬운 말 `ui.stat_easy.*`), 무공별 지금까지 피해·초당 피해(`DamageReport.Lines(weapons.Dealt, 판 시각, 얻은 시각)`, 누르면 짝·진전·연환). 절기 조합표 탭은 UI-01U 몫이라 자리만.
