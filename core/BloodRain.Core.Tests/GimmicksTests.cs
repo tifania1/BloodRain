@@ -47,7 +47,7 @@ namespace BloodRain.Core.Tests
         /// <summary>
         /// cheonha.json 지역에 적힌 기믹 이름은 gimmicks.json 에 있거나, 7장 '지형 기믹 수치'가 '아직 수치가 없습니다'로 적은 것이다.
         /// 이름을 잘못 적으면(오타) 지역에 아무것도 안 놓여도 조용히 지나가니 여기서 막는다. 수치가 생기면 아래 목록에서 빼고 gimmicks.json 으로.
-        /// 시작값 안은 docs/design/gimmick_draft.md(R-10·R4-07).
+        /// 시작값 표는 docs/design/gimmick_start_values.md(R-10·R4-07, 사람 확인 전).
         /// </summary>
         [Fact] public void 지역의_기믹_이름은_데이터나_아직_목록에_있다()
         {
