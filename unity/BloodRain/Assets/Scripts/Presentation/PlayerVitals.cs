@@ -67,11 +67,18 @@ namespace BloodRain.Presentation
 
         public bool Invulnerable => _iframe > 0f || (_move != null && _move.Invulnerable);
 
+        /// <summary>시험용: 비전 취선으로 피한 수(Evades 에도 들어감).</summary>
+        public int DrunkenEvades { get; private set; }
+
         /// <summary>피해를 받는다. 실제로 들어갔으면 true.</summary>
         public bool Hit(float damage)
         {
             if (Invulnerable || Health <= 0f) return false;
-            if (BloodRain.Core.Build.Evade.Roll(evadeChance, _rng))
+            // SC-01U 비전 취선(drunken_step): 능력치 회피와 따로 한 번 더 굴린다(Core SecretEffects.Evades)
+            var secrets = Hud.SecretWatch.Instance;
+            bool drunkenEvade = secrets != null && secrets.Effects.EvadeChance > 0f && secrets.Effects.Evades(_rng.NextDouble());
+            if (drunkenEvade) DrunkenEvades++;
+            if (drunkenEvade || BloodRain.Core.Build.Evade.Roll(evadeChance, _rng))
             {
                 // 피함: 피해·넉백 없음. 같은 접촉에 매 프레임 다시 굴리지 않게 맞은 뒤 무적은 준다(짧은 잔상)
                 Evades++;
