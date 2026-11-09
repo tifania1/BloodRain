@@ -13,7 +13,7 @@ namespace BloodRain.Presentation.Meta
     //   한 번에 쓰려면 LoadGame/SaveAll.
     //   쓸 때는 .tmp 에 먼저 쓰고 바꿔 끼운다(쓰다 꺼져도 옛 저장이 남게).
     //   읽다 깨진 칸은 지우지 않고 .bad 로 옮겨 두고 새 혼으로 시작한다.
-    //   옛 저장(soul.json·dialogue.json)은 처음 읽을 때 1번 칸으로 옮기고 원본은 .bak 로 남긴다(SoulSlots.ShouldMigrateLegacy).
+    //   옛 저장(soul.json·dialogue.json)은 처음 읽을 때 1번 칸으로 옮기고 원본은 .bak 로 남긴다(SoulSlots.ShouldMigrateLegacy). 옛 혼이 깨졌으면 .bad 로.
     public static class SoulStore
     {
         public static string Dir => Application.persistentDataPath;
@@ -114,8 +114,10 @@ namespace BloodRain.Presentation.Meta
             }
             catch (Exception e)
             {
-                // 혼이 깨졌으면 옮기지 않고 그대로 둔다
-                Debug.LogError($"[SoulStore] 옛 저장(soul.json)을 못 읽어 옮기지 않았습니다: {e.Message}");
+                // QA-21: 깨진 옛 혼은 칸으로 옮기지 않고 soul.json.bad 로 비켜 둔다(옛 LF-03 과 같은 처리).
+                //   그대로 두면 HasSoul·SlotExists·저장 때마다 다시 읽다 실패해 타이틀 한 번에 에러가 여러 줄 찍혔다.
+                Debug.LogError($"[SoulStore] 옛 저장(soul.json)을 못 읽어 옮기지 않았습니다(옛 파일은 soul.json.bad): {e.Message}");
+                MoveAside(soulPath);
             }
         }
 
