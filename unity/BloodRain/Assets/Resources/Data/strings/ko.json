@@ -219,6 +219,7 @@
   "ui.slot.delete_yes": "지운다",
   "ui.slot.delete_no": "그만둔다",
   "ui.slot.back": "돌아가기",
+  "ui.title.credits": "크레딧",
   "ui.settings.title": "설정",
   "ui.settings.shake": "화면 흔들림 {0}%",
   "ui.settings.shake_sub": "각성·피격 때",

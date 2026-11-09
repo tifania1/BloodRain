@@ -504,7 +504,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 - [ ] TT-02U 크레딧 화면 · 먼저: TT-02
   - 할 것: 타이틀 단추에 '크레딧'(설정 아래, 인트로 다시 보기 위). 누르면 선지 바탕에 글이 천천히 위로 흐르는 두루마리 — 머리 '血雨江湖', 만든 사람, 쓴 것(글꼴·엔진·소리·음악) 고지, 끝에 '플레이해 주셔서 고맙습니다'. 아무 키·클릭이면 빨리 감기, Esc·패드 B 는 타이틀로. 곡은 메인 테마가 있으면 그것.
-  - 쓸 것: TT-02 가 만든 credits 데이터와 strings 키(`Loc.T`), `Presentation/Meta/TitleScreen`, 본문 글꼴(SC·TC 대체 목록 그대로)
+  - 쓸 것: `DataBoot` 의 `GameData.Credits`(credits.json)에서 `Credits.Roll(Loc.T)` 가 주는 줄을 위에서부터 그대로 흘린다(만든 사람 빈 이름·빈 줄은 이미 빠져 있음, 글은 이미 옮겨져 옴). 줄 종류 `CreditLineKind`: Title(붓 글꼴 '血雨江湖' + 붉은 낙관) · Heading(묶음 머리, 먹 굵게) · Use(쓰임, 담묵 작게) · Name(이름) · Notice(저작권 줄·라이선스 이름, 작게) · LicenseText(라이선스 원문, 가장 작게·문단은 빈 줄로 나뉨·폭 맞춰 줄바꿈) · Thanks(끝 인사, 크게 한 줄 띄워). 단추 글은 strings `ui.title.credits`(네 언어, TT-02). `Presentation/Meta/TitleScreen`, 본문 글꼴(SC·TC 대체 목록 그대로). 고지 내용과 이유는 `docs/design/credits.md`
   - 메뉴: `BloodRain/Bootstrap/타이틀 화면 짓기(Boot 씬)` 다시
   - 끝: 크레딧이 끝까지 흐르고 타이틀로 돌아옴, 영어·간체로 바꿔도 두부 없음, 콘솔 에러 0
   - 찍기: `docs/unity_shots/TT-02U/` 의 `credits.png`
