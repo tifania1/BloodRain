@@ -276,9 +276,10 @@ namespace BloodRain.Presentation.Hud
             RefreshSeals();
         }
 
+        // 다시 고르기·파기·정진 단추도 열린 직후엔 안 받는다(웹 tooSoon 이 셋 다 막음, 마우스 클릭은 키보드 막기를 안 거침)
         void Reroll()
         {
-            if (!_open || _firstOpen || !_charges.Can(LevelUpAction.Reroll)) return;
+            if (!_open || Guarded || _firstOpen || !_charges.Can(LevelUpAction.Reroll)) return;
             _charges.Reroll();
             _offers = _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _banishMode = false;
@@ -287,14 +288,14 @@ namespace BloodRain.Presentation.Hud
 
         void ToggleBanish()
         {
-            if (!_open || _firstOpen || !_charges.Can(LevelUpAction.Banish)) return;
+            if (!_open || Guarded || _firstOpen || !_charges.Can(LevelUpAction.Banish)) return;
             _banishMode = !_banishMode;
             Refresh();
         }
 
         void Skip()
         {
-            if (!_open || !_charges.Can(LevelUpAction.Skip)) return;
+            if (!_open || Guarded || !_charges.Can(LevelUpAction.Skip)) return;
             _charges.Skip(_ultimate);
             Close();
         }
