@@ -40,6 +40,12 @@ namespace BloodRain.Presentation.Combat
         readonly List<GameObject> _beamVis = new List<GameObject>();
         Material _mat;
         GameObject _bossMark;
+        // C-10a 서장 장삼: 땅의 주인 규칙(BossAwakening) 밖의 싸움. 기혈은 Prologue 바닥(10%)을 거쳐야 해서
+        // 덩이 기혈은 넉넉한 완충(_buffer)으로 두고, 깎인 만큼을 life.DamagePrologueBoss 로 진짜 기혈(_realHealth)에 옮긴다.
+        bool _prologue, _prologueDone;
+        float _realHealth, _buffer;
+        // 한 시전 안에서 여러 번 일어나는 일(jump_slam 세 번 뛰기). 패턴 시계(Elapsed) 기준
+        readonly List<(float at, System.Action act)> _later = new List<(float at, System.Action act)>();
 
         /// <summary>시험·로그용: 패턴별 판정 수와 맞은 수.</summary>
         public readonly Dictionary<string, int> Resolved = new Dictionary<string, int>();
@@ -83,11 +89,13 @@ namespace BloodRain.Presentation.Combat
             var life = runner != null ? runner.Life : null;
             if (life == null || runner.enemies == null || runner.player == null) return;
             var fight = life.Bosses.Fight;
-            if (fight != _fight)
+            if (!_prologue && fight != _fight)
             {
                 if (_fight != null) EndFight();
                 if (fight != null) BeginFight(fight, life);
             }
+            if (_fight == null && !_prologueDone && life.IsPrologue && life.Prologue.Step == BloodRain.Core.Run.PrologueStep.Boss)
+                BeginPrologueFight(life);
             if (_fight == null) return;
 
             float dt = Time.deltaTime;
@@ -100,15 +108,29 @@ namespace BloodRain.Presentation.Combat
             if (_stun > 0f) { _stun -= dt; a.Stun = Mathf.Max(0.05f, _stun); }
             else a.Stun = 0f;
             a.Speed = _patterns.Holding ? 0f : _walkSpeed;
+            if (_prologue)
+            {
+                float dmg = _buffer - a.Health;
+                if (dmg > 0f) { _realHealth = life.DamagePrologueBoss(_realHealth, _fight.MaxHealth, dmg); a.Health = _buffer; }
+            }
             sim.Set(idx, a);
+            if (_prologue && _realHealth <= 0f) { runner.enemies.Kill(idx); return; } // 각성 뒤에만 0 이 된다(Prologue 바닥)
 
             Vector2 boss = new Vector2(a.Pos.x, a.Pos.y);
             if (_bossMark != null) { _bossMark.transform.position = new Vector3(boss.x, boss.y, 0f); }
 
             if (_stun <= 0f)
             {
-                float ratio = a.MaxHealth > 0f ? a.Health / a.MaxHealth : 1f;
+                float ratio = _prologue ? _realHealth / _fight.MaxHealth : a.MaxHealth > 0f ? a.Health / a.MaxHealth : 1f;
                 foreach (var e in _patterns.Tick(dt, ratio)) Handle(e, boss);
+                for (int i = 0; i < _later.Count;)
+                {
+                    if (_later[i].at > _patterns.Elapsed) { i++; continue; }
+                    var act = _later[i].act;
+                    _later.RemoveAt(i);
+                    act();
+                    if (_fight == null) return;
+                }
             }
             UpdateTeles(boss);
             UpdateBeams(boss, dt);
@@ -155,6 +177,7 @@ namespace BloodRain.Presentation.Combat
                 a.BornRealm = fight.Realm;
                 a.NoDrop = 1;
                 _walkSpeed = a.Speed;
+                if (_prologue) { _realHealth = fight.MaxHealth; _buffer = a.Health = a.MaxHealth = fight.MaxHealth * 10f; }
                 sim.Set(idx, a);
             }
             _bossMark = Shape("땅의 주인 표시", new Color(0.9f, 0.1f, 0.08f, 0.55f), 6);
@@ -165,8 +188,23 @@ namespace BloodRain.Presentation.Combat
             SfxPlayer.Instance?.Play("sfx_boss_appear");
         }
 
+        /// <summary>C-10a 서장 장삼전. 기혈은 Prologue.BossMaxHealth(enemies.json 그대로), 2막 없음.</summary>
+        void BeginPrologueFight(BloodRain.Core.Run.Life life)
+        {
+            var data = DataBoot.Data;
+            var pb = data.Cheonha.PrologueBody;
+            var boss = data.Bosses.First(b => b.Id == pb.Boss);
+            var region = data.Cheonha.Regions.FirstOrDefault(r => r.Id == pb.Region) ?? data.Cheonha.Regions[0];
+            var ws = WorldScale.Current;
+            _prologue = true;
+            BeginFight(new BossFight(region, boss, ws != null ? ws.Realm : 0, life.Minutes, BloodRain.Core.Run.Prologue.BossMaxHealth(boss), false), life);
+        }
+
         void EndFight()
         {
+            if (_prologue) _prologueDone = true;
+            _prologue = false;
+            _later.Clear();
             Clear();
             _fight = null;
             _patterns = null;
@@ -187,6 +225,14 @@ namespace BloodRain.Presentation.Combat
         {
             if (_fight == null || a.Id != _bossId) return;
             var life = runner.Life;
+            if (_prologue)
+            {
+                // 서장 끝(KillPrologueBoss → 컷 → 첫 환혼)은 C-10b
+                Debug.Log($"[PatternRunner] 서장 {_fight.Boss.NameKo} 쓰러짐");
+                LastEvent = "쓰러짐";
+                EndFight();
+                return;
+            }
             Debug.Log($"[PatternRunner] {_fight.Boss.NameKo} 쓰러짐");
             LastEvent = "쓰러짐";
             if (life != null && life.Bosses.InFight && life.Record == null)
@@ -252,6 +298,21 @@ namespace BloodRain.Presentation.Combat
                     case "rotating_beams":
                         t.Center = boss;
                         break;
+                    case "bind_line":
+                        t.Center = boss;
+                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
+                        SetBeam(t.Vis, p.Length * _factor, p.Width * _factor, t.Facing);
+                        break;
+                    case "summon":
+                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.3f), 2);
+                        SetRing(t.Vis, Vector2.zero, p.Scatter * _factor, 0.15f * _factor);
+                        break;
+                    case "jump_slam":
+                        t.Cast = -100; // 판정은 _later 가 뛸 때마다 한다(Resolve 가 지우지 않게)
+                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
+                        SetCircles(t.Vis, new[] { Vector2.zero }, p.Radius * _factor);
+                        ScheduleJumps(p, e.At, t);
+                        break;
                     default:
                         Debug.LogWarning($"[PatternRunner] 아직 안 그리는 모양 {p.Shape} ({p.Id})");
                         break;
@@ -267,6 +328,7 @@ namespace BloodRain.Presentation.Combat
             LastEvent = $"판정 {p.NameKo}";
             var tele = _teles.FirstOrDefault(x => x.P == p && x.Cast == e.Cast && x.FadeLeft < 0f);
             if (p.Continuous) { if (tele != null) Remove(tele); return; } // 2막 빛줄기는 UpdateBeams 가 맞힌다
+            if (p.Shape == "jump_slam") return; // ScheduleJumps 가 뛸 때마다
             float pr = PlayerRadius;
             bool hit = false;
             switch (p.Shape)
@@ -282,6 +344,24 @@ namespace BloodRain.Presentation.Combat
                 {
                     var c = tele != null ? tele.Center : player;
                     SummonRing(p, c);
+                    break;
+                }
+                case "summon":
+                {
+                    var c = tele != null ? tele.Center : player;
+                    Summon(p, c, BloodRain.Core.Combat.PatternShapes.SummonOffsets(p, _rng));
+                    break;
+                }
+                case "bind_line":
+                {
+                    var c = tele != null ? tele.Center : boss;
+                    var d = (player - c) / _factor;
+                    hit = BossPatterns.InLine(p.Length, p.Width, d.x, d.y, tele != null ? tele.Facing : Deg(player - boss), pr);
+                    if (hit && p.RootSeconds > 0f && !(runner.vitals != null && runner.vitals.Invulnerable))
+                    {
+                        var pc = runner.player.GetComponent<PlayerController>();
+                        if (pc != null) pc.Bind(p.RootSeconds); // 경공으로 끊는 것은 PlayerController 가
+                    }
                     break;
                 }
                 case "circles":
@@ -303,6 +383,52 @@ namespace BloodRain.Presentation.Combat
                 tele.FadeLeft = 0.25f;
                 SetColor(tele.Vis, new Color(1f, 0.25f, 0.15f, 0.6f));
             }
+        }
+
+        // jump_slam: Count 번 뛴다. k 번째는 JumpTakeoffSeconds(k) 에 그 순간 플레이어 자리에 그림자, JumpLandSeconds(k) 에 내려찍음
+        void ScheduleJumps(BossPatternDef p, float castAt, Tele first)
+        {
+            int n = Mathf.Max(1, p.Count);
+            for (int k = 0; k < n; k++)
+            {
+                int kk = k;
+                Tele[] slot = { kk == 0 ? first : null };
+                if (kk > 0)
+                    _later.Add((castAt + BloodRain.Core.Combat.PatternShapes.JumpTakeoffSeconds(p, kk), () =>
+                    {
+                        Vector2 pl = runner.player.position;
+                        var t = new Tele { P = p, Cast = -100 - kk, Start = _patterns.Elapsed, Center = pl };
+                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
+                        SetCircles(t.Vis, new[] { Vector2.zero }, p.Radius * _factor);
+                        t.Vis.transform.position = new Vector3(pl.x, pl.y, 0f);
+                        _teles.Add(t);
+                        slot[0] = t;
+                    }));
+                _later.Add((castAt + BloodRain.Core.Combat.PatternShapes.JumpLandSeconds(p, kk), () =>
+                {
+                    var t = slot[0];
+                    if (t == null) return;
+                    Vector2 pl = runner.player.position;
+                    var d = (pl - t.Center) / _factor;
+                    int idx = BossIndex();
+                    if (idx >= 0) { var a = runner.enemies.Sim.Get(idx); a.Pos = new float2(t.Center.x, t.Center.y); runner.enemies.Sim.Set(idx, a); }
+                    if (BossPatterns.InCircle(p.Radius, d.x, d.y, PlayerRadius) && runner.vitals != null && runner.vitals.Hit(Scaled(p.BaseDamage)))
+                        PlayerHits[p.Id] = PlayerHits.TryGetValue(p.Id, out var h) ? h + 1 : 1;
+                    JumpLands++;
+                    t.FadeLeft = 0.25f;
+                    SetColor(t.Vis, new Color(1f, 0.25f, 0.15f, 0.6f));
+                }));
+            }
+        }
+
+        /// <summary>시험용: jump_slam 이 내려찍은 수.</summary>
+        public int JumpLands { get; private set; }
+
+        void Summon(BossPatternDef p, Vector2 center, (float x, float y)[] offsets)
+        {
+            var def = DataBoot.Data.Enemy(p.Summon);
+            if (def == null) { Debug.LogWarning($"[PatternRunner] 소환 적 없음 {p.Summon}"); return; }
+            foreach (var o in offsets) runner.enemies.SpawnAt(def, center + new Vector2(o.x, o.y) * _factor);
         }
 
         void SummonRing(BossPatternDef p, Vector2 center)
@@ -515,6 +641,7 @@ namespace BloodRain.Presentation.Combat
             int idx = BossIndex();
             if (idx < 0) return;
             var sim = runner.enemies.Sim;
+            if (_prologue) { _realHealth = _fight.MaxHealth * ratio; return; }
             var a = sim.Get(idx);
             a.Health = a.MaxHealth * ratio;
             sim.Set(idx, a);
@@ -526,6 +653,7 @@ namespace BloodRain.Presentation.Combat
             {
                 int idx = BossIndex();
                 if (idx < 0) return 0f;
+                if (_prologue) return _realHealth / _fight.MaxHealth;
                 var a = runner.enemies.Sim.Get(idx);
                 return a.MaxHealth > 0f ? a.Health / a.MaxHealth : 0f;
             }

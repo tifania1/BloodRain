@@ -12,6 +12,16 @@ namespace BloodRain.Editor
         [MenuItem(Root + "wongak")]
         static void Wongak() => Call("wongak");
 
+        // C-10a 서장 장삼: 서장 몸이면 장삼 사건을 바로 일으킨다(Prologue.Step 이 Boss 가 되면 PatternRunner 가 세운다)
+        [MenuItem(Root + "jang_sam")]
+        static void JangSam()
+        {
+            var life = BloodRain.Presentation.LifeRunner.Instance != null ? BloodRain.Presentation.LifeRunner.Instance.Life : null;
+            if (life == null || !life.IsPrologue) { Debug.LogWarning("[BossTest] 서장 몸이 아님"); return; }
+            life.Prologue.BossAppeared(BloodRain.Presentation.DataBoot.Data.Cheonha.PrologueBody.Boss);
+            Debug.Log($"[BossTest] jang_sam: 서장 {life.Prologue.Step}");
+        }
+
         [MenuItem(Root + "2막으로(남은 기혈 30%)")]
         static void Phase2()
         {
@@ -22,6 +32,7 @@ namespace BloodRain.Editor
         }
 
         [MenuItem(Root + "wongak", true)]
+        [MenuItem(Root + "jang_sam", true)]
         [MenuItem(Root + "2막으로(남은 기혈 30%)", true)]
         static bool Playing() => Application.isPlaying;
 
