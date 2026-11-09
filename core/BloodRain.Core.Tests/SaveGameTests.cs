@@ -7,7 +7,7 @@ using static BloodRain.Core.Tests.TestData;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>SV-01: 메타 진행을 JSON 한 파일로(15장 '저장'), 옛 두 파일(LF-03)에서 옮기기.</summary>
+    /// <summary>SV-01: 메타 진행을 저장 칸마다 JSON 한 파일로(15장 '저장'), 옛 두 파일(LF-03)에서 옮기기.</summary>
     public class SaveGameTests
     {
         readonly GameData _d = Load();
@@ -22,10 +22,11 @@ namespace BloodRain.Core.Tests
         static DialogueProgress SomeDialogue() =>
             DialogueProgress.FromJson("{\"Version\":1,\"Seen\":[\"mok:first\"],\"Joined\":[\"hyegong\"],\"InnNext\":{\"hyegong\":2},\"Cycle\":2}");
 
-        [Fact] public void 기획서는_한_파일_저장()
+        [Fact] public void 기획서는_칸마다_한_파일_저장()
         {
-            Assert.Contains("메타 진행은 JSON 한 파일", Gdd);
-            Assert.Equal("save.json", SaveGame.FileName);
+            // 11-09 혼 저장 세 칸(SV-01): 'JSON 한 파일' → 칸마다 한 파일. 칸 파일 이름은 SoulSlots(SoulSlotsTests)
+            Assert.Contains("메타 진행은 저장 칸마다 JSON 한 파일", Gdd);
+            Assert.Contains("대화 진행도 칸마다", Gdd);
         }
 
         [Fact] public void 묶었다_풀면_같다()

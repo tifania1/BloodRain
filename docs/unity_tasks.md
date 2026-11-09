@@ -509,12 +509,20 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 크레딧이 끝까지 흐르고 타이틀로 돌아옴, 영어·간체로 바꿔도 두부 없음, 콘솔 에러 0
   - 찍기: `docs/unity_shots/TT-02U/` 의 `credits.png`
 
-- [ ] SV-01U 혼 저장 세 칸과 칸 고르기 화면 · 먼저: SV-01
-  - 할 것: SoulStore 를 칸 셋으로(`soul_1.json`~`soul_3.json`, 대화 진행도 칸마다). 옛 `soul.json` 이 있으면 처음 열 때 1번 칸으로 옮기고 원본은 `soul.json.bak` 으로 남긴다(지우지 않음). 타이틀: 시작 → 칸 고르기 화면(칸 카드 셋: 몇 번째 생·가장 높은 경지·봉인석·밟은 땅·연무장 합·마지막으로 한 날, 빈 칸은 '새 혼') → 빈 칸이면 서장, 있는 칸이면 객잔. 이어하기는 마지막으로 쓴 칸(PlayerPrefs)으로 바로. 칸 지우기는 카드의 작은 단추 + 화면 안에서 두 번 묻기(confirm 창 없음).
-  - 쓸 것: Core `SoulSlotSummary.From(Soul)`(SV-01), `Presentation/Meta/SoulStore`·`TitleScreen`, strings 키(SV-01)
-  - 메뉴: 타이틀 화면 짓기 다시
-  - 끝: 1번 칸에 옛 저장이 그대로 보이고, 2번 칸 새 혼으로 서장 → 정산까지 가도 1번 칸이 안 바뀜, 지운 칸은 '새 혼'. 콘솔 에러 0
-  - 찍기: `docs/unity_shots/SV-01U/` 의 `slots.png`
+- [ ] SV-01Ua 혼 저장을 칸 셋으로(soul_1~3, 대사 진행도 칸마다) · 먼저: SV-01
+  - 할 것: `Presentation/Meta/SoulStore.cs` 가 soul.json·dialogue.json 두 파일 대신 칸마다 `SoulSlots.FileName(n)`(soul_1.json~soul_3.json) 하나에 `new SaveGame(soul, dialogue).ToJson()` 을 쓴다(11-07 'save.json 한 파일' 항목은 이 항목으로 합침). .tmp 에 쓰고 바꿔 끼우기, 깨진 칸은 .bad 로 옮기고 새 혼 — 지금과 같게. 지금 칸은 SoulStore 에 하나(예: `SoulStore.Slot`, 기본 1). 지금 `Load`·`LoadDialogue`·`Save`·`SaveDialogue` 를 따로 부르는 곳(LifeRunner·SettlementScreen·ChimbangScreen·InnFlow·Editor 시험 메뉴 SoulBootstrap·LanternBootstrap·SectBodyMenu)은 지금 칸에서 한 번 읽은 `SaveGame` 을 같이 쓰고 저장도 한 번에(혼만 저장하다 대사를 옛 것으로 덮어쓰지 않게). 옮기기: 처음 읽을 때 `SoulSlots.ShouldMigrateLegacy(soul.json 있음, soul_1.json 있음)` 이면 `SaveGame.FromLegacy(data, soul.json 내용, dialogue.json 내용 또는 null)` 을 `SoulSlots.LegacySlot`(1번) 칸에 쓰고 `SoulSlots.LegacyFiles` 를 `SoulSlots.BackupName`(.bak)으로 옮긴다(지우지 않음). 혼이 깨졌으면 옮기지 않고 그대로 두고 오류 한 줄
+  - 쓸 것: Core `Meta/SoulSlots.cs`(`SoulSlots`, 2026-11-09 클라우드 SV-01, `SoulSlotsTests`), `Meta/SaveGame.cs`(`SaveGameTests`), 기획서 15장 '저장'
+  - 메뉴: `BloodRain/Test/혼 저장 지우기` 는 칸 셋·옛 두 파일·.bak 를 다 지움. `서장 마친 혼으로 저장` 같은 시험 메뉴는 지금 칸(1번)에
+  - 끝: 옛 soul.json·dialogue.json 이 있는 PC 에서 켜면 윤회의 기·대사 진행이 그대로 soul_1.json 으로 옮겨지고 persistentDataPath 에 soul_1.json 과 soul.json.bak·dialogue.json.bak. 쓰러졌다 다시 켜도 남음. 콘솔 에러 0
+  - 찍기: 없음(파일 목록을 daily 에 한 줄)
+  - Steam 클라우드(사람·나중): Steamworks 앱 설정 'Steam Cloud → Auto-Cloud' 에 Windows `%USERPROFILE%/AppData/LocalLow/<회사>/<제품>/` 의 `soul_*.json` 세 칸을 올리게(설정·조작·마지막으로 쓴 칸은 PlayerPrefs 라 기기마다 따로). 앱 등록(ST-05) 뒤
+
+- [ ] SV-01Ub 타이틀의 저장 칸 고르기 화면 · 먼저: SV-01Ua
+  - 할 것: 새 `Presentation/Meta/SlotSelectScreen`(TitleScreen 이 띄움, 선지 바탕 카드 셋). 칸마다 파일이 있으면 `SoulSlotSummary.From(soul, n, File.GetLastWriteTime(칸 파일))`, 없으면 `SoulSlotSummary.Empty(n)`. 카드: 머리 `ui.slot.name`. `IsEmpty` 면 `ui.slot.new`·`ui.slot.new_sub` 만. 아니면 `ui.slot.life`(LifeNumber)·`ui.slot.realm`(`Loc.Realm`)·`ui.slot.seal_stones`(SealStones, SealStonesNeeded)·`ui.slot.regions`(RegionsVisited)·`ui.slot.training`(TrainingLevels)·`ui.slot.last_played`(LastPlayed 를 `ui.slot.date` 에 연·월·일로). 화면 머리 `ui.slot.title`·`ui.slot.sub`, 돌아가기 `ui.slot.back`(Esc·패드 B 도). 카드를 고르면 그 칸을 `SoulStore.Slot` 에 두고 PlayerPrefs 에 마지막으로 쓴 칸으로 적은 뒤 `SoulSlots.DestinationOf` 대로 Prologue → Run(서장), Inn → Inn. 타이틀: 시작 → 이 화면. 이어하기는 `SoulSlots.ContinueSlot(PlayerPrefs 칸, 카드 셋)` 이 null 이 아닐 때만 보이고 그 칸으로 바로 Inn(TT-01U 의 `CanContinue` 셈을 이것으로). 칸 지우기: 혼이 든 카드 귀퉁이에 작은 `ui.slot.delete` 단추 → `SlotDeleteAsk.Ask(n)` → 화면 안 띠(따로 뜨는 확인 창 없음)에 Step 1 이면 `ui.slot.delete_ask`(칸 번호), Step 2 면 `ui.slot.delete_ask_again`, 단추 `ui.slot.delete_yes`(→ `Confirm()`)·`ui.slot.delete_no`(→ `Cancel()`). `Confirm()` 이 칸 번호를 돌려주면 그 칸 파일을 지우고(.bak 안 만듦) 카드를 다시 그림
+  - 쓸 것: Core `Meta/SoulSlots.cs`(`SoulSlotSummary`·`SoulSlots.ContinueSlot`·`DestinationOf`·`SlotDeleteAsk`, 2026-11-09 클라우드 SV-01, `SoulSlotsTests`), strings `ui.slot.*`(네 언어), 기획서 12장 화면 목록 '저장 칸 고르기'·'타이틀과 저장 칸', `Presentation/Meta/SoulStore`·`TitleScreen`
+  - 메뉴: `BloodRain/Bootstrap/타이틀 화면 짓기(Boot 씬)` 다시
+  - 끝: 1번 칸에 옛 저장이 그대로 보이고, 2번 칸 새 혼으로 서장 → 정산까지 가도 1번 칸이 안 바뀜, 두 번 물은 뒤 지운 칸은 '새 혼', 껐다 켜서 이어하기 → 마지막으로 쓴 칸. 영어·간체로 바꿔도 두부 없음. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/SV-01Ub/` 의 `slots.png`
 
 - [ ] SV-02U 침방 '바라는 문파' 고르기 · 먼저: SV-02(2026-11-09 끝남)
   - 할 것: 침방 화면 후보 셋 위에 작은 줄 '바라는 문파: <이름> (바꾸기)'. 환혼 강화 '바라는 문파'를 샀을 때만 보인다. 바꾸기를 누르면 해금한 문파 목록(문파 이름·대표 인물 얼굴 작은 그림)에서 하나를 고른다. 고르면 후보를 다시 뽑지 않고 다음 생 뽑기부터 반영. 고정 문파로 든 후보 카드에는 작은 '願' 낙관. 첫 환혼 침방에는 줄이 안 보인다(고정 셋이라 안 탐).
@@ -802,14 +810,6 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 시험 메뉴 `서장 마친 혼으로 저장` 뒤 원각을 쓰러뜨린 혼을 만드는 메뉴가 없으면 하나 더(`원각 잡은 혼으로 저장`)
   - 끝: 서장만 마친 혼은 문이 안 보이고, 원각 잡은 혼은 '수리 중' 문이 보이며 눌러도 화면이 안 바뀜, 콘솔 에러 0
   - 찍기: `docs/unity_shots/A-07U/` 의 `library_door.png`
-
-- [ ] SV-01U 혼·대사 저장을 한 파일(save.json)로 · 먼저: 없음(LF-03 끝남)
-  - 할 것: `Presentation/Meta/SoulStore.cs` 가 `soul.json`·`dialogue.json` 두 파일 대신 `SaveGame.FileName`(save.json) 하나에 `new SaveGame(soul, dialogue).ToJson()` 을 쓴다(.tmp 에 쓰고 바꿔 끼우기·깨지면 .bad 는 그대로). 읽기는 save.json 이 있으면 `SaveGame.FromJson`, 없고 옛 soul.json 이 있으면 `SaveGame.FromLegacy(data, soul.json 내용, dialogue.json 내용 또는 null)` 로 읽어 save.json 으로 쓰고 옛 두 파일은 `.old` 로 옮김. 지금 `Load`·`LoadDialogue`·`Save`·`SaveDialogue` 를 따로 부르는 곳(LifeRunner·SettlementScreen·침방·객잔)은 한 번 읽은 `SaveGame` 을 같이 쓰고 저장도 한 번에(혼만 저장하고 대사는 옛 것을 덮어쓰는 일이 없게). `혼 저장 지우기` 메뉴는 save.json 과 옛 두 파일을 다 지움
-  - 쓸 것: Core `Meta/SaveGame.cs`(2026-11-07 클라우드 SV-01, `SaveGameTests`), 기획서 15장 '저장'
-  - 메뉴: `BloodRain/Test/혼 저장 지우기`
-  - 끝: 옛 두 파일이 있는 PC 에서 켜면 윤회의 기·대사 진행이 그대로 save.json 으로 옮겨지고, 쓰러졌다 다시 켜도 남음. persistentDataPath 에 save.json 하나만. 콘솔 에러 0
-  - 찍기: 없음(파일 목록을 daily 에 한 줄)
-  - Steam 클라우드(사람·나중): Steamworks 앱 설정 'Steam Cloud → Auto-Cloud' 에 Windows `%USERPROFILE%/AppData/LocalLow/<회사>/<제품>/save.json` 하나만 올리게(설정·조작은 PlayerPrefs 라 기기마다 따로). 앱 등록(ST-05) 뒤
 
 - [ ] DN-01U 피해 숫자 · 먼저: 없음(무공 때리기·치명타는 있음)
   - 할 것: Unity 엔 피해 숫자가 아직 없다. 한 생에 `new Core.World.DamageNumbers(data.Balance)` 하나. 무공이 적을 때릴 때(치명타 여부 포함) `DamageNumbers.ShouldShow(피해, 치명타, 정예·땅의 주인인가, rng)` 가 참이면 `Add(적 x, y, 몸 반지름, 피해, 치명타, rng)`, 프레임마다 `Tick(dt)`. 그리기는 `Items` 를 TMP 풀(상한 `Limits.DamageNumbers` 80, 15장 풀링)로: 자리 (X, Y + Lift), 떠오르기는 웹처럼 수명 동안 화면 높이 약 26px(1080 높이 기준 비율로), 알파 `Alpha(n)`. 보통은 먹색 굵은 작은 글, 치명타는 주홍 더 굵고 크게, 둘 다 종이색 테두리(웹 template.html '피해 숫자' 그리기와 같게). 설정 `GameSettings` 피해 숫자 끔(WP-57U)이면 그리기만 끔

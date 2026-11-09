@@ -1,10 +1,10 @@
 #nullable enable
-// 메타 저장 한 파일(기획서 15장 '저장': 메타 진행은 JSON 한 파일로 저장하고 Steam 클라우드에 올린다).
-//   혼(Soul.ToJson)과 객잔 대사 진행(DialogueProgress.ToJson)을 save.json 하나에 담는다:
+// 저장 칸 한 파일(기획서 15장 '저장': 메타 진행은 저장 칸마다 JSON 한 파일로 저장하고 Steam 클라우드에도 칸마다 올린다).
+//   혼(Soul.ToJson)과 객잔 대사 진행(DialogueProgress.ToJson)을 칸 파일 하나(SoulSlots.FileName — soul_1.json~soul_3.json)에 담는다:
 //     { "version": 1, "soul": { …혼 저장… }, "dialogue": { …대사 진행… } }
 //   안쪽 두 덩이는 제 형식(제 version)을 그대로 쓴다. 바깥 version 은 묶는 꼴이 바뀔 때만 올린다.
 //   설정(GameSettings)·조작(Controls)은 기기마다 다른 값이라 여기 넣지 않는다(PlayerPrefs).
-//   옛 저장(soul.json·dialogue.json 두 파일, LF-03)은 FromLegacy 로 한 번 읽어 옮긴다.
+//   옛 저장(soul.json·dialogue.json 두 파일, LF-03)은 FromLegacy 로 한 번 읽어 1번 칸으로 옮긴다(SoulSlots.ShouldMigrateLegacy).
 //   쓰는 쪽(Unity SoulStore)이 .tmp 에 먼저 쓰고 바꿔 끼우는 것은 그대로다.
 using System;
 using BloodRain.Core.Data;
@@ -16,8 +16,7 @@ namespace BloodRain.Core.Meta
     public sealed class SaveGame
     {
         public const int SaveVersion = 1;
-        /// <summary>저장 파일 이름. Steam 클라우드(Steam Auto-Cloud)에 올릴 파일도 이것 하나.</summary>
-        public const string FileName = "save.json";
+        // 파일 이름은 칸마다 SoulSlots.FileName(1~3). Steam 클라우드(Auto-Cloud)도 그 셋을 올린다.
         /// <summary>옮기기 전 옛 파일 이름(LF-03).</summary>
         public const string LegacySoulFile = "soul.json", LegacyDialogueFile = "dialogue.json";
 
