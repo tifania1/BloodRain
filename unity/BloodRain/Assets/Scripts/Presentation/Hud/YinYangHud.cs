@@ -115,6 +115,11 @@ namespace BloodRain.Presentation.Hud
         {
             var lr = LifeRunner.Instance;
             if (_root == null || lr == null || lr.Life == null) return;
+            // SC-01U 비전 무극(boundless): 음양 게이지가 없어지니 HUD 도 숨긴다(속성 보너스는 WeaponRunner.AspectDamage 가 AspectDamageBonus 로)
+            var sw = SecretWatch.Instance;
+            bool removed = sw != null && sw.Effects.GaugeRemoved;
+            if (_root.gameObject.activeSelf == removed) _root.gameObject.SetActive(!removed);
+            if (removed) return;
             var gauge = lr.Life.Loadout.Gauge;
             var def = DataBoot.Data.Balance.Yinyang;
             float max = Mathf.Max(1, Mathf.Max(Mathf.Abs(def.Min), def.Max));
