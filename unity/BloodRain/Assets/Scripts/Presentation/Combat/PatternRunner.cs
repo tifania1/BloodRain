@@ -191,7 +191,8 @@ namespace BloodRain.Presentation.Combat
             LastEvent = "쓰러짐";
             if (life != null && life.Bosses.InFight && life.Record == null)
             {
-                var kill = life.DefeatBoss();
+                var kill = life.DefeatBoss(_fight.IsFinal ? life.Silver : (int?)null);
+                if (kill.Chest) BloodRain.Presentation.Fx.ChestLayer.Instance?.Place(at); // BR-02 처치 보갑(C-09d 보갑 길)
                 Debug.Log($"[PatternRunner] 처치 {kill.RegionId} 첫 처치 {kill.First} 봉인석 {kill.SealStone} 윤회의 기 {kill.RebirthQi}");
             }
             EndFight();
