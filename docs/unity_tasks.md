@@ -17,12 +17,19 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
-- [ ] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?")
+- [x] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?") — 2026-11-09 21:00 PC: 커밋 cf47b4d 를 `BloodRain/WebGL 빌드`(릴리스, 54.3MB, 14분 16초)로 묶어 https://dev.bloodrain.pages.dev 에 올림. BloodRain.data.br 가 44MiB 라 Cloudflare Pages 25MiB 상한에 걸려서 `tools/split_webgl_data.py` 를 새로 둠(data 를 풀어 조각 셋으로 다시 brotli, index.html 이 이어 붙인 Blob 을 dataUrl 로) — **앞으로 올리는 순서: 빌드 → `python tools/split_webgl_data.py` → `web/_headers` 복사 → wrangler**. GPU 크롬(playwright channel=chrome, 헤드리스 아님)으로 타이틀이 뜨고 시작 → 서장 → 레벨업 카드 → 쓰러짐 → 서장 다시까지 돎, 브라우저 붉은 오류 0. 그 뒤(장삼 처치 → 정산 → 객잔 → 침방)는 장삼이 아직 Run 에 없어(C-10a) 웹이든 에디터든 못 감 — WG-01Ub 로 넘김. 서장 쓰러짐은 혼에 아무것도 안 남기는 설계라 새로고침 뒤 '혼 저장 없음'이 맞고, IndexedDB 에 /idbfs 는 생김(이어하기 확인도 WG-01Ub). 본 것: 웹은 기기 갈래가 Mobile(적 상한 400)로 잡힘, OnGUI 디버그 줄 한글은 여전히 빔. 찍음 `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
   - 할 것: https://dev.bloodrain.pages.dev 는 11-01 에 올린 Run 씬만 있는 옛 판이다. `WebGLBuild.cs` 가 이제 빌드 설정 순서(Boot → Run → Inn)대로 묶어 타이틀부터 연다(2026-11-09 클라우드가 고침). 저장소 최신으로 받고 → `BloodRain/WebGL 빌드`(릴리스, 12~15분) → 저장소 루트에서 `web/_headers` 를 결과 폴더에 복사 → `npx wrangler pages deploy build/WebGL/BloodRain --project-name=bloodrain --branch=dev`. GPU 크롬(V-04d 처럼 playwright channel=chrome, 헤드리스 아님)으로 열어 타이틀 → 시작 → 서장 → 쓰러짐 → 정산 → 객잔 → 침방 → 다음 생까지 한 바퀴. 새로고침한 뒤 이어하기가 보이는지(혼 저장이 브라우저 IndexedDB 에 남는지) 본다. 안 남으면 그 사실과 고칠 자리(SoulStore.Write 뒤 동기화)를 `막힘:` 말고 결과 줄에 적는다. 빌드가 끝나면 활성 플랫폼이 바뀌었는지 보고 바뀌었으면 원래대로.
   - 쓸 것: `Assets/Editor/WebGLBuild.cs`, `web/_headers`, PC 에 로그인된 wrangler(`%APPDATA%\xdg.config\.wrangler`)
   - 메뉴: `BloodRain/WebGL 빌드`
   - 끝: dev.bloodrain.pages.dev 에서 타이틀이 뜨고 한 바퀴가 돎, 브라우저 콘솔에 붉은 오류 없음(URP 기본 셰이더 경고 둘은 V-04d 대로 괜찮음). 결과 줄에 크기·걸린 시간·올린 시각
-  - 찍기: `docs/unity_shots/WG-01U/` 의 `title_web.png`·`inn_web.png`
+  - 찍기: `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
+
+- [ ] WG-01Ub 웹에서 한 생 한 바퀴와 이어하기 · 먼저: C-10b
+  - 할 것: WG-01U 순서(빌드 → `tools/split_webgl_data.py` → `web/_headers` → wrangler)로 새로 올리고 GPU 크롬으로 서장 장삼 처치 → 정산 → 객잔 → 침방 → 다음 생까지 한 바퀴. 새로고침한 뒤 타이틀에 이어하기가 보이는지(혼 저장이 IndexedDB /idbfs 에 남는지). 안 남으면 SoulStore.Write 뒤 FS 동기화가 빠진 것 — 그 사실과 고칠 자리를 결과 줄에.
+  - 쓸 것: `Assets/Editor/WebGLBuild.cs`, `tools/split_webgl_data.py`, `web/_headers`, `Presentation/Meta/SoulStore.cs`
+  - 메뉴: `BloodRain/WebGL 빌드`
+  - 끝: 웹에서 한 바퀴가 돌고, 새로고침 뒤 이어하기가 보임. 브라우저 붉은 오류 0
+  - 찍기: `docs/unity_shots/WG-01U/` 의 `inn_web.png`
 
 - [x] V-10b 붓 획 자른 텍스처 확인 — 2026-11-04 메뉴 다시 돌림, brushCrops 107줄(새 붓 획 포함, 27은 옛 수), 레벨 7 획이 V-04 화면과 같은 반지름·담채·금빛, 콘솔 에러 0
   - 할 것: 컴파일 확인 → 메뉴를 다시 돌려 Run 씬 WeaponRunner 에 brushCrops 가 채워지는지 → 삼재검법 1·2·3단이 전과 같은 자리·크기로 그어지는지 본다. 메뉴를 안 돌리면 잘린 그림이 512 칸 크기로 늘어나 보인다.

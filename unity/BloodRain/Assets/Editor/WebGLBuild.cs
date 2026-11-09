@@ -9,7 +9,8 @@ namespace BloodRain.Editor
     // WebGL 빌드. CI(game-ci)와 같은 자리(저장소 루트 build/WebGL/BloodRain)에 만든다.
     // PC 명령줄: Unity.exe -batchmode -quit -projectPath unity/BloodRain -buildTarget WebGL
     //            -executeMethod BloodRain.Editor.WebGLBuild.Build -logFile <로그>
-    // 올리기는 저장소 루트에서 web/_headers 를 결과 폴더에 넣고
+    // 올리기는 저장소 루트에서 python tools/split_webgl_data.py(data 가 Cloudflare Pages 25MiB 상한을 넘으면 조각으로 나눔, 2026-11-09)
+    //            → web/_headers 를 결과 폴더에 넣고
     //            npx wrangler pages deploy build/WebGL/BloodRain --project-name=bloodrain --branch=dev
     public static class WebGLBuild
     {
