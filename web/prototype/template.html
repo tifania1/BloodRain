@@ -4685,7 +4685,7 @@ function localFoe() {
 // 고유 적 동작 넷(WP-13c): 천하 시안 localBehavior 와 같은 규칙을 1장 프로토타입 적 틀에 맞춰(거리·속도는 enemies.json 그대로 m, 축척 곱 없음 —
 // 프로토타입 적은 1m 크기 그대로라서). 독인 독기(poison_aura, 당가 몸이면 안 받음은 이 판에 문파가 없어 뺌), 매화검귀 꽃잎 탄·설인 얼음덩이(petal_shot·ice_throw),
 // 혈사자 예고 돌진 뒤 포효(charge_roar: 둘레 적 걸음 +auraBonus 를 roarSeconds 동안). 피해는 그 적 접촉 피해가 분에 따라 커진 몫을 같이 받는다.
-// 무리 넷(snake_line·twin_revive·spear_line·flank_pack)은 spawnLocalGroup 이 같이 낸다. 수적 갈고리(hook_bind)·독두꺼비 독 웅덩이(onDeath)도. 혈영 분신(mimic)은 첫 무공 흉내. 남은 동작(water_pull)은 아직 그냥 쫓아온다.
+// 무리 넷(snake_line·twin_revive·spear_line·flank_pack)은 spawnLocalGroup 이 같이 낸다. 수적 갈고리(hook_bind)·독두꺼비 독 웅덩이(onDeath)도. 혈영 분신(mimic)은 첫 무공 흉내. 수귀 물 끌기(water_pull)는 물길(WP-13b)이 들어온 뒤 붙였다.
 const dmgScale = e => e.dmg / (E_BY_ID[e.type].contactDamage || 1);
 const LOCAL_BEH = {
   // 혈영 분신(WP-13c, Core Mimicry, 시안 mimicTick): 플레이어 첫 무공(시작 무공) 하나를 흉내 낸다. 피해는 그 무공 레벨의 바탕 피해 × damageScale,
@@ -4729,6 +4729,13 @@ const LOCAL_BEH = {
   flank_pack(e, dt, dx, dy, d) {
     if (!e.flank || d <= E_BY_ID[e.type].group.commitRange) return [dx * e.speed, dy * e.speed];
     const c = Math.cos(e.flank), sn = Math.sin(e.flank); return [(dx * c - dy * sn) * e.speed, (dx * sn + dy * c) * e.speed];
+  },
+  // 수귀(WP-13c, 시안 localBehavior 와 같은 규칙): 물 위에 있는 수귀가 pull.range m 안이면 플레이어를 수귀 쪽으로 초속 pull.speed m 끌어당긴다.
+  // 경공 중엔 안 끌리고, 여럿이어도 한 걸음에 한 번(6장 '여럿이어도 큰 것 하나', Core EnemyPull). 아래 경지에서 생긴 수귀는 곧 밟히니 안 끈다
+  water_pull(e, dt, dx, dy, d) {
+    const D = E_BY_ID[e.type], p = G.player;
+    if (D.pull && d < D.pull.range && p.dashT <= 0 && !lowBorn(e) && G.pullStamp !== G.t && inWaterC(e.x, e.y)) { G.pullStamp = G.t; const v = D.pull.speed * dt; p.x -= dx * v; p.y -= dy * v; }
+    return [dx * e.speed, dy * e.speed];
   },
   poison_aura(e, dt, dx, dy, d) {
     const D = E_BY_ID[e.type];
@@ -4820,6 +4827,7 @@ const LOCAL_BEH = {
 };
 // 무리로 나오는 고유 적(시안 spawnLocal 과 같은 규칙): 금선지네 한 줄, 쌍강시 둘, 마교도 가로줄, 설랑 떼
 function spawnLocalGroup(type, x, y) {
+  if (E_BY_ID[type].onlyInWater && !inWaterC(x, y)) return null;   // 수귀는 물에서만 솟는다(onlyInWater, WP-13c). 그 자리가 물이 아니면 이번 차례는 건너뜀(시안 spawnLocal 과 같음)
   const D = E_BY_ID[type], p = G.player, f = spawnEnemy(type, x, y);
   if (D.behavior === 'snake_line' && D.group) {
     let prev = f; for (let i = 1; i < D.group.size; i++) { const m = spawnEnemy(type, x + i * D.group.spacing, y); m.lead = prev; prev = m; }

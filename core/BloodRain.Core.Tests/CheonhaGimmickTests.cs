@@ -85,6 +85,9 @@ namespace BloodRain.Core.Tests
                 "pushPagodaC(p, B.stats.playerBodyRadius, false)", "pushPagodaC(e, e.r, !!(E_BY_ID[e.type] || {}).ignoresTerrain)", "drawGroundGimmicks(now);",
             })
                 Assert.Contains(key, Proto);
+            // 수귀(WP-13c): 물에서만 솟고(onlyInWater), 물 위 수귀가 pull 값으로 끌어당긴다(한 걸음에 한 번)
+            foreach (var key in new[] { "E_BY_ID[type].onlyInWater && !inWaterC(x, y)", "D.pull && d < D.pull.range && p.dashT <= 0", "G.pullStamp !== G.t && inWaterC(e.x, e.y)", "const v = D.pull.speed * dt" })
+                Assert.Contains(key, Proto);
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
             Assert.Contains("\"water\", \"taijiFloor\", \"campfire\", \"pagodaForest\", \"bell\"", build);
         }
