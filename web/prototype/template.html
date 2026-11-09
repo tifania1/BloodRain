@@ -4623,6 +4623,7 @@ function renderInn() {
   }
   const ub = $('innupg'); ub.innerHTML = '';
   for (const u of RB.upgrades || []) {
+    if (!/^(candidates|rerolls)\+/.test(u.effect)) continue;   // 바라는 문파(pin, SV-02)는 고르는 화면이 Unity 판에만 있다(SV-02U). 웹에서 사면 아무 일이 없으니 안 판다
     const lv = upgLevel(m, u.id), cost = upgCost(m, u), b = document.createElement('button'); b.type = 'button';
     b.disabled = cost == null || m.qi < cost;
     const what = u.effect.startsWith('candidates') ? '환생 후보 +1' : u.effect.startsWith('rerolls') ? '환혼마다 후보 다시 뽑기 +1' : u.effect;

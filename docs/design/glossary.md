@@ -67,6 +67,7 @@
 | 천하 | All Under Heaven | 天下 | 게임 구조 이름 |
 | 중원 | the Central Plains | 中原 | 맵 |
 | 문파 | Sect | 门派 | 몸의 소속 |
+| 바라는 문파 | Desired Sect | 心仪门派 | 환혼 강화, 침방 후보 한 칸에 늘 드는 문파(카드 낙관 願/愿) |
 | 세가 | Clan | 世家 | 남궁·당가 |
 | 마교 | Demonic Cult | 魔教 | 문파 하나 |
 | 혈공 | Blood Art | 血功 | 마교 몸 성장 |

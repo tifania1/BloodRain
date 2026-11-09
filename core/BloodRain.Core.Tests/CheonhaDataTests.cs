@@ -410,7 +410,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(new[] { 0.6f, 0.37f }, c.Region("songshan").Pos);
             Assert.True(c.Region("bongmagok").Final);
             Assert.Equal(7, c.Bosses.FinalRequires.SealStones);
-            Assert.Equal(2, c.Rebirth.Upgrades.Count);
+            Assert.Equal(3, c.Rebirth.Upgrades.Count);
             Assert.Equal(2000, c.RebirthQi.Targets.Last().Qi);
             Assert.Equal(64, c.RealmScale.Last().ClusterSize);
         }

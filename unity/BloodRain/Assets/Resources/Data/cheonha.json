@@ -133,9 +133,11 @@
     "_noteGender": "몸 성별(21장, 사람 확인 2026-10-30). 후보마다 femaleRatio 로 여자 몸, maleOnlySects 문파는 늘 남자. 능력치는 같고 대표 인물의 호칭(사형/사매)과 대사 몇 줄만 바뀐다. 성별은 후보의 성질을 다 굴린 뒤에 굴린다.",
     "femaleRatio": 0.5,
     "maleOnlySects": ["shaolin"],
+    "_noteUpgrades": "환혼 강화(10장). effect 는 '이름+수': candidates 후보 수, rerolls 한 번 환혼에 다시 고르기 수, pin 바라는 문파(SV-02, 2026-11-09 사람이 추천대로 정함 — 침방에서 해금한 문파 하나를 골라 두면 후보 한 칸에 늘 그 문파, 성질은 그대로 무작위, 첫 환혼은 고정이라 안 탐).",
     "upgrades": [
       { "id": "fourth_body", "nameKo": "넷째 몸",   "effect": "candidates+1",  "maxLevel": 1, "baseCost": 2000, "costPerLevel": false },
-      { "id": "reroll",      "nameKo": "다시 고르기", "effect": "rerolls+1",    "maxLevel": 3, "baseCost": 400,  "costPerLevel": true }
+      { "id": "reroll",      "nameKo": "다시 고르기", "effect": "rerolls+1",    "maxLevel": 3, "baseCost": 400,  "costPerLevel": true },
+      { "id": "pin_sect",    "nameKo": "바라는 문파", "effect": "pin+1",        "maxLevel": 1, "baseCost": 4000, "costPerLevel": false }
     ]
   },
 

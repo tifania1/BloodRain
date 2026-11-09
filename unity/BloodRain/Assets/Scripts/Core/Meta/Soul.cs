@@ -1,6 +1,6 @@
 #nullable enable
 // 혼(계정 진행, 기획서 10·21장). 몸이 바뀌어도 혼에 남는 것을 여기 모은다.
-//   윤회의 기 잔고, 연무장(산 레벨과 쓴 양, 전부 환불), 환혼 강화(넷째 몸, 다시 고르기),
+//   윤회의 기 잔고, 연무장(산 레벨과 쓴 양, 전부 환불), 환혼 강화(넷째 몸, 다시 고르기, 바라는 문파와 고른 문파),
 //   해금(땅의 주인 첫 처치 = 'boss:<지역>' 토큰, 도전 과제 토큰), 봉인석(이번 회차), 밟은 땅,
 //   한 번 깨친 길(오른 경지, 깨운 절기), 생 횟수와 문파별 생, 문파별로 깬 종장(진엔딩 '서로 다른 문파 4곳'), 의서, 회차.
 //   회귀는 cycle.resets 에 적힌 것(봉인석)만 지운다.
@@ -180,8 +180,8 @@ namespace BloodRain.Core.Meta
     public sealed class Soul
     {
         public const int SaveVersion = 1;
-        /// <summary>환혼 강화 effect 에 쓸 수 있는 이름(candidates+1, rerolls+1).</summary>
-        public static readonly string[] UpgradeEffectKeys = { "candidates", "rerolls" };
+        /// <summary>환혼 강화 effect 에 쓸 수 있는 이름(candidates+1, rerolls+1, pin+1 바라는 문파).</summary>
+        public static readonly string[] UpgradeEffectKeys = { "candidates", "rerolls", "pin" };
 
         readonly GameData _data;
         int _qi;
@@ -199,6 +199,7 @@ namespace BloodRain.Core.Meta
         readonly Dictionary<string, int> _finalClears = new Dictionary<string, int>();
         readonly HashSet<string> _torn = new HashSet<string>();
         readonly HashSet<string> _restored = new HashSet<string>();
+        string? _pinnedSect;
 
         public Soul(GameData data) { _data = data; }
 
@@ -306,6 +307,30 @@ namespace BloodRain.Core.Meta
         public int CandidateCount => C.Rebirth.Candidates + UpgradeEffect("candidates");
         /// <summary>한 번 환혼에 쓸 수 있는 다시 고르기 수.</summary>
         public int RerollsPerRebirth => UpgradeEffect("rerolls");
+
+        /// <summary>환혼 강화 '바라는 문파'(pin_sect)를 샀는가. 사야 침방에서 문파를 고를 수 있다.</summary>
+        public bool HasSectPin => UpgradeEffect("pin") > 0;
+        /// <summary>고른 바라는 문파(문파 id). 아직 안 골랐으면 null. 강화를 사기 전엔 늘 null.</summary>
+        public string? PinnedSect => _pinnedSect;
+        /// <summary>다음 침방에 실제로 쓰는 바라는 문파: 강화를 샀고, 골라 두었고, 그 문파가 해금돼 있을 때만. 아니면 null.</summary>
+        public string? ActivePinnedSect =>
+            HasSectPin && _pinnedSect != null && UnlockedSects.Contains(_pinnedSect) ? _pinnedSect : null;
+
+        /// <summary>바라는 문파로 고를 수 있는가: 강화를 샀고, 있는 문파이고, 해금했을 때. 서장 몸(진소운)은 문파가 아니라 못 고른다.</summary>
+        public bool CanPinSect(string sectId) =>
+            HasSectPin && C.Sects.Any(x => x.Id == sectId) && UnlockedSects.Contains(sectId);
+
+        /// <summary>바라는 문파를 고르거나 바꾼다(침방에서 언제든). 고를 수 없는 문파면 아무것도 안 바뀌고 false.
+        /// 이미 연 침방의 후보는 다시 뽑지 않는다. 다음 OpenRebirth 부터 반영.</summary>
+        public bool TryPinSect(string sectId)
+        {
+            if (!CanPinSect(sectId)) return false;
+            _pinnedSect = sectId;
+            return true;
+        }
+
+        /// <summary>바라는 문파를 비운다(강화는 그대로, 다음 침방은 모두 무작위).</summary>
+        public void ClearSectPin() => _pinnedSect = null;
 
         int UpgradeEffect(string key)
         {
@@ -578,12 +603,12 @@ namespace BloodRain.Core.Meta
 
         // ---- 환혼과 한 생 ----
 
-        /// <summary>침방을 연다. 첫 환혼이면 고정 셋, 아니면 해금한 문파에서 후보 수·다시 고르기만큼.</summary>
+        /// <summary>침방을 연다. 첫 환혼이면 고정 셋, 아니면 해금한 문파에서 후보 수·다시 고르기만큼(바라는 문파가 있으면 한 칸은 그 문파).</summary>
         public RebirthDraw OpenRebirth(Random rng)
         {
             if (!PrologueDone) throw new InvalidOperationException("서장을 마치기 전에는 환혼이 없습니다. 첫 생은 Rebirth.Prologue 로 시작합니다");
             GuardNewLife();
-            return new RebirthDraw(C, UnlockedSects, CandidateCount, RerollsPerRebirth, IsFirstRebirth, rng);
+            return new RebirthDraw(C, UnlockedSects, CandidateCount, RerollsPerRebirth, IsFirstRebirth, rng, ActivePinnedSect);
         }
 
         /// <summary>이 몸으로 한 생을 시작한다. 서장이 안 끝났으면 Rebirth.Prologue 몸이어야 한다.</summary>
@@ -729,6 +754,8 @@ namespace BloodRain.Core.Meta
             public bool JourneyOver;
             /// <summary>도감에서 찾은 쪽. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public List<string> Codex = new List<string>();
+            /// <summary>바라는 문파(SV-02). 안 골랐으면 칸이 없다. 이 칸이 생기기 전 저장은 안 고른 것으로 읽는다.</summary>
+            public string? PinnedSect;
         }
 
         static readonly JsonSerializerSettings SaveSettings = new JsonSerializerSettings
@@ -777,6 +804,7 @@ namespace BloodRain.Core.Meta
                 EndingsSeen = Sorted(_endingsSeen),
                 JourneyOver = JourneyOver,
                 Codex = Sorted(_codex),
+                PinnedSect = _pinnedSect,
             };
             return JsonConvert.SerializeObject(f, SaveSettings);
         }
@@ -817,6 +845,8 @@ namespace BloodRain.Core.Meta
             s._restored.UnionWith(f.RestoredManuals);
             s._endingsSeen.UnionWith(f.EndingsSeen);
             s._codex.UnionWith(f.Codex.Where(k => CodexKey.IsValid(data.Synergies, k)));
+            // 없어진 문파 id 는 버린다. 해금·강화 여부는 쓸 때(ActivePinnedSect) 본다
+            if (f.PinnedSect != null && s.C.Sects.Any(x => x.Id == f.PinnedSect)) s._pinnedSect = f.PinnedSect;
             return s;
         }
     }

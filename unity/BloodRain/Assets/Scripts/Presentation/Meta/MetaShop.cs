@@ -78,11 +78,12 @@ namespace BloodRain.Presentation.Meta
                 soul.TrainingMax(item.Stat), () => soul.TrainingLevel(item.Stat), () => soul.TrainingCost(item.Stat), () => soul.RebirthQi,
                 () => soul.TryBuyTraining(item.Stat), changed, width);
 
-        /// <summary>환혼 강화 한 줄(넷째 몸, 다시 고르기).</summary>
+        /// <summary>환혼 강화 한 줄(넷째 몸, 다시 고르기, 바라는 문파).</summary>
         public static MetaShopRow Upgrade(Transform parent, TMP_FontAsset font, Soul soul, RebirthUpgradeDef u, Action changed, float width = 600)
         {
             var (key, amount) = Soul.ParseEffect(u.Effect);
-            string effect = key == "candidates" ? Loc.F("ui.shop.candidates", amount) : key == "rerolls" ? Loc.F("ui.shop.rerolls", amount) : u.Effect;
+            string effect = key == "candidates" ? Loc.F("ui.shop.candidates", amount) : key == "rerolls" ? Loc.F("ui.shop.rerolls", amount)
+                : key == "pin" ? Loc.T("ui.shop.pin") : u.Effect;
             return new MetaShopRow(parent, font, Loc.Upgrade(u), effect, u.MaxLevel, () => soul.UpgradeLevel(u.Id), () => soul.UpgradeCost(u.Id),
                 () => soul.RebirthQi, () => soul.TryBuyUpgrade(u.Id), changed, width);
         }

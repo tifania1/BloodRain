@@ -4,6 +4,8 @@
 //         같은 문파가 성질만 달리해 또 나온다.
 //   타고난 성질: 후보마다 0·1·2개를 countWeights 비율로. 같은 성질은 두 번 안 붙고, excludes 쌍(음체·양체, 약골·강골)도 같이 안 붙는다.
 //   첫 환혼(서장 직후)은 firstRebirth 셋 고정, firstRebirthTraits 가 거짓이면 성질도 없다. 다시 고르기도 없다.
+//   바라는 문파(환혼 강화 pin_sect, SV-02): 고른 문파가 한 칸에 늘 들고, 나머지 칸은 그 문파를 빼고 겹치지 않게 뽑는다.
+//         성질은 그대로 무작위, 자리는 섞는다. 다시 고르기를 해도 그 문파는 남는다(성질은 새로). 첫 환혼은 고정이라 안 탄다.
 //   몸: 문파가 기혈·걸음·음양 시작·시작 무공·오의·고유 능력을 정하고(5장), 성질이 능력치·음양 시작·윤회의 기 배율을 더한다.
 //       고유 능력의 숫자(sects[].traitEffect)는 SectTrait 가 읽는다. 능력치 덧셈은 ComputeStats 가 함께 얹는다.
 //       태어난 문파의 진전은 homeSchoolTiers 만큼 더 센다. Synergy.Compute 의 바깥 보너스(고수의 유해와 같은 자리)로 넣는다.
@@ -28,12 +30,16 @@ namespace BloodRain.Core.Meta
         /// <summary>여자 몸인가. 능력치는 같고 대표 인물이 '사매'로 부르는 대사가 따로 있다(21장, docs/story/leaders.md).</summary>
         public bool Female { get; }
 
-        public RebirthCandidate(SectDef sect, RegionDef region, IReadOnlyList<BirthTraitDef> traits, bool female = false)
+        /// <summary>바라는 문파(환혼 강화 pin_sect)로 든 칸인가. 침방 카드의 '願' 낙관. 같은 문파가 둘이어도 이 칸 하나만 참.</summary>
+        public bool Pinned { get; }
+
+        public RebirthCandidate(SectDef sect, RegionDef region, IReadOnlyList<BirthTraitDef> traits, bool female = false, bool pinned = false)
         {
             Sect = sect;
             Region = region;
             Traits = traits;
             Female = female;
+            Pinned = pinned;
         }
 
         public float Density => Region.Density;
@@ -154,8 +160,10 @@ namespace BloodRain.Core.Meta
             return def.List.Where(t => chosen.Contains(t)).ToList();
         }
 
-        /// <summary>환생 후보 count 명. 해금한 문파에서 겹치지 않게 뽑고, 모자라면 같은 문파를 성질만 달리해 더 넣는다.</summary>
-        public static List<RebirthCandidate> Roll(CheonhaDef c, IEnumerable<string> unlockedSects, int count, Random rng)
+        /// <summary>환생 후보 count 명. 해금한 문파에서 겹치지 않게 뽑고, 모자라면 같은 문파를 성질만 달리해 더 넣는다.
+        /// pinnedSect(바라는 문파)를 주면 그 문파가 한 칸에 늘 들고(Pinned 참), 나머지 칸은 그 문파를 빼고 뽑는다.
+        /// 해금 안 된 문파나 없는 문파를 주면 ArgumentException. null 이면 예전과 난수까지 똑같다.</summary>
+        public static List<RebirthCandidate> Roll(CheonhaDef c, IEnumerable<string> unlockedSects, int count, Random rng, string? pinnedSect = null)
         {
             if (count < 1) throw new ArgumentOutOfRangeException(nameof(count));
             var unlocked = new HashSet<string>(unlockedSects);
@@ -163,6 +171,12 @@ namespace BloodRain.Core.Meta
                 if (c.Sects.All(s => s.Id != id)) throw new ArgumentException($"없는 문파입니다: {id}");
             var pool = c.Sects.Where(s => unlocked.Contains(s.Id)).ToList();
             if (pool.Count == 0) throw new InvalidOperationException("해금한 문파가 없습니다");
+            if (pinnedSect != null)
+            {
+                var pin = pool.FirstOrDefault(s => s.Id == pinnedSect)
+                    ?? throw new ArgumentException($"바라는 문파는 해금한 문파여야 합니다: {pinnedSect}");
+                return WithTraits(c, PinnedPicks(pool, pin, count, rng), rng);
+            }
 
             var picks = pool.ToList();
             int unique = Math.Min(count, picks.Count);
@@ -174,15 +188,34 @@ namespace BloodRain.Core.Meta
                 // 겹친 문파가 늘 끝 카드에만 오지 않게 자리를 섞는다
                 for (int i = 0; i < picks.Count - 1; i++) Swap(picks, i, rng.Next(i, picks.Count));
             }
+            return WithTraits(c, picks.Select(s => (s, false)).ToList(), rng);
+        }
 
-            var result = new List<RebirthCandidate>(count);
-            foreach (var sect in picks)
+        /// <summary>바라는 문파 한 칸 + 나머지(그 문파를 뺀 해금 문파에서 겹치지 않게, 모자라면 아무 해금 문파나 성질만 달리해). 자리는 섞는다.</summary>
+        static List<(SectDef Sect, bool Pinned)> PinnedPicks(List<SectDef> pool, SectDef pin, int count, Random rng)
+        {
+            var others = pool.Where(s => s.Id != pin.Id).ToList();
+            int unique = Math.Min(count - 1, others.Count);
+            for (int i = 0; i < unique; i++) Swap(others, i, rng.Next(i, others.Count));
+            var picks = new List<(SectDef Sect, bool Pinned)> { (pin, true) };
+            picks.AddRange(others.GetRange(0, unique).Select(s => (s, false)));
+            while (picks.Count < count) picks.Add((pool[rng.Next(pool.Count)], false));
+            // 바라는 문파가 늘 첫 카드에 오지 않게
+            for (int i = 0; i < picks.Count - 1; i++) Swap(picks, i, rng.Next(i, picks.Count));
+            return picks;
+        }
+
+        /// <summary>뽑은 문파마다 성질을 붙인다. 같은 문파 후보끼리는 성질 묶음이 겹치지 않게 다시 굴린다. 성별은 그 뒤에.</summary>
+        static List<RebirthCandidate> WithTraits(CheonhaDef c, List<(SectDef Sect, bool Pinned)> picks, Random rng)
+        {
+            var result = new List<RebirthCandidate>(picks.Count);
+            foreach (var (sect, pinned) in picks)
             {
                 var region = c.Region(sect.Region);
                 for (int tries = 0; ; tries++)
                 {
                     if (tries >= MaxTraitTries) throw new InvalidOperationException($"{sect.Id} 후보끼리 성질을 다르게 붙이지 못했습니다");
-                    var cand = new RebirthCandidate(sect, region, RollTraits(c.BirthTraits, rng));
+                    var cand = new RebirthCandidate(sect, region, RollTraits(c.BirthTraits, rng), pinned: pinned);
                     if (result.Any(o => o.Sect.Id == sect.Id && o.SameTraits(cand))) continue;
                     result.Add(cand);
                     break;
@@ -199,7 +232,7 @@ namespace BloodRain.Core.Meta
         }
 
         static List<RebirthCandidate> WithGender(CheonhaDef c, List<RebirthCandidate> list, Random rng) =>
-            list.Select(x => new RebirthCandidate(x.Sect, x.Region, x.Traits, RollFemale(c.Rebirth, x.Sect, rng))).ToList();
+            list.Select(x => new RebirthCandidate(x.Sect, x.Region, x.Traits, RollFemale(c.Rebirth, x.Sect, rng), x.Pinned)).ToList();
 
         /// <summary>첫 환혼(서장 직후): firstRebirth 문파를 데이터 순서대로. 성질은 firstRebirthTraits 가 참일 때만 굴린다.</summary>
         public static List<RebirthCandidate> First(CheonhaDef c, Random rng)
@@ -276,8 +309,11 @@ namespace BloodRain.Core.Meta
         public int Count { get; }
         public int RerollsLeft { get; private set; }
         public IReadOnlyList<RebirthCandidate> Candidates { get; private set; }
+        /// <summary>이 침방에서 한 칸에 늘 드는 문파(바라는 문파). 없거나 첫 환혼이면 null.
+        /// 침방에서 바라는 문파를 바꿔도 이 값은 그대로다(다음 침방부터 반영, SV-02U).</summary>
+        public string? PinnedSect { get; }
 
-        public RebirthDraw(CheonhaDef c, IEnumerable<string> unlockedSects, int count, int rerolls, bool first, Random rng)
+        public RebirthDraw(CheonhaDef c, IEnumerable<string> unlockedSects, int count, int rerolls, bool first, Random rng, string? pinnedSect = null)
         {
             _c = c;
             _unlocked = unlockedSects.ToList();
@@ -293,16 +329,17 @@ namespace BloodRain.Core.Meta
             {
                 Count = count;
                 RerollsLeft = Math.Max(0, rerolls);
-                Candidates = Rebirth.Roll(c, _unlocked, count, rng);
+                PinnedSect = pinnedSect;
+                Candidates = Rebirth.Roll(c, _unlocked, count, rng, PinnedSect);
             }
         }
 
-        /// <summary>후보를 통째로 다시 뽑는다. 남은 횟수가 없으면 InvalidOperationException.</summary>
+        /// <summary>후보를 통째로 다시 뽑는다(바라는 문파 칸은 문파만 남고 성질은 새로). 남은 횟수가 없으면 InvalidOperationException.</summary>
         public IReadOnlyList<RebirthCandidate> Reroll()
         {
             if (RerollsLeft <= 0) throw new InvalidOperationException("다시 고르기가 남지 않았습니다");
             RerollsLeft--;
-            Candidates = Rebirth.Roll(_c, _unlocked, Count, _rng);
+            Candidates = Rebirth.Roll(_c, _unlocked, Count, _rng, PinnedSect);
             return Candidates;
         }
 
