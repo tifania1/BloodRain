@@ -780,7 +780,7 @@ function schoolSummons(dt) {
       const a0 = i / S.allies * TAU + G.t, ax = p.x + Math.cos(a0) * 1.5, ay = p.y + Math.sin(a0) * 1.5, tg = nearestEnemies(ax, ay, 1, 12)[0];
       if (!tg) continue;
       const a = Math.atan2(tg.y - ay, tg.x - ax);
-      addProj({ x: ax, y: ay, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce: 0, life: sh.lifeSeconds, kind: 'palm', w: null, kb: bg.knockback });
+      addProj({ x: ax, y: ay, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: sh.radius, dmg, pierce: W_BY_ID.palm_wind.pierce[0], life: sh.lifeSeconds, kind: 'palm', w: null, kb: bg.knockback });   // 장풍 Lv1 처럼 다 뚫음(Unity ShootFreeFrom 과 같게, QA-22)
     }
   }
 }
