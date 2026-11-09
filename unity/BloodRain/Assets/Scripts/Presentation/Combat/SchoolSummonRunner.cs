@@ -9,7 +9,7 @@ namespace BloodRain.Presentation.Combat
     // R-07U 진전 소림 4(나한 허상)·개방 4(개방 제자). 셈은 전부 Core SchoolSummons, 여기는 그리기와 밀기·쏘기만.
     //   허상: 몸 둘레 radius(축척) 원에 images 개가 seconds 동안 돈다. 둘레 안 잡몹·정예를 ArhatPush 만큼 밀고 피해는 없다(땅의 주인 제외).
     //   제자: allies 명이 seconds 동안 몸 곁에 선다(적이 노리지 않음). AllyVolleys 만큼 제자마다 가장 가까운 적에게 장풍 Lv1 탄 한 대.
-    //         탄 모양은 weapons.json palm_wind shot, 피해·넉백은 SchoolSummons.AllyShot(공력은 탄이 맞을 때 EnemyField 가 곱하는 길 그대로라 1).
+    //         탄 모양은 weapons.json palm_wind shot, 피해·넉백은 SchoolSummons.AllyShot(fx, 공력 — WeaponRunner.mightMultiplier).
     // LifeRunner 가 붙이고 프레임마다 Step 을 부른다.
     public sealed class SchoolSummonRunner : MonoBehaviour
     {
@@ -100,7 +100,7 @@ namespace BloodRain.Presentation.Combat
             }
             if (ev.AllyVolleys > 0 && allies > 0 && weapons != null)
             {
-                var (dmg, knock) = SchoolSummons.AllyShot(fx, 1f);
+                var (dmg, knock) = SchoolSummons.AllyShot(fx, weapons.mightMultiplier);
                 var palm = System.Linq.Enumerable.FirstOrDefault(DataBoot.Data.Weapons, w => w.Id == "palm_wind");
                 var shot = palm?.Shot;
                 float speed = shot != null ? shot.Speed : 5f, rad = shot != null ? shot.Radius : 0.55f, lifeS = shot != null ? shot.LifeSeconds : 2.6f;

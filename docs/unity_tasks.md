@@ -24,6 +24,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: dev.bloodrain.pages.dev 에서 타이틀이 뜨고 한 바퀴가 돎, 브라우저 콘솔에 붉은 오류 없음(URP 기본 셰이더 경고 둘은 V-04d 대로 괜찮음). 결과 줄에 크기·걸린 시간·올린 시각
   - 찍기: `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
 
+- [ ] MT-01U 공력이 무공 피해에 곱해지는지 확인 · 먼저: 없음 (2026-11-09 23시 클라우드 QA-22 가 찾음: Unity 무공 피해에 공력(StatSheet.Might)이 어디서도 안 곱해져 공력 심법·연무장 공력·남궁 몸·검총이 무공에 아무 일도 안 했음. 오의만 썼음)
+  - 할 것: 클라우드가 고친 코드를 컴파일하고 확인한다 — `WeaponRunner.mightMultiplier`(LifeRunner 가 `st.Might` 를 넣음)를 `Damage(Slot)` 에, 당가 5 독침·화산 3 꽃잎 피해에, 개방 제자 장풍(`SchoolSummons.AllyShot(fx, weapons.mightMultiplier)`)에 곱함. 취선 `FoodMightBonus` 는 SC-01U 남은 것대로 이 값에 더하면 된다
+  - 쓸 것: `Presentation/Combat/WeaponRunner.cs`, `Presentation/LifeRunner.cs`, `Presentation/Combat/SchoolSummonRunner.cs`
+  - 메뉴: 없음
+  - 끝: 콘솔 에러 0. 연무장 공력을 사거나(또는 공력 심법을 고르고) 삼재검법 한 방 피해가 그 배만큼 오름(디버그 숫자나 로그). 오의 피해는 전과 같음(두 번 곱해지지 않는지)
+  - 찍기: 없음(결과 줄에 공력 전·후 한 방 피해)
+
 - [ ] WG-01Ub 웹에서 한 생 한 바퀴와 이어하기 · 먼저: C-10b
   - 할 것: WG-01U 순서(빌드 → `tools/split_webgl_data.py` → `web/_headers` → wrangler)로 새로 올리고 GPU 크롬으로 서장 장삼 처치 → 정산 → 객잔 → 침방 → 다음 생까지 한 바퀴. 새로고침한 뒤 타이틀에 이어하기가 보이는지(혼 저장이 IndexedDB /idbfs 에 남는지). 안 남으면 SoulStore.Write 뒤 FS 동기화가 빠진 것 — 그 사실과 고칠 자리를 결과 줄에.
   - 쓸 것: `Assets/Editor/WebGLBuild.cs`, `tools/split_webgl_data.py`, `web/_headers`, `Presentation/Meta/SoulStore.cs`

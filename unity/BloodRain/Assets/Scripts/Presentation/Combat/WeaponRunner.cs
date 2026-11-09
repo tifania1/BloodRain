@@ -35,6 +35,8 @@ namespace BloodRain.Presentation.Combat
         [NonSerialized] public float explosionAreaMultiplier = 1f;
         /// <summary>ST-02U 화상 배율(1 + BurnDamage, 화룡심법). 벽력탄 화상 초당 피해에 지속 피해 배율과 같이 곱한다.</summary>
         [NonSerialized] public float burnMultiplier = 1f;
+        /// <summary>MT-01 공력(StatSheet.Might — 심법·연무장·남궁 몸·검총 몫이 다 들어 있음). 무공 한 방 피해에 곱한다(웹 weaponDamage 의 G.stats.might).</summary>
+        [NonSerialized] public float mightMultiplier = 1f;
         // C-06b 곱하는 진전 효과(SynergyEffects). 남궁 2 검 계열·개방 3 낮은 기혈은 한 방 피해에, 곤륜 3 강시는 맞는 적에 따라 곱한다.
         [NonSerialized] public BloodRain.Core.Build.SynergyEffects effects = BloodRain.Core.Build.SynergyEffects.None;
         [NonSerialized] public float healthRatio = 1f;
@@ -243,7 +245,7 @@ namespace BloodRain.Presentation.Combat
             }
         }
 
-        float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * effects.WeaponDamageMultiplier(s.Def, healthRatio)
+        float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * mightMultiplier * effects.WeaponDamageMultiplier(s.Def, healthRatio)
             * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s) * AspectDamage(s) * SecretDamage(s);
 
         // SC-01U 비전 무명검: 대상 무공(삼재검법) 피해 × (1 + damageBonus)(Core SecretEffects.WeaponDamageMultiplier)
@@ -1570,7 +1572,7 @@ namespace BloodRain.Presentation.Combat
                 var p = agents[i].Pos;
                 AddSpark("fx_dagger_ink", new Vector2(p.x, p.y), -Mathf.PI * 0.5f, 0f, 0.3f, 0.06f, false, 0.85f, NeedleInk);
             }
-            NeedleHits += enemies.Damage(_filtered, t.Param("damage"), c, 0f, null, t.Param("poisonSeconds"));
+            NeedleHits += enemies.Damage(_filtered, t.Param("damage") * mightMultiplier, c, 0f, null, t.Param("poisonSeconds")); // 20장 '독침 8 × 공력'(웹 ndl.damage * might)
         }
 
         // 화산 3 꽃잎(crit_petals): 무공 치명타가 난 적 자리에서 petals 장이 사방으로. 꽃잎이 낸 치명타는 다시 꽃잎을 안 낸다
@@ -1608,7 +1610,7 @@ namespace BloodRain.Presentation.Combat
                 float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
                 _projs.Add(new Proj
                 {
-                    Pos = at, Vel = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * speed, Radius = radius, Damage = t.Param("damage"),
+                    Pos = at, Vel = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * speed, Radius = radius, Damage = t.Param("damage") * mightMultiplier,
                     Life = t.Param("lifeSeconds"), Pierce = 0, Color = PetalColor, Hit = new HashSet<int>(), Petal = true,
                 });
                 PetalCount++;
