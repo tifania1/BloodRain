@@ -2600,14 +2600,18 @@ function drawBossOverlays() {
   }
 }
 // 화면 밖 땅의 주인(깨어남·싸움 중) 방향 표시. HUD 아래, 경공 버튼 위에만 놓는다
-function drawGimmicks(now) {
-  const k = sc(G.tier);
+// 바닥에 깔린 기믹 넷(모닥불·물길·태극 바닥·탑림)은 함수 하나씩. 1장 프로토타입(template.html)이 이 넷을 글자 그대로 옮겨 쓴다 —
+// 여기를 고치면 거기도 같이 고친다(CheonhaGimmickTests 가 두 판의 본문이 같은지 본다)
+function drawCampfires(now) {
   if (GIM.campfire) for (const c of campfires(camX, camY, Math.hypot(VW, VH) / 2 / PPM)) {   // 모닥불: 따뜻한 둘레와 불씨
     const X = sx(c.x), Y = sy(c.y), R = c.r * PPM; if (R < 2) continue;
     const g = ctx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, 'rgba(230,140,50,0.32)'); g.addColorStop(1, 'rgba(230,140,50,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
     ctx.fillStyle = `rgba(210,90,30,${0.75 + 0.2 * Math.sin(now * 9 + c.x)})`; ctx.beginPath(); ctx.arc(X, Y, Math.max(2, R * 0.12), 0, TAU); ctx.fill();
   }
+}
+function drawWaterways() {
+  const k = sc(G.tier);
   if (GIM.water) for (const r of REGIONS) {
     if (!regionHas(r, GIM.water.id)) continue;
     const sp = LD.waterSpacing * k, hw = LD.waterHalf * k;
@@ -2625,6 +2629,8 @@ function drawGimmicks(now) {
       ctx.stroke();
     }
   }
+}
+function drawTaijiPads() {
   if (GIM.taijiFloor) for (const pad of taijiPads()) {
     const X = sx(pad.x), Y = sy(pad.y), R = pad.r * PPM; if (R < 2 || X < -R || X > VW + R || Y < -R || Y > VH + R) continue;
     const ready = (G.taijiCd[pad.key] || 0) <= G.t;
@@ -2634,6 +2640,8 @@ function drawGimmicks(now) {
     ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke();
     ctx.globalAlpha = 1;
   }
+}
+function drawPagodas() {
   if (GIM.pagodaForest && PPM * sc(G.tier) > 0.5) {   // 탑림: 화면 안 무더기만. 먹 그림자 위에 층층 돌탑
     const k = sc(G.tier), sp = LD.pagodaSpacing * k, x0 = camX - VW / 2 / PPM, x1 = camX + VW / 2 / PPM, y0 = camY - VH / 2 / PPM, y1 = camY + VH / 2 / PPM;
     const seen = new Set();
@@ -2648,6 +2656,9 @@ function drawGimmicks(now) {
       }
     }
   }
+}
+function drawGimmicks(now) {
+  drawCampfires(now); drawWaterways(); drawTaijiPads(); drawPagodas();
   if (GIM.bell) for (const b of [...songBells().map(b => Object.assign({ ready: (G.bellCd[b.key] || 0) <= G.t }, b)), ...G.dropBells.map(b => Object.assign({ ready: true, drop: true }, b))]) {
     const X = sx(b.x), Y = sy(b.y), R = Math.max(b.touch * PPM, 4); if (X < -R * 3 || X > VW + R * 3 || Y < -R * 3 || Y > VH + R * 3) continue;
     ctx.globalAlpha = b.ready ? 1 : 0.4;

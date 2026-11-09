@@ -146,8 +146,8 @@ def data_blob() -> str:
         # 정산(WP-14c): ?life= 판이 끝나면 10장 윤회의 기 식(Core RebirthQi)으로 셈해 혼 기록에 새긴다
         "rebirthQi": {k: v for k, v in drop_notes(load("cheonha")["rebirthQi"]).items() if k != "targets"},
         # 한 생의 고유 적 비율(WP-13c): 축척 모드에서 다른 땅에 서면 그 땅 고유 적을 이 비율로 섞는다
-        # 지역 기믹(WP-13b): 독안개·낙석·눈보라·붉은 달은 gimmicks.json 값 그대로(배치 간격이 필요 없는 것부터)
-        "gimmicks": {k: drop_notes(v) for k, v in load("gimmicks").items() if k in ("poisonFog", "fallingRocks", "blizzard", "redMoon")},
+        # 지역 기믹(WP-13b): 독안개·낙석·눈보라·붉은 달, 바닥에 깔린 물길·태극 바닥·모닥불·탑림(범종은 탑림이 종 둘레를 비울 때 닿는 거리만 씀)은 gimmicks.json 값 그대로
+        "gimmicks": {k: drop_notes(v) for k, v in load("gimmicks").items() if k in ("poisonFog", "fallingRocks", "blizzard", "redMoon", "water", "taijiFloor", "campfire", "pagodaForest", "bell")},
         # 한 생 시간표(WP-14b): ?life= 판이 1장 시간표 대신 chapters.json life 의 bands·events 를 쓴다
         "lifePlan": {k: drop_notes(next(c for c in load("chapters")["chapters"] if c["id"] == "life")[k]) for k in ("bands", "events")},
         "lifeLocalShare": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["localShare"],

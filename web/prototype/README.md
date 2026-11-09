@@ -59,7 +59,7 @@ python tools/deploy_web_prototype.py --branch claude/dev   # 미리보기 주소
 ## 한 생 판의 몸(WP-20~25, 2026-11-06)
 
 천하 시안에 있던 몸 규칙을 한 생 판으로 옮겼다(Core 셈 그대로, 시안 '문파 고유 능력'·'문파 오의'·'마교 혈공' 절과 같은 것).
-- 문파 고유 능력 아홉(`sectT`·`sectBonus`): 빌드가 sects `traitEffect` 나머지·`yinyangStart`·`harmonyRange`·`bloodArt`·`ultimate` 를 넣는다. 남궁 공력·수로채 회피·마교 쾌속은 그때그때(`sectBonus`), 마교 회복 절반은 `healMul`, 곤륜 둔화는 `nearSlow`. 수로채 물 무시는 물길이 들어올 때.
+- 문파 고유 능력 아홉(`sectT`·`sectBonus`): 빌드가 sects `traitEffect` 나머지·`yinyangStart`·`harmonyRange`·`bloodArt`·`ultimate` 를 넣는다. 남궁 공력·수로채 회피·마교 쾌속은 그때그때(`sectBonus`), 마교 회복 절반은 `healMul`, 곤륜 둔화는 `nearSlow`. 수로채 물 무시는 `sectT().ignoresWater`(WP-13b).
 - 연무장 스무 항목이 다 판에 닿는다(탐욕·경공 칸·오의 충전·정진·재기 포함). 정진·재기는 기본 0회라 연무장에서 찍어야 쓴다(8장). 1장 판 정진은 시험 판이라 그대로 늘.
 - 보부상: 한 생 시간표 12·24분, balance.json `merchant`.
 - 마교 혈공·마공 깨달음: 구슬 진기 × 농도^0.25, 심마, 돌파 셋 중 하나는 마공.
@@ -97,7 +97,8 @@ HUD·멈춤 화면·조작 안내의 말은 `Resources/Data/strings/ko.json` 의
 
 천하 시안에 있던 지역 콘텐츠를 한 생 판으로 옮기는 중이다. 값은 모두 데이터(gimmicks·enemies·bosspatterns·chapters·cheonha.json)에서 읽고, 지금 경지 축척을 곱한다.
 - 밟은 땅: 가장 가까운 지역(봉마곡 뺌)이 위쪽 글이 되고, 처음 들어서면 지명 알림과 윤회의 기 +50.
-- 지역 기믹(`regionGimmicksStep`·`weatherOnW`): 독안개(당가타, 안에서 진기 2배)·낙석(화산)·눈보라(곤륜)·붉은 달(십만대산). 물길·태극 바닥·모닥불·범종 격자·탑림은 배치 값(backlog R-10·R4-07, `docs/design/gimmick_draft.md`)이 정해진 뒤.
+- 지역 기믹(`regionGimmicksStep`·`weatherOnW`): 독안개(당가타, 안에서 진기 2배)·낙석(화산)·눈보라(곤륜)·붉은 달(십만대산).
+- 바닥에 깔린 기믹(WP-13b 둘째 조각): 물길(장강 수로)·태극 바닥(무당산)·모닥불(곤륜 설원)·탑림(숭산). 놓는 자리·판정·그림은 천하 시안 함수를 글자 그대로 옮긴 `CHG`(nearestTwo·inWater·pagodaLayout·pagodaPatchAt·pushOutOfPagodas·taijiPads·campfires·drawCampfires·drawWaterways·drawTaijiPads·drawPagodas — `CheonhaGimmickTests` 가 두 본문이 같은지 본다, 시안을 고치면 여기도). 시안 함수는 절대 m 로 돌고 `CHG_G`·`sync` 가 이 판 값(싸움 좌표 × `worldU()`)을 넣어 준다. 효과는 이 판 코드로 gimmicks.json 값을 읽는다: 물 위 걸음 0.7배(경공 뒤 3초 수상비, 수로채 몸·나는 적·수귀는 그대로), 태극 바닥은 게이지 반대 속성 무공만 30초 +30%(Core `TaijiBlessing`), 모닥불 곁 초당 기혈 1%·빙강시 걸음 0.5배·설무향 이동 범위 축소 절반, 탑림은 걷는 몸·적을 막음. 놓는 간격(물길·태극 바닥·모닥불·탑림 무더기)은 gimmicks.json 에 아직 없어 시안 `LD` 놀이판 값을 `CHG_LD` 로 옮겨 씀(R-10·R4-07 이 데이터에 넣으면 거기서 읽게). 범종 30m 격자는 1장 마당 범종과 겹쳐 아직 안 옮김, 혈제단은 자리(R4-07) 뒤.
 - 고유 적: 1장 밖 땅이면 life.localShare 비율로 그 땅 적을 섞는다. 제 동작(`LOCAL_BEH`·`spawnLocalGroup`)이 있는 것: 독인·매화검귀·설인·혈사자·금선지네·쌍강시·마교도·설랑·수적·독두꺼비·혈영 분신. 수귀 끌어당김은 물길 뒤. 그림은 아직 1장 적 자리 표시.
 - 정예: 그 땅 정예 표(없으면 숭산 표)의 5·10·15분 차례, bosspatterns.json 패턴 가운데 프로토타입이 아는 모양만 차례로.
 - 땅의 주인: 절정부터 장막 안 보스 지역이 깨어나고(붉은 기둥·점선 원), 원에 들어서면 싸움(Core `BossAwakening.Tick` 규칙). 종장 뺀 일곱 땅의 1·2막 패턴을 다 안다(`WebLordTests`). 첫 처치면 봉인석·혈정·문파 열림, 다음 귀환 때 침방에서 목 노인·운낭·대표 인물이 한 마디씩(Core `InnDialogue.OnReturn`).

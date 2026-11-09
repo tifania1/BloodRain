@@ -1640,12 +1640,12 @@ function lordContinuous(e, P) {
       }
       return true;
     });
-  } else if (P.shape === 'shrinking_arena') {   // 이동 범위 축소(Core ArenaRadiusStep·OutsideArena): 2막이 된 순간 보스 자리를 가운데로 원이 줄고, 밖에 서 있으면 맞는다. 모닥불은 프로토타입에 아직 없다
+  } else if (P.shape === 'shrinking_arena') {   // 이동 범위 축소(Core ArenaRadiusStep·OutsideArena): 2막이 된 순간 보스 자리를 가운데로 원이 줄고, 밖에 서 있으면 맞는다. 모닥불 곁에서 싸우면 slowedNearMultiplier 배(WP-13b)
     const A = draw({ kind: 'arena', P, x: e.x, y: e.y, R: P.radius, warm: P.telegraphSeconds, hit: 0 });
     lordFx(dt => {
       if (e.dead) return false;
       if (A.warm > 0) { A.warm -= dt; return true; }
-      A.R = Math.max(P.minRadius, A.R - P.shrinkPerSecond * dt); A.hit -= dt;
+      A.R = Math.max(P.minRadius, A.R - P.shrinkPerSecond * dt * (P.slowedNear === 'campfire' && G.campOn && nearCampfireC(G.player.x, G.player.y) ? P.slowedNearMultiplier : 1)); A.hit -= dt;
       const dx = G.player.x - A.x, dy = G.player.y - A.y;
       if (A.hit <= 0 && dx * dx + dy * dy > (A.R + 0.35) * (A.R + 0.35)) { A.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
       return true;
@@ -2087,7 +2087,7 @@ function drunkMight() { return (G.drunkFood || 0) * SECRET.chwiseon.params.might
 function weaponDamage(w) {
   const def = W_BY_ID[w.id];
   let d = lerp(def.damageLv1, def.damageLv8, (w.lv - 1) / 7);
-  d *= (G.stats.might + sectBonus('Might') + (G.tombMight || 0) + drunkMight()) * aspectMult(def.yinyang);   // 남궁 기혈 50% 이상 공력 +25%(WP-20), 검총에 꽂은 레벨 × 3%(WP-31)
+  d *= (G.stats.might + sectBonus('Might') + (G.tombMight || 0) + drunkMight()) * aspectMult(def.yinyang) * taijiBlessMul(def.yinyang);   // 남궁 기혈 50% 이상 공력 +25%(WP-20), 검총에 꽂은 레벨 × 3%(WP-31), 태극 바닥 기운(WP-13b)
   if (w.evolved) d *= B.evolution.damageMultiplier;
   if (G.glow && G.glow.w === w) d *= BA.afterglowDamageMultiplier;   // 각성 여운(balance.json awakening)
   if (G.insights.includes('ilgeom') && G.weapons[0] === w) d *= 1 + IP.ilgeom.damageBonus;
@@ -2699,6 +2699,7 @@ function doDash() {
   const p = G.player;
   if (p.dashCharges <= 0 || p.dashT > 0 || p.stunT > 0) return;
   p.dashCharges--; p.dashT = B.dash.duration; p.iframe = B.dash.iframes; G.dashes = (G.dashes || 0) + 1;   // 도전 과제 dash_N_one_run(WP-17)
+  if (GIMW.water) p.walkT = GIMW.water.waterWalkSeconds;   // 수상비: 경공 뒤 물에서 느려지지 않는다(WP-13b)
   if (p.rootT > 0) { p.rootT = 0; toast('포승줄을 끊었다', ''); }
   if (p.pullT > 0) p.pullT = 0;   // 갈고리 사슬도 경공으로 끊는다
   const sp = B.dash.distance * (1 + ((synEff('dash_drag') || {}).distanceBonus || 0)) / B.dash.duration; p.dashVx = p.fx * sp; p.dashVy = p.fy * sp;
@@ -2773,7 +2774,7 @@ function update(dt) {
   const [mx, my, moving] = readMove();
   p.moving = moving;
   if (moving) { const m = Math.hypot(mx, my) || 1; p.fx = mx / m; p.fy = my / m; p.still = 0; } else p.still += dt;
-  let speed = S.move * (G.backlash ? 1 - B.yinyang.extreme.backlashSlow : 1) * (G.wPlayer || 1);   // 눈보라(WP-13b)
+  let speed = S.move * (G.backlash ? 1 - B.yinyang.extreme.backlashSlow : 1) * (G.wPlayer || 1) * (G.wWater || 1);   // 눈보라·물(WP-13b)
   // 빙강시(6장, enemies.json onHitSlowSeconds·onHitSlowMultiplier, Unity EnemyField 와 같음): 닿아 맞으면 그 시간 동안 걸음 배율. 다시 맞으면 시간만 처음부터
   if (p.chillT > 0) { p.chillT -= dt; speed *= p.chillMul || 1; }
   // 기절(방장 대리 범종): 걷지도 경공도 못 한다. 무공은 그대로 나간다.
@@ -2784,6 +2785,7 @@ function update(dt) {
   else { p.x += mx * speed * dt; p.y += my * speed * dt; }
   // 혈우 장막(WP-12, 7장): 축척 시험에서만. 태어난 곳(0,0) 둘레, 반경 = 그 경지 첫 화면 대각선 × boundaryViewMultiple, 현경부터 없음
   const cr = curtainR(dt); if (cr !== Infinity) { const U = worldU(), hx = G.home.x / U, hy = G.home.y / U, d = Math.hypot(p.x - hx, p.y - hy) * U, lim = cr - 0.5 * U; if (d > lim) { p.x = hx + (p.x - hx) * lim / d; p.y = hy + (p.y - hy) * lim / d; } }   // 장막은 절대 m, 내 자리는 싸움 좌표(WP-15)
+  if (G.pagodaOn) pushPagodaC(p, B.stats.playerBodyRadius, false);   // 탑림: 몸 반지름으로 돌탑에 막힌다(WP-13b)
   p.iframe = Math.max(0, p.iframe - dt); p.block = Math.max(0, p.block - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt);
   if (p.dashCharges < p.dashMax) { p.dashRecharge += dt; if (p.dashRecharge >= B.dash.rechargeSeconds) { p.dashRecharge = 0; p.dashCharges++; } }
   // 회복
@@ -2876,10 +2878,13 @@ function update(dt) {
     if (e.roarT > 0) { vx *= 1 + (e.roarBonus || 0); vy *= 1 + (e.roarBonus || 0); }   // 혈사자 포효(WP-13c)
     if (e.flagT > 0) { e.flagT -= dt; vx *= 1 + (e.flag || 0); vy *= 1 + (e.flag || 0); if (e.flagT <= 0) e.flag = 0; }   // 기수 깃발(WP-50)
     if (G.wEnemy && G.wEnemy !== 1 && !e.boss) { vx *= G.wEnemy; vy *= G.wEnemy; }   // 눈보라·붉은 달(WP-13b)
+    if (G.waterOn && !e.boss && e.type !== 'water_ghost' && !(E_BY_ID[e.type] || {}).ignoresTerrain && inWaterC(e.x, e.y)) { const wm = or1(GIMW.water.moveSpeedMultiplier); vx *= wm; vy *= wm; }   // 물: 나는 적·수귀는 그대로(WP-13b)
+    if (G.campOn && (E_BY_ID[e.type] || {}).family === GIMW.campfire.slowedFamily && nearCampfireC(e.x, e.y)) { const cm = or1(GIMW.campfire.slowedMoveSpeedMultiplier); vx *= cm; vy *= cm; }   // 모닥불 곁 빙강시(WP-13b)
     if (G.empower && !e.boss) { vx *= G.empower.spd; vy *= G.empower.spd; }   // 혈월(WP-13e)
     { const ns = nearSlow(d); if (ns !== 1) { vx *= ns; vy *= ns; } }   // 곤륜 설한기(WP-20)
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
+    if (G.pagodaOn) pushPagodaC(e, e.r, !!(E_BY_ID[e.type] || {}).ignoresTerrain);   // 탑림: 걷는 적은 막히고 나는 적은 지나간다(WP-13b)
     e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
     if (Math.abs(vx) > 0.05) e.dir = vx > 0 ? 1 : -1;
     // 떨어진 적은 반대편으로 옮겨 다시 쓴다
@@ -4952,10 +4957,219 @@ function regionGimmicksStep(dt) {
     }
   }
   G.rocks = G.rocks.filter(r => r.t > 0);
+  // 바닥 기믹(WP-13b 둘째 조각, 시안 regionGimmicks 와 같은 규칙, 값은 gimmicks.json). 자리 판정은 위 CHG(시안 함수)로 절대 m 에서
+  const U = worldU(), ax = p.x * U, ay = p.y * U, gw = GIMW.water, tj = GIMW.taijiFloor, cf = GIMW.campfire;
+  G.waterOn = !!gw && hereHas(gw.id); G.campOn = !!cf && hereHas(cf.id); G.pagodaOn = !!GIMW.pagodaForest && hereHas(GIMW.pagodaForest.id);
+  // 물(장강 수로): 물 위 걸음 moveSpeedMultiplier. 경공 뒤 waterWalkSeconds 동안 수상비, 수로채 몸(traitEffect ignoresWater)은 늘 그대로
+  if (p.walkT > 0) p.walkT -= dt;
+  G.wWater = G.waterOn && !(p.walkT > 0) && !sectT().ignoresWater && CHG.inWater(ax, ay) ? or1(gw.moveSpeedMultiplier) : 1;
+  // 태극 바닥(무당산, Core TaijiFloorGimmick.TryStep): 밟으면 음양 게이지 반대 속성 durationSeconds. 게이지가 0이면 아무 일도 없고 바닥도 안 쓰인다
+  if (G.bless) { G.bless.t -= dt; if (G.bless.t <= 0) G.bless = null; }
+  if (tj && hereHas(tj.id)) {
+    G.taijiCd = G.taijiCd || {};
+    for (const pad of CHG.taijiPads()) {
+      if (Math.hypot(ax - pad.x, ay - pad.y) > pad.r || (G.taijiCd[pad.key] || 0) > G.t) continue;
+      const gv = Math.round(G.yy); if (!gv) continue;
+      const aspect = gv > 0 ? 'yin' : 'yang', prev = G.bless;   // Core TaijiBlessing.OppositeOf: 양(+)이면 음, 음(-)이면 양
+      G.taijiCd[pad.key] = G.t + tj.cooldownSeconds; G.bless = { aspect, t: tj.durationSeconds };
+      addEffect('ring', pad.x / U, pad.y / U, { r: pad.r / U * 3, color: '#1A1A1A', life: 0.5 });
+      if (!prev || prev.aspect !== aspect) toast(tj.nameKo, `${aspect === 'yin' ? '음' : '양'}의 기운 ${tj.durationSeconds}초 · ${aspect === 'yin' ? '음' : '양'} 무공 피해 +${Math.round(tj.oppositeAspectDamageBonus * 100)}%`);
+    }
+  }
+  // 모닥불(곤륜 설원): 곁(반경 radius)에 서 있으면 초당 최대 기혈 healPerSecondMaxHealthRatio 회복. 빙강시 계열 걸음은 적 고리에서
+  if (G.campOn && !G.won && CHG.nearCampfire(ax, ay)) {
+    p.hp = Math.min(p.maxHp, p.hp + p.maxHp * cf.healPerSecondMaxHealthRatio * dt * otherHeal());
+    if (!G.cfHint) { G.cfHint = true; toast(cf.nameKo, `곁에선 기혈이 차오르고 빙강시가 느려진다`); }
+  }
+  if (G.waterOn && !G.waterHint && G.wWater !== 1) { G.waterHint = true; toast(gw.nameKo, '물 위에선 걸음이 느려진다 · 경공 뒤 잠깐은 물 위를 달린다'); }
+  if (G.pagodaOn && !G.pagodaHint) { const pt = CHG.pagodaPatchAt(ax, ay); if (pt && Math.hypot(ax - pt.x, ay - pt.y) < pt.R) { G.pagodaHint = true; toast(GIMW.pagodaForest.nameKo, '돌탑 사이 좁은 길 · 걷는 것은 모두 막힌다'); } }
 }
 function drawRegionGimmicks() {
   for (const f of G.fogs || []) { const R = fogR(f) * PPM; if (R < 1) continue; const g = ctx.createRadialGradient(wx(f.x), wy(f.y), 0, wx(f.x), wy(f.y), R); g.addColorStop(0, 'rgba(90,130,60,0.30)'); g.addColorStop(1, 'rgba(90,130,60,0.05)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(f.x), wy(f.y), R, 0, TAU); ctx.fill(); }
   for (const r of G.rocks || []) { const q = 1 - r.t / r.life; ctx.fillStyle = `rgba(26,26,26,${0.12 + 0.3 * q})`; ctx.beginPath(); ctx.ellipse(wx(r.x), wy(r.y), r.r * PPM * (0.4 + 0.6 * q), r.r * PPM * 0.6 * (0.4 + 0.6 * q), 0, 0, TAU); ctx.fill(); }
+}
+// ───────── 바닥에 깔린 지역 기믹(WP-13b 둘째 조각): 물길(장강 수로)·태극 바닥(무당산)·모닥불(곤륜 설원)·탑림(숭산) ─────────
+// 천하 시안 cheonha.html 의 배치·판정·그림 함수를 글자 그대로 옮겼다(CheonhaGimmickTests 가 두 판의 본문이 같은지 본다). 시안을 고치면 여기도 같이.
+// 시안 함수는 '절대 m'(중원 한 장 좌표, 길이는 화면 m × 축척 sc(경지))로 돈다. 이 판의 싸움 좌표는 절대 / worldU() 라서(WP-15)
+// 아래 다리(CHG_G, sync)가 시안 이름(G.p·G.tier·G.view·REGIONS·camX·PPM…)을 이 판 값으로 바꿔 넣는다. 지역 자리는 CH_REGS 와 같은 1장 마당 기준 절대 m.
+// 수치는 gimmicks.json(water·taijiFloor·campfire·pagodaForest, 탑림이 가운데 종 둘레를 비울 때 bell.touchRadius).
+// 놓는 간격(물길 간격·반폭·굽이, 태극 바닥·모닥불·탑림 무더기 간격)은 gimmicks.json 에 아직 없어 시안 LD 의 놀이판 값을 그대로 쓴다
+// (gimmick_draft.md 2절 안과 같은 값. R-10·R4-07 이 데이터에 넣으면 두 판 다 거기서 읽게 바꿀 것 — CheonhaGimmickTests 가 시안 LD 와 같은지 본다).
+const CHG_LD = { waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7, taijiSpacing: 16, campfireSpacing: 28, pagodaSpacing: 60 };
+const CHG_G = {   // 시안 함수 안의 G 자리. 이 판의 한 판 상태(G)를 그때그때 읽는다
+  get tier() { return tierNow(); },
+  get t() { return G.t; },
+  get view() { return G.viewD || WD.view0Meters; },
+  get p() { const U = worldU(); return { x: G.player.x * U, y: G.player.y * U }; },
+  get taijiCd() { return G.taijiCd || (G.taijiCd = {}); },
+  get pagodaCache() { return G.pagodaCache || (G.pagodaCache = new Map()); },
+  get pagodaTier() { return G.pagodaTier; },
+  set pagodaTier(v) { G.pagodaTier = v; },
+};
+const CHG = ((G, GIM, LD, REGIONS) => {
+  const INK = '#1A1A1A', PAPER = '#EFE6D2', sc = t => Math.pow(WD.scalePerRealm, t);
+  const visibleRegions = () => CH_REGS;   // 밟은 땅 판정(chRegionAt)처럼 봉마곡은 뺀다. REGIONS(무더기 간격 판정)는 시안처럼 봉마곡까지
+  let camX = 0, camY = 0, PPM = 1;        // 그리기 전에 sync 가 절대 m 기준으로 맞춘다(PPM 은 절대 1m 의 픽셀 수)
+  const sync = (cx, cy, ppm) => { camX = cx; camY = cy; PPM = ppm; };
+  function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const regionHas = (r, id) => !!(r && r.gimmicks && r.gimmicks.includes(id));
+  function nearestTwo(x, y) {
+    let a = null, b = null, da = Infinity, db = Infinity;
+    for (const r of visibleRegions()) { const d = Math.hypot(r.x - x, r.y - y); if (d < da) { b = a; db = da; a = r; da = d; } else if (d < db) { b = r; db = d; } }
+    return { a, b, da, db };
+  }
+  function inWater(x, y) {
+    if (!GIM.water || !G) return false;
+    const a = nearestTwo(x, y).a; if (!regionHas(a, GIM.water.id)) return false;
+    const k = sc(G.tier), sp = LD.waterSpacing * k, v = y - a.y + LD.waterWave * k * Math.sin((x - a.x) / (LD.waterWaveLen * k));
+    const m = (((v + sp / 2) % sp) + sp) % sp - sp / 2;
+    return Math.abs(m) < LD.waterHalf * k;
+  }
+  function pagodaLayout(def, rnd, scale) {
+    const stones = [], placed = [];
+    if (def.spacing <= 0) return stones;
+    const n = Math.ceil(def.patchRadius / def.spacing), minC = 2 * def.pagodaRadius + def.minGap;
+    for (let j = -n; j <= n; j++) for (let i = -n; i <= n; i++) {
+      const x = i * def.spacing + (rnd() * 2 - 1) * def.jitter, y = j * def.spacing + (rnd() * 2 - 1) * def.jitter;
+      if (rnd() < def.skipChance) continue;
+      if (Math.hypot(x, y) + def.pagodaRadius > def.patchRadius) continue;
+      if (placed.some(([px, py]) => (px - x) ** 2 + (py - y) ** 2 < minC * minC)) continue;
+      placed.push([x, y]); stones.push({ x: x * scale, y: y * scale, r: def.pagodaRadius * scale });
+    }
+    return stones;
+  }
+  const regionHalfGap = r => Math.min(...REGIONS.filter(o => o !== r).map(o => Math.hypot(o.x - r.x, o.y - r.y))) / 2;
+  function pagodaPatchAt(x, y) {
+    const def = GIM.pagodaForest; if (!def) return null;
+    if (G.pagodaTier !== G.tier) { G.pagodaCache.clear(); G.pagodaTier = G.tier; }
+    const r = nearestTwo(x, y).a; if (!regionHas(r, def.id)) return null;
+    const k = sc(G.tier), sp = LD.pagodaSpacing * k, center = sp * 0.5 > regionHalfGap(r);
+    const i = center ? 0 : Math.floor((x - r.x) / sp), j = center ? 0 : Math.floor((y - r.y) / sp), key = `${r.id}:${center ? 'c' : i + ',' + j}`;
+    if (G.pagodaCache.has(key)) return G.pagodaCache.get(key);
+    const cx = center ? r.x : r.x + (i + 0.5) * sp, cy = center ? r.y : r.y + (j + 0.5) * sp;
+    let patch = null;
+    if (nearestTwo(cx, cy).a === r) {
+      const seed = (G.tier * 7919 + (i + 512) * 104729 + (j + 512) * 1299709 + r.id.length * 31) >>> 0;
+      const clear = center && GIM.bell ? (GIM.bell.touchRadius + def.pagodaRadius + def.minGap) * k : 0;
+      const stones = pagodaLayout(def, rng(seed), k).map(s => ({ x: cx + s.x, y: cy + s.y, r: s.r }))
+        .filter(s => nearestTwo(s.x, s.y).a === r && Math.hypot(s.x - r.x, s.y - r.y) >= clear);
+      patch = { x: cx, y: cy, R: def.patchRadius * k, stones, center };
+    }
+    G.pagodaCache.set(key, patch);
+    return patch;
+  }
+  function pushOutOfPagodas(o, rad, flying) {
+    const def = GIM.pagodaForest; if (!def || (flying && !def.blocksFlying)) return;
+    const pt = pagodaPatchAt(o.x, o.y); if (!pt || Math.hypot(o.x - pt.x, o.y - pt.y) > pt.R + rad) return;
+    for (const s of pt.stones) {
+      const dx = o.x - s.x, dy = o.y - s.y, d = Math.hypot(dx, dy), m = s.r + rad;
+      if (d >= m) continue;
+      if (d < 1e-6) { o.x = s.x + m; continue; }
+      o.x = s.x + dx / d * m; o.y = s.y + dy / d * m;
+    }
+  }
+  function taijiPads() {   // 지금 화면 근처의 태극 바닥(무당산). 칸 번호가 같으면 같은 바닥이라 쿨타임을 칸으로 센다
+    const g = GIM.taijiFloor, out = []; if (!g) return out;
+    const k = sc(G.tier), sp = LD.taijiSpacing * k, half = G.view * 0.6;
+    for (const r of REGIONS) {
+      if (!regionHas(r, g.id) || Math.hypot(r.x - G.p.x, r.y - G.p.y) > G.view * 3 + 300 * k) continue;
+      const i0 = Math.floor((G.p.x - half - r.x) / sp), i1 = Math.ceil((G.p.x + half - r.x) / sp), j0 = Math.floor((G.p.y - half - r.y) / sp), j1 = Math.ceil((G.p.y + half - r.y) / sp);
+      if ((i1 - i0) * (j1 - j0) > 400) continue;
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const x = r.x + (i + (j & 1) * 0.5) * sp, y = r.y + j * sp;
+        if (nearestTwo(x, y).a !== r) continue;
+        out.push({ x, y, key: `${G.tier}:${i},${j}`, r: g.touchRadius * k });
+      }
+    }
+    return out;
+  }
+  function campfires(x0, y0, reach) {
+    const g = GIM.campfire, out = []; if (!g || !G) return out;
+    const k = sc(G.tier), sp = LD.campfireSpacing * k;
+    for (const r of REGIONS) {
+      if (!regionHas(r, g.id) || Math.hypot(r.x - x0, r.y - y0) > reach + 400 * k) continue;
+      const i0 = Math.floor((x0 - reach - r.x) / sp - 0.5), i1 = Math.ceil((x0 + reach - r.x) / sp - 0.5), j0 = Math.floor((y0 - reach - r.y) / sp - 0.5), j1 = Math.ceil((y0 + reach - r.y) / sp - 0.5);
+      if ((i1 - i0 + 1) * (j1 - j0 + 1) > 400) continue;
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const x = r.x + (i + 0.5) * sp, y = r.y + (j + 0.5) * sp;
+        if (nearestTwo(x, y).a === r) out.push({ x, y, r: g.radius * k });
+      }
+    }
+    return out;
+  }
+  const nearCampfire = (x, y) => campfires(x, y, (GIM.campfire ? GIM.campfire.radius : 0) * sc(G.tier)).some(c => Math.hypot(x - c.x, y - c.y) <= c.r);
+  const sx = x => (x - camX) * PPM + VW / 2, sy = y => (y - camY) * PPM + VH / 2;
+  function drawCampfires(now) {
+    if (GIM.campfire) for (const c of campfires(camX, camY, Math.hypot(VW, VH) / 2 / PPM)) {   // 모닥불: 따뜻한 둘레와 불씨
+      const X = sx(c.x), Y = sy(c.y), R = c.r * PPM; if (R < 2) continue;
+      const g = ctx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, 'rgba(230,140,50,0.32)'); g.addColorStop(1, 'rgba(230,140,50,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+      ctx.fillStyle = `rgba(210,90,30,${0.75 + 0.2 * Math.sin(now * 9 + c.x)})`; ctx.beginPath(); ctx.arc(X, Y, Math.max(2, R * 0.12), 0, TAU); ctx.fill();
+    }
+  }
+  function drawWaterways() {
+    const k = sc(G.tier);
+    if (GIM.water) for (const r of REGIONS) {
+      if (!regionHas(r, GIM.water.id)) continue;
+      const sp = LD.waterSpacing * k, hw = LD.waterHalf * k;
+      const x0 = camX - VW / 2 / PPM - sp, x1 = camX + VW / 2 / PPM + sp, y0 = camY - VH / 2 / PPM - sp, y1 = camY + VH / 2 / PPM + sp;
+      if ((x1 - x0) / sp > 60 || hw * PPM < 1) continue;
+      const step = Math.max((x1 - x0) / 80, 0.5 * k);
+      ctx.lineWidth = hw * 2 * PPM; ctx.lineCap = 'butt'; ctx.strokeStyle = 'rgba(70,110,120,0.32)';
+      for (let j = Math.floor((y0 - r.y) / sp) - 1; j <= Math.ceil((y1 - r.y) / sp) + 1; j++) {
+        ctx.beginPath(); let on = false;
+        for (let x = x0; x <= x1; x += step) {
+          const y = r.y + j * sp - LD.waterWave * k * Math.sin((x - r.x) / (LD.waterWaveLen * k));
+          if (nearestTwo(x, y).a !== r) { on = false; continue; }
+          if (on) ctx.lineTo(sx(x), sy(y)); else { ctx.moveTo(sx(x), sy(y)); on = true; }
+        }
+        ctx.stroke();
+      }
+    }
+  }
+  function drawTaijiPads() {
+    if (GIM.taijiFloor) for (const pad of taijiPads()) {
+      const X = sx(pad.x), Y = sy(pad.y), R = pad.r * PPM; if (R < 2 || X < -R || X > VW + R || Y < -R || Y > VH + R) continue;
+      const ready = (G.taijiCd[pad.key] || 0) <= G.t;
+      ctx.globalAlpha = ready ? 0.75 : 0.25;
+      ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(X, Y, R, -Math.PI / 2, Math.PI / 2); ctx.arc(X, Y + R / 2, R / 2, Math.PI / 2, -Math.PI / 2, true); ctx.arc(X, Y - R / 2, R / 2, Math.PI / 2, -Math.PI / 2); ctx.fill();
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+  function drawPagodas() {
+    if (GIM.pagodaForest && PPM * sc(G.tier) > 0.5) {   // 탑림: 화면 안 무더기만. 먹 그림자 위에 층층 돌탑
+      const k = sc(G.tier), sp = LD.pagodaSpacing * k, x0 = camX - VW / 2 / PPM, x1 = camX + VW / 2 / PPM, y0 = camY - VH / 2 / PPM, y1 = camY + VH / 2 / PPM;
+      const seen = new Set();
+      for (let x = x0 - sp / 2; x <= x1 + sp; x += sp / 2) for (let y = y0 - sp / 2; y <= y1 + sp; y += sp / 2) {
+        const pt = pagodaPatchAt(x, y); if (!pt || seen.has(pt)) continue; seen.add(pt);
+        for (const s of pt.stones) {
+          const X = sx(s.x), Y = sy(s.y), R = s.r * PPM; if (X < -R * 2 || X > VW + R * 2 || Y < -R * 4 || Y > VH + R * 2) continue;
+          ctx.fillStyle = 'rgba(26,26,26,0.22)'; ctx.beginPath(); ctx.ellipse(X, Y + R * 0.2, R * 1.1, R * 0.5, 0, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#8C857A'; ctx.strokeStyle = INK; ctx.lineWidth = Math.max(1, R * 0.08);
+          for (let t = 0; t < 4; t++) { const w = R * (1.6 - t * 0.3), h = R * 0.55, yy = Y - R * 0.1 - t * h * 0.95; ctx.fillRect(X - w / 2, yy - h, w, h); ctx.strokeRect(X - w / 2, yy - h, w, h); }
+          ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(X, Y - R * 0.1 - 4 * R * 0.52 - R * 0.15, R * 0.18, 0, TAU); ctx.fill();
+        }
+      }
+    }
+  }
+  return { sync, inWater, pagodaPatchAt, pushOutOfPagodas, taijiPads, campfires, nearCampfire, drawCampfires, drawWaterways, drawTaijiPads, drawPagodas };
+})(CHG_G, GIMW, CHG_LD, LORD_REGS);
+// 싸움 좌표로 부르는 다리: 시안 함수는 절대 m 를 받는다
+const inWaterC = (x, y) => CHG.inWater(x * worldU(), y * worldU());
+const nearCampfireC = (x, y) => CHG.nearCampfire(x * worldU(), y * worldU());
+function pushPagodaC(o, rad, flying) {   // 탑림: 걷는 몸을 돌탑 밖으로(Core PagodaForest.BlocksMovement). 자리와 반지름을 절대 m 로 바꿔 시안 함수에 넘긴다
+  const U = worldU(), a = { x: o.x * U, y: o.y * U };
+  CHG.pushOutOfPagodas(a, rad * U, flying);
+  o.x = a.x / U; o.y = a.y / U;
+}
+// 태극 바닥 기운(Core TaijiBlessing.DamageMultiplier): 걸린 속성 무공만 피해 +oppositeAspectDamageBonus, 중립 무공은 그대로
+const taijiBlessMul = aspect => G.bless && G.bless.t > 0 && aspect === G.bless.aspect ? 1 + GIMW.taijiFloor.oppositeAspectDamageBonus : 1;
+function drawGroundGimmicks(now) {   // 시안 drawGimmicks 와 같은 차례(모닥불 → 물길 → 태극 바닥 → 탑림)
+  if (!SCALE_MODE || isPro()) return;
+  const U = worldU(); CHG.sync(G.cam.x * U, G.cam.y * U, PPM / U);
+  CHG.drawCampfires(now); CHG.drawWaterways(); CHG.drawTaijiPads(); CHG.drawPagodas();
 }
 // 지역 정예(WP-13d 첫 조각): 축척 모드에서 1장 밖 땅에 서 있으면 1장 정예 차례(enemies.json elites.chapter1 의 몇 번째)와 같은 자리의
 // 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.
@@ -5035,6 +5249,7 @@ function render() {
   for (let x = ox; x < VW; x += T) for (let y = oy; y < VH; y += T) ctx.drawImage(groundTile, x, y, T, T);
   drawCheonha();      // 중원 한 장의 바다·강·지명(축척 시험에서만)
   drawCurtain(now);   // 혈우 장막(축척 시험에서만)
+  drawGroundGimmicks(now);   // 물길·태극 바닥·모닥불·탑림(WP-13b, 축척 시험에서만)
   drawLords(now);     // 땅의 주인 기둥·싸움 원(WP-13e)
   // 먹 자국
   for (const s of G.splats) {

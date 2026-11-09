@@ -7,7 +7,7 @@
 | M2 줄 | 기획서 | 데이터 | Core | 웹 | Unity |
 |---|---|---|---|---|---|
 | 서장 | 4장 서장 상세 흐름, 19장 | chapters.json `prologue`, cheonha.json `prologueBody` | `Run/Prologue.cs`, `Spawning/PrologueDirector.cs`, 첫 레벨업 한 장(T-43) | 프로토타입 서장 → 끝 컷 → 그 판 침방 첫 환혼 셋 → 첫 생(WP-14e) | C-06b(첫 레벨업 카드 한 장) |
-| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 프로토타입 한 생 판: 범종, 시간표(chapters.json life), 숭산 정예·원각(WP-13·14). 탑림은 R4-07 배치 값 뒤 | TU 축척·지역 HUD 끝 |
+| 숭산 일대 삼류–절정 | 6·7장 | cheonha.json `regions.songshan`, chapters.json `life`, gimmicks.json 범종·탑림(우물은 청운진), enemies.json 숭산 정예 셋·고유 적 | `RegionSpawns`·`LifeDirector`·`Gimmicks`·`Regions` | 프로토타입 한 생 판: 범종, 시간표(chapters.json life), 숭산 정예·원각(WP-13·14), 탑림(WP-13b, 시안 `pagodaPatchAt`·`pushOutOfPagodas` 글자 그대로, 무더기 간격은 시안 놀이판 값). 범종은 1장 마당 것 그대로(시안 30m 격자는 아직) | TU 축척·지역 HUD 끝 |
 | 원각 | 6장 땅의 주인 패턴 수치 | bosspatterns.json `wongak` | `BossPatterns`·`BossAwakening`(기혈 곡선 T-40) | 둘 다 패턴 다 나옴 | 보스 패턴 러너 |
 | 문파 3 | 5·21장 | cheonha.json sects 소림·개방·남궁(`unlock: start`), 시작 무공, 대표 인물 | `Rebirth`(후보·몸·성별), 진전 `Synergy` | 프로토타입 한 생 판: 몸·시작 무공·고유 능력(WP-14a·20), 대표 인물 마당 줄 | TU-11 후보 카드 |
 | 축척 전환 | 7장 | cheonha.json `realmScale`·`breakthrough`·`cluster`·`crush` | `Scale`·`Breakthrough` | 프로토타입 기본(WP-12·15, `?scale=0` 이 옛 시야) | TU-01 축척 카메라 |
