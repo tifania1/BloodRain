@@ -141,6 +141,12 @@ namespace BloodRain.Presentation
             if (GetComponent<EncounterLayer>() == null) gameObject.AddComponent<EncounterLayer>().runner = this; // WP-39U 기연
             if (GetComponent<ChestLayer>() == null) gameObject.AddComponent<ChestLayer>().runner = this; // C-09d 보갑·각성
             if (GetComponent<Combat.PatternRunner>() == null) gameObject.AddComponent<Combat.PatternRunner>().runner = this; // BR-01 땅의 주인 패턴
+            if (GetComponent<BossHealthBar>() == null) // UI-01U 땅의 주인 체력바(설정에서 끔)
+            {
+                var bar = gameObject.AddComponent<BossHealthBar>();
+                var lu0 = FindFirstObjectByType<LevelUpScreen>();
+                if (lu0 != null) bar.font = lu0.font;
+            }
             SettingsScreen.Apply(SettingsScreen.Current); // WP-57U 저장된 음량·조준(타이틀을 거치지 않고 Run 을 켠 때도)
             if (GetComponent<PauseScreen>() == null) // PS-01U 일시정지(Esc·Start)
             {

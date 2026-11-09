@@ -48,6 +48,8 @@ namespace BloodRain.Presentation.Combat
         public bool InFight => _fight != null;
         public BossPatterns Patterns => _patterns;
         public int BossId => _bossId;
+        /// <summary>지금 싸우는 땅의 주인 이름(현지화). 싸움이 없으면 빈 글.</summary>
+        public string BossName => _fight != null ? Loc.Boss(_fight.Boss) : "";
 
         sealed class Tele
         {
