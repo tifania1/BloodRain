@@ -16,7 +16,9 @@ namespace BloodRain.Presentation.Combat
     //   - 길이·반경은 화면 기준 m 이라 싸움을 건 경지(Fight.Realm) 축척을 곱해 세계에 놓는다.
     //   - 피해 = BossPatterns.ScaleDamage(baseDamage, 싸움을 건 분, 그때 혈운 농도, damagePerMinute). 호신은 PlayerVitals 가 뺀다.
     //   - 지금 그리는 모양: cone(금강장)·summon_ring(십팔나한진)·circles(범종 낙하)·rotating_beams(붉은 빛줄기, 2막).
-    //     다른 땅의 주인 모양은 각자 항목(R-14U·R4-02U)에서 이 틀에 더한다. 범종이 남기는 범종 기믹은 아직 안 둔다.
+    //     다른 땅의 주인 모양은 각자 항목(R-14U·R4-02U)에서 이 틀에 더한다.
+    //   - BR-03 범종 낙하(leaveGimmick bell)는 원 자리마다 Core BellGimmick 을 남긴다. 닿으면 울려 둘레 적을 세우고(보스는 Stun),
+    //     한 번 울렸거나 수명이 다하면 치운다. 싸움이 끝나도 남은 수명만큼은 둔다(웹 G.bells).
     public sealed class PatternRunner : MonoBehaviour
     {
         public LifeRunner runner;
@@ -38,6 +40,10 @@ namespace BloodRain.Presentation.Combat
         readonly System.Random _rng = new System.Random();
         readonly List<Tele> _teles = new List<Tele>();
         readonly List<GameObject> _beamVis = new List<GameObject>();
+        readonly List<(BellGimmick bell, Vector2 at, GameObject vis)> _bells = new List<(BellGimmick, Vector2, GameObject)>();
+        /// <summary>시험·로그용: 남은 종 수, 울린 수.</summary>
+        public int BellCount => _bells.Count;
+        public int BellRings { get; private set; }
         Material _mat;
         GameObject _bossMark;
         // C-10a 서장 장삼: 땅의 주인 규칙(BossAwakening) 밖의 싸움. 기혈은 Prologue 바닥(10%)을 거쳐야 해서
@@ -70,7 +76,7 @@ namespace BloodRain.Presentation.Combat
         }
 
         void Awake() => Instance = this;
-        void OnDestroy() { if (Instance == this) Instance = null; Clear(); }
+        void OnDestroy() { if (Instance == this) Instance = null; Clear(); ClearBells(); }
 
         void OnEnable() { if (runner != null && runner.enemies != null) runner.enemies.Killed += OnKilled; }
         void OnDisable() { if (runner != null && runner.enemies != null) runner.enemies.Killed -= OnKilled; }
@@ -88,6 +94,7 @@ namespace BloodRain.Presentation.Combat
         {
             var life = runner != null ? runner.Life : null;
             if (life == null || runner.enemies == null || runner.player == null) return;
+            UpdateBells(Time.deltaTime);
             var fight = life.Bosses.Fight;
             if (!_prologue && fight != _fight)
             {
@@ -239,6 +246,9 @@ namespace BloodRain.Presentation.Combat
             {
                 var kill = life.DefeatBoss(_fight.IsFinal ? life.Silver : (int?)null);
                 if (kill.Chest) BloodRain.Presentation.Fx.ChestLayer.Instance?.Place(at); // BR-02 처치 보갑(C-09d 보갑 길)
+                var notice = BossKillNotice.Of(DataBoot.Data, Loc.Current, kill); // BR-02 짧은 붓글씨(종장이면 null)
+                var banner = runner.GetComponent<BloodRain.Presentation.Hud.BossKillBanner>();
+                if (notice != null && banner != null) banner.Show(notice);
                 Debug.Log($"[PatternRunner] 처치 {kill.RegionId} 첫 처치 {kill.First} 봉인석 {kill.SealStone} 윤회의 기 {kill.RebirthQi}");
             }
             EndFight();
@@ -370,7 +380,8 @@ namespace BloodRain.Presentation.Combat
                         foreach (var c in tele.Circles)
                         {
                             var d = (player - c) / _factor;
-                            if (BossPatterns.InCircle(p.Radius, d.x, d.y, pr)) { hit = true; break; }
+                            if (BossPatterns.InCircle(p.Radius, d.x, d.y, pr)) hit = true;
+                            if (p.LeaveGimmick == "bell") LeaveBell(p, c);
                         }
                     break;
                 }
@@ -509,6 +520,71 @@ namespace BloodRain.Presentation.Combat
                     if (runner.vitals.Hit(Scaled(p.BaseDamage))) PlayerHits[p.Id] = PlayerHits.TryGetValue(p.Id, out var h) ? h + 1 : 1;
                 }
             }
+        }
+
+        // ---- BR-03 범종 낙하가 남기는 범종 ----
+
+        void LeaveBell(BossPatternDef p, Vector2 at)
+        {
+            var bell = BellGimmick.FromBossDrop(DataBoot.Data.Gimmicks.Bell, p, _factor);
+            // 자리 표시: 먹 원 + 金 테두리(원화가 오면 바꾼다)
+            var vis = Shape("범종", new Color(0.08f, 0.07f, 0.06f, 0.85f), 4);
+            SetCircles(vis, new[] { Vector2.zero }, bell.TouchRadius * 0.6f);
+            var rim = Shape("범종 테", new Color(0.86f, 0.68f, 0.22f, 0.95f), 5);
+            rim.transform.SetParent(vis.transform, false);
+            SetRing(rim, Vector2.zero, bell.TouchRadius * 0.6f, 0.12f * _factor);
+            vis.transform.position = new Vector3(at.x, at.y, 0f);
+            _bells.Add((bell, at, vis));
+        }
+
+        void UpdateBells(float dt)
+        {
+            if (_bells.Count == 0) return;
+            Vector2 player = runner.player.position;
+            for (int i = _bells.Count - 1; i >= 0; i--)
+            {
+                var (bell, at, vis) = _bells[i];
+                bell.Tick(dt);
+                if (bell.TryRing(Vector2.Distance(player, at))) Ring(bell, at);
+                if (bell.Gone)
+                {
+                    if (vis != null) Destroy(vis);
+                    _bells.RemoveAt(i);
+                }
+            }
+        }
+
+        void Ring(BellGimmick bell, Vector2 at)
+        {
+            BellRings++;
+            SfxPlayer.Instance?.Play("sfx_gimmick_bell");
+            var sim = runner.enemies.Sim;
+            if (sim == null) return;
+            int stunned = 0;
+            for (int i = 0; i < sim.Count; i++)
+            {
+                var a = sim.Get(i);
+                if (a.Health <= 0f) continue;
+                float dist = Vector2.Distance(at, new Vector2(a.Pos.x, a.Pos.y));
+                bool isBoss = a.Id == _bossId && _fight != null;
+                var def = runner.enemies.DefOf(a.Kind);
+                var kind = isBoss || (def != null && def.Family == "boss") ? GimmickTargetKind.Boss
+                    : def != null && def.Family == "elite" ? GimmickTargetKind.Elite : GimmickTargetKind.Normal;
+                float s = bell.StunSeconds(kind, dist);
+                if (s <= 0f) continue;
+                stunned++;
+                if (isBoss) { Stun(s); continue; } // 보스는 패턴 시계도 멈춘다
+                a.Stun = Mathf.Max(a.Stun, s);
+                sim.Set(i, a);
+            }
+            LastEvent = $"범종 울림 {stunned}";
+            Debug.Log($"[PatternRunner] 범종 울림 — 세운 적 {stunned}");
+        }
+
+        void ClearBells()
+        {
+            foreach (var b in _bells) if (b.vis != null) Destroy(b.vis);
+            _bells.Clear();
         }
 
         // ---- 그리기(바닥 붉은 그림자. 붓 획 예고는 vfx.md 대로 나중에) ----

@@ -149,6 +149,12 @@ namespace BloodRain.Presentation
                 var lu0 = FindFirstObjectByType<LevelUpScreen>();
                 if (lu0 != null) bar.font = lu0.font;
             }
+            if (GetComponent<BossKillBanner>() == null) // BR-02 땅의 주인 처치 알림
+            {
+                var kb = gameObject.AddComponent<BossKillBanner>();
+                var lu1 = FindFirstObjectByType<LevelUpScreen>();
+                if (lu1 != null) kb.font = lu1.font;
+            }
             SettingsScreen.Apply(SettingsScreen.Current); // WP-57U 저장된 음량·조준(타이틀을 거치지 않고 Run 을 켠 때도)
             if (GetComponent<PauseScreen>() == null) // PS-01U 일시정지(Esc·Start)
             {
