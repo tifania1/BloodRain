@@ -631,6 +631,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 쓸 것: Core `Life`(IsPrologue·Prologue·DamagePrologueBoss·KillPrologueBoss·RestartPrologue), `Spawning/PrologueDirector.cs`
   - 메뉴: `BloodRain/Test/서장 시계 넘기기(플레이 중)/5분·8분30초`
   - 끝: 새 혼으로 서장 10분을 끝까지 놀면 장삼 → 컷 → 첫 환혼 침방까지 끊김 없음
+  - 같이 고칠 것(2026-11-10 클라우드 QA-23): PC 루프가 붙인 `CutScreen.inputGuardSeconds` 가 0.6 으로 박혀 있다 — 웹 컷은 `balance.json levelUp.inputGuardSeconds`(0.35, 12장 '레벨업 입력')를 같이 쓰니 `DataBoot.Data.Balance.LevelUp.InputGuardSeconds` 로.
   - 찍기: `docs/unity_shots/C-10/` 의 `prologue_end.png`
 
 - [ ] E-01 숭산 정예 셋 · 먼저: BR-01
