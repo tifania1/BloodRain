@@ -49,8 +49,29 @@ namespace BloodRain.Editor
                 options = development ? BuildOptions.Development : BuildOptions.None,
             });
             var s = report.summary;
+            if (s.result == BuildResult.Succeeded) EnableAutoSync(outDir);
             UnityEngine.Debug.Log($"[WebGLBuild] {(development ? "개발 " : "")}{(PlayerSettings.WebGL.debugSymbolMode == WebGLDebugSymbolMode.Embedded ? "심볼 " : "")}{s.result} · {s.totalSize / 1048576f:F1}MB · {s.totalTime} · 장면 {scenes.Length}개 → {outDir}");
             if (Application.isBatchMode) EditorApplication.Exit(s.result == BuildResult.Succeeded ? 0 : 1);
+        }
+
+        const string AutoSyncOff = "// config.autoSyncPersistentDataPath = true;";
+        const string AutoSyncOn = "config.autoSyncPersistentDataPath = true; // WebGLBuild: 혼 저장을 IndexedDB 에 남긴다(WG-01Ub)";
+
+        /// <summary>
+        /// WG-01Ub: 기본 템플릿은 persistentDataPath 쓰기를 IndexedDB 로 옮기지 않는다(주석 처리된 한 줄).
+        /// 그대로면 SoulStore 가 쓴 칸 파일이 새로고침 뒤 사라져 이어하기가 안 뜬다. 빌드 뒤 index.html 에서 그 줄을 켠다.
+        /// </summary>
+        public static void EnableAutoSync(string outDir)
+        {
+            var index = Path.Combine(outDir, "index.html");
+            var html = File.ReadAllText(index);
+            if (html.Contains(AutoSyncOn)) return;
+            if (!html.Contains(AutoSyncOff))
+            {
+                UnityEngine.Debug.LogError("[WebGLBuild] index.html 에 autoSyncPersistentDataPath 줄이 없다(템플릿이 바뀌었나) — 혼 저장이 새로고침 뒤 안 남는다");
+                return;
+            }
+            File.WriteAllText(index, html.Replace(AutoSyncOff, AutoSyncOn));
         }
     }
 }
