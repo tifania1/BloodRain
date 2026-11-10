@@ -619,6 +619,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 원각을 쓰러뜨리면 봉인석 하나·소림 해금, 그 생을 끝내면 정산·장경각(봉인석 잔고)에 반영
   - 찍기: `docs/unity_shots/BR-02/` 의 `wongak_kill.png`
 
+- [ ] BR-03 범종 낙하가 남기는 범종 · 먼저: BR-01 (2026-11-10 클라우드가 넣음 — BR-01 이 '아직 안 둔다'로 남긴 것, 어느 항목에도 없었음)
+  - 할 것: PatternRunner 의 circles 판정에서 `p.LeaveGimmick == "bell"` 이면 원 자리마다 `BellGimmick.FromBossDrop(data.Gimmicks.Bell, p, 싸움 경지 축척)` 을 하나씩 둔다(기획서 6장 범종 낙하 줄: 12초 남고 한 번 치면 범종 기믹처럼). 매 프레임 `Tick(dt)`, 플레이어 거리로 `TryRing` → 울리면 둘레 적마다 `StunSeconds(Normal|Elite|Boss, 거리)` 를 Sim Stun 에(보스면 `PatternRunner.Stun` — 패턴 시계도 멈춤), 울림 소리 `sfx_gimmick_bell`(Audio/SFX 에 다섯 벌 있음). `Gone` 이면 치운다. 그림은 등롱처럼 자리 표시(먹 원 + 金 테두리)로 두고 원화가 오면 바꾼다. 싸움이 끝나도 남은 수명만큼은 둔다(웹 G.bells 와 같음).
+  - 쓸 것: Core `World/Gimmicks.cs` `BellGimmick`(FromBossDrop·TryRing·StunSeconds·Gone), gimmicks.json `bell`(닿는 1.4·기절 반경 8·2초·보스 0.6초), bosspatterns.json wongak `bell_drop_x3`(leaveGimmick·leaveSeconds·leaveUses), 웹 `G.bells`(template.html 범종 낙하·3011 줄 치우기)
+  - 메뉴: BR-01 의 땅의 주인 부르기/wongak
+  - 끝: 범종 낙하 뒤 종 셋이 남고, 닿으면 둘레 잡몹이 2초·원각이 0.6초 서고(패턴 시계 멈춤), 한 번 울린 종·12초 지난 종은 사라짐
+  - 찍기: `docs/unity_shots/BR-03/` 의 `bell_left.png`
+
 - [x] C-10a 강시 포쾌 장삼 · 먼저: BR-01 — 2026-11-10 01:10 PC: PatternRunner 가 서장 몸에서 `Prologue.Step` 이 Boss 가 되면 장삼을 세움(BossAwakening 밖 싸움, 기혈 `Prologue.BossMaxHealth`, 2막 없음). 덩이 기혈은 10배 완충으로 두고 깎인 만큼을 `life.DamagePrologueBoss` 로 진짜 기혈에 옮겨 바닥 10% 를 지킴(체력바도 진짜 기혈). 포승줄 bind_line(줄 예고, 맞으면 `PlayerController.Bind(RootSeconds)`), 호루라기 summon(시강 여섯을 `PatternShapes.SummonOffsets` 로), 세 번 내려찍기 jump_slam(`JumpTakeoffSeconds`·`JumpLandSeconds` 마다 그 순간 플레이어 자리 그림자 → 장삼이 거기로 뛰어 내려찍음). 메뉴 `BloodRain/Test/땅의 주인 부르기(플레이 중)/jang_sam`(서장 몸에서 장삼 사건을 바로). 플레이: 포승줄 2.5초 → 호루라기 7.0 → 내려찍기 11.5(첫 착지 12.3, 셋 다 착지, 2번 맞음), 간격 4.5 — 웹 장삼과 같은 순서·간격. 기혈 0.105 에서 무공에 맞으니 바닥에서 각성으로 넘어가 Step Finish, 그 뒤 0.069 까지 깎임. 포승줄은 두 번 다 비켜 맞는 것·묶임은 아직 못 봄. 콘솔 에러 0. 0 이 되면 덩이를 지우고 끝만 — `KillPrologueBoss` → 컷 → 첫 환혼은 C-10b. 찍음 `docs/unity_shots/C-10/` 의 `jang_sam.png`
   - 할 것: PatternRunner 로 `jang_sam`(rope_throw `bind_line` — 맞으면 `RootSeconds` 걷기 못함, 경공으로 끊김 / whistle_summon 시강 소환 / triple_slam `jump_slam` — Count 번, 뛸 때마다 그 순간 플레이어 자리 그림자). 최대 기혈 `Prologue.BossMaxHealth(boss)`, 2막 없음.
   - 쓸 것: Core `Run/Prologue.cs`, bosspatterns.json `jang_sam`, `PlayerController.Bind`(이미 있음), `Combat/PatternShapes`(jump_slam `JumpTakeoffSeconds`·`JumpLandSeconds`, summon `SummonOffsets`, WP-64)
