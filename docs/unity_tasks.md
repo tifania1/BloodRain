@@ -844,6 +844,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
+- [ ] GM-01U M2 지역 기믹(청운진 우물·부서지는 수레와 장독, 숭산 범종·탑림, 개방 술독, 남궁 검각 시렁) · 먼저: backlog R-10(사람 결정 대기 — 자리·개수가 gimmick_start_values.md 2절에 묶임) (2026-11-10 클라우드가 넣음 — M2 '숭산 일대' 기믹인데 Unity 항목이 없었음. 원각 범종 낙하가 남기는 종은 BR-03)
+  - 할 것: 지역마다 그 지역 기믹을 지금 경지 축척으로 깐다(7장 '그 지역 안에서만', 경지가 바뀌면 새로). 범종 `BellGimmick`(지역 종이라 수명·횟수 없음, 60초 쿨다운), 탑림 `PagodaForest.Layout` 돌탑을 이동 막는 원으로(날짐승은 통과 — `BlocksMovement`), 우물 `WellGimmick`(한 번 회복), 술독·검각 시렁 `BreakableGimmick`(무공에 맞으면 Hit, 깨지면 음식 또는 은자 5~10). 자리·개수는 R-10 결정 뒤 그 표대로.
+  - 쓸 것: Core `World/Gimmicks.cs`·`Gimmicks2.cs`, gimmicks.json `bell`·`pagodaForest`·`well`·`wineJars`·`swordRacks`, cheonha.json regions `gimmicks`, 웹 lookdev `cheonha.html` 범종·탑림 깔기(LD.bellSpacing 30·pagodaSpacing 60)
+  - 메뉴: R-13U 와 같은 `BloodRain/Bootstrap/Run 씬에 지역 기믹 붙이기`
+  - 끝: 숭산에 들어서면 범종·탑림, 청운진 우물, 개방 총타 술독, 남궁세가 시렁이 그 땅에만
+  - 찍기: `docs/unity_shots/GM-01U/` 의 `<기믹>.png`
+
 - [ ] R-13U 세 지역 기믹(독안개·물·태극 바닥)과 수귀 · 먼저: backlog R-10(사람 결정 대기)
   - 할 것: gimmicks.json 그대로 Core `Gimmicks` 판정을 지역에 놓는다. 물 지형 걸음에 `WaterGimmick.MoveSpeedMultiplier(…, ignoresWater: SectTrait.IgnoresWater)`(R-04U (4)), 수귀(`OnlyInWater`)는 물에서만 솟음(C-02b 남은 것). 놓는 자리·수는 R-10 이 정해진 뒤.
   - 쓸 것: Core `World/Gimmicks.cs`(PoisonFogGimmick·WaterGimmick …), gimmicks.json, cheonha.json regions
