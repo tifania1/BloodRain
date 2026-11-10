@@ -609,6 +609,7 @@
   "ui.levelup.level_one": "Step 1",
   "ui.levelup.level_up": "Step {0} → {1}",
   "ui.levelup.pair_passive": "{0} · Paired method: {1}",
+  "ui.levelup.damage": "Damage {0} → {1}",
   "ui.levelup.milestone": "New move: {0}",
   "ui.levelup.power_up": "Power rises",
   "ui.levelup.none": "None",

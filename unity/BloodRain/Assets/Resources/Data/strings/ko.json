@@ -64,6 +64,7 @@
   "ui.levelup.level_one": "1 단계",
   "ui.levelup.level_up": "{0} → {1} 단계",
   "ui.levelup.pair_passive": "{0} · 짝 심법 {1}",
+  "ui.levelup.damage": "피해 {0} → {1}",
   "ui.levelup.milestone": "새 동작: {0}",
   "ui.levelup.power_up": "위력이 오른다",
   "ui.levelup.none": "없음",

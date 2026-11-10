@@ -528,7 +528,7 @@ namespace BloodRain.Presentation.Hud
                 {
                     var w = _data.Weapon(o.Id);
                     int lv = _loadout.Weapons[o.Id];
-                    return (Loc.T("ui.levelup.kind.up_weapon"), WeaponName(w), Loc.F("ui.levelup.level_up", lv, lv + 1), Milestone(w, lv + 1));
+                    return (Loc.T("ui.levelup.kind.up_weapon"), WeaponName(w), Loc.F("ui.levelup.level_up", lv, lv + 1), UpgradeNote(w, o, lv + 1));
                 }
                 case OfferKind.NewPassive:
                 {
@@ -547,6 +547,16 @@ namespace BloodRain.Presentation.Hud
                     return (Loc.T("ui.levelup.kind.fallback"), Loc.T("ui.levelup.fallback.name"), Loc.F("ui.levelup.fallback.level", fc.Silver, fc.Heal.ToString("0")), Loc.T("ui.levelup.fallback.note"));
                 }
             }
+        }
+
+        // UI-01U 카드 둘째 줄(12장 '레벨업 카드 규칙'): 바뀌는 수치 — 무공 피해 a → b, 이정표가 있으면 ' · 새 동작'. 웹 offerCard 와 같은 셈(LevelUpView.Card).
+        string UpgradeNote(WeaponDef w, Offer o, int level)
+        {
+            var c = LevelUpView.Card(_data, _loadout, o);
+            if (c == null) return Milestone(w, level);
+            string dmg = Loc.F("ui.levelup.damage", c.DamageFrom.ToString("0"), c.DamageTo.ToString("0"));
+            if (c.Milestone == null) return dmg;
+            return dmg + " · " + Loc.T($"weapons.{w.Id}.milestones.{level}", c.Milestone);
         }
 
         static string Milestone(WeaponDef w, int level)

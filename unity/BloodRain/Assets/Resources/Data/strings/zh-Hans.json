@@ -609,6 +609,7 @@
   "ui.levelup.level_one": "第1阶",
   "ui.levelup.level_up": "第{0} → {1}阶",
   "ui.levelup.pair_passive": "{0} · 配对心法 {1}",
+  "ui.levelup.damage": "伤害 {0} → {1}",
   "ui.levelup.milestone": "新招式：{0}",
   "ui.levelup.power_up": "威力提升",
   "ui.levelup.none": "无",
