@@ -246,6 +246,10 @@ namespace BloodRain.Core.Data
         public float CritDamageMultiplier = 2f;
         /// <summary>플레이어 몸 반지름(경지 m). 적 몸과 이만큼 겹치면 접촉 피해, 보스 패턴 판정도 이 원으로 본다.</summary>
         public float PlayerBodyRadius = 0.4f;
+        /// <summary>땅의 주인(장삼 포함) 몸 반지름(싸움을 건 경지 m). 무공이 맞히는 원이자 닿는 피해 원.</summary>
+        public float BossBodyRadius = 1.18f;
+        /// <summary>정예 몸 반지름(경지 m).</summary>
+        public float EliteBodyRadius = 0.78f;
     }
 
     /// <summary>연무장 한 항목. Stat은 Core.Build.StatKind 이름.</summary>

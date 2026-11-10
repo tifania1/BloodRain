@@ -634,7 +634,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/C-10/` 의 `prologue_end.png`
 
 - [ ] E-01 숭산 정예 셋 · 먼저: BR-01
-  - 할 것: PatternRunner 로 동인(`jump_slam` 3연타), 계율원 강시 승려(`projectile_fan` 세 갈래, 걸으며 쏨), 강시 방장 대리(`circles` + Aim `self`, 맞으면 `StunSeconds` 걷기·경공 못 함, 무공은 나감). LF-02 가 정예 사건으로 세운 적에 붙인다. PatternRunner 가 지금 한 몸(_fight·_patterns·_teles·_later)만 다루니 몸마다 상태 묶음으로 쪼갠다 — Core `BossPatterns` 는 몸마다 `new BossPatterns(set)` 하나씩이면 되고 Core 쪽 손볼 것은 없다(2026-11-10 클라우드 확인). 같은 김에 `Shape()` 가 예고마다 `new Mesh()` 를 만들고 `Remove`·`Clear` 는 GameObject 만 지워 메쉬가 남는다(정예가 붙으면 예고가 몇 배) → 지울 때 `MeshFilter.sharedMesh` 도 `Destroy`.
+  - 할 것: PatternRunner 로 동인(`jump_slam` 3연타), 계율원 강시 승려(`projectile_fan` 세 갈래, 걸으며 쏨), 강시 방장 대리(`circles` + Aim `self`, 맞으면 `StunSeconds` 걷기·경공 못 함, 무공은 나감). LF-02 가 정예 사건으로 세운 적에 붙인다. PatternRunner 가 지금 한 몸(_fight·_patterns·_teles·_later)만 다루니 몸마다 상태 묶음으로 쪼갠다 — Core `BossPatterns` 는 몸마다 `new BossPatterns(set)` 하나씩이면 되고 Core 쪽 손볼 것은 없다(2026-11-10 클라우드 확인). 같은 김에 `Shape()` 가 예고마다 `new Mesh()` 를 만들고 `Remove`·`Clear` 는 GameObject 만 지워 메쉬가 남는다(정예가 붙으면 예고가 몇 배) → 지울 때 `MeshFilter.sharedMesh` 도 `Destroy`. 정예 몸 반지름은 `Balance.Stats.EliteBodyRadius`(0.78, 경지 m), 땅의 주인은 PatternRunner 자리 표시 `bossBodyRadius` 1.0 대신 `Balance.Stats.BossBodyRadius`(1.18) — 웹과 같은 값(2026-11-10 BD-02).
   - 쓸 것: `data.ElitePatternSet("dongin"|"gyeyul_monk"|"acting_abbot")`, bosspatterns.json elites, `Combat/PatternShapes`(jump_slam 뜀·착지 초, projectile_fan `FanDegrees`·`FanShotRadius`·`FanFlightSeconds`, WP-64)
   - 메뉴: `BloodRain/Test/정예 부르기(플레이 중)/<id>`
   - 끝: 셋이 웹 프로토타입 eliteAI 와 같은 모양

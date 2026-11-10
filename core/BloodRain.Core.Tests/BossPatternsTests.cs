@@ -133,7 +133,7 @@ namespace BloodRain.Core.Tests
             }
             // 프로토타입은 이동속도 100을 balance.json stats.moveBase(MOVE)로 쓴다(speed: 0.45 * MOVE = 45).
             // spawnBoss
-            const string spawn = @"speed: ([\d.]+) \* MOVE, dmg: ([\d.]+), r: KIND_SIZE\.boss[^\n]*\n\s*pattern: 'boss', timer: ([\d.]+)";
+            const string spawn = @"speed: ([\d.]+) \* MOVE, dmg: ([\d.]+), r: B\.stats\.bossBodyRadius[^\n]*\n\s*pattern: 'boss', timer: ([\d.]+)";
             Assert.Equal(W.MoveSpeed / 100f, Grab(spawn, 1), 3);
             Assert.Equal(At20(W.ContactDamage), Grab(spawn, 2), 3);
             Assert.Equal(W.FirstCastSeconds, Grab(spawn, 3));

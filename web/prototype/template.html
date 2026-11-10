@@ -1524,7 +1524,7 @@ function spawnElite(key) {
   const hp = d.hp * foeHpMul();
   const e = spawnEnemy('sigang', p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, {
     sprite: 'elite', elite: true, eliteKey: key, name: d.name, hp, maxHp: hp, speed: d.speed / 100 * MOVE, dmg: d.dmg * foeDmgMul(),
-    r: KIND_SIZE.elite * 0.3, kbRes: d.kbRes, xp: 25, ps: d.ps, pat: d.pat, timer: d.ps.firstCastSeconds,
+    r: B.stats.eliteBodyRadius, kbRes: d.kbRes, xp: 25, ps: d.ps, pat: d.pat, timer: d.ps.firstCastSeconds,
   });
   toast(d.name, '정예가 나타났다 · 쓰러뜨리면 보갑');
   return e;
@@ -1534,7 +1534,7 @@ function spawnBoss() {
   // 프로토타입 보정: 기획서 기준 체력 90,000은 '평균 빌드 초당 1,500'을 가정한 값. 프로토타입 무공은 아직 약해서 낮춰 둔다.
   const hp = BOSS_HP[G.mode];
   const e = spawnEnemy('sigang', p.x, p.y - viewH() * 0.62, {
-    sprite: 'boss', boss: true, name: '혈나한 원각', hp, maxHp: hp, speed: 0.45 * MOVE, dmg: 28, r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0,
+    sprite: 'boss', boss: true, name: '혈나한 원각', hp, maxHp: hp, speed: 0.45 * MOVE, dmg: 28, r: B.stats.bossBodyRadius, kbRes: 1, xp: 0,
     pattern: 'boss', timer: 2.5, cycle: 0, phase2: false, beamA: 0,
   });
   G.boss = e; G.bossSpawned = true;
@@ -1546,7 +1546,7 @@ function spawnJangSam() {
   const p = G.player, def = DATA.bosses.find(b => b.id === PROB.boss), J = DATA.jangSam;
   const e = spawnEnemy('sigang', p.x, p.y - viewH() * 0.62, {
     sprite: 'boss', boss: true, jang: true, name: def.nameKo, hp: def.health, maxHp: def.health, speed: J.moveSpeed / 100 * MOVE, dmg: J.contactDamage,
-    r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0, timer: J.firstCastSeconds, cycle: 0,
+    r: B.stats.bossBodyRadius, kbRes: 1, xp: 0, timer: J.firstCastSeconds, cycle: 0,
   });
   G.boss = e; G.bossSpawned = true;
   toast(def.nameKo, '마을 포쾌가 강시가 되어 덮쳐 온다');
@@ -1761,7 +1761,7 @@ function lordBegin(r) {
   const sc = 1 + B.enemyScaling.damagePerMinute * G.gm;
   const e = spawnEnemy('sigang', r.x / U, r.y / U, {
     sprite: 'boss', boss: true, lord: r.id, lordBoss: def.id, shadow, name, hp, maxHp: hp, speed: set.moveSpeed / 100 * MOVE, dmg: set.contactDamage * sc,
-    r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
+    r: B.stats.bossBodyRadius, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
     ps: { patterns: pats, intervalSeconds: set.intervalSeconds, firstCastSeconds: set.firstCastSeconds }, pat: pats[0] || null,
   });
   G.lords[r.id] = 'fight'; G.lordF = e; G.boss = e;
@@ -1783,7 +1783,7 @@ function finalShadow(r, i, at) {
   const pats = (set.patterns || []).filter(eliteShapeOk), name = `혈영 ${def.nameKo}`, sc = 1 + B.enemyScaling.damagePerMinute * G.gm;
   const e = spawnEnemy('sigang', at ? at.x : r.x / U, at ? at.y : r.y / U, {
     sprite: 'boss', boss: true, lord: r.id, lordBoss: id, shadow: true, fin: i, name, hp, maxHp: hp, speed: set.moveSpeed / 100 * MOVE, dmg: set.contactDamage * sc,
-    r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
+    r: B.stats.bossBodyRadius, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
     ps: { patterns: pats, intervalSeconds: set.intervalSeconds, firstCastSeconds: set.firstCastSeconds }, pat: pats[0] || null,
   });
   G.lords[r.id] = 'fight'; G.lordF = e; G.boss = e;
@@ -1906,7 +1906,7 @@ function finalStage(r, idx, si, at) {
   const pats = (set.patterns || []).filter(eliteShapeOk), bn0 = BOSS_BY[FB.boss], name = `${bn0 ? bn0.nameKo : '혈마'} · ${st.nameKo}`;
   const e = spawnEnemy('sigang', at.x, at.y, {
     sprite: 'boss', boss: true, lord: r.id, lordBoss: FB.boss, shadow: false, fin: idx, stage: st.id, name, hp, maxHp: hp, speed: set.moveSpeed / 100 * MOVE, dmg: set.contactDamage * sc,
-    r: KIND_SIZE.boss * 0.28, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
+    r: B.stats.bossBodyRadius, kbRes: 1, xp: 0, timer: set.firstCastSeconds, set,
     ps: { patterns: pats, intervalSeconds: set.intervalSeconds, firstCastSeconds: set.firstCastSeconds }, pat: pats[0] || null,
   });
   G.lordF = e; G.boss = e;

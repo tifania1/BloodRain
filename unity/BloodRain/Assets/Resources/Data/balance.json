@@ -66,7 +66,7 @@
     "spawnFractionPerSecond": 0.3,
     "ringMinDiagonal": 0.6, "ringMaxDiagonal": 0.75, "recycleBeyondDiagonal": 1.5, "recycleToDiagonal": 0.65, "eliteDiagonal": 0.62, "toadRingScale": 0.55
   },
-  "stats": { "_note": "능력치 기본값 중 캐릭터에 없는 것. 기획서 '8. 전투 시스템' 능력치 표.", "moveBase": 4.6, "magnetBase": 1.5, "cooldownReductionCap": 0.6, "critDamageMultiplier": 2, "playerBodyRadius": 0.4 },
+  "stats": { "_note": "능력치 기본값 중 캐릭터에 없는 것. 기획서 '8. 전투 시스템' 능력치 표.", "moveBase": 4.6, "magnetBase": 1.5, "cooldownReductionCap": 0.6, "critDamageMultiplier": 2, "playerBodyRadius": 0.4, "_noteBody": "땅의 주인·정예 몸 반지름(경지 m)은 웹 프로토타입 그림 크기(보스 4.2 x 0.28, 정예 2.6 x 0.3)에서 옮긴 값. 무공이 맞히는 원이자 닿는 피해 원.", "bossBodyRadius": 1.18, "eliteBodyRadius": 0.78 },
   "training": {
     "_note": "연무장(영구 강화). 기획서 '10. 성장·메타 시스템' 연무장 표와 같은 값. stat은 Core.Build.StatKind 이름. 비용 = baseCost x 다음 레벨 x (1 + costGrowthPerBought x 지금까지 산 총 레벨 수).",
     "costGrowthPerBought": 0.1,
