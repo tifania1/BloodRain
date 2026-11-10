@@ -614,7 +614,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 - [ ] BR-02 원각 2막과 처치 · 먼저: BR-01 (진행: 2026-11-10 01:05 PC — 2막 붉은 빛줄기는 BR-01 에서 붙음. 처치: PatternRunner 가 보스 덩이가 쓰러지면 `life.DefeatBoss(종장이면 은자)`, `kill.Chest` 면 쓰러진 자리에 `ChestLayer.Place`(C-09d 보갑 길). 플레이(서장 몸, 시험 메뉴로 원각을 부르고 기혈을 바닥 가까이): 무공에 쓰러짐 → 숭산 Defeated, 봉인석 0 → 1, 보갑 1개 떨어져 열림. 콘솔 에러 0. 찍음 `docs/unity_shots/BR-02/` 의 `wongak_kill.png`. 남은 것: BossKill(봉인석·문파 해금·윤회의 기·혈정)을 짧은 붓글씨로 보여 주기(새 strings 키 필요), 천하 몸으로 한 생을 끝내 정산·장경각 봉인석 잔고 확인)
   - 할 것: 기혈 30% 에서 2막(bosspatterns.json wongak phase2), 0 이면 `life.DefeatBoss(남은 은자)` → `BossKill`(봉인석·문파 해금·윤회의 기·혈정·보갑) 을 짧은 붓글씨로, 보갑이면 C-09d 보갑. 혼에 `Soul` 이 기록하는지 정산에서 확인.
-  - 쓸 것: Core `Life.DefeatBoss`, `BossKill`, 붓글씨 글은 `World/BossKillNotice.Of(data, Loc.Current, kill)`(제목 + 보상 줄, 종장이면 null — 2026-11-10 클라우드, 키 `ui.bosskill.*` 네 언어, 웹 toast 와 같은 글). 처치 컷 넷은 `InnDialogue.LordKill(data, life.Log, kill, progress)`(BossKill 판 2026-11-10 클라우드, 계정 첫 처치에만, 본 것은 progress 에 — boss_cuts.md '고르는 코드')를 PC 루프가 붙인 `CutScreen` 으로. 컷이 없으면 웹처럼 kill1 첫 줄만 붓글씨 뒤에 알림
+  - 쓸 것: Core `Life.DefeatBoss`, `BossKill`, 붓글씨 글은 `World/BossKillNotice.Of(data, Loc.Current, kill)`(제목 + 보상 줄, 종장이면 null — 2026-11-10 클라우드, 키 `ui.bosskill.*` 네 언어, 웹 toast 와 같은 글). 처치 컷은 DL-06b(PC 루프가 붙인 `CutScreen` 으로).
   - 메뉴: BR-01 과 같음
   - 끝: 원각을 쓰러뜨리면 봉인석 하나·소림 해금, 그 생을 끝내면 정산·장경각(봉인석 잔고)에 반영
   - 찍기: `docs/unity_shots/BR-02/` 의 `wongak_kill.png`
@@ -799,7 +799,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/DL-03b/` 의 `prologue_cue.png`
 
 - [ ] DL-06b 땅의 주인 컷·한 줄 · 먼저: BR-02
-  - 할 것: 보스전 경고 직후 `InnDialogue.LordMeet(data, soul, lifeLog, region, progress)` → `Cuts`(만남 2컷, 비면 건너뜀, 건너뛰기 가능) 다음 `BloodMoon` 줄, 또는 이름 붓글씨 아래 `Echo` 한 줄. 기혈 30% 2막 예고 때 머리 위 `Phase2` 2초(시간 안 멈춤). 처치 뒤 `lifeLog.KillBoss(region)` → `InnDialogue.LordKill(data, lifeLog, kill, progress)` → 처치 4컷(`cut.Art`, `cut.Lines`, `cut.Alt` 면 `….alt.lines.<n>.text`).
+  - 할 것: 보스전 경고 직후 `InnDialogue.LordMeet(data, soul, lifeLog, region, progress)` → `Cuts`(만남 2컷, 비면 건너뜀, 건너뛰기 가능) 다음 `BloodMoon` 줄, 또는 이름 붓글씨 아래 `Echo` 한 줄. 기혈 30% 2막 예고 때 머리 위 `Phase2` 2초(시간 안 멈춤). 처치 뒤 `life.DefeatBoss()` 가 돌려준 `BossKill` 로 `InnDialogue.LordKill(data, life.Log, kill, progress)`(2026-11-10 BK-02. `lifeLog.KillBoss` 를 또 부르지 않는다 — DefeatBoss 가 이미 불러 두 번 세게 됨) → 처치 4컷(`cut.Art`, `cut.Lines`, `cut.Alt` 면 `….alt.lines.<n>.text`).
   - 쓸 것: Core `InnDialogue.LordMeet`·`LordKill`, dialogue.json lords
   - 메뉴: BR-01 의 땅의 주인 부르기
   - 끝: 원각 첫 만남 2컷 → 싸움 → 2막 한 줄 → 처치 4컷. 두 번째 만남은 Echo 한 줄
