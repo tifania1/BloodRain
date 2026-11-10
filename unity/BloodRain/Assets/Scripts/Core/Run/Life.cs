@@ -490,6 +490,7 @@ namespace BloodRain.Core.Run
             _fightWas = false; _harmonyKept = false;
             var info = Log.KillBoss(kill.RegionId);
             kill.First = info.FirstInCycle;
+            kill.FirstOnAccount = info.FirstOnAccount;
             kill.SealStone = info.SealStone;
             kill.UnlockSect = info.UnlockedSect;
             kill.RebirthQi = info.RebirthQi;

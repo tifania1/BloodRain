@@ -455,6 +455,11 @@ namespace BloodRain.Core.Meta
             return lord.Cuts.Where(c => c.Id.StartsWith("kill", StringComparison.Ordinal)).Select(c => Resolve(c, log)).ToList();
         }
 
+        /// <summary>Life.DefeatBoss 가 돌려준 BossKill 로(Unity 는 BossKillInfo 를 따로 받지 않는다). 종장이면 빈 목록.</summary>
+        public static IReadOnlyList<LordCut> LordKill(GameData data, LifeLog log, World.BossKill kill, DialogueProgress p) =>
+            kill.IsFinal ? Array.Empty<LordCut>()
+                : LordKill(data, log, new BossKillInfo(kill.RegionId, kill.First, kill.FirstOnAccount, kill.SealStone, kill.UnlockSect, kill.RebirthQi, kill.BloodCrystal), p);
+
         static LordCut Resolve(CutDef c, LifeLog log)
         {
             if (c.Alt != null)

@@ -98,6 +98,8 @@ namespace BloodRain.Core.World
         public string BossId = "";
         /// <summary>첫 처치. 거짓이면 혈영을 다시 쓰러뜨린 것.</summary>
         public bool First;
+        /// <summary>계정 첫 처치(문파 해금·대표 인물 합류·처치 컷). InnDialogue.LordKill 이 본다.</summary>
+        public bool FirstOnAccount;
         /// <summary>종장 혈마. 봉인 엔딩으로 넘어가고 아래 보상은 없다.</summary>
         public bool IsFinal;
         /// <summary>봉인석 이름(첫 처치). 없으면 null.</summary>

@@ -78,6 +78,7 @@ namespace BloodRain.Core.Tests
             Assert.False(shadow1);
             Assert.True(first.First);
             Assert.NotNull(first.SealStone);
+            Assert.True(first.FirstOnAccount);
             Assert.Equal(1, life1.SealStones); // 생 도중에도 봉인석이 는다(일곱째면 그 생에서 봉마곡이 열린다)
             soul.EndLife(life1.End(LifeEndWay.Fallen, 0));
 
@@ -98,10 +99,24 @@ namespace BloodRain.Core.Tests
             Assert.True(bloodmoon.First);
             Assert.NotNull(bloodmoon.SealStone);
             Assert.Null(bloodmoon.UnlockSect); // 문파 해금은 계정 첫 처치에만
+            Assert.False(bloodmoon.FirstOnAccount);
             Assert.Equal(first.RebirthQi, bloodmoon.RebirthQi); // 보너스 값(배율은 정산 때)
             int expect = (int)Math.Round(bosses.FirstKill.BloodCrystal * _d.Cheonha.Cycle.Bloodmoon.Rewards, MidpointRounding.AwayFromZero);
             Assert.Equal(expect, bloodmoon.BloodCrystal);
             Assert.True(bloodmoon.BloodCrystal > first.BloodCrystal);
+        }
+        [Fact] public void 처치_컷은_BossKill_로도_계정_첫_처치에만()
+        {
+            // Unity 는 Life.DefeatBoss 의 BossKill 만 받는다(BR-02). 그걸로 InnDialogue.LordKill 을 부른다
+            var soul = NewSoul();
+            var p = new DialogueProgress();
+            var life1 = NewLife(soul, "shaolin");
+            var cuts = InnDialogue.LordKill(_d, life1.Log, KillSongshan(life1, out _), p);
+            Assert.Equal(new[] { "kill1", "kill2", "kill3", "kill4" }, cuts.Select(c => c.Id));
+            soul.EndLife(life1.End(LifeEndWay.Fallen, 0));
+            soul.Regress();
+            var life2 = NewLife(soul, "shaolin");
+            Assert.Empty(InnDialogue.LordKill(_d, life2.Log, KillSongshan(life2, out _), new DialogueProgress()));   // 혈월 첫 처치여도 계정 첫 처치가 아니다
         }
         [Fact] public void 적_기혈과_피해는_음수_분을_0분으로_본다()
         {
