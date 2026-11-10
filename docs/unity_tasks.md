@@ -614,7 +614,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 - [ ] BR-02 원각 2막과 처치 · 먼저: BR-01 (진행: 2026-11-10 01:05 PC — 2막 붉은 빛줄기는 BR-01 에서 붙음. 처치: PatternRunner 가 보스 덩이가 쓰러지면 `life.DefeatBoss(종장이면 은자)`, `kill.Chest` 면 쓰러진 자리에 `ChestLayer.Place`(C-09d 보갑 길). 플레이(서장 몸, 시험 메뉴로 원각을 부르고 기혈을 바닥 가까이): 무공에 쓰러짐 → 숭산 Defeated, 봉인석 0 → 1, 보갑 1개 떨어져 열림. 콘솔 에러 0. 찍음 `docs/unity_shots/BR-02/` 의 `wongak_kill.png`. 남은 것: BossKill(봉인석·문파 해금·윤회의 기·혈정)을 짧은 붓글씨로 보여 주기(새 strings 키 필요), 천하 몸으로 한 생을 끝내 정산·장경각 봉인석 잔고 확인)
   - 할 것: 기혈 30% 에서 2막(bosspatterns.json wongak phase2), 0 이면 `life.DefeatBoss(남은 은자)` → `BossKill`(봉인석·문파 해금·윤회의 기·혈정·보갑) 을 짧은 붓글씨로, 보갑이면 C-09d 보갑. 혼에 `Soul` 이 기록하는지 정산에서 확인.
-  - 쓸 것: Core `Life.DefeatBoss`, `BossKill`
+  - 쓸 것: Core `Life.DefeatBoss`, `BossKill`, 붓글씨 글은 `World/BossKillNotice.Of(data, Loc.Current, kill)`(제목 + 보상 줄, 종장이면 null — 2026-11-10 클라우드, 키 `ui.bosskill.*` 네 언어, 웹 toast 와 같은 글)
   - 메뉴: BR-01 과 같음
   - 끝: 원각을 쓰러뜨리면 봉인석 하나·소림 해금, 그 생을 끝내면 정산·장경각(봉인석 잔고)에 반영
   - 찍기: `docs/unity_shots/BR-02/` 의 `wongak_kill.png`

@@ -1987,7 +1987,7 @@ function lordDown(e) {
   // 처치 컷 넷(WP-56)은 계정 첫 처치에만. 컷을 안 띄우는 때(자동 판)는 첫 줄만 알림으로
   const acctFirst = first && !((G.soul0.bossKills || {})[def.id] > 0) && !G.lordKills.some(x => x !== kill && x.boss === def.id);
   if (!(acctFirst && lordCuts(def.id, 'kill'))) { const k1 = lordLine(def.id, 'kill1'); if (k1) setTimeout(() => toast(def.nameKo, k1), 1800); }
-  const lines = [kill.stone ? `봉인석 ${kill.stone}` : '', sect ? `${sect.nameKo}로 환생할 수 있다` : '', `윤회의 기 +${kill.qi} · 혈정 +${kill.crystal}`].filter(Boolean);
+  const lines = [kill.stone ? `봉인석 ${kill.stone}` : '', sect ? `${sect.nameKo}의 몸으로 환생할 수 있다` : '', `윤회의 기 +${kill.qi} · 혈정 +${kill.crystal}`].filter(Boolean);
   toast(`${e.name} — 쓰러뜨렸다`, first ? lines.join(' · ') : `혈영으로 다시 일어날 것이다 · ${lines.join(' · ')}`);
 }
 // 기둥과 싸움 원: 깨어난 땅마다 붉은 기둥, 원은 점선(경고 중이면 진하게)
