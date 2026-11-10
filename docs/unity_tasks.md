@@ -633,7 +633,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 세 패턴이 웹 프로토타입 장삼과 같은 순서·간격
   - 찍기: `docs/unity_shots/C-10/` 의 `jang_sam.png`
 
-- [ ] C-10b 서장 10분 통과 · 먼저: C-10a, LF-03
+- [x] C-10b 서장 10분 통과 · 먼저: C-10a, LF-03 — 2026-11-10 22:45 PC: 흐름은 이미 붙어 있었음(PatternRunner 처치 → `LifeRunner.EndPrologue` → KillPrologueBoss·Soul.EndLife·저장 → `CutScreen` → 객잔 → 침방 첫 환혼). 고친 것: CutScreen 입력 막기 0.6 박힌 값을 `Balance.LevelUp.InputGuardSeconds` 로(QA-23). 플레이(빈 저장 칸 2 로 새 혼): 서장 시계 5분 → 정예 강시 도부수 1 이 섬, 8분59초 → 9.0분 장삼 → 기혈 6000 에서 깎으니 600(10%) 에서 각성, 이어 0 → 컷 sb_prologue_burnout → sb_prologue_needle → 객잔 → 침방 첫 환혼(소림·개방·남궁) → 소림 고르니 Run 에 소림 몸. 혼 PrologueDone true. 각성 뒤 진소운이 쓰러지면 Hold(기혈 1)로 이어짐. 콘솔 에러 0(스크린샷 도구가 멈춘 프레임을 Step 할 때 Dash.Tick dt 예외 한 번 — 도구 몫). 도부수 부채꼴 패턴은 PatternRunner 가 한 몸만 다뤄 아직 안 돎 → E-01 에 넘김. 시험용 혼이 PC 저장 칸 2(soul_2.json)에 남음. 찍음 `docs/unity_shots/C-10/` 의 `prologue_end.png`·`prologue_first_rebirth.png`
   - 할 것: 서장 흐름을 끝까지 — 5:00 정예 강시 도부수(`data.ElitePatternSet("gangsi_axeman")` 부채꼴), 장삼 사건(`life.Prologue.Step` 이 Boss)이면 장삼, 피해는 `life.DamagePrologueBoss(hp, max, dmg)`(바닥 10% 에서 각성), 0 이면 `life.KillPrologueBoss()` → `soul.EndLife(record)` → 컷 `Prologue.CurrentCut`/`NextCut`(그림은 없으면 빈 칸 + 자막) → `soul.OpenRebirth` → `Prologue.ChooseFirst` → 침방. 진소운 기혈 0 은 LF-03 의 PlayerDown 길.
   - 쓸 것: Core `Life`(IsPrologue·Prologue·DamagePrologueBoss·KillPrologueBoss·RestartPrologue), `Spawning/PrologueDirector.cs`
   - 메뉴: `BloodRain/Test/서장 시계 넘기기(플레이 중)/5분·8분30초`
@@ -642,7 +642,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/C-10/` 의 `prologue_end.png`
 
 - [ ] E-01 숭산 정예 셋 · 먼저: BR-01
-  - 할 것: PatternRunner 로 동인(`jump_slam` 3연타), 계율원 강시 승려(`projectile_fan` 세 갈래, 걸으며 쏨), 강시 방장 대리(`circles` + Aim `self`, 맞으면 `StunSeconds` 걷기·경공 못 함, 무공은 나감). LF-02 가 정예 사건으로 세운 적에 붙인다. PatternRunner 가 지금 한 몸(_fight·_patterns·_teles·_later)만 다루니 몸마다 상태 묶음으로 쪼갠다 — Core `BossPatterns` 는 몸마다 `new BossPatterns(set)` 하나씩이면 되고 Core 쪽 손볼 것은 없다(2026-11-10 클라우드 확인). 같은 김에 `Shape()` 가 예고마다 `new Mesh()` 를 만들고 `Remove`·`Clear` 는 GameObject 만 지워 메쉬가 남는다(정예가 붙으면 예고가 몇 배) → 지울 때 `MeshFilter.sharedMesh` 도 `Destroy`. 정예 몸 반지름은 `Balance.Stats.EliteBodyRadius`(0.78, 경지 m), 땅의 주인은 PatternRunner 자리 표시 `bossBodyRadius` 1.0 대신 `Balance.Stats.BossBodyRadius`(1.18) — 웹과 같은 값(2026-11-10 BD-02).
+  - 할 것: (C-10b 에서 넘어옴) 서장 5:00 정예 강시 도부수(`data.ElitePatternSet("gangsi_axeman")` 부채꼴)도 같은 틀로 — 지금은 몸만 서고 패턴이 안 돎. PatternRunner 로 동인(`jump_slam` 3연타), 계율원 강시 승려(`projectile_fan` 세 갈래, 걸으며 쏨), 강시 방장 대리(`circles` + Aim `self`, 맞으면 `StunSeconds` 걷기·경공 못 함, 무공은 나감). LF-02 가 정예 사건으로 세운 적에 붙인다. PatternRunner 가 지금 한 몸(_fight·_patterns·_teles·_later)만 다루니 몸마다 상태 묶음으로 쪼갠다 — Core `BossPatterns` 는 몸마다 `new BossPatterns(set)` 하나씩이면 되고 Core 쪽 손볼 것은 없다(2026-11-10 클라우드 확인). 같은 김에 `Shape()` 가 예고마다 `new Mesh()` 를 만들고 `Remove`·`Clear` 는 GameObject 만 지워 메쉬가 남는다(정예가 붙으면 예고가 몇 배) → 지울 때 `MeshFilter.sharedMesh` 도 `Destroy`. 정예 몸 반지름은 `Balance.Stats.EliteBodyRadius`(0.78, 경지 m), 땅의 주인은 PatternRunner 자리 표시 `bossBodyRadius` 1.0 대신 `Balance.Stats.BossBodyRadius`(1.18) — 웹과 같은 값(2026-11-10 BD-02).
   - 쓸 것: `data.ElitePatternSet("dongin"|"gyeyul_monk"|"acting_abbot")`, bosspatterns.json elites, `Combat/PatternShapes`(jump_slam 뜀·착지 초, projectile_fan `FanDegrees`·`FanShotRadius`·`FanFlightSeconds`, WP-64)
   - 메뉴: `BloodRain/Test/정예 부르기(플레이 중)/<id>`
   - 끝: 셋이 웹 프로토타입 eliteAI 와 같은 모양

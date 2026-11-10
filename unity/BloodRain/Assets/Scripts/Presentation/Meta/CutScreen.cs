@@ -18,8 +18,9 @@ namespace BloodRain.Presentation.Meta
     {
         public TMP_FontAsset font;
         public List<Texture2D> art = new List<Texture2D>();
-        /// <summary>한 컷을 넘길 수 있게 되기까지(실제 초). 쓰러뜨린 순간 누르던 키가 컷을 건너뛰지 않게.</summary>
-        public float inputGuardSeconds = 0.6f;
+        /// <summary>한 컷을 넘길 수 있게 되기까지(실제 초). 쓰러뜨린 순간 누르던 키가 컷을 건너뛰지 않게.
+        /// 웹 컷과 같이 balance levelUp.inputGuardSeconds(12장 '레벨업 입력')를 쓴다.</summary>
+        static float InputGuardSeconds => DataBoot.Data.Balance.LevelUp.InputGuardSeconds;
 
         public bool IsOpen { get; private set; }
         public string Shown { get; private set; } = "";
@@ -99,7 +100,7 @@ namespace BloodRain.Presentation.Meta
 
         void Update()
         {
-            if (!IsOpen || Time.unscaledTime - _openedAt < inputGuardSeconds) return;
+            if (!IsOpen || Time.unscaledTime - _openedAt < InputGuardSeconds) return;
             var kb = Keyboard.current;
             var mouse = Mouse.current;
             bool pressed = (kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame))
