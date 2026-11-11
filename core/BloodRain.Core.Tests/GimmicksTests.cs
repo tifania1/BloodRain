@@ -130,12 +130,16 @@ namespace BloodRain.Core.Tests
                 Assert.True(m.Success, $"template.html 에서 /{pattern}/ 를 못 찾았습니다. 프로토타입 코드가 바뀌었으면 이 패턴도 같이 고친다");
                 return float.Parse(m.Groups[group].Value, CultureInfo.InvariantCulture);
             }
-            Assert.Equal(G.Bell.TouchRadius, Grab(@"if \(b\.cd <= 0 && Math\.hypot\(p\.x - b\.x, p\.y - b\.y\) < ([\d.]+)\)"));
-            Assert.Equal(G.Bell.CooldownSeconds, Grab(@"b\.cd = Math\.max\(\d+, ([\d.]+) / G\.timeScale\)"));
-            const string stun = @"forNear\(b\.x, b\.y, ([\d.]+), e => \{ if \(!e\.boss\) e\.stun = ([\d.]+); else e\.stun = ([\d.]+); \}\)";
-            Assert.Equal(G.Bell.StunRadius, Grab(stun, 1));
-            Assert.Equal(G.Bell.StunSeconds, Grab(stun, 2));
-            Assert.Equal(G.Bell.BossStunSeconds, Grab(stun, 3));
+            // 2026-11-11 QA-24: 웹 떨어진 종도 gimmicks.json bell 을 읽는다. 데이터가 없을 때 쓰는 대신 값이 데이터와 같고, 울림이 그 값을 쓰는지 본다
+            const string fb = @"const BG = GIMW\.bell \|\| \{ touchRadius: ([\d.]+), stunRadius: ([\d.]+), stunSeconds: ([\d.]+), bossStunSeconds: ([\d.]+), cooldownSeconds: ([\d.]+) \};";
+            Assert.Equal(G.Bell.TouchRadius, Grab(fb, 1));
+            Assert.Equal(G.Bell.StunRadius, Grab(fb, 2));
+            Assert.Equal(G.Bell.StunSeconds, Grab(fb, 3));
+            Assert.Equal(G.Bell.BossStunSeconds, Grab(fb, 4));
+            Assert.Equal(G.Bell.CooldownSeconds, Grab(fb, 5));
+            Assert.Contains("Math.hypot(p.x - b.x, p.y - b.y) < BG.touchRadius", html);
+            Assert.Contains("b.cd = Math.max(20, BG.cooldownSeconds / G.timeScale)", html);
+            Assert.Contains("forNear(b.x, b.y, BG.stunRadius, e => { e.stun = Math.max(e.stun || 0, e.boss ? BG.bossStunSeconds : BG.stunSeconds); })", html);
         }
 
         // ---- 범종 ----
