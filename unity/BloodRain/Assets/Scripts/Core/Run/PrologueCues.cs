@@ -49,6 +49,10 @@ namespace BloodRain.Core.Run
 
         public bool IsHint => Hint != null;
         public string TextKo => Hint?.TextKo ?? Line!.TextKo;
+        /// <summary>현지화 키(Strings.Get(Key, TextKo)). 안내는 dialogue.prologue.hints.&lt;id&gt;.text, 대사는 dialogue.prologue.lines.&lt;id&gt;.text.</summary>
+        public string Key => Hint != null ? $"dialogue.prologue.hints.{Hint.Id}.text" : $"dialogue.prologue.lines.{Line!.Id}.text";
+        /// <summary>대사를 하는 사람(dialogue.json speakers id). 안내·화면 밖 목소리 이름 없는 줄이면 null.</summary>
+        public string? Speaker => Line?.Speaker;
     }
 
     public sealed class PrologueCues

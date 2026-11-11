@@ -34,7 +34,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 - [ ] WG-01Ub 웹에서 한 생 한 바퀴와 이어하기 · 먼저: C-10b (진행: 2026-11-10 23:35 PC — bb2c66c 를 릴리스로 빌드(56.5MB, 13분 26초), data 조각 셋. 혼 저장이 IndexedDB 에 안 남는 까닭을 먼저 찾음: Unity 기본 템플릿 index.html 에 `config.autoSyncPersistentDataPath = true` 가 주석으로 꺼져 있고 SoulStore.Write 뒤 FS 동기화도 없음 → `WebGLBuild.EnableAutoSync` 를 새로 둬 빌드가 끝나면 그 줄을 켬(이번 결과물에도 적용). 로컬(`tools/serve_webgl.py`, GPU 크롬)에서 타이틀 → 칸 고르기 → 1번 칸 새 혼 → 서장까지 붉은 오류 0, 서장 중 /idbfs 에는 PlayerPrefs 만(혼은 서장을 끝내야 쓰므로 맞음). 서장 끝·새로고침 뒤 이어하기는 아직 못 봄 — 자동 입력(원 그리며 걷기 + 1·Space 를 1.5초마다)을 켜면 게임 시계가 실제 4분에 1분만 감(끄면 1:1)이라 시간 안에 장삼까지 못 감. 다음엔 Space 를 빼고 걸을 것.)
   - 막힘: dev.bloodrain.pages.dev 올리기 — PC wrangler 로그인이 풀려 있음(`wrangler whoami` 가 not authenticated, `%APPDATA%\xdg.config\.wrangler\config` 없음). 사람이 PC 에서 `npx wrangler login` 한 번 해야 함. 결과물은 build/WebGL/BloodRain 에 조각·_headers 까지 준비됨
   - 할 것: WG-01U 순서(빌드 → `tools/split_webgl_data.py` → `web/_headers` → wrangler)로 새로 올리고 GPU 크롬으로 서장 장삼 처치 → 정산 → 객잔 → 침방 → 다음 생까지 한 바퀴. 새로고침한 뒤 타이틀에 이어하기가 보이는지(혼 저장이 IndexedDB /idbfs 에 남는지). 안 남으면 SoulStore.Write 뒤 FS 동기화가 빠진 것 — 그 사실과 고칠 자리를 결과 줄에.
-  - 쓸 것: `Assets/Editor/WebGLBuild.cs`(빌드 뒤 `EnableAutoSync` 가 index.html 의 autoSyncPersistentDataPath 를 켬), `tools/split_webgl_data.py`, `web/_headers`, `Presentation/Meta/SoulStore.cs`, 로컬로 볼 때 `tools/serve_webgl.py`
+  - 쓸 것: `Assets/Editor/WebGLBuild.cs`(빌드 뒤 `EnableAutoSync` 가 index.html 의 autoSyncPersistentDataPath 를 켬), `tools/split_webgl_data.py`(2026-11-11 QA-24: 이것도 autoSync 줄을 켬 — Actions 빌드는 EnableAutoSync 를 안 거쳐서. PC 빌드는 이미 켜져 있으면 그대로 둠), `web/_headers`, `Presentation/Meta/SoulStore.cs`, 로컬로 볼 때 `tools/serve_webgl.py`
   - 메뉴: `BloodRain/WebGL 빌드`
   - 끝: 웹에서 한 바퀴가 돌고, 새로고침 뒤 이어하기가 보임. 브라우저 붉은 오류 0
   - 찍기: `docs/unity_shots/WG-01U/` 의 `inn_web.png`
@@ -801,7 +801,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/DL-03b/` 의 `return.png`
 
 - [ ] DL-03b2 서장 대사 · 먼저: C-10b
-  - 할 것: Core `Run/PrologueCues` — 판 시작 `Start()`, 매 프레임 `Watch(life)`, `Life.Tick` 결과를 `OnSecond(second)`, 정예 처치 `OnEliteKilled(id)`. 돌려준 `PrologueCueItem` 을 `Delay` 초 뒤 띄움(offscreen 이면 화면 아래 가운데, `IsHint` 면 `prologue.hints` 를 가운데 아래 크게). 장삼 처치 뒤 컷 두 장 자막.
+  - 할 것: Core `Run/PrologueCues` — 판 시작 `Start()`, 매 프레임 `Watch(life)`, `Life.Tick` 결과를 `OnSecond(second)`, 정예 처치 `OnEliteKilled(id)`. 돌려준 `PrologueCueItem` 을 `Delay` 초 뒤 띄움(offscreen 이면 화면 아래 가운데, `IsHint` 면 `prologue.hints` 를 가운데 아래 크게). 글은 `Loc` 로 `item.Key`(없으면 `item.TextKo`), 말하는 사람은 `item.Speaker`(2026-11-11 클라우드가 더함). 장삼 처치 뒤 컷 두 장 자막.
   - 쓸 것: Core `Run/PrologueCues.cs`, dialogue.json prologue, `docs/story/prologue.md`
   - 메뉴: 없음
   - 끝: 서장 10분 동안 start·first_levelup·boss_warning·awaken 줄이 한 번씩

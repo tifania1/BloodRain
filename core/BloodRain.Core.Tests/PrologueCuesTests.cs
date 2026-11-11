@@ -23,6 +23,22 @@ namespace BloodRain.Core.Tests
             PrologueCue.BossKill, "realm", "elite_spawn", "elite_kill",
         };
 
+        [Fact] public void 띄울_줄의_현지화_키가_모두_목록에_있다()
+        {
+            // DL-03b2 Unity 가 Strings.Get(item.Key, item.TextKo) 로 띄운다(2026-11-11)
+            var cat = StringCatalog.FromData(ReadFiles(), ReadText(System.IO.Path.Combine(DataDir, "strings", "ko.json")));
+            var items = P.Hints.Select(h => new PrologueCueItem(h.When, h, null, 0f))
+                .Concat(P.Lines.Select(l => new PrologueCueItem(l.When, null, l, 0f))).ToList();
+            Assert.NotEmpty(items);
+            foreach (var it in items)
+            {
+                Assert.True(cat.Korean.TryGetValue(it.Key, out var ko), it.Key + " 가 목록에 없다");
+                Assert.Equal(it.TextKo, ko);
+            }
+            var start = new PrologueCues(_d).Start();
+            Assert.Equal("dialogue.prologue.lines.start.text", start[0].Key);
+        }
+
         [Fact] public void 대사와_안내의_when_은_모두_아는_사건이다()
         {
             foreach (var w in P.Lines.Select(l => l.When).Concat(P.Hints.Select(h => h.When)))
