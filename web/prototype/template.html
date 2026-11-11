@@ -3000,12 +3000,14 @@ function update(dt) {
   }
   G.drops = G.drops.filter(d => !d.dead);
   G.lanterns = G.lanterns.filter(l => !l.dead);
-  // 범종: 닿으면 반경 8m 적 2초 기절
+  // 범종(옛 시야 마당 종·원각이 떨어뜨린 종): 닿으면 둘레 적 기절, 값은 gimmicks.json bell(Core BellGimmick — 싸움 좌표라 축척 곱 없음).
+  // 쿨다운만 빠른 판(?quick, timeScale 4)에서 20초 아래로 안 내려가게 둔다. 이미 더 길게 기절한 적은 그대로(Unity PatternRunner.Ring 과 같이 큰 쪽)
+  const BG = GIMW.bell || { touchRadius: 1.4, stunRadius: 8, stunSeconds: 2, bossStunSeconds: 0.6, cooldownSeconds: 60 };
   for (const b of G.bells) {
     b.cd = Math.max(0, b.cd - dt); if (b.life != null) b.life -= dt;
-    if (b.cd <= 0 && Math.hypot(p.x - b.x, p.y - b.y) < 1.4) {
-      b.cd = Math.max(20, 60 / G.timeScale); if (b.uses != null) b.uses--; addEffect('ring', b.x, b.y, { r: 8, life: 0.8, color: '#C9A227' }); sfx('bell');
-      forNear(b.x, b.y, 8, e => { if (!e.boss) e.stun = 2; else e.stun = 0.6; });
+    if (b.cd <= 0 && Math.hypot(p.x - b.x, p.y - b.y) < BG.touchRadius) {
+      b.cd = Math.max(20, BG.cooldownSeconds / G.timeScale); if (b.uses != null) b.uses--; addEffect('ring', b.x, b.y, { r: BG.stunRadius, life: 0.8, color: '#C9A227' }); sfx('bell');
+      forNear(b.x, b.y, BG.stunRadius, e => { e.stun = Math.max(e.stun || 0, e.boss ? BG.bossStunSeconds : BG.stunSeconds); });
     }
   }
   G.bells = G.bells.filter(b => !(b.life != null && b.life <= 0) && b.uses !== 0);   // 떨어진 종: 수명·횟수가 다하면 치운다(Core BellGimmick.Gone)
