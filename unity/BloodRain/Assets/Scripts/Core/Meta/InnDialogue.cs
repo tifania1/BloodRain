@@ -58,8 +58,14 @@ namespace BloodRain.Core.Meta
         /// <summary>alt 자막을 썼나(현지화 키가 ….cuts.&lt;id&gt;.alt.lines.&lt;n&gt;.text).</summary>
         public bool Alt { get; }
 
-        public LordCut(string id, string? art, IReadOnlyList<CutLineDef> lines, bool alt)
-        { Id = id; Art = art; Lines = lines; Alt = alt; }
+        /// <summary>줄 키 앞부분(땅의 주인 컷이면 dialogue.lords.list.&lt;id&gt;.cuts.&lt;컷&gt;[.alt]). 인트로·종장 컷은 null — 키는 FinalDialogue 각 메서드 설명대로.</summary>
+        public string? KeyPrefix { get; }
+
+        public LordCut(string id, string? art, IReadOnlyList<CutLineDef> lines, bool alt, string? keyPrefix = null)
+        { Id = id; Art = art; Lines = lines; Alt = alt; KeyPrefix = keyPrefix; }
+
+        /// <summary>n 번째 자막 줄의 현지화 키(KeyPrefix 가 없으면 null).</summary>
+        public string? LineKey(int n) => KeyPrefix == null ? null : $"{KeyPrefix}.lines.{n}.text";
     }
 
     /// <summary>땅의 주인을 만났을 때(보스전 경고 직후) 띄울 것.</summary>
@@ -77,6 +83,11 @@ namespace BloodRain.Core.Meta
 
         public LordEncounter(string lord, IReadOnlyList<LordCut> cuts, string? bloodMoon, string? echo, string phase2)
         { Lord = lord; Cuts = cuts; BloodMoon = bloodMoon; Echo = echo; Phase2 = phase2; }
+
+        // 현지화 키(Strings.Get(키, 한국어)). 2026-11-11 DL-06b 준비
+        public string BloodMoonKey => $"dialogue.lords.list.{Lord}.bloodMoon";
+        public string EchoKey => $"dialogue.lords.list.{Lord}.echo";
+        public string Phase2Key => $"dialogue.lords.list.{Lord}.phase2";
     }
 
     /// <summary>정산 자막 한 줄. Text 는 한국어로 채운 문장이고, 다른 말은 Line 의 키에 Region·Lord·Sect·Seconds 를 넣어 채운다.</summary>
@@ -441,7 +452,7 @@ namespace BloodRain.Core.Meta
             if (p.HasSeen(key))
                 return new LordEncounter(lord.Id, Array.Empty<LordCut>(), null, null, lord.Phase2Ko);
             p.See(key);
-            var cuts = lord.Cuts.Where(c => c.Id.StartsWith("meet", StringComparison.Ordinal)).Select(c => Resolve(c, log)).ToList();
+            var cuts = lord.Cuts.Where(c => c.Id.StartsWith("meet", StringComparison.Ordinal)).Select(c => Resolve(lord.Id, c, log)).ToList();
             return new LordEncounter(lord.Id, cuts, soul.IsBloodMoon ? lord.BloodMoonKo : null, null, lord.Phase2Ko);
         }
 
@@ -452,7 +463,7 @@ namespace BloodRain.Core.Meta
             var key = $"lord.{lord.Id}.kill";
             if (!kill.FirstOnAccount || p.HasSeen(key)) return Array.Empty<LordCut>();
             p.See(key);
-            return lord.Cuts.Where(c => c.Id.StartsWith("kill", StringComparison.Ordinal)).Select(c => Resolve(c, log)).ToList();
+            return lord.Cuts.Where(c => c.Id.StartsWith("kill", StringComparison.Ordinal)).Select(c => Resolve(lord.Id, c, log)).ToList();
         }
 
         /// <summary>Life.DefeatBoss 가 돌려준 BossKill 로(Unity 는 BossKillInfo 를 따로 받지 않는다). 종장이면 빈 목록.</summary>
@@ -460,14 +471,15 @@ namespace BloodRain.Core.Meta
             kill.IsFinal ? Array.Empty<LordCut>()
                 : LordKill(data, log, new BossKillInfo(kill.RegionId, kill.First, kill.FirstOnAccount, kill.SealStone, kill.UnlockSect, kill.RebirthQi, kill.BloodCrystal), p);
 
-        static LordCut Resolve(CutDef c, LifeLog log)
+        static LordCut Resolve(string lord, CutDef c, LifeLog log)
         {
+            var prefix = $"dialogue.lords.list.{lord}.cuts.{c.Id}";
             if (c.Alt != null)
             {
                 var w = c.Alt.When.Split(':');
-                if (w[0] == "stone" && log.HasSealStone(w[1])) return new LordCut(c.Id, c.Art, c.Alt.Lines, true);
+                if (w[0] == "stone" && log.HasSealStone(w[1])) return new LordCut(c.Id, c.Art, c.Alt.Lines, true, prefix + ".alt");
             }
-            return new LordCut(c.Id, c.Art, c.Lines, false);
+            return new LordCut(c.Id, c.Art, c.Lines, false, prefix);
         }
 
         /// <summary>정산 화면 자막. Soul.EndLife 바로 뒤(OnReturn 과 같은 때)에 부른다. 위에서부터 맞는 줄 하나, 그 밖이면 무작위.</summary>

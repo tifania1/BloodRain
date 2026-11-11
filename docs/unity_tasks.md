@@ -808,7 +808,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/DL-03b/` 의 `prologue_cue.png`
 
 - [ ] DL-06b 땅의 주인 컷·한 줄 · 먼저: BR-02
-  - 할 것: 보스전 경고 직후 `InnDialogue.LordMeet(data, soul, lifeLog, region, progress)` → `Cuts`(만남 2컷, 비면 건너뜀, 건너뛰기 가능) 다음 `BloodMoon` 줄, 또는 이름 붓글씨 아래 `Echo` 한 줄. 기혈 30% 2막 예고 때 머리 위 `Phase2` 2초(시간 안 멈춤). 처치 뒤 `life.DefeatBoss()` 가 돌려준 `BossKill` 로 `InnDialogue.LordKill(data, life.Log, kill, progress)`(2026-11-10 BK-02. `lifeLog.KillBoss` 를 또 부르지 않는다 — DefeatBoss 가 이미 불러 두 번 세게 됨) → 처치 4컷(`cut.Art`, `cut.Lines`, `cut.Alt` 면 `….alt.lines.<n>.text`).
+  - 할 것: 보스전 경고 직후 `InnDialogue.LordMeet(data, soul, lifeLog, region, progress)` → `Cuts`(만남 2컷, 비면 건너뜀, 건너뛰기 가능) 다음 `BloodMoon` 줄, 또는 이름 붓글씨 아래 `Echo` 한 줄. 기혈 30% 2막 예고 때 머리 위 `Phase2` 2초(시간 안 멈춤). 처치 뒤 `life.DefeatBoss()` 가 돌려준 `BossKill` 로 `InnDialogue.LordKill(data, life.Log, kill, progress)`(2026-11-10 BK-02. `lifeLog.KillBoss` 를 또 부르지 않는다 — DefeatBoss 가 이미 불러 두 번 세게 됨) → 처치 4컷(`cut.Art`, `cut.Lines`, 줄 키는 `cut.LineKey(n)` — alt 면 알아서 `….alt.lines.<n>.text`). 한 줄 키는 `Phase2Key`·`EchoKey`·`BloodMoonKey`(2026-11-11 클라우드가 더함, `Loc` 로 키 없으면 한국어).
   - 쓸 것: Core `InnDialogue.LordMeet`·`LordKill`, dialogue.json lords
   - 메뉴: BR-01 의 땅의 주인 부르기
   - 끝: 원각 첫 만남 2컷 → 싸움 → 2막 한 줄 → 처치 4컷. 두 번째 만남은 Echo 한 줄

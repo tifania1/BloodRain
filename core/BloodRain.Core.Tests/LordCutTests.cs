@@ -29,6 +29,44 @@ namespace BloodRain.Core.Tests
         static void End(Soul s, LifeLog log) => s.EndLife(log.Finish(LifeEndWay.Fallen, 0));
 
         [Fact]
+        public void 만남_처치_컷과_한_줄의_현지화_키가_모두_목록에_있다()
+        {
+            // DL-06b Unity 가 Strings.Get(키, 한국어) 로 띄운다(2026-11-11)
+            var cat = StringCatalog.FromData(ReadFiles(), ReadText(System.IO.Path.Combine(DataDir, "strings", "ko.json")));
+            void Has(string? key, string ko)
+            {
+                Assert.NotNull(key);
+                Assert.True(cat.Korean.TryGetValue(key!, out var v), key + " 가 목록에 없다");
+                Assert.Equal(ko, v);
+            }
+            void Cuts(System.Collections.Generic.IReadOnlyList<LordCut> cuts)
+            {
+                foreach (var c in cuts)
+                    for (int n = 0; n < c.Lines.Count; n++) Has(c.LineKey(n), c.Lines[n].TextKo);
+            }
+            int alts = 0;
+            foreach (var r in C.Regions.Where(r => r.Boss != null && r.Id != "bongmagok"))
+            {
+                var s = AfterPrologue();
+                var p = new DialogueProgress();
+                var log = Begin(s);
+                foreach (var other in C.Regions.Where(o => o.Boss != null && o.Id != r.Id && o.Id != "bongmagok")) log.KillBoss(other.Id); // alt 컷 조건(stone:…)이 서게
+                var e = InnDialogue.LordMeet(_d, s, log, r.Id, p);
+                Assert.NotEmpty(e.Cuts);
+                Cuts(e.Cuts);
+                var lord = _d.Dialogue.Lord(r.Boss!);
+                Has(e.Phase2Key, lord.Phase2Ko);
+                Has(e.EchoKey, lord.EchoKo);
+                if (lord.BloodMoonKo != null) Has(e.BloodMoonKey, lord.BloodMoonKo);
+                var kill = InnDialogue.LordKill(_d, log, log.KillBoss(r.Id), p);
+                Assert.NotEmpty(kill);
+                Cuts(kill);
+                alts += kill.Count(c => c.Alt);
+            }
+            Assert.Equal(2, alts);   // 혈허진인·낙매검선의 검혼 kill3
+        }
+
+        [Fact]
         public void 처음_만나면_만남_두_컷_다시_만나면_컷_없이_2막_줄만()
         {
             var s = AfterPrologue();
