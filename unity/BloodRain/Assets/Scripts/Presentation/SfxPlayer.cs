@@ -158,6 +158,7 @@ namespace BloodRain.Presentation
 
         void OnGUI()
         {
+            ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
             if (!showDebug) return;
             GUI.color = new Color(1f, 1f, 1f, 0.8f);
             GUI.Label(new Rect(12, 184, 900, 22), $"효과음  튼 수 {Played} · 버린 수 {Dropped} · 최근 {Recent}");

@@ -922,6 +922,7 @@ namespace BloodRain.Presentation
 
         void OnGUI()
         {
+            ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
             DrawPopups();
             if (!showDebug || _life == null) return;
             var realm = _life.Scale.Realms[_life.Realm];

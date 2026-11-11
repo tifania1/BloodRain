@@ -232,6 +232,7 @@ namespace BloodRain.Presentation.Fx
 
         void OnGUI()
         {
+            ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
             var cam = Camera.main;
             _style ??= new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             if (cam != null)

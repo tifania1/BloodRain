@@ -171,6 +171,7 @@ namespace BloodRain.Presentation
 
         void OnGUI()
         {
+            ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
             if (!showStats || Step <= 0) return;
             var st = Strength;
             GUI.Label(new Rect(12, 92, 640, 22),
