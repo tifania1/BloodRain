@@ -122,6 +122,9 @@ namespace BloodRain.Core.Meta
 
         public LeaderLine(string leader, string slot, string text, bool sister)
         { Leader = leader; Slot = slot; Text = text; Sister = sister; }
+
+        /// <summary>현지화 키 dialogue.leaders.list.&lt;인물&gt;[.sister].&lt;칸&gt;(2026-11-11 DL-03b1 준비).</summary>
+        public string Key => $"dialogue.leaders.list.{Leader}{(Sister ? ".sister" : "")}.{Slot}";
     }
 
     /// <summary>귀환 한 번에 나오는 대사.</summary>
@@ -233,6 +236,9 @@ namespace BloodRain.Core.Meta
 
     public static class InnDialogue
     {
+        /// <summary>목 노인·운낭·연무장 줄의 현지화 키. section 은 "mok"·"unnang"·"training"(dialogue.json 묶음 이름).</summary>
+        public static string LineKey(string section, DialogueLineDef line) => $"dialogue.{section}.lines.{line.Id}.text";
+
         const string MaCheonpae = "ma_cheonpae";
 
         /// <summary>서장을 뺀 생 횟수(mok.md '생 횟수').</summary>

@@ -359,5 +359,32 @@ namespace BloodRain.Core.Tests
             for (int i = 0; i < 6; i++)
                 Assert.DoesNotContain(Ids(Live(s2, p2, "shaolin").Mok), id => id.StartsWith("hermit_"));   // 안 만나면 없다
         }
+
+        [Fact]
+        public void 객잔_대사_현지화_키가_모두_목록에_있다()
+        {
+            // DL-03b1 Unity 가 Strings.Get(키, 한국어) 로 띄운다(2026-11-11)
+            var d = Load();
+            var cat = StringCatalog.FromData(ReadFiles(), ReadText(System.IO.Path.Combine(DataDir, "strings", "ko.json")));
+            void Has(string key, string ko)
+            {
+                Assert.True(cat.Korean.TryGetValue(key, out var v), key + " 가 목록에 없다");
+                Assert.Equal(ko, v);
+            }
+            foreach (var (section, lines) in new[] { ("mok", d.Dialogue.Mok), ("unnang", d.Dialogue.Unnang), ("training", d.Dialogue.Training) })
+            {
+                Assert.NotEmpty(lines.Lines);
+                foreach (var l in lines.Lines) Has(InnDialogue.LineKey(section, l), l.TextKo);
+            }
+            foreach (var l in d.Dialogue.Leaders.List)
+            {
+                for (int i = 0; i < l.YardUnknown.Count; i++) Has(new LeaderLine(l.Id, "yardUnknown." + i, l.YardUnknown[i], false).Key, l.YardUnknown[i]);
+                for (int i = 0; i < l.YardKnown.Count; i++) Has(new LeaderLine(l.Id, "yardKnown." + i, l.YardKnown[i], false).Key, l.YardKnown[i]);
+                for (int i = 0; i < l.Inn.Count; i++) Has(new LeaderLine(l.Id, "inn." + i, l.Inn[i], false).Key, l.Inn[i]);
+                Has(new LeaderLine(l.Id, "join", l.Join, false).Key, l.Join);
+                if (l.YardBloodMoon.Length > 0) Has(new LeaderLine(l.Id, "yardBloodMoon", l.YardBloodMoon, false).Key, l.YardBloodMoon);
+                foreach (var kv in l.Sister) Has(new LeaderLine(l.Id, kv.Key, kv.Value, true).Key, kv.Value);
+            }
+        }
     }
 }
