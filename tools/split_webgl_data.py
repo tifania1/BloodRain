@@ -5,6 +5,8 @@
 # index.html 은 조각을 받아 이어 붙인 Blob 주소를 dataUrl 로 넘기게 고친다. 원래 .data.br 는 지운다.
 # 쓰는 법(저장소 루트): python tools/split_webgl_data.py [build/WebGL/BloodRain]
 # PC 올리기와 Actions(webgl.yml) 둘 다 이걸 부른다. 테스트는 tools/tests/test_split_webgl_data.py.
+# 같은 김에 index.html 의 autoSyncPersistentDataPath 줄을 켠다(WG-01Ub, 혼 저장이 IndexedDB 에 남게).
+# PC 는 Editor/WebGLBuild.EnableAutoSync 가 이미 켜지만, Actions 는 game-ci 기본 빌드라 그 메서드를 안 거친다(QA-24).
 import os, sys, re
 
 LIMIT = 24 * 1024 * 1024          # 조각 하나 압축 크기 상한(여유를 둔 값)
@@ -18,6 +20,28 @@ LOADER = """
         return URL.createObjectURL(new Blob(bufs));
       }
 """
+
+
+AUTOSYNC_OFF = "// config.autoSyncPersistentDataPath = true;"
+AUTOSYNC_ON = "config.autoSyncPersistentDataPath = true; // WebGLBuild: 혼 저장을 IndexedDB 에 남긴다(WG-01Ub)"
+
+
+def patch_autosync(html):
+    """주석 처리된 autoSync 줄을 켠다(Editor/WebGLBuild.cs 와 같은 글). 이미 켜졌으면 그대로, 줄이 없으면 ValueError."""
+    if AUTOSYNC_ON in html:
+        return html
+    if AUTOSYNC_OFF not in html:
+        raise ValueError("index.html 에 autoSyncPersistentDataPath 줄이 없다(템플릿이 바뀌었나) — 혼 저장이 새로고침 뒤 안 남는다")
+    return html.replace(AUTOSYNC_OFF, AUTOSYNC_ON, 1)
+
+
+def autosync(root):
+    idx = os.path.join(root, "index.html")
+    html = open(idx, encoding="utf-8").read()
+    out = patch_autosync(html)
+    if out != html:
+        open(idx, "w", encoding="utf-8").write(out)
+    return out != html
 
 
 def patch_index(html, names):
@@ -66,6 +90,10 @@ def split(root, limit=LIMIT, chunk=CHUNK):
 
 if __name__ == "__main__":
     root = sys.argv[1] if len(sys.argv) > 1 else os.path.join("build", "WebGL", "BloodRain")
+    try:
+        print("O  autoSync 켬" if autosync(root) else "O  autoSync 이미 켜져 있음")
+    except (FileNotFoundError, ValueError) as e:
+        print("X  " + str(e)); sys.exit(1)
     try:
         names = split(root)
     except (FileNotFoundError, ValueError) as e:

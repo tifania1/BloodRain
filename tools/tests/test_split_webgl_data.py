@@ -44,6 +44,25 @@ class 색인고치기(unittest.TestCase):
             sw.patch_index(INDEX.replace('dataUrl: buildUrl + "/BloodRain.data.br",', 'dataUrl: "x",'), ["a"])
 
 
+class 자동동기화(unittest.TestCase):
+    INDEX = "      var config = {\n        // config.autoSyncPersistentDataPath = true;\n      };"
+
+    def test_주석을_풀고_두_번_해도_같다(self):
+        out = sw.patch_autosync(self.INDEX)
+        self.assertIn(sw.AUTOSYNC_ON, out)
+        self.assertNotIn(sw.AUTOSYNC_OFF, out)
+        self.assertEqual(out, sw.patch_autosync(out))
+
+    def test_줄이_없으면_멈춘다(self):
+        with self.assertRaises(ValueError):
+            sw.patch_autosync(INDEX)
+
+    def test_PC_빌드와_같은_글이다(self):
+        cs = (Path(__file__).resolve().parents[2] / "unity/BloodRain/Assets/Editor/WebGLBuild.cs").read_text(encoding="utf-8")
+        self.assertIn('"%s"' % sw.AUTOSYNC_OFF, cs)
+        self.assertIn('"%s"' % sw.AUTOSYNC_ON, cs)
+
+
 @unittest.skipIf(brotli is None, "brotli 없음")
 class 나누기(unittest.TestCase):
     def setUp(self):
