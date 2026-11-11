@@ -149,6 +149,13 @@ namespace BloodRain.Presentation
                 var lu0 = FindFirstObjectByType<LevelUpScreen>();
                 if (lu0 != null) bar.font = lu0.font;
             }
+            if (GetComponent<Fx.DamageNumberLayer>() == null) // DN-01U 피해 숫자(설정에서 끔)
+            {
+                var dn = gameObject.AddComponent<Fx.DamageNumberLayer>();
+                dn.enemies = enemies;
+                var lu2 = FindFirstObjectByType<LevelUpScreen>();
+                if (lu2 != null) dn.font = lu2.font;
+            }
             if (GetComponent<BossKillBanner>() == null) // BR-02 땅의 주인 처치 알림
             {
                 var kb = gameObject.AddComponent<BossKillBanner>();

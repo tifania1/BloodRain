@@ -835,7 +835,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 서장만 마친 혼은 문이 안 보이고, 원각 잡은 혼은 '수리 중' 문이 보이며 눌러도 화면이 안 바뀜, 콘솔 에러 0
   - 찍기: `docs/unity_shots/A-07U/` 의 `library_door.png`
 
-- [ ] DN-01U 피해 숫자 · 먼저: 없음(무공 때리기·치명타는 있음)
+- [x] DN-01U 피해 숫자 · 먼저: 없음(무공 때리기·치명타는 있음) — 2026-11-12 01:40 PC API: EnemyField.Damage 가 때릴 때마다 `Struck`(자리·사람 하나 반지름·피해·치명타·정예/땅의 주인) 이벤트를 내고, 새 `Fx/DamageNumberLayer`(LifeRunner 가 붙임, 글꼴은 LevelUpScreen 것)가 Core `DamageNumbers` 로 ShouldShow·Add·Tick, TextMeshPro 풀(상한 80)에 그림. 보통 먹색 22px·치명타 주홍 31px(1080 높이 기준), 종이색 테두리 머티리얼 한 장 공유, 수명 동안 26px 떠오르며 옅어짐. 플레이: 청운진에서 실제 치명타·맞음에 숫자가 뜨고 0.7초에 사라짐, 120개를 넣어도 80개, NumbersOn 끄면 그린 수 0(목록은 그대로) 켜면 다시. 콘솔 에러 0. 찍음 `docs/unity_shots/DN-01U/` 의 `numbers.png`(멈춘 채 시험 숫자 넷 + 실제 치명타 하나). 숭산 2분은 못 봄(청운진 서장 몸으로 봄)
   - 할 것: Unity 엔 피해 숫자가 아직 없다. 한 생에 `new Core.World.DamageNumbers(data.Balance)` 하나. 무공이 적을 때릴 때(치명타 여부 포함) `DamageNumbers.ShouldShow(피해, 치명타, 정예·땅의 주인인가, rng)` 가 참이면 `Add(적 x, y, 몸 반지름, 피해, 치명타, rng)`, 프레임마다 `Tick(dt)`. 그리기는 `Items` 를 TMP 풀(상한 `Limits.DamageNumbers` 80, 15장 풀링)로: 자리 (X, Y + Lift), 떠오르기는 웹처럼 수명 동안 화면 높이 약 26px(1080 높이 기준 비율로), 알파 `Alpha(n)`. 보통은 먹색 굵은 작은 글, 치명타는 주홍 더 굵고 크게, 둘 다 종이색 테두리(웹 template.html '피해 숫자' 그리기와 같게). 설정 `GameSettings` 피해 숫자 끔(WP-57U)이면 그리기만 끔
   - 쓸 것: Core `World/DamageNumbers.cs`, balance.json `damageNumber`·`limits.damageNumbers`(2026-11-07 클라우드 DN-01, `DamageNumbersTests`), 기획서 11장 '동시 피해 숫자 표시 80'·12장 설정
   - 메뉴: 없음(판에서 바로)

@@ -222,12 +222,17 @@ namespace BloodRain.Presentation
                 dd *= outgoingMultiplier; // R4-10U 천마해체 피해 x2
                 float cc = critChance + testCritBonus;
                 bool sure = sureCrit != null && sureCrit(a.Id); // LK-01Ub 점혈창
+                bool crit = false;
                 if (sure || (cc > 0f && _rng.NextDouble() < cc))
                 {
                     dd *= critMul;
                     CritCount++;
+                    crit = true;
                     _critAt.Add(new Vector2(a.Pos.x, a.Pos.y));
                 }
+                // DN-01U 피해 숫자: 맞은 자리·사람 하나 반지름·피해·치명타·정예/땅의 주인
+                Struck?.Invoke(new Vector2(a.Pos.x, a.Pos.y), PersonRadius(a.BornRealm), dd, crit,
+                    kindDef != null && (kindDef.Family == "elite" || kindDef.Family == "boss"));
                 a.Health -= dd;
                 Dealt += dd;
                 if (poisonSeconds > 0f) { if (st.Poison <= 0f) PoisonedCount++; st.Poison = Mathf.Max(st.Poison, poisonSeconds); _status[a.Id] = st; }
@@ -339,6 +344,8 @@ namespace BloodRain.Presentation
         bool PoisonImmune => sectTrait.PoisonImmune || passivePoisonImmune;
         /// <summary>치명타가 난 적 자리(화산 3 꽃잎). Damage 가 끝난 뒤 부른다.</summary>
         public event System.Action<Vector2> Crit;
+        /// <summary>DN-01U 무공이 적 하나를 때릴 때마다(자리, 사람 하나 반지름 세계 m, 피해, 치명타, 정예·땅의 주인인가).</summary>
+        public event System.Action<Vector2, float, float, bool, bool> Struck;
         /// <summary>독 번짐이 퍼진 자리와 반경(세계 m). 그림은 WeaponRunner 가.</summary>
         public event System.Action<Vector2, float> PoisonSpread;
         public int CritCount { get; private set; }
@@ -498,6 +505,9 @@ namespace BloodRain.Presentation
         WorldScale World => WorldScale.Current;
 
         /// <summary>size(경지 m) 사람이 n 명인 덩이의 밀어내기 반경(세계 m).</summary>
+        /// <summary>덩이 안 사람 하나의 반지름(세계 m). 피해 숫자를 머리 위에 띄울 때 쓴다.</summary>
+        float PersonRadius(int bornRealm) => World.Length(clusters != null ? clusters.memberRealmMeters : 1f, bornRealm) * 0.38f;
+
         float RadiusOf(int bornRealm)
         {
             var ws = World;
