@@ -382,16 +382,16 @@ namespace BloodRain.Presentation.Hud
             k.text = kind;
             k.enableAutoSizing = true; k.fontSizeMin = 16; k.fontSizeMax = 26;
             var n = MakeText(card.rectTransform, "이름", 44, Ink, TextAlignmentOptions.Center);
-            Place(n.rectTransform, new Vector2(0.5f, 1f), new Vector2(8, -130), new Vector2(290, 110));
+            Place(n.rectTransform, new Vector2(0.5f, 1f), new Vector2(8, -120), new Vector2(290, 90));
             n.textWrappingMode = TextWrappingModes.Normal;
             n.text = name;
             n.enableAutoSizing = true; n.fontSizeMin = 26; n.fontSizeMax = 44;
             var l = MakeText(card.rectTransform, "단계", 32, Ink, TextAlignmentOptions.Center);
-            Place(l.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(8, 10), new Vector2(290, 50));
+            Place(l.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(8, 32), new Vector2(290, 44));
             l.text = level;
             var d = MakeText(card.rectTransform, "설명", 24, new Color(0.3f, 0.26f, 0.22f), TextAlignmentOptions.Center);
-            Place(d.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 98), new Vector2(290, 110));
-            if (o.Kind != OfferKind.Fallback) DrawSynergy(card.rectTransform, o, k);
+            Place(d.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 98), new Vector2(290, 100));
+            if (o.Kind != OfferKind.Fallback) { DrawSynergy(card.rectTransform, o, k); DrawBadges(card.rectTransform, o); }
             d.textWrappingMode = TextWrappingModes.Normal;
             d.text = note;
             d.enableAutoSizing = true; d.fontSizeMin = 16; d.fontSizeMax = 24;
@@ -436,7 +436,7 @@ namespace BloodRain.Presentation.Hud
             foreach (var h in pv.Links) if (h.Completes && !best.Completes) best = h;
             bool done = best.Completes && !best.Locked;
             var band = MakeImage(card, "연환 띠", best.Locked ? new Color(0.25f, 0.22f, 0.2f) : done ? Blood : Ink);
-            Place(band.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 180), new Vector2(300, 44));
+            Place(band.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 172), new Vector2(300, 40));
             var bt = MakeText(band.rectTransform, "글", 22, done ? Gold : Paper, TextAlignmentOptions.Center);
             Stretch(bt.rectTransform);
             bt.textWrappingMode = TextWrappingModes.NoWrap;
@@ -448,6 +448,44 @@ namespace BloodRain.Presentation.Hud
                 : done ? Loc.F("ui.levelup.link.done", linkName)
                 : Loc.F("ui.levelup.link.need", linkName, partner, best.Link.MinLevel);
             if (pv.Links.Count > 1) bt.text += Loc.F("ui.levelup.link.more", pv.Links.Count - 1);
+        }
+
+        // UI-01U 카드 셋째 줄 배지(12장 '레벨업 카드 규칙', 웹 offerCard badges): 절기 문턱(핏빛)을 앞에, 절기 짝(먹)을 뒤에.
+        //   진전은 오른쪽 위 인장, 연환은 바로 아래 띠가 맡는다(DrawSynergy). 재료는 Core LevelUpView.Card 의 Pair·Threshold.
+        void DrawBadges(RectTransform card, Offer o)
+        {
+            var c = LevelUpView.Card(_data, _loadout, o);
+            if (c == null || (c.Pair == null && c.Threshold == null)) return;
+            var row = new GameObject("배지", typeof(RectTransform), typeof(HorizontalLayoutGroup)).GetComponent<RectTransform>();
+            row.SetParent(card, false);
+            Place(row, new Vector2(0.5f, 0f), new Vector2(8, 216), new Vector2(300, 32));
+            var h = row.GetComponent<HorizontalLayoutGroup>();
+            h.spacing = 6; h.childAlignment = TextAnchor.MiddleCenter;
+            h.childControlWidth = h.childControlHeight = true;
+            h.childForceExpandWidth = h.childForceExpandHeight = false;
+            if (c.Threshold != null)
+                Badge(row, Loc.F("ui.levelup.badge.threshold", Loc.T($"evolutions.{c.Threshold.Id}.name", c.Threshold.NameKo)), Blood, Gold);
+            if (c.Pair != null)
+            {
+                string partner = c.Weapon ? SlotPassiveName(c.Pair.Passive) : WeaponName(_data.Weapon(c.Pair.Weapon));
+                Badge(row, Loc.F("ui.levelup.badge.pair", partner), Ink, Paper);
+            }
+            // 두 배지가 카드 폭(300)을 넘으면(긴 절기 이름·영어) 줄째로 줄인다
+            LayoutRebuilder.ForceRebuildLayoutImmediate(row);
+            float want = LayoutUtility.GetPreferredWidth(row);
+            if (want > 300f) row.localScale = Vector3.one * (300f / want);
+        }
+
+        void Badge(RectTransform row, string text, Color bg, Color fg)
+        {
+            var img = MakeImage(row, "배지 한 칸", bg);
+            var fit = img.gameObject.AddComponent<HorizontalLayoutGroup>();
+            fit.padding = new RectOffset(10, 10, 2, 2);
+            fit.childControlWidth = fit.childControlHeight = true;
+            fit.childForceExpandWidth = fit.childForceExpandHeight = false;
+            var t = MakeText(img.rectTransform, "글", 19, fg, TextAlignmentOptions.Center);
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            t.text = text;
         }
 
         static string Short(string name) => name.Length <= 2 ? name : name.Substring(0, 2);
@@ -522,9 +560,9 @@ namespace BloodRain.Presentation.Hud
                 case OfferKind.NewWeapon:
                 {
                     var w = _data.Weapon(o.Id);
-                    // 둘째 줄: 무엇을 하는 무공인지(웹 BEHAVIOR_TEXT), 그 아래 속성·짝 심법
+                    // 둘째 줄: 무엇을 하는 무공인지(웹 BEHAVIOR_TEXT), 그 아래 속성. 짝 심법은 셋째 줄 배지(DrawBadges)
                     return (Loc.T("ui.levelup.kind.new_weapon"), WeaponName(w), Loc.T("ui.levelup.level_one"),
-                        Loc.T($"ui.levelup.behavior.{w.Behavior}") + "\n" + Loc.F("ui.levelup.pair_passive", Aspect(w.Yinyang), PassiveName(w.PairPassive)));
+                        Loc.T($"ui.levelup.behavior.{w.Behavior}") + "\n" + Aspect(w.Yinyang));
                 }
                 case OfferKind.UpgradeWeapon:
                 {
@@ -574,13 +612,6 @@ namespace BloodRain.Presentation.Hud
             if (w.Milestones != null && w.Milestones.TryGetValue(level.ToString(), out var m))
                 return Loc.F("ui.levelup.milestone", Loc.T($"weapons.{w.Id}.milestones.{level}", m));
             return Loc.T("ui.levelup.power_up");
-        }
-
-        string PassiveName(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return Loc.T("ui.levelup.none");
-            foreach (var p in _data.Passives) if (p.Id == id) return Loc.T($"passives.{p.Id}.name", p.NameKo);
-            return id;
         }
 
         static string Aspect(string yy) => Loc.T(yy == "yang" ? "ui.aspect.yang" : yy == "yin" ? "ui.aspect.yin" : "ui.aspect.neutral");
