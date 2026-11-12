@@ -522,7 +522,9 @@ namespace BloodRain.Presentation.Hud
                 case OfferKind.NewWeapon:
                 {
                     var w = _data.Weapon(o.Id);
-                    return (Loc.T("ui.levelup.kind.new_weapon"), WeaponName(w), Loc.T("ui.levelup.level_one"), Loc.F("ui.levelup.pair_passive", Aspect(w.Yinyang), PassiveName(w.PairPassive)));
+                    // 둘째 줄: 무엇을 하는 무공인지(웹 BEHAVIOR_TEXT), 그 아래 속성·짝 심법
+                    return (Loc.T("ui.levelup.kind.new_weapon"), WeaponName(w), Loc.T("ui.levelup.level_one"),
+                        Loc.T($"ui.levelup.behavior.{w.Behavior}") + "\n" + Loc.F("ui.levelup.pair_passive", Aspect(w.Yinyang), PassiveName(w.PairPassive)));
                 }
                 case OfferKind.UpgradeWeapon:
                 {
@@ -533,13 +535,13 @@ namespace BloodRain.Presentation.Hud
                 case OfferKind.NewPassive:
                 {
                     var p = _data.Passive(o.Id);
-                    return (Loc.T("ui.levelup.kind.new_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.T("ui.levelup.level_one"), Aspect(p.Yinyang));
+                    return (Loc.T("ui.levelup.kind.new_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.T("ui.levelup.level_one"), PassiveNote(p));
                 }
                 case OfferKind.UpgradePassive:
                 {
                     var p = _data.Passive(o.Id);
                     int lv = _loadout.Passives[o.Id];
-                    return (Loc.T("ui.levelup.kind.up_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.F("ui.levelup.level_up", lv, lv + 1), Aspect(p.Yinyang));
+                    return (Loc.T("ui.levelup.kind.up_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.F("ui.levelup.level_up", lv, lv + 1), PassiveNote(p));
                 }
                 default:
                 {
@@ -557,6 +559,14 @@ namespace BloodRain.Presentation.Hud
             string dmg = Loc.F("ui.levelup.damage", c.DamageFrom.ToString("0"), c.DamageTo.ToString("0"));
             if (c.Milestone == null) return dmg;
             return dmg + " · " + Loc.T($"weapons.{w.Id}.milestones.{level}", c.Milestone);
+        }
+
+        // UI-01U 심법 카드 둘째 줄: 레벨마다 오르는 효과(웹 offerCard 의 STAT_TEXT, 값 글은 Core LevelUpView.EffectValue), 그 아래 속성
+        static string PassiveNote(PassiveDef p)
+        {
+            var parts = new List<string>();
+            foreach (var e in p.Effects) parts.Add(Loc.Stat(e.Stat) + " " + LevelUpView.EffectValue(e));
+            return parts.Count == 0 ? Aspect(p.Yinyang) : string.Join(", ", parts) + "\n" + Aspect(p.Yinyang);
         }
 
         static string Milestone(WeaponDef w, int level)

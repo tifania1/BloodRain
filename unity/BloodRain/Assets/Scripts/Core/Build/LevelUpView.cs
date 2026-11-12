@@ -98,6 +98,25 @@ namespace BloodRain.Core.Build
             }
         }
 
+        /// <summary>심법 효과 한 줄의 값 글(능력치 이름 뒤에 붙임). 웹 STAT_TEXT 와 같은 셈 —
+        /// 재사용 대기시간 '-n%', 방어 '-n', 개수 '+1', 흡혈 소수 한 자리 %, 행운·회복은 그냥 수, 나머지 '+n%'.</summary>
+        public static string EffectValue(PassiveEffect e)
+        {
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            string Pct(float v) => System.Math.Round(v * 100, System.MidpointRounding.AwayFromZero).ToString("0", inv) + "%";
+            string Num(float v) => v.ToString("0.##", inv);
+            switch (e.Stat)
+            {
+                case "CooldownReduction": return "-" + Pct(e.PerLevel);
+                case "Armor": return "-" + Num(e.PerLevel);
+                case "Amount": return "+1";
+                case "Lifesteal": return "+" + (e.PerLevel * 100).ToString("0.0", inv) + "%";
+                case "Luck":
+                case "Recovery": return "+" + Num(e.PerLevel);
+                default: return "+" + Pct(e.PerLevel);
+            }
+        }
+
         /// <summary>카드 한 장이 켜는 칸. 절기 짝은 지금 가진 것만(없는 칸은 빛낼 데가 없다).</summary>
         public static List<SlotLight> CardLights(GameData data, Loadout loadout, Offer offer)
         {

@@ -13,6 +13,21 @@ namespace BloodRain.Core.Tests
         static string[] S(System.Collections.Generic.IEnumerable<SlotLight> l) => l.Select(x => x.ToString()).ToArray();
 
         [Fact]
+        public void 심법_효과_값_글은_웹_STAT_TEXT_와_같은_꼴()
+        {
+            string V(string stat, float v) => LevelUpView.EffectValue(new PassiveEffect { Stat = stat, PerLevel = v });
+            Assert.Equal("+8%", V("Might", 0.08f));
+            Assert.Equal("-6%", V("CooldownReduction", 0.06f));
+            Assert.Equal("-1", V("Armor", 1f));
+            Assert.Equal("+1", V("Amount", 0f));
+            Assert.Equal("+0.5%", V("Lifesteal", 0.005f));
+            Assert.Equal("+0.2", V("Recovery", 0.2f));
+            // 데이터의 심법 효과는 모두 글이 나온다(빈 글 없음)
+            foreach (var p in _d.Passives) foreach (var e in p.Effects) Assert.False(string.IsNullOrEmpty(LevelUpView.EffectValue(e)));
+            Assert.Contains("const STAT_TEXT = {", TestData.ReadRepoFile("web", "prototype", "template.html"));
+        }
+
+        [Fact]
         public void 카드는_오를_칸_새_칸_가진_절기_짝_칸을_켠다()
         {
             var l = Jin();
