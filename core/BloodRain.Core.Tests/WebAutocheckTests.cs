@@ -61,7 +61,7 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void CI_가_묶은_뒤_자동_점검을_돌린다()
         {
-            // WP-04: 올리기 전에 자동 점검. 한동안은 결과만 남긴다(continue-on-error).
+            // WP-04: 올리기 전에 자동 점검. WP-05(2026-11-12)부터 점검이 실패하면 올리기를 막는다.
             var yml = ReadRepoFile(".github", "workflows", "web-prototype.yml");
             int build = yml.IndexOf("python tools/build_web_prototype.py");
             int check = yml.IndexOf("node tools/web_autocheck.js --runs 2");
@@ -72,6 +72,9 @@ namespace BloodRain.Core.Tests
             // ubuntu-latest(26.04)에선 Playwright 가 크로미움을 못 깔아 점검이 2초 만에 끝나고 continue-on-error 로 초록이 됐다(실행 150)
             Assert.DoesNotContain("runs-on: ubuntu-latest", yml);
             Assert.Contains("if: always()", yml);   // 준비가 실패해도 요약·경고는 남긴다
+            int stepAt = yml.IndexOf("name: 자동 점검");
+            var step = yml.Substring(stepAt, yml.IndexOf("- name:", stepAt) - stepAt);
+            Assert.DoesNotContain("continue-on-error", step);   // WP-05: 문제가 나오면 올리기를 막는다
         }
 
         [Fact] public void 서장_점검은_장삼_뒤에_남은_화면을_닫고_컷을_본다()
