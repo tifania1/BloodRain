@@ -504,10 +504,10 @@ namespace BloodRain.Presentation
 
         WorldScale World => WorldScale.Current;
 
-        /// <summary>size(경지 m) 사람이 n 명인 덩이의 밀어내기 반경(세계 m).</summary>
         /// <summary>덩이 안 사람 하나의 반지름(세계 m). 피해 숫자를 머리 위에 띄울 때 쓴다.</summary>
         float PersonRadius(int bornRealm) => World.Length(clusters != null ? clusters.memberRealmMeters : 1f, bornRealm) * 0.38f;
 
+        /// <summary>size(경지 m) 사람이 n 명인 덩이의 밀어내기 반경(세계 m).</summary>
         float RadiusOf(int bornRealm)
         {
             var ws = World;
