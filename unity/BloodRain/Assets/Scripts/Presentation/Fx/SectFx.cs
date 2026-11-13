@@ -351,23 +351,27 @@ namespace BloodRain.Presentation.Fx
         {
             float m = Meter;
             Add(.3f, (f, k) => Quad(2, at + Vector2.up * .2f * m, 3f * m, 1.8f * m, 0f, new Vector4(.7f - .3f * k, .05f, .3f, 0f), FxRamp.Blue, .7f * k), true);
-            After(.3f, () =>
+            After(.3f, () => SkyFall(at, onLand));
+        }
+
+        /// <summary>낙하 검기만(예고 없이). 부른 뒤 0.07초에 땅에 닿는다.</summary>
+        public void SkyFall(Vector2 at, Action onLand = null)
+        {
+            float m = Meter;
+            Add(.34f, (f, k) =>
             {
-                Add(.34f, (f, k) =>
-                {
-                    float t = f.T, pg = Mathf.Min(1f, t / .07f), ds = Mathf.Max(0f, (t - .12f) / .22f);
-                    var top = at + Vector2.up * 5.2f * m;
-                    Quad(1, top, 10f * m, 1.7f * m, -Mathf.PI / 2f, new Vector4(.42f, .3f, 2f, 1f), FxRamp.BlueInk, .55f, pg, ds, f.Seed);
-                    Glow(1, top, 10f * m, 1.3f * m, -Mathf.PI / 2f, new Vector4(.42f, .4f, 3f, 1f), FxRamp.Blue, 1f, pg, ds, f.Seed + 1f);
-                });
-                After(.07f, () =>
-                {
-                    onLand?.Invoke();
-                    var g0 = at + Vector2.up * .3f * m;
-                    Ring(g0, 4.6f, FxRamp.BlueInk, .28f, .5f);
-                    Ring(g0, 4.4f, FxRamp.Blue, .28f, 1f, true);
-                    Add(.14f, (g, k) => Glow(3, at + Vector2.up * .4f * m, 3.4f * m, 3.4f * m, g.Seed, new Vector4(11f, .9f, .8f, 0f), FxRamp.Blue, 1f - k, 1f, 0f, g.Seed));
-                });
+                float t = f.T, pg = Mathf.Min(1f, t / .07f), ds = Mathf.Max(0f, (t - .12f) / .22f);
+                var top = at + Vector2.up * 5.2f * m;
+                Quad(1, top, 10f * m, 1.7f * m, -Mathf.PI / 2f, new Vector4(.42f, .3f, 2f, 1f), FxRamp.BlueInk, .55f, pg, ds, f.Seed);
+                Glow(1, top, 10f * m, 1.3f * m, -Mathf.PI / 2f, new Vector4(.42f, .4f, 3f, 1f), FxRamp.Blue, 1f, pg, ds, f.Seed + 1f);
+            });
+            After(.07f, () =>
+            {
+                onLand?.Invoke();
+                var g0 = at + Vector2.up * .3f * m;
+                Ring(g0, 4.6f, FxRamp.BlueInk, .28f, .5f);
+                Ring(g0, 4.4f, FxRamp.Blue, .28f, 1f, true);
+                Add(.14f, (g, k) => Glow(3, at + Vector2.up * .4f * m, 3.4f * m, 3.4f * m, g.Seed, new Vector4(11f, .9f, .8f, 0f), FxRamp.Blue, 1f - k, 1f, 0f, g.Seed));
             });
         }
 

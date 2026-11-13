@@ -6,6 +6,8 @@ using BloodRain.Sim;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using SectFx = BloodRain.Presentation.Fx.SectFx;
+using FxRamp = BloodRain.Presentation.Fx.FxRamp;
 
 namespace BloodRain.Presentation.Combat
 {
@@ -206,6 +208,7 @@ namespace BloodRain.Presentation.Combat
 
             Hook();
             float dt = Time.deltaTime;
+            SectFxTick(dt);
             foreach (var s in slots)
             {
                 s.Cooldown -= dt;
@@ -413,15 +416,26 @@ namespace BloodRain.Presentation.Combat
                     int strikes = Has(s, "3연 베기") ? 3 : 1;
                     float gap = Gap(s, 0.12f), kb = ws.Speed(Knock(s));
                     for (int k = 0; k < strikes; k++)
+                    {
+                        int strikeNo = k;
                         Later(k * gap, () =>
                         {
                             // LK-01Ua 연환 쌍검합벽: 창천검기가 도는 동안 삼재검법 피해 × (1 + damageBonus)·금빛(웹 front_arc sg)
                             bool sg = Link("ssanggeom", "damageBonus") is float sgb && SweepActive();
                             float d2 = sg ? dmg * (1f + Link("ssanggeom", "damageBonus").Value) : dmg;
+                            _hitKind = HitKindOf(s);
+                            int di = 0;
                             foreach (var a in dirs)
                             {
+                                if (Sfx && s.id == "samjae_sword")
+                                {
+                                    // VF-01U: 굵은 붓 호가 0.11초에 그어지고 결을 따라 흩어진다. 2단 청회 담채, 3단·절기·쌍검합벽은 금빛 날
+                                    int tier = BrushTier(s);
+                                    _sfx.Swing(() => P, a, (di++ + strikeNo) % 2 == 0 ? 1 : -1, FxRamp.Ink, 0.55f, tier >= 2 ? FxRamp.Wash : (FxRamp?)null,
+                                               tier >= 3 || evo != null || sg ? FxRamp.Gold : (FxRamp?)null, R, 2.3f);
+                                }
                                 // 절기면 금빛 부채꼴을 붓 획 위에 한 겹 더(웹 gold)
-                                if (!AddBrush(s, a) || evo != null || sg) AddFx(a, Mathf.PI, R, 0.22f, evo != null || sg ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.95f, 0.93f, 0.85f, 0.75f));
+                                else if (!AddBrush(s, a) || evo != null || sg) AddFx(a, Mathf.PI, R, 0.22f, evo != null || sg ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.95f, 0.93f, 0.85f, 0.75f));
                                 Deal(s, d2, HitArc(P, R, a, d2, kb));
                             }
                             // LK-01Ub 연환 검화: 벤 자리(첫 방향 사거리 0.6)에서 낙화검우 꽃잎 petals 장이 피어 흩어짐. 꽃잎 한 장 = 낙화검우 한 방(표에 피해가 없어 LK-01a 결정 전)
@@ -434,6 +448,7 @@ namespace BloodRain.Presentation.Combat
                                           new Color(0.95f, 0.60f, 0.68f, 0.9f), cut);
                             }
                         });
+                    }
                     if (evo != null && EvolvedHits.SendsWave(evo, s.Fired))
                         Shoot(s, baseA, ws.Speed(evo.Param("waveSpeed")), ws.Length(evo.Param("waveRadius")), dmg * evo.Param("waveDamage"), 999,
                               evo.Param("waveLifeSeconds"), 0, 0f, kb, new Color(1f, 0.82f, 0.38f, 0.85f));
@@ -456,17 +471,23 @@ namespace BloodRain.Presentation.Combat
                         });
                     }
                     for (int k = 0; k < hits; k++)
+                    {
+                        bool lastFist = k == hits - 1;
                         Later(k * gap, () =>
                         {
                             // 나한권: 바라보는 쪽 사거리 절반 자리에 주먹 먹 자국(fx_fist_ink), 연타마다 조금씩 흔들어 찍는다
                             float fa = Mathf.Atan2(player.Facing.y, player.Facing.x) + UnityEngine.Random.Range(-0.35f, 0.35f);
                             var fat = P + new Vector2(Mathf.Cos(fa), Mathf.Sin(fa)) * R * 0.55f;
-                            if (!AddSpark("fx_fist_ink", fat, fa, 0f, 0.28f, 0.05f))
+                            _hitKind = HitKindOf(s);
+                            // VF-01U: 금빛 권영이 박히고 충격 고리가 퍼진다. 마지막 주먹은 크고 고리가 두 번(종 울림)
+                            if (Sfx) _sfx.Punch(P, fa, lastFist, R * (lastFist ? 0.95f : 0.8f));
+                            else if (!AddSpark("fx_fist_ink", fat, fa, 0f, 0.28f, 0.05f))
                                 AddFx(Mathf.Atan2(player.Facing.y, player.Facing.x), Mathf.PI * 2f, R * 0.6f, 0.12f, new Color(0.85f, 0.55f, 0.25f, 0.6f));
                             enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                             BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), R); // C-09b 친 자리 안 등롱
                             Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
                         });
+                    }
                     // C-09e 백보신권(절기): 조준 각 가운데로 projectiles 발 갈래 권경, 다 뚫음. 조준은 탄속 × 수명 안 가장 가까운 적(웹 melee_combo)
                     var fistEvo = EvoOf(s);
                     if (fistEvo != null)
@@ -485,9 +506,21 @@ namespace BloodRain.Presentation.Combat
                     var arrayEvo = EvoOf(s);
                     float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s) * (arrayEvo != null ? arrayEvo.Param("rangeMultiplier", 1f) : 1f)); // Lv8 범위 +40%(areaLv8)
                     int sweeps = arrayEvo != null ? Mathf.Max(1, (int)arrayEvo.Param("sweeps", 1f)) : Has(s, "2회 회전") ? 2 : 1;
+                    float sweepA0 = UnityEngine.Random.value * Mathf.PI * 2f;
+                    _hitKind = HitKindOf(s);
+                    if (Sfx)
+                    {
+                        // VF-01U: 몸을 도는 푸른 초승달이 꼬리를 끌고, 바퀴마다 새로 긋는다. 판정(SweepHits)의 머리 각과 같은 각이다
+                        float per = s.Def.SweepSeconds ?? 0.36f;
+                        for (int k = 0; k < sweeps; k++)
+                        {
+                            if (k == 0) _sfx.Orbit(() => P, sweepA0, R, per);
+                            else _sfx.After(per * k, () => _sfx.Orbit(() => P, sweepA0, R, per));
+                        }
+                    }
                     _fx.Add(new Fx
                     {
-                        Angle = UnityEngine.Random.value * Mathf.PI * 2f, Span = 0.6f, Radius = R, Life = (s.Def.SweepSeconds ?? 0.36f) * sweeps,
+                        Angle = sweepA0, Span = 0.6f, Radius = R, Life = (s.Def.SweepSeconds ?? 0.36f) * sweeps,
                         Color = arrayEvo != null ? new Color(0.95f, 0.82f, 0.40f, 0.85f) : new Color(0.55f, 0.75f, 0.95f, 0.8f), Sweep = true, Sweeps = sweeps, Weapon = s, Damage = dmg, Hit = new HashSet<int>(),
                     });
                     // LK-01Ub 연환 인뢰검: 낙뢰가 검기 원을 타고 한 바퀴(뇌부 개수만큼 고르게, 검기 한 바퀴 시간 동안) 돌고, 다 돈 뒤 원 안 적 감전.
@@ -726,9 +759,21 @@ namespace BloodRain.Presentation.Combat
                     for (int k = 0; k < swings; k++)
                         Later(k * gap, () =>
                         {
+                            _hitKind = HitKindOf(s);
+                            int di = 0;
                             foreach (var a in WeaponShapes.ArcDirections(evo != null, dirN, () => UnityEngine.Random.value))
                             {
-                                AddFx(a, Mathf.PI, R, 0.26f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.80f, 0.62f, 0.38f, 0.7f));
+                                if (Sfx)
+                                {
+                                    // VF-01U: 거칠게 마른 갈색 호가 겹쳐 보이고, 한 박자 늦게 봉 끝에서 먼지와 술 방울이 터진다
+                                    int sd = (di++ + s.Fired) % 2 == 0 ? 1 : -1;
+                                    float aa = a;
+                                    _sfx.GhostSwing(() => P, aa, sd, FxRamp.Brown, R);
+                                    _sfx.Swing(() => P, aa, sd, FxRamp.Brown, 1f, null, evo != null ? FxRamp.Gold : (FxRamp?)null, R, 2.4f);
+                                    var tip = P + new Vector2(Mathf.Cos(aa), Mathf.Sin(aa)) * R * 0.9f;
+                                    _sfx.After(0.12f, () => _sfx.Thump(tip));
+                                }
+                                else AddFx(a, Mathf.PI, R, 0.26f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.80f, 0.62f, 0.38f, 0.7f));
                                 Deal(s, dmg, HitArc(P, R, a, dmg, kb, stun, bossStun));
                             }
                             // LK-01Ub 연환 견인타: 봉이 닿는 원(R) 안 끌려오는 적을 받아쳐 날려 보냄, 부딪히면 둘 다 피해(취선봉 한 방, LK-01a 결정 전)
@@ -1517,6 +1562,49 @@ namespace BloodRain.Presentation.Combat
         float _needleLeft = -1f;
         static readonly Color NeedleInk = new Color(0.20f, 0.42f, 0.16f, 1f);
 
+        // ── VF-01U 문파 이펙트(SectFx). 없으면 예전 그림(붓 획·도형)으로 돌아간다 ──
+        SectFx _sfx;
+        bool _sfxHooked;
+        string _hitKind = "ink";
+        /// <summary>끄면 예전 그림. 시험 메뉴·견줌 스크린샷용.</summary>
+        [NonSerialized] public bool sectFxOn = true;
+        bool Sfx => sectFxOn && _sfx != null && _sfx.Ready;
+
+        void SectFxTick(float dt)
+        {
+            if (_sfx == null) _sfx = SectFx.Instance != null ? SectFx.Instance : gameObject.AddComponent<SectFx>();
+            if (!_sfxHooked && enemies != null)
+            {
+                _sfxHooked = true;
+                enemies.Struck += (at, radius, dmg, crit, big) =>
+                {
+                    if (!Sfx) return;
+                    var d = at - P;
+                    _sfx.Hit(at, Mathf.Atan2(d.y, d.x), _hitKind, crit || big);
+                };
+                enemies.Killed += (at, agent) =>
+                {
+                    if (!Sfx) return;
+                    var d = at - P;
+                    _sfx.Kill(at, Mathf.Atan2(d.y, d.x));
+                };
+            }
+            _sfx.Meter = World.Length(1f);
+            _sfx.Tick(dt);
+        }
+
+        /// <summary>맞은 자리에 튀는 것의 종류(먹·금·호박·푸른 불씨). 무공이 피해를 넣기 직전에 고른다.</summary>
+        static string HitKindOf(Slot s)
+        {
+            switch (s.id)
+            {
+                case "nahan_fist": return "gold";
+                case "drunken_staff": return "amber";
+                case "changcheon_qi": return "blue";
+                default: return "ink";
+            }
+        }
+
         void SkySword(Slot s)
         {
             var t = effects.Tier("sky_sword");
@@ -1531,9 +1619,12 @@ namespace BloodRain.Presentation.Combat
             float dmg = Damage(s) * t.Param("damageMultiplier");
             float delay = t.Param("delaySeconds");
             AddFxAt(at, 0f, Mathf.PI * 2f, R, delay, new Color(0.55f, 0.75f, 0.95f, 0.25f)); // 떨어질 자리
+            if (Sfx) Later(Mathf.Max(0f, delay - 0.07f), () => _sfx.SkyFall(at)); // VF-01U: 닿는 때가 판정과 맞게 0.07초 먼저 떨어뜨린다
             Later(delay, () =>
             {
-                if (!AddSpark("fx_sword_qi_glow", at, -Mathf.PI * 0.5f, R * 2.4f, 0.35f, 0.08f))
+                _hitKind = "blue";
+                if (Sfx) { }
+                else if (!AddSpark("fx_sword_qi_glow", at, -Mathf.PI * 0.5f, R * 2.4f, 0.35f, 0.08f))
                     AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.25f, new Color(0.8f, 0.9f, 1f, 0.8f));
                 enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
                 BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
@@ -1910,7 +2001,7 @@ namespace BloodRain.Presentation.Combat
             if (qi != null)
                 foreach (var f in _fx)
                 {
-                    if (!f.Sweep) continue;
+                    if (!f.Sweep || Sfx) continue;
                     float a = f.Angle + f.Prev;
                     float dissolve = Mathf.Clamp01((f.Age / f.Life - 0.7f) / 0.3f);
                     var at = P + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * f.Radius * 0.62f;
@@ -1929,7 +2020,7 @@ namespace BloodRain.Presentation.Combat
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             foreach (var f in _fx)
             {
-                if (f.Sweep && qi != null) continue;
+                if (f.Sweep && (qi != null || Sfx)) continue;
                 float k = f.Age / f.Life;
                 float angle = f.Sweep ? f.Angle + f.Prev : f.Angle;
                 var c = f.Fixed ? f.Center : P;
