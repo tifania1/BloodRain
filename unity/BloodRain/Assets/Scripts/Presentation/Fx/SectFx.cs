@@ -67,6 +67,9 @@ namespace BloodRain.Presentation.Fx
             IdTime = Shader.PropertyToID("_FxTime"), IdAlpha = Shader.PropertyToID("_Alpha"), IdAdd = Shader.PropertyToID("_Add"),
             IdC0 = Shader.PropertyToID("_C0"), IdC1 = Shader.PropertyToID("_C1"), IdC2 = Shader.PropertyToID("_C2");
 
+        /// <summary>월드 단위로 1m. 경지가 오르면 세상이 작아지니 WeaponRunner 가 프레임마다 넣는다(장식 크기·속도에 곱한다).</summary>
+        [NonSerialized] public float Meter = 1f;
+
         public int LiveCount => _fx.Count;
         public bool Ready => material != null;
 
@@ -143,7 +146,7 @@ namespace BloodRain.Presentation.Fx
             foreach (var f in _fx) if (!f.Under) f.Draw(f, f.T / f.Life);
             foreach (var d in _drops)
             {
-                float k = d.T / d.Life, sp = d.Vel.magnitude;
+                float k = d.T / d.Life, sp = d.Vel.magnitude / Mathf.Max(Meter, 1e-6f);
                 float rot = Mathf.Atan2(d.Vel.y, d.Vel.x);
                 var p = new Vector4(d.Glow ? .3f : .55f, 0f, 0f, 0f);
                 float al = .92f * (1f - k * k);
@@ -188,7 +191,8 @@ namespace BloodRain.Presentation.Fx
             _fx.Add(new Fx { Life = life, Draw = draw, Under = under, Seed = Rnd(0f, 7f) });
         }
 
-        void After(float t, Action f) => _later.Add(new Later { T = t, F = f });
+        /// <summary>t 초 뒤(이펙트 시계)에 부른다.</summary>
+        public void After(float t, Action f) => _later.Add(new Later { T = t, F = f });
 
         static Vector2 Dir(float a) => new Vector2(Mathf.Cos(a), Mathf.Sin(a));
 
@@ -199,13 +203,17 @@ namespace BloodRain.Presentation.Fx
             n = FxSettings.Scale(n);
             for (int i = 0; i < n && _drops.Count < MaxDrops; i++)
             {
-                float a = dir + Rnd(-spread, spread), s = Rnd(speed * .35f, speed);
-                _drops.Add(new Drop { Pos = at, Vel = Dir(a) * s, Life = Rnd(.22f, .45f), Size = size * Rnd(.6f, 1.3f), C = c, Glow = glow });
+                float a = dir + Rnd(-spread, spread), s = Rnd(speed * .35f, speed) * Meter;
+                _drops.Add(new Drop { Pos = at, Vel = Dir(a) * s, Life = Rnd(.22f, .45f), Size = size * Meter * Rnd(.6f, 1.3f), C = c, Glow = glow });
             }
         }
 
-        /// <summary>퍼지는 충격 고리.</summary>
+        /// <summary>퍼지는 충격 고리. size 는 미터.</summary>
         public void Ring(Vector2 at, float size, FxRamp c, float life, float alpha = 1f, bool glow = false, bool under = false)
+            => RingW(at, size * Meter, c, life, alpha, glow, under);
+
+        /// <summary>퍼지는 충격 고리. size 는 월드 단위.</summary>
+        public void RingW(Vector2 at, float size, FxRamp c, float life, float alpha = 1f, bool glow = false, bool under = false)
         {
             Add(life, (f, k) =>
             {
@@ -221,7 +229,8 @@ namespace BloodRain.Presentation.Fx
             if (_time - _lastFlash <= .02f) return;
             _lastFlash = _time;
             float fa = dir + Rnd(-.5f, .5f);
-            Add(.07f, (f, k) => Quad(1, at, 1.3f + k * .6f, .45f, fa, new Vector4(.38f, 0f, 0f, 1f), FxRamp.White, .8f * (1f - k)));
+            float m = Meter;
+            Add(.07f, (f, k) => Quad(1, at, (1.3f + k * .6f) * m, .45f * m, fa, new Vector4(.38f, 0f, 0f, 1f), FxRamp.White, .8f * (1f - k)));
         }
 
         /// <summary>맞는 쪽 반응의 그림 부분(섬광 + 종류별로 튀는 것). kind: ink · gold · amber · blue</summary>
@@ -241,8 +250,8 @@ namespace BloodRain.Presentation.Fx
         public void Kill(Vector2 at, float dir)
         {
             if (_stains.Count >= MaxStains) _stains.RemoveAt(0);
-            _stains.Add(new Stain { Pos = at + Dir(dir) * .5f, Seed = Rnd(0f, 9f), Rot = dir, Size = Rnd(.9f, 1.4f) });
-            Drops(at + Vector2.up * .6f, dir, 8, 9f, FxRamp.Ink, false, .15f, 1.1f);
+            _stains.Add(new Stain { Pos = at + Dir(dir) * .5f * Meter, Seed = Rnd(0f, 9f), Rot = dir, Size = Rnd(.9f, 1.4f) * Meter });
+            Drops(at, dir, 8, 9f, FxRamp.Ink, false, .15f, 1.1f);
         }
 
         // ── 무공 ─────────────────────────────────────────────
@@ -283,27 +292,27 @@ namespace BloodRain.Presentation.Fx
             Drops(at, 0f, 9, 6f, FxRamp.Amber, true, .13f, Mathf.PI);
         }
 
-        /// <summary>소림 나한권: 금빛 권영이 from 에서 ang 쪽으로 reach 만큼 박힌다. 닿는 때(0.08초)에 onLand 를 부른다. last 는 마지막 주먹(크고 고리 둘).</summary>
+        /// <summary>소림 나한권: 금빛 권영이 from 에서 ang 쪽으로 reach(월드 단위)만큼 박힌다. 닿는 때(0.08초)에 onLand 를 부른다. last 는 마지막 주먹(크고 고리 둘).</summary>
         public void Punch(Vector2 from, float ang, bool last, float reach, Action<Vector2> onLand = null)
         {
-            float sz = last ? 4.0f : 2.9f;
+            float sz = reach * (last ? 1.5f : 1.3f);
             var d0 = Dir(ang);
             var target = from + d0 * reach;
             Add(.38f, (f, k) =>
             {
                 float t = f.T, go = Mathf.Min(1f, t / .08f), ez = 1f - (1f - go) * (1f - go), ds = Mathf.Max(0f, (t - .2f) / .18f);
-                var pos = from + d0 * (.4f + (reach - .75f) * ez);
-                Quad(7, pos - d0 * .1f + Vector2.down * .06f, sz * 1.12f, sz * .86f, ang, Vector4.zero, FxRamp.Ink, .62f, 1f, ds, f.Seed);
+                var pos = from + d0 * reach * (.18f + .66f * ez);
+                Quad(7, pos - d0 * reach * .045f + Vector2.down * reach * .03f, sz * 1.12f, sz * .86f, ang, Vector4.zero, FxRamp.Ink, .62f, 1f, ds, f.Seed);
                 Glow(7, pos, sz, sz * .74f, ang, Vector4.zero, FxRamp.Gold, 1f, 1f, ds, f.Seed);
             });
             After(.08f, () =>
             {
                 onLand?.Invoke(target);
-                Ring(target, last ? 5f : 3.2f, FxRamp.Ink, .26f, .55f);
-                Ring(target, last ? 4.8f : 3f, FxRamp.Gold, .26f, 1f, true);
-                float b = last ? 3.4f : 2.2f;
+                RingW(target, reach * (last ? 1.85f : 1.45f), FxRamp.Ink, .26f, .55f);
+                RingW(target, reach * (last ? 1.78f : 1.36f), FxRamp.Gold, .26f, 1f, true);
+                float b = reach * (last ? 1.26f : 1f);
                 Add(.11f, (g, k) => Glow(3, target, b * (1f + k * .5f), b * (1f + k * .5f), g.Seed, new Vector4(5f, .28f, .8f, 0f), FxRamp.Gold, 1f - k, 1f, 0f, g.Seed));
-                if (last) After(.1f, () => { Ring(target, 7.4f, FxRamp.Ink, .36f, .35f); Ring(target, 7.2f, FxRamp.Gold, .36f, .8f, true); });   // 종 울림
+                if (last) After(.1f, () => { RingW(target, reach * 2.74f, FxRamp.Ink, .36f, .35f); RingW(target, reach * 2.67f, FxRamp.Gold, .36f, .8f, true); });   // 종 울림
             });
         }
 
@@ -332,31 +341,32 @@ namespace BloodRain.Presentation.Fx
             var mid = (a + b) * .5f;
             Add(.16f, (f, k) =>
             {
-                Quad(4, mid, len, 1.6f, ang, new Vector4(.35f, .06f, .5f, 0f), FxRamp.BlueInk, .5f * (1f - k * k), 1f, 0f, f.Seed);
-                Glow(4, mid, len, 1.6f, ang, new Vector4(.35f, .035f, .5f, 0f), FxRamp.Blue, 1f - k * k, 1f, 0f, f.Seed);
+                Quad(4, mid, len, 1.6f * Meter, ang, new Vector4(.35f, .06f, .5f, 0f), FxRamp.BlueInk, .5f * (1f - k * k), 1f, 0f, f.Seed);
+                Glow(4, mid, len, 1.6f * Meter, ang, new Vector4(.35f, .035f, .5f, 0f), FxRamp.Blue, 1f - k * k, 1f, 0f, f.Seed);
             });
         }
 
         /// <summary>하늘에서 내리꽂히는 검기(창궁 진전 3단). 0.3초 예고 고리 뒤에 떨어지고, 닿는 때 onLand.</summary>
         public void SkySword(Vector2 at, Action onLand = null)
         {
-            Add(.3f, (f, k) => Quad(2, at + Vector2.up * .2f, 3f, 1.8f, 0f, new Vector4(.7f - .3f * k, .05f, .3f, 0f), FxRamp.Blue, .7f * k), true);
+            float m = Meter;
+            Add(.3f, (f, k) => Quad(2, at + Vector2.up * .2f * m, 3f * m, 1.8f * m, 0f, new Vector4(.7f - .3f * k, .05f, .3f, 0f), FxRamp.Blue, .7f * k), true);
             After(.3f, () =>
             {
                 Add(.34f, (f, k) =>
                 {
                     float t = f.T, pg = Mathf.Min(1f, t / .07f), ds = Mathf.Max(0f, (t - .12f) / .22f);
-                    var top = at + Vector2.up * 5.2f;
-                    Quad(1, top, 10f, 1.7f, -Mathf.PI / 2f, new Vector4(.42f, .3f, 2f, 1f), FxRamp.BlueInk, .55f, pg, ds, f.Seed);
-                    Glow(1, top, 10f, 1.3f, -Mathf.PI / 2f, new Vector4(.42f, .4f, 3f, 1f), FxRamp.Blue, 1f, pg, ds, f.Seed + 1f);
+                    var top = at + Vector2.up * 5.2f * m;
+                    Quad(1, top, 10f * m, 1.7f * m, -Mathf.PI / 2f, new Vector4(.42f, .3f, 2f, 1f), FxRamp.BlueInk, .55f, pg, ds, f.Seed);
+                    Glow(1, top, 10f * m, 1.3f * m, -Mathf.PI / 2f, new Vector4(.42f, .4f, 3f, 1f), FxRamp.Blue, 1f, pg, ds, f.Seed + 1f);
                 });
                 After(.07f, () =>
                 {
                     onLand?.Invoke();
-                    var g0 = at + Vector2.up * .3f;
+                    var g0 = at + Vector2.up * .3f * m;
                     Ring(g0, 4.6f, FxRamp.BlueInk, .28f, .5f);
                     Ring(g0, 4.4f, FxRamp.Blue, .28f, 1f, true);
-                    Add(.14f, (g, k) => Glow(3, at + Vector2.up * .4f, 3.4f, 3.4f, g.Seed, new Vector4(11f, .9f, .8f, 0f), FxRamp.Blue, 1f - k, 1f, 0f, g.Seed));
+                    Add(.14f, (g, k) => Glow(3, at + Vector2.up * .4f * m, 3.4f * m, 3.4f * m, g.Seed, new Vector4(11f, .9f, .8f, 0f), FxRamp.Blue, 1f - k, 1f, 0f, g.Seed));
                 });
             });
         }
