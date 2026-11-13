@@ -63,7 +63,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/HF-02U/` 의 `dash_trail.png`
 
 - [ ] VF-01U 통합 이펙트 셰이더와 삼재검법·소림·개방·남궁 · 먼저: backlog VF-01 (하는 중: 대화 세션 11-13 밤)
-  - 할 것: 시안(웹 lookdev 폴더의 `sects.html`, backlog VF-01 이 만듦)의 셰이더 식을 `Art/Shaders/FxInk.shader` 로 옮기고, WeaponRunner 의 옛 도형(`AddFx`) 자리에 네 무공부터 다섯 겹 이펙트를 붙인다.
+  - 할 것: 시안(`web/lookdev/sects.html` — 안의 `FS` 가 FxInk 조각 셰이더, `swing`·`punch`·`orbit`·`skySword`·`hit` 이 겹 조합과 값)의 셰이더 식을 `Art/Shaders/FxInk.shader` 로 옮기고, WeaponRunner 의 옛 도형(`AddFx`) 자리에 네 무공부터 다섯 겹 이펙트를 붙인다.
   - 쓸 것: `Presentation/Combat/WeaponRunner.cs`(AddFx·AddBrush·AddSpark 자리), `Art/VFX` 재료, vfx.md 단계 규칙
   - 메뉴: `BloodRain/Bootstrap/` 아래 이펙트 재질 짓는 메뉴
   - 끝: 네 무공이 서로 다른 색·모양·움직임으로 읽힘. 사람이 보고 '이 정도'를 정함
