@@ -11,11 +11,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 - 화면에 임시로 띄우는 글자는 `Loc.T`·`Loc.F` 로. 새 화면 클래스는 Presentation 의 기존 갈래(Hud·Fx·Meta·Combat)에 둔다.
 - 움직임은 웹 프로토타입(`web/prototype/template.html`)·천하 시안(`web/lookdev/cheonha.html`)과 나란히 놓고 견준다.
 - 밤 웹 빌드(2026-11-09 사람이 '진짜 게임을 해 볼 곳'을 원함): **토·일 22:37 차례**는 항목보다 먼저, 마지막으로 올린 뒤(daily 의 '웹 빌드: 올림 <커밋>' 줄) `unity/BloodRain/Assets` 를 바꾼 커밋이 있으면 WebGL 을 새로 빌드해 https://dev.bloodrain.pages.dev 에 올린다. 평일은 세션이 하루 한 번뿐이라 항목에 쓴다(2026-11-10부터). 방법은 WG-01U 결과 줄 그대로(WG-01U 가 아직이면 그 항목을 한다). 실패하면 오래 붙잡지 말고 daily 에 한 줄 남기고 항목으로 넘어간다. daily 에 '웹 빌드: 올림 <커밋 7자리> <크기>MB' 또는 '바뀐 것 없어 건너뜀'.
+- **화면 집중(2026-11-13)**: '할 차례' 맨 위 '0. 화면 집중' 절만 한다. A~F 절의 열린 항목은 사람이 풀 때까지 얼림(컴파일 에러 고치기는 예외).
 - 핵심 줄기: Run 씬에 Core `Life` 가 아직 없다(레벨은 OrbLayer 시험 RunXp, 적은 EnemyField 시험 생성, 혼은 저장 안 됨). 'B. 한 생 뼈대'가 끝나야 그 아래 대부분이 풀린다. A 를 끝내면 B 부터.
 
 ## 할 차례
 
-### A. 지금 바로 되는 확인(Life 없이, 짧음)
+### 0. 화면 집중 (2026-11-13 사람이 정함 — 이 절이 끝나기 전에는 아래 절로 내려가지 않는다)
+
+까닭과 본 것은 `docs/design/review_2026-11-13.md`. '하는 중: 대화 세션' 표시가 붙은 항목은 대화 세션이 PC Unity 로 직접 하니 건너뛴다(대화 세션은 22:30 전에 Unity 에서 손을 뗀다).
 
 - [ ] DBG-01U 디버그 글 기본 끔 · 먼저: 없음 (2026-11-13 사람이 본 플레이테스트에서 HUD 를 덮음 — `docs/design/review_2026-11-13.md` 2절)
   - 할 것: `LifeRunner.showDebug` 기본값을 끔으로, F1 로 켜고 끔. 개발 빌드가 아닌 빌드(`Debug.isDebugBuild` 가 거짓)에선 F1 도 안 먹게. 다른 OnGUI 디버그 줄(EnemyField·WeaponRunner·OrbLayer·LanternLayer·ChestLayer 의 시험 줄)도 같은 스위치를 따르게 한다. 시험 씬에서 쓰는 키(Ctrl+숫자 등)는 디버그가 켜졌을 때만.
@@ -30,6 +33,43 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 아틀라스를 굽는다면 `BloodRain/Bootstrap/` 아래 새 메뉴 하나(다시 돌리면 같은 결과). Run 씬 EnemyField 에 물리는 것도 그 메뉴가
   - 끝: Run 씬에서 시강·혈강시·동갑시·혈인이 제 그림으로 콩콩 뛰고, 원화 없는 종류는 임시 강시로 나옴. 적 300 에서 TU-04 때보다 그리기 호출·ms 가 크게 안 늘어남(숫자를 daily 에). 콘솔 에러 0
   - 찍기: `docs/unity_shots/B-12/` 의 `enemy_art_clusters.png`
+
+- [ ] PR-02U 나무·집·절을 원화로 · 먼저: 없음
+  - 할 것: `PropLayer` 가 코드로 찍는 임시 그림(나무 = 타원 7개 등)을 `Assets/Art/Props` 원화 시트의 칸으로 바꾼다. 원화가 없는 종류만 임시 그림으로 남기고 결과 줄에 적는다(backlog VF-04 가 목록을 대 줌 — 없어도 시트를 직접 보고 한다). 축척이 바뀌어도 선 굵기가 뭉개지지 않게 필터·밉맵 확인(지금 나무는 점 필터로 계단이 보인다).
+  - 쓸 것: `Presentation/Fx/PropLayer.cs`·`PropArt.cs`, `Assets/Art/Props/*.png` 와 Parts
+  - 메뉴: `BloodRain/Bootstrap/소품 그림 …`(PR-01U 가 만든 메뉴) 다시
+  - 끝: 청운진·숭산 삼류 화면에서 코드로 찍은 초록 덩어리가 안 보임. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/PR-02U/` 의 `cheongun.png`·`songshan.png`
+
+- [ ] FL-01U 바닥을 선지로 · 먼저: 없음
+  - 할 것: 지금 바닥은 같은 벽돌 줄눈 + 'v' 풀이 화면 가득 되풀이된다. 선지 질감(옅은 얼룩·섬유) 한 겹을 화면 전체에 깔고, 벽돌 줄눈은 마당·길 안에만, 그 밖은 여백 + 드문 먹 얼룩·풀·돌. 가장자리 어둡게(비네트)는 카메라 쪽 한 겹으로. 휴대폰 생각해 셰이더 한 장으로.
+  - 쓸 것: `Assets/Art/Tiles`, 바닥을 그리는 지금 코드(MapLayer·타일), `Art/VFX/Common` 노이즈
+  - 메뉴: Run 씬 짓는 메뉴에 붙임
+  - 끝: 삼류·이류 두 축척에서 바닥 무늬가 되풀이로 안 읽힘. 원화(캐릭터·적)가 바닥보다 또렷함
+  - 찍기: `docs/unity_shots/FL-01U/` 의 `floor_realm0.png`·`floor_realm1.png`
+
+- [ ] HF-01U 타격감 바탕: 맞는 쪽 · 먼저: B-12Ua (하는 중: 대화 세션 11-13 밤)
+  - 할 것: 적 피격에 흰 번쩍 2프레임·맞은 방향 찌그러짐·방향 있는 먹 튐, 처치에 먹 번짐 + 바닥 먹 자국. 덩이 렌더러 인스턴스마다 번쩍·찌그러짐 값을 넘긴다.
+  - 쓸 것: `Presentation/Fx/ClusterRenderer.cs`·`ClusterInk.shader`·`InkBurst.cs`·`InkMarks.cs`, `EnemyField.Struck`, 값은 `docs/design/vfx.md`(backlog VF-03 표가 오면 그 값)
+  - 메뉴: 없음
+  - 끝: 삼재검법으로 시강을 벨 때 맞은 적이 눈에 띄게 반응함. 300마리에서 프레임 유지
+  - 찍기: `docs/unity_shots/HF-01U/` 의 `hit.png`·`kill.png`
+
+- [ ] HF-02U 타격감 바탕: 화면과 주인공 · 먼저: 없음 (하는 중: 대화 세션 11-13 밤)
+  - 할 것: 히트스톱(0.3초에 한 번까지), 방향 있는 화면 흔들림(설정 배율), 공격 방향으로 몸이 튀어나감, 경공 잔상 3장, 걷기 기울임·눌림.
+  - 쓸 것: `Presentation/ScaleCamera.cs`·`PlayerLook.cs`·`PlayerController.cs`·`Fx/FxSettings.cs`, vfx.md '화면이 어지러워지지 않게'
+  - 메뉴: 없음
+  - 끝: 설정 흔들림 0% 에서 흔들림 없음, 100% 에서 큰 타격에만. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/HF-02U/` 의 `dash_trail.png`
+
+- [ ] VF-01U 통합 이펙트 셰이더와 삼재검법·소림·개방·남궁 · 먼저: backlog VF-01 (하는 중: 대화 세션 11-13 밤)
+  - 할 것: 시안(웹 lookdev 폴더의 `sects.html`, backlog VF-01 이 만듦)의 셰이더 식을 `Art/Shaders/FxInk.shader` 로 옮기고, WeaponRunner 의 옛 도형(`AddFx`) 자리에 네 무공부터 다섯 겹 이펙트를 붙인다.
+  - 쓸 것: `Presentation/Combat/WeaponRunner.cs`(AddFx·AddBrush·AddSpark 자리), `Art/VFX` 재료, vfx.md 단계 규칙
+  - 메뉴: `BloodRain/Bootstrap/` 아래 이펙트 재질 짓는 메뉴
+  - 끝: 네 무공이 서로 다른 색·모양·움직임으로 읽힘. 사람이 보고 '이 정도'를 정함
+  - 찍기: `docs/unity_shots/VF-01U/` 의 `samjae.png`·`shaolin.png`·`gaebang.png`·`namgung.png`
+
+### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
 - [x] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?") — 2026-11-09 21:00 PC: 커밋 cf47b4d 를 `BloodRain/WebGL 빌드`(릴리스, 54.3MB, 14분 16초)로 묶어 https://dev.bloodrain.pages.dev 에 올림. BloodRain.data.br 가 44MiB 라 Cloudflare Pages 25MiB 상한에 걸려서 `tools/split_webgl_data.py` 를 새로 둠(data 를 풀어 조각 셋으로 다시 brotli, index.html 이 이어 붙인 Blob 을 dataUrl 로) — **앞으로 올리는 순서: 빌드 → `python tools/split_webgl_data.py` → `web/_headers` 복사 → wrangler**. GPU 크롬(playwright channel=chrome, 헤드리스 아님)으로 타이틀이 뜨고 시작 → 서장 → 레벨업 카드 → 쓰러짐 → 서장 다시까지 돎, 브라우저 붉은 오류 0. 그 뒤(장삼 처치 → 정산 → 객잔 → 침방)는 장삼이 아직 Run 에 없어(C-10a) 웹이든 에디터든 못 감 — WG-01Ub 로 넘김. 서장 쓰러짐은 혼에 아무것도 안 남기는 설계라 새로고침 뒤 '혼 저장 없음'이 맞고, IndexedDB 에 /idbfs 는 생김(이어하기 확인도 WG-01Ub). 본 것: 웹은 기기 갈래가 Mobile(적 상한 400)로 잡힘, OnGUI 디버그 줄 한글은 여전히 빔. 찍음 `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
   - 할 것: https://dev.bloodrain.pages.dev 는 11-01 에 올린 Run 씬만 있는 옛 판이다. `WebGLBuild.cs` 가 이제 빌드 설정 순서(Boot → Run → Inn)대로 묶어 타이틀부터 연다(2026-11-09 클라우드가 고침). 저장소 최신으로 받고 → `BloodRain/WebGL 빌드`(릴리스, 12~15분) → 저장소 루트에서 `web/_headers` 를 결과 폴더에 복사 → `npx wrangler pages deploy build/WebGL/BloodRain --project-name=bloodrain --branch=dev`. GPU 크롬(V-04d 처럼 playwright channel=chrome, 헤드리스 아님)으로 열어 타이틀 → 시작 → 서장 → 쓰러짐 → 정산 → 객잔 → 침방 → 다음 생까지 한 바퀴. 새로고침한 뒤 이어하기가 보이는지(혼 저장이 브라우저 IndexedDB 에 남는지) 본다. 안 남으면 그 사실과 고칠 자리(SoulStore.Write 뒤 동기화)를 `막힘:` 말고 결과 줄에 적는다. 빌드가 끝나면 활성 플랫폼이 바뀌었는지 보고 바뀌었으면 원래대로.
