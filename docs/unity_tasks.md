@@ -17,6 +17,20 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
+- [ ] DBG-01U 디버그 글 기본 끔 · 먼저: 없음 (2026-11-13 사람이 본 플레이테스트에서 HUD 를 덮음 — `docs/design/review_2026-11-13.md` 2절)
+  - 할 것: `LifeRunner.showDebug` 기본값을 끔으로, F1 로 켜고 끔. 개발 빌드가 아닌 빌드(`Debug.isDebugBuild` 가 거짓)에선 F1 도 안 먹게. 다른 OnGUI 디버그 줄(EnemyField·WeaponRunner·OrbLayer·LanternLayer·ChestLayer 의 시험 줄)도 같은 스위치를 따르게 한다. 시험 씬에서 쓰는 키(Ctrl+숫자 등)는 디버그가 켜졌을 때만.
+  - 쓸 것: `Presentation/LifeRunner.cs`(showDebug), OnGUI 를 가진 Presentation 파일들
+  - 메뉴: 없음
+  - 끝: Run 씬을 그냥 Play 하면 왼쪽 위에 무공 칸·경지만 보이고 디버그 글이 없음, F1 로 뜸. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/DBG-01U/` 의 `clean_hud.png`
+
+- [ ] B-12Ua 적 원화를 덩이 렌더러에(2026-11-07 클라우드가 정함: 붙인다. B-12U 가 물은 것) · 먼저: 없음
+  - 할 것: 지금 `EnemyField` 가 `ClusterRenderer.atlas` 에 `MakePlaceholderAtlas()`(임시 강시) 한 장만 물려 모든 적을 같은 그림으로 겹쳐 그린다. 적 종류마다 제 원화를 쓰게 한다. 원화가 있는 것은 `Assets/Art/Enemies/` 의 `enemy_<id>.png`(sigang·hyeolin·hyeol_gangsi·hyeol_musa·donggap·bigang·hyeol_gungsu·hyeolyeong_assassin·hyeol_sulsa·gisu·golden_toad·mogin_nahan 열둘)와 `elite_<id>.png`(gangsi_axeman·dongin·gyeyul_monk·acting_abbot 넷), 모두 256px. 없는 종류(M3 땅 적들)는 지금처럼 임시 강시 + 종류 색(`TintOf(family)`). 방법은 PC 가 고른다 — 에디터 메뉴가 16장을 한 아틀라스(예: 4×4, 칸 256)로 구워 `ClusterView` 에 칸 번호를 두고 셰이더가 인스턴스마다 UV 칸을 읽거나, 종류마다 머티리얼 하나씩(DrawMeshInstanced 호출이 종류 수만큼 늘어도 1023 묶음이라 괜찮은지 TU-04 숫자로 확인). 덩이 안 사람 크기는 웹 프로토타입 `KIND_SIZE`(sigang·hyeol_gangsi 1.3, donggap 1.6, hyeolin 1.2, hyeol_musa 1.35, mogin_nahan 1.5, golden_toad 1.0, 정예 2.6 — 그 밖은 1.3)를 종류마다 `memberRealmMeters` 대신 쓴다. 원화가 색을 갖고 있으니 종류 색 얹기는 원화가 있는 종류에선 끄고, 기수 깃발(BuffTint)·돌진 예고(TelegraphTint) 깜빡임만 남긴다. 디졸브·콩콩은 그대로.
+  - 쓸 것: `Presentation/Fx/ClusterRenderer.cs`(atlas·`Add`·그리기), `Presentation/EnemyField.cs`(`_kinds`·`Kind`·`TintOf`·덩이 넘기는 곳), `enemies.json` id, `tools/fix_art_meta.py` 규칙(아틀라스를 새 png 로 굽는다면 그 파일도 규칙에 맞게)
+  - 메뉴: 아틀라스를 굽는다면 `BloodRain/Bootstrap/` 아래 새 메뉴 하나(다시 돌리면 같은 결과). Run 씬 EnemyField 에 물리는 것도 그 메뉴가
+  - 끝: Run 씬에서 시강·혈강시·동갑시·혈인이 제 그림으로 콩콩 뛰고, 원화 없는 종류는 임시 강시로 나옴. 적 300 에서 TU-04 때보다 그리기 호출·ms 가 크게 안 늘어남(숫자를 daily 에). 콘솔 에러 0
+  - 찍기: `docs/unity_shots/B-12/` 의 `enemy_art_clusters.png`
+
 - [x] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?") — 2026-11-09 21:00 PC: 커밋 cf47b4d 를 `BloodRain/WebGL 빌드`(릴리스, 54.3MB, 14분 16초)로 묶어 https://dev.bloodrain.pages.dev 에 올림. BloodRain.data.br 가 44MiB 라 Cloudflare Pages 25MiB 상한에 걸려서 `tools/split_webgl_data.py` 를 새로 둠(data 를 풀어 조각 셋으로 다시 brotli, index.html 이 이어 붙인 Blob 을 dataUrl 로) — **앞으로 올리는 순서: 빌드 → `python tools/split_webgl_data.py` → `web/_headers` 복사 → wrangler**. GPU 크롬(playwright channel=chrome, 헤드리스 아님)으로 타이틀이 뜨고 시작 → 서장 → 레벨업 카드 → 쓰러짐 → 서장 다시까지 돎, 브라우저 붉은 오류 0. 그 뒤(장삼 처치 → 정산 → 객잔 → 침방)는 장삼이 아직 Run 에 없어(C-10a) 웹이든 에디터든 못 감 — WG-01Ub 로 넘김. 서장 쓰러짐은 혼에 아무것도 안 남기는 설계라 새로고침 뒤 '혼 저장 없음'이 맞고, IndexedDB 에 /idbfs 는 생김(이어하기 확인도 WG-01Ub). 본 것: 웹은 기기 갈래가 Mobile(적 상한 400)로 잡힘, OnGUI 디버그 줄 한글은 여전히 빔. 찍음 `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
   - 할 것: https://dev.bloodrain.pages.dev 는 11-01 에 올린 Run 씬만 있는 옛 판이다. `WebGLBuild.cs` 가 이제 빌드 설정 순서(Boot → Run → Inn)대로 묶어 타이틀부터 연다(2026-11-09 클라우드가 고침). 저장소 최신으로 받고 → `BloodRain/WebGL 빌드`(릴리스, 12~15분) → 저장소 루트에서 `web/_headers` 를 결과 폴더에 복사 → `npx wrangler pages deploy build/WebGL/BloodRain --project-name=bloodrain --branch=dev`. GPU 크롬(V-04d 처럼 playwright channel=chrome, 헤드리스 아님)으로 열어 타이틀 → 시작 → 서장 → 쓰러짐 → 정산 → 객잔 → 침방 → 다음 생까지 한 바퀴. 새로고침한 뒤 이어하기가 보이는지(혼 저장이 브라우저 IndexedDB 에 남는지) 본다. 안 남으면 그 사실과 고칠 자리(SoulStore.Write 뒤 동기화)를 `막힘:` 말고 결과 줄에 적는다. 빌드가 끝나면 활성 플랫폼이 바뀌었는지 보고 바뀌었으면 원래대로.
   - 쓸 것: `Assets/Editor/WebGLBuild.cs`, `web/_headers`, PC 에 로그인된 wrangler(`%APPDATA%\xdg.config\.wrangler`)
@@ -885,13 +899,6 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: 아주 느리게 돌려 쓰러지는 강시 가장자리가 붉다가 검게 식는 것, 맞는 순간 하얗게 번쩍. 적 300 에서 프레임 시간이 크게 안 늘어남. 콘솔 에러 0
   - 찍기: `docs/unity_shots/VX-01U/` 의 `dissolve.png`·`flash.png`
-
-- [ ] B-12Ua 적 원화를 덩이 렌더러에(2026-11-07 클라우드가 정함: 붙인다. B-12U 가 물은 것) · 먼저: 없음
-  - 할 것: 지금 `EnemyField` 가 `ClusterRenderer.atlas` 에 `MakePlaceholderAtlas()`(임시 강시) 한 장만 물려 모든 적을 같은 그림으로 겹쳐 그린다. 적 종류마다 제 원화를 쓰게 한다. 원화가 있는 것은 `Assets/Art/Enemies/` 의 `enemy_<id>.png`(sigang·hyeolin·hyeol_gangsi·hyeol_musa·donggap·bigang·hyeol_gungsu·hyeolyeong_assassin·hyeol_sulsa·gisu·golden_toad·mogin_nahan 열둘)와 `elite_<id>.png`(gangsi_axeman·dongin·gyeyul_monk·acting_abbot 넷), 모두 256px. 없는 종류(M3 땅 적들)는 지금처럼 임시 강시 + 종류 색(`TintOf(family)`). 방법은 PC 가 고른다 — 에디터 메뉴가 16장을 한 아틀라스(예: 4×4, 칸 256)로 구워 `ClusterView` 에 칸 번호를 두고 셰이더가 인스턴스마다 UV 칸을 읽거나, 종류마다 머티리얼 하나씩(DrawMeshInstanced 호출이 종류 수만큼 늘어도 1023 묶음이라 괜찮은지 TU-04 숫자로 확인). 덩이 안 사람 크기는 웹 프로토타입 `KIND_SIZE`(sigang·hyeol_gangsi 1.3, donggap 1.6, hyeolin 1.2, hyeol_musa 1.35, mogin_nahan 1.5, golden_toad 1.0, 정예 2.6 — 그 밖은 1.3)를 종류마다 `memberRealmMeters` 대신 쓴다. 원화가 색을 갖고 있으니 종류 색 얹기는 원화가 있는 종류에선 끄고, 기수 깃발(BuffTint)·돌진 예고(TelegraphTint) 깜빡임만 남긴다. 디졸브·콩콩은 그대로.
-  - 쓸 것: `Presentation/Fx/ClusterRenderer.cs`(atlas·`Add`·그리기), `Presentation/EnemyField.cs`(`_kinds`·`Kind`·`TintOf`·덩이 넘기는 곳), `enemies.json` id, `tools/fix_art_meta.py` 규칙(아틀라스를 새 png 로 굽는다면 그 파일도 규칙에 맞게)
-  - 메뉴: 아틀라스를 굽는다면 `BloodRain/Bootstrap/` 아래 새 메뉴 하나(다시 돌리면 같은 결과). Run 씬 EnemyField 에 물리는 것도 그 메뉴가
-  - 끝: Run 씬에서 시강·혈강시·동갑시·혈인이 제 그림으로 콩콩 뛰고, 원화 없는 종류는 임시 강시로 나옴. 적 300 에서 TU-04 때보다 그리기 호출·ms 가 크게 안 늘어남(숫자를 daily 에). 콘솔 에러 0
-  - 찍기: `docs/unity_shots/B-12/` 의 `enemy_art_clusters.png`
 
 - [ ] B-12U 원화 Sprite 다시 들여오기 확인(2026-11-05 클라우드 B-12) · 먼저: B-12Ua (진행: 2026-11-05 00:55 PC — 7장 모두 Sprite/Single/PPU 100, 밉맵·Repeat 규칙대로 들어옴, Unity 가 채운 spriteID 커밋. 남은 것: Run 씬에서 시강·혈강시 크기·마당 타일 깔림 보기. 다만 지금 적은 ClusterRenderer 덩이로 그려 원화 Sprite 를 쓰는 코드가 아직 없다 — 붙이는 일이 따로 필요한지 클라우드가 정할 것 → 2026-11-07 클라우드: 붙인다, B-12Ua)
   - 할 것: 클라우드가 meta 값만 바꾼 원화 7장(Enemies 둘, Props, Tiles, Map, Backgrounds, Cards)을 Unity 가 Sprite 로 다시 들여오는지 본다. spriteID 가 빈 칸이라 Unity 가 채워 meta 를 다시 쓴다(그 변경은 커밋).
