@@ -47,6 +47,65 @@ namespace BloodRain.Presentation
         MaterialPropertyBlock _mpb;
         static readonly int FlashId = Shader.PropertyToID("_Flash");
         float _height, _foot, _phase, _walk;
+        // HF-02U 공격 방향으로 몸이 살짝 튀어나감(월드 벡터, 빠르게 돌아옴)과 경공 잔상
+        Vector2 _lunge;
+        struct Ghost { public SpriteRenderer R; public float Age; }
+        readonly System.Collections.Generic.List<Ghost> _ghosts = new System.Collections.Generic.List<Ghost>();
+        float _ghostClock;
+        const float GhostLife = 0.28f, GhostEvery = 0.035f;
+        static readonly Color GhostInk = new Color(0.16f, 0.17f, 0.2f, 0.5f);
+
+        /// <summary>공격하는 쪽으로 몸을 worldDistance 만큼 내밀었다가 돌아온다(그림만, 판정 자리는 그대로).</summary>
+        public void Lunge(Vector2 dir, float worldDistance)
+        {
+            if (dir.sqrMagnitude < 1e-8f) return;
+            _lunge = dir.normalized * worldDistance;
+        }
+
+        void TickGhosts(float dt)
+        {
+            if (Renderer == null) return;
+            bool dashing = _move != null && _move.Dash != null && _move.Dash.IsDashing;
+            _ghostClock -= dt;
+            if (dashing && _ghostClock <= 0f && !BloodRain.Presentation.Fx.FxSettings.Simplified)
+            {
+                _ghostClock = GhostEvery;
+                SpriteRenderer g = null;
+                for (int i = 0; i < _ghosts.Count; i++) if (_ghosts[i].Age >= GhostLife) { g = _ghosts[i].R; _ghosts.RemoveAt(i); break; }
+                if (g == null && _ghosts.Count < 10)
+                {
+                    var go = new GameObject("DashGhost");
+                    g = go.AddComponent<SpriteRenderer>();
+                    g.sortingLayerID = Renderer.sortingLayerID;
+                    g.sortingOrder = Renderer.sortingOrder - 1;
+                }
+                if (g != null)
+                {
+                    g.sprite = Renderer.sprite;
+                    g.flipX = Renderer.flipX;
+                    g.transform.SetPositionAndRotation(_body.position, _body.rotation);
+                    g.transform.localScale = _body.lossyScale;
+                    g.enabled = true;
+                    _ghosts.Add(new Ghost { R = g, Age = 0f });
+                }
+            }
+            for (int i = 0; i < _ghosts.Count; i++)
+            {
+                var gh = _ghosts[i];
+                if (gh.Age >= GhostLife) continue;
+                gh.Age += dt;
+                float k = Mathf.Clamp01(gh.Age / GhostLife);
+                var c = GhostInk; c.a *= (1f - k) * (1f - k);
+                gh.R.color = c;
+                if (gh.Age >= GhostLife) gh.R.enabled = false;
+                _ghosts[i] = gh;
+            }
+        }
+
+        void OnDestroy()
+        {
+            foreach (var g in _ghosts) if (g.R != null) Destroy(g.R.gameObject);
+        }
         Vector3 _last;
         bool _flip;
 
@@ -124,6 +183,12 @@ namespace BloodRain.Presentation
             else if (_walk <= 0f) _phase = 0f;
             float s = Mathf.Sin(_phase);
             Place(Mathf.Abs(s) * bobHeight * _walk, s * tiltDegrees * _walk);
+            if (_lunge.sqrMagnitude > 1e-10f)
+            {
+                _body.position += new Vector3(_lunge.x, _lunge.y, 0f);
+                _lunge *= Mathf.Pow(0.0005f, dt);
+            }
+            TickGhosts(dt);
 
             Renderer.GetPropertyBlock(_mpb);
             _mpb.SetFloat(FlashId, Mathf.Clamp01(Flash));

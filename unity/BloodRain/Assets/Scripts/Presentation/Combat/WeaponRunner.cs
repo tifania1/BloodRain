@@ -431,6 +431,7 @@ namespace BloodRain.Presentation.Combat
                                 {
                                     // VF-01U: 굵은 붓 호가 0.11초에 그어지고 결을 따라 흩어진다. 2단 청회 담채, 3단·절기·쌍검합벽은 금빛 날
                                     int tier = BrushTier(s);
+                                    if (di == 0) Lunge(a, 0.38f);
                                     _sfx.Swing(() => P, a, (di++ + strikeNo) % 2 == 0 ? 1 : -1, FxRamp.Ink, 0.55f, tier >= 2 ? FxRamp.Wash : (FxRamp?)null,
                                                tier >= 3 || evo != null || sg ? FxRamp.Gold : (FxRamp?)null, R, 2.3f);
                                 }
@@ -480,7 +481,15 @@ namespace BloodRain.Presentation.Combat
                             var fat = P + new Vector2(Mathf.Cos(fa), Mathf.Sin(fa)) * R * 0.55f;
                             _hitKind = HitKindOf(s);
                             // VF-01U: 금빛 권영이 박히고 충격 고리가 퍼진다. 마지막 주먹은 크고 고리가 두 번(종 울림)
-                            if (Sfx) _sfx.Punch(P, fa, lastFist, R * (lastFist ? 0.95f : 0.8f));
+                            if (Sfx)
+                            {
+                                Lunge(fa, lastFist ? 0.5f : 0.3f);
+                                _sfx.Punch(P, fa, lastFist, R * (lastFist ? 0.95f : 0.8f), lastFist ? land =>
+                                {
+                                    BloodRain.Presentation.Fx.HitFeel.Stop(0.06f);
+                                    BloodRain.Presentation.Fx.HitFeel.Shake(0.35f, fa);
+                                } : (Action<Vector2>)null);
+                            }
                             else if (!AddSpark("fx_fist_ink", fat, fa, 0f, 0.28f, 0.05f))
                                 AddFx(Mathf.Atan2(player.Facing.y, player.Facing.x), Mathf.PI * 2f, R * 0.6f, 0.12f, new Color(0.85f, 0.55f, 0.25f, 0.6f));
                             enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
@@ -768,6 +777,7 @@ namespace BloodRain.Presentation.Combat
                                     // VF-01U: 거칠게 마른 갈색 호가 겹쳐 보이고, 한 박자 늦게 봉 끝에서 먼지와 술 방울이 터진다
                                     int sd = (di++ + s.Fired) % 2 == 0 ? 1 : -1;
                                     float aa = a;
+                                    Lunge(aa, 0.3f);
                                     _sfx.GhostSwing(() => P, aa, sd, FxRamp.Brown, R);
                                     _sfx.Swing(() => P, aa, sd, FxRamp.Brown, 1f, null, evo != null ? FxRamp.Gold : (FxRamp?)null, R, 2.4f);
                                     var tip = P + new Vector2(Mathf.Cos(aa), Mathf.Sin(aa)) * R * 0.9f;
@@ -1580,17 +1590,32 @@ namespace BloodRain.Presentation.Combat
                 {
                     if (!Sfx) return;
                     var d = at - P;
-                    _sfx.Hit(at, Mathf.Atan2(d.y, d.x), _hitKind, crit || big);
+                    float ang = Mathf.Atan2(d.y, d.x);
+                    _sfx.Hit(at, ang, _hitKind, crit || big);
+                    // HF-02U 치명타·큰 적을 때리면 짧게 멈추고 맞은 쪽으로 화면이 밀린다
+                    if (crit || big) { BloodRain.Presentation.Fx.HitFeel.Stop(0.04f); BloodRain.Presentation.Fx.HitFeel.Shake(0.3f, ang); }
                 };
                 enemies.Killed += (at, agent) =>
                 {
                     if (!Sfx) return;
                     var d = at - P;
-                    _sfx.Kill(at, Mathf.Atan2(d.y, d.x));
+                    float ang = Mathf.Atan2(d.y, d.x);
+                    _sfx.Kill(at, ang);
+                    BloodRain.Presentation.Fx.HitFeel.Stop(0.03f); // 0.3초에 한 번까지(HitFeel)
+                    BloodRain.Presentation.Fx.HitFeel.Shake(0.12f, ang);
                 };
             }
             _sfx.Meter = World.Length(1f);
             _sfx.Tick(dt);
+        }
+
+        PlayerLook _look;
+        /// <summary>HF-02U 공격하는 쪽으로 몸이 미터만큼 튀어나갔다 돌아온다.</summary>
+        void Lunge(float angle, float meters)
+        {
+            if (!sectFxOn) return;
+            if (_look == null && player != null) _look = player.GetComponent<PlayerLook>();
+            if (_look != null) _look.Lunge(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)), World.Length(meters));
         }
 
         /// <summary>맞은 자리에 튀는 것의 종류(먹·금·호박·푸른 불씨). 무공이 피해를 넣기 직전에 고른다.</summary>
@@ -1619,7 +1644,11 @@ namespace BloodRain.Presentation.Combat
             float dmg = Damage(s) * t.Param("damageMultiplier");
             float delay = t.Param("delaySeconds");
             AddFxAt(at, 0f, Mathf.PI * 2f, R, delay, new Color(0.55f, 0.75f, 0.95f, 0.25f)); // 떨어질 자리
-            if (Sfx) Later(Mathf.Max(0f, delay - 0.07f), () => _sfx.SkyFall(at)); // VF-01U: 닿는 때가 판정과 맞게 0.07초 먼저 떨어뜨린다
+            if (Sfx) Later(Mathf.Max(0f, delay - 0.07f), () => _sfx.SkyFall(at, () =>
+            {
+                BloodRain.Presentation.Fx.HitFeel.Stop(0.05f);
+                BloodRain.Presentation.Fx.HitFeel.Shake(0.4f, -Mathf.PI * 0.5f);
+            })); // VF-01U: 닿는 때가 판정과 맞게 0.07초 먼저 떨어뜨린다
             Later(delay, () =>
             {
                 _hitKind = "blue";

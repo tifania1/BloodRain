@@ -246,11 +246,10 @@ namespace BloodRain.Presentation.Fx
             }
         }
 
-        /// <summary>쓰러진 자리의 먹 얼룩과 튀는 먹. 6초에 걸쳐 마른다.</summary>
+        /// <summary>쓰러진 자리에서 튀는 먹.</summary>
         public void Kill(Vector2 at, float dir)
         {
-            if (_stains.Count >= MaxStains) _stains.RemoveAt(0);
-            _stains.Add(new Stain { Pos = at + Dir(dir) * .5f * Meter, Seed = Rnd(0f, 9f), Rot = dir, Size = Rnd(.9f, 1.4f) * Meter });
+            // 바닥 먹 자국은 InkMarks 가 이미 남긴다. 여기서 또 남기면 몸 둘레가 잿빛으로 뭉친다(11-13 Unity 에서 확인)
             Drops(at, dir, 8, 9f, FxRamp.Ink, false, .15f, 1.1f);
         }
 

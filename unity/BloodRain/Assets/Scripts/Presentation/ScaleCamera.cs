@@ -29,6 +29,9 @@ namespace BloodRain.Presentation
                 var p = target.position;
                 transform.position = new Vector3(p.x, p.y, transform.position.z);
             }
+            // HF-02U 히트스톱 풀기와 화면 흔들림(미터 → 지금 경지의 월드 길이). 대상이 없어도 시계는 돌린다
+            var shake = BloodRain.Presentation.Fx.HitFeel.Tick(Time.unscaledDeltaTime) * s.Length(1f);
+            if (target != null) transform.position += new Vector3(shake.x, shake.y, 0f);
         }
     }
 }
