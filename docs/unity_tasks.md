@@ -18,7 +18,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 ### 0. 화면 집중 (2026-11-13 사람이 정함 — 이 절이 끝나기 전에는 아래 절로 내려가지 않는다)
 
-까닭과 본 것은 `docs/design/review_2026-11-13.md`. '하는 중: 대화 세션' 표시가 붙은 항목은 대화 세션이 PC Unity 로 직접 하니 건너뛴다(대화 세션은 22:30 전에 Unity 에서 손을 뗀다).
+까닭과 본 것은 `docs/design/review_2026-11-13.md`. 대화 세션이 11-13 밤에 잡았던 HF-01U·HF-02U·VF-01U 는 2026-11-16 에 표시를 풀었다 — 남은 것은 각 항목 '진행'에 적혀 있고 PC Unity 세션이 이어서 한다.
 
 - [x] DBG-01U 디버그 글 기본 끔 · 먼저: 없음 (2026-11-13 사람이 본 플레이테스트에서 HUD 를 덮음 — `docs/design/review_2026-11-13.md` 2절) — 2026-11-15 PC: `Presentation/DebugOverlay.cs` 새로 둠(기본 꺼짐, F1 로 켜고 끔, `Debug.isDebugBuild` 가 거짓이면 F1 도 안 먹음). LifeRunner·EnemyField·WeaponRunner·OrbLayer·PlayerVitals·BloodShadowRunner·BgmPlayer·SfxPlayer 의 OnGUI 디버그 줄과 시험 키(Ctrl+숫자, [ ] C K, O M)가 이 스위치를 따름. 각 컴포넌트 showDebug·showStats 는 그대로 두고 둘 다 참일 때만 띄움. Run 씬 Play 콘솔 에러 0, 끔·켬 두 장 찍음(`debug_f1.png` 가 켠 것)
   - 할 것: `LifeRunner.showDebug` 기본값을 끔으로, F1 로 켜고 끔. 개발 빌드가 아닌 빌드(`Debug.isDebugBuild` 가 거짓)에선 F1 도 안 먹게. 다른 OnGUI 디버그 줄(EnemyField·WeaponRunner·OrbLayer·LanternLayer·ChestLayer 의 시험 줄)도 같은 스위치를 따르게 한다. 시험 씬에서 쓰는 키(Ctrl+숫자 등)는 디버그가 켜졌을 때만.
@@ -48,14 +48,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 삼류·이류 두 축척에서 바닥 무늬가 되풀이로 안 읽힘. 원화(캐릭터·적)가 바닥보다 또렷함
   - 찍기: `docs/unity_shots/FL-01U/` 의 `floor_realm0.png`·`floor_realm1.png`
 
-- [ ] HF-01U 타격감 바탕: 맞는 쪽 · 먼저: B-12Ua (하는 중: 대화 세션 11-13 밤)
+- [ ] HF-01U 타격감 바탕: 맞는 쪽 · 먼저: B-12Ua (진행: 2026-11-13 맞은 자리의 가는 흰 섬광·종류별로 튀는 것(먹·금·호박·푸른 불씨)·처치 때 튀는 먹은 `SectFx.Hit`·`Kill` 로 들어감 — `EnemyField.Struck`·`Killed` 에 물림. 남은 것: 적 몸의 흰 번쩍 2프레임과 맞은 방향 찌그러짐. 덩이 렌더러(`ClusterInk.shader`)에 인스턴스 값 `_Flash` 를 더하고 `ClusterView` 가 맞은 때를 들고 있어야 한다. 원화가 붙은(B-12Ua) 뒤에 한다 — 검은 실루엣은 색을 곱해도 안 밝아지니 섞기(lerp)로)
   - 할 것: 적 피격에 흰 번쩍 2프레임·맞은 방향 찌그러짐·방향 있는 먹 튐, 처치에 먹 번짐 + 바닥 먹 자국. 덩이 렌더러 인스턴스마다 번쩍·찌그러짐 값을 넘긴다.
   - 쓸 것: `Presentation/Fx/ClusterRenderer.cs`·`ClusterInk.shader`·`InkBurst.cs`·`InkMarks.cs`, `EnemyField.Struck`, 값은 `docs/design/vfx.md`(backlog VF-03 표가 오면 그 값)
   - 메뉴: 없음
   - 끝: 삼재검법으로 시강을 벨 때 맞은 적이 눈에 띄게 반응함. 300마리에서 프레임 유지
   - 찍기: `docs/unity_shots/HF-01U/` 의 `hit.png`·`kill.png`
 
-- [ ] HF-02U 타격감 바탕: 화면과 주인공 · 먼저: 없음 (하는 중: 대화 세션 11-13 밤)
+- [ ] HF-02U 타격감 바탕: 화면과 주인공 · 먼저: 없음 (진행: 2026-11-13 대화 세션이 코드는 다 넣고 Run 씬 Play 로 봄 — `Fx/HitFeel.cs`(히트스톱 0.3초에 한 번·최대 0.08초·다른 연출이 시간을 쥐면 안 끼어듦, 방향 있는 흔들림 × 설정 배율)를 `ScaleCamera` 가 돌리고, 처치·치명타·나한권 마지막 주먹·낙하 검기가 부른다. `PlayerLook.Lunge`(공격 쪽으로 0.3~0.5m)와 경공 잔상. 남은 것: 아래 '끝' 확인(흔들림 0%·100%)과 찍기뿐. 느낌 값은 사람이 해 보고 조정)
   - 할 것: 히트스톱(0.3초에 한 번까지), 방향 있는 화면 흔들림(설정 배율), 공격 방향으로 몸이 튀어나감, 경공 잔상 3장, 걷기 기울임·눌림.
   - 쓸 것: `Presentation/ScaleCamera.cs`·`PlayerLook.cs`·`PlayerController.cs`·`Fx/FxSettings.cs`, vfx.md '화면이 어지러워지지 않게'
   - 메뉴: 없음
@@ -63,7 +63,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/HF-02U/` 의 `dash_trail.png`
   (진행: 2026-11-13 대화 세션 커밋 c4fcff7 이 HitFeel 히트스톱·방향 흔들림, PlayerLook 튀어나감·경공 잔상을 넣음. 걷기 기울임·눌림은 BD-01U 때 있던 것. 남은 것: '끝' 확인(흔들림 0%·100%)과 찍기. 값은 2026-11-15 클라우드가 vfx.md '타격감 값' 표에 옮김 — 잔상은 지금 한 번에 8장쯤이라 review 의 '3장'과 다름)
 
-- [ ] VF-01U 통합 이펙트 셰이더와 삼재검법·소림·개방·남궁 · 먼저: backlog VF-01 (하는 중: 대화 세션 11-13 밤)
+- [ ] VF-01U 통합 이펙트 셰이더와 삼재검법·소림·개방·남궁 · 먼저: backlog VF-01 (진행: 2026-11-13 대화 세션이 `Art/Shaders/FxInk.shader`(시안 FS 를 그대로) + `Fx/SectFx.cs`(Swing·GhostSwing·Thump·Punch·Orbit·Bolt·SkySword·SkyFall·Ring·Drops·Hit·Kill, 크기는 지금 경지의 1m 에 맞춤)를 넣고 WeaponRunner 의 삼재검법(front_arc)·나한권(melee_combo)·창천검기(orbit_slash)·취선봉(random_arc)·하늘 검기를 SectFx 로 바꿈(`sectFxOn` 을 끄면 예전 그림). Run 씬 Play 로 네 무공이 뜨는 것까지 봄. **남은 것 셋**: ① 재질 `Assets/Resources/Fx/FxInk.mat` 이 저장소에 없다 — 11-13 에 PC 에서 메뉴 `BloodRain/Bootstrap/이펙트 재질 짓기(FxInk)` 로 만들었는데 PC 연결이 끊겨 커밋을 못 함. PC 에 남아 있으면 `Resources/Fx` 폴더째 .meta 와 함께 커밋, 없으면 메뉴를 다시 돌려 커밋. 재질이 없으면 `Shader.Find` 로 넘어가는데 빌드에선 셰이더가 빠질 수 있다 ② 웹 빌드(dev.bloodrain.pages.dev)에서 삼재검법 획이 FxInk 로 뜨는지 확인(안 뜨면 ① 때문) ③ 아래 찍기 넉 장. 그 뒤 '끝'의 '이 정도'는 사람 몫)
   - 할 것: 시안(`web/lookdev/sects.html` — 안의 `FS` 가 FxInk 조각 셰이더, `swing`·`punch`·`orbit`·`skySword`·`hit` 이 겹 조합과 값)의 셰이더 식을 `Art/Shaders/FxInk.shader` 로 옮기고, WeaponRunner 의 옛 도형(`AddFx`) 자리에 네 무공부터 다섯 겹 이펙트를 붙인다.
   - 쓸 것: `Presentation/Combat/WeaponRunner.cs`(AddFx·AddBrush·AddSpark 자리), `Art/VFX` 재료, vfx.md 단계 규칙
   - 메뉴: `BloodRain/Bootstrap/` 아래 이펙트 재질 짓는 메뉴
@@ -111,6 +111,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 시험 메뉴 `다음 경지까지 진기(플레이 중)`
   - 끝: 삼류 → 이류 돌파에서 낙관이 찍히고, 빗줄기가 갈라지고, 쓸린 시강이 먹 점으로 날아가고, 깨달음 넉 장(진소운)이 펼쳐짐. 콘솔 에러 0
   - 찍기: `docs/unity_shots/BT-01U/` 의 `stamp.png`(0.3초쯤)·`sweep.png`(0.9초쯤)·`insight.png`
+
+- [ ] VF-02U 나머지 무공을 SectFx 로 · 먼저: backlog VF-09(사람이 VF-01U 네 무공을 보고 '이 정도'를 정한 뒤 시안이 나옴)
+  - 할 것: WeaponRunner 에서 아직 옛 도형(`AddFx`)·AI 재료 한 장(`AddSpark`·`DrawAi`)으로 그리는 무공을 `review_2026-11-13.md` 6절 표대로 SectFx 겹으로 바꾼다. 차례: 당가 비도술(가는 은빛 줄 + 독 얼룩) → 무당 태극검(흑백 두 궤적) → 화산 낙화검우(가는 검선 + 꽃잎) → 곤륜 뇌부(부적 + 낙뢰, `Bolt` 를 세로로) → 수로채 쇄겸술(사슬 + 물결 호) → 마교 혈조(어두운 자주 찢김 셋) → 문파 밖 여섯. 새 모양이 필요하면 `FxInk.shader` 에 모양 번호를 더하고 시안(`web/lookdev/sects.html`)에도 같은 식을 넣어 둘이 어긋나지 않게 한다. 밝은 종이 위에서 빛은 `SectFx.Glow`(색 있는 몸 + 약한 더하기) + 먹 받침으로.
+  - 쓸 것: `Presentation/Fx/SectFx.cs`·`Art/Shaders/FxInk.shader`, `Presentation/Combat/WeaponRunner.cs`(VF-01U 가 바꾼 네 자리를 본보기로), vfx.md 색 규칙(붉은 계열은 어두운 자주·연분홍만)
+  - 메뉴: 없음
+  - 끝: 무공마다 색·모양·움직임이 달라 한눈에 갈림. `sectFxOn` 을 꺼도 예전 그림으로 돈다. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/VF-02U/` 에 무공마다 한 장
 
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
