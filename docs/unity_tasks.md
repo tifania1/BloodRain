@@ -76,6 +76,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 기연을 크게 올린 시험 판(연무장 기연 최고)에서 금빛 카드가 보이고, 집으면 그 무공이 2레벨 오름. 콘솔 에러 0
   - 찍기: `docs/unity_shots/GU-02U/` 의 `great_card.png`
 
+- [ ] GU-04U 연무장을 경맥도로 · 먼저: 없음 (바탕 그림 art_queue `ui_meridian_chart` 가 아직이면 옅은 먹 사람 윤곽을 코드로 그려 두고 그림이 오면 바꿈)
+  - 할 것: 연무장 화면의 목록을 기획서 10장 '경맥도' 표대로 혈자리 20곳으로 바꾼다. 혈마다 최대 레벨만큼 둘레 점, 다 뚫으면 금빛, 큰 혈 셋(관원·노궁·용천)은 두 배 크기에 뚫을 때 그 경맥 줄이 한 번 빛남. 혈을 누르면 옆에 이름·레벨당 값·다음 비용(지금 목록과 같은 글), 전부 환불 단추는 그대로. 패드·방향키로 혈 사이를 옮겨 다닐 수 있게(12장 '레벨업 입력'과 같은 포커스 규칙)
+  - 쓸 것: `Presentation/Meta/TrainingScreen.cs`, Core 연무장 비용·구매(지금 화면이 부르는 것 그대로), balance.json `training.items`(값·비용은 여기서), 혈자리 자리(0~1 좌표)는 화면 클래스 안 표 하나로, 그림 `Assets/Art/UI` 의 경맥도(들어오면)
+  - 메뉴: 없음
+  - 끝: 객잔 → 연무장에서 경맥 그림 위 혈 20곳이 보이고 사고·환불이 예전과 같이 됨. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/GU-04U/` 의 `meridian.png`
+
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
 - [x] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?") — 2026-11-09 21:00 PC: 커밋 cf47b4d 를 `BloodRain/WebGL 빌드`(릴리스, 54.3MB, 14분 16초)로 묶어 https://dev.bloodrain.pages.dev 에 올림. BloodRain.data.br 가 44MiB 라 Cloudflare Pages 25MiB 상한에 걸려서 `tools/split_webgl_data.py` 를 새로 둠(data 를 풀어 조각 셋으로 다시 brotli, index.html 이 이어 붙인 Blob 을 dataUrl 로) — **앞으로 올리는 순서: 빌드 → `python tools/split_webgl_data.py` → `web/_headers` 복사 → wrangler**. GPU 크롬(playwright channel=chrome, 헤드리스 아님)으로 타이틀이 뜨고 시작 → 서장 → 레벨업 카드 → 쓰러짐 → 서장 다시까지 돎, 브라우저 붉은 오류 0. 그 뒤(장삼 처치 → 정산 → 객잔 → 침방)는 장삼이 아직 Run 에 없어(C-10a) 웹이든 에디터든 못 감 — WG-01Ub 로 넘김. 서장 쓰러짐은 혼에 아무것도 안 남기는 설계라 새로고침 뒤 '혼 저장 없음'이 맞고, IndexedDB 에 /idbfs 는 생김(이어하기 확인도 WG-01Ub). 본 것: 웹은 기기 갈래가 Mobile(적 상한 400)로 잡힘, OnGUI 디버그 줄 한글은 여전히 빔. 찍음 `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
