@@ -101,7 +101,7 @@ namespace BloodRain.Core.Tests
                 }
         }
 
-        [Fact] public void 공통_텍스처_낙관_바탕_먹_튐_6_바닥_먹_자국_4_노이즈_2()
+        [Fact] public void 공통_텍스처_낙관_바탕_먹_튐_6_바닥_먹_자국_4_노이즈_2_선지_1()
         {
             var dir = Path.GetFullPath(Path.Combine(Dir, "..", "Common"));
             var names = Directory.GetFiles(dir, "*.png").Select(f => Path.GetFileName(f)!).ToList();
@@ -109,13 +109,14 @@ namespace BloodRain.Core.Tests
             Assert.Equal(6, names.Count(n => n.StartsWith("ink_splat_")));
             Assert.Equal(4, names.Count(n => n.StartsWith("ground_ink_")));
             Assert.Equal(2, names.Count(n => n.StartsWith("noise_")));
-            Assert.Equal(13, names.Count);
+            Assert.Single(names, n => n == "paper_1.png");   // 선지 바닥 한 겹(FL-01U)
+            Assert.Equal(14, names.Count);
             Assert.True(File.Exists(Path.Combine(dir, "common.json")));
             foreach (var n in names)
             {
                 var (w, h, ct) = Header(Path.Combine(dir, n));
                 Assert.Equal((512, 512), (w, h));
-                Assert.Equal(n.StartsWith("noise_") ? 0 : 6, ct); // 노이즈는 회색 한 채널, 나머지는 흰색 + 알파
+                Assert.Equal(n.StartsWith("noise_") || n.StartsWith("paper_") ? 0 : 6, ct); // 노이즈·선지는 회색 한 채널, 나머지는 흰색 + 알파
             }
         }
 

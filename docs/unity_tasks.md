@@ -43,7 +43,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 - [ ] FL-01U 바닥을 선지로 · 먼저: 없음
   - 할 것: 지금 바닥은 같은 벽돌 줄눈 + 'v' 풀이 화면 가득 되풀이된다. 선지 질감(옅은 얼룩·섬유) 한 겹을 화면 전체에 깔고, 벽돌 줄눈은 마당·길 안에만, 그 밖은 여백 + 드문 먹 얼룩·풀·돌. 가장자리 어둡게(비네트)는 카메라 쪽 한 겹으로. 휴대폰 생각해 셰이더 한 장으로.
-  - 쓸 것: `Assets/Art/Tiles`, 바닥을 그리는 지금 코드(MapLayer·타일), `Art/VFX/Common` 노이즈
+  - 쓸 것: `Assets/Art/Tiles`, 바닥을 그리는 지금 코드(MapLayer·타일), `Art/VFX/Common/paper_1.png`(선지 한 겹, 회색 1 이 흰 종이, 이음매 없음, 한 변 6m 로 깖, Repeat — 2026-11-14 bake_brush.py 가 구움, .meta 는 noise 를 본뜸. VfxBootstrap 이 Common 을 Clamp 로 되돌리면 paper_ 는 빼 주기, VfxImportSettingsTests 도 paper_ 만 Repeat 로 봄)·노이즈
   - 메뉴: Run 씬 짓는 메뉴에 붙임
   - 끝: 삼류·이류 두 축척에서 바닥 무늬가 되풀이로 안 읽힘. 원화(캐릭터·적)가 바닥보다 또렷함
   - 찍기: `docs/unity_shots/FL-01U/` 의 `floor_realm0.png`·`floor_realm1.png`

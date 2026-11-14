@@ -55,7 +55,10 @@ namespace BloodRain.Core.Tests
                 Assert.True(Field(meta, "spriteMode") == "1", $"{name}: Single 이 아니다");
                 Assert.True(Field(meta, "enableMipMap") == "0", $"{name}: 밉맵이 켜져 있다");
                 Assert.True(Field(meta, "alphaIsTransparency") == "1", $"{name}: 알파 투명이 꺼져 있다");
-                Assert.True(Field(meta, "wrapU") == "1" && Field(meta, "wrapV") == "1", $"{name}: Clamp 가 아니다");
+                if (Path.GetFileName(name).StartsWith("paper_"))   // 선지 바닥은 깔아 되풀이하는 텍스처라 Repeat(FL-01U)
+                    Assert.True(Field(meta, "wrapU") == "0" && Field(meta, "wrapV") == "0", $"{name}: Repeat 가 아니다");
+                else
+                    Assert.True(Field(meta, "wrapU") == "1" && Field(meta, "wrapV") == "1", $"{name}: Clamp 가 아니다");
             }
         }
 

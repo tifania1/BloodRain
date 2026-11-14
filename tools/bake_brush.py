@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "unity/BloodRain/Assets/Art/VFX/Brush"
@@ -586,6 +586,33 @@ def ground_stain(seed: int):
     return a
 
 
+def paper_fiber(seed: int):
+    """선지 바닥 한 겹(FL-01U, review 5-1): 아주 옅은 얼룩 + 가는 섬유. 1 이 흰 종이, 어두울수록 섬유·얼룩.
+    네 변을 감아 그려서 타일로 깔아도 이음매가 없다. 색과 세기는 셰이더 몫."""
+    rng = random.Random(seed)
+    S = SIZE
+    stain = value_noise(rng, ((4, 0.55), (12, 0.3), (40, 0.15)))
+    stain = (stain - stain.min()) / (stain.max() - stain.min())
+    fib = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(fib)
+    for _ in range(520):
+        x, y = rng.random() * S, rng.random() * S
+        ang = rng.gauss(0.35, 0.9)          # 섬유는 한쪽으로 조금 쏠린다(뜬 결)
+        L = rng.uniform(10, 60)
+        bend = rng.uniform(-0.5, 0.5)
+        val = rng.randint(30, 110)
+        pts = []
+        for k in range(7):
+            u = k / 6
+            a = ang + bend * (u - 0.5)
+            pts.append((x + math.cos(a) * L * u, y + math.sin(a) * L * u))
+        for ox in (-S, 0, S):
+            for oy in (-S, 0, S):
+                d.line([(px + ox, py + oy) for px, py in pts], fill=val, width=1)
+    f = np.asarray(fib.filter(ImageFilter.GaussianBlur(0.6)), dtype=np.float32) / 255
+    return np.clip(1.0 - stain * 0.16 - f * 0.22, 0, 1)
+
+
 def gray_png(a: np.ndarray) -> bytes:
     buf = io.BytesIO()
     Image.fromarray(np.uint8(np.round(np.clip(a, 0, 1) * 255)), "L").save(buf, format="PNG", optimize=True)
@@ -604,19 +631,20 @@ def bake_common():
         n = value_noise(random.Random(7300 + i))
         n = (n - n.min()) / (n.max() - n.min())
         files[f"noise_{i}.png"] = gray_png(n)
-    meta = {"_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. 흰색 + 알파(색은 셰이더): seal_base 낙관 바탕(글자는 Unity 에서 얹음, 색은 낙관 주홍), ink_splat 먹 튐(+x 로 튐, 한 변 1.4m), ground_ink 바닥 먹 자국(한 변 3m). 회색: noise 소멸(_Dissolve)용 값 노이즈, 감아 이어 붙여도 이음매가 없다.",
+    files["paper_1.png"] = gray_png(paper_fiber(7401))
+    meta = {"_note": "tools/bake_brush.py 가 쓴다. 손으로 고치지 않는다. 흰색 + 알파(색은 셰이더): seal_base 낙관 바탕(글자는 Unity 에서 얹음, 색은 낙관 주홍), ink_splat 먹 튐(+x 로 튐, 한 변 1.4m), ground_ink 바닥 먹 자국(한 변 3m). 회색: noise 소멸(_Dissolve)용 값 노이즈, paper 선지 바닥 한 겹(1 이 흰 종이, 한 변 6m 로 깖), 둘 다 감아 이어 붙여도 이음매가 없다.",
             "sizeMeters": {"ink_splat": 1.4, "ground_ink": 3.0}}
     files["common.json"] = (json.dumps(meta, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
     return files
 
 
 def common_preview(files) -> Image.Image:
-    names = ["seal_base.png"] + [f"ink_splat_{i}.png" for i in range(1, 7)] + [f"ground_ink_{i}.png" for i in range(1, 5)] + ["noise_1.png", "noise_2.png"]
+    names = ["seal_base.png"] + [f"ink_splat_{i}.png" for i in range(1, 7)] + [f"ground_ink_{i}.png" for i in range(1, 5)] + ["noise_1.png", "noise_2.png", "paper_1.png"]
     cell, gap, cols = 200, 10, 5
     rows = (len(names) + cols - 1) // cols
     img = Image.new("RGB", (cols * (cell + gap) + gap, rows * (cell + gap) + gap + 40), PAPER)
     d = ImageDraw.Draw(img)
-    d.text((gap, 8), "공통 텍스처(V-03): 낙관 바탕 · 먹 튐 6 · 바닥 먹 자국 4 · 노이즈 2", fill=INK, font=_font(20))
+    d.text((gap, 8), "공통 텍스처(V-03): 낙관 바탕 · 먹 튐 6 · 바닥 먹 자국 4 · 노이즈 2 · 선지 1", fill=INK, font=_font(20))
     for k, n in enumerate(names):
         x, y = gap + (k % cols) * (cell + gap), 40 + gap + (k // cols) * (cell + gap)
         im = Image.open(io.BytesIO(files[n]))
