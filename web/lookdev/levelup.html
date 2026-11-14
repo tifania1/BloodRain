@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>레벨업 깨달음 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;900&display=swap">
+<style>
+:root{--bg:#efe6d0;--fg:#1c1a17;--mut:#6b6457;--line:#cbbf9f;--btn:#e4d9bb;--on:#1c1a17;--onfg:#f3ead4;--gold:#8a6c0c;--stage:#2a2620;--paper:#f2e8cf;--ink:#1c1a17;--goldl:#d9b64a;--blue:#3d6f9e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#16140f;--fg:#ece3cc;--mut:#a2977f;--line:#3b3628;--btn:#27231a;--on:#e9dfc4;--onfg:#17150f;--gold:#d7b545;--stage:#0e0d0b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16140f;--fg:#ece3cc;--mut:#a2977f;--line:#3b3628;--btn:#27231a;--on:#e9dfc4;--onfg:#17150f;--gold:#d7b545;--stage:#0e0d0b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:15px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:26px;font-weight:900;margin:0}
+h1 small{font-size:14px;font-weight:400;color:var(--mut);margin-left:.6em}
+.lead{margin:0;color:var(--mut);max-width:65ch}
+.bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grp>span{font-size:12px;color:var(--mut);letter-spacing:.12em}
+button{font:inherit;font-size:14px;padding:7px 13px;border:1px solid var(--line);background:var(--btn);color:var(--fg);border-radius:3px;cursor:pointer;min-height:36px}
+button[aria-pressed="true"]{background:var(--on);color:var(--onfg);border-color:var(--on);font-weight:600}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.stage{position:relative;width:100%;aspect-ratio:16/9;background:var(--stage);border:1px solid var(--line);overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2%;pointer-events:none}
+.row{display:flex;gap:2.4%;width:78%;justify-content:center}
+.card{position:relative;flex:0 0 22%;aspect-ratio:3/4.4;background:var(--paper);color:var(--ink);border-radius:2px;clip-path:inset(50% 0 50% 0);
+  box-shadow:0 0 0 2px #3b3226 inset;padding:6% 7%;font-size:clamp(9px,1.25vw,15px);display:flex;flex-direction:column;gap:.4em;pointer-events:auto}
+.card::before,.card::after{content:"";position:absolute;left:-4%;right:-4%;height:5%;background:#4a3b28;border-radius:3px}
+.card::before{top:-1%}.card::after{bottom:-1%}
+.card b{font-size:1.15em}
+.card .lv{color:#6b6457;font-size:.9em}
+.card .badge{margin-top:auto;font-size:.8em;color:#6b6457;border-top:1px solid #cbbf9f;padding-top:.3em}
+.card.great{box-shadow:0 0 0 3px var(--goldl) inset,0 0 18px 2px rgba(217,182,74,.55)}
+.card.great .badge{color:#8a6c0c;font-weight:600}
+.card.open{animation:unroll var(--unroll) cubic-bezier(.2,.7,.2,1) forwards;animation-delay:var(--d)}
+@keyframes unroll{from{clip-path:inset(50% 0 50% 0)}to{clip-path:inset(-2% -5% -2% -5%)}}
+.card .shine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,236,170,.75) 50%,transparent 65%);background-size:250% 100%;background-position:120% 0;opacity:0}
+.card.great.open .shine{animation:shine .55s ease-out forwards;animation-delay:calc(var(--d) + var(--unroll) + var(--greatLag))}
+@keyframes shine{0%{opacity:1;background-position:120% 0}100%{opacity:0;background-position:-30% 0}}
+.doneo{flex:0 0 46%;aspect-ratio:auto;height:auto;min-height:0;flex-direction:row;align-items:center;gap:4%;padding:2.2% 4%;
+  background:linear-gradient(#f6ecd0,#efdfb0);box-shadow:0 0 0 3px var(--goldl) inset,0 0 26px 4px rgba(217,182,74,.6)}
+.doneo svg{flex:0 0 22%;height:auto}
+.doneo svg path{fill:none;stroke-linecap:round;stroke-width:9;stroke-dasharray:300;stroke-dashoffset:300}
+.doneo.open svg path{animation:draw .5s ease-out forwards}
+.doneo.open svg path.b{animation-delay:.12s}
+.doneo.open svg path.m{animation-delay:.42s;stroke-width:5}
+@keyframes draw{to{stroke-dashoffset:0}}
+.doneo .t{display:flex;flex-direction:column}
+.doneo .t small{color:#8a6c0c;font-weight:600}
+.guard{position:absolute;left:0;bottom:0;height:3px;background:var(--goldl);width:0}
+.note{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 22px;margin:0;padding:0;list-style:none}
+.note li{border-top:1px solid var(--line);padding-top:8px;min-width:0}
+.note b{display:block;font-size:12px;letter-spacing:.14em;color:var(--gold);font-weight:600}
+@media (prefers-reduced-motion: reduce){.card.open{animation-duration:.01s}.doneo.open svg path{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>레벨업 깨달음 시안 <small>혈우강호 · 2026-11-14 · VF-07</small></h1>
+  <p class="lead">레벨업 화면이 먹 번짐으로 열리고 카드가 두루마리처럼 위아래로 펼쳐집니다. 대오 카드는 금빛 테두리에 한 박자 늦게 반짝이고, 돈오 카드는 보통 카드 줄 위에 따로 떠서 두 무공의 획이 합쳐집니다. 값은 아래 표에 있고 Unity GU-01U·GU-02U 가 그대로 가져다 씁니다.</p>
+  <div class="bar">
+    <div class="grp" id="gCase"><span>경우</span></div>
+    <div class="grp"><span>보기</span><button id="replay">다시 열기</button><button id="slow" aria-pressed="false">느리게 ×4</button></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="ui" id="ui"></div>
+    <div class="guard" id="guard"></div>
+  </div>
+  <ul class="note">
+    <li><b>먹 번짐 열림</b>0.35초. 화면 가운데에서 잡음 섞인 먹이 번져 싸움판을 72%까지 어둡게 덮는다. 시간은 첫 프레임에 멈춤.</li>
+    <li><b>두루마리 펼침</b>카드마다 0.28초, 가운데 축에서 위아래로. 카드 사이 0.06초씩 늦게. 먹 번짐 0.12초 뒤에 첫 카드.</li>
+    <li><b>입력 막기</b>열린 뒤 0.35초(balance.json levelUp.inputGuardSeconds). 아래 금빛 줄이 다 차면 고를 수 있음.</li>
+    <li><b>대오</b>금빛 테두리 3px + 바깥 번짐. 펼침이 끝나고 0.1초 뒤 빛줄기가 한 번 지나감(0.55초).</li>
+    <li><b>돈오</b>카드 줄 위에 따로 한 장. 첫 무공 획(먹) → 0.12초 뒤 둘째 무공 획(문파 색) → 0.42초에 합쳐진 금빛 획. 고르기는 그대로 하나.</li>
+    <li><b>대성</b>돈오와 같은 틀에 테두리 두 겹, 배지 '대성 · 연환 효과 1.5배'.</li>
+  </ul>
+</div>
+<script>
+const V={inkOpen:0.35,inkDark:0.72,firstCardDelay:0.12,unroll:0.28,stagger:0.06,guard:0.35,greatLag:0.1};
+const CASES=[
+  {id:'plain',ko:'보통',cards:[['삼재검법','Lv3 → 4',''],['창천검기','새 무공','연환 가까워짐'],['청명심법','Lv1 → 2','']]},
+  {id:'great',ko:'대오 섞임',cards:[['삼재검법','Lv3 → 5','대오 · 두 단계 한 번에',1],['창천검기','새 무공','연환 가까워짐'],['청명심법','Lv1 → 2','']]},
+  {id:'doneo',ko:'돈오',doneo:['쌍검합벽','삼재검법 + 창천검기','돈오 · 연환을 깨친다'],cards:[['삼재검법','Lv4 → 5',''],['나한권','새 무공',''],['청명심법','Lv2 → 3','']]},
+  {id:'grand',ko:'대성',doneo:['쌍검합벽','삼재검법 + 창천검기','대성 · 연환 효과 1.5배',1],cards:[['창천검기','Lv7 → 8',''],['청명심법','Lv4 → 5',''],['은자·음식','은자 50 · 기혈 30','']]},
+];
+let cur='doneo',slow=1;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),ui=document.getElementById('ui'),guard=document.getElementById('guard');
+function size(){const r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1);cv.width=r.width*d;cv.height=r.height*d;}
+// 싸움판 대신: 종이 위 점(적)과 가운데 주인공
+const dots=Array.from({length:120},(_,i)=>({x:Math.random(),y:Math.random(),r:.004+Math.random()*.006}));
+const blobs=Array.from({length:28},()=>({a:Math.random()*Math.PI*2,k:.75+Math.random()*.5}));
+let t0=performance.now();
+function draw(now){
+  const t=(now-t0)/1000/slow,W=cv.width,H=cv.height;
+  ctx.fillStyle='#d9ccab';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#5b2a2a';for(const d of dots){ctx.beginPath();ctx.arc(d.x*W,d.y*H,d.r*W,0,7);ctx.fill();}
+  ctx.fillStyle='#1c1a17';ctx.beginPath();ctx.arc(W/2,H*.55,W*.012,0,7);ctx.fill();
+  // 먹 번짐: 잡음 섞인 반지름으로 덮는다
+  const p=Math.min(1,t/V.inkOpen),e=1-Math.pow(1-p,3),R=Math.hypot(W,H)*.62*e;
+  if(R>0){ctx.save();ctx.globalAlpha=V.inkDark;ctx.fillStyle='#0f0d0a';ctx.beginPath();
+    const n=blobs.length;for(let i=0;i<=n;i++){const b=blobs[i%n],a=i/n*Math.PI*2,rr=R*(p<1?b.k:1);const x=W/2+Math.cos(a)*rr,y=H*.55+Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.closePath();ctx.fill();ctx.restore();}
+  guard.style.width=Math.min(100,t/V.guard*100)+'%';
+  if(t<3)requestAnimationFrame(draw);
+}
+function build(){
+  const c=CASES.find(x=>x.id===cur);ui.innerHTML='';
+  const css=document.documentElement.style;css.setProperty('--unroll',V.unroll*slow+'s');css.setProperty('--greatLag',V.greatLag*slow+'s');
+  let k=0;const delay=()=>((V.firstCardDelay+V.stagger*k++)*slow)+'s';
+  if(c.doneo){const r=document.createElement('div');r.className='row';const d=document.createElement('div');
+    d.className='card doneo great';d.style.setProperty('--d',delay());
+    if(c.doneo[3])d.style.boxShadow='0 0 0 3px var(--goldl) inset,0 0 0 6px #f2e8cf inset,0 0 0 8px var(--goldl) inset,0 0 30px 6px rgba(217,182,74,.7)';
+    d.innerHTML=`<svg viewBox="0 0 100 100"><path d="M12 80 Q40 20 88 30" stroke="#1c1a17"/><path class="b" d="M12 30 Q55 40 88 82" stroke="var(--blue)"/><path class="m" d="M10 56 Q50 44 90 56" stroke="#c9a12f"/></svg><div class="t"><b>${c.doneo[0]}</b><span>${c.doneo[1]}</span><small>${c.doneo[2]} · 선택을 쓰지 않음</small></div><i class="shine"></i>`;
+    r.appendChild(d);ui.appendChild(r);}
+  const row=document.createElement('div');row.className='row';
+  for(const [n,lv,badge,great] of c.cards){const e=document.createElement('div');e.className='card'+(great?' great':'');e.style.setProperty('--d',delay());
+    e.innerHTML=`<b>${n}</b><span class="lv">${lv}</span><span class="badge">${badge||'&nbsp;'}</span><i class="shine"></i>`;row.appendChild(e);}
+  ui.appendChild(row);
+  if(slow>1)ui.querySelectorAll('.doneo svg path').forEach(p=>{p.style.animationDuration=(.5*slow)+'s';p.style.animationDelay=(p.classList.contains('m')?.42:p.classList.contains('b')?.12:0)*slow+'s';});
+  requestAnimationFrame(()=>ui.querySelectorAll('.card').forEach(x=>x.classList.add('open')));
+}
+function replay(){size();t0=performance.now();build();requestAnimationFrame(draw);}
+const g=document.getElementById('gCase');
+for(const c of CASES){const b=document.createElement('button');b.textContent=c.ko;b.setAttribute('aria-pressed',c.id===cur);b.onclick=()=>{cur=c.id;g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));replay();};g.appendChild(b);}
+document.getElementById('replay').onclick=replay;
+const sb=document.getElementById('slow');sb.onclick=()=>{slow=slow>1?1:4;sb.setAttribute('aria-pressed',slow>1);replay();};
+addEventListener('resize',()=>{size();});
+replay();
+</script>
+</body>
+</html>
