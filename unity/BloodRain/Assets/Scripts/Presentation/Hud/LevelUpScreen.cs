@@ -138,6 +138,8 @@ namespace BloodRain.Presentation.Hud
             Time.timeScale = 0f;
             _firstOpen = !_firstDone && _prologue != null;
             _firstDone = true;
+            // GU-01 돈오: 금빛 돈오 카드 화면(unity_tasks GU-01U)이 붙기 전까지는 열 때 저절로 집는다(안 그러면 연환이 영영 안 켜짐).
+            _loadout.TakeAllDoneo(_restored);
             _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _root.gameObject.SetActive(true);
             _openedAt = Time.unscaledTime;

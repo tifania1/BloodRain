@@ -122,6 +122,7 @@ namespace BloodRain.Sim
                 }
                 if (double.IsNaN(next) || next > minutes) break;
 
+                if (loadout.TakeAllDoneo() > 0) Mark(now);   // 돈오 카드는 늘 집는다(GU-01)
                 var offers = loadout.RollLevelUp(rng, 0f, unlocked);
                 var pick = Choose(g, s, loadout, offers, rng, hold, out double best);
                 while (best < 0 && rerolls > 0)

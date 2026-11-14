@@ -60,6 +60,12 @@ namespace BloodRain.Core.Data
         public float GreatChancePerLuck;
         /// <summary>대오 카드 한 장이 올리는 레벨(벼랑 기연 +2레벨과 같은 값).</summary>
         public int GreatLevels = 2;
+        /// <summary>돈오로 깨친 연환이 대성(大成)으로 한 번 더 깨이는 두 무공 레벨(기획서 20장 '돈오', GU-01 추천값 8). 0 이면 대성이 없다.</summary>
+        public int DoneoGrandLevel;
+        /// <summary>대성한 연환의 효과 값 배율(16개 공통, 추천값 1.5).</summary>
+        public float DoneoGrandMultiplier = 1f;
+        /// <summary>장경각 도감에 오른 연환의 짝 무공 카드 추첨 가중치(다음 생부터, 추천값 2). 1 이면 보통 추첨.</summary>
+        public float KnownLinkWeight = 1f;
     }
 
     public sealed class FallbackCardDef

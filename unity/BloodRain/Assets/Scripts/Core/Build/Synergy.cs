@@ -3,6 +3,8 @@
 //   연환: 두 무공이 모두 minLevel 이상. 절기가 된 무공은 최고 단계로 친다.
 //   진전: 문파 무공·심법을 가진 개수 + 바깥 보너스(고수의 유해, 연고지 …) + 기본의 극.
 //   기본의 극: 삼재검법 Lv8이면 가장 많이 모은 문파에 하나 더(common.target 이 all 이면 모든 문파에).
+//   돈오(GU-01): 로드아웃에서 온 레벨표면 조건을 갖춰도 돈오 카드를 집은 연환(Loadout.AwakenedLinks)만 켜지고, 나머지는 PendingLinks.
+//     대성한 연환(Loadout.GrandLinks)은 LinkParam 이 doneoGrandMultiplier 배. 손으로 만든 레벨표(Awakened == null)는 조건만 본다.
 //   비급 층(tier: secret): 복원한 것만 켜진다. 조건은 갖췄는데 잠긴 것은 LockedLinks·LockedTiers 로 따로 알린다('?' 표시, 찢긴 비급 등록).
 using System;
 using System.Collections.Generic;
@@ -16,11 +18,18 @@ namespace BloodRain.Core.Build
     {
         public IReadOnlyDictionary<string, int> Weapons { get; }
         public IReadOnlyDictionary<string, int> Passives { get; }
+        /// <summary>돈오로 깨친 연환. null 이면 조건만 보고 켠다(시뮬레이터의 조합 셈·시험용).</summary>
+        public IReadOnlyCollection<string>? Awakened { get; }
+        /// <summary>대성한 연환. null 이면 없음.</summary>
+        public IReadOnlyCollection<string>? Grand { get; }
 
-        public BuildLevels(IReadOnlyDictionary<string, int> weapons, IReadOnlyDictionary<string, int> passives)
+        public BuildLevels(IReadOnlyDictionary<string, int> weapons, IReadOnlyDictionary<string, int> passives,
+            IReadOnlyCollection<string>? awakened = null, IReadOnlyCollection<string>? grand = null)
         {
             Weapons = weapons;
             Passives = passives;
+            Awakened = awakened;
+            Grand = grand;
         }
 
         public static BuildLevels Of(GameData data, Loadout loadout)
@@ -29,7 +38,8 @@ namespace BloodRain.Core.Build
             var w = new Dictionary<string, int>();
             foreach (var kv in loadout.Weapons)
                 w[kv.Key] = loadout.Evolved.Contains(kv.Key) ? Math.Max(kv.Value, max) : kv.Value;
-            return new BuildLevels(w, loadout.Passives.ToDictionary(kv => kv.Key, kv => kv.Value));
+            return new BuildLevels(w, loadout.Passives.ToDictionary(kv => kv.Key, kv => kv.Value),
+                loadout.AwakenedLinks.ToList(), loadout.GrandLinks.ToList());
         }
 
         /// <summary>무공이든 심법이든 지금 레벨. 없으면 0.</summary>
@@ -48,7 +58,7 @@ namespace BloodRain.Core.Build
                 case OfferKind.NewPassive: p[offer.Id] = 1; break;
                 case OfferKind.UpgradePassive: p[offer.Id] = (p.TryGetValue(offer.Id, out var pl) ? pl : 0) + offer.Levels; break;
             }
-            return new BuildLevels(w, p);
+            return new BuildLevels(w, p, Awakened, Grand);
         }
     }
 
@@ -110,16 +120,27 @@ namespace BloodRain.Core.Build
         public bool CommonActive { get; }
         /// <summary>두 무공 레벨은 갖췄는데 비급이 잠겨 안 켜진 연환.</summary>
         public IReadOnlyList<LinkDef> LockedLinks { get; }
+        /// <summary>조건은 갖췄는데 돈오 카드를 아직 안 집어 꺼져 있는 연환(다음 레벨업에 돈오 카드로 뜬다).</summary>
+        public IReadOnlyList<LinkDef> PendingLinks { get; }
+        /// <summary>켜진 연환 중 대성한 것의 id.</summary>
+        public IReadOnlyCollection<string> GrandLinks { get; }
+        readonly float _grandMultiplier;
 
         public SynergyState(IReadOnlyList<LinkDef> links, IReadOnlyList<SchoolState> schools, string? commonSchool, bool commonActive,
-            IReadOnlyList<LinkDef>? lockedLinks = null)
+            IReadOnlyList<LinkDef>? lockedLinks = null, IReadOnlyList<LinkDef>? pendingLinks = null,
+            IReadOnlyCollection<string>? grandLinks = null, float grandMultiplier = 1f)
         {
             Links = links;
             Schools = schools;
             CommonSchool = commonSchool;
             CommonActive = commonActive;
             LockedLinks = lockedLinks ?? Array.Empty<LinkDef>();
+            PendingLinks = pendingLinks ?? Array.Empty<LinkDef>();
+            GrandLinks = grandLinks ?? Array.Empty<string>();
+            _grandMultiplier = grandMultiplier;
         }
+
+        public bool IsGrand(string id) => GrandLinks.Contains(id);
 
         /// <summary>조건은 갖췄는데 잠긴 비급의 복원 id(연환 먼저). 이 상태로 생을 마치면 찢긴 비급으로 오른다(Meta.LifeLog.NoteSynergy).</summary>
         public IEnumerable<string> LockedManualIds =>
@@ -128,9 +149,15 @@ namespace BloodRain.Core.Build
 
         public bool HasLink(string id) => Links.Any(l => l.Id == id);
         /// <summary>켜진 연환의 효과 숫자. 안 켜졌으면 null(무공 실행기가 '켜졌으면 이 값'으로 쓴다). LK-01.</summary>
+        /// 대성한 연환은 doneoGrandMultiplier 배(16개 공통 배율, 기획서 20장 '돈오').
         public float? LinkParam(string id, string key)
         {
-            foreach (var l in Links) if (l.Id == id) return l.Param(key);
+            foreach (var l in Links)
+                if (l.Id == id)
+                {
+                    var v = l.Param(key);
+                    return IsGrand(id) ? v * _grandMultiplier : v;
+                }
             return null;
         }
         public SchoolState School(string id) => Schools.First(s => s.School.Id == id);
@@ -234,8 +261,13 @@ namespace BloodRain.Core.Build
                          && levels.Weapons.TryGetValue(l.B, out var b) && b >= l.MinLevel)
                 .ToList();
             bool LinkOpen(LinkDef l) => !l.IsSecret || restored == null || restored.Contains(l.ManualId);
-            var links = met.Where(LinkOpen).ToList();
+            var open = met.Where(LinkOpen).ToList();
             var lockedLinks = met.Where(l => !LinkOpen(l)).ToList();
+            var aw = levels.Awakened;
+            var links = aw == null ? open : open.Where(l => aw.Contains(l.Id)).ToList();
+            var pending = aw == null ? new List<LinkDef>() : open.Where(l => !aw.Contains(l.Id)).ToList();
+            var gr = levels.Grand;
+            var grand = gr == null ? new List<string>() : links.Where(l => gr.Contains(l.Id)).Select(l => l.Id).ToList();
 
             var members = new int[syn.Schools.Count];
             var bonus = new int[syn.Schools.Count];
@@ -275,7 +307,8 @@ namespace BloodRain.Core.Build
             {
                 schools.Add(new SchoolState(syn.Schools[i], members[i], bonus[i], opens[i]));
             }
-            return new SynergyState(links, schools, commonSchool, commonActive, lockedLinks);
+            return new SynergyState(links, schools, commonSchool, commonActive, lockedLinks, pending, grand,
+                data.Balance.LevelUp.DoneoGrandMultiplier);
         }
 
         /// <summary>기본의 극이 채워 줄 문파. 가장 많이 모은 문파를 고르되, 이미 마지막 단계까지 찬 문파는 채울 것이 없으니 건너뛴다.
@@ -329,10 +362,12 @@ namespace BloodRain.Core.Build
                 foreach (var l in syn.Links)
                 {
                     var partner = l.Partner(offer.Id);
-                    if (partner == null || s0.HasLink(l.Id) || !levels.Weapons.ContainsKey(partner)) continue;
+                    if (partner == null || s0.HasLink(l.Id) || s0.PendingLinks.Contains(l) || !levels.Weapons.ContainsKey(partner)) continue;
                     bool locked = l.IsSecret && restored != null && !restored.Contains(l.ManualId);
                     if (locked && s0.LockedLinks.Contains(l)) continue;
-                    hints.Add(new LinkHint(l, partner, locked ? s1.LockedLinks.Contains(l) : s1.HasLink(l.Id), locked));
+                    // 돈오: 조건이 갖춰지면 '켜짐'이 아니라 다음 레벨업에 돈오 카드가 뜬다. 카드 안내는 같이 '이 선택으로 깨칠 수 있음'.
+                    bool completes = locked ? s1.LockedLinks.Contains(l) : s1.HasLink(l.Id) || s1.PendingLinks.Contains(l);
+                    hints.Add(new LinkHint(l, partner, completes, locked));
                 }
             }
 

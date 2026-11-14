@@ -76,6 +76,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 기연을 크게 올린 시험 판(연무장 기연 최고)에서 금빛 카드가 보이고, 집으면 그 무공이 2레벨 오름. 콘솔 에러 0
   - 찍기: `docs/unity_shots/GU-02U/` 의 `great_card.png`
 
+- [ ] GU-01U 금빛 돈오 카드와 대성 · 먼저: backlog GU-01
+  - 할 것: 레벨업 화면을 열 때 `_loadout.PendingDoneo(_restored)` 가 비어 있지 않으면 보통 카드 줄 위에 금빛 돈오 카드를 따로 한 장씩(연환 이름·두 무공 인장·`ui.levelup.doneo.badge`, 대성이면 `ui.levelup.doneo.grand`, 아래 작게 `ui.levelup.doneo.free`) 띄우고, 누르면 `TakeDoneo` → 시너지 다시 셈(LifeRunner 278줄과 같은 길). 보통 카드 고르기는 그대로 하나. 지금은 2026-11-14 클라우드가 `LevelUpScreen` Open 에 `_loadout.TakeAllDoneo(_restored)` 한 줄을 넣어 저절로 집게 해 둠(컴파일 확인 전 — 에러면 그것부터). 카드 화면을 붙이면 그 줄을 지운다. 처음 깨친 연환은 긴 돈오 연출(탁본 뒤집기 + 두 무공 색이 합쳐지는 획, 발견 연출 S-04 재활용)과 도감 등록, 대성은 이펙트에 두 무공이 합쳐진 모양(쌍검합벽이면 삼재 획 위에 푸른 검기). 다음 생 짝 무공 가중치는 `RollLevelUp(..., knownLinks)` 에 `Soul.Codex` 중 `link:` 쪽 id 를 넘긴다
+  - 쓸 것: `Presentation/Hud/LevelUpScreen.cs`, Core `Loadout.PendingDoneo`·`TakeDoneo`·`DoneoCard`, `SynergyState.PendingLinks`·`IsGrand`, strings `ui.levelup.doneo.*`, 기획서 20장 '돈오'
+  - 메뉴: 없음
+  - 끝: 삼재검법·창천검기를 Lv4 까지 올린 시험 판에서 다음 레벨업에 금빛 돈오 카드가 뜨고, 집으면 HUD 연환 띠가 켜짐. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/GU-01U/` 의 `doneo_card.png`
+
 - [ ] GU-03U 생마다 한 줄 가르치기 · 먼저: 없음
   - 할 것: 몇 번째 생(침방과 같은 셈)이 1·2·3이면 그 생에서 레벨업 화면을 처음 열 때 카드 위에 한 줄(`ui.teach.evolution`·`link`·`school`)을 띄우고 닫으면 지운다. 넷째 생부터는 없음. 화면 글에 '비급 층'이 남아 있으면 찾아서 '찢긴 비급'으로
   - 쓸 것: `Presentation/Hud/LevelUpScreen.cs`, 혼 저장의 마친 생 수(침방이 쓰는 값), strings `ui.teach.*`(Loc.T), 기획서 12장 '가르치는 순서'

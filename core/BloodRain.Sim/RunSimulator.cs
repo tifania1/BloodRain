@@ -513,6 +513,8 @@ namespace BloodRain.Sim
         {
             bool first = double.IsNaN(_result.FirstLevelUpMinute);
             if (first) _result.FirstLevelUpMinute = _t / 60;
+            // 돈오 카드(기획서 20장, GU-01): 조건을 갖춘 연환은 다음 레벨업에 따로 뜨고, 시뮬레이터는 늘 집는다(레벨업 선택을 쓰지 않음).
+            if (_loadout.TakeAllDoneo() > 0) RecomputeStats();
             // 서장 첫 레벨업은 새 무공 한 장뿐(chapters.json prologue firstLevelUpChoices, 4장)
             var offers = first && _prologue != null
                 ? _loadout.RollFirstLevelUp(_rng, (float)_b.Sheet.Luck, _unlocked, _g.Chapter("prologue"))

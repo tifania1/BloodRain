@@ -91,6 +91,7 @@ namespace BloodRain.Core.Tests
                 if (cur == 0) { l.Apply(new Offer(weapon ? OfferKind.NewWeapon : OfferKind.NewPassive, id)); cur = 1; }
                 for (; cur < level; cur++) l.Apply(new Offer(weapon ? OfferKind.UpgradeWeapon : OfferKind.UpgradePassive, id));
             }
+            l.TakeAllDoneo();   // 돈오 카드는 집었다고 본다(연환 효과를 보는 시험들). 돈오 자체는 DoneoTests.
             return l;
         }
     }

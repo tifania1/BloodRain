@@ -25,6 +25,16 @@ namespace BloodRain.Core.Build
         public override string ToString() => Great ? $"{Kind}:{Id}+{Levels}" : $"{Kind}:{Id}";
     }
 
+    /// <summary>금빛 돈오(頓悟) 카드 한 장(기획서 20장 '돈오', GU-01). 레벨업 선택과 따로 뜨고 집어야 연환이 켜진다.
+    /// Grand 면 이미 깨친 연환이 대성(大成)으로 한 번 더 깨인다(효과 값 doneoGrandMultiplier 배).</summary>
+    public readonly struct DoneoCard
+    {
+        public readonly LinkDef Link;
+        public readonly bool Grand;
+        public DoneoCard(LinkDef link, bool grand) { Link = link; Grand = grand; }
+        public override string ToString() => Grand ? $"Doneo:{Link.Id}+grand" : $"Doneo:{Link.Id}";
+    }
+
     public sealed class Loadout
     {
         readonly GameData _data;
@@ -32,6 +42,8 @@ namespace BloodRain.Core.Build
         readonly Dictionary<string, int> _passives = new Dictionary<string, int>();
         readonly HashSet<string> _evolved = new HashSet<string>();
         readonly HashSet<string> _banished = new HashSet<string>();
+        readonly HashSet<string> _links = new HashSet<string>();
+        readonly HashSet<string> _grandLinks = new HashSet<string>();
 
         public int WeaponSlots { get; private set; }
         public int PassiveSlots { get; private set; }
@@ -40,6 +52,10 @@ namespace BloodRain.Core.Build
         public IReadOnlyDictionary<string, int> Weapons => _weapons;
         public IReadOnlyDictionary<string, int> Passives => _passives;
         public IReadOnlyCollection<string> Evolved => _evolved;
+        /// <summary>돈오 카드를 집어 켠 연환 id. Synergy.Compute 는 이 안의 연환만 켠다.</summary>
+        public IReadOnlyCollection<string> AwakenedLinks => _links;
+        /// <summary>대성까지 깨친 연환 id.</summary>
+        public IReadOnlyCollection<string> GrandLinks => _grandLinks;
 
         public Loadout(GameData data, CharacterDef character)
         {
@@ -130,24 +146,56 @@ namespace BloodRain.Core.Build
 
         /// <summary>레벨업 선택지 3개(기연이 높으면 4개). 고를 것이 없으면 은자·음식(Fallback).
         /// 뽑힌 것이 모두 새 무공이면 은자·음식을 한 장 더 붙인다(levelUp.fallbackWhenAllNewWeapons).</summary>
-        public List<Offer> RollLevelUp(Random rng, float luck, ISet<string> unlocked)
+        /// <param name="knownLinks">장경각 도감에 오른 연환 id(지난 생들에서 깨친 것, Soul.Codex 의 link: 쪽). 그 연환의 짝 무공 카드는
+        /// knownLinkWeight 배로 잘 뜬다(기획서 20장 '돈오'). null 이거나 가중치가 붙는 카드가 없으면 보통 추첨(난수 순서도 같다).</param>
+        public List<Offer> RollLevelUp(Random rng, float luck, ISet<string> unlocked, IReadOnlyCollection<string>? knownLinks = null)
         {
             var rule = _data.Balance.LevelUp;
             int count = rule.BaseChoices;
             if (count < rule.MaxChoices && rng.NextDouble() < Math.Min(1.0, luck / rule.LuckForFourthChoice)) count++;
 
             var pool = Candidates(unlocked);
+            var weights = pool.Select(o => KnownLinkWeight(o, knownLinks)).ToList();
+            bool weighted = weights.Any(w => w != 1.0);
             var result = new List<Offer>();
             while (result.Count < count && pool.Count > 0)
             {
-                int i = rng.Next(pool.Count);
+                int i = weighted ? WeightedIndex(rng, weights) : rng.Next(pool.Count);
                 result.Add(pool[i]);
                 pool.RemoveAt(i);
+                weights.RemoveAt(i);
             }
             if (result.Count == 0 || (rule.FallbackWhenAllNewWeapons && result.All(o => o.Kind == OfferKind.NewWeapon)))
                 result.Add(new Offer(OfferKind.Fallback, "silver_or_food"));
             MarkGreat(result, rng, luck);
             return result;
+        }
+
+        /// <summary>이 카드의 추첨 가중치: 무공 카드이고, 도감에 오른 연환 중 짝 무공을 가졌고 아직 안 깨친 것이 있으면 knownLinkWeight.</summary>
+        public double KnownLinkWeight(Offer offer, IReadOnlyCollection<string>? knownLinks)
+        {
+            if (knownLinks == null || knownLinks.Count == 0) return 1.0;
+            if (offer.Kind != OfferKind.NewWeapon && offer.Kind != OfferKind.UpgradeWeapon) return 1.0;
+            double w = _data.Balance.LevelUp.KnownLinkWeight;
+            if (w <= 0 || w == 1.0) return 1.0;
+            foreach (var l in _data.Synergies.Links)
+            {
+                if (_links.Contains(l.Id) || !knownLinks.Contains(l.Id)) continue;
+                var partner = l.Partner(offer.Id);
+                if (partner != null && _weapons.ContainsKey(partner)) return w;
+            }
+            return 1.0;
+        }
+
+        static int WeightedIndex(Random rng, List<double> weights)
+        {
+            double total = weights.Sum(), r = rng.NextDouble() * total;
+            for (int i = 0; i < weights.Count; i++)
+            {
+                r -= weights[i];
+                if (r < 0) return i;
+            }
+            return weights.Count - 1;
         }
 
         /// <summary>대오 확률: levelUp.greatChance + 기연 × greatChancePerLuck(1 을 넘지 않음).</summary>
@@ -246,5 +294,57 @@ namespace BloodRain.Core.Build
         }
 
         public void Evolve(EvolutionDef evo) => _evolved.Add(evo.Weapon);
+
+        /// <summary>판정용 무공 레벨: 절기가 된 무공은 최고 단계로 친다(BuildLevels 와 같은 셈). 없으면 0.</summary>
+        int LinkLevel(string id) =>
+            !_weapons.TryGetValue(id, out var lv) ? 0 : _evolved.Contains(id) ? Math.Max(lv, WeaponMax) : lv;
+
+        /// <summary>지금 뜰 돈오 카드(연환 데이터 순서). 두 무공이 minLevel 이상인데 아직 안 깨친 연환, 깨쳤고 둘 다 doneoGrandLevel 이상인데
+        /// 아직 대성 안 한 연환. 장경각에서 복원 안 한 비급 연환은 뜨지 않는다(카드엔 '?'로 남음). restored 가 null 이면 비급도 모두 열림.
+        /// 게임은 레벨업 화면이 열릴 때 이것을 레벨업 카드와 따로 보이고, 집은 것을 TakeDoneo 로 넘긴다.</summary>
+        public List<DoneoCard> PendingDoneo(IReadOnlyCollection<string>? restored = null)
+        {
+            int grandLevel = _data.Balance.LevelUp.DoneoGrandLevel;
+            var list = new List<DoneoCard>();
+            foreach (var l in _data.Synergies.Links)
+            {
+                if (l.IsSecret && restored != null && !restored.Contains(l.ManualId)) continue;
+                int a = LinkLevel(l.A), b = LinkLevel(l.B);
+                if (!_links.Contains(l.Id))
+                {
+                    if (a >= l.MinLevel && b >= l.MinLevel) list.Add(new DoneoCard(l, false));
+                }
+                else if (grandLevel > 0 && !_grandLinks.Contains(l.Id) && a >= grandLevel && b >= grandLevel)
+                    list.Add(new DoneoCard(l, true));
+            }
+            return list;
+        }
+
+        /// <summary>돈오 카드를 집는다: 연환을 켜거나 대성으로 올린다. 조건이 안 맞는 카드는 예외.</summary>
+        public void TakeDoneo(DoneoCard card)
+        {
+            var l = card.Link;
+            int a = LinkLevel(l.A), b = LinkLevel(l.B);
+            if (!card.Grand)
+            {
+                if (a < l.MinLevel || b < l.MinLevel) throw new InvalidOperationException($"연환 조건이 안 됩니다: {l.Id}");
+                _links.Add(l.Id);
+            }
+            else
+            {
+                int g = _data.Balance.LevelUp.DoneoGrandLevel;
+                if (!_links.Contains(l.Id)) throw new InvalidOperationException($"아직 깨치지 않은 연환입니다: {l.Id}");
+                if (g <= 0 || a < g || b < g) throw new InvalidOperationException($"대성 조건이 안 됩니다: {l.Id}");
+                _grandLinks.Add(l.Id);
+            }
+        }
+
+        /// <summary>뜬 돈오 카드를 모두 집는다(시뮬레이터·시험용, 플레이어는 늘 집는다고 본다). 집은 수.</summary>
+        public int TakeAllDoneo(IReadOnlyCollection<string>? restored = null)
+        {
+            var cards = PendingDoneo(restored);
+            foreach (var c in cards) TakeDoneo(c);
+            return cards.Count;
+        }
     }
 }
