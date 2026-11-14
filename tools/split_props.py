@@ -36,7 +36,17 @@ SHEETS: dict[str, list[str]] = {
     "props_pickups": ["bun", "duck", "silver_bag", "blood_crystal", "seal_stone_shard"],
     "props_items": ["chwigi_talisman", "jeongsin_talisman", "thunder_bomb", "chest_closed", "chest_open"],
     "props_breakables": ["lantern", "lantern_silver", "cart", "storage_jar", "wine_jar", "sword_rack"],
+    # 지형 소품(VF-04, 2026-11-14 클라우드): PropLayer 의 나무·집·전각·산 임시 그림을 바꿀 재료(unity_tasks PR-02U)
+    "props_cheongun_village": ["inn", "village_house", "market_stall", "fence", "haystack"],
+    "props_songshan_halls": ["temple_main_hall", "temple_side_hall", "mountain_gate", "bell_tower", "stone_lantern"],
+    "props_songshan_nature": ["pine_old", "pine_cliff", "boulder_mossy", "rocks_small", "shrub"],
+    "props_songshan_pagodas": ["pagoda_seven", "pagoda_three", "stupa_bell", "pagoda_broken", "pagoda_mossy"],
+    "props_songshan_far": ["far_temple", "far_peak", "far_pine_forest", "far_village", "far_pagoda_forest"],
+    "props_cheonha_terrain": ["pine_gnarled", "terrain_house", "pagoda_tall", "peak_snow", "huts_thatched"],
 }
+
+# 소품끼리 바짝 붙은 시트는 덩이 잇는 거리를 줄인다(기본 JOIN 이면 둘이 한 덩이가 됨)
+SHEET_JOIN: dict[str, int] = {"props_cheongun_village": 2, "props_songshan_halls": 2}
 
 
 def _dilate(mask: list[bytearray], w: int, h: int, r: int) -> list[bytearray]:
@@ -75,7 +85,7 @@ def _dilate(mask: list[bytearray], w: int, h: int, r: int) -> list[bytearray]:
     return col
 
 
-def find_parts(img: Image.Image) -> list[tuple[tuple[int, int, int, int], Image.Image]]:
+def find_parts(img: Image.Image, join: int = JOIN) -> list[tuple[tuple[int, int, int, int], Image.Image]]:
     """덩이마다 ((왼, 위, 오른, 아래), 그 덩이만 255 인 시트 크기 마스크) — 읽는 차례(줄 → 왼쪽부터).
     칸이 서로 겹쳐도 마스크로 거르니 옆 덩이 끝이 묻어오지 않는다."""
     a = img.getchannel("A")
@@ -85,7 +95,7 @@ def find_parts(img: Image.Image) -> list[tuple[tuple[int, int, int, int], Image.
     small = a.resize((sw, sh), Image.BOX)
     px = small.load()
     mask = [bytearray(1 if px[x, y] >= ALPHA_MIN // 2 else 0 for x in range(sw)) for y in range(sh)]
-    grown = _dilate(mask, sw, sh, max(1, JOIN // s))
+    grown = _dilate(mask, sw, sh, max(1, join // s))
     seen = [bytearray(sw) for _ in range(sh)]
     label = Image.new("L", (sw, sh), 0)
     lp = label.load()
@@ -171,7 +181,7 @@ def main() -> int:
         if not src.exists():
             continue  # 아직 안 뽑은 시트
         img = Image.open(src).convert("RGBA")
-        parts = find_parts(img)
+        parts = find_parts(img, SHEET_JOIN.get(sheet, JOIN))
         if len(parts) != len(names):
             problems.append(f"{sheet}: 덩이 {len(parts)}개, 이름 {len(names)}개")
             continue
