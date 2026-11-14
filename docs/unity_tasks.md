@@ -37,7 +37,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 - [ ] PR-02U 나무·집·절을 원화로 · 먼저: 없음
   - 할 것: `PropLayer` 가 코드로 찍는 임시 그림(나무 = 타원 7개 등)을 `Assets/Art/Props` 원화 시트의 칸으로 바꾼다. 원화가 없는 종류만 임시 그림으로 남기고 결과 줄에 적는다(backlog VF-04 가 목록을 대 줌 — 없어도 시트를 직접 보고 한다). 축척이 바뀌어도 선 굵기가 뭉개지지 않게 필터·밉맵 확인(지금 나무는 점 필터로 계단이 보인다).
   - 쓸 것: `Presentation/Fx/PropLayer.cs`·`PropArt.cs`, `Assets/Art/Props/Parts`(2026-11-14 VF-04 가 지형 시트 여섯을 `tools/split_props.py` 로 잘라 둠, 시트 칸을 직접 자를 필요 없음). PropKind 셋 벌마다 — Tree: `prop_pine_old`·`prop_pine_cliff`·`prop_pine_gnarled`(덤불 `prop_shrub`·바위 `prop_boulder_mossy`·`prop_rocks_small` 도 섞어도 됨) / House: `prop_village_house`·`prop_terrain_house`·`prop_huts_thatched`(청운진 마당은 `prop_inn`·`prop_market_stall`·`prop_fence`·`prop_haystack`) / Temple: `prop_temple_main_hall`·`prop_temple_side_hall`·`prop_bell_tower`(숭산 탑림 `prop_pagoda_seven`·`prop_pagoda_three`·`prop_stupa_bell`·`prop_pagoda_broken`·`prop_pagoda_mossy`·`prop_pagoda_tall`, 산문 `prop_mountain_gate`, 석등 `prop_stone_lantern`) / Mount: `prop_peak_snow`·`prop_far_peak`. 멀리서 볼 때(이류 이상) 한 덩이로 바꿔 그릴 것: `prop_far_temple`·`prop_far_village`·`prop_far_pine_forest`·`prop_far_pagoda_forest`. 원화가 없는 종류는 없다
-  - 메뉴: `BloodRain/Bootstrap/소품 그림 …`(PR-01U 가 만든 메뉴) 다시 — 새 Parts 40장이 목록에 들어가는지
+  - 메뉴: `BloodRain/Bootstrap/소품 그림 …`(PR-01U 가 만든 메뉴) 다시 — 새 Parts 30장이 목록에 들어가는지
   - 끝: 청운진·숭산 삼류 화면에서 코드로 찍은 초록 덩어리가 안 보임. 콘솔 에러 0
   - 찍기: `docs/unity_shots/PR-02U/` 의 `cheongun.png`·`songshan.png`
 
