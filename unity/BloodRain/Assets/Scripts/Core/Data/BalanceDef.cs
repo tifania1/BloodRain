@@ -54,6 +54,12 @@ namespace BloodRain.Core.Data
         public Dictionary<string, int> TraitRerolls = new Dictionary<string, int>();
         /// <summary>레벨업 화면이 열린 직후 입력을 받지 않는 초(기획서 12장 '레벨업 입력', 프로토타입 값 0.35). 싸우던 손이 카드를 잘못 누르지 않게.</summary>
         public float InputGuardSeconds = 0.35f;
+        /// <summary>금빛 대오(大悟) 카드 기본 확률(기획서 8장, GU-02 추천값 3%). 0 이면 대오 카드가 없다.</summary>
+        public float GreatChance;
+        /// <summary>기연 1 마다 더하는 대오 확률(추천값 0.2%p).</summary>
+        public float GreatChancePerLuck;
+        /// <summary>대오 카드 한 장이 올리는 레벨(벼랑 기연 +2레벨과 같은 값).</summary>
+        public int GreatLevels = 2;
     }
 
     public sealed class FallbackCardDef

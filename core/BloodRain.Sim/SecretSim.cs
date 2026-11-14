@@ -201,11 +201,11 @@ namespace BloodRain.Sim
             {
                 case OfferKind.NewWeapon:
                 case OfferKind.UpgradeWeapon:
-                    return Sign(g.Weapon(o.Id).Aspect) * y.WeaponPerLevel;
+                    return Sign(g.Weapon(o.Id).Aspect) * y.WeaponPerLevel * o.Levels; // 대오 카드는 레벨 수만큼
                 case OfferKind.NewPassive:
                 case OfferKind.UpgradePassive:
                     var p = g.Passive(o.Id);
-                    return Sign(p.Aspect) * (p.YinyangPerLevelOverride ?? y.PassivePerLevel);
+                    return Sign(p.Aspect) * (p.YinyangPerLevelOverride ?? y.PassivePerLevel) * o.Levels;
                 default: return 0;
             }
         }

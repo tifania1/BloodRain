@@ -15,7 +15,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 
 기획 업그레이드(2026-11-13 사람이 `docs/design/roguelike_benchmark.md` 아홉 안을 '추천 순서대로 전부'로 정함. 숫자는 그 문서의 추천값으로 넣고 기획서에 '추천값, 사람이 바꿀 수 있음'이라고 적는다). 숭산 한 생 안에 넣는 넷:
 - [ ] GU-01 돈오(頓悟) — 연환을 사건으로(안 ①): 기획서 20장 연환·8장 레벨업 규칙·21장 '한 번 깨친 길'을 고친다. 두 무공이 Lv4 가 되면 바로 켜지지 않고 다음 레벨업에 금빛 돈오 카드가 따로 한 장 뜨며(레벨업 선택을 쓰지 않음) 집어야 켜진다. 둘 다 Lv8 이면 '대성'으로 한 번 더(효과 값 공통 1.5배). 장경각에 오른 연환은 다음 생부터 짝 무공 카드 가중치 2배. `synergies.json`·Core(연환 판정·레벨업 추첨)·테스트·strings 네 언어·gdd_changes. 웹 프로토타입은 건드리지 않는다(얼림). Unity 카드·연출은 unity_tasks GU-01U 로
-- [ ] GU-02 대오(大悟) 카드(안 ④): 기획서 8장 레벨업 규칙에 '낮은 확률로 금빛 대오 카드, 그 카드는 +2레벨'. 확률 3% + 기연 × 0.2%p 를 `balance.json` 에(추천값). Core 레벨업 추첨·테스트(시드 고정, 확률, 최고 단계를 넘지 않음)·strings·gdd_changes. Unity 카드 금빛 테두리는 GU-02U 로
+- [x] GU-02 2026-11-14 — 대오(大悟) 카드: `Offer.Levels`·`Great`, `Loadout.RollLevelUp` 이 가진 것 강화 카드(남은 단계 2 이상)마다 3% + 기연 × 0.2%p 로 금빛(balance.json `levelUp.greatChance`·`greatChancePerLuck`·`greatLevels`), `Apply` 가 레벨마다 올리고 최고 단계에서 멈춤, `LevelUpView.Card` 가 두 단계·`Great` 를 보임. 기획서 8장, strings 네 언어 `ui.levelup.badge.great`, glossary, `GreatCardTests` 6개. 난수 순서가 바뀌어 sim 보고서 여섯(decisions·yinyang·contact·blood-art·meta·meta-pace)을 다시 씀(대부분 시드 흔들림 수준). Unity 는 unity_tasks GU-02U
 - [ ] GU-03 말 줄이기(안 ⑨): 플레이어에게 가르치는 말을 절기·연환·진전 셋으로. 기획서 20장 머리 표와 12장에 '가르치는 순서'(첫 생 절기 문턱, 둘째 생 연환, 셋째 생 진전 — 생마다 한 줄 안내) 추가, '비급 층'은 UI 말에서 빼고 '찢긴 쪽'으로만. `glossary.md`·strings 안내 문구 네 언어. 규칙은 안 바꾼다
 - [ ] GU-04 경맥도(經脈圖) 화면 설계(안 ⑥의 화면만): 기획서 10장 연무장·12장에 연무장 20항목을 경맥 그림 위 혈자리로 놓는 배치(항목 → 혈자리 이름, 비싼 셋 분광·경공 충전·재기는 큰 혈), 값·비용은 그대로. 혈자리 이름은 실제 경혈 이름(백회·단전 등 장르 공통어). 필요한 바탕 그림은 art_queue 에. Unity 화면은 GU-04U 로. 먼저: 없음
 

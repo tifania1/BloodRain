@@ -39,6 +39,8 @@ namespace BloodRain.Core.Build
         public bool IsNew;
         public int FromLevel;   // 새 것이면 0
         public int ToLevel;
+        /// <summary>금빛 대오 카드(한 번에 2레벨, 기획서 8장). 카드 테두리·첫째 줄 '대오' 표시.</summary>
+        public bool Great;
         /// <summary>무공: 지금 피해(새 것이면 0)와 고른 뒤 피해(Lv1→Lv8 선형, 웹 lerp 와 같음).</summary>
         public float DamageFrom, DamageTo;
         /// <summary>무공: 고른 레벨의 이정표 글(weapons.json milestones), 없으면 null.</summary>
@@ -66,16 +68,17 @@ namespace BloodRain.Core.Build
                     loadout.Weapons.TryGetValue(offer.Id, out var lv);
                     var evo = data.Evolutions.FirstOrDefault(e => e.Weapon == offer.Id);
                     loadout.Passives.TryGetValue(evo?.Passive ?? "", out var pairLv);
+                    int to = System.Math.Min(weaponMax, lv + offer.Levels);
                     string? ms = null;
-                    def.Milestones?.TryGetValue((lv + 1).ToString(), out ms);
+                    def.Milestones?.TryGetValue(to.ToString(), out ms);
                     return new CardText
                     {
-                        Weapon = true, IsNew = lv == 0, FromLevel = lv, ToLevel = lv + 1,
+                        Weapon = true, IsNew = lv == 0, FromLevel = lv, ToLevel = to, Great = offer.Great,
                         DamageFrom = lv == 0 ? 0 : Combat.WeaponMath.DamageAt(def, lv, weaponMax),
-                        DamageTo = Combat.WeaponMath.DamageAt(def, lv + 1, weaponMax),
+                        DamageTo = Combat.WeaponMath.DamageAt(def, to, weaponMax),
                         Milestone = ms,
                         Pair = evo,
-                        Threshold = offer.Kind == OfferKind.UpgradeWeapon && evo != null && lv + 1 >= weaponMax && pairLv >= pairMin ? evo : null,
+                        Threshold = offer.Kind == OfferKind.UpgradeWeapon && evo != null && to >= weaponMax && pairLv >= pairMin ? evo : null,
                     };
                 }
                 case OfferKind.NewPassive:
@@ -86,12 +89,13 @@ namespace BloodRain.Core.Build
                     var evo = data.Evolutions.FirstOrDefault(e => e.Passive == offer.Id);
                     loadout.Weapons.TryGetValue(evo?.Weapon ?? "", out var wl);
                     bool inPool = evo != null && (weaponPool == null || weaponPool.Contains(evo.Weapon));
+                    int to = System.Math.Min(data.Balance.Levels.PassiveMax, lv + offer.Levels);
                     return new CardText
                     {
-                        Weapon = false, IsNew = lv == 0, FromLevel = lv, ToLevel = lv + 1,
+                        Weapon = false, IsNew = lv == 0, FromLevel = lv, ToLevel = to, Great = offer.Great,
                         Effects = def.Effects,
                         Pair = inPool ? evo : null,
-                        Threshold = evo != null && wl >= weaponMax && !loadout.Evolved.Contains(evo.Weapon) && lv + 1 == pairMin ? evo : null,
+                        Threshold = evo != null && wl >= weaponMax && !loadout.Evolved.Contains(evo.Weapon) && lv < pairMin && to >= pairMin ? evo : null,
                     };
                 }
                 default: return null;

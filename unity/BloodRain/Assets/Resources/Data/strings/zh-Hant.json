@@ -608,6 +608,7 @@
   "ui.levelup.kind.fallback": "行囊",
   "ui.levelup.level_one": "第1階",
   "ui.levelup.level_up": "第{0} → {1}階",
+  "ui.levelup.badge.great": "大悟 · 一次兩階",
   "ui.levelup.badge.pair": "配對 {0}",
   "ui.levelup.badge.threshold": "絕技門檻 · {0}",
   "ui.levelup.damage": "傷害 {0} → {1}",

@@ -14,8 +14,15 @@ namespace BloodRain.Core.Build
     {
         public readonly OfferKind Kind;
         public readonly string Id;
-        public Offer(OfferKind kind, string id) { Kind = kind; Id = id; }
-        public override string ToString() => $"{Kind}:{Id}";
+        /// <summary>이 카드로 오르는 레벨 수. 0·1 은 보통 카드(1), 2 는 금빛 대오(大悟) 카드(기획서 8장, GU-02).</summary>
+        readonly int _levels;
+        public Offer(OfferKind kind, string id) { Kind = kind; Id = id; _levels = 1; }
+        public Offer(OfferKind kind, string id, int levels) { Kind = kind; Id = id; _levels = levels < 1 ? 1 : levels; }
+        public int Levels => _levels < 1 ? 1 : _levels;
+        /// <summary>금빛 대오 카드(한 번에 2레벨 이상).</summary>
+        public bool Great => Levels > 1;
+        public Offer AsGreat(int levels) => new Offer(Kind, Id, levels);
+        public override string ToString() => Great ? $"{Kind}:{Id}+{Levels}" : $"{Kind}:{Id}";
     }
 
     public sealed class Loadout
@@ -76,8 +83,12 @@ namespace BloodRain.Core.Build
                     break;
                 case OfferKind.UpgradeWeapon:
                     if (_weapons[offer.Id] >= WeaponMax) throw new InvalidOperationException("이미 최고 단계입니다");
-                    _weapons[offer.Id]++;
-                    Gauge.OnWeaponLevelUp(_data.Weapon(offer.Id));
+                    // 대오 카드는 레벨마다 한 번씩 올린다(음양도 레벨마다 움직임). 최고 단계에서 멈춘다.
+                    for (int n = 0; n < offer.Levels && _weapons[offer.Id] < WeaponMax; n++)
+                    {
+                        _weapons[offer.Id]++;
+                        Gauge.OnWeaponLevelUp(_data.Weapon(offer.Id));
+                    }
                     break;
                 case OfferKind.NewPassive:
                     if (_passives.ContainsKey(offer.Id)) throw new InvalidOperationException($"이미 가진 심법입니다: {offer.Id}");
@@ -87,8 +98,11 @@ namespace BloodRain.Core.Build
                     break;
                 case OfferKind.UpgradePassive:
                     if (_passives[offer.Id] >= PassiveMax) throw new InvalidOperationException("이미 최고 단계입니다");
-                    _passives[offer.Id]++;
-                    Gauge.OnPassiveLevelUp(_data.Passive(offer.Id));
+                    for (int n = 0; n < offer.Levels && _passives[offer.Id] < PassiveMax; n++)
+                    {
+                        _passives[offer.Id]++;
+                        Gauge.OnPassiveLevelUp(_data.Passive(offer.Id));
+                    }
                     break;
                 case OfferKind.Fallback:
                     break;
@@ -132,7 +146,38 @@ namespace BloodRain.Core.Build
             }
             if (result.Count == 0 || (rule.FallbackWhenAllNewWeapons && result.All(o => o.Kind == OfferKind.NewWeapon)))
                 result.Add(new Offer(OfferKind.Fallback, "silver_or_food"));
+            MarkGreat(result, rng, luck);
             return result;
+        }
+
+        /// <summary>대오 확률: levelUp.greatChance + 기연 × greatChancePerLuck(1 을 넘지 않음).</summary>
+        public float GreatChance(float luck)
+        {
+            var rule = _data.Balance.LevelUp;
+            return (float)Math.Max(0.0, Math.Min(1.0, rule.GreatChance + Math.Max(0f, luck) * rule.GreatChancePerLuck));
+        }
+
+        /// <summary>대오 카드가 될 수 있는 카드: 가진 것 강화이고 남은 단계가 greatLevels 이상. 새 무공·심법, 은자·음식은 안 된다.</summary>
+        public bool CanBeGreat(Offer offer)
+        {
+            int need = _data.Balance.LevelUp.GreatLevels;
+            if (need < 2) return false;
+            switch (offer.Kind)
+            {
+                case OfferKind.UpgradeWeapon: return _weapons.TryGetValue(offer.Id, out var w) && WeaponMax - w >= need;
+                case OfferKind.UpgradePassive: return _passives.TryGetValue(offer.Id, out var p) && PassiveMax - p >= need;
+                default: return false;
+            }
+        }
+
+        /// <summary>뽑힌 카드마다 대오 판정(기획서 8장 '대오 카드'). 확률이 0 이면 난수를 쓰지 않는다.</summary>
+        void MarkGreat(List<Offer> offers, Random rng, float luck)
+        {
+            float chance = GreatChance(luck);
+            if (chance <= 0f) return;
+            int levels = _data.Balance.LevelUp.GreatLevels;
+            for (int i = 0; i < offers.Count; i++)
+                if (CanBeGreat(offers[i]) && rng.NextDouble() < chance) offers[i] = offers[i].AsGreat(levels);
         }
 
         /// <summary>흐름의 첫 레벨업(chapters.json firstLevelUpChoices, 서장 1). 새 무공 카드만 그 수만큼, 은자·음식은 붙이지 않는다.

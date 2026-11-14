@@ -63,6 +63,7 @@
   "ui.levelup.kind.fallback": "행낭",
   "ui.levelup.level_one": "1 단계",
   "ui.levelup.level_up": "{0} → {1} 단계",
+  "ui.levelup.badge.great": "대오 · 두 단계 한 번에",
   "ui.levelup.badge.pair": "짝 {0}",
   "ui.levelup.badge.threshold": "절기 문턱 · {0}",
   "ui.levelup.damage": "피해 {0} → {1}",

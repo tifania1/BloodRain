@@ -69,6 +69,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 네 무공이 서로 다른 색·모양·움직임으로 읽힘. 사람이 보고 '이 정도'를 정함
   - 찍기: `docs/unity_shots/VF-01U/` 의 `samjae.png`·`shaolin.png`·`gaebang.png`·`namgung.png`
 
+- [ ] GU-02U 대오 카드 금빛 테두리 · 먼저: backlog GU-02
+  - 할 것: 레벨업 카드가 `Offer.Great`(= `CardText.Great`)면 금빛 테두리와 첫째 줄 옆 '대오' 배지를 붙인다. 첫째 줄 `Lv a→b` 는 이미 `CardText.ToLevel` 이 두 단계를 보이니 그대로 쓴다. 뜰 때 다른 카드보다 0.1초 늦게 반짝이게(레벨업 징 위에 맑은 소리 하나, 소리가 없으면 넘어감)
+  - 쓸 것: `Presentation/Hud/LevelUpScreen.cs`(카드 그리기·DrawBadges), Core `Loadout.RollLevelUp`·`Offer.Great`·`LevelUpView.Card`, strings `ui.levelup.badge.great`, 확률은 balance.json `levelUp.greatChance`(직접 적지 않는다)
+  - 메뉴: 없음
+  - 끝: 기연을 크게 올린 시험 판(연무장 기연 최고)에서 금빛 카드가 보이고, 집으면 그 무공이 2레벨 오름. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/GU-02U/` 의 `great_card.png`
+
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
 - [x] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?") — 2026-11-09 21:00 PC: 커밋 cf47b4d 를 `BloodRain/WebGL 빌드`(릴리스, 54.3MB, 14분 16초)로 묶어 https://dev.bloodrain.pages.dev 에 올림. BloodRain.data.br 가 44MiB 라 Cloudflare Pages 25MiB 상한에 걸려서 `tools/split_webgl_data.py` 를 새로 둠(data 를 풀어 조각 셋으로 다시 brotli, index.html 이 이어 붙인 Blob 을 dataUrl 로) — **앞으로 올리는 순서: 빌드 → `python tools/split_webgl_data.py` → `web/_headers` 복사 → wrangler**. GPU 크롬(playwright channel=chrome, 헤드리스 아님)으로 타이틀이 뜨고 시작 → 서장 → 레벨업 카드 → 쓰러짐 → 서장 다시까지 돎, 브라우저 붉은 오류 0. 그 뒤(장삼 처치 → 정산 → 객잔 → 침방)는 장삼이 아직 Run 에 없어(C-10a) 웹이든 에디터든 못 감 — WG-01Ub 로 넘김. 서장 쓰러짐은 혼에 아무것도 안 남기는 설계라 새로고침 뒤 '혼 저장 없음'이 맞고, IndexedDB 에 /idbfs 는 생김(이어하기 확인도 WG-01Ub). 본 것: 웹은 기기 갈래가 Mobile(적 상한 400)로 잡힘, OnGUI 디버그 줄 한글은 여전히 빔. 찍음 `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
