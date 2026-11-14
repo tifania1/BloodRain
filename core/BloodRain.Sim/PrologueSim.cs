@@ -77,6 +77,45 @@ namespace BloodRain.Sim
             return Median(xs);
         }
 
+        /// <summary>첫 몇 분 동안 화면 위 적 수: 기획서 11장 '화면 위 적 수 목표'(balance.json spawnTarget) 대 시뮬레이션(VF-02).</summary>
+        public const int DensityMinutes = 3;
+
+        /// <summary>분마다 (목표, 살아 있는 적 가운데값, 무리에 닿은 적 가운데값, 누적 처치 가운데값). 평균 정책.</summary>
+        public static List<(int Minute, double Target, double Alive, double InCrowd, double Kills)> Density(SimData data, int seeds)
+        {
+            var g = data.Game;
+            var curve = Core.Spawning.WaveTable.From(g).Curve(Core.Spawning.WaveTable.Prologue, g.Balance.SpawnTarget);
+            var runs = Enumerable.Range(1, seeds).Select(s => RunOne(data, s)).ToList();
+            var list = new List<(int, double, double, double, double)>();
+            for (int m = 1; m <= DensityMinutes; m++)
+            {
+                var snaps = runs.Select(r => r.Minutes.First(x => x.Minute == m)).ToList();
+                list.Add((m, curve.TargetAt(m), Median(snaps.Select(x => (double)x.Alive)), Median(snaps.Select(x => (double)x.InCrowd)), Median(snaps.Select(x => (double)x.Kills))));
+            }
+            return list;
+        }
+
+        static void AppendDensity(StringBuilder sb, SimData data, int seeds)
+        {
+            var g = data.Game;
+            int cluster = g.Cheonha.RealmScale.First().ClusterSize;
+            sb.AppendLine($"## 첫 {DensityMinutes}분 화면 위 적 수(평균 정책, 가운데값)");
+            sb.AppendLine();
+            sb.AppendLine($"목표는 기획서 11장 '화면 위 적 수 목표'(balance.json `spawnTarget.points`). 서장은 삼류라 덩이 하나가 {cluster}명이다. '살아 있는 적'은 생성 디렉터가 세는 수(목표에 모자라면 매초 부족분의 {(g.Balance.SpawnTarget.SpawnFractionPerSecond * 100).ToString("0", CultureInfo.InvariantCulture)}%를 만든다), '무리에 닿은 적'은 생긴 뒤 다가와 맞을 수 있게 된 적. 적 기혈은 청운진 혈운 농도를 곱한다. 값은 바꾸지 않고 견주기만 한다(VF-02).");
+            sb.AppendLine();
+            sb.AppendLine("| 분 | 목표 | 살아 있는 적 | 목표 대비 | 무리에 닿은 적 | 누적 처치 |");
+            sb.AppendLine("|---|---|---|---|---|---|");
+            foreach (var r in Density(data, seeds))
+                sb.AppendLine($"| {r.Minute}:00 | {F0(r.Target)} | {F0(r.Alive)} | {(r.Target > 0 ? (r.Alive / r.Target * 100).ToString("0", CultureInfo.InvariantCulture) + "%" : "-")} | {F0(r.InCrowd)} | {F0(r.Kills)} |");
+            sb.AppendLine();
+            var rows = Density(data, seeds);
+            var st = g.Balance.SpawnTarget;
+            string P(double v) => (v * 100).ToString("0", CultureInfo.InvariantCulture) + "%";
+            sb.AppendLine($"- 살아 있는 적은 목표의 {P(rows.Min(r => r.Alive / r.Target))}~{P(rows.Max(r => r.Alive / r.Target))}. 시강이 금방 죽어서(3분까지 {F0(rows.Last().Kills)}마리) 매초 부족분의 일부만 채우는 셈이 늘 한 박자 늦다.");
+            sb.AppendLine($"- 무리에 닿은 적은 그보다 훨씬 적다. 새 적은 화면 바깥 고리(대각선 {st.RingMinDiagonal.ToString("0.0#", CultureInfo.InvariantCulture)}~{st.RingMaxDiagonal.ToString("0.0#", CultureInfo.InvariantCulture)}배)에서 걸어오는데 닿자마자 베인다. 화면이 비어 보인다면 이 몫이다. 값을 바꿀지는 사람 결정(decisions.md VF-02a).");
+            sb.AppendLine();
+        }
+
         static double Median(IEnumerable<double> xs) => Median(xs, out _);
 
         static double Median(IEnumerable<double> xs, out int count)
@@ -155,6 +194,7 @@ namespace BloodRain.Sim
                 }
                 sb.AppendLine();
             }
+            AppendDensity(sb, data, seeds);
             sb.AppendLine("## 읽는 법");
             sb.AppendLine();
             var avg = rows[0];
