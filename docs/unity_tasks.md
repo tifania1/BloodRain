@@ -70,7 +70,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/VF-01U/` 의 `samjae.png`·`shaolin.png`·`gaebang.png`·`namgung.png`
 
 - [ ] GU-02U 대오 카드 금빛 테두리 · 먼저: backlog GU-02
-  - 할 것: 레벨업 카드가 `Offer.Great`(= `CardText.Great`)면 금빛 테두리와 첫째 줄 옆 '대오' 배지를 붙인다. 첫째 줄 `Lv a→b` 는 이미 `CardText.ToLevel` 이 두 단계를 보이니 그대로 쓴다. 뜰 때 다른 카드보다 0.1초 늦게 반짝이게(레벨업 징 위에 맑은 소리 하나, 소리가 없으면 넘어감)
+  - 할 것: 레벨업 카드가 `Offer.Great`(= `CardText.Great`)면 금빛 테두리와 첫째 줄 옆 '대오' 배지를 붙인다. 첫째 줄 `Lv a→b` 는 2026-11-14 클라우드가 `LevelUpScreen` 571·582줄을 `lv + o.Levels` 로 바꿔 두 단계를 보인다(컴파일 확인 전 — 에러면 그것부터). 뜰 때 다른 카드보다 0.1초 늦게 반짝이게(레벨업 징 위에 맑은 소리 하나, 소리가 없으면 넘어감)
   - 쓸 것: `Presentation/Hud/LevelUpScreen.cs`(카드 그리기·DrawBadges), Core `Loadout.RollLevelUp`·`Offer.Great`·`LevelUpView.Card`, strings `ui.levelup.badge.great`, 확률은 balance.json `levelUp.greatChance`(직접 적지 않는다)
   - 메뉴: 없음
   - 끝: 기연을 크게 올린 시험 판(연무장 기연 최고)에서 금빛 카드가 보이고, 집으면 그 무공이 2레벨 오름. 콘솔 에러 0

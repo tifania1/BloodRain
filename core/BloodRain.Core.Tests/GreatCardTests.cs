@@ -116,5 +116,14 @@ namespace BloodRain.Core.Tests
             foreach (var lang in new[] { "ko", "en", "zh-Hans", "zh-Hant" })
                 Assert.Contains("\"ui.levelup.badge.great\"", TestData.ReadRepoFile("unity", "BloodRain", "Assets", "Resources", "Data", "strings", lang + ".json"));
         }
+
+        [Fact]
+        public void 시너지_미리보기도_두_레벨로_센다()
+        {
+            var l = Jin();
+            var after = BuildLevels.Of(_d, l).After(new Offer(OfferKind.UpgradeWeapon, "samjae_sword", 2));
+            Assert.Equal(3, after.Level("samjae_sword"));
+            Assert.Equal(2, BuildLevels.Of(_d, l).After(new Offer(OfferKind.UpgradeWeapon, "samjae_sword")).Level("samjae_sword"));
+        }
     }
 }

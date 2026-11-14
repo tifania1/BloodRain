@@ -568,7 +568,7 @@ namespace BloodRain.Presentation.Hud
                 {
                     var w = _data.Weapon(o.Id);
                     int lv = _loadout.Weapons[o.Id];
-                    return (Loc.T("ui.levelup.kind.up_weapon"), WeaponName(w), Loc.F("ui.levelup.level_up", lv, lv + 1), UpgradeNote(w, o, lv + 1));
+                    return (Loc.T("ui.levelup.kind.up_weapon"), WeaponName(w), Loc.F("ui.levelup.level_up", lv, lv + o.Levels), UpgradeNote(w, o, lv + o.Levels));
                 }
                 case OfferKind.NewPassive:
                 {
@@ -579,7 +579,7 @@ namespace BloodRain.Presentation.Hud
                 {
                     var p = _data.Passive(o.Id);
                     int lv = _loadout.Passives[o.Id];
-                    return (Loc.T("ui.levelup.kind.up_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.F("ui.levelup.level_up", lv, lv + 1), PassiveNote(p));
+                    return (Loc.T("ui.levelup.kind.up_passive"), Loc.T($"passives.{p.Id}.name", p.NameKo), Loc.F("ui.levelup.level_up", lv, lv + o.Levels), PassiveNote(p));
                 }
                 default:
                 {

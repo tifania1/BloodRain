@@ -44,9 +44,9 @@ namespace BloodRain.Core.Build
             switch (offer.Kind)
             {
                 case OfferKind.NewWeapon: w[offer.Id] = 1; break;
-                case OfferKind.UpgradeWeapon: w[offer.Id] = w.TryGetValue(offer.Id, out var wl) ? wl + 1 : 1; break;
+                case OfferKind.UpgradeWeapon: w[offer.Id] = (w.TryGetValue(offer.Id, out var wl) ? wl : 0) + offer.Levels; break;   // 대오 카드는 2레벨
                 case OfferKind.NewPassive: p[offer.Id] = 1; break;
-                case OfferKind.UpgradePassive: p[offer.Id] = p.TryGetValue(offer.Id, out var pl) ? pl + 1 : 1; break;
+                case OfferKind.UpgradePassive: p[offer.Id] = (p.TryGetValue(offer.Id, out var pl) ? pl : 0) + offer.Levels; break;
             }
             return new BuildLevels(w, p);
         }
