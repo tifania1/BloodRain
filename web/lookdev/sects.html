@@ -135,10 +135,11 @@ void main(){
 const FSP=`#version 300 es
 precision highp float;
 in vec2 v;out vec4 o;
-uniform sampler2D uTex,uNoise;uniform float uFlash,uDiss,uAlpha,uSil;
+uniform sampler2D uTex,uNoise;uniform float uFlash,uDiss,uAlpha,uSil;uniform vec3 uCut;
 void main(){vec4 t=texture(uTex,v);float n=texture(uNoise,v*1.3).r;
  float keep=uDiss>0.?smoothstep(uDiss,uDiss+.1,n)*step(uDiss,.999):1.;
  vec3 c=mix(t.rgb,vec3(.05),max(uSil,smoothstep(0.,.5,uDiss)));c=mix(c,vec3(1.,.98,.92),uFlash*.8);
+ if(uCut.z!=0.){float sd=dot(v-.5,uCut.xy);keep*=smoothstep(-.012,.012,sd*uCut.z);c=mix(c,vec3(.04),(1.-smoothstep(0.,.05,abs(sd)))*.85);}
  float a=t.a*keep*uAlpha;o=vec4(c*a,a);}`;
 function prog(vs,fs){const p=gl.createProgram();for(const[t,s]of[[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]]){const h=gl.createShader(t);gl.shaderSource(h,s);gl.compileShader(h);if(!gl.getShaderParameter(h,gl.COMPILE_STATUS))console.error('shader',gl.getShaderInfoLog(h));gl.attachShader(p,h);}gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))console.error('link',gl.getProgramInfoLog(p));
  const u={};const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const inf=gl.getActiveUniform(p,i);u[inf.name]=gl.getUniformLocation(p,inf.name);}return{p,u};}
@@ -167,7 +168,7 @@ function fx(shape,x,y,w,h,rot,o){const P=PF;gl.useProgram(P.p);common(P,x,y,w,h,
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,NOISE);gl.uniform1i(P.u.uNoise,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
 function glow(shape,x,y,w,h,rot,o){fx(shape,x,y,w,h,rot,o);fx(shape,x,y,w,h,rot,Object.assign({},o,{add:true,alpha:(o.alpha==null?1:o.alpha)*.4}));}
 function sprite(tex,x,y,w,h,rot,o){if(!tex.ok)return;const P=PS;gl.useProgram(P.p);common(P,x,y,w,h,rot);
- gl.uniform1f(P.u.uFlash,o.flash||0);gl.uniform1f(P.u.uDiss,o.diss||0);gl.uniform1f(P.u.uAlpha,o.alpha==null?1:o.alpha);gl.uniform1f(P.u.uSil,o.sil||0);
+ gl.uniform1f(P.u.uFlash,o.flash||0);gl.uniform1f(P.u.uDiss,o.diss||0);gl.uniform1f(P.u.uAlpha,o.alpha==null?1:o.alpha);gl.uniform1f(P.u.uSil,o.sil||0);const cu=o.cut||[0,0,0];gl.uniform3f(P.u.uCut,cu[0],cu[1],cu[2]);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(P.u.uTex,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,NOISE);gl.uniform1i(P.u.uNoise,1);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
 // 색 램프: [가장자리, 가운데, 심]
 const INK=[[.13,.12,.11],[.06,.06,.06],[.02,.02,.02]];
@@ -202,7 +203,8 @@ function hit(e,dmg,dir,kb,kind,heavy){if(e.dead>=0)return;e.hp-=dmg;
  if(kind==='gold'){drops(hx,hy,dir,heavy?12:6,12,GOLD,true,.12,.9);drops(hx,hy,dir,3,7,INK,false,.11,.6);}
  if(kind==='amber'){drops(hx,hy,dir,7,9,AMBER,true,.11,1.3);drops(hx,hy,dir,4,6,BROWN,false,.13,.9);}
  if(kind==='blue'){drops(hx,hy,dir,7,13,BLUE,true,.09,.7);}
- if(e.hp<=0){e.dead=0;stop(heavy?.06:.035);shake(heavy?.45:.16,dir);
+ if(e.hp<=0){e.dead=0;stop(heavy?.06:.035);shake(heavy?.45:.16,dir);if(tier>=3){e.split=1;e.ca=dir+rnd(-.35,.35);}   // 3단부터 두 동강(VF-08)
+
   ST.push({x:e.x+Math.cos(dir)*.5,y:e.y+Math.sin(dir)*.5,t:0,seed:Math.random()*9,rot:dir,s:rnd(.9,1.4)});
   drops(hx,hy,dir,8,9,INK,false,.15,1.1);}
  else if(heavy){stop(.04);shake(.3,dir);} }
@@ -276,19 +278,19 @@ function step(dt){
  cool-=dt;if(cool<=0){const tg=nearest(4.2);if(tg){Pl.face=Math.atan2(tg.y,tg.x);STY[style].fire(Pl.face);fired++;cool=STY[style].cd;}else cool=.1;}
  Pl.lunge*=Math.pow(.0005,dt);Pl.sway*=Math.pow(.02,dt);
  let alive=0;for(let i=E.length-1;i>=0;i--){const e=E[i];
-  if(e.dead>=0){e.dead+=dt;e.x+=e.kx*dt;e.y+=e.ky*dt;e.kx*=Math.pow(.01,dt);e.ky*=Math.pow(.01,dt);if(e.dead>(old?.12:.4))E.splice(i,1);continue;}
+  if(e.dead>=0){e.dead+=dt;e.x+=e.kx*dt;e.y+=e.ky*dt;e.kx*=Math.pow(.01,dt);e.ky*=Math.pow(.01,dt);if(e.dead>(old?.12:e.split?.6:.4))E.splice(i,1);continue;}
   alive++;const d=Math.hypot(e.x,e.y)||1;if(d>1.0){e.x-=e.x/d*1.25*dt;e.y-=e.y/d*1.25*dt;}
   e.x+=e.kx*dt;e.y+=e.ky*dt;const dk=Math.pow(.004,dt);e.kx*=dk;e.ky*=dk;e.fl=Math.max(0,e.fl-dt/.055);e.sq=Math.max(0,e.sq-dt/.16);}
  if(alive<26)spawn(26-alive);
  for(let i=FX.length-1;i>=0;i--){const f=FX[i];const t0=f.t;f.t+=dt;for(const h of f.hooks)if(t0<h.t&&f.t>=h.t)h.f();if(f.t>=f.life)FX.splice(i,1);}
  for(let i=PT.length-1;i>=0;i--){const p=PT[i];p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;const dr=Math.pow(.02,dt);p.vx*=dr;p.vy*=dr;if(p.t>=p.life)PT.splice(i,1);}
- for(let i=ST.length-1;i>=0;i--){ST[i].t+=dt;if(ST[i].t>6)ST.splice(i,1);}
+ for(let i=ST.length-1;i>=0;i--){ST[i].t+=dt;if(ST[i].t>8)ST.splice(i,1);}   // 바닥 먹 자국 8초에 마름(review 6절 잔흔)
  for(let i=NUM.length-1;i>=0;i--){NUM[i].t+=dt;if(NUM[i].t>.7)NUM.splice(i,1);}
 }
 function draw(){
  gl.disable(gl.BLEND);fx(9,cam[0],cam[1],VW*2,VH*2,0,{});
  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
- for(const s of ST){const k=s.t/6;fx(3,s.x,s.y,s.s*2,s.s*1.4,s.rot,{p:[3,.35,.8],c:INK,alpha:.26*(1-k)*(1-k),diss:.12+k*.5,seed:s.seed});}
+ for(const s of ST){const k=s.t/8;fx(3,s.x,s.y,s.s*2,s.s*1.4,s.rot,{p:[3,.35,.8],c:INK,alpha:.26*(1-k)*(1-k),diss:.12+k*.5,seed:s.seed});}
  for(const f of FX)if(f.under)f.draw(f,f.t/f.life);
  const list=E.slice().sort((a,b)=>b.y-a.y);let pd=false;
  const drawP=()=>{const lx=Math.cos(Pl.la)*Pl.lunge,ly=Math.sin(Pl.la)*Pl.lunge;fx(5,Pl.x+lx,Pl.y+ly-.02,1.5,.55,0,{p:[.2],c:INK,alpha:.22});
@@ -296,7 +298,9 @@ function draw(){
  for(const e of list){if(!pd&&e.y<Pl.y){drawP();pd=true;}
   const hop=Math.abs(Math.sin(time*5+e.seed))*.13,sq=old?0:e.sq;
   if(e.dead<0)fx(5,e.x,e.y-.02,1.2,.45,0,{p:[.2],c:INK,alpha:.2});
-  sprite(TSIG,e.x,e.y+.85+hop,(e.x>Pl.x?-1:1)*1.9*(1+.28*sq),1.9*(1-.22*sq),Math.cos(e.sa)*sq*.35,{flash:old?0:e.fl,sil:old?1:0,diss:e.dead>=0?(old?.01:Math.min(.99,e.dead/.4)):0,alpha:e.dead>=0&&old?1-e.dead/.12:1});}
+  if(e.split&&e.dead>=0&&!old){const fl=e.x>Pl.x?-1:1,nx=Math.cos(e.ca),ny=Math.sin(e.ca),sl=Math.min(1,e.dead/.25),gap=(1-(1-sl)*(1-sl))*.55,dz=Math.max(0,Math.min(.99,(e.dead-.18)/.42));
+   for(const sd of[1,-1])sprite(TSIG,e.x+nx*gap*sd,e.y+.85+ny*gap*sd-e.dead*.4*(sd<0?1:.4),fl*1.9,1.9,sd*e.dead*.5,{flash:Math.max(0,1-e.dead/.06),diss:dz,cut:[nx*fl,ny,sd]});}
+  else sprite(TSIG,e.x,e.y+.85+hop,(e.x>Pl.x?-1:1)*1.9*(1+.28*sq),1.9*(1-.22*sq),Math.cos(e.sa)*sq*.35,{flash:old?0:e.fl,sil:old?1:0,diss:e.dead>=0?(old?.01:Math.min(.99,e.dead/.4)):0,alpha:e.dead>=0&&old?1-e.dead/.12:1});}
  if(!pd)drawP();
  for(const f of FX)if(!f.under)f.draw(f,f.t/f.life);
  for(const p of PT){const k=p.t/p.life,sp=Math.hypot(p.vx,p.vy);(p.add?glow:fx)(5,p.x,p.y,p.size*(1+sp*.09),p.size*(1-k*.5),Math.atan2(p.vy,p.vx),{p:[p.add?.3:.55],c:p.col,alpha:.92*(1-k*k)});}
