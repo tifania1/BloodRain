@@ -47,7 +47,6 @@
    - 이미지 세션은 큐·`Assets/Art`·`docs/vfx_preview`·daily 만 건드린다. `art_inbox` 는 PC 원래 폴더 것을 쓴다.
    - 올리기 전에 `git fetch` + `git rebase origin/claude/dev`.
    - `queue.jsonl` 이 충돌하면 origin 쪽을 받고, 이번 세션이 바꾼 줄의 status 만 다시 고친다.
-   - **한 번만(backlog PR-02, 2026-11-08):** 그리기 전에 `python tools/postprocess_art.py --redo-bg`(art_inbox 원본으로 스프라이트·초상·소품 배경을 다시 지움) → `python tools/split_props.py` → 초상 하나·소품 낱장 하나를 어두운 바탕에 얹어 얼굴·만두 속이 안 비치는지 본다. 원본이 없다고 나온 그림만 `--redo-bg --from-assets --only <id>`. 끝나면 backlog PR-02 를 닫고 이 줄을 지운다.
 2. **연결 확인.** 크롬 확장이 연결돼 있는지(`list_connected_browsers`) 보고, chatgpt.com 에 로그인돼 있는지 확인한다. 아래 중 하나라도 해당하면 바로 멈추고 daily 에 한 줄 남긴다.
    - 확장이 연결돼 있지 않다.
    - 로그인 화면이 뜬다.
