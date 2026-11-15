@@ -99,8 +99,8 @@ namespace BloodRain.Presentation.Fx
             var ws = WorldScale.Current;
             if (ws == null || player == null) return;
             var kb = Keyboard.current;
-            if (kb != null && kb.oKey.wasPressedThisFrame) Spray(500); // 시험: 구슬 500개 흩뿌려 합치기 보기
-            if (kb != null && kb.mKey.wasPressedThisFrame) Field.PullAll();
+            if (kb != null && DebugOverlay.On && kb.oKey.wasPressedThisFrame) Spray(500); // 시험: 구슬 500개 흩뿌려 합치기 보기
+            if (kb != null && DebugOverlay.On && kb.mKey.wasPressedThisFrame) Field.PullAll(); // 시험 키(DBG-01U)
 
             var (value, count) = Field.Step(Time.deltaTime, player.position, ws.Length(_magnet), ws.Length(absorbRealmMeters),
                                             ws.Speed(pullBase), ws.Speed(pullPerSecond), ws.Realm, ws.Length(_bodyRadius));
@@ -159,7 +159,7 @@ namespace BloodRain.Presentation.Fx
         void OnGUI()
         {
             ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
-            if (!showStats || Field == null) return;
+            if (!showStats || !DebugOverlay.On || Field == null) return; // DBG-01U F1
             string xp = TestXp != null ? $"  레벨 {TestXp.Level} ({TestXp.Xp:0}/{TestXp.Required})  경지 {TestXp.Realm.NameKo}" : "";
             GUI.Label(new Rect(12, 52, 640, 22), $"구슬 {Field.Count}/{Field.Limit}  합침 {Field.Merges}{xp}   K 일격, O 구슬 500, M 모두 끌기");
         }

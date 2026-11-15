@@ -20,7 +20,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 까닭과 본 것은 `docs/design/review_2026-11-13.md`. '하는 중: 대화 세션' 표시가 붙은 항목은 대화 세션이 PC Unity 로 직접 하니 건너뛴다(대화 세션은 22:30 전에 Unity 에서 손을 뗀다).
 
-- [ ] DBG-01U 디버그 글 기본 끔 · 먼저: 없음 (2026-11-13 사람이 본 플레이테스트에서 HUD 를 덮음 — `docs/design/review_2026-11-13.md` 2절)
+- [x] DBG-01U 디버그 글 기본 끔 · 먼저: 없음 (2026-11-13 사람이 본 플레이테스트에서 HUD 를 덮음 — `docs/design/review_2026-11-13.md` 2절) — 2026-11-15 PC: `Presentation/DebugOverlay.cs` 새로 둠(기본 꺼짐, F1 로 켜고 끔, `Debug.isDebugBuild` 가 거짓이면 F1 도 안 먹음). LifeRunner·EnemyField·WeaponRunner·OrbLayer·PlayerVitals·BloodShadowRunner·BgmPlayer·SfxPlayer 의 OnGUI 디버그 줄과 시험 키(Ctrl+숫자, [ ] C K, O M)가 이 스위치를 따름. 각 컴포넌트 showDebug·showStats 는 그대로 두고 둘 다 참일 때만 띄움. Run 씬 Play 콘솔 에러 0, 끔·켬 두 장 찍음(`debug_f1.png` 가 켠 것)
   - 할 것: `LifeRunner.showDebug` 기본값을 끔으로, F1 로 켜고 끔. 개발 빌드가 아닌 빌드(`Debug.isDebugBuild` 가 거짓)에선 F1 도 안 먹게. 다른 OnGUI 디버그 줄(EnemyField·WeaponRunner·OrbLayer·LanternLayer·ChestLayer 의 시험 줄)도 같은 스위치를 따르게 한다. 시험 씬에서 쓰는 키(Ctrl+숫자 등)는 디버그가 켜졌을 때만.
   - 쓸 것: `Presentation/LifeRunner.cs`(showDebug), OnGUI 를 가진 Presentation 파일들
   - 메뉴: 없음

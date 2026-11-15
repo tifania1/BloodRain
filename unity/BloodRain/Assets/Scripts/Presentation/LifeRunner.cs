@@ -924,7 +924,7 @@ namespace BloodRain.Presentation
         {
             ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
             DrawPopups();
-            if (!showDebug || _life == null) return;
+            if (!showDebug || !DebugOverlay.On || _life == null) return; // DBG-01U F1
             var realm = _life.Scale.Realms[_life.Realm];
             var region = _life.Regions.Region(_life.RegionId);
             GUI.color = Color.white;

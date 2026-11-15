@@ -193,7 +193,7 @@ namespace BloodRain.Presentation.Combat
         {
             if (World == null || enemies == null || player == null || enemies.Sim == null) return;
             var kb = Keyboard.current;
-            if (kb != null && kb.leftCtrlKey.isPressed)
+            if (kb != null && DebugOverlay.On && kb.leftCtrlKey.isPressed) // 시험 키는 디버그가 켜졌을 때만(DBG-01U)
             {
                 if (kb.digit1Key.wasPressedThisFrame) Learn(TestOrder[0]);
                 if (kb.digit2Key.wasPressedThisFrame) Learn(TestOrder[1]);
@@ -2102,7 +2102,7 @@ namespace BloodRain.Presentation.Combat
         void OnGUI()
         {
             ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
-            if (!showStats) return;
+            if (!showStats || !DebugOverlay.On) return; // DBG-01U F1
             var sb = new System.Text.StringBuilder("무공 ");
             foreach (var s in slots)
             {

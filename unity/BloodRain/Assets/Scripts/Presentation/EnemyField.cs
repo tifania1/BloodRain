@@ -818,7 +818,7 @@ namespace BloodRain.Presentation
         void Update()
         {
             var kb = Keyboard.current;
-            if (kb != null)
+            if (kb != null && DebugOverlay.On) // 시험 키는 디버그가 켜졌을 때만(DBG-01U)
             {
                 if (kb.rightBracketKey.wasPressedThisFrame) targetCount = Mathf.Min(capacity, targetCount * 2);
                 if (kb.leftBracketKey.wasPressedThisFrame) targetCount = Mathf.Max(1, targetCount / 2);
@@ -1545,7 +1545,7 @@ namespace BloodRain.Presentation
         void OnGUI()
         {
             ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
-            if (!showStats) return;
+            if (!showStats || !DebugOverlay.On) return; // DBG-01U F1
             GUI.Label(new Rect(12, 12, 520, 22), $"적 {Count}/{(testSpawn ? targetCount.ToString() : "디렉터")}  시뮬 {_simMs:0.00}ms  {_fps:0}fps   [ ] 수 조절, C 비우기");
         }
     }

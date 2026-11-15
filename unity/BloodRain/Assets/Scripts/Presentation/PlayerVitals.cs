@@ -193,7 +193,7 @@ namespace BloodRain.Presentation
         void OnGUI()
         {
             ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
-            if (!showStats) return;
+            if (!showStats || !DebugOverlay.On) return; // DBG-01U F1
             GUI.Label(new Rect(12, 32, 520, 22), $"기혈 {Health:0}/{MaxHealth:0}  맞음 {Hits}  받은 피해 {DamageTaken:0}  피함 {Evades}  회복 {Healed:0.#}");
         }
     }

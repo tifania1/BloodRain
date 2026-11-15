@@ -172,7 +172,7 @@ namespace BloodRain.Presentation
         void OnGUI()
         {
             ImguiFont.Use(); // 웹 빌드에서 한글이 빠지지 않게(WG-01Ub)
-            if (!showStats || Step <= 0) return;
+            if (!showStats || !DebugOverlay.On || Step <= 0) return; // DBG-01U F1
             var st = Strength;
             GUI.Label(new Rect(12, 92, 640, 22),
                 $"혈마의 그림자 {st.Step}단계  피해 {st.ContactDamage:0.#}  걸음 {st.MoveSpeed:0}  적 피해 x{st.EnemyDamageMultiplier:0.##}  맞힘 {HitsDealt}  순간이동 {Teleports}");
