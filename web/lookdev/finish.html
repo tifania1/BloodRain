@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>화면 마감 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;900&display=swap">
+<style>
+:root{--bg:#efe6d0;--fg:#1c1a17;--mut:#6b6457;--line:#cbbf9f;--btn:#e4d9bb;--on:#1c1a17;--onfg:#f3ead4;--gold:#8a6c0c;--stage:#2a2620}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#16140f;--fg:#ece3cc;--mut:#a2977f;--line:#3b3628;--btn:#27231a;--on:#e9dfc4;--onfg:#17150f;--gold:#d7b545;--stage:#0e0d0b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16140f;--fg:#ece3cc;--mut:#a2977f;--line:#3b3628;--btn:#27231a;--on:#e9dfc4;--onfg:#17150f;--gold:#d7b545;--stage:#0e0d0b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:15px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:26px;font-weight:900;margin:0}
+h1 small{font-size:14px;font-weight:400;color:var(--mut);margin-left:.6em}
+.lead{margin:0;color:var(--mut);max-width:65ch}
+.bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grp>span{font-size:12px;color:var(--mut);letter-spacing:.12em}
+button{font:inherit;font-size:14px;padding:7px 13px;border:1px solid var(--line);background:var(--btn);color:var(--fg);border-radius:3px;cursor:pointer;min-height:36px}
+button[aria-pressed="true"]{background:var(--on);color:var(--onfg);border-color:var(--on);font-weight:600}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.stage{position:relative;width:100%;aspect-ratio:16/9;background:var(--stage);border:1px solid var(--line);overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+#tag{position:absolute;left:1.2%;top:1.5%;font-size:12px;color:#f3ead4;background:rgba(28,26,23,.55);padding:2px 8px;border-radius:2px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-top:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-size:12px;letter-spacing:.12em;color:var(--gold);font-weight:600}
+.scroll{overflow-x:auto}
+code{font-size:.9em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>화면 마감 시안 <small>혈우강호 · 2026-11-15 · VF-12</small></h1>
+  <p class="lead">review 5-2 '화면' 줄(약한 Bloom은 기·금빛에만, 종이 질감, 가장자리 어둡게)을 한 화면에서 켜고 꺼 봅니다. 선지 위에선 빛이 하얗게 날아가니 Bloom은 HDR로 그린 기·금빛만 넘는 문턱을 두고 아주 약하게, 혈우 장막 안처럼 어두운 곳에서만 눈에 띄게 합니다. 적 위험 표시(밝은 주홍)는 HDR로 그리지 않으니 번지지 않습니다.</p>
+  <div class="bar">
+    <div class="grp" id="gCase"><span>곳</span></div>
+    <div class="grp" id="gPre"><span>마감</span></div>
+    <div class="grp" id="gTog"><span>한 겹씩</span></div>
+  </div>
+  <div class="stage" id="stage"><canvas id="out"></canvas><div id="tag"></div></div>
+  <div class="scroll"><table>
+    <thead><tr><th>겹</th><th>시안 값</th><th>Unity(URP 2D, Global Volume 하나)</th><th>까닭</th></tr></thead>
+    <tbody>
+      <tr><td>Bloom</td><td>문턱 1.0(선형), 세기 0.35, 퍼짐 0.55, 색 없음. 혈우 장막 안은 세기 0.6</td><td>Volume Bloom: Threshold 1, Intensity 0.35, Scatter 0.55, High Quality Filtering 끔. 카메라 HDR 켬. 기·금빛 재질만 색을 1.6~2배(HDR)로, 원화·바닥·UI·적 위험 표시는 1 이하</td><td>선지 바탕은 이미 밝아 문턱이 낮으면 화면 전체가 뿌예짐. 문턱으로 '무엇이 빛나는지'를 재질이 정하게</td></tr>
+      <tr><td>가장자리 어둡게</td><td>먹색 #1c1a17, 세기 0.22, 부드러움 0.45, 둥글게. 혈우 장막 안 0.3</td><td>Volume Vignette: Color #1C1A17, Intensity 0.22, Smoothness 0.45, Rounded 켬. 장막 세기는 BloodRain 장막 거리로 0.22 → 0.3 섞기</td><td>가운데(몸)로 눈이 모이고 화면 끝 덩이 적이 덜 시끄러움</td></tr>
+      <tr><td>종이</td><td><code>paper_1.png</code> 곱하기 한 겹, 한 변 6m</td><td>FL-01U 바닥 셰이더 몫(이 Volume 에 넣지 않음)</td><td>후처리로 깔면 캐릭터 위에도 결이 덮여 원화가 탁해짐</td></tr>
+      <tr><td>효과 간소화</td><td>Bloom 끔, 가장자리 어둡게만 남김</td><td><code>FxSettings.Simplified</code> 면 Bloom 의 active 를 끔</td><td>휴대폰에서 Bloom 이 가장 비쌈</td></tr>
+      <tr><td>넣지 않는 것</td><td>색수차·필름 잡티·피사계 심도</td><td>Volume 에 넣지 않음</td><td>수묵 그림체와 안 맞고 읽기를 해침</td></tr>
+    </tbody>
+  </table></div>
+</div>
+<script>
+(()=>{
+const CASES=[{id:"day",label:"숭산 낮(선지)"},{id:"rain",label:"혈우 장막 안"}];
+const PRESETS=[{id:"now",label:"지금(마감 없음)",on:{bloom:0,vig:0,paper:0}},{id:"look",label:"시안",on:{bloom:1,vig:1,paper:1}},{id:"strong",label:"문턱 낮춤(나쁜 예)",on:{bloom:2,vig:1,paper:1}},{id:"mobile",label:"효과 간소화",on:{bloom:0,vig:1,paper:1}}];
+const LOOK={bloom:{intensity:0.35,rainIntensity:0.6,scatter:0.55},vig:{intensity:0.22,rainIntensity:0.3,smooth:0.45,color:"28,26,23"}};
+const $=s=>document.querySelector(s);
+const stage=$("#stage"),cv=$("#out"),cx=cv.getContext("2d"),tag=$("#tag");
+const base=document.createElement("canvas"),bx=base.getContext("2d"),emi=document.createElement("canvas"),ex=emi.getContext("2d");
+const h=location.hash.slice(1).split("-");
+let cs=CASES.find(c=>c.id===h[0])||CASES[0],pre=PRESETS.find(p=>p.id===h[1])||PRESETS[1],on={...pre.on};
+function mk(grp,list,cur,fn){const g=$(grp);list.forEach(x=>{const b=document.createElement("button");b.textContent=x.label;b.dataset.id=x.id;b.onclick=()=>fn(x);g.appendChild(b)});}
+function sync(){
+  [...$("#gCase").children].forEach(b=>b.dataset.id&&b.setAttribute("aria-pressed",b.dataset.id===cs.id));
+  [...$("#gPre").children].forEach(b=>b.dataset.id&&b.setAttribute("aria-pressed",pre&&b.dataset.id===pre.id));
+  [...$("#gTog").children].forEach(b=>b.dataset.id&&b.setAttribute("aria-pressed",!!on[b.dataset.id]));
+  history.replaceState(null,"","#"+cs.id+(pre?"-"+pre.id:""));
+}
+mk("#gCase",CASES,cs,c=>{cs=c;sync()});
+mk("#gPre",PRESETS,pre,p=>{pre=p;on={...p.on};sync()});
+mk("#gTog",[{id:"bloom",label:"Bloom"},{id:"vig",label:"가장자리 어둡게"},{id:"paper",label:"종이"}],null,t=>{on[t.id]=on[t.id]?0:1;pre=PRESETS.find(p=>p.on.bloom===on.bloom&&p.on.vig===on.vig&&p.on.paper===on.paper)||null;sync()});
+// 종이: 사이트에선 Art/VFX/Common/paper_1.png, 없으면 비슷하게 그림
+let paperPat=null;
+function fallbackPaper(){const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,256,256);
+  let s=11;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+  for(let i=0;i<40;i++){g.fillStyle=`rgba(120,110,90,${0.03+r()*0.04})`;g.beginPath();g.arc(r()*256,r()*256,10+r()*40,0,7);g.fill()}
+  g.strokeStyle="rgba(90,80,60,.16)";g.lineWidth=0.7;for(let i=0;i<260;i++){const x=r()*256,y=r()*256,a=r()*6.28,l=6+r()*18;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+Math.cos(a+0.6)*l*0.5,y+Math.sin(a+0.6)*l*0.5,x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}
+  return c}
+const im=new Image();im.onload=()=>{paperPat=im};im.onerror=()=>{paperPat=fallbackPaper()};im.src="vfx/Common/paper_1.png";
+let W=0,H=0,D=1;
+function resize(){D=Math.min(2,devicePixelRatio||1);W=cv.width=base.width=stage.clientWidth*D;H=cv.height=base.height=stage.clientHeight*D;emi.width=Math.max(1,W>>2);emi.height=Math.max(1,H>>2)}
+addEventListener("resize",resize);resize();
+// 장면: 몸 가운데, 시강 무리가 둘러쌈, 삼재검법 3단 금빛 호·창천검기 초승달·적 위험 고리
+let s0=5;const rr=()=>(s0=(s0*1664525+1013904223)>>>0)/4294967296;
+const foes=[...Array(46)].map(()=>{const a=rr()*6.283,R=0.17+rr()*0.5;return{a,R,ph:rr()*6,sp:0.03+rr()*0.04}});
+const props=[...Array(9)].map(()=>({x:rr(),y:rr(),k:rr()<0.4?"house":"tree",s:0.6+rr()*0.6}));
+const M=()=>H/9; // 1m 가 화면 높이의 1/9 쯤
+function ink(g,x,y,rw,rh,col){g.fillStyle=col;g.beginPath();g.ellipse(x,y,rw,rh,0,0,7);g.fill()}
+function drawScene(g,t,dark,emissive){
+  const m=M(),cxp=W/2,cyp=H/2;
+  if(!emissive){
+    g.fillStyle=dark?"#9b8d80":"#ece2c8";g.fillRect(0,0,W,H);
+    if(!on.paper){g.strokeStyle=dark?"rgba(40,30,30,.25)":"rgba(80,70,50,.22)";g.lineWidth=D;const st=m*0.9;
+      for(let y=(-t*0)%st;y<H;y+=st){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();for(let x=((y/st)%2)*st/2;x<W;x+=st){g.beginPath();g.moveTo(x,y);g.lineTo(x,y+st);g.stroke()}}
+      g.fillStyle=g.strokeStyle;g.font=`${m*0.3}px serif`;for(let i=0;i<60;i++)g.fillText("v",((i*137)%100)/100*W,((i*61)%100)/100*H)}
+    else if(paperPat){g.save();g.globalCompositeOperation="multiply";const p=g.createPattern(paperPat,"repeat");const sc=6*m/paperPat.width;p.setTransform(new DOMMatrix([sc,0,0,sc,0,0]));g.fillStyle=p;g.fillRect(0,0,W,H);g.restore();
+      for(let i=0;i<7;i++)ink(g,((i*0.37+0.1)%1)*W,((i*0.53+0.2)%1)*H,m*0.5,m*0.18,"rgba(60,55,45,.08)")}
+    for(const p of props){const x=p.x*W,y=p.y*H;if(Math.hypot(x-cxp,y-cyp)<m*2)continue;
+      if(p.k==="tree"){ink(g,x,y+m*0.5*p.s,m*0.5*p.s,m*0.12*p.s,"rgba(40,35,30,.18)");ink(g,x,y,m*0.42*p.s,m*0.5*p.s,dark?"#3d3a36":"#4f5a48");g.fillStyle="#3a2f25";g.fillRect(x-m*0.04*p.s,y+m*0.2*p.s,m*0.08*p.s,m*0.35*p.s)}
+      else{g.fillStyle=dark?"#5b5049":"#cdbf9f";g.fillRect(x-m*0.7*p.s,y-m*0.3*p.s,m*1.4*p.s,m*0.7*p.s);g.fillStyle="#2c2a28";g.beginPath();g.moveTo(x-m*0.95*p.s,y-m*0.25*p.s);g.lineTo(x,y-m*0.8*p.s);g.lineTo(x+m*0.95*p.s,y-m*0.25*p.s);g.fill()}}
+    // 적 위험 고리(밝은 주홍, HDR 아님)
+    const dz=(t*0.6)%1;g.strokeStyle=`rgba(214,72,40,${0.85-dz*0.5})`;g.lineWidth=m*0.06;g.setLineDash([m*0.2,m*0.12]);g.beginPath();g.arc(W*0.76,H*0.3,m*(0.9+dz*0.2),0,7);g.stroke();g.setLineDash([]);
+    g.fillStyle="rgba(214,72,40,.18)";g.beginPath();g.arc(W*0.76,H*0.3,m*0.9,0,7);g.fill();
+    for(const f of foes){const a=f.a+t*f.sp,R=f.R*W*0.55,x=cxp+Math.cos(a)*R,y=cyp+Math.sin(a)*R*0.62,hop=Math.max(0,Math.sin(t*5+f.ph))*m*0.22;
+      ink(g,x,y+m*0.28,m*0.22,m*0.07,"rgba(30,25,20,.25)");g.fillStyle=dark?"#4a3f45":"#6d6a5e";g.fillRect(x-m*0.13,y-m*0.42-hop,m*0.26,m*0.62);ink(g,x,y-m*0.5-hop,m*0.13,m*0.13,"#e1d6bd");g.fillStyle="#1c1a17";g.fillRect(x-m*0.28,y-m*0.28-hop,m*0.56,m*0.06)}
+    // 몸
+    ink(g,cxp,cyp+m*0.32,m*0.3,m*0.09,"rgba(30,25,20,.3)");g.fillStyle="#2a3440";g.beginPath();g.moveTo(cxp-m*0.2,cyp+m*0.3);g.lineTo(cxp,cyp-m*0.45);g.lineTo(cxp+m*0.2,cyp+m*0.3);g.fill();ink(g,cxp,cyp-m*0.52,m*0.14,m*0.14,"#efe3c8");g.fillStyle="#1c1a17";ink(g,cxp,cyp-m*0.62,m*0.15,m*0.08,"#1c1a17");
+  }
+  // 기·금빛(바탕에도 그리고, emissive 에도 그림 — HDR 로 그린 것만 Bloom 문턱을 넘는다)
+  const k=emissive?1:D;
+  const sw=(t%1.1)/0.25;
+  if(sw<1.6){const p=Math.min(1,sw),fade=sw<1?1:1-(sw-1)/0.6,a0=-2.2,a1=a0+2.6*p,R=m*1.35;
+    if(!emissive){g.strokeStyle=`rgba(28,26,23,${0.55*fade})`;g.lineWidth=m*0.28;g.lineCap="round";g.beginPath();g.arc(cxp,cyp,R,a0,a1);g.stroke()}
+    g.strokeStyle=emissive?`rgba(255,214,110,${fade})`:`rgba(217,182,74,${0.9*fade})`;g.lineWidth=m*(emissive?0.2:0.14);g.lineCap="round";g.beginPath();g.arc(cxp,cyp,R,a0,a1);g.stroke();
+    if(!emissive){g.strokeStyle=`rgba(255,246,214,${0.8*fade})`;g.lineWidth=m*0.04;g.beginPath();g.arc(cxp,cyp,R,a0+0.2,a1);g.stroke()}}
+  for(let i=0;i<3;i++){const a=t*2.4+i*2.094,R=m*2.1,x=cxp+Math.cos(a)*R,y=cyp+Math.sin(a)*R*0.62;
+    g.save();g.translate(x,y);g.rotate(a+1.57);
+    if(!emissive){g.fillStyle="rgba(28,26,23,.35)";g.beginPath();g.arc(0,m*0.04,m*0.36,3.4,6.0);g.arc(0,m*0.16,m*0.3,6.0,3.4,true);g.fill()}
+    g.fillStyle=emissive?"rgba(160,210,255,.9)":"rgba(150,190,225,.85)";g.beginPath();g.arc(0,0,m*0.36,3.4,6.0);g.arc(0,m*0.12,m*0.3,6.0,3.4,true);g.fill();g.restore();
+    for(let j=1;j<6;j++){const b=a-j*0.09,xx=cxp+Math.cos(b)*R,yy=cyp+Math.sin(b)*R*0.62;g.fillStyle=emissive?`rgba(160,210,255,${0.5-j*0.08})`:`rgba(150,190,225,${0.5-j*0.08})`;g.beginPath();g.arc(xx,yy,m*(0.12-j*0.015),0,7);g.fill()}}
+  // 진기 구슬(금빛 작은 점)
+  for(let i=0;i<10;i++){const x=W*((i*0.31+0.13)%1),y=H*((i*0.47+0.21)%1);if(Math.hypot(x-cxp,y-cyp)<m*1.5)continue;g.fillStyle=emissive?"rgba(255,220,120,.9)":"#d9b64a";g.beginPath();g.arc(x,y,m*0.07,0,7);g.fill()}
+}
+function frame(now){
+  const t=now/1000,dark=cs.id==="rain";
+  bx.setTransform(1,0,0,1,0,0);drawScene(bx,t,dark,false);
+  if(dark){bx.fillStyle="rgba(60,10,25,.38)";bx.fillRect(0,0,W,H);bx.strokeStyle="rgba(150,40,60,.35)";bx.lineWidth=D;
+    for(let i=0;i<180;i++){const u=((i*0.618+t*0.13*(1+i%3*0.2))%1)*W,v=((i*0.377+t*0.9*(0.8+i%5*0.1))%1)*H;bx.beginPath();bx.moveTo(u,v);bx.lineTo(u-H*0.01,v+H*0.04);bx.stroke()}}
+  cx.setTransform(1,0,0,1,0,0);cx.globalCompositeOperation="source-over";cx.globalAlpha=1;cx.filter="none";cx.drawImage(base,0,0);
+  if(on.bloom){
+    ex.setTransform(1,0,0,1,0,0);ex.clearRect(0,0,emi.width,emi.height);ex.save();ex.scale(emi.width/W,emi.height/H);
+    if(on.bloom===2){ex.drawImage(base,0,0)} // 문턱을 낮추면 밝은 바탕까지 문턱을 넘는다
+    drawScene(ex,t,dark,true);ex.restore();
+    const I=on.bloom===2?0.55:(dark?LOOK.bloom.rainIntensity:LOOK.bloom.intensity),r=H*0.012*(1+LOOK.bloom.scatter*2);
+    cx.globalCompositeOperation=dark?"lighter":"screen";
+    cx.filter=`blur(${r}px)`;cx.globalAlpha=I;cx.drawImage(emi,0,0,W,H);
+    cx.filter=`blur(${r*2.4}px)`;cx.globalAlpha=I*0.6;cx.drawImage(emi,0,0,W,H);
+    cx.filter="none";cx.globalAlpha=1;cx.globalCompositeOperation="source-over";
+  }
+  if(on.vig){const I=dark?LOOK.vig.rainIntensity:LOOK.vig.intensity,R=Math.hypot(W,H)/2,inner=R*(1-LOOK.vig.smooth)*0.9;
+    const gr=cx.createRadialGradient(W/2,H/2,inner,W/2,H/2,R);gr.addColorStop(0,`rgba(${LOOK.vig.color},0)`);gr.addColorStop(1,`rgba(${LOOK.vig.color},${Math.min(1,I*3)})`);cx.fillStyle=gr;cx.fillRect(0,0,W,H)}
+  tag.textContent=(pre?pre.label:"직접 고름")+" · Bloom "+(on.bloom===2?"문턱 낮음":on.bloom?"켬":"끔")+" · 가장자리 "+(on.vig?"켬":"끔")+" · 종이 "+(on.paper?"켬":"끔");
+  requestAnimationFrame(frame);
+}
+sync();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -61,6 +61,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: 설정 흔들림 0% 에서 흔들림 없음, 100% 에서 큰 타격에만. 콘솔 에러 0
   - 찍기: `docs/unity_shots/HF-02U/` 의 `dash_trail.png`
+  (진행: 2026-11-13 대화 세션 커밋 c4fcff7 이 HitFeel 히트스톱·방향 흔들림, PlayerLook 튀어나감·경공 잔상을 넣음. 걷기 기울임·눌림은 BD-01U 때 있던 것. 남은 것: '끝' 확인(흔들림 0%·100%)과 찍기. 값은 2026-11-15 클라우드가 vfx.md '타격감 값' 표에 옮김 — 잔상은 지금 한 번에 8장쯤이라 review 의 '3장'과 다름)
 
 - [ ] VF-01U 통합 이펙트 셰이더와 삼재검법·소림·개방·남궁 · 먼저: backlog VF-01 (하는 중: 대화 세션 11-13 밤)
   - 할 것: 시안(`web/lookdev/sects.html` — 안의 `FS` 가 FxInk 조각 셰이더, `swing`·`punch`·`orbit`·`skySword`·`hit` 이 겹 조합과 값)의 셰이더 식을 `Art/Shaders/FxInk.shader` 로 옮기고, WeaponRunner 의 옛 도형(`AddFx`) 자리에 네 무공부터 다섯 겹 이펙트를 붙인다.
@@ -68,6 +69,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: `BloodRain/Bootstrap/` 아래 이펙트 재질 짓는 메뉴
   - 끝: 네 무공이 서로 다른 색·모양·움직임으로 읽힘. 사람이 보고 '이 정도'를 정함
   - 찍기: `docs/unity_shots/VF-01U/` 의 `samjae.png`·`shaolin.png`·`gaebang.png`·`namgung.png`
+
+- [ ] PP-01U 화면 마감: 약한 Bloom·가장자리 어둡게 · 먼저: 없음 (2026-11-15 클라우드 VF-12)
+  - 할 것: Run 씬에 Global Volume 하나(Bloom·Vignette 만). Bloom 은 문턱 1·세기 0.35·퍼짐 0.55, 카메라 HDR 켬, 기·금빛 이펙트 재질(FxInk 의 빛 겹, 금빛 비백, 진기 구슬)만 색을 1.6~2배로 올려 문턱을 넘게 하고 원화·바닥·UI·적 위험 표시(밝은 주홍)는 1 이하로 둔다. Vignette 는 색 #1C1A17·세기 0.22·부드러움 0.45·둥글게, 혈우 장막 안으로 들어갈수록 0.3(Bloom 은 0.6)까지. `FxSettings.Simplified` 면 Bloom 끔. 색수차·필름 잡티·피사계 심도는 넣지 않는다. FL-01U 가 비네트를 따로 깔았으면 하나로 합친다
+  - 쓸 것: 시안 `web/lookdev/finish.html`(아래 표, 주소 `#day-look`·`#rain-look`·`#day-strong`), URP 2D Renderer 의 Post Processing, `Presentation/Fx/FxSettings.cs`, 혈우 장막 거리(BloodRain 장막 코드)
+  - 메뉴: Run 씬 짓는 메뉴에 Volume 을 붙임(다시 돌려도 하나만)
+  - 끝: 숭산 낮 화면이 Bloom 을 켜기 전과 거의 같은 밝기이고 금빛 호·진기 구슬만 살짝 번짐, 장막 안에선 번짐이 눈에 띔. 효과 간소화에서 Bloom 꺼짐. 300마리에서 ms 를 daily 에. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/PP-01U/` 의 `day.png`·`rain.png`
 
 - [ ] GU-02U 대오 카드 금빛 테두리 · 먼저: backlog GU-02
   - 할 것: 레벨업 카드가 `Offer.Great`(= `CardText.Great`)면 금빛 테두리와 첫째 줄 옆 '대오' 배지를 붙인다. 첫째 줄 `Lv a→b` 는 2026-11-14 클라우드가 `LevelUpScreen` 571·582줄을 `lv + o.Levels` 로 바꿔 두 단계를 보인다(컴파일 확인 전 — 에러면 그것부터). 뜰 때 다른 카드보다 0.1초 늦게 반짝이게(레벨업 징 위에 맑은 소리 하나, 소리가 없으면 넘어감)
