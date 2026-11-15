@@ -54,6 +54,35 @@ namespace BloodRain.Presentation
             public EnemyMove Move;
             public Color Tint;
             public float Weight;
+            public Texture2D Art;   // 적 원화(B-12Ua). null 이면 임시 강시 + 종류 색
+            public float Size;      // 덩이 안 사람 크기(경지 m)
+        }
+
+        [Tooltip("적 원화(enemy_<id>·elite_<id>). 'BloodRain/Bootstrap/적 원화를 덩이에' 메뉴가 Assets/Art/Enemies 에서 채운다.")]
+        public Texture2D[] enemyArt = new Texture2D[0];
+
+        Kind MakeKind(EnemyDef def, EnemyMove move, float weight)
+        {
+            Texture2D art = null;
+            foreach (var t in enemyArt)
+                if (t != null && (t.name == "enemy_" + def.Id || t.name == "elite_" + def.Id)) { art = t; break; }
+            // 원화가 색을 갖고 있으니 종류 색은 원화 없는 종류만
+            return new Kind { Def = def, Move = move, Tint = art != null ? Color.white : TintOf(def.Family), Weight = weight, Art = art, Size = KindSize(def) };
+        }
+
+        /// <summary>덩이 안 사람 크기(경지 m). 웹 프로토타입 KIND_SIZE 와 같은 값.</summary>
+        static float KindSize(EnemyDef def)
+        {
+            if (def.Family == "elite") return 2.6f;
+            switch (def.Id)
+            {
+                case "donggap": return 1.6f;
+                case "hyeolin": return 1.2f;
+                case "hyeol_musa": return 1.35f;
+                case "mogin_nahan": return 1.5f;
+                case "golden_toad": return 1.0f;
+                default: return 1.3f; // sigang·hyeol_gangsi 와 그 밖
+            }
         }
 
         EnemySim _sim;
@@ -457,7 +486,7 @@ namespace BloodRain.Presentation
             foreach (var (id, w) in Mix)
             {
                 var def = data.Enemy(id);
-                _kinds.Add(new Kind { Def = def, Move = MoveOf(def.Behavior), Tint = TintOf(def.Family), Weight = w });
+                _kinds.Add(MakeKind(def, MoveOf(def.Behavior), w));
                 _totalWeight += w;
             }
             _sim = new EnemySim(capacity);
@@ -588,14 +617,14 @@ namespace BloodRain.Presentation
             if (kindIndex < 0)
             {
                 // 생성표 밖 적(디렉터·시험이 직접 넣은 것)도 종류 순번을 갖게 가중치 0 으로 표 끝에 붙인다(DefOf·탄·보상이 읽는다)
-                _kinds.Add(new Kind { Def = def, Move = move, Tint = TintOf(def.Family), Weight = 0f });
+                _kinds.Add(MakeKind(def, move, 0f));
                 kindIndex = _kinds.Count - 1;
             }
             a.Kind = kindIndex;
             int id = _sim.Spawn(a);
             if (id < 0) return -1;
             var tint = kindIndex >= 0 ? _kinds[kindIndex].Tint : TintOf(def.Family);
-            _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f };
+            _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Art = _kinds[kindIndex].Art, Size = _kinds[kindIndex].Size, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f };
             if (def.Twin != null && !_spawningTwin)
             {
                 // 흑백 쌍강시(enemies.json twin, 기획서 6장): 플레이어 쪽 방향에 직각으로 Gap m 옆에 짝을 하나 더 세운다

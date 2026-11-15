@@ -1093,7 +1093,6 @@ MonoBehaviour:
   art:
   - {fileID: 2800000, guid: c05242b4dc964e90808a90ee47e3bb38, type: 3}
   - {fileID: 2800000, guid: 2edc38293eb04079afd3469a6cc7e783, type: 3}
-  inputGuardSeconds: 0.6
 --- !u!4 &670523075
 Transform:
   m_ObjectHideFlags: 0
@@ -2587,6 +2586,36 @@ MonoBehaviour:
   vitals: {fileID: 0}
   showStats: 1
   damageMultiplier: 1
+  enemyArt:
+  - {fileID: 2800000, guid: 3b81e35faf3a4b96b890bd339163b81d, type: 3}
+  - {fileID: 2800000, guid: 5d05c00150e0468bafd132a3fda9ca91, type: 3}
+  - {fileID: 2800000, guid: 514c4b534c014978a7b436865132bce3, type: 3}
+  - {fileID: 2800000, guid: 5e8486833fd44432b0c42b0b30f2afa3, type: 3}
+  - {fileID: 2800000, guid: e7cc2bca36b74171ba3c086db9968cec, type: 3}
+  - {fileID: 2800000, guid: 5bbd79594f4440d68d17446cc0a91cef, type: 3}
+  - {fileID: 2800000, guid: 6cea54c7329e4cdf9a561f73daf85c82, type: 3}
+  - {fileID: 2800000, guid: 76f174ce17444922b8434be942367fe0, type: 3}
+  - {fileID: 2800000, guid: ae52cdd278be4da5a239140385e381f0, type: 3}
+  - {fileID: 2800000, guid: c5f64fb236d243aea154e981d8b90896, type: 3}
+  - {fileID: 2800000, guid: 777069014aa94b25a4739960cc401707, type: 3}
+  - {fileID: 2800000, guid: 3feabae1de8c42b784f458c6a289fbf2, type: 3}
+  - {fileID: 2800000, guid: b56e72c94aa542adbf0165dcdde10814, type: 3}
+  - {fileID: 2800000, guid: bde36fd5d7a84854879ed5819cfc5fde, type: 3}
+  - {fileID: 2800000, guid: 09b1686766094d8895832dc591e210b5, type: 3}
+  - {fileID: 2800000, guid: 1d13687d917249fba079482f5d12f153, type: 3}
+  - {fileID: 2800000, guid: 6a1ebd16aa3e4fd2aa8e300d62fadb01, type: 3}
+  - {fileID: 2800000, guid: ee36ff54193a40198b1a035c502c6696, type: 3}
+  - {fileID: 2800000, guid: 50fb721c00e3483c90e04497df991eeb, type: 3}
+  - {fileID: 2800000, guid: 9af32d69ad7b4baaa2b0c177b2b1747e, type: 3}
+  - {fileID: 2800000, guid: 81596390b1b74db9bb63f9b310a2b809, type: 3}
+  - {fileID: 2800000, guid: d7e26652105f4d0faa549bc78917c9ef, type: 3}
+  - {fileID: 2800000, guid: 9ae97057abd84295a202b125956d3fb6, type: 3}
+  - {fileID: 2800000, guid: 9501bb24196e4d38a71dc6a7ce3229bd, type: 3}
+  - {fileID: 2800000, guid: 862bf19b8ace4ecc9fa16c9fc4d89664, type: 3}
+  - {fileID: 2800000, guid: f95bde81f6a14f55a027486f836a8cc1, type: 3}
+  - {fileID: 2800000, guid: cb75ce52d1be49cdbc55ae60fa03b5bb, type: 3}
+  - {fileID: 2800000, guid: af0822ffe8224c5bb5d6b8e9f982421f, type: 3}
+  - {fileID: 2800000, guid: f82c51169be34d8bad0f6edbf93cc40f, type: 3}
   levelUp: {fileID: 0}
 --- !u!114 &1925260474
 MonoBehaviour:

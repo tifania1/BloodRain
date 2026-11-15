@@ -15,6 +15,10 @@ namespace BloodRain.Presentation.Fx
         /// <summary>시뮬레이션이 주는 콩콩 박자(0~1, 앞 HopDuty 동안 공중). -1 이면 렌더러 시계로 계속 뛴다(TU-04 시험용), -2 면 안 뛴다.</summary>
         public float HopBeat = -1f;
         public float HopDuty = 0.72f;
+        /// <summary>이 덩이 사람 그림(적 원화, B-12Ua). null 이면 렌더러의 atlas(임시 강시).</summary>
+        public Texture2D Art;
+        /// <summary>사람 하나 크기(그 덩이가 생긴 경지 m). 0 이면 렌더러의 memberRealmMeters.</summary>
+        public float Size;
 
         internal int Drawn = -1;          // 지난 프레임에 그린 사람 수
         internal int FadeFrom;            // 디졸브 중인 사람의 끝 순번(이 순번 아래, Drawn 이상이 사라지는 중)
@@ -111,6 +115,9 @@ namespace BloodRain.Presentation.Fx
             _count = 0;
             var rp = new RenderParams(material) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
 
+            // 1) 덩이마다 그릴 사람 수·디졸브를 한 번만 셈하고, 화면 안 덩이만 그림별로 모은다(B-12Ua: 적 종류마다 제 원화)
+            _visible.Clear();
+            _textures.Clear();
             foreach (var c in _clusters)
             {
                 int target = ws.Scale.DrawMembers(c.BornRealm, c.Health);
@@ -129,14 +136,25 @@ namespace BloodRain.Presentation.Fx
                 if (upto <= 0) continue;
 
                 int n = ws.Scale.ClusterSize(c.BornRealm);
-                float size = ws.Length(memberRealmMeters, c.BornRealm);
+                float size = ws.Length(c.Size > 0f ? c.Size : memberRealmMeters, c.BornRealm);
                 if (cull && cam != null)
                 {
                     float r = size * (spacing * Mathf.Sqrt(n) + 1f);
                     if (c.Position.x + r < view.xMin || c.Position.x - r > view.xMax ||
                         c.Position.y + r < view.yMin || c.Position.y - r > view.yMax) continue;
                 }
+                var tex = c.Art != null ? c.Art : atlas;
+                if (!_textures.Contains(tex)) _textures.Add(tex);
+                _visible.Add((c, n, size, upto, fadeK, tex));
+            }
 
+            // 2) 그림 한 장마다 그 그림을 쓰는 덩이만 모아 그린다(그리기 호출 = 화면 안 종류 수 × ceil(사람/1023))
+            foreach (var tex in _textures)
+            {
+                _batchTex = tex;
+                foreach (var (c, n, size, upto, fadeK, ctex) in _visible)
+                {
+                if (ctex != tex) continue;
                 var lay = Layout(n, c.Seed);
                 Vector4 tint = c.Tint;
                 for (int i = 0; i < upto; i++)
@@ -163,15 +181,22 @@ namespace BloodRain.Presentation.Fx
                     instances++;
                     if (_count == Batch) { Flush(rp); calls++; }
                 }
+                }
+                if (_count > 0) { Flush(rp); calls++; }
             }
-            if (_count > 0) { Flush(rp); calls++; }
             LastInstances = instances;
             LastDrawCalls = calls;
         }
 
+        readonly List<(ClusterView c, int n, float size, int upto, float fadeK, Texture2D tex)> _visible = new List<(ClusterView, int, float, int, float, Texture2D)>();
+        readonly List<Texture2D> _textures = new List<Texture2D>();
+        Texture2D _batchTex;
+        static readonly int IdMainTex = Shader.PropertyToID("_MainTex");
+
         void Flush(RenderParams rp)
         {
             _mpb.Clear();
+            if (_batchTex != null) _mpb.SetTexture(IdMainTex, _batchTex);
             _mpb.SetVectorArray(IdTint, _tints);
             _mpb.SetFloatArray(IdDissolve, _dissolves);
             Graphics.RenderMeshInstanced(rp, _quad, 0, _mats, _count);
