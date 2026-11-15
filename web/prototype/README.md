@@ -11,6 +11,7 @@
 - 이펙트 갤러리(V-09): https://bloodrain-proto.pages.dev/lookdev/vfx_gallery.html. 원본 `web/lookdev/vfx_gallery.html`. 빌드가 `Assets/Art/VFX` 의 Brush·Common·AI png·json 을 `site/lookdev/vfx/` 로 복사하고, 갤러리가 그걸 읽어 `BrushStroke.shader` 와 같은 식(그어짐·흩어짐·담채·빛 더하기)으로 캔버스에 돌린다. 일렁임은 noise_2 로 uv 를 흔드는 시안(V-08 이 셰이더에 넣을 때 기준). 빌드한 사이트에서만 열린다(file:// 로는 텍스처를 못 읽음).
 - 효과음 듣기(SFX-04): https://bloodrain-proto.pages.dev/lookdev/sfx_listen.html. 원본 `web/lookdev/sfx_listen.html`. 빌드가 `sfx_queue` 줄을 넣고 `Assets/Audio/SFX` 의 ogg·sfx.json 을 `site/lookdev/sfx/` 로 복사한다. 후보를 번호를 가리고 섞어 들려 주고, 고른 것을 feedback.md 에 붙일 줄('sfx_levelup 2·4 고름')로 만든다. AI 후보는 PC 의 `art_inbox/sfx` 폴더를 열면 같이 뜬다. 프로토타입도 같은 파일로 레벨업 징·보스 등장 징·범종·진기 흡수 풍경(연속 흡수 때 5음 음계로 오름)을 틀고, 못 읽으면 예전 발진기 소리로 돌아간다.
 - 천하 시안(기획서 7·10·21장의 천하 한 장 + 환혼 + 윤회의 기): https://bloodrain-proto.pages.dev/lookdev/cheonha.html. 원본 `web/lookdev/cheonha.html`. 아래 '천하 시안' 절 참고.
+- 경지 돌파 시안(VF-11): https://bloodrain-proto.pages.dev/lookdev/breakthrough.html. 원본 `web/lookdev/breakthrough.html`. 기획서 7장 돌파 연출 시간표대로 낙관·물러남·쓸림·깨달음 카드. 주소 끝에 `#jin@0.9` 처럼 붙이면 그 연출 시각에 멈춘다.
 
 ## 묶기와 올리기
 

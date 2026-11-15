@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>경지 돌파 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;900&display=swap">
+<style>
+:root{--bg:#efe6d0;--fg:#1c1a17;--mut:#6b6457;--line:#cbbf9f;--btn:#e4d9bb;--on:#1c1a17;--onfg:#f3ead4;--gold:#8a6c0c;--stage:#2a2620;--paper:#f2e8cf;--ink:#1c1a17;--goldl:#d9b64a;--seal:#5b1d3c;--demon:#5b1d3c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#16140f;--fg:#ece3cc;--mut:#a2977f;--line:#3b3628;--btn:#27231a;--on:#e9dfc4;--onfg:#17150f;--gold:#d7b545;--stage:#0e0d0b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16140f;--fg:#ece3cc;--mut:#a2977f;--line:#3b3628;--btn:#27231a;--on:#e9dfc4;--onfg:#17150f;--gold:#d7b545;--stage:#0e0d0b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:15px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:26px;font-weight:900;margin:0}
+h1 small{font-size:14px;font-weight:400;color:var(--mut);margin-left:.6em}
+.lead{margin:0;color:var(--mut);max-width:65ch}
+.bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grp>span{font-size:12px;color:var(--mut);letter-spacing:.12em}
+button{font:inherit;font-size:14px;padding:7px 13px;border:1px solid var(--line);background:var(--btn);color:var(--fg);border-radius:3px;cursor:pointer;min-height:36px}
+button[aria-pressed="true"]{background:var(--on);color:var(--onfg);border-color:var(--on);font-weight:600}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.stage{position:relative;width:100%;aspect-ratio:16/9;background:var(--stage);border:1px solid var(--line);overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+#clock{position:absolute;right:1.2%;top:1.5%;font-size:12px;color:#d8cfb6;font-variant-numeric:tabular-nums;opacity:.8}
+.ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2%;pointer-events:none}
+.row{display:flex;gap:2.4%;width:84%;justify-content:center}
+.card{position:relative;flex:0 0 18%;min-width:0;aspect-ratio:3/4.4;background:var(--paper);color:var(--ink);border-radius:2px;clip-path:inset(50% 0 50% 0);
+  box-shadow:0 0 0 2px #3b3226 inset;padding:1.4% 1.6%;font-size:clamp(8px,1.05vw,14px);display:flex;flex-direction:column;gap:.35em}
+.card::before,.card::after{content:"";position:absolute;left:-4%;right:-4%;height:5%;background:#4a3b28;border-radius:3px}
+.card::before{top:-1%}.card::after{bottom:-1%}
+.card .g{font-size:3.2em;font-weight:900;line-height:1.1;text-align:center;margin:.1em 0 .15em}
+.card b{font-size:1.1em}
+.card .h{color:#6b6457;font-size:.85em}
+.card .badge{margin-top:auto;font-size:.8em;color:#6b6457;border-top:1px solid #cbbf9f;padding-top:.3em}
+.card.demon{box-shadow:0 0 0 3px var(--demon) inset}
+.card.demon .g{color:var(--demon)}
+.card.demon .badge{color:var(--demon);font-weight:600}
+.card.open{animation:unroll var(--unroll) cubic-bezier(.2,.7,.2,1) forwards;animation-delay:var(--d)}
+@keyframes unroll{from{clip-path:inset(50% 0 50% 0)}to{clip-path:inset(-2% -5% -2% -5%)}}
+.title{color:#efe4c7;font-size:clamp(11px,1.5vw,18px);letter-spacing:.3em;opacity:0}
+.title.open{animation:fadein .3s ease-out forwards;animation-delay:var(--d)}
+@keyframes fadein{to{opacity:1}}
+.note{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 22px;margin:0;padding:0;list-style:none}
+.note li{border-top:1px solid var(--line);padding-top:8px;min-width:0}
+.note b{display:block;font-size:12px;letter-spacing:.14em;color:var(--gold);font-weight:600}
+@media (prefers-reduced-motion: reduce){.card.open{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>경지 돌파 시안 <small>혈우강호 · 2026-11-15 · VF-11</small></h1>
+  <p class="lead">돌파하는 순간 세상이 흑백으로 멎고 새 경지 글자가 낙관처럼 찍힙니다. 화면이 새 축척으로 물러나면서 혈우 장막이 밀려나고 빗줄기가 가운데부터 갈라지며, 0.8초에 발밑의 아래 경지 적이 한꺼번에 쓸려 나갑니다. 1.4초에 먹이 번지고 깨달음 카드가 두루마리처럼 펼쳐집니다. 시간표는 기획서 7장 '돌파 연출'과 cheonha.json `breakthrough` 그대로이고, 카드 펼침 값은 레벨업 시안(levelup.html)과 같습니다.</p>
+  <div class="bar">
+    <div class="grp" id="gCase"><span>경우</span></div>
+    <div class="grp"><span>보기</span><button id="replay">다시 돌파</button><button id="revisit" aria-pressed="false">다시 오른 경지(0.7초)</button><button id="slow" aria-pressed="false">느리게 ×4</button></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="world"></canvas>
+    <canvas id="fx"></canvas>
+    <div class="ui" id="ui"></div>
+    <div id="clock"></div>
+  </div>
+  <ul class="note">
+    <li><b>0~0.2초 · 멎음</b>세상 시간 0.05배. 흑백이 다 켜진 채 0.2초 머물고 0.3초에 걸쳐 색이 돌아옴(BreakthroughFx monoHold·monoFade). 몸 둘레만 색이 남음.</li>
+    <li><b>낙관</b>0.02초부터 0.12초 동안 1.5배 → 1배로 눌러 찍힘, 끝에 2% 눌림 튐. 바탕은 어두운 자주(밝은 주홍은 적 위험 표시 몫). 1.4초부터 0.3초에 걸쳐 옅어짐.</li>
+    <li><b>0.2~1.4초 · 물러남</b>화면 대각선이 36m × 2.25^(경지+0.35)에서 2.25^(경지+1)로, 천천히 출발해 천천히 멈춤(smoothstep). 혈우 장막 반경(첫 화면 대각선 × 2.4)도 같은 진행값.</li>
+    <li><b>빗줄기 갈라짐</b>화면 위 빗줄기가 몸에서부터 둥글게 비켜남. 갈라진 반지름 = 화면 대각선 × 0.55 × 진행값, 가장자리 12%는 옅어지며 휨.</li>
+    <li><b>0.8초 · 쓸림</b>그때 화면 대각선 0.6배 안의 아래 경지 적이 0.25초 동안 바깥으로 거리의 35%만큼 날아가며 먹 점으로 바뀌고, 바닥에 먹 자국이 남음.</li>
+    <li><b>1.4초 · 깨달음</b>먹 번짐 0.35초(72%까지 어둡게) → 0.12초 뒤 첫 카드, 펼침 0.28초·사이 0.06초. 진소운은 넉 장, 마교 몸은 첫 자리가 마공(자주 테두리).</li>
+    <li><b>다시 오른 경지</b>같은 순서를 0.7초로(cheonha.json revisitSeconds). 낙관·쓸림·물러남 시각이 모두 절반. 카드 펼침은 그대로.</li>
+    <li><b>현경</b>장막이 1.6배까지 밀려나며 옅어져 걷힘(BreakthroughFx curtainLiftScale).</li>
+  </ul>
+</div>
+<script>
+(()=>{
+const BT={timeScale:0.05,zoomFrom:0.2,zoomTo:1.4,revisit:0.7,sweepAt:0.8,sweepFrac:0.6};
+const MONO={hold:0.2,fade:0.3}, STAMP={at:0.02,dur:0.12,from:1.5,fadeAt:1.4,fade:0.3};
+const OPEN={bloom:0.35,dark:0.72,lag:0.12,unroll:0.28,stagger:0.06};
+const REALMS=[["삼류","三流"],["이류","二流"],["일류","一流"],["절정","絶頂"],["초절정","超絶頂"],["화경","化境"],["현경","玄境"]];
+const CLUSTER=[1,4,9,16,28,44,64];
+const INS={ilgeom:["一","일검파만","一劍破萬","첫 번째 공격 무공의 피해 +40%"],ungi:["息","운기조식","運氣調息","5초간 움직이지 않으면 기혈 초당 2% 회복"],igi:["御","이기어검","以氣御劍","근접 무공의 사거리 +50%"],geumjong:["鐘","금종조","金鐘罩","10초마다 피해 1회 무효화"],cheolli:["追","천리추종","千里追蹤","진기 구슬 흡수 범위 2배"],salgi:["殺","살기충천","殺氣衝天","처치 수 100마다 공력 +1% (최대 +30%)"],simma:["魔","심마환영","心魔幻影","심마로 음양이 기울 때마다 공력 +2% (최대 +30%)",1]};
+const CASES=[
+ {id:"jin",label:"진소운 · 삼류→이류",from:0,cards:["ilgeom","ungi","igi","cheolli"],badge:"서장 특성 · 넉 장"},
+ {id:"plain",label:"보통 몸 · 일류→절정",from:2,cards:["geumjong","salgi","igi"],badge:"절정 · 첫 절기 그릇, 각성 판정"},
+ {id:"demon",label:"마교 몸 · 이류→일류",from:1,cards:["simma","ilgeom","cheolli"],badge:""},
+ {id:"top",label:"화경→현경 · 장막 걷힘",from:5,cards:["salgi","geumjong","ungi"],badge:""}];
+const $=s=>document.querySelector(s);
+const stage=$("#stage"),wc=$("#world"),fc=$("#fx"),wx=wc.getContext("2d"),fx=fc.getContext("2d"),ui=$("#ui"),clock=$("#clock");
+let cs=CASES[0],revisit=false,slow=false,t0=0,world=null,cardsShown=false;
+const hp=location.hash.slice(1).split("@");let freeze=hp[1]?parseFloat(hp[1]):-1; // #jin@0.9 = 연출 0.9초에 멈춤(찍기용)
+const caseFromHash=()=>CASES.find(c=>c.id===hp[0])||CASES[0];
+const g=$("#gCase");
+CASES.forEach(c=>{const b=document.createElement("button");b.textContent=c.label;b.dataset.id=c.id;b.onclick=()=>{cs=c;freeze=-1;history.replaceState(null,"","#"+c.id);start()};g.appendChild(b)});
+$("#replay").onclick=()=>{freeze=-1;start()};
+$("#revisit").onclick=e=>{revisit=!revisit;e.target.setAttribute("aria-pressed",revisit);start()};
+$("#slow").onclick=e=>{slow=!slow;e.target.setAttribute("aria-pressed",slow);start()};
+function rng(s){return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+const diagAt=(k,p)=>36*Math.pow(2.25,k+p);
+const smooth=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x)};
+function build(){
+  const r=rng(7+cs.from*13),k=cs.from,S=Math.pow(2.25,k),props=[],foes=[],rain=[];
+  // 지금 경지 축척의 마당 소품 + 한 단계 위 축척에서 보일 먼 소품
+  for(let i=0;i<220;i++){const R=(0.18+Math.pow(r(),0.8))*diagAt(k,1.1)*0.75,a=r()*6.283,far=R>diagAt(k,0.5)*0.5,house=r()<0.4;
+    props.push({x:Math.cos(a)*R,y:Math.sin(a)*R*0.62,kind:house?"house":"tree",s:(house?5+r()*4:1.5+r()*1.5)*S*(far?2.25:1),v:r()})}
+  for(let i=0;i<70;i++){const R=(0.1+r()*0.6)*diagAt(k,0.35)*0.5,a=r()*6.283;foes.push({x:Math.cos(a)*R,y:Math.sin(a)*R,s:0.45*S,ph:r()*6,swept:-1,vx:0,vy:0})}
+  for(let i=0;i<260;i++)rain.push({u:r(),v:r(),l:0.02+r()*0.03,sp:0.6+r()*0.6});
+  world={props,foes,rain,k};
+}
+function start(){
+  [...g.children].forEach(b=>b.tagName==="BUTTON"&&b.setAttribute("aria-pressed",b.dataset.id===cs.id));
+  build();cardsShown=false;ui.innerHTML="";t0=performance.now();
+}
+function resize(){const d=Math.min(2,devicePixelRatio||1);[wc,fc].forEach(c=>{c.width=stage.clientWidth*d;c.height=stage.clientHeight*d})}
+addEventListener("resize",resize);
+function showCards(at){
+  const tl=document.createElement("div");tl.className="title open";tl.style.setProperty("--d",(OPEN.lag)+"s");
+  tl.textContent="깨달음 — 하나를 고른다";ui.appendChild(tl);
+  const row=document.createElement("div");row.className="row";ui.appendChild(row);
+  cs.cards.forEach((id,i)=>{const c=INS[id],el=document.createElement("div");el.className="card"+(c[4]?" demon":"");
+    el.innerHTML=`<div class="g">${c[0]}</div><b>${c[1]}</b><span class="h">${c[2]}</span><span>${c[3]}</span><span class="badge">${c[4]?"마공":(i===0&&cs.badge?cs.badge:"깨달음")}</span>`;
+    el.style.setProperty("--unroll",OPEN.unroll*(slow?4:1)+"s");el.style.setProperty("--d",(OPEN.lag+i*OPEN.stagger)*(slow?4:1)+"s");
+    row.appendChild(el);requestAnimationFrame(()=>el.classList.add("open"))});
+}
+function frame(now){
+  requestAnimationFrame(frame);if(!world)return;
+  const W=wc.width,H=wc.height,cx=W/2,cy=H/2,D=Math.hypot(W,H);
+  const real=freeze>=0?freeze:(now-t0)/1000/(slow?4:1), sc=revisit?BT.revisit/BT.zoomTo:1, t=real/sc; // t = 1.4초 기준 시계
+  const k=world.k,top=k===5;
+  const zp=smooth((t-BT.zoomFrom)/(BT.zoomTo-BT.zoomFrom));
+  const diag=diagAt(k,0.35+0.65*zp), ppm=D/diag;
+  const c0=2.4*diagAt(k,0), c1=top?c0*1.6:2.4*diagAt(k+1,0), curtain=c0+(c1-c0)*zp, curtainA=top?1-zp:1;
+  const mono=t<MONO.hold?1:Math.max(0,1-(t-MONO.hold)/MONO.fade);
+  clock.textContent=`연출 ${Math.min(t,BT.zoomTo)*sc>=BT.zoomTo*sc&&t>BT.zoomTo?'끝 ·':''} ${(Math.min(t,BT.zoomTo)*sc).toFixed(2)}초 / ${(BT.zoomTo*sc).toFixed(2)}`;
+  // 세상
+  wx.setTransform(1,0,0,1,0,0);wx.fillStyle="#d9cfb3";wx.fillRect(0,0,W,H);
+  const P=(x,y)=>[cx+x*ppm,cy+y*ppm];
+  for(const p of world.props){const [x,y]=P(p.x,p.y),s=p.s*ppm;if(x<-s||y<-s||x>W+s||y>H+s||s<0.4)continue;
+    wx.globalAlpha=0.35+0.3*p.v;
+    if(p.kind==="house"){wx.fillStyle="#6d5a44";wx.fillRect(x-s/2,y-s*0.35,s,s*0.7);wx.fillStyle="#2f2a24";wx.fillRect(x-s*0.6,y-s*0.5,s*1.2,s*0.22)}
+    else{wx.fillStyle="#4f6a4a";wx.beginPath();wx.arc(x,y,s/2,0,6.283);wx.fill()}}
+  wx.globalAlpha=1;
+  // 장막: 둘레의 붉은 비
+  wx.save();wx.globalAlpha=0.85*curtainA;wx.strokeStyle="#8e1d1d";
+  const cr=curtain*ppm;wx.lineWidth=Math.max(1,D*0.0012);
+  for(let i=0;i<360;i++){const a=i/360*6.283,j=(i*37%11)/11,rr=cr*(0.97+0.06*j);const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr*0.62;
+    wx.beginPath();wx.moveTo(x,y-D*0.008);wx.lineTo(x-D*0.002,y+D*0.008);wx.stroke()}
+  wx.globalAlpha=0.18*curtainA;wx.fillStyle="#5a1010";wx.beginPath();wx.rect(0,0,W,H);wx.ellipse(cx,cy,cr,cr*0.62,0,0,6.283,true);wx.fill("evenodd");wx.restore();
+  // 적
+  const sweepR=BT.sweepFrac*diagAt(k,0.35+0.65*smooth((BT.sweepAt-BT.zoomFrom)/(BT.zoomTo-BT.zoomFrom)));
+  for(const f of world.foes){
+    if(t>=BT.sweepAt&&f.swept<0&&Math.hypot(f.x,f.y)<sweepR)f.swept=BT.sweepAt;
+    let x=f.x,y=f.y,a=1,s=f.s*ppm;
+    if(f.swept>=0){const q=Math.min(1,(t-f.swept)/0.25/ (1/sc)*1);x*=1+0.35*smooth(q);y*=1+0.35*smooth(q);a=1-q;
+      const [mx,my]=P(f.x*1.35,f.y*1.35);wx.globalAlpha=0.35*Math.min(1,q*2);wx.fillStyle="#1c1a17";wx.beginPath();wx.ellipse(mx,my,s*0.9,s*0.5,0,0,6.283);wx.fill()}
+    const [px,py]=P(x,y);wx.globalAlpha=a;wx.fillStyle=f.swept>=0?"#1c1a17":"#3a3f36";wx.beginPath();wx.arc(px,py,Math.max(1,s*(f.swept>=0?0.6:1)),0,6.283);wx.fill()}
+  wx.globalAlpha=1;
+  wc.style.filter=`grayscale(${mono}) contrast(${1+0.25*mono})`;
+  // 위 겹: 빗줄기·몸·낙관·먹 번짐
+  fx.setTransform(1,0,0,1,0,0);fx.clearRect(0,0,W,H);
+  const part=D*0.55*zp, edge=D*0.12;
+  fx.strokeStyle="rgba(120,30,30,.55)";fx.lineWidth=Math.max(1,D*0.0009);
+  for(const r of world.rain){const yy=((r.v+real*r.sp*0.05)%1)*H,xx=r.u*W;let dx=xx-cx,dy=yy-cy,d=Math.hypot(dx,dy);
+    let al=d<part?0:d<part+edge?(d-part)/edge:1;if(al<=0)continue;let push=(1-al)*edge*0.6;
+    const ox=xx+dx/d*push,oy=yy+dy/d*push;fx.globalAlpha=al;fx.beginPath();fx.moveTo(ox,oy);fx.lineTo(ox-D*0.003,oy+r.l*H);fx.stroke()}
+  fx.globalAlpha=1;
+  const ps=0.5*Math.pow(2.25,k)*D/diagAt(k,0.35); // 몸은 화면에서 늘 같은 크기
+  fx.fillStyle="#efe4c7";fx.beginPath();fx.arc(cx,cy,ps*0.75,0,6.283);fx.fill();fx.fillStyle="#2b5a7a";fx.beginPath();fx.arc(cx,cy,ps*0.55,0,6.283);fx.fill();
+  if(t>=STAMP.at){const q=Math.min(1,(t-STAMP.at)/STAMP.dur),bounce=q<1?0:Math.max(0,0.02*(1-(t-STAMP.at-STAMP.dur)/0.08));
+    const s=(STAMP.from+(1-STAMP.from)*smooth(q))*(1-bounce), fa=t<STAMP.fadeAt?1:Math.max(0,1-(t-STAMP.fadeAt)/STAMP.fade);
+    const name=REALMS[k+1],L=H*0.2*s,x=cx,y=H*0.24;fx.save();fx.globalAlpha=Math.min(1,q*1.6)*fa;fx.translate(x,y);fx.rotate(-0.04);
+    fx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue("--seal")||"#5b1d3c";fx.fillRect(-L/2,-L/2,L,L);
+    fx.strokeStyle="#efe4c7";fx.lineWidth=L*0.03;fx.strokeRect(-L*0.42,-L*0.42,L*0.84,L*0.84);
+    fx.fillStyle="#efe4c7";fx.textAlign="center";fx.textBaseline="middle";const n=name[1].length,fs=L*(n>2?0.3:0.38);
+    fx.font=`900 ${fs}px "Noto Serif KR",serif`;
+    if(n>2){fx.fillText(name[1].slice(0,2),0,-fs*0.55);fx.fillText(name[1].slice(2),0,fs*0.55)}else{fx.fillText(name[1][0],0,-fs*0.5);fx.fillText(name[1][1],0,fs*0.55)}
+    fx.font=`600 ${H*0.035}px "Noto Serif KR",serif`;fx.fillStyle="#efe4c7";fx.shadowColor="rgba(0,0,0,.85)";fx.shadowBlur=H*0.012;fx.fillText(`${name[0]} · 적 한 덩이 ${CLUSTER[k+1]}`,0,L*0.5+H*0.05);fx.restore()}
+  if(t>=BT.zoomTo){const q=Math.min(1,(real-BT.zoomTo*sc)/OPEN.bloom);const R=D*0.75*smooth(q);
+    const gr=fx.createRadialGradient(cx,cy,0,cx,cy,Math.max(1,R));gr.addColorStop(0,`rgba(20,18,15,${OPEN.dark})`);gr.addColorStop(0.8,`rgba(20,18,15,${OPEN.dark*0.9})`);gr.addColorStop(1,"rgba(20,18,15,0)");
+    fx.fillStyle=gr;fx.fillRect(0,0,W,H);if(!cardsShown){cardsShown=true;showCards()}}
+}
+cs=caseFromHash();resize();start();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

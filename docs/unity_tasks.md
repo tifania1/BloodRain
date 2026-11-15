@@ -97,6 +97,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 객잔 → 연무장에서 경맥 그림 위 혈 20곳이 보이고 사고·환불이 예전과 같이 됨. 콘솔 에러 0
   - 찍기: `docs/unity_shots/GU-04U/` 의 `meridian.png`
 
+- [ ] BT-01U 경지 돌파를 '깨달음'답게 · 먼저: 없음 (2026-11-15 클라우드 VF-11)
+  - 할 것: 지금 돌파 줌(흑백·물러남·쓸림)은 그대로 두고 겉을 시안대로: 새 경지 한자를 어두운 자주 낙관으로 찍기(0.02초부터 0.12초, 1.5배 → 1배, 1.4초부터 0.3초에 옅어짐, 아래 '이류 · 적 한 덩이 4' 한 줄), 화면 빗줄기가 몸에서부터 둥글게 갈라짐(반지름 = 화면 대각선 × 0.55 × 줌 진행), 쓸린 적이 0.25초 동안 바깥으로 거리 35% 날아가며 먹 점으로 바뀌고 바닥 먹 자국, 깨달음 화면(InsightScreen)이 레벨업 시안과 같은 먹 번짐 + 두루마리 펼침으로 열림. 다시 오른 경지(0.7초)는 시각을 모두 절반.
+  - 쓸 것: 시안 `web/lookdev/breakthrough.html`(값은 그 아래 표, `#jin@0.9` 처럼 멈춰 봄), `Presentation/Fx/BreakthroughFx.cs`(Stamp·Swept·Ended), `Presentation/Hud/InsightScreen.cs`, 레벨업 열림은 GU-01U 와 같은 코드를 나눠 씀, `Fx/InkMarks.cs`, 경지 이름·덩이 수는 cheonha.json `realmScale`·strings
+  - 메뉴: 시험 메뉴 `다음 경지까지 진기(플레이 중)`
+  - 끝: 삼류 → 이류 돌파에서 낙관이 찍히고, 빗줄기가 갈라지고, 쓸린 시강이 먹 점으로 날아가고, 깨달음 넉 장(진소운)이 펼쳐짐. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/BT-01U/` 의 `stamp.png`(0.3초쯤)·`sweep.png`(0.9초쯤)·`insight.png`
+
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
 - [x] WG-01U 진짜 게임을 브라우저에서: WebGL 새로 빌드해 올리기 · 먼저: 없음 (2026-11-09 사람: "웹 프로토타입 말고 진짜 게임은 어디서 해볼 수 있지?") — 2026-11-09 21:00 PC: 커밋 cf47b4d 를 `BloodRain/WebGL 빌드`(릴리스, 54.3MB, 14분 16초)로 묶어 https://dev.bloodrain.pages.dev 에 올림. BloodRain.data.br 가 44MiB 라 Cloudflare Pages 25MiB 상한에 걸려서 `tools/split_webgl_data.py` 를 새로 둠(data 를 풀어 조각 셋으로 다시 brotli, index.html 이 이어 붙인 Blob 을 dataUrl 로) — **앞으로 올리는 순서: 빌드 → `python tools/split_webgl_data.py` → `web/_headers` 복사 → wrangler**. GPU 크롬(playwright channel=chrome, 헤드리스 아님)으로 타이틀이 뜨고 시작 → 서장 → 레벨업 카드 → 쓰러짐 → 서장 다시까지 돎, 브라우저 붉은 오류 0. 그 뒤(장삼 처치 → 정산 → 객잔 → 침방)는 장삼이 아직 Run 에 없어(C-10a) 웹이든 에디터든 못 감 — WG-01Ub 로 넘김. 서장 쓰러짐은 혼에 아무것도 안 남기는 설계라 새로고침 뒤 '혼 저장 없음'이 맞고, IndexedDB 에 /idbfs 는 생김(이어하기 확인도 WG-01Ub). 본 것: 웹은 기기 갈래가 Mobile(적 상한 400)로 잡힘, OnGUI 디버그 줄 한글은 여전히 빔. 찍음 `docs/unity_shots/WG-01U/` 의 `title_web.png`·`run_web.png`
