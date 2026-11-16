@@ -63,11 +63,52 @@ namespace BloodRain.Core.Tests
         }
 
         [Fact]
+        public void 삼재검법_다섯_단계는_Lv3_4_6_7에서_오른다()
+        {
+            var w = _d.Weapon("samjae_sword");
+            Assert.Equal((3, 4, 6, 7), WeaponGrowth.VisualStageLevels(w));
+            int[] want = { 1, 1, 2, 3, 3, 4, 5, 5 };
+            for (int lv = 1; lv <= 8; lv++) Assert.Equal(want[lv - 1], WeaponGrowth.VisualStage(w, lv));
+        }
+
+        [Theory]
+        [InlineData(new[] { "2", "5" }, 1, 3, 3, 4, 5, 5)]   // 가운데 레벨이 문턱과 겹치면 2단을 건너뛴다(Lv2 가 곧 3단)
+        [InlineData(new[] { "3", "4" }, 1, 2, 3, 5, 5, 5)]   // 문턱이 붙어 있으면 4단을 건너뛴다
+        [InlineData(new[] { "5", "8" }, 1, 1, 2, 2, 3, 3)]   // Lv3·Lv5·Lv7·Lv8
+        public void 가운데_단계는_문턱과_겹치면_건너뛴다(string[] ms, int l1, int l2, int l3, int l4, int l5, int l6)
+        {
+            var w = With(ms);
+            int[] want = { l1, l2, l3, l4, l5, l6 };
+            for (int lv = 1; lv <= 6; lv++) Assert.Equal(want[lv - 1], WeaponGrowth.VisualStage(w, lv));
+        }
+
+        [Fact]
+        public void 모든_무공_다섯_단계는_세_단계와_어긋나지_않는다()
+        {
+            // 1·2단은 VisualTier 1, 3·4단은 2, 5단은 3. 새 동작이 붙는 레벨에서 3단·5단이 시작된다
+            foreach (var w in _d.Weapons)
+            {
+                int prev = 1;
+                for (int lv = 1; lv <= WeaponGrowth.MaxLevel; lv++)
+                {
+                    int st = WeaponGrowth.VisualStage(w, lv);
+                    Assert.True(st >= prev && st <= 5, w.Id);
+                    Assert.Equal(WeaponGrowth.VisualTier(w, lv), (st + 1) / 2);
+                    prev = st;
+                }
+                Assert.Equal(1, WeaponGrowth.VisualStage(w, 1));
+                Assert.Equal(5, prev);
+            }
+        }
+
+        [Fact]
         public void vfx_md_가_규칙을_적고_있다()
         {
             var md = File.ReadAllText(Path.Combine(TestData.RepoRoot, "docs", "design", "vfx.md"));
             Assert.Contains("마일스톤이 없는 무공은 Lv4·Lv7로 본다", md);
             Assert.Contains("WeaponGrowth.VisualTier", md);
+            Assert.Contains("WeaponGrowth.VisualStage", md);
+            Assert.Contains("| 5단 |", md);
         }
     }
 }

@@ -65,6 +65,22 @@ namespace BloodRain.Core.Combat
             return level >= third ? 3 : level >= second ? 2 : 1;
         }
 
+        /// <summary>이펙트 다섯 단계 가운데 2~5단이 시작되는 레벨(docs/design/vfx.md 단계 규칙, 2026-11-16).
+        /// 3단·5단은 VisualTierLevels 의 두 문턱(새 동작이 붙는 레벨) 그대로이고, 2단·4단은 그 앞 구간의 가운데 레벨이다.
+        /// 삼재검법(Lv4·Lv7)이면 3·4·6·7. 가운데 레벨이 문턱과 겹치면 그 단계는 건너뛴다.</summary>
+        public static (int second, int third, int fourth, int fifth) VisualStageLevels(WeaponDef w)
+        {
+            var (a, b) = VisualTierLevels(w);
+            return ((a + 2) / 2, a, (a + b + 1) / 2, b);
+        }
+
+        /// <summary>그 레벨의 이펙트 단계 1~5(절기는 따로). 1·2단은 VisualTier 1, 3·4단은 2, 5단은 3 에 든다.</summary>
+        public static int VisualStage(WeaponDef w, int level)
+        {
+            var (second, third, fourth, fifth) = VisualStageLevels(w);
+            return level >= fifth ? 5 : level >= fourth ? 4 : level >= third ? 3 : level >= second ? 2 : 1;
+        }
+
         /// <summary>그 레벨이면 붙어 있는 새 동작인지(이름으로). 이름이 데이터에 없으면 예외.</summary>
         public static bool HasMilestone(WeaponDef w, int level, string name)
         {
