@@ -9,7 +9,8 @@ namespace BloodRain.Presentation.Fx
     //   - 화면 짧은 변의 0.4배보다 커진 소품(마당의 전각 등)은 옅게(최소 0.25)
     //   - 산은 화면 대각선 140m→700m 사이에서 0→0.6 으로 떠오름(수묵 지도 그림이 있으면 산은 그림에 맡기고 안 그림)
     //   - 화면 대각선에 비해 너무 작아진 소품은 수묵 지도로 넘김(TU-08, MapLayer.FadeFor)
-    // 소품 그림이 아직 없어 웹 시안의 도형 소품(나무·집·전각·산 세 벌씩)을 코드로 그린 임시 텍스처를 쓴다.
+    // 그림은 PropArt 목록(Art/Props/Parts 원화, PR-02U)에서 종류·벌마다 하나(ArtIds). 씬에 PropArt 가 없거나 그림이 빠지면
+    //   웹 시안의 도형 소품(나무·집·전각·산 세 벌씩)을 코드로 그린 임시 텍스처로 넘어간다.
     // 종류·벌마다 재질 하나, Graphics.RenderMeshInstanced 로 그린다. 그리는 순서는 먼 것(지도 위쪽) 먼저.
     public sealed class PropLayer : MonoBehaviour
     {
@@ -23,6 +24,18 @@ namespace BloodRain.Presentation.Fx
         public int seed = 7;
         [Tooltip("이 지역 한가운데가 Unity (0,0). 비우면 WorldCoords.Origin 을 그대로 쓴다")]
         public string originRegion = "";
+
+        // 종류 × 벌 → Art/Props/Parts 원화 이름(PropKind 순서: Tree, House, Temple, Mount). PR-02U
+        static readonly string[] ArtIds =
+        {
+            "prop_pine_old", "prop_pine_cliff", "prop_pine_gnarled",
+            "prop_village_house", "prop_terrain_house", "prop_huts_thatched",
+            "prop_temple_main_hall", "prop_temple_side_hall", "prop_bell_tower",
+            "prop_peak_snow", "prop_far_peak", "prop_peak_snow",
+        };
+        readonly float[] _aspect = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+        int _artCount;
+        public int ArtSlots => _artCount;
 
         PropField _field;
         Material[] _mats;
@@ -54,12 +67,25 @@ namespace BloodRain.Presentation.Fx
                 for (int v = 0; v < Variants; v++)
                 {
                     var m = new Material(material) { name = $"소품 {(PropKind)k} {v}", renderQueue = 2990 };
-                    m.mainTexture = PropTextures.Make((PropKind)k, v);
-                    _mats[k * Variants + v] = m;
+                    int slot = k * Variants + v;
+                    // PR-02U: 원화가 있으면(PropArt 목록) 그 그림, 없으면 웹 시안 도형 임시 그림
+                    var sp = PropArt.Instance != null ? PropArt.Instance.Get(ArtIds[slot]) : null;
+                    if (sp != null)
+                    {
+                        m.mainTexture = sp.texture;
+                        var r = sp.textureRect;
+                        var ts = new Vector2(sp.texture.width, sp.texture.height);
+                        m.mainTextureScale = new Vector2(r.width / ts.x, r.height / ts.y);
+                        m.mainTextureOffset = new Vector2(r.x / ts.x, r.y / ts.y);
+                        _aspect[slot] = r.width / Mathf.Max(1f, r.height);
+                        _artCount++;
+                    }
+                    else m.mainTexture = PropTextures.Make((PropKind)k, v);
+                    _mats[slot] = m;
                 }
             for (int i = 0; i < _m.Length; i++) { _m[i] = new List<Matrix4x4>(); _t[i] = new List<Vector4>(); }
             for (int i = 0; i < _dBuf.Length; i++) _dBuf[i] = 0f;
-            Debug.Log($"[소품 층] {_field.Props.Count}개 (산·전각 {_field.Landmarks.Count})");
+            Debug.Log($"[소품 층] {_field.Props.Count}개 (산·전각 {_field.Landmarks.Count}), 원화 {_artCount}/{Kinds * Variants}벌");
         }
 
         void LateUpdate()
@@ -102,7 +128,10 @@ namespace BloodRain.Presentation.Fx
                 float s = p.S;
                 if (u.x + s < c.x - w || u.x - s > c.x + w || u.y - s > c.y + h || u.y + s < c.y - h) continue;
                 int slot = (int)p.Kind * Variants + p.Variant;
-                _m[slot].Add(Matrix4x4.TRS(new Vector3(u.x, u.y + s * 0.35f, 0.5f), Quaternion.identity, new Vector3(s, s, 1f)));
+                // 긴 변이 s. 원화는 가로세로 비가 달라 그 비대로 늘린다(임시 그림은 정사각 1)
+                float asp = _aspect[slot];
+                float sw = asp >= 1f ? s : s * asp, sh = asp >= 1f ? s / asp : s;
+                _m[slot].Add(Matrix4x4.TRS(new Vector3(u.x, u.y + sh * 0.35f, 0.5f), Quaternion.identity, new Vector3(sw, sh, 1f)));
                 _t[slot].Add(new Vector4(1f, 1f, 1f, alpha));
                 drawn++;
             }

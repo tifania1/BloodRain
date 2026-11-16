@@ -2411,38 +2411,98 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.PropArt
   names:
+  - prop_bell_tower
   - prop_blood_crystal
+  - prop_boulder_mossy
   - prop_bun
   - prop_cart
   - prop_chest_closed
   - prop_chest_open
   - prop_chwigi_talisman
   - prop_duck
+  - prop_far_pagoda_forest
+  - prop_far_peak
+  - prop_far_pine_forest
+  - prop_far_temple
+  - prop_far_village
+  - prop_fence
+  - prop_haystack
+  - prop_huts_thatched
+  - prop_inn
   - prop_jeongsin_talisman
   - prop_lantern
   - prop_lantern_silver
+  - prop_market_stall
+  - prop_mountain_gate
+  - prop_pagoda_broken
+  - prop_pagoda_mossy
+  - prop_pagoda_seven
+  - prop_pagoda_tall
+  - prop_pagoda_three
+  - prop_peak_snow
+  - prop_pine_cliff
+  - prop_pine_gnarled
+  - prop_pine_old
+  - prop_rocks_small
   - prop_seal_stone_shard
+  - prop_shrub
   - prop_silver_bag
+  - prop_stone_lantern
   - prop_storage_jar
+  - prop_stupa_bell
   - prop_sword_rack
+  - prop_temple_main_hall
+  - prop_temple_side_hall
+  - prop_terrain_house
   - prop_thunder_bomb
+  - prop_village_house
   - prop_wine_jar
   sprites:
+  - {fileID: 21300000, guid: 3a6d1678a0c9426c8ee8cf2a5e98ff34, type: 3}
   - {fileID: 21300000, guid: b7e7fc4136924c37ab4b4753e9212d57, type: 3}
+  - {fileID: 21300000, guid: fd8e30bdd8934a79bcb78cb6170f35b6, type: 3}
   - {fileID: 21300000, guid: 6f72840fd6814b4d880cd0a65478898d, type: 3}
   - {fileID: 21300000, guid: a34058c1a50a4a8aa0a43584281ec224, type: 3}
   - {fileID: 21300000, guid: d1541ed99bbd4c22a265c9885ad5d891, type: 3}
   - {fileID: 21300000, guid: 508eac2d33d4483ab606f7538463cd62, type: 3}
   - {fileID: 21300000, guid: b6c3d3b1b4c8488bb49a08b0ff237d7e, type: 3}
   - {fileID: 21300000, guid: ce2c34ee6f5147ebb4cf7c30ab22a4aa, type: 3}
+  - {fileID: 21300000, guid: 57e395c5c4a64db8908219553b287a42, type: 3}
+  - {fileID: 21300000, guid: 7e63e7732d384d6f80f60443a4267fd1, type: 3}
+  - {fileID: 21300000, guid: f9ad0da3b3914ac7b38d39bea104fdd5, type: 3}
+  - {fileID: 21300000, guid: 4b5ff9a8b11e40998145740e1ecec69c, type: 3}
+  - {fileID: 21300000, guid: 0249d39504724689a91ddd59d1d28e1c, type: 3}
+  - {fileID: 21300000, guid: 187d4fb1f47140e89de1ac13177f28e8, type: 3}
+  - {fileID: 21300000, guid: 1ca9dffdcf504046b3189ac035bf115d, type: 3}
+  - {fileID: 21300000, guid: 2bb69e03c9c04124acbd63ed6ac82eb8, type: 3}
+  - {fileID: 21300000, guid: 615472acb33f4289898de06ca3fe1d80, type: 3}
   - {fileID: 21300000, guid: f10e710ca24d4358b8344fe64ca06c7a, type: 3}
   - {fileID: 21300000, guid: d75aab99b897455cade68f5fe2b51fb6, type: 3}
   - {fileID: 21300000, guid: 2315c06016d74d19b6b6fa768310df54, type: 3}
+  - {fileID: 21300000, guid: 55a8136fadb648e99e1352e68b21b07a, type: 3}
+  - {fileID: 21300000, guid: 5957fefd3369454baa016ad0445a4e24, type: 3}
+  - {fileID: 21300000, guid: 3d41602679894a1198f18ec517bcb0fd, type: 3}
+  - {fileID: 21300000, guid: 7051f0059c55414e89ff11be8b8d5fdd, type: 3}
+  - {fileID: 21300000, guid: afedb6d3beed4846b71e651de9db6b45, type: 3}
+  - {fileID: 21300000, guid: 00aae0f1cc8f40489c0b004a8fc5cb39, type: 3}
+  - {fileID: 21300000, guid: aabd6f3d5bb540e2905a3e514fe97bc3, type: 3}
+  - {fileID: 21300000, guid: b972926a3f4342049350bd3707062f44, type: 3}
+  - {fileID: 21300000, guid: c9bde75a5d78477682e800a04b87e58c, type: 3}
+  - {fileID: 21300000, guid: bbffbafbb12f434cb859af6277e7888e, type: 3}
+  - {fileID: 21300000, guid: fc52d01c021f44b28e3d1c678d3d8d5a, type: 3}
+  - {fileID: 21300000, guid: e7e3c2f5b87d4383b0b90b828509f6f4, type: 3}
   - {fileID: 21300000, guid: 6c31a754973c4888a23c65edfd5ee830, type: 3}
+  - {fileID: 21300000, guid: 9dcb03558dc94a349ba6d189f4f4c926, type: 3}
   - {fileID: 21300000, guid: c401985236444296a9450cda3b0293c0, type: 3}
+  - {fileID: 21300000, guid: b509deb2933845bfa7fff248b217b067, type: 3}
   - {fileID: 21300000, guid: 004bd5efdfbe4f9cbfe5a7c4b7b551be, type: 3}
+  - {fileID: 21300000, guid: 183af3d09c2646bcae31e3cf42c5e772, type: 3}
   - {fileID: 21300000, guid: ebe0747e23f5451c855a70656a79f1ee, type: 3}
+  - {fileID: 21300000, guid: 504502d70e044bd0b40c66a9dc9af9a1, type: 3}
+  - {fileID: 21300000, guid: 2222a71f52d547268fca421cb848306e, type: 3}
+  - {fileID: 21300000, guid: 850b90e9458843de89e29fd46a0b6fb8, type: 3}
   - {fileID: 21300000, guid: f401fdfa1bc24625b53416f1269107ee, type: 3}
+  - {fileID: 21300000, guid: 249c37b8ed594f4da29d75875d0be976, type: 3}
   - {fileID: 21300000, guid: 97fb31992eee49fc83a06efcacde56cc, type: 3}
 --- !u!1 &1700858264
 GameObject:
