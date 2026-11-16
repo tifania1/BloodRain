@@ -121,7 +121,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/BT-01U/` 의 `stamp.png`(0.3초쯤)·`sweep.png`(0.9초쯤)·`insight.png`
 
 - [ ] VF-02U 나머지 무공을 SectFx 로 · 먼저: backlog VF-09(2026-11-16 끝남 — 시안 `sects.html` 에 여섯 문파가 들어감. 사람은 아직 안 봤으니 문파 하나를 옮기고 찍어 두면 아침에 같이 본다)
-  - 할 것: WeaponRunner 에서 아직 옛 도형(`AddFx`)·AI 재료 한 장(`AddSpark`·`DrawAi`)으로 그리는 무공을 `review_2026-11-13.md` 6절 표대로 SectFx 겹으로 바꾼다. 차례: 당가 비도술(가는 은빛 줄 + 독 얼룩) → 무당 태극검(흑백 두 궤적) → 화산 낙화검우(가는 검선 + 꽃잎) → 곤륜 뇌부(부적 + 낙뢰, `Bolt` 를 세로로) → 수로채 쇄겸술(사슬 + 물결 호) → 마교 혈조(어두운 자주 찢김 셋) → 문파 밖 여섯. 시안이 새로 쓴 모양 10 태극·11 꽃잎·12 부적은 `FxInk.shader` 에 같은 번호로 옮긴다(식은 시안 FS 그대로). 그 밖에 새 모양이 필요하면 `FxInk.shader` 에 모양 번호를 더하고 시안(`web/lookdev/sects.html`)에도 같은 식을 넣어 둘이 어긋나지 않게 한다. 밝은 종이 위에서 빛은 `SectFx.Glow`(색 있는 몸 + 약한 더하기) + 먹 받침으로.
+  - 할 것: WeaponRunner 에서 아직 옛 도형(`AddFx`)·AI 재료 한 장(`AddSpark`·`DrawAi`)으로 그리는 무공을 `review_2026-11-13.md` 6절 표대로 SectFx 겹으로 바꾼다. 차례: 당가 비도술(가는 은빛 줄 + 독 얼룩) → 무당 태극검(흑백 두 궤적) → 화산 낙화검우(가는 검선 + 꽃잎) → 곤륜 뇌부(부적 + 낙뢰, `Bolt` 를 세로로) → 수로채 쇄겸술(사슬 + 물결 호) → 마교 혈조(어두운 자주 찢김 셋) → 문파 밖 여섯. 시안이 새로 쓴 모양 10 태극·11 꽃잎·12 부적은 2026-11-16 개발 세션이 `FxInk.shader` 에 같은 번호로 옮겨 둠(클라우드라 컴파일 확인 전 — 셰이더 에러가 뜨면 그것부터). 그 밖에 새 모양이 필요하면 `FxInk.shader` 에 모양 번호를 더하고 시안(`web/lookdev/sects.html`)에도 같은 식을 넣어 둘이 어긋나지 않게 한다. 밝은 종이 위에서 빛은 `SectFx.Glow`(색 있는 몸 + 약한 더하기) + 먹 받침으로.
   - 쓸 것: `Presentation/Fx/SectFx.cs`·`Art/Shaders/FxInk.shader`, `Presentation/Combat/WeaponRunner.cs`(VF-01U 가 바꾼 네 자리를 본보기로), vfx.md 색 규칙(붉은 계열은 어두운 자주·연분홍만)
   - 메뉴: 없음
   - 끝: 무공마다 색·모양·움직임이 달라 한눈에 갈림. `sectFxOn` 을 꺼도 예전 그림으로 돈다. 콘솔 에러 0

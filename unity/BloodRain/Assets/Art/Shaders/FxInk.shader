@@ -1,7 +1,7 @@
 // 무공 이펙트 통합 셰이더(VF-01U, 2026-11-13). 시안 web/lookdev/sects.html 의 FS 를 그대로 옮긴 것.
 // 텍스처 한 장을 띄우는 대신 모양을 식으로 그리고, 흐르는 잡음으로 가장자리를 침식하고,
 // 색 램프(가장자리 → 가운데 → 심)로 칠하고, 긋기(_Prog)와 흩어짐(_Diss)으로 움직인다.
-// 모양(_Shape): 0 호(검·봉 궤적) · 1 줄기(찌르기·낙하 검기·섬광) · 2 충격 고리 · 3 터짐·얼룩 · 4 번개 가지 · 5 방울·그림자 · 7 권영
+// 모양(_Shape): 0 호(검·봉 궤적) · 1 줄기(찌르기·낙하 검기·섬광) · 2 충격 고리 · 3 터짐·얼룩 · 4 번개 가지 · 5 방울·그림자 · 7 권영 · 10 태극 · 11 꽃잎 · 12 부적
 // 밝은 종이 위에선 더하기만 하면 하얗게 날아간다. 빛은 '색 있는 몸(_Add 0) + 약한 더하기(_Add 1, 알파 0.4) + 먹 받침' 세 겹으로 그린다(SectFx.Glow).
 Shader "BloodRain/FxInk"
 {
@@ -139,7 +139,7 @@ Shader "BloodRain/FxInk"
                     a = 1.0 - smoothstep(_P.x, 1.0, r);
                     heat = 1.0 - r;
                 }
-                else
+                else if (_Shape < 7.5)
                 {
                     // 권영: 마디 있는 둥근 머리 + 뒤로 가늘어지는 결
                     float xf = p.x - 0.07 * abs(cos(p.y * 7.5));
@@ -153,6 +153,39 @@ Shader "BloodRain/FxInk"
                     float er = n1(p * 0.9 + _Seed);
                     a = body * lerp(smoothstep(0.38, 0.62, st) * 0.85, 1.0, head) * smoothstep(_Diss, _Diss + 0.2, er + 0.02) * step(_Diss, 0.999);
                     heat = saturate(head * (1.0 - e * e) * (0.55 + 0.45 * smoothstep(0.0, 0.7, p.x)));
+                }
+                else if (_Shape < 10.5)
+                {
+                    // 태극(VF-09): 흑백 두 색. heat 0 → _C0(검), 1 → _C2(흰). _P.x: 가장자리 잡음
+                    float d1 = length(p - float2(0.0, 0.5)), d2 = length(p + float2(0.0, 0.5));
+                    float s = p.x > 0.0 ? 1.0 : 0.0;
+                    if (d1 < 0.5) s = 0.0;
+                    if (d2 < 0.5) s = 1.0;
+                    if (d1 < 0.13) s = 1.0;
+                    if (d2 < 0.13) s = 0.0;
+                    float er = n1(float2(ang * 0.6 + _Seed, r * 2.0 - _FxTime * 0.2));
+                    a = (1.0 - smoothstep(0.86, 1.0, r + (er - 0.5) * _P.x)) * (1.0 - _Diss);
+                    heat = s;
+                }
+                else if (_Shape < 11.5)
+                {
+                    // 꽃잎(VF-09): 끝이 살짝 파인 물방울
+                    float qx = p.x + 0.1;
+                    float w = 0.62 * sqrt(max(0.0, 1.0 - qx * qx)) * (1.0 - 0.3 * smoothstep(0.4, 1.0, qx)) + 1e-4;
+                    float e = abs(p.y) / w;
+                    float notch = 1.0 - step(0.78, qx) * (1.0 - smoothstep(0.03, 0.14, abs(p.y)));
+                    a = (1.0 - smoothstep(0.7, 1.0, e)) * step(abs(qx), 1.0) * notch;
+                    heat = saturate(1.0 - e * 0.7 - max(qx, 0.0) * 0.25);
+                }
+                else
+                {
+                    // 부적(VF-09): 누런 종이 띠, 가장자리 침식, 가운데 세로 먹 획과 위 먹 점. 먹은 heat 0(_C0)
+                    float er = n1(p * 0.7 + _Seed);
+                    float m = max(abs(p.x), abs(p.y));
+                    a = (1.0 - smoothstep(0.84, 0.98, m + (er - 0.5) * 0.14)) * smoothstep(_Diss, _Diss + 0.15, er + 0.02) * step(_Diss, 0.999);
+                    float ink = max((1.0 - smoothstep(0.07, 0.15, abs(p.x + 0.12 * sin(p.y * 8.0 + _Seed)))) * step(abs(p.y), 0.62),
+                                    1.0 - smoothstep(0.1, 0.17, length(p - float2(0.0, 0.74))));
+                    heat = ink > 0.5 ? 0.0 : 0.55 + 0.35 * er;
                 }
 
                 float3 col = heat < 0.5 ? lerp(_C0.rgb, _C1.rgb, heat * 2.0) : lerp(_C1.rgb, _C2.rgb, (heat - 0.5) * 2.0);
