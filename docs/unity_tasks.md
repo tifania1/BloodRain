@@ -70,6 +70,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 네 무공이 서로 다른 색·모양·움직임으로 읽힘. 사람이 보고 '이 정도'를 정함
   - 찍기: `docs/unity_shots/VF-01U/` 의 `samjae.png`·`shaolin.png`·`gaebang.png`·`namgung.png`
 
+- [ ] VF-03U 더 세게·다섯 단계 확인 · 먼저: VF-01U 의 ①(재질 커밋)
+  - 할 것: 2026-11-16 사람이 "더 세게, 단계도 더 나누고"라고 해서 클라우드가 시안 값을 Unity 코드에 옮겨 뒀다(**Unity 컴파일 확인 전** — 에러면 그것부터. `SectFx`·`HitFeel`·`FxSettings` 는 엔진 흉내 스텁으로 컴파일해 봤고 `WeaponRunner`·`ScaleCamera` 는 문법만 봄). 바뀐 것: `WeaponRunner` 가 네 무공에 `FxStage`(= Core `WeaponGrowth.VisualStage`, 1~5)를 넘기고, 맞음·처치 그림과 멈춤·흔들림이 단계를 따른다(`HitLook`). `SectFx` 에 마른 붓 메아리·날빛·검풍·먹 터짐·열십자 섬광·임팩트 컷·바닥 금·빛살·잔상 주먹·머리 빛·궤도 번개. `HitFeel.Jolt`(화면 눌림 5%까지 + 종이 어둡게, `ScaleCamera` 가 직교 크기에 곱하고 `SectFx` 가 먹 한 장을 깐다). 시험 판에서 네 무공을 Lv1·3·4·6·8 로 올려 가며 단계마다 달라 보이는지 본다. 볼 것 셋: ① 300마리에서 처치 흔들림이 과하게 쌓이지 않는지(5단 처치 한 번에 0.28 — 과하면 `WeaponRunner` Killed 쪽 값을 줄이고 vfx.md '처치 멈춤·흔들림' 줄도 고침) ② 종이 어둡게가 바닥·소품 위, 캐릭터 밑에 깔리는지(z 는 `SectFx.ZUnder`) ③ 화면 눌림이 AwakeningFx·돌파 줌과 싸우지 않는지
+  - 쓸 것: 시안 `web/lookdev/sects.html`(주소 `#samjae-1` ~ `#namgung-5`, 단계별 값은 `L([다섯 칸])`), vfx.md '단계 규칙'·'타격감 값'의 2026-11-16 석 줄
+  - 시안에만 있고 Unity 에 안 옮긴 것(규칙이 따라와야 해서): 취선봉 5단 '한 바퀴 크게 쓸어 마무리', 창천검기 2단부터 '맞은 적에서 옆 적으로 튀는 번개', 5단 처치 두 동강(HF-01U 의 덩이 렌더러 일과 같이). 넣을지는 사람이 Unity 를 본 뒤
+  - 메뉴: 없음
+  - 끝: 네 무공 모두 1단과 5단이 한눈에 다르고 그 사이도 구분됨. 효과 간소화를 켜면 담채·메아리·검풍·먹 터짐이 빠짐. 설정 흔들림 0% 에서 흔들림·눌림·어둡게 없음. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/VF-03U/` 에 무공마다 `<무공>_1.png`·`<무공>_3.png`·`<무공>_5.png`
+
 - [ ] PP-01U 화면 마감: 약한 Bloom·가장자리 어둡게 · 먼저: 없음 (2026-11-15 클라우드 VF-12)
   - 할 것: Run 씬에 Global Volume 하나(Bloom·Vignette 만). Bloom 은 문턱 1·세기 0.35·퍼짐 0.55, 카메라 HDR 켬, 기·금빛 이펙트 재질(FxInk 의 빛 겹, 금빛 비백, 진기 구슬)만 색을 1.6~2배로 올려 문턱을 넘게 하고 원화·바닥·UI·적 위험 표시(밝은 주홍)는 1 이하로 둔다. Vignette 는 색 #1C1A17·세기 0.22·부드러움 0.45·둥글게, 혈우 장막 안으로 들어갈수록 0.3(Bloom 은 0.6)까지. `FxSettings.Simplified` 면 Bloom 끔. 색수차·필름 잡티·피사계 심도는 넣지 않는다. FL-01U 가 비네트를 따로 깔았으면 하나로 합친다
   - 쓸 것: 시안 `web/lookdev/finish.html`(아래 표, 주소 `#day-look`·`#rain-look`·`#day-strong`), URP 2D Renderer 의 Post Processing, `Presentation/Fx/FxSettings.cs`, 혈우 장막 거리(BloodRain 장막 코드)

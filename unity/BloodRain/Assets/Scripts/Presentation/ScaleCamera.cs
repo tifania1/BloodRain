@@ -23,7 +23,8 @@ namespace BloodRain.Presentation
             var s = WorldScale.Current;
             if (s == null) return;
             s.Tick(Time.unscaledDeltaTime);
-            _cam.orthographicSize = WorldScale.OrthoSize(s.ViewDiagonal, _cam.aspect);
+            // 큰 타격에 화면이 한 번 눌린다(HitFeel.Jolt, 5%까지). 값은 아래 Tick 이 프레임마다 가라앉힌다
+            _cam.orthographicSize = WorldScale.OrthoSize(s.ViewDiagonal, _cam.aspect) * BloodRain.Presentation.Fx.HitFeel.Zoom;
             if (target != null)
             {
                 var p = target.position;

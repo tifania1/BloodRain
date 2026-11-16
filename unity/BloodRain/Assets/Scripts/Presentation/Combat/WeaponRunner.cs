@@ -403,6 +403,7 @@ namespace BloodRain.Presentation.Combat
             var ws = World;
             float dmg = Damage(s);
             s.Fired++;
+            HitLook(s, false);   // 맞은 자리 그림의 종류·단계 기본값(앞 무공 것이 남지 않게). 네 무공은 피해 직전에 다시 고른다
             switch (s.Def.Behavior)
             {
                 case "front_arc":
@@ -423,17 +424,20 @@ namespace BloodRain.Presentation.Combat
                             // LK-01Ua 연환 쌍검합벽: 창천검기가 도는 동안 삼재검법 피해 × (1 + damageBonus)·금빛(웹 front_arc sg)
                             bool sg = Link("ssanggeom", "damageBonus") is float sgb && SweepActive();
                             float d2 = sg ? dmg * (1f + Link("ssanggeom", "damageBonus").Value) : dmg;
-                            _hitKind = HitKindOf(s);
+                            HitLook(s);
                             int di = 0;
                             foreach (var a in dirs)
                             {
                                 if (Sfx && s.id == "samjae_sword")
                                 {
-                                    // VF-01U: 굵은 붓 호가 0.11초에 그어지고 결을 따라 흩어진다. 2단 청회 담채, 3단·절기·쌍검합벽은 금빛 날
-                                    int tier = BrushTier(s);
-                                    if (di == 0) Lunge(a, 0.38f);
-                                    _sfx.Swing(() => P, a, (di++ + strikeNo) % 2 == 0 ? 1 : -1, FxRamp.Ink, 0.55f, tier >= 2 ? FxRamp.Wash : (FxRamp?)null,
-                                               tier >= 3 || evo != null || sg ? FxRamp.Gold : (FxRamp?)null, R, 2.3f);
+                                    // VF-01U(2026-11-16 다섯 단계): 굵은 붓 호가 0.09초에 그어지고 결을 따라 흩어진다.
+                                    // 2단 마른 붓 메아리, 3단 청회 담채, 4단 흰 날빛과 검풍, 5단·절기·쌍검합벽은 금빛 날. 5단 3연 베기의 마지막은 크게 휘두른다
+                                    int fxSt = FxStage(s);
+                                    bool fin = fxSt >= 5 && strikes > 1 && strikeNo == strikes - 1;
+                                    if (di == 0) Lunge(a, ByStage(fxSt, 0.3f, 0.36f, 0.42f, 0.48f, 0.56f) * (fin ? 1.3f : 1f));
+                                    _sfx.Swing(() => P, a, (di++ + strikeNo) % 2 == 0 ? 1 : -1, FxRamp.Ink, ByStage(fxSt, 0.5f, 0.6f, 0.65f, 0.7f, 0.75f),
+                                               fxSt >= 3 ? FxRamp.Wash : (FxRamp?)null, fxSt >= 5 || evo != null || sg ? FxRamp.Gold : (FxRamp?)null,
+                                               fin ? R * 1.08f : R, fin ? 3.1f : 2.3f, fxSt, fxSt >= 4 ? FxRamp.Blade : (FxRamp?)null, null, fin);
                                 }
                                 // 절기면 금빛 부채꼴을 붓 획 위에 한 겹 더(웹 gold)
                                 else if (!AddBrush(s, a) || evo != null || sg) AddFx(a, Mathf.PI, R, 0.22f, evo != null || sg ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.95f, 0.93f, 0.85f, 0.75f));
@@ -479,16 +483,18 @@ namespace BloodRain.Presentation.Combat
                             // 나한권: 바라보는 쪽 사거리 절반 자리에 주먹 먹 자국(fx_fist_ink), 연타마다 조금씩 흔들어 찍는다
                             float fa = Mathf.Atan2(player.Facing.y, player.Facing.x) + UnityEngine.Random.Range(-0.35f, 0.35f);
                             var fat = P + new Vector2(Mathf.Cos(fa), Mathf.Sin(fa)) * R * 0.55f;
-                            _hitKind = HitKindOf(s);
-                            // VF-01U: 금빛 권영이 박히고 충격 고리가 퍼진다. 마지막 주먹은 크고 고리가 두 번(종 울림)
+                            HitLook(s);
+                            // VF-01U(2026-11-16 다섯 단계): 금빛 권영이 박히고 충격 고리가 퍼진다. 마지막 주먹은 크고 고리가 두 번(종 울림).
+                            // 2단 바닥 금, 3단 잔상 주먹, 4단 달아오른 심과 빛살, 5단 마지막 주먹은 1.3배에 고리 셋
                             if (Sfx)
                             {
-                                Lunge(fa, lastFist ? 0.5f : 0.3f);
+                                int fxSt = FxStage(s);
+                                Lunge(fa, (lastFist ? 0.5f : 0.3f) * ByStage(fxSt, 1f, 1.06f, 1.12f, 1.2f, 1.3f));
                                 _sfx.Punch(P, fa, lastFist, R * (lastFist ? 0.95f : 0.8f), lastFist ? land =>
                                 {
-                                    BloodRain.Presentation.Fx.HitFeel.Stop(0.06f);
-                                    BloodRain.Presentation.Fx.HitFeel.Shake(0.35f, fa);
-                                } : (Action<Vector2>)null);
+                                    BloodRain.Presentation.Fx.HitFeel.Stop(fxSt >= 5 ? 0.07f : 0.06f);
+                                    BloodRain.Presentation.Fx.HitFeel.Shake(0.25f + 0.04f * fxSt, fa);
+                                } : (Action<Vector2>)null, fxSt);
                             }
                             else if (!AddSpark("fx_fist_ink", fat, fa, 0f, 0.28f, 0.05f))
                                 AddFx(Mathf.Atan2(player.Facing.y, player.Facing.x), Mathf.PI * 2f, R * 0.6f, 0.12f, new Color(0.85f, 0.55f, 0.25f, 0.6f));
@@ -516,15 +522,17 @@ namespace BloodRain.Presentation.Combat
                     float R = ws.Length(s.Def.Range * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * RangeMul(s) * (arrayEvo != null ? arrayEvo.Param("rangeMultiplier", 1f) : 1f)); // Lv8 범위 +40%(areaLv8)
                     int sweeps = arrayEvo != null ? Mathf.Max(1, (int)arrayEvo.Param("sweeps", 1f)) : Has(s, "2회 회전") ? 2 : 1;
                     float sweepA0 = UnityEngine.Random.value * Mathf.PI * 2f;
-                    _hitKind = HitKindOf(s);
+                    HitLook(s);
                     if (Sfx)
                     {
-                        // VF-01U: 몸을 도는 푸른 초승달이 꼬리를 끌고, 바퀴마다 새로 긋는다. 판정(SweepHits)의 머리 각과 같은 각이다
+                        // VF-01U(2026-11-16 다섯 단계): 몸을 도는 푸른 초승달이 꼬리를 끌고, 바퀴마다 새로 긋는다. 판정(SweepHits)의 머리 각과 같은 각이다.
+                        // 단계가 오르면 굵어지고 꼬리가 길어진다. 2단 머리 빛, 3단 후광, 4단 흰 날과 궤도를 기는 번개(그림만)
                         float per = s.Def.SweepSeconds ?? 0.36f;
+                        int fxSt = FxStage(s);
                         for (int k = 0; k < sweeps; k++)
                         {
-                            if (k == 0) _sfx.Orbit(() => P, sweepA0, R, per);
-                            else _sfx.After(per * k, () => _sfx.Orbit(() => P, sweepA0, R, per));
+                            if (k == 0) _sfx.Orbit(() => P, sweepA0, R, per, fxSt);
+                            else _sfx.After(per * k, () => _sfx.Orbit(() => P, sweepA0, R, per, fxSt));
                         }
                     }
                     _fx.Add(new Fx
@@ -765,23 +773,33 @@ namespace BloodRain.Presentation.Combat
                     float stun = evo != null ? evo.Param("stunSeconds") : 0f;
                     float bossStun = evo != null ? evo.Param("bossStunSeconds") : 0f; // EV-01U 땅의 주인은 따로 0.6초(패턴 시계도 멈춤)
                     float gap = Gap(s, 0.18f), kb = ws.Speed(Knock(s));
+                    int swingSeen = 0;   // 람다가 차례대로 불리니 여기서 센다(for 의 k 는 람다 안에서 못 쓴다)
                     for (int k = 0; k < swings; k++)
                         Later(k * gap, () =>
                         {
-                            _hitKind = HitKindOf(s);
+                            HitLook(s);
+                            bool lastSwing = ++swingSeen >= swings;
                             int di = 0;
                             foreach (var a in WeaponShapes.ArcDirections(evo != null, dirN, () => UnityEngine.Random.value))
                             {
                                 if (Sfx)
                                 {
-                                    // VF-01U: 거칠게 마른 갈색 호가 겹쳐 보이고, 한 박자 늦게 봉 끝에서 먼지와 술 방울이 터진다
+                                    // VF-01U(2026-11-16 다섯 단계): 거칠게 마른 갈색 호가 겹쳐 보이고(밑에 먹 받침), 한 박자 늦게 봉 끝에서 먼지와 술 방울이 터진다.
+                                    // 2단 찍힌 자리가 패임, 3단 술 안개 담채와 솟는 술, 4단 호박빛 술기운과 흙먼지 바람·마지막 봉 끝은 고리 두 번
                                     int sd = (di++ + s.Fired) % 2 == 0 ? 1 : -1;
                                     float aa = a;
-                                    Lunge(aa, 0.3f);
+                                    int fxSt = FxStage(s);
+                                    Lunge(aa, ByStage(fxSt, 0.3f, 0.36f, 0.42f, 0.48f, 0.56f));
                                     _sfx.GhostSwing(() => P, aa, sd, FxRamp.Brown, R);
-                                    _sfx.Swing(() => P, aa, sd, FxRamp.Brown, 1f, null, evo != null ? FxRamp.Gold : (FxRamp?)null, R, 2.4f);
+                                    _sfx.Swing(() => P, aa, sd, FxRamp.Brown, 1f, fxSt >= 3 ? FxRamp.Wine : (FxRamp?)null,
+                                               evo != null ? FxRamp.Gold : fxSt >= 4 ? FxRamp.Amber : (FxRamp?)null, R, 2.4f, fxSt, null, FxRamp.Ink);
                                     var tip = P + new Vector2(Mathf.Cos(aa), Mathf.Sin(aa)) * R * 0.9f;
-                                    _sfx.After(0.12f, () => _sfx.Thump(tip));
+                                    bool tipLast = lastSwing && fxSt >= 4;
+                                    _sfx.After(0.12f, () =>
+                                    {
+                                        _sfx.Thump(tip, fxSt, tipLast);
+                                        BloodRain.Presentation.Fx.HitFeel.Shake(0.1f + 0.03f * fxSt);
+                                    });
                                 }
                                 else AddFx(a, Mathf.PI, R, 0.26f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.80f, 0.62f, 0.38f, 0.7f));
                                 Deal(s, dmg, HitArc(P, R, a, dmg, kb, stun, bossStun));
@@ -1470,6 +1488,8 @@ namespace BloodRain.Presentation.Combat
         // orbit_slash: 칼날이 한 바퀴 도는 동안 지나간 부채꼴 안의 적을 한 바퀴에 한 번씩
         void SweepHits(ref Fx f)
         {
+            // 도는 동안 다른 무공이 쓰이면 맞은 자리 그림이 그 무공 것으로 바뀌니 여기서 다시 고른다. 5단은 처음 닿는 적 하나에 임팩트 컷
+            if (f.Weapon != null) HitLook(f.Weapon, f.Hit != null && f.Hit.Count == 0 && FxStage(f.Weapon) >= 5);
             float perSweep = f.Life / f.Sweeps;
             float turn = Mathf.Min(f.Age, f.Life) / perSweep * Mathf.PI * 2f;
             int prevSweep = (int)(f.Prev / (Mathf.PI * 2f));
@@ -1576,12 +1596,15 @@ namespace BloodRain.Presentation.Combat
         SectFx _sfx;
         bool _sfxHooked;
         string _hitKind = "ink";
+        int _hitStage = 1;     // 맞은 자리 그림의 세기 단계(1~5)
+        bool _cutArmed;        // 이번에 처음 맞는 적 하나에 임팩트 컷(4단부터)
         /// <summary>끄면 예전 그림. 시험 메뉴·견줌 스크린샷용.</summary>
         [NonSerialized] public bool sectFxOn = true;
         bool Sfx => sectFxOn && _sfx != null && _sfx.Ready;
 
         void SectFxTick(float dt)
         {
+            _cutArmed = false;   // 임팩트 컷은 건 프레임 안에서만(빗나간 뒤 엉뚱한 무공의 타격에 붙지 않게)
             if (_sfx == null) _sfx = SectFx.Instance != null ? SectFx.Instance : gameObject.AddComponent<SectFx>();
             if (!_sfxHooked && enemies != null)
             {
@@ -1591,18 +1614,21 @@ namespace BloodRain.Presentation.Combat
                     if (!Sfx) return;
                     var d = at - P;
                     float ang = Mathf.Atan2(d.y, d.x);
-                    _sfx.Hit(at, ang, _hitKind, crit || big);
-                    // HF-02U 치명타·큰 적을 때리면 짧게 멈추고 맞은 쪽으로 화면이 밀린다
-                    if (crit || big) { BloodRain.Presentation.Fx.HitFeel.Stop(0.04f); BloodRain.Presentation.Fx.HitFeel.Shake(0.3f, ang); }
+                    bool cut = _cutArmed;
+                    _cutArmed = false;
+                    bool heavy = crit || big || cut;
+                    _sfx.Hit(at, ang, _hitKind, heavy, _hitStage, cut);
+                    // HF-02U 치명타·큰 적·4단부터 첫 타격이면 짧게 멈추고 맞은 쪽으로 화면이 밀린다(단계가 오르면 더 세게)
+                    if (heavy) { BloodRain.Presentation.Fx.HitFeel.Stop(0.04f); BloodRain.Presentation.Fx.HitFeel.Shake(0.26f + 0.02f * _hitStage, ang); }
                 };
                 enemies.Killed += (at, agent) =>
                 {
                     if (!Sfx) return;
                     var d = at - P;
                     float ang = Mathf.Atan2(d.y, d.x);
-                    _sfx.Kill(at, ang);
-                    BloodRain.Presentation.Fx.HitFeel.Stop(0.03f); // 0.3초에 한 번까지(HitFeel)
-                    BloodRain.Presentation.Fx.HitFeel.Shake(0.12f, ang);
+                    _sfx.Kill(at, ang, _hitStage);
+                    BloodRain.Presentation.Fx.HitFeel.Stop(0.03f + 0.005f * _hitStage); // 0.3초에 한 번까지(HitFeel)
+                    BloodRain.Presentation.Fx.HitFeel.Shake(0.13f + 0.03f * _hitStage, ang);
                 };
             }
             _sfx.Meter = World.Length(1f);
@@ -1616,6 +1642,21 @@ namespace BloodRain.Presentation.Combat
             if (!sectFxOn) return;
             if (_look == null && player != null) _look = player.GetComponent<PlayerLook>();
             if (_look != null) _look.Lunge(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)), World.Length(meters));
+        }
+
+        /// <summary>vfx.md 이펙트 다섯 단계(2026-11-16). 셈은 Core `WeaponGrowth.VisualStage`. 붓 획 텍스처는 여전히 세 단계(BrushTier).</summary>
+        static int FxStage(Slot s) => s.Def == null ? 1 : WeaponGrowth.VisualStage(s.Def, s.level);
+
+        /// <summary>단계(1~5)마다 값 하나(시안의 L([..])).</summary>
+        static float ByStage(int st, float a, float b, float c, float d, float e)
+            => st <= 1 ? a : st == 2 ? b : st == 3 ? c : st == 4 ? d : e;
+
+        /// <summary>이 무공이 피해를 넣기 직전에 부른다: 맞은 자리에 튀는 것의 종류와 세기 단계. arm 이면 이번에 처음 맞는 적 하나에 임팩트 컷(4단부터).</summary>
+        void HitLook(Slot s, bool arm = true)
+        {
+            _hitKind = HitKindOf(s);
+            _hitStage = FxStage(s);
+            _cutArmed = arm && _hitStage >= 4;
         }
 
         /// <summary>맞은 자리에 튀는 것의 종류(먹·금·호박·푸른 불씨). 무공이 피해를 넣기 직전에 고른다.</summary>
