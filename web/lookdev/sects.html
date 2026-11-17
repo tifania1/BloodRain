@@ -319,14 +319,27 @@ const KM={amber:{sh:15,p:[14,.75,.35,3],c:WINE,a:.5,wm:1.2,hm:1.5},
  thunder:{sh:14,p:[7,.38,.3,1],c:BLUEINK,a:.5},fire:{sh:14,p:[9,.45,.34,1.2],c:SOOT,a:.35},blue:{sh:14,p:[6,.3,.26,1],c:BLUEINK,a:.42}};
 // 절제된 타격감(2026-11-17 사람: 흔들림·번쩍임 대신 '적이 다르게 죽는다'). 무공의 성질마다 쓰러지는 모습이 다르다
 const DL={fire:.7,ink:.6,gold:.75,amber:.55,blue:.7,thunder:.7,poison:.85,silver:.85,water:.6,petal:.5,violet:.75};
-function die(e,kind,dir,heavy){const st=tier;e.die=DL[kind]?kind:'ink';e.dl=DL[e.die];e.dd=dir;e.spin=rnd(-1,1);
- if(e.die==='ink'){if(st>=3){e.split=1;e.ca=dir+rnd(-.35,.35);}else{e.die=null;}}                          // 검: 벤 금을 따라 갈라져 미끄러진다(3단부터)
+// VF-18 단계가 오르면 쓰러지는 모습도 한 겹씩: 1·2단은 모두 먹으로 번지며 쓰러짐, 3·4단은 무공 성질대로, 5단은 성질 위에 마무리 한 겹(아래 deepDie)
+function die(e,kind,dir,heavy){const st=tier;if(st<=2){e.die=null;return;}e.die=DL[kind]?kind:'ink';e.dl=DL[e.die];e.dd=dir;e.spin=rnd(-1,1);
+ if(st>=5)deepDie(e,e.die,dir);
+ if(e.die==='ink'){e.split=1;e.ca=dir+rnd(-.35,.35);}                                                        // 검: 벤 금을 따라 갈라져 미끄러진다(3단부터)
  if(e.die==='gold'){e.kx+=Math.cos(dir)*(9+st);e.ky+=Math.sin(dir)*(9+st);}                                   // 권: 뒤로 날아가며 금가루로 흩어진다
  if(e.die==='amber'){e.kx*=.2;e.ky*=.2;ST.push({x:e.x,y:e.y,t:0,seed:Math.random()*9,rot:0,s:1.5,c:BROWN,a:.3});ring(e.x,e.y+.2,2.2,DUST,false,.3,.7);}   // 봉: 납작 눌려 흙에 번진다
  if(e.die==='blue'||e.die==='thunder'||e.die==='silver'||e.die==='fire'){e.kx=e.ky=0;}                                        // 뇌: 그을린 채 굳었다 바스러짐 · 비도: 박힌 채 섰다가 쓰러짐
- if(e.die==='water'){e.kx+=Math.cos(dir)*7;e.ky+=Math.sin(dir)*7;{const x=e.x,y=e.y,sg=Math.cos(dir)<0?-1:1,sz=1.9+.12*st;addFx(.6,(f,k)=>fx(17,x+sg*.3,y+.9,sg*sz,sz,0,{p:[.24,.45,.9],c:WATER,alpha:.75*(1-k*k),prog:Math.min(1,f.t/.22),diss:Math.max(0,(k-.45)*1.6),seed:f.seed}));}addFx(.5,(f,k)=>fx(1,e.x,e.y+.5,3.2,.8,dir,{p:[.4,.6,2,1],c:WATER,alpha:.6*(1-k),prog:Math.min(1,f.t/.12),diss:k*.7,seed:f.seed}),null,true);}   // 물살에 쓸려 간다
+ if(e.die==='water'){e.kx+=Math.cos(dir)*7;e.ky+=Math.sin(dir)*7;addFx(.5,(f,k)=>fx(1,e.x,e.y+.5,3.2,.8,dir,{p:[.4,.6,2,1],c:WATER,alpha:.6*(1-k),prog:Math.min(1,f.t/.12),diss:k*.7,seed:f.seed}),null,true);}   // 물살에 쓸려 간다
  if(e.die==='petal')petals(e.x,e.y+.9,dir,12,5,3.14,.2);                                                       // 꽃잎으로 흩어진다
  if(e.die==='violet'&&st>=6&&ALLY.length<4&&(heavy||Math.random()<.35)){const x=e.x,y=e.y;later(.8,()=>ALLY.push({x,y,t:0,cd:.5,seed:Math.random()*7}));}}   // 마교 6단: 피를 빨린 적이 강시로 일어나 같이 싸운다
+// 5단 마무리: 검 갈라진 반쪽이 먹으로 흩어짐 · 권 날아간 끝에 금가루 · 봉 흙먼지 두 겹 · 뇌·불 재가 되어 위로 날림 · 독 꺼진 자리 독 꽃 · 비도 쓰러질 때 바늘 빛 · 물 물보라 · 꽃잎 두 배 · 마교 피안개 터짐
+function deepDie(e,k,dir){const x=e.x,y=e.y;
+ if(k==='ink'){e.scatter=1;later(.22,()=>{drops(x,y+.9,dir,10,4,INK,false,.16,3.14);addFx(.5,(f,q)=>fx(3,x,y+.9,2.4*(1+q*.4),2*(1+q*.4),f.seed,{p:[8,.8,.8],c:INK,alpha:.4*(1-q),diss:.15+q*.6,seed:f.seed}),null,true);});}
+ if(k==='gold')later(.45,()=>{const a=e.x,b=e.y;drops(a,b+.9,0,14,5,GOLD,true,.12,3.14);});
+ if(k==='amber')later(.08,()=>ring(x,y+.2,3.2,DUST,false,.45,.55));
+ if(k==='blue'||k==='thunder'||k==='fire')later(.35,()=>{for(let i=0;i<12;i++)PT.push({x:x+rnd(-.5,.5),y:y+rnd(.3,1.7),vx:rnd(-.4,.4),vy:rnd(1,2.2),t:0,life:rnd(.5,.9),col:k==='fire'?SOOT:BLUEINK,add:false,size:rnd(.06,.12)});});
+ if(k==='poison')later(.6,()=>ST.push({x,y,t:0,seed:Math.random()*9,rot:rnd(0,6),s:1.2,c:POISONINK,a:.38,sh:13,p:[5,.45,.8,.8]}));
+ if(k==='silver')later(.3,()=>addFx(.12,(f,q)=>glow(1,x,y+1,1.4,.12,-.6,{p:[.3,0,0,1],c:SILVER,alpha:1-q})));
+ if(k==='water'){const sg=Math.cos(dir)<0?-1:1,sz=1.9+.12*tier;addFx(.6,(f,q)=>fx(17,x+sg*.3,y+.9,sg*sz,sz,0,{p:[.24,.45,.9],c:WATER,alpha:.75*(1-q*q),prog:Math.min(1,f.t/.22),diss:Math.max(0,(q-.45)*1.6),seed:f.seed}));}
+ if(k==='petal')petals(x,y+.9,dir,12,6,3.14,.2);
+ if(k==='violet')addFx(.45,(f,q)=>glow(3,x,y+.8,2.2*(1+q*.6),1.8*(1+q*.6),f.seed,{p:[7,.6,.8],c:VGLOW,alpha:.45*(1-q),diss:.1+q*.6,seed:f.seed}),null,true);}
 function drawDeath(e){const k=Math.min(1,e.dead/e.dl),fl=e.x>Pl.x?-1:1,W0=1.9,y=e.y+.85,late=(a)=>Math.max(0,Math.min(.99,(k-a)/(1-a)));
  switch(e.die){
   case'gold':sprite(TSIG,e.x,y+Math.sin(k*3.14)*.6,fl*W0*(1-.25*k),W0*(1-.25*k),e.spin*e.dead*7,{tint:[1,.8,.3,.25+.5*k],diss:late(.4)});break;
@@ -703,7 +716,7 @@ function draw(){
  for(const e of list){if(!pd&&e.y<Pl.y){drawP();pd=true;}
   const hop=Math.abs(Math.sin(time*5+e.seed))*.13,sq=old?0:e.sq;
   if(e.dead<0)fx(5,e.x,e.y-.02,1.2,.45,0,{p:[.2],c:INK,alpha:.2});
-  if(e.split&&e.dead>=0&&!old){const fl=e.x>Pl.x?-1:1,nx=Math.cos(e.ca),ny=Math.sin(e.ca),sl=Math.min(1,e.dead/.25),gap=(1-(1-sl)*(1-sl))*.55,dz=Math.max(0,Math.min(.99,(e.dead-.18)/.42));
+  if(e.split&&e.dead>=0&&!old){const fl=e.x>Pl.x?-1:1,nx=Math.cos(e.ca),ny=Math.sin(e.ca),sl=Math.min(1,e.dead/.25),gap=(1-(1-sl)*(1-sl))*.55,dz=Math.max(0,Math.min(.99,(e.dead-(e.scatter?.12:.18))/(e.scatter?.28:.42)));
    for(const sd of[1,-1])sprite(TSIG,e.x+nx*gap*sd,e.y+.85+ny*gap*sd-e.dead*.4*(sd<0?1:.4),fl*1.9,1.9,sd*e.dead*.5,{flash:Math.max(0,1-e.dead/.06),diss:dz,cut:[nx*fl,ny,sd]});}
   else if(calm&&!old&&e.dead>=0&&e.die)drawDeath(e);
   else sprite(TSIG,e.x,e.y+.85+hop,(e.x>Pl.x?-1:1)*1.9*(1+.28*sq),1.9*(1-.22*sq),Math.cos(e.sa)*sq*.35,{flash:old?0:e.fl,sil:old?1:0,diss:e.dead>=0?(old?.01:Math.min(.99,e.dead/.4)):0,alpha:e.dead>=0&&old?1-e.dead/.12:1});}

@@ -85,6 +85,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 네 무공으로 적을 잡으면 쓰러지는 모습이 서로 다르고, 화면이 흔들린다는 느낌 없이 맞는 게 읽힘. 콘솔 에러 0
   - 찍기: `docs/unity_shots/HF-03U/` 에 무공마다 쓰러지는 순간 한 장
 
+  - 2026-11-17 클라우드 VF-18: 시안에서 단계를 나눔 — 1·2단은 모든 무공이 먹으로 번지며 쓰러지고(지금 기본), 성질대로 쓰러지는 것은 3단부터, 5단은 마무리 한 겹(vfx.md '절제된 타격감' 마지막 줄, 시안 `deepDie`). `WeaponGrowth.VisualStage` 로 갈라 붙인다
 - [ ] PP-01U 화면 마감: 약한 Bloom·가장자리 어둡게 · 먼저: 없음 (2026-11-15 클라우드 VF-12)
   - 할 것: Run 씬에 Global Volume 하나(Bloom·Vignette 만). Bloom 은 문턱 1·세기 0.35·퍼짐 0.55, 카메라 HDR 켬, 기·금빛 이펙트 재질(FxInk 의 빛 겹, 금빛 비백, 진기 구슬)만 색을 1.6~2배로 올려 문턱을 넘게 하고 원화·바닥·UI·적 위험 표시(밝은 주홍)는 1 이하로 둔다. Vignette 는 색 #1C1A17·세기 0.22·부드러움 0.45·둥글게, 혈우 장막 안으로 들어갈수록 0.3(Bloom 은 0.6)까지. `FxSettings.Simplified` 면 Bloom 끔. 색수차·필름 잡티·피사계 심도는 넣지 않는다. FL-01U 가 비네트를 따로 깔았으면 하나로 합친다
   - 쓸 것: 시안 `web/lookdev/finish.html`(아래 표, 주소 `#day-look`·`#rain-look`·`#day-strong`), URP 2D Renderer 의 Post Processing, `Presentation/Fx/FxSettings.cs`, 혈우 장막 거리(BloodRain 장막 코드)
