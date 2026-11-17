@@ -39,6 +39,25 @@ class 색인고치기(unittest.TestCase):
         self.assertIn("config.dataUrl = u; document.body.appendChild(script);", out)
         self.assertEqual(out, sw.patch_index(out, ["a.data.br"]))
 
+    def test_빌드_표를_붙이고_두_번_해도_같다(self):
+        whole = INDEX.replace('frameworkUrl: buildUrl + "/BloodRain.framework.js.br",',
+                              'frameworkUrl: buildUrl + "/BloodRain.framework.js.br",\n        codeUrl: buildUrl + "/BloodRain.wasm.br",')
+        out = sw.stamp_index(sw.patch_index(whole, ["a.data.br", "b.data.br"]), 123)
+        self.assertIn('"/BloodRain.loader.js?v=123"', out)
+        self.assertIn('"/BloodRain.framework.js.br?v=123"', out)
+        self.assertIn('"/BloodRain.wasm.br?v=123"', out)
+        self.assertIn('fetch(buildUrl + "/" + n + "?v=123")', out)
+        again = sw.stamp_index(out, 456)
+        self.assertNotIn("v=123", again)
+        self.assertEqual(again.count("?v=456"), 4)
+        # 나누지 않은 판은 data 주소에도 붙는다
+        plain = sw.stamp_index(whole, 9)
+        self.assertIn('"/BloodRain.data.br?v=9"', plain)
+
+    def test_주소를_못_찾으면_멈춘다(self):
+        with self.assertRaises(ValueError):
+            sw.stamp_index("<script>var x = 1;</script>", 1)
+
     def test_템플릿이_다르면_멈춘다(self):
         with self.assertRaises(ValueError):
             sw.patch_index(INDEX.replace('dataUrl: buildUrl + "/BloodRain.data.br",', 'dataUrl: "x",'), ["a"])

@@ -6,6 +6,7 @@
 # 쓰는 법(저장소 루트): python tools/split_webgl_data.py [build/WebGL/BloodRain]
 # PC 올리기와 Actions(webgl.yml) 둘 다 이걸 부른다. 테스트는 tools/tests/test_split_webgl_data.py.
 # 같은 김에 index.html 의 autoSyncPersistentDataPath 줄을 켠다(WG-01Ub, 혼 저장이 IndexedDB 에 남게).
+# 끝으로 빌드 파일 주소에 ?v=<빌드 시각> 을 붙인다(2026-11-17 — 이름이 같은 파일이 1년 캐시돼 새로 올려도 옛 판이 떴다).
 # PC 는 Editor/WebGLBuild.EnableAutoSync 가 이미 켜지만, Actions 는 game-ci 기본 빌드라 그 메서드를 안 거친다(QA-24).
 import os, sys, re
 
@@ -59,6 +60,44 @@ def patch_index(html, names):
                         '.catch(e => { console.error("data 조각 받기 실패", e); });', 1)
 
 
+def stamp_index(html, version):
+    """빌드 파일 주소 끝에 ?v=<version> 을 붙인다(2026-11-17).
+    web/_headers 가 /Build/*.br 을 1년·immutable 로 캐시하게 해 두었는데 파일 이름이 빌드마다 같아서,
+    한 번 들어와 본 브라우저는 새로 올려도 옛 판(wasm·data)을 계속 띄웠다. 색인(index.html)은 캐시되지 않으니
+    여기서 주소를 빌드마다 다르게 만든다. 이미 붙어 있으면 값만 바꾼다(두 번 해도 같다).
+    못 찾는 주소가 있으면 ValueError — 반쯤 붙인 채 올리면 옛 조각과 새 조각이 섞인다."""
+    v = "?v=" + str(version)
+    html = re.sub(r"\?v=[0-9A-Za-z_.-]+", "", html)
+    n_total = 0
+    # "/BloodRain.loader.js" · "/BloodRain.framework.js.br" · "/BloodRain.wasm.br" · "/BloodRain.data.br"
+    html, n = re.subn(r'(buildUrl\s*\+\s*"/[^"?]+\.(?:js|br))"', lambda m: m.group(1) + v + '"', html)
+    n_total += n
+    # 조각 받기: fetch(buildUrl + "/" + n)
+    if "dataParts" in html:
+        html, n = re.subn(r'fetch\(buildUrl \+ "/" \+ n(?: \+ "[^"]*")?\)', 'fetch(buildUrl + "/" + n + "' + v + '")', html)
+        if n != 1:
+            raise ValueError("index.html 에서 조각 받는 줄을 못 찾았다(?v= 를 못 붙임)")
+    if n_total < 3:
+        raise ValueError("index.html 에서 loader·framework·wasm 주소를 다 찾지 못했다(?v= 를 못 붙임)")
+    return html
+
+
+def stamp(root, version=None):
+    """index.html 에 빌드 표를 붙인다. version 이 없으면 wasm 파일이 쓰인 시각(초). 돌려주는 값은 붙인 표."""
+    idx = os.path.join(root, "index.html")
+    if version is None:
+        bdir = os.path.join(root, "Build")
+        wasm = [f for f in os.listdir(bdir) if ".wasm" in f]
+        if not wasm:
+            raise FileNotFoundError(bdir + " 에 wasm 이 없다")
+        version = int(os.path.getmtime(os.path.join(bdir, wasm[0])))
+    html = open(idx, encoding="utf-8").read()
+    out = stamp_index(html, version)
+    if out != html:
+        open(idx, "w", encoding="utf-8").write(out)
+    return version
+
+
 def split(root, limit=LIMIT, chunk=CHUNK):
     """나눴으면 조각 이름 목록, 나눌 필요가 없으면 []. 없는 파일이면 FileNotFoundError."""
     import brotli
@@ -94,10 +133,19 @@ if __name__ == "__main__":
         print("O  autoSync 켬" if autosync(root) else "O  autoSync 이미 켜져 있음")
     except (FileNotFoundError, ValueError) as e:
         print("X  " + str(e)); sys.exit(1)
+    names = []
     try:
         names = split(root)
+    except FileNotFoundError as e:
+        # 이미 나눈 폴더에서 다시 돌려도 빌드 표는 붙인다
+        if "dataParts" not in open(os.path.join(root, "index.html"), encoding="utf-8").read():
+            print("X  " + str(e)); sys.exit(1)
+        print("O  data 는 이미 나눠져 있음")
+    except ValueError as e:
+        print("X  " + str(e)); sys.exit(1)
+    else:
+        print("O  조각 %d개, index.html 고침" % len(names) if names else "O  data 가 상한 안이라 나누지 않는다")
+    try:
+        print("O  빌드 표 ?v=%s (옛 캐시를 안 쓰게)" % stamp(root))
     except (FileNotFoundError, ValueError) as e:
         print("X  " + str(e)); sys.exit(1)
-    if not names:
-        print("O  data 가 상한 안이라 나누지 않는다"); sys.exit(0)
-    print("O  조각 %d개, index.html 고침" % len(names))
