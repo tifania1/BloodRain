@@ -133,6 +133,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: 무공마다 색·모양·움직임이 달라 한눈에 갈림. `sectFxOn` 을 꺼도 예전 그림으로 돈다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/VF-02U/` 에 무공마다 한 장
+  - AI 재료가 남은 자리(2026-11-17 클라우드 VF-20, `WeaponRunner.cs` 기준 — 바꾸지 말고 그 무공을 SectFx 로 옮길 때 같이 걷어 낸다. 위 차례 안에서는 이 순서): ① 독무 `aura` 몸 둘레 안개 `fx_mist_ink_3`(578줄쯤, 숭산 한 생 시작 무공) ② 장풍 `slow_projectile` `fx_palm_ink`·섬광지 `random_rapid` `fx_finger_glow`(`ProjFx`) ③ 벽력탄 `random_bomb` 터짐 `fx_bomb_ink_1·2` + `fx_bomb_glow`(1329줄쯤), 같은 재료를 쓰는 절기 둘 — 탄 폭발(`p.Explode`, 1272줄쯤)·모아 터뜨리기(1413줄쯤) ④ 비도술 `homing_dagger` 궤적 `fx_dagger_ink`(`ProjFx`)와 당가 5 독침 `needle_rain`(1738줄쯤) ⑤ 화산 3 꽃잎 `crit_petals` `fx_petal_ink`(`ProjFx` 의 `s == null`) ⑥ 뇌부 `random_lightning` 낙뢰 `lightningShade·Gold·Core`(`fx_lightning_glow`). ①~③ 은 backlog VF-14 시안이 나온 뒤. 이미 SectFx 인 나한권 `fx_fist_ink`(499줄)·창천검기 `fx_sword_qi_glow`(1697·2069줄)는 `sectFxOn` 을 껐을 때만 도는 예비라 VF-01U 끝에서 지워도 된다. Run 씬 `WeaponRunner` 에 물린 나머지 AI 재료(`fx_evo_*` 열여섯 벌·`fx_aura_glow`·`fx_claw_ink`·`fx_mist_ink`·`fx_mist_ink_2`·`fx_petal_glow`·`fx_lightning_glow_2·3`)는 코드가 이름으로 부르지 않아 화면에 안 나온다. `Fx/AiFxLayers.cs` 도 어느 씬·프리팹에도 안 붙어 있다(V-04 시험용)
 
 ### A. 지금 바로 되는 확인(Life 없이, 짧음)
 
