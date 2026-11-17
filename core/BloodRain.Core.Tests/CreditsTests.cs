@@ -22,9 +22,18 @@ namespace BloodRain.Core.Tests
         static string Norm(string s) => Regex.Replace(s, @"\s+", " ").Trim();
         static readonly Regex Hangul = new Regex("[가-힣]");
 
-        /// <summary>Assets 아래 글꼴 파일(.ttf·.otf) 전부. TextMesh Pro 기본 글꼴도 Resources 에 있어 빌드에 들어간다.</summary>
+        /// <summary>에셋 스토어에서 산 것의 폴더(.gitignore, PC 에만 있다 — docs/design/store_assets.md). 그 안의 시연용 글꼴은 저장소 것이 아니고
+        /// 씬이 가리키지 않아 빌드에도 안 들어가니 고지 대상에서 뺀다. 2026-11-18: PC 에서만 이 테스트가 깨져 푸시가 막혔다.</summary>
+        static bool InStoreAsset(string path)
+        {
+            var rel = Path.GetRelativePath(AssetsDir, path).Replace('\\', '/');
+            return rel.StartsWith("Plugins/", StringComparison.Ordinal) || rel.StartsWith("DamageNumbersPro/", StringComparison.Ordinal);
+        }
+
+        /// <summary>Assets 아래 글꼴 파일(.ttf·.otf) 전부(산 에셋 폴더는 뺌). TextMesh Pro 기본 글꼴도 Resources 에 있어 빌드에 들어간다.</summary>
         static List<string> FontFiles() =>
             Directory.GetFiles(AssetsDir, "*.*", SearchOption.AllDirectories)
+                .Where(p => !InStoreAsset(p))
                 .Where(p => p.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase) || p.EndsWith(".otf", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(p => p, StringComparer.Ordinal).ToList();
 
@@ -68,7 +77,7 @@ namespace BloodRain.Core.Tests
             var ofl = _c.License("ofl");
             Assert.NotNull(ofl);
             Assert.Equal("SIL Open Font License, Version 1.1", ofl!.Name);
-            foreach (var txt in Directory.GetFiles(AssetsDir, "*OFL*.txt", SearchOption.AllDirectories))
+            foreach (var txt in Directory.GetFiles(AssetsDir, "*OFL*.txt", SearchOption.AllDirectories).Where(p => !InStoreAsset(p)))
             {
                 var t = ReadText(txt);
                 var body = t.Substring(t.IndexOf("SIL OPEN FONT LICENSE Version 1.1", StringComparison.Ordinal));
