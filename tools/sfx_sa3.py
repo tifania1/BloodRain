@@ -80,6 +80,10 @@ def run(server: str, prompt: dict, timeout: float = 300) -> list[str]:
     raise TimeoutError("ComfyUI 가 제한 시간 안에 끝내지 않음")
 
 
+# 같은 문구를 한 번 더 뽑을 때 붙이는 말(차례로 돌려 쓴다)
+TWISTS = ["lower pitched and heavier", "higher pitched, lighter and quicker", "distant, with a short echo in a stone hall", "very close and dry, punchy"]
+
+
 def load_variants(path) -> dict:
     """sfx_queue/variants.json: id → 문구 갈래 목록(또는 {seconds, prompts}). 없으면 빈 것."""
     from pathlib import Path
@@ -110,7 +114,10 @@ def generate(sid: str, prompts: list[str], seconds: float, count: int, seed: int
         # 한 번에 하나씩, 시드를 바꿔 가며 뽑는다 — 한 묶음(batch)으로 뽑은 것끼리는 문구가 달라도 거의 같은 소리였다
         # (2026-11-17 밤: 혈인 비명은 같은 묶음 두 개의 스펙트럼이 96% 겹침)
         for k in range(take):
-            files = (runner or run)(server, build_prompt(text, seconds, 1, f"{sid}_v{vi + 1}_{k + 1}", seed + 7919 * vi + 104729 * k))
+            # 시드만 바꿔서는 거의 같은 소리가 나온다(8걸음 증류 모델이라 문구가 소리를 정한다 — 같은 문구 두 번의 스펙트럼이 95% 겹침).
+            # 그래서 갈래의 둘째부터는 문구 끝에 성격을 바꾸는 말을 붙인다
+            said = text if k == 0 else f"{text.rstrip('. ')}, {TWISTS[(vi + k - 1) % len(TWISTS)]}"
+            files = (runner or run)(server, build_prompt(said, seconds, 1, f"{sid}_v{vi + 1}_{k + 1}", seed + 7919 * vi + 104729 * k))
             for f in files:
                 n += 1
                 src = comfy_output / f

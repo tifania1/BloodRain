@@ -83,6 +83,12 @@ class 큐로_뽑기(unittest.TestCase):
             self.assertEqual(n, 4)
             self.assertEqual([c[1] for c in calls], [1, 1, 1, 1])
             self.assertEqual(len({c[2] for c in calls}), 4)
+            # 같은 갈래의 둘째는 문구도 달라진다(시드만 바꾸면 거의 같은 소리)
+            self.assertEqual(len({c[0] for c in calls}), 2)
+            texts = []
+            sa3.generate("b", ["x"], 1.0, 2, 5, root / "art_inbox" / "sfx" / "b", out, "http://x", lambda sv, pr: (texts.append(pr["6"]["inputs"]["text"]), fake(sv, pr))[1])
+            self.assertNotEqual(texts[0], texts[1])
+            self.assertIn(sa3.TWISTS[0], texts[1])
             self.assertEqual(sorted(p.name for p in (root / "art_inbox/sfx/a").iterdir()), ["a_00001.flac", "a_00002.flac"])
             after = [json.loads(l) for l in q.read_text(encoding="utf-8").splitlines()]
             self.assertEqual([r["status"] for r in after], ["generated", "todo", "todo", "todo"])
