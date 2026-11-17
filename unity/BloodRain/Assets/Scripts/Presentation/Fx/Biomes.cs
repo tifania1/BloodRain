@@ -33,7 +33,7 @@ namespace BloodRain.Presentation.Fx
             ["cheongun"] = new Look { Base = Hex(0xC6C3BC), Shade = Hex(0x9C978E), Map = Hex(0xC9C4B8), Kind = "cobble" },
             // 숭산 소림: 네모난 돌판, 줄눈에 이끼
             ["songshan"] = new Look { Base = Hex(0xBFC5BA), Shade = Hex(0x8C9A84), Map = Hex(0xB4C0AC), Kind = "slab" },
-            // 개방 총타(개봉 저자): 수레 자국 난 흙길, 짚
+            // 개방 총타(저잣거리): 수레 자국 난 흙길, 짚
             ["gaebang_hq"] = new Look { Base = Hex(0xC2B9AE), Shade = Hex(0x968A7C), Map = Hex(0xC8BBAA), Kind = "dirt" },
             // 남궁세가: 마름모로 깐 청석
             ["namgung_manor"] = new Look { Base = Hex(0xC9D0D4), Shade = Hex(0x97A4AD), Map = Hex(0xBFCAD2), Kind = "diamond" },
@@ -183,11 +183,13 @@ namespace BloodRain.Presentation.Fx
                 }
                 case "cobble":
                 {
-                    for (int i = 0; i < 150; i++)
+                    // 납작한 돌: 가는 먹 테두리(아래쪽만 조금 진하게) 안을 밝게. 얼룩처럼 보이지 않게 진한 속은 쓰지 않는다
+                    for (int i = 0; i < 120; i++)
                     {
-                        float x = cv.R(0, T), y = cv.R(0, T), rx = cv.R(7, 20), ry = rx * cv.R(0.6f, 0.95f), rot = cv.R(0, 3.14f);
-                        cv.Blob(x + 1.5f, y + 2f, rx + 1.5f, ry + 1.5f, rot, ink, 0.16f, 0.35f);          // 아래 그늘
-                        cv.Blob(x, y, rx, ry, rot, cv.R() < 0.5f ? light : look.Shade, cv.R(0.25f, 0.5f), 0.3f);
+                        float x = cv.R(0, T), y = cv.R(0, T), rx = cv.R(8, 19), ry = rx * cv.R(0.62f, 0.9f), rot = cv.R(0, 3.14f);
+                        cv.Blob(x + 0.8f, y + 1.6f, rx + 1.2f, ry + 1.2f, rot, ink, 0.20f, 0.12f);         // 테두리·아래 그늘
+                        cv.Blob(x, y, rx, ry, rot, Color.Lerp(look.Base, light, cv.R(0.35f, 0.9f)), 0.95f, 0.12f);
+                        if (cv.R() < 0.4f) cv.Stroke(x - rx * 0.4f, y, rot + cv.R(-0.5f, 0.5f), rx * 0.8f, 0.6f, 0f, look.Shade, 0.35f, 0f, 0.3f); // 돌결
                     }
                     for (int i = 0; i < 380; i++) cv.Blend((int)cv.R(0, T), (int)cv.R(0, T), ink, cv.R(0.05f, 0.16f));
                     break;
@@ -324,9 +326,9 @@ namespace BloodRain.Presentation.Fx
         }
 
         // ---- 천하도 ----
-        // 두 큰 강을 지역 자리에서 잡는다(실제 지리의 큰 줄기: 황하는 곤륜 북쪽에서 화산·숭산 북쪽을 지나 개봉 북쪽으로 바다에,
+        // 두 큰 강을 지역 자리에서 잡는다(실제 지리의 큰 줄기: 황하는 곤륜 북쪽에서 화산·개방 총타·숭산 북쪽을 지나 동쪽 바다에,
         // 장강은 당가타(사천)에서 장강 수로를 지나 남궁세가 남쪽으로 바다에). 지역 자리가 바뀌면 강도 따라간다.
-        static readonly (string id, float dx, float dy)[] YellowRiver = { ("kunlun", 0.03f, -0.10f), ("huashan", -0.02f, -0.11f), ("huashan", 0.04f, -0.03f), ("songshan", 0f, -0.07f), ("gaebang_hq", 0f, -0.05f), ("gaebang_hq", 0.16f, -0.12f), ("gaebang_hq", 0.40f, -0.14f) };
+        static readonly (string id, float dx, float dy)[] YellowRiver = { ("kunlun", 0.03f, -0.10f), ("huashan", -0.06f, -0.10f), ("huashan", 0.03f, -0.07f), ("gaebang_hq", 0.02f, -0.06f), ("songshan", 0.08f, -0.10f), ("songshan", 0.24f, -0.14f), ("songshan", 0.42f, -0.17f) };
         static readonly (string id, float dx, float dy)[] LongRiver = { ("danggata", -0.10f, 0.02f), ("danggata", 0.03f, 0.05f), ("janggang", -0.10f, 0.03f), ("janggang", 0f, 0f), ("janggang", 0.10f, -0.02f), ("namgung_manor", 0f, 0.07f), ("namgung_manor", 0.16f, 0.04f), ("namgung_manor", 0.40f, 0.02f) };
 
         /// <summary>지역 자료로 그린 천하도(가로 w px, 세로는 세계 비율). 위가 북.</summary>

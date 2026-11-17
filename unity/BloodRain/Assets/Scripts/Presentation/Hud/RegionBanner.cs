@@ -57,7 +57,9 @@ namespace BloodRain.Presentation.Hud
             _strip.texture = Biomes.Tile(region.Id);
             _name.text = Loc.Region(region) + "   ·   " + Loc.F("ui.density", region.Density.ToString("0.0"));
             _canvas.SetActive(true);
-            _type.ShowText("{fade}{size}" + Loc.Hanja(region.Hanja) + "{/size}{/fade}");
+            string big = Loc.Hanja(region.Hanja);
+            if (string.IsNullOrEmpty(big)) big = Loc.Region(region); // 중국어 판은 한자 줄이 비어 이름을 크게
+            _type.ShowText("{fade}{size}" + big + "{/size}{/fade}");
 
             if (_seq != null) _seq.Kill();
             _group.alpha = 0f;
