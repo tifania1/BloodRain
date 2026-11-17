@@ -1,7 +1,7 @@
 #nullable enable
 // 서장(청운진 객잔 마당 10분)의 적 생성. 한 생의 LifeDirector 와 같은 모양으로 매초 Second 를 부른다(기획서 4장 '서장 상세 흐름', 21장).
 //   종류: chapters.json prologue 가중치표. 서장은 지역 고유 적이 없다.
-//   수: balance.json 화면 위 적 수 곡선, 8:30 ~ 9:00(장삼 경고) 사이는 만들지 않는다(prologue stopSpawningAtMinute ~ boss).
+//   수: balance.json 화면 위 적 수 곡선(채움 비율만 chapters.json prologue spawnFractionPerSecond 0.5), 8:30 ~ 9:00(장삼 경고) 사이는 만들지 않는다(prologue stopSpawningAtMinute ~ boss).
 //   사건: 3:30 혈인 돌진, 5:00 정예 강시 도부수, 9:00 장삼. 시각이 지나면 한 번씩 낸다(멈춤 중에도).
 //   덩이: '천하 규칙을 그대로 쓴다'(21장)에 따라 한 생과 같이 그 순간 경지(cheonha.json realms clusterSize)로 정한다.
 //   멈춤: 돌파 연출(breakthrough.spawnHoldSeconds), 각성 파동 뒤(balance.json awakening.spawnPauseSeconds)는 Hold 로.
@@ -32,8 +32,11 @@ namespace BloodRain.Core.Spawning
             _scale = new Scale(data);
             _curve = _table.Curve(WaveTable.Prologue, data.Balance.SpawnTarget);
             _schedule = _table.Schedule(WaveTable.Prologue, rng);
-            _fraction = data.Balance.SpawnTarget.SpawnFractionPerSecond;
+            _fraction = _table.Chapter(WaveTable.Prologue).SpawnFractionPerSecond ?? data.Balance.SpawnTarget.SpawnFractionPerSecond;
         }
+
+        /// <summary>목표보다 모자란 적을 매초 채우는 몫(chapters.json prologue 가 balance 값을 덮어씀).</summary>
+        public float FillFraction => _fraction;
 
         public WaveSchedule Schedule => _schedule;
         public Scale Scale => _scale;

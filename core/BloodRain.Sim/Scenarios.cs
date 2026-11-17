@@ -29,6 +29,14 @@ namespace BloodRain.Sim
     public static class Scenarios
     {
         /// <summary>처치 진기를 enemies.json 에 새로 넣는다면(P-02). 동갑시·목인나한처럼 단단한 적만 2.</summary>
+        /// <summary>채움 비율 0.1. 서장은 chapters.json prologue 가 balance 값을 덮어쓰니(VF-02a) 그쪽도 같이 낮춘다.</summary>
+        static void LowRefill(SimData d)
+        {
+            d.Game.Balance.SpawnTarget.SpawnFractionPerSecond = 0.1f;
+            foreach (var c in d.Game.Chapters)
+                if (c.SpawnFractionPerSecond != null) c.SpawnFractionPerSecond = 0.1f;
+        }
+
         public static readonly IReadOnlyDictionary<string, double> LeanKillXp = new Dictionary<string, double>
         {
             ["sigang"] = 1, ["hyeolin"] = 1, ["hyeol_gangsi"] = 1, ["hyeol_musa"] = 1, ["mogin_nahan"] = 2, ["donggap"] = 2,
@@ -43,9 +51,9 @@ namespace BloodRain.Sim
             {
                 Id = "refill",
                 NameKo = "생성 채움 비율 낮추기",
-                Change = "balance.json `spawnTarget.spawnFractionPerSecond` 0.3 → 0.1",
+                Change = "balance.json `spawnTarget.spawnFractionPerSecond` 0.3 → 0.1(서장 덮어쓰기 0.5 도 0.1)",
                 Why = "화면을 비우는 빌드에게 적이 바로 다시 채워지는 속도가 진기 공급의 상한이다.",
-                ApplyData = d => d.Game.Balance.SpawnTarget.SpawnFractionPerSecond = 0.1f,
+                ApplyData = LowRefill,
             },
             new Scenario
             {
@@ -101,7 +109,7 @@ namespace BloodRain.Sim
                 NameKo = "채움 비율 0.1 + 처치 진기 줄이기",
                 Change = "위 두 변경을 같이",
                 Why = "공급 상한과 마리당 진기를 함께 낮춘다.",
-                ApplyData = d => d.Game.Balance.SpawnTarget.SpawnFractionPerSecond = 0.1f,
+                ApplyData = LowRefill,
                 ApplyOptions = o => o.With(x => x.KillXp = LeanKillXp),
             },
         };

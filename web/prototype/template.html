@@ -2814,7 +2814,7 @@ function update(dt) {
     if (!stopped || G.bossSpawned) {
       const alive = G.enemies.length;
       const target = (G.bossSpawned ? BOSS_TRASH : spawnTarget(G.gm)) * (G.lordF ? LR.spawnTargetScale : 1);   // 땅의 주인과 싸우는 동안 줄인다(7장)
-      const n = Math.ceil((target - alive) * B.spawnTarget.spawnFractionPerSecond - 1e-4);
+      const n = Math.ceil((target - alive) * ((isPro() && PRO.spawnFractionPerSecond) || B.spawnTarget.spawnFractionPerSecond) - 1e-4);   // 서장만 chapters.json prologue 값(0.5)
       for (let i = 0; i < n && roomForFoe(); i++) { const [x, y] = ringPos(), lf = localFoe(); if (lf) spawnLocalGroup(lf, x, y); else spawnEnemy(pickType(G.body ? G.gm : Math.min(G.gm, 19)), x, y); }
     }
   }

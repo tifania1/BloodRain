@@ -14,14 +14,24 @@ namespace BloodRain.Core.Tests
         PrologueDirector New(int seed = 1) => new PrologueDirector(_d, new Random(seed));
         ChapterDef Prologue => _d.Chapters.Single(c => c.Id == "prologue");
 
-        [Fact] public void 부족분의_30퍼센트를_서장_가중치표에서_만든다()
+        [Fact] public void 부족분의_50퍼센트를_서장_가중치표에서_만든다()
         {
             var pd = New();
+            Assert.Equal(0.5f, Prologue.SpawnFractionPerSecond);   // VF-02a: 서장만 0.3 → 0.5
+            Assert.Equal(0.5f, pd.FillFraction);
             var s = pd.Second(0, 1, 0);
-            Assert.Equal(5, s.Spawns.Count); // 15 x 0.3 = 4.5 → 5
+            Assert.Equal(8, s.Spawns.Count); // 15 x 0.5 = 7.5 → 8
             var band = Prologue.Bands.First();
             Assert.All(s.Spawns, x => Assert.True(band.WeightOf(x.Enemy) > 0, x.Enemy));
             Assert.Empty(pd.Second(1f / 60, 1, 500).Spawns);
+        }
+
+        [Fact] public void 채움_비율_덮어쓰기는_서장만_한_생과_웹은_그대로_읽는다()
+        {
+            Assert.Null(_d.Chapters.Single(c => c.Id == "life").SpawnFractionPerSecond);
+            Assert.Equal(0.3f, _d.Balance.SpawnTarget.SpawnFractionPerSecond);
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("(isPro() && PRO.spawnFractionPerSecond) || B.spawnTarget.spawnFractionPerSecond", html);
         }
 
         [Fact] public void 장삼_경고_전_30초는_만들지_않고_장삼이_나오면_다시_만든다()

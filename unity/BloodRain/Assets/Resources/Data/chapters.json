@@ -9,6 +9,8 @@
       "durationMinutes": 10,
       "_noteStop": "9:00 장삼 경고 전 30초 동안 새 적을 만들지 않는다. 보스전이 시작되면 다시 돈다.",
       "stopSpawningAtMinute": 8.5,
+      "_noteSpawnFraction": "서장만 부족분을 매초 50%씩 채운다(balance.json spawnTarget.spawnFractionPerSecond 0.3 을 덮어씀). 첫 3분 화면 위 적이 목표의 83%쯤에 머물러 늘림(VF-02a, 2026-11-17 사람). 곡선 점은 한 생과 같다. 없으면 balance 값.",
+      "spawnFractionPerSecond": 0.5,
       "_noteFirstLevelUp": "첫 레벨업은 새 무공 카드 한 장뿐(4장 0:15, 고르기만 하면 됨). 은자·음식 카드도 붙이지 않는다. Core Loadout.RollFirstLevelUp.",
       "firstLevelUpChoices": 1,
       "bands": [

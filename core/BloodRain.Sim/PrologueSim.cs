@@ -99,9 +99,10 @@ namespace BloodRain.Sim
         {
             var g = data.Game;
             int cluster = g.Cheonha.RealmScale.First().ClusterSize;
+            float fill = g.Chapters.Single(c => c.Id == Core.Spawning.WaveTable.Prologue).SpawnFractionPerSecond ?? g.Balance.SpawnTarget.SpawnFractionPerSecond;
             sb.AppendLine($"## 첫 {DensityMinutes}분 화면 위 적 수(평균 정책, 가운데값)");
             sb.AppendLine();
-            sb.AppendLine($"목표는 기획서 11장 '화면 위 적 수 목표'(balance.json `spawnTarget.points`). 서장은 삼류라 덩이 하나가 {cluster}명이다. '살아 있는 적'은 생성 디렉터가 세는 수(목표에 모자라면 매초 부족분의 {(g.Balance.SpawnTarget.SpawnFractionPerSecond * 100).ToString("0", CultureInfo.InvariantCulture)}%를 만든다), '무리에 닿은 적'은 생긴 뒤 다가와 맞을 수 있게 된 적. 적 기혈은 청운진 혈운 농도를 곱한다. 값은 바꾸지 않고 견주기만 한다(VF-02).");
+            sb.AppendLine($"목표는 기획서 11장 '화면 위 적 수 목표'(balance.json `spawnTarget.points`). 서장은 삼류라 덩이 하나가 {cluster}명이다. '살아 있는 적'은 생성 디렉터가 세는 수(목표에 모자라면 매초 부족분의 {(fill * 100).ToString("0", CultureInfo.InvariantCulture)}%를 만든다 — 서장만 chapters.json prologue `spawnFractionPerSecond`, 한 생은 balance.json {(g.Balance.SpawnTarget.SpawnFractionPerSecond * 100).ToString("0", CultureInfo.InvariantCulture)}%), '무리에 닿은 적'은 생긴 뒤 다가와 맞을 수 있게 된 적. 적 기혈은 청운진 혈운 농도를 곱한다.");
             sb.AppendLine();
             sb.AppendLine("| 분 | 목표 | 살아 있는 적 | 목표 대비 | 무리에 닿은 적 | 누적 처치 |");
             sb.AppendLine("|---|---|---|---|---|---|");
@@ -112,7 +113,8 @@ namespace BloodRain.Sim
             var st = g.Balance.SpawnTarget;
             string P(double v) => (v * 100).ToString("0", CultureInfo.InvariantCulture) + "%";
             sb.AppendLine($"- 살아 있는 적은 목표의 {P(rows.Min(r => r.Alive / r.Target))}~{P(rows.Max(r => r.Alive / r.Target))}. 시강이 금방 죽어서(3분까지 {F0(rows.Last().Kills)}마리) 매초 부족분의 일부만 채우는 셈이 늘 한 박자 늦다.");
-            sb.AppendLine($"- 무리에 닿은 적은 그보다 훨씬 적다. 새 적은 화면 바깥 고리(대각선 {st.RingMinDiagonal.ToString("0.0#", CultureInfo.InvariantCulture)}~{st.RingMaxDiagonal.ToString("0.0#", CultureInfo.InvariantCulture)}배)에서 걸어오는데 닿자마자 베인다. 화면이 비어 보인다면 이 몫이다. 값을 바꿀지는 사람 결정(decisions.md VF-02a).");
+            sb.AppendLine($"- 무리에 닿은 적은 그보다 훨씬 적다. 새 적은 화면 바깥 고리(대각선 {st.RingMinDiagonal.ToString("0.0#", CultureInfo.InvariantCulture)}~{st.RingMaxDiagonal.ToString("0.0#", CultureInfo.InvariantCulture)}배)에서 걸어오는데 닿자마자 베인다. 화면이 비어 보인다면 이 몫이다.");
+            sb.AppendLine("- 2026-11-17 VF-02a(사람이 추천에 맡김)로 서장만 채움 비율을 30% → 50%로 올렸다. 30%일 때는 살아 있는 적이 목표의 82%~84%(1·2·3분 21·33·45), 무리에 닿은 적 4·9·12, 3분까지 처치 493, 이류 2:38·일류 6:18이었다.");
             sb.AppendLine();
         }
 
@@ -203,7 +205,7 @@ namespace BloodRain.Sim
             sb.AppendLine($"- 음양은 {avg.OffHarmonyRuns}/{avg.Runs}판에서 9분 안에 태극을 벗어났다. 기획서는 설명 문구를 시각이 아니라 '처음 기울 때'(가운데 {Clock(TargetOffHarmony)}쯤)에 붙인다.");
             sb.AppendLine($"- 장삼전 각성까지 평균 정책 {F0(avg.AwakenSeconds)}초. 서장 장삼은 처치 목표 {boss.TargetKillSeconds:0}초(enemies.json targetKillSeconds)인데, 각성 전 90%를 깎는 데 이만큼 걸리고 각성 뒤 남은 10%를 절기로 마저 친다.");
             if (scenarios)
-                sb.AppendLine("- 조정 시험 가운데 서장 시각을 움직이는 것은 생성 채움 비율(0.3 → 0.1)뿐이다. 이류가 3:20 근처로 늦어지고 일류도 1분쯤 늦어지며 장삼 각성도 길어진다. 서장만 따로 바꾸려면 chapters.json prologue 에 채움 비율을 따로 두는 길이 있다(지금은 balance.json 하나를 같이 쓴다).");
+                sb.AppendLine("- 조정 시험 가운데 서장 시각을 움직이는 것은 생성 채움 비율(0.1로)뿐이다. 이류가 3:20 근처로 늦어지고 일류도 1분쯤 늦어지며 장삼 각성도 길어진다. 서장 채움 비율은 chapters.json prologue 가 balance.json 값을 덮어쓴다(지금 0.5, VF-02a).");
             sb.AppendLine("- 빠진 것: 장삼전 동안 레벨업·잡몹 진기, 장삼 패턴(포승줄 묶임 1초·호루라기 시강 소환), 덩이(이류부터 4명)의 그림. 정책은 사람이 아니라 정해진 규칙으로 고른다.");
             return sb.ToString();
         }

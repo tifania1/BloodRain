@@ -64,6 +64,8 @@ namespace BloodRain.Core.Tests
             Assert.Equal(before.XpCurve.Segments[2].Base, after.XpCurve.Segments[2].Base);
 
             Assert.Equal(0.1f, Scenarios.Find("refill").LoadData(TestData.DataDir).Game.Balance.SpawnTarget.SpawnFractionPerSecond);
+            Assert.Equal(0.1f, Scenarios.Find("refill").LoadData(TestData.DataDir).Game.Chapter("prologue").SpawnFractionPerSecond);   // 서장 덮어쓰기도 같이
+            Assert.Equal(0.5f, SimData.Load(TestData.DataDir).Game.Chapter("prologue").SpawnFractionPerSecond);
             Assert.Equal(2, Scenarios.Find("kill-xp+pair2").LoadData(TestData.DataDir).Game.Balance.Evolution.PairPassiveMinLevel);
         }
 

@@ -100,6 +100,8 @@ namespace BloodRain.Core.Data
         public int FirstLevelUpChoices;
         /// <summary>이 시각부터 보스 사건까지 새 적을 만들지 않는다. 없으면 멈추지 않는다.</summary>
         public float? StopSpawningAtMinute;
+        /// <summary>목표보다 모자란 적을 매초 몇 몫씩 채우는지. 없으면 balance.json spawnTarget.spawnFractionPerSecond(서장만 0.5, VF-02a).</summary>
+        public float? SpawnFractionPerSecond;
         public List<SpawnBandDef> Bands = new List<SpawnBandDef>();
         public List<ChapterEventDef> Events = new List<ChapterEventDef>();
         /// <summary>시각 순서. 비어 있으면 지역 고유 적을 뽑지 않는다.</summary>
