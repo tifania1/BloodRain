@@ -44,7 +44,7 @@
 - 화면을 볼 때(2026-11-17): Run 씬 Play 나 웹 dev 판에서 **F2 시험 메뉴**(`Hud/TestPanel.cs`, 개발 판에서만 붙음)로 무공·경지·문파 몸을 바로 바꾼다. 코드로는 `TestPanel.Raise(id, 레벨)`·`TestPanel.SwitchBody(문파 id)`. 지도는 M(`Hud/WorldMapHud.cs`).
 - 에셋 스토어에서 산 것(2026-11-17): DOTween Pro·Text Animator·All In 1 Sprite Shader·Damage Numbers Pro 가 PC 의 Unity 프로젝트에만 있다. **저장소가 공개라 커밋하지 않는다**(`.gitignore`). 넣은 것·쓰는 곳·다시 넣는 법은 `docs/design/store_assets.md`. 그 에셋을 쓰는 코드는 클라우드에서 컴파일을 볼 수 없으니 고쳤으면 unity_tasks 에 컴파일 확인을 남긴다.
 - **PC 저장소에 커밋 안 된 변경을 남기지 않는다**(2026-11-18): Unity 가 고친 글꼴 에셋·ProjectSettings 가 남아 PC Unity 세션 셋이 연달아 건너뛴 일이 있었다. 세션을 끝낼 때 `git status` 를 보고 Unity 가 만든 변경은 "Unity 저장 뒤 설정"으로 커밋한다.
-- 바닥과 지도(2026-11-17): 바닥은 지역마다 다른 타일(`Fx/Biomes.cs`, 원화가 오면 `Resources/Art/Tiles/tile_<지역>`), 천하도는 지역 자료에서 그린다(`Biomes.MakeMap` — 옛 그림 `Art/Map/map_central_plains` 는 쓰지 않음). 적 몸놀림은 `ClusterMotion` 일곱 갈래.
+- 바닥과 지도(2026-11-17): 바닥은 지역마다 다른 타일(`Fx/Biomes.cs` — 원화 타일이 있는 여섯 지역은 지역 바탕빛 위에 원화를 옅게 얹고, 없는 지역은 코드로 그린 타일. 원화가 새로 오면 `Resources/Art/Tiles` 에 넣고 `Biomes.ArtOf` 표에 한 줄), 천하도는 지역 자료에서 그린다(`Biomes.MakeMap` — 옛 그림 `Art/Map/map_central_plains` 는 쓰지 않음). 적 몸놀림은 `ClusterMotion` 일곱 갈래.
 - `web/prototype/` — 브라우저 프로토타입. 원본은 `template.html` 하나이고 데이터 JSON을 빌드 때 그대로 넣는다. 빌드 결과는 커밋하지 않는다.
   푸시하면 CI(`web-prototype.yml`)가 묶어서 Cloudflare Pages에 올린다(claude/dev는 미리보기 주소, main은 공개 주소 https://bloodrain-proto.pages.dev). 설명은 그 폴더 README.
 

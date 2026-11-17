@@ -213,7 +213,10 @@ namespace BloodRain.Core.Tests
                 var file = (string)o["id"]! + (kind == "vfx_ink" ? "_stroke.png" : kind == "vfx_glow" ? "_gold.png" : jpg.Contains(kind) ? ".jpg" : ".png");
                 var path = Path.Combine(new[] { RepoRoot, "unity", "BloodRain", "Assets", "Art" }
                     .Concat(kinds[kind].Split('/')).Append(file).ToArray());
-                Assert.True(File.Exists(path), $"{o["id"]}: imported 인데 {path} 가 없다");
+                // 실행 중에 이름으로 읽는 그림(지역 바닥 타일, Biomes.ArtOf)은 Resources/Art 아래 같은 폴더에 둔다
+                var inResources = Path.Combine(new[] { RepoRoot, "unity", "BloodRain", "Assets", "Resources", "Art" }
+                    .Concat(kinds[kind].Split('/')).Append(file).ToArray());
+                Assert.True(File.Exists(path) || File.Exists(inResources), $"{o["id"]}: imported 인데 {path} 가 없다(Resources/Art 에도 없다)");
             }
         }
     }

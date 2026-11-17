@@ -29,7 +29,8 @@ namespace BloodRain.Presentation.Fx
         [Tooltip("PP-01U 가장자리 어둡게 세기(시안 finish.html 0.22)")]
         [Range(0f, 0.6f)] public float vignette = 0.22f;
 
-        Material _mapMat, _groundMat, _groundMat2, _vigMat;
+        Material _mapMat, _vigMat;
+        readonly Material[] _groundMats = new Material[4]; // 발밑(바탕·원화), 이웃(바탕·원화) — 그리는 차례대로
         /// <summary>지금 쓰는 천하도 그림(구석 지도·큰 지도가 같이 쓴다).</summary>
         public Texture2D MapTexture { get; private set; }
         /// <summary>지금 발밑 지역과, 섞이는 이웃 지역(없으면 null)·섞인 몫(0~0.5).</summary>
@@ -73,8 +74,7 @@ namespace BloodRain.Presentation.Fx
             MapTexture = usePaintedMap && map != null ? map : Biomes.MakeMap(_regions, new PropField(_regions));
             HasPaintedMap = true;
             _mapMat = new Material(material) { name = "천하도", renderQueue = 2970, mainTexture = MapTexture };
-            _groundMat = new Material(material) { name = "지역 바닥", renderQueue = 2980 };
-            _groundMat2 = new Material(material) { name = "지역 바닥(이웃)", renderQueue = 2981 };
+            for (int i = 0; i < _groundMats.Length; i++) _groundMats[i] = new Material(material) { name = "지역 바닥 " + i, renderQueue = 2980 + i };
             _vigMat = new Material(material) { name = "가장자리 어둡게", renderQueue = 3990, mainTexture = MakeVignette() };
         }
 
@@ -102,20 +102,39 @@ namespace BloodRain.Presentation.Fx
                 var scale = new Vector2(qw / GroundTile, qh / GroundTile);
                 var offset = new Vector2((c.x - qw / 2f) / GroundTile, (c.y - qh / 2f) / GroundTile);
                 var mat = Matrix4x4.TRS(new Vector3(c.x, c.y, 0.6f), Quaternion.identity, new Vector3(qw, qh, 1f));
-                _groundMat.mainTexture = Biomes.Tile(GroundRegion);
-                _groundMat.mainTextureScale = scale; _groundMat.mainTextureOffset = offset;
-                Draw(_groundMat, mat, Near * groundOpacity);
+                DrawGround(0, GroundRegion, mat, scale, offset, Near * groundOpacity);
                 if (GroundBlend > 0.01f)
                 {
-                    _groundMat2.mainTexture = Biomes.Tile(GroundRegion2);
-                    _groundMat2.mainTextureScale = scale; _groundMat2.mainTextureOffset = offset;
-                    mat.m23 = 0.59f;
-                    Draw(_groundMat2, mat, Near * groundOpacity * GroundBlend);
+                    mat.m23 = 0.58f;
+                    DrawGround(1, GroundRegion2, mat, scale, offset, Near * groundOpacity * GroundBlend);
                 }
             }
-            // 가장자리 어둡게(PP-01U 의 비네트 몫): 이펙트 위, 화면 UI 밑
-            if (vignette > 0.005f)
-                Draw(_vigMat, Matrix4x4.TRS(new Vector3(c.x, c.y, -0.9f), Quaternion.identity, new Vector3(w * 2.02f, h * 2.02f, 1f)), Mathf.Clamp01(vignette / 0.6f));
+            // 가장자리 어둡게(FL-01U): 화면에 붙인 판. 가운데는 투명
+            if (vignette > 0.001f)
+                Draw(_vigMat, Matrix4x4.TRS(new Vector3(c.x, c.y, -0.9f), Quaternion.identity, new Vector3(w * 2f, h * 2f, 1f)), vignette);
+        }
+
+        /// <summary>한 지역의 바닥을 깐다. 원화 타일이 있으면 지역 바탕빛을 깔고 그 위에 원화를 옅게, 없으면 코드로 그린 타일.
+        /// slot 0 은 발밑 지역, 1 은 경계에서 섞이는 이웃(재질·그리는 차례가 따로다).</summary>
+        void DrawGround(int slot, string region, Matrix4x4 mat, Vector2 scale, Vector2 offset, float alpha)
+        {
+            var art = Biomes.Art(region, out float artOpacity);
+            var m = _groundMats[slot * 2];
+            if (art == null)
+            {
+                m.mainTexture = Biomes.Tile(region);
+                m.mainTextureScale = scale; m.mainTextureOffset = offset;
+                Draw(m, mat, alpha);
+                return;
+            }
+            m.mainTexture = Texture2D.whiteTexture;
+            var b = Biomes.Of(region).Base;
+            Draw(m, mat, alpha, new Color(b.r, b.g, b.b, 1f));
+            var top = _groundMats[slot * 2 + 1];
+            top.mainTexture = art;
+            top.mainTextureScale = scale; top.mainTextureOffset = offset;
+            mat.m23 -= 0.005f;
+            Draw(top, mat, alpha * artOpacity);
         }
 
         /// <summary>발밑 지역과 이웃 지역을 고른다. 가장 가까운 두 지역까지의 거리 차가 blendBand 안이면 이웃을 그만큼(경계에서 반반) 섞는다.
@@ -135,10 +154,12 @@ namespace BloodRain.Presentation.Fx
             GroundBlend = 0.5f * k * k * (3f - 2f * k);
         }
 
-        void Draw(Material m, Matrix4x4 mat, float alpha)
+        void Draw(Material m, Matrix4x4 mat, float alpha) => Draw(m, mat, alpha, Color.white);
+
+        void Draw(Material m, Matrix4x4 mat, float alpha, Color tint)
         {
             _mpb.Clear();
-            _mpb.SetVector(IdTint, new Vector4(1, 1, 1, alpha));
+            _mpb.SetVector(IdTint, new Vector4(tint.r, tint.g, tint.b, alpha));
             _mpb.SetFloat(IdDissolve, 0f);
             var rp = new RenderParams(m) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(mat.GetColumn(3), new Vector3(1e6f, 1e6f, 1f)) };
             Graphics.RenderMesh(rp, _quad, 0, mat);

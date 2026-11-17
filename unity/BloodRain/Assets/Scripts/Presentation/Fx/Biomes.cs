@@ -9,7 +9,7 @@ namespace BloodRain.Presentation.Fx
     // 지역마다 다른 바닥과, 지역 자료로 그린 천하도(2026-11-17 밤 사람: "누런 끼 빼고 각 지역마다의 특색을 살린 그래픽으로,
     // 지역을 이동할 때마다 맞는 이미지가 나와야", "지도가 현실 지역 위치랑 안 맞는다").
     //   - 바닥: 지역 하나에 512px 이음매 없는 타일 한 장을 코드로 그린다. 빛깔은 종이 누런빛을 버리고 지역 빛(돌·대숲·눈·물가…)으로.
-    //     원화 타일(art_queue tile_<지역>)이 들어오면 Resources/Art/Tiles/tile_<지역> 를 먼저 쓴다.
+    //     원화 타일이 있는 지역(ArtOf 표)은 지역 바탕빛 위에 원화를 옅게 얹어 쓴다(Resources/Art/Tiles).
     //   - 천하도: 옛 수묵 지도 그림은 땅 자리(cheonha.json regions.pos)와 맞지 않았다. 땅 모양(PropField.InLand)·지역 자리·산 자리·
     //     두 큰 강을 자료에서 바로 그려 지도와 실제 자리가 늘 맞게 한다.
     // 처음 쓸 때 한 번 그려 두고 다시 쓴다(지역은 열하나, 한 장 0.1초 안쪽).
@@ -58,14 +58,37 @@ namespace BloodRain.Presentation.Fx
 
         static readonly Dictionary<string, Texture2D> Tiles = new Dictionary<string, Texture2D>();
 
-        /// <summary>그 지역 바닥 타일. 원화(Resources/Art/Tiles/tile_&lt;지역&gt;)가 있으면 그것, 없으면 코드로 그린 것.</summary>
+        /// <summary>그 지역 바닥 타일(코드로 그린 것). 원화가 있는 지역은 MapLayer 가 Art 를 대신 깐다. 지역 알림의 띠는 늘 이것.</summary>
         public static Texture2D Tile(string regionId)
         {
             regionId = regionId ?? "";
             if (Tiles.TryGetValue(regionId, out var t) && t != null) return t;
-            t = Resources.Load<Texture2D>("Art/Tiles/tile_" + regionId);
-            if (t == null) t = MakeTile(regionId, Of(regionId));
+            t = MakeTile(regionId, Of(regionId));
             Tiles[regionId] = t;
+            return t;
+        }
+
+        // 원화 타일(Resources/Art/Tiles, 2026-10~11 에 뽑아 둔 수묵 바닥)과 얹는 세기. 원화는 어두워서(평균 밝기 0.4) 그대로 깔면
+        // 먹 이펙트와 적이 묻힌다(2026-11-13 검토에서 벽돌 바닥을 걷어낸 까닭). 그래서 지역 바탕빛 위에 이 세기만큼만 얹어 밝게 씻어 쓴다.
+        // 흙바닥은 세게 얹으면 누렇게 돌아가니 약하게, 돌·대숲은 무늬가 살게 세게. 원화가 새로 오면 여기 한 줄.
+        static readonly Dictionary<string, (string file, float opacity)> ArtOf = new Dictionary<string, (string, float)>
+        {
+            ["cheongun"] = ("tile_cheongun_yard", 0.36f),
+            ["songshan"] = ("tile_ch1_courtyard", 0.5f),
+            ["gaebang_hq"] = ("tile_gaebang_lane", 0.36f),
+            ["namgung_manor"] = ("tile_namgung_court", 0.5f),
+            ["danggata"] = ("tile_danggata_bamboo", 0.48f),
+            ["janggang"] = ("tile_changjiang_bank", 0.42f),
+        };
+        static readonly Dictionary<string, Texture2D> Arts = new Dictionary<string, Texture2D>();
+
+        /// <summary>그 지역의 원화 타일과 얹는 세기. 없으면 null(코드 타일을 쓴다).</summary>
+        public static Texture2D Art(string regionId, out float opacity)
+        {
+            opacity = 0f;
+            if (regionId == null || !ArtOf.TryGetValue(regionId, out var a)) return null;
+            opacity = a.opacity;
+            if (!Arts.TryGetValue(regionId, out var t)) { t = Resources.Load<Texture2D>("Art/Tiles/" + a.file); Arts[regionId] = t; }
             return t;
         }
 
