@@ -76,3 +76,6 @@
 - (22:48 대화) "내 에셋들을 확인해 보고 이 게임에 쓸 만한 것들을 설치해서 적극 활용해 줘, 일단 DOTween Pro, sprite shader, Text Animator 는 꼭 설치해서 활용해 줘" → 진행: 2026-11-17 밤(daily). 저장소가 공개라 산 에셋은 커밋하지 않는다 — 넣은 것과 규칙은 `docs/design/store_assets.md`
 - (22:49 대화) "회사 PC 아트리스트 연결해 뒀어" → 다음 이미지 세션(23:47)이 시험 넉 장을 뽑음
 
+
+## 2026-11-18
+- (06:30, 아침 정리 알림을 보고) "커밋해" — PC 저장소(`E:\Unity\BloodRain`)에 남은 변경(`Assets/Art/Fonts/NotoSerifKR SDF.asset`·`YujiBoku Dynamic SDF.asset`·`ProjectSettings/ProjectSettings.asset`)을 커밋하라는 뜻. 클라우드 정리 세션은 PC 에 닿지 않아 다음 PC Unity 세션이 한다: 추적 중인 이 세 파일만 커밋해 `claude/dev` 로 푸시하고(메시지 예: "Unity 저장 뒤 설정(글꼴 에셋), 사람이 커밋하라고 함"), 안 추적 파일(`PlayerAllIn1.mat`, `Captures/`)은 `docs/design/store_assets.md` 규칙(산 에셋은 커밋하지 않음)을 보고 산 에셋에 기대는 것이면 `.gitignore` 에 넣는다. 그다음 평소 차례를 돈다.
