@@ -46,6 +46,8 @@ namespace BloodRain.Presentation
         PlayerController _move;
         MaterialPropertyBlock _mpb;
         static readonly int FlashId = Shader.PropertyToID("_Flash");
+        static readonly int HitBlendId = Shader.PropertyToID("_HitEffectBlend");
+        bool _allIn1;
         float _height, _foot, _phase, _walk;
         // HF-02U 공격 방향으로 몸이 살짝 튀어나감(월드 벡터, 빠르게 돌아옴)과 경공 잔상
         Vector2 _lunge;
@@ -131,6 +133,10 @@ namespace BloodRain.Presentation
             Renderer = go.AddComponent<SpriteRenderer>();
             Renderer.sprite = sprites[found];
             if (flashMaterial != null) Renderer.sharedMaterial = flashMaterial;
+            // 산 에셋 All In 1 Sprite Shader 재질(Resources/Fx/PlayerAllIn1 — 셰이더는 PC 에만, docs/design/store_assets.md).
+            // 옅은 빛 테두리로 적 무리 속에서 내 몸이 묻히지 않게 하고, 피격 번쩍임은 그 셰이더의 Hit Effect 로 낸다. 셰이더가 없으면 옛 재질 그대로
+            var allIn1 = Resources.Load<Material>("Fx/PlayerAllIn1");
+            if (allIn1 != null && allIn1.shader != null && allIn1.shader.name.StartsWith("AllIn1SpriteShader")) { Renderer.sharedMaterial = allIn1; _allIn1 = true; }
             if (rootSr != null)
             {
                 Renderer.sortingLayerID = rootSr.sortingLayerID;
@@ -192,6 +198,7 @@ namespace BloodRain.Presentation
 
             Renderer.GetPropertyBlock(_mpb);
             _mpb.SetFloat(FlashId, Mathf.Clamp01(Flash));
+            if (_allIn1) _mpb.SetFloat(HitBlendId, Mathf.Clamp01(Flash));
             Renderer.SetPropertyBlock(_mpb);
         }
     }

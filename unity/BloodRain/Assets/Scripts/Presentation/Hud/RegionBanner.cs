@@ -84,7 +84,7 @@ namespace BloodRain.Presentation.Hud
             _canvas.transform.SetParent(transform, false);
             var canvas = _canvas.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 60;
+            canvas.sortingOrder = 5; // 레벨업·깨달음 화면(40~50)이 위를 덮는다
             var scaler = _canvas.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);
