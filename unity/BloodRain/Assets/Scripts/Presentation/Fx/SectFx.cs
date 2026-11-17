@@ -15,7 +15,7 @@ namespace BloodRain.Presentation.Fx
         // 값은 시안(web/lookdev/sects.html)과 같다. 밝은 종이 위에서 읽히게 가장자리를 짙게 잡았다.
         public static readonly FxRamp Ink = new FxRamp(C(.13f, .12f, .11f), C(.06f, .06f, .06f), C(.02f, .02f, .02f));
         public static readonly FxRamp Wash = new FxRamp(C(.3f, .52f, .5f), C(.24f, .46f, .44f), C(.18f, .38f, .37f));
-        public static readonly FxRamp Gold = new FxRamp(C(.6f, .27f, .02f), C(.97f, .66f, .1f), C(1f, .96f, .72f));
+        public static readonly FxRamp Gold = new FxRamp(C(.56f, .4f, .05f), C(.98f, .74f, .16f), C(1f, .96f, .72f));   // 2026-11-17 가장자리를 주황에서 황토로(주홍으로 읽히지 않게)
         public static readonly FxRamp Brown = new FxRamp(C(.42f, .3f, .18f), C(.24f, .15f, .07f), C(.1f, .06f, .03f));
         public static readonly FxRamp Amber = new FxRamp(C(.55f, .2f, .02f), C(.93f, .5f, .08f), C(1f, .85f, .45f));
         public static readonly FxRamp Blue = new FxRamp(C(.05f, .15f, .6f), C(.2f, .5f, .96f), C(.9f, .97f, 1f));
