@@ -164,24 +164,35 @@ namespace BloodRain.Presentation.Hud
             }
 
             y += gap;
-            Head("무공 — 누르면 +1, 오른쪽은 바로 Lv8(5단)");
+            Head("무공 — 누를 때마다 다음 단계(1~5단)");
             int max = data.Balance.Levels.WeaponMax;
-            foreach (var wdef in data.Weapons)
+            var ws = data.Weapons;
+            for (int i = 0; i < ws.Count; i += 2)
             {
-                life.Loadout.Weapons.TryGetValue(wdef.Id, out int lv);
-                string id = wdef.Id; int cur = lv;
-                string state = lv > 0 ? $"Lv{lv} · {WeaponGrowth.VisualStage(wdef, lv)}단" : "없음";
-                if (Vis(y))
+                var cells = new List<(string, System.Action, bool)>();
+                for (int j = i; j < Mathf.Min(i + 2, ws.Count); j++)
                 {
-                    float nameW = cw * 0.66f;
-                    Btn(new Rect(x0, y, nameW, rh), $"{Loc.Weapon(wdef)}  {state}", () => Raise(id, cur + 1), lv < max);
-                    Btn(new Rect(x0 + nameW + gap, y, cw - nameW - gap, rh), $"Lv{max}", () => Raise(id, max), lv < max);
+                    var wdef = ws[j];
+                    life.Loadout.Weapons.TryGetValue(wdef.Id, out int lv);
+                    string id = wdef.Id;
+                    int next = NextStageLevel(wdef, lv, max);
+                    string state = lv > 0 ? $"{WeaponGrowth.VisualStage(wdef, lv)}단 Lv{lv}" : "—";
+                    cells.Add(($"{Loc.Weapon(wdef)}  {state}", () => Raise(id, next), lv < max));
                 }
-                y += rh + gap;
+                Row(cells.ToArray());
             }
             // 내용이 판보다 길면 휠로 굴린다
             float content = y + _scroll - _panel.y;
             _scroll = Mathf.Clamp(_scroll, 0f, Mathf.Max(0f, content - h + pad));
+        }
+
+        /// <summary>이펙트 단계가 하나 오르는 가장 낮은 레벨(없으면 1, 더 오를 단계가 없으면 최대 레벨).</summary>
+        static int NextStageLevel(WeaponDef w, int level, int max)
+        {
+            if (level <= 0) return 1;
+            int st = WeaponGrowth.VisualStage(w, level);
+            for (int lv = level + 1; lv <= max; lv++) if (WeaponGrowth.VisualStage(w, lv) > st) return lv;
+            return max;
         }
 
         /// <summary>그 무공을 level 까지. 칸이 모자라면 칸을 하나 늘린다(시험이니).</summary>
