@@ -170,6 +170,9 @@ namespace BloodRain.Presentation
                 var lu = FindFirstObjectByType<LevelUpScreen>();
                 if (lu != null) ps.font = lu.font;
             }
+            if (GetComponent<WorldMapHud>() == null) gameObject.AddComponent<WorldMapHud>().runner = this; // 천하도(구석 지도·M 큰 지도·첫머리 땅 이름)
+            if (TestPanel.Allowed && GetComponent<TestPanel>() == null) gameObject.AddComponent<TestPanel>().runner = this; // 시험 메뉴(F2, 개발 판만)
+            WorldIntro.Begin(); // 천하 한 장에서 태어난 자리로 내려오며 시작
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             if (cuts == null) cuts = FindFirstObjectByType<CutScreen>();
             // QA-05U 화면 가장자리 땅의 주인 화살표를 이 생의 기록(혼의 봉인석·처치)으로
