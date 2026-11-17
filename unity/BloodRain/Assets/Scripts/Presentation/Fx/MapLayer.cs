@@ -1,3 +1,4 @@
+using BloodRain.Core.Data;
 using BloodRain.Sim;
 using UnityEngine;
 
@@ -19,12 +20,22 @@ namespace BloodRain.Presentation.Fx
         [Tooltip("수묵 지도(art_queue map_central_plains). 없으면 땅 모양만 그린 임시 텍스처")]
         public Texture2D map;
 
-        [Tooltip("FL-01U 선지 바닥이 지도를 가리는 정도. 1 이면 지도가 안 비친다")]
-        [Range(0.5f, 1f)] public float groundOpacity = 0.8f;
+        [Tooltip("바닥이 지도를 가리는 정도. 1 이면 지도가 안 비친다(2026-11-17 밤 사람: 지도를 확대해 놓은 것 같다 → 안 비치게)")]
+        [Range(0.5f, 1f)] public float groundOpacity = 1f;
+        [Tooltip("옛 수묵 지도 그림을 쓴다. 끄면 지역 자료로 그린 천하도(땅 자리와 늘 맞음)")]
+        public bool usePaintedMap = false;
+        [Tooltip("지역 경계에서 두 바닥이 섞이는 띠(m). 두 지역까지 거리 차가 이 안이면 섞인다")]
+        public float blendBand = 90f;
         [Tooltip("PP-01U 가장자리 어둡게 세기(시안 finish.html 0.22)")]
         [Range(0f, 0.6f)] public float vignette = 0.22f;
 
-        Material _mapMat, _groundMat, _vigMat;
+        Material _mapMat, _groundMat, _groundMat2, _vigMat;
+        /// <summary>지금 쓰는 천하도 그림(구석 지도·큰 지도가 같이 쓴다).</summary>
+        public Texture2D MapTexture { get; private set; }
+        /// <summary>지금 발밑 지역과, 섞이는 이웃 지역(없으면 null)·섞인 몫(0~0.5).</summary>
+        public string GroundRegion { get; private set; }
+        public string GroundRegion2 { get; private set; }
+        public float GroundBlend { get; private set; }
         Mesh _quad;
         MaterialPropertyBlock _mpb;
         BloodRain.Core.World.Regions _regions;
@@ -35,7 +46,7 @@ namespace BloodRain.Presentation.Fx
         public float Far { get; private set; }
         public float Near { get; private set; }
         // 2026-11-17 사람: "중원 전체 맵 적용이 하나도 안 돼 있다" — 그린 지도가 있으면 낮은 경지에서도 선지 밑으로 비치게 진하게 둔다
-        public float MapAlpha => HasPaintedMap ? 0.9f + 0.1f * Far : 0.35f + 0.65f * Far;
+        public float MapAlpha => 0.9f + 0.1f * Far;
         /// <summary>그린 수묵 지도가 들어와 있나(임시 땅 모양이 아니라). 소품 층이 도형 산을 뺄지 본다.</summary>
         public static bool HasPaintedMap { get; private set; }
         void OnDestroy() => HasPaintedMap = false;
@@ -58,10 +69,12 @@ namespace BloodRain.Presentation.Fx
             _regions = new BloodRain.Core.World.Regions(DataBoot.Data);
             _quad = MakeQuad();
             _mpb = new MaterialPropertyBlock();
-            HasPaintedMap = map != null;
-            _mapMat = new Material(material) { name = "수묵 지도", renderQueue = 2970, mainTexture = map != null ? map : MakeLandTexture() };
-            var ground = MakePaperTile();
-            _groundMat = new Material(material) { name = "선지 바닥", renderQueue = 2980, mainTexture = ground };
+            // 천하도: 옛 그림은 땅 자리와 안 맞아(사람 2026-11-17) 지역 자료로 그린 것을 쓴다. 산도 지도에 그려 넣으니 도형 산은 뺀다
+            MapTexture = usePaintedMap && map != null ? map : Biomes.MakeMap(_regions, new PropField(_regions));
+            HasPaintedMap = true;
+            _mapMat = new Material(material) { name = "천하도", renderQueue = 2970, mainTexture = MapTexture };
+            _groundMat = new Material(material) { name = "지역 바닥", renderQueue = 2980 };
+            _groundMat2 = new Material(material) { name = "지역 바닥(이웃)", renderQueue = 2981 };
             _vigMat = new Material(material) { name = "가장자리 어둡게", renderQueue = 3990, mainTexture = MakeVignette() };
         }
 
@@ -81,17 +94,45 @@ namespace BloodRain.Presentation.Fx
             var center = new Vector3(topLeft.x + W / 2f, topLeft.y - H / 2f, 0.7f);
             Draw(_mapMat, Matrix4x4.TRS(center, Quaternion.identity, new Vector3(W, H, 1f)), MapAlpha);
 
-            // 선지 바닥(FL-01U): 화면을 덮는 판, 결은 세계 좌표에 붙인다. 살짝 비쳐서 밑의 수묵 지도가 그 땅의 빛으로 번진다
+            // 지역 바닥: 화면을 덮는 판, 무늬는 세계 좌표에 붙인다. 발밑 지역의 타일을 깔고, 경계 띠에서는 이웃 지역 타일을 위에 겹쳐 섞는다
             if (Near > 0.01f)
             {
+                PickGround(WorldCoords.FromUnity(c));
                 float qw = w * 2f + GroundTile * 2f, qh = h * 2f + GroundTile * 2f;
-                _groundMat.mainTextureScale = new Vector2(qw / GroundTile, qh / GroundTile);
-                _groundMat.mainTextureOffset = new Vector2((c.x - qw / 2f) / GroundTile, (c.y - qh / 2f) / GroundTile);
-                Draw(_groundMat, Matrix4x4.TRS(new Vector3(c.x, c.y, 0.6f), Quaternion.identity, new Vector3(qw, qh, 1f)), Near * (HasPaintedMap ? groundOpacity : 1f));
+                var scale = new Vector2(qw / GroundTile, qh / GroundTile);
+                var offset = new Vector2((c.x - qw / 2f) / GroundTile, (c.y - qh / 2f) / GroundTile);
+                var mat = Matrix4x4.TRS(new Vector3(c.x, c.y, 0.6f), Quaternion.identity, new Vector3(qw, qh, 1f));
+                _groundMat.mainTexture = Biomes.Tile(GroundRegion);
+                _groundMat.mainTextureScale = scale; _groundMat.mainTextureOffset = offset;
+                Draw(_groundMat, mat, Near * groundOpacity);
+                if (GroundBlend > 0.01f)
+                {
+                    _groundMat2.mainTexture = Biomes.Tile(GroundRegion2);
+                    _groundMat2.mainTextureScale = scale; _groundMat2.mainTextureOffset = offset;
+                    mat.m23 = 0.59f;
+                    Draw(_groundMat2, mat, Near * groundOpacity * GroundBlend);
+                }
             }
             // 가장자리 어둡게(PP-01U 의 비네트 몫): 이펙트 위, 화면 UI 밑
             if (vignette > 0.005f)
                 Draw(_vigMat, Matrix4x4.TRS(new Vector3(c.x, c.y, -0.9f), Quaternion.identity, new Vector3(w * 2.02f, h * 2.02f, 1f)), Mathf.Clamp01(vignette / 0.6f));
+        }
+
+        /// <summary>발밑 지역과 이웃 지역을 고른다. 가장 가까운 두 지역까지의 거리 차가 blendBand 안이면 이웃을 그만큼(경계에서 반반) 섞는다.
+        /// 봉마곡은 봉인석이 다 모이기 전에는 지역으로 치지 않는 규칙(Regions.Nearest)이 있지만 바닥은 보이는 대로 깐다.</summary>
+        void PickGround(System.Numerics.Vector2 world)
+        {
+            RegionDef a = null, b = null; float da = float.MaxValue, db = float.MaxValue;
+            foreach (var r in _regions.All)
+            {
+                float d = System.Numerics.Vector2.Distance(world, _regions.Center(r));
+                if (d < da) { b = a; db = da; a = r; da = d; }
+                else if (d < db) { b = r; db = d; }
+            }
+            GroundRegion = a != null ? a.Id : null;
+            GroundRegion2 = b != null ? b.Id : null;
+            float k = b == null ? 0f : 1f - Mathf.Clamp01((db - da) / Mathf.Max(1f, blendBand));
+            GroundBlend = 0.5f * k * k * (3f - 2f * k);
         }
 
         void Draw(Material m, Matrix4x4 mat, float alpha)

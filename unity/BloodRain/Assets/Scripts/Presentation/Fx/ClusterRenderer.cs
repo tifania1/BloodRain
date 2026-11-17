@@ -20,9 +20,30 @@ namespace BloodRain.Presentation.Fx
         /// <summary>사람 하나 크기(그 덩이가 생긴 경지 m). 0 이면 렌더러의 memberRealmMeters.</summary>
         public float Size;
 
+        /// <summary>몸놀림(2026-11-17 밤 사람: "너무 허접하게 움직이는 느낌" — 뛰지 않는 적은 그림이 미끄러지기만 했다).
+        /// 걷는 박자는 실제로 움직인 빠르기를 따르고, 그림은 가는 쪽을 본다(원화는 오른쪽을 본다).</summary>
+        public ClusterMotion Motion = ClusterMotion.Walk;
+
         internal int Drawn = -1;          // 지난 프레임에 그린 사람 수
+        internal Vector2 LastPos; internal bool HasLast;
+        internal float Face = 1f;         // 1 오른쪽, -1 왼쪽
+        internal float FaceShown = 1f;    // 돌아서는 중(납작해졌다 펴짐)
+        internal float Speed;             // 부드럽게 한 빠르기(세계 m/초)
+        internal float Stride;            // 걸음 박자(걸은 거리로 쌓는다 — 서면 멈춤)
         internal int FadeFrom;            // 디졸브 중인 사람의 끝 순번(이 순번 아래, Drawn 이상이 사라지는 중)
         internal float FadeStart = -10f;
+    }
+
+    /// <summary>적 몸놀림 갈래. EnemyField 가 적 종류를 보고 고른다.</summary>
+    public enum ClusterMotion : byte
+    {
+        Walk,   // 사람: 걸음마다 살짝 들썩이고 좌우로 기우뚱
+        Hop,    // 강시: 콩콩(시뮬레이션 박자). 뜰 때 늘어나고 내려앉을 때 눌린다
+        Leap,   // 두꺼비: 웅크렸다 뛰기(렌더러 박자)
+        Float,  // 귀신·그림자: 떠서 느리게 흔들림
+        Beast,  // 짐승·지네: 앞으로 숙이고 잰걸음
+        Stiff,  // 목인·동인: 뻣뻣하게 좌우로 덜컥덜컥
+        Heavy,  // 정예·땅의 주인: 느리고 무거운 걸음, 디딜 때 눌림
     }
 
     // 적 덩이 렌더러(기획서 7장 '적 한 덩이', TU-04). 적 그림 한 장을 덩이당 최대 64번 겹쳐 그린다.
@@ -143,6 +164,20 @@ namespace BloodRain.Presentation.Fx
                     if (c.Position.x + r < view.xMin || c.Position.x - r > view.xMax ||
                         c.Position.y + r < view.yMin || c.Position.y - r > view.yMax) continue;
                 }
+                // 몸놀림 재료: 빠르기·보는 쪽·걸음 박자(덩이마다 한 번)
+                float dt = Time.deltaTime;
+                if (!c.HasLast) { c.LastPos = c.Position; c.HasLast = true; }
+                else if (dt > 1e-5f)
+                {
+                    var d = c.Position - c.LastPos;
+                    c.LastPos = c.Position;
+                    float sp = d.magnitude / dt;
+                    if (sp > size * 40f) sp = 0f; // 순간 이동(밀려남·자리 옮김)은 걸음으로 치지 않는다
+                    c.Speed = Mathf.Lerp(c.Speed, sp, 1f - Mathf.Exp(-dt * 8f));
+                    c.Stride += c.Speed * dt / Mathf.Max(0.01f, size);
+                    if (Mathf.Abs(d.x) > size * 0.15f * dt) c.Face = d.x > 0f ? 1f : -1f;
+                    c.FaceShown = Mathf.MoveTowards(c.FaceShown, c.Face, dt * 9f);
+                }
                 var tex = c.Art != null ? c.Art : atlas;
                 if (!_textures.Contains(tex)) _textures.Add(tex);
                 _visible.Add((c, n, size, upto, fadeK, tex));
@@ -173,8 +208,78 @@ namespace BloodRain.Presentation.Fx
                         float beat = t / hopPeriod + m.z * hopPhaseSpread;
                         hop = Mathf.Abs(Mathf.Sin(beat * Mathf.PI)) * hopHeight;
                     }
-                    var pos = new Vector3(c.Position.x + m.x * size, c.Position.y + (m.y + hop) * size, -0.3f - m.y * 0.0001f);
-                    _mats[_count] = Matrix4x4.TRS(pos, Quaternion.identity, new Vector3(size, size, 1f));
+                    // 몸놀림: 들썩임(bob)·기울기(tilt, 라디안)·늘어남(sx, sy). 발은 땅에 붙여 둔다
+                    float bob = 0f, tilt = 0f, sx = 1f, sy = 1f;
+                    float own = m.z * 6.283f + c.Seed * 0.37f;          // 사람마다 어긋나는 몫
+                    float moveK = Mathf.Clamp01(c.Speed / (size * 0.35f)); // 서 있으면 0
+                    float breath = Mathf.Sin(t * 2.1f + own) * 0.012f;
+                    switch (c.Motion)
+                    {
+                        case ClusterMotion.Hop:
+                            if (c.HopBeat >= 0f)
+                            {
+                                float f = Mathf.Repeat(c.HopBeat - m.z * hopPhaseSpread * 0.25f, 1f);
+                                if (f < c.HopDuty) { float a = Mathf.Sin(f / c.HopDuty * Mathf.PI); sy = 1f + 0.10f * a; sx = 1f - 0.06f * a; }
+                                else { float g = Mathf.Sin((f - c.HopDuty) / (1f - c.HopDuty) * Mathf.PI); sy = 1f - 0.13f * g; sx = 1f + 0.09f * g; }
+                            }
+                            break;
+                        case ClusterMotion.Leap:
+                        {
+                            float f = Mathf.Repeat(t / 0.9f + m.z * 0.6f + c.Seed * 0.13f, 1f);
+                            if (f < 0.45f) { float a = Mathf.Sin(f / 0.45f * Mathf.PI); bob = a * 0.34f * moveK; sy = 1f + 0.14f * a * moveK; sx = 1f - 0.08f * a * moveK; }
+                            else { float g = Mathf.Sin((f - 0.45f) / 0.55f * Mathf.PI); sy = 1f - 0.16f * g; sx = 1f + 0.12f * g; }
+                            break;
+                        }
+                        case ClusterMotion.Float:
+                            bob = 0.10f + Mathf.Sin(t * 1.7f + own) * 0.07f;
+                            tilt = Mathf.Sin(t * 1.15f + own * 1.3f) * 0.07f - c.FaceShown * 0.05f * moveK;
+                            sy = 1f + Mathf.Sin(t * 2.3f + own) * 0.035f; sx = 2f - sy;
+                            break;
+                        case ClusterMotion.Beast:
+                        {
+                            float ph = c.Stride * 2.6f + own;
+                            bob = Mathf.Abs(Mathf.Sin(ph)) * 0.07f * moveK;
+                            tilt = -c.FaceShown * (0.10f + 0.05f * Mathf.Sin(ph * 2f)) * moveK;
+                            sx = 1f + 0.06f * Mathf.Sin(ph * 2f) * moveK; sy = 2f - sx + breath;
+                            break;
+                        }
+                        case ClusterMotion.Stiff:
+                        {
+                            float ph = c.Stride * 1.5f + own;
+                            float rock = Mathf.Sin(ph); rock = Mathf.Sign(rock) * Mathf.Pow(Mathf.Abs(rock), 0.35f); // 덜컥: 양 끝에 오래 머문다
+                            tilt = rock * 0.13f * moveK;
+                            bob = Mathf.Abs(Mathf.Cos(ph)) * 0.02f * moveK;
+                            break;
+                        }
+                        case ClusterMotion.Heavy:
+                        {
+                            float ph = c.Stride * 1.1f + own;
+                            float step = Mathf.Abs(Mathf.Sin(ph));
+                            bob = step * 0.05f * moveK;
+                            tilt = Mathf.Sin(ph) * 0.045f * moveK;
+                            sy = 1f - (1f - step) * 0.05f * moveK + breath; sx = 1f + (1f - step) * 0.04f * moveK;
+                            break;
+                        }
+                        default: // Walk
+                        {
+                            float ph = c.Stride * 1.9f + own;
+                            bob = Mathf.Abs(Mathf.Sin(ph)) * 0.075f * moveK;
+                            tilt = Mathf.Sin(ph) * 0.085f * moveK - c.FaceShown * 0.03f * moveK;
+                            sy = 1f + Mathf.Sin(ph * 2f) * 0.03f * moveK + breath; sx = 2f - sy;
+                            break;
+                        }
+                    }
+                    // 돌아설 때는 가로로 납작해졌다 펴진다(FaceShown -1~1). 0 을 지나며 그림이 뒤집힌다
+                    float face = Mathf.Abs(c.FaceShown) < 0.12f ? (c.FaceShown < 0f ? -0.12f : 0.12f) : c.FaceShown;
+                    float w2 = size * sx * face, h2 = size * sy;
+                    float cs = Mathf.Cos(tilt), sn = Mathf.Sin(tilt);
+                    float footX = c.Position.x + m.x * size, footY = c.Position.y + (m.y + hop + bob) * size - size * 0.5f;
+                    var mat = Matrix4x4.identity;
+                    mat.m00 = cs * w2; mat.m01 = -sn * h2;
+                    mat.m10 = sn * w2; mat.m11 = cs * h2;
+                    mat.m03 = footX - sn * h2 * 0.5f; mat.m13 = footY + cs * h2 * 0.5f;
+                    mat.m23 = -0.3f - m.y * 0.0001f;
+                    _mats[_count] = mat;
                     _tints[_count] = tint;
                     _dissolves[_count] = i < c.Drawn ? 0f : Mathf.Clamp01(fadeK);
                     _count++;

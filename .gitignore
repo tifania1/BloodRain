@@ -11,6 +11,13 @@ unity/BloodRain/.vsconfig
 # unityMCP 스크린샷 기본 폴더. 남길 화면은 docs/unity_shots/<항목 id>/ 로 옮긴다
 unity/BloodRain/Assets/Screenshots/
 unity/BloodRain/Assets/Screenshots.meta
+# 에셋 스토어에서 산 것(공개 저장소라 올리지 않는다 — docs/design/store_assets.md). PC 에만 둔다
+unity/BloodRain/Assets/Plugins.meta
+unity/BloodRain/Assets/Plugins/Demigiant*
+unity/BloodRain/Assets/Plugins/AllIn1SpriteShader*
+unity/BloodRain/Assets/Plugins/Febucci*
+unity/BloodRain/Assets/DamageNumbersPro*
+unity/BloodRain/Assets/Resources/DOTweenSettings.asset*
 *.csproj.user
 *.pidb.meta
 *.pdb.meta

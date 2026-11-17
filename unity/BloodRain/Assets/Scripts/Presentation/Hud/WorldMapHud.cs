@@ -11,7 +11,7 @@ namespace BloodRain.Presentation.Hud
     //   ① 구석 지도: 오른쪽 위에 중원 한 장과 내 자리(붉은 점). 누르거나 M(패드 Select)이면 큰 지도.
     //   ② 큰 지도: 세상을 멈추고 지도 한 장, 땅 이름·한자·혈운 농도, 내 자리·태어난 곳·혈우 장막. M·Esc·누름으로 닫는다.
     //   ③ 한 생 첫머리(WorldIntro)에는 태어난 땅 이름을 크게 띄운다.
-    // 그림은 MapLayer.map(수묵 지도) 그대로, 땅 자리는 cheonha.json regions.pos. 규칙은 건드리지 않는다(보기만).
+    // 그림은 MapLayer.MapTexture(지역 자료로 그린 천하도) 그대로, 땅 자리는 cheonha.json regions.pos. 규칙은 건드리지 않는다(보기만).
     // LifeRunner 가 붙인다(메뉴 없음). 글은 IMGUI — 다른 디버그 줄처럼 ImguiFont 로 한글을 쓴다.
     public sealed class WorldMapHud : MonoBehaviour
     {
@@ -23,6 +23,7 @@ namespace BloodRain.Presentation.Hud
         static readonly Color GoldInk = new Color32(0x8A, 0x63, 0x14, 255);
 
         Texture2D _map, _white, _dot, _ring;
+        MapLayer _mapLayer;
         bool _open, _lookedForMap;
         float _prevScale = 1f;
         int _openedFrame = -1;
@@ -51,11 +52,11 @@ namespace BloodRain.Presentation.Hud
         {
             get
             {
-                if (_map == null && !_lookedForMap)
+                if (_map == null)
                 {
-                    _lookedForMap = true;
-                    var ml = FindFirstObjectByType<MapLayer>();
-                    if (ml != null) _map = ml.map;
+                    // MapLayer 가 Start 에서 지역 자료로 천하도를 그린다. 아직이면 다음 프레임에 다시 본다
+                    if (_mapLayer == null && !_lookedForMap) { _lookedForMap = true; _mapLayer = FindFirstObjectByType<MapLayer>(); }
+                    if (_mapLayer != null) _map = _mapLayer.MapTexture;
                 }
                 return _map;
             }

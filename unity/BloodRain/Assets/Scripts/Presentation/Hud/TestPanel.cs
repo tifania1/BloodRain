@@ -50,7 +50,7 @@ namespace BloodRain.Presentation.Hud
             if (_mapHud != null) _mapHud.RegionClicked = r => { if (!string.IsNullOrEmpty(r.Sect)) SwitchBody(r.Sect); };
         }
 
-        void OnDestroy() { if (_bg != null) Destroy(_bg); }
+        void OnDestroy() { if (_bg != null) Destroy(_bg); if (_fast && Time.timeScale > 1f) Time.timeScale = 1f; }
 
         void Update()
         {
@@ -58,6 +58,8 @@ namespace BloodRain.Presentation.Hud
             if (kb != null && kb.f2Key.wasPressedThisFrame) _open = !_open;
             if (_undying && runner != null && runner.vitals != null && runner.Life != null && runner.Life.Record == null
                 && runner.vitals.Health < runner.vitals.MaxHealth) runner.vitals.Heal(runner.vitals.MaxHealth);
+            // 빨리 감기: 다른 화면이 시간을 세웠다(0) 풀면(1) 다시 4배로. 세운 동안은 건드리지 않는다
+            if (_fast && Time.timeScale == 1f) Time.timeScale = 4f;
             var ptr = Pointer.current;
             if (ptr != null)
             {
@@ -85,6 +87,8 @@ namespace BloodRain.Presentation.Hud
             return false;
         }
         readonly List<string> _labels = new List<string>();
+
+        bool _fast;
 
         bool Btn(Rect r, string label, System.Action act, bool enabled = true)
         {
@@ -152,6 +156,12 @@ namespace BloodRain.Presentation.Hud
                 Row(($"적 {runner.enemies.targetCount} ×2", () => runner.enemies.targetCount = Mathf.Min(runner.enemies.capacity, runner.enemies.targetCount * 2), true),
                     ("÷2", () => runner.enemies.targetCount = Mathf.Max(1, runner.enemies.targetCount / 2), true),
                     ("지도 M", () => { if (_mapHud != null) { if (_mapHud.IsOpen) _mapHud.Close(); else _mapHud.Open(); } }, true));
+
+            // 정예·땅의 주인·빨리 감기(2026-11-17 밤 사람: 정예와 보스가 나오는 걸 봐야 한다). 정예는 규칙으로 5분마다, 땅의 주인은 절정부터 그 땅 한가운데
+            bool boss = runner.CanChallengeBoss();
+            Row(("정예 부르기", () => runner.SummonElite(), true),
+                (boss ? "땅의 주인과 싸우기" : "땅의 주인 없음", () => runner.ChallengeBoss(), boss),
+                (_fast ? "빠르기 ×4 켬" : "빠르기 ×4 끔", () => { _fast = !_fast; if (!_fast && Time.timeScale > 1f) Time.timeScale = 1f; }, true));
 
             y += gap;
             Head("몸 바꾸기 — 그 문파 땅에서 새 생");

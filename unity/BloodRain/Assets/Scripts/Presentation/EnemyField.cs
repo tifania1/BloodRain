@@ -102,6 +102,19 @@ namespace BloodRain.Presentation
         public event System.Action<Vector2, EnemyAgent> Killed;
 
         /// <summary>HF-03U 그 적의 그림 한 장·크기(월드)·색. 쓰러지는 모습(DeathLayer)이 쓴다.</summary>
+        /// <summary>적 종류 → 몸놀림. 데이터에 따로 칸이 없어 이름·계열·걸음 규칙에서 고른다(새 적은 여기 한 줄).</summary>
+        public static ClusterMotion MotionOf(EnemyDef def, EnemyMove move)
+        {
+            if (move == EnemyMove.Hop) return ClusterMotion.Hop;
+            string id = def.Id ?? "";
+            if (id.Contains("toad")) return ClusterMotion.Leap;
+            if (id.Contains("mogin") || id.Contains("dongin")) return ClusterMotion.Stiff;
+            if (id.Contains("wolf") || id.Contains("lion") || id.Contains("centipede")) return ClusterMotion.Beast;
+            if (id.Contains("ghost") || id.Contains("clone") || id.Contains("sulsa") || id.Contains("assassin") || move == EnemyMove.Curve) return ClusterMotion.Float;
+            if (def.Family == "elite" || def.Family == "boss" || id.Contains("yeti")) return ClusterMotion.Heavy;
+            return ClusterMotion.Walk;
+        }
+
         public bool LookOf(EnemyAgent a, out Texture2D art, out float worldSize, out Color tint)
         {
             art = null; worldSize = 0f; tint = Color.white;
@@ -636,7 +649,7 @@ namespace BloodRain.Presentation
             int id = _sim.Spawn(a);
             if (id < 0) return -1;
             var tint = kindIndex >= 0 ? _kinds[kindIndex].Tint : TintOf(def.Family);
-            _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Art = _kinds[kindIndex].Art, Size = _kinds[kindIndex].Size, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f };
+            _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Art = _kinds[kindIndex].Art, Size = _kinds[kindIndex].Size, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f, Motion = MotionOf(_kinds[kindIndex].Def, move) };
             if (def.Twin != null && !_spawningTwin)
             {
                 // 흑백 쌍강시(enemies.json twin, 기획서 6장): 플레이어 쪽 방향에 직각으로 Gap m 옆에 짝을 하나 더 세운다

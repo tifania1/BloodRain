@@ -172,6 +172,7 @@ namespace BloodRain.Presentation
             }
             if (GetComponent<WorldMapHud>() == null) gameObject.AddComponent<WorldMapHud>().runner = this; // 천하도(구석 지도·M 큰 지도·첫머리 땅 이름)
             if (TestPanel.Allowed && GetComponent<TestPanel>() == null) gameObject.AddComponent<TestPanel>().runner = this; // 시험 메뉴(F2, 개발 판만)
+            if (GetComponent<RegionBanner>() == null) gameObject.AddComponent<RegionBanner>().runner = this; // 다른 땅에 들어설 때 알림
             WorldIntro.Begin(); // 천하 한 장에서 태어난 자리로 내려오며 시작
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             if (cuts == null) cuts = FindFirstObjectByType<CutScreen>();
@@ -662,6 +663,38 @@ namespace BloodRain.Presentation
             float diag = WorldScale.Current != null ? WorldScale.Current.ViewDiagonal : 30f;
             float ang = (float)(_spawnRng.NextDouble() * Mathf.PI * 2);
             return (Vector2)player.position + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * diag * _data.Balance.SpawnTarget.EliteDiagonal;
+        }
+
+        /// <summary>시험 메뉴 '정예 부르기': 지금 선 지역의 정예 하나를 화면 가장자리 바로 바깥에 세운다(지역 표가 없으면 서장의 강시 도부수). 세운 적 id.</summary>
+        public string SummonElite()
+        {
+            if (_life == null || _life.Record != null || enemies == null || player == null) return null;
+            var own = _life.Regions.OwnElites(_life.RegionId);
+            string id = own != null ? own[_spawnRng.Next(own.Count)] : "gangsi_axeman";
+            enemies.SpawnAt(_data.Enemy(id), ElitePos());
+            return id;
+        }
+
+        /// <summary>시험 메뉴에서 볼 것: 지금 선 땅에 싸울 수 있는 주인이 있나(주인이 없는 땅, 이번 생에 이미 쓰러뜨렸거나 싸우는 중이면 거짓).</summary>
+        public bool CanChallengeBoss()
+        {
+            if (_life == null || _life.Record != null || player == null) return false;
+            var reg = _life.Regions.Region(_life.RegionId);
+            if (reg.Boss == null) return false;
+            var st = _life.Bosses.State(reg.Id);
+            return st == BloodRain.Core.World.BossRegionState.Dormant || st == BloodRain.Core.World.BossRegionState.Awake;
+        }
+
+        /// <summary>시험 메뉴 '땅의 주인': 이 땅의 주인이 깨어나는 경지(절정)까지 진기를 넣고 그 땅 한가운데로 옮긴다. 들어서면 규칙대로 싸움이 시작된다.</summary>
+        public bool ChallengeBoss()
+        {
+            if (!CanChallengeBoss()) return false;
+            var reg = _life.Regions.Region(_life.RegionId);
+            for (int i = 0; i < 9 && _life.Bosses.State(reg.Id) == BloodRain.Core.World.BossRegionState.Dormant; i++) GiveXpToNextRealm();
+            if (_life.Bosses.State(reg.Id) != BloodRain.Core.World.BossRegionState.Awake) return false;
+            var c = WorldCoords.ToUnity(_life.Regions.Center(reg));
+            player.position = new Vector3(c.x, c.y, player.position.z);
+            return true;
         }
 
         void SpawnSecond(LifeSecond s)
