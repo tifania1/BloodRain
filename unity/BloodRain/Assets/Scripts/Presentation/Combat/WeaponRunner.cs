@@ -1775,7 +1775,12 @@ namespace BloodRain.Presentation.Combat
             if (_hooked || enemies == null) return;
             _hooked = true;
             enemies.Crit += OnCrit;
-            enemies.PoisonSpread += (at, r) => AddFxAt(at, 0f, Mathf.PI * 2f, r, 0.35f, PoisonColor);
+            // VF-02U: 중독된 적이 쓰러져 독이 번질 때 납작한 원 대신 독 꽃이 크게 터진다(시안 dagger 5단)
+            enemies.PoisonSpread += (at, r) =>
+            {
+                if (Sfx) _sfx.PoisonBloom(at, r * 0.8f / Mathf.Max(1e-6f, _sfx.Meter), true);
+                else AddFxAt(at, 0f, Mathf.PI * 2f, r, 0.35f, PoisonColor);
+            };
         }
 
         void OnDestroy()
