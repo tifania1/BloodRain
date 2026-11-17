@@ -90,7 +90,7 @@ def load_variants(path) -> dict:
 
 
 def generate(sid: str, prompts: list[str], seconds: float, count: int, seed: int, dst, comfy_output, server: str, runner=None) -> int:
-    """문구 갈래마다 따로(시드도 다르게) 뽑아 dst 에 <id>_000NN 으로 옮긴다. 같은 문구 한 묶음은 거의 같은 소리가 나온다(2026-11-17).
+    """문구 갈래마다, 후보 하나마다 따로(시드도 다르게) 뽑아 dst 에 <id>_000NN 으로 옮긴다. 같은 문구 한 묶음은 거의 같은 소리가 나온다(2026-11-17).
     dst 의 옛 후보와 trimmed/ 는 먼저 지운다 — 번호가 섞이면 사람이 고른 번호가 다른 소리를 가리킨다."""
     import shutil
     from pathlib import Path
@@ -107,11 +107,14 @@ def generate(sid: str, prompts: list[str], seconds: float, count: int, seed: int
         take = min(per, count - n)
         if take <= 0:
             break
-        files = (runner or run)(server, build_prompt(text, seconds, take, f"{sid}_v{vi + 1}", seed + 7919 * vi))
-        for f in files:
-            n += 1
-            src = comfy_output / f
-            shutil.copyfile(src, dst / f"{sid}_{n:05d}{src.suffix}")
+        # 한 번에 하나씩, 시드를 바꿔 가며 뽑는다 — 한 묶음(batch)으로 뽑은 것끼리는 문구가 달라도 거의 같은 소리였다
+        # (2026-11-17 밤: 혈인 비명은 같은 묶음 두 개의 스펙트럼이 96% 겹침)
+        for k in range(take):
+            files = (runner or run)(server, build_prompt(text, seconds, 1, f"{sid}_v{vi + 1}_{k + 1}", seed + 7919 * vi + 104729 * k))
+            for f in files:
+                n += 1
+                src = comfy_output / f
+                shutil.copyfile(src, dst / f"{sid}_{n:05d}{src.suffix}")
     return n
 
 
@@ -157,7 +160,7 @@ def run_also(sid: str, root, comfy_output, variants: dict, server: str = "http:/
     root = Path(root)
     dst = root / "art_inbox" / "sfx" / sid
     n = generate(sid, v["prompts"], float(v["seconds"]), count, int(v.get("seed", 4242)), dst, comfy_output, server, runner)
-    row = {"id": sid, "seconds": float(v["seconds"]), "loop": False, "category": v.get("category", "reward")}
+    row = {"id": sid, "seconds": float(v["seconds"]), "loop": False, "category": v.get("category", "reward"), "max_s": float(v.get("max_s", float(v["seconds"]) + 0.15))}
     files = sorted(p for p in dst.iterdir() if p.is_file() and p.name.startswith(sid + "_"))
     for i, src in enumerate(files, 1):
         pp.process_file(src, dst / "trimmed" / f"{sid}_{i:02d}.ogg", row)

@@ -76,6 +76,13 @@ class 큐로_뽑기(unittest.TestCase):
             # 문구 갈래마다 따로, 시드도 다르게
             self.assertEqual([(c[0], c[1]) for c in calls], [("thin swish", 1), ("heavy whoosh", 1)])
             self.assertNotEqual(calls[0][2], calls[1][2])
+            # 후보가 갈래 수보다 많으면 갈래마다 하나씩 여러 번, 시드는 모두 다르다(한 묶음으로 뽑지 않는다)
+            calls.clear()
+            (root / "art_inbox" / "sfx" / "b").mkdir(parents=True, exist_ok=True)
+            n = sa3.generate("b", ["x", "y"], 1.0, 4, 5, root / "art_inbox" / "sfx" / "b", out, "http://x", fake2)
+            self.assertEqual(n, 4)
+            self.assertEqual([c[1] for c in calls], [1, 1, 1, 1])
+            self.assertEqual(len({c[2] for c in calls}), 4)
             self.assertEqual(sorted(p.name for p in (root / "art_inbox/sfx/a").iterdir()), ["a_00001.flac", "a_00002.flac"])
             after = [json.loads(l) for l in q.read_text(encoding="utf-8").splitlines()]
             self.assertEqual([r["status"] for r in after], ["generated", "todo", "todo", "todo"])
