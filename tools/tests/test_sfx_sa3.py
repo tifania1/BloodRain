@@ -39,5 +39,38 @@ class SfxSa3Tests(unittest.TestCase):
         self.assertEqual(same.count("no reverb tail"), 1)
 
 
+class 큐로_뽑기(unittest.TestCase):
+    def test_ai_todo_줄만_뽑아_옮기고_generated_로_적는다(self):
+        import json
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            out = root / "comfy"
+            (out / "sfx").mkdir(parents=True)
+            rows = [
+                {"id": "a", "route": "ai", "status": "todo", "seconds": 0.5, "candidates": 2, "seed": 7, "prompt": "p", "save_dir": "art_inbox/sfx/a/", "milestone": "M2"},
+                {"id": "b", "route": "synth", "status": "todo", "seconds": 0.5, "prompt": "p"},
+                {"id": "c", "route": "ai", "status": "todo", "seconds": 20.0, "prompt": "p", "milestone": "M2"},
+                {"id": "d", "route": "ai", "status": "todo", "seconds": 0.5, "prompt": "p", "milestone": "M3"},
+            ]
+            q = root / "queue.jsonl"
+            q.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+            def fake(server, prompt):
+                name = prompt["57"]["inputs"]["filename_prefix"].split("/")[1]
+                n = prompt["11"]["inputs"]["batch_size"]
+                files = []
+                for k in range(1, n + 1):
+                    (out / "sfx" / f"{name}_{k:05d}_.flac").write_bytes(b"x")
+                    files.append(f"sfx/{name}_{k:05d}_.flac")
+                return files
+
+            done = sa3.run_queue(q, root, out, milestone="M2", runner=fake)
+            self.assertEqual(done, ["a"])
+            self.assertEqual(sorted(p.name for p in (root / "art_inbox/sfx/a").iterdir()), ["a_00001.flac", "a_00002.flac"])
+            after = [json.loads(l) for l in q.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([r["status"] for r in after], ["generated", "todo", "todo", "todo"])
+
+
 if __name__ == "__main__":
     unittest.main()
