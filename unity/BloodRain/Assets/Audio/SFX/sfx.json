@@ -170,282 +170,282 @@
       "variants": [
         {
           "file": "sfx_xp_absorb_n1_1.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.8,
-          "gainDb": -0.2,
+          "seconds": 0.338,
+          "sourcePeakDb": -1.1,
+          "gainDb": 0.1,
           "note": 1
         },
         {
           "file": "sfx_xp_absorb_n1_2.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.337,
+          "sourcePeakDb": -0.7,
+          "gainDb": -0.3,
           "note": 1
         },
         {
           "file": "sfx_xp_absorb_n1_3.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.337,
+          "sourcePeakDb": -0.8,
+          "gainDb": -0.2,
           "note": 1
         },
         {
           "file": "sfx_xp_absorb_n1_4.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.8,
-          "gainDb": -0.2,
+          "seconds": 0.337,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 1
         },
         {
           "file": "sfx_xp_absorb_n1_5.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.8,
-          "gainDb": -0.2,
+          "seconds": 0.339,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 1
         },
         {
           "file": "sfx_xp_absorb_n2_1.ogg",
-          "seconds": 0.6,
+          "seconds": 0.336,
+          "sourcePeakDb": -1.1,
+          "gainDb": 0.1,
+          "note": 2
+        },
+        {
+          "file": "sfx_xp_absorb_n2_2.ogg",
+          "seconds": 0.337,
           "sourcePeakDb": -0.8,
           "gainDb": -0.2,
           "note": 2
         },
         {
-          "file": "sfx_xp_absorb_n2_2.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
-          "note": 2
-        },
-        {
           "file": "sfx_xp_absorb_n2_3.ogg",
-          "seconds": 0.6,
+          "seconds": 0.336,
           "sourcePeakDb": -0.9,
           "gainDb": -0.1,
           "note": 2
         },
         {
           "file": "sfx_xp_absorb_n2_4.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
+          "seconds": 0.34,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 2
         },
         {
           "file": "sfx_xp_absorb_n2_5.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.2,
-          "gainDb": 0.2,
+          "seconds": 0.336,
+          "sourcePeakDb": -0.9,
+          "gainDb": -0.1,
           "note": 2
         },
         {
           "file": "sfx_xp_absorb_n3_1.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.335,
+          "sourcePeakDb": -0.7,
+          "gainDb": -0.3,
           "note": 3
         },
         {
           "file": "sfx_xp_absorb_n3_2.ogg",
-          "seconds": 0.6,
+          "seconds": 0.339,
           "sourcePeakDb": -0.9,
           "gainDb": -0.1,
           "note": 3
         },
         {
           "file": "sfx_xp_absorb_n3_3.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.3,
-          "gainDb": 0.3,
+          "seconds": 0.335,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 3
         },
         {
           "file": "sfx_xp_absorb_n3_4.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.2,
-          "gainDb": 0.2,
+          "seconds": 0.336,
+          "sourcePeakDb": -1.1,
+          "gainDb": 0.1,
           "note": 3
         },
         {
           "file": "sfx_xp_absorb_n3_5.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.8,
-          "gainDb": -0.2,
+          "seconds": 0.337,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 3
         },
         {
           "file": "sfx_xp_absorb_n4_1.ogg",
-          "seconds": 0.6,
+          "seconds": 0.339,
+          "sourcePeakDb": -0.9,
+          "gainDb": -0.1,
+          "note": 4
+        },
+        {
+          "file": "sfx_xp_absorb_n4_2.ogg",
+          "seconds": 0.34,
           "sourcePeakDb": -0.8,
           "gainDb": -0.2,
           "note": 4
         },
         {
-          "file": "sfx_xp_absorb_n4_2.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
-          "note": 4
-        },
-        {
           "file": "sfx_xp_absorb_n4_3.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.2,
-          "gainDb": 0.2,
+          "seconds": 0.335,
+          "sourcePeakDb": -0.6,
+          "gainDb": -0.4,
           "note": 4
         },
         {
           "file": "sfx_xp_absorb_n4_4.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
+          "seconds": 0.337,
+          "sourcePeakDb": -0.3,
+          "gainDb": -0.7,
           "note": 4
         },
         {
           "file": "sfx_xp_absorb_n4_5.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.34,
+          "sourcePeakDb": -0.6,
+          "gainDb": -0.4,
           "note": 4
         },
         {
           "file": "sfx_xp_absorb_n5_1.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
+          "seconds": 0.34,
+          "sourcePeakDb": -0.7,
+          "gainDb": -0.3,
           "note": 5
         },
         {
           "file": "sfx_xp_absorb_n5_2.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.332,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 5
         },
         {
           "file": "sfx_xp_absorb_n5_3.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.334,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 5
         },
         {
           "file": "sfx_xp_absorb_n5_4.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
+          "seconds": 0.34,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 5
         },
         {
           "file": "sfx_xp_absorb_n5_5.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.336,
+          "sourcePeakDb": -0.8,
+          "gainDb": -0.2,
           "note": 5
         },
         {
           "file": "sfx_xp_absorb_n6_1.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
-          "note": 6
-        },
-        {
-          "file": "sfx_xp_absorb_n6_2.ogg",
-          "seconds": 0.6,
+          "seconds": 0.336,
           "sourcePeakDb": -1.0,
           "gainDb": 0.0,
           "note": 6
         },
         {
+          "file": "sfx_xp_absorb_n6_2.ogg",
+          "seconds": 0.341,
+          "sourcePeakDb": -0.8,
+          "gainDb": -0.2,
+          "note": 6
+        },
+        {
           "file": "sfx_xp_absorb_n6_3.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.335,
+          "sourcePeakDb": -1.1,
+          "gainDb": 0.1,
           "note": 6
         },
         {
           "file": "sfx_xp_absorb_n6_4.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.339,
+          "sourcePeakDb": -1.1,
+          "gainDb": 0.1,
           "note": 6
         },
         {
           "file": "sfx_xp_absorb_n6_5.ogg",
-          "seconds": 0.6,
+          "seconds": 0.336,
           "sourcePeakDb": -0.9,
           "gainDb": -0.1,
           "note": 6
         },
         {
           "file": "sfx_xp_absorb_n7_1.ogg",
-          "seconds": 0.6,
+          "seconds": 0.336,
           "sourcePeakDb": -1.1,
           "gainDb": 0.1,
           "note": 7
         },
         {
           "file": "sfx_xp_absorb_n7_2.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
+          "seconds": 0.337,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 7
         },
         {
           "file": "sfx_xp_absorb_n7_3.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
+          "seconds": 0.339,
+          "sourcePeakDb": -0.8,
+          "gainDb": -0.2,
           "note": 7
         },
         {
           "file": "sfx_xp_absorb_n7_4.ogg",
-          "seconds": 0.6,
+          "seconds": 0.333,
           "sourcePeakDb": -1.0,
           "gainDb": 0.0,
           "note": 7
         },
         {
           "file": "sfx_xp_absorb_n7_5.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.337,
+          "sourcePeakDb": -0.7,
+          "gainDb": -0.3,
           "note": 7
         },
         {
           "file": "sfx_xp_absorb_n8_1.ogg",
-          "seconds": 0.6,
+          "seconds": 0.338,
           "sourcePeakDb": -1.1,
           "gainDb": 0.1,
           "note": 8
         },
         {
           "file": "sfx_xp_absorb_n8_2.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.336,
+          "sourcePeakDb": -0.5,
+          "gainDb": -0.5,
           "note": 8
         },
         {
           "file": "sfx_xp_absorb_n8_3.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -1.1,
-          "gainDb": 0.1,
+          "seconds": 0.336,
+          "sourcePeakDb": -1.0,
+          "gainDb": 0.0,
           "note": 8
         },
         {
           "file": "sfx_xp_absorb_n8_4.ogg",
-          "seconds": 0.6,
+          "seconds": 0.339,
           "sourcePeakDb": -0.9,
           "gainDb": -0.1,
           "note": 8
         },
         {
           "file": "sfx_xp_absorb_n8_5.ogg",
-          "seconds": 0.6,
-          "sourcePeakDb": -0.9,
-          "gainDb": -0.1,
+          "seconds": 0.338,
+          "sourcePeakDb": -0.5,
+          "gainDb": -0.5,
           "note": 8
         }
       ]

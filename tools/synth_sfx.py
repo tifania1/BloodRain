@@ -5,7 +5,7 @@ sfx_queue/queue.jsonl 의 route synth 줄(징·풍경·범종·심장)을 numpy 
 한 소리에 candidates 벌(보통 5)을 굽는다. Unity 는 이 벌들을 Audio Random Container 에 넣어 번갈아 튼다.
   - 맥놀이: 큰 쇠붙이(징·범종)는 배음마다 높이가 조금 다른 짝을 하나 더 두어 '웅웅' 하고 울게 한다
   - 친 세기별 밝기: 세게 칠수록 높은 배음이 크고 빨리 줄어든다(strike 0~1)
-  - 진기 흡수 풍경은 5음 음계(궁상각치우)로 8음을 미리 굽는다(실행 중 음높이를 바꾸면 음색이 뭉개짐)
+  - 진기 흡수음(바람 한 줄기)은 5음 음계(궁상각치우) 비율로 밝기가 다른 8벌을 미리 굽는다(실행 중 음높이를 바꾸면 음색이 뭉개짐)
 
 흐름: 굽기 → art_inbox/sfx/<id>/<id>_NN.wav (후보, 커밋 안 함) → postprocess_sfx.py 와 같은 다듬기
       → unity/BloodRain/Assets/Audio/SFX/<id>_<k>.ogg(풍경은 <id>_n<음>_<k>.ogg) + sfx.json, 큐는 imported.
@@ -45,7 +45,10 @@ RECIPES = {
                          "glide": 0.0, "thump": 0.6},
     # 2026-11-17 사람: "먹는 아이템 효과음이 너무 싸구려 티가 난다" → 순음 넷짜리 풍경(C6~E7, 삑 소리)을
     # 뜯는 현 + 옥 울림으로 바꾸고 한 옥타브 가까이 내림(D5~F#6). 옛 값: kind chime, CHIME, f0 1046.5, strike 0.5
-    "sfx_xp_absorb": {"kind": "pluck", "f0": 587.33, "notes": 8, "strike": 0.5},
+    # 같은 날 밤 사람: "뚱땅거리는 소리가 난다. 기를 흡입하는 소리가 아니다" → "숨소리는 이상할 것 같고 바람소리 같은 것으로"
+    # → 음이 있는 악기를 버리고 바람 한 줄기가 빨려 드는 소리로(kind wind). f0 는 바람이 우는 높이의 시작값이고
+    # 이어 주울수록(음 0~7) 5음 음계 비율로 조금씩 밝아진다. 옛 값: kind pluck, f0 587.33, strike 0.5
+    "sfx_xp_absorb": {"kind": "wind", "f0": 620.0, "notes": 8},
     "sfx_low_health_heart": {"kind": "heart", "f0": 55.0, "gap_s": 0.26},
 }
 
@@ -174,6 +177,44 @@ def pluck(seconds: float, f0: float, strike: float, rng: np.random.Generator) ->
     return out + 0.1 * wet / max(1e-9, float(np.max(np.abs(wet)))) * float(np.max(np.abs(out)))
 
 
+def _sweep_band(noise: np.ndarray, f: np.ndarray, q: float) -> np.ndarray:
+    """잡음을 가운데 높이가 움직이는 띠 거르개(상태 변수 거르개)로 거른다. f 는 표본마다의 가운데 높이(Hz)."""
+    g = 2 * np.sin(np.pi * np.minimum(f, RATE * 0.22) / RATE)
+    low = band = 0.0
+    out = np.empty(len(noise))
+    damp = 1.0 / q
+    for i in range(len(noise)):
+        low += g[i] * band
+        high = noise[i] - low - damp * band
+        band += g[i] * high
+        out[i] = band
+    return out
+
+
+def wind(seconds: float, f0: float, rng: np.random.Generator) -> np.ndarray:
+    """바람 한 줄기가 몸 쪽으로 빨려 드는 소리. 음이 있는 악기가 아니라 잡음이다(사람: 뚱땅거리면 안 된다, 숨소리도 아니다).
+    - 몸통: 잡음을 좁지 않은 띠(Q 1.6)로 거르고 띠의 가운데를 f0 의 0.7배에서 2.1배로 끌어올린다(바람이 가까워지며 높아짐)
+    - 결: 그 위 두 배 높이의 넓은 띠를 작게 얹어 '쉬이' 하는 공기 소리를 보탠다
+    - 세기: 천천히 부풀다가(전체의 62%쯤에서 가장 큼) 빨리 꺼진다. 빨려 들어가 끊기는 느낌이 여기서 난다
+    - 살랑임: 7~11Hz 로 세기를 조금 흔들어 기계 소리 같지 않게
+    때리는 소리(어택)와 울리는 꼬리가 없다 — 수십 개를 잇달아 주워도 시끄럽지 않게."""
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    u = t / max(1e-9, seconds)
+    peak = 0.62 + rng.normal(0, 0.03)
+    env = np.where(u < peak, (u / peak) ** 1.8, np.maximum(0.0, 1 - (u - peak) / (1 - peak)) ** 1.5)
+    env *= 1 + 0.12 * np.sin(2 * np.pi * (7 + rng.random() * 4) * t + rng.random() * 6.28)
+    rise = 0.7 + 1.4 * u ** (1.3 + rng.normal(0, 0.1))
+    fc = f0 * (1 + rng.normal(0, 0.04)) * rise
+    body = _sweep_band(rng.normal(0, 1, n), fc, 1.6)
+    air = _sweep_band(rng.normal(0, 1, n), np.minimum(fc * 2.3, 5200.0), 0.8)
+    x = (body / max(1e-9, float(np.max(np.abs(body)))) + 0.2 * air / max(1e-9, float(np.max(np.abs(air))))) * env
+    edge = int(0.006 * RATE)                              # 앞뒤 끝을 눌러 틱 소리를 없앤다
+    x[:edge] *= np.linspace(0, 1, edge)
+    x[-edge:] *= np.linspace(1, 0, edge)
+    return x
+
+
 def bake_layer(row: dict, what: str, variant: int) -> np.ndarray:
     """층 겹치기 줄의 코드 합성 재료 한 벌. 시드 = 줄 seed + 벌(줄의 다른 재료 후보 번호와 같이 간다)."""
     rec = LAYER_RECIPES[(row["id"], what)]
@@ -204,6 +245,9 @@ def bake(row: dict, variant: int, note: int = 0) -> np.ndarray:
         x = chime(sec, rec["partials"], note_freq(rec["f0"], note), rec["strike"], rng)
     elif rec["kind"] == "pluck":
         x = pluck(sec, note_freq(rec["f0"], note), rec["strike"], rng)
+    elif rec["kind"] == "wind":
+        # 음계를 그대로 타면 여덟째가 세 배 높아 쉭쉭거린다. 0.55 제곱으로 눌러 1.8배까지만
+        x = wind(sec, rec["f0"] * (note_freq(1.0, note)) ** 0.55, rng)
     else:
         x = heart(sec, rec["f0"], rec["gap_s"], rng)
     return x / max(1e-9, float(np.max(np.abs(x)))) * 0.89

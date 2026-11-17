@@ -40,13 +40,22 @@ class 굽기(unittest.TestCase):
         self.assertAlmostEqual(f[5], 2000.0)
         self.assertAlmostEqual(f[3] / f[0], 1.5)
 
-    def test_풍경_소리의_가장_센_높이가_그_음이다(self):
-        row = {"id": "sfx_xp_absorb", "seed": 3, "seconds": 0.4}
+    def test_진기_흡수음은_바람이다_음이_없고_부풀다_꺼진다(self):
+        # 2026-11-17 사람: "뚱땅거리는 소리가 난다" → 악기 음이 아니라 바람. 음(좁은 봉우리)이 없고, 이어 주울수록 밝아지고, 세기는 뒤쪽에서 가장 크다
+        row = {"id": "sfx_xp_absorb", "seed": 3, "seconds": 0.35}
+        cents = []
         for k in (0, 4, 7):
             x = ss.bake(row, 0, k)
             spec = np.abs(np.fft.rfft(x))
-            peak = np.argmax(spec) * ss.RATE / len(x)
-            self.assertAlmostEqual(peak, ss.note_freq(ss.RECIPES["sfx_xp_absorb"]["f0"], k), delta=15)
+            freq = np.fft.rfftfreq(len(x), 1 / ss.RATE)
+            cents.append(float((spec * freq).sum() / spec.sum()))
+            # 가장 센 한 칸이 전체 에너지의 5% 도 안 된다(현·종은 절반을 넘는다)
+            self.assertLess(float((spec ** 2).max() / (spec ** 2).sum()), 0.05)
+            win = int(0.01 * ss.RATE)
+            env = np.array([np.abs(x[i:i + win]).mean() for i in range(0, len(x) - win, win)])
+            self.assertGreater(np.argmax(env) / len(env), 0.4)
+            self.assertLess(float(np.abs(x[:48]).max()), 0.05)   # 때리는 머리가 없다
+        self.assertEqual(cents, sorted(cents))
 
     def test_심장은_두_박(self):
         x = np.abs(ss.bake({"id": "sfx_low_health_heart", "seed": 1, "seconds": 0.8}, 0))

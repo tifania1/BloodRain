@@ -1,0 +1,127 @@
+{
+ "_note": "효과음 후보의 문구 갈래(2026-11-17 사람: \"1번부터 8번까지 다 똑같은 소리\" — 같은 문구로 한 묶음을 뽑으면 SA3 가 거의 같은 소리를 낸다. 권격은 후보끼리 파형이 93% 겹쳤다). sfx_sa3.py --queue 가 줄의 candidates 를 갈래 수로 나눠 갈래마다 따로 뽑는다(시드도 다름). 값이 묶음({seconds, prompts})이면 큐의 route 가 ai 가 아니어도 --also 로 후보만 뽑는다.",
+ "sfx_wpn_sword": [
+  "A thin light sword whipping through the air, very fast high swish, no impact",
+  "A heavy broad blade swung hard, deep whoosh of displaced air with a low metallic hum",
+  "A sharp sword slash ending in a short wet cut through cloth and flesh",
+  "A sword drawn and slashed in one motion, quick steel scrape then a bright ringing swish"
+ ],
+ "sfx_wpn_sword_qi": [
+  "A crescent of compressed air shooting forward, breathy rising whoosh",
+  "A thin shimmering energy blade flying past, glassy high-pitched whistle that fades",
+  "A sharp tearing sound of wind cut by a blade, like silk ripping fast",
+  "A soft low gust followed by a faint metallic ring flying away"
+ ],
+ "sfx_wpn_fist": [
+  "A heavy punch landing on a body, deep dull thump",
+  "A fast sharp punch hitting a leather sandbag, tight smack with a short snap",
+  "A powerful body blow, low bassy thud with a crack",
+  "A quick flurry of three light punches on cloth, rapid soft thuds"
+ ],
+ "sfx_wpn_palm": [
+  "A burst of wind pushed from an open palm, soft whoosh then a dull thump",
+  "A heavy gust of air slamming into cloth, deep airy boom",
+  "An open hand slap on a chest, flat hollow smack with a puff of air",
+  "A rolling wave of compressed air passing by, low breathy rumble"
+ ],
+ "sfx_wpn_staff": [
+  "A wooden staff striking a body, hollow wooden thwack",
+  "A bamboo pole whipped through the air then cracking down hard, whoosh and sharp crack",
+  "A thick heavy wooden club thudding into something soft, low dull knock",
+  "Two quick knocks of a wooden stick on bone, dry clacks"
+ ],
+ "sfx_wpn_dagger": [
+  "A small throwing knife spinning past, short sharp whistle",
+  "A thin dart flicked fast, tiny airy zip",
+  "A throwing knife sticking into wood, quick whoosh and a solid thunk",
+  "A light blade thrown with a flick of a cloth sleeve, soft swish and a faint metallic ting"
+ ],
+ "sfx_wpn_finger": [
+  "A tiny bolt of energy flicked from a fingertip, very thin quick high whistle",
+  "A short sharp snap of air like a tiny whip crack, bright",
+  "A small bright pluck of energy, soft glassy ping",
+  "A quick puff of compressed air shot from a blowpipe, short pfft"
+ ],
+ "sfx_wpn_thunder": [
+  "A small gunpowder bomb exploding, sharp crack followed by a short low boom",
+  "A firecracker bundle bursting, bright popping cracks with sizzling sparks",
+  "A dull heavy powder keg blast, deep thump with falling debris",
+  "A fuse hissing for a moment then a hard punchy explosion"
+ ],
+ "sfx_wpn_poison": [
+  "Gas hissing out and spreading, soft long hiss",
+  "A thick liquid bubbling and fizzing, wet sizzling",
+  "A slow breathy exhale of mist with faint crackling",
+  "Acid sizzling on stone, sharp fizz that fades"
+ ],
+ "sfx_enemy_hyeolin": [
+  "A man's short strangled scream and gasp as he collapses, no words",
+  "A hoarse low groan and a body falling to the ground",
+  "A sharp pained yelp cut off suddenly",
+  "A wet choking gurgle and a last breath"
+ ],
+ "sfx_chest_open": [
+  "An old wooden treasure chest creaking open, then a bright soft chime",
+  "A heavy wooden lid lifting with a low creak and a metal latch click",
+  "A small lacquered box opening with a click and a gentle shimmering bell",
+  "A rusty hinge squeak and a solid wooden thunk"
+ ],
+ "sfx_awaken_inhale": [
+  "A deep low drum hit together with a strong inhaling rush of wind",
+  "A huge slow breath being drawn in, rising airy whoosh",
+  "A deep taiko drum boom with a long low rumble",
+  "Wind being sucked into a point, reverse whoosh building up and stopping suddenly"
+ ],
+ "sfx_awaken_crack": [
+  "Thick black ink splashing on paper, wet sharp splatter",
+  "Dry paper tearing fast, crisp rip",
+  "Ice cracking sharply, brittle snap",
+  "A wet brush slapped hard onto paper, heavy splat"
+ ],
+ "sfx_awaken_seal": [
+  "A heavy stone seal stamped firmly onto paper on a wooden desk, solid dull knock",
+  "A wooden block slammed on a table, hard sharp knock",
+  "A deep thud of a heavy stamp with a faint low ring",
+  "A firm press and a soft sticky peel of a stamp lifted from paper"
+ ],
+ "sfx_breakthrough_brush": [
+  "One long confident stroke of a wet calligraphy brush on rice paper, soft rasp",
+  "A dry brush dragged quickly across rough paper, scratchy hiss",
+  "A broad brush sweep with a flick at the end, soft swish and snap",
+  "A slow wet brush stroke with ink dripping, smooth and quiet"
+ ],
+ "sfx_wpn_taiji_sword": [
+  "A light straight sword circling in a smooth arc, soft airy whoosh with a clean thin ring",
+  "A slow wide swing of a flexible blade, low wobbling hum",
+  "Two swords crossing gently, soft metallic slide and ring",
+  "A spinning blade passing by, steady whirring swish"
+ ],
+ "sfx_wpn_sonic": [
+  "A single plucked zither string releasing a resonant wave, deep humming resonance",
+  "A low guqin string plucked hard and bent, twangy growl that fades",
+  "A struck string followed by a pressure wave, pluck then a low whoomp",
+  "A high sharp pluck with a ringing metallic overtone"
+ ],
+ "sfx_wpn_lightning_talisman": [
+  "A small lightning bolt striking, quick electric zap and a sharp crack",
+  "Paper burning up fast then a thunderclap, quick flare and bang",
+  "Electric buzzing and crackling arcs, sizzling sparks",
+  "A close thunder crack, sharp snap with a short rolling tail"
+ ],
+ "sfx_wpn_plum_petals": [
+  "Several light blades flicking out in quick succession, soft airy fluttering whooshes",
+  "A flurry of petals and thin blades, light papery flutter with faint rings",
+  "Three fast thin sword swishes one after another, bright and light",
+  "A soft gust scattering leaves, gentle rustle with a high whistle"
+ ],
+ "sfx_xp_absorb": {
+  "seconds": 0.4,
+  "category": "reward",
+  "prompts": [
+   "A short soft gust of wind drawn inward, quick airy whoosh that swells and cuts off, no voice",
+   "A small swirl of wind sucked into a point, gentle and quick",
+   "A light breeze passing through bamboo leaves, very short soft swish",
+   "A silk sleeve passing quickly through the air, smooth soft whoosh"
+  ]
+ }
+}

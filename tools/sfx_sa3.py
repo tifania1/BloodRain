@@ -80,18 +80,55 @@ def run(server: str, prompt: dict, timeout: float = 300) -> list[str]:
     raise TimeoutError("ComfyUI 가 제한 시간 안에 끝내지 않음")
 
 
-def run_queue(queue, root, comfy_output, server: str = "http://127.0.0.1:8188", only: str | None = None,
-              milestone: str | None = None, max_seconds: float = 6.0, runner=None) -> list[str]:
-    """큐의 route ai · status todo 줄을 차례로 뽑는다(backlog SFX-09). 뽑은 id 목록을 돌려준다.
-    줄마다 candidates 개를 한 묶음으로 뽑아 ComfyUI output 에서 save_dir(art_inbox/sfx/<id>/)로 옮기고 status 를 generated 로.
-    max_seconds 보다 긴 줄(빗소리 루프 20초)은 건너뛴다 — 길이가 달라 따로 본다. runner 는 시험용(없으면 run)."""
+def load_variants(path) -> dict:
+    """sfx_queue/variants.json: id → 문구 갈래 목록(또는 {seconds, prompts}). 없으면 빈 것."""
+    from pathlib import Path
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    return {k: v for k, v in json.loads(path.read_text(encoding="utf-8")).items() if not k.startswith("_")}
+
+
+def generate(sid: str, prompts: list[str], seconds: float, count: int, seed: int, dst, comfy_output, server: str, runner=None) -> int:
+    """문구 갈래마다 따로(시드도 다르게) 뽑아 dst 에 <id>_000NN 으로 옮긴다. 같은 문구 한 묶음은 거의 같은 소리가 나온다(2026-11-17).
+    dst 의 옛 후보와 trimmed/ 는 먼저 지운다 — 번호가 섞이면 사람이 고른 번호가 다른 소리를 가리킨다."""
     import shutil
     from pathlib import Path
+    dst, comfy_output = Path(dst), Path(comfy_output)
+    dst.mkdir(parents=True, exist_ok=True)
+    for old in dst.iterdir():
+        if old.is_file() and old.name.startswith(sid + "_"):
+            old.unlink()
+    if (dst / "trimmed").is_dir():
+        shutil.rmtree(dst / "trimmed")
+    per = max(1, -(-count // len(prompts)))
+    n = 0
+    for vi, text in enumerate(prompts):
+        take = min(per, count - n)
+        if take <= 0:
+            break
+        files = (runner or run)(server, build_prompt(text, seconds, take, f"{sid}_v{vi + 1}", seed + 7919 * vi))
+        for f in files:
+            n += 1
+            src = comfy_output / f
+            shutil.copyfile(src, dst / f"{sid}_{n:05d}{src.suffix}")
+    return n
+
+
+def run_queue(queue, root, comfy_output, server: str = "http://127.0.0.1:8188", only: str | None = None,
+              milestone: str | None = None, max_seconds: float = 6.0, runner=None, redo: bool = False,
+              variants: dict | None = None) -> list[str]:
+    """큐의 route ai · status todo 줄을 차례로 뽑는다(backlog SFX-09). 뽑은 id 목록을 돌려준다.
+    줄마다 candidates 개를 뽑아 save_dir(art_inbox/sfx/<id>/)로 옮기고 status 를 generated 로. 문구 갈래(variants)가 있으면 갈래마다 나눠 뽑는다.
+    redo 면 이미 generated 인 줄도 다시 뽑는다(picked·imported 는 건드리지 않는다).
+    max_seconds 보다 긴 줄(빗소리 루프 20초)은 건너뛴다 — 길이가 달라 따로 본다. runner 는 시험용(없으면 run)."""
+    from pathlib import Path
     queue, root, comfy_output = Path(queue), Path(root), Path(comfy_output)
+    variants = variants or {}
     rows = [json.loads(l) for l in queue.read_text(encoding="utf-8").splitlines() if l.strip()]
     done = []
     for row in rows:
-        if row.get("route") != "ai" or row.get("status") != "todo":
+        if row.get("route") != "ai" or row.get("status") not in (("todo", "generated") if redo else ("todo",)):
             continue
         if (only and row["id"] != only) or (milestone and row.get("milestone") != milestone):
             continue
@@ -99,18 +136,32 @@ def run_queue(queue, root, comfy_output, server: str = "http://127.0.0.1:8188", 
             print(f"  건너뜀 {row['id']}: {row.get('seconds')}초(긴 것은 따로)")
             continue
         seed = int(row["seed"]) if row.get("seed") is not None else random.randint(1, 2**40)
-        files = (runner or run)(server, build_prompt(row["prompt"], float(row["seconds"]), int(row.get("candidates", 8)), row["id"], seed))
+        v = variants.get(row["id"])
+        prompts = (v["prompts"] if isinstance(v, dict) else v) if v else [row["prompt"]]
         dst = root / (row.get("save_dir") or f"art_inbox/sfx/{row['id']}/")
-        dst.mkdir(parents=True, exist_ok=True)
-        for i, f in enumerate(files, 1):
-            src = comfy_output / f
-            shutil.copyfile(src, dst / f"{row['id']}_{i:05d}{src.suffix}")
+        n = generate(row["id"], prompts, float(row["seconds"]), int(row.get("candidates", 8)), seed, dst, comfy_output, server, runner)
         row["status"] = "generated"
         done.append(row["id"])
-        print(f"  {row['id']}: {len(files)}개 → {dst}")
+        print(f"  {row['id']}: {n}개(문구 {len(prompts)}갈래) → {dst}")
         # 한 줄 끝날 때마다 적는다(도중에 끊겨도 뽑은 데까지 남게)
         queue.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     return done
+
+
+def run_also(sid: str, root, comfy_output, variants: dict, server: str = "http://127.0.0.1:8188", count: int = 8, runner=None) -> int:
+    """큐의 길(route)과 상관없이 variants.json 의 묶음({seconds, prompts})으로 후보만 뽑아 다듬어 둔다(큐는 안 고친다).
+    코드로 구운 소리(진기 흡수음)를 AI 후보와 견주어 들을 때 쓴다. 다듬은 것은 art_inbox/sfx/<id>/trimmed/ 에."""
+    from pathlib import Path
+    import postprocess_sfx as pp
+    v = variants[sid]
+    root = Path(root)
+    dst = root / "art_inbox" / "sfx" / sid
+    n = generate(sid, v["prompts"], float(v["seconds"]), count, int(v.get("seed", 4242)), dst, comfy_output, server, runner)
+    row = {"id": sid, "seconds": float(v["seconds"]), "loop": False, "category": v.get("category", "reward")}
+    files = sorted(p for p in dst.iterdir() if p.is_file() and p.name.startswith(sid + "_"))
+    for i, src in enumerate(files, 1):
+        pp.process_file(src, dst / "trimmed" / f"{sid}_{i:02d}.ogg", row)
+    return n
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -121,11 +172,17 @@ def main(argv: list[str] | None = None) -> int:
         qp = argparse.ArgumentParser(prog="sfx_sa3.py --queue")
         qp.add_argument("--only")
         qp.add_argument("--milestone")
+        qp.add_argument("--redo", action="store_true", help="이미 generated 인 줄도 다시 뽑는다")
+        qp.add_argument("--also", help="큐의 길과 상관없이 variants.json 묶음으로 후보만 뽑을 id(예: sfx_xp_absorb)")
         qp.add_argument("--comfy-output", default=r"E:\Unity\BloodRain-sfx\ComfyUI\output")
         qp.add_argument("--server", default="http://127.0.0.1:8188")
         q = qp.parse_args(argv[1:])
         root = Path(__file__).resolve().parent.parent
-        done = run_queue(root / "sfx_queue" / "queue.jsonl", root, q.comfy_output, q.server, q.only, q.milestone)
+        variants = load_variants(root / "sfx_queue" / "variants.json")
+        if q.also:
+            print(f"  {q.also}: {run_also(q.also, root, q.comfy_output, variants, q.server)}개 뽑아 다듬음")
+            return 0
+        done = run_queue(root / "sfx_queue" / "queue.jsonl", root, q.comfy_output, q.server, q.only, q.milestone, redo=q.redo, variants=variants)
         print(f"{len(done)}줄 뽑음. 다음: python tools/postprocess_sfx.py --candidates")
         return 0
     ap = argparse.ArgumentParser()

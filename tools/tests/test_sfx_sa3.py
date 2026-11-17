@@ -65,8 +65,17 @@ class 큐로_뽑기(unittest.TestCase):
                     files.append(f"sfx/{name}_{k:05d}_.flac")
                 return files
 
-            done = sa3.run_queue(q, root, out, milestone="M2", runner=fake)
+            calls = []
+
+            def fake2(server, prompt):
+                calls.append((prompt["6"]["inputs"]["text"].split(",")[0], prompt["11"]["inputs"]["batch_size"], prompt["3"]["inputs"]["seed"]))
+                return fake(server, prompt)
+
+            done = sa3.run_queue(q, root, out, milestone="M2", runner=fake2, variants={"a": ["thin swish", "heavy whoosh"]})
             self.assertEqual(done, ["a"])
+            # 문구 갈래마다 따로, 시드도 다르게
+            self.assertEqual([(c[0], c[1]) for c in calls], [("thin swish", 1), ("heavy whoosh", 1)])
+            self.assertNotEqual(calls[0][2], calls[1][2])
             self.assertEqual(sorted(p.name for p in (root / "art_inbox/sfx/a").iterdir()), ["a_00001.flac", "a_00002.flac"])
             after = [json.loads(l) for l in q.read_text(encoding="utf-8").splitlines()]
             self.assertEqual([r["status"] for r in after], ["generated", "todo", "todo", "todo"])
