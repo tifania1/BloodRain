@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using SectFx = BloodRain.Presentation.Fx.SectFx;
 using FxRamp = BloodRain.Presentation.Fx.FxRamp;
+using DeathLayer = BloodRain.Presentation.Fx.DeathLayer;
 
 namespace BloodRain.Presentation.Combat
 {
@@ -1653,6 +1654,7 @@ namespace BloodRain.Presentation.Combat
         string _hitKind = "ink";
         int _hitStage = 1;     // 맞은 자리 그림의 세기 단계(1~5)
         bool _cutArmed;        // 이번에 처음 맞는 적 하나에 임팩트 컷(4단부터)
+        DeathLayer _deathFx;   // HF-03U 쓰러지는 모습
         /// <summary>끄면 예전 그림. 시험 메뉴·견줌 스크린샷용.</summary>
         [NonSerialized] public bool sectFxOn = true;
         bool Sfx => sectFxOn && _sfx != null && _sfx.Ready;
@@ -1682,6 +1684,12 @@ namespace BloodRain.Presentation.Combat
                     var d = at - P;
                     float ang = Mathf.Atan2(d.y, d.x);
                     _sfx.Kill(at, ang, _hitStage);
+                    // HF-03U 쓰러지는 모습: 무공 성질마다 다르게(밟힘·쓸림은 뺀다)
+                    if (!enemies.LastKillCrushed && enemies.LookOf(agent, out var deadArt, out float deadSize, out var deadTint))
+                    {
+                        if (_deathFx == null) { _deathFx = gameObject.AddComponent<DeathLayer>(); _deathFx.material = enemies.clusters != null ? enemies.clusters.material : null; }
+                        _deathFx.Add(at, d, deadArt, deadSize, deadTint, _hitKind, _hitStage);
+                    }
                     BloodRain.Presentation.Fx.HitFeel.Stop(0.03f + 0.005f * _hitStage); // 0.3초에 한 번까지(HitFeel)
                     BloodRain.Presentation.Fx.HitFeel.Shake(0.13f + 0.03f * _hitStage, ang);
                 };

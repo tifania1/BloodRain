@@ -101,6 +101,18 @@ namespace BloodRain.Presentation
         /// <summary>적이 쓰러질 때(위치 세계 m, 그 적 상태). 진기 구슬(OrbLayer)이 여기서 떨어진다.</summary>
         public event System.Action<Vector2, EnemyAgent> Killed;
 
+        /// <summary>HF-03U 그 적의 그림 한 장·크기(월드)·색. 쓰러지는 모습(DeathLayer)이 쓴다.</summary>
+        public bool LookOf(EnemyAgent a, out Texture2D art, out float worldSize, out Color tint)
+        {
+            art = null; worldSize = 0f; tint = Color.white;
+            if (clusters == null || World == null || _kinds == null || a.Kind < 0 || a.Kind >= _kinds.Count) return false;
+            var k = _kinds[a.Kind];
+            art = k.Art != null ? k.Art : clusters.atlas;
+            tint = k.Art != null ? Color.white : k.Tint;
+            worldSize = World.Length(k.Size > 0f ? k.Size : clusters.memberRealmMeters, a.BornRealm);
+            return art != null;
+        }
+
         /// <summary>index 자리 적을 쓰러뜨린다(무공 C-04 가 기혈을 0으로 만들면 이걸 부른다).</summary>
         public void Kill(int index) => Kill(index, false);
 
