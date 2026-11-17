@@ -743,10 +743,20 @@ namespace BloodRain.Presentation.Combat
                     {
                         var e = enemies.Sim.Agents[_targets[k]];
                         var at = new Vector2(e.Pos.x, e.Pos.y);
-                        AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.79f, 0.64f, 0.15f, 0.22f)); // 떨어질 자리(금빛 표식)
+                        int thSt = FxStage(s);
+                        bool thLast = thSt >= 5 && k == Mathf.Min(n, _targets.Count) - 1;   // 5단: 마지막 부적에 번개 셋
+                        if (Sfx) _sfx.Talisman(P, at, fuse, thSt, R / Mathf.Max(1e-6f, ws.Length(1.2f)));   // VF-02U 누런 부적이 날아가 붙는다
+                        else AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.79f, 0.64f, 0.15f, 0.22f)); // 떨어질 자리(금빛 표식)
                         Later(fuse, () =>
                         {
-                            if (!AddBolt(at)) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.25f, new Color(1f, 0.92f, 0.55f, 0.8f));
+                            if (Sfx)
+                            {
+                                _sfx.Strike(at, R, thSt, thLast);
+                                HitLook(s, false);
+                                BloodRain.Presentation.Fx.HitFeel.Shake(0.12f + 0.03f * thSt + (thLast ? 0.3f : 0f), -Mathf.PI * 0.5f);
+                                if (thLast) BloodRain.Presentation.Fx.HitFeel.Stop(0.05f);
+                            }
+                            else if (!AddBolt(at)) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.25f, new Color(1f, 0.92f, 0.55f, 0.8f));
                             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
                             BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
                             if (shock > 0f)
@@ -846,6 +856,8 @@ namespace BloodRain.Presentation.Combat
                     float a0 = UnityEngine.Random.value * Mathf.PI * 2f, kb = ws.Speed(Knock(s));
                     var last = new Dictionary<int, float>();
                     var push = new List<int>(); var still = new List<int>();
+                    // VF-02U 흑백 검이 느리게 돌며 궤적을 남긴다(시안 taiji)
+                    if (Sfx) { int bn = n; float ba0 = a0; _sfx.Taiji(() => P, (t, i) => WeaponShapes.BladeAngle(ba0, t, i, bn), bn, R, life, FxStage(s), evo != null); }
                     for (int k = 0; k * step < life; k++)
                     {
                         float now = k * step;
@@ -867,7 +879,7 @@ namespace BloodRain.Presentation.Combat
                                     enemies.Sim.QueryCircle(new float2(at.x, at.y), bladeR, _reboundNear);
                                     foreach (int j in _reboundNear) { int pid = agents[j].Id; if (_pulled.TryGetValue(pid, out var pu) && pu > Time.time && !_rebound.Contains(pid)) _rebound.Add(pid); }
                                 }
-                                AddFxAt(at, 0f, Mathf.PI * 2f, bladeR, step * 1.2f,
+                                if (!Sfx) AddFxAt(at, 0f, Mathf.PI * 2f, bladeR, step * 1.2f,
                                     evo == null ? new Color(0.36f, 0.46f, 0.60f, 0.85f) : i % 2 == 0 ? new Color(0.96f, 0.94f, 0.88f, 0.9f) : new Color(0.12f, 0.12f, 0.14f, 0.9f));
                                 enemies.Sim.QueryCircle(new float2(at.x, at.y), bladeR, _near);
                                 BloodRain.Presentation.Fx.LanternLayer.Strike(at, bladeR); // C-09b 친 자리 안 등롱
@@ -882,6 +894,7 @@ namespace BloodRain.Presentation.Combat
                             }
                             // 검은 검(안 미는 쪽)은 id 로 들고 있다가, 미는 쪽 피해(쓰러짐으로 자리 번호가 바뀜) 뒤 번호를 다시 찾는다
                             for (int q = 0; q < still.Count; q++) still[q] = agents[still[q]].Id;
+                            HitLook(s, false);
                             if (push.Count > 0) Deal(s, bdmg, enemies.Damage(push, bdmg, P, kb));
                             if (still.Count > 0)
                             {
@@ -912,11 +925,13 @@ namespace BloodRain.Presentation.Combat
                     var far = WeaponShapes.FarthestWithin(P.x, P.y, _xs, _ys, R, n);
                     float pull = ws.Length(WeaponShapes.Trial.PullTo);
                     _filtered.Clear();
+                    int chainSt = FxStage(s), chainN = 0;
                     foreach (int k in far)
                     {
                         int i = _near[k];
                         var a = enemies.Sim.Get(i);
-                        AddFxAt(new Vector2(a.Pos.x, a.Pos.y), 0f, Mathf.PI * 2f, a.Radius + ws.Length(0.2f), 0.2f, new Color(0.22f, 0.20f, 0.24f, 0.75f)); // 사슬이 걸린 자리
+                        var hookAt = new Vector2(a.Pos.x, a.Pos.y);
+                        if (!Sfx) AddFxAt(hookAt, 0f, Mathf.PI * 2f, a.Radius + ws.Length(0.2f), 0.2f, new Color(0.22f, 0.20f, 0.24f, 0.75f)); // 사슬이 걸린 자리
                         a.Slow = Mathf.Max(a.Slow, slow);
                         if (a.Weight >= 0.5f)
                         {
@@ -928,8 +943,11 @@ namespace BloodRain.Presentation.Combat
                             a.Pos = new float2(P.x + dx * kk, P.y + dy * kk);
                         }
                         enemies.Sim.Set(i, a);
+                        // VF-02U 먹 사슬이 걸린 자리까지 뻗고, 끌려온 자리에 물결(시안 chain)
+                        if (Sfx) _sfx.Chain(() => P, hookAt, new Vector2(a.Pos.x, a.Pos.y), chainSt, chainN++ % 2 == 0);
                         if (!_filtered.Contains(i)) _filtered.Add(i);
                     }
+                    if (Sfx) { HitLook(s); Lunge(Mathf.Atan2(player.Facing.y, player.Facing.x), 0.3f); }
                     Deal(s, dmg, enemies.Damage(_filtered, dmg, P, 0f));
                     break;
                 }
@@ -950,10 +968,18 @@ namespace BloodRain.Presentation.Combat
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R + width, _near);
                     var agents = enemies.Sim.Agents;
                     _filtered.Clear();
+                    int clawSt = FxStage(s), clawK = 0;
+                    if (Sfx)
+                    {
+                        // VF-02U 어두운 자주 할퀸 자국 + 끝의 옅은 피안개(시안 claws)
+                        Lunge(baseA, 0.38f);
+                        _sfx.BloodMistAt(P + new Vector2(Mathf.Cos(baseA), Mathf.Sin(baseA)) * (R + ws.Length(0.3f)), 1.8f * (1f + 0.08f * clawSt), clawSt);
+                    }
                     foreach (var a in WeaponShapes.ClawAngles(baseA, n))
                     {
                         float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
-                        AddFxAt(P + new Vector2(ca, sa) * R * 0.5f, a, 0.25f, R * 0.5f, 0.14f, evo != null ? new Color(0.62f, 0.08f, 0.10f, 0.8f) : new Color(0.45f, 0.10f, 0.12f, 0.7f));
+                        if (Sfx) _sfx.Claw(P, a, R, clawSt, 0.016f * clawK++);
+                        else AddFxAt(P + new Vector2(ca, sa) * R * 0.5f, a, 0.25f, R * 0.5f, 0.14f, evo != null ? new Color(0.62f, 0.08f, 0.10f, 0.8f) : new Color(0.45f, 0.10f, 0.12f, 0.7f));
                         foreach (int i in _near)
                         {
                             if (_filtered.Contains(i)) continue;
@@ -975,6 +1001,14 @@ namespace BloodRain.Presentation.Combat
                         if (hcLs != null && _bleed.TryGetValue(id, out var bt) && bt > Time.time) { bleedHits++; Fired("hyeolchang_steal"); }
                         if (hdR != null && enemies.IsPoisoned(id)) _spreadAt.Add(new Vector2(agents[i].Pos.x, agents[i].Pos.y));
                     }
+                    // VF-02U 3단부터 흡혈 실: 맞은 적 셋까지에서 몸으로 가는 실이 들어온다(쓰러지기 전에 자리를 적어 둔다)
+                    if (Sfx && clawSt >= 3 && ls > 0f)
+                        for (int q = 0; q < Mathf.Min(3, _filtered.Count); q++)
+                        {
+                            var fp = agents[_filtered[q]].Pos;
+                            _sfx.BloodThread(new Vector2(fp.x, fp.y), () => P);
+                        }
+                    if (Sfx) HitLook(s);
                     int got = enemies.Damage(_filtered, dmg, P, ws.Speed(Knock(s)));
                     Deal(s, dmg, got);
                     if (_spreadAt.Count > 0 && SlotOf("poison_mist") is Slot mist)
@@ -1014,7 +1048,8 @@ namespace BloodRain.Presentation.Combat
                     foreach (var delay in WeaponShapes.RingDelays(Has(s, "음파 2겹")))
                         Later(delay, () =>
                         {
-                            AddFxAt(P, 0f, Mathf.PI * 2f, R, 0.35f, qinEvo != null || roar ? new Color(0.95f, 0.82f, 0.40f, 0.35f) : new Color(0.55f, 0.62f, 0.80f, 0.30f));
+                            if (Sfx) { _sfx.Sonic(() => P, R, FxStage(s), qinEvo != null || roar); HitLook(s, false); }   // VF-02U 현 떨림과 먹 파문(시안 sonic)
+                            else AddFxAt(P, 0f, Mathf.PI * 2f, R, 0.35f, qinEvo != null || roar ? new Color(0.95f, 0.82f, 0.40f, 0.35f) : new Color(0.55f, 0.62f, 0.80f, 0.30f));
                             enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                             BloodRain.Presentation.Fx.LanternLayer.Strike(P, R); // C-09b 친 자리 안 등롱
                             foreach (int i in _near) // 기절은 피해(쓰러짐으로 자리 번호가 바뀜) 전에. 땅의 주인은 무리에 없다
@@ -1053,11 +1088,14 @@ namespace BloodRain.Presentation.Combat
                         Later(h * WeaponShapes.ThrustGapSeconds, () =>
                         {
                             _filtered.Clear();
+                            int spearSt = FxStage(s), spearK = 0;
+                            if (Sfx) { Lunge(baseA, 0.3f); HitLook(s); }
                             foreach (var a in dirs)
                             {
                                 float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
                                 var mid = P + new Vector2(ca, sa) * R * 0.5f;
-                                AddFxAt(P, a, 0.10f, R, 0.12f, spearEvo != null ? new Color(1f, 0.82f, 0.38f, 0.8f) : new Color(0.85f, 0.85f, 0.90f, 0.8f));
+                                if (Sfx) _sfx.Thrust(() => P, a, R, spearSt, spearK++ > 0, spearEvo != null);   // VF-02U 곧은 먹 찌르기와 흰 배꽃(시안 thrust)
+                                else AddFxAt(P, a, 0.10f, R, 0.12f, spearEvo != null ? new Color(1f, 0.82f, 0.38f, 0.8f) : new Color(0.85f, 0.85f, 0.90f, 0.8f));
                                 enemies.Sim.QueryCircle(new float2(mid.x, mid.y), R * 0.5f + unit, _near);
                                 BloodRain.Presentation.Fx.LanternLayer.Strike(mid, R * 0.5f);
                                 var agents = enemies.Sim.Agents;
@@ -1689,6 +1727,11 @@ namespace BloodRain.Presentation.Combat
                 case "flash_finger": return "needle";
                 case "thunder_bomb": return "fire";
                 case "poison_mist": return "poison";
+                case "taiji_sword": return "pale";
+                case "chain_sickle": return "water";
+                case "blood_claw": return "violet";
+                case "thunder_talisman": return "thunder";
+                case "falling_petals": return "petal";
                 default: return "ink";
             }
         }
@@ -2055,7 +2098,8 @@ namespace BloodRain.Presentation.Combat
         // 투사체 그림: 무공 → (재료, 길이 = 경지 m 또는 투사체 반경의 몇 배, 그어지는 시간)
         /// <summary>VF-02U: SectFx 로 그리는 탄인가(장풍·섬광지·비도).</summary>
         bool IsSectProj(Proj p) => Sfx && p.Weapon != null && !p.Petal
-            && (p.Weapon.Def.Behavior == "slow_projectile" || p.Weapon.Def.Behavior == "random_rapid" || p.Weapon.Def.Behavior == "homing_dagger");
+            && (p.Weapon.Def.Behavior == "slow_projectile" || p.Weapon.Def.Behavior == "random_rapid" || p.Weapon.Def.Behavior == "homing_dagger"
+                || p.Weapon.Def.Behavior == "petal_scatter");
 
         /// <summary>VF-02U: 이 프레임의 탄을 SectFx 에 넘긴다. 넘겼으면 참(옛 재료는 건너뛴다).</summary>
         bool SectProj(Proj p)
@@ -2066,7 +2110,8 @@ namespace BloodRain.Presentation.Combat
             int st = FxStage(p.Weapon);
             bool evo = EvoOf(p.Weapon) != null;
             var look = p.Weapon.Def.Behavior == "slow_projectile" ? SectFx.ProjLook.Palm
-                     : p.Weapon.Def.Behavior == "random_rapid" ? SectFx.ProjLook.Finger : SectFx.ProjLook.Dagger;
+                     : p.Weapon.Def.Behavior == "random_rapid" ? SectFx.ProjLook.Finger
+                     : p.Weapon.Def.Behavior == "petal_scatter" ? SectFx.ProjLook.Petal : SectFx.ProjLook.Dagger;
             _sfx.Proj(look, p.Pos, ang, p.Radius, p.Age, Mathf.Max(0f, p.Life), run, st, evo);
             return true;
         }

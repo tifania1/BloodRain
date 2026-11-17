@@ -45,6 +45,7 @@ namespace BloodRain.Presentation.Fx
         public static readonly FxRamp Iron = new FxRamp(C(.2f, .2f, .22f), C(.1f, .1f, .11f), C(.03f, .03f, .04f));
         public static readonly FxRamp Soot = new FxRamp(C(.32f, .22f, .13f), C(.18f, .11f, .06f), C(.07f, .05f, .03f));
         public static readonly FxRamp MistG = new FxRamp(C(.5f, .64f, .46f), C(.64f, .78f, .56f), C(.84f, .92f, .76f));
+        public static readonly FxRamp BloodMist = new FxRamp(C(.42f, .16f, .3f), C(.36f, .11f, .24f), C(.28f, .06f, .17f));
         public static readonly FxRamp Fire = new FxRamp(C(1f, .85f, .5f), C(1f, .95f, .75f), C(1f, 1f, .95f));
     }
 
@@ -69,7 +70,8 @@ namespace BloodRain.Presentation.Fx
             public bool Under;
             public Action<Fx, float> Draw;
         }
-        struct Drop { public Vector2 Pos, Vel; public float T, Life, Size; public FxRamp C; public bool Glow; }
+        // Shape 가 0 이 아니면 그 모양 조각(11 꽃잎)이 Rot + T × Spin 으로 돌며 흩날린다
+        struct Drop { public Vector2 Pos, Vel; public float T, Life, Size, Rot, Spin; public FxRamp C; public bool Glow; public int Shape; }
         // Shape 0 이면 예전 먹 터짐(모양 3). 아니면 그 모양·값·색·알파로(VF-19 처치 바닥 자국)
         struct Stain { public Vector2 Pos; public float T, Seed, Rot, Size, A; public int Shape; public Vector4 P; public FxRamp C; }
         struct Later { public float T; public Action F; }
@@ -185,6 +187,7 @@ namespace BloodRain.Presentation.Fx
             foreach (var d in _drops)
             {
                 float k = d.T / d.Life, sp = d.Vel.magnitude / Mathf.Max(Meter, 1e-6f);
+                if (d.Shape != 0) { Quad(d.Shape, d.Pos, d.Size * 2f, d.Size * 1.15f, d.Rot + d.T * d.Spin, default, d.C, .95f * (1f - k * k)); continue; }
                 float rot = Mathf.Atan2(d.Vel.y, d.Vel.x);
                 var p = new Vector4(d.Glow ? .3f : .55f, 0f, 0f, 0f);
                 float al = .92f * (1f - k * k);
