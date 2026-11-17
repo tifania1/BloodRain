@@ -51,16 +51,18 @@ namespace BloodRain.Presentation.Fx
         /// <summary>흔들림을 더한다. trauma 0~1, dir(라디안)이 있으면 그쪽으로 한 번 밀린다.</summary>
         public static void Shake(float trauma, float dir = float.NaN)
         {
-            _trauma = Mathf.Min(1f, Mathf.Max(_trauma, trauma) + trauma * 0.15f);
-            if (!float.IsNaN(dir)) _kick += new Vector2(Mathf.Cos(dir), Mathf.Sin(dir)) * trauma * 0.25f;
+            // 2026-11-17 사람: 흔들림이 너무 거세다 → 5분의 1로, 0.28 을 넘지 않게. 방향으로 살짝 밀리는 것만 남긴다(시안의 '절제')
+            trauma *= 0.2f;
+            _trauma = Mathf.Min(0.28f, Mathf.Max(_trauma, trauma) + trauma * 0.15f);
+            if (!float.IsNaN(dir)) _kick += new Vector2(Mathf.Cos(dir), Mathf.Sin(dir)) * trauma * 0.5f;
             if (_kick.sqrMagnitude > 0.16f) _kick = _kick.normalized * 0.4f;
         }
 
         /// <summary>큰 타격에 화면이 한 번 눌리고(zoom 0~1) 종이가 잠깐 어두워진다(dim 0~1). 쌓이되 1 까지.</summary>
         public static void Jolt(float zoom, float dim)
         {
-            _zoom = Mathf.Min(1f, _zoom + zoom);
-            _dim = Mathf.Min(1f, _dim + dim);
+            // 2026-11-17 사람: 흔들림이 거세고 번쩍임이 많다 → 눌림은 3분의 1, 종이 어둡게는 뺀다(시안의 '절제')
+            _zoom = Mathf.Min(0.5f, _zoom + zoom * 0.35f);
         }
 
         /// <summary>카메라 직교 크기에 곱할 값(1 이 평소, 눌리면 0.95 까지). 설정 흔들림 배율을 따른다(0 이면 늘 1).</summary>

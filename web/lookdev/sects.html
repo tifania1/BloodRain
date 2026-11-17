@@ -35,11 +35,11 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 </style>
 <div class="wrap">
   <h1>문파 이펙트 시안 <small>2026-11-17 · 여섯 단계 · 열 무공</small></h1>
-  <p class="lead">무공이 깊어질수록 초식에서 기, 강기로 올라가는 여섯 단계입니다. 1~5단은 무공 레벨로 오르고, 6단 신병합일은 절기를 깨운 무공에 그 문파의 신병까지 지녔을 때만 열립니다(6단 시안은 삼재검법·소림·개방·남궁 넷만, 나머지는 5단 모습에 기운만 얹었습니다). 아래 줄이 그 단계에서 새로 붙는 것입니다.</p>
+  <p class="lead">무공이 깊어질수록 초식에서 기, 강기로 올라가는 여섯 단계입니다. 1~5단은 무공 레벨로 오르고, 6단 신병합일은 절기를 깨운 무공에 그 문파의 신병까지 지녔을 때만 열립니다(6단 시안은 삼재검법·소림·개방·남궁·마교 다섯, 나머지는 5단 모습에 기운만 얹었습니다). 타격감은 '절제'가 기본입니다 — 화면 흔들림과 흰 번쩍임을 줄이고, 무공의 성질마다 적이 다르게 쓰러집니다. 아래 줄이 그 단계에서 새로 붙는 것입니다.</p>
   <div class="bar">
     <div class="grp" id="gStyle"><span>문파</span></div>
     <div class="grp" id="gTier"><span>단계</span></div>
-    <div class="grp" id="gMode"><span>방식</span></div>
+    <div class="grp" id="gMode"><span>타격감</span></div>
   </div>
   <div class="stage" id="stage"><canvas id="gl"></canvas><canvas id="ov"></canvas></div>
   <ul class="note" id="note"></ul>
@@ -151,10 +151,10 @@ void main(){
 const FSP=`#version 300 es
 precision highp float;
 in vec2 v;out vec4 o;
-uniform sampler2D uTex,uNoise;uniform float uFlash,uDiss,uAlpha,uSil;uniform vec3 uCut;
+uniform sampler2D uTex,uNoise;uniform float uFlash,uDiss,uAlpha,uSil;uniform vec3 uCut;uniform vec4 uTint;
 void main(){vec4 t=texture(uTex,v);float n=texture(uNoise,v*1.3).r;
  float keep=uDiss>0.?smoothstep(uDiss,uDiss+.1,n)*step(uDiss,.999):1.;
- vec3 c=mix(t.rgb,vec3(.05),max(uSil,smoothstep(0.,.5,uDiss)));c=mix(c,vec3(1.,.98,.92),uFlash*.8);
+ vec3 c=mix(t.rgb,vec3(.05),max(uSil,smoothstep(0.,.5,uDiss)));c=mix(c,uTint.rgb,uTint.a);c=mix(c,vec3(1.,.98,.92),uFlash*.8);
  if(uCut.z!=0.){float sd=dot(v-.5,uCut.xy);keep*=smoothstep(-.012,.012,sd*uCut.z);c=mix(c,vec3(.04),(1.-smoothstep(0.,.05,abs(sd)))*.85);}
  float a=t.a*keep*uAlpha;o=vec4(c*a,a);}`;
 function prog(vs,fs){const p=gl.createProgram();for(const[t,s]of[[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]]){const h=gl.createShader(t);gl.shaderSource(h,s);gl.compileShader(h);if(!gl.getShaderParameter(h,gl.COMPILE_STATUS))console.error('shader',gl.getShaderInfoLog(h));gl.attachShader(p,h);}gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))console.error('link',gl.getProgramInfoLog(p));
@@ -184,7 +184,7 @@ function fx(shape,x,y,w,h,rot,o){const P=PF;gl.useProgram(P.p);common(P,x,y,w,h,
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,NOISE);gl.uniform1i(P.u.uNoise,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
 function glow(shape,x,y,w,h,rot,o){fx(shape,x,y,w,h,rot,o);fx(shape,x,y,w,h,rot,Object.assign({},o,{add:true,alpha:(o.alpha==null?1:o.alpha)*.4}));}
 function sprite(tex,x,y,w,h,rot,o){if(!tex.ok)return;const P=PS;gl.useProgram(P.p);common(P,x,y,w,h,rot);
- gl.uniform1f(P.u.uFlash,o.flash||0);gl.uniform1f(P.u.uDiss,o.diss||0);gl.uniform1f(P.u.uAlpha,o.alpha==null?1:o.alpha);gl.uniform1f(P.u.uSil,o.sil||0);const cu=o.cut||[0,0,0];gl.uniform3f(P.u.uCut,cu[0],cu[1],cu[2]);
+ gl.uniform1f(P.u.uFlash,o.flash||0);gl.uniform1f(P.u.uDiss,o.diss||0);gl.uniform1f(P.u.uAlpha,o.alpha==null?1:o.alpha);gl.uniform1f(P.u.uSil,o.sil||0);const cu=o.cut||[0,0,0];gl.uniform3f(P.u.uCut,cu[0],cu[1],cu[2]);const ti=o.tint||[0,0,0,0];gl.uniform4f(P.u.uTint,ti[0],ti[1],ti[2],ti[3]);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(P.u.uTex,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,NOISE);gl.uniform1i(P.u.uNoise,1);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
 // 색 램프: [가장자리, 가운데, 심]
 const INK=[[.13,.12,.11],[.06,.06,.06],[.02,.02,.02]];
@@ -218,9 +218,9 @@ const KD={silver:[SILVER,true],water:[WATER,false],thunder:[THUNDER,true],violet
 
 // ── 세계 ──────────────────────────────────────────
 const rnd=(a,b)=>a+Math.random()*(b-a);
-const E=[],FX=[],PT=[],NUM=[],ST=[];
+const E=[],FX=[],PT=[],NUM=[],ST=[],ALLY=[];
 const Pl={x:0,y:0,face:0,lunge:0,la:0,sway:0};
-let flashW=0,lastFlash=0,style='samjae',tier=3,old=false,cool=.6,fired=0,hs=0,hsLock=0,trauma=0,kick=[0,0],zoomK=0,dim=0;
+let flashW=0,lastFlash=0,style='samjae',tier=3,old=false,calm=true,cool=.6,fired=0,hs=0,hsLock=0,trauma=0,kick=[0,0],zoomK=0,dim=0;
 const L=a=>a[Math.min(tier,a.length)-1];     // 단계마다 값 하나. 6단(신병합일)은 5단 값 위에 얹는다
 const LAD=['초식','경력','기','기인','강기','신병합일'];   // 무협의 성취 사다리: 형(招式) → 힘(勁力) → 기(氣) → 기가 날이 됨(氣刃) → 강기(罡氣) → 신병합일(神兵合一)
 const TS=[1,1.07,1.14,1.22,1.32];           // 단계별 크기
@@ -231,19 +231,21 @@ function spawn(n){for(let i=0;i<n;i++){const a=rnd(0,6.283),d=rnd(10.5,14);E.pus
 function nearest(maxd){let b=null,bd=maxd*maxd;for(const e of E){if(e.dead>=0)continue;const d=e.x*e.x+e.y*e.y;if(d<bd){bd=d;b=e;}}return b;}
 function addFx(life,draw,hooks,under){FX.push({t:0,life,draw,hooks:hooks||[],under:!!under,seed:Math.random()*7});}
 function drops(x,y,dir,n,sp,col,add,size,spread){for(let i=0;i<n;i++){const a=dir+rnd(-spread,spread),s=rnd(sp*.35,sp);PT.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:0,life:rnd(.22,.45),col,add,size:size*rnd(.6,1.3)});}}
-function stop(sec){if(old||hsLock>0)return;hs=Math.max(hs,Math.min(.08,sec));hsLock=.3;}
-function shake(tr,dir){if(old)return;trauma=Math.min(1,trauma+tr);if(dir!=null){kick[0]+=Math.cos(dir)*tr*.3;kick[1]+=Math.sin(dir)*tr*.3;}}
+function stop(sec){if(old||hsLock>0)return;if(calm)sec*=.6;hs=Math.max(hs,Math.min(.08,sec));hsLock=.3;}
+function shake(tr,dir){if(old)return;if(calm){trauma=Math.min(.28,trauma+tr*.18);if(dir!=null){kick[0]+=Math.cos(dir)*tr*.1;kick[1]+=Math.sin(dir)*tr*.1;}return;}   // 절제: 흔들림은 5분의 1, 방향으로 살짝 밀리기만
+ trauma=Math.min(1,trauma+tr);if(dir!=null){kick[0]+=Math.cos(dir)*tr*.3;kick[1]+=Math.sin(dir)*tr*.3;}}
 // 화면이 한 번 눌리고(당겨 보기) 종이가 잠깐 어두워진다. 큰 타격에만
-function jolt(z,d){if(old)return;zoomK=Math.min(1,zoomK+z);dim=Math.min(1,dim+d);}
+function jolt(z,d){if(old)return;if(calm){zoomK=Math.min(.5,zoomK+z*.35);return;}zoomK=Math.min(1,zoomK+z);dim=Math.min(1,dim+d);}   // 절제: 종이를 어둡게 하지 않는다
 // 맞는 쪽 반응: 번쩍·찌그러짐·밀림·튀는 것·숫자. 단계가 오르면 섬광이 길어지고 먹이 터지고 큰 타격엔 임팩트 컷
 function hit(e,dmg,dir,kb,kind,heavy){if(e.dead>=0)return;e.hp-=dmg;
  if(NUM.length<16||heavy)NUM.push({x:e.x+rnd(-.35,.35),y:e.y+1.4+rnd(0,.4),t:0,v:Math.round(dmg+rnd(-2,2)),big:!!heavy});
  if(old){e.kx+=Math.cos(dir)*kb*.5;e.ky+=Math.sin(dir)*kb*.5;if(e.hp<=0){e.dead=0;drops(e.x,e.y+.6,dir,4,3,INK,false,.1,3.14);}return;}
  const st=tier,K=L([1,1.15,1.3,1.5,1.7]),dn=L([.8,1,1.2,1.45,1.7]);
- e.fl=1;e.sq=1;e.sa=dir;e.kx+=Math.cos(dir)*kb*K;e.ky+=Math.sin(dir)*kb*K;
+ e.fl=calm?.28:1;e.sq=1;e.sa=dir;e.kx+=Math.cos(dir)*kb*K;e.ky+=Math.sin(dir)*kb*K;
  const hx=e.x,hy=e.y+.7;
  if(time-lastFlash>.02){lastFlash=time;const fa=dir+rnd(-.5,.5),len=L([1.5,1.9,2.3,2.7,3.1])*(heavy?1.35:1),wd=.4+.07*st;
-  addFx(.08,(f,k)=>{fx(1,hx,hy,len*(1+k*.5),wd,fa,{p:[.38,0,0,1],c:WHITE,alpha:.92*(1-k)});
+  if(calm)addFx(.16,(f,k)=>fx(1,hx,hy,len*.85,wd*.55,fa,{p:[.3,.7,0,1],c:INK,alpha:.9*(1-k*k),prog:Math.min(1,f.t/.035),diss:k*.5,seed:f.seed}));   // 절제: 흰 섬광 대신 먹으로 그은 금 하나
+  else addFx(.08,(f,k)=>{fx(1,hx,hy,len*(1+k*.5),wd,fa,{p:[.38,0,0,1],c:WHITE,alpha:.92*(1-k)});
    if(st>=3)fx(1,hx,hy,len*.62*(1+k*.5),wd*.8,fa+1.25,{p:[.3,0,0,1],c:WHITE,alpha:.75*(1-k)});});          // 타격 섬광(3단부터 열십자)
   if(st>=2){const bs=1.2+.28*st;addFx(.16,(f,k)=>fx(3,hx,hy-.1,bs*(1+k*.45),bs*(1+k*.45),f.seed,{p:[8,.85,.8],c:INK,alpha:.5*(1-k),diss:k*.5,seed:f.seed}),null,true);}}  // 맞은 자리 먹 터짐
  if(kind==='ink')drops(hx,hy,dir,Math.round((heavy?10:6)*dn),11+st,INK,false,.13,.5);
@@ -254,12 +256,33 @@ function hit(e,dmg,dir,kb,kind,heavy){if(e.dead>=0)return;e.hp-=dmg;
  if(kind==='petal'){petals(hx,hy,dir,Math.round((heavy?9:5)*dn),6+st,1.3,.2);drops(hx,hy,dir,3,8,INK,false,.09,.6);}
  if(heavy&&st>=4){                                                                                             // 임팩트 컷: 검은 먹 터짐 위에 흰 터짐 두 프레임
   addFx(.07,(f,k)=>fx(3,hx,hy,3.3,3.3,f.seed,{p:[9,1,.8],c:INK,alpha:.85*(1-k*k),seed:f.seed}),null,true);
-  addFx(.09,(f,k)=>fx(3,hx,hy,2*(1+k),2*(1+k),f.seed,{p:[10,1.2,.8],c:WHITE,alpha:1-k,seed:f.seed}));jolt(.35,.35);}
- if(e.hp<=0){e.dead=0;stop((heavy?.05:.03)+.005*st);shake((heavy?.34:.13)+.03*st,dir);if(st>=5){e.split=1;e.ca=dir+rnd(-.35,.35);}   // 5단(예전 3단)부터 두 동강
+  if(!calm)addFx(.09,(f,k)=>fx(3,hx,hy,2*(1+k),2*(1+k),f.seed,{p:[10,1.2,.8],c:WHITE,alpha:1-k,seed:f.seed}));jolt(.35,.35);}
+ if(e.hp<=0){e.dead=0;if(!calm||heavy)stop((heavy?.05:.03)+.005*st);shake((heavy?.34:.13)+.03*st,dir);if(st>=5&&!calm){e.split=1;e.ca=dir+rnd(-.35,.35);}   // 5단(예전 3단)부터 두 동강
+  if(calm)die(e,kind,dir,heavy);
   ST.push({x:e.x+Math.cos(dir)*.5,y:e.y+Math.sin(dir)*.5,t:0,seed:Math.random()*9,rot:dir,s:rnd(.9,1.4)*(1+.07*st)});
   drops(hx,hy,dir,Math.round(8*dn),9+st,INK,false,.15,1.1);
   if(st>=3)addFx(.22,(f,k)=>fx(3,hx,hy,2.3*(1+k*.6),2.3*(1+k*.6),f.seed,{p:[7,.9,.8],c:INK,alpha:.6*(1-k),diss:k*.6,seed:f.seed}),null,true);}
  else if(heavy){stop(.04);shake(.26+.02*st,dir);} }
+// 절제된 타격감(2026-11-17 사람: 흔들림·번쩍임 대신 '적이 다르게 죽는다'). 무공의 성질마다 쓰러지는 모습이 다르다
+const DL={ink:.6,gold:.75,amber:.55,blue:.7,thunder:.7,poison:.85,silver:.85,water:.6,petal:.5,violet:.75};
+function die(e,kind,dir,heavy){const st=tier;e.die=DL[kind]?kind:'ink';e.dl=DL[e.die];e.dd=dir;e.spin=rnd(-1,1);
+ if(e.die==='ink'){if(st>=3){e.split=1;e.ca=dir+rnd(-.35,.35);}else{e.die=null;}}                          // 검: 벤 금을 따라 갈라져 미끄러진다(3단부터)
+ if(e.die==='gold'){e.kx+=Math.cos(dir)*(9+st);e.ky+=Math.sin(dir)*(9+st);}                                   // 권: 뒤로 날아가며 금가루로 흩어진다
+ if(e.die==='amber'){e.kx*=.2;e.ky*=.2;ST.push({x:e.x,y:e.y,t:0,seed:Math.random()*9,rot:0,s:1.5,c:BROWN,a:.3});ring(e.x,e.y+.2,2.2,DUST,false,.3,.7);}   // 봉: 납작 눌려 흙에 번진다
+ if(e.die==='blue'||e.die==='thunder'||e.die==='silver'){e.kx=e.ky=0;}                                        // 뇌: 그을린 채 굳었다 바스러짐 · 비도: 박힌 채 섰다가 쓰러짐
+ if(e.die==='water'){e.kx+=Math.cos(dir)*7;e.ky+=Math.sin(dir)*7;addFx(.5,(f,k)=>fx(1,e.x,e.y+.5,3.2,.8,dir,{p:[.4,.6,2,1],c:WATER,alpha:.6*(1-k),prog:Math.min(1,f.t/.12),diss:k*.7,seed:f.seed}),null,true);}   // 물살에 쓸려 간다
+ if(e.die==='petal')petals(e.x,e.y+.9,dir,12,5,3.14,.2);                                                       // 꽃잎으로 흩어진다
+ if(e.die==='violet'&&st>=6&&ALLY.length<4&&(heavy||Math.random()<.35)){const x=e.x,y=e.y;later(.8,()=>ALLY.push({x,y,t:0,cd:.5,seed:Math.random()*7}));}}   // 마교 6단: 피를 빨린 적이 강시로 일어나 같이 싸운다
+function drawDeath(e){const k=Math.min(1,e.dead/e.dl),fl=e.x>Pl.x?-1:1,W0=1.9,y=e.y+.85,late=(a)=>Math.max(0,Math.min(.99,(k-a)/(1-a)));
+ switch(e.die){
+  case'gold':sprite(TSIG,e.x,y+Math.sin(k*3.14)*.6,fl*W0*(1-.25*k),W0*(1-.25*k),e.spin*e.dead*7,{tint:[1,.8,.3,.25+.5*k],diss:late(.4)});break;
+  case'amber':{const q=Math.min(1,e.dead/.1);sprite(TSIG,e.x,e.y+.85*(1-.62*q),fl*W0*(1+.45*q),W0*(1-.68*q),0,{sil:.5*k,diss:late(.45)});break;}
+  case'blue':case'thunder':sprite(TSIG,e.x+(k<.3?Math.sin(time*95)*.035:0),y-late(.4)*.25,fl*W0,W0,0,{sil:Math.min(1,k*5),diss:late(.4)});break;
+  case'poison':{const sy=1-k*.78;sprite(TSIG,e.x,e.y+.85*sy,fl*W0*(1+.3*k),W0*sy,0,{tint:[.3,.6,.25,.65*Math.min(1,k*2)],diss:late(.62)});break;}
+  case'silver':{const q=late(.38);sprite(TSIG,e.x+fl*q*.5,y-q*.55,fl*W0,W0,-fl*q*1.45,{sil:.25*k,alpha:1-late(.75)});break;}
+  case'water':sprite(TSIG,e.x,y,fl*W0*(1+.6*k),W0*(1-.35*k),Math.cos(e.dd)*.45*k,{tint:[.3,.66,.68,.55*k],diss:late(.3)});break;
+  case'petal':sprite(TSIG,e.x,y,fl*W0,W0,0,{tint:[.93,.76,.81,Math.min(1,k*2.2)],diss:Math.min(.99,k*1.25)});break;
+  case'violet':sprite(TSIG,e.x,y,fl*W0*(1-.5*k),W0*(1-.08*k),0,{tint:[.21,.04,.13,.85*Math.min(1,k*2)],diss:late(.6)});break;}}
 function inArc(e,ang,span,R){const d=Math.hypot(e.x,e.y);if(d>R+e.r)return false;let da=Math.atan2(e.y,e.x)-ang;da=Math.atan2(Math.sin(da),Math.cos(da));return Math.abs(da)<span/2;}
 
 // ── 무공 ──────────────────────────────────────────
@@ -304,7 +327,8 @@ const STY={
   steps:['누런 부적 둘이 날아가 붙고 0.4초 뒤 낙뢰. 화면이 약하게 번쩍, 바닥에 그을음','낙뢰가 굵어지고 부적 자리에 먹 고리','(Lv5 감전) 셋. 맞은 적에서 옆 적으로 전기가 튀고 섬광이 열십자','넷. 낙뢰 옆으로 가지 번개 둘, 큰 타격에 임팩트 컷과 화면 눌림','다섯 장 뒤 마지막 부적에 번개 셋이 한데 꽂힌다'],
   fire(a){const n=L([2,2,3,4,5]);for(let i=0;i<n;i++)later(i*.08,()=>talisman(tier>=5&&i===n-1));}},
  magyo:{label:'마교 · 혈조',who:'어두운 자주 할퀸 자국과 피안개',cd:.9,
-  steps:['어두운 자주 할퀸 자국 셋이 앞으로 찢긴다. 끝에서 옅은 피안개','획이 굵어지고 마른 메아리가 한 겹. 맞은 자리에 먹 터짐','양손 두 번. 찢긴 자국이 바닥에 잠깐 남고, 흡혈 때 붉은 실이 몸으로 들어온다','자국 가장자리에 연분홍 빛이 서고 첫 타격에 임팩트 컷','다섯 갈래로 세 번, 마지막은 X 자로 크게 찢고 피안개가 터진다'],
+  steps:['어두운 자주 할퀸 자국 셋이 앞으로 찢긴다. 끝에서 옅은 피안개','획이 굵어지고 마른 메아리가 한 겹. 맞은 자리에 먹 터짐','양손 두 번. 찢긴 자국이 바닥에 잠깐 남고, 흡혈 때 붉은 실이 몸으로 들어온다','자국 가장자리에 연분홍 빛이 서고 첫 타격에 임팩트 컷','다섯 갈래로 세 번, 마지막은 X 자로 크게 찢고 피안개가 터진다','피를 빨린 적이 강시로 일어나 곁에서 같이 싸운다(넷까지, 여덟 숨). 쓰러진 적의 피가 실이 되어 몸으로 들어온다'],
+  lad:['초식','경력','조기','혈사','혈강','혈조합일'],
   fire(a){const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)later(i*.11,()=>claws(a,i%2?-1:1,tier>=5&&i===n-1));}},
 };
 const LATER=[];function later(t,f){LATER.push({t,f});}
@@ -488,7 +512,7 @@ function talisman(final){const st=tier,live=E.filter(e=>e.dead<0&&Math.hypot(e.x
 function strike(x,y,m,final){const st=tier,w=L([.05,.07,.08,.09,.1])*m,H=9;
  const one=(ox,oy,ww,al)=>addFx(.2,(e,k)=>{fx(4,ox,oy+H/2,H,2,-Math.PI/2,{p:[.25,ww*2.2,.6],c:BLUEINK,alpha:.7*al*(1-k*k),seed:e.seed});glow(4,ox,oy+H/2,H,2,-Math.PI/2,{p:[.25,ww,.6],c:THUNDER,alpha:al*(1-k*k),seed:e.seed});});
  one(x,y,w,1);if(final)for(const s of[-1,1])one(x+s*.6,y,w*.8,.9);
- flashW=Math.min(1,flashW+(final?1:.55));
+ if(!calm)flashW=Math.min(1,flashW+(final?1:.55));
  addFx(.12,(g,k)=>glow(3,x,y+.4,2.6*m*(1+k*.5),2.6*m*(1+k*.5),g.seed,{p:[10,.9,.8],c:THUNDER,alpha:1-k,seed:g.seed}));
  ring(x,y+.2,3.2*m,BLUEINK,false,.26,.5);ST.push({x,y,t:0,seed:Math.random()*9,rot:rnd(0,6),s:1.4*m,a:.45});                   // 그을음
  let n=0;for(const e of E)if(e.dead<0&&Math.hypot(e.x-x,e.y-y)<1.2*m+e.r){hit(e,18+st*3,Math.atan2(e.y-y,e.x-x)||0,2,'thunder',(st>=4&&n===0)||final);n++;
@@ -523,11 +547,19 @@ function step(dt){
  Pl.lunge*=Math.pow(.0005,dt);Pl.sway*=Math.pow(.02,dt);
  if(tier>=6&&!old&&Math.random()<dt*14)PT.push({x:Pl.x+rnd(-.7,.7),y:Pl.y+rnd(0,.6),vx:rnd(-.2,.2),vy:rnd(1.2,2.4),t:0,life:rnd(.5,.9),col:AURA[style]||GOLD,add:true,size:.13});   // 6단: 몸에서 기운이 오른다
  let alive=0;for(let i=E.length-1;i>=0;i--){const e=E[i];
-  if(e.dead>=0){e.dead+=dt;e.x+=e.kx*dt;e.y+=e.ky*dt;e.kx*=Math.pow(.01,dt);e.ky*=Math.pow(.01,dt);if(e.dead>(old?.12:e.split?.6:.4))E.splice(i,1);continue;}
+  if(e.dead>=0){e.dead+=dt;e.x+=e.kx*dt;e.y+=e.ky*dt;e.kx*=Math.pow(.01,dt);e.ky*=Math.pow(.01,dt);if(calm&&!old&&e.die){const r=Math.random();if(e.die==='gold'&&r<dt*26)PT.push({x:e.x+rnd(-.4,.4),y:e.y+rnd(.3,1.4),vx:rnd(-.3,.3),vy:rnd(.4,1.2),t:0,life:.6,col:GOLD,add:true,size:.12});
+   if((e.die==='blue'||e.die==='thunder')&&e.dead>.25&&r<dt*30)PT.push({x:e.x+rnd(-.4,.4),y:e.y+rnd(.4,1.6),vx:rnd(-.3,.3),vy:rnd(-2,-.8),t:0,life:.5,col:INK,add:false,size:.11});
+   if(e.die==='poison'&&r<dt*18)PT.push({x:e.x+rnd(-.4,.4),y:e.y+rnd(.2,.8),vx:rnd(-.2,.2),vy:rnd(.6,1.4),t:0,life:.6,col:POISON,add:true,size:.16});
+   if(e.die==='violet'&&r<dt*24){const dx=Pl.x-e.x,dy=Pl.y+.8-e.y-.8,d=Math.hypot(dx,dy)||1;PT.push({x:e.x+rnd(-.2,.2),y:e.y+rnd(.5,1.3),vx:dx/d*7,vy:dy/d*7,t:0,life:Math.min(.7,d/7),col:VGLOW,add:true,size:.12});}}
+   if(e.dead>(old?.12:e.dl||(e.split?.6:.4)))E.splice(i,1);continue;}
   alive++;if(e.psn>0){e.psn-=dt;if(tier>=4&&!old&&Math.random()<dt*9)PT.push({x:e.x+rnd(-.3,.3),y:e.y+1+rnd(0,.5),vx:rnd(-.3,.3),vy:rnd(.8,1.6),t:0,life:.6,col:POISON,add:true,size:.2});}   // 중독된 적의 녹색 김
   const d=Math.hypot(e.x,e.y)||1;if(d>1.0){e.x-=e.x/d*1.25*dt;e.y-=e.y/d*1.25*dt;}
   e.x+=e.kx*dt;e.y+=e.ky*dt;const dk=Math.pow(.004,dt);e.kx*=dk;e.ky*=dk;e.fl=Math.max(0,e.fl-dt/.055);e.sq=Math.max(0,e.sq-dt/.16);}
  if(alive<26)spawn(26-alive);
+ for(let i=ALLY.length-1;i>=0;i--){const a=ALLY[i];a.t+=dt;a.cd-=dt;if(a.t>8){ALLY.splice(i,1);continue;}if(a.t<.5)continue;
+  let tg=null,bd=1e9;for(const e of E){if(e.dead>=0)continue;const d=(e.x-a.x)**2+(e.y-a.y)**2;if(d<bd){bd=d;tg=e;}}if(!tg)continue;
+  const d=Math.sqrt(bd),ang=Math.atan2(tg.y-a.y,tg.x-a.x);a.face=ang;if(d>1.1){const hop=Math.abs(Math.sin(time*6+a.seed));a.x+=Math.cos(ang)*3.2*hop*dt;a.y+=Math.sin(ang)*3.2*hop*dt;}
+  else if(a.cd<=0){a.cd=.7;hit(tg,9,ang,3,'violet');addFx(.2,(f,k)=>fx(1,tg.x,tg.y+.8,1.6,.5,ang+.6,{p:[.3,.9,1.5,1],c:VIOLET,alpha:1-k,prog:Math.min(1,f.t/.05),seed:f.seed}));}}
  for(let i=FX.length-1;i>=0;i--){const f=FX[i];const t0=f.t;f.t+=dt;for(const h of f.hooks)if(t0<h.t&&f.t>=h.t)h.f();if(f.t>=f.life)FX.splice(FX.indexOf(f),1);}
  for(let i=PT.length-1;i>=0;i--){const p=PT[i];p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.sh){p.x+=Math.sin(p.t*7+p.rot)*dt*.7;p.y-=dt*.5;}const dr=Math.pow(p.sh?.08:.02,dt);p.vx*=dr;p.vy*=dr;if(p.t>=p.life)PT.splice(i,1);}
  for(let i=ST.length-1;i>=0;i--){ST[i].t+=dt;if(ST[i].t>8)ST.splice(i,1);}   // 바닥 먹 자국 8초에 마름(review 6절 잔흔)
@@ -549,8 +581,12 @@ function draw(){
   if(e.dead<0)fx(5,e.x,e.y-.02,1.2,.45,0,{p:[.2],c:INK,alpha:.2});
   if(e.split&&e.dead>=0&&!old){const fl=e.x>Pl.x?-1:1,nx=Math.cos(e.ca),ny=Math.sin(e.ca),sl=Math.min(1,e.dead/.25),gap=(1-(1-sl)*(1-sl))*.55,dz=Math.max(0,Math.min(.99,(e.dead-.18)/.42));
    for(const sd of[1,-1])sprite(TSIG,e.x+nx*gap*sd,e.y+.85+ny*gap*sd-e.dead*.4*(sd<0?1:.4),fl*1.9,1.9,sd*e.dead*.5,{flash:Math.max(0,1-e.dead/.06),diss:dz,cut:[nx*fl,ny,sd]});}
+  else if(calm&&!old&&e.dead>=0&&e.die)drawDeath(e);
   else sprite(TSIG,e.x,e.y+.85+hop,(e.x>Pl.x?-1:1)*1.9*(1+.28*sq),1.9*(1-.22*sq),Math.cos(e.sa)*sq*.35,{flash:old?0:e.fl,sil:old?1:0,diss:e.dead>=0?(old?.01:Math.min(.99,e.dead/.4)):0,alpha:e.dead>=0&&old?1-e.dead/.12:1});}
  if(!pd)drawP();
+ for(const a of ALLY){const up=Math.min(1,a.t/.5),out=Math.min(1,(8-a.t)/.6),hop=a.t>.5?Math.abs(Math.sin(time*6+a.seed))*.16:0;   // 마교 6단: 일어난 강시(어두운 자주 실루엣, 발밑에 피안개 고리)
+  glow(2,a.x,a.y+.05,2.2,1.1,0,{p:[.6,.09,.5],c:VGLOW,alpha:.6*out,seed:a.seed});
+  sprite(TSIG,a.x,a.y+.85*up+hop,(Math.cos(a.face||0)<0?-1:1)*1.9,1.9*up,0,{tint:[.3,.07,.2,.82],alpha:out,diss:a.t<.5?(1-up)*.6:0});}
  for(const f of FX.slice())if(!f.under)f.draw(f,f.t/f.life);
  for(const p of PT){const k=p.t/p.life,sp=Math.hypot(p.vx,p.vy);if(p.sh){fx(p.sh,p.x,p.y,p.size*2,p.size*1.15,p.rot+p.t*p.spin,{c:p.col,alpha:.95*(1-k*k)});continue;}(p.add?glow:fx)(5,p.x,p.y,p.size*(1+sp*.09),p.size*(1-k*.5),Math.atan2(p.vy,p.vx),{p:[p.add?.3:.55],c:p.col,alpha:.92*(1-k*k)});}
  // 숫자와 이름표
@@ -575,12 +611,12 @@ function group(id,items,get,set){const g=document.getElementById(id);for(const[v
  g._sync=()=>{for(const b of g.querySelectorAll('button'))b.setAttribute('aria-pressed',String(String(get())===b.dataset.v));};}
 function sync(){for(const id of['gStyle','gTier','gMode'])document.getElementById(id)._sync();
  const nt=document.getElementById('note');nt.classList.toggle('pick',!old);nt.innerHTML=STY[style].steps.concat(STY[style].steps.length<6?['문파의 신병을 지니면 열린다. 이 무공의 6단 시안은 아직 없고, 5단 모습에 기운만 얹었다']:[]).map((t,i)=>`<li${i+1===tier&&!old?' aria-current="true"':''}><b>${i+1}단 ${ladOf(i)} · ${lvOf(i)}</b>${t}</li>`).join('');
- try{history.replaceState(null,'','#'+style+'-'+tier+(old?'-old':''));}catch(e){}}
-function reset(){FX.length=PT.length=LATER.length=0;cool=.3;zoomK=dim=flashW=0;for(const e of E)e.psn=0;}
+ try{history.replaceState(null,'','#'+style+'-'+tier+(old?'-old':calm?'':'-loud'));}catch(e){}}
+function reset(){ALLY.length=0;FX.length=PT.length=LATER.length=0;cool=.3;zoomK=dim=flashW=0;for(const e of E)e.psn=0;}
 group('gStyle',Object.keys(STY).map(k=>[k,STY[k].label]),()=>style,v=>{style=v;reset();});
 group('gTier',[1,2,3,4,5,6].map(i=>[i,i+'단 '+LAD[i-1]]),()=>tier,v=>{tier=+v;reset();});
-group('gMode',[['new','개편안'],['old','지금 방식']],()=>old?'old':'new',v=>{old=v==='old';reset();});
-const h=(location.hash||'').slice(1).split('-');if(STY[h[0]])style=h[0];if(+h[1]>=1&&+h[1]<=6)tier=+h[1];if(h[2]==='old')old=true;
+group('gMode',[['calm','절제'],['loud','거센(11-16)'],['old','지금 방식']],()=>old?'old':calm?'calm':'loud',v=>{old=v==='old';calm=v==='calm';reset();});
+const h=(location.hash||'').slice(1).split('-');if(STY[h[0]])style=h[0];if(+h[1]>=1&&+h[1]<=6)tier=+h[1];if(h[2]==='old')old=true;if(h[2]==='loud')calm=false;
 sync();spawn(26);for(const e of E){const k=rnd(.25,1);e.x*=k;e.y*=k;}
 window.__sects={get n(){return E.length},get fx(){return FX.length},pause(v){paused=v;},adv(dt){time+=dt;hsLock=0;hs=0;settle(dt);step(dt);}};
 requestAnimationFrame(frame);

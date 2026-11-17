@@ -275,11 +275,8 @@ namespace BloodRain.Presentation.Fx
             _lastFlash = _time;
             float fa = dir + Rnd(-.5f, .5f), m = Meter;
             float len = L(stage, 1.5f, 1.9f, 2.3f, 2.7f, 3.1f) * (heavy ? 1.35f : 1f) * m, wd = (.4f + .07f * stage) * m;
-            Add(.08f, (f, k) =>
-            {
-                Quad(1, at, len * (1f + k * .5f), wd, fa, new Vector4(.38f, 0f, 0f, 1f), FxRamp.White, .92f * (1f - k));
-                if (stage >= 3) Quad(1, at, len * .62f * (1f + k * .5f), wd * .8f, fa + 1.25f, new Vector4(.3f, 0f, 0f, 1f), FxRamp.White, .75f * (1f - k));
-            });
+            // 2026-11-17 사람: 번쩍임이 많다 → 흰 섬광 대신 먹으로 그은 금 하나(시안의 '절제')
+            Add(.16f, (f, k) => Quad(1, at, len * .85f, wd * .55f, fa, new Vector4(.3f, .7f, 0f, 1f), FxRamp.Ink, .9f * (1f - k * k), Mathf.Min(1f, f.T / .035f), k * .5f, f.Seed));
             if (stage >= 2 && !FxSettings.Simplified)
             {
                 float bs = (1.2f + .28f * stage) * m;
@@ -317,7 +314,6 @@ namespace BloodRain.Presentation.Fx
         {
             float m = Meter;
             Add(.07f, (f, k) => Quad(3, at, 3.3f * m, 3.3f * m, f.Seed, new Vector4(9f, 1f, .8f, 0f), FxRamp.Ink, .85f * (1f - k * k), 1f, 0f, f.Seed), true);
-            Add(.09f, (f, k) => Quad(3, at, 2f * (1f + k) * m, 2f * (1f + k) * m, f.Seed, new Vector4(10f, 1.2f, .8f, 0f), FxRamp.White, 1f - k, 1f, 0f, f.Seed));
             HitFeel.Jolt(.35f, .35f);
         }
 
