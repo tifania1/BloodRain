@@ -575,7 +575,8 @@ namespace BloodRain.Presentation.Combat
                     float tick = Tick(s);
                     float hitDmg = dmg * tick;                                 // tickSeconds 마다 초당 피해 x tickSeconds
                     // 독무: 몸 둘레 안개(fx_mist_ink_3, 가운데서 번짐)를 틱마다 새로 피워 두 장씩 겹치게, 청회 담채색으로 옅게
-                    if (!AddSpark("fx_mist_ink_3", Vector2.zero, UnityEngine.Random.value * Mathf.PI * 2f, R * 2.3f, tick * 2.2f, tick * 0.8f, true, 0.55f, MistWash))
+                    if (Sfx) { _sfx.Mist(() => P, R, FxStage(s)); HitLook(s, false); }   // VF-02U 옅은 녹색 안개
+                    else if (!AddSpark("fx_mist_ink_3", Vector2.zero, UnityEngine.Random.value * Mathf.PI * 2f, R * 2.3f, tick * 2.2f, tick * 0.8f, true, 0.55f, MistWash))
                         AddFx(0f, Mathf.PI * 2f, R, tick, new Color(0.37f, 0.50f, 0.29f, 0.22f));
                     enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _near);
                     BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(P.x, P.y), R); // C-09b 친 자리 안 등롱
@@ -702,7 +703,8 @@ namespace BloodRain.Presentation.Combat
                         Vector2 at;
                         if (_targets.Count > 0) { var e = enemies.Sim.Agents[_targets[UnityEngine.Random.Range(0, _targets.Count)]]; at = new Vector2(e.Pos.x, e.Pos.y); }
                         else at = P + new Vector2(UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-4f, 4f)) * ws.Length(1f);
-                        AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.70f, 0.15f, 0.12f, 0.18f)); // 떨어질 자리 표시
+                        if (Sfx) _sfx.BombThrow(P, at, fuse, FxStage(s));   // VF-02U 쇠구슬이 포물선으로 떨어져 심지가 탄다
+                        else AddFxAt(at, 0f, Mathf.PI * 2f, R, fuse, new Color(0.70f, 0.15f, 0.12f, 0.18f)); // 떨어질 자리 표시
                         if (bombEvo == null) { Later(fuse, () => BombBlast(s, at, R, dmg, kb)); continue; }
                         var chain = EvolvedHits.ChainBombs(bombEvo, at.x, at.y, R, () => UnityEngine.Random.value);
                         foreach (var b in chain)
@@ -1246,9 +1248,13 @@ namespace BloodRain.Presentation.Combat
                     }
                     int critsBefore = enemies.CritCount;
                     var hitAt = sim.Agents[j].Pos; // 맞히면 쓰러져 자리 번호가 바뀔 수 있으니 먼저
+                    if (p.Weapon != null) HitLook(p.Weapon, false);   // VF-02U 맞은 자리에 튀는 것의 종류(은빛·독·지풍 빛 점)
                     int got = enemies.Damage(_one1, p.Damage, p.Pos, p.Knock);
                     _petalHit = false;
                     if (p.Weapon != null) Deal(p.Weapon, p.Damage, got);
+                    // VF-02U 당가 3단부터: 비도가 박힌 바닥에 독 꽃 얼룩
+                    if (Sfx && p.Weapon != null && p.Weapon.id == "flying_dagger" && FxStage(p.Weapon) >= 3)
+                        _sfx.PoisonBloom(new Vector2(hitAt.x, hitAt.y), 0.6f + 0.075f * FxStage(p.Weapon));
                     // LK-01Ua 연환 암기연환: 섬광지 치명타면 그 적에게 비도 한 자루(비도 한 방, 따라감 — 초속 14m·0.25m·1초·따라가기 8, 웹 값)
                     if (p.Weapon != null && p.Weapon.id == "flash_finger" && enemies.CritCount > critsBefore && Link("amgi", "daggers") is float dn && SlotOf("flying_dagger") is Slot dag)
                     {
@@ -1325,10 +1331,21 @@ namespace BloodRain.Presentation.Combat
         {
             if (record) { if (_blasts.Count >= 64) _blasts.RemoveAt(0); _blasts.Add(new Blast { At = at, R = R, T = Time.time }); } // LK-01Ub 뇌화가 보는 최근 폭발
             // 벽력탄: 터진 자리에 먹 번짐(fx_bomb_ink_1·2 번갈아) 위로 불꽃 빛(fx_bomb_glow)
-            float rot = UnityEngine.Random.value * Mathf.PI * 2f;
-            bool ink = AddSpark(s.Fired % 2 == 0 ? "fx_bomb_ink_1" : "fx_bomb_ink_2", at, rot, R * 2.4f, 0.55f, 0.08f);
-            bool glow = AddSpark("fx_bomb_glow", at, rot, R * 2.2f, 0.35f, 0.06f);
-            if (!ink && !glow) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
+            if (Sfx)
+            {
+                // VF-02U 호박색 불꽃·흙먼지 고리·불씨·먹 연기·그을음(시안 bomb). 4단부터는 짧게 멈추고 화면이 밀린다
+                int bst = FxStage(s);
+                _sfx.BombBurst(at, R, bst, false);
+                HitLook(s, false);
+                if (bst >= 4) { BloodRain.Presentation.Fx.HitFeel.Stop(0.05f); BloodRain.Presentation.Fx.HitFeel.Shake(0.3f, -Mathf.PI * 0.5f); }
+            }
+            else
+            {
+                float rot = UnityEngine.Random.value * Mathf.PI * 2f;
+                bool ink = AddSpark(s.Fired % 2 == 0 ? "fx_bomb_ink_1" : "fx_bomb_ink_2", at, rot, R * 2.4f, 0.55f, 0.08f);
+                bool glow = AddSpark("fx_bomb_glow", at, rot, R * 2.2f, 0.35f, 0.06f);
+                if (!ink && !glow) AddFxAt(at, 0f, Mathf.PI * 2f, R, 0.35f, new Color(0.95f, 0.55f, 0.20f, 0.7f));
+            }
             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
             BloodRain.Presentation.Fx.LanternLayer.Strike(new Vector2(at.x, at.y), R); // C-09b 친 자리 안 등롱
             // ST-02U 화상: 폭발 원 안 적에 burnPerSecond(Lv1→Lv8) × 화상 배율 × 지속 피해 배율, burnSeconds × 지속.
@@ -1667,6 +1684,11 @@ namespace BloodRain.Presentation.Combat
                 case "nahan_fist": return "gold";
                 case "drunken_staff": return "amber";
                 case "changcheon_qi": return "blue";
+                // VF-02U 2026-11-17
+                case "flying_dagger": return FxStage(s) >= 3 ? "poison" : "silver";
+                case "flash_finger": return "needle";
+                case "thunder_bomb": return "fire";
+                case "poison_mist": return "poison";
                 default: return "ink";
             }
         }
@@ -2026,6 +2048,24 @@ namespace BloodRain.Presentation.Combat
         }
 
         // 투사체 그림: 무공 → (재료, 길이 = 경지 m 또는 투사체 반경의 몇 배, 그어지는 시간)
+        /// <summary>VF-02U: SectFx 로 그리는 탄인가(장풍·섬광지·비도).</summary>
+        bool IsSectProj(Proj p) => Sfx && p.Weapon != null && !p.Petal
+            && (p.Weapon.Def.Behavior == "slow_projectile" || p.Weapon.Def.Behavior == "random_rapid" || p.Weapon.Def.Behavior == "homing_dagger");
+
+        /// <summary>VF-02U: 이 프레임의 탄을 SectFx 에 넘긴다. 넘겼으면 참(옛 재료는 건너뛴다).</summary>
+        bool SectProj(Proj p)
+        {
+            if (!IsSectProj(p)) return false;
+            var dir = p.Vel.sqrMagnitude > 1e-8f ? p.Vel.normalized : Vector2.right;
+            float ang = Mathf.Atan2(dir.y, dir.x), run = p.Vel.magnitude * p.Age;
+            int st = FxStage(p.Weapon);
+            bool evo = EvoOf(p.Weapon) != null;
+            var look = p.Weapon.Def.Behavior == "slow_projectile" ? SectFx.ProjLook.Palm
+                     : p.Weapon.Def.Behavior == "random_rapid" ? SectFx.ProjLook.Finger : SectFx.ProjLook.Dagger;
+            _sfx.Proj(look, p.Pos, ang, p.Radius, p.Age, Mathf.Max(0f, p.Life), run, st, evo);
+            return true;
+        }
+
         bool ProjFx(Slot s, out AiFx f, out float realmMeters, out float radiusTimes)
         {
             realmMeters = 0f; radiusTimes = 0f; f = null;
@@ -2080,6 +2120,7 @@ namespace BloodRain.Presentation.Combat
             // 투사체: 날아가는 쪽으로 돌린 재료. 머리가 투사체 자리에 오게 길이 0.3 만큼 뒤로 물린다
             foreach (var p in _projs)
             {
+                if (SectProj(p)) continue;   // VF-02U 장풍·섬광지·비도는 SectFx 가 그린다
                 if (!ProjFx(p.Weapon, out var pf, out float rm, out float rt)) continue;
                 float size = rm > 0f ? World.Length(rm) : p.Radius * rt;
                 var dir = p.Vel.sqrMagnitude > 1e-8f ? p.Vel.normalized : Vector2.right;
@@ -2100,7 +2141,7 @@ namespace BloodRain.Presentation.Combat
             }
             var disc = Sector(Mathf.PI * 2f);
             foreach (var p in _projs)
-                if (!ProjFx(p.Weapon, out _, out _, out _))
+                if (!IsSectProj(p) && !ProjFx(p.Weapon, out _, out _, out _))
                     Draw(rp, disc, new Vector3(p.Pos.x, p.Pos.y, -0.26f), 0f, p.Radius, p.Color);
         }
 

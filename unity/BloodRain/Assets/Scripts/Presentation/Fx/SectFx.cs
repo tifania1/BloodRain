@@ -27,6 +27,25 @@ namespace BloodRain.Presentation.Fx
         public static readonly FxRamp Hot = new FxRamp(C(.96f, .6f, .1f), C(1f, .9f, .5f), C(1f, 1f, .95f));
         public static readonly FxRamp BlueHot = new FxRamp(C(.3f, .6f, 1f), C(.8f, .93f, 1f), C(1f, 1f, 1f));
         public static readonly FxRamp Wine = new FxRamp(C(.62f, .42f, .16f), C(.56f, .34f, .1f), C(.46f, .26f, .07f));
+        // 2026-11-17 나머지 무공(VF-02U). 값은 시안 SILVER … MISTG 그대로
+        public static readonly FxRamp Silver = new FxRamp(C(.42f, .47f, .52f), C(.8f, .85f, .9f), C(1f, 1f, 1f));
+        public static readonly FxRamp Poison = new FxRamp(C(.12f, .34f, .12f), C(.36f, .68f, .24f), C(.78f, .96f, .55f));
+        public static readonly FxRamp PoisonInk = new FxRamp(C(.16f, .28f, .12f), C(.1f, .2f, .08f), C(.05f, .12f, .04f));
+        public static readonly FxRamp Water = new FxRamp(C(.08f, .34f, .38f), C(.3f, .66f, .68f), C(.86f, .98f, .98f));
+        public static readonly FxRamp WaterInk = new FxRamp(C(.1f, .26f, .28f), C(.06f, .18f, .2f), C(.03f, .1f, .12f));
+        public static readonly FxRamp Taiji = new FxRamp(C(.04f, .04f, .04f), C(.5f, .49f, .46f), C(.97f, .96f, .92f));
+        public static readonly FxRamp Pale = new FxRamp(C(.7f, .69f, .65f), C(.93f, .92f, .88f), C(1f, 1f, .98f));
+        public static readonly FxRamp Petal = new FxRamp(C(.74f, .47f, .56f), C(.93f, .76f, .81f), C(1f, .95f, .96f));
+        public static readonly FxRamp Talis = new FxRamp(C(.12f, .08f, .04f), C(.8f, .64f, .24f), C(.97f, .88f, .52f));
+        public static readonly FxRamp Thunder = new FxRamp(C(.45f, .6f, .95f), C(.85f, .93f, 1f), C(1f, 1f, 1f));
+        public static readonly FxRamp Violet = new FxRamp(C(.34f, .09f, .22f), C(.21f, .04f, .13f), C(.1f, .02f, .06f));
+        public static readonly FxRamp VGlow = new FxRamp(C(.45f, .1f, .3f), C(.66f, .3f, .48f), C(.93f, .74f, .84f));
+        public static readonly FxRamp Palm = new FxRamp(C(.3f, .4f, .46f), C(.6f, .7f, .75f), C(.9f, .95f, .96f));
+        public static readonly FxRamp Finger = new FxRamp(C(.7f, .56f, .24f), C(.98f, .9f, .6f), C(1f, 1f, .96f));
+        public static readonly FxRamp Iron = new FxRamp(C(.2f, .2f, .22f), C(.1f, .1f, .11f), C(.03f, .03f, .04f));
+        public static readonly FxRamp Soot = new FxRamp(C(.32f, .22f, .13f), C(.18f, .11f, .06f), C(.07f, .05f, .03f));
+        public static readonly FxRamp MistG = new FxRamp(C(.5f, .64f, .46f), C(.64f, .78f, .56f), C(.84f, .92f, .76f));
+        public static readonly FxRamp Fire = new FxRamp(C(1f, .85f, .5f), C(1f, .95f, .75f), C(1f, 1f, .95f));
     }
 
     /// <summary>
@@ -37,7 +56,8 @@ namespace BloodRain.Presentation.Fx
     /// 여기는 그림만 그린다. 피해 판정은 WeaponRunner 가 그대로 한다.
     /// 그리기는 WeaponRunner 의 붓 획과 같은 방식(Graphics.RenderMesh + z 순서)이다.
     /// </summary>
-    public sealed class SectFx : MonoBehaviour
+    [DefaultExecutionOrder(200)]   // WeaponRunner 가 그 프레임의 탄(Proj)을 넘긴 뒤에 그린다
+    public sealed partial class SectFx : MonoBehaviour
     {
         public static SectFx Instance { get; private set; }
 
@@ -50,7 +70,8 @@ namespace BloodRain.Presentation.Fx
             public Action<Fx, float> Draw;
         }
         struct Drop { public Vector2 Pos, Vel; public float T, Life, Size; public FxRamp C; public bool Glow; }
-        struct Stain { public Vector2 Pos; public float T, Seed, Rot, Size; }
+        // Shape 0 이면 예전 먹 터짐(모양 3). 아니면 그 모양·값·색·알파로(VF-19 처치 바닥 자국)
+        struct Stain { public Vector2 Pos; public float T, Seed, Rot, Size, A; public int Shape; public Vector4 P; public FxRamp C; }
         struct Later { public float T; public Action F; }
 
         readonly List<Fx> _fx = new List<Fx>();
@@ -154,11 +175,13 @@ namespace BloodRain.Presentation.Fx
             foreach (var s in _stains)
             {
                 float k = s.T / StainLife;
-                Quad(3, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, new Vector4(3f, .35f, .8f, 0f), FxRamp.Ink, .26f * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
+                if (s.Shape == 0) Quad(3, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, new Vector4(3f, .35f, .8f, 0f), FxRamp.Ink, .26f * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
+                else Quad(s.Shape, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, s.P, s.C, s.A * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
             }
             foreach (var f in _fx) if (f.Under) f.Draw(f, f.T / f.Life);
             _z = ZOver;
             foreach (var f in _fx) if (!f.Under) f.Draw(f, f.T / f.Life);
+            DrawLive();
             foreach (var d in _drops)
             {
                 float k = d.T / d.Life, sp = d.Vel.magnitude / Mathf.Max(Meter, 1e-6f);
@@ -304,6 +327,15 @@ namespace BloodRain.Presentation.Fx
                     Drops(at, dir, 4, 6f, FxRamp.Brown, false, .13f, .9f);
                     break;
                 case "blue": Drops(at, dir, Mathf.RoundToInt(7 * dn), 13f + stage, FxRamp.Blue, true, .09f, .7f); break;
+                case "silver": HitSpark(at, dir, FxRamp.Silver, stage); Drops(at, dir, Mathf.RoundToInt(4 * dn), 11f + stage, FxRamp.Ink, false, .1f, .5f); break;
+                case "poison": Drops(at, dir, Mathf.RoundToInt(4 * dn), 7f + stage, FxRamp.Poison, true, .1f, 1.2f); Drops(at, dir, 2, 6f, FxRamp.PoisonInk, false, .11f, .8f); break;
+                case "needle": HitSpark(at, dir, FxRamp.Finger, stage); break;
+                case "fire": Drops(at, dir, Mathf.RoundToInt(6 * dn), 10f + stage, FxRamp.Amber, true, .11f, 1.1f); Drops(at, dir, 3, 6f, FxRamp.Ink, false, .12f, .8f); break;
+                case "water": Drops(at, dir, Mathf.RoundToInt(7 * dn), 10f + stage, FxRamp.Water, true, .1f, 1.1f); break;
+                case "petal": Drops(at, dir, Mathf.RoundToInt(5 * dn), 7f + stage, FxRamp.Petal, true, .13f, 1.4f); Drops(at, dir, 3, 8f, FxRamp.Ink, false, .11f, .5f); break;
+                case "thunder": Drops(at, dir, Mathf.RoundToInt(7 * dn), 13f + stage, FxRamp.Thunder, true, .09f, 1.6f); break;
+                case "violet": Drops(at, dir, Mathf.RoundToInt(6 * dn), 9f + stage, FxRamp.Violet, false, .13f, .9f); Drops(at, dir, 2, 7f, FxRamp.VGlow, true, .09f, .7f); break;
+                case "pale": Drops(at, dir, Mathf.RoundToInt(5 * dn), 8f + stage, FxRamp.Pale, true, .1f, 1.2f); Drops(at, dir, 3, 7f, FxRamp.Ink, false, .11f, .6f); break;
                 default: Drops(at, dir, Mathf.RoundToInt((heavy ? 10 : 6) * dn), 11f + stage, FxRamp.Ink, false, .13f, .5f); break;
             }
             if (cut && stage >= 4) ImpactCut(at);

@@ -27,6 +27,8 @@ namespace BloodRain.Presentation.Hud
         float _prevScale = 1f;
         int _openedFrame = -1;
         GUIStyle _label;
+        readonly System.Collections.Generic.List<Rect> _placed = new System.Collections.Generic.List<Rect>();
+        readonly System.Collections.Generic.List<RegionDef> _order = new System.Collections.Generic.List<RegionDef>();
 
         public bool IsOpen => _open;
         /// <summary>큰 지도에서 땅을 눌렀을 때(시험 메뉴가 그 문파 몸으로 새 생을 연다). 비어 있으면 누름은 닫기.</summary>
@@ -144,21 +146,38 @@ namespace BloodRain.Presentation.Hud
             var here = regions.Region(life.RegionId);
             var e = Event.current;
             RegionDef clicked = null;
-            foreach (var reg in regions.Visible(life.SealStones))
+            // 땅 이름이 서로 겹치지 않게: 점 아래 → 위 → 오른쪽 → 왼쪽 가운데 먼저 비는 자리에 둔다(지금 선 땅부터)
+            _placed.Clear();
+            _order.Clear();
+            foreach (var reg in regions.Visible(life.SealStones)) { if (reg.Id == here.Id) _order.Insert(0, reg); else _order.Add(reg); }
+            float lw = 190f * k, lh = 44f * k;
+            foreach (var reg in _order)
             {
                 float x = r.x + reg.Pos[0] * r.width, y = r.y + reg.Pos[1] * r.height;
                 bool cur = reg.Id == here.Id, born = reg.Id == life.Body.Region.Id;
+                Rect box = default;
+                for (int tryAt = 0; tryAt < 5; tryAt++)
+                {
+                    box = tryAt == 0 ? new Rect(x - lw / 2f, y + 9f * k, lw, lh)
+                        : tryAt == 1 ? new Rect(x - lw / 2f, y - 9f * k - lh, lw, lh)
+                        : tryAt == 2 ? new Rect(x + 12f * k, y - lh / 2f, lw, lh)
+                        : tryAt == 3 ? new Rect(x - 12f * k - lw, y - lh / 2f, lw, lh)
+                        : new Rect(x - lw / 2f, y + 9f * k + lh, lw, lh);
+                    bool hit = false;
+                    foreach (var o in _placed) if (o.Overlaps(box)) { hit = true; break; }
+                    if (!hit) break;
+                }
+                _placed.Add(box);
                 Blit(_dot, x, y, (cur ? 13f : 9f) * k, new Color(Paper.r, Paper.g, Paper.b, 0.95f));
                 Blit(_ring, x, y, (cur ? 17f : 12f) * k, cur ? Crimson : Ink);
                 _label.alignment = TextAnchor.UpperCenter;
-                _label.fontSize = Mathf.RoundToInt((cur ? 19f : 16f) * k); _label.fontStyle = FontStyle.Bold;
+                _label.fontSize = Mathf.RoundToInt((cur ? 18f : 16f) * k); _label.fontStyle = FontStyle.Bold;
                 string han = Loc.Hanja(reg.Hanja);
-                var nameRect = new Rect(x - 110f * k, y + 9f * k, 220f * k, 26f * k);
-                Outlined(nameRect, string.IsNullOrEmpty(han) ? Loc.Region(reg) : Loc.Region(reg) + " " + han, cur ? Crimson : Ink, Paper, k);
+                Outlined(new Rect(box.x, box.y, box.width, 26f * k), string.IsNullOrEmpty(han) ? Loc.Region(reg) : Loc.Region(reg) + " " + han, cur ? Crimson : Ink, Paper, k);
                 _label.fontSize = Mathf.RoundToInt(12f * k); _label.fontStyle = FontStyle.Normal;
                 string sub = Loc.F("ui.density", reg.Density.ToString("0.0")) + (born ? "  ·  " + Loc.T("ui.map.born") : "");
-                Outlined(new Rect(x - 110f * k, y + 31f * k, 220f * k, 20f * k), sub, born ? GoldInk : new Color(Ink.r, Ink.g, Ink.b, 0.85f), Paper, k);
-                if (e.type == EventType.MouseDown && e.button == 0 && new Rect(x - 60f * k, y - 14f * k, 120f * k, 62f * k).Contains(e.mousePosition)) clicked = reg;
+                Outlined(new Rect(box.x, box.y + 22f * k, box.width, 20f * k), sub, born ? GoldInk : new Color(Ink.r, Ink.g, Ink.b, 0.85f), Paper, k);
+                if (e.type == EventType.MouseDown && e.button == 0 && (box.Contains(e.mousePosition) || new Rect(x - 14f * k, y - 14f * k, 28f * k, 28f * k).Contains(e.mousePosition))) clicked = reg;
             }
 
             // 혈우 장막(이 경지에 갈 수 있는 끝)과 내 자리
