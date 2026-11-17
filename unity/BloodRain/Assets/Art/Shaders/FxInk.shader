@@ -1,7 +1,7 @@
 // 무공 이펙트 통합 셰이더(VF-01U, 2026-11-13). 시안 web/lookdev/sects.html 의 FS 를 그대로 옮긴 것.
 // 텍스처 한 장을 띄우는 대신 모양을 식으로 그리고, 흐르는 잡음으로 가장자리를 침식하고,
 // 색 램프(가장자리 → 가운데 → 심)로 칠하고, 긋기(_Prog)와 흩어짐(_Diss)으로 움직인다.
-// 모양(_Shape): 0 호(검·봉 궤적) · 1 줄기(찌르기·낙하 검기·섬광) · 2 충격 고리 · 3 터짐·얼룩 · 4 번개 가지 · 5 방울·그림자 · 7 권영 · 10 태극 · 11 꽃잎 · 12 부적
+// 모양(_Shape): 0 호(검·봉 궤적) · 1 줄기(찌르기·낙하 검기·섬광) · 2 충격 고리 · 3 터짐·얼룩 · 4 번개 가지 · 5 방울·그림자 · 7 권영 · 10 태극 · 11 꽃잎 · 12 부적 · 13 꽃잎 로브 얼룩 · 14 그을음 · 15 쏠린 방울 튐 · 16 젖은 자국 · 17 말리는 물보라(VF-19)
 // 밝은 종이 위에선 더하기만 하면 하얗게 날아간다. 빛은 '색 있는 몸(_Add 0) + 약한 더하기(_Add 1, 알파 0.4) + 먹 받침' 세 겹으로 그린다(SectFx.Glow).
 Shader "BloodRain/FxInk"
 {
@@ -177,7 +177,7 @@ Shader "BloodRain/FxInk"
                     a = (1.0 - smoothstep(0.7, 1.0, e)) * step(abs(qx), 1.0) * notch;
                     heat = saturate(1.0 - e * 0.7 - max(qx, 0.0) * 0.25);
                 }
-                else
+                else if (_Shape < 12.5)
                 {
                     // 부적(VF-09): 누런 종이 띠, 가장자리 침식, 가운데 세로 먹 획과 위 먹 점. 먹은 heat 0(_C0)
                     float er = n1(p * 0.7 + _Seed);
@@ -186,6 +186,92 @@ Shader "BloodRain/FxInk"
                     float ink = max((1.0 - smoothstep(0.07, 0.15, abs(p.x + 0.12 * sin(p.y * 8.0 + _Seed)))) * step(abs(p.y), 0.62),
                                     1.0 - smoothstep(0.1, 0.17, length(p - float2(0.0, 0.74))));
                     heat = ink > 0.5 ? 0.0 : 0.55 + 0.35 * er;
+                }
+                else if (_Shape < 13.5)
+                {
+                    // 꽃잎 로브 얼룩(VF-19, 당가 독 꽃). _P: 로브 수, 로브 세기, 반지름, 심 어둡기 — 가장자리에 물감이 고이고 심이 짙다
+                    float lob = 0.5 + 0.5 * cos(ang * _P.x + _Seed * 2.0);
+                    float jag = n1(float2(ang * 0.6 + _Seed, _Seed * 0.7));
+                    float len = _P.z * (1.0 - _P.y + _P.y * pow(lob, 0.7)) * (0.9 + 0.2 * jag);
+                    float e = r / len;
+                    float er = n2(p * 0.9 + _Seed);
+                    a = min(1.0, (1.0 - smoothstep(0.82, 1.0, e)) * (0.55 + 0.45 * smoothstep(0.55, 0.95, e) + _P.w * (1.0 - smoothstep(0.0, 0.3, e))))
+                        * smoothstep(_Diss, _Diss + 0.15, er + 0.02) * step(_Diss, 0.999);
+                    heat = saturate(_P.w * (1.0 - smoothstep(0.0, 0.35, e)) + 0.35 * smoothstep(0.6, 0.95, e));
+                }
+                else if (_Shape < 14.5)
+                {
+                    // 그을음(VF-19, 곤륜·남궁): 가운데 검고 가는 금이 방사로 뻗음. _P: 금 수, 금 길이, 심 반지름, 거칠기
+                    float er = n1(float2(ang * 0.8 + _Seed, r * 2.0));
+                    float core = 1.0 - smoothstep(_P.z * 0.6, _P.z * (1.0 + 0.35 * (er - 0.5) * _P.w * 2.0), r);
+                    float seg = ang / (2.0 * PI) * _P.x + _Seed;
+                    float id = floor(seg);
+                    float fr = frac(seg) - 0.5;
+                    float jit = n2(float2(id * 0.173 + _Seed, 0.5));
+                    float wob = (n1(float2(r * 2.5 + id * 0.31, id * 0.7 + _Seed)) - 0.5) * 0.5;
+                    float cl = _P.z + _P.y * (0.4 + 0.6 * jit);
+                    float dA = abs(fr + wob * 0.3 - (jit - 0.5) * 0.4) * r * 2.0 * PI / _P.x;
+                    float w = 0.035 * (1.0 - smoothstep(_P.z * 0.5, cl, r)) + 0.004;
+                    float crack = (1.0 - smoothstep(w * 0.5, w, dA)) * step(r, cl) * step(_P.z * 0.5, r);
+                    float er2 = n2(p * 0.8 + _Seed);
+                    a = max(core * 0.9, crack) * smoothstep(_Diss, _Diss + 0.15, er2 + 0.02) * step(_Diss, 0.999);
+                    heat = saturate(core * (1.0 - 0.5 * r / _P.z) + crack * 0.7);
+                }
+                else if (_Shape < 15.5)
+                {
+                    // 한쪽(+x)으로 쏠린 방울 튐(VF-19, 개방 술 방울): 큰 방울 몇에 잔 방울, 뒤로 꼬리. _P: 방울 수(16까지), 퍼짐, 꼬리, 큰 방울 수
+                    float acc = 0.0, hh = 0.0;
+                    [loop] for (int k = 0; k < 16; k++)
+                    {
+                        float fi = (float)k;
+                        if (fi >= _P.x) break;
+                        float h1 = n1(float2(fi * 0.381 + _Seed * 0.13, fi * 0.727 + 0.23));
+                        float h2 = n2(float2(fi * 0.553 + _Seed * 0.7, fi * 0.297 + 0.61));
+                        float h3 = n1(float2(fi * 0.619 + 0.77, fi * 0.443 + _Seed * 0.3));
+                        float big = step(fi, _P.w - 0.5);
+                        float dx = lerp(-0.45, 0.85, pow(h1, 0.8));
+                        float2 d = p - float2(dx, (h2 - 0.5) * 2.0 * _P.y * (0.3 + 0.7 * (dx + 0.35) / 1.15));
+                        float rad = big > 0.0 ? lerp(0.15, 0.22, h3) : lerp(0.04, 0.09, h3);
+                        float Lt = rad + _P.z * rad * 4.0;
+                        float ex = d.x < 0.0 ? -d.x / Lt : 0.0;
+                        float wd = rad * (1.0 - ex * 0.9);
+                        float dd = d.x < 0.0 ? (ex > 1.0 ? 9.0 : abs(d.y) / max(wd, 1e-4)) : length(d) / rad;
+                        float m = 1.0 - smoothstep(0.75, 1.0, dd);
+                        acc = max(acc, m);
+                        hh = max(hh, m * (big > 0.0 ? 1.0 : 0.6) * (1.0 - ex * 0.6));
+                    }
+                    float er = n2(p * 0.9 + _Seed);
+                    a = acc * smoothstep(_Diss, _Diss + 0.15, er + 0.02) * step(_Diss, 0.999);
+                    heat = hh;
+                }
+                else if (_Shape < 16.5)
+                {
+                    // 젖은 자국(VF-19, 수로채): 고른 담묵에 가장자리만 조금 진함. _P: 반지름, 가장자리 진하기, 잡음
+                    float er = n1(float2(ang * 0.7 + _Seed, _Seed * 0.5));
+                    float er3 = n2(p * 1.6 + _Seed);
+                    float len = _P.x * (1.0 + (er - 0.5) * _P.z + (er3 - 0.5) * _P.z * 0.4);
+                    float e = r / len;
+                    float rim = smoothstep(0.7, 0.97, e) * (1.0 - smoothstep(0.97, 1.02, e));
+                    float er2 = n2(p * 0.8 + _Seed + 3.1);
+                    a = (1.0 - smoothstep(0.9, 1.0, e)) * (0.45 + _P.y * rim) * smoothstep(_Diss, _Diss + 0.15, er2 + 0.02) * step(_Diss, 0.999);
+                    heat = 0.25 + 0.6 * rim;
+                }
+                else
+                {
+                    // 위로 말리는 물보라(VF-19, 수로채 처치): 왼쪽 아래에서 솟아 오른쪽으로 말려 끝이 거품으로 부서짐. _P: 굵기, 말림, 거품
+                    float2 q = p - float2(0.08, -0.15);
+                    float th = atan2(q.y, q.x);
+                    if (th < -0.5 * PI) th += 2.0 * PI;
+                    float t = (1.05 * PI - th) / (1.15 * PI);
+                    float Rt = 0.66 * (1.0 - _P.y * t);
+                    float d = abs(length(q) - Rt);
+                    float w = _P.x * (1.0 - t * 0.7) * smoothstep(0.0, 0.12, t) + 1e-4;
+                    float body = (1.0 - smoothstep(0.55, 1.0, d / w)) * step(0.0, t) * step(t, 1.0);
+                    float fz = n1(float2(t * 3.0 + _Seed, length(q) * 4.0 - _FxTime * 0.8));
+                    float er = n2(p * 0.9 + _Seed);
+                    a = body * lerp(1.0, smoothstep(0.42, 0.6, fz), smoothstep(0.55, 0.95, t) * _P.z) * step(t, _Prog * 1.1)
+                        * smoothstep(_Diss, _Diss + 0.15, er + 0.02) * step(_Diss, 0.999);
+                    heat = saturate(smoothstep(0.45, 1.0, t) * 0.8 + (1.0 - d / w) * 0.3);
                 }
 
                 float3 col = heat < 0.5 ? lerp(_C0.rgb, _C1.rgb, heat * 2.0) : lerp(_C1.rgb, _C2.rgb, (heat - 0.5) * 2.0);

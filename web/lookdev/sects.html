@@ -144,6 +144,49 @@ void main(){
   a=(1.-smoothstep(.84,.98,m+(er-.5)*.14))*smoothstep(uDiss,uDiss+.15,er+.02)*step(uDiss,.999);
   float ink=max((1.-smoothstep(.07,.15,abs(p.x+.12*sin(p.y*8.+uSeed))))*step(abs(p.y),.62),1.-smoothstep(.1,.17,length(p-vec2(0.,.74))));
   heat=ink>.5?0.:.55+.35*er;
+ }else if(uShape==13){ // 꽃잎 로브 얼룩(당가 독 꽃). uP: 로브 수, 로브 세기, 반지름, 심 어둡기 — 가장자리에 물감이 고이고 심이 짙다
+  float lob=.5+.5*cos(ang*uP.x+uSeed*2.);float jag=n1(vec2(ang*.6+uSeed,uSeed*.7));
+  float len=uP.z*(1.-uP.y+uP.y*pow(lob,.7))*(.9+.2*jag);float e=r/len;
+  float er=n2(p*.9+uSeed);
+  a=min(1.,(1.-smoothstep(.82,1.,e))*(.55+.45*smoothstep(.55,.95,e)+uP.w*(1.-smoothstep(0.,.3,e))))*smoothstep(uDiss,uDiss+.15,er+.02)*step(uDiss,.999);
+  heat=clamp(uP.w*(1.-smoothstep(0.,.35,e))+.35*smoothstep(.6,.95,e),0.,1.);
+ }else if(uShape==14){ // 그을음: 가운데 검고 가는 금이 방사로 뻗음. uP: 금 수, 금 길이, 심 반지름, 거칠기
+  float er=n1(vec2(ang*.8+uSeed,r*2.));
+  float core=1.-smoothstep(uP.z*.6,uP.z*(1.+.35*(er-.5)*uP.w*2.),r);
+  float seg=ang/(2.*PI)*uP.x+uSeed;float id=floor(seg);float fr=fract(seg)-.5;
+  float jit=n2(vec2(id*.173+uSeed,.5));float wob=(n1(vec2(r*2.5+id*.31,id*.7+uSeed))-.5)*.5;
+  float cl=uP.z+uP.y*(.4+.6*jit);
+  float dA=abs(fr+wob*.3-(jit-.5)*.4)*r*2.*PI/uP.x;
+  float w=.035*(1.-smoothstep(uP.z*.5,cl,r))+.004;
+  float crack=(1.-smoothstep(w*.5,w,dA))*step(r,cl)*step(uP.z*.5,r);
+  float er2=n2(p*.8+uSeed);
+  a=max(core*.9,crack)*smoothstep(uDiss,uDiss+.15,er2+.02)*step(uDiss,.999);
+  heat=clamp(core*(1.-.5*r/uP.z)+crack*.7,0.,1.);
+ }else if(uShape==15){ // 한쪽(+x)으로 쏠린 방울 튐: 큰 방울 몇에 잔 방울, 뒤로 꼬리. uP: 방울 수(16까지), 퍼짐, 꼬리, 큰 방울 수
+  float acc=0.,hh=0.;
+  for(int i=0;i<16;i++){if(float(i)>=uP.x)break;float fi=float(i);
+   float h1=n1(vec2(fi*.381+uSeed*.13,fi*.727+.23)),h2=n2(vec2(fi*.553+uSeed*.7,fi*.297+.61)),h3=n1(vec2(fi*.619+.77,fi*.443+uSeed*.3));
+   float big=step(fi,uP.w-.5);float dx=mix(-.45,.85,pow(h1,.8));
+   vec2 d=p-vec2(dx,(h2-.5)*2.*uP.y*(.3+.7*(dx+.35)/1.15));
+   float rad=big>0.?mix(.15,.22,h3):mix(.04,.09,h3);float Lt=rad+uP.z*rad*4.;
+   float ex=d.x<0.?-d.x/Lt:0.;float wd=rad*(1.-ex*.9);
+   float dd=d.x<0.?(ex>1.?9.:abs(d.y)/max(wd,1e-4)):length(d)/rad;
+   float m=1.-smoothstep(.75,1.,dd);acc=max(acc,m);hh=max(hh,m*(big>0.?1.:.6)*(1.-ex*.6));}
+  float er=n2(p*.9+uSeed);a=acc*smoothstep(uDiss,uDiss+.15,er+.02)*step(uDiss,.999);heat=hh;
+ }else if(uShape==16){ // 젖은 자국: 고른 담묵에 가장자리만 조금 진함. uP: 반지름, 가장자리 진하기, 잡음
+  float er=n1(vec2(ang*.7+uSeed,uSeed*.5)),er3=n2(p*1.6+uSeed);
+  float len=uP.x*(1.+(er-.5)*uP.z+(er3-.5)*uP.z*.4);float e=r/len;
+  float rim=smoothstep(.7,.97,e)*(1.-smoothstep(.97,1.02,e));float er2=n2(p*.8+uSeed+3.1);
+  a=(1.-smoothstep(.9,1.,e))*(.45+uP.y*rim)*smoothstep(uDiss,uDiss+.15,er2+.02)*step(uDiss,.999);
+  heat=.25+.6*rim;
+ }else if(uShape==17){ // 위로 말리는 물보라: 왼쪽 아래에서 솟아 오른쪽으로 말려 끝이 거품으로 부서짐. uP: 굵기, 말림, 거품
+  vec2 q=p-vec2(.08,-.15);float th=atan(q.y,q.x);if(th<-.5*PI)th+=2.*PI;
+  float t=(1.05*PI-th)/(1.15*PI);float Rt=.66*(1.-uP.y*t);float d=abs(length(q)-Rt);
+  float w=uP.x*(1.-t*.7)*smoothstep(0.,.12,t)+1e-4;float body=(1.-smoothstep(.55,1.,d/w))*step(0.,t)*step(t,1.);
+  float fz=n1(vec2(t*3.+uSeed,length(q)*4.-uTime*.8));
+  float er=n2(p*.9+uSeed);
+  a=body*mix(1.,smoothstep(.42,.6,fz),smoothstep(.55,.95,t)*uP.z)*step(t,uProg*1.1)*smoothstep(uDiss,uDiss+.15,er+.02)*step(uDiss,.999);
+  heat=clamp(smoothstep(.45,1.,t)*.8+(1.-d/w)*.3,0.,1.);
  }
  vec3 col=heat<.5?mix(uC0,uC1,heat*2.):mix(uC1,uC2,(heat-.5)*2.);
  a*=uAlpha;o=vec4(col*a,a*(1.-uAdd));
@@ -259,10 +302,15 @@ function hit(e,dmg,dir,kb,kind,heavy){if(e.dead>=0)return;e.hp-=dmg;
   if(!calm)addFx(.09,(f,k)=>fx(3,hx,hy,2*(1+k),2*(1+k),f.seed,{p:[10,1.2,.8],c:WHITE,alpha:1-k,seed:f.seed}));jolt(.35,.35);}
  if(e.hp<=0){e.dead=0;if(!calm||heavy)stop((heavy?.05:.03)+.005*st);shake((heavy?.34:.13)+.03*st,dir);if(st>=5&&!calm){e.split=1;e.ca=dir+rnd(-.35,.35);}   // 5단(예전 3단)부터 두 동강
   if(calm)die(e,kind,dir,heavy);
-  ST.push({x:e.x+Math.cos(dir)*.5,y:e.y+Math.sin(dir)*.5,t:0,seed:Math.random()*9,rot:dir,s:rnd(.9,1.4)*(1+.07*st)});
+  ST.push(Object.assign({x:e.x+Math.cos(dir)*.5,y:e.y+Math.sin(dir)*.5,t:0,seed:Math.random()*9,rot:dir,s:rnd(.9,1.4)*(1+.07*st)},KM[kind]||{}));
   drops(hx,hy,dir,Math.round(8*dn),9+st,INK,false,.15,1.1);
   if(st>=3)addFx(.22,(f,k)=>fx(3,hx,hy,2.3*(1+k*.6),2.3*(1+k*.6),f.seed,{p:[7,.9,.8],c:INK,alpha:.6*(1-k),diss:k*.6,seed:f.seed}),null,true);}
  else if(heavy){stop(.04);shake(.26+.02*st,dir);} }
+// 처치 자리 바닥 자국(VF-19, 그림 재료 대신 셰이더 모양): 개방 술 방울 튐 · 당가 독 꽃 얼룩 · 수로채 젖은 자국 · 곤륜·남궁 그을음. 나머지는 먹 터짐(3)
+const KM={amber:{sh:15,p:[14,.75,.35,3],c:WINE,a:.5,wm:1.2,hm:1.5},
+ poison:{sh:13,p:[6,.45,.85,.8],c:POISONINK,a:.42},
+ water:{sh:16,p:[.8,1.4,.35],c:WATERINK,a:.3},
+ thunder:{sh:14,p:[7,.38,.3,1],c:BLUEINK,a:.5},blue:{sh:14,p:[6,.3,.26,1],c:BLUEINK,a:.42}};
 // 절제된 타격감(2026-11-17 사람: 흔들림·번쩍임 대신 '적이 다르게 죽는다'). 무공의 성질마다 쓰러지는 모습이 다르다
 const DL={ink:.6,gold:.75,amber:.55,blue:.7,thunder:.7,poison:.85,silver:.85,water:.6,petal:.5,violet:.75};
 function die(e,kind,dir,heavy){const st=tier;e.die=DL[kind]?kind:'ink';e.dl=DL[e.die];e.dd=dir;e.spin=rnd(-1,1);
@@ -270,7 +318,7 @@ function die(e,kind,dir,heavy){const st=tier;e.die=DL[kind]?kind:'ink';e.dl=DL[e
  if(e.die==='gold'){e.kx+=Math.cos(dir)*(9+st);e.ky+=Math.sin(dir)*(9+st);}                                   // 권: 뒤로 날아가며 금가루로 흩어진다
  if(e.die==='amber'){e.kx*=.2;e.ky*=.2;ST.push({x:e.x,y:e.y,t:0,seed:Math.random()*9,rot:0,s:1.5,c:BROWN,a:.3});ring(e.x,e.y+.2,2.2,DUST,false,.3,.7);}   // 봉: 납작 눌려 흙에 번진다
  if(e.die==='blue'||e.die==='thunder'||e.die==='silver'){e.kx=e.ky=0;}                                        // 뇌: 그을린 채 굳었다 바스러짐 · 비도: 박힌 채 섰다가 쓰러짐
- if(e.die==='water'){e.kx+=Math.cos(dir)*7;e.ky+=Math.sin(dir)*7;addFx(.5,(f,k)=>fx(1,e.x,e.y+.5,3.2,.8,dir,{p:[.4,.6,2,1],c:WATER,alpha:.6*(1-k),prog:Math.min(1,f.t/.12),diss:k*.7,seed:f.seed}),null,true);}   // 물살에 쓸려 간다
+ if(e.die==='water'){e.kx+=Math.cos(dir)*7;e.ky+=Math.sin(dir)*7;{const x=e.x,y=e.y,sg=Math.cos(dir)<0?-1:1,sz=1.9+.12*st;addFx(.6,(f,k)=>fx(17,x+sg*.3,y+.9,sg*sz,sz,0,{p:[.24,.45,.9],c:WATER,alpha:.75*(1-k*k),prog:Math.min(1,f.t/.22),diss:Math.max(0,(k-.45)*1.6),seed:f.seed}));}addFx(.5,(f,k)=>fx(1,e.x,e.y+.5,3.2,.8,dir,{p:[.4,.6,2,1],c:WATER,alpha:.6*(1-k),prog:Math.min(1,f.t/.12),diss:k*.7,seed:f.seed}),null,true);}   // 물살에 쓸려 간다
  if(e.die==='petal')petals(e.x,e.y+.9,dir,12,5,3.14,.2);                                                       // 꽃잎으로 흩어진다
  if(e.die==='violet'&&st>=6&&ALLY.length<4&&(heavy||Math.random()<.35)){const x=e.x,y=e.y;later(.8,()=>ALLY.push({x,y,t:0,cd:.5,seed:Math.random()*7}));}}   // 마교 6단: 피를 빨린 적이 강시로 일어나 같이 싸운다
 function drawDeath(e){const k=Math.min(1,e.dead/e.dl),fl=e.x>Pl.x?-1:1,W0=1.9,y=e.y+.85,late=(a)=>Math.max(0,Math.min(.99,(k-a)/(1-a)));
@@ -449,7 +497,7 @@ function dagger(a){const st=tier,tg=nearest(7)||{x:Math.cos(a)*5,y:Math.sin(a)*5
    addFx(.06,(g,k)=>glow(1,hx,hy,1.6,.5,ha+1.57,{p:[.3,0,0,1],c:SILVER,alpha:1-k}));                    // 맞는 순간 번쩍
    if(st>=3){tg.psn=2;const sx=tg.x,sy=tg.y+.1,sz=1.2+.15*st;addFx(1.8,(g,k)=>fx(3,sx,sy,sz*(.5+.5*ez(Math.min(1,k*4))),sz*.7*(.5+.5*ez(Math.min(1,k*4))),g.seed,{p:[6,.7,.8],c:POISONINK,alpha:.55*(1-k*k),diss:.1+k*.6,seed:g.seed}),null,true);}   // 독 꽃 얼룩
    if(st>=5&&tg.dead>=0&&was){const bx=tg.x,by=tg.y+.6;addFx(.4,(g,k)=>glow(3,bx,by,3.4*ez(Math.min(1,k*3)),3.4*ez(Math.min(1,k*3)),g.seed,{p:[7,.8,.8],c:POISON,alpha:.8*(1-k),diss:k*.6,seed:g.seed}));
-    drops(bx,by,0,14,9,POISON,true,.14,3.14);ST.push({x:bx,y:by-.5,t:0,seed:Math.random()*9,rot:0,s:1.6,c:POISONINK,a:.4});for(const q of E)if(q!==tg&&Math.hypot(q.x-bx,q.y+.6-by)<1.8)hit(q,6,Math.atan2(q.y+.6-by,q.x-bx),3,'poison');}}}]);}
+    drops(bx,by,0,14,9,POISON,true,.14,3.14);ST.push({x:bx,y:by-.5,t:0,seed:Math.random()*9,rot:rnd(0,6),s:1.6,c:POISONINK,a:.45,sh:13,p:[7,.5,.85,.9]});for(const q of E)if(q!==tg&&Math.hypot(q.x-bx,q.y+.6-by)<1.8)hit(q,6,Math.atan2(q.y+.6-by,q.x-bx),3,'poison');}}}]);}
 // 수로채 쇄겸: 먹 사슬이 뻗어 낫이 박히고 당길 때 물결이 따라온다
 function chain(a,first){const st=tier,R=5*L(TS);let tg=null,bd=99;for(const e of E){if(e.dead>=0)continue;const d=Math.hypot(e.x,e.y);let da=Math.atan2(e.y,e.x)-a;da=Math.abs(Math.atan2(Math.sin(da),Math.cos(da)));if(d<R&&da<.5&&d+da*3<bd){bd=d+da*3;tg=e;}}
  const fxp=tg?tg.x:Math.cos(a)*R,fyp=tg?tg.y+.7:Math.sin(a)*R+.7;
@@ -465,7 +513,7 @@ function chain(a,first){const st=tier,R=5*L(TS);let tg=null,bd=99;for(const e of
   if(st>=3&&t>.2){const S=2*Ln/.78+.1,pg=Math.min(1,(t-.2)/.14);fx(0,Pl.x,y0-.2,S,S*dir,an,{p:[1.3,.5,1,.6],c:WATERINK,alpha:.4*(1-k),prog:pg,diss:Math.max(0,k-.6)*2,seed:f.seed+4});
    glow(0,Pl.x,y0-.2,S*.98,S*.98*dir,an,{p:[1.3,.3,1,.5],c:WATER,alpha:.7*(1-k),prog:pg,diss:Math.max(0,k-.6)*2,seed:f.seed+5});}   // 물결 호
  },[{t:.14,f:()=>{drops(fxp,fyp,a+Math.PI,10,9+st,WATER,false,.13,1.2);ring(fxp,fyp-.2,2.2,WATERINK,false,.25,.5);
-   if(tg&&tg.dead<0){hit(tg,14+st*3,a,0,'water',first&&st>=4);if(st>=2)ST.push({x:tg.x,y:tg.y,t:0,seed:Math.random()*9,rot:a,s:1.3,c:WATERINK,a:.3});}}},
+   if(tg&&tg.dead<0){hit(tg,14+st*3,a,0,'water',first&&st>=4);if(st>=2)ST.push({x:tg.x,y:tg.y,t:0,seed:Math.random()*9,rot:a,s:1.3,c:WATERINK,a:.3,sh:16,p:[.8,1.4,.35]});}}},
   {t:.22,f:()=>{if(!tg||tg.dead>=0)return;const d=Math.hypot(tg.x,tg.y)||1;tg.kx-=tg.x/d*9;tg.ky-=tg.y/d*9;
    if(st>=4){const wx=tg.x,wy=tg.y+.2;addFx(.5,(g,k)=>{fx(2,wx,wy,2.6*(1-k*.4),1.6*(1-k*.4),0,{p:[.6,.12,.6],c:WATERINK,alpha:.5*(1-k),seed:g.seed});glow(2,wx,wy,2.4*(1-k*.4),1.5*(1-k*.4),0,{p:[.5,.08,.6],c:WATER,alpha:.8*(1-k),seed:g.seed+1});},null,true);}}}]);}
 function wave(){if(old)return;const R=3.4*L(TS),S=2*R/.78,y=Pl.y+.6,a0=Pl.face;
@@ -514,7 +562,7 @@ function strike(x,y,m,final){const st=tier,w=L([.05,.07,.08,.09,.1])*m,H=9;
  one(x,y,w,1);if(final)for(const s of[-1,1])one(x+s*.6,y,w*.8,.9);
  if(!calm)flashW=Math.min(1,flashW+(final?1:.55));
  addFx(.12,(g,k)=>glow(3,x,y+.4,2.6*m*(1+k*.5),2.6*m*(1+k*.5),g.seed,{p:[10,.9,.8],c:THUNDER,alpha:1-k,seed:g.seed}));
- ring(x,y+.2,3.2*m,BLUEINK,false,.26,.5);ST.push({x,y,t:0,seed:Math.random()*9,rot:rnd(0,6),s:1.4*m,a:.45});                   // 그을음
+ ring(x,y+.2,3.2*m,BLUEINK,false,.26,.5);ST.push({x,y,t:0,seed:Math.random()*9,rot:rnd(0,6),s:1.4*m,a:.5,c:BLUEINK,sh:14,p:[8,.4,.3,1]});                   // 그을음
  let n=0;for(const e of E)if(e.dead<0&&Math.hypot(e.x-x,e.y-y)<1.2*m+e.r){hit(e,18+st*3,Math.atan2(e.y-y,e.x-x)||0,2,'thunder',(st>=4&&n===0)||final);n++;
   if(st>=3){let o=null,od=9;for(const q of E){if(q===e||q.dead>=0)continue;const d=(q.x-e.x)**2+(q.y-e.y)**2;if(d<od){od=d;o=q;}}if(o){const s0=e,o1=o;bolt(s0.x,s0.y+.7,o1.x,o1.y+.7,()=>hit(o1,6,0,1,'thunder'));}}}   // 감전이 옆으로 튐
  if(st>=4)for(const s of[-1,1]){const a=-Math.PI/2+s*rnd(.6,1.1),ln=rnd(1.6,2.4)*m;later(.02,()=>bolt(x,y+.5,x+Math.cos(a+Math.PI)*ln*-1,y+.5+Math.sin(a)*-ln*.6));}   // 가지 번개
@@ -569,7 +617,7 @@ function draw(){
  gl.disable(gl.BLEND);fx(9,cam[0],cam[1],vw*2,vh*2,0,{});
  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
  if(dim>0)fx(5,cam[0],cam[1],VW*3,VW*3,0,{p:[.98],c:INK,alpha:dim*.3});     // 큰 타격에 종이가 잠깐 어두워져 빛이 산다
- for(const s of ST){const k=s.t/8;fx(3,s.x,s.y,s.s*2,s.s*1.4,s.rot,{p:[3,.35,.8],c:s.c||INK,alpha:(s.a||.26)*(1-k)*(1-k),diss:.12+k*.5,seed:s.seed});}
+ for(const s of ST){const k=s.t/8;fx(s.sh||3,s.x,s.y,s.s*2*(s.wm||1),s.s*1.4*(s.hm||1),s.rot,{p:s.p||[3,.35,.8],c:s.c||INK,alpha:(s.a||.26)*(1-k)*(1-k),diss:.12+k*.5,seed:s.seed});}   // VF-19: 문파마다 자국 모양(KM)
  if(flashW>0)fx(5,cam[0],cam[1],VW*3,VW*3,0,{p:[.98],c:WHITE,alpha:flashW*.2,add:true});   // 낙뢰 때 화면이 약하게 번쩍
  for(const f of FX.slice())if(f.under)f.draw(f,f.t/f.life);
  const list=E.slice().sort((a,b)=>b.y-a.y);let pd=false;
