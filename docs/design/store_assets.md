@@ -21,7 +21,7 @@ PC 의 에셋 스토어 내려받기 폴더(`%APPDATA%\Unity\Asset Store-5.x`)�
 
 - `BloodRain.Presentation.asmdef` 가 위 어셈블리 셋을 참조한다. 에셋이 없는 곳에서는 `RegionBanner.cs` 가 컴파일되지 않는다.
 - Actions 의 WebGL 빌드(`webgl.yml`)는 Unity 라이선스 비밀값이 없어 지금도 건너뛴다. 비밀값을 넣어 켜면 에셋이 없어 빌드가 깨지니, 켜려면 먼저 산 에셋을 쓰는 코드를 따로 떼어야 한다.
-- DOTween: 들여오면 뜨는 설정 창을 쓰지 않고 `DOTween/Modules/DOTween.Modules.asmdef`, `DOTweenPro/DOTweenPro.Scripts.asmdef`, `DOTweenPro/Editor/DOTweenPro.EditorScripts.asmdef` 를 손으로 만들었다(다시 들여오면 이 셋을 다시 만든다). `ProjectSettings` 의 `DOTWEEN` 정의는 DOTween 이 넣은 것이고 커밋돼 있다. TextMeshPro 모듈(`DOTWEEN_TEXTMESHPRO`)은 켜지 않았다.
+- DOTween: 설정 창을 쓰지 않고 `DOTween/Modules/DOTween.Modules.asmdef`, `DOTweenPro/DOTweenPro.Scripts.asmdef`, `DOTweenPro/Editor/DOTweenPro.EditorScripts.asmdef` 를 손으로 만들었다. **`Assets/Resources/DOTweenSettings.asset` 의 `createASMDEF` 가 1 이어야 한다** — 0 이면 DOTween 이 다음 도메인 리로드 때 asmdef 셋을 지워 `RegionBanner.cs` 가 `DOFade`·`DOAnchorPosY` 를 못 찾는다(2026-11-18 아침에 그렇게 깨져 있었다. 설정 에셋의 그 줄을 1 로 고치고 asmdef 셋을 다시 만들면 된다). `ProjectSettings` 의 `DOTWEEN` 정의는 DOTween 이 넣은 것이고 커밋돼 있다. TextMeshPro 모듈(`DOTWEEN_TEXTMESHPRO`)은 켜지 않았다.
 - 들여올 때 "New Version of DOTween Imported" 대화창이 에디터를 멈춘다(unityMCP 가 답이 없으면 이 창을 닫는다).
 - All In 1 재질은 셰이더가 없으면 `PlayerLook` 이 옛 재질을 그대로 쓴다(셰이더 이름을 보고 고른다).
 
