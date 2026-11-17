@@ -46,6 +46,7 @@ p.lead { margin:0; color:var(--soft); line-height:1.7; font-size:14px; max-width
 .out button { border:1px solid #EFE6D2; background:transparent; color:#EFE6D2; border-radius:3px; padding:7px 12px; font:700 13px/1 inherit; cursor:pointer; }
 </style></head><body><main>
 <h1>효과음 후보 듣기</h1>
+<p class="lead">2026-11-17 밤에 다시 뽑았습니다. 앞의 것은 한 문구로 여덟을 뽑아 다 같은 소리였고, 이번에는 소리마다 문구를 네 갈래로 나눠 둘씩 뽑았습니다(1·2, 3·4, 5·6, 7·8 이 같은 갈래). 맨 위 두 칸은 진기 줍는 소리입니다 — 지금 게임에 든 바람 소리와, 같은 느낌으로 AI 가 뽑은 것.</p>
 <p class="lead">소리마다 후보가 여덟 개씩 있습니다. 숫자를 누르면 들리고, 옆의 '고름'을 누르면 고른 것으로 표시됩니다. 게임에서는 고른 것들을 번갈아 틉니다(둘에서 넷쯤 고르면 됩니다). 마음에 드는 게 없는 소리는 비워 두세요 — 다시 뽑습니다. 다 고른 뒤 아래 줄을 복사해 대화창에 붙여 주세요.</p>
 <div class="grid" id="grid"></div>
 </main>
@@ -54,7 +55,7 @@ p.lead { margin:0; color:var(--soft); line-height:1.7; font-size:14px; max-width
 const DATA = __DATA__;
 const picked = {};
 let audio = null, playingEl = null;
-try { Object.assign(picked, JSON.parse(localStorage.getItem('sfx_picked') || '{}')); } catch (e) {}
+try { Object.assign(picked, JSON.parse(localStorage.getItem('sfx_picked_v2') || '{}')); } catch (e) {}
 function play(src, el) {
   if (audio) { audio.pause(); }
   if (playingEl) playingEl.classList.remove('playing');
@@ -67,7 +68,7 @@ function refresh() {
   for (const s of DATA) { const p = (picked[s.id] || []).slice().sort((a, b) => a - b); if (p.length) lines.push(s.id + ' ' + p.join('·') + ' 고름'); }
   document.getElementById('line').value = lines.join('\\n');
   document.getElementById('count').textContent = lines.length + ' / ' + DATA.length + ' 소리';
-  try { localStorage.setItem('sfx_picked', JSON.stringify(picked)); } catch (e) {}
+  try { localStorage.setItem('sfx_picked_v2', JSON.stringify(picked)); } catch (e) {}
 }
 const grid = document.getElementById('grid');
 for (const s of DATA) {
@@ -102,7 +103,19 @@ def build(queue: Path, root: Path, out: Path) -> int:
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
-    for row in rows:
+    # 진기 줍는 소리: 지금 게임에 든 것(코드로 구운 바람, 낮은·가운데·높은 벌)과 AI 후보(variants.json 묶음, sfx_sa3 --also)를 맨 위에
+    game = root / "unity" / "BloodRain" / "Assets" / "Audio" / "SFX"
+    nums = []
+    for k in (1, 4, 8):
+        f = game / f"sfx_xp_absorb_n{k}_1.ogg"
+        if f.is_file():
+            (out / "sfx_xp_absorb_game").mkdir(exist_ok=True)
+            shutil.copyfile(f, out / "sfx_xp_absorb_game" / f"{k:02d}.ogg")
+            nums.append(k)
+    if nums:
+        data.append({"id": "sfx_xp_absorb_game", "use": "진기 줍는 소리 — 지금 게임에 든 바람(1 처음, 4 이어 주울 때, 8 많이 이어 주울 때)", "seconds": 0.35, "files": nums})
+    extra = dict(id="sfx_xp_absorb", use="진기 줍는 소리 — AI 가 뽑은 바람 후보", seconds=0.4, save_dir="art_inbox/sfx/sfx_xp_absorb/", status="generated")
+    for row in [extra] + rows:
         if row.get("status") != "generated":
             continue
         tdir = root / (row.get("save_dir") or f"art_inbox/sfx/{row['id']}/") / "trimmed"
