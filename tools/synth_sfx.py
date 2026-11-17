@@ -43,7 +43,9 @@ RECIPES = {
                     "decay_scale": 0.7},
     "sfx_gimmick_bell": {"kind": "metal", "partials": TEMPLE_BELL, "f0": 130.8, "strike": 0.7, "beat_hz": 0.9,
                          "glide": 0.0, "thump": 0.6},
-    "sfx_xp_absorb": {"kind": "chime", "partials": CHIME, "f0": 1046.5, "notes": 8, "strike": 0.5},
+    # 2026-11-17 사람: "먹는 아이템 효과음이 너무 싸구려 티가 난다" → 순음 넷짜리 풍경(C6~E7, 삑 소리)을
+    # 뜯는 현 + 옥 울림으로 바꾸고 한 옥타브 가까이 내림(D5~F#6). 옛 값: kind chime, CHIME, f0 1046.5, strike 0.5
+    "sfx_xp_absorb": {"kind": "pluck", "f0": 587.33, "notes": 8, "strike": 0.5},
     "sfx_low_health_heart": {"kind": "heart", "f0": 55.0, "gap_s": 0.26},
 }
 
@@ -135,6 +137,43 @@ def jingle(seconds: float, partials, f0: float, shakes: tuple[int, int], spread_
     return out
 
 
+def pluck(seconds: float, f0: float, strike: float, rng: np.random.Generator) -> np.ndarray:
+    """뜯는 현(고쟁 한 줄) + 옥 울림. 순음 몇 개짜리 풍경이 장난감 삑 소리로 들려서 바꿨다.
+    - 현: 배음 열둘, 세기는 뜯는 자리(줄 길이의 0.2쯤)가 정하고 높은 배음일수록 빨리 죽는다. 줄이 뻣뻣해 배음이 살짝 높다
+    - 뜯는 순간 음이 0.4% 높았다가 30ms 에 제자리로(줄이 당겨졌다 풀림)
+    - 옥 울림: 정수배가 아닌 배음 둘을 아주 작게, 짧게
+    - 손톱 소리: 3~6kHz 잡음 4ms, 작게
+    - 끝에 짧은 방 울림 한 겹(잡음을 지수로 줄인 것과 포갬)
+    기본음이 가장 크다(시험이 봄)."""
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    pos = 0.2 + rng.normal(0, 0.015)                     # 뜯는 자리
+    stiff = 0.00035 * (1 + rng.normal(0, 0.1))           # 줄 뻣뻣함
+    tau1 = 0.2 * (1 + rng.normal(0, 0.06))               # 기본음 감쇠
+    glide = 1 + 0.004 * np.exp(-t / 0.03)                # 뜯는 순간 음 높이
+    phase = 2 * np.pi * f0 * np.cumsum(glide) / RATE
+    out = np.zeros(n)
+    for k in range(1, 13):
+        fk = k * np.sqrt(1 + stiff * k * k)
+        if f0 * fk > RATE * 0.45:
+            break
+        a = abs(np.sin(np.pi * k * pos)) / k ** (1.45 - 0.35 * strike) * (1 + rng.normal(0, 0.06))
+        if k == 1:
+            a *= 1.25
+        tau = tau1 / (1 + 0.42 * (k - 1) ** 1.15)
+        out += a * _env(t, tau, 0.0025) * np.sin(fk * phase + rng.random() * 0.6)
+    for ratio, amp, tau in ((2.76, 0.07, 0.11), (5.4, 0.035, 0.06)):   # 옥 울림
+        out += amp * _env(t, tau, 0.002) * np.sin(2 * np.pi * f0 * ratio * (1 + rng.normal(0, 0.002)) * t + rng.random() * 6.28)
+    m = int(0.004 * RATE)                                 # 손톱
+    nz = rng.normal(0, 1, m * 4)
+    nz = np.diff(np.concatenate([[0.0], np.convolve(nz, np.ones(4) / 4, "same")]))[:m] * np.hanning(m)
+    out[:m] += 0.05 * nz / max(1e-9, float(np.max(np.abs(nz))))
+    tail = rng.normal(0, 1, int(0.22 * RATE)) * np.exp(-np.arange(int(0.22 * RATE)) / (0.06 * RATE))   # 방 울림
+    tail = np.convolve(tail, np.ones(24) / 24, "same")
+    wet = np.convolve(out, tail)[:n]
+    return out + 0.1 * wet / max(1e-9, float(np.max(np.abs(wet)))) * float(np.max(np.abs(out)))
+
+
 def bake_layer(row: dict, what: str, variant: int) -> np.ndarray:
     """층 겹치기 줄의 코드 합성 재료 한 벌. 시드 = 줄 seed + 벌(줄의 다른 재료 후보 번호와 같이 간다)."""
     rec = LAYER_RECIPES[(row["id"], what)]
@@ -163,6 +202,8 @@ def bake(row: dict, variant: int, note: int = 0) -> np.ndarray:
                   rec.get("glide", 0.0), rec.get("decay_scale", 1.0), rec.get("thump", 0.0))
     elif rec["kind"] == "chime":
         x = chime(sec, rec["partials"], note_freq(rec["f0"], note), rec["strike"], rng)
+    elif rec["kind"] == "pluck":
+        x = pluck(sec, note_freq(rec["f0"], note), rec["strike"], rng)
     else:
         x = heart(sec, rec["f0"], rec["gap_s"], rng)
     return x / max(1e-9, float(np.max(np.abs(x)))) * 0.89
