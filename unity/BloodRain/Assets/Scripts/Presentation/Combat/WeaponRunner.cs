@@ -556,6 +556,7 @@ namespace BloodRain.Presentation.Combat
                                 var at = P + new Vector2(Mathf.Cos(ba), Mathf.Sin(ba)) * R;
                                 if (!AddBolt(at)) AddFxAt(at, 0f, Mathf.PI * 2f, br, 0.25f, new Color(1f, 0.92f, 0.55f, 0.8f));
                                 enemies.Sim.QueryCircle(new float2(at.x, at.y), br, _reboundNear);
+                                if (Sfx) HitLook(tal, false);   // 쓰러지는 모습이 앞 무공 것이 아니라 뇌부(그을림)로
                                 Deal(tal, tdmg, enemies.Damage(_reboundNear, tdmg, at, 0f));
                             });
                         }
@@ -1471,6 +1472,7 @@ namespace BloodRain.Presentation.Combat
                     enemies.Sim.QueryCircle(new float2(c.x, c.y), ER, _gather);
                     BloodRain.Presentation.Fx.LanternLayer.Strike(c, ER);
                     float hit = dmg * evo.Param("damageMultiplier", 1f);
+                    if (Sfx) HitLook(s, false);   // 0.6초 뒤 터짐이라 그사이 다른 무공이 바꿔 놓은 종류를 되돌린다
                     Deal(s, hit, enemies.Damage(_gather, hit, c, 0f));
                 });
             }
@@ -1688,7 +1690,9 @@ namespace BloodRain.Presentation.Combat
                     if (!enemies.LastKillCrushed && enemies.LookOf(agent, out var deadArt, out float deadSize, out var deadTint))
                     {
                         if (_deathFx == null) { _deathFx = gameObject.AddComponent<DeathLayer>(); _deathFx.material = enemies.clusters != null ? enemies.clusters.material : null; }
-                        _deathFx.Add(at, d, deadArt, deadSize, deadTint, _hitKind, _hitStage);
+                        // 독·화상 지속 피해로 쓰러지면 마지막에 친 무공이 아니라 그 성질로(단계는 3: 성질대로, 5단 마무리 없음)
+                        var dot = enemies.LastKillDot;
+                        _deathFx.Add(at, d, deadArt, deadSize, deadTint, dot ?? _hitKind, dot != null ? 3 : _hitStage);
                     }
                     BloodRain.Presentation.Fx.HitFeel.Stop(0.03f + 0.005f * _hitStage); // 0.3초에 한 번까지(HitFeel)
                     BloodRain.Presentation.Fx.HitFeel.Shake(0.13f + 0.03f * _hitStage, ang);

@@ -146,6 +146,9 @@ namespace BloodRain.Presentation
         /// <summary>CR-01U 방금 Killed 로 알린 처치가 밟힘·쓸림인가. 참이면 구슬 대신 진기 Scale.CrushXp, 정예 보갑은 Scale.CrushedDropsChest 일 때만.</summary>
         public bool LastKillCrushed { get; private set; }
 
+        /// <summary>HF-03U 방금 Killed 로 알린 처치가 지속 피해면 "poison"(중독 중)·"fire"(그 밖 화상), 아니면 null.</summary>
+        public string LastKillDot { get; private set; }
+
         /// <summary>밟힘·쓸림으로 쓰러뜨린 덩이 수(시험·디버그 줄).</summary>
         public int CrushedCount { get; private set; }
 
@@ -476,7 +479,14 @@ namespace BloodRain.Presentation
             _statusIds.Clear();
             foreach (var kv in _status) if (kv.Value.Poison <= 0f && kv.Value.DotLeft <= 0f) _statusIds.Add(kv.Key);
             foreach (int id in _statusIds) _status.Remove(id);
-            for (int k = _dead.Count - 1; k >= 0; k--) Kill(_dead[k]);
+            for (int k = _dead.Count - 1; k >= 0; k--)
+            {
+                // HF-03U 쓰러지는 모습이 마지막에 친 무공이 아니라 독이면 녹아내림, 화상이면 재로 보이게 Killed 동안만 알린다
+                var da = _sim.Get(_dead[k]);
+                LastKillDot = _status.TryGetValue(da.Id, out var ds) && ds.Poison > 0f ? "poison" : "fire";
+                Kill(_dead[k]);
+                LastKillDot = null;
+            }
             if (_dead.Count > 0) _sim.RebuildGrid(Mathf.Max(0.01f, RadiusOf(World.Realm) * 2.2f));
         }
 
