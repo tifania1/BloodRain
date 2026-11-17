@@ -34,8 +34,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .err{padding:14px;border:1px solid var(--line)}
 </style>
 <div class="wrap">
-  <h1>문파 이펙트 시안 <small>2026-11-16 · 다섯 단계 · 열 무공</small></h1>
-  <p class="lead">무공 레벨이 오를 때 화면이 어떻게 달라지는지 다섯 단계로 나눠 봅니다. 단계마다 궤적·기·타격·잔흔·화면 가운데 둘 이상이 함께 바뀌고, 아래 줄이 그 단계에서 새로 붙는 것입니다. 셰이더 식은 Unity 로 그대로 옮깁니다.</p>
+  <h1>문파 이펙트 시안 <small>2026-11-17 · 여섯 단계 · 열 무공</small></h1>
+  <p class="lead">무공이 깊어질수록 초식에서 기, 강기로 올라가는 여섯 단계입니다. 1~5단은 무공 레벨로 오르고, 6단 신병합일은 절기를 깨운 무공에 그 문파의 신병까지 지녔을 때만 열립니다(6단 시안은 삼재검법·소림·개방·남궁 넷만, 나머지는 5단 모습에 기운만 얹었습니다). 아래 줄이 그 단계에서 새로 붙는 것입니다.</p>
   <div class="bar">
     <div class="grp" id="gStyle"><span>문파</span></div>
     <div class="grp" id="gTier"><span>단계</span></div>
@@ -221,10 +221,12 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const E=[],FX=[],PT=[],NUM=[],ST=[];
 const Pl={x:0,y:0,face:0,lunge:0,la:0,sway:0};
 let flashW=0,lastFlash=0,style='samjae',tier=3,old=false,cool=.6,fired=0,hs=0,hsLock=0,trauma=0,kick=[0,0],zoomK=0,dim=0;
-const L=a=>a[tier-1];                       // 단계(1~5)마다 값 하나
+const L=a=>a[Math.min(tier,a.length)-1];     // 단계마다 값 하나. 6단(신병합일)은 5단 값 위에 얹는다
+const LAD=['초식','경력','기','기인','강기','신병합일'];   // 무협의 성취 사다리: 형(招式) → 힘(勁力) → 기(氣) → 기가 날이 됨(氣刃) → 강기(罡氣) → 신병합일(神兵合一)
 const TS=[1,1.07,1.14,1.22,1.32];           // 단계별 크기
 const LV=['Lv1–2','Lv3','Lv4–5','Lv6','Lv7–8'];   // 새 동작이 붙는 레벨이 Lv4·Lv7 인 무공. 다르면 무공마다 lv
-const lvOf=i=>(STY[style].lv||LV)[i];
+const lvOf=i=>i>=5?'절기 + 신병':(STY[style].lv||LV)[i];
+const ladOf=i=>(STY[style].lad||LAD)[i];
 function spawn(n){for(let i=0;i<n;i++){const a=rnd(0,6.283),d=rnd(10.5,14);E.push({x:Math.cos(a)*d,y:Math.sin(a)*d*.62,hp:30,fl:0,sq:0,sa:0,kx:0,ky:0,dead:-1,seed:Math.random()*9,r:.45});}}
 function nearest(maxd){let b=null,bd=maxd*maxd;for(const e of E){if(e.dead>=0)continue;const d=e.x*e.x+e.y*e.y;if(d<bd){bd=d;b=e;}}return b;}
 function addFx(life,draw,hooks,under){FX.push({t:0,life,draw,hooks:hooks||[],under:!!under,seed:Math.random()*7});}
@@ -263,22 +265,29 @@ function inArc(e,ang,span,R){const d=Math.hypot(e.x,e.y);if(d>R+e.r)return false
 // ── 무공 ──────────────────────────────────────────
 const STY={
  samjae:{label:'삼재검법',who:'진소운 · 기본기',cd:1.0,
-  steps:['굵은 먹 호 하나. 맞은 자리에 흰 섬광과 튀는 먹','획이 굵어지고 마른 붓 메아리가 한 겹 따라온다. 맞은 자리에 먹이 터진다','앞뒤로 두 번. 청회 담채가 번지고 섬광이 열십자로, 처치 때 먹이 크게 터진다','칼날에 흰 빛이 서고 벤 자리에서 검풍이 밀려 나간다. 첫 타격에 임팩트 컷, 화면이 한 번 눌린다','세 번째는 크게 휘둘러 마무리. 금빛 날과 불씨, 처치는 두 동강'],
-  fire(a){const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)later(i*.12,()=>{const fin=tier===5&&i===n-1;
+  steps:['굵은 먹 호 하나. 맞은 자리에 흰 섬광과 튀는 먹','획이 굵어지고 마른 붓 메아리가 한 겹 따라온다. 맞은 자리에 먹이 터진다','앞뒤로 두 번. 청회 담채가 번지고 섬광이 열십자로, 처치 때 먹이 크게 터진다','칼날에 흰 빛이 서고 벤 자리에서 검풍이 밀려 나간다. 첫 타격에 임팩트 컷, 화면이 한 번 눌린다','세 번째는 크게 휘둘러 마무리. 금빛 날과 불씨, 처치는 두 동강','검과 하나가 된다. 천·지·인 세 방향을 한꺼번에 크게 베고, 금빛 검강이 날아가 줄지은 적을 꿰뚫는다'],
+  lad:['초식','경력','검기','검사','검강','신검합일'],
+  fire(a){if(tier>=6&&!old){for(let j=0;j<3;j++)later(.36+j*.05,()=>swing(a+j*2.094,j%2?-1:1,{ink:INK,rough:.7,wash:WASH,edge:BLADE,gold:GOLD,R:2.2*L(TS)*1.5,span:2.5,kind:'ink',dmg:16,kb:8,fin:j===0}));later(.5,()=>swordWave(a));}
+   const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)later(i*.12,()=>{const fin=tier>=5&&i===n-1;
    swing(a+(i%2?Math.PI:0),i%2?-1:1,{ink:INK,rough:L([.5,.6,.65,.7,.75]),wash:tier>=3?WASH:null,edge:tier>=4?BLADE:null,gold:tier>=5?GOLD:null,R:2.2*L(TS)*(fin?1.25:1),span:fin?3.5:2.3,kind:'ink',dmg:12,kb:5,fin});});}},
  shaolin:{label:'소림 · 나한권',who:'금빛 권영과 충격 고리',cd:1.3,lv:['Lv1–2','Lv3','Lv4–5','Lv6–7','Lv8'],
-  steps:['금빛 권영 두 번. 맞은 자리에 둥근 충격 고리','세 번. 맞은 바닥에 먹 금이 간다','주먹 뒤로 잔상 둘이 따라 박힌다. 마지막 주먹은 종 울림(고리 두 번)','네 번을 더 빠르게. 주먹 심이 희게 달아오르고 금빛 살이 사방으로 뻗는다','마지막 주먹이 1.3배. 고리 세 번, 종이가 어두워지며 화면이 눌린다'],
-  fire(a){const n=L([2,3,3,4,4]),gap=tier>=4?.11:.14;for(let i=0;i<n;i++)later(i*gap,()=>punch(a+(i-(n-1)/2)*.26,i===n-1));}},
+  steps:['금빛 권영 두 번. 맞은 자리에 둥근 충격 고리','세 번. 맞은 바닥에 먹 금이 간다','주먹 뒤로 잔상 둘이 따라 박힌다. 마지막 주먹은 종 울림(고리 두 번)','네 번을 더 빠르게. 주먹 심이 희게 달아오르고 금빛 살이 사방으로 뻗는다','마지막 주먹이 1.3배. 고리 세 번, 종이가 어두워지며 화면이 눌린다','염주를 감은 주먹. 마지막 주먹 뒤에 하늘에서 금강의 손이 내려찍고, 종 울림이 다섯 번 퍼진다'],
+  lad:['초식','경력','권기','권풍','권강','금강합일'],
+  fire(a){const n=L([2,3,3,4,4]),gap=tier>=4?.11:.14;for(let i=0;i<n;i++)later(i*gap,()=>punch(a+(i-(n-1)/2)*.26,i===n-1));if(tier>=6&&!old)later(n*gap+.16,()=>vajra(a));}},
  gaebang:{label:'개방 · 취선봉',who:'삐뚤빼뚤 마른 붓',cd:1.2,
-  steps:['거친 갈색 호 하나가 엉뚱한 각도로. 한 박자 늦게 봉 끝이 터지며 흙과 돌이 튄다','두 번. 봉 끝이 찍힌 자리가 패이고 호박색 술 방울이 튄다','술 안개가 호를 따라 번지고 술이 위로 솟는다','세 번. 획에 호박빛 술기운이 서고 흙먼지 바람이 밀려 나간다. 마지막 봉 끝은 고리 두 번','비틀거리다 한 바퀴 크게 쓸어 마무리. 발밑이 크게 터진다'],
+  steps:['거친 갈색 호 하나가 엉뚱한 각도로. 한 박자 늦게 봉 끝이 터지며 흙과 돌이 튄다','두 번. 봉 끝이 찍힌 자리가 패이고 호박색 술 방울이 튄다','술 안개가 호를 따라 번지고 술이 위로 솟는다','세 번. 획에 호박빛 술기운이 서고 흙먼지 바람이 밀려 나간다. 마지막 봉 끝은 고리 두 번','비틀거리다 한 바퀴 크게 쓸어 마무리. 발밑이 크게 터진다','취선장을 쥔다. 크게 쓸고 난 뒤 봉 끝이 둘레 여덟 곳을 차례로 찍으며 술기운이 사방으로 터진다'],
+  lad:['초식','경력','봉기','봉풍','봉강','취선합일'],
   fire(a){const n=L([1,2,2,3,3]);for(let i=0;i<n;i++)later(i*.2,()=>{const aa=a+rnd(-.75,.75),gd=i%2?-1:1;Pl.sway=gd*.3;const rr=rnd(2.1,2.7)*L(TS);
     if(!old){const gs=2*rr/.78,sd=Math.random()*7;addFx(.34,(f,k)=>fx(0,Pl.x,Pl.y+.6,gs*1.06,gs*1.06*gd,aa+gd*.3,{p:[2.3,.5,1,1],c:BROWN,alpha:.3*(1-k),prog:Math.min(1,f.t/.13),diss:.25+k*.6,seed:sd}));}
     swing(aa,gd,{ink:BROWN,under:INK,rough:1,wash:tier>=3?WINE:null,edge:null,gold:tier>=4?AMBER:null,R:rr,span:2.4,kind:'amber',dmg:10,kb:7});
     const R=2.1*L(TS);later(.12,()=>thump(Math.cos(aa)*R*.9,Math.sin(aa)*R*.9,i===n-1&&tier>=4,false));});
-   if(tier>=5)later(n*.2+.12,()=>{Pl.sway=.5;swing(a,1,{ink:BROWN,under:INK,rough:.9,wash:WINE,edge:null,gold:AMBER,R:2.8*L(TS),span:5.9,kind:'amber',dmg:14,kb:10,fin:true});later(.1,()=>thump(0,-.3,true,true));});}},
+   if(tier>=5)later(n*.2+.12,()=>{Pl.sway=.5;swing(a,1,{ink:BROWN,under:INK,rough:.9,wash:WINE,edge:null,gold:AMBER,R:2.8*L(TS),span:5.9,kind:'amber',dmg:14,kb:10,fin:true});later(.1,()=>thump(0,-.3,true,true));});
+   if(tier>=6&&!old)later(n*.2+.34,()=>{for(let j=0;j<8;j++)later(j*.055,()=>{const q=a+j*.785;thump(Math.cos(q)*3.3,Math.sin(q)*3.3*.8,j===7,false);rays(Math.cos(q)*3.3,Math.sin(q)*3.3*.8+.6,3,1.6,AMBER);});});}},
  namgung:{label:'남궁 · 창천검기',who:'푸른 검기와 번개 가지',cd:1.7,lv:['Lv1–2','Lv3–4','Lv5','Lv6','Lv7–8'],
-  steps:['푸른 초승달이 몸을 한 바퀴 돈다. 밑에 남색 먹','검기가 굵어지고, 맞은 적에서 옆 적으로 번개가 한 번 튄다','초승달 둘이 마주 돌고 넓은 후광이 붙는다','날 끝이 희게 빛나고 궤도를 따라 번개가 긴다. 번개는 두 번 튀고, 하늘에서 검기 하나','초승달 셋, 번개 세 번, 하늘 검기 셋이 차례로 꽂히며 화면이 눌린다'],
-  fire(a){const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)orbit(a+i*6.283/n);const sk=L([0,0,0,1,3]);for(let i=0;i<sk;i++)later(.35+i*.17,()=>skySword(sk>1));}},
+  steps:['푸른 초승달이 몸을 한 바퀴 돈다. 밑에 남색 먹','검기가 굵어지고, 맞은 적에서 옆 적으로 번개가 한 번 튄다','초승달 둘이 마주 돌고 넓은 후광이 붙는다','날 끝이 희게 빛나고 궤도를 따라 번개가 긴다. 번개는 두 번 튀고, 하늘에서 검기 하나','초승달 셋, 번개 세 번, 하늘 검기 셋이 차례로 꽂히며 화면이 눌린다','창천의 검을 쥔다. 검기가 한 바퀴 더 크게 돌고, 몸에서 번개가 여덟 갈래로 뻗으며 하늘 검기 여섯이 둘레에 꽂힌다'],
+  lad:['초식','경력','검기','검사','검강','창천합일'],
+  fire(a){const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)orbit(a+i*6.283/n);const sk=L([0,0,0,1,3])+(tier>=6?3:0);for(let i=0;i<sk;i++)later(.35+i*.13,()=>skySword(sk>1));
+   if(tier>=6&&!old)later(.5,()=>{for(let j=0;j<8;j++){const q=a+j*.785+rnd(-.15,.15),r=rnd(4,5.4);bolt(Math.cos(q)*.6,Math.sin(q)*.6+.6,Math.cos(q)*r,Math.sin(q)*r+.6);}ring(0,.6,9,BLUEINK,false,.34,.5);ring(0,.6,8.6,BLUE,false,.34,1,true);shake(.3);});}},
  dangga:{label:'당가 · 비도술',who:'가는 은빛 줄과 독 꽃',cd:.8,lv:['Lv1–3','Lv4–5','Lv6','(없음)','Lv7–8'],
   steps:['아주 가는 은빛 줄 하나. 날아가는 동안은 거의 안 보이다 맞는 순간만 번쩍','비도 둘. 줄 뒤에 은빛 꼬리가 길어지고 맞은 자리에 먹이 터진다','(Lv6 중독) 셋. 맞은 바닥에 독 꽃 얼룩이 번지고 섬광이 열십자','이 무공은 마일스톤이 Lv6 하나라 4단이 없다(3단 → 5단). 5단 가는 길의 겉: 줄에 흰 날빛, 중독된 적에서 녹색 김','넷이 부채꼴로 나갔다 한 번 더. 중독된 적이 죽으면 독 꽃이 크게 터진다'],
   fire(a){const n=L([1,2,3,3,4]);for(let i=0;i<n;i++)later(i*.05,()=>dagger(a+(i-(n-1)/2)*.32));if(tier>=5)later(.32,()=>{for(let i=0;i<n;i++)later(i*.04,()=>dagger(a+Math.PI*.15*(i-(n-1)/2)+rnd(-.2,.2)));});}},
@@ -376,6 +385,26 @@ function skySword(many){const live=E.filter(e=>e.dead<0&&Math.hypot(e.x,e.y)<7);
     ring(x,y+.3,4.6*m,BLUEINK,false,.28,.55);ring(x,y+.3,4.4*m,BLUE,false,.28,1,true);crack(x,y,3.2*m,BLUEINK);rays(x,y+.3,many?8:6,3*m,BLUE);
     addFx(.14,(g,k)=>glow(3,x,y+.4,3.4*m,3.4*m,g.seed,{p:[11,.9,.8],c:BLUE,alpha:1-k,seed:g.seed}));shake(.4,-Math.PI/2);stop(.05);jolt(many?.6:.4,many?.6:.4);}}]);});}
 
+// ── 6단 신병합일(2026-11-17, 절기 + 문파 신병) ──────────────────────
+function swordWave(a){const R=2.6,S=2*R/.78,seen=new Set(),ca=Math.cos(a),sa=Math.sin(a);     // 날아가는 금빛 검강: 줄지은 적을 꿰뚫는다
+ addFx(.5,(f,k)=>{const d=k*8.5-R+1.6,x=ca*d,y=sa*d+.6,cx=ca*(d+R),cy=sa*(d+R)+.6;
+  fx(0,x,y,S*1.05,S*1.05,a,{p:[1.7,.5,1,.6],c:INK,alpha:.7*(1-k*k),diss:k*.5,seed:f.seed});
+  glow(0,x,y,S,S,a,{p:[1.7,.34,1,.4],c:GOLD,alpha:1-k*k*.6,diss:k*.4,seed:f.seed+1});
+  glow(0,x,y,S*.99,S*.99,a,{p:[1.7,.1,1,.2],c:HOT,alpha:1-k,seed:f.seed+2});
+  if(Math.random()<.5)drops(cx,cy,a+Math.PI,1,5,GOLD,true,.12,1.2);
+  for(const e of E){if(e.dead>=0||seen.has(e))continue;if(Math.hypot(e.x-cx,e.y+.6-cy)<1.7+e.r){seen.add(e);hit(e,26,a,9,'gold',seen.size===1);}}});
+ shake(.25,a);}
+function vajra(a){const R=2.7*L(TS),x=Math.cos(a)*R,y=Math.sin(a)*R,sz=7.5;                     // 금강의 손: 하늘에서 내려찍는 큰 금빛 권영
+ addFx(.3,(f,k)=>fx(2,x,y+.3,5,3,0,{p:[.75-.3*k,.06,.3],c:GOLD,alpha:.7*k}),null,true);
+ later(.3,()=>addFx(.5,(f,k)=>{const t=f.t,go=Math.min(1,t/.08),ez2=1-(1-go)*(1-go),ds=Math.max(0,(t-.22)/.28),yy=y+.9+(1-ez2)*6;
+   fx(7,x,yy-.1,sz*1.1,sz*.84,-Math.PI/2,{c:INK,alpha:.6,diss:ds,seed:f.seed});
+   glow(7,x,yy,sz,sz*.76,-Math.PI/2,{c:GOLD,diss:ds,seed:f.seed});
+   glow(7,x,yy-sz*.06,sz*.6,sz*.46,-Math.PI/2,{c:HOT,alpha:.95*(1-k),diss:ds,seed:f.seed+3});
+  },[{t:.08,f:()=>{for(const e of E)if(Math.hypot(e.x-x,e.y-y)<3.1+e.r)hit(e,34,Math.atan2(e.y-y,e.x-x)||0,13,'gold',true);
+    for(let j=0;j<5;j++)later(j*.09,()=>{ring(x,y+.5,(6+j*2.2),INK,false,.4,.5-j*.07);ring(x,y+.5,(5.8+j*2.2),GOLD,false,.4,1-j*.15,true);});
+    crack(x,y,7);rays(x,y+.5,14,5,GOLD);drops(x,y+.5,0,24,15,GOLD,true,.15,3.14);
+    addFx(.14,(g,k)=>glow(3,x,y+.5,6*(1+k*.5),6*(1+k*.5),g.seed,{p:[9,.5,.8],c:HOT,alpha:1-k,seed:g.seed}));shake(.6,-Math.PI/2);stop(.08);jolt(1,.9);}}]));}
+const AURA={samjae:GOLD,shaolin:GOLD,gaebang:AMBER,namgung:BLUE,dangga:POISON,suro:WATER,wudang:PALE,huashan:PETAL,gonryun:THUNDER,magyo:VGLOW};
 // ── 나머지 여섯 문파(VF-09) ──────────────────────────────
 const ez=k=>1-(1-k)*(1-k);
 function oldShot(x,y,s,col,dmg,ang){addFx(.12,()=>fx(5,x,y,s,s,0,{p:[.95],c:[col,col,col],alpha:.6}),[{t:.02,f:()=>{for(const e of E)if(Math.hypot(e.x-x,e.y+.6-y)<s*.5+e.r)hit(e,dmg,ang,2,'ink');}}]);}
@@ -492,6 +521,7 @@ function step(dt){
  for(let i=LATER.length-1;i>=0;i--){const l=LATER[i];l.t-=dt;if(l.t<=0){LATER.splice(i,1);l.f();}}
  cool-=dt;if(cool<=0){const tg=nearest(4.2);if(tg){Pl.face=Math.atan2(tg.y,tg.x);STY[style].fire(Pl.face);fired++;cool=STY[style].cd+(style==='gaebang'&&tier>=5?.5:0);}else cool=.1;}
  Pl.lunge*=Math.pow(.0005,dt);Pl.sway*=Math.pow(.02,dt);
+ if(tier>=6&&!old&&Math.random()<dt*14)PT.push({x:Pl.x+rnd(-.7,.7),y:Pl.y+rnd(0,.6),vx:rnd(-.2,.2),vy:rnd(1.2,2.4),t:0,life:rnd(.5,.9),col:AURA[style]||GOLD,add:true,size:.13});   // 6단: 몸에서 기운이 오른다
  let alive=0;for(let i=E.length-1;i>=0;i--){const e=E[i];
   if(e.dead>=0){e.dead+=dt;e.x+=e.kx*dt;e.y+=e.ky*dt;e.kx*=Math.pow(.01,dt);e.ky*=Math.pow(.01,dt);if(e.dead>(old?.12:e.split?.6:.4))E.splice(i,1);continue;}
   alive++;if(e.psn>0){e.psn-=dt;if(tier>=4&&!old&&Math.random()<dt*9)PT.push({x:e.x+rnd(-.3,.3),y:e.y+1+rnd(0,.5),vx:rnd(-.3,.3),vy:rnd(.8,1.6),t:0,life:.6,col:POISON,add:true,size:.2});}   // 중독된 적의 녹색 김
@@ -512,6 +542,7 @@ function draw(){
  for(const f of FX.slice())if(f.under)f.draw(f,f.t/f.life);
  const list=E.slice().sort((a,b)=>b.y-a.y);let pd=false;
  const drawP=()=>{const lx=Math.cos(Pl.la)*Pl.lunge,ly=Math.sin(Pl.la)*Pl.lunge;fx(5,Pl.x+lx,Pl.y+ly-.02,1.5,.55,0,{p:[.2],c:INK,alpha:.22});
+  if(tier>=6&&!old){const c=AURA[style]||GOLD,pu=.5+.5*Math.sin(time*3);glow(2,Pl.x+lx,Pl.y+ly+.1,4.2,2.1,0,{p:[.62+.05*pu,.07,.5],c,alpha:.55+.25*pu,seed:time*.3});glow(5,Pl.x+lx,Pl.y+ly+1,2.6,3.2,0,{p:[.05],c,alpha:.16+.08*pu});}
   sprite(TPLY,Pl.x+lx,Pl.y+ly+.95,(Math.cos(Pl.face)<0?-1:1)*2.5,2.5,Pl.sway+Math.cos(Pl.la)*Pl.lunge*-.25,{});};
  for(const e of list){if(!pd&&e.y<Pl.y){drawP();pd=true;}
   const hop=Math.abs(Math.sin(time*5+e.seed))*.13,sq=old?0:e.sq;
@@ -528,7 +559,7 @@ function draw(){
   c2.font=`${n.big&&!old?900:600} ${Math.round((n.big&&!old?20:13)*DPR*pop*(W/DPR/1000+.35))}px "Noto Serif KR",serif`;c2.globalAlpha=1-k*k;
   c2.lineWidth=3*DPR;c2.strokeStyle='rgba(240,232,210,.9)';c2.strokeText(n.v,x,y);c2.fillStyle=n.big&&!old?'#8a5a00':'#1c1a17';c2.fillText(n.v,x,y);}
  c2.globalAlpha=1;c2.textAlign='left';c2.fillStyle='rgba(28,26,23,.82)';const fs=Math.max(12,Math.round(W/62));
- c2.font=`900 ${fs*1.25}px "Noto Serif KR",serif`;c2.fillText(STY[style].label+(old?'':'  '+tier+'단 · '+lvOf(tier-1)),fs,fs*1.9);
+ c2.font=`900 ${fs*1.25}px "Noto Serif KR",serif`;c2.fillText(STY[style].label+(old?'':'  '+tier+'단 '+ladOf(tier-1)+' · '+lvOf(tier-1)),fs,fs*1.9);
  c2.font=`400 ${fs*.85}px "Noto Serif KR",serif`;c2.fillStyle='rgba(28,26,23,.6)';c2.fillText(old?'지금 빌드 방식: 도형 한 장, 반응 없음':STY[style].who,fs,fs*3.2);
 }
 function settle(real){flashW=Math.max(0,flashW-real*6);zoomK*=Math.pow(.0006,real);dim=Math.max(0,dim-real*5);const z=1-zoomK*.05;vw=VW*z;vh=VH*z;}
@@ -543,13 +574,13 @@ function frame(now){const real=Math.min(.05,(now-last)/1000);last=now;
 function group(id,items,get,set){const g=document.getElementById(id);for(const[val,label]of items){const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.v=val;b.onclick=()=>{set(val);sync();};g.appendChild(b);}
  g._sync=()=>{for(const b of g.querySelectorAll('button'))b.setAttribute('aria-pressed',String(String(get())===b.dataset.v));};}
 function sync(){for(const id of['gStyle','gTier','gMode'])document.getElementById(id)._sync();
- const nt=document.getElementById('note');nt.classList.toggle('pick',!old);nt.innerHTML=STY[style].steps.map((t,i)=>`<li${i+1===tier&&!old?' aria-current="true"':''}><b>${i+1}단 · ${lvOf(i)}</b>${t}</li>`).join('');
+ const nt=document.getElementById('note');nt.classList.toggle('pick',!old);nt.innerHTML=STY[style].steps.concat(STY[style].steps.length<6?['문파의 신병을 지니면 열린다. 이 무공의 6단 시안은 아직 없고, 5단 모습에 기운만 얹었다']:[]).map((t,i)=>`<li${i+1===tier&&!old?' aria-current="true"':''}><b>${i+1}단 ${ladOf(i)} · ${lvOf(i)}</b>${t}</li>`).join('');
  try{history.replaceState(null,'','#'+style+'-'+tier+(old?'-old':''));}catch(e){}}
 function reset(){FX.length=PT.length=LATER.length=0;cool=.3;zoomK=dim=flashW=0;for(const e of E)e.psn=0;}
 group('gStyle',Object.keys(STY).map(k=>[k,STY[k].label]),()=>style,v=>{style=v;reset();});
-group('gTier',[1,2,3,4,5].map(i=>[i,i+'단']),()=>tier,v=>{tier=+v;reset();});
+group('gTier',[1,2,3,4,5,6].map(i=>[i,i+'단 '+LAD[i-1]]),()=>tier,v=>{tier=+v;reset();});
 group('gMode',[['new','개편안'],['old','지금 방식']],()=>old?'old':'new',v=>{old=v==='old';reset();});
-const h=(location.hash||'').slice(1).split('-');if(STY[h[0]])style=h[0];if(+h[1]>=1&&+h[1]<=5)tier=+h[1];if(h[2]==='old')old=true;
+const h=(location.hash||'').slice(1).split('-');if(STY[h[0]])style=h[0];if(+h[1]>=1&&+h[1]<=6)tier=+h[1];if(h[2]==='old')old=true;
 sync();spawn(26);for(const e of E){const k=rnd(.25,1);e.x*=k;e.y*=k;}
 window.__sects={get n(){return E.length},get fx(){return FX.length},pause(v){paused=v;},adv(dt){time+=dt;hsLock=0;hs=0;settle(dt);step(dt);}};
 requestAnimationFrame(frame);
