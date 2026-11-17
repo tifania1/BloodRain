@@ -10,6 +10,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 - 다른 세션이 새 항목을 넣을 때는 '할 차례'의 알맞은 절(의존 순서 자리)에 같은 꼴(첫 줄 `먼저:`, 밑줄 다섯 칸)로 넣는다. 맨 아래나 '끝난 것'에 붙이지 않는다. 앞으로 생길 스크린샷·파일은 `폴더/` 의 `이름` 처럼 떼어 적는다(DocLinkTests 가 없는 경로를 막는다).
 - 화면에 임시로 띄우는 글자는 `Loc.T`·`Loc.F` 로. 새 화면 클래스는 Presentation 의 기존 갈래(Hud·Fx·Meta·Combat)에 둔다.
 - 움직임은 웹 프로토타입(`web/prototype/template.html`)·천하 시안(`web/lookdev/cheonha.html`)과 나란히 놓고 견준다.
+- 웹 빌드 캐시(2026-11-17): `web/_headers` 가 `/Build/*.br` 을 1년 캐시하는데 파일 이름이 빌드마다 같아, 한 번 들어와 본 브라우저는 새로 올려도 옛 판을 띄웠다. `tools/split_webgl_data.py` 가 끝에 index.html 의 주소에 `?v=<빌드 시각>` 을 붙이니 올리기 전에 꼭 돌린다(이미 나눈 폴더에서 다시 돌려도 됨). 올린 뒤 확인은 색인까지 새로 받게 주소 끝에 `index.html` 을 붙여 연다.
 - 밤 웹 빌드(2026-11-09 사람이 '진짜 게임을 해 볼 곳'을 원함): **매일 04:37 차례**(2026-11-17부터 다시)는 항목보다 먼저, 마지막으로 올린 뒤(daily 의 '웹 빌드: 올림 <커밋>' 줄) `unity/BloodRain/Assets` 를 바꾼 커밋이 있으면 WebGL 을 새로 빌드해 https://dev.bloodrain.pages.dev 에 올린다. 평일은 세션이 하루 한 번뿐이라 항목에 쓴다(2026-11-10부터). 방법은 WG-01U 결과 줄 그대로(WG-01U 가 아직이면 그 항목을 한다). 실패하면 오래 붙잡지 말고 daily 에 한 줄 남기고 항목으로 넘어간다. daily 에 '웹 빌드: 올림 <커밋 7자리> <크기>MB' 또는 '바뀐 것 없어 건너뜀'.
 - **화면 집중(2026-11-13)**: '할 차례' 맨 위 '0. 화면 집중' 절만 한다. A~F 절의 열린 항목은 사람이 풀 때까지 얼림(컴파일 에러 고치기는 예외).
 - 핵심 줄기: Run 씬에 Core `Life` 가 아직 없다(레벨은 OrbLayer 시험 RunXp, 적은 EnemyField 시험 생성, 혼은 저장 안 됨). 'B. 한 생 뼈대'가 끝나야 그 아래 대부분이 풀린다. A 를 끝내면 B 부터.
@@ -20,6 +21,8 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 까닭과 본 것은 `docs/design/review_2026-11-13.md`. 대화 세션이 11-13 밤에 잡았던 HF-01U·HF-02U·VF-01U 는 2026-11-16 에 표시를 풀었다 — 남은 것은 각 항목 '진행'에 적혀 있고 PC Unity 세션이 이어서 한다.
 
+- [x] WM-01U 천하도: 중원 한 장 맵이 게임에서 보이게 · 먼저: 없음 (2026-11-17 사람: "중원 전체 맵 적용이 하나도 안 돼 있다") — 2026-11-17 20시 대화 세션: 그린 수묵 지도(`Art/Map` 의 `map_central_plains`)가 삼류·이류에선 불투명 타일 밑에 깔려 한 번도 안 보였음. ① `WorldIntro`(ScaleCamera.cs): 한 생 첫머리에 화면 대각선 1,900m 에서 태어난 자리로 3.3초에 내려옴(카메라 크기에만 곱함, 규칙은 그대로) ② `Hud/WorldMapHud.cs`: 오른쪽 위 구석 지도 + 내 자리, M(패드 Select)·누름으로 큰 천하도(세상 멈춤, 땅 이름·한자·혈운 농도·태어난 곳·혈우 장막 고리, 이름 겹침 피함), 첫머리에 태어난 땅 이름. LifeRunner 가 붙임(메뉴 없음). 글 키 `ui.map.*` 넷. Play·웹 빌드에서 확인
+- [x] TP-01U 시험 메뉴(개발 판) · 먼저: 없음 (2026-11-17 사람: 웹 판으로는 이펙트 단계·지도를 볼 길이 없어 "테스팅 의미가 없다") — 2026-11-17 20시 대화 세션: `Hud/TestPanel.cs`. 에디터·개발 빌드·dev 주소·localhost 에서만 붙음(`TestPanel.Allowed`), 정식 빌드엔 없음. 왼쪽 '시험' 단추나 F2: 무공 익힘·+1·Lv8(WeaponTrialMenu 와 같은 길), 경지 +1, 기혈 채움, 안 죽기, 적 목표 ×2 ÷2, 몸 바꾸기(문파 아홉 — SectBodyMenu 와 같은 길, 큰 지도에서 땅을 눌러도 됨). **화면을 볼 때는 이걸로**: Play 뒤 `TestPanel.Raise(id, 레벨)`·`TestPanel.SwitchBody(문파)` 를 부르면 된다
 - [x] DBG-01U 디버그 글 기본 끔 · 먼저: 없음 (2026-11-13 사람이 본 플레이테스트에서 HUD 를 덮음 — `docs/design/review_2026-11-13.md` 2절) — 2026-11-15 PC: `Presentation/DebugOverlay.cs` 새로 둠(기본 꺼짐, F1 로 켜고 끔, `Debug.isDebugBuild` 가 거짓이면 F1 도 안 먹음). LifeRunner·EnemyField·WeaponRunner·OrbLayer·PlayerVitals·BloodShadowRunner·BgmPlayer·SfxPlayer 의 OnGUI 디버그 줄과 시험 키(Ctrl+숫자, [ ] C K, O M)가 이 스위치를 따름. 각 컴포넌트 showDebug·showStats 는 그대로 두고 둘 다 참일 때만 띄움. Run 씬 Play 콘솔 에러 0, 끔·켬 두 장 찍음(`debug_f1.png` 가 켠 것)
   - 할 것: `LifeRunner.showDebug` 기본값을 끔으로, F1 로 켜고 끔. 개발 빌드가 아닌 빌드(`Debug.isDebugBuild` 가 거짓)에선 F1 도 안 먹게. 다른 OnGUI 디버그 줄(EnemyField·WeaponRunner·OrbLayer·LanternLayer·ChestLayer 의 시험 줄)도 같은 스위치를 따르게 한다. 시험 씬에서 쓰는 키(Ctrl+숫자 등)는 디버그가 켜졌을 때만.
   - 쓸 것: `Presentation/LifeRunner.cs`(showDebug), OnGUI 를 가진 Presentation 파일들
@@ -41,7 +44,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 청운진·숭산 삼류 화면에서 코드로 찍은 초록 덩어리가 안 보임. 콘솔 에러 0
   - 찍기: `docs/unity_shots/PR-02U/` 의 `cheongun.png`·`songshan.png`
 
-- [ ] FL-01U 바닥을 선지로 · 먼저: 없음
+- [ ] FL-01U 바닥을 선지로 · 먼저: 없음 (진행: 2026-11-17 20시 대화 세션 — 사람이 웹 판을 해 보고 "테스팅 의미가 없다"고 해서 바로 넣음. `MapLayer.MakePaperTile`(512px 선지: 옅은 얼룩 세 겹 + 섬유 900획 + 티, 12m 에 한 장)로 벽돌 타일을 바꾸고, 그린 수묵 지도가 있으면 선지가 0.8 만 가려 밑의 지도가 그 땅 빛으로 번짐(`groundOpacity`, 지도 알파는 0.9부터). 가장자리 어둡게는 같은 층의 판 한 장(`vignette` 0.22, 먹빛 #1C1A17). Play·웹 빌드에서 삼류 화면 확인. 남은 것: 마당·길 안에만 벽돌 줄눈, 드문 먹 얼룩·풀·돌, 이류 축척 확인과 찍기)
   - 할 것: 지금 바닥은 같은 벽돌 줄눈 + 'v' 풀이 화면 가득 되풀이된다. 선지 질감(옅은 얼룩·섬유) 한 겹을 화면 전체에 깔고, 벽돌 줄눈은 마당·길 안에만, 그 밖은 여백 + 드문 먹 얼룩·풀·돌. 가장자리 어둡게(비네트)는 카메라 쪽 한 겹으로. 휴대폰 생각해 셰이더 한 장으로.
   - 쓸 것: `Assets/Art/Tiles`, 바닥을 그리는 지금 코드(MapLayer·타일), `Art/VFX/Common/paper_1.png`(선지 한 겹, 회색 1 이 흰 종이, 이음매 없음, 한 변 6m 로 깖, Repeat — 2026-11-14 bake_brush.py 가 구움, .meta 는 noise 를 본뜸. VfxBootstrap 이 Common 을 Clamp 로 되돌리면 paper_ 는 빼 주기, VfxImportSettingsTests 도 paper_ 만 Repeat 로 봄)·노이즈
   - 메뉴: Run 씬 짓는 메뉴에 붙임
@@ -78,7 +81,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 네 무공 모두 1단과 5단이 한눈에 다르고 그 사이도 구분됨. 효과 간소화를 켜면 담채·메아리·검풍·먹 터짐이 빠짐. 설정 흔들림 0% 에서 흔들림·눌림·어둡게 없음. 콘솔 에러 0
   - 찍기: `docs/unity_shots/VF-03U/` 에 무공마다 `<무공>_1.png`·`<무공>_3.png`·`<무공>_5.png`
 
-- [ ] HF-03U 절제된 타격감: 적이 쓰러지는 모습 · 먼저: 없음
+- [ ] HF-03U 절제된 타격감: 적이 쓰러지는 모습 · 먼저: 없음 (진행: 2026-11-17 20시 대화 세션 — `Fx/DeathLayer.cs` 를 새로 넣음. 쓰러진 적 그림 한 장을 0.3~0.6초 남겨 3단부터 성질대로: 먹 = 둘로 갈라짐, 금 = 뒤로 날아가며 금가루, 호박 = 납작, 푸름·번개 = 그을려 굳었다 바스러짐, 독 = 녹아 가라앉음, 물 = 쓸려 감, 꽃잎 = 연분홍으로 흩어짐, 자주 = 오그라듦, 불 = 재. 1·2단은 먹으로 번지며 밀려남(VF-18 규칙). `WeaponRunner` Killed 가 `EnemyField.LookOf`(그 적 그림·크기)로 넘김, 밟힘·쓸림은 뺌. 덩이 셰이더는 안 고침(같은 재질에 색·디졸브만) — 진짜 두 동강(UV 자르기)과 몸의 흰 번쩍은 HF-01U 때. Play 에서 나한권 5단으로 금빛으로 날아가는 것 확인. 남은 것: ① 절제 값이 화면에서 차분한지 사람 확인 ② 무공마다 한 장씩 찍기)
   - 할 것: 2026-11-17 사람이 "화면 흔들림이 너무 거세고 번쩍거림이 많아 … 적이 죽을 때 좀 다르게 죽는다던가"라고 함. 클라우드가 `HitFeel.Shake`(5분의 1, 최대 0.28)·`Jolt`(눌림 3분의 1, 어둡게 없음)와 `SectFx.HitFlash`(흰 섬광 → 먹 금 하나)·`ImpactCut`(흰 터짐 뺌)을 먼저 고쳐 둠(**Unity 컴파일·화면 확인 전**). 이 항목은 ① 그 값이 화면에서 차분한지 보고 ② 적이 쓰러지는 모습을 무공 성질(`WeaponRunner._hitKind`)마다 다르게: 시안 `sects.html` 의 `die`·`drawDeath` 를 덩이 렌더러(HF-01U 가 넣는 `_Flash`·찌그러짐 자리)로 옮긴다. 먼저 넷(먹 = 갈라짐, 금 = 날아가 금가루, 호박 = 납작, 푸름 = 그을려 굳었다 바스러짐). 적의 흰 번쩍임은 0.28 까지만
   - 쓸 것: vfx.md '절제된 타격감', 시안 주소 `#samjae-4`·`#shaolin-4`·`#gaebang-4`·`#namgung-4`(거센 쪽은 끝에 `-loud`)
   - 메뉴: 없음
@@ -86,7 +89,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 찍기: `docs/unity_shots/HF-03U/` 에 무공마다 쓰러지는 순간 한 장
 
   - 2026-11-17 클라우드 VF-18: 시안에서 단계를 나눔 — 1·2단은 모든 무공이 먹으로 번지며 쓰러지고(지금 기본), 성질대로 쓰러지는 것은 3단부터, 5단은 마무리 한 겹(vfx.md '절제된 타격감' 마지막 줄, 시안 `deepDie`). `WeaponGrowth.VisualStage` 로 갈라 붙인다
-- [ ] PP-01U 화면 마감: 약한 Bloom·가장자리 어둡게 · 먼저: 없음 (2026-11-15 클라우드 VF-12)
+- [ ] PP-01U 화면 마감: 약한 Bloom·가장자리 어둡게 · 먼저: 없음 (2026-11-15 클라우드 VF-12) (진행: 2026-11-17 가장자리 어둡게는 FL-01U 와 같이 `MapLayer` 가 판 한 장으로 깖 — Volume 을 붙일 때 이것과 합친다. Bloom 은 아직)
   - 할 것: Run 씬에 Global Volume 하나(Bloom·Vignette 만). Bloom 은 문턱 1·세기 0.35·퍼짐 0.55, 카메라 HDR 켬, 기·금빛 이펙트 재질(FxInk 의 빛 겹, 금빛 비백, 진기 구슬)만 색을 1.6~2배로 올려 문턱을 넘게 하고 원화·바닥·UI·적 위험 표시(밝은 주홍)는 1 이하로 둔다. Vignette 는 색 #1C1A17·세기 0.22·부드러움 0.45·둥글게, 혈우 장막 안으로 들어갈수록 0.3(Bloom 은 0.6)까지. `FxSettings.Simplified` 면 Bloom 끔. 색수차·필름 잡티·피사계 심도는 넣지 않는다. FL-01U 가 비네트를 따로 깔았으면 하나로 합친다
   - 쓸 것: 시안 `web/lookdev/finish.html`(아래 표, 주소 `#day-look`·`#rain-look`·`#day-strong`), URP 2D Renderer 의 Post Processing, `Presentation/Fx/FxSettings.cs`, 혈우 장막 거리(BloodRain 장막 코드)
   - 메뉴: Run 씬 짓는 메뉴에 Volume 을 붙임(다시 돌려도 하나만)
@@ -128,7 +131,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 삼류 → 이류 돌파에서 낙관이 찍히고, 빗줄기가 갈라지고, 쓸린 시강이 먹 점으로 날아가고, 깨달음 넉 장(진소운)이 펼쳐짐. 콘솔 에러 0
   - 찍기: `docs/unity_shots/BT-01U/` 의 `stamp.png`(0.3초쯤)·`sweep.png`(0.9초쯤)·`insight.png`
 
-- [ ] VF-02U 나머지 무공을 SectFx 로 · 먼저: backlog VF-09(2026-11-16 끝남 — 시안 `sects.html` 에 여섯 문파가 들어감. 사람은 아직 안 봤으니 문파 하나를 옮기고 찍어 두면 아침에 같이 본다)
+- [ ] VF-02U 나머지 무공을 SectFx 로 · 먼저: backlog VF-09(2026-11-16 끝남 — 시안 `sects.html` 에 여섯 문파가 들어감. 사람은 아직 안 봤으니 문파 하나를 옮기고 찍어 두면 아침에 같이 본다) (진행: 2026-11-17 20시 대화 세션 — 열두 무공을 한 번에 옮김. `Fx/SectFxMore.cs`(SectFx 의 partial): 장풍·섬광지·비도술·낙화검우는 탄을 `SectFx.Proj` 로 넘겨 그리고(`WeaponRunner.SectProj`), 벽력탄 `BombThrow`·`BombBurst`, 독무 `Mist`, 뇌부 `Talisman`·`Strike`, 태극검 `Taiji`, 쇄겸술 `Chain`, 혈조 `Claw`·`BloodMistAt`·`BloodThread`, 음공 `Sonic`, 이화창 `Thrust`. 맞은 자리 종류(`HitKindOf`)에 silver·poison·needle·fire·water·petal·thunder·violet·pale 을 더하고, 바닥 자국(`Stain`)이 모양·색을 받게 함(독 꽃 13, 그을음 14, 젖은 자국 16), 꽃잎·배꽃 조각은 모양 11. 독 번짐의 납작한 초록 원은 독 꽃 터짐으로. Unity 컴파일 에러 0, Play 에서 열두 무공을 Lv8 로 올려 뜨는 것까지 봄(시험 메뉴 F2). **안 옮긴 것**: 절기(진화) 전용 그림 `fx_evo_*`, 화산 3 꽃잎 탄, 태극검 5단 끝의 큰 태극(밀어내기 규칙이 따라와야 함), 장풍 3단 흙먼지 자국, 섬광지 5단 긴 지풍, 음공 멈칫 표시. 남은 것: 무공마다 한 장 찍기, 사람이 보고 세기 조정)
   - 할 것: WeaponRunner 에서 아직 옛 도형(`AddFx`)·AI 재료 한 장(`AddSpark`·`DrawAi`)으로 그리는 무공을 `review_2026-11-13.md` 6절 표대로 SectFx 겹으로 바꾼다. 차례: 당가 비도술(가는 은빛 줄 + 독 얼룩) → 무당 태극검(흑백 두 궤적) → 화산 낙화검우(가는 검선 + 꽃잎) → 곤륜 뇌부(부적 + 낙뢰, `Bolt` 를 세로로) → 수로채 쇄겸술(사슬 + 물결 호) → 마교 혈조(어두운 자주 찢김 셋) → 문파 밖 여섯. 시안이 새로 쓴 모양 10 태극·11 꽃잎·12 부적은 2026-11-16 개발 세션이 `FxInk.shader` 에 같은 번호로 옮겨 둠(클라우드라 컴파일 확인 전 — 셰이더 에러가 뜨면 그것부터). 그 밖에 새 모양이 필요하면 `FxInk.shader` 에 모양 번호를 더하고 시안(`web/lookdev/sects.html`)에도 같은 식을 넣어 둘이 어긋나지 않게 한다. 밝은 종이 위에서 빛은 `SectFx.Glow`(색 있는 몸 + 약한 더하기) + 먹 받침으로.
   - 쓸 것: `Presentation/Fx/SectFx.cs`·`Art/Shaders/FxInk.shader`, `Presentation/Combat/WeaponRunner.cs`(VF-01U 가 바꾼 네 자리를 본보기로), vfx.md 색 규칙(붉은 계열은 어두운 자주·연분홍만)
   - 메뉴: 없음

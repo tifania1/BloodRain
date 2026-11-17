@@ -41,6 +41,7 @@
 - 게임 구조는 '천하'(2026-10-29 결정): 죽을 때마다 다른 문파 제자의 몸으로 환생(차시환혼), 경지마다 세상이 2.25배 작아지는 중원 한 장 맵, 생이 끝나면 윤회의 기로 능력치. 기획서 5·7·10·21장. 옛 '장 선택 + 강호 지도' 안은 버렸다.
 - `gdd.md` 를 고치면 `docs/design/gdd_changes.md` 에 한 줄(날짜, 장·절, 무엇을)을 남긴다. 원본 문서(Claude Docs)에는 대화 세션이 모아서 옮긴다.
 - Unity 에디터가 필요한 일(씬, 프리팹, 셰이더, 플레이 검수)은 직접 하려 하지 말고 `docs/unity_tasks.md` 의 '할 차례' 알맞은 절(의존 순서 자리)에 `- [ ]` 항목으로 적는다(첫 줄 `먼저:`, 밑줄 할 것·쓸 것·메뉴·끝·찍기 — 그 파일 맨 위 '항목 읽는 법'). 밤에 PC Unity 세션이 PC의 Unity(unityMCP)로 처리한다. PC가 꺼져 있거나 다른 프로젝트 Unity가 떠 있으면 건너뛴다. 매일 04:37 차례는 마지막으로 올린 뒤 Unity 쪽이 바뀌었으면 WebGL 빌드를 https://dev.bloodrain.pages.dev 에 올린다(진짜 게임을 브라우저로 해 보는 곳, 2026-11-09 — unity_tasks '항목 읽는 법').
+- 화면을 볼 때(2026-11-17): Run 씬 Play 나 웹 dev 판에서 **F2 시험 메뉴**(`Hud/TestPanel.cs`, 개발 판에서만 붙음)로 무공·경지·문파 몸을 바로 바꾼다. 코드로는 `TestPanel.Raise(id, 레벨)`·`TestPanel.SwitchBody(문파 id)`. 지도는 M(`Hud/WorldMapHud.cs`).
 - `web/prototype/` — 브라우저 프로토타입. 원본은 `template.html` 하나이고 데이터 JSON을 빌드 때 그대로 넣는다. 빌드 결과는 커밋하지 않는다.
   푸시하면 CI(`web-prototype.yml`)가 묶어서 Cloudflare Pages에 올린다(claude/dev는 미리보기 주소, main은 공개 주소 https://bloodrain-proto.pages.dev). 설명은 그 폴더 README.
 

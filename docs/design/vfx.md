@@ -196,3 +196,13 @@
 | 바닥 타일 | 절차적 생성 + 소품만 AI | 이음새 없음 |
 
 판단이 사람 눈에 달린 부분: 움직임의 손맛은 스크린샷으로 다 안 보인다. 시안·프로토타입을 직접 보고 남긴 말(`docs/feedback.md`)이 기준이다.
+
+## Unity 에 들어간 것 (2026-11-17 밤)
+
+- 열여섯 무공이 모두 `SectFx` 로 그려진다(삼재·나한·창천·취선은 `SectFx.cs`, 나머지 열둘은 `SectFxMore.cs`). `sectFxOn` 을 끄면 예전 그림.
+- 날아가는 것(장풍·섬광지·비도·낙화검우)은 `WeaponRunner` 가 탄을 굴리고 `SectFx.Proj` 로 그 프레임의 자리만 넘긴다. 씨앗은 탄이 난 때로 잡아 잡음이 프레임마다 튀지 않는다.
+- 맞은 자리 종류: ink · gold · amber · blue · silver · poison · needle · fire · water · petal · thunder · violet · pale (`WeaponRunner.HitKindOf` → `SectFx.Hit`).
+- 쓰러지는 모습은 `DeathLayer` — 덩이 셰이더는 그대로 두고 쓰러진 적 그림 한 장에 색·디졸브·자리·크기만 바꾼다. 3단부터 성질대로, 1·2단은 먹.
+- 바닥·지도: 선지 바닥은 `MapLayer.MakePaperTile`, 한 생 첫머리 내려오기는 `WorldIntro`, 가장자리 어둡게는 `MapLayer.vignette`.
+- 시안에만 있고 아직 안 옮긴 것: 절기 전용 그림, 6단, 태극검 5단 끝의 큰 태극, 섬광지 5단 긴 지풍, 장풍 흙먼지 자국, 음공 멈칫 표시, 진짜 두 동강.
+
