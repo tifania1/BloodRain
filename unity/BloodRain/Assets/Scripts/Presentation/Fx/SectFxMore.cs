@@ -426,11 +426,24 @@ namespace BloodRain.Presentation.Fx
                 var h = origin() + d * dist;
                 if (stage >= 3) Glow(1, h - d * len * .45f, len * .95f, .5f * M, a, new Vector4(.5f, .5f, 3f, 1f), FxRamp.Pale, .3f * al, 1f, 0f, f.Seed + 2f);
                 if (stage >= 2) Quad(1, h - d * (tl * .5f + .25f * M), tl, .3f * M, a, new Vector4(.4f, .9f, 3f, 1f), FxRamp.Ink, .3f * al, 1f, .3f, f.Seed + 3f);
-                Quad(1, h - d * tl * .5f, tl, L(stage, .22f, .28f, .3f, .32f, .34f) * M, a, new Vector4(.45f, .55f, 3f, .8f), body, .9f * al, 1f, (1f - al) * .6f, f.Seed);
-                if (stage >= 4) Glow(1, h - d * tl * .4f, tl * .8f, .08f * M, a, new Vector4(.3f, .1f, 3f, 1f), FxRamp.White, .85f * al, 1f, 0f, f.Seed + 1f);
+                Quad(1, h - d * tl * .5f, tl, L(stage, .26f, .36f, .5f, .66f, .85f) * M, a, new Vector4(.5f, .42f, 3f, .8f), body, .95f * al, 1f, (1f - al) * .6f, f.Seed);   // VF-25: 4·5단이 삼재검법 5단 세기에 닿게 굵힘
+                if (stage >= 4) Glow(1, h - d * tl * .4f, tl * .8f, L(stage, .08f, .08f, .08f, .1f, .13f) * M, a, new Vector4(.3f, .1f, 3f, 1f), FxRamp.White, .85f * al, 1f, 0f, f.Seed + 1f);
                 Glow(5, h, .3f * M, .3f * M, 0f, new Vector4(.2f, 0f, 0f, 0f), FxRamp.White, .8f * al);
             });
             if (stage >= 3) After(dur, () => Petals(origin() + d * len, a, spin ? 10 : 6, 3f + stage * .4f, 1.2f, .22f, FxRamp.Pale));
+            // VF-25: 찌른 길이 먹 한 획으로 잠깐 남는다(삼재검법 반원이 남듯)
+            if (stage >= 2)
+                After(dur, () =>
+                {
+                    float ml = len + .2f * M;
+                    var mid = origin() + d * (.3f * M + ml * .5f);
+                    float tw = L(stage, .3f, .3f, .4f, .5f, .64f) * M, ta = L(stage, .4f, .4f, .5f, .55f, .62f);
+                    Add(L(stage, .3f, .3f, .36f, .4f, .46f), (f, k) =>
+                    {
+                        Quad(1, mid, ml, tw, a, new Vector4(.5f, .7f, 1.5f, 1f), body, ta * (1f - k), 1f, .15f + k * .75f, f.Seed);
+                        if (stage >= 5) Glow(1, mid + d * ml * .1f, ml * .8f, .12f * M, a, new Vector4(.3f, .2f, 1.5f, 1f), FxRamp.White, .5f * (1f - k) * (1f - k), 1f, 0f, f.Seed + 1f);
+                    });
+                });
         }
     }
 }
