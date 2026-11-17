@@ -21,6 +21,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 까닭과 본 것은 `docs/design/review_2026-11-13.md`. 대화 세션이 11-13 밤에 잡았던 HF-01U·HF-02U·VF-01U 는 2026-11-16 에 표시를 풀었다 — 남은 것은 각 항목 '진행'에 적혀 있고 PC Unity 세션이 이어서 한다.
 
+- [ ] SFX-17U 무공 소리 물리기 · 먼저: backlog SFX-09(사람이 후보를 골라 큐가 picked 가 된 뒤) (2026-11-17 사람: 줍는 소리가 "싸구려 티" — 지금 게임에 타격·휘두름 소리는 하나도 없다)
+  - 할 것: 고른 소리가 `Assets/Audio/SFX` 에 들어오면 무공이 쏘거나 맞힐 때 튼다. 삼재검법·창천검기·비도술·섬광지는 쏠 때, 나한권·장풍·취선봉은 맞힐 때, 벽력탄은 터질 때, 독무는 퍼질 때(틱마다가 아니라 2초에 한 번쯤), 혈인이 쓰러질 때 비명. 같은 소리가 몰리면 `SfxGate` 가 버린다(0.05초 안 4번까지)
+  - 쓸 것: `Presentation/SfxPlayer.cs`(`Play(id)`), Core `SfxGate`, `Presentation/Combat/WeaponRunner.cs`(Fire·BombBlast·Struck 자리), sfx_list.md 의 id 와 쓰는 때
+  - 메뉴: `BloodRain/Bootstrap/효과음 재생기 붙이기(Run·Inn)`(새 소리를 목록에 넣음)
+  - 끝: 숭산 한 생을 돌려 무공마다 제 소리가 나고, 300마리에서 소리가 뭉개지지 않음. 콘솔 에러 0
+  - 찍기: 없음(소리) — daily 에 튼 수·버린 수(F1 디버그 줄)
 - [x] WM-01U 천하도: 중원 한 장 맵이 게임에서 보이게 · 먼저: 없음 (2026-11-17 사람: "중원 전체 맵 적용이 하나도 안 돼 있다") — 2026-11-17 20시 대화 세션: 그린 수묵 지도(`Art/Map` 의 `map_central_plains`)가 삼류·이류에선 불투명 타일 밑에 깔려 한 번도 안 보였음. ① `WorldIntro`(ScaleCamera.cs): 한 생 첫머리에 화면 대각선 1,900m 에서 태어난 자리로 3.3초에 내려옴(카메라 크기에만 곱함, 규칙은 그대로) ② `Hud/WorldMapHud.cs`: 오른쪽 위 구석 지도 + 내 자리, M(패드 Select)·누름으로 큰 천하도(세상 멈춤, 땅 이름·한자·혈운 농도·태어난 곳·혈우 장막 고리, 이름 겹침 피함), 첫머리에 태어난 땅 이름. LifeRunner 가 붙임(메뉴 없음). 글 키 `ui.map.*` 넷. Play·웹 빌드에서 확인
 - [x] TP-01U 시험 메뉴(개발 판) · 먼저: 없음 (2026-11-17 사람: 웹 판으로는 이펙트 단계·지도를 볼 길이 없어 "테스팅 의미가 없다") — 2026-11-17 20시 대화 세션: `Hud/TestPanel.cs`. 에디터·개발 빌드·dev 주소·localhost 에서만 붙음(`TestPanel.Allowed`), 정식 빌드엔 없음. 왼쪽 '시험' 단추나 F2: 무공 익힘·+1·Lv8(WeaponTrialMenu 와 같은 길), 경지 +1, 기혈 채움, 안 죽기, 적 목표 ×2 ÷2, 몸 바꾸기(문파 아홉 — SectBodyMenu 와 같은 길, 큰 지도에서 땅을 눌러도 됨). **화면을 볼 때는 이걸로**: Play 뒤 `TestPanel.Raise(id, 레벨)`·`TestPanel.SwitchBody(문파)` 를 부르면 된다
 - [x] DBG-01U 디버그 글 기본 끔 · 먼저: 없음 (2026-11-13 사람이 본 플레이테스트에서 HUD 를 덮음 — `docs/design/review_2026-11-13.md` 2절) — 2026-11-15 PC: `Presentation/DebugOverlay.cs` 새로 둠(기본 꺼짐, F1 로 켜고 끔, `Debug.isDebugBuild` 가 거짓이면 F1 도 안 먹음). LifeRunner·EnemyField·WeaponRunner·OrbLayer·PlayerVitals·BloodShadowRunner·BgmPlayer·SfxPlayer 의 OnGUI 디버그 줄과 시험 키(Ctrl+숫자, [ ] C K, O M)가 이 스위치를 따름. 각 컴포넌트 showDebug·showStats 는 그대로 두고 둘 다 참일 때만 띄움. Run 씬 Play 콘솔 에러 0, 끔·켬 두 장 찍음(`debug_f1.png` 가 켠 것)
