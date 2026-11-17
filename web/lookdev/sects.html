@@ -405,12 +405,42 @@ const STY={
  mist:{label:'독무',who:'옅은 녹색 안개',cd:.5,
   steps:['몸 둘레에 옅은 녹색 안개가 늘 감돈다. 안의 적은 녹색으로 물들며 느려진다','안개가 조금 넓어지고 겹이 하나 는다','안개 가장자리에 짙은 띠가 돌고 위로 김이 오른다','더 넓게. 안개 안에서 쓰러진 적 자리에 독 꽃 얼룩','가장 넓게(2m → 3.5m). 안개가 천천히 맴돌며 가장자리에서 독 김이 피어오른다'],
   fire(){mist();}},
+ sonic:{label:'음공',who:'먹 동심 파문과 현 떨림',cd:2.5,lv:['Lv1–3','Lv4–5','Lv6','(없음)','Lv7–8'],
+  steps:['현이 떨리고 먹 파문 한 겹이 몸에서 5m까지 번져 나가며 닿는 적을 민다. 가끔 적이 멈칫한다','파문이 굵어지고 뒤로 마른 메아리 고리가 따라간다','(Lv6 음파 2겹) 0.18초 뒤 한 겹 더. 파문 안쪽에 옅은 담채','이 무공은 마일스톤이 Lv6 하나라 4단이 없다(3단 → 5단). 5단 가는 길의 겉: 현에 흰 빛','세 겹. 현이 희게 울리고 멈칫한 적 머리 위로 먹 점이 맴돈다'],
+  fire(){const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)later(i*.18,()=>sonic(i));}},
+ spear:{label:'이화창',who:'창끝과 흰 배꽃',cd:1.6,
+  steps:['곧은 먹 찌르기 하나가 4m 앞까지 꿰뚫는다. 창끝에 작은 흰 빛','획이 굵어지고 마른 메아리가 한 겹. 맞은 자리에 먹 터짐','창끝이 멈춘 자리에서 흰 배꽃이 흩날리고 옅은 담채','두 번 찌르고 창날에 흰 빛이 선다','(Lv7 회전 찌르기) 찌른 뒤 한 바퀴 돌며 세 방향을 더 찌르고 배꽃이 크게 흩어진다'],
+  fire(a){const n=tier>=4?2:1;for(let i=0;i<n;i++)later(i*.14,()=>thrust(a+(i?rnd(-.12,.12):0),false));if(tier>=5)later(n*.14+.12,()=>{for(let j=1;j<=3;j++)later(j*.05,()=>thrust(a+j*Math.PI/2,true));ring(Pl.x,Pl.y+.5,4,PALE,false,.35,.5);});}},
  magyo:{label:'마교 · 혈조',who:'어두운 자주 할퀸 자국과 피안개',cd:.9,
   steps:['어두운 자주 할퀸 자국 셋이 앞으로 찢긴다. 끝에서 옅은 피안개','획이 굵어지고 마른 메아리가 한 겹. 맞은 자리에 먹 터짐','양손 두 번. 찢긴 자국이 바닥에 잠깐 남고, 흡혈 때 붉은 실이 몸으로 들어온다','자국 가장자리에 연분홍 빛이 서고 첫 타격에 임팩트 컷','다섯 갈래로 세 번, 마지막은 X 자로 크게 찢고 피안개가 터진다','피를 빨린 적이 강시로 일어나 곁에서 같이 싸운다(넷까지, 여덟 숨). 쓰러진 적의 피가 실이 되어 몸으로 들어온다'],
   lad:['초식','경력','조기','혈사','혈강','혈조합일'],
   fire(a){const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)later(i*.11,()=>claws(a,i%2?-1:1,tier>=5&&i===n-1));}},
 };
 const LATER=[];function later(t,f){LATER.push({t,f});}
+// ── VF-15 음공·이화창 ──
+// 음공: 몸에서 먹 파문이 5m까지(0.6초), 닿는 적을 민다(넉백 3), 멈칫(기절 5→15%). 현 떨림은 몸 앞 가는 줄 셋
+function sonic(layer){const st=tier,R=5,dur=.6,seen=new Set(),x0=Pl.x,y0=Pl.y+.5;
+ if(old){ring(x0,y0,R*2,INK,false,.4,.5);for(const e of E)if(e.dead<0&&Math.hypot(e.x,e.y)<R)hit(e,10,Math.atan2(e.y,e.x),3,'ink');return;}
+ addFx(.35,(f,k)=>{for(let j=-1;j<=1;j++){const wob=Math.sin(f.t*70+j)*.06*(1-k);fx(1,x0,y0+.35+j*.12+wob,1.5,.05,0,{p:[.5,.2,0,1],c:INK,alpha:.7*(1-k)});
+  if(st>=5)glow(1,x0,y0+.35+j*.12+wob,1.5,.04,0,{p:[.5,0,0,1],c:WHITE,alpha:.6*(1-k)});}});                                  // 현 떨림
+ ring(x0,y0,R*2.2,INK,false,dur+.15,L([.7,.8,.85,.85,.9]));if(st>=2)later(.07,()=>ring(x0,y0,R*2,INK,false,dur+.1,.35));   // 먹 파문(+ 마른 메아리 고리)
+ addFx(dur+.2,(f,k)=>{const q=Math.min(1,f.t/dur),r=R*ez(q),al=1-Math.max(0,(f.t-dur)/.2);
+  if(st>=3)fx(5,x0,y0,r*2,r*1.24,0,{p:[.85],c:WASH,alpha:.08*al*(1-q)});
+  if(q<1)for(const e of E){if(e.dead>=0||seen.has(e))continue;const d=Math.hypot(e.x-x0,(e.y+.5-y0)/.62);if(Math.abs(d-r)<.6){seen.add(e);const a=Math.atan2(e.y-y0,e.x-x0);hit(e,10+st*3,a,3,'ink',false);
+   if(Math.random()<L([.05,.08,.1,.12,.15])){e.stun=1.2;addFx(1.2,(g,kk)=>{for(let i=0;i<3;i++){const aa=g.t*5+i*2.09;fx(5,e.x+Math.cos(aa)*.35,e.y+2+Math.sin(aa)*.12,.12,.12,0,{p:[.3],c:INK,alpha:.8*(1-kk)});}});}}}});}
+// 이화창: 곧은 찌르기가 4m 앞까지 꿰뚫음(1→3명), 창끝에서 흰 배꽃
+function blossoms(x,y,dir,n,sp,spr,sz){for(let i=0;i<n;i++){const a=dir+rnd(-spr,spr),v=rnd(sp*.3,sp);PT.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t:0,life:rnd(.6,1.1),col:PALE,size:sz*rnd(.7,1.3),sh:11,rot:rnd(0,6.28),spin:rnd(-6,6)});}}
+function thrust(a,spin){const st=tier,len=4*L(TS)*(spin?.8:1),dur=.1,ca=Math.cos(a),sa=Math.sin(a),y0=Pl.y+.8,seen=new Set(),pierce=L([1,1,2,2,3]),tl=L([1.6,1.9,2.1,2.3,2.5]);
+ if(old){oldShot(ca*2.5,sa*2.5+.6,.7,[.8,.8,.8],22,a);return;}
+ addFx(dur+.22,(f,k)=>{const q=Math.min(1,f.t/dur),d=.4+len*ez(q),hx=Pl.x+ca*d,hy=y0+sa*d,al=1-Math.max(0,(f.t-dur)/.22);
+  if(st>=3)glow(1,hx-ca*len*.45,hy-sa*len*.45,len*.95,.5,a,{p:[.5,.5,3,1],c:PALE,alpha:.3*al,seed:f.seed+2});
+  if(st>=2)fx(1,hx-ca*(tl*.5+.25),hy-sa*(tl*.5+.25),tl,.3,a,{p:[.4,.9,3,1],c:INK,alpha:.3*al,diss:.3,seed:f.seed+3});   // 마른 메아리
+  fx(1,hx-ca*tl*.5,hy-sa*tl*.5,tl,L([.22,.28,.3,.32,.34]),a,{p:[.45,.55,3,.8],c:INK,alpha:.9*al,diss:(1-al)*.6,seed:f.seed});
+  if(st>=4)glow(1,hx-ca*tl*.4,hy-sa*tl*.4,tl*.8,.08,a,{p:[.3,.1,3,1],c:WHITE,alpha:.85*al,seed:f.seed+1});
+  glow(5,hx,hy,.3,.3,0,{p:[.2],c:WHITE,alpha:.8*al});                                                              // 창끝 흰 빛
+  if(q<1&&seen.size<pierce)for(const e of E){if(e.dead>=0||seen.has(e))continue;if(Math.hypot(e.x-hx,e.y+.7-hy)<.5+e.r){seen.add(e);hit(e,22+st*5,a,3,'ink',spin&&seen.size===1);if(seen.size>=pierce)break;}}
+ },[{t:dur,f:()=>{const d=.4+len,hx=Pl.x+ca*d,hy=y0+sa*d;if(st>=3)blossoms(hx,hy,a,spin?10:6,3+st*.4,1.2,.22);}}]);}
+
 // ── VF-14 문파 밖 시작 무공 넷 ──
 // 장풍: 회청 바람 초승달이 천천히(5m/초) 밀려 나가며 닿는 적을 모두 민다(관통 무한, 넉백 5)
 function palm(a,second){const st=tier,m=L([1,1.06,1.12,1.2,1.3])*(second?.9:1),S=3*m,v=6,life=1.5,seen=new Set(),ca=Math.cos(a),sa=Math.sin(a),y0=Pl.y+.7;
