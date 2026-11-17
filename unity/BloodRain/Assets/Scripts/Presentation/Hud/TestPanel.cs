@@ -228,7 +228,16 @@ namespace BloodRain.Presentation.Hud
             var c = data.Cheonha;
             var sect = c.Sect(sectId);
             var cand = new RebirthCandidate(sect, c.Region(sect.Region), new List<BirthTraitDef>());
-            if (RebirthHandoff.Soul == null) RebirthHandoff.Soul = SoulStore.Load(data);
+            var soul = RebirthHandoff.Soul ?? SoulStore.Load(data);
+            if (!soul.PrologueDone)
+            {
+                // 새 혼은 서장부터라 문파 몸으로 바로 못 들어간다(Soul.BeginLife 가 "첫 생은 서장"이라며 막아 화면이 깨졌다 — 2026-11-18 웹에서 봄).
+                // 시험에서는 서장을 마친 것으로 친 혼으로 바꿔 든다. 이 혼이 이 칸에 그대로 저장된다
+                string json = System.Text.RegularExpressions.Regex.Replace(soul.ToJson(), "(\"prologueDone\"\\s*:\\s*)false", "$1true", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (!json.Contains("\"prologueDone\":true") && !json.Contains("\"prologueDone\": true")) json = "{\"prologueDone\":true," + json.TrimStart().Substring(1); // 칸이 빠져 있던 저장
+                soul = Soul.FromJson(data, json);
+            }
+            RebirthHandoff.Soul = soul;
             RebirthHandoff.ClearBody();
             RebirthHandoff.Body = Rebirth.Body(c, cand);
             Time.timeScale = 1f;
