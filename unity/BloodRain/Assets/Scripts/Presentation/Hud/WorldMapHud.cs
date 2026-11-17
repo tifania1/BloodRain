@@ -73,6 +73,30 @@ namespace BloodRain.Presentation.Hud
                 if ((toggle || esc) && Time.frameCount != _openedFrame) Close();
             }
             else if (toggle) Open();
+            // 웹 빌드에서는 IMGUI 가 마우스 누름을 못 받아(2026-11-17 dev 판에서 확인) Input System 포인터로 직접 본다
+            var ptr = Pointer.current;
+            if (ptr != null && ptr.press.wasPressedThisFrame)
+            {
+                var pp = ptr.position.ReadValue();
+                Press(new Vector2(pp.x, Screen.height - pp.y));
+            }
+        }
+
+        Rect _miniRect;
+        readonly System.Collections.Generic.List<(Rect r, RegionDef reg)> _regionHits = new System.Collections.Generic.List<(Rect, RegionDef)>();
+
+        /// <summary>GUI 좌표(왼쪽 위가 0,0)를 눌렀다. 구석 지도면 큰 지도를 열고, 큰 지도에선 땅(시험)이나 닫기.</summary>
+        public void Press(Vector2 gui)
+        {
+            if (_open)
+            {
+                if (Time.frameCount == _openedFrame) return;
+                RegionDef hit = null;
+                foreach (var (r, reg) in _regionHits) if (r.Contains(gui)) { hit = reg; break; }
+                Close();
+                if (hit != null && RegionClicked != null) RegionClicked(hit);
+            }
+            else if (_miniRect.width > 0f && _miniRect.Contains(gui) && Time.timeScale > 0f) Open();
         }
 
         public void Open()
@@ -96,10 +120,12 @@ namespace BloodRain.Presentation.Hud
         void OnGUI()
         {
             if (runner == null || runner.Life == null || Map == null) return;
+            if (Event.current.type != EventType.Repaint) return;
             ImguiFont.Use();
             if (_label == null) _label = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, richText = false, wordWrap = false };
             float k = Screen.height / 720f;
             var life = runner.Life;
+            _miniRect = default;
             if (WorldIntro.Playing) { DrawIntroTitle(life, k); return; }
             if (life.Record != null) return;
             if (_open) DrawBig(life, k);
@@ -127,8 +153,7 @@ namespace BloodRain.Presentation.Hud
             _label.fontSize = Mathf.RoundToInt(12f * k); _label.fontStyle = FontStyle.Normal; _label.alignment = TextAnchor.UpperRight;
             Outlined(new Rect(r.x, r.yMax + 2f * k, r.width, 20f * k), Loc.T("ui.map.hint"), new Color(Ink.r, Ink.g, Ink.b, 0.8f), new Color(Paper.r, Paper.g, Paper.b, 0.7f), k);
             GUI.color = Color.white;
-            var e = Event.current;
-            if (e.type == EventType.MouseDown && e.button == 0 && r.Contains(e.mousePosition)) { e.Use(); Open(); }
+            _miniRect = r;
         }
 
         void DrawBig(BloodRain.Core.Run.Life life, float k)
@@ -144,8 +169,7 @@ namespace BloodRain.Presentation.Hud
 
             var regions = life.Regions;
             var here = regions.Region(life.RegionId);
-            var e = Event.current;
-            RegionDef clicked = null;
+            _regionHits.Clear();
             // 땅 이름이 서로 겹치지 않게: 점 아래 → 위 → 오른쪽 → 왼쪽 가운데 먼저 비는 자리에 둔다(지금 선 땅부터)
             _placed.Clear();
             _order.Clear();
@@ -177,7 +201,8 @@ namespace BloodRain.Presentation.Hud
                 _label.fontSize = Mathf.RoundToInt(12f * k); _label.fontStyle = FontStyle.Normal;
                 string sub = Loc.F("ui.density", reg.Density.ToString("0.0")) + (born ? "  ·  " + Loc.T("ui.map.born") : "");
                 Outlined(new Rect(box.x, box.y + 22f * k, box.width, 20f * k), sub, born ? GoldInk : new Color(Ink.r, Ink.g, Ink.b, 0.85f), Paper, k);
-                if (e.type == EventType.MouseDown && e.button == 0 && (box.Contains(e.mousePosition) || new Rect(x - 14f * k, y - 14f * k, 28f * k, 28f * k).Contains(e.mousePosition))) clicked = reg;
+                _regionHits.Add((box, reg));
+                _regionHits.Add((new Rect(x - 14f * k, y - 14f * k, 28f * k, 28f * k), reg));
             }
 
             // 혈우 장막(이 경지에 갈 수 있는 끝)과 내 자리
@@ -201,12 +226,6 @@ namespace BloodRain.Presentation.Hud
             if (RegionClicked != null) foot += "  ·  " + "(시험) 땅을 누르면 그 문파 몸으로 새 생";
             Outlined(new Rect(0, r.yMax + 8f * k, Screen.width, 24f * k), foot, Paper, Ink, k);
 
-            if (e.type == EventType.MouseDown && e.button == 0 && Time.frameCount != _openedFrame)
-            {
-                e.Use();
-                if (clicked != null && RegionClicked != null) { Close(); RegionClicked(clicked); }
-                else Close();
-            }
         }
 
         void DrawIntroTitle(BloodRain.Core.Run.Life life, float k)

@@ -33,10 +33,14 @@ namespace BloodRain.Presentation.Hud
         }
 
         bool _open, _undying;
-        Vector2 _scroll;
+        float _scroll;
         GUIStyle _btn, _lbl, _head;
         Texture2D _bg;
         WorldMapHud _mapHud;
+        // 웹 빌드에서는 IMGUI 가 마우스 누름을 못 받는다(GUI.Button 이 안 눌림, 2026-11-17 dev 판에서 확인).
+        // 그래서 그릴 때 단추 자리와 할 일을 적어 두고(_hits), 누름은 Input System 포인터로 직접 본다.
+        readonly List<(Rect r, System.Action act)> _hits = new List<(Rect, System.Action)>();
+        Rect _panel;
 
         void Start()
         {
@@ -54,83 +58,130 @@ namespace BloodRain.Presentation.Hud
             if (kb != null && kb.f2Key.wasPressedThisFrame) _open = !_open;
             if (_undying && runner != null && runner.vitals != null && runner.Life != null && runner.Life.Record == null
                 && runner.vitals.Health < runner.vitals.MaxHealth) runner.vitals.Heal(runner.vitals.MaxHealth);
+            var ptr = Pointer.current;
+            if (ptr != null)
+            {
+                var pp = ptr.position.ReadValue();
+                var gui = new Vector2(pp.x, Screen.height - pp.y);
+                if (ptr.press.wasPressedThisFrame) Press(gui);
+                var mouse = Mouse.current;
+                if (_open && mouse != null && _panel.Contains(gui)) _scroll = Mathf.Max(0f, _scroll - mouse.scroll.ReadValue().y * 0.4f);
+            }
+        }
+
+        /// <summary>GUI 좌표(왼쪽 위가 0,0)를 눌렀다. 맨 위에 그린 단추부터 본다. 누른 단추가 있으면 참.</summary>
+        public bool Press(Vector2 gui)
+        {
+            for (int i = _hits.Count - 1; i >= 0; i--)
+                if (_hits[i].r.Contains(gui)) { var act = _hits[i].act; act(); return true; }
+            return false;
+        }
+
+        /// <summary>그 글자의 단추를 누른다(시험·자동 확인용). 없으면 거짓.</summary>
+        public bool PressLabel(string label)
+        {
+            for (int i = 0; i < _labels.Count; i++)
+                if (_labels[i] == label) { _hits[i].act(); return true; }
+            return false;
+        }
+        readonly List<string> _labels = new List<string>();
+
+        bool Btn(Rect r, string label, System.Action act, bool enabled = true)
+        {
+            GUI.color = enabled ? new Color(0.24f, 0.21f, 0.18f, 0.96f) : new Color(0.16f, 0.15f, 0.14f, 0.7f);
+            GUI.DrawTexture(r, _bg);
+            GUI.color = new Color(0.62f, 0.52f, 0.36f, enabled ? 0.9f : 0.3f);
+            GUI.DrawTexture(new Rect(r.x, r.yMax - 1f, r.width, 1f), _bg);
+            GUI.color = Color.white;
+            _btn.normal.textColor = enabled ? new Color(0.95f, 0.92f, 0.84f) : new Color(0.6f, 0.58f, 0.54f);
+            GUI.Label(r, label, _btn);
+            if (enabled) { _hits.Add((r, act)); _labels.Add(label); }
+            return false;
         }
 
         void OnGUI()
         {
             if (runner == null || runner.Life == null) return;
+            if (Event.current.type != EventType.Repaint) return;
             ImguiFont.Use();
             float k = Screen.height / 720f;
             if (_btn == null)
             {
-                _btn = new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter };
+                _btn = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter };
                 _lbl = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft };
                 _head = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold };
             }
             int fs = Mathf.RoundToInt(13f * k);
             _btn.fontSize = fs; _lbl.fontSize = fs; _head.fontSize = Mathf.RoundToInt(14f * k);
             _lbl.normal.textColor = new Color(0.93f, 0.9f, 0.82f); _head.normal.textColor = new Color(0.95f, 0.78f, 0.35f);
+            _hits.Clear(); _labels.Clear();
 
-            float bw = 62f * k, bh = 28f * k;
-            if (GUI.Button(new Rect(8f * k, Screen.height * 0.36f, bw, bh), _open ? "닫기 F2" : "시험 F2", _btn)) _open = !_open;
-            if (!_open) return;
+            // 단추는 왼쪽 가운데(무공 칸·문파 인장 밑, 음양 HUD 위), 판은 그 오른쪽에 길게(왼쪽 HUD 를 안 가리게)
+            float bw = 70f * k, bh = 28f * k;
+            Btn(new Rect(8f * k, Screen.height * 0.36f, bw, bh), _open ? "닫기 F2" : "시험 F2", () => _open = !_open);
+            if (!_open) { _panel = default; return; }
 
-            float w = 318f * k, top = Screen.height * 0.36f + bh + 6f * k, h = Screen.height - top - 12f * k;
-            var area = new Rect(8f * k, top, w, h);
-            GUI.color = new Color(0.08f, 0.07f, 0.06f, 0.86f);
-            GUI.DrawTexture(area, _bg);
+            float w = 330f * k, top = 96f * k, h = Screen.height - top - 20f * k, pad = 8f * k, rh = 26f * k, gap = 4f * k;
+            _panel = new Rect(136f * k, top, w, h);
+            GUI.color = new Color(0.08f, 0.07f, 0.06f, 0.88f);
+            GUI.DrawTexture(_panel, _bg);
             GUI.color = Color.white;
-            GUILayout.BeginArea(new Rect(area.x + 8f * k, area.y + 6f * k, area.width - 16f * k, area.height - 12f * k));
-            _scroll = GUILayout.BeginScrollView(_scroll);
             var life = runner.Life;
             var data = DataBoot.Data;
-            var row = GUILayout.Height(26f * k);
-
-            GUILayout.Label($"시험 메뉴 — 개발 판에서만 보인다", _head);
-            GUILayout.Label($"{Loc.Realm(life.Scale.Realms[life.Realm])} · Lv {life.Level} · 적 {(runner.enemies != null ? runner.enemies.Count : 0)}", _lbl);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("경지 +1", _btn, row)) runner.GiveXpToNextRealm();
-            if (GUILayout.Button("기혈 채움", _btn, row) && runner.vitals != null) runner.vitals.Heal(runner.vitals.MaxHealth);
-            if (GUILayout.Button(_undying ? "안 죽기 켬" : "안 죽기 끔", _btn, row)) _undying = !_undying;
-            GUILayout.EndHorizontal();
-            if (runner.enemies != null)
+            float x0 = _panel.x + pad, cw = w - pad * 2f, y = _panel.y + pad - _scroll;
+            // 판 밖으로 나간 줄은 그리지도, 누르지도 않는다
+            bool Vis(float yy) => yy >= _panel.y && yy + rh <= _panel.yMax;
+            void Head(string t) { if (Vis(y)) GUI.Label(new Rect(x0, y, cw, rh), t, _head); y += rh; }
+            void Row(params (string label, System.Action act, bool on)[] cells)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"적 목표 {runner.enemies.targetCount}", _lbl, GUILayout.Width(110f * k));
-                if (GUILayout.Button("×2", _btn, row)) runner.enemies.targetCount = Mathf.Min(runner.enemies.capacity, runner.enemies.targetCount * 2);
-                if (GUILayout.Button("÷2", _btn, row)) runner.enemies.targetCount = Mathf.Max(1, runner.enemies.targetCount / 2);
-                if (GUILayout.Button("지도 M", _btn, row) && _mapHud != null) { if (_mapHud.IsOpen) _mapHud.Close(); else _mapHud.Open(); }
-                GUILayout.EndHorizontal();
+                if (Vis(y))
+                {
+                    float cellW = (cw - gap * (cells.Length - 1)) / cells.Length;
+                    for (int i = 0; i < cells.Length; i++) Btn(new Rect(x0 + i * (cellW + gap), y, cellW, rh), cells[i].label, cells[i].act, cells[i].on);
+                }
+                y += rh + gap;
             }
 
-            GUILayout.Space(6f * k);
-            GUILayout.Label("몸 바꾸기 — 그 문파 땅에서 새 생", _head);
+            Head("시험 메뉴 — 개발 판에서만 보인다");
+            if (Vis(y)) GUI.Label(new Rect(x0, y, cw, rh), $"{Loc.Realm(life.Scale.Realms[life.Realm])} · Lv {life.Level} · 적 {(runner.enemies != null ? runner.enemies.Count : 0)}", _lbl);
+            y += rh;
+            Row(("경지 +1", () => runner.GiveXpToNextRealm(), true),
+                ("기혈 채움", () => { if (runner.vitals != null) runner.vitals.Heal(runner.vitals.MaxHealth); }, true),
+                (_undying ? "안 죽기 켬" : "안 죽기 끔", () => _undying = !_undying, true));
+            if (runner.enemies != null)
+                Row(($"적 {runner.enemies.targetCount} ×2", () => runner.enemies.targetCount = Mathf.Min(runner.enemies.capacity, runner.enemies.targetCount * 2), true),
+                    ("÷2", () => runner.enemies.targetCount = Mathf.Max(1, runner.enemies.targetCount / 2), true),
+                    ("지도 M", () => { if (_mapHud != null) { if (_mapHud.IsOpen) _mapHud.Close(); else _mapHud.Open(); } }, true));
+
+            y += gap;
+            Head("몸 바꾸기 — 그 문파 땅에서 새 생");
             var sects = data.Cheonha.Sects;
             for (int i = 0; i < sects.Count; i += 3)
             {
-                GUILayout.BeginHorizontal();
-                for (int j = i; j < Mathf.Min(i + 3, sects.Count); j++)
-                    if (GUILayout.Button(Loc.Sect(sects[j]), _btn, row)) SwitchBody(sects[j].Id);
-                GUILayout.EndHorizontal();
+                var cells = new List<(string, System.Action, bool)>();
+                for (int j = i; j < Mathf.Min(i + 3, sects.Count); j++) { string id = sects[j].Id; cells.Add((Loc.Sect(sects[j]), () => SwitchBody(id), true)); }
+                Row(cells.ToArray());
             }
 
-            GUILayout.Space(6f * k);
-            GUILayout.Label("무공 — 단계는 이펙트 단계(1~5)", _head);
+            y += gap;
+            Head("무공 — 누르면 +1, 오른쪽은 바로 Lv8(5단)");
             int max = data.Balance.Levels.WeaponMax;
             foreach (var wdef in data.Weapons)
             {
                 life.Loadout.Weapons.TryGetValue(wdef.Id, out int lv);
-                GUILayout.BeginHorizontal();
-                string state = lv > 0 ? $"Lv{lv} · {WeaponGrowth.VisualStage(wdef, lv)}단" : "—";
-                GUILayout.Label($"{Loc.Weapon(wdef)}  {state}", _lbl, GUILayout.Width(170f * k));
-                GUI.enabled = lv < max;
-                if (GUILayout.Button(lv > 0 ? "+1" : "익힘", _btn, row)) Raise(wdef.Id, lv + 1);
-                if (GUILayout.Button($"Lv{max}", _btn, row)) Raise(wdef.Id, max);
-                GUI.enabled = true;
-                GUILayout.EndHorizontal();
+                string id = wdef.Id; int cur = lv;
+                string state = lv > 0 ? $"Lv{lv} · {WeaponGrowth.VisualStage(wdef, lv)}단" : "없음";
+                if (Vis(y))
+                {
+                    float nameW = cw * 0.66f;
+                    Btn(new Rect(x0, y, nameW, rh), $"{Loc.Weapon(wdef)}  {state}", () => Raise(id, cur + 1), lv < max);
+                    Btn(new Rect(x0 + nameW + gap, y, cw - nameW - gap, rh), $"Lv{max}", () => Raise(id, max), lv < max);
+                }
+                y += rh + gap;
             }
-            GUILayout.EndScrollView();
-            GUILayout.EndArea();
+            // 내용이 판보다 길면 휠로 굴린다
+            float content = y + _scroll - _panel.y;
+            _scroll = Mathf.Clamp(_scroll, 0f, Mathf.Max(0f, content - h + pad));
         }
 
         /// <summary>그 무공을 level 까지. 칸이 모자라면 칸을 하나 늘린다(시험이니).</summary>
