@@ -26,9 +26,9 @@ PAGE = """<!doctype html>
 :root { --paper:#EFE6D2; --card:#F6F0E2; --ink:#1A1A1A; --soft:#5A554C; --line:rgba(26,26,26,.18); --seal:#B3261E; }
 * { box-sizing: border-box; }
 body { margin:0; background:var(--paper); color:var(--ink); font-family:"Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif; }
-main { max-width:1080px; margin:0 auto; padding:24px 16px 160px; display:grid; gap:18px; }
+main { max-width:1080px; margin:0 auto; padding:24px 16px 160px; display:grid; grid-template-columns:minmax(0,1fr); gap:18px; }
 h1 { margin:0; font-size:28px; }
-p.lead { margin:0; color:var(--soft); line-height:1.7; font-size:14px; max-width:66ch; }
+p.lead { margin:0; color:var(--soft); line-height:1.7; font-size:14px; max-width:66ch; word-break:keep-all; overflow-wrap:anywhere; }
 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr)); gap:12px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:12px; display:grid; gap:8px; }
 .card h2 { margin:0; font-size:16px; }
