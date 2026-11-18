@@ -115,6 +115,34 @@ namespace BloodRain.Core.Tests
             Assert.Equal(_d.Chronicle.Events.Select(e => e.Id).OrderBy(x => x), BloodRain.Sim.ChronicleSim.DesignFirstLife.Keys.OrderBy(x => x));
         }
 
+        (BloodRain.Core.Meta.Soul soul, BloodRain.Core.Run.Life life) NewLife()
+        {
+            var soul = new BloodRain.Core.Meta.Soul(_d);
+            soul.EndLife(soul.BeginLife(BloodRain.Core.Meta.Rebirth.Prologue(_d)).Finish(BloodRain.Core.Run.LifeEndWay.Fallen, 0));
+            var c = _d.Cheonha;
+            var cand = new BloodRain.Core.Meta.RebirthCandidate(c.Sect("shaolin"), c.Region("songshan"), Array.Empty<BirthTraitDef>());
+            return (soul, new BloodRain.Core.Run.Life(soul, BloodRain.Core.Meta.Rebirth.Body(c, cand), new Random(1)));
+        }
+
+        /// <summary>GU-11h5: 사건 시각에 그 자리가 화면 대각선 절반 안이면 겪음으로 남고, 생이 끝나면 혼에 쌓이고 저장된다.</summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void 사건_시각에_그_자리_곁에_있으면_겪은_사건으로_남는다(bool atVillage)
+        {
+            var (soul, life) = NewLife();
+            var c = C;
+            var village = c.Position(c.Event("songshan_refugees"))!.Value;
+            var at = atVillage ? village : new Regions(_d).Center("songshan");
+            while (life.Minutes < 2.05f) life.Tick(0.5f, at, 0);
+            Assert.Equal(atVillage, life.Log.Chronicle.Contains("songshan_refugees"));
+            Assert.DoesNotContain("gaebang_scatter", life.Log.Chronicle);
+            soul.EndLife(life.End(BloodRain.Core.Run.LifeEndWay.Fallen, 0));
+            Assert.Equal(atVillage, soul.Chronicle.Contains("songshan_refugees"));
+            var back = BloodRain.Core.Meta.Soul.FromJson(_d, soul.ToJson());
+            Assert.Equal(soul.Chronicle.OrderBy(x => x), back.Chronicle.OrderBy(x => x));
+        }
+
         [Theory]
         [InlineData("\"region\": \"gaebang_hq\"", "\"region\": \"nowhere\"")]
         [InlineData("\"kind\": \"movement\", \"atSeconds\": 120", "\"kind\": \"nope\", \"atSeconds\": 120")]

@@ -114,12 +114,15 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> Letters { get; }
         /// <summary>이번 생에 혈마의 속삭임을 받았나(20장 '계승 엔딩 표식'). 혼이 횟수를 센다.</summary>
         public bool Whispered { get; }
+        /// <summary>이번 생에 겪은 연표 사건 id(chronicle.json, GU-11h5). 혼이 '겪은 사건'으로 남긴다(연표 화면에 먹으로).</summary>
+        public IReadOnlyList<string> Chronicle { get; }
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
             IEnumerable<string>? tornManuals = null, int bloodCrystal = 0, int kills = 0, int dashes = 0, int talismansUsed = 0, int goldenToads = 0, int foodEaten = 0, bool singleWeaponBoss = false,
-            IEnumerable<string>? letters = null, bool whispered = false)
+            IEnumerable<string>? letters = null, bool whispered = false, IEnumerable<string>? chronicle = null)
         {
+            Chronicle = chronicle?.Distinct().ToList() ?? new List<string>();
             Whispered = whispered;
             Letters = letters?.Distinct().ToList() ?? new List<string>();
             GoldenToads = goldenToads;
@@ -394,6 +397,9 @@ namespace BloodRain.Core.Meta
         }
         /// <summary>하오문 밀서로 조건을 본 비전 id(20장 기연). 장경각 도감이 '밀서: 조건' 한 줄을 더 보인다.</summary>
         public IReadOnlyCollection<string> Letters => _letters;
+        readonly HashSet<string> _chronicle = new HashSet<string>(StringComparer.Ordinal);
+        /// <summary>어느 생에서든 겪은 연표 사건 id(chronicle.json, GU-11h5). 연표 화면이 먹으로 진하게 그린다. 회귀해도 남는다.</summary>
+        public IReadOnlyCollection<string> Chronicle => _chronicle;
         /// <summary>혈마의 속삭임을 받은 생의 수(20장 '계승 엔딩 표식'). 무엇을 바꾸는지는 WP-29a 결정 대기라 세기만 한다.</summary>
         public int WhispersTotal { get; private set; }
         /// <summary>얻은 칭호 id(cheonha.json titles, 10장 해금 표). 모으기 보상이라 능력치는 없다.</summary>
@@ -670,6 +676,7 @@ namespace BloodRain.Core.Meta
             var newTitles = GrantTitles(record);
             if (record.Whispered) WhispersTotal++;
             _letters.UnionWith(record.Letters.Where(id => _data.Synergies.Secrets.Any(x => x.Id == id)));
+            _chronicle.UnionWith(record.Chronicle.Where(id => _data.Chronicle.Events.Any(x => x.Id == id)));
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
             {
                 NewFacilities = Inn.Refresh(this),
@@ -747,6 +754,8 @@ namespace BloodRain.Core.Meta
             /// <summary>얻은 칭호. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public List<string> Titles = new List<string>();
             public List<string> Letters = new List<string>();
+            /// <summary>겪은 연표 사건. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
+            public List<string> Chronicle = new List<string>();
             public int Whispers;
             /// <summary>엔딩(4장). 이 칸들이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public bool EndingPending;
@@ -799,6 +808,7 @@ namespace BloodRain.Core.Meta
                 GoldenToads = GoldenToadsTotal,
                 Titles = Sorted(_titles),
                 Letters = Sorted(_letters),
+                Chronicle = Sorted(_chronicle),
                 Whispers = WhispersTotal,
                 EndingPending = EndingPending,
                 EndingsSeen = Sorted(_endingsSeen),
@@ -836,6 +846,7 @@ namespace BloodRain.Core.Meta
             s._unlocks.UnionWith(f.Unlocks);
             s._titles.UnionWith(f.Titles.Where(id => s.C.Titles.Any(t => t.Id == id)));
             s._letters.UnionWith(f.Letters.Where(id => data.Synergies.Secrets.Any(x => x.Id == id)));
+            s._chronicle.UnionWith(f.Chronicle.Where(id => data.Chronicle.Events.Any(x => x.Id == id)));
             s._bosses.UnionWith(f.BossesKilled);
             s._sealStones.UnionWith(f.SealStones);
             s._visited.UnionWith(f.VisitedRegions);
@@ -1049,7 +1060,18 @@ namespace BloodRain.Core.Meta
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
             new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
-                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss, _letters, Whispered);
+                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss, _letters, Whispered, _chronicle);
+
+        readonly List<string> _chronicle = new List<string>();
+        /// <summary>이번 생에 겪은 연표 사건 id(겪은 차례).</summary>
+        public IReadOnlyList<string> Chronicle => _chronicle;
+        /// <summary>연표 사건을 겪었다. 이번 생에 처음이면 참(같은 생에 두 번은 안 센다).</summary>
+        public bool Witness(string chronicleEvent)
+        {
+            if (_chronicle.Contains(chronicleEvent)) return false;
+            _chronicle.Add(chronicleEvent);
+            return true;
+        }
 
         /// <summary>이번 생에 혈마의 속삭임을 받았나. Life 가 EncounterBoons.AcceptWhisper 때 켠다.</summary>
         public bool Whispered { get; set; }

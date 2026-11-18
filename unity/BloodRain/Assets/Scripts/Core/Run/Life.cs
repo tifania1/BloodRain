@@ -77,6 +77,7 @@ namespace BloodRain.Core.Run
             Xp = new RunXp(new XpCurve(_data.Balance.XpCurve), new Realms(_data.Balance.Realms));
             Regions = new Regions(_data);
             Scale = new Scale(_data);
+            Chronicle = new Chronicle(_data.Chronicle, Regions, Scale);
             Breakthrough = new Breakthrough(Scale, _data.Cheonha.Breakthrough, _data.Cheonha.Crush);
             Awakening = new Awakening(_data.Balance.Awakening);
             Charge = new UltimateCharge(_data.Balance.UltimateCharge, _data.Balance.Yinyang.Harmony, StartChargeBonus(soul, body))
@@ -212,6 +213,8 @@ namespace BloodRain.Core.Run
         /// <summary>오의 한 번에 몇 번 나가나. 현경이면 2(오의 2연속). 게이지는 한 번만 비운다.</summary>
         public int UltimateCasts => RealmRewards.DoubleUltimate ? 2 : 1;
         public Vector2 Position { get; private set; }
+        /// <summary>천하 연표(chronicle.json). 서장에서는 보지 않는다.</summary>
+        public Chronicle Chronicle { get; }
         /// <summary>지금 자리의 혈운 농도. 적 기혈·피해는 EnemyScaling.HealthAt·DamageAt 에 이 값을 넘긴다.</summary>
         public float Density => Regions.Density(Position, SealStones);
         /// <summary>지금 가진 봉인석 수(생이 시작될 때 혼의 수 + 이번 생에 새로 얻은 것).</summary>
@@ -274,12 +277,29 @@ namespace BloodRain.Core.Run
 
             Bosses.Tick(dt, Position, Level, Minutes);
             Director.BossFight = Bosses.InFight;
+            NoteChronicle(Minutes - dt / 60f);
             NoteFightHarmony();
 
             _secondAcc += dt;
             if (_secondAcc < 1.0) return null;
             _secondAcc -= 1.0; // 한 프레임이 몇 초를 건너뛰면 남은 초는 다음 프레임들이 하나씩 낸다(버리지 않는다)
             return Director.Second(Minutes, Level, RegionId, aliveNow);
+        }
+
+        /// <summary>연표(GU-11h5, 겪음 기록만): 이번 프레임에 시각이 지난 사건마다, 그 자리가 지금 화면 대각선의 절반 안이면 '겪음'.
+        /// 천하 전체 사건은 필요한 경지(minRealm)에 올라 있으면 겪음. 막음·못 막음은 아직 없다.
+        /// '화면 안' 기준은 2026-11-18 예약 세션이 정한 것(설계안은 '그 시각에 거기 있었는가'까지만).</summary>
+        void NoteChronicle(float fromMinutes)
+        {
+            float from = fromMinutes * 60f, to = Minutes * 60f;
+            foreach (var e in Chronicle.Events)
+            {
+                if (e.AtSeconds <= from || e.AtSeconds > to) continue;
+                bool seen = e.Everywhere
+                    ? Realm >= Chronicle.RequiredRealm(e, Position)
+                    : Vector2.Distance(Chronicle.Position(e)!.Value, Position) <= Scale.ViewDiagonal(Level) * 0.5f;
+                if (seen) Log.Witness(e.Id);
+            }
         }
 
         /// <summary>땅의 주인 싸움이 시작되면 태극을 지켰다고 두고, 싸우는 동안 한 번이라도 태극 밖이면 지움.</summary>
