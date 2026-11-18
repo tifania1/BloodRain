@@ -43,6 +43,9 @@ namespace BloodRain.Core.Tests
                 }
             }
             life.GainSilver(37);
+            var evo = _d.Evolutions.First(e => life.Loadout.Weapons.ContainsKey(e.Weapon));
+            life.Loadout.Evolve(evo);
+            life.Log.Witness("songshan_refugees");
             var snap = LifeSnapshot.Capture(life);
             var json = JsonConvert.SerializeObject(snap);
             var back = JsonConvert.DeserializeObject<LifeSnapshot>(json)!;
@@ -60,7 +63,26 @@ namespace BloodRain.Core.Tests
             Assert.Equal(life.Loadout.Gauge.Value, fresh.Loadout.Gauge.Value);
             Assert.Equal(life.Charge.Value, fresh.Charge.Value, 4);
             Assert.Equal(life.Silver, fresh.Silver);
+            Assert.Equal(life.Loadout.Evolved.OrderBy(x => x), fresh.Loadout.Evolved.OrderBy(x => x));
+            Assert.Equal(new[] { "songshan_refugees" }, fresh.Log.Chronicle);
             Assert.True(life.Level > 1);
+        }
+
+        [Fact] public void 쓰러뜨린_땅의_주인과_깨어난_땅을_되돌린다()
+        {
+            var (_, plain) = NewLife();
+            var snap = LifeSnapshot.Capture(plain);
+            snap.Level = _d.Balance.Realms.Single(r => r.Id == "jeoljeong").Level + 1;
+            snap.Minutes = 12;
+            snap.BossesKilled.Add("songshan");
+            var (_, life) = NewLife();
+            int stonesBefore = life.SealStones;
+            life.Restore(snap);
+            Assert.Equal(BossRegionState.Defeated, life.Bosses.State("songshan"));
+            Assert.Contains("songshan", life.Log.BossesKilled);
+            Assert.Equal(stonesBefore + 1, life.SealStones);
+            Assert.NotEmpty(life.Bosses.Awake);                 // 절정이면 장막 안 다른 땅의 주인이 깨어 있다
+            Assert.Equal(new[] { "songshan" }, LifeSnapshot.Capture(life).BossesKilled);
         }
 
         [Fact] public void 다른_몸이나_흐른_생에는_되돌리지_않는다()

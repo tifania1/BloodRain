@@ -183,6 +183,16 @@ namespace BloodRain.Core.World
         /// <summary>이 출생지에서 그 경지면 깨어나 있을 땅(지금 계정 기록 기준). 침방 지도에 '어느 땅의 주인까지 닿는지' 그릴 때.</summary>
         public List<RegionDef> AwakeAt(int realm) => _bossRegions.Where(r => ShouldBeAwake(r, realm, _record.SealStones)).ToList();
 
+        /// <summary>생 도중 저장에서 되돌린다(LifeSnapshot ②): 이번 생에 쓰러뜨린 곳은 Defeated, 그 레벨의 경지로 깨어날 곳은 Awake.
+        /// 싸우던 중이었으면 깨어난 채로 둔다(이어 할 때 싸움을 다시 건다). '방금 깨어남' 알림은 남기지 않는다.</summary>
+        internal void Restore(IEnumerable<string> defeatedThisLife, int level)
+        {
+            foreach (var id in defeatedThisLife)
+                if (_state.ContainsKey(id)) _state[id] = BossRegionState.Defeated;
+            UpdateRealm(level);
+            _justWoke.Clear();
+        }
+
         /// <summary>경지가 바뀌었을 때(돌파). 새로 깨어난 지역을 데이터 순서대로 돌려준다.</summary>
         public List<RegionDef> UpdateRealm(int level)
         {

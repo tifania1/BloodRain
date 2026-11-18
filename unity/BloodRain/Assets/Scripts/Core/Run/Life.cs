@@ -451,8 +451,17 @@ namespace BloodRain.Core.Run
                 int more = kv.Value - Loadout.Passives[kv.Key];
                 if (more > 0) Loadout.Apply(new Offer(OfferKind.UpgradePassive, kv.Key, more));
             }
+            foreach (var w in s.Evolved)
+                Loadout.Evolve(_data.Evolutions.FirstOrDefault(e => e.Weapon == w) ?? throw new InvalidOperationException($"절기가 없는 무공입니다: {w}"));
+            foreach (var e in s.Chronicle) Log.Witness(e);
+            foreach (var region in s.BossesKilled)
+            {
+                var info = Log.KillBoss(region);   // 일지·윤회의 기·혈정을 다시 센다(장부는 저장하지 않으므로)
+                _bossRecord.Apply(new BossKill { RegionId = region, First = info.FirstInCycle, SealStone = info.SealStone, UnlockSect = info.UnlockedSect });
+            }
             Loadout.Gauge.Restore(s.Gauge);   // 무공·심법을 올리며 움직인 음양을 저장 값으로
             Xp.Restore(s.Level, s.Xp, s.XpTotal);
+            Bosses.Restore(s.BossesKilled, s.Level);
             Charge.Restore(s.Charge);
             Minutes = s.Minutes;
             foreach (var r in s.Visited) Log.Enter(r);
