@@ -124,6 +124,18 @@ namespace BloodRain.Core.Build
             return b;
         }
 
+        /// <summary>살기충천·심마가 세기 시작한 처치 수·기운 횟수(생 도중 저장용).</summary>
+        public int KillsAtSalgi => _killsAtSalgi;
+        public int SimmaBaseline => _simmaBaseline;
+
+        /// <summary>생 도중 저장을 되돌릴 때(Life.Restore) 고른 차례대로 Take 한 뒤 세기 시작한 값과 금종조 대기를 저장 값으로 놓는다.</summary>
+        internal void RestoreCounters(int killsAtSalgi, int simmaBaseline, float blockCooldown)
+        {
+            _killsAtSalgi = killsAtSalgi;
+            _simmaBaseline = simmaBaseline;
+            _blockCooldown = Math.Max(0f, blockCooldown);
+        }
+
         /// <summary>천마해체를 썼다. 심마 공력이 사라지고 그 뒤 기운 횟수부터 다시 센다.</summary>
         public void OnDemonicReset(int simmaSteps) => _simmaBaseline = simmaSteps;
 

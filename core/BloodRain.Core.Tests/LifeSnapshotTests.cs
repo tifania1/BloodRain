@@ -150,6 +150,43 @@ namespace BloodRain.Core.Tests
             Assert.Equal(a.RebirthQi.Total, b.RebirthQi.Total);
         }
 
+        [Fact] public void 깨달음_기연_영약_재기를_되돌린다()
+        {
+            var (_, life) = NewLife();
+            var inn = _d.Cheonha.Inn;
+            life.TakeElixirs(new[] { inn.Elixirs.First(e => e.Id == "hyeoljeongdan"), inn.Elixirs.First(e => e.Id == "taegeukhwan"), inn.Elixirs.First(e => e.Id == "sohwandan") });
+            var at = new Regions(_d).Center("songshan");
+            life.Tick(1f, at, 0);
+            life.Log.Kill(250);
+            life.TakeInsight(_d.Insight("yeokgeun"));
+            life.TakeInsight(_d.Insight("salgi"), life.Log.Kills);
+            life.TakeInsight(_d.Insight("geumjong"));
+            Assert.True(life.InsightEffects.TryBlock());
+            life.Encounters.HonorRelic("shaolin");
+            life.Encounters.MeetHermit();
+            Assert.NotNull(life.TryRevive(life.CurrentStats()));   // 소환단
+            life.Log.Kill(130);
+            life.Log.KillElite();
+            var json = JsonConvert.SerializeObject(LifeSnapshot.Capture(life));
+            var back = JsonConvert.DeserializeObject<LifeSnapshot>(json)!;
+
+            var (_, fresh) = NewLife();
+            fresh.Restore(back);
+            Assert.Equal(life.InsightEffects.Taken.Select(i => i.Id), fresh.InsightEffects.Taken.Select(i => i.Id));
+            Assert.Equal(life.InsightBonus(life.Log.Kills)[StatKind.Might], fresh.InsightBonus(fresh.Log.Kills)[StatKind.Might], 5);
+            Assert.False(fresh.InsightEffects.TryBlock());   // 금종조 대기가 이어진다
+            Assert.Equal(life.Encounters.Met, fresh.Encounters.Met);
+            Assert.Equal(life.Encounters.SchoolExtra.OrderBy(x => x.Key), fresh.Encounters.SchoolExtra.OrderBy(x => x.Key));
+            Assert.Equal(life.Elixirs.Select(e => e.Id), fresh.Elixirs.Select(e => e.Id));
+            Assert.True(fresh.ElixirReviveUsed);
+            Assert.True(fresh.Loadout.Gauge.Frozen);
+            Assert.Equal(life.YinyangFreezeLeft, fresh.YinyangFreezeLeft, 3);
+            Assert.Equal(life.Log.BloodCrystal, fresh.Log.BloodCrystal);
+            Assert.Equal(life.Loadout.Gauge.Value, fresh.Loadout.Gauge.Value);
+            Assert.Equal(life.Level, fresh.Level);   // 대환단 없음, 영약을 다시 걸지 않는다
+            Assert.Equal(life.Charge.Value, fresh.Charge.Value, 4);
+        }
+
         [Fact] public void 장부_칸이_없는_옛_스냅샷도_읽는다()
         {
             var (_, life) = NewLife();
@@ -158,6 +195,7 @@ namespace BloodRain.Core.Tests
             var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
             obj.Remove("Tally");
             obj.Remove("Awakened");
+            obj.Remove("Boons");
             var back = obj.ToObject<LifeSnapshot>()!;
             Assert.Null(back.Tally);
             var (_, fresh) = NewLife();

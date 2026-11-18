@@ -337,6 +337,10 @@ namespace BloodRain.Core.Run
         bool _elixirReviveUsed;
         float _yinyangFreezeLeft;
 
+        /// <summary>소환단을 이미 썼나, 태극환 음양 멈춤이 몇 초 남았나(생 도중 저장용).</summary>
+        public bool ElixirReviveUsed => _elixirReviveUsed;
+        public float YinyangFreezeLeft => Math.Max(0f, _yinyangFreezeLeft);
+
         /// <summary>이번 생에 지니고 나온 약방 영약(기획서 10장 '영약(약방)').</summary>
         public IReadOnlyList<ElixirDef> Elixirs => _elixirs;
 
@@ -468,6 +472,7 @@ namespace BloodRain.Core.Run
                 var info = Log.KillBoss(region);   // 일지·윤회의 기·혈정을 다시 센다(장부는 저장하지 않으므로)
                 _bossRecord.Apply(new BossKill { RegionId = region, First = info.FirstInCycle, SealStone = info.SealStone, UnlockSect = info.UnlockedSect });
             }
+            if (s.Boons is { } b) RestoreBoons(b);
             Loadout.Gauge.Restore(s.Gauge);   // 무공·심법을 올리며 움직인 음양을 저장 값으로
             Xp.Restore(s.Level, s.Xp, s.XpTotal);
             // 오른 경지를 일지에 다시 적는다: 생 기록의 가장 높은 경지와 처음 오른 경지 윤회의 기(장부는 저장하지 않으므로)
@@ -479,6 +484,29 @@ namespace BloodRain.Core.Run
             foreach (var r in s.Visited) Log.Enter(r);
             MoveTo(s.Position);
             Silver = s.Silver;
+        }
+
+        void RestoreBoons(LifeBoonsSnapshot b)
+        {
+            foreach (var id in b.Insights)
+            {
+                var def = _data.Insights.Concat(_data.DemonicInsights).FirstOrDefault(i => i.Id == id)
+                    ?? throw new InvalidOperationException($"없는 깨달음입니다: {id}");
+                InsightEffects.Take(def, Loadout.Gauge);   // 역근의 기울기 배율도 다시 건다. 게이지 값은 뒤에서 저장 값으로
+            }
+            InsightEffects.RestoreCounters(b.KillsAtSalgi, b.SimmaBaseline, b.BlockCooldown);
+            Encounters.Restore(b.Encounters, b.EncounterSchools, b.SwordTombMight, b.WhisperTaken);
+            // 영약: 다시 걸지 않는다(오의·시작 레벨은 저장 값이 이미 담음). 지닌 목록과 혈정 배율·소환단·태극환 남은 시간만
+            foreach (var id in b.Elixirs)
+            {
+                var e = _data.Cheonha.Inn.Elixirs.FirstOrDefault(x => x.Id == id) ?? throw new InvalidOperationException($"없는 영약입니다: {id}");
+                _elixirs.Add(e);
+                if (e.BloodCrystalMultiplier > 0) Log.DropCrystalMultiplier *= e.BloodCrystalMultiplier;
+            }
+            _elixirReviveUsed = b.ElixirReviveUsed;
+            _yinyangFreezeLeft = b.YinyangFreezeLeft;
+            Loadout.Gauge.Frozen = _yinyangFreezeLeft > 0;
+            RevivalsUsed = b.RevivalsUsed;
         }
 
         public void MoveTo(Vector2 position)

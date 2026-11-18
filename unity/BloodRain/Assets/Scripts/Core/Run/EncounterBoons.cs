@@ -118,6 +118,17 @@ namespace BloodRain.Core.Run
             return b;
         }
 
+        /// <summary>생 도중 저장을 되돌릴 때(Life.Restore) 받은 기연·더한 진전·검총 공력·속삭임을 저장 값으로 놓는다. 막 만든 것에만.
+        /// 검총에서 버린 무공은 저장된 무공 목록에 이미 없고, 영약·영물의 '가득·음양 0'은 저장된 게이지 값이 맡는다.</summary>
+        internal void Restore(IEnumerable<string> met, IReadOnlyDictionary<string, int> schools, float weaponMightBonus, bool whisperTaken)
+        {
+            if (_met.Count > 0 || _schools.Count > 0) throw new InvalidOperationException("막 만든 기연에만 되돌린다");
+            foreach (var id in met) Note(id);
+            foreach (var kv in schools) _schools[kv.Key] = kv.Value;
+            WeaponMightBonus = weaponMightBonus;
+            WhisperTaken = whisperTaken;
+        }
+
         static void FillUp(UltimateCharge charge, YinYangGauge gauge)
         {
             charge.AddFlat(charge.Max);
