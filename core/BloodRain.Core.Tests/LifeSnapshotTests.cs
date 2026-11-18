@@ -63,6 +63,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(life.Loadout.Gauge.Value, fresh.Loadout.Gauge.Value);
             Assert.Equal(life.Charge.Value, fresh.Charge.Value, 4);
             Assert.Equal(life.Silver, fresh.Silver);
+            Assert.Equal(life.Log.HighestRealm, fresh.Log.HighestRealm);
             Assert.Equal(life.Loadout.Evolved.OrderBy(x => x), fresh.Loadout.Evolved.OrderBy(x => x));
             Assert.Equal(new[] { "songshan_refugees" }, fresh.Log.Chronicle);
             Assert.True(life.Level > 1);

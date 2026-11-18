@@ -464,6 +464,9 @@ namespace BloodRain.Core.Run
             }
             Loadout.Gauge.Restore(s.Gauge);   // 무공·심법을 올리며 움직인 음양을 저장 값으로
             Xp.Restore(s.Level, s.Xp, s.XpTotal);
+            // 오른 경지를 일지에 다시 적는다: 생 기록의 가장 높은 경지와 처음 오른 경지 윤회의 기(장부는 저장하지 않으므로)
+            foreach (var r in _data.Balance.Realms.OrderBy(r => r.Level))
+                if (r.Level > 1 && r.Level <= s.Level) Log.Breakthrough(r.Id);
             Bosses.Restore(s.BossesKilled, s.Level);
             Charge.Restore(s.Charge);
             Minutes = s.Minutes;
