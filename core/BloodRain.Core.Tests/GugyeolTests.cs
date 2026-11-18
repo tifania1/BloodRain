@@ -98,6 +98,15 @@ namespace BloodRain.Core.Tests
             Assert.Equal(first.Id, g.Pick(new[] { Silver, first })!.Value.Id);
         }
 
+        [Fact] public void 구결_시뮬레이터_보고서가_세_몸을_낸다()
+        {
+            var md = BloodRain.Sim.GugyeolSim.Report(BloodRain.Sim.SimData.Load(TestData.DataDir), seeds: 2);
+            foreach (var body in new[] { "| 소림 |", "| 개방 |", "| 남궁 |" }) Assert.Contains(body, md);
+            var p = BloodRain.Sim.GugyeolSim.RunPair(_d, "shaolin", 1);
+            Assert.InRange(p.Followed, 0, p.Steps);
+            Assert.True(p.Steps > 0);
+        }
+
         [Fact] public void 생_도중_저장을_되돌리면_고른_차례도_돌아온다()
         {
             var (_, life) = NewLife();

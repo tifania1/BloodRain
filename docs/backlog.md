@@ -52,6 +52,8 @@ review 6절 '순서 3'에서 쪼갬(2026-11-16 20시, 위가 사람 판단 대�
 - [x] GU-11k 2026-11-18 — (설계안 '회귀 가속' 구결, 정한 것 5) Core `Build.Gugyeol`·`GugyeolPlayer`(지난 생 차례를 앞부분만 따라 고르고 어긋나면 멈춤), `Loadout.PickOrder`, `LifeRecord.PickOrder`, 혼 `GugyeolOf(문파)`·저장 칸 `Gugyeol`, 생 도중 저장 `PickOrder`. gdd 10장 한 줄. 화면(켜기 단추·자동으로 고른 카드 보이기)은 unity_tasks 에 안 올림 — 화면 집중이 풀린 뒤
 - [x] GU-11l 2026-11-18 — 전생의 공력을 혼에: `Soul.RealmCrossings`(생마다 오른 경지까지 구간 +1, 서장 포함, 저장 칸 `RealmCrossings`, 옛 저장은 0부터)·`Soul.PastLifePower()`, `PastLifePower.WakeRealms`(30번 넘은 구간까지 '그 경지로 깨어나기'). 생(RunXp)에 물리는 것은 GU-11f1 감소율·상한이 정해진 뒤 — 지금 물리면 판 세기가 바뀐다
 - [x] GU-11n 2026-11-18 — 연표 사건의 진영 갈래 자리: `chronicle.json` branches(무림맹 집결 정파 원군·마교 포위, 설계안 예 그대로, 이름만), Core `ChronicleBranchDef`·`Chronicle.BranchFor`, strings 셋, gdd 7장 한 줄
+- [x] GU-11o 2026-11-18 — 구결이 실제로 몇 걸음 따르나: `GugyeolSim`(`--gugyeol`) → `design/sim/gugyeol.md`. 같은 몸 두 생, 레벨업 29번: 소림·개방·남궁 30판씩 가운데값 0걸음(평균 0.1~0.2). 뜬 카드에 다음 걸음이 거의 없어 첫 장부터 멈춤
+- [ ] GU-11o1 **사람 결정 대기** 구결을 어떻게 일하게 할지. 추천은 decisions #66(켜진 동안 다음 걸음 카드를 한 장 끼워 띄우고 자동으로 고름, 못 고르면 멈춤). 정해지면 Core `GugyeolPlayer`·`Loadout.RollLevelUp` + 테스트 + gugyeol.md 다시
 - [ ] GU-11h4 **사람 결정 대기** 혈월의 밤 2막(30~60분) 숫자와 60분에 무엇이 끝나는지. 추천은 decisions #64 · 먼저: GU-11h3
 - [ ] GU-11m **사람 결정 대기** 연표 결과의 숫자 넷(막는 판정·강시 문파 땅 세기·무너진 문파마다 천하 혈운·처음 막은 사건 윤회의 기). 설계안엔 말만 있음. 추천은 decisions #65(60초 버팀 · 그 땅 +1.0 · 천하 +0.1씩 · 150). 정해지면 chronicle.json 에 값 + Core `Life.Crisis` 막음 판정·혈운 농도 더하기·Soul 첫 막음 보상
 - [x] GU-11h5 2026-11-18 — `Life` 가 `Chronicle` 을 들고 Tick 마다 시각이 지난 사건을 봄: 그 자리가 화면 대각선 절반 안이면(천하 전체 사건은 필요한 경지면) `LifeLog.Witness` → `LifeRecord.Chronicle` → 혼 `Soul.Chronicle`(저장 칸 Chronicle, 옛 저장은 빈 것으로). 서장은 안 봄. 막음·못 막음·원군·강시 문파는 아직. '화면 대각선 절반' 기준은 예약 세션이 정함(daily)
