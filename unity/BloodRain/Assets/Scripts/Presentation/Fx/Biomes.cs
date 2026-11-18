@@ -34,7 +34,7 @@ namespace BloodRain.Presentation.Fx
             // 숭산 소림: 네모난 돌판, 줄눈에 이끼
             ["songshan"] = new Look { Base = Hex(0xBFC5BA), Shade = Hex(0x8C9A84), Map = Hex(0xB4C0AC), Kind = "slab" },
             // 개방 총타(저잣거리): 수레 자국 난 흙길, 짚
-            ["gaebang_hq"] = new Look { Base = Hex(0xC2B9AE), Shade = Hex(0x968A7C), Map = Hex(0xC8BBAA), Kind = "dirt" },
+            ["gaebang_hq"] = new Look { Base = Hex(0xBEBAB3), Shade = Hex(0x918880), Map = Hex(0xC8BBAA), Kind = "dirt" },
             // 남궁세가: 마름모로 깐 청석
             ["namgung_manor"] = new Look { Base = Hex(0xC9D0D4), Shade = Hex(0x97A4AD), Map = Hex(0xBFCAD2), Kind = "diamond" },
             // 당가타(사천 대숲): 풀빛 땅에 댓잎
@@ -75,7 +75,7 @@ namespace BloodRain.Presentation.Fx
         {
             ["cheongun"] = ("tile_cheongun_yard", 0.36f),
             ["songshan"] = ("tile_ch1_courtyard", 0.5f),
-            ["gaebang_hq"] = ("tile_gaebang_lane", 0.36f),
+            ["gaebang_hq"] = ("tile_gaebang_lane", 0.26f),
             ["namgung_manor"] = ("tile_namgung_court", 0.5f),
             ["danggata"] = ("tile_danggata_bamboo", 0.48f),
             ["janggang"] = ("tile_changjiang_bank", 0.42f),
@@ -323,7 +323,7 @@ namespace BloodRain.Presentation.Fx
                     // 뿌리와 넓은 잎: 굵게 굽는 어두운 뿌리, 둥근 잎 얼룩, 보랏빛 그늘
                     var root = new Color(0.30f, 0.26f, 0.28f); var leafD = new Color(0.30f, 0.42f, 0.30f); var violet = new Color(0.45f, 0.38f, 0.5f);
                     for (int i = 0; i < 30; i++) cv.Blob(cv.R(0, T), cv.R(0, T), cv.R(20, 60), cv.R(14, 36), cv.R(0, 3f), violet, cv.R(0.06f, 0.14f), 1f);
-                    for (int i = 0; i < 16; i++) cv.Stroke(cv.R(0, T), cv.R(0, T), cv.R(0, 6.28f), cv.R(80, 220), cv.R(1.6f, 3.2f), cv.R(-0.02f, 0.02f), root, 0.34f, 0.8f, 0.12f);
+                    for (int i = 0; i < 10; i++) cv.Stroke(cv.R(0, T), cv.R(0, T), cv.R(0, 6.28f), cv.R(80, 200), cv.R(1.4f, 2.6f), cv.R(-0.02f, 0.02f), root, 0.2f, 0.8f, 0.12f);
                     for (int i = 0; i < 170; i++) { float r = cv.R(5, 12); cv.Blob(cv.R(0, T), cv.R(0, T), r, r * cv.R(0.4f, 0.6f), cv.R(0, 3.14f), leafD, cv.R(0.2f, 0.42f), 0.45f); }
                     break;
                 }

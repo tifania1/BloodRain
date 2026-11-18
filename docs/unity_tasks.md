@@ -27,7 +27,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음(실행 중에 만든다)
   - 끝: 아홉 땅 바닥과 몸놀림 일곱 갈래를 다 보고 고친 것·남긴 것을 daily 에. 콘솔 에러 0
   - 찍기: `Captures/ground_<지역>.png` 아홉 장, 경계 한 장
-  - (진행: 2026-11-18 아침 — 컴파일 에러 0. 청운진·화산·숭산·당가타 바닥, 구석 지도, 화산 알림, 정예 부르기는 화면으로 봄. 나머지 땅과 움직이는 모습, 경계 섞임은 못 봄)
+  - (진행: 2026-11-18 아침 — 컴파일 에러 0. 청운진·화산·숭산·당가타 바닥, 구석 지도, 화산 알림, 정예 부르기는 화면으로 봄. 나머지 땅과 움직이는 모습, 경계 섞임은 못 봄. 2026-11-18 20:45 PC: 남은 여섯 땅(개방 총타·남궁세가·장강 수로·무당산·곤륜 설원·십만대산)을 `TestPanel.SwitchBody` 로 서서 봄 — 장강 청록, 무당 옅은 민트에 구름 소용돌이, 곤륜 흰 눈, 남궁 회색 판석으로 땅마다 다르게 읽힘. 고친 것 둘(`Biomes.cs`): 개방 총타가 누런 흙빛이라 원화 세기 0.36 → 0.26, 바탕빛을 덜 붉게(C2B9AE → BEBAB3) / 십만대산 뿌리 획이 굵고 진해 이펙트와 다툴 듯해 16획·0.34 → 10획·0.2. 콘솔 에러 0. 찍음 `docs/unity_shots/GR-01U/` 의 `ground_gaebang.png`·`ground_namgung.png`·`ground_janggang.png`·`ground_wudangsan.png`·`ground_kunlun.png`·`ground_sipmandaesan.png`(고치기 전은 `_before`). 눈에 띈 것: 남궁 판석 줄눈이 또렷해 되풀이가 보임, 무당·십만대산에서 소나무 소품이 왼쪽 위 무공 칸을 덮음. 봉마곡은 문파가 없어 몸 바꾸기로 못 감. 남은 것: 몸놀림 일곱 갈래·경계 섞임·지역 알림 — 에디터가 뒤에 있으면 프레임이 안 돌아 `EditorApplication.Step` 으로만 넘겨서 움직임은 판단 못 함, 사람이 앞에 있을 때나 웹 판에서)
 - [ ] DN-01U 피해 숫자를 Damage Numbers Pro 로 · 먼저: 없음 (2026-11-17 사람: 사 둔 에셋을 "적극 활용")
   - 할 것: `Assets/DamageNumbersPro` 의 프리팹 하나를 복사해 글꼴(지금 `DamageNumberLayer.font`)·크기(보통 22px, 치명 31px)·먹빛을 맞추고, `DamageNumberLayer` 가 숫자를 띄우는 자리에서 그 프리팹의 `Spawn` 을 부른다. 같은 적에게 잇달아 들어간 숫자는 합쳐 보이게(에셋의 Combination). 300마리에서 프레임이 지금보다 나빠지면 되돌린다
   - 쓸 것: `Fx/DamageNumberLayer.cs`, `docs/design/store_assets.md`(어셈블리 `DamageNumbersPro` 를 `BloodRain.Presentation.asmdef` 에 더한다)
