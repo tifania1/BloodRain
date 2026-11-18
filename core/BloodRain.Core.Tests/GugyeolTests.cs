@@ -109,3 +109,44 @@ namespace BloodRain.Core.Tests
         }
     }
 }
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>혼이 경지 구간을 넘은 횟수를 세고 전생의 공력을 낸다(GU-11l).</summary>
+    public class SoulCrossingTests
+    {
+        readonly GameData _d = TestData.Load();
+
+        [Fact] public void 생마다_오른_경지까지_구간을_세고_저장하고_공력을_낸다()
+        {
+            var realms = _d.Balance.Realms.OrderBy(r => r.Level).ToList();
+            var soul = new Soul(_d);
+            soul.EndLife(soul.BeginLife(Rebirth.Prologue(_d)).Finish(LifeEndWay.Fallen, 0));
+            var before = soul.RealmCrossings.ToDictionary(kv => kv.Key, kv => kv.Value);
+            var r = new LifeRecord("shaolin", LifeEndWay.Fallen, new RebirthQiLedger(_d.Cheonha.RebirthQi).Settle(0), Array.Empty<string>(), new[] { "songshan" }, realms[2].Id, Array.Empty<string>());
+            soul.EndLife(r);
+            int Get(Dictionary<string, int> d, string id) => d.TryGetValue(id, out var n) ? n : 0;
+            Assert.Equal(Get(before, realms[1].Id) + 1, soul.RealmCrossings[realms[1].Id]);
+            Assert.Equal(Get(before, realms[2].Id) + 1, soul.RealmCrossings[realms[2].Id]);
+            Assert.False(soul.RealmCrossings.ContainsKey(realms[0].Id));
+            Assert.Equal(0, soul.RealmCrossings.TryGetValue(realms[3].Id, out var n3) ? n3 : 0);
+
+            var back = Soul.FromJson(_d, soul.ToJson());
+            Assert.Equal(soul.RealmCrossings.OrderBy(kv => kv.Key), back.RealmCrossings.OrderBy(kv => kv.Key));
+            var p = back.PastLifePower();
+            Assert.Equal(soul.RealmCrossings[realms[1].Id], p.Crossings(realms[1].Id));
+            // 이류 구간은 줄고, 가장 높이 오른 경지(일류)로 가는 구간은 제 속도
+            Assert.True(p.CutForSegment(1) > 0);
+            Assert.Equal(0f, p.CutForSegment(2));
+            Assert.Empty(p.WakeRealms());
+        }
+
+        [Fact] public void 서른_번_넘은_구간까지만_그_경지로_깨어날_수_있다()
+        {
+            var realms = _d.Balance.Realms.OrderBy(r => r.Level).ToList();
+            var cross = new Dictionary<string, int> { [realms[1].Id] = 31, [realms[2].Id] = 30, [realms[3].Id] = 29, [realms[4].Id] = 40 };
+            var p = new BloodRain.Core.Progression.PastLifePower(realms, cross, realms[4].Id);
+            Assert.Equal(new[] { realms[1].Id, realms[2].Id }, p.WakeRealms());
+        }
+    }
+}

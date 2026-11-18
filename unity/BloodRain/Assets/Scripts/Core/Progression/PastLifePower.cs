@@ -5,7 +5,7 @@
 //   - 그 구간을 넘은 횟수 n 마다 필요한 진기가 CutPerCrossing(4%)씩 줄고, MaxCut(30%)에서 멈춘다.
 //   - 지금까지 가장 높이 오른 경지로 가는 구간은 줄어들지 않는다. 맨 앞은 늘 제 속도.
 // 값 4%·30% 는 설계안 추천(시뮬레이션 전)이라 아직 데이터로 옮기지 않았다. 시뮬레이터 곡선(design/sim/acceleration.md)을 본 뒤 정한다.
-// 아직 Soul 저장·Life 에 물리지 않았다. RunXp.PastLife 에 넣으면 그 판의 필요 진기가 줄어든다.
+// 넘은 횟수는 혼이 센다(Soul.RealmCrossings·PastLifePower(), GU-11l). 아직 Life 에 물리지 않았다. RunXp.PastLife 에 넣으면 그 판의 필요 진기가 줄어든다.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +17,8 @@ namespace BloodRain.Core.Progression
     {
         public const float DefaultCutPerCrossing = 0.04f;
         public const float DefaultMaxCut = 0.30f;
+        /// <summary>같은 구간을 이만큼 넘었으면 침방에서 그 경지로 깨어나기를 고를 수 있다(설계안·기획서 10장 '천하 확장: 전생의 공력').</summary>
+        public const int WakeCrossings = 30;
 
         readonly List<RealmDef> _realms;
         readonly Dictionary<string, int> _crossings;
@@ -73,6 +75,19 @@ namespace BloodRain.Core.Progression
         }
 
         public int Crossings(string realmId) => _crossings.TryGetValue(realmId, out var n) ? n : 0;
+
+        /// <summary>그 경지로 깨어나기를 고를 수 있는 경지 id(낮은 차례). 삼류부터 이어서 모든 구간을 WakeCrossings 번 넘은 데까지.
+        /// 건너뛴 구간의 레벨업 선택을 시작할 때 한꺼번에 고르는 것은 화면 쪽 일이다.</summary>
+        public IReadOnlyList<string> WakeRealms()
+        {
+            var list = new List<string>();
+            for (int i = 1; i < _realms.Count; i++)
+            {
+                if (Crossings(_realms[i].Id) < WakeCrossings) break;
+                list.Add(_realms[i].Id);
+            }
+            return list;
+        }
 
         /// <summary>가는 경지 순번 segment 구간의 줄어드는 몫(0~MaxCut).</summary>
         public float CutForSegment(int segment)
