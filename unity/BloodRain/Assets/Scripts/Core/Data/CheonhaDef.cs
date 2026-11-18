@@ -350,6 +350,15 @@ namespace BloodRain.Core.Data
         /// <summary>늘 남자 몸인 문파(소림).</summary>
         public List<string> MaleOnlySects = new List<string>();
         public List<RebirthUpgradeDef> Upgrades = new List<RebirthUpgradeDef>();
+        /// <summary>무작위 후보에 붙는 '덕'(천하 확장 설계안 정한 것 7, GU-11g). 해금한 문파를 직접 고르는 길과 견줘 무작위 후보를 고를 까닭.
+        /// 내용·크기는 사람 결정 대기(decisions #63)라 지금은 비어 있고, 비어 있으면 후보에 덕이 붙지 않는다(난수도 안 쓴다).</summary>
+        public List<RebirthBoonDef> Boons = new List<RebirthBoonDef>();
+    }
+
+    public sealed class RebirthBoonDef
+    {
+        public string Id = "";
+        public string NameKo = "";
     }
 
     public sealed class RebirthUpgradeDef

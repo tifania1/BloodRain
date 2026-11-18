@@ -6,6 +6,8 @@
 //   첫 환혼(서장 직후)은 firstRebirth 셋 고정, firstRebirthTraits 가 거짓이면 성질도 없다. 다시 고르기도 없다.
 //   바라는 문파(환혼 강화 pin_sect, SV-02): 고른 문파가 한 칸에 늘 들고, 나머지 칸은 그 문파를 빼고 겹치지 않게 뽑는다.
 //         성질은 그대로 무작위, 자리는 섞는다. 다시 고르기를 해도 그 문파는 남는다(성질은 새로). 첫 환혼은 고정이라 안 탄다.
+//   직접 고르기(천하 확장 설계안 정한 것 7, GU-11g): 첫 환혼이 아니면 해금한 문파 가운데 하나를 직접 골라 태어날 수도 있다.
+//         직접 고른 몸은 성질·덕이 없다. 무작위 후보는 그대로 남고, rebirth.boons 가 있으면 후보마다 덕 하나가 붙는다(지금은 비어 있음).
 //   몸: 문파가 기혈·걸음·음양 시작·시작 무공·오의·고유 능력을 정하고(5장), 성질이 능력치·음양 시작·윤회의 기 배율을 더한다.
 //       고유 능력의 숫자(sects[].traitEffect)는 SectTrait 가 읽는다. 능력치 덧셈은 ComputeStats 가 함께 얹는다.
 //       태어난 문파의 진전은 homeSchoolTiers 만큼 더 센다. Synergy.Compute 의 바깥 보너스(고수의 유해와 같은 자리)로 넣는다.
@@ -33,13 +35,17 @@ namespace BloodRain.Core.Meta
         /// <summary>바라는 문파(환혼 강화 pin_sect)로 든 칸인가. 침방 카드의 '願' 낙관. 같은 문파가 둘이어도 이 칸 하나만 참.</summary>
         public bool Pinned { get; }
 
-        public RebirthCandidate(SectDef sect, RegionDef region, IReadOnlyList<BirthTraitDef> traits, bool female = false, bool pinned = false)
+        /// <summary>무작위 후보에 붙은 덕 id(cheonha.json rebirth.boons). 덕 목록이 비었거나 직접 고른 몸이면 null.</summary>
+        public string? Boon { get; }
+
+        public RebirthCandidate(SectDef sect, RegionDef region, IReadOnlyList<BirthTraitDef> traits, bool female = false, bool pinned = false, string? boon = null)
         {
             Sect = sect;
             Region = region;
             Traits = traits;
             Female = female;
             Pinned = pinned;
+            Boon = boon;
         }
 
         public float Density => Region.Density;
@@ -91,6 +97,8 @@ namespace BloodRain.Core.Meta
         public SectTrait SectTrait { get; }
         /// <summary>여자 몸인가(후보에서 그대로). 서장 진소운은 남자.</summary>
         public bool Female { get; internal set; }
+        /// <summary>무작위 후보에 붙어 온 덕 id(GU-11g). 효과는 아직 없다(사람 결정 대기, decisions #63).</summary>
+        public string? Boon { get; internal set; }
 
         /// <summary>이 몸으로 시작하는 로드아웃(시작 무공 Lv1, 음양 게이지는 이 몸의 시작값과 태극 구간).</summary>
         public Loadout NewLoadout(GameData data) => new Loadout(data, Character);
@@ -234,6 +242,26 @@ namespace BloodRain.Core.Meta
         static List<RebirthCandidate> WithGender(CheonhaDef c, List<RebirthCandidate> list, Random rng) =>
             list.Select(x => new RebirthCandidate(x.Sect, x.Region, x.Traits, RollFemale(c.Rebirth, x.Sect, rng), x.Pinned)).ToList();
 
+        /// <summary>무작위 후보마다 덕 하나(rebirth.boons 에서). 목록이 비었으면 난수를 쓰지 않고 그대로 돌려준다(예전 시드와 같은 후보).</summary>
+        public static List<RebirthCandidate> WithBoons(CheonhaDef c, List<RebirthCandidate> list, Random rng)
+        {
+            var boons = c.Rebirth.Boons;
+            if (boons.Count == 0) return list;
+            return list.Select(x => new RebirthCandidate(x.Sect, x.Region, x.Traits, x.Female, x.Pinned, boons[rng.Next(boons.Count)].Id)).ToList();
+        }
+
+        /// <summary>해금한 문파를 직접 골라 태어나는 후보(GU-11g). 성질·덕 없음. female 이 null 이면 후보와 같은 규칙으로 성별을 굴린다.
+        /// 해금 안 됐거나 없는 문파면 ArgumentException, 늘 남자인 문파에 여자 몸을 달라면 ArgumentException.</summary>
+        public static RebirthCandidate Direct(CheonhaDef c, IEnumerable<string> unlockedSects, string sectId, Random rng, bool? female = null)
+        {
+            if (!unlockedSects.Contains(sectId)) throw new ArgumentException($"해금한 문파가 아닙니다: {sectId}", nameof(sectId));
+            var sect = c.Sects.FirstOrDefault(s => s.Id == sectId) ?? throw new ArgumentException($"없는 문파입니다: {sectId}", nameof(sectId));
+            if (female == true && c.Rebirth.MaleOnlySects.Contains(sectId))
+                throw new ArgumentException($"{sectId} 는 늘 남자 몸입니다", nameof(female));
+            bool f = female ?? RollFemale(c.Rebirth, sect, rng);
+            return new RebirthCandidate(sect, c.Region(sect.Region), Array.Empty<BirthTraitDef>(), f);
+        }
+
         /// <summary>첫 환혼(서장 직후): firstRebirth 문파를 데이터 순서대로. 성질은 firstRebirthTraits 가 참일 때만 굴린다.</summary>
         public static List<RebirthCandidate> First(CheonhaDef c, Random rng)
         {
@@ -279,7 +307,7 @@ namespace BloodRain.Core.Meta
             float qi = traits.Sum(t => t.RebirthQi);
             var school = new Dictionary<string, int>();
             if (c.Rebirth.HomeSchoolTiers != 0) school[cand.Sect.Id] = c.Rebirth.HomeSchoolTiers;
-            return new RebirthBody(cand.Sect, cand.Region, CharacterOf(cand.Sect, yinyang), traits, TraitStats(traits), qi, school) { Female = cand.Female };
+            return new RebirthBody(cand.Sect, cand.Region, CharacterOf(cand.Sect, yinyang), traits, TraitStats(traits), qi, school) { Female = cand.Female, Boon = cand.Boon };
         }
 
         /// <summary>서장(첫 생)의 몸: 진소운 제 몸(cheonha.json prologueBody). 성질·문파 진전 보너스 없음.</summary>
@@ -330,8 +358,19 @@ namespace BloodRain.Core.Meta
                 Count = count;
                 RerollsLeft = Math.Max(0, rerolls);
                 PinnedSect = pinnedSect;
-                Candidates = Rebirth.Roll(c, _unlocked, count, rng, PinnedSect);
+                Candidates = Rebirth.WithBoons(c, Rebirth.Roll(c, _unlocked, count, rng, PinnedSect), rng);
             }
+        }
+
+        /// <summary>직접 고를 수 있는 문파(해금한 문파, 데이터 순서). 첫 환혼은 고정이라 비어 있다(GU-11g).</summary>
+        public IReadOnlyList<SectDef> DirectChoices =>
+            IsFirst ? (IReadOnlyList<SectDef>)Array.Empty<SectDef>() : _c.Sects.Where(s => _unlocked.Contains(s.Id)).ToList();
+
+        /// <summary>해금한 문파를 직접 골라 몸을 만든다(성질·덕 없음). 첫 환혼이면 InvalidOperationException.</summary>
+        public RebirthBody ChooseDirect(string sectId, bool? female = null)
+        {
+            if (IsFirst) throw new InvalidOperationException("첫 환혼은 정해진 셋 가운데서만 고릅니다");
+            return Rebirth.Body(_c, Rebirth.Direct(_c, _unlocked, sectId, _rng, female));
         }
 
         /// <summary>후보를 통째로 다시 뽑는다(바라는 문파 칸은 문파만 남고 성질은 새로). 남은 횟수가 없으면 InvalidOperationException.</summary>
@@ -339,7 +378,7 @@ namespace BloodRain.Core.Meta
         {
             if (RerollsLeft <= 0) throw new InvalidOperationException("다시 고르기가 남지 않았습니다");
             RerollsLeft--;
-            Candidates = Rebirth.Roll(_c, _unlocked, Count, _rng, PinnedSect);
+            Candidates = Rebirth.WithBoons(_c, Rebirth.Roll(_c, _unlocked, Count, _rng, PinnedSect), _rng);
             return Candidates;
         }
 
