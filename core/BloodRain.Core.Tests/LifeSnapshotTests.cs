@@ -85,6 +85,30 @@ namespace BloodRain.Core.Tests
             Assert.Equal(new[] { "songshan" }, LifeSnapshot.Capture(life).BossesKilled);
         }
 
+        [Fact] public void 저장_파일에_이어_할_생이_실리고_없으면_예전_문자열과_같다()
+        {
+            var save = SaveGame.New(_d);
+            string plain = save.ToJson();
+            Assert.DoesNotContain("\"life\"", plain);
+            var (_, life) = NewLife();
+            life.Tick(1f, new Regions(_d).Center("songshan"), 0);
+            var link = _d.Synergies.Links.First();
+            save.Ongoing = LifeSnapshot.Capture(life);
+            save.Ongoing.Links.Add(link.Id);
+            var back = SaveGame.FromJson(_d, save.ToJson());
+            Assert.NotNull(back.Ongoing);
+            Assert.Equal(life.Minutes, back.Ongoing!.Minutes, 4);
+            var (_, fresh) = NewLife();
+            fresh.Restore(back.Ongoing);
+            Assert.Contains(link.Id, fresh.Loadout.AwakenedLinks);
+            back.Ongoing = null;
+            Assert.Equal(plain, back.ToJson());
+            // 깨진 칸은 버리고 혼은 살린다
+            Assert.Contains("\"SnapshotVersion\": 1", save.ToJson());
+            var broken = save.ToJson().Replace("\"SnapshotVersion\": 1", "\"SnapshotVersion\": 99");
+            Assert.Null(SaveGame.FromJson(_d, broken).Ongoing);
+        }
+
         [Fact] public void 다른_몸이나_흐른_생에는_되돌리지_않는다()
         {
             var (_, life) = NewLife();

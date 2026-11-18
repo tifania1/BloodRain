@@ -320,6 +320,13 @@ namespace BloodRain.Core.Build
             return list;
         }
 
+        /// <summary>생 도중 저장에서 켠 연환·대성을 되돌린다(LifeSnapshot ②). 조건은 다시 보지 않는다(저장 때 이미 맞았던 것).</summary>
+        internal void RestoreLinks(IEnumerable<string> links, IEnumerable<string> grand)
+        {
+            _links.UnionWith(links);
+            _grandLinks.UnionWith(grand);
+        }
+
         /// <summary>돈오 카드를 집는다: 연환을 켜거나 대성으로 올린다. 조건이 안 맞는 카드는 예외.</summary>
         public void TakeDoneo(DoneoCard card)
         {

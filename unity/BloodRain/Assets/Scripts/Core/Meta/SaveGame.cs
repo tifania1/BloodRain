@@ -1,7 +1,7 @@
 #nullable enable
 // 저장 칸 한 파일(기획서 15장 '저장': 메타 진행은 저장 칸마다 JSON 한 파일로 저장하고 Steam 클라우드에도 칸마다 올린다).
 //   혼(Soul.ToJson)과 객잔 대사 진행(DialogueProgress.ToJson)을 칸 파일 하나(SoulSlots.FileName — soul_1.json~soul_3.json)에 담는다:
-//     { "version": 1, "soul": { …혼 저장… }, "dialogue": { …대사 진행… } }
+//     { "version": 1, "soul": { …혼 저장… }, "dialogue": { …대사 진행… }, "life": { …이어 할 생(있을 때만, Run.LifeSnapshot)… } }
 //   안쪽 두 덩이는 제 형식(제 version)을 그대로 쓴다. 바깥 version 은 묶는 꼴이 바뀔 때만 올린다.
 //   설정(GameSettings)·조작(Controls)은 기기마다 다른 값이라 여기 넣지 않는다(PlayerPrefs).
 //   옛 저장(soul.json·dialogue.json 두 파일, LF-03)은 FromLegacy 로 한 번 읽어 1번 칸으로 옮긴다(SoulSlots.ShouldMigrateLegacy).
@@ -22,6 +22,9 @@ namespace BloodRain.Core.Meta
 
         public Soul Soul { get; }
         public DialogueProgress Dialogue { get; }
+        /// <summary>이어 할 생(생 도중 저장, GU-11h2). 없으면 null — 그 칸을 아예 쓰지 않아 옛 판과 같은 문자열·같은 판 번호로 남는다.
+        /// 옛 판이 이 칸이 있는 저장을 읽으면 칸을 모르고 넘어가 생 단위 저장처럼 돈다(이어 할 생만 없다).</summary>
+        public BloodRain.Core.Run.LifeSnapshot? Ongoing { get; set; }
 
         public SaveGame(Soul soul, DialogueProgress dialogue)
         {
@@ -41,6 +44,7 @@ namespace BloodRain.Core.Meta
                 ["soul"] = JObject.Parse(Soul.ToJson()),
                 ["dialogue"] = JObject.Parse(Dialogue.ToJson()),
             };
+            if (Ongoing != null) o["life"] = JObject.FromObject(Ongoing);
             return o.ToString(Formatting.Indented);
         }
 
@@ -55,7 +59,21 @@ namespace BloodRain.Core.Meta
             if (!(o["soul"] is JObject soul)) throw new FormatException("저장에 혼이 없습니다");
             var soulJson = soul.ToString(Formatting.None);
             var parsedSoul = Soul.FromJson(data, soulJson);
-            return new SaveGame(parsedSoul, ReadDialogue(o["dialogue"] is JObject d ? d.ToString(Formatting.None) : null));
+            var save = new SaveGame(parsedSoul, ReadDialogue(o["dialogue"] is JObject d ? d.ToString(Formatting.None) : null));
+            save.Ongoing = ReadOngoing(o["life"] as JObject);
+            return save;
+        }
+
+        /// <summary>이어 할 생 칸. 없거나 깨졌거나 모르는 판이면 null(혼은 살린다 — 대사와 같은 까닭).</summary>
+        static BloodRain.Core.Run.LifeSnapshot? ReadOngoing(JObject? o)
+        {
+            if (o == null) return null;
+            try
+            {
+                var s = o.ToObject<BloodRain.Core.Run.LifeSnapshot>();
+                return s != null && s.SnapshotVersion == BloodRain.Core.Run.LifeSnapshot.Version ? s : null;
+            }
+            catch (JsonException) { return null; }
         }
 
         /// <summary>옛 두 파일(soul.json·dialogue.json)의 내용으로 만든다. 없는 쪽은 null — 새로 시작.

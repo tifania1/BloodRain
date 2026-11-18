@@ -454,6 +454,9 @@ namespace BloodRain.Core.Run
             foreach (var w in s.Evolved)
                 Loadout.Evolve(_data.Evolutions.FirstOrDefault(e => e.Weapon == w) ?? throw new InvalidOperationException($"절기가 없는 무공입니다: {w}"));
             foreach (var e in s.Chronicle) Log.Witness(e);
+            foreach (var id in s.Links.Concat(s.GrandLinks))
+                if (_data.Synergies.Links.All(l => l.Id != id)) throw new InvalidOperationException($"없는 연환입니다: {id}");
+            Loadout.RestoreLinks(s.Links, s.GrandLinks);
             foreach (var region in s.BossesKilled)
             {
                 var info = Log.KillBoss(region);   // 일지·윤회의 기·혈정을 다시 센다(장부는 저장하지 않으므로)
