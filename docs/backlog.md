@@ -46,7 +46,7 @@ review 6절 '순서 3'에서 쪼갬(2026-11-16 20시, 위가 사람 판단 대�
 - [x] GU-11h 2026-11-18 — 지금 30분에 기대는 곳: `chapters.json` life durationMinutes 30·openEnded(표 길이, 뒤는 마지막 표), `cheonha.json` lifeEnd shadowFromMinute 30·shadowStepMinutes 5(Core `LifeDirector.ShadowStep`, 테스트 LifeDirectorTests·WebShadowTests·ShadowSimTests), bosses.healthCurve 마지막 점 30분(뒤는 기울기 연장), balance spawnTarget 18분 400 뒤 그대로, rebirthQi.targets 30분까지, 시뮬레이터 `CheonhaSim.Minutes` 30. 저장은 혼 단위뿐(`Meta/SaveGame.cs`, 생 안 상태 없음). 아래 다섯으로 쪼갬
 - [ ] GU-11h1 생 도중 저장 ①: Core `LifeSnapshot` — 시각·레벨·진기·위치·경지·지역 방문·무공/심법 레벨·음양·오의 게이지·은자를 담고 `Life` 에서 뽑고 되돌리는 왕복 테스트. 적·탄·사건 자리는 저장하지 않고 이어 할 때 비운 뒤 생성 규칙대로 다시 채운다(예약 세션이 정한 시작 방식, daily 에 적음). `SaveGame` 에 넣는 것은 ②
 - [ ] GU-11h2 생 도중 저장 ②: 땅의 주인 깨어남·처치, 각성·연환, 기연 진행 등 남은 생 안 상태를 스냅샷에 더하고 `SaveGame`(SaveVersion 2, 옛 판 읽기 유지)에 '이어 할 생' 칸 하나 · 먼저: GU-11h1
-- [ ] GU-11h3 시뮬레이터 60분: `CheonhaSim` 을 60분까지 돌려 지금 규칙(마지막 표 연장, 그림자 5분마다)으로 30~60분에 레벨·그림자 단계·땅의 주인 기혈이 어떻게 가는지 표(`design/sim/cheonha60.md`). 값은 안 고침. GU-11h4 결정의 재료
+- [x] GU-11h3 2026-11-18 — `LongLifeSim`(`--cheonha60`) 숭산 소림 10판, `design/sim/cheonha60.md`: 30분 뒤로 적 수 400·종류는 그대로, 레벨은 5분에 10~14씩 계속(60분 196), 땅의 주인 기혈 배율 1.31 → 2.24, 봉인석 없는 현경은 그림자 60분에 7단계(접촉 30 → 114, 걸음 85 → 133). 2막에 새로 나오는 것이 없음을 확인 — GU-11h4 재료
 - [ ] GU-11h4 **사람 결정 대기** 혈월의 밤 2막(30~60분) 숫자와 60분에 무엇이 끝나는지. 추천은 decisions #64 · 먼저: GU-11h3
 - [ ] GU-11h5 연표를 Life 에 물림(겪음 기록만): 사건 시각에 그 자리가 화면 대각선 안이면 혼에 '겪은 사건'으로 남기고(설계안 규칙 5 '먹으로 그려짐'), 처음 겪은 사건 수를 생 기록에. 막음·못 막음 판정과 원군·강시 문파는 규칙이 더 정해진 뒤. '화면 안' 기준은 예약 세션 추천이라 daily·decisions 에 같이 적는다
 - [x] SFX-A1 2026-11-17 — 사람이 정함: 효과음은 지금 길 그대로, 목소리만 Artlist AI 음성으로 시험. '효과음'은 배경음을 말한 것이었고 배경음은 이미 있으니(Gemini 33곡, 귀 검수 대기) 다시 만들지 않는다

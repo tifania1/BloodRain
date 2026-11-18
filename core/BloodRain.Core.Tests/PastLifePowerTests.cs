@@ -59,6 +59,13 @@ namespace BloodRain.Core.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new PastLifePower(Realms, new Dictionary<string, int>(), null, 0.04f, 1f));
         }
 
+        [Fact] public void 육십분_보고서가_5분마다_60분까지_선다()
+        {
+            var md = BloodRain.Sim.LongLifeSim.Report(BloodRain.Sim.SimData.Load(TestData.DataDir), seeds: 1);
+            Assert.Contains("| 60 |", md);
+            Assert.Equal(12, md.Split('\n').Count(l => System.Text.RegularExpressions.Regex.IsMatch(l, @"^\| \d+ \| \d+ \|")));
+        }
+
         [Fact] public void 가속_보고서가_목표_곡선과_나란히_선다()
         {
             var md = BloodRain.Sim.AccelerationSim.Report(BloodRain.Sim.SimData.Load(TestData.DataDir), seeds: 1);
