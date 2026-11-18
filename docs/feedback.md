@@ -80,4 +80,5 @@
 ## 2026-11-18
 - (06:30, 아침 정리 알림을 보고) "커밋해" — PC 저장소(`E:\Unity\BloodRain`)에 남은 변경(`Assets/Art/Fonts/NotoSerifKR SDF.asset`·`YujiBoku Dynamic SDF.asset`·`ProjectSettings/ProjectSettings.asset`)을 커밋하라는 뜻. 클라우드 정리 세션은 PC 에 닿지 않아 다음 PC Unity 세션이 한다: 추적 중인 이 세 파일만 커밋해 `claude/dev` 로 푸시하고(메시지 예: "Unity 저장 뒤 설정(글꼴 에셋), 사람이 커밋하라고 함"), 안 추적 파일(`PlayerAllIn1.mat`, `Captures/`)은 `docs/design/store_assets.md` 규칙(산 에셋은 커밋하지 않음)을 보고 산 에셋에 기대는 것이면 `.gitignore` 에 넣는다. 그다음 평소 차례를 돈다. → 끝: 2026-11-18 08:30 대화 세션이 PC 에서 세 파일과 `PlayerAllIn1.mat`(직접 만든 재질, 산 셰이더를 가리키기만 함)을 커밋·푸시. `Captures/` 는 그대로 둠
 - (08:30 대화) "밤새 얼마나 진행됐지? 막힌 부분이 있다면 해결해 줘" → 끝: 2026-11-18 daily 08:30 줄
+- (09:16 대화) "설계안 결정사항을 넣었어" — 천하 확장 설계안(Claude Docs) '정해 주실 것' 표의 결정 칸: 1 "히든 해금 캐릭터로 넣음"(무림맹·황실·혈교) · 2 "그대로" · 3 "그대로" · 4 "그렇게" · 5 "그렇게" · 6 "넣음" · 7 "추천대로" · 8 "좋아." → 반영: 2026-11-18 `docs/design/cheonha_expansion.md` '정한 것', 원본 글 전체는 `cheonha_expansion_full.md`, decisions #57 닫음, backlog GU-11b~h(시제품은 Core·시뮬레이터부터)
 
