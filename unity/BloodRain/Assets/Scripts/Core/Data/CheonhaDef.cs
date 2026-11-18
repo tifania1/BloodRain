@@ -41,6 +41,8 @@ namespace BloodRain.Core.Data
         public List<RegionDef> Regions = new List<RegionDef>();
         public BossRulesDef Bosses = new BossRulesDef();
         public List<SectDef> Sects = new List<SectDef>();
+        /// <summary>진영(정파·사파·마교·새외). 문파마다 하나(SectDef.Camp).</summary>
+        public CampsDef Camps = new CampsDef();
         public PrologueBodyDef PrologueBody = new PrologueBodyDef();
         public BirthTraitsDef BirthTraits = new BirthTraitsDef();
         public RebirthDef Rebirth = new RebirthDef();
@@ -58,6 +60,8 @@ namespace BloodRain.Core.Data
 
         public RegionDef Region(string id) => Regions.First(r => r.Id == id);
         public SectDef Sect(string id) => Sects.First(s => s.Id == id);
+        /// <summary>그 문파 몸의 진영.</summary>
+        public CampDef CampOf(string sectId) => Camps.List.First(c => c.Id == Sect(sectId).Camp);
         public BirthTraitDef Trait(string id) => BirthTraits.List.First(t => t.Id == id);
         /// <summary>땅의 주인이 있는 지역(봉마곡 빼고 일곱).</summary>
         public IEnumerable<RegionDef> BossRegions => Regions.Where(r => r.Boss != null && !r.Final);
@@ -234,11 +238,27 @@ namespace BloodRain.Core.Data
     public sealed class FinalRequiresDef { public int SealStones; public string Realm = ""; }
 
     /// <summary>문파 하나 = 태어날 수 있는 몸의 바탕(기획서 5장).</summary>
+    /// <summary>진영 목록(천하 확장 설계안 '정·사·마 진영', 2026-11-18). 같은 연표 사건의 갈래를 진영에 따라 나눌 자리.</summary>
+    public sealed class CampsDef
+    {
+        public List<CampDef> List = new List<CampDef>();
+    }
+
+    public sealed class CampDef
+    {
+        public const string Orthodox = "orthodox", Unorthodox = "unorthodox", Demonic = "demonic", Outland = "outland";
+        public string Id = "";
+        public string NameKo = "";
+        public string Hanja = "";
+    }
+
     public sealed class SectDef
     {
         public string Id = "";
         public string NameKo = "";
         public string Region = "";
+        /// <summary>진영 id(cheonha.json camps.list). 천하 확장 '정·사·마 진영'.</summary>
+        public string Camp = "";
         /// <summary>대표 인물(characters.json id). 화산·곤륜은 없음.</summary>
         public string? Leader;
         public string StartWeapon = "";

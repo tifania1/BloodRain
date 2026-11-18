@@ -94,6 +94,24 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"{TestData.Num((float)_c["crush"]!["sweepViewMultiple"]!)}배 안", brk);
         }
 
+        // ---- 5장 천하 확장: 진영 ----
+
+        [Fact] public void 문파마다_진영이_하나이고_기획서_줄과_같다()
+        {
+            var camps = _d.Cheonha.Camps.List.Select(c => c.Id).ToList();
+            Assert.Equal(new[] { "orthodox", "unorthodox", "demonic", "outland" }, camps);
+            foreach (var s in _d.Cheonha.Sects) Assert.Contains(s.Camp, camps);
+            var line = TestData.GddSection("천하 확장: 세력").Split('\n').Single(l => l.StartsWith("- 지금 아홉의 진영"));
+            foreach (var c in _d.Cheonha.Camps.List)
+            {
+                var names = _d.Cheonha.Sects.Where(s => s.Camp == c.Id).Select(s => s.NameKo).ToList();
+                if (names.Count == 0) { Assert.Contains($"{c.NameKo}는 아직 없다", line); continue; }
+                Assert.Contains($"{c.NameKo} = {string.Join("·", names)}", line);
+            }
+            Assert.Equal("정파", _d.Cheonha.CampOf("shaolin").NameKo);
+            Assert.Equal("마교", _d.Cheonha.CampOf("demonic").NameKo);
+        }
+
         // ---- 7장 지역 ----
 
         [Fact] public void 지역표가_데이터와_같다()
