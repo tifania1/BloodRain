@@ -20,6 +20,11 @@ namespace BloodRain.Core.Run
         public int SnapshotVersion = Version;
         /// <summary>태어난 문파 id(서장은 null). 되돌릴 때 같은 몸인지 본다.</summary>
         public string? Sect;
+        /// <summary>몸을 다시 만들 재료(태어난 지역·타고난 성질 id·여자 몸·덕). 옛 저장엔 없어 null — 그때는 문파만 본다.</summary>
+        public string? Region;
+        public List<string>? Traits;
+        public bool Female;
+        public string? Boon;
         public float Minutes;
         public int Level;
         public double Xp;
@@ -50,6 +55,10 @@ namespace BloodRain.Core.Run
         public static LifeSnapshot Capture(Life life) => new LifeSnapshot
         {
             Sect = life.Body.Sect?.Id,
+            Region = life.Body.Region.Id,
+            Traits = life.Body.Traits.Select(t => t.Id).ToList(),
+            Female = life.Body.Female,
+            Boon = life.Body.Boon,
             Minutes = life.Minutes,
             Level = life.Xp.Level,
             Xp = life.Xp.Xp,
@@ -75,6 +84,21 @@ namespace BloodRain.Core.Run
         };
 
         [Newtonsoft.Json.JsonIgnore] public Vector2 Position => new Vector2(X, Y);
+
+        /// <summary>이어 할 때 같은 몸을 만들 후보(Rebirth.Body 에 넘긴다). 서장 저장이거나 몸 재료가 없는 옛 저장이면 null.</summary>
+        public Meta.RebirthCandidate? Candidate(Data.CheonhaDef c)
+        {
+            if (Sect == null || Region == null || Traits == null) return null;
+            return new Meta.RebirthCandidate(c.Sect(Sect), c.Region(Region), Traits.Select(c.Trait).ToList(), Female, boon: Boon);
+        }
+
+        /// <summary>이 몸이 저장한 몸과 같은가(문파, 그리고 재료가 있으면 지역·성질·성별·덕까지).</summary>
+        public bool SameBody(Meta.RebirthBody body)
+        {
+            if (Sect != body.Sect?.Id) return false;
+            if (Region == null || Traits == null) return true;
+            return Region == body.Region.Id && Traits.SequenceEqual(body.Traits.Select(t => t.Id)) && Female == body.Female && Boon == body.Boon;
+        }
     }
 
     /// <summary>생 도중 저장 ② 넷째 조각: 깨달음·기연·영약·재기.</summary>

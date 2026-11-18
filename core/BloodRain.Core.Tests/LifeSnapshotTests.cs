@@ -198,6 +198,29 @@ namespace BloodRain.Core.Tests
             Assert.NotNull(back.Ongoing);
         }
 
+        [Fact] public void 저장한_몸_재료로_같은_몸을_다시_만든다()
+        {
+            var soul = new Soul(_d);
+            soul.EndLife(soul.BeginLife(Rebirth.Prologue(_d)).Finish(LifeEndWay.Fallen, 0));
+            var c = _d.Cheonha;
+            var traits = c.BirthTraits.List.Take(2).ToList();
+            var cand = new RebirthCandidate(c.Sect("gaebang"), c.Region(c.Sect("gaebang").Region), traits, female: true);
+            var life = new Life(soul, Rebirth.Body(c, cand), new Random(1));
+            life.Tick(1f, new Regions(_d).Center(c.Sect("gaebang").Region), 0);
+            var back = JsonConvert.DeserializeObject<LifeSnapshot>(JsonConvert.SerializeObject(LifeSnapshot.Capture(life)))!;
+
+            var again = back.Candidate(c)!;
+            Assert.Equal(traits.Select(t => t.Id), again.Traits.Select(t => t.Id));
+            Assert.True(again.Female);
+            var fresh = new Life(soul, Rebirth.Body(c, again), new Random(2));
+            fresh.Restore(back);
+            Assert.Equal(life.Body.RebirthQiBonus, fresh.Body.RebirthQiBonus);
+            Assert.Equal(life.Loadout.Gauge.Value, fresh.Loadout.Gauge.Value);
+            // 성질이 다른 같은 문파 몸에는 되돌리지 않는다
+            var plain = new Life(soul, Rebirth.Body(c, new RebirthCandidate(c.Sect("gaebang"), cand.Region, Array.Empty<BirthTraitDef>(), female: true)), new Random(3));
+            Assert.Throws<InvalidOperationException>(() => plain.Restore(back));
+        }
+
         [Fact] public void 장부_칸이_없는_옛_스냅샷도_읽는다()
         {
             var (_, life) = NewLife();
@@ -207,11 +230,14 @@ namespace BloodRain.Core.Tests
             obj.Remove("Tally");
             obj.Remove("Awakened");
             obj.Remove("Boons");
+            obj.Remove("Region");
+            obj.Remove("Traits");
             var back = obj.ToObject<LifeSnapshot>()!;
             Assert.Null(back.Tally);
             var (_, fresh) = NewLife();
             fresh.Restore(back);
             Assert.Equal(0, fresh.Log.Kills);
+            Assert.Null(back.Candidate(_d.Cheonha));   // 몸 재료가 없는 옛 저장은 문파만 맞으면 되돌린다
         }
 
         [Fact] public void 다른_몸이나_흐른_생에는_되돌리지_않는다()

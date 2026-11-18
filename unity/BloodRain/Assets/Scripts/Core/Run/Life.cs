@@ -461,7 +461,7 @@ namespace BloodRain.Core.Run
         {
             if (s.SnapshotVersion != LifeSnapshot.Version) throw new InvalidOperationException($"모르는 저장 판: {s.SnapshotVersion}");
             if (Record != null || Minutes > 0) throw new InvalidOperationException("막 만든 생에만 되돌린다");
-            if (s.Sect != Body.Sect?.Id) throw new InvalidOperationException($"다른 몸의 저장입니다: {s.Sect}");
+            if (!s.SameBody(Body)) throw new InvalidOperationException($"다른 몸의 저장입니다: {s.Sect} {s.Region}");
             while (Loadout.WeaponSlots < s.WeaponSlots) Loadout.AddExtraSlot(true);
             while (Loadout.PassiveSlots < s.PassiveSlots) Loadout.AddExtraSlot(false);
             foreach (var kv in s.Weapons)
