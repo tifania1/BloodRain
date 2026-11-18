@@ -105,6 +105,16 @@ namespace BloodRain.Core.Tests
             Assert.All(_d.Chronicle.Events, e => Assert.False(string.IsNullOrEmpty(e.PlaceKo)));
         }
 
+        /// <summary>GU-11e 보고서가 세 몸 모두 사건 열하나를 판정하고, 설계안 '첫 생' 칸을 숭산 표에 나란히 둔다.</summary>
+        [Fact] public void 연표_시뮬레이션_보고서가_세_몸을_다_판정한다()
+        {
+            var md = BloodRain.Sim.ChronicleSim.Report(BloodRain.Sim.SimData.Load(TestData.DataDir), seeds: 2);
+            foreach (var body in new[] { "## 소림 몸", "## 개방 몸", "## 남궁 몸" }) Assert.Contains(body, md);
+            Assert.Equal(3 * _d.Chronicle.Events.Count, md.Split('\n').Count(l => l.StartsWith("| ") && System.Text.RegularExpressions.Regex.IsMatch(l, @"^\| \d+:\d\d \|")));
+            Assert.Contains("설계안 '첫 생'", md);
+            Assert.Equal(_d.Chronicle.Events.Select(e => e.Id).OrderBy(x => x), BloodRain.Sim.ChronicleSim.DesignFirstLife.Keys.OrderBy(x => x));
+        }
+
         [Theory]
         [InlineData("\"region\": \"gaebang_hq\"", "\"region\": \"nowhere\"")]
         [InlineData("\"kind\": \"movement\", \"atSeconds\": 120", "\"kind\": \"nope\", \"atSeconds\": 120")]
