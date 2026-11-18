@@ -454,6 +454,12 @@ namespace BloodRain.Core.Run
             foreach (var w in s.Evolved)
                 Loadout.Evolve(_data.Evolutions.FirstOrDefault(e => e.Weapon == w) ?? throw new InvalidOperationException($"절기가 없는 무공입니다: {w}"));
             foreach (var e in s.Chronicle) Log.Witness(e);
+            foreach (var id in s.Awakened)
+            {
+                if (_data.Evolutions.All(e => e.Id != id)) throw new InvalidOperationException($"없는 절기입니다: {id}");
+                Log.Awaken(id);
+            }
+            if (s.Tally != null) Log.RestoreTally(s.Tally);
             foreach (var id in s.Links.Concat(s.GrandLinks))
                 if (_data.Synergies.Links.All(l => l.Id != id)) throw new InvalidOperationException($"없는 연환입니다: {id}");
             Loadout.RestoreLinks(s.Links, s.GrandLinks);

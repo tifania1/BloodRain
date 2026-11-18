@@ -141,6 +141,15 @@ namespace BloodRain.Core.Meta
             _orbs += orbs;
         }
 
+        /// <summary>생 도중 저장을 되돌릴 때(LifeSnapshot) 구슬 몫을 저장 값으로 놓는다. 보너스는 되돌리면서 다시 적으니 건드리지 않는다.</summary>
+        internal void RestoreOrbs(double weighted, double raw, long orbs)
+        {
+            if (weighted < 0 || raw < 0 || orbs < 0) throw new ArgumentOutOfRangeException(nameof(orbs));
+            _weighted = weighted;
+            _raw = raw;
+            _orbs = orbs;
+        }
+
         /// <summary>이 종류의 보너스 한 번이 몇인지(cheonha.json rebirthQi).</summary>
         public int AmountOf(RebirthQiBonusKind kind) => kind switch
         {

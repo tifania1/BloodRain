@@ -2,8 +2,9 @@
 // 생 도중 저장 ①(backlog GU-11h1, 천하 확장 설계안 '긴 생을 위한 두 가지'). 한 생 상한이 60분으로 늘어 중간에 끄고 이어 할 수 있어야 한다.
 // 이 판(①)이 담는 것: 시각·레벨·진기·위치·밟은 땅·무공/심법 레벨과 칸 수·음양·오의 게이지·은자.
 // 담지 않는 것: 적·탄·사건 자리(이어 할 때 비우고 생성 규칙대로 다시 채운다 — 2026-11-18 예약 세션이 정한 시작 방식),
-//   그리고 ②(GU-11h2)로 미룬 것: 처치 때 혼에 바로 여는 것(극성 처치·의상), 각성 일지(LifeLog.Awaken), 깨달음, 기연, 윤회의 기 장부, 영약, 부활.
-//   (② 첫 조각으로 절기를 깨운 무공·겪은 연표 사건·이번 생에 쓰러뜨린 땅의 주인·켠 연환과 대성은 담는다. 땅의 주인 깨어남은 레벨로 다시 셈한다.)
+//   그리고 ②(GU-11h2)로 미룬 것: 처치 때 혼에 바로 여는 것(극성 처치·의상), 깨달음, 기연, 영약, 부활.
+//   (② 첫 조각으로 절기를 깨운 무공·겪은 연표 사건·이번 생에 쓰러뜨린 땅의 주인·켠 연환과 대성은 담는다. 땅의 주인 깨어남은 레벨로 다시 셈한다.
+//    셋째 조각(2026-11-18 20시)으로 일지의 절기 각성, 세던 수·찢긴 비급·밀서·속삭임, 구슬로 모은 윤회의 기 장부(LifeLogTally)도 담는다.)
 // 되돌리기는 새로 만든 같은 몸의 Life 에 Life.Restore 로 한다. 저장 파일에는 SaveGame.Ongoing('life' 칸)으로 들어간다.
 using System;
 using System.Collections.Generic;
@@ -38,6 +39,10 @@ namespace BloodRain.Core.Run
         /// <summary>켠 연환과 대성으로 올린 연환 id.</summary>
         public List<string> Links = new List<string>();
         public List<string> GrandLinks = new List<string>();
+        /// <summary>② 셋째 조각: 일지의 절기 각성(절기 id, 깨운 차례 — 처음 깨운 절기는 혼 장부로 다시 가린다).</summary>
+        public List<string> Awakened = new List<string>();
+        /// <summary>일지의 세던 수(처치·경공·정신부·금두꺼비·음식·정예·영물·의서)와 찢긴 비급·밀서·속삭임, 구슬로 모은 윤회의 기 장부. 옛 저장엔 없어 null.</summary>
+        public Meta.LifeLogTally? Tally;
 
         public static LifeSnapshot Capture(Life life) => new LifeSnapshot
         {
@@ -61,6 +66,8 @@ namespace BloodRain.Core.Run
             BossesKilled = life.Log.BossesKilled.ToList(),
             Links = life.Loadout.AwakenedLinks.ToList(),
             GrandLinks = life.Loadout.GrandLinks.ToList(),
+            Awakened = life.Log.AwakenedEvolutions.ToList(),
+            Tally = life.Log.Tally(),
         };
 
         [Newtonsoft.Json.JsonIgnore] public Vector2 Position => new Vector2(X, Y);

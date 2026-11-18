@@ -110,6 +110,61 @@ namespace BloodRain.Core.Tests
             Assert.Null(SaveGame.FromJson(_d, broken).Ongoing);
         }
 
+        [Fact] public void 일지의_세던_수와_구슬_윤회의_기를_되돌린다()
+        {
+            var (_, life) = NewLife();
+            var at = new Regions(_d).Center("songshan");
+            for (int i = 0; i < 40; i++) { life.Tick(0.1f, at, 0); life.Absorb(2); }
+            life.Log.Kill(57);
+            life.Log.Dash(); life.Log.Dash();
+            life.Log.UseTalisman();
+            life.Log.CatchGoldenToad();
+            life.Log.EatFood();
+            life.Log.KillElite();
+            life.Log.CatchSpiritBeast();
+            life.Log.Whispered = true;
+            life.Log.SingleWeaponBoss = true;
+            var letter = life.Log.ReadLetter(Array.Empty<string>());
+            var evo = _d.Evolutions.First();
+            life.Log.Awaken(evo.Id);
+            var json = JsonConvert.SerializeObject(LifeSnapshot.Capture(life));
+            var back = JsonConvert.DeserializeObject<LifeSnapshot>(json)!;
+
+            var (_, fresh) = NewLife();
+            fresh.Restore(back);
+            var a = life.Log.Finish(LifeEndWay.Fallen, 10);
+            var b = fresh.Log.Finish(LifeEndWay.Fallen, 10);
+            Assert.Equal(a.Kills, b.Kills);
+            Assert.Equal(a.Dashes, b.Dashes);
+            Assert.Equal(a.TalismansUsed, b.TalismansUsed);
+            Assert.Equal(a.GoldenToads, b.GoldenToads);
+            Assert.Equal(a.FoodEaten, b.FoodEaten);
+            Assert.Equal(a.BloodCrystal, b.BloodCrystal);
+            Assert.Equal(a.SingleWeaponBoss, b.SingleWeaponBoss);
+            Assert.Equal(a.Whispered, b.Whispered);
+            Assert.Equal(a.Letters, b.Letters);
+            if (letter != null) Assert.Contains(letter.Id, b.Letters);
+            Assert.Equal(new[] { evo.Id }, b.AwakenedEvolutions);
+            Assert.Equal(life.Log.Qi.OrbCount, fresh.Log.Qi.OrbCount);
+            Assert.True(a.RebirthQi.Total > 0);
+            Assert.Equal(a.RebirthQi.Total, b.RebirthQi.Total);
+        }
+
+        [Fact] public void 장부_칸이_없는_옛_스냅샷도_읽는다()
+        {
+            var (_, life) = NewLife();
+            life.Tick(0.5f, new Regions(_d).Center("songshan"), 0);
+            var json = JsonConvert.SerializeObject(LifeSnapshot.Capture(life));
+            var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
+            obj.Remove("Tally");
+            obj.Remove("Awakened");
+            var back = obj.ToObject<LifeSnapshot>()!;
+            Assert.Null(back.Tally);
+            var (_, fresh) = NewLife();
+            fresh.Restore(back);
+            Assert.Equal(0, fresh.Log.Kills);
+        }
+
         [Fact] public void 다른_몸이나_흐른_생에는_되돌리지_않는다()
         {
             var (_, life) = NewLife();

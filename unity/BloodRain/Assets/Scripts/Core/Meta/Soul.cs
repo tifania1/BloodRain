@@ -1062,6 +1062,36 @@ namespace BloodRain.Core.Meta
             new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
                 BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss, _letters, Whispered, _chronicle);
 
+        /// <summary>생 도중 저장을 되돌릴 때(Life.Restore) 세던 수와 모은 목록을 저장 값으로 놓는다. 막 만든 일지에만.
+        /// 땅의 주인·경지·밟은 땅·절기·연표처럼 혼 장부를 다시 세야 하는 것은 각자의 메서드로 다시 부르니 여기서 안 다룬다.</summary>
+        internal void RestoreTally(LifeLogTally t)
+        {
+            if (Kills != 0 || _eliteKills != 0 || Qi.OrbCount != 0) throw new InvalidOperationException("막 만든 일지에만 되돌린다");
+            Kills = t.Kills;
+            Dashes = t.Dashes;
+            TalismansUsed = t.TalismansUsed;
+            GoldenToads = t.GoldenToads;
+            FoodEaten = t.FoodEaten;
+            _eliteKills = t.EliteKills;
+            _spiritBeasts = t.SpiritBeasts;
+            Manuscripts = t.Manuscripts;
+            SingleWeaponBoss = t.SingleWeaponBoss;
+            Whispered = t.Whispered;
+            foreach (var id in t.Torn) if (!_torn.Contains(id)) _torn.Add(id);
+            foreach (var id in t.Letters) if (!_letters.Contains(id)) _letters.Add(id);
+            Qi.RestoreOrbs(t.OrbWeighted, t.OrbRaw, t.OrbCount);
+        }
+
+        /// <summary>지금 세던 수와 모은 목록(생 도중 저장용).</summary>
+        public LifeLogTally Tally() => new LifeLogTally
+        {
+            Kills = Kills, Dashes = Dashes, TalismansUsed = TalismansUsed, GoldenToads = GoldenToads, FoodEaten = FoodEaten,
+            EliteKills = _eliteKills, SpiritBeasts = _spiritBeasts, Manuscripts = Manuscripts,
+            SingleWeaponBoss = SingleWeaponBoss, Whispered = Whispered,
+            Torn = _torn.ToList(), Letters = _letters.ToList(),
+            OrbWeighted = Qi.WeightedOrbValue, OrbRaw = Qi.OrbValue, OrbCount = Qi.OrbCount,
+        };
+
         readonly List<string> _chronicle = new List<string>();
         /// <summary>이번 생에 겪은 연표 사건 id(겪은 차례).</summary>
         public IReadOnlyList<string> Chronicle => _chronicle;
@@ -1094,5 +1124,17 @@ namespace BloodRain.Core.Meta
             }
             return null;
         }
+    }
+
+    /// <summary>한 생 일지의 세던 수와 모은 목록(생 도중 저장 ②, backlog GU-11h2). 구슬로 모은 윤회의 기 장부(값 × 농도 합)도 여기에.</summary>
+    public sealed class LifeLogTally
+    {
+        public int Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten;
+        public int EliteKills, SpiritBeasts, Manuscripts;
+        public bool SingleWeaponBoss, Whispered;
+        public List<string> Torn = new List<string>();
+        public List<string> Letters = new List<string>();
+        public double OrbWeighted, OrbRaw;
+        public long OrbCount;
     }
 }
