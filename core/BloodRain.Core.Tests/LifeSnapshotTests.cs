@@ -187,6 +187,17 @@ namespace BloodRain.Core.Tests
             Assert.Equal(life.Charge.Value, fresh.Charge.Value, 4);
         }
 
+        [Fact] public void 처치_때_혼에_바로_연_것은_혼_칸이_싣는다()
+        {
+            // 극성 처치·태극 의상처럼 처치 순간 혼에 여는 것은 스냅샷이 아니라 같은 파일의 혼(soul 칸)이 싣는다. 되돌리며 다시 열지 않는다.
+            var (soul, life) = NewLife();
+            soul.Unlock(UnlockToken.BossAtExtreme);
+            var save = new SaveGame(soul, new DialogueProgress()) { Ongoing = LifeSnapshot.Capture(life) };
+            var back = SaveGame.FromJson(_d, save.ToJson());
+            Assert.True(back.Soul.IsUnlocked(UnlockToken.BossAtExtreme));
+            Assert.NotNull(back.Ongoing);
+        }
+
         [Fact] public void 장부_칸이_없는_옛_스냅샷도_읽는다()
         {
             var (_, life) = NewLife();
