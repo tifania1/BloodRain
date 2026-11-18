@@ -1311,6 +1311,8 @@
   "chronicle.events.danggata_poison.name": "The blood poison is unleashed",
   "chronicle.events.murim_muster.place": "Heart of the Central Plains",
   "chronicle.events.murim_muster.name": "The Murim Alliance musters",
+  "chronicle.events.murim_muster.branches.reinforce.name": "Orthodox body: reinforcements join",
+  "chronicle.events.murim_muster.branches.siege.name": "Demonic body: break the encirclement",
   "chronicle.events.imperial_south.place": "Northern Road",
   "chronicle.events.imperial_south.name": "The Imperial Guard marches south and seals the road",
   "chronicle.events.magyo_north.place": "The Hundred Thousand Mountains",

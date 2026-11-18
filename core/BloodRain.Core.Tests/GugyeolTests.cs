@@ -150,3 +150,22 @@ namespace BloodRain.Core.Tests
         }
     }
 }
+
+namespace BloodRain.Core.Tests
+{
+    /// <summary>연표 사건의 진영 갈래(GU-11n).</summary>
+    public class ChronicleBranchTests
+    {
+        readonly GameData _d = TestData.Load();
+
+        [Fact] public void 갈래의_진영은_있는_진영이고_무림맹_집결은_정파와_마교가_갈린다()
+        {
+            var camps = _d.Cheonha.Camps.List.Select(c => c.Id).ToHashSet();
+            foreach (var e in _d.Chronicle.Events) foreach (var b in e.Branches) Assert.Contains(b.Camp, camps);
+            var muster = _d.Chronicle.Events.Single(e => e.Id == "murim_muster");
+            Assert.Equal("reinforce", BloodRain.Core.World.Chronicle.BranchFor(muster, _d.Cheonha.CampOf("shaolin").Id)!.Id);
+            Assert.Equal("siege", BloodRain.Core.World.Chronicle.BranchFor(muster, _d.Cheonha.CampOf("demonic").Id)!.Id);
+            Assert.Null(BloodRain.Core.World.Chronicle.BranchFor(muster, _d.Cheonha.CampOf("waterfort").Id));
+        }
+    }
+}

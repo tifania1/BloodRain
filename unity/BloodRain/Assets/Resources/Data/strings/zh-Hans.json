@@ -1311,6 +1311,8 @@
   "chronicle.events.danggata_poison.name": "血毒散开",
   "chronicle.events.murim_muster.place": "中原腹地",
   "chronicle.events.murim_muster.name": "武林盟集结",
+  "chronicle.events.murim_muster.branches.reinforce.name": "正派之身：得援军",
+  "chronicle.events.murim_muster.branches.siege.name": "魔教之身：须杀出重围",
   "chronicle.events.imperial_south.place": "北方大路",
   "chronicle.events.imperial_south.name": "禁军南下，封锁道路",
   "chronicle.events.magyo_north.place": "十万大山",

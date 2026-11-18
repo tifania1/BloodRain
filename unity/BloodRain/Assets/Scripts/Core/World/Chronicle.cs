@@ -83,12 +83,17 @@ namespace BloodRain.Core.World
                     throw new InvalidOperationException($"chronicle.json {e.Id}: 모르는 경지 {e.MinRealm}");
                 if (e.Everywhere && e.MinRealm == null)
                     throw new InvalidOperationException($"chronicle.json {e.Id}: 천하 전체 사건은 minRealm 이 있어야 한다");
+                if (e.Branches.Select(b => b.Id).Distinct().Count() != e.Branches.Count || e.Branches.Select(b => b.Camp).Distinct().Count() != e.Branches.Count)
+                    throw new InvalidOperationException($"chronicle.json {e.Id}: 갈래 id·진영이 겹칩니다");
             }
         }
 
         /// <summary>시각 순서.</summary>
         public IReadOnlyList<ChronicleEventDef> Events => _events;
         public IReadOnlyList<ChronicleKindDef> Kinds => _def.Kinds;
+
+        /// <summary>이 진영 몸이 그 사건을 겪을 때의 갈래. 그 진영 갈래가 없으면 null(본 사건 그대로).</summary>
+        public static ChronicleBranchDef? BranchFor(ChronicleEventDef e, string camp) => e.Branches.FirstOrDefault(b => b.Camp == camp);
 
         public ChronicleEventDef Event(string id) =>
             _events.FirstOrDefault(e => e.Id == id) ?? throw new ArgumentException($"모르는 사건: {id}", nameof(id));

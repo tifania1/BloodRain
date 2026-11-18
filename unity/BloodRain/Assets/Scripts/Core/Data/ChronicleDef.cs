@@ -42,5 +42,16 @@ namespace BloodRain.Core.Data
         public string? MinRealm;
         public string PlaceKo = "";
         public string NameKo = "";
+        /// <summary>진영에 따라 갈리는 갈래(천하 확장 '정·사·마 진영'). 없는 진영은 갈래 없이 본 사건 그대로.</summary>
+        public List<ChronicleBranchDef> Branches = new List<ChronicleBranchDef>();
+    }
+
+    /// <summary>같은 사건의 진영별 갈래 한 줄. 내용(적·보상)은 아직 없고 이름만.</summary>
+    public sealed class ChronicleBranchDef
+    {
+        public string Id = "";
+        /// <summary>cheonha.json camps.list 의 id.</summary>
+        public string Camp = "";
+        public string NameKo = "";
     }
 }
