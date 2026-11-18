@@ -476,6 +476,7 @@ namespace BloodRain.Core.Run
                 int more = kv.Value - Loadout.Passives[kv.Key];
                 if (more > 0) Loadout.Apply(new Offer(OfferKind.UpgradePassive, kv.Key, more));
             }
+            if (s.PickOrder != null) Loadout.RestorePickOrder(s.PickOrder);
             foreach (var w in s.Evolved)
                 Loadout.Evolve(_data.Evolutions.FirstOrDefault(e => e.Weapon == w) ?? throw new InvalidOperationException($"절기가 없는 무공입니다: {w}"));
             foreach (var e in s.Chronicle) Log.Witness(e);
@@ -666,6 +667,7 @@ namespace BloodRain.Core.Run
             if (Prologue != null && !Prologue.FightOver)
                 throw new InvalidOperationException("서장은 장삼을 쓰러뜨려야 끝납니다. 그 전에 그만두면 RestartPrologue 로 처음부터");
             Record = Log.Finish(way, leftoverSilver ?? Silver);
+            Record.PickOrder = Loadout.PickOrder.ToList();
             return Record;
         }
     }

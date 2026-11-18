@@ -44,6 +44,7 @@ namespace BloodRain.Core.Build
         readonly HashSet<string> _banished = new HashSet<string>();
         readonly HashSet<string> _links = new HashSet<string>();
         readonly HashSet<string> _grandLinks = new HashSet<string>();
+        readonly List<string> _pickOrder = new List<string>();
 
         public int WeaponSlots { get; private set; }
         public int PassiveSlots { get; private set; }
@@ -56,6 +57,11 @@ namespace BloodRain.Core.Build
         public IReadOnlyCollection<string> AwakenedLinks => _links;
         /// <summary>대성까지 깨친 연환 id.</summary>
         public IReadOnlyCollection<string> GrandLinks => _grandLinks;
+        /// <summary>이번 생에 고른 차례(구결 걸음, Gugyeol.Step). 시작 무공은 안 든다. 생이 끝나면 혼이 문파마다 남긴다.</summary>
+        public IReadOnlyList<string> PickOrder => _pickOrder;
+
+        /// <summary>생 도중 저장을 되돌릴 때(Life.Restore) 고른 차례를 저장 값으로 놓는다.</summary>
+        internal void RestorePickOrder(IEnumerable<string> steps) { _pickOrder.Clear(); _pickOrder.AddRange(steps); }
 
         public Loadout(GameData data, CharacterDef character)
         {
@@ -123,6 +129,8 @@ namespace BloodRain.Core.Build
                 case OfferKind.Fallback:
                     break;
             }
+            var step = Gugyeol.Step(offer);
+            if (step != null) _pickOrder.Add(step);
         }
 
         /// <summary>지금 고를 수 있는 모든 선택지(무작위 추첨 전 후보).</summary>

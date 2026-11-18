@@ -51,6 +51,8 @@ namespace BloodRain.Core.Run
         public Meta.LifeLogTally? Tally;
         /// <summary>② 넷째 조각: 고른 깨달음(고른 차례)·살기충천/심마가 세기 시작한 값·금종조 대기, 기연, 영약, 재기. 옛 저장엔 없어 null.</summary>
         public LifeBoonsSnapshot? Boons;
+        /// <summary>고른 차례(구결 걸음). 옛 저장엔 없어 null — 그때는 되돌린 무공·심법으로 채운 차례가 남는다.</summary>
+        public List<string>? PickOrder;
 
         public static LifeSnapshot Capture(Life life) => new LifeSnapshot
         {
@@ -75,6 +77,7 @@ namespace BloodRain.Core.Run
             Silver = life.Silver,
             Evolved = life.Loadout.Evolved.ToList(),
             Chronicle = life.Log.Chronicle.ToList(),
+            PickOrder = life.Loadout.PickOrder.ToList(),
             BossesKilled = life.Log.BossesKilled.ToList(),
             Links = life.Loadout.AwakenedLinks.ToList(),
             GrandLinks = life.Loadout.GrandLinks.ToList(),

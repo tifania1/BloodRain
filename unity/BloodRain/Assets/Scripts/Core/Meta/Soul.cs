@@ -116,6 +116,8 @@ namespace BloodRain.Core.Meta
         public bool Whispered { get; }
         /// <summary>이번 생에 겪은 연표 사건 id(chronicle.json, GU-11h5). 혼이 '겪은 사건'으로 남긴다(연표 화면에 먹으로).</summary>
         public IReadOnlyList<string> Chronicle { get; }
+        /// <summary>이번 생에 고른 차례(구결 걸음, Build.Gugyeol). Life.End 가 채운다. 혼이 문파마다 마지막 것을 남긴다.</summary>
+        public IReadOnlyList<string> PickOrder { get; internal set; } = Array.Empty<string>();
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
@@ -199,6 +201,7 @@ namespace BloodRain.Core.Meta
         readonly HashSet<string> _realms = new HashSet<string>();
         readonly HashSet<string> _evolutions = new HashSet<string>();
         readonly Dictionary<string, int> _livesBySect = new Dictionary<string, int>();
+        readonly Dictionary<string, List<string>> _gugyeol = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         readonly Dictionary<string, int> _finalClears = new Dictionary<string, int>();
         readonly HashSet<string> _torn = new HashSet<string>();
         readonly HashSet<string> _restored = new HashSet<string>();
@@ -497,6 +500,8 @@ namespace BloodRain.Core.Meta
         public bool PrologueDone { get; private set; }
         /// <summary>문파별로 마친 생 수.</summary>
         public IReadOnlyDictionary<string, int> LivesBySect => _livesBySect;
+        /// <summary>그 문파 몸으로 산 마지막 생의 고른 차례(구결). 없으면 빈 목록.</summary>
+        public IReadOnlyList<string> GugyeolOf(string sectId) => _gugyeol.TryGetValue(sectId, out var l) ? l : (IReadOnlyList<string>)Array.Empty<string>();
         /// <summary>다음 환혼이 첫 환혼(서장을 마치고 아직 문파로 산 적 없음)인가.</summary>
         public bool IsFirstRebirth => PrologueDone && _livesBySect.Count == 0;
         /// <summary>문파별로 종장을 깬 횟수(회차 합산).</summary>
@@ -677,6 +682,7 @@ namespace BloodRain.Core.Meta
             if (record.Whispered) WhispersTotal++;
             _letters.UnionWith(record.Letters.Where(id => _data.Synergies.Secrets.Any(x => x.Id == id)));
             _chronicle.UnionWith(record.Chronicle.Where(id => _data.Chronicle.Events.Any(x => x.Id == id)));
+            if (record.Sect != null && record.PickOrder.Count > 0) _gugyeol[record.Sect] = record.PickOrder.ToList();
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
             {
                 NewFacilities = Inn.Refresh(this),
@@ -742,6 +748,8 @@ namespace BloodRain.Core.Meta
             public int Lives;
             public bool PrologueDone;
             public SortedDictionary<string, int> LivesBySect = new SortedDictionary<string, int>(StringComparer.Ordinal);
+            /// <summary>문파마다 마지막 생의 고른 차례(구결). 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
+            public SortedDictionary<string, List<string>> Gugyeol = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
             public SortedDictionary<string, int> FinalClearsBySect = new SortedDictionary<string, int>(StringComparer.Ordinal);
             public int Manuscripts;
             public int Cycle = 1;
@@ -799,6 +807,7 @@ namespace BloodRain.Core.Meta
                 Lives = Lives,
                 PrologueDone = PrologueDone,
                 LivesBySect = Sorted(_livesBySect),
+                Gugyeol = new SortedDictionary<string, List<string>>(_gugyeol.ToDictionary(kv => kv.Key, kv => kv.Value.ToList()), StringComparer.Ordinal),
                 FinalClearsBySect = Sorted(_finalClears),
                 Manuscripts = Manuscripts,
                 Cycle = Cycle,
@@ -842,6 +851,7 @@ namespace BloodRain.Core.Meta
             foreach (var kv in f.Training) s._training[kv.Key] = kv.Value;
             foreach (var kv in f.RebirthUpgrades) s._upgrades[kv.Key] = kv.Value;
             foreach (var kv in f.LivesBySect) s._livesBySect[kv.Key] = kv.Value;
+            if (f.Gugyeol != null) foreach (var kv in f.Gugyeol) s._gugyeol[kv.Key] = kv.Value.ToList();
             foreach (var kv in f.FinalClearsBySect) s._finalClears[kv.Key] = kv.Value;
             s._unlocks.UnionWith(f.Unlocks);
             s._titles.UnionWith(f.Titles.Where(id => s.C.Titles.Any(t => t.Id == id)));
