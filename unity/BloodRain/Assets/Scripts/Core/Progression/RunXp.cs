@@ -60,6 +60,15 @@ namespace BloodRain.Core.Progression
         public double Progress => Xp / Required;
         public RealmDef Realm => _realms.For(Level, _mode);
 
+        /// <summary>생 도중 저장에서 되돌린다(LifeSnapshot). 돌파 연출은 일으키지 않는다.</summary>
+        internal void Restore(int level, double xp, double total)
+        {
+            if (level < 1) throw new ArgumentOutOfRangeException(nameof(level));
+            Level = level;
+            Xp = Math.Max(0, xp);
+            Total = Math.Max(0, total);
+        }
+
         /// <summary>구슬 하나(또는 한 프레임 흡수 합계)를 더한다. 배율은 여기서 곱한다.</summary>
         public AbsorbResult Absorb(double orbXp)
         {

@@ -430,6 +430,36 @@ namespace BloodRain.Core.Run
         }
 
         /// <summary>플레이어 위치를 옮긴다(Tick 이 부른다). 다른 지역에 들어서면 일지에 남긴다.</summary>
+        /// <summary>생 도중 저장 ①(GU-11h1)을 막 만든 같은 몸의 Life 에 되돌린다. 적·탄은 부른 쪽이 비운다.
+        /// 다른 문파 몸이거나 이미 흐른 생이면 InvalidOperationException. ②로 미룬 상태는 LifeSnapshot 머리 주석.</summary>
+        public void Restore(LifeSnapshot s)
+        {
+            if (s.SnapshotVersion != LifeSnapshot.Version) throw new InvalidOperationException($"모르는 저장 판: {s.SnapshotVersion}");
+            if (Record != null || Minutes > 0) throw new InvalidOperationException("막 만든 생에만 되돌린다");
+            if (s.Sect != Body.Sect?.Id) throw new InvalidOperationException($"다른 몸의 저장입니다: {s.Sect}");
+            while (Loadout.WeaponSlots < s.WeaponSlots) Loadout.AddExtraSlot(true);
+            while (Loadout.PassiveSlots < s.PassiveSlots) Loadout.AddExtraSlot(false);
+            foreach (var kv in s.Weapons)
+            {
+                if (!Loadout.Weapons.ContainsKey(kv.Key)) Loadout.Apply(new Offer(OfferKind.NewWeapon, kv.Key));
+                int more = kv.Value - Loadout.Weapons[kv.Key];
+                if (more > 0) Loadout.Apply(new Offer(OfferKind.UpgradeWeapon, kv.Key, more));
+            }
+            foreach (var kv in s.Passives)
+            {
+                if (!Loadout.Passives.ContainsKey(kv.Key)) Loadout.Apply(new Offer(OfferKind.NewPassive, kv.Key));
+                int more = kv.Value - Loadout.Passives[kv.Key];
+                if (more > 0) Loadout.Apply(new Offer(OfferKind.UpgradePassive, kv.Key, more));
+            }
+            Loadout.Gauge.Restore(s.Gauge);   // 무공·심법을 올리며 움직인 음양을 저장 값으로
+            Xp.Restore(s.Level, s.Xp, s.XpTotal);
+            Charge.Restore(s.Charge);
+            Minutes = s.Minutes;
+            foreach (var r in s.Visited) Log.Enter(r);
+            MoveTo(s.Position);
+            Silver = s.Silver;
+        }
+
         public void MoveTo(Vector2 position)
         {
             Position = position;

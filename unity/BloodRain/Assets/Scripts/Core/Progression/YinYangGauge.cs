@@ -17,6 +17,8 @@ namespace BloodRain.Core.Progression
         double _carry; // 기울기 배율 때문에 남은 소수 몫(2.5 → 2, 다음에 3)
 
         public int Value { get; private set; }
+        /// <summary>생 도중 저장에서 되돌린다(LifeSnapshot).</summary>
+        internal void Restore(int value) { Value = Clamp(value); _carry = 0; }
 
         public YinYangGauge(YinYangDef def, int start = 0, int? harmonyRangeOverride = null)
         {

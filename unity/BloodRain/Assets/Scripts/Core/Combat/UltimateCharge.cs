@@ -14,6 +14,8 @@ namespace BloodRain.Core.Combat
         readonly YinYangHarmonyDef _harmony;
 
         public float Value { get; private set; }
+        /// <summary>생 도중 저장에서 되돌린다(LifeSnapshot).</summary>
+        internal void Restore(float value) => Value = Clamp(value);
         /// <summary>연무장·심법에서 온 충전 보너스(0.2 = +20%).</summary>
         public float ChargeBonus { get; set; }
         /// <summary>태극 보너스에 곱하는 수. 무당 고유 능력 '조화 보너스 2배'면 2(SectTrait.HarmonyBonusMultiplier).</summary>
