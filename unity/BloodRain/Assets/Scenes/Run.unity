@@ -1140,6 +1140,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.MapLayer
   material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
   map: {fileID: 2800000, guid: 6a4b3bcda5c96b84580ad84cdb3a0822, type: 3}
+  groundOpacity: 1
+  usePaintedMap: 0
+  blendBand: 90
+  vignette: 0.22
 --- !u!114 &680656955
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3046,6 +3050,58 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -92}
   m_SizeDelta: {x: 900, y: 41.600002}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2092335492
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2092335494}
+  - component: {fileID: 2092335493}
+  m_Layer: 0
+  m_Name: "\uD654\uBA74 \uB9C8\uAC10"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2092335493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2092335492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ecad59ec1097cc42975fca2edf85b72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.PostFinish
+  bloomThreshold: 1
+  bloomIntensity: 0.35
+  bloomIntensityRain: 0.6
+  bloomScatter: 0.55
+  vignetteColor: {r: 0.10980392, g: 0.101960786, b: 0.09019608, a: 1}
+  vignetteIntensity: 0.22
+  vignetteIntensityRain: 0.3
+  vignetteSmoothness: 0.45
+--- !u!4 &2092335494
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2092335492}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3075,3 +3131,4 @@ SceneRoots:
   - {fileID: 1700858266}
   - {fileID: 1271029690}
   - {fileID: 670523075}
+  - {fileID: 2092335494}

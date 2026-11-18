@@ -31,6 +31,8 @@ namespace BloodRain.Editor
             camGo.AddComponent<ScaleCamera>();
 
             new GameObject("DataBoot").AddComponent<DataBoot>();
+            new GameObject("화면 마감").AddComponent<PostFinish>();   // PP-01U Bloom·Vignette
+            PostFinishBootstrap.EnsurePostProcessData();
 
             var player = new GameObject("플레이어");
             player.transform.position = new Vector3(0, 0, -1f);

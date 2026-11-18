@@ -16,6 +16,7 @@ Shader "BloodRain/FxInk"
         _FxTime ("Time", Float) = 0
         _Alpha ("Alpha", Range(0, 1)) = 1
         _Add ("Additive (0 보통, 1 더하기)", Range(0, 1)) = 0
+        _Hdr ("더하기 겹 HDR 배수(PP-01U Bloom)", Float) = 1
         _C0 ("Edge", Color) = (0.13, 0.12, 0.11, 1)
         _C1 ("Mid", Color) = (0.06, 0.06, 0.06, 1)
         _C2 ("Core", Color) = (0.02, 0.02, 0.02, 1)
@@ -38,7 +39,7 @@ Shader "BloodRain/FxInk"
                 float4 _NoiseTex_ST;
                 float4 _P;
                 float4 _C0, _C1, _C2;
-                float _Shape, _Prog, _Diss, _Seed, _FxTime, _Alpha, _Add;
+                float _Shape, _Prog, _Diss, _Seed, _FxTime, _Alpha, _Add, _Hdr;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
@@ -276,7 +277,8 @@ Shader "BloodRain/FxInk"
 
                 float3 col = heat < 0.5 ? lerp(_C0.rgb, _C1.rgb, heat * 2.0) : lerp(_C1.rgb, _C2.rgb, (heat - 0.5) * 2.0);
                 a *= _Alpha;
-                return half4(col * a, a * (1.0 - _Add));
+                // 더하기 겹만 HDR 로 밀어 Bloom 문턱(1)을 넘긴다(PP-01U). 몸 겹·먹은 1 이하 그대로
+                return half4(col * a * lerp(1.0, max(_Hdr, 1.0), _Add), a * (1.0 - _Add));
             }
             ENDHLSL
         }

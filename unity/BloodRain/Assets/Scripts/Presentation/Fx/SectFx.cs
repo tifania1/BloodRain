@@ -94,7 +94,7 @@ namespace BloodRain.Presentation.Fx
 
         static readonly int IdNoise = Shader.PropertyToID("_NoiseTex"), IdShape = Shader.PropertyToID("_Shape"), IdP = Shader.PropertyToID("_P"),
             IdProg = Shader.PropertyToID("_Prog"), IdDiss = Shader.PropertyToID("_Diss"), IdSeed = Shader.PropertyToID("_Seed"),
-            IdTime = Shader.PropertyToID("_FxTime"), IdAlpha = Shader.PropertyToID("_Alpha"), IdAdd = Shader.PropertyToID("_Add"),
+            IdTime = Shader.PropertyToID("_FxTime"), IdAlpha = Shader.PropertyToID("_Alpha"), IdAdd = Shader.PropertyToID("_Add"), IdHdr = Shader.PropertyToID("_Hdr"),
             IdC0 = Shader.PropertyToID("_C0"), IdC1 = Shader.PropertyToID("_C1"), IdC2 = Shader.PropertyToID("_C2");
 
         /// <summary>월드 단위로 1m. 경지가 오르면 세상이 작아지니 WeaponRunner 가 프레임마다 넣는다(장식 크기·속도에 곱한다).</summary>
@@ -211,6 +211,7 @@ namespace BloodRain.Presentation.Fx
             _mpb.SetFloat(IdTime, _time);
             _mpb.SetFloat(IdAlpha, alpha);
             _mpb.SetFloat(IdAdd, add ? 1f : 0f);
+            _mpb.SetFloat(IdHdr, add ? GlowHdr : 1f);
             _mpb.SetColor(IdC0, c.Edge);
             _mpb.SetColor(IdC1, c.Mid);
             _mpb.SetColor(IdC2, c.Core);
@@ -218,6 +219,9 @@ namespace BloodRain.Presentation.Fx
             var m = Matrix4x4.TRS(new Vector3(pos.x, pos.y, _z), Quaternion.Euler(0f, 0f, rot * Mathf.Rad2Deg), new Vector3(w, h, 1f));
             Graphics.RenderMesh(_rp, _quad, 0, m);
         }
+
+        /// <summary>더하기 겹의 HDR 배수(PP-01U). Bloom 문턱 1 을 기·금빛만 넘게 한다. 1 이면 예전과 같다.</summary>
+        public static float GlowHdr = 1.8f;
 
         /// <summary>빛나는 겹: 색 있는 몸 + 약한 더하기 한 겹. 밝은 종이 위에서 하얗게 날아가지 않는다.</summary>
         public void Glow(int shape, Vector2 pos, float w, float h, float rot, Vector4 p, FxRamp c,
