@@ -34,6 +34,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: 숭산 한 생에서 숫자가 새 프리팹으로 뜨고 300마리 프레임이 전과 같다(F1 줄). 콘솔 에러 0
   - 찍기: `Captures/dn_pro.png`
+  - 막힘: 2026-11-18 22:40 PC — 코드는 넣고 꺼 둠. 메뉴 `BloodRain/Bootstrap/피해 숫자 프리팹 짓기(DNP)`(`Editor/DamageNumberProBootstrap.cs`)가 데모 2D `Clear` 를 바탕으로 `Resources/Fx/DamageNumberInk`·`DamageNumberCrit` 프리팹을 지음(풀 100, 동시 80, 합치기 ABSORB_NEW). `DamageNumberLayer.usePro` 를 켜면 꺼진 원본 한 벌에 우리 글꼴·종이색 테두리를 얹어 `Spawn` 하고 크기는 `SetScale(px × 화면 1px 의 세계 길이)`, 합치는 거리 `combinePx` 48px. 두 asmdef(Presentation·Editor)에 `DamageNumbersPro` 를 더함. **그런데 켜고 숫자를 띄우자 두 번 다 에디터 메모리가 34GB 까지 차고 `D3D12 Device failed (8007000e)` — 텍스처 올리기(`TexturesD3D12::UploadTexture2D`) 중 스크래치 버퍼 4MB 수천 개 — 로 죽음.** 두 번째는 일시정지 상태에서 OnStruck 을 서른 번 부른 뒤 Step 한 번이었으니 DNP 쪽이 원인. 짐작: 데모 프리팹 TMP 에 우리 동적 글꼴을 갈아 끼우며 아틀라스를 계속 새로 만듦(Saw-Glow 재질·서브메시가 남은 채). 다음에 볼 것: ① 프리팹을 지을 때 글꼴·재질까지 미리 넣고(실행 때 바꾸지 않기) ② 우리 글꼴의 숫자 전용 정적 SDF 를 따로 구워 쓰기 ③ 숫자 하나만 띄우고 Profiler 메모리로 확인. 그때까지 `usePro = false` 로 예전 TextMeshPro 풀이 그대로 그린다
 - [ ] SFX-17U 무공 소리 물리기 · 먼저: backlog SFX-09(사람이 후보를 골라 큐가 picked 가 된 뒤) (2026-11-17 사람: 줍는 소리가 "싸구려 티" — 지금 게임에 타격·휘두름 소리는 하나도 없다)
   - 할 것: 고른 소리가 `Assets/Audio/SFX` 에 들어오면 무공이 쏘거나 맞힐 때 튼다. 삼재검법·창천검기·비도술·섬광지는 쏠 때, 나한권·장풍·취선봉은 맞힐 때, 벽력탄은 터질 때, 독무는 퍼질 때(틱마다가 아니라 2초에 한 번쯤), 혈인이 쓰러질 때 비명. 같은 소리가 몰리면 `SfxGate` 가 버린다(0.05초 안 4번까지)
   - 쓸 것: `Presentation/SfxPlayer.cs`(`Play(id)`), Core `SfxGate`, `Presentation/Combat/WeaponRunner.cs`(Fire·BombBlast·Struck 자리), sfx_list.md 의 id 와 쓰는 때

@@ -21,6 +21,14 @@ namespace BloodRain.Presentation.Fx
         /// <summary>수명 동안 떠오르는 높이(1080 높이 기준 px). 웹 약 26px.</summary>
         public float risePx = 26f;
         public int sortingOrder = 400;
+        /// <summary>Damage Numbers Pro 프리팹으로 띄운다(2026-11-18 DN-01U). 끄거나 프리팹이 없으면 예전 TextMeshPro 풀.</summary>
+        public bool usePro = false; // 2026-11-18 PC: 켜고 숫자를 띄우자 D3D12 텍스처 올리기로 메모리가 34GB 까지 차 에디터가 두 번 죽음. 원인 찾기 전까지 끔(unity_tasks DN-01U)
+        /// <summary>잇달아 들어간 숫자를 합치는 거리(1080 높이 화면 기준 px). 화면 거리라 경지 축척과 상관없다.</summary>
+        public float combinePx = 48f;
+        /// <summary>Resources/Fx 의 프리팹(메뉴 `BloodRain/Bootstrap/피해 숫자 프리팹 짓기(DNP)`).</summary>
+        public DamageNumbersPro.DamageNumber proNormal, proCrit;
+        DamageNumbersPro.DamageNumber _tplNormal, _tplCrit;
+        bool _proReady;
 
         static readonly Color Ink = new Color32(0x1A, 0x1A, 0x1A, 0xFF);
         static readonly Color Vermilion = new Color32(0xB3, 0x26, 0x1E, 0xFF); // 13장 주홍(혈우)
@@ -69,7 +77,66 @@ namespace BloodRain.Presentation.Fx
         {
             if (_nums == null) return;
             if (!_nums.ShouldShow(damage, crit, eliteOrBoss, _rng.NextDouble())) return;
-            _nums.Add(at.x, at.y, radius, damage, crit, _rng.NextDouble());
+            var it = _nums.Add(at.x, at.y, radius, damage, crit, _rng.NextDouble());
+            if (ProReady()) SpawnPro(it);
+        }
+
+        bool ProReady()
+        {
+            if (!usePro) return false;
+            if (_proReady) return true;
+            if (proNormal == null) proNormal = Resources.Load<DamageNumbersPro.DamageNumber>("Fx/DamageNumberInk");
+            if (proCrit == null) proCrit = Resources.Load<DamageNumbersPro.DamageNumber>("Fx/DamageNumberCrit");
+            if (proNormal == null || proCrit == null) { usePro = false; return false; }
+            _tplNormal = MakeTemplate(proNormal, Ink);
+            _tplCrit = MakeTemplate(proCrit, Vermilion);
+            _proReady = true;
+            return true;
+        }
+
+        // 프리팹을 꺼진 채로 한 벌 복제해 글꼴·종이색 테두리·색을 얹고, 그것을 Spawn 원본으로 쓴다(풀도 이 원본 기준).
+        DamageNumbersPro.DamageNumber MakeTemplate(DamageNumbersPro.DamageNumber prefab, Color color)
+        {
+            var go = Instantiate(prefab.gameObject, transform);
+            go.SetActive(false);
+            go.name = prefab.name + " 원본";
+            var dn = go.GetComponent<DamageNumbersPro.DamageNumber>();
+            foreach (var t in go.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (font != null) t.font = font;
+                t.fontSharedMaterial = OutlineMat(t);
+                t.color = color;
+            }
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true)) r.sortingOrder = sortingOrder;
+            if (DataBoot.Data != null) dn.maxActiveInstances = DataBoot.Data.Balance.Limits.DamageNumbers;
+            return dn;
+        }
+
+        Material OutlineMat(TMP_Text t)
+        {
+            if (_mat == null)
+            {
+                // 종이색 테두리 한 장을 모두가 나눠 쓴다(정점 알파가 테두리까지 옅게 한다)
+                _mat = new Material(t.fontSharedMaterial);
+                _mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
+                _mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.25f);
+                _mat.SetColor(ShaderUtilities.ID_OutlineColor, Paper);
+                _mat.SetFloat(ShaderUtilities.ID_FaceDilate, 0.1f);
+            }
+            return _mat;
+        }
+
+        void SpawnPro(in DamageNumber it)
+        {
+            var cam = Camera.main;
+            if (!SettingsScreen.Current.NumbersOn || cam == null || !cam.orthographic) return;
+            float worldPerPx = 2f * cam.orthographicSize / 1080f;
+            var tpl = it.Crit ? _tplCrit : _tplNormal;
+            var dn = tpl.Spawn(new Vector3(it.X, it.Y + it.Lift, 0f), it.Value);
+            dn.SetScale((it.Crit ? critPx : normalPx) * worldPerPx);
+            var c = dn.combinationSettings;
+            c.maxDistance = combinePx * worldPerPx;
+            dn.combinationSettings = c;
         }
 
         void LateUpdate()
@@ -84,7 +151,8 @@ namespace BloodRain.Presentation.Fx
 
             var cam = Camera.main;
             var items = _nums.Items;
-            bool on = SettingsScreen.Current.NumbersOn && cam != null && cam.orthographic;
+            // Pro 가 그리면 Core 목록은 상한·떠 있는 수 세기에만 쓰고 예전 풀은 끈다
+            bool on = !_proReady && SettingsScreen.Current.NumbersOn && cam != null && cam.orthographic;
             int n = on ? items.Count : 0;
             if (on)
             {
