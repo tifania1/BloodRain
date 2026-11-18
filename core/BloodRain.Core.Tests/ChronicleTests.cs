@@ -143,6 +143,22 @@ namespace BloodRain.Core.Tests
             Assert.Equal(soul.Chronicle.OrderBy(x => x), back.Chronicle.OrderBy(x => x));
         }
 
+        /// <summary>문파의 위기: 시각에 그 자리에 없었으면 무너짐, 있었으면 그 자리에 있음, 시각 전이면 아직.</summary>
+        [Fact] public void 위기_시각에_그_자리에_없던_문파는_무너진다()
+        {
+            var (_, life) = NewLife();
+            var songshan = new Regions(_d).Center("songshan");
+            Assert.Equal(BloodRain.Core.Run.CrisisState.Ahead, life.Crisis("gaebang_scatter"));
+            Assert.Empty(life.FallenSects);
+            while (life.Minutes < 6.1f) life.Tick(0.5f, songshan, 0);       // 개방 총타 위기(6:00)를 숭산에서 넘김
+            Assert.Equal(BloodRain.Core.Run.CrisisState.Fallen, life.Crisis("gaebang_scatter"));
+            Assert.Equal(new[] { "gaebang" }, life.FallenSects);
+            while (life.Minutes < 11.75f) life.Tick(0.5f, songshan, 0);     // 숭산 범종(11:40)은 제 땅이라 그 자리에 있음
+            Assert.Equal(BloodRain.Core.Run.CrisisState.Present, life.Crisis("songshan_bell"));
+            Assert.Equal(new[] { "gaebang", "wudang" }, life.FallenSects);
+            Assert.Throws<ArgumentException>(() => life.Crisis("songshan_refugees"));
+        }
+
         [Theory]
         [InlineData("\"region\": \"gaebang_hq\"", "\"region\": \"nowhere\"")]
         [InlineData("\"kind\": \"movement\", \"atSeconds\": 120", "\"kind\": \"nope\", \"atSeconds\": 120")]

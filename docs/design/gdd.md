@@ -794,7 +794,7 @@ Oct 28, 2026 · @Tifania
 
 ### 천하 확장: 천하 연표(정해짐 2026-11-18, 시제품 전)
 
-설계안 `docs/design/cheonha_expansion_full.md`(원본 Claude Docs '혈우강호 천하 확장 설계안') '천하 연표'. 시제품 자료는 `chronicle.json`(숭산 한 생 범위 사건 열하나), 판정은 Core `World.Chronicle`, 시뮬레이션은 `design/sim/chronicle.md`. 아직 한 생(Life)에 물리지 않았다.
+설계안 `docs/design/cheonha_expansion_full.md`(원본 Claude Docs '혈우강호 천하 확장 설계안') '천하 연표'. 시제품 자료는 `chronicle.json`(숭산 한 생 범위 사건 열하나), 판정은 Core `World.Chronicle`, 시뮬레이션은 `design/sim/chronicle.md`. 한 생(Core `Life`)은 사건 시각에 그 자리가 화면 대각선 절반 안이면 '겪음'으로 적고 혼에 쌓는다(GU-11h5). 문파의 위기는 그 시각에 그 자리에 없었으면 그 문파가 '무너짐'으로 판정된다(`Life.Crisis`·`FallenSects`). 그 자리에 있었을 때 막았는지는 사건 속 적·보상이 생긴 뒤 정한다.
 
 1. 사건이 언제 어디서 터지는지는 늘 같다. 그 안의 적 구성과 보상 후보만 생마다 다르다(사람이 정함).
 2. 혈우 장막은 출생지 둘레로 삼류 86m, 이류 194m, 일류 437m, 절정 984m, 초절정 2,215m까지만 열어 준다(지금 데이터 값). 먼 사건은 그 시각 전에 경지를 올려야 본다.

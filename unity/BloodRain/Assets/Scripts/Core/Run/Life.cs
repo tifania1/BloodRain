@@ -287,7 +287,7 @@ namespace BloodRain.Core.Run
         }
 
         /// <summary>연표(GU-11h5, 겪음 기록만): 이번 프레임에 시각이 지난 사건마다, 그 자리가 지금 화면 대각선의 절반 안이면 '겪음'.
-        /// 천하 전체 사건은 필요한 경지(minRealm)에 올라 있으면 겪음. 막음·못 막음은 아직 없다.
+        /// 천하 전체 사건은 필요한 경지(minRealm)에 올라 있으면 겪음. 문파의 위기를 못 막음(그 자리에 없었음)은 Crisis·FallenSects, 막음은 아직 없다.
         /// '화면 안' 기준은 2026-11-18 예약 세션이 정한 것(설계안은 '그 시각에 거기 있었는가'까지만).</summary>
         void NoteChronicle(float fromMinutes)
         {
@@ -301,6 +301,27 @@ namespace BloodRain.Core.Run
                 if (seen) Log.Witness(e.Id);
             }
         }
+
+        /// <summary>문파의 위기(연표 kind sect_crisis)가 이번 생에 어떻게 됐나. 설계안 '못 막으면 강시 문파' 중 '못 막음'만 판정한다:
+        /// 사건 시각이 지났는데 그 자리에 없었으면(겪음 기록이 없으면) Fallen. 있었으면 Present — 막았는지는 사건 속 내용(적·보상)이 생긴 뒤 정한다.
+        /// 결과는 이 생에만 남는다(혼에는 겪은 기록만). 겪음 기록과 시각에서 다시 나오므로 생 도중 저장에 따로 담지 않는다.</summary>
+        public CrisisState Crisis(string chronicleEvent)
+        {
+            var e = Chronicle.Event(chronicleEvent);
+            if (e.Kind != SectCrisisKind) throw new ArgumentException($"문파의 위기가 아닙니다: {chronicleEvent}");
+            if (Log.Chronicle.Contains(e.Id)) return CrisisState.Present;
+            return Minutes * 60f >= e.AtSeconds && !IsPrologue ? CrisisState.Fallen : CrisisState.Ahead;
+        }
+
+        public const string SectCrisisKind = "sect_crisis";
+
+        /// <summary>이번 생에 무너진 문파 id(위기 시각에 그 자리에 없었던 문파, 무너진 차례). 문파는 사건 지역에서 태어나는 문파.
+        /// 병기를 떨어뜨리는 강시 제자는 이 목록의 문파에서만 나온다(2026-11-18 사람 결정 4, 병기 규칙은 GU-10 때).</summary>
+        public IReadOnlyList<string> FallenSects =>
+            Chronicle.Events.Where(e => e.Kind == SectCrisisKind && e.Region != null && Crisis(e.Id) == CrisisState.Fallen)
+                .OrderBy(e => e.AtSeconds)
+                .SelectMany(e => _data.Cheonha.Sects.Where(x => x.Region == e.Region).Select(x => x.Id))
+                .Distinct().ToList();
 
         /// <summary>땅의 주인 싸움이 시작되면 태극을 지켰다고 두고, 싸우는 동안 한 번이라도 태극 밖이면 지움.</summary>
         void NoteFightHarmony()
@@ -648,4 +669,7 @@ namespace BloodRain.Core.Run
             return Record;
         }
     }
+
+    /// <summary>문파의 위기 판정(Life.Crisis). Ahead: 시각 전. Present: 그 시각에 그 자리에 있었음(막았는지는 사건 내용이 생긴 뒤). Fallen: 없었음 — 강시 문파.</summary>
+    public enum CrisisState { Ahead, Present, Fallen }
 }
