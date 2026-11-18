@@ -1,3 +1,4 @@
+#nullable enable
 // 한 판 진행기. 진기 구슬을 흡수하면 레벨이 몇 번 오르는지, 그 사이 어느 경지를 돌파했는지 알려 준다.
 // 화면 쪽은 결과를 받아 레벨업 카드(LevelUps 번)와 돌파 연출(Breakthroughs 순서대로)을 큐에 쌓으면 된다.
 // 심득(Growth) 배율 때문에 진기가 소수가 될 수 있어 double로 들고 있는다.
@@ -48,7 +49,13 @@ namespace BloodRain.Core.Progression
             Growth = growth;
         }
 
-        public int Required => _curve.Required(Level);
+        /// <summary>전생의 공력(넘어 본 경지 구간의 필요 진기를 줄임, GU-11f). 없으면 줄지 않는다. 아직 Life 는 넣지 않는다.</summary>
+        public PastLifePower? PastLife { get; set; }
+
+        /// <summary>지금 레벨에서 다음 레벨까지 필요한 진기. 전생의 공력이 있으면 줄인 값을 올림한다(1 이상).</summary>
+        public int Required => PastLife == null
+            ? _curve.Required(Level)
+            : Math.Max(1, (int)Math.Ceiling(_curve.Required(Level) * PastLife.RequiredScale(Level) - 1e-6));
         /// <summary>경험치 막대 채움 비율(0~1).</summary>
         public double Progress => Xp / Required;
         public RealmDef Realm => _realms.For(Level, _mode);

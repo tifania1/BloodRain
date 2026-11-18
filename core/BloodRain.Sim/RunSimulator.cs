@@ -39,6 +39,8 @@ namespace BloodRain.Sim
         /// <summary>서장(청운진 객잔 마당). 적 종류·수·사건을 Core PrologueDirector(chapters.json prologue)로 바꾸고,
         /// 적 기혈은 청운진 혈운 농도(cheonha.json)로 셈한다. Chapter 는 쓰지 않는다. 보고서 prologue.md.</summary>
         public bool Prologue;
+        /// <summary>전생의 공력(GU-11f). 넘어 본 경지 구간의 필요 진기를 줄인다. 보고서 acceleration.md.</summary>
+        public BloodRain.Core.Progression.PastLifePower? PastLife;
 
         public SimOptions With(Action<SimOptions> change)
         {
@@ -180,7 +182,7 @@ namespace BloodRain.Sim
             _ultDef = _g.Ultimates.FirstOrDefault(u => u.Id == _character.Ultimate);
             _loadout = new Loadout(_g, _character);
             _realms = new Realms(_g.Balance.Realms);
-            _xp = new RunXp(new XpCurve(_g.Balance.XpCurve), _realms);
+            _xp = new RunXp(new XpCurve(_g.Balance.XpCurve), _realms) { PastLife = opt.PastLife };
             _spawn = new SpawnCurve(_g.Balance.SpawnTarget);
             _scaling = new EnemyScaling(_g.Balance.EnemyScaling);
             _ult = new UltimateCharge(_g.Balance.UltimateCharge, _g.Balance.Yinyang.Harmony);
