@@ -23,11 +23,11 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 - [ ] GR-01U 지역 바닥·몸놀림 눈으로 확인하고 다듬기 · 먼저: 없음 (2026-11-17 사람: "누런 끼 빼고 각 지역마다의 특색", "너무 허접하게 움직이는 느낌")
   - 할 것: 11-17 밤 대화 세션이 넣은 것을 움직이는 화면으로 본다. ① F2 '몸 바꾸기'로 문파 아홉의 땅에 서 보고 바닥 타일(`Fx/Biomes.cs` 의 무늬)이 그 땅답게 읽히는지, 이펙트·적이 바닥에 묻히지 않는지 ② 두 땅 사이를 걸어 경계 띠에서 섞임이 거슬리지 않는지(`MapLayer.blendBand`) ③ 적 몸놀림 일곱 갈래(`ClusterRenderer` 의 `ClusterMotion`)가 종류마다 어울리는지 — 두꺼비 뛰기·수귀 떠다님·목인 덜컥·정예 무거운 걸음. 지나치면 진폭을 줄인다 ④ 지역 알림(`Hud/RegionBanner.cs`)이 HUD 와 겹치지 않는지
-  - 쓸 것: `Fx/Biomes.cs`(Looks 표·MakeTile), `Fx/MapLayer.cs`(PickGround), `Fx/ClusterRenderer.cs`, `EnemyField.MotionOf`, `Hud/TestPanel.cs`(정예 부르기·땅의 주인·빠르기 ×4). 원화 타일이 오면 `Resources/Art/Tiles/tile_<지역>` 에 넣으면 코드 타일 대신 쓴다
+  - 쓸 것: `Fx/Biomes.cs`(Looks 표·MakeTile, 원화를 얹는 세기는 `ArtOf` — 여섯 땅은 원화, 다섯 땅은 코드 타일), `Fx/MapLayer.cs`(PickGround·DrawGround), `Fx/ClusterRenderer.cs`, `EnemyField.MotionOf`, `Hud/TestPanel.cs`(정예 부르기·땅의 주인·빠르기 ×4). 원화 타일이 오면 `Resources/Art/Tiles` 에 넣고 `ArtOf` 에 한 줄
   - 메뉴: 없음(실행 중에 만든다)
   - 끝: 아홉 땅 바닥과 몸놀림 일곱 갈래를 다 보고 고친 것·남긴 것을 daily 에. 콘솔 에러 0
   - 찍기: `Captures/ground_<지역>.png` 아홉 장, 경계 한 장
-  - (진행: 2026-11-17 밤 — 컴파일 에러 0. 청운진 바닥·구석 지도·화산 알림·정예 부르기는 화면으로 봄. 나머지 땅과 움직이는 모습은 못 봄)
+  - (진행: 2026-11-18 아침 — 컴파일 에러 0. 청운진·화산·숭산·당가타 바닥, 구석 지도, 화산 알림, 정예 부르기는 화면으로 봄. 나머지 땅과 움직이는 모습, 경계 섞임은 못 봄)
 - [ ] DN-01U 피해 숫자를 Damage Numbers Pro 로 · 먼저: 없음 (2026-11-17 사람: 사 둔 에셋을 "적극 활용")
   - 할 것: `Assets/DamageNumbersPro` 의 프리팹 하나를 복사해 글꼴(지금 `DamageNumberLayer.font`)·크기(보통 22px, 치명 31px)·먹빛을 맞추고, `DamageNumberLayer` 가 숫자를 띄우는 자리에서 그 프리팹의 `Spawn` 을 부른다. 같은 적에게 잇달아 들어간 숫자는 합쳐 보이게(에셋의 Combination). 300마리에서 프레임이 지금보다 나빠지면 되돌린다
   - 쓸 것: `Fx/DamageNumberLayer.cs`, `docs/design/store_assets.md`(어셈블리 `DamageNumbersPro` 를 `BloodRain.Presentation.asmdef` 에 더한다)
