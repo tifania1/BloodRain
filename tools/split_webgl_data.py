@@ -202,7 +202,7 @@ if __name__ == "__main__":
         # 이미 나눈 폴더에서 다시 돌려도 빌드 표는 붙인다
         if "dataParts" not in open(os.path.join(root, "index.html"), encoding="utf-8").read():
             print("X  " + str(e)); sys.exit(1)
-        print("O  data 는 이미 나눠져 있음" + (" — 색인에 진행 표시를 넣음" if upgrade(root) else ""))
+        print("O  data 는 이미 나눠져 있음" + (", 색인에 진행 표시를 넣음" if upgrade(root) else ""))
     except ValueError as e:
         print("X  " + str(e)); sys.exit(1)
     else:
