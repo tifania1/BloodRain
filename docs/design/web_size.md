@@ -35,6 +35,7 @@ Build Settings 의 씬 셋(Boot·Run·Inn) + `Resources/` 전부에서 시작해
 - 원화 텍스처의 밉맵: 빌드에 드는 원화 다수가 밉맵을 켜 놨다(소품 낱장 44장 포함, ×4/3). 지도를 크게 줄여 볼 때 말고는 필요 없다.
 - 이펙트 텍스처 최대 크기: VFX 가 DXT 로도 27MB 어림. WebGL 만 1024 로 낮출 수 있는지.
 - wasm 10MB: Managed Stripping Level 이 비어 있다(기본값). WebGL 만 'Medium' 으로 올려 보기 — 리플렉션으로 읽는 데이터 클래스가 잘리지 않게 `Assets/link.xml` 이 Core 를 통째로 남긴다(2026-11-19 20시 넣음, 테스트 `LinkXmlTests`). 올리고 재는 일은 unity_tasks WEB-02U.
+- TMP 기본 에셋(LiberationSans SDF·글꼴·EmojiOne 1.7MB)과 Unity 로고 2.7MB: `TextMesh Pro/Resources` 는 통째로 빌드에 들어간다. 2026-11-19 22시 Resources 밖으로 옮기고 기본 글꼴을 NotoSerifKR SDF 로(테스트 `TmpSettingsTests`). 로고 끄기와 확인은 unity_tasks WEB-04U.
 - 배경음이 들어오면: WebGL 에서 Vorbis 낮은 품질 + 'Load In Background'/스트리밍.
 
 ## 빌드 보고 (2026-11-19 20:50 PC, fe369ea 릴리스 batchmode 2분 21초)
