@@ -45,6 +45,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: 빌드에 LiberationSans·EmojiOne·Unity 로고 없음, 글 네모 0. web_size.md '빌드 보고'에 data 크기
   - 찍기: 없음
+- [ ] WEB-05U 소품 아틀라스 WebGL Crunch 확인·재기 · 먼저: 없음 (2026-11-19 23시 클라우드 — `Art/Props/PropParts.spriteatlasv2.meta` 에 WebGL 덮어쓰기: DXT5Crunched, 품질 50, 4096·밉맵 그대로)
+  - 할 것: ① 받아온 뒤 Build Settings 가 WebGL 인 채로 아틀라스를 골라 Inspector WebGL 탭에 'Use Crunch Compression' 이 켜졌는지, Pack Preview 다시 ② Run 씬 Play 로 서장·경지 +1 두 번에서 소나무·초가·바위 테두리가 뭉개지거나 색띠가 생기는지 WEB-01U 의 `props_mip_realm1.png` 와 견줌. 거슬리면 품질 50 → 75, 그래도 거슬리면 Crunch 끄고 메타를 되돌림 ③ 그날 웹 빌드 보고에서 아틀라스 크기와 data.br 전·후
+  - 쓸 것: `docs/design/web_size.md` '다음 후보', `docs/unity_shots/WEB-01U/`
+  - 메뉴: 없음
+  - 끝: data.br 전·후를 web_size.md '빌드 보고'에, 화질 판단 한 줄. 되돌렸으면 `AtlasWebGlTests` 도 같이 지움
+  - 찍기: `Captures/web05_props_crunch_realm1.png`(끝나면 `docs/unity_shots/WEB-05U/` 로)
 - [ ] GR-01U 지역 바닥·몸놀림 눈으로 확인하고 다듬기 · 먼저: 없음 (2026-11-17 사람: "누런 끼 빼고 각 지역마다의 특색", "너무 허접하게 움직이는 느낌")
   - 할 것: 11-17 밤 대화 세션이 넣은 것을 움직이는 화면으로 본다. ① F2 '몸 바꾸기'로 문파 아홉의 땅에 서 보고 바닥 타일(`Fx/Biomes.cs` 의 무늬)이 그 땅답게 읽히는지, 이펙트·적이 바닥에 묻히지 않는지 ② 두 땅 사이를 걸어 경계 띠에서 섞임이 거슬리지 않는지(`MapLayer.blendBand`) ③ 적 몸놀림 일곱 갈래(`ClusterRenderer` 의 `ClusterMotion`)가 종류마다 어울리는지 — 두꺼비 뛰기·수귀 떠다님·목인 덜컥·정예 무거운 걸음. 지나치면 진폭을 줄인다 ④ 지역 알림(`Hud/RegionBanner.cs`)이 HUD 와 겹치지 않는지
   - 쓸 것: `Fx/Biomes.cs`(Looks 표·MakeTile, 원화를 얹는 세기는 `ArtOf` — 여섯 땅은 원화, 다섯 땅은 코드 타일), `Fx/MapLayer.cs`(PickGround·DrawGround), `Fx/ClusterRenderer.cs`, `EnemyField.MotionOf`, `Hud/TestPanel.cs`(정예 부르기·땅의 주인·빠르기 ×4). 원화 타일이 오면 `Resources/Art/Tiles` 에 넣고 `ArtOf` 에 한 줄
