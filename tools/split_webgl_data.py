@@ -145,14 +145,16 @@ def stamp_index(html, version):
 
 
 def stamp(root, version=None):
-    """index.html 에 빌드 표를 붙인다. version 이 없으면 wasm 파일이 쓰인 시각(초). 돌려주는 값은 붙인 표."""
+    """index.html 에 빌드 표를 붙인다. version 이 없으면 Build 폴더 파일 중 가장 늦게 쓰인 시각(초). 돌려주는 값은 붙인 표.
+    2026-11-19: 예전엔 wasm 시각만 봤는데, 코드가 안 바뀐 빌드는 Unity 가 wasm 을 다시 안 써서 표가 그대로였고
+    브라우저가 옛 data 조각을 캐시에서 꺼내 'Invalid binary data file size' 로 멈췄다."""
     idx = os.path.join(root, "index.html")
     if version is None:
         bdir = os.path.join(root, "Build")
-        wasm = [f for f in os.listdir(bdir) if ".wasm" in f]
-        if not wasm:
+        files = [f for f in os.listdir(bdir) if os.path.isfile(os.path.join(bdir, f))]
+        if not any(".wasm" in f for f in files):
             raise FileNotFoundError(bdir + " 에 wasm 이 없다")
-        version = int(os.path.getmtime(os.path.join(bdir, wasm[0])))
+        version = int(max(os.path.getmtime(os.path.join(bdir, f)) for f in files))
     html = open(idx, encoding="utf-8").read()
     out = stamp_index(html, version)
     if out != html:

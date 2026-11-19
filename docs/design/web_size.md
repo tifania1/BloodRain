@@ -36,3 +36,41 @@ Build Settings 의 씬 셋(Boot·Run·Inn) + `Resources/` 전부에서 시작해
 - 이펙트 텍스처 최대 크기: VFX 가 DXT 로도 27MB 어림. WebGL 만 1024 로 낮출 수 있는지.
 - wasm 10MB: Managed Stripping Level 이 비어 있다(기본값). WebGL 만 'Medium' 으로 올려 보기 — 리플렉션으로 읽는 데이터 클래스가 잘리지 않게 `Assets/link.xml` 이 Core 를 통째로 남긴다(2026-11-19 20시 넣음, 테스트 `LinkXmlTests`). 올리고 재는 일은 unity_tasks WEB-02U.
 - 배경음이 들어오면: WebGL 에서 Vorbis 낮은 품질 + 'Load In Background'/스트리밍.
+
+## 빌드 보고 (2026-11-19 20:50 PC, fe369ea 릴리스 batchmode 2분 21초)
+
+**합계 76.1 → 37.6MB**(data.br 70 → 27.2MB, wasm.br 10.4MB 그대로). 올린 조각은 21.1 + 7.6MB 두 개.
+
+PC 에서 본 것:
+- 줄인 글꼴: 동적 글꼴 넷 'Clear Dynamic Data' 함. 세 언어 데이터·문구 글자를 FontEngine 으로 글꼴마다 대 보니 빠진 글자 0. 에디터 Run 씬 한국어·간체·번체 레벨업 카드, 웹 판 타이틀·칸 고르기에서 네모 없음.
+- 소품 낱장은 4의 배수로 맞췄는데도 **RGBA32 로 실렸다**. WebGL 은 밉맵을 켠 텍스처가 2의 거듭제곱이 아니면 DXT 로 못 누른다(시험: 768x640·744x640 + 밉맵 → RGBA32, 512x256·1024² → DXT5, 740x640 밉맵 끔 → DXT5).
+  밉맵을 끄면 경지가 오를 때 소나무·초가가 하얗게 자글거려서(`docs/unity_shots/WEB-01U/` 의 `props_nomip_realm1.png` 와 `props_mip_realm1.png`) 끄지 않고 **스프라이트 아틀라스 한 장**(`Art/Props/PropParts.spriteatlasv2`, 4096 · 밉맵 · DXT5, 메뉴 `BloodRain/Bootstrap/소품 아틀라스 짓기(WebGL 압축)`, Sprite Packer V2)으로 묶었다. PropLayer 는 `textureRect` 로 UV 를 잡아 그대로 맞음(`web01_props_atlas_realm0.png`).
+  `tools/pad_mult4.py` 는 이제 꼭 필요하진 않지만 해가 없어 둔다.
+- 올린 뒤 웹 판이 'Invalid binary data file size' 로 멈췄다: `split_webgl_data.py` 의 `?v=` 가 wasm 시각이었는데 코드가 안 바뀐 빌드라 wasm 이 다시 안 쓰여 표가 그대로 → 브라우저가 옛 조각을 캐시에서 씀. Build 폴더에서 가장 늦은 파일 시각으로 바꿈.
+
+큰 것 스무 개(압축 전):
+
+| 크기 | 에셋 |
+|---|---|
+| 21.3MB | Art/Props/PropParts.spriteatlasv2 (소품 46장) |
+| 6.0MB | Art/Map/map_central_plains.jpg — CLAUDE.md 는 '쓰지 않음'인데 빌드에 들어감. 누가 참조하는지 볼 것 |
+| 2.7MB | 내장 Splash Screen Unity Logo |
+| 1.5MB | Art/Fonts/YujiBoku-Regular.ttf |
+| 1.4MB | Art/Fonts/NotoSerifKR-Regular.otf |
+| 1.3MB | Art/Cutscenes/sb_prologue_needle.jpg |
+| 1.3MB | Art/Cutscenes/sb_prologue_burnout.jpg |
+| 1.0MB | TextMesh Pro LiberationSans SDF.asset |
+| 1.0MB | Art/Fonts/YujiBoku SDF.asset |
+| 768.6KB | Art/Cards/card_sect_shaolin.jpg |
+| 768.6KB | Art/Backgrounds/bg_chimbang.jpg |
+| 768.6KB | Art/Backgrounds/bg_title.jpg |
+| 753.6KB | Art/Fonts/NotoSerifSC-Regular.otf |
+| 659.6KB | Art/Fonts/NotoSerifTC-Regular.otf |
+| 525.8KB | Resources/unity_builtin_extra |
+| 344.5KB | TextMesh Pro LiberationSans.ttf |
+| 341.5KB | TextMesh Pro EmojiOne.png |
+| 270.4KB | DamageNumbersPro Saw-Glow.asset |
+| 262.6KB | URP SMAA AreaTex.tga |
+| 256.1KB × 여럿 | Art/VFX/AI 의 512² 빛·먹 재료(DXT5) |
+
+분류: 텍스처 70.3MB(89.8%), 소리 0.96MB, 셰이더 0.95MB, 그 밖 5.8MB. 다음 후보: 옛 지도 6MB 빼기, Splash 로고(유료 판이 아니면 못 뺌), 아틀라스 최대 크기를 WebGL 만 2048(화질 보고), TMP 기본 글꼴·EmojiOne.

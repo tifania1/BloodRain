@@ -21,7 +21,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 까닭과 본 것은 `docs/design/review_2026-11-13.md`. 대화 세션이 11-13 밤에 잡았던 HF-01U·HF-02U·VF-01U 는 2026-11-16 에 표시를 풀었다 — 남은 것은 각 항목 '진행'에 적혀 있고 PC Unity 세션이 이어서 한다.
 
-- [ ] WEB-01U 줄인 글꼴·소품 확인하고 웹 판 크기 재기 · 먼저: 없음 (2026-11-19 사람: 웹 판 "로딩이 안 돼" — 받는 양 76MB. 클라우드가 글꼴 넷을 쓰는 글자만 남기고(35.8 → 4.5MB) 소품 낱장 44장을 4의 배수로 맞춤. 어림과 까닭은 `docs/design/web_size.md`)
+- [x] WEB-01U 줄인 글꼴·소품 확인하고 웹 판 크기 재기 · 먼저: 없음 — **2026-11-19 20:50 PC 끝**: 웹 판 76.1 → 37.6MB(data 70 → 27.2MB). 글꼴 네모 0(세 언어), 소품 낱장은 WebGL 이 밉맵 켠 NPOT 을 못 눌러 아틀라스 한 장(밉맵·DXT5)으로 묶음, `split_webgl_data.py` 캐시 표 고침, dev 판에 올려 타이틀·칸 고르기까지 뜨는 것 확인. 빌드 보고는 `docs/design/web_size.md`. 찍음 `docs/unity_shots/WEB-01U/` (2026-11-19 사람: 웹 판 "로딩이 안 돼" — 받는 양 76MB. 클라우드가 글꼴 넷을 쓰는 글자만 남기고(35.8 → 4.5MB) 소품 낱장 44장을 4의 배수로 맞춤. 어림과 까닭은 `docs/design/web_size.md`)
   - 할 것: ① 받아온 뒤 Project 창에서 동적 글꼴 에셋 넷(`NotoSerifKR SDF`·`NotoSerifSC SDF`·`NotoSerifTC SDF`·`YujiBoku Dynamic SDF`)을 골라 Inspector 톱니 → 'Clear Dynamic Data'(원본 글꼴의 글리프 번호가 바뀌어 저장된 아틀라스가 엉뚱한 글자를 그릴 수 있다). `YujiBoku SDF`(정적)는 그대로 ② Run 씬을 켜 한국어·간체·번체로 HUD·레벨업 카드·지역 알림·절기 한자를 보고 네모(빠진 글자)가 없는지 ③ 소품 낱장 하나(`prop_inn`)의 Inspector 에서 WebGL 형식이 압축(DXT5/BC)인지, 'multiple of 4' 경고가 없는지 ④ 그날 웹 빌드의 Editor.log 'Build Report' 에서 큰 것 스무 개와 data 크기를 `docs/design/web_size.md` 맨 아래 '빌드 보고' 절에 붙인다
   - 쓸 것: `tools/subset_fonts.py`(빠진 글자가 있으면 `pip install fonttools` 후 다시 돌림), `tools/pad_mult4.py`, `docs/design/web_size.md` '다음 후보'
   - 메뉴: 없음(Unity 가 다시 들여옴)
