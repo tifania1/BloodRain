@@ -27,19 +27,19 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음(Unity 가 다시 들여옴)
   - 끝: 세 언어에서 네모 0, 소품 낱장 압축됨, 빌드 보고 표가 web_size.md 에. 콘솔 에러 0. 그날 data 크기를 daily '웹 빌드' 줄에
   - 찍기: `Captures/web01_ko.png`·`Captures/web01_zh.png`
-- [ ] WEB-02U 웹 판 wasm 줄이기: WebGL 만 코드 줄이기 'Medium' · 먼저: WEB-01U (2026-11-19 클라우드가 `Assets/link.xml` 로 Core 를 통째로 남겨 둠 — 데이터는 Newtonsoft 가 리플렉션으로 읽어서)
+- [x] WEB-02U 웹 판 wasm 줄이기: WebGL 만 코드 줄이기 'Medium' · 먼저: WEB-01U (2026-11-19 클라우드가 `Assets/link.xml` 로 Core 를 통째로 남겨 둠 — 데이터는 Newtonsoft 가 리플렉션으로 읽어서) — **2026-11-19 23:00 PC 끝**: WebGL 만 Managed Stripping Medium(다른 플랫폼 그대로). wasm.br 10.4 → 9.1MB(10,884,188 → 9,591,706 바이트). 로컬 GPU 크롬에서 타이틀 → 1번 칸 새 혼 → 서장(레벨업 카드로 비도술 익힘) → M 천하도까지 콘솔 204줄 중 오류·MissingMethod·NullReference 0. 객잔까지는 서장 10분을 버텨야 해 못 감
   - 할 것: ① Project Settings → Player → WebGL 탭 → Other Settings → Managed Stripping Level 을 Medium(다른 플랫폼은 그대로) ② 그날 웹 빌드 전에 에디터가 아닌 빌드로 확인해야 하니 웹 빌드를 한 번 하고, 브라우저(로컬 서버 또는 dev 판)에서 서장 → 레벨업 카드 두 번 → 지도(M) → 객잔까지 가 보며 콘솔에 MissingMethodException·NullReference·'값이 0' 이 없는지 ③ 빌드 보고에서 wasm 크기를 바꾸기 전과 대 본다. 잘리는 것이 있으면 그 어셈블리를 link.xml 에 더하고, 그래도 안 되면 Low 로 되돌린다
   - 쓸 것: `Assets/link.xml`, `docs/design/web_size.md` '다음 후보'
   - 메뉴: 없음
   - 끝: wasm 크기 전·후를 web_size.md '빌드 보고' 절에, 브라우저 콘솔 에러 0
   - 찍기: 없음
-- [ ] WEB-03U 옛 지도 6MB 빼기 확인: 침방 벽 지도를 Run 천하도와 같은 그림으로 · 먼저: 없음 (2026-11-19 21시 클라우드 — `ChimbangScreen.wallMap` 이 비면 `Biomes.MakeMap` 을 걸게 고치고 Inn·Run·ChimbangTest·ScaleTest 씬의 `map_central_plains.jpg` 참조를 비움, 부트스트랩 셋도 더는 안 넣음. 컴파일은 클라우드에서 못 봄)
+- [x] WEB-03U 옛 지도 6MB 빼기 확인: 침방 벽 지도를 Run 천하도와 같은 그림으로 · 먼저: 없음 (2026-11-19 21시 클라우드 — `ChimbangScreen.wallMap` 이 비면 `Biomes.MakeMap` 을 걸게 고치고 Inn·Run·ChimbangTest·ScaleTest 씬의 `map_central_plains.jpg` 참조를 비움, 부트스트랩 셋도 더는 안 넣음. 컴파일은 클라우드에서 못 봄) — **2026-11-19 22:41 PC 끝**: 컴파일 에러 0. ChimbangTest 씬에서 벽 지도가 바다·땅빛 천하도, 지명 점이 땅 자리에 앉고 `Hover(0)`(당가 제자)로 당가타에 붉은 점·장막 원. 콘솔 에러 0. 빌드 보고에서 `map_central_plains.jpg` 빠짐. 찍음 `docs/unity_shots/WEB-03U/` 의 `chimbang_wall.png`·`chimbang_hover.png`
   - 할 것: ① 컴파일 에러 0 ② Inn 씬 Play → 침방 오른쪽 벽 지도가 바다·땅빛 천하도로 나오고 지명 점이 땅 자리(Run 의 M 지도와 같은 곳)에 앉는지, 후보 카드에 커서를 올리면 붉은 점·장막 원이 맞는 자리에 ③ 그날 웹 빌드 보고에서 `map_central_plains.jpg` 가 빠졌는지와 data 크기
   - 쓸 것: `Presentation/Meta/ChimbangScreen.cs`·`ChimbangMap.cs`, `Fx/Biomes.MakeMap`
   - 메뉴: 없음
   - 끝: 벽 지도가 천하도, 빌드에 옛 지도 없음. web_size.md 표 그 줄에 결과
   - 찍기: `Captures/web03_chimbang.png`
-- [ ] WEB-04U TMP 기본 에셋 뺀 것 확인 + Unity 로고 빼기 · 먼저: 없음 (2026-11-19 22시 클라우드 — LiberationSans·EmojiOne 을 `TextMesh Pro/Resources` 밖 `TextMesh Pro/Unused/` 로 옮기고 TMP Settings 기본 글꼴을 NotoSerifKR SDF 로, 기본 스프라이트 없음·이모지 끔. 에디터에서 못 봄)
+- [x] WEB-04U TMP 기본 에셋 뺀 것 확인 + Unity 로고 빼기 · 먼저: 없음 (2026-11-19 22시 클라우드 — LiberationSans·EmojiOne 을 `TextMesh Pro/Resources` 밖 `TextMesh Pro/Unused/` 로 옮기고 TMP Settings 기본 글꼴을 NotoSerifKR SDF 로, 기본 스프라이트 없음·이모지 끔. 에디터에서 못 봄) — **2026-11-19 22:45 PC 끝**: TMP 기본 글꼴 NotoSerifKR SDF·기본 스프라이트 없음 확인, Run 씬 HUD·피해 숫자 글 그대로(DNP 프리팹은 제 Saw-Glow 글꼴이고 `usePro` 꺼져 있음), 콘솔 에러 0. Splash Screen·Unity 로고 끔. 빌드 보고에서 LiberationSans·EmojiOne·로고 빠짐, 웹 판 37.6 → 30.6MB(data.br 22.4MB 라 조각 안 나눔). 찍음 `docs/unity_shots/WEB-04U/` 의 `run_text.png`
   - 할 것: ① 에디터가 옮긴 것을 다시 읽은 뒤 Project Settings → TextMesh Pro → Settings 에서 Default Font Asset 이 NotoSerifKR SDF 인지, 콘솔 에러 0 ② Run 씬 Play → 피해 숫자(Damage Numbers Pro)·레벨업 카드·HUD 글이 그대로 나오는지(DNP 프리팹이 LiberationSans 를 가리켜도 Resources 밖에서 그대로 읽힘 — 빠진 게 있으면 그 프리팹 글꼴을 NotoSerifKR SDF 로) ③ Player → Splash Image 에서 'Show Unity Logo' 를 끄고(Unity 6 은 Personal 도 끌 수 있음) Splash Screen 도 끔 — 빌드 보고 2.7MB 'Splash Screen Unity Logo' 가 빠지는지 ④ 그날 웹 빌드 보고에서 LiberationSans·EmojiOne·로고가 빠졌는지와 data 크기
   - 쓸 것: `Assets/TextMesh Pro/Resources/TMP Settings.asset`, `docs/design/web_size.md`
   - 메뉴: 없음

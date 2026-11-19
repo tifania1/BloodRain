@@ -75,3 +75,12 @@ PC 에서 본 것:
 | 256.1KB × 여럿 | Art/VFX/AI 의 512² 빛·먹 재료(DXT5) |
 
 분류: 텍스처 70.3MB(89.8%), 소리 0.96MB, 셰이더 0.95MB, 그 밖 5.8MB. 다음 후보: 옛 지도 6MB 빼기(WEB-03U), Splash 로고(유료 판이 아니면 못 뺌), 아틀라스 최대 크기를 WebGL 만 2048(화질 보고), TMP 기본 글꼴·EmojiOne.
+
+## 빌드 보고 (2026-11-19 23:00 PC, b5d4966 + Medium·로고 끔, 릴리스 batchmode 11분 21초)
+
+**합계 37.6 → 30.6MB**(data.br 27.2 → 22.4MB, wasm.br 10.4 → 9.1MB). data 가 Cloudflare 25MiB 상한 안이라 조각을 안 나눈다.
+
+- WEB-02U: WebGL 만 Managed Stripping Medium. wasm.br 10,884,188 → 9,591,706 바이트(-1.2MB). `link.xml` 로 Core 를 남겨 둔 채, 로컬 GPU 크롬 서장·레벨업·천하도까지 콘솔 오류 0. 처음 Medium 빌드는 IL2CPP 를 새로 돌려 11분.
+- WEB-03U: `map_central_plains.jpg`(6MB) 빠짐.
+- WEB-04U: Splash 로고(2.7MB)·LiberationSans SDF(1.0MB)·LiberationSans.ttf·EmojiOne 빠짐.
+- 남은 큰 것: 소품 아틀라스 21.3MB(압축 전), YujiBoku 원본 1.5MB·SDF 1.0MB, NotoSerifKR 1.4MB, 서장 컷 두 장 1.3MB씩, DNP Saw-Glow 270KB(`usePro` 를 안 쓰면 뺄 수 있음). 분류: 텍스처 60.3MB(88.9%), 소리 0.96MB, 셰이더 0.94MB, 그 밖 5.4MB.
