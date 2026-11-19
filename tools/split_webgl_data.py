@@ -15,12 +15,42 @@ CHUNK = 48 * 1024 * 1024          # 처음 시도하는 조각 원본 크기
 
 LOADER = """
       // split_webgl_data.py: data 를 조각으로 받아 이어 붙인다(Cloudflare Pages 25MiB 상한).
+      // 받는 동안 진행 막대를 70%%까지 채우고 몇 MB 받았는지 적는다(2026-11-19 — 조각을 다 받을 때까지 막대가 0 에 서 있어
+      // 사람이 "로딩이 안 된다"고 했다. 회사 회선에서 조각 70MB 에 28초). 나머지 30%%는 Unity 가 채운다.
       const dataParts = %s;
+      const dataTotal = %d;
       async function joinData() {
-        const bufs = await Promise.all(dataParts.map(n => fetch(buildUrl + "/" + n).then(r => { if (!r.ok) throw new Error(n + " " + r.status); return r.arrayBuffer(); })));
-        return URL.createObjectURL(new Blob(bufs));
+        let got = 0;
+        const bar = document.querySelector("#unity-progress-bar-full");
+        const box = document.querySelector("#unity-loading-bar");
+        const note = document.createElement("div");
+        note.id = "data-note";
+        note.style.cssText = "color:#bbb;font:13px sans-serif;text-align:center;margin-top:10px;white-space:nowrap";
+        if (box) { box.style.display = "block"; box.appendChild(note); }
+        const show = () => {
+          if (bar) bar.style.width = (70 * Math.min(1, got / dataTotal)) + "%%";
+          note.textContent = "\ubc1b\ub294 \uc911 " + Math.round(got / 1048576) + " / " + Math.round(dataTotal / 1048576) + "MB";
+        };
+        show();
+        try {
+          const bufs = await Promise.all(dataParts.map(async n => {
+            const r = await fetch(buildUrl + "/" + n);
+            if (!r.ok) throw new Error(n + " " + r.status);
+            if (!r.body) { const b = await r.arrayBuffer(); got += b.byteLength; show(); return b; }
+            const reader = r.body.getReader(), chunks = [];
+            for (;;) { const step = await reader.read(); if (step.done) break; chunks.push(step.value); got += step.value.byteLength; show(); }
+            return new Blob(chunks);
+          }));
+          note.textContent = "\uc900\ube44\ud558\ub294 \uc911";
+          return URL.createObjectURL(new Blob(bufs));
+        } catch (e) {
+          note.textContent = "\ubc1b\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc0c8\ub85c\uace0\uce68\ud574 \uc8fc\uc138\uc694 (" + e.message + ")";
+          throw e;
+        }
       }
 """
+LOADER_BLOCK = re.compile(r"\n\s*// split_webgl_data\.py: data 를 조각으로.*?\n      \}\n(?=\s*var loaderUrl)", re.S)
+UNITY_PROGRESS = '100 * progress + "%"'
 
 
 AUTOSYNC_OFF = "// config.autoSyncPersistentDataPath = true;"
@@ -45,19 +75,51 @@ def autosync(root):
     return out != html
 
 
-def patch_index(html, names):
-    """index.html 에 조각 받기를 넣는다. 세 군데 중 하나라도 못 찾으면 ValueError(반쯤 고친 채 두지 않는다)."""
+def loader_js(names, total):
+    return LOADER % (repr(list(names)).replace("'", '"'), int(total))
+
+
+def patch_progress(html):
+    """Unity 가 채우는 진행 막대를 70~100% 로 옮긴다(앞 70% 는 조각 받기). 템플릿에 그 줄이 없으면 그대로 둔다."""
+    if UNITY_PROGRESS in html:
+        html = html.replace(UNITY_PROGRESS, '(70 + 30 * progress) + "%"', 1)
+    return html
+
+
+def patch_index(html, names, total=0):
+    """index.html 에 조각 받기를 넣는다. 세 군데 중 하나라도 못 찾으면 ValueError(반쯤 고친 채 두지 않는다).
+    이미 넣은 색인이면: 진행 표시가 없는 옛 받기(dataTotal 없음)만 새것으로 바꾼다."""
     if "dataParts" in html:
-        return html
+        if "dataTotal" in html or not total:
+            return html
+        if not LOADER_BLOCK.search(html):
+            raise ValueError("index.html 의 옛 조각 받기 글을 못 찾았다(진행 표시를 못 넣음)")
+        html = LOADER_BLOCK.sub(lambda m: loader_js(names, total), html, count=1)
+        return patch_progress(html)
     data_line = re.search(r'dataUrl:\s*buildUrl\s*\+\s*"/[^"]*\.data\.br",', html)
     if "var loaderUrl" not in html or not data_line or "document.body.appendChild(script);" not in html:
         raise ValueError("index.html 에서 var loaderUrl·dataUrl·appendChild(script) 중 하나를 못 찾았다(Unity 템플릿이 바뀌었나)")
-    html = html.replace("var loaderUrl", LOADER % repr(names).replace("'", '"') + "      var loaderUrl", 1)
+    html = html.replace("var loaderUrl", loader_js(names, total) + "      var loaderUrl", 1)
     html = html.replace(data_line.group(0), 'dataUrl: "",', 1)
+    html = patch_progress(html)
     # 로더 스크립트를 붙이기 전에 조각을 받아 dataUrl 을 채운다
     return html.replace("document.body.appendChild(script);",
                         'joinData().then(u => { config.dataUrl = u; document.body.appendChild(script); })'
                         '.catch(e => { console.error("data 조각 받기 실패", e); });', 1)
+
+
+def upgrade(root):
+    """이미 나눈 폴더의 색인에 진행 표시를 넣는다(조각을 풀어 크기를 센다). 바꿨으면 True."""
+    import brotli
+    idx = os.path.join(root, "index.html")
+    html = open(idx, encoding="utf-8").read()
+    if "dataParts" not in html or "dataTotal" in html:
+        return False
+    names = re.findall(r'"(BloodRain\.data\.part\d+\.data\.br)"', html)
+    total = sum(len(brotli.decompress(open(os.path.join(root, "Build", n), "rb").read())) for n in names)
+    out = patch_index(html, names, total)
+    open(idx, "w", encoding="utf-8").write(out)
+    return out != html
 
 
 def stamp_index(html, version):
@@ -118,7 +180,7 @@ def split(root, limit=LIMIT, chunk=CHUNK):
             break
         chunk //= 2
     names = ["BloodRain.data.part%d.data.br" % i for i in range(len(packed))]
-    html = patch_index(html, names)
+    html = patch_index(html, names, len(raw))
     for i, (n, p) in enumerate(zip(names, packed)):
         open(os.path.join(bdir, n), "wb").write(p)
         print("O  %s  %d → %d" % (n, len(parts[i]), len(p)))
@@ -140,7 +202,7 @@ if __name__ == "__main__":
         # 이미 나눈 폴더에서 다시 돌려도 빌드 표는 붙인다
         if "dataParts" not in open(os.path.join(root, "index.html"), encoding="utf-8").read():
             print("X  " + str(e)); sys.exit(1)
-        print("O  data 는 이미 나눠져 있음")
+        print("O  data 는 이미 나눠져 있음" + (" — 색인에 진행 표시를 넣음" if upgrade(root) else ""))
     except ValueError as e:
         print("X  " + str(e)); sys.exit(1)
     else:

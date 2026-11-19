@@ -105,7 +105,34 @@ class 나누기(unittest.TestCase):
             joined += brotli.decompress(p)
         self.assertEqual(joined, self.raw)
         self.assertFalse(Path(self.root, "Build", "BloodRain.data.br").exists())
-        self.assertIn("dataParts", Path(self.root, "index.html").read_text(encoding="utf-8"))
+        html = Path(self.root, "index.html").read_text(encoding="utf-8")
+        self.assertIn("dataParts", html)
+        # 받는 동안 진행 막대를 채우려고 풀린 크기 합을 색인에 적는다(2026-11-19: 막대가 0 에 서 있어 "로딩이 안 된다")
+        self.assertIn("const dataTotal = %d;" % len(self.raw), html)
+
+    def test_옛_색인에는_진행_표시만_넣는다(self):
+        # 진행 표시가 없던 때 나눈 폴더(dataParts 는 있고 dataTotal 은 없음)를 다시 돌리면 받기 글만 새것으로 바뀐다
+        names = sw.split(self.root, limit=100_000, chunk=400_000)
+        idx = Path(self.root, "index.html")
+        new = idx.read_text(encoding="utf-8")
+        old_loader = """
+      // split_webgl_data.py: data 를 조각으로 받아 이어 붙인다(Cloudflare Pages 25MiB 상한).
+      const dataParts = %s;
+      async function joinData() {
+        const bufs = await Promise.all(dataParts.map(n => fetch(buildUrl + "/" + n + "?v=7").then(r => { if (!r.ok) throw new Error(n + " " + r.status); return r.arrayBuffer(); })));
+        return URL.createObjectURL(new Blob(bufs));
+      }
+""" % repr(names).replace("'", '"')
+        old = sw.LOADER_BLOCK.sub(lambda m: old_loader, new, count=1)
+        self.assertNotIn("dataTotal", old)
+        idx.write_text(old, encoding="utf-8")
+        self.assertTrue(sw.upgrade(self.root))
+        html = idx.read_text(encoding="utf-8")
+        self.assertIn("const dataTotal = %d;" % len(self.raw), html)
+        self.assertEqual(html.count("async function joinData"), 1)
+        self.assertFalse(sw.upgrade(self.root))  # 두 번 해도 같다
+        # 빌드 표(?v=)를 붙이는 줄이 새 받기 글에 꼭 한 번 있다
+        self.assertEqual(html.count('fetch(buildUrl + "/" + n)'), 1)
 
     def test_상한_안이면_그대로_둔다(self):
         self.assertEqual(sw.split(self.root, limit=10_000_000), [])
