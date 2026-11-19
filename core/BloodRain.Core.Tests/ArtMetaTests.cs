@@ -90,5 +90,18 @@ namespace BloodRain.Core.Tests
             int U32(int o) => (b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3];
             return (U32(16), U32(20));
         }
+
+        [Fact]
+        public void 컷_그림은_밉맵을_끈다()
+        {
+            // WEB-06: 컷은 화면에 꽉 차게만 그려 밉맵이 필요 없다. 1536x1024 는 2의 거듭제곱이 아니라
+            // 밉맵을 켜면 WebGL 이 DXT 로 못 누르고 RGBA32 로 싣는다(web_size.md 2026-11-19 빌드 보고).
+            var bad = Directory.GetFiles(Path.Combine(ArtDir, "Cutscenes"), "*.meta")
+                .Where(m => new[] { ".png", ".jpg", ".jpeg" }.Contains(Path.GetExtension(m[..^5]).ToLowerInvariant()))
+                .Where(m => Regex.Match(File.ReadAllText(m), @"^\s+enableMipMap: (\d)", RegexOptions.Multiline).Groups[1].Value != "0")
+                .Select(Path.GetFileName)
+                .ToList();
+            Assert.True(bad.Count == 0, "밉맵이 켜진 컷 그림:\n" + string.Join("\n", bad));
+        }
     }
 }

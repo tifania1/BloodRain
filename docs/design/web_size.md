@@ -37,6 +37,8 @@ Build Settings 의 씬 셋(Boot·Run·Inn) + `Resources/` 전부에서 시작해
 - wasm 10MB: Managed Stripping Level 이 비어 있다(기본값). WebGL 만 'Medium' 으로 올려 보기 — 리플렉션으로 읽는 데이터 클래스가 잘리지 않게 `Assets/link.xml` 이 Core 를 통째로 남긴다(2026-11-19 20시 넣음, 테스트 `LinkXmlTests`). 올리고 재는 일은 unity_tasks WEB-02U.
 - TMP 기본 에셋(LiberationSans SDF·글꼴·EmojiOne 1.7MB)과 Unity 로고 2.7MB: `TextMesh Pro/Resources` 는 통째로 빌드에 들어간다. 2026-11-19 22시 Resources 밖으로 옮기고 기본 글꼴을 NotoSerifKR SDF 로(테스트 `TmpSettingsTests`). 로고 끄기와 확인은 unity_tasks WEB-04U.
 - 소품 아틀라스 21.3MB(DXT5 는 brotli 로 잘 안 줄어듦): 2026-11-19 23시 WebGL 만 Crunch(DXT5Crunched·품질 50) 덮어쓰기(테스트 `AtlasWebGlTests`). 화질과 크기는 unity_tasks WEB-05U. Crunch 는 받은 뒤 CPU 가 풀어 로딩 끝에 조금 더 걸린다.
+- 컷 그림 22장(1536x1024): 2의 거듭제곱이 아닌데 밉맵이 켜져 WebGL 에서 RGBA32 로 실렸을 것. 2026-11-20 00시 밉맵 끔(테스트 `ArtMetaTests.컷_그림은_밉맵을_끈다`, 확인 unity_tasks WEB-06U).
+- 인물 낱장 21장(`Art/Characters`)도 2의 거듭제곱이 아니고 밉맵이 켜져 있다. 경지가 오르면 멀리 보니 밉맵은 남겨야 하고, 소품처럼 아틀라스로 묶는 게 길(PC 가 WEB-06U 에서 형식부터 본다).
 - 배경음이 들어오면: WebGL 에서 Vorbis 낮은 품질 + 'Load In Background'/스트리밍.
 
 ## 빌드 보고 (2026-11-19 20:50 PC, fe369ea 릴리스 batchmode 2분 21초)
