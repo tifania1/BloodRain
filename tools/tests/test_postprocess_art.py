@@ -64,8 +64,11 @@ class SplitPropsTests(unittest.TestCase):
         box, mask = parts[2]
         part = sp.tight(img, box, mask)
         # 삼각형 칸 안에 네모가 들어 있어도 삼각형만 남아 크기가 삼각형 크기와 같고, 네모 자리는 비어 있다
-        self.assertEqual((part.width - sp.PAD * 2, part.height - sp.PAD * 2), (251, 141))
-        self.assertEqual(part.getpixel((sp.PAD + 30, sp.PAD + 120))[3], 0)
+        x0, y0, x1, y1 = part.getchannel("A").getbbox()
+        self.assertEqual((x1 - x0, y1 - y0), (251, 141))
+        self.assertGreaterEqual(min(x0, y0), sp.PAD)
+        self.assertEqual((part.width % 4, part.height % 4), (0, 0))  # DXT 압축 조건(pad_mult4.py)
+        self.assertEqual(part.getpixel((x0 + 30, y0 + 120))[3], 0)
 
 
 if __name__ == "__main__":

@@ -39,7 +39,7 @@ namespace BloodRain.Core.Tests
         {
             Assert.True(File.Exists(Path.Combine(FontDir, "NotoSerifKR-OFL.txt")));
             var body = Body.Value;
-            Assert.True(body.Count > 20000, $"Noto Serif KR 글자 수 {body.Count}");
+            Assert.True(body.Count > 2500, $"Noto Serif KR 글자 수 {body.Count}(쓰는 글자만 남긴 판, tools/subset_fonts.py)");
             foreach (var ch in "가힣혈우강호중원숭산소림ABCxyz0123456789%+-×·")
                 Assert.Contains((int)ch, body);
         }

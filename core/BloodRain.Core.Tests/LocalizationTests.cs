@@ -177,7 +177,7 @@ namespace BloodRain.Core.Tests
         public void 간체_글꼴과_라이선스가_있다()
         {
             Assert.True(File.Exists(Path.Combine(FontDir, "NotoSerifSC-OFL.txt")));
-            Assert.True(Sc.Value.Count > 20000, $"Noto Serif SC 글자 수 {Sc.Value.Count}");
+            Assert.True(Sc.Value.Count > 1000, $"Noto Serif SC 글자 수 {Sc.Value.Count}(쓰는 글자만 남긴 판, tools/subset_fonts.py)");
             foreach (var ch in "血雨江湖少林武当华山剑气内功真气境界ABCxyz0123456789%+-×·（）：，。")
                 Assert.Contains((int)ch, Sc.Value);
         }

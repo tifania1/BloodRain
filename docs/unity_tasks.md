@@ -21,6 +21,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 까닭과 본 것은 `docs/design/review_2026-11-13.md`. 대화 세션이 11-13 밤에 잡았던 HF-01U·HF-02U·VF-01U 는 2026-11-16 에 표시를 풀었다 — 남은 것은 각 항목 '진행'에 적혀 있고 PC Unity 세션이 이어서 한다.
 
+- [ ] WEB-01U 줄인 글꼴·소품 확인하고 웹 판 크기 재기 · 먼저: 없음 (2026-11-19 사람: 웹 판 "로딩이 안 돼" — 받는 양 76MB. 클라우드가 글꼴 넷을 쓰는 글자만 남기고(35.8 → 4.5MB) 소품 낱장 44장을 4의 배수로 맞춤. 어림과 까닭은 `docs/design/web_size.md`)
+  - 할 것: ① 받아온 뒤 Project 창에서 동적 글꼴 에셋 넷(`NotoSerifKR SDF`·`NotoSerifSC SDF`·`NotoSerifTC SDF`·`YujiBoku Dynamic SDF`)을 골라 Inspector 톱니 → 'Clear Dynamic Data'(원본 글꼴의 글리프 번호가 바뀌어 저장된 아틀라스가 엉뚱한 글자를 그릴 수 있다). `YujiBoku SDF`(정적)는 그대로 ② Run 씬을 켜 한국어·간체·번체로 HUD·레벨업 카드·지역 알림·절기 한자를 보고 네모(빠진 글자)가 없는지 ③ 소품 낱장 하나(`prop_inn`)의 Inspector 에서 WebGL 형식이 압축(DXT5/BC)인지, 'multiple of 4' 경고가 없는지 ④ 그날 웹 빌드의 Editor.log 'Build Report' 에서 큰 것 스무 개와 data 크기를 `docs/design/web_size.md` 맨 아래 '빌드 보고' 절에 붙인다
+  - 쓸 것: `tools/subset_fonts.py`(빠진 글자가 있으면 `pip install fonttools` 후 다시 돌림), `tools/pad_mult4.py`, `docs/design/web_size.md` '다음 후보'
+  - 메뉴: 없음(Unity 가 다시 들여옴)
+  - 끝: 세 언어에서 네모 0, 소품 낱장 압축됨, 빌드 보고 표가 web_size.md 에. 콘솔 에러 0. 그날 data 크기를 daily '웹 빌드' 줄에
+  - 찍기: `Captures/web01_ko.png`·`Captures/web01_zh.png`
 - [ ] GR-01U 지역 바닥·몸놀림 눈으로 확인하고 다듬기 · 먼저: 없음 (2026-11-17 사람: "누런 끼 빼고 각 지역마다의 특색", "너무 허접하게 움직이는 느낌")
   - 할 것: 11-17 밤 대화 세션이 넣은 것을 움직이는 화면으로 본다. ① F2 '몸 바꾸기'로 문파 아홉의 땅에 서 보고 바닥 타일(`Fx/Biomes.cs` 의 무늬)이 그 땅답게 읽히는지, 이펙트·적이 바닥에 묻히지 않는지 ② 두 땅 사이를 걸어 경계 띠에서 섞임이 거슬리지 않는지(`MapLayer.blendBand`) ③ 적 몸놀림 일곱 갈래(`ClusterRenderer` 의 `ClusterMotion`)가 종류마다 어울리는지 — 두꺼비 뛰기·수귀 떠다님·목인 덜컥·정예 무거운 걸음. 지나치면 진폭을 줄인다 ④ 지역 알림(`Hud/RegionBanner.cs`)이 HUD 와 겹치지 않는지
   - 쓸 것: `Fx/Biomes.cs`(Looks 표·MakeTile, 원화를 얹는 세기는 `ArtOf` — 여섯 땅은 원화, 다섯 땅은 코드 타일), `Fx/MapLayer.cs`(PickGround·DrawGround), `Fx/ClusterRenderer.cs`, `EnemyField.MotionOf`, `Hud/TestPanel.cs`(정예 부르기·땅의 주인·빠르기 ×4). 원화 타일이 오면 `Resources/Art/Tiles` 에 넣고 `ArtOf` 에 한 줄

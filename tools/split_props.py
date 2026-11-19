@@ -145,8 +145,10 @@ def tight(img: Image.Image, box: tuple[int, int, int, int], mask: Image.Image) -
     part.putalpha(Image.composite(a, Image.new("L", a.size, 0), mask.crop(box)))
     bb = part.getchannel("A").point(lambda v: 255 if v >= 8 else 0).getbbox() or (0, 0, part.width, part.height)
     part = part.crop(bb)
-    out = Image.new("RGBA", (part.width + PAD * 2, part.height + PAD * 2), (0, 0, 0, 0))
-    out.paste(part, (PAD, PAD))
+    # 가로·세로를 4의 배수로(DXT 압축 조건, tools/pad_mult4.py). 남는 여백은 양쪽에 고르게
+    W, H = (part.width + PAD * 2 + 3) // 4 * 4, (part.height + PAD * 2 + 3) // 4 * 4
+    out = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    out.paste(part, ((W - part.width) // 2, (H - part.height) // 2))
     return out
 
 

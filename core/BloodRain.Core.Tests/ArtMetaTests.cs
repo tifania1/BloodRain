@@ -71,5 +71,24 @@ namespace BloodRain.Core.Tests
                 .Distinct().OrderBy(x => x).ToList();
             Assert.Equal(SpriteFolders.OrderBy(x => x).ToList(), sets);
         }
+        [Fact]
+        public void 소품_낱장은_가로세로가_4의_배수다()
+        {
+            // DXT 압축 조건. 아니면 RGBA32 로 실려 웹 판이 무거워진다(WEB-01). 고치는 길: python tools/pad_mult4.py
+            var bad = Directory.GetFiles(Path.Combine(ArtDir, "Props", "Parts"), "*.png")
+                .Select(p => (name: Path.GetFileName(p), size: PngSize(p)))
+                .Where(x => x.size.w % 4 != 0 || x.size.h % 4 != 0)
+                .Select(x => $"{x.name} {x.size.w}x{x.size.h}")
+                .ToList();
+            Assert.True(bad.Count == 0, "4의 배수가 아닌 소품 낱장:\n" + string.Join("\n", bad));
+        }
+
+        static (int w, int h) PngSize(string path)
+        {
+            var b = new byte[24];
+            using (var f = File.OpenRead(path)) f.Read(b, 0, 24);
+            int U32(int o) => (b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3];
+            return (U32(16), U32(20));
+        }
     }
 }

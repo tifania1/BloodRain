@@ -35,7 +35,7 @@ namespace BloodRain.Core.Tests
         public void 번체_글꼴과_라이선스가_있다()
         {
             Assert.True(File.Exists(Path.Combine(FontDir, "NotoSerifTC-OFL.txt")));
-            Assert.True(Tc.Value.Count > 20000, $"Noto Serif TC 글자 수 {Tc.Value.Count}");
+            Assert.True(Tc.Value.Count > 1000, $"Noto Serif TC 글자 수 {Tc.Value.Count}(쓰는 글자만 남긴 판, tools/subset_fonts.py)");
             foreach (var ch in "血雨江湖少林武當華山劍氣內功真氣境界輪迴殭屍ABCxyz0123456789%+-×·（）：，。「」")
                 Assert.Contains((int)ch, Tc.Value);
         }
