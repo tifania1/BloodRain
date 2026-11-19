@@ -45,7 +45,6 @@ namespace BloodRain.Editor
             var screen = new GameObject("침방 화면").AddComponent<ChimbangScreen>();
             screen.font = HudBootstrap.EnsureBodyFont();
             screen.background = FindSprite("Assets/Art/Backgrounds/bg_chimbang");
-            screen.wallMap = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg"); // TU-12
             foreach (var s in DataBoot.Load().Cheonha.Sects)
             {
                 var art = FindSprite($"Assets/Art/Cards/card_sect_{s.Id}");

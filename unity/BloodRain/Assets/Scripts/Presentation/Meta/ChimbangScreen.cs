@@ -29,7 +29,8 @@ namespace BloodRain.Presentation.Meta
         public Sprite background;
         [Tooltip("art_queue card_sect_<문파 id>. 없는 문파는 단색 카드")]
         public List<SectArt> sectArt = new List<SectArt>();
-        [Tooltip("벽에 거는 중원 지도(art_queue map_central_plains). 없으면 빈 종이")]
+        // 옛 map_central_plains 는 땅 자리와 맞지 않아 쓰지 않는다(2026-11-19, 웹 판 6MB 줄임)
+        [Tooltip("벽에 거는 그린 지도. 비워 두면 Run 의 천하도와 같은 그림(Biomes.MakeMap)을 건다")]
         public Texture wallMap;
         [Tooltip("시험용: 해금 문파 대신 모든 문파에서 뽑는다")]
         public bool allSects;
@@ -312,7 +313,9 @@ namespace BloodRain.Presentation.Meta
             _cards.sizeDelta = new Vector2(1200, 640);
             _cards.anchoredPosition = new Vector2(-330, -30);
             _map = gameObject.AddComponent<ChimbangMap>();
-            _map.Build(root, font, wallMap, _data, new Vector2(640, 416));
+            var regions = new BloodRain.Core.World.Regions(_data);
+            var wall = wallMap != null ? wallMap : BloodRain.Presentation.Fx.Biomes.MakeMap(regions, new BloodRain.Sim.PropField(regions));
+            _map.Build(root, font, wall, _data, new Vector2(640, 416));
             var frame = _map.Frame;
             frame.anchorMin = frame.anchorMax = new Vector2(1f, 0.5f);
             frame.anchoredPosition = new Vector2(-360, -30);

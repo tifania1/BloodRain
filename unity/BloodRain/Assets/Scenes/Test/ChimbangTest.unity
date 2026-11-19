@@ -279,7 +279,7 @@ MonoBehaviour:
   font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
   background: {fileID: 0}
   sectArt: []
-  wallMap: {fileID: 2800000, guid: 6a4b3bcda5c96b84580ad84cdb3a0822, type: 3}
+  wallMap: {fileID: 0}
   allSects: 1
   extraCandidates: 0
   extraRerolls: 2

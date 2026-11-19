@@ -701,7 +701,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.MapLayer
   material: {fileID: 2100000, guid: 52c1f2c07f9c0864b8b56083d744476e, type: 2}
-  map: {fileID: 2800000, guid: 6a4b3bcda5c96b84580ad84cdb3a0822, type: 3}
+  map: {fileID: 0}
 --- !u!114 &1071881975
 MonoBehaviour:
   m_ObjectHideFlags: 0

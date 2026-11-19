@@ -60,7 +60,6 @@ namespace BloodRain.Editor
             // TU-08 수묵 지도와 마당 바닥
             var ml = props.AddComponent<MapLayer>();
             ml.material = ClusterBootstrap.EnsureMaterial();
-            ml.map = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg");
 
             // TU-10 화면 가장자리 표시(장막 번짐, 땅의 주인 화살표, 혈운 기둥)
             var edge = new GameObject("화면 가장자리 표시").AddComponent<EdgeIndicators>();

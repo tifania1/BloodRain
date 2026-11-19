@@ -17,7 +17,7 @@ namespace BloodRain.Presentation.Fx
 
         [Tooltip("ClusterInk 재질. 복사해 쓴다")]
         public Material material;
-        [Tooltip("수묵 지도(art_queue map_central_plains). 없으면 땅 모양만 그린 임시 텍스처")]
+        [Tooltip("그린 지도(usePaintedMap 일 때만). 옛 map_central_plains 는 땅 자리와 맞지 않아 비워 둔다(2026-11-19)")]
         public Texture2D map;
 
         [Tooltip("바닥이 지도를 가리는 정도. 1 이면 지도가 안 비친다(2026-11-17 밤 사람: 지도를 확대해 놓은 것 같다 → 안 비치게)")]

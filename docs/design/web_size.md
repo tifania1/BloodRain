@@ -53,7 +53,7 @@ PC 에서 본 것:
 | 크기 | 에셋 |
 |---|---|
 | 21.3MB | Art/Props/PropParts.spriteatlasv2 (소품 46장) |
-| 6.0MB | Art/Map/map_central_plains.jpg — CLAUDE.md 는 '쓰지 않음'인데 빌드에 들어감. 누가 참조하는지 볼 것 |
+| 6.0MB | Art/Map/map_central_plains.jpg — Run `MapLayer.map`(usePaintedMap 꺼져 안 그림)·Inn 침방 벽 지도 `ChimbangScreen.wallMap` 이 들고 있었다. 2026-11-19 21시 둘 다 비우고 침방도 `Biomes.MakeMap` 천하도를 걸게 고침(확인 unity_tasks WEB-03U) |
 | 2.7MB | 내장 Splash Screen Unity Logo |
 | 1.5MB | Art/Fonts/YujiBoku-Regular.ttf |
 | 1.4MB | Art/Fonts/NotoSerifKR-Regular.otf |
@@ -73,4 +73,4 @@ PC 에서 본 것:
 | 262.6KB | URP SMAA AreaTex.tga |
 | 256.1KB × 여럿 | Art/VFX/AI 의 512² 빛·먹 재료(DXT5) |
 
-분류: 텍스처 70.3MB(89.8%), 소리 0.96MB, 셰이더 0.95MB, 그 밖 5.8MB. 다음 후보: 옛 지도 6MB 빼기, Splash 로고(유료 판이 아니면 못 뺌), 아틀라스 최대 크기를 WebGL 만 2048(화질 보고), TMP 기본 글꼴·EmojiOne.
+분류: 텍스처 70.3MB(89.8%), 소리 0.96MB, 셰이더 0.95MB, 그 밖 5.8MB. 다음 후보: 옛 지도 6MB 빼기(WEB-03U), Splash 로고(유료 판이 아니면 못 뺌), 아틀라스 최대 크기를 WebGL 만 2048(화질 보고), TMP 기본 글꼴·EmojiOne.

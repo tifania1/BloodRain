@@ -55,7 +55,6 @@ namespace BloodRain.Editor
             pl.originRegion = "cheongun";
             var ml = props.AddComponent<MapLayer>();
             ml.material = ClusterBootstrap.EnsureMaterial();
-            ml.map = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Map/map_central_plains.jpg");
 
             // 적 무리(C-02): Burst 시뮬레이션 + 덩이 렌더러
             var enemies = new GameObject("적 무리");

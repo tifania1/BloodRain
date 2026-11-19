@@ -33,6 +33,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: wasm 크기 전·후를 web_size.md '빌드 보고' 절에, 브라우저 콘솔 에러 0
   - 찍기: 없음
+- [ ] WEB-03U 옛 지도 6MB 빼기 확인: 침방 벽 지도를 Run 천하도와 같은 그림으로 · 먼저: 없음 (2026-11-19 21시 클라우드 — `ChimbangScreen.wallMap` 이 비면 `Biomes.MakeMap` 을 걸게 고치고 Inn·Run·ChimbangTest·ScaleTest 씬의 `map_central_plains.jpg` 참조를 비움, 부트스트랩 셋도 더는 안 넣음. 컴파일은 클라우드에서 못 봄)
+  - 할 것: ① 컴파일 에러 0 ② Inn 씬 Play → 침방 오른쪽 벽 지도가 바다·땅빛 천하도로 나오고 지명 점이 땅 자리(Run 의 M 지도와 같은 곳)에 앉는지, 후보 카드에 커서를 올리면 붉은 점·장막 원이 맞는 자리에 ③ 그날 웹 빌드 보고에서 `map_central_plains.jpg` 가 빠졌는지와 data 크기
+  - 쓸 것: `Presentation/Meta/ChimbangScreen.cs`·`ChimbangMap.cs`, `Fx/Biomes.MakeMap`
+  - 메뉴: 없음
+  - 끝: 벽 지도가 천하도, 빌드에 옛 지도 없음. web_size.md 표 그 줄에 결과
+  - 찍기: `Captures/web03_chimbang.png`
 - [ ] GR-01U 지역 바닥·몸놀림 눈으로 확인하고 다듬기 · 먼저: 없음 (2026-11-17 사람: "누런 끼 빼고 각 지역마다의 특색", "너무 허접하게 움직이는 느낌")
   - 할 것: 11-17 밤 대화 세션이 넣은 것을 움직이는 화면으로 본다. ① F2 '몸 바꾸기'로 문파 아홉의 땅에 서 보고 바닥 타일(`Fx/Biomes.cs` 의 무늬)이 그 땅답게 읽히는지, 이펙트·적이 바닥에 묻히지 않는지 ② 두 땅 사이를 걸어 경계 띠에서 섞임이 거슬리지 않는지(`MapLayer.blendBand`) ③ 적 몸놀림 일곱 갈래(`ClusterRenderer` 의 `ClusterMotion`)가 종류마다 어울리는지 — 두꺼비 뛰기·수귀 떠다님·목인 덜컥·정예 무거운 걸음. 지나치면 진폭을 줄인다 ④ 지역 알림(`Hud/RegionBanner.cs`)이 HUD 와 겹치지 않는지
   - 쓸 것: `Fx/Biomes.cs`(Looks 표·MakeTile, 원화를 얹는 세기는 `ArtOf` — 여섯 땅은 원화, 다섯 땅은 코드 타일), `Fx/MapLayer.cs`(PickGround·DrawGround), `Fx/ClusterRenderer.cs`, `EnemyField.MotionOf`, `Hud/TestPanel.cs`(정예 부르기·땅의 주인·빠르기 ×4). 원화 타일이 오면 `Resources/Art/Tiles` 에 넣고 `ArtOf` 에 한 줄
