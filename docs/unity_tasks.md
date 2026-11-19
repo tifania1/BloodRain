@@ -45,13 +45,13 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: 빌드에 LiberationSans·EmojiOne·Unity 로고 없음, 글 네모 0. web_size.md '빌드 보고'에 data 크기
   - 찍기: 없음
-- [ ] WEB-05U 소품 아틀라스 WebGL Crunch 확인·재기 · 먼저: 없음 (2026-11-19 23시 클라우드 — `Art/Props/PropParts.spriteatlasv2.meta` 에 WebGL 덮어쓰기: DXT5Crunched, 품질 50, 4096·밉맵 그대로)
+- [x] WEB-05U 소품 아틀라스 WebGL Crunch 확인·재기 · 먼저: 없음 (2026-11-19 23시 클라우드 — `Art/Props/PropParts.spriteatlasv2.meta` 에 WebGL 덮어쓰기: DXT5Crunched, 품질 50, 4096·밉맵 그대로) — **2026-11-20 00:45 PC 끝**: WebGL 탭 덮어쓰기 DXT5Crunched·품질 50 켜짐, 다시 묶은 아틀라스 4096² DXT5Crunched 밉맵 13. 빌드 보고 아틀라스 21.3 → 2.1MB, data.br 22.4 → 19.1MB, 웹 판 30.6 → 27.4MB. 청운진 이류에서 소나무·초가·전각 테두리 뭉개짐·색띠 없음(`props_mip_realm1.png` 와 견줘 차이 못 느낌) — 품질 50 그대로. dev 판에 올려 GPU 크롬 타이틀까지 콘솔 오류 0. 찍음 `docs/unity_shots/WEB-05U/` 의 `web05_props_crunch_realm1.png`·`web05_dev_title.png`
   - 할 것: ① 받아온 뒤 Build Settings 가 WebGL 인 채로 아틀라스를 골라 Inspector WebGL 탭에 'Use Crunch Compression' 이 켜졌는지, Pack Preview 다시 ② Run 씬 Play 로 서장·경지 +1 두 번에서 소나무·초가·바위 테두리가 뭉개지거나 색띠가 생기는지 WEB-01U 의 `props_mip_realm1.png` 와 견줌. 거슬리면 품질 50 → 75, 그래도 거슬리면 Crunch 끄고 메타를 되돌림 ③ 그날 웹 빌드 보고에서 아틀라스 크기와 data.br 전·후
   - 쓸 것: `docs/design/web_size.md` '다음 후보', `docs/unity_shots/WEB-01U/`
   - 메뉴: 없음
   - 끝: data.br 전·후를 web_size.md '빌드 보고'에, 화질 판단 한 줄. 되돌렸으면 `AtlasWebGlTests` 도 같이 지움
   - 찍기: `Captures/web05_props_crunch_realm1.png`(끝나면 `docs/unity_shots/WEB-05U/` 로)
-- [ ] WEB-06U 컷 그림 밉맵 끈 것 확인·재기 · 먼저: 없음 (2026-11-20 00시 클라우드 — `Art/Cutscenes/*.jpg.meta` 22장 enableMipMap 0)
+- [x] WEB-06U 컷 그림 밉맵 끈 것 확인·재기 · 먼저: 없음 (2026-11-20 00시 클라우드 — `Art/Cutscenes/*.jpg.meta` 22장 enableMipMap 0) — **2026-11-20 00:45 PC 끝**: `sb_prologue_needle` 은 WebGL 에서 DXT1 2048x1024(가져올 때 2의 거듭제곱으로 늘림)라 전에도 RGBA32 는 아니었고 밉맵 몫만 빠짐 — 컷 한 장 1.3 → 1.0MB(빌드 보고), data.br 몫은 WEB-05U 와 같은 빌드라 합쳐 22.4 → 19.1MB. 서장 바늘 컷을 CutScreen 에 띄워 보니 흐림·계단 없음. 인물 낱장 18장은 가져올 때 256² 로 맞춰져 DXT5 + 밉맵 — 아틀라스로 묶을 까닭 없음(web_size.md 에 적음). 콘솔 에러 0(스크린샷 도구 Step 때 Dash.Tick dt 예외 하나 — 도구 몫). 찍음 `docs/unity_shots/WEB-06U/` 의 `web06_cut_needle.png`
   - 할 것: ① 받아온 뒤 Build Settings 가 WebGL 인 채로 `sb_prologue_needle.jpg` 를 골라 Inspector 아래 미리보기의 형식이 RGBA32 가 아니라 DXT1(또는 DXT5)인지 ② Run 씬 서장 끝 컷(`CutScreen`, F2 로 서장을 건너뛰거나 메뉴 'Run 씬에 서장 끝 컷 화면 붙이기' 뒤 Play)에서 그림이 흐려지거나 계단이 생기지 않는지 ③ 그날 웹 빌드 보고에서 `sb_prologue_*` 크기와 data.br 전·후 ④ 인물 낱장 21장(`Art/Characters`, 2의 거듭제곱 아님 + 밉맵)도 RGBA32 로 실리는지 보고, 그렇다면 소품처럼 아틀라스로 묶을지 web_size.md 에 한 줄
   - 쓸 것: `docs/design/web_size.md` '다음 후보'·빌드 보고, `Presentation/Meta/CutScreen.cs`
   - 메뉴: 없음

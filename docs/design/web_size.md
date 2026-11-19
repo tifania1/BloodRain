@@ -87,3 +87,12 @@ PC 에서 본 것:
 - WEB-03U: `map_central_plains.jpg`(6MB) 빠짐.
 - WEB-04U: Splash 로고(2.7MB)·LiberationSans SDF(1.0MB)·LiberationSans.ttf·EmojiOne 빠짐.
 - 남은 큰 것: 소품 아틀라스 21.3MB(압축 전), YujiBoku 원본 1.5MB·SDF 1.0MB, NotoSerifKR 1.4MB, 서장 컷 두 장 1.3MB씩, DNP Saw-Glow 270KB(`usePro` 를 안 쓰면 뺄 수 있음). 분류: 텍스처 60.3MB(88.9%), 소리 0.96MB, 셰이더 0.94MB, 그 밖 5.4MB.
+
+## 빌드 보고 (2026-11-20 00:45 PC, 0045f31 + 소품 Crunch·컷 밉맵 끔, 릴리스 batchmode 1분 20초)
+
+**합계 30.6 → 27.4MB**(data.br 22.4 → 19.1MB, 22,404,261 → 19,054,888 바이트, wasm.br 9.1MB 그대로).
+
+- WEB-05U: 소품 아틀라스(4096² 밉맵) WebGL 만 DXT5Crunched 품질 50 — 21.3 → 2.1MB(압축 전). 청운진 이류에서 소나무·초가 테두리 뭉개짐·색띠 못 느낌(`docs/unity_shots/WEB-05U/` 의 `web05_props_crunch_realm1.png`), 품질 50 그대로 둠. dev 판 GPU 크롬 타이틀까지 오류 0.
+- WEB-06U: 컷 그림은 가져올 때 2048x1024 로 늘려져 전에도 DXT1 이었다(RGBA32 아님). 밉맵 몫만 빠져 한 장 1.3 → 1.0MB. 서장 바늘 컷 흐림 없음.
+- 인물 낱장 18장은 가져올 때 256² 라 DXT5 + 밉맵으로 잘 눌림 — 아틀라스로 묶을 까닭 없음.
+- 남은 큰 것(압축 전): 소품 아틀라스 2.1MB, YujiBoku 원본 1.5MB·SDF 1.0MB, NotoSerifKR 1.4MB, 서장 컷 두 장 1.0MB씩, 카드·배경 jpg 셋 768KB씩, Art/VFX/AI 512² 재료 256KB씩 여럿. 분류: 텍스처 40.4MB(84.2%), 소리 0.96MB, 셰이더 0.94MB, 그 밖 5.4MB.
