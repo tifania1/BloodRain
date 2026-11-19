@@ -1,0 +1,9 @@
+<!--
+  코드 줄이기(Managed Stripping)가 지우면 안 되는 것(WEB-01, docs/design/web_size.md).
+  게임 데이터(Resources/Data/*.json)와 저장 파일은 Newtonsoft 가 리플렉션으로 읽고 쓴다.
+  코드에서 직접 부르지 않는 setter·생성자가 잘리면 값이 조용히 비어 버리니 Core 는 통째로 남긴다.
+  Newtonsoft 자체는 com.unity.nuget.newtonsoft-json 패키지가 제 link.xml 로 지킨다.
+-->
+<linker>
+  <assembly fullname="BloodRain.Core" preserve="all" />
+</linker>

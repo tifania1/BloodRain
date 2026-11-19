@@ -27,6 +27,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음(Unity 가 다시 들여옴)
   - 끝: 세 언어에서 네모 0, 소품 낱장 압축됨, 빌드 보고 표가 web_size.md 에. 콘솔 에러 0. 그날 data 크기를 daily '웹 빌드' 줄에
   - 찍기: `Captures/web01_ko.png`·`Captures/web01_zh.png`
+- [ ] WEB-02U 웹 판 wasm 줄이기: WebGL 만 코드 줄이기 'Medium' · 먼저: WEB-01U (2026-11-19 클라우드가 `Assets/link.xml` 로 Core 를 통째로 남겨 둠 — 데이터는 Newtonsoft 가 리플렉션으로 읽어서)
+  - 할 것: ① Project Settings → Player → WebGL 탭 → Other Settings → Managed Stripping Level 을 Medium(다른 플랫폼은 그대로) ② 그날 웹 빌드 전에 에디터가 아닌 빌드로 확인해야 하니 웹 빌드를 한 번 하고, 브라우저(로컬 서버 또는 dev 판)에서 서장 → 레벨업 카드 두 번 → 지도(M) → 객잔까지 가 보며 콘솔에 MissingMethodException·NullReference·'값이 0' 이 없는지 ③ 빌드 보고에서 wasm 크기를 바꾸기 전과 대 본다. 잘리는 것이 있으면 그 어셈블리를 link.xml 에 더하고, 그래도 안 되면 Low 로 되돌린다
+  - 쓸 것: `Assets/link.xml`, `docs/design/web_size.md` '다음 후보'
+  - 메뉴: 없음
+  - 끝: wasm 크기 전·후를 web_size.md '빌드 보고' 절에, 브라우저 콘솔 에러 0
+  - 찍기: 없음
 - [ ] GR-01U 지역 바닥·몸놀림 눈으로 확인하고 다듬기 · 먼저: 없음 (2026-11-17 사람: "누런 끼 빼고 각 지역마다의 특색", "너무 허접하게 움직이는 느낌")
   - 할 것: 11-17 밤 대화 세션이 넣은 것을 움직이는 화면으로 본다. ① F2 '몸 바꾸기'로 문파 아홉의 땅에 서 보고 바닥 타일(`Fx/Biomes.cs` 의 무늬)이 그 땅답게 읽히는지, 이펙트·적이 바닥에 묻히지 않는지 ② 두 땅 사이를 걸어 경계 띠에서 섞임이 거슬리지 않는지(`MapLayer.blendBand`) ③ 적 몸놀림 일곱 갈래(`ClusterRenderer` 의 `ClusterMotion`)가 종류마다 어울리는지 — 두꺼비 뛰기·수귀 떠다님·목인 덜컥·정예 무거운 걸음. 지나치면 진폭을 줄인다 ④ 지역 알림(`Hud/RegionBanner.cs`)이 HUD 와 겹치지 않는지
   - 쓸 것: `Fx/Biomes.cs`(Looks 표·MakeTile, 원화를 얹는 세기는 `ArtOf` — 여섯 땅은 원화, 다섯 땅은 코드 타일), `Fx/MapLayer.cs`(PickGround·DrawGround), `Fx/ClusterRenderer.cs`, `EnemyField.MotionOf`, `Hud/TestPanel.cs`(정예 부르기·땅의 주인·빠르기 ×4). 원화 타일이 오면 `Resources/Art/Tiles` 에 넣고 `ArtOf` 에 한 줄
