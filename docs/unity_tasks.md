@@ -167,7 +167,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 삼재검법·창천검기를 Lv4 까지 올린 시험 판에서 다음 레벨업에 금빛 돈오 카드가 뜨고, 집으면 HUD 연환 띠가 켜짐. 콘솔 에러 0
   - 찍기: `docs/unity_shots/GU-01U/` 의 `doneo_card.png`
 
-- [ ] GU-03U 생마다 한 줄 가르치기 · 먼저: 없음
+- [x] GU-03U 생마다 한 줄 가르치기 · 먼저: 없음 — **2026-11-20 04:55 PC 끝**: `LevelUpScreen` 이 그 생에서 처음 열 때만 제목 아래(카드 위)에 금빛 한 줄, 닫으면 숨김. 몇 번째 생은 `RebirthHandoff.Soul.Lives + 1`(혼이 없으면 첫 생), 키는 `TeachKeyFor`(1 evolution·2 link·3 school, 넷째부터 없음). 화면 글에 '비급 층'은 없었음(synergies.json `_note` 뿐). 저장된 혼이 마친 생 1이라 둘째 생으로 봄 — 첫 레벨업에 연환 줄이 뜨고, 고른 뒤 두 번째 레벨업엔 없음. 첫 생 줄은 같은 표의 첫 칸이라 따로 안 찍음. 콘솔 에러 0. 찍음 `docs/unity_shots/GU-03U/` 의 `teach_life2.png`
   - 할 것: 몇 번째 생(침방과 같은 셈)이 1·2·3이면 그 생에서 레벨업 화면을 처음 열 때 카드 위에 한 줄(`ui.teach.evolution`·`link`·`school`)을 띄우고 닫으면 지운다. 넷째 생부터는 없음. 화면 글에 '비급 층'이 남아 있으면 찾아서 '찢긴 비급'으로
   - 쓸 것: `Presentation/Hud/LevelUpScreen.cs`, 혼 저장의 마친 생 수(침방이 쓰는 값), strings `ui.teach.*`(Loc.T), 기획서 12장 '가르치는 순서'
   - 메뉴: 없음

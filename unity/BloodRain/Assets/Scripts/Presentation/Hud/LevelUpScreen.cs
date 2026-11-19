@@ -143,7 +143,45 @@ namespace BloodRain.Presentation.Hud
             _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _root.gameObject.SetActive(true);
             _openedAt = Time.unscaledTime;
+            ShowTeach();
             Refresh();
+        }
+
+        // ── GU-03U 생마다 한 줄 가르치기(기획서 12장 '가르치는 순서') ─────────────
+        // 몇 번째 생인지는 침방과 같은 셈(마친 생 + 1). 그 생에서 레벨업 화면을 처음 열 때만 카드 위에 한 줄, 닫으면 지운다.
+        static readonly string[] TeachKeys = { "ui.teach.evolution", "ui.teach.link", "ui.teach.school" };
+        TextMeshProUGUI _teach;
+        bool _teachDone;
+
+        /// <summary>시험용: 지금 카드 위에 떠 있는 가르치는 줄(없으면 null).</summary>
+        public string TeachLine => _teach != null && _teach.gameObject.activeSelf ? _teach.text : null;
+
+        /// <summary>몇 번째 생(1부터)에 띄울 키. 넷째 생부터는 null.</summary>
+        public static string TeachKeyFor(int lifeNo) => lifeNo >= 1 && lifeNo <= TeachKeys.Length ? TeachKeys[lifeNo - 1] : null;
+
+        static int LifeNumber()
+        {
+            var soul = Meta.RebirthHandoff.Soul;
+            return soul != null ? soul.Lives + 1 : 1;
+        }
+
+        void ShowTeach()
+        {
+            if (_teach == null)
+            {
+                _teach = MakeText(_root, "가르치는 줄", 28, new Color(0.86f, 0.74f, 0.42f), TextAlignmentOptions.Center);
+                Place(_teach.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 272), new Vector2(1400, 44));
+                _teach.enableAutoSizing = true; _teach.fontSizeMin = 16; _teach.fontSizeMax = 28;
+            }
+            string key = _teachDone ? null : TeachKeyFor(LifeNumber());
+            _teachDone = true;
+            _teach.text = key != null ? Loc.T(key) : "";
+            _teach.gameObject.SetActive(key != null);
+        }
+
+        void HideTeach()
+        {
+            if (_teach != null) _teach.gameObject.SetActive(false);
         }
 
         // ── UI-01U 열린 직후 입력 막기 · 옆 칸(기획서 12장 '레벨업 카드 규칙') ─────────────
@@ -240,6 +278,7 @@ namespace BloodRain.Presentation.Hud
         void Close()
         {
             _open = false;
+            HideTeach();
             _root.gameObject.SetActive(false);
             Time.timeScale = _savedTimeScale;
         }
