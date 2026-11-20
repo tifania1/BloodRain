@@ -24,6 +24,11 @@ namespace BloodRain.Presentation.Fx
         /// 걷는 박자는 실제로 움직인 빠르기를 따르고, 그림은 가는 쪽을 본다(원화는 오른쪽을 본다).</summary>
         public ClusterMotion Motion = ClusterMotion.Walk;
 
+        /// <summary>HF-01U 맞은 때(Time.unscaledTime)와 맞은 방향의 가로 몫(-1~1, 친 쪽에서 적 쪽). EnemyField.Damage 가 넣는다.
+        /// 맞으면 덩이 사람 모두가 0.055초 따뜻한 흰빛으로 섞이고(세기 0.28 — vfx.md '절제'), 0.16초 동안 가로로 퍼지고 세로로 눌리며 맞은 쪽 반대로 기운다(시안 sects.html hit).</summary>
+        public float HitAt = -10f;
+        public float HitDirX;
+
         internal int Drawn = -1;          // 지난 프레임에 그린 사람 수
         internal Vector2 LastPos; internal bool HasLast;
         internal float Face = 1f;         // 1 오른쪽, -1 왼쪽
@@ -56,6 +61,9 @@ namespace BloodRain.Presentation.Fx
         const int Batch = 1023;
         static readonly int IdTint = Shader.PropertyToID("_Tint");
         static readonly int IdDissolve = Shader.PropertyToID("_Dissolve");
+        static readonly int IdFlash = Shader.PropertyToID("_Flash");
+        // HF-01U 맞는 쪽 반응(시안 sects.html hit, 절제): 번쩍 0.055초·세기 0.28, 찌그러짐 0.16초·가로 +28%·세로 −22%·기울기 0.35rad
+        public const float FlashSeconds = 0.055f, FlashStrength = 0.28f, SquashSeconds = 0.16f;
 
         public Material material;
         public Texture2D atlas;
@@ -73,6 +81,7 @@ namespace BloodRain.Presentation.Fx
         readonly Matrix4x4[] _mats = new Matrix4x4[Batch];
         readonly Vector4[] _tints = new Vector4[Batch];
         readonly float[] _dissolves = new float[Batch];
+        readonly float[] _flashes = new float[Batch];
         readonly Dictionary<long, Vector3[]> _layouts = new Dictionary<long, Vector3[]>();
         MaterialPropertyBlock _mpb;
         Mesh _quad;
@@ -192,6 +201,9 @@ namespace BloodRain.Presentation.Fx
                 if (ctex != tex) continue;
                 var lay = Layout(n, c.Seed);
                 Vector4 tint = c.Tint;
+                float hitAge = now - c.HitAt;
+                float flash = hitAge >= 0f && hitAge < FlashSeconds ? FlashStrength * (1f - hitAge / FlashSeconds) : 0f;
+                float squash = hitAge >= 0f && hitAge < SquashSeconds ? 1f - hitAge / SquashSeconds : 0f;
                 for (int i = 0; i < upto; i++)
                 {
                     var m = lay[i];
@@ -269,6 +281,7 @@ namespace BloodRain.Presentation.Fx
                             break;
                         }
                     }
+                    if (squash > 0f) { sx *= 1f + 0.28f * squash; sy *= 1f - 0.22f * squash; tilt -= c.HitDirX * squash * 0.35f; } // 맞은 쪽 반대로 기울며 눌림
                     // 돌아설 때는 가로로 납작해졌다 펴진다(FaceShown -1~1). 0 을 지나며 그림이 뒤집힌다
                     float face = Mathf.Abs(c.FaceShown) < 0.12f ? (c.FaceShown < 0f ? -0.12f : 0.12f) : c.FaceShown;
                     float w2 = size * sx * face, h2 = size * sy;
@@ -282,6 +295,7 @@ namespace BloodRain.Presentation.Fx
                     _mats[_count] = mat;
                     _tints[_count] = tint;
                     _dissolves[_count] = i < c.Drawn ? 0f : Mathf.Clamp01(fadeK);
+                    _flashes[_count] = flash;
                     _count++;
                     instances++;
                     if (_count == Batch) { Flush(rp); calls++; }
@@ -304,6 +318,7 @@ namespace BloodRain.Presentation.Fx
             if (_batchTex != null) _mpb.SetTexture(IdMainTex, _batchTex);
             _mpb.SetVectorArray(IdTint, _tints);
             _mpb.SetFloatArray(IdDissolve, _dissolves);
+            _mpb.SetFloatArray(IdFlash, _flashes);
             Graphics.RenderMeshInstanced(rp, _quad, 0, _mats, _count);
             _count = 0;
         }

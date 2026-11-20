@@ -1,5 +1,5 @@
 // 적 덩이 렌더러(TU-04)용. Graphics.RenderMeshInstanced 로 사람 하나를 사각형 하나로 그린다.
-// 사람마다 _Tint(색)와 _Dissolve(0 그대로 ~ 1 다 사라짐)를 인스턴스 값으로 받는다.
+// 사람마다 _Tint(색)와 _Dissolve(0 그대로 ~ 1 다 사라짐), _Flash(맞은 번쩍 0~1, HF-01U)를 인스턴스 값으로 받는다.
 // 사라질 때는 먹물이 번지듯: 잡음보다 _Dissolve 가 큰 곳부터 지워지고, 지워지는 가장자리는 먹빛.
 Shader "BloodRain/ClusterInk"
 {
@@ -33,6 +33,7 @@ Shader "BloodRain/ClusterInk"
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Tint)
                 UNITY_DEFINE_INSTANCED_PROP(float, _Dissolve)
+                UNITY_DEFINE_INSTANCED_PROP(float, _Flash)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -72,6 +73,9 @@ Shader "BloodRain/ClusterInk"
                     if (n < cut - _EdgeWidth) col.a = 0;
                     else if (n < cut) col.rgb = _InkColor.rgb;
                 }
+                // 맞은 번쩍: 색을 곱하면 먹빛 원화는 안 밝아지니 따뜻한 흰빛으로 섞는다(시안 sects.html 과 같은 0.8 배)
+                float flash = UNITY_ACCESS_INSTANCED_PROP(Props, _Flash);
+                col.rgb = lerp(col.rgb, float3(1.0, 0.98, 0.92), saturate(flash) * 0.8);
                 clip(col.a - 0.01);
                 return col;
             }

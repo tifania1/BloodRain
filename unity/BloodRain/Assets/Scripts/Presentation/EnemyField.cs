@@ -290,6 +290,13 @@ namespace BloodRain.Presentation
                 // DN-01U 피해 숫자: 맞은 자리·사람 하나 반지름·피해·치명타·정예/땅의 주인
                 Struck?.Invoke(new Vector2(a.Pos.x, a.Pos.y), PersonRadius(a.BornRealm), dd, crit,
                     kindDef != null && (kindDef.Family == "elite" || kindDef.Family == "boss"));
+                // HF-01U 덩이가 맞은 때·방향(번쩍·찌그러짐은 ClusterRenderer)
+                if (_views.TryGetValue(a.Id, out var hv))
+                {
+                    float hdx = a.Pos.x - from.x, hdy = a.Pos.y - from.y, hm = Mathf.Sqrt(hdx * hdx + hdy * hdy);
+                    hv.HitAt = Time.unscaledTime;
+                    hv.HitDirX = hm > 1e-5f ? hdx / hm : 0f;
+                }
                 a.Health -= dd;
                 Dealt += dd;
                 if (poisonSeconds > 0f) { if (st.Poison <= 0f) PoisonedCount++; st.Poison = Mathf.Max(st.Poison, poisonSeconds); _status[a.Id] = st; }
