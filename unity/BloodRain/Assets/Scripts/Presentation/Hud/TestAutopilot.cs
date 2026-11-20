@@ -17,7 +17,7 @@ namespace BloodRain.Presentation.Hud
 
         float _wanderAngle, _pickWait, _logWait, _clock;
         LevelUpScreen _lu;
-        ScaleTestDriver _scale;
+        BloodRain.Presentation.Fx.OrbLayer _orbs;
         PlayerController _pc;
         readonly System.Text.StringBuilder _log = new System.Text.StringBuilder();
         public int Picks { get; private set; }
@@ -77,10 +77,29 @@ namespace BloodRain.Presentation.Hud
             }
             else move = new Vector2(Mathf.Cos(_wanderAngle), Mathf.Sin(_wanderAngle));
             // 혈우 장막(경지마다 갈 수 있는 테두리)에 밀리기 시작하면 태어난 자리 쪽으로 돌아선다
-            if (_scale == null) _scale = FindFirstObjectByType<ScaleTestDriver>();
             if (_pc == null) _pc = runner.player.GetComponent<PlayerController>();
-            if (_scale != null && _pc != null && _scale.PushStrength > 0.05f)
-                move = ((_pc.birthplace - p).normalized * 2f + move).normalized;
+            var ws = BloodRain.Sim.WorldScale.Current;
+            if (ws != null && _pc != null)
+            {
+                float push = ws.Scale.PushStrength(new System.Numerics.Vector2(p.x, p.y), new System.Numerics.Vector2(_pc.birthplace.x, _pc.birthplace.y), ws.Realm);
+                if (push > 0.02f) move = ((_pc.birthplace - p).normalized * 2f + move).normalized;
+            }
+            // 가까운 적이 없으면 진기 구슬을 주우러 간다(사람처럼). 12m 안 가장 가까운 것
+            if (away.sqrMagnitude < 1e-6f)
+            {
+                if (_orbs == null) _orbs = FindFirstObjectByType<BloodRain.Presentation.Fx.OrbLayer>();
+                if (_orbs != null && _orbs.Field != null)
+                {
+                    float best = 144f; Vector2 tgt = Vector2.zero; bool found = false;
+                    var list = _orbs.Field.Orbs;
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        float m2 = (list[i].Pos - p).sqrMagnitude;
+                        if (m2 < best) { best = m2; tgt = list[i].Pos; found = true; }
+                    }
+                    if (found && (nearD2 > keepOut * keepOut * 4f)) move = ((tgt - p).normalized * 1.5f + move * 0.5f).normalized;
+                }
+            }
             ControlInput.MoveOverride = Vector2.ClampMagnitude(move, 1f);
 
             _logWait += Time.deltaTime; _clock += Time.deltaTime;
