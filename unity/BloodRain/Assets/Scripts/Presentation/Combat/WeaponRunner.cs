@@ -2219,7 +2219,7 @@ namespace BloodRain.Presentation.Combat
         /// <summary>VF-02U: SectFx 로 그리는 탄인가(장풍·섬광지·비도).</summary>
         bool IsSectProj(Proj p) => Sfx && p.Weapon != null && !p.Petal
             && (p.Weapon.Def.Behavior == "slow_projectile" || p.Weapon.Def.Behavior == "random_rapid" || p.Weapon.Def.Behavior == "homing_dagger"
-                || p.Weapon.Def.Behavior == "petal_scatter");
+                || p.Weapon.Def.Behavior == "petal_scatter" || p.Weapon.Def.Behavior == "front_arc" || p.Weapon.Def.Behavior == "melee_combo");
 
         /// <summary>VF-02U: 이 프레임의 탄을 SectFx 에 넘긴다. 넘겼으면 참(옛 재료는 건너뛴다).</summary>
         bool SectProj(Proj p)
@@ -2231,7 +2231,9 @@ namespace BloodRain.Presentation.Combat
             bool evo = EvoOf(p.Weapon) != null;
             var look = p.Weapon.Def.Behavior == "slow_projectile" ? SectFx.ProjLook.Palm
                      : p.Weapon.Def.Behavior == "random_rapid" ? SectFx.ProjLook.Finger
-                     : p.Weapon.Def.Behavior == "petal_scatter" ? SectFx.ProjLook.Petal : SectFx.ProjLook.Dagger;
+                     : p.Weapon.Def.Behavior == "petal_scatter" ? SectFx.ProjLook.Petal
+                     : p.Weapon.Def.Behavior == "front_arc" ? SectFx.ProjLook.QiWave
+                     : p.Weapon.Def.Behavior == "melee_combo" ? SectFx.ProjLook.Fist : SectFx.ProjLook.Dagger;
             _sfx.Proj(look, p.Pos, ang, p.Radius, p.Age, Mathf.Max(0f, p.Life), run, st, evo);
             return true;
         }

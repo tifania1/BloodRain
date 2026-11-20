@@ -9,7 +9,7 @@ namespace BloodRain.Presentation.Fx
     // 값의 길이 단위는 시안 m. 탄 크기처럼 WeaponRunner 가 이미 월드 길이로 준 것은 그대로 쓰고, 시안 숫자는 Meter 를 곱한다.
     public sealed partial class SectFx
     {
-        public enum ProjLook { Palm, Finger, Dagger, Petal }
+        public enum ProjLook { Palm, Finger, Dagger, Petal, QiWave, Fist }
 
         struct LiveProj { public ProjLook Look; public Vector2 Pos; public float Ang, Size, Age, Left, Seed, Run; public int Stage; public bool Evo; }
         readonly List<LiveProj> _live = new List<LiveProj>();
@@ -50,6 +50,8 @@ namespace BloodRain.Presentation.Fx
                     case ProjLook.Palm: DrawPalm(p); break;
                     case ProjLook.Finger: DrawFinger(p); break;
                     case ProjLook.Petal: DrawPetalShot(p); break;
+                    case ProjLook.QiWave: DrawQiWave(p); break;
+                    case ProjLook.Fist: DrawFistFly(p); break;
                     default: DrawDagger(p); break;
                 }
             }
@@ -85,6 +87,35 @@ namespace BloodRain.Presentation.Fx
                 for (int j = -1; j <= 1; j += 2)
                     Quad(1, p.Pos - d * .37f * S + n * (j * .117f * S), .53f * S, .073f * S, p.Ang + j * .15f * Mathf.Sin(p.Age * 9f), new Vector4(.3f, .8f, 3f, 1f), body, .4f * al, 1f, 0f, p.Seed + j);
             }
+        }
+
+        // 천지인 삼검(삼재검법 절기) 검기 — 시안 qiWave: 먹 초승달 + 마른 메아리 + 흰 청록 날빛. VF-04U(2026-11-20, 전엔 금빛 원판이 날아갔다).
+        // size 는 검기 판정 반경 R. 시안처럼 S = 2R/.78 이면 초승달 앞날이 판정 원 가장자리에 온다
+        void DrawQiWave(LiveProj p)
+        {
+            float S = p.Size / .39f, k = p.Age / Mathf.Max(.01f, p.Age + p.Left);
+            float al = 1f - Mathf.Max(0f, (k - .7f) / .3f);
+            var d = Dir(p.Ang);
+            if (!FxSettings.Simplified) Quad(0, p.Pos - d * .064f * S, S * 1.1f, S * 1.1f, p.Ang, new Vector4(1.6f, .5f, 1f, .8f), FxRamp.Ink, .35f * al, 1f, .3f, p.Seed + 1f);
+            Quad(0, p.Pos, S, S, p.Ang, new Vector4(1.6f, .42f, 1f, .6f), FxRamp.Ink, .9f * al, Mathf.Min(1f, p.Age / .08f), k > .7f ? (k - .7f) * 3f : 0f, p.Seed);
+            Glow(0, p.Pos, S * 1.01f, S * 1.01f, p.Ang, new Vector4(1.6f, .1f, 1f, .2f), FxRamp.Blade, .9f * al, 1f, 0f, p.Seed + 2f);
+        }
+
+        // 백보신권(나한권 절기) 날아가는 권경 — 시안 fistFly: 금빛 권영 + 잔상 셋 + 달아오른 심, 지나간 길에 0.12초마다 먹 금. VF-04U(2026-11-20, 전엔 금빛 원판).
+        // size 는 권경 판정 반경. 시안 권영 크기 2.4m = 판정 반경 1.2m 의 두 배
+        void DrawFistFly(LiveProj p)
+        {
+            float sz = p.Size * 2f, k = p.Age / Mathf.Max(.01f, p.Age + p.Left);
+            float al = 1f - Mathf.Max(0f, (k - .8f) / .2f);
+            var d = Dir(p.Ang);
+            if (!FxSettings.Simplified)
+                for (int j = 3; j >= 1; j--)
+                    Glow(7, p.Pos - d * (j * .1875f * sz), sz * (1f - .12f * j), sz * .74f * (1f - .12f * j), p.Ang, Vector4.zero, FxRamp.Gold, .22f / j * al, 1f, .4f, p.Seed + j);
+            Quad(7, p.Pos - d * .042f * sz, sz * 1.1f, sz * .84f, p.Ang, Vector4.zero, FxRamp.Ink, .6f * al, 1f, 0f, p.Seed);
+            Glow(7, p.Pos, sz, sz * .74f, p.Ang, Vector4.zero, FxRamp.Gold, al, 1f, 0f, p.Seed);
+            Glow(7, p.Pos + d * .0625f * sz, sz * .55f, sz * .4f, p.Ang, Vector4.zero, FxRamp.Hot, .8f * al, 1f, 0f, p.Seed + 4f);
+            if (!FxSettings.Simplified && k < .9f && _stains.Count < MaxStains - 8 && Mathf.Floor(p.Age / .12f) != Mathf.Floor((p.Age - Time.deltaTime) / .12f))
+                _stains.Add(new Stain { Pos = p.Pos - d * .167f * sz, Seed = p.Seed + p.Age, Rot = p.Ang, Size = .29f * sz, Shape = 14, P = new Vector4(5f, .5f, .3f, 1f), C = FxRamp.Ink, A = .2f });
         }
 
         // 섬광지: 흰 금빛 바늘. 3단 꼬리가 길어지고 4단부터 흰 심
