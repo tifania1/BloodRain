@@ -197,6 +197,8 @@ namespace BloodRain.Presentation.Fx
             float al = Mathf.Clamp01(p.Left / .12f);
             var d = Dir(p.Ang);
             var mid = p.Pos - d * tl * .5f;
+            // VF-04U 무영비도(절기): 날은 보이지 않고 스친 금만 아주 옅게(시안 ghostDagger). 튕긴 자리의 은빛 점·금은 맞는 순간 HitSpark 가 그린다
+            if (p.Evo) { Glow(1, mid, tl * 1.4f, .05f * m, p.Ang, new Vector4(.2f, .1f, 3f, 1f), FxRamp.Silver, .3f * al, 1f, 0f, p.Seed); return; }
             // 2026-11-20 사람: 비도가 너무 안 보인다 — 은빛만으로는 옅은 종이 바닥에 묻혀서, 먹 받침을 굵고 짙게, 날도 키우고 먹 그림자를 깐다
             Quad(1, mid, tl, .26f * m, p.Ang, new Vector4(.22f, .3f, 2f, 1f), p.Evo ? FxRamp.BlueInk : FxRamp.Ink, .62f * al, 1f, 0f, p.Seed);
             Glow(1, mid, tl, .15f * m, p.Ang, new Vector4(.2f, .2f, 2f, 1f), st >= 4 ? FxRamp.Blade : FxRamp.Silver, (st >= 2 ? .95f : .8f) * al, 1f, 0f, p.Seed + 1f);
