@@ -30,6 +30,7 @@ namespace BloodRain.Presentation.Fx
         DamageNumbersPro.DamageNumber _tplNormal, _tplCrit;
         bool _proReady;
 
+        const float PopSeconds = 0.12f;
         static readonly Color Ink = new Color32(0x1A, 0x1A, 0x1A, 0xFF);
         static readonly Color Vermilion = new Color32(0xB3, 0x26, 0x1E, 0xFF); // 13장 주홍(혈우)
         static readonly Color Paper = new Color32(0xEF, 0xE6, 0xD2, 0xFF);
@@ -176,6 +177,9 @@ namespace BloodRain.Presentation.Fx
                     t.color = c;
                     float y = it.Y + it.Lift + it.Age / life * risePx * worldPerPx;
                     t.transform.position = new Vector3(it.X, y, 0f);
+                    // 처음 0.12초 톡 튀어 나왔다 제 크기로(치명은 더 크게, 2026-11-21) — 숫자가 붙어 나와 밋밋했다
+                    float pop = it.Age < PopSeconds ? 1f + (it.Crit ? 0.45f : 0.2f) * (1f - it.Age / PopSeconds) : 1f;
+                    t.transform.localScale = new Vector3(pop, pop, 1f);
                     if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
                 }
             }
