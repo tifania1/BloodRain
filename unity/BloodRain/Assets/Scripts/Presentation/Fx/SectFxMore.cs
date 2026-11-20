@@ -70,6 +70,7 @@ namespace BloodRain.Presentation.Fx
             float tl = Mathf.Min(L(st, .7f, .8f, 1.2f, 1.3f, 1.5f) * m, p.Run + .25f * m), w = L(st, .1f, .11f, .12f, .13f, .14f) * m * (p.Evo ? 1.3f : 1f);
             float al = Mathf.Clamp01(p.Left / .06f);
             var d = Dir(p.Ang);
+            Quad(1, p.Pos - d * tl * .5f, tl, w * 2.2f, p.Ang, new Vector4(.3f, .2f, 3f, 1f), FxRamp.Ink, .45f * al, 1f, 0f, p.Seed + 2f); // 먹 받침(흰 금빛이 종이 바닥에 묻히지 않게, 2026-11-20)
             Glow(1, p.Pos - d * tl * .5f, tl, w, p.Ang, new Vector4(.3f, .2f, 3f, 1f), FxRamp.Finger, .85f * al, 1f, 0f, p.Seed);
             if (st >= 4 || p.Evo) Quad(1, p.Pos - d * tl * .45f, tl * .8f, w * .45f, p.Ang, new Vector4(.3f, .1f, 3f, 1f), FxRamp.White, .9f * al, 1f, 0f, p.Seed + 1f);
         }
@@ -82,17 +83,20 @@ namespace BloodRain.Presentation.Fx
             float al = Mathf.Clamp01(p.Left / .12f);
             var d = Dir(p.Ang);
             var mid = p.Pos - d * tl * .5f;
-            Quad(1, mid, tl, .14f * m, p.Ang, new Vector4(.22f, .3f, 2f, 1f), p.Evo ? FxRamp.BlueInk : FxRamp.Ink, .35f * al, 1f, 0f, p.Seed);
-            Glow(1, mid, tl, .1f * m, p.Ang, new Vector4(.2f, .2f, 2f, 1f), st >= 4 ? FxRamp.Blade : FxRamp.Silver, (st >= 2 ? .8f : .55f) * al, 1f, 0f, p.Seed + 1f);
-            Quad(5, p.Pos, .32f * m, .11f * m, p.Ang, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Silver, al);
+            // 2026-11-20 사람: 비도가 너무 안 보인다 — 은빛만으로는 옅은 종이 바닥에 묻혀서, 먹 받침을 굵고 짙게, 날도 키우고 먹 그림자를 깐다
+            Quad(1, mid, tl, .26f * m, p.Ang, new Vector4(.22f, .3f, 2f, 1f), p.Evo ? FxRamp.BlueInk : FxRamp.Ink, .62f * al, 1f, 0f, p.Seed);
+            Glow(1, mid, tl, .15f * m, p.Ang, new Vector4(.2f, .2f, 2f, 1f), st >= 4 ? FxRamp.Blade : FxRamp.Silver, (st >= 2 ? .95f : .8f) * al, 1f, 0f, p.Seed + 1f);
+            Quad(5, p.Pos - d * .02f * m, .6f * m, .24f * m, p.Ang, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Ink, .85f * al);
+            Quad(5, p.Pos, .52f * m, .17f * m, p.Ang, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Silver, al);
         }
 
         /// <summary>맞는 순간 가는 빛 한 줄(비도·지풍). 3단부터 열십자.</summary>
         public void HitSpark(Vector2 at, float dir, FxRamp c, int stage)
         {
             float m = Meter;
-            Add(.07f, (f, k) =>
+            Add(.09f, (f, k) =>
             {
+                Quad(1, at, 1.3f * m, .5f * m, dir + 1.57f, new Vector4(.3f, 0f, 0f, 1f), FxRamp.Ink, .5f * (1f - k)); // 먹 받침(2026-11-20)
                 Glow(1, at, 1.2f * m, .34f * m, dir + 1.57f, new Vector4(.3f, 0f, 0f, 1f), c, 1f - k);
                 if (stage >= 3) Glow(1, at, .9f * m, .26f * m, dir, new Vector4(.3f, 0f, 0f, 1f), c, .8f * (1f - k));
             });
