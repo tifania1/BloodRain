@@ -174,7 +174,7 @@ namespace BloodRain.Presentation
                 if (found >= 0) break;
             }
             // 2026-11-21 몸 그림이 아직 없는 문파(화산·곤륜·마교)는 붉은 동그라미 대신 결이 비슷한 문파 그림을 그 문파 빛으로 조금 물들여 쓴다
-            //   화산·곤륜은 도가라 무당 옷, 마교는 짙은 옷의 당가. 그림이 들어오면 위에서 제 그림을 먼저 찾으므로 저절로 바뀐다
+            //   화산·곤륜은 도가라 무당 옷, 마교는 짙은 옷의 당가. 그림이 들어오면 위에서 제 그림을 먼저 찾으므로 저절로 바뀐다(화산은 같은 날 05시에 들어옴)
             if (found < 0 && body.Sect != null && StandIn.TryGetValue(body.Sect.Id, out var alt))
             {
                 string g = body.Female ? "f" : "m", o = body.Female ? "m" : "f";
