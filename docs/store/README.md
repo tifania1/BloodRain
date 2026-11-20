@@ -23,10 +23,10 @@ M2 끝(2027-02 말)에 Steam 스토어 페이지를 열고 위시리스트를 �
 | Unity 6 플레이어 Windows 최소: Windows 10 21H1(빌드 19043) 이상, x86·x64(SSE2) 또는 Arm64, DX10·DX11·DX12·Vulkan GPU | [Unity 6.3 시스템 요구 사항](https://docs.unity.com/en-us/engine/6000.3/manual/get-started/install-and-upgrade/getting-started-installing-unity/system-requirements) 'Unity Player system requirements' | 문서(2026-11-07, 6000.3 판으로 다시 봄 — 6.0 과 같음) |
 | 캡슐·스크린샷 규격 | `docs/design/art_list.md` 7절(Steamworks 문서, 2026-11-04 다른 세션이 확인) | 문서 |
 
-## 정할 것 (사람)
+## 정한 것 (2026-11-20 사람이 추천대로)
 
-- AI 생성 콘텐츠 공개 문구(`store_text.md` 끝): 글 초안에 AI 를 쓴 것까지 밝힐지, 배경음 줄(BGM-02 끝난 뒤). 추천: 초안처럼 넓게 밝힌다. 밝힌 것이 적어서 문제가 되는 일은 있어도 많아서 문제가 되는 일은 드물다.
-- 짧은 소개에 '당신' 같은 2인칭을 쓸지. 추천: 쓴다. 한국 Steam 상점 글에서 흔하고 짧은 글에 힘이 있다.
+- AI 생성 콘텐츠 공개 문구(`store_text.md` 끝): 글 초안에 AI 를 쓴 것까지 넓게 밝힌다(ST-01a). 배경음 줄은 스토어 열기 전 사람이 Gemini 약관 원문을 본 뒤 확정(BGM-02a).
+- 짧은 소개에 '당신' 2인칭을 쓴다(ST-01b) — 지금 초안 그대로.
 
 ## 스토어 페이지 공개까지 할 일 (로드맵 17장 M2 에서 쪼갬)
 
