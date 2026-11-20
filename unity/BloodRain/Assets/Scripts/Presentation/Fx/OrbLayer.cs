@@ -135,6 +135,15 @@ namespace BloodRain.Presentation.Fx
             var blue = new Vector4(0.36f, 0.62f, 0.86f, 1f);
             var green = new Vector4(0.40f, 0.72f, 0.42f, 1f);
             var red = new Vector4(0.80f, 0.20f, 0.16f, 1f);
+            // PP-01U 진기 구슬도 Bloom 문턱(1)을 넘겨 은은히 번지게: HDR 카메라·효과 간소화 꺼짐일 때만 가운데 밝기를 1.6배(알파는 그대로)
+            var cam = Camera.main;
+            if (cam != null && cam.allowHDR && !FxSettings.Simplified)
+            {
+                const float hdr = 1.6f;
+                blue = new Vector4(blue.x * hdr, blue.y * hdr, blue.z * hdr, 1f);
+                green = new Vector4(green.x * hdr, green.y * hdr, green.z * hdr, 1f);
+                red = new Vector4(red.x * hdr, red.y * hdr, red.z * hdr, 1f);
+            }
             int c = 0;
             float t = Time.time;
             foreach (var o in Field.Orbs)
