@@ -1315,6 +1315,8 @@ MonoBehaviour:
   - char_gaebang_f
   - char_gaebang_m
   - char_ha_yeon
+  - char_huashan_f
+  - char_huashan_m
   - char_hyegong
   - char_jinsowoon
   - char_machil
@@ -1334,6 +1336,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 75ebfe15a29844cd854810d663d15398, type: 3}
   - {fileID: 21300000, guid: d13ba6483932492bb4a521f46b1faf23, type: 3}
   - {fileID: 21300000, guid: acdfc382b5ad4952b8dda99747045f49, type: 3}
+  - {fileID: 21300000, guid: 6ea0b75f282805845849d40149a237ab, type: 3}
+  - {fileID: 21300000, guid: c7298e71d3ecf2040bf2834b08c0f0b4, type: 3}
   - {fileID: 21300000, guid: f6c3a6b7382b45a7a91d76a66734cea1, type: 3}
   - {fileID: 21300000, guid: 0a1f0104865a4648acf559f35391fe86, type: 3}
   - {fileID: 21300000, guid: 0a34c371139d49ddb86911e94f58d0cf, type: 3}
@@ -1367,9 +1371,13 @@ MonoBehaviour:
   - 0.0546875
   - 0.0546875
   - 0.0546875
+  - 0.0546875
+  - 0.0546875
   bodyV:
   - 0.890625
   - 0.88671875
+  - 0.890625
+  - 0.890625
   - 0.890625
   - 0.890625
   - 0.890625
