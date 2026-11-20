@@ -283,6 +283,7 @@ namespace BloodRain.Presentation.Hud
             var rt = t.rectTransform;
             rt.anchorMin = rt.anchorMax = new Vector2(1, 1); rt.pivot = new Vector2(1, 1);
             rt.anchoredPosition = pos; rt.sizeDelta = new Vector2(420, 32);
+            InkHalo.Apply(t);
             return t;
         }
     }

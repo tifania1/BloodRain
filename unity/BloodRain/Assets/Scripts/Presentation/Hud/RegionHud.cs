@@ -29,7 +29,12 @@ namespace BloodRain.Presentation.Hud
         public string RegionId => _shownId;
         public float Density { get; private set; } = 1f;
 
-        void Awake() => _regions = new Regions(DataBoot.Data);
+        void Awake()
+        {
+            _regions = new Regions(DataBoot.Data);
+            InkHalo.Apply(clockText);
+            InkHalo.Apply(regionText);
+        }
 
         void LateUpdate()
         {
