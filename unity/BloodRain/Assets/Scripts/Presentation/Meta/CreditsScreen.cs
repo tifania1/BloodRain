@@ -71,6 +71,14 @@ namespace BloodRain.Presentation.Meta
             var bg = Child("바탕", _root).gameObject.AddComponent<Image>();
             bg.color = PaperBg; // 클릭을 받아 뒤 타이틀 단추가 눌리지 않게(raycastTarget 기본 켬)
             Stretch(bg.rectTransform);
+            // 2026-11-21 판 바닥·저장 칸과 같은 선지 결과 가장자리 어둡게(납작한 단색 종이였다)
+            var grain = Child("PaperGrain", _root).gameObject.AddComponent<RawImage>();
+            grain.texture = BloodRain.Presentation.Fx.MapLayer.PaperTile; grain.raycastTarget = false;
+            grain.uvRect = new Rect(0f, 0f, 1920f / 512f, 1080f / 512f);
+            Stretch(grain.rectTransform);
+            var vig = Child("Vignette", _root).gameObject.AddComponent<RawImage>();
+            vig.texture = BloodRain.Presentation.Fx.MapLayer.VignetteTex; vig.color = new Color(1f, 1f, 1f, 0.6f); vig.raycastTarget = false;
+            Stretch(vig.rectTransform);
 
             // 흘릴 글: 화면 가운데 위쪽을 기준으로 아래로 쌓고, 통째로 위로 올린다
             _scroll = Child("두루마리", _root);
