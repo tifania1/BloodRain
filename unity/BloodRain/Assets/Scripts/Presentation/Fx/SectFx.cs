@@ -198,7 +198,12 @@ namespace BloodRain.Presentation.Fx
             foreach (var d in _drops)
             {
                 float k = d.T / d.Life, sp = d.Vel.magnitude / Mathf.Max(Meter, 1e-6f);
-                if (d.Shape != 0) { Quad(d.Shape, d.Pos, d.Size * 2f, d.Size * 1.15f, d.Rot + d.T * d.Spin, default, d.C, .95f * (1f - k * k)); continue; }
+                if (d.Shape != 0)
+                {
+                    // 꽃잎처럼 밝은 조각은 먹 그림자를 한 겹(종이 바닥에 묻혔다, 2026-11-20). 바쁜 프레임엔 뺀다
+                    if (!Busy && IsLight(d.C)) Quad(d.Shape, d.Pos + new Vector2(.03f, -.03f) * Meter, d.Size * 2.3f, d.Size * 1.4f, d.Rot + d.T * d.Spin, default, FxRamp.Ink, .45f * (1f - k * k));
+                    Quad(d.Shape, d.Pos, d.Size * 2f, d.Size * 1.15f, d.Rot + d.T * d.Spin, default, d.C, .95f * (1f - k * k)); continue;
+                }
                 float rot = Mathf.Atan2(d.Vel.y, d.Vel.x);
                 var p = new Vector4(d.Glow ? .3f : .55f, 0f, 0f, 0f);
                 float al = .92f * (1f - k * k);
@@ -235,10 +240,17 @@ namespace BloodRain.Presentation.Fx
         /// <summary>더하기 겹의 HDR 배수(PP-01U). Bloom 문턱 1 을 기·금빛만 넘게 한다. 1 이면 예전과 같다.</summary>
         public static float GlowHdr = 1.8f;
 
+        /// <summary>종이 바닥(밝기 .7 안팎)에 묻히는 밝은 램프인가: 가운데 색의 밝기가 .65 를 넘으면.</summary>
+        static bool IsLight(FxRamp c) => .2126f * c.Mid.r + .7152f * c.Mid.g + .0722f * c.Mid.b > .65f;
+
         /// <summary>빛나는 겹: 색 있는 몸 + 약한 더하기 한 겹. 밝은 종이 위에서 하얗게 날아가지 않는다.</summary>
         public void Glow(int shape, Vector2 pos, float w, float h, float rot, Vector4 p, FxRamp c,
             float alpha = 1f, float prog = 1f, float diss = 0f, float seed = 0f)
         {
+            // 밝은 빛(은빛·흰 금빛·담채·꽃잎·번개 …)은 옅은 종이 바닥에 묻힌다(2026-11-20 사람: 지풍·비도 같은 게 너무 안 보인다).
+            // 같은 모양을 조금 크게 먹으로 한 겹 먼저 깔아 테두리처럼 읽히게. 아주 작은 튐은 빼서 장 수를 아낀다
+            if (IsLight(c) && Mathf.Abs(w * h) > .05f * Meter * Meter)
+                Quad(shape, pos, w * 1.18f + .06f * Meter * Mathf.Sign(w), h * 1.35f + .06f * Meter * Mathf.Sign(h), rot, p, FxRamp.Ink, alpha * .42f, prog, diss, seed);
             Quad(shape, pos, w, h, rot, p, c, alpha, prog, diss, seed);
             if (!FxSettings.Simplified && !Busy) Quad(shape, pos, w, h, rot, p, c, alpha * .4f, prog, diss, seed, true);
         }

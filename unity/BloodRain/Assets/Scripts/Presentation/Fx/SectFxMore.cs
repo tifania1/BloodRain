@@ -53,6 +53,8 @@ namespace BloodRain.Presentation.Fx
             if (st >= 2 && !FxSettings.Simplified)
                 for (int j = 1; j <= 2; j++)
                     Quad(0, c0 - d * .15f * S * j, S * (1f - .08f * j), S * (1f - .08f * j), p.Ang, new Vector4(1.9f, .26f, 1f, .9f), body, .22f * al / j, 1f, .3f + .15f * j, p.Seed + j);
+            // 회청 바람이 종이 바닥에 묻혀서 먹 받침을 먼저(2026-11-20)
+            Quad(0, c0 - d * .03f * S, S * 1.08f, S * 1.08f, p.Ang, new Vector4(2f, st >= 2 ? .56f : .48f, 1f, .55f), FxRamp.Ink, .45f * al, Mathf.Min(1f, p.Age / .08f), k > .75f ? (k - .75f) * 3f : 0f, p.Seed);
             Quad(0, c0, S, S, p.Ang, new Vector4(2f, st >= 2 ? .46f : .38f, 1f, .55f), body, .95f * al, Mathf.Min(1f, p.Age / .08f), k > .75f ? (k - .75f) * 3f : 0f, p.Seed);
             if (st >= 5)
             {
@@ -67,11 +69,12 @@ namespace BloodRain.Presentation.Fx
         void DrawFinger(LiveProj p)
         {
             int st = p.Stage; float m = Meter;
-            float tl = Mathf.Min(L(st, .7f, .8f, 1.2f, 1.3f, 1.5f) * m, p.Run + .25f * m), w = L(st, .1f, .11f, .12f, .13f, .14f) * m * (p.Evo ? 1.3f : 1f);
+            // 2026-11-20 사람: 지풍이 너무 안 보인다 — 굵기 약 1.8배, 끝에 빛 머리
+            float tl = Mathf.Min(L(st, .9f, 1f, 1.3f, 1.4f, 1.6f) * m, p.Run + .25f * m), w = L(st, .18f, .2f, .22f, .24f, .26f) * m * (p.Evo ? 1.3f : 1f);
             float al = Mathf.Clamp01(p.Left / .06f);
             var d = Dir(p.Ang);
-            Quad(1, p.Pos - d * tl * .5f, tl, w * 2.2f, p.Ang, new Vector4(.3f, .2f, 3f, 1f), FxRamp.Ink, .45f * al, 1f, 0f, p.Seed + 2f); // 먹 받침(흰 금빛이 종이 바닥에 묻히지 않게, 2026-11-20)
-            Glow(1, p.Pos - d * tl * .5f, tl, w, p.Ang, new Vector4(.3f, .2f, 3f, 1f), FxRamp.Finger, .85f * al, 1f, 0f, p.Seed);
+            Glow(1, p.Pos - d * tl * .5f, tl, w, p.Ang, new Vector4(.3f, .2f, 3f, 1f), FxRamp.Finger, .95f * al, 1f, 0f, p.Seed); // 먹 받침은 Glow 가 깐다
+            Glow(5, p.Pos, w * 2.2f, w * 1.4f, p.Ang, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Finger, al);
             if (st >= 4 || p.Evo) Quad(1, p.Pos - d * tl * .45f, tl * .8f, w * .45f, p.Ang, new Vector4(.3f, .1f, 3f, 1f), FxRamp.White, .9f * al, 1f, 0f, p.Seed + 1f);
         }
 
@@ -86,8 +89,7 @@ namespace BloodRain.Presentation.Fx
             // 2026-11-20 사람: 비도가 너무 안 보인다 — 은빛만으로는 옅은 종이 바닥에 묻혀서, 먹 받침을 굵고 짙게, 날도 키우고 먹 그림자를 깐다
             Quad(1, mid, tl, .26f * m, p.Ang, new Vector4(.22f, .3f, 2f, 1f), p.Evo ? FxRamp.BlueInk : FxRamp.Ink, .62f * al, 1f, 0f, p.Seed);
             Glow(1, mid, tl, .15f * m, p.Ang, new Vector4(.2f, .2f, 2f, 1f), st >= 4 ? FxRamp.Blade : FxRamp.Silver, (st >= 2 ? .95f : .8f) * al, 1f, 0f, p.Seed + 1f);
-            Quad(5, p.Pos - d * .02f * m, .6f * m, .24f * m, p.Ang, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Ink, .85f * al);
-            Quad(5, p.Pos, .52f * m, .17f * m, p.Ang, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Silver, al);
+            Glow(5, p.Pos, .52f * m, .17f * m, p.Ang, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Silver, al); // 먹 그림자는 Glow 가 깐다
         }
 
         /// <summary>맞는 순간 가는 빛 한 줄(비도·지풍). 3단부터 열십자.</summary>
@@ -184,11 +186,13 @@ namespace BloodRain.Presentation.Fx
                 {
                     float a = a0 + sp * f.T, al = Mathf.Sin(k * Mathf.PI);
                     var pos = center() + new Vector2(Mathf.Cos(a) * r0, Mathf.Sin(a) * r0 * .8f);
-                    Quad(3, pos, sz * (1f + .3f * k), sz * .7f * (1f + .3f * k), a, new Vector4(5f, .35f, .85f, 0f), FxRamp.MistG, .26f * al, 1f, .25f + .5f * k, f.Seed);
+                    Quad(3, pos, sz * (1f + .3f * k), sz * .7f * (1f + .3f * k), a, new Vector4(5f, .35f, .85f, 0f), FxRamp.Poison, .3f * al, 1f, .25f + .5f * k, f.Seed); // MistG(옅은 연두) .26 → 독 녹색 .3(2026-11-20: 종이 바닥에 묻혔다)
                 }, true);
             }
+            // 독무가 닿는 둘레: 1단부터 옅은 독 먹 고리(전엔 3단부터만 — 범위가 안 보였다, 2026-11-20)
+            if (!FxSettings.Simplified)
+                Add(1.2f, (f, k) => Quad(2, center(), R * 2.1f, R * 1.7f, f.Seed + f.T * .4f, new Vector4(.86f, .08f, .8f, 0f), FxRamp.PoisonInk, (stage >= 3 ? .3f : .2f) * Mathf.Sin(k * Mathf.PI)), true);
             if (stage < 3 || FxSettings.Simplified) return;
-            Add(1.2f, (f, k) => Quad(2, center(), R * 2.1f, R * 1.7f, f.Seed + f.T * .4f, new Vector4(.86f, .08f, .8f, 0f), FxRamp.PoisonInk, .22f * Mathf.Sin(k * Mathf.PI)), true);
             float m = Meter;
             for (int j = 0; j < (stage >= 5 ? 3 : 1) && _drops.Count < MaxDrops; j++)
             {
@@ -217,7 +221,7 @@ namespace BloodRain.Presentation.Fx
             float tl = Mathf.Min(L(st, .8f, 1f, 1.2f, 1.3f, 1.4f) * m, p.Run + .3f * m), al = Mathf.Clamp01(p.Left / .1f);
             var d = Dir(p.Ang);
             if (st >= 3) Glow(1, p.Pos - d * tl * .6f, tl * 1.2f, .36f * m, p.Ang, new Vector4(.4f, .4f, 2f, 1f), FxRamp.Petal, .45f * al, 1f, 0f, p.Seed);
-            Quad(1, p.Pos - d * tl * .5f, tl, .1f * m, p.Ang, new Vector4(.25f, .2f, 2f, 1f), FxRamp.Ink, .85f * al, 1f, 0f, p.Seed + 1f);
+            Quad(1, p.Pos - d * tl * .5f, tl, .18f * m, p.Ang, new Vector4(.25f, .2f, 2f, 1f), FxRamp.Ink, .9f * al, 1f, 0f, p.Seed + 1f); // 굵기 .1 → .18(2026-11-20 잘 안 보였다)
             if (st >= 4) Glow(1, p.Pos - d * tl * .5f, tl, .06f * m, p.Ang, new Vector4(.2f, .1f, 2f, 1f), FxRamp.White, .8f * al, 1f, 0f, p.Seed + 2f);
             float dt = Time.deltaTime;
             if (st >= 2 && dt > 0f && Rnd(0f, 1f) < dt / (st >= 4 ? .03f : .05f)) Petals(p.Pos - d * .3f * m, p.Ang + Mathf.PI, 1, 1.5f, 1f, .16f, FxRamp.Petal);
