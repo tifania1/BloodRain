@@ -9,7 +9,7 @@ namespace BloodRain.Presentation.Fx
     // 지역마다 다른 바닥과, 지역 자료로 그린 천하도(2026-11-17 밤 사람: "누런 끼 빼고 각 지역마다의 특색을 살린 그래픽으로,
     // 지역을 이동할 때마다 맞는 이미지가 나와야", "지도가 현실 지역 위치랑 안 맞는다").
     //   - 바닥: 지역 하나에 512px 이음매 없는 타일 한 장을 코드로 그린다. 빛깔은 종이 누런빛을 버리고 지역 빛(돌·대숲·눈·물가…)으로.
-    //     원화 타일이 있는 지역(ArtOf 표)은 지역 바탕빛 위에 원화를 옅게 얹어 쓴다(Resources/Art/Tiles).
+    //     원화 타일이 있는 지역(ArtOf 표 — 아홉)은 지역 바탕빛 위에 원화를 옅게 얹어 쓴다(Resources/Art/Tiles).
     //   - 천하도: 옛 수묵 지도 그림은 땅 자리(cheonha.json regions.pos)와 맞지 않았다. 땅 모양(PropField.InLand)·지역 자리·산 자리·
     //     두 큰 강을 자료에서 바로 그려 지도와 실제 자리가 늘 맞게 한다.
     // 처음 쓸 때 한 번 그려 두고 다시 쓴다(지역은 열하나, 한 장 0.1초 안쪽).
@@ -79,6 +79,10 @@ namespace BloodRain.Presentation.Fx
             ["namgung_manor"] = ("tile_namgung_court", 0.5f),
             ["danggata"] = ("tile_danggata_bamboo", 0.48f),
             ["janggang"] = ("tile_changjiang_bank", 0.42f),
+            // 2026-11-21 들인 셋(Artlist 01:47 차례). 십만대산 돌은 아주 짙어 옅게 얹는다(먹 이펙트가 묻히지 않게)
+            ["huashan"] = ("tile_huashan_rock", 0.4f),
+            ["kunlun"] = ("tile_kunlun_snow", 0.45f),
+            ["sipmandaesan"] = ("tile_sipmandaesan_stone", 0.24f),
         };
         static readonly Dictionary<string, Texture2D> Arts = new Dictionary<string, Texture2D>();
 
