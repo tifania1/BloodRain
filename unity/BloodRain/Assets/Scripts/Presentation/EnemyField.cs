@@ -168,7 +168,7 @@ namespace BloodRain.Presentation
                 if (_ink != null) return _ink;
                 _ink = gameObject.AddComponent<InkBurst>();
                 var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
-                _ink.Init(ScaleTestDriver.MakeCircle(), new Material(shader) { name = "밟힘 먹물" });
+                _ink.Init(InkBurst.MakeBlot(), new Material(shader) { name = "밟힘 먹물" });
                 return _ink;
             }
         }

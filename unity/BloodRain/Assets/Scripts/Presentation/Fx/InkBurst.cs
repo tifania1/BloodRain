@@ -5,7 +5,9 @@ namespace BloodRain.Presentation.Fx
 {
     // 밟힌 적이 먹물로 터지는 자국(TU-03). 둥근 먹점 몇 개가 번지며 옅어진다. 시계는 언스케일
     // (돌파 중 세상 시간 0.05배여도 쓸림 자국은 제 속도로 보이게).
-    // 임시 도형이다. 먹 번짐 셰이더·적 아틀라스가 들어오면 바꾼다.
+    // 2026-11-20 21시 BT-01U: 둥근 흰 원 스프라이트(ScaleTestDriver.MakeCircle)를 크게 키워 찍던 것이 초절정 돌파 쓸림에서
+    // 화면을 새까만 원판 백여 개로 덮었다. 가장자리가 들쭉날쭉한 먹 방울 그림(MakeBlot)으로 바꾸고, 크기·짙기·수를 줄였다.
+    // 쓸린 적 몸은 DeathLayer.AddSwept 가 먹빛으로 날려 보내니 여기 먹점은 곁들이는 몫이다.
     public sealed class InkBurst : MonoBehaviour
     {
         public static readonly Color Ink = new Color(0.07f, 0.06f, 0.06f, 0.85f);
@@ -33,10 +35,10 @@ namespace BloodRain.Presentation.Fx
             if (awayFrom.HasValue)
             {
                 var d = at - awayFrom.Value;
-                push = d.sqrMagnitude > 1e-6f ? d.normalized * size * 3f : Vector2.zero;
+                push = d.sqrMagnitude > 1e-6f ? d.normalized * size * 2f : Vector2.zero;
             }
             // 돌파 쓸림처럼 한꺼번에 수백이 밟히면 먹점이 천 개 넘게 떴다(2026-11-20 재 봄: 오브젝트 1,008개). 많이 떠 있으면 덜 찍는다
-            int n = _live.Count > 300 ? 0 : _live.Count > 120 ? 2 : blotsPerBurst;
+            int n = _live.Count > 240 ? 0 : _live.Count > 80 ? 1 : awayFrom.HasValue ? 3 : blotsPerBurst;
             for (int i = 0; i < n; i++)
             {
                 float a = (float)(_rng.NextDouble() * Mathf.PI * 2);
@@ -47,9 +49,50 @@ namespace BloodRain.Presentation.Fx
                 _live.Add(new Blot
                 {
                     R = sr, From = at + off * r, Vel = off * size * 0.8f + push,
-                    Size = size * Mathf.Lerp(0.35f, 0.7f, (float)_rng.NextDouble()), Age = 0f, C = color,
+                    Size = size * Mathf.Lerp(0.16f, 0.36f, (float)_rng.NextDouble()), Age = 0f, C = color,
                 });
+                sr.transform.rotation = Quaternion.Euler(0f, 0f, (float)_rng.NextDouble() * 360f);
             }
+        }
+
+        static Sprite _blot;
+
+        /// <summary>먹 방울 한 점(64px): 가장자리가 잡음으로 들쭉날쭉하고 안쪽이 조금 더 짙으며, 곁에 작은 방울 몇 개가 튄다.</summary>
+        public static Sprite MakeBlot()
+        {
+            if (_blot != null) return _blot;
+            const int n = 64;
+            var rng = new System.Random(11);
+            float[] lobe = new float[7];
+            for (int i = 0; i < lobe.Length; i++) lobe[i] = (float)rng.NextDouble() * 6.283f;
+            var sat = new Vector3[4];
+            for (int i = 0; i < sat.Length; i++)
+            {
+                float a = (float)rng.NextDouble() * 6.283f, r = 0.36f + (float)rng.NextDouble() * 0.1f;
+                sat[i] = new Vector3(0.5f + Mathf.Cos(a) * r, 0.5f + Mathf.Sin(a) * r, 0.025f + (float)rng.NextDouble() * 0.03f);
+            }
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp, name = "먹 방울" };
+            var px = new Color32[n * n];
+            for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+            {
+                float u = (x + 0.5f) / n - 0.5f, v = (y + 0.5f) / n - 0.5f;
+                float d = Mathf.Sqrt(u * u + v * v), th = Mathf.Atan2(v, u);
+                float edge = 0.27f + 0.035f * Mathf.Sin(th * 3f + lobe[0]) + 0.025f * Mathf.Sin(th * 5f + lobe[1]) + 0.015f * Mathf.Sin(th * 9f + lobe[2]);
+                float a = Mathf.Clamp01((edge - d) * n * 0.5f);
+                foreach (var s in sat)
+                {
+                    float sd = Mathf.Sqrt((u + 0.5f - s.x) * (u + 0.5f - s.x) + (v + 0.5f - s.y) * (v + 0.5f - s.y));
+                    a = Mathf.Max(a, Mathf.Clamp01((s.z - sd) * n * 0.5f));
+                }
+                // 안쪽이 짙고 가장자리로 가며 살짝 옅다(먹이 번진 자리)
+                float core = Mathf.Lerp(1f, 0.72f, Mathf.Clamp01(d / 0.3f));
+                px[y * n + x] = new Color32(255, 255, 255, (byte)(a * core * 255));
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            _blot = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), n * 0.6f);
+            return _blot;
         }
 
         SpriteRenderer MakeRenderer()
@@ -81,8 +124,8 @@ namespace BloodRain.Presentation.Fx
                 float ease = 1f - (1f - k) * (1f - k);
                 var p = b.From + b.Vel * ease;
                 b.R.transform.position = new Vector3(p.x, p.y, -0.6f);
-                b.R.transform.localScale = Vector3.one * b.Size * Mathf.Lerp(0.6f, 1.6f, ease);
-                var c = b.C; c.a *= 1f - k * k;
+                b.R.transform.localScale = Vector3.one * b.Size * Mathf.Lerp(0.7f, 1.25f, ease);
+                var c = b.C; c.a *= 0.8f * (1f - k * k);
                 b.R.color = c;
                 _live[i] = b;
             }
