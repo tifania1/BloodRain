@@ -59,6 +59,18 @@ namespace BloodRain.Core.Tests
             Assert.Equal(new[] { "丐", "罩" }, viaBrush);
         }
 
+        [Fact] public void IMGUI_가_한자_글꼴로_돌리는_글자는_본문_글꼴에_없는_글자와_같다()
+        {
+            // IMGUI(천하도 등)는 대체 글꼴이 없어 ImguiFont.MissingInKr 의 글자를 TC 글꼴로 따로 그린다(2026-11-21 웹 판 丐 빈칸)
+            var src = File.ReadAllText(Path.Combine(RepoRoot, "unity", "BloodRain", "Assets", "Scripts", "Presentation", "ImguiFont.cs"));
+            var m = System.Text.RegularExpressions.Regex.Match(src, "MissingInKr\\s*=\\s*\"([^\"]*)\"");
+            Assert.True(m.Success, "ImguiFont.MissingInKr 를 못 찾음");
+            var listed = m.Groups[1].Value.Select(c => c.ToString()).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            var missing = DataChars().Where(t => t.cp >= 0x2E80 && !Body.Value.Contains(t.cp)).Select(t => t.cp).Distinct()
+                .Select(char.ConvertFromUtf32).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            Assert.Equal(missing, listed);
+        }
+
         /// <summary>sfnt(TTF·OTF) 의 cmap 에서 유니코드 코드포인트만 읽는다. 형식 4·12 만.</summary>
         internal static class Cmap
         {

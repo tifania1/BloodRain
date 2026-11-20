@@ -35,6 +35,9 @@ namespace BloodRain.Presentation
         }
 
         const string HanName = "NotoSerifTC SDF";
+        /// <summary>데이터에 쓰는데 Noto Serif KR 에 없는 한자(테스트 FontCoverageTests 가 데이터와 맞는지 본다).
+        /// 에디터는 OS 글꼴로 대신 그려 Font.HasCharacter 가 참이라 목록으로도 본다.</summary>
+        public const string MissingInKr = "丐罩";
         static Font _han;
         static float _nextHanTry;
 
@@ -62,7 +65,7 @@ namespace BloodRain.Presentation
         {
             var f = Font;
             if (f == null || string.IsNullOrEmpty(s)) return false;
-            foreach (char c in s) if (c >= 0x2E80 && !f.HasCharacter(c)) return true;
+            foreach (char c in s) if (c >= 0x2E80 && (MissingInKr.IndexOf(c) >= 0 || !f.HasCharacter(c))) return true;
             return false;
         }
 
