@@ -56,8 +56,12 @@ namespace BloodRain.Presentation
         public static bool Pressed(string action) => Act(action)?.WasPressedThisFrame() ?? false;
 
         /// <summary>키보드 이동(상하좌우 행동). 스틱은 부르는 쪽이 더한다.</summary>
+        /// <summary>시험 메뉴 '자동 플레이'가 넣는 이동(2026-11-20, Hud/TestAutopilot). 값이 있으면 키보드 대신 이것.</summary>
+        public static Vector2? MoveOverride;
+
         public static Vector2 Move()
         {
+            if (MoveOverride.HasValue) return MoveOverride.Value;
             var v = Vector2.zero;
             if (Held(ControlAction.Up)) v.y += 1;
             if (Held(ControlAction.Down)) v.y -= 1;

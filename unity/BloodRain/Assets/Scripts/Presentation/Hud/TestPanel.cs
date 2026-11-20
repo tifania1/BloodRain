@@ -89,6 +89,7 @@ namespace BloodRain.Presentation.Hud
         readonly List<string> _labels = new List<string>();
 
         bool _fast;
+        TestAutopilot _auto;
 
         bool Btn(Rect r, string label, System.Action act, bool enabled = true)
         {
@@ -162,6 +163,9 @@ namespace BloodRain.Presentation.Hud
             Row(("정예 부르기", () => runner.SummonElite(), true),
                 (boss ? "땅의 주인과 싸우기" : "땅의 주인 없음", () => runner.ChallengeBoss(), boss),
                 (_fast ? "빠르기 ×4 켬" : "빠르기 ×4 끔", () => { _fast = !_fast; if (!_fast && Time.timeScale > 1f) Time.timeScale = 1f; }, true));
+            // 자동 플레이(2026-11-20): 적을 피해 걷고 레벨업은 자동으로 고른다. 빠르기 ×4 와 같이 쓰면 한 생을 금방 본다
+            if (_auto == null) { _auto = GetComponent<TestAutopilot>(); if (_auto == null) { _auto = gameObject.AddComponent<TestAutopilot>(); _auto.runner = runner; } }
+            Row((_auto.On ? "자동 플레이 켬" : "자동 플레이 끔", () => _auto.On = !_auto.On, true));
 
             y += gap;
             Head("몸 바꾸기 — 그 문파 땅에서 새 생");

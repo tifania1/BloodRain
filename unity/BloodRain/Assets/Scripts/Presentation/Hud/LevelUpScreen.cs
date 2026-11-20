@@ -317,6 +317,26 @@ namespace BloodRain.Presentation.Hud
             RefreshSeals();
         }
 
+        /// <summary>자동 고르기(UI-01b, 2026-11-20 정함): 절기 짝이 되는 카드 > 가진 무공·심법 레벨업 > 새 무공 > 새 심법, 같으면 맨 왼쪽.
+        /// 시험 메뉴 '자동 플레이'가 부른다. 고르면 true(열린 직후 막힘 등으로 못 고르면 false).</summary>
+        public bool AutoPick()
+        {
+            if (!_open || _offers.Count == 0 || Guarded) return false;
+            int best = 0, bestRank = int.MaxValue;
+            for (int i = 0; i < _offers.Count; i++)
+            {
+                var o = _offers[i];
+                bool owned = o.Kind == OfferKind.UpgradeWeapon || o.Kind == OfferKind.UpgradePassive;
+                var view = LevelUpView.Card(_data, _loadout, o);
+                bool pair = view != null && (view.Pair != null || view.Threshold != null);
+                int rank = pair ? 0 : owned ? 1 : o.Kind == OfferKind.NewWeapon ? 2 : o.Kind == OfferKind.NewPassive ? 3 : 4;
+                if (rank < bestRank) { bestRank = rank; best = i; }
+            }
+            _banishMode = false;
+            Pick(best);
+            return !_open;
+        }
+
         // 다시 고르기·파기·정진 단추도 열린 직후엔 안 받는다(웹 tooSoon 이 셋 다 막음, 마우스 클릭은 키보드 막기를 안 거침)
         void Reroll()
         {
