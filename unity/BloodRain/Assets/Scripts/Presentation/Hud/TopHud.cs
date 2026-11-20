@@ -37,7 +37,7 @@ namespace BloodRain.Presentation.Hud
         static readonly Color HpLow = new Color32(179, 38, 30, 255);
         const float SlotSize = 44f, SlotGap = 6f;
 
-        sealed class Cell { public Image Frame, Inner; public TextMeshProUGUI Glyph, Level; }
+        sealed class Cell { public Image Frame, Inner; public RawImage Grain; public TextMeshProUGUI Glyph, Level; }
         readonly List<Cell> _wCells = new List<Cell>(), _pCells = new List<Cell>();
         RectTransform _root, _slotRoot, _head, _hpFill;
         Image _hpFillImg;
@@ -120,6 +120,8 @@ namespace BloodRain.Presentation.Hud
             fr.anchoredPosition = new Vector2(col * (SlotSize + SlotGap), -row * (SlotSize + SlotGap)); fr.sizeDelta = new Vector2(SlotSize, SlotSize);
             c.Inner = Img(fr, "속", SlotPaper);
             var ir = c.Inner.rectTransform; ir.anchorMin = Vector2.zero; ir.anchorMax = Vector2.one; ir.offsetMin = new Vector2(3, 3); ir.offsetMax = new Vector2(-3, -3);
+            // 2026-11-21 칸 속에 선지 결(납작한 크림색 네모였다). 빈 칸은 더 옅게(FillCells)
+            c.Grain = BloodRain.Presentation.Meta.InkUi.PaperGrainFill(ir, new Vector2(SlotSize, SlotSize), 0.3f);
             c.Glyph = Text(fr, "글자", 24, TextAlignmentOptions.Center, Vector2.zero);
             var gr = c.Glyph.rectTransform; gr.anchorMin = Vector2.zero; gr.anchorMax = Vector2.one; gr.pivot = new Vector2(0.5f, 0.5f);
             gr.offsetMin = Vector2.zero; gr.offsetMax = new Vector2(0, -2);
@@ -151,6 +153,7 @@ namespace BloodRain.Presentation.Hud
                 if (s.Id == null)
                 {
                     c.Frame.color = new Color(SlotInk.r, SlotInk.g, SlotInk.b, 0.35f); c.Inner.color = SlotEmpty;
+                    c.Grain.color = new Color(1f, 1f, 1f, 0.1f);
                     c.Glyph.text = ""; c.Level.text = "";
                     continue;
                 }
@@ -158,6 +161,7 @@ namespace BloodRain.Presentation.Hud
                 c.Glyph.text = string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1); // 아이콘 그림이 오기 전엔 이름 첫 글자(웹 GLYPH 자리)
                 c.Level.text = s.Level.ToString();
                 c.Inner.color = SlotPaper;
+                c.Grain.color = new Color(1f, 1f, 1f, 0.3f);
                 c.Glyph.color = SchoolTint.OfMember(s.Id) ?? TextInk; // 글자는 문파 색(레벨업 카드 책등과 같은 색)
                 switch (s.Glow)
                 {
