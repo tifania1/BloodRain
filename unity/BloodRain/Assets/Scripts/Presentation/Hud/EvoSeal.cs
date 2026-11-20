@@ -86,6 +86,7 @@ namespace BloodRain.Presentation.Hud
             _hanja = Txt(_canvas.transform, 140f, new Color(Ink.r, Ink.g, Ink.b, 0.62f), font);
             var hr = _hanja.rectTransform; hr.anchorMin = hr.anchorMax = new Vector2(0.5f, 0.5f);
             hr.anchoredPosition = new Vector2(0f, 216f); hr.sizeDelta = new Vector2(1600f, 180f);
+            InkHalo.Apply(_hanja);   // 큰 베기 위에 겹치면 먹 글자가 묻혀서(2026-11-20 PC) 뒤에 옅은 종이빛 번짐
 
             // 주홍 낙관: 글자 오른쪽 위, 한자 높이의 32% 네모 안에 '絶'
             _sealRt = new GameObject("낙관", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<RectTransform>();
