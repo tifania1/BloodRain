@@ -140,6 +140,9 @@ namespace BloodRain.Presentation.Meta
             b.interactable = enabled;
             if (onClick != null) b.onClick.AddListener(onClick);
             Place((RectTransform)go.transform, new Vector2(0, y), new Vector2(420, 76));
+            // 2026-11-21 종이 결과 먹 테두리(납작한 크림색 상자였다)
+            InkUi.PaperGrainFill((RectTransform)go.transform, new Vector2(420, 76), 0.35f);
+            var edge = go.AddComponent<Outline>(); edge.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.55f); edge.effectDistance = new Vector2(2f, -2f);
             var t = Text("글", go.transform, label, 32, FontStyles.Bold, Ink, font);
             if (!enabled) t.alpha = 0.55f;
             Stretch(t.rectTransform);
