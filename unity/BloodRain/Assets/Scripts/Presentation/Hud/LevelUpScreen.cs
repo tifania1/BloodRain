@@ -442,6 +442,8 @@ namespace BloodRain.Presentation.Hud
             // 서장 첫 레벨업은 카드 한 장(새 무공)뿐이라 다시 고르기·파기를 숨긴다. 정진은 남긴다.
             _reroll.gameObject.SetActive(!_firstOpen);
             _banish.gameObject.SetActive(!_firstOpen);
+            // 정진 하나만 남으면 가운데로(오른쪽에 혼자 떠 있었다, 2026-11-21 서장 첫 카드)
+            ((RectTransform)_skip.transform).anchoredPosition = new Vector2(_firstOpen ? 0f : 360f, -360f);
         }
 
         void MakeCard(int index, Offer o)
