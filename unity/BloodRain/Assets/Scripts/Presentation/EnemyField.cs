@@ -101,7 +101,6 @@ namespace BloodRain.Presentation
         /// <summary>적이 쓰러질 때(위치 세계 m, 그 적 상태). 진기 구슬(OrbLayer)이 여기서 떨어진다.</summary>
         public event System.Action<Vector2, EnemyAgent> Killed;
 
-        /// <summary>HF-03U 그 적의 그림 한 장·크기(월드)·색. 쓰러지는 모습(DeathLayer)이 쓴다.</summary>
         /// <summary>적 종류 → 몸놀림. 데이터에 따로 칸이 없어 이름·계열·걸음 규칙에서 고른다(새 적은 여기 한 줄).</summary>
         public static ClusterMotion MotionOf(EnemyDef def, EnemyMove move)
         {
@@ -115,6 +114,7 @@ namespace BloodRain.Presentation
             return ClusterMotion.Walk;
         }
 
+        /// <summary>HF-03U 그 적의 그림 한 장·크기(월드)·색. 쓰러지는 모습(DeathLayer)이 쓴다.</summary>
         public bool LookOf(EnemyAgent a, out Texture2D art, out float worldSize, out Color tint)
         {
             art = null; worldSize = 0f; tint = Color.white;
@@ -186,6 +186,9 @@ namespace BloodRain.Presentation
                 last = i;
                 var a = _sim.Get(i);
                 Ink.Burst(new Vector2(a.Pos.x, a.Pos.y), a.Radius * 2f, InkBurst.Ink, awayFrom);
+                // BT-01U 돌파 쓸림이면 그 적 그림이 바깥으로 날아가며 먹 점으로(DeathLayer.AddSwept)
+                if (awayFrom.HasValue && DeathLayer.Instance != null && LookOf(a, out var sa, out var ss, out var st))
+                    DeathLayer.Instance.AddSwept(new Vector2(a.Pos.x, a.Pos.y), awayFrom.Value, sa, ss, st);
                 Kill(i, true);
                 n++;
             }

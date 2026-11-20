@@ -14,8 +14,8 @@ namespace BloodRain.Presentation.Fx
         public Material material;   // BloodRain/ClusterInk(덩이 렌더러 것). 복사해 쓴다
 
         const int Max = 96;
-        enum Look { Fade, Split, Fly, Squash, Char, Melt, Sweep, Petal, Wither, Ash }
-        struct Ghost { public Vector2 Pos, Dir; public float T, Life, Size, Spin; public Texture2D Art; public Look Look; public Color Tint; public bool Done; }
+        enum Look { Fade, Split, Fly, Squash, Char, Melt, Sweep, Petal, Wither, Ash, Swept }
+        struct Ghost { public Vector2 Pos, Dir; public float T, Life, Size, Spin, Reach; public Texture2D Art; public Look Look; public Color Tint; public bool Done, Unscaled; }
 
         readonly List<Ghost> _g = new List<Ghost>();
         readonly Matrix4x4[] _m = new Matrix4x4[1];
@@ -27,6 +27,8 @@ namespace BloodRain.Presentation.Fx
         static readonly int IdTint = Shader.PropertyToID("_Tint"), IdDissolve = Shader.PropertyToID("_Dissolve"), IdMainTex = Shader.PropertyToID("_MainTex");
 
         public int LiveCount => _g.Count;
+        /// <summary>돌파 쓸림(EnemyField.Sweep)이 부른다. WeaponRunner 가 첫 처치 때 붙이니 그 전이면 null.</summary>
+        public static DeathLayer Instance { get; private set; }
 
         static float Ez(float t) => 1f - (1f - t) * (1f - t) * (1f - t);
 
@@ -57,8 +59,27 @@ namespace BloodRain.Presentation.Fx
             if (look == Look.Wither && SectFx.Instance != null) SectFx.Instance.Drops(at + Vector2.up * size * .35f, Mathf.Atan2(-dir.y, -dir.x), 7, 7f, FxRamp.BloodMist, false, .12f, .45f);
         }
 
+        /// <summary>BT-01U 돌파에 쓸린 적(시안 breakthrough.html): 0.25초(실제 시간 — 돌파 중 세상 시간은 0.05배) 동안 몸에서 바깥으로
+        /// 거리의 35% 날아가며 먹빛으로 바뀌어 먹 점으로 흩어진다. 화면 밖이면 그리지 않는다(쓸림은 수백 덩이가 한꺼번에).</summary>
+        public void AddSwept(Vector2 at, Vector2 center, Texture2D art, float size, Color tint)
+        {
+            if (art == null || material == null || FxSettings.Simplified) return;
+            var cam = Camera.main;
+            if (cam != null && cam.orthographic)
+            {
+                float h = cam.orthographicSize + size, w = cam.orthographicSize * cam.aspect + size;
+                Vector2 c = cam.transform.position;
+                if (Mathf.Abs(at.x - c.x) > w || Mathf.Abs(at.y - c.y) > h) return;
+            }
+            if (_g.Count >= Max) _g.RemoveAt(0);
+            var d = at - center;
+            float dist = d.magnitude;
+            _g.Add(new Ghost { Pos = at, Dir = dist > 1e-5f ? d / dist : Vector2.right, Reach = dist * .35f, Life = .25f, Size = size, Art = art, Look = Look.Swept, Tint = tint, Unscaled = true, Spin = Random.value < .5f ? -1f : 1f });
+        }
+
         void Awake()
         {
+            Instance = this;
             _mpb = new MaterialPropertyBlock();
             _quad = new Mesh { name = "쓰러지는 사람" };
             _quad.vertices = new[] { new Vector3(-0.5f, -0.5f), new Vector3(0.5f, -0.5f), new Vector3(-0.5f, 0.5f), new Vector3(0.5f, 0.5f) };
@@ -67,18 +88,18 @@ namespace BloodRain.Presentation.Fx
             _quad.RecalculateBounds();
         }
 
-        void OnDestroy() { if (_mat != null) Destroy(_mat); }
+        void OnDestroy() { if (_mat != null) Destroy(_mat); if (Instance == this) Instance = null; }
 
         void LateUpdate()
         {
             if (_g.Count == 0 || material == null) return;
             if (_mat == null) _mat = new Material(material) { name = "쓰러지는 적", enableInstancing = true };
-            float dt = Time.deltaTime;
+            float dt = Time.deltaTime, udt = Time.unscaledDeltaTime;
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             for (int i = _g.Count - 1; i >= 0; i--)
             {
                 var g = _g[i];
-                g.T += dt;
+                g.T += g.Unscaled ? udt : dt;
                 if (g.T >= g.Life) { _g.RemoveAt(i); continue; }
                 float k = g.T / g.Life, s = g.Size;
                 var n = new Vector2(-g.Dir.y, g.Dir.x);
@@ -123,6 +144,12 @@ namespace BloodRain.Presentation.Fx
                     case Look.Wither:  // 피를 빨리며 검붉게 오그라든다(HF-03U: 자주가 흐렸다)
                         Draw(rp, g.Art, g.Pos - g.Dir * (s * .5f * Ez(k)), 0f, s * (1f - .6f * k), s * (1f - .35f * k), Color.Lerp(c, new Color(.36f, .06f, .12f, 1f), Mathf.Min(1f, k * 3.5f)), k * k);
                         break;
+                    case Look.Swept:   // 돌파에 쓸려 바깥으로 날아가며 먹빛 점으로 흩어진다(시안: 거리 × 0.35, smoothstep, 먹 #1c1a17)
+                    {
+                        float e = k * k * (3f - 2f * k);
+                        Draw(rp, g.Art, g.Pos + g.Dir * (g.Reach * e), g.Spin * 25f * e, s * (1f - .4f * e), s * (1f - .4f * e), Color.Lerp(c, new Color(.11f, .1f, .09f, 1f), Mathf.Min(1f, k * 4f)), .15f + .85f * k);
+                        break;
+                    }
                     case Look.Ash:     // 그을려 재가 되어 떠오른다
                         Draw(rp, g.Art, g.Pos + Vector2.up * (s * .3f * k), 0f, s, s, Color.Lerp(c, new Color(.2f, .15f, .1f, 1f), Mathf.Min(1f, k * 4f)), k);
                         break;
