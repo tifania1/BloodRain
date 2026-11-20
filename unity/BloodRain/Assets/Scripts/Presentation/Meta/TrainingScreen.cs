@@ -114,7 +114,7 @@ namespace BloodRain.Presentation.Meta
             {
                 var row = MetaShopRow.Upgrade(_root, font, soul, u, Refresh, 760);
                 row.Rect.anchorMin = row.Rect.anchorMax = new Vector2(0.5f, 1f);
-                row.Rect.anchoredPosition = new Vector2(k % 2 == 0 ? -420 : 420, y);
+                row.Rect.anchoredPosition = new Vector2(k % 2 == 0 ? -420 : 420, y - (k / 2) * 50); // 셋째 줄부터 아래로(전엔 같은 자리에 겹쳤다)
                 _rows.Add(row);
                 k++;
             }
