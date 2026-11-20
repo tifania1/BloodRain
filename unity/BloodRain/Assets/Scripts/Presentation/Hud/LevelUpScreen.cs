@@ -495,11 +495,11 @@ namespace BloodRain.Presentation.Hud
                 foreach (var t in pv.School.Tiers) if (t.Count > pv.SchoolCountAfter && t.Count < next) next = t.Count;
                 // 인장도 문파 색: 새 단계에 닿으면 꽉 찬 색에 금테, 아니면 옅은 색 바탕에 그 색 글자
                 var sc = SchoolTint.Of(pv.School);
-                var seal = MakeImage(card, "문파 인장", reaches ? sc : new Color(sc.r, sc.g, sc.b, 0.22f));
+                var seal = MakeImage(card, "문파 인장", reaches ? sc : new Color(sc.r, sc.g, sc.b, 0.12f));
                 Place(seal.rectTransform, new Vector2(1f, 1f), new Vector2(-46, -46), new Vector2(72, 72));
                 var rim = seal.gameObject.AddComponent<Outline>();
                 rim.effectColor = reaches ? Gold : sc; rim.effectDistance = new Vector2(3, -3);
-                var sealText = MakeText(seal.rectTransform, "글", 20, reaches ? PaperHot : sc, TextAlignmentOptions.Center);
+                var sealText = MakeText(seal.rectTransform, "글", 20, reaches ? PaperHot : Color.Lerp(sc, Ink, 0.3f), TextAlignmentOptions.Center); // 옅은 바탕 위라 글자는 조금 더 짙게
                 Stretch(sealText.rectTransform);
                 sealText.lineSpacing = -20;
                 // 영어는 이름 전체라 길다(L-01b2): 칸 안에서 줄이고, 머리글은 인장 왼쪽까지만 쓴다

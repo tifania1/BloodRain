@@ -225,6 +225,19 @@ namespace BloodRain.Presentation.Hud
             var weapons = runner.weapons != null ? runner.weapons : FindFirstObjectByType<WeaponRunner>();
             var lo = runner.Life.Loadout;
             if (weapons == null || lo == null) return;
+            // 심법 id 를 넘기면 무공 칸에 잘못 들어가 레벨업 카드가 깨졌다(2026-11-20 시험 중). 심법은 심법 칸으로
+            if (!System.Linq.Enumerable.Any(DataBoot.Data.Weapons, w => w.Id == id))
+            {
+                if (!System.Linq.Enumerable.Any(DataBoot.Data.Passives, p => p.Id == id)) return;
+                level = Mathf.Min(level, DataBoot.Data.Balance.Levels.PassiveMax);
+                if (!lo.Passives.ContainsKey(id) && lo.Passives.Count >= lo.PassiveSlots) lo.AddExtraSlot(false);
+                for (int guard = 0; guard < 16; guard++)
+                {
+                    if (lo.Passives.TryGetValue(id, out int pl) && pl >= level) break;
+                    lo.Apply(new Offer(lo.Passives.ContainsKey(id) ? OfferKind.UpgradePassive : OfferKind.NewPassive, id));
+                }
+                return;
+            }
             level = Mathf.Min(level, DataBoot.Data.Balance.Levels.WeaponMax);
             if (!lo.Weapons.ContainsKey(id) && lo.Weapons.Count >= lo.WeaponSlots) lo.AddExtraSlot(true);
             for (int guard = 0; guard < 16; guard++)
