@@ -232,7 +232,7 @@ namespace BloodRain.Presentation
             if (_life == null || _life.Record != null || enemies == null) return;
             var def = enemies.DefOf(a.Kind);
             if (def == null || def.Family != "elite") return;
-            int got = _life.KillElite();
+            int got = _life.KillElite(def.Id);
             if (got > 0) _popups.Add((at, $"{Loc.T("ui.settle.crystal")} +{got}", Time.unscaledTime));
         }
 
@@ -574,6 +574,13 @@ namespace BloodRain.Presentation
             int alive = enemies != null ? enemies.Count : 0;
             var second = _life.Tick(dt, pos, alive);
             if (second != null) SpawnSecond(second);
+            var wokeByTime = _life.TakeWokenByTime(); // EB-01a 15분 주인 깨어남: 기둥·화면 끝 표시·알림
+            if (wokeByTime.Count > 0)
+            {
+                if (_edges != null) _edges.Woke(wokeByTime);
+                var banner = GetComponent<RegionBanner>();
+                if (banner != null) banner.ShowLord(NearestOf(wokeByTime, pos));
+            }
             TickInsights(dt);
             TickDissolution(dt);
             TickSummons(dt);
@@ -967,6 +974,18 @@ namespace BloodRain.Presentation
             int realm = _life.Realm;
             for (int i = 0; i < 200 && _life.Realm == realm; i++)
                 OnAbsorbed(System.Math.Max(1.0, _life.Xp.Required - _life.Xp.Xp + 0.5), 1);
+        }
+
+        BloodRain.Core.Data.RegionDef NearestOf(System.Collections.Generic.List<BloodRain.Core.Data.RegionDef> list, System.Numerics.Vector2 pos)
+        {
+            BloodRain.Core.Data.RegionDef best = list[0];
+            float bd = float.MaxValue;
+            foreach (var r in list)
+            {
+                float d = System.Numerics.Vector2.Distance(_life.Regions.Center(r), pos);
+                if (d < bd) { bd = d; best = r; }
+            }
+            return best;
         }
 
         void OnAbsorbed(double xp, int count)

@@ -147,6 +147,8 @@ namespace BloodRain.Presentation.Hud
             Fill(new Rect(r.x - 2f * k, r.y - 2f * k, r.width + 4f * k, r.height + 4f * k), new Color(Ink.r, Ink.g, Ink.b, 0.55f));
             GUI.color = new Color(1f, 1f, 1f, 0.92f);
             GUI.DrawTexture(r, Map, ScaleMode.StretchToFill);
+            foreach (var lr in life.Bosses.Awake) // EB-01a 깨어난 주인 자리
+                Blit(_dot, r.x + lr.Pos[0] * r.width, r.y + lr.Pos[1] * r.height, 5f * k, new Color(Crimson.r, Crimson.g, Crimson.b, 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 3f)));
             var uv = PlayerUv(life);
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 4f);
             Blit(_ring, r.x + uv.x * r.width, r.y + uv.y * r.height, (13f + 5f * pulse) * k, new Color(Crimson.r, Crimson.g, Crimson.b, 0.9f - 0.4f * pulse));
@@ -193,15 +195,21 @@ namespace BloodRain.Presentation.Hud
                     if (!hit) break;
                 }
                 _placed.Add(box);
-                Blit(_dot, x, y, (cur ? 13f : 9f) * k, new Color(Paper.r, Paper.g, Paper.b, 0.95f));
-                Blit(_ring, x, y, (cur ? 17f : 12f) * k, cur ? Crimson : Ink);
+                bool lord = reg.Boss != null && life.Bosses.BossRegions.Contains(reg) && life.Bosses.State(reg.Id) == BloodRain.Core.World.BossRegionState.Awake;
+                if (lord) // EB-01a 깨어난 땅의 주인: 붉게 뛰는 고리
+                {
+                    float lp = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3f);
+                    Blit(_ring, x, y, (26f + 10f * lp) * k, new Color(Crimson.r, Crimson.g, Crimson.b, 0.95f - 0.5f * lp));
+                }
+                Blit(_dot, x, y, (cur ? 13f : 9f) * k, lord ? Crimson : new Color(Paper.r, Paper.g, Paper.b, 0.95f));
+                Blit(_ring, x, y, (cur ? 17f : 12f) * k, cur || lord ? Crimson : Ink);
                 _label.alignment = TextAnchor.UpperCenter;
                 _label.fontSize = Mathf.RoundToInt((cur ? 18f : 16f) * k); _label.fontStyle = FontStyle.Bold;
                 string han = Loc.Hanja(reg.Hanja);
                 Outlined(new Rect(box.x, box.y, box.width, 26f * k), string.IsNullOrEmpty(han) ? Loc.Region(reg) : Loc.Region(reg) + " " + han, cur ? Crimson : Ink, Paper, k);
                 _label.fontSize = Mathf.RoundToInt(12f * k); _label.fontStyle = FontStyle.Normal;
-                string sub = Loc.F("ui.density", reg.Density.ToString("0.0")) + (born ? "  ·  " + Loc.T("ui.map.born") : "");
-                Outlined(new Rect(box.x, box.y + 22f * k, box.width, 20f * k), sub, born ? GoldInk : new Color(Ink.r, Ink.g, Ink.b, 0.85f), Paper, k);
+                string sub = Loc.F("ui.density", reg.Density.ToString("0.0")) + (born ? "  ·  " + Loc.T("ui.map.born") : "") + (lord ? "  ·  " + Loc.T("ui.map.lord_awake") : "");
+                Outlined(new Rect(box.x, box.y + 22f * k, box.width, 20f * k), sub, lord ? Crimson : born ? GoldInk : new Color(Ink.r, Ink.g, Ink.b, 0.85f), Paper, k);
                 _regionHits.Add((box, reg));
                 _regionHits.Add((new Rect(x - 14f * k, y - 14f * k, 28f * k, 28f * k), reg));
             }

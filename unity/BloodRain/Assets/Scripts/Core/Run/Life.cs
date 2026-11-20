@@ -246,6 +246,16 @@ namespace BloodRain.Core.Run
         /// <summary>지금 세상 시간 배율(돌파·각성 연출 중엔 느리다). Unity 의 Time.timeScale 에 넣는다.</summary>
         public float WorldTimeScale => Math.Min(Breakthrough.WorldTimeScale, Awakening.IsActive ? Awakening.WorldTimeScale : 1f);
 
+        readonly List<RegionDef> _wokenByTime = new List<RegionDef>();
+
+        /// <summary>시각(15분, cheonha.json bosses.awakenAtMinute)으로 새로 깨어난 땅의 주인. 부르면 비운다. 돌파로 깨어난 곳은 LifeAbsorb.WokenBosses.</summary>
+        public List<RegionDef> TakeWokenByTime()
+        {
+            var r = new List<RegionDef>(_wokenByTime);
+            _wokenByTime.Clear();
+            return r;
+        }
+
         /// <summary>한 프레임. 세상 시간으로 1초가 찰 때마다 그 1초의 생성 지시를 돌려준다(아니면 null).</summary>
         public LifeSecond? Tick(float unscaledDt, Vector2 position, int aliveNow)
         {
@@ -276,6 +286,8 @@ namespace BloodRain.Core.Run
             MoveTo(position);
 
             Bosses.Tick(dt, Position, Level, Minutes);
+            var wokeByTime = Bosses.UpdateMinute(Minutes); // 15분이면 경지가 모자라도 장막 안 주인이 깨어난다(EB-01a)
+            if (wokeByTime.Count > 0) _wokenByTime.AddRange(wokeByTime);
             Director.BossFight = Bosses.InFight;
             NoteChronicle(Minutes - dt / 60f);
             NoteFightHarmony();
@@ -500,7 +512,7 @@ namespace BloodRain.Core.Run
             // 오른 경지를 일지에 다시 적는다: 생 기록의 가장 높은 경지와 처음 오른 경지 윤회의 기(장부는 저장하지 않으므로)
             foreach (var r in _data.Balance.Realms.OrderBy(r => r.Level))
                 if (r.Level > 1 && r.Level <= s.Level) Log.Breakthrough(r.Id);
-            Bosses.Restore(s.BossesKilled, s.Level);
+            Bosses.Restore(s.BossesKilled, s.Level, s.Minutes);
             Charge.Restore(s.Charge);
             Minutes = s.Minutes;
             foreach (var r in s.Visited) Log.Enter(r);
@@ -622,7 +634,17 @@ namespace BloodRain.Core.Run
         }
 
         /// <summary>정예를 쓰러뜨렸다. 이번에 얻은 혈정 수(정산 화면·HUD 용).</summary>
-        public int KillElite() => Log.KillElite();
+        public int KillElite(string? enemyId = null)
+        {
+            // 떠도는 정예(엇박 2:30·7:30…, chapters.json roaming)는 혈정을 주지 않는다 — 10장 '20분 생에 8개'를 지킨다(EB-01a)
+            if (enemyId != null && !IsPrologue)
+            {
+                _roamingElites ??= new HashSet<string>(_data.Chapters.First(c => c.Id == WaveTable.Life).RoamingElites);
+                if (_roamingElites.Contains(enemyId)) return 0;
+            }
+            return Log.KillElite();
+        }
+        HashSet<string>? _roamingElites;
 
         static StatBonus StartBonus(Soul soul, RebirthBody body)
         {

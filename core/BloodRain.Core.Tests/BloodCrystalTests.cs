@@ -41,7 +41,7 @@ namespace BloodRain.Core.Tests
         {
             // 10장 화폐 표 '20분 생에 8개': chapters.json life 정예가 20분 전까지 셋(5·10·15분) + 원각 첫 처치 5
             var life = _d.Chapters.Single(c => c.Id == "life");
-            int elitesBefore20 = life.Events.Count(e => e.Kind == "elite" && e.At < 20f);
+            int elitesBefore20 = life.Events.Count(e => e.Kind == "elite" && !e.Roaming && e.At < 20f); // 떠도는 정예는 혈정이 없다
             var log = AfterPrologue().BeginLife(Shaolin());
             for (int i = 0; i < elitesBefore20; i++) log.KillElite();
             log.KillBoss("songshan");
@@ -100,6 +100,15 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1, life.KillElite());
             Assert.Equal(1, life.Log.BloodCrystal);
             Assert.Equal(1, life.End(LifeEndWay.Zuohwa, 0).BloodCrystal);
+        }
+
+        [Fact] public void 떠도는_정예는_혈정을_주지_않는다()
+        {
+            // 6장 엇박 2분 30초 떠도는 정예(chapters.json roaming). 지역 정예는 그대로 하나
+            var life = new Life(AfterPrologue(), Shaolin(), new Random(1));
+            Assert.Equal(0, life.KillElite("gangsi_axeman"));
+            Assert.Equal(1, life.KillElite("dongin"));
+            Assert.Equal(1, life.Log.BloodCrystal);
         }
 
         [Fact] public void 저장에_남고_옛_저장은_0()

@@ -79,6 +79,8 @@
     "awakenFrom": "jeoljeong",
     "engageViewMultiple": 0.15,
     "awakenGraceSeconds": 5,
+    "_noteAwakenAtMinute": "한 생 15분이 지나면 경지가 절정에 못 미쳐도 그 경지 장막 안 땅의 주인이 깨어난다. 주인은 제 땅에 그대로 있고, '주인이 깨어났다' 알림과 지도·화면 끝 표시만 뜬다(2026-11-20 EB-01a, decisions #58).",
+    "awakenAtMinute": 15,
     "spawnTargetScale": 0.4,
     "healthCurve": [[5, 0.08], [10, 0.3], [15, 0.67], [20, 1], [30, 1.31]],
     "firstKill": { "rebirthQi": 300, "bloodCrystal": 5, "sealStone": true, "unlockSect": true },

@@ -8,7 +8,7 @@ using Xunit;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>RegionSpawns: 서 있는 지역의 고유 적과 n번째 정예(기획서 6장 '지역별 고유 적'·'정예(5분마다)', 7장).</summary>
+    /// <summary>RegionSpawns: 서 있는 지역의 고유 적과 n번째 정예(기획서 6장 '지역별 고유 적'·'정예(2분 30초마다)', 7장).</summary>
     public class RegionSpawnsTests
     {
         readonly GameData _d = TestData.Load();
@@ -86,15 +86,18 @@ namespace BloodRain.Core.Tests
             var r = R;
             var schedule = WaveTable.From(_d).Schedule(WaveTable.Life, new Random(2));
             foreach (var region in _d.Cheonha.Regions.Where(g => !g.Final))
-                foreach (var e in schedule.Events.Where(x => x.Kind == WaveEventKind.Elite))
+                foreach (var e in schedule.Events.Where(x => x.Kind == WaveEventKind.Elite && !x.Def.Roaming))
                     Assert.Contains(r.EnemyFor(e, region.Id, new Random(0)), r.EliteTable(region.Id));
+            // 떠도는 정예는 땅과 상관없이 정해진 하나
+            foreach (var e in schedule.Events.Where(x => x.Kind == WaveEventKind.Elite && x.Def.Roaming))
+                Assert.Equal("gangsi_axeman", r.EnemyFor(e, "kunlun", new Random(0)));
         }
 
         // ---- 기획서 6장 ----
 
         [Fact] public void 정예_표와_규칙이_기획서_6장과_같다()
         {
-            var sec = TestData.GddSection("정예(5분마다)");
+            var sec = TestData.GddSection("정예(2분 30초마다)");
             var r = R;
             int rows = 0;
             foreach (var row in TestData.GddTable(sec))
@@ -111,7 +114,11 @@ namespace BloodRain.Core.Tests
             var times = Regex.Match(sec, @"정예는 ([\d·]+)분에 나오고");
             Assert.True(times.Success, "6장 정예 시각 문장 모양이 바뀜");
             Assert.Equal(times.Groups[1].Value.Split('·').Select(s => float.Parse(s)),
-                Life.Events.Where(e => e.Type == WaveEventKind.Elite).Select(e => e.At));
+                Life.Events.Where(e => e.Type == WaveEventKind.Elite && !e.Roaming).Select(e => e.At));
+            Assert.Contains("엇박(2분 30초부터 5분마다, 27분 30초까지)", sec);
+            Assert.Contains("떠도는 정예는 혈정을 주지 않습니다", sec);
+            Assert.Equal(Enumerable.Range(0, 6).Select(i => 2.5f + 5f * i),
+                Life.Events.Where(e => e.Type == WaveEventKind.Elite && e.Roaming).Select(e => e.At));
 
             Assert.Contains("넷째·다섯째는 셋째가 다시 나옴", sec);
             foreach (var g in _d.Cheonha.BossRegions)

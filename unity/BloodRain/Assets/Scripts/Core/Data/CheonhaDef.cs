@@ -230,6 +230,8 @@ namespace BloodRain.Core.Data
         public float EngageViewMultiple;
         /// <summary>깨어날 때 이미 싸움 원 안이면 이만큼 경고한 뒤 싸움(그사이 나가면 미룸).</summary>
         public float AwakenGraceSeconds;
+        /// <summary>이 분이 되면 경지가 awakenFrom 에 못 미쳐도 장막 안 땅의 주인이 깨어난다(0 이면 없음). 2026-11-20 EB-01a.</summary>
+        public float AwakenAtMinute;
         public float SpawnTargetScale;
         /// <summary>[싸움을 건 분, 기준 체력에 곱할 배율]. 사이는 곧게 잇고, 첫 점 앞은 첫 값, 마지막 점 뒤는 마지막 두 점의 기울기로 늘린다(7장).</summary>
         public List<float[]> HealthCurve = new List<float[]>();

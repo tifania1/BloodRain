@@ -145,8 +145,8 @@ namespace BloodRain.Core.Tests
             Assert.Null(g.OwnElites("namgung_manor"));
             Assert.Null(g.OwnElites("bongmagok"));
             Assert.Equal(_d.Elites["prologue"], g.OwnElites("cheongun")); // 서장 흐름의 표. 한 생에선 RegionSpawns 가 숭산 표로 바꾼다
-            Assert.Contains("넷째·다섯째는 셋째가 다시 나옴", TestData.GddSection("정예(5분마다)"));
-            Assert.Contains("숭산 표", TestData.GddSection("정예(5분마다)"));
+            Assert.Contains("넷째·다섯째는 셋째가 다시 나옴", TestData.GddSection("정예(2분 30초마다)"));
+            Assert.Contains("숭산 표", TestData.GddSection("정예(2분 30초마다)"));
             foreach (var r in g.All.Where(r => r.Chapter != null && _d.Elites.ContainsKey(r.Chapter)))
                 Assert.Equal(_d.Elites[r.Chapter!], g.OwnElites(r.Id));
         }

@@ -46,6 +46,24 @@ namespace BloodRain.Presentation.Hud
         public void Show(RegionDef region)
         {
             if (region == null) return;
+            string big = Loc.Hanja(region.Hanja);
+            if (string.IsNullOrEmpty(big)) big = Loc.Region(region); // 중국어 판은 한자 줄이 비어 이름을 크게
+            Play(region, big, Loc.Region(region) + "   ·   " + Loc.F("ui.density", region.Density.ToString("0.0")), Ink);
+        }
+
+        static readonly Color Blood = new Color(0.62f, 0.09f, 0.08f, 1f);
+
+        /// <summary>땅의 주인이 깨어났다는 알림(15분, EB-01a). 그 땅 바닥 무늬 위에 붉은 글씨.</summary>
+        public void ShowLord(RegionDef region)
+        {
+            if (region == null) return;
+            var bd = System.Linq.Enumerable.FirstOrDefault(DataBoot.Data.Bosses, b => b.Id == region.Boss);
+            string boss = bd != null ? Loc.Boss(bd) : region.Boss;
+            Play(region, Loc.T("ui.lord_woke.title"), Loc.F("ui.lord_woke.sub", Loc.Region(region), boss), Blood);
+        }
+
+        void Play(RegionDef region, string big, string sub, Color bigColor)
+        {
             if (_canvas == null) Build();
             if (font == null)
             {
@@ -55,10 +73,9 @@ namespace BloodRain.Presentation.Hud
             if (font != null) { _hanja.font = font; _name.font = font; }
             LastRegion = region.Id;
             _strip.texture = Biomes.Tile(region.Id);
-            _name.text = Loc.Region(region) + "   ·   " + Loc.F("ui.density", region.Density.ToString("0.0"));
+            _name.text = sub;
+            _hanja.color = bigColor;
             _canvas.SetActive(true);
-            string big = Loc.Hanja(region.Hanja);
-            if (string.IsNullOrEmpty(big)) big = Loc.Region(region); // 중국어 판은 한자 줄이 비어 이름을 크게
             _type.ShowText("{fade}{size}" + big + "{/size}{/fade}");
 
             if (_seq != null) _seq.Kill();

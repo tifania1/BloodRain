@@ -8,7 +8,7 @@
 //
 // Unity 쪽 흐름:
 //   1. 생이 시작되면 new BossAwakening(data, 출생지 지역 id, 혼).
-//   2. 돌파마다 UpdateRealm(새 레벨) → 새로 깨어난 지역에 혈운 기둥을 세우고 화면 끝에 붉은 표시.
+//   2. 돌파마다 UpdateRealm(새 레벨), 매초 UpdateMinute(경과 분) → 새로 깨어난 지역에 혈운 기둥을 세우고 화면 끝에 붉은 표시·'주인이 깨어났다' 알림.
 //   3. 매 프레임(또는 몇 프레임마다) TryEngage(플레이어 위치, 레벨, 경과 분). 싸움이 정해지면 경고 뒤 보스전.
 //      보스전 동안 생성 목표에 SpawnTargetScale(0.4)을 곱한다. 보스는 Fight.Realm 축척으로 그리고, 밟히지 않는다.
 //   4. 보스를 쓰러뜨리면 Defeat() → 보상(BossKill)을 혼에 반영한 뒤 Refresh() 로 봉마곡이 열리는지 다시 본다.
@@ -168,14 +168,14 @@ namespace BloodRain.Core.World
 
         // ---- 깨어남 ----
 
-        /// <summary>그 경지에서 깨어나 있어야 하는가. 땅의 주인은 절정부터 장막 안(현경은 장막이 없어 모두),
+        /// <summary>그 경지에서 깨어나 있어야 하는가. 땅의 주인은 절정부터(또는 한 생 15분이 지나면 경지와 상관없이) 장막 안(현경은 장막이 없어 모두),
         /// 봉마곡은 봉인석 일곱과 현경을 모두 갖췄을 때.</summary>
         public bool ShouldBeAwake(RegionDef region, int realm, int sealStones)
         {
             if (region.Boss == null) return false;
             if (region.Final)
                 return sealStones >= _rules.FinalRequires.SealStones && realm >= _finalRealm && Regions.IsVisible(region, sealStones);
-            if (realm < _awakenFrom) return false;
+            if (realm < _awakenFrom && !(_rules.AwakenAtMinute > 0f && _minute >= _rules.AwakenAtMinute)) return false;
             var radius = _scale.BoundaryRadius(realm);
             return radius == null || Vector2.Distance(_birthCenter, _regions.Center(region)) <= radius.Value;
         }
@@ -185,12 +185,23 @@ namespace BloodRain.Core.World
 
         /// <summary>생 도중 저장에서 되돌린다(LifeSnapshot ②): 이번 생에 쓰러뜨린 곳은 Defeated, 그 레벨의 경지로 깨어날 곳은 Awake.
         /// 싸우던 중이었으면 깨어난 채로 둔다(이어 할 때 싸움을 다시 건다). '방금 깨어남' 알림은 남기지 않는다.</summary>
-        internal void Restore(IEnumerable<string> defeatedThisLife, int level)
+        internal void Restore(IEnumerable<string> defeatedThisLife, int level, float minute = 0f)
         {
+            _minute = Math.Max(_minute, minute);
             foreach (var id in defeatedThisLife)
                 if (_state.ContainsKey(id)) _state[id] = BossRegionState.Defeated;
             UpdateRealm(level);
             _justWoke.Clear();
+        }
+
+        float _minute;
+
+        /// <summary>한 생 경과 분. awakenAtMinute(15분)을 넘기는 순간 경지가 모자라도 장막 안 주인이 깨어난다. 새로 깨어난 지역.</summary>
+        public List<RegionDef> UpdateMinute(float minute)
+        {
+            bool crossed = _rules.AwakenAtMinute > 0f && _minute < _rules.AwakenAtMinute && minute >= _rules.AwakenAtMinute;
+            _minute = Math.Max(_minute, minute);
+            return crossed ? Refresh() : new List<RegionDef>();
         }
 
         /// <summary>경지가 바뀌었을 때(돌파). 새로 깨어난 지역을 데이터 순서대로 돌려준다.</summary>

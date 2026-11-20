@@ -180,6 +180,7 @@ namespace BloodRain.Core.Spawning
                 if (e.Nth > 0 && e.Type != WaveEventKind.Elite) throw new InvalidOperationException($"{at}: nth 는 정예 사건에만 쓴다({e.Kind})");
                 if (e.Type == WaveEventKind.Elite && (e.Nth > 0) == !string.IsNullOrEmpty(e.Enemy))
                     throw new InvalidOperationException($"{at}: 정예 사건은 enemy(정해진 정예)와 nth(지역 표의 몇 번째) 가운데 하나만 적는다");
+                if (e.Roaming && (e.Type != WaveEventKind.Elite || e.Nth > 0)) throw new InvalidOperationException($"{at}: roaming 은 enemy 를 적은 정예 사건에만 쓴다({e.Kind})");
                 if (e.Local && e.Type != WaveEventKind.Group) throw new InvalidOperationException($"{at}: local 은 무리 사건에만 쓴다({e.Kind})");
                 if (WaveEventKinds.SpawnsEnemy(e.Type) && e.Nth == 0 && string.IsNullOrEmpty(e.Enemy))
                     throw new InvalidOperationException($"{at}: {e.Kind} 에 enemy 가 없음" + (e.Local ? "(고유 적이 없는 땅에서 대신 나올 적)" : ""));

@@ -63,6 +63,8 @@ namespace BloodRain.Core.Data
         public int Nth;
         /// <summary>참이면 서 있는 지역의 고유 적이 나온다. 고유 적이 없는 땅이면 Enemy.</summary>
         public bool Local;
+        /// <summary>떠도는 정예(2026-11-20 EB-01a): 지역 정예 사이 엇박에 땅을 가리지 않고 나오는 정해진 정예. 보갑은 떨구지만 혈정은 주지 않는다.</summary>
+        public bool Roaming;
 
         public WaveEventKind Type => WaveEventKinds.Parse(Kind);
         /// <summary>가장 이른 시각(창이 있으면 창 시작).</summary>
@@ -107,6 +109,9 @@ namespace BloodRain.Core.Data
         /// <summary>시각 순서. 비어 있으면 지역 고유 적을 뽑지 않는다.</summary>
         public List<LocalShareDef> LocalShare = new List<LocalShareDef>();
         public EliteFallbackDef? EliteFallback;
+
+        /// <summary>이 흐름의 떠도는 정예 id(혈정을 주지 않는 정예).</summary>
+        public IEnumerable<string> RoamingElites => Events.Where(e => e.Type == WaveEventKind.Elite && e.Roaming).Select(e => e.Enemy).Distinct();
 
         public ChapterEventDef? BossEvent => Events.SingleOrDefault(e => e.Type == WaveEventKind.Boss);
         public float? BossAtMinute => BossEvent?.At;

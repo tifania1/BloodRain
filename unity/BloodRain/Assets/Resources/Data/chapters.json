@@ -34,7 +34,7 @@
         { "fromMinute": 5,  "share": 0.10 },
         { "fromMinute": 15, "share": 0.15 }
       ],
-      "_noteElites": "정예 사건은 enemy 대신 nth(이 생에서 몇 번째 정예인지)를 적는다. 서 있는 지역의 장 이름(cheonha.json regions[].chapter)으로 enemies.json elites 표를 찾아 min(nth, 표 길이)번째를 쓴다. 지역 정예가 없는 땅은 fallbackRegion 의 표를 쓴다(6장 '정예(5분마다)').",
+      "_noteElites": "정예 사건은 enemy 대신 nth(이 생에서 몇 번째 정예인지)를 적는다. 서 있는 지역의 장 이름(cheonha.json regions[].chapter)으로 enemies.json elites 표를 찾아 min(nth, 표 길이)번째를 쓴다. 지역 정예가 없는 땅은 fallbackRegion 의 표를 쓴다(6장 '정예(2분 30초마다)'). 그 사이 엇박(2:30·7:30…27:30)은 enemy 와 roaming 을 적은 떠도는 정예(강시 도부수)라 어느 땅에서나 나오고, 보갑은 떨구되 혈정은 주지 않는다(2026-11-20 EB-01a).",
       "eliteFallback": { "region": "songshan", "regions": ["cheongun", "gaebang_hq", "namgung_manor"] },
       "bands": [
         { "fromMinute": 0,  "toMinute": 3,  "spawns": [ { "enemy": "sigang", "weight": 1 } ] },
@@ -51,26 +51,32 @@
         { "fromMinute": 22, "toMinute": 30, "spawns": [ { "enemy": "sigang", "weight": 0.1 }, { "enemy": "hyeol_gangsi", "weight": 0.2 }, { "enemy": "hyeol_musa", "weight": 0.15 }, { "enemy": "donggap", "weight": 0.2 }, { "enemy": "bigang", "weight": 0.1 }, { "enemy": "hyeol_gungsu", "weight": 0.1 }, { "enemy": "hyeolyeong_assassin", "weight": 0.07 }, { "enemy": "hyeol_sulsa", "weight": 0.05 }, { "enemy": "gisu", "weight": 0.03 } ] }
       ],
       "events": [
+        { "at": 2.5, "kind": "elite",  "enemy": "gangsi_axeman", "roaming": true, "_note": "떠도는 정예(2분 30초 엇박, 2026-11-20 EB-01a). 땅을 가리지 않는 강시 도부수, 처치하면 보갑. 혈정은 주지 않는다(10장 20분 생에 8개 그대로)" },
         { "at": 3.5,  "kind": "charge", "enemy": "hyeolin", "count": 14, "_note": "3~5분 혈인 돌진 1회" },
         { "at": 5,    "kind": "elite",  "nth": 1, "_note": "정예 → 첫 보갑" },
         { "at": 6.5,  "kind": "group",  "local": true, "enemy": "hyeol_gangsi", "count": 10, "_note": "5~8분 무리. 서 있는 지역 고유 적(숭산이면 목인나한), 고유 적이 없는 땅이면 enemy(혈강시)" },
+        { "at": 7.5, "kind": "elite",  "enemy": "gangsi_axeman", "roaming": true },
         { "at": 8.5,  "kind": "charge", "enemy": "hyeolin", "count": 20, "_note": "8~10분 혈인 돌진 2회 중 첫째" },
         { "at": 9.5,  "kind": "charge", "enemy": "hyeolin", "count": 22 },
         { "at": 10,   "kind": "elite",  "nth": 2 },
         { "window": [10, 12], "kind": "toad", "enemy": "golden_toad", "_note": "10~12분 사이 한 번 무작위" },
         { "at": 12,   "kind": "merchant", "_note": "보부상" },
+        { "at": 12.5, "kind": "elite",  "enemy": "gangsi_axeman", "roaming": true },
         { "at": 13.5, "kind": "ring",   "enemy": "donggap", "count": 24, "_note": "12~15분 동갑시 포위 웨이브" },
         { "at": 15,   "kind": "elite",  "nth": 3 },
         { "window": [15, 17], "kind": "silver_lantern", "_note": "은빛 등롱은 15분 이후 한 생에 한두 개" },
         { "at": 15.5, "kind": "charge", "enemy": "hyeolin", "count": 28, "_note": "15~20분 혈인 대규모 돌진 3회" },
         { "at": 16.6, "kind": "charge", "enemy": "hyeolin", "count": 30 },
         { "window": [17, 19], "kind": "silver_lantern", "chance": 0.5 },
+        { "at": 17.5, "kind": "elite",  "enemy": "gangsi_axeman", "roaming": true },
         { "at": 17.7, "kind": "charge", "enemy": "hyeolin", "count": 34 },
         { "at": 20,   "kind": "elite",  "nth": 4, "_note": "넷째부터는 지역 표의 셋째가 다시 나온다" },
         { "at": 21.5, "kind": "charge", "enemy": "hyeolin", "count": 36, "_note": "20~25분 혈인 대규모 돌진 2회. 23분 20초 화경 돌파를 피해 앞뒤로 둔다" },
+        { "at": 22.5, "kind": "elite",  "enemy": "gangsi_axeman", "roaming": true },
         { "at": 24,   "kind": "merchant", "_note": "보부상" },
         { "at": 24.5, "kind": "charge", "enemy": "hyeolin", "count": 40 },
-        { "at": 25,   "kind": "elite",  "nth": 5 }
+        { "at": 25,   "kind": "elite",  "nth": 5 },
+        { "at": 27.5, "kind": "elite",  "enemy": "gangsi_axeman", "roaming": true }
       ]
     }
   ]

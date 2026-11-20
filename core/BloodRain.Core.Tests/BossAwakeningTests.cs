@@ -31,6 +31,27 @@ namespace BloodRain.Core.Tests
             ["sipmandaesan"]  = new[] { new[] { "danggata", "janggang", "wudangsan", "sipmandaesan" }, new[] { "songshan", "huashan", "kunlun" }, new string[0] },
         };
 
+        [Fact] public void 십오분이면_절정_전이어도_장막_안_주인이_깨어난다()
+        {
+            // 2026-11-20 EB-01a: 주인은 제 땅에 그대로 두고, 15분에 깨어남 알림만(cheonha.json bosses.awakenAtMinute)
+            Assert.Equal(15f, _d.Cheonha.Bosses.AwakenAtMinute);
+            var life = Life("songshan");
+            Assert.Empty(life.UpdateRealm(Level("ilryu")));
+            Assert.Empty(life.UpdateMinute(14.9f));
+            var woke = life.UpdateMinute(15f).Select(r => r.Id).ToList();
+            Assert.Contains("songshan", woke);
+            Assert.All(woke, id => Assert.Equal(BossRegionState.Awake, life.State(id)));
+            Assert.Empty(life.UpdateMinute(16f));                    // 한 번만
+            Assert.Empty(life.UpdateRealm(Level("jeoljeong")).Where(r => woke.Contains(r.Id))); // 절정에 올라도 다시 깨지 않음
+
+            // 장막 밖 땅은 15분이 지나도 잠든 채(곤륜 출생 일류면 곤륜 하나)
+            var far = Life("kunlun");
+            far.UpdateRealm(Level("ilryu"));
+            Assert.Equal(new[] { "kunlun" }, far.UpdateMinute(15f).Select(r => r.Id).ToArray());
+
+            Assert.Contains("한 생이 15분을 넘기면 아직 절정에 못 올랐어도", TestData.GddSection("땅의 주인이 깨어나는 규칙"));
+        }
+
         [Fact] public void 출생지_아홉_곳의_경지별로_깨어나는_땅의_주인()
         {
             Assert.Equal(_d.Cheonha.Sects.Select(s => s.Region).OrderBy(x => x), AwakenTable.Keys.OrderBy(x => x));

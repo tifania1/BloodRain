@@ -1384,7 +1384,7 @@ function makeEvents(mode) {
   // 한 생 시험(WP-14b): chapters.json life events. 정예는 nth(서 있는 땅의 정예 표에서 몇 번째), 무리는 그 땅 고유 적.
   // 보부상은 openMerchant(WP-22). 은빛 등롱은 window 안 무작위 시각에 chance(없으면 1)로 — 혈월 회차에만 놓는다(이벤트 쪽에서 G.moon 을 봄)
   if (mode !== 'prologue' && curLifeSect() && SCALE_MODE && DATA.lifePlan) return DATA.lifePlan.events.map(e =>
-    e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? { at: e.at, kind: 'elite', nth: e.nth }
+    e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? (e.roaming ? { at: e.at, kind: 'elite', roam: e.enemy } : { at: e.at, kind: 'elite', nth: e.nth })
     : e.kind === 'toad' ? { at: rand(e.window[0], e.window[1]), kind: 'toad' } : e.kind === 'ring' ? { at: e.at, kind: 'ring', n: e.count }
     : e.kind === 'group' ? { at: e.at, kind: 'group', enemy: e.enemy, n: e.count, local: e.local }
     : e.kind === 'merchant' ? { at: e.at, kind: 'merchant' }   // 보부상(WP-22)
@@ -3040,7 +3040,7 @@ function runEvent(ev) {
     }
     toast('혈인 떼', '한 방향으로 돌진해 온다');
     cue('first_charge');
-  } else if (ev.kind === 'elite') { const ek = ev.nth ? lifeEliteKey(ev.nth) : regionEliteKey(ev.type); spawnElite(ek); cue('elite_spawn:' + ELITES[ek].id); }
+  } else if (ev.kind === 'elite') { const ek = ev.roam ? (Object.keys(ELITES).find(k => ELITES[k].id === ev.roam) || Object.keys(ELITES)[0]) : ev.nth ? lifeEliteKey(ev.nth) : regionEliteKey(ev.type); /* 떠도는 정예(EB-01a) */ spawnElite(ek); cue('elite_spawn:' + ELITES[ek].id); }
   else if (ev.kind === 'group') {   // 한 생 무리(WP-14b): 서 있는 땅 고유 적 하나를 골라 count 마리 한 덩어리로, 고유 적이 없는 땅이면 enemy
     const r = CH_REGS.find(x => x.id === G.chRegion), list = ev.local && r && LOCAL_BY[r.chapter], type = list ? list[Math.floor(Math.random() * list.length)] : ev.enemy;
     const a = rand(0, TAU), cx = p.x + Math.cos(a) * diag * 0.55, cy = p.y + Math.sin(a) * diag * 0.55;

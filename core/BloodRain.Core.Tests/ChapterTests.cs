@@ -113,7 +113,8 @@ namespace BloodRain.Core.Tests
                     switch (e.Type)
                     {
                         case WaveEventKind.Elite:
-                            if (e.Nth == 0) Assert.Contains(e.Enemy, _d.Elites[chapterName!]);
+                            if (e.Roaming) Assert.Contains(_d.Enemies, x => x.Id == e.Enemy && x.Family == "elite"); // 떠도는 정예(땅을 안 가림)
+                            else if (e.Nth == 0) Assert.Contains(e.Enemy, _d.Elites[chapterName!]);
                             else Assert.Equal("", e.Enemy);
                             break;
                         case WaveEventKind.Boss: Assert.Contains(_d.Bosses, b => b.Id == e.Enemy && b.Chapter == chapterName); break;
@@ -183,8 +184,11 @@ namespace BloodRain.Core.Tests
             Assert.Equal(_d.Elites["prologue"], pro.Select(e => e.Enemy));
             Assert.Equal(new[] { 5f }, pro.Select(e => e.At));
 
-            var life = Life.Events.Where(e => e.Type == WaveEventKind.Elite).ToList();
+            var life = Life.Events.Where(e => e.Type == WaveEventKind.Elite && !e.Roaming).ToList();
             Assert.Equal(new[] { 5f, 10f, 15f, 20f, 25f }, life.Select(e => e.At));
+            Assert.All(Life.Events.Where(e => e.Type == WaveEventKind.Elite && e.Roaming), e => Assert.Equal("gangsi_axeman", e.Enemy));
+            Assert.Equal(new[] { "gangsi_axeman" }, Life.RoamingElites);
+            Assert.Empty(Prologue.RoamingElites);
             Assert.Equal(new[] { 1, 2, 3, 4, 5 }, life.Select(e => e.Nth));
             Assert.All(life, e => Assert.Equal("", e.Enemy));
         }
@@ -205,8 +209,8 @@ namespace BloodRain.Core.Tests
         {
             var c = Life;
             var rows = TestData.GddTable(TestData.GddSection("한 생의 시간대별 흐름"));
-            Assert.Equal(16, rows.Count);
-            int elites = 0, merchants = 0, charges = 0, checkedRows = 0;
+            Assert.Equal(17, rows.Count);
+            int elites = 0, merchants = 0, charges = 0, checkedRows = 0, roaming = 0;
             foreach (var row in rows)
             {
                 var t = Minutes(row[0]);
@@ -221,7 +225,7 @@ namespace BloodRain.Core.Tests
                     {
                         known = true;
                         elites++;
-                        var e = c.Events.Single(x => x.Type == WaveEventKind.Elite && x.At == a);
+                        var e = c.Events.Single(x => x.Type == WaveEventKind.Elite && !x.Roaming && x.At == a);
                         Assert.Equal(elites, e.Nth);
                     }
                     if (ev.Contains("보부상"))
@@ -241,6 +245,14 @@ namespace BloodRain.Core.Tests
                     continue;
                 }
                 // 구간 [a, b): 돌진 횟수가 기획서와 같아야 한다(언급이 없으면 0회)
+                var roam = Regex.Match(ev, @"(\d+)분 30초 떠도는 정예");
+                if (roam.Success)
+                {
+                    roaming++;
+                    float at = int.Parse(roam.Groups[1].Value) + 0.5f;
+                    Assert.True(at >= a && at < b, $"{row[0]} 떠도는 정예 {at}분이 구간 밖");
+                    Assert.Contains(c.Events, e => e.Type == WaveEventKind.Elite && e.Roaming && e.At == at);
+                }
                 var charge = Regex.Match(ev, @"돌진 (\d+)회");
                 int n = charge.Success ? int.Parse(charge.Groups[1].Value) : 0;
                 charges += n;
@@ -265,9 +277,10 @@ namespace BloodRain.Core.Tests
                     Assert.True(_d.Balance.Realms.IndexOf(realm) >= from, $"{row[0]} {realm.NameKo} 에서 땅의 주인이 깨어남");
                 }
             }
-            Assert.Equal(16, checkedRows);
+            Assert.Equal(17, checkedRows);
             Assert.Equal(5, elites);
-            Assert.Equal(elites, c.Events.Count(e => e.Type == WaveEventKind.Elite));
+            Assert.Equal(elites, c.Events.Count(e => e.Type == WaveEventKind.Elite && !e.Roaming));
+            Assert.Equal(roaming, c.Events.Count(e => e.Type == WaveEventKind.Elite && e.Roaming));
             Assert.Equal(merchants, c.Events.Count(e => e.Type == WaveEventKind.Merchant));
             Assert.Equal(charges, c.Events.Count(e => e.Type == WaveEventKind.Charge));
             Assert.Single(c.Events, e => e.Type == WaveEventKind.Toad);
@@ -322,7 +335,7 @@ namespace BloodRain.Core.Tests
                 }
                 else Assert.Same(realm, RealmAt(a));
             }
-            Assert.Equal(9, checkedRows);
+            Assert.Equal(10, checkedRows); // 25~30분 줄(떠도는 정예)이 2026-11-20 더해짐
             Assert.Equal(5, breakthroughs); // 이류·일류·절정·초절정·화경. 현경은 30분 줄에 괄호 없이
             Assert.Equal(_d.Balance.Realms[^1], RealmAt(Life.DurationMinutes));
         }
@@ -533,7 +546,8 @@ namespace BloodRain.Core.Tests
             Assert.Contains(s.Between(4.9f, 5f), e => e.Kind == WaveEventKind.Elite && e.Def.Nth == 1);
             Assert.DoesNotContain(s.Between(5f, 5.1f), e => e.Kind == WaveEventKind.Elite);
             Assert.Contains(s.Between(24.99f, 25f), e => e.Kind == WaveEventKind.Elite && e.Def.Nth == 5);
-            Assert.Empty(s.Between(25f, 1000f)); // 마지막 사건은 25분 정예. 그 뒤(현경, 혈마의 그림자)는 사건이 아니다
+            Assert.Single(s.Between(25f, 1000f), e => e.Kind == WaveEventKind.Elite && e.Def.Roaming && e.At == 27.5f); // 마지막 사건은 27분 30초 떠도는 정예
+            Assert.Single(s.Between(25f, 1000f)); // 그 뒤(현경, 혈마의 그림자)는 사건이 아니다
 
             var p = Table.Schedule(WaveTable.Prologue, new Random(1));
             var boss = p.Between(8.99f, 9f).Single();
