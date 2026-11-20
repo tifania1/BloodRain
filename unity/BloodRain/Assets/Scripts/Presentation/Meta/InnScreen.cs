@@ -232,11 +232,15 @@ namespace BloodRain.Presentation.Meta
             // 가운데 종이 한 장
             var sheet = Img(_root, "종이", new Color(Paper.r, Paper.g, Paper.b, 0.95f));
             Place(sheet.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(1240, 940));
+            // 2026-11-21 종이 결·안쪽 먹 테두리(납작한 단색 판이었다)
+            InkUi.PaperGrain(_root, Vector2.zero, new Vector2(1240, 940), new Color(1f, 1f, 1f, 0.5f));
+            InkUi.Frame(_root, Vector2.zero, new Vector2(1240, 940), 16f, 2f, new Color(Ink.r, Ink.g, Ink.b, 0.35f));
 
             var title = Text(_root, Loc.T("ui.inn.title"), 54, FontStyles.Bold, Ink);
             Place(title.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 400), new Vector2(1100, 70));
             _sub = Text(_root, "", 24, FontStyles.Normal, new Color(Ink.r, Ink.g, Ink.b, 0.7f));
             Place(_sub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 345), new Vector2(1180, 36));
+            InkUi.Stroke(_root, new Vector2(0, 318), new Vector2(620, 14), new Color(Ink.r, Ink.g, Ink.b, 0.75f));
 
             // 새 생 시작(침방)
             var start = MakeButton(_root, "새 생 시작", Blood, out _startLabel, 40, PaperHot);
@@ -287,6 +291,9 @@ namespace BloodRain.Presentation.Meta
             bool ready = enter && HasScreen(id); // 화면이 있는 시설(서고만 아직 없음)
             var color = ready ? new Color(0.30f, 0.24f, 0.18f) : buildable ? new Color(0.45f, 0.33f, 0.12f) : open ? new Color(0.42f, 0.38f, 0.33f) : new Color(0.62f, 0.58f, 0.52f);
             var b = MakeButton(_grid, id, color, out var label, 30, open || buildable ? PaperHot : new Color(0.95f, 0.92f, 0.86f, 0.75f));
+            // 칸에도 종이 결을 옅게 깔고(글 밑) 먹 테두리
+            InkUi.PaperGrainFill((RectTransform)b.transform, new Vector2(370, 180), 0.14f).transform.SetAsFirstSibling();
+            var edge = b.gameObject.AddComponent<Outline>(); edge.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.45f); edge.effectDistance = new Vector2(2f, -2f);
             string state = ready ? Loc.T("ui.inn.enter")
                 : buildable ? Loc.F("ui.inn.build", f.BuildBloodCrystal)
                 : open && !enter ? Loc.T("ui.inn.under_repair")

@@ -86,7 +86,7 @@ namespace BloodRain.Presentation.Meta
             sealText.rectTransform.anchorMin = Vector2.zero; sealText.rectTransform.anchorMax = Vector2.one; sealText.rectTransform.offsetMin = sealText.rectTransform.offsetMax = Vector2.zero;
             var stroke = new GameObject("붓 획", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)).GetComponent<RawImage>();
             stroke.transform.SetParent(_root, false);
-            stroke.texture = BrushStroke; stroke.color = new Color(Ink.r, Ink.g, Ink.b, 0.8f); stroke.raycastTarget = false;
+            stroke.texture = InkUi.BrushStroke; stroke.color = new Color(Ink.r, Ink.g, Ink.b, 0.8f); stroke.raycastTarget = false;
             Place(stroke.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -152), new Vector2(Mathf.Max(520f, tw + 120f), 18));
             var mark = Text(_root, "輪迴", 320, FontStyles.Normal, new Color(Ink.r, Ink.g, Ink.b, 0.045f));
             Place(mark.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(430, -60), new Vector2(760, 420));
@@ -329,43 +329,6 @@ namespace BloodRain.Presentation.Meta
             r.texture = tex; r.color = c; r.raycastTarget = false;
             var rt = r.rectTransform; rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = rt.offsetMax = Vector2.zero;
             return r;
-        }
-
-        static Texture2D _brush;
-        /// <summary>가로 붓 획 한 줄(양끝이 가늘고 가장자리가 거칢, 비백 몇 줄). 흰색 알파 텍스처라 색은 RawImage 가 입힌다.</summary>
-        static Texture2D BrushStroke
-        {
-            get
-            {
-                if (_brush != null) return _brush;
-                const int W = 512, H = 32;
-                var px = new Color[W * H];
-                var rng = new System.Random(5);
-                float[] edgeT = new float[W], edgeB = new float[W];
-                float et = 0f, eb = 0f;
-                for (int x = 0; x < W; x++) { et = Mathf.Clamp(et + ((float)rng.NextDouble() - 0.5f) * 0.12f, -0.25f, 0.25f); eb = Mathf.Clamp(eb + ((float)rng.NextDouble() - 0.5f) * 0.12f, -0.25f, 0.25f); edgeT[x] = et; edgeB[x] = eb; }
-                float[] gaps = new float[H];
-                for (int y = 0; y < H; y++) gaps[y] = (float)rng.NextDouble();
-                for (int x = 0; x < W; x++)
-                {
-                    float u = x / (float)(W - 1);
-                    // 들어갈 때 눌렀다가 끝으로 빠지며 가늘어짐
-                    float thick = Mathf.Sin(Mathf.PI * Mathf.Pow(u, 0.7f)) * (u < 0.08f ? 1.15f : 1f);
-                    for (int y = 0; y < H; y++)
-                    {
-                        float v = (y + 0.5f) / H * 2f - 1f;
-                        float top = thick * (0.8f + edgeT[x]), bot = -thick * (0.8f + edgeB[x]);
-                        float a = Mathf.Clamp01((top - v) * 10f) * Mathf.Clamp01((v - bot) * 10f);
-                        // 비백: 획 끝 쪽에 가로로 빈 줄
-                        if (u > 0.55f && gaps[y] > 1.1f - u * 0.6f) a *= 0.25f;
-                        px[y * W + x] = new Color(1f, 1f, 1f, a);
-                    }
-                }
-                _brush = new Texture2D(W, H, TextureFormat.RGBA32, false) { name = "BrushStroke", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-                _brush.SetPixels(px);
-                _brush.Apply(false, true);
-                return _brush;
-            }
         }
 
         RectTransform Column(Vector2 pos)
