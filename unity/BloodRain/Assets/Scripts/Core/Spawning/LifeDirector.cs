@@ -106,7 +106,7 @@ namespace BloodRain.Core.Spawning
             }
             _lastMinute = minute;
 
-            float target = TargetAt(minute);
+            float target = TargetAt(minute) * _scale.SpawnDensity(realm); // 경지가 오를수록 빼곡하게(2026-11-20)
             r.Target = target;
             if (_hold > 0f) { r.Held = true; return r; }
 

@@ -16,8 +16,8 @@ namespace BloodRain.Core.Tests
             var sec = TestData.GddSection("축척과 덩이");
             var c = _d.Cheonha;
             Assert.Contains($"가로 {N(c.World.WidthMeters)} x 세로 {N(c.World.HeightMeters)}", sec);
-            Assert.Contains($"2.25^경지", sec);
-            Assert.Equal(2.25f, c.World.ScalePerRealm);
+            Assert.Contains($"2.4^경지", sec);
+            Assert.Equal(2.4f, c.World.ScalePerRealm, 4);
             Assert.Contains($"격자 크기도 경지마다 {N(c.World.ScalePerRealm)}배", sec);
             Assert.Contains($"덩이당 최대 {c.RealmScale.Max(r => r.ClusterSize)}", sec);
             Assert.Contains($"연출 {N(c.Breakthrough.ZoomToSeconds)}초(이미 올라 본 경지는 {N(c.Breakthrough.RevisitSeconds)}초)", sec);

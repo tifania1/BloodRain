@@ -108,7 +108,7 @@ def data_blob() -> str:
                           if f.stem.rsplit("_", 2)[1] in ("meet", "down")},
         "ui": ui_strings(),
         # 천하 축척(WP-12): 화면 대각선 = view0Meters × scalePerRealm^(경지 순번 + viewInRealmShare × 경지 안 진행), 7장
-        "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare", "boundaryViewMultiple", "noBoundaryFrom", "widthMeters", "heightMeters", "land", "rivers")},
+        "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare", "boundary0Meters", "boundaryPerRealm", "noBoundaryFrom", "widthMeters", "heightMeters", "land", "rivers")},
         # 적 한 덩이·밟힘·돌파 연출(WP-15, 7장): 경지별 덩이 크기, 밟힌 진기·쓸림, 연출 시각
         "clusterSize": {r["realm"]: r["clusterSize"] for r in load("cheonha")["realmScale"]},
         "crush": drop_notes(load("cheonha")["crush"]),

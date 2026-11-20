@@ -144,14 +144,17 @@ namespace BloodRain.Core.Data
     {
         public float WidthMeters;
         public float HeightMeters;
-        /// <summary>경지 한 단계마다 세상이 작아지는 배율(2.25).</summary>
+        /// <summary>경지 한 단계마다 세상이 작아지는 배율(2.4, 2026-11-20 전에는 2.25).</summary>
         public float ScalePerRealm;
         /// <summary>삼류 첫 화면 대각선(m).</summary>
         public float View0Meters;
         /// <summary>경지 안 진행이 시야에 주는 몫(0.35단계).</summary>
         public float ViewInRealmShare;
-        /// <summary>혈우 장막 반경 = 그 경지 첫 화면 대각선 × 이 값.</summary>
-        public float BoundaryViewMultiple;
+        /// <summary>삼류 혈우 장막 반경(세계 m, 86.4). 경지마다 BoundaryPerRealm 배.
+        /// 2026-11-20 첫 시야를 36m→24m 로 당기면서 장막은 화면과 떼어 옛 크기(36 × 2.25^경지 × 2.4)를 그대로 지킨다 — 어느 경지에 어디까지 갈 수 있는지는 지도 설계라서.</summary>
+        public float Boundary0Meters;
+        /// <summary>경지 한 단계마다 장막 반경이 커지는 배율(2.25).</summary>
+        public float BoundaryPerRealm;
         /// <summary>장막 안쪽 밀림 띠 너비 = 그 경지 첫 화면 대각선 × 이 값(0.25).</summary>
         public float PushBandViewMultiple = 0.25f;
         /// <summary>장막 위에서 미는 속도 = 플레이어 이동 속도 × 이 값(1.25). 띠 시작에서는 0.</summary>
@@ -165,6 +168,8 @@ namespace BloodRain.Core.Data
         public string Realm = "";
         /// <summary>적 한 덩이에 든 사람 수.</summary>
         public int ClusterSize = 1;
+        /// <summary>화면 위 목표 적 수(balance spawnTarget)에 곱하는 배율. 경지가 오를수록 빼곡하게(2026-11-20 사람). 삼류 1.</summary>
+        public float SpawnDensity = 1f;
         public string FoeKo = "";
         public string ScreenKo = "";
     }

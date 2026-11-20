@@ -47,6 +47,7 @@ namespace BloodRain.Core.World
         readonly CrushDef _crush;
         readonly List<RealmDef> _realms;
         readonly int[] _clusterSize;
+        readonly float[] _density;
         readonly int _noBoundaryFrom;
 
         public Scale(GameData data) : this(data.Cheonha, data.Balance.Realms) { }
@@ -58,11 +59,13 @@ namespace BloodRain.Core.World
             _realms = realms.OrderBy(r => r.Level).ToList();
             if (_realms.Count == 0) throw new ArgumentException("경지가 하나도 없습니다", nameof(realms));
             _clusterSize = new int[_realms.Count];
+            _density = new float[_realms.Count];
             for (int i = 0; i < _realms.Count; i++)
             {
                 var row = cheonha.RealmScale.FirstOrDefault(s => s.Realm == _realms[i].Id);
                 if (row == null) throw new ArgumentException($"cheonha.json realmScale 에 {_realms[i].Id} 가 없습니다");
                 _clusterSize[i] = row.ClusterSize;
+                _density[i] = row.SpawnDensity > 0f ? row.SpawnDensity : 1f;
             }
             int nb = _realms.FindIndex(r => r.Id == _world.NoBoundaryFrom);
             _noBoundaryFrom = nb < 0 ? _realms.Count : nb;
@@ -117,7 +120,7 @@ namespace BloodRain.Core.World
             return n + _world.ViewInRealmShare * ProgressInRealm(level);
         }
 
-        /// <summary>화면 대각선(세계 m) = 36 × 2.25^(경지 순번 + 0.35 × 경지 안 진행).</summary>
+        /// <summary>화면 대각선(세계 m) = 24 × 2.4^(경지 순번 + 0.35 × 경지 안 진행).</summary>
         public float ViewDiagonal(float level) => DiagonalAtExponent(ViewExponent(level));
 
         /// <summary>그 경지 첫 화면 대각선(세계 m). 7장 표의 '화면 대각선' 칸.</summary>
@@ -130,9 +133,9 @@ namespace BloodRain.Core.World
         /// <summary>장막이 있는 경지인가. 현경부터 없다.</summary>
         public bool HasBoundary(int realm) => realm < _noBoundaryFrom;
 
-        /// <summary>혈우 장막 반경(세계 m) = 그 경지 첫 화면 대각선 × 2.4. 장막이 없는 경지는 null.</summary>
+        /// <summary>혈우 장막 반경(세계 m) = 86.4 × 2.25^경지(화면과 따로, 2026-11-20). 장막이 없는 경지는 null.</summary>
         public float? BoundaryRadius(int realm) =>
-            HasBoundary(realm) ? ViewDiagonalAtRealm(realm) * _world.BoundaryViewMultiple : (float?)null;
+            HasBoundary(realm) ? _world.Boundary0Meters * (float)Math.Pow(_world.BoundaryPerRealm, realm) : (float?)null;
 
         /// <summary>장막 안인가(경계 포함). 장막이 없으면 늘 참.</summary>
         public bool IsInside(Vector2 position, Vector2 birthplace, int realm)
@@ -226,6 +229,9 @@ namespace BloodRain.Core.World
 
         /// <summary>그 경지에서 생긴 적 한 덩이에 든 사람 수(삼류 1 … 현경 64).</summary>
         public int ClusterSize(int realm) => _clusterSize[Math.Max(0, Math.Min(TopRealm, realm))];
+
+        /// <summary>화면 위 목표 적 수 배율(cheonha.json realmScale spawnDensity). 경지가 오를수록 빼곡하게.</summary>
+        public float SpawnDensity(int realm) => _density[Math.Max(0, Math.Min(TopRealm, realm))];
 
         /// <summary>덩이를 쓰러뜨렸을 때 처치 수(HUD·업적). 진기는 덩이 하나에 그 적 한 마리 값이다.</summary>
         public int KillCount(int bornRealm) => ClusterSize(bornRealm);

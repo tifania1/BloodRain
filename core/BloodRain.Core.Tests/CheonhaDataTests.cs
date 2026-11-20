@@ -22,14 +22,15 @@ namespace BloodRain.Core.Tests
         JObject World => (JObject)_c["world"]!;
         float S => (float)World["scalePerRealm"]!;
         float View0 => (float)World["view0Meters"]!;
-        float BoundaryMul => (float)World["boundaryViewMultiple"]!;
+        float Boundary0 => (float)World["boundary0Meters"]!;
+        float BoundaryPer => (float)World["boundaryPerRealm"]!;
         List<JObject> Regions => _c["regions"]!.Children<JObject>().ToList();
         List<JObject> Sects => _c["sects"]!.Children<JObject>().ToList();
         List<JObject> Traits => _c["birthTraits"]!["list"]!.Children<JObject>().ToList();
         JObject Region(string id) => Regions.Single(r => (string)r["id"]! == id);
         int RealmIndex(string id) => _d.Balance.Realms.FindIndex(r => r.Id == id);
         double ViewAt(int realm) => View0 * Math.Pow(S, realm);
-        double BoundaryAt(int realm) => ViewAt(realm) * BoundaryMul;
+        double BoundaryAt(int realm) => Boundary0 * Math.Pow(BoundaryPer, realm);
         (double x, double y) Meters(JObject region)
         {
             var pos = (JArray)region["pos"]!;
@@ -56,6 +57,15 @@ namespace BloodRain.Core.Tests
             Assert.Equal("hyeongyeong", (string)World["noBoundaryFrom"]!);
         }
 
+        [Fact] public void 적_빼곡함은_삼류_1에서_오르기만_하고_PC_성능_상한을_넘지_않는다()
+        {
+            var dens = _d.Cheonha.RealmScale.Select(r => r.SpawnDensity).ToList();
+            Assert.Equal(1f, dens[0]);
+            for (int i = 1; i < dens.Count; i++) Assert.True(dens[i] >= dens[i - 1], $"{i}");
+            float maxTarget = _d.Balance.SpawnTarget.Points.Max(p => p[1]);
+            Assert.True(dens.Max() * maxTarget <= _d.Balance.Limits.EnemiesPc, $"{dens.Max()} x {maxTarget} > {_d.Balance.Limits.EnemiesPc}");
+        }
+
         [Fact] public void 경지와_축척_표가_데이터와_같다()
         {
             var rows = TestData.GddTable(TestData.GddSection("경지와 축척"));
@@ -78,6 +88,7 @@ namespace BloodRain.Core.Tests
                 else Assert.Equal(Math.Round(BoundaryAt(i)), Num(r[4].TrimEnd('m')));
                 Assert.Equal((string)scale[i]["screenKo"]!, r[5]);
                 Assert.Equal($"{(string)scale[i]["foeKo"]!} {(int)scale[i]["clusterSize"]!}", r[6]);
+                Assert.Equal($"×{TestData.Num((float)scale[i]["spawnDensity"]!)}", r[7]);
             }
         }
 
@@ -86,7 +97,7 @@ namespace BloodRain.Core.Tests
             var sec = TestData.GddSection("경지와 축척");
             Assert.Contains($"{TestData.Num(S)}배", sec);
             Assert.Contains($"{TestData.Num(View0)}m × {TestData.Num(S)}^(경지 순번 + {TestData.Num((float)World["viewInRealmShare"]!)} × 경지 안 진행)", sec);
-            Assert.Contains($"{TestData.Num(BoundaryMul)}배", sec);
+            Assert.Contains($"{TestData.Num(Boundary0)}m × {TestData.Num(BoundaryPer)}^경지 순번", sec);
             Assert.Contains($"진기는 {TestData.Num((float)_c["crush"]!["xpPerCrushed"]!)}만", sec);
             var brk = TestData.GddSection("돌파 연출");
             Assert.Contains($"{TestData.Num((float)_c["breakthrough"]!["timeScale"]!)}배", brk);
@@ -416,7 +427,9 @@ namespace BloodRain.Core.Tests
             [Fact] public void GameData가_cheonha_json을_타입으로_읽는다()
         {
             var c = _d.Cheonha;
-            Assert.Equal(2.25f, c.World.ScalePerRealm, 3);
+            Assert.Equal(2.4f, c.World.ScalePerRealm, 3);
+            Assert.Equal(86.4f, c.World.Boundary0Meters, 3);
+            Assert.Equal(2.25f, c.World.BoundaryPerRealm, 3);
             Assert.Equal(Regions.Count, c.Regions.Count);
             Assert.Equal(7, c.BossRegions.Count());
             Assert.Equal(9, c.Sects.Count);

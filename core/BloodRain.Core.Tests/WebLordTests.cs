@@ -32,7 +32,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("LR.healthCurve", html);
             Assert.Contains("LR.firstKill : LR.repeatKill", html);
             // 장막 반경은 축척 모드 장막과 같은 식, 기혈 배율은 Core HealthMultiplier 와 같은 꼴(마지막 두 점 기울기로 늘림)
-            Assert.Contains("WD.view0Meters * Math.pow(WD.scalePerRealm, t) * WD.boundaryViewMultiple", html);
+            Assert.Contains("WD.boundary0Meters * Math.pow(WD.boundaryPerRealm, t)", html);
             Assert.Contains("return b[1] + (b[1] - a[1]) / (b[0] - a[0]) * (m - b[0]);", html);
         }
 

@@ -2,13 +2,14 @@
   "_note": "천하(天下) 한 장과 환혼(還魂). 기획서 7장(경지와 축척, 지역, 땅의 주인), 10장(윤회의 기, 환혼 강화), 21장(환혼, 타고난 성질, 한 번 깨친 길, 회귀)과 같은 값이어야 한다. 길이는 모두 삼류 축척의 m. 위치(pos)는 지도 그림 위 비율(왼쪽 위 0,0 / 오른쪽 아래 1,1).",
 
   "world": {
-    "_note": "화면 대각선 = view0Meters x scalePerRealm^(경지 순번 + viewInRealmShare x 경지 안 진행). 혈우 장막 반경 = 그 경지 첫 화면 대각선 x boundaryViewMultiple. 현경(noBoundaryFrom)부터 장막 없음. 장막 안쪽 띠(그 경지 첫 화면 대각선 x pushBandViewMultiple)에 들어서면 출생지 쪽으로 밀린다. 미는 속도는 띠 시작 0에서 장막 위 플레이어 이동 속도 x pushMoveShare 까지 곧게 오른다.",
+    "_note": "화면 대각선 = view0Meters x scalePerRealm^(경지 순번 + viewInRealmShare x 경지 안 진행). 혈우 장막 반경 = boundary0Meters x boundaryPerRealm^경지 순번(화면과 따로: 2026-11-20 첫 시야를 36m·2.25배에서 24m·2.4배로 당기며 장막은 옛 크기 36 x 2.25^경지 x 2.4 를 지킴). 현경(noBoundaryFrom)부터 장막 없음. 장막 안쪽 띠(그 경지 첫 화면 대각선 x pushBandViewMultiple)에 들어서면 출생지 쪽으로 밀린다. 미는 속도는 띠 시작 0에서 장막 위 플레이어 이동 속도 x pushMoveShare 까지 곧게 오른다.",
     "widthMeters": 4000,
     "heightMeters": 2600,
-    "scalePerRealm": 2.25,
-    "view0Meters": 36,
+    "scalePerRealm": 2.4,
+    "view0Meters": 24,
     "viewInRealmShare": 0.35,
-    "boundaryViewMultiple": 2.4,
+    "boundary0Meters": 86.4,
+    "boundaryPerRealm": 2.25,
     "pushBandViewMultiple": 0.25,
     "pushMoveShare": 1.25,
     "noBoundaryFrom": "hyeongyeong",
@@ -21,13 +22,13 @@
   },
 
   "realmScale": [
-    { "realm": "samryu",       "clusterSize": 1,  "foeKo": "시강",  "screenKo": "문파 마당과 전각 몇 채" },
-    { "realm": "iryu",         "clusterSize": 4,  "foeKo": "패거리", "screenKo": "산문과 아랫마을" },
-    { "realm": "ilryu",        "clusterSize": 9,  "foeKo": "떼",    "screenKo": "고을 하나" },
-    { "realm": "jeoljeong",    "clusterSize": 16, "foeKo": "군단",  "screenKo": "그 지역 전체(숭산 일대)" },
-    { "realm": "chojeoljeong", "clusterSize": 28, "foeKo": "군세",  "screenKo": "이웃 지역 몇 곳" },
-    { "realm": "hwagyeong",    "clusterSize": 44, "foeKo": "대군",  "screenKo": "중원의 절반" },
-    { "realm": "hyeongyeong",  "clusterSize": 64, "foeKo": "천군",  "screenKo": "천하 전체" }
+    { "realm": "samryu",       "clusterSize": 1, "spawnDensity": 1.0,  "foeKo": "시강",  "screenKo": "문파 마당과 전각 몇 채" },
+    { "realm": "iryu",         "clusterSize": 4, "spawnDensity": 1.1,  "foeKo": "패거리", "screenKo": "산문과 아랫마을" },
+    { "realm": "ilryu",        "clusterSize": 9, "spawnDensity": 1.2,  "foeKo": "떼",    "screenKo": "고을 하나" },
+    { "realm": "jeoljeong",    "clusterSize": 16, "spawnDensity": 1.3, "foeKo": "군단",  "screenKo": "그 지역 전체(숭산 일대)" },
+    { "realm": "chojeoljeong", "clusterSize": 28, "spawnDensity": 1.4, "foeKo": "군세",  "screenKo": "이웃 지역 몇 곳" },
+    { "realm": "hwagyeong",    "clusterSize": 44, "spawnDensity": 1.5, "foeKo": "대군",  "screenKo": "중원의 절반" },
+    { "realm": "hyeongyeong",  "clusterSize": 64, "spawnDensity": 1.5, "foeKo": "천군",  "screenKo": "천하 전체" }
   ],
 
   "cluster": {

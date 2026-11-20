@@ -17,14 +17,14 @@ namespace BloodRain.Core.Tests
 
         // ---- 배율과 화면 대각선 ----
 
-        [Fact] public void 경지_배율은_2_25의_거듭제곱이다()
+        [Fact] public void 경지_배율은_2_4의_거듭제곱이다()
         {
             var s = NewScale();
             Assert.Equal(1f, s.Factor(0), 5);
-            Assert.Equal(2.25f, s.Factor(1), 5);
-            Assert.Equal(11.390625f, s.Factor(3), 4);
-            Assert.Equal(20.25f, s.ToWorld(4f, 2), 4);    // 일류(순번 2)의 경공 4m = 세계 20.25m
-            Assert.Equal(4f, s.ToRealm(20.25f, 2), 4);
+            Assert.Equal(2.4f, s.Factor(1), 5);
+            Assert.Equal(13.824f, s.Factor(3), 3);
+            Assert.Equal(23.04f, s.ToWorld(4f, 2), 3);    // 일류(순번 2)의 경공 4m = 세계 23.04m
+            Assert.Equal(4f, s.ToRealm(23.04f, 2), 4);
             Assert.Equal(_d.Cheonha.World.ScalePerRealm, s.Factor(1), 5);
         }
 
@@ -56,7 +56,7 @@ namespace BloodRain.Core.Tests
             float share = _d.Cheonha.World.ViewInRealmShare;
             Assert.Equal(1f, s.ViewExponent(10), 4);                    // 이류에 막 오름
             Assert.Equal(1f + share * 0.5f, s.ViewExponent(15), 4);     // 이류 10 → 일류 20의 절반
-            Assert.Equal(36f * (float)Math.Pow(2.25, 1 + share * 0.5), s.ViewDiagonal(15), 2);
+            Assert.Equal(24f * (float)Math.Pow(2.4, 1 + share * 0.5), s.ViewDiagonal(15), 2);
             Assert.Equal(5f + share * 19f / 20f, s.ViewExponent(89), 4); // 화경 70 → 현경 90
             Assert.Equal(6f, s.ViewExponent(90), 4);
             Assert.Equal(6f, s.ViewExponent(120), 4);                   // 현경은 진행 0
@@ -188,7 +188,7 @@ namespace BloodRain.Core.Tests
             Assert.False(b.IsActive);
             Assert.Equal(1f, b.WorldTimeScale);
             Assert.False(b.SpawnHeld);
-            Assert.Equal(81f, (float)Math.Round(b.ViewDiagonal));        // 이류 첫 화면
+            Assert.Equal(58f, (float)Math.Round(b.ViewDiagonal));        // 이류 첫 화면(24 × 2.4)
             Assert.Equal(s.BoundaryRadius(0), b.FromBoundaryRadius);
             Assert.Equal(s.BoundaryRadius(1), b.ToBoundaryRadius);
             Assert.Equal(BreakthroughCue.None, b.Tick(1f));
