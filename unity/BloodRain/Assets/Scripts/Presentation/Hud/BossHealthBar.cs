@@ -54,9 +54,11 @@ namespace BloodRain.Presentation.Hud
             nameGo.transform.SetParent(rt, false);
             _name = nameGo.GetComponent<TextMeshProUGUI>();
             if (font != null) _name.font = font;
-            _name.fontSize = 24f;
+            _name.fontSize = 26f;
             _name.color = TextInk;
             _name.alignment = TextAlignmentOptions.Center;
+            _name.fontStyle = FontStyles.Bold;
+            InkHalo.Apply(_name);   // 돌바닥·소품 위에서도 읽히게(위 HUD 글과 같은 종이빛 번짐)
             var nr = (RectTransform)nameGo.transform;
             nr.anchorMin = new Vector2(0f, 1f); nr.anchorMax = new Vector2(1f, 1f);
             nr.pivot = new Vector2(0.5f, 1f);
