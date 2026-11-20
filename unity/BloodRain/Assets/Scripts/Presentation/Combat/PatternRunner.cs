@@ -535,13 +535,19 @@ namespace BloodRain.Presentation.Combat
         void LeaveBell(BossPatternDef p, Vector2 at)
         {
             var bell = BellGimmick.FromBossDrop(DataBoot.Data.Gimmicks.Bell, p, _factor);
-            // 자리 표시: 먹 원 + 金 테두리(원화가 오면 바꾼다)
-            var vis = Shape("범종", new Color(0.08f, 0.07f, 0.06f, 0.85f), 4);
-            SetCircles(vis, new[] { Vector2.zero }, bell.TouchRadius * 0.6f);
-            var rim = Shape("범종 테", new Color(0.86f, 0.68f, 0.22f, 0.95f), 5);
-            rim.transform.SetParent(vis.transform, false);
-            SetRing(rim, Vector2.zero, bell.TouchRadius * 0.6f, 0.12f * _factor);
-            vis.transform.position = new Vector3(at.x, at.y, 0f);
+            // 지역 범종(GimmickLayer)과 같은 그림·크기(2026-11-21 — 전엔 먹 원 + 金 테두리 자리 표시). 떨어질 때 먹 고리가 퍼진다
+            var vis = Fx.PropArt.Make(transform, "범종", "prop_stupa_bell", at, bell.TouchRadius * 1.6f, 4);
+            if (vis == null)
+            {
+                vis = Shape("범종", new Color(0.08f, 0.07f, 0.06f, 0.85f), 4);
+                SetCircles(vis, new[] { Vector2.zero }, bell.TouchRadius * 0.6f);
+                var rim = Shape("범종 테", new Color(0.86f, 0.68f, 0.22f, 0.95f), 5);
+                rim.transform.SetParent(vis.transform, false);
+                SetRing(rim, Vector2.zero, bell.TouchRadius * 0.6f, 0.12f * _factor);
+                vis.transform.position = new Vector3(at.x, at.y, 0f);
+            }
+            var fx = Fx.SectFx.Instance;
+            if (fx != null && fx.Ready && !Fx.FxSettings.Simplified) { fx.RingW(at, bell.TouchRadius * 2.4f, Fx.FxRamp.Ink, 0.35f, 0.7f, false, true); fx.CrackW(at, bell.TouchRadius * 1.6f, Fx.FxRamp.Ink); }
             _bells.Add((bell, at, vis));
         }
 
@@ -566,6 +572,9 @@ namespace BloodRain.Presentation.Combat
         {
             BellRings++;
             SfxPlayer.Instance?.Play("sfx_gimmick_bell");
+            // 울림: 금빛 소리 고리 둘이 번진다(둘째는 적을 세우는 반경까지)
+            var fx = Fx.SectFx.Instance;
+            if (fx != null && fx.Ready) { fx.RingW(at, bell.TouchRadius * 3f, Fx.FxRamp.Gold, 0.5f, 0.8f, true); if (!Fx.FxSettings.Simplified) fx.RingW(at, bell.StunRadius * 2.2f, Fx.FxRamp.Gold, 0.8f, 0.45f, true); }
             var sim = runner.enemies.Sim;
             if (sim == null) return;
             int stunned = 0;
