@@ -10,6 +10,7 @@
 //   하오문 밀서: 고르는 셈은 LifeLog.ReadLetter(혼이 계정에 남김), 여기는 만났다는 표시만(Life.ReadLetter). 벼랑은 WP-32a 결정 대기.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BloodRain.Core.Build;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
@@ -27,6 +28,7 @@ namespace BloodRain.Core.Run
         public const string Whisper = "whisper";
         public const string SwordTomb = "sword_tomb";
         public const string Letter = "letter";
+        public const string Cliff = "cliff";
         /// <summary>혈마의 속삭임이 올려 주는 진전(synergies.json schools 의 마교).</summary>
         public const string WhisperSchool = "demonic";
 
@@ -94,6 +96,32 @@ namespace BloodRain.Core.Run
             Note(Whisper);
             return true;
         }
+
+        /// <summary>벼랑 기연(WP-32a, 2026-11-20 추천대로 — decisions #37): 경공으로 벼랑 끝 띠를 넘어 뛰어내렸을 때 고를 카드 셋.
+        /// 가진 무공(최고 단계 아님·절기 아님) 가운데 무작위 둘에 +levels 단계씩 한 장씩, 그리고 못 연 무공 하나(무공 칸이 비었을 때 — 계정 해금이 안 된 것 먼저,
+        /// 없으면 아직 안 가진 아무 무공). 못 연 무공을 못 내면 가진 무공 +levels 한 장 더. 고를 것이 없으면 빈 목록.</summary>
+        public static List<Build.Offer> CliffOffers(GameData data, Build.Loadout loadout, ISet<string> unlocked, Random rng)
+        {
+            int levels = Math.Max(1, (int)data.Synergies.Encounter(Cliff).Param("levels"));
+            int max = data.Balance.Levels.WeaponMax;
+            var ups = loadout.Weapons.Where(kv => kv.Value < max && !loadout.Evolved.Contains(kv.Key)).Select(kv => kv.Key).OrderBy(_ => rng.Next()).ToList();
+            var list = new List<Build.Offer>();
+            foreach (var id in ups.Take(2)) list.Add(new Build.Offer(Build.OfferKind.UpgradeWeapon, id, Math.Min(levels, max - loadout.Weapons[id])));
+            string? fresh = null;
+            if (loadout.Weapons.Count < loadout.WeaponSlots)
+            {
+                var notOwned = data.Weapons.Where(w => !loadout.Weapons.ContainsKey(w.Id)).ToList();
+                var locked = notOwned.Where(w => !unlocked.Contains(w.Id)).ToList();
+                var pool = locked.Count > 0 ? locked : notOwned;
+                if (pool.Count > 0) fresh = pool[rng.Next(pool.Count)].Id;
+            }
+            if (fresh != null) list.Add(new Build.Offer(Build.OfferKind.NewWeapon, fresh));
+            else if (ups.Count > 2) list.Add(new Build.Offer(Build.OfferKind.UpgradeWeapon, ups[2], Math.Min(levels, max - loadout.Weapons[ups[2]])));
+            return list;
+        }
+
+        /// <summary>벼랑에서 뛰어내렸다(받은 기연으로 남김). 카드 고르기는 Presentation 이 CliffOffers 로.</summary>
+        public void DiveCliff() => Note(Cliff);
 
         /// <summary>검총에 검을 꽂을 수 있나(무공이 둘 이상이고 그 무공을 가졌을 때).</summary>
         public static bool CanPlantSword(Loadout loadout, string weaponId) =>

@@ -609,6 +609,7 @@
   "ui.encounter.tomb.card": "Plant it: other arts +{0}% Might",
   "ui.encounter.tomb.pass": "Walk on",
   "ui.encounter.tomb.only": "You have only this one blade to plant",
+  "ui.encounter.cliff": "You leapt from the cliff — a secret manual is carved into the cave wall",
   "ui.encounter.letter": "Lower Five Gates Letter · {0}",
   "ui.encounter.letter_blank": "Lower Five Gates Letter · the paper is blank",
   "ui.encounter.beast": "Blood Crystal +{0}",

@@ -45,6 +45,12 @@ namespace BloodRain.Presentation.Hud
         readonly HashSet<string> _unlocked = new HashSet<string>();
         readonly System.Random _rng = new System.Random();
         List<Offer> _offers = new List<Offer>();
+        // WP-32a 벼랑 기연처럼 레벨업이 아닌데 이 화면으로 고를 카드(다음에 열 때 굴리지 않고 이것을 띄운다)
+        List<Offer> _extraOffers;
+        bool _extraNow;
+
+        /// <summary>레벨업과 상관없이 이 카드들로 한 번 연다(벼랑 기연 등). 레벨업 차례는 줄지 않는다.</summary>
+        public void OpenExtra(List<Offer> offers) { if (offers != null && offers.Count > 0) _extraOffers = offers; }
         int _handledLevel = 1;
         int _pending;
         bool _open, _banishMode, _firstDone, _firstOpen;
@@ -112,11 +118,11 @@ namespace BloodRain.Presentation.Hud
             // C-07b 깨달음 화면이 먼저(열려 있거나 열릴 차례면 기다린다)
             bool insight = LifeRunner.Instance != null && LifeRunner.Instance.InsightBusy;
             // 연 프레임엔 키를 읽지 않는다(깨달음 카드를 고른 같은 숫자 키가 레벨업 카드까지 고르지 않게)
-            if (!_open && _pending > 0 && !zooming && !insight)
+            if (!_open && (_pending > 0 || _extraOffers != null) && !zooming && !insight)
             {
                 Open();
                 // UI-01b 설정 '자동 고르기': 화면을 띄우자마자 고른다(서장 첫 카드 한 장은 보여 준다 — 가르치는 자리)
-                if (Meta.SettingsScreen.Current.AutoPick && !_firstOpen) { _autoNow = true; AutoPick(); _autoNow = false; }
+                if (Meta.SettingsScreen.Current.AutoPick && !_firstOpen && !_extraNow) { _autoNow = true; AutoPick(); _autoNow = false; }
                 return;
             }
             if (!_open) return;
@@ -139,15 +145,17 @@ namespace BloodRain.Presentation.Hud
         {
             _open = true;
             SfxPlayer.Instance?.Play("sfx_levelup"); // SFX-14U
-            _pending--;
+            _extraNow = _extraOffers != null;
+            if (!_extraNow) _pending--;
             _banishMode = false;
             _savedTimeScale = BloodRain.Presentation.Fx.HitFeel.ScaleToRestore(); // 타격 멈춤(0.02)을 기억하지 않게(2026-11-20)
             Time.timeScale = 0f;
-            _firstOpen = !_firstDone && _prologue != null;
-            _firstDone = true;
+            _firstOpen = !_extraNow && !_firstDone && _prologue != null;
+            if (!_extraNow) _firstDone = true;
             // GU-01 돈오: 금빛 돈오 카드 화면(unity_tasks GU-01U)이 붙기 전까지는 열 때 저절로 집는다(안 그러면 연환이 영영 안 켜짐).
             _loadout.TakeAllDoneo(_restored);
-            _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
+            if (_extraNow) { _offers = _extraOffers; _extraOffers = null; }
+            else _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _root.gameObject.SetActive(true);
             _openedAt = Time.unscaledTime;
             ShowTeach();

@@ -609,6 +609,7 @@
   "ui.encounter.tomb.card": "插下后其余武功功力 +{0}%",
   "ui.encounter.tomb.pass": "走过",
   "ui.encounter.tomb.only": "只剩这一把剑，无剑可插",
+  "ui.encounter.cliff": "跳下悬崖——洞中石壁上刻着秘籍",
   "ui.encounter.letter": "下五门密信 · {0}",
   "ui.encounter.letter_blank": "下五门密信 · 是张白纸",
   "ui.encounter.beast": "血晶 +{0}",

@@ -19,13 +19,15 @@ namespace BloodRain.Presentation.Fx
     //   검총: 1.5m 안에 서면 SwordTombScreen(가진 무공 + 지나친다) → PlantSword. 무공이 하나뿐이면 '꽂을 검이 이것 하나뿐'. 2.5m 밖으로 벗어나야 다시 뜬다.
     //   하오문 밀서: 다음에 깨는 보통 등롱(LanternLayer.Break)에서 ReadLetter(이번 생 SecretWatch.Found 를 찾은 비전으로) — 비전 이름은 떠오르는 글, 조건은 로그.
     //     장경각 도감 '밀서: 조건' 줄은 도감에 비전 줄이 생긴 뒤(soul.Letters 는 Core 가 이미 남김).
+    //   벼랑(WP-32a, 2026-11-20 추천대로): 10m 고리에 길이 4m 벼랑 끝 띠(플레이어 쪽을 향해 가로로). 경공 중에 띠를 넘으면 뛰어내림 →
+    //     레벨업 화면으로 EncounterBoons.CliffOffers 셋(가진 무공 둘 +2단계, 못 연 무공 하나) 가운데 하나. 경공 없이 걸어서는 못 넘는다(띠에 막힘은 그림뿐 — 그냥 지나가면 아무 일 없음).
     public sealed class EncounterLayer : MonoBehaviour
     {
         public static EncounterLayer Instance { get; private set; }
 
         public LifeRunner runner;
 
-        sealed class Spot { public EncounterDef Def; public Vector2 Pos; public GameObject Go; public SpriteRenderer Ring; public float Prog; public bool Near; public string School; }
+        sealed class Spot { public EncounterDef Def; public Vector2 Pos; public GameObject Go; public SpriteRenderer Ring; public float Prog; public bool Near; public string School; public Vector2 Normal; }
 
         readonly List<Spot> _spots = new List<Spot>();
         readonly System.Random _rng = new System.Random();
@@ -86,6 +88,7 @@ namespace BloodRain.Presentation.Fx
             _lastCharge = cv;
 
             var me = PlayerPos;
+            var prev = _lastPos;
             bool moving = (me - _lastPos).sqrMagnitude > 1e-6f;
             _lastPos = me;
             float sc = Scale;
@@ -127,6 +130,17 @@ namespace BloodRain.Presentation.Fx
                         }
                         else if (s.Near && EncounterSpots.Left(s.Def, d)) { Debug.Log("[EncounterLayer] 혈마의 속삭임 — 석상을 지나쳤다"); Remove(i); continue; }
                         break;
+                    case EncounterBoons.Cliff:
+                        if (Dashing() && CrossesBand(s, prev, me, sc))
+                        {
+                            var lu = FindFirstObjectByType<LevelUpScreen>();
+                            var offers = EncounterBoons.CliffOffers(DataBoot.Data, Life.Loadout, CliffUnlocked(), _rng);
+                            if (lu != null && offers.Count > 0) lu.OpenExtra(offers);
+                            Life.Encounters.DiveCliff();
+                            runner.ShowPopup(Loc.T("ui.encounter.cliff"));
+                            done = true;
+                        }
+                        break;
                     case EncounterBoons.SwordTomb:
                         // 무덤 1.5m 안에 서면 가진 무공 카드에서 골라 꽂는다. 지나쳤으면 2.5m 밖으로 벗어났다 와야 다시 뜬다(웹과 같음)
                         if (EncounterSpots.Left(s.Def, d)) s.Near = false;
@@ -156,6 +170,32 @@ namespace BloodRain.Presentation.Fx
         /// <summary>하오문 밀서가 나와 다음 보통 등롱을 기다리는 중.</summary>
         public bool LetterArmed { get; private set; }
         bool TombOpen => _tomb != null && _tomb.IsOpen;
+
+        bool Dashing()
+        {
+            var pc = runner != null && runner.player != null ? runner.player.GetComponent<PlayerController>() : null;
+            return pc != null && pc.Dash != null && pc.Dash.IsDashing;
+        }
+
+        /// <summary>이번 프레임에 prev → me 가 벼랑 띠(길이 bandLength, Normal 에 수직)를 넘었나.</summary>
+        static bool CrossesBand(Spot s, Vector2 prev, Vector2 me, float sc)
+        {
+            float a = Vector2.Dot(prev - s.Pos, s.Normal), b = Vector2.Dot(me - s.Pos, s.Normal);
+            if (a * b > 0f || a == b) return false;
+            var hit = Vector2.Lerp(prev, me, a / (a - b));
+            var along = new Vector2(-s.Normal.y, s.Normal.x);
+            return Mathf.Abs(Vector2.Dot(hit - s.Pos, along)) <= s.Def.Param("bandLength") * sc * 0.5f;
+        }
+
+        /// <summary>계정에서 열린 무공(못 연 무공 카드를 고를 때 빼는 쪽). 혼이 없으면(시험 씬) 처음부터 나오는 것.</summary>
+        System.Collections.Generic.ISet<string> CliffUnlocked()
+        {
+            var soul = Meta.RebirthHandoff.Soul;
+            if (soul != null) return soul.UnlockedWeapons();
+            var set = new HashSet<string>();
+            foreach (var w in DataBoot.Data.Weapons) if (w.Unlock == "start") set.Add(w.Id);
+            return set;
+        }
 
         string FirstWeapon()
         {
@@ -314,6 +354,25 @@ namespace BloodRain.Presentation.Fx
                 case EncounterBoons.Elixir: body.sprite = _circle; body.color = new Color32(0xC9, 0xA2, 0x27, 200); go.transform.localScale = Vector3.one * 0.9f * sc; break;
                 case EncounterBoons.Whisper: body.sprite = _square; body.color = new Color32(0x5A, 0x2A, 0x26, 255); go.transform.localScale = new Vector3(0.7f, 1.3f, 1f) * sc; break;
                 case EncounterBoons.SwordTomb: body.sprite = _circle; body.color = new Color32(0x6B, 0x5A, 0x44, 255); go.transform.localScale = new Vector3(1.1f, 0.55f, 1f) * sc; AddBlades(go.transform); break;
+                case EncounterBoons.Cliff:
+                {
+                    // 벼랑 끝 띠: 플레이어 쪽을 바라보는 가로 띠(짙은 먹) + 그 너머 낭떠러지(더 짙은 그림자)
+                    var normal = (pos - PlayerPos).sqrMagnitude > 1e-6f ? (pos - PlayerPos).normalized : Vector2.right;
+                    float len = e.Param("bandLength");
+                    float ang = Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg;
+                    go.transform.rotation = Quaternion.Euler(0, 0, ang);
+                    body.sprite = _square; body.color = new Color32(0x3A, 0x30, 0x2A, 230);
+                    go.transform.localScale = new Vector3(0.35f, len, 1f) * sc;
+                    var abyss = new GameObject("낭떠러지");
+                    abyss.transform.SetParent(go.transform, false);
+                    abyss.transform.localPosition = new Vector3(2.2f, 0f, 0f);
+                    abyss.transform.localScale = new Vector3(3.6f, 1f, 1f);
+                    var ar = abyss.AddComponent<SpriteRenderer>();
+                    ar.sprite = _square; ar.color = new Color(0.05f, 0.04f, 0.04f, 0.55f); ar.sortingOrder = 3;
+                    _spots.Add(new Spot { Def = e, Pos = pos, Go = go, Ring = ar, School = school, Normal = normal });
+                    Debug.Log($"[EncounterLayer] 기연의 기척: {e.Id} @ {pos}");
+                    return;
+                }
             }
             // 닿는 원(점선 대신 옅은 원)
             float ring = e.Spot != null && e.Spot.ReachRadius > 0f ? e.Spot.ReachRadius : 1.3f;

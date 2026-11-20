@@ -177,10 +177,11 @@
       "require": { "onlyWeapon": "samjae_sword", "levels": { "samjae_sword": 8 }, "counts": { "elapsedSeconds": 600 } } }
   ],
   "encounters": [
-    { "id": "cliff", "nameKo": "벼랑 기연", "where": "벽이 있는 장(서장·3·4·5장) 맵 끝의 벼랑",
+    { "id": "cliff", "spot": { "appearFromMinute": 3, "appearToMinute": 14, "ringRadius": 10 }, "nameKo": "벼랑 기연", "where": "벽이 있는 장(서장·3·4·5장) 맵 끝의 벼랑",
       "how": "경공으로 벼랑 밖으로 뛰어내린다. 판마다 한 번",
       "reward": "떨어진 동굴 석벽의 비급: 가진 무공 하나 +2레벨, 또는 아직 못 연 무공 하나를 이번 판에 배운다", "chance": 0.35,
-      "chapters": ["prologue", "chapter3", "chapter4", "chapter5"] },
+      "chapters": ["prologue", "chapter3", "chapter4", "chapter5"], "params": { "bandLength": 4, "levels": 2 },
+      "_noteSpot": "WP-32a(2026-11-20 사람이 추천대로 — decisions #37): 천하 한 장엔 맵 끝 벽이 없어, 그 장 땅에서 다른 기연처럼 한 번 굴려(3~14분) 맞으면 플레이어 10m 고리에 길이 bandLength m 벼랑 끝 띠를 놓는다. 경공으로 띠를 넘으면 뛰어내림 → 셋 중 고름: 가진 무공 둘에 +levels 단계씩 한 장씩, 못 연 무공 하나(무공 칸이 비었을 때, 없으면 가진 무공 +levels 한 장 더). 화산 잔도(cliff_path)가 놓이면 그 길 끝을 벼랑으로 쓸 수 있다(Unity 몫)." },
     { "id": "hermit", "spot": { "appearFromMinute": 5, "appearToMinute": 11, "ringRadius": 11, "reachRadius": 1.7, "decayPerSecond": 0.5 }, "nameKo": "은거기인", "where": "어느 장이든 맵 구석에서 바둑을 두는 노인", "proto": true,
       "how": "노인 곁에서 6초 동안 떠나지 않는다. 그동안에도 적은 몰려온다",
       "reward": "돌파 깨달음 하나를 더 고른다. 객잔의 목 노인과 대화가 하나 열린다", "chance": 0.4,

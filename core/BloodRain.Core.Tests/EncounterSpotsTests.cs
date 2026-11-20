@@ -12,11 +12,10 @@ namespace BloodRain.Core.Tests
         readonly GameData _d = TestData.Load();
         EncounterDef E(string id) => _d.Synergies.Encounter(id);
 
-        [Fact] public void 벼랑만_빼고_다_놓는_값이_있다()
+        [Fact] public void 모든_기연에_놓는_값이_있다()   // 벼랑도 WP-32a(2026-11-20)부터 10m 고리
         {
             foreach (var e in _d.Synergies.Encounters)
             {
-                if (e.Id == "cliff") { Assert.Null(e.Spot); continue; }
                 Assert.NotNull(e.Spot);
                 Assert.True(e.Spot!.AppearToMinute >= e.Spot.AppearFromMinute, e.Id);
                 Assert.True(e.Spot.AppearFromMinute >= e.MinMinute, $"{e.Id} 는 minMinute 전에 나올 수 없다");
@@ -48,7 +47,7 @@ namespace BloodRain.Core.Tests
                 Assert.Equal(11f, MathF.Sqrt(x * x + y * y), 3);
             }
             Assert.Equal((0f, 0f), EncounterSpots.PlaceOffset(E("letter"), rng));
-            Assert.Equal(0f, EncounterSpots.AppearMinute(E("cliff"), rng));
+            Assert.InRange(EncounterSpots.AppearMinute(E("cliff"), rng), 3f, 14f);
         }
 
         [Fact] public void 닿기와_떠나기는_경계를_뺀다()
