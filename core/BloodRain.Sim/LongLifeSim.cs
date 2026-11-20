@@ -65,7 +65,16 @@ namespace BloodRain.Sim
             sb.AppendLine();
             sb.AppendLine("- 30분 뒤로는 적 수(400)와 적 종류(life 마지막 표)가 그대로라 2막에 새로 나오는 것이 없다. 땅의 주인 기혈 배율만 30분 점(1.31) 뒤로 기울기대로 계속 오른다.");
             sb.AppendLine("- 레벨은 30분 뒤에도 5분에 10~14씩 계속 오른다(진기 흐름이 그대로라). 2막에서 무엇으로 성장을 보여 줄지(새 깨달음·병기 등)는 아직 없다.");
-            sb.AppendLine("- 봉인석이 모자란 현경은 그림자가 5분마다 세져 60분에 7단계(접촉 피해 곱으로 커짐, 걸음은 플레이어 기본 100보다 빠르고 상한 없음)가 된다. 언제 붙잡히는지는 [shadow.md](shadow.md). 2막을 두려면 그림자 규칙을 2막과 어떻게 나눌지부터 정해야 한다 — 사람 결정 대기 GU-11h4(decisions #64).");
+            sb.AppendLine("- 봉인석이 모자란 현경은 그림자가 5분마다 세져 60분에 7단계(접촉 피해 곱으로 커짐, 걸음은 플레이어 기본 100보다 빠르고 상한 없음)가 된다. 언제 붙잡히는지는 [shadow.md](shadow.md). 2막에서 그림자를 어떻게 할지는 아래 줄(GU-11h4)에서 정했다.");
+            // 2026-11-20 정한 2막(GU-11h4): 숭산에 머문 생이면 제 땅 밖 문파의 위기는 모두 무너진다 — 그 땅 주인이 30분부터 10분마다 하나씩 모여든다
+            var gl = c.LifeEnd.GatheringLords;
+            int lords = g.Chronicle.Events.Count(e => e.Kind == BloodRain.Core.Run.Life.SectCrisisKind && e.Region != null && e.Region != "songshan"
+                && c.Regions.Any(r => r.Id == e.Region && r.Boss != null));
+            if (gl.EveryMinutes > 0)
+            {
+                var at = Enumerable.Range(0, lords).Select(i => gl.FromMinute + i * gl.EveryMinutes).Where(m => c.LifeEnd.EndMinute <= 0 || m < c.LifeEnd.EndMinute).ToList();
+                sb.AppendLine($"- **2026-11-20 정함(GU-11h4)**: Unity 한 생(Core `Life`)은 위 그림자 대신 '모여드는 땅의 주인'이다 — {gl.FromMinute:0}분에 하나, {gl.EveryMinutes:0}분마다 하나씩, 그 생에 무너진 문파 땅 주인 수까지, {c.LifeEnd.EndMinute:0}분에 혈월이 지며 좌화와 같은 정산. 숭산에만 머문 이 시뮬레이션의 생이면 무너지는 땅 주인이 {lords}곳이라 {string.Join("·", at.Select(m => m.ToString("0")))}분에 하나씩 온다. 위 그림자 칸은 옛 규칙이고 웹 판이 아직 따른다.");
+            }
             return sb.ToString();
         }
     }
