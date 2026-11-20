@@ -136,7 +136,7 @@ namespace BloodRain.Presentation.Meta
         {
             GameSettings.Shake, GameSettings.Awaken, GameSettings.Flash, GameSettings.BossBar, GameSettings.Rain,
             GameSettings.Volume, GameSettings.Muted, GameSettings.Effects, GameSettings.Numbers, GameSettings.AimModeKey,
-            GameSettings.AimMarker, FxSimpleKey, GameSettings.Lang, GameSettings.Voice,
+            GameSettings.AimMarker, FxSimpleKey, GameSettings.AutoPickKey, GameSettings.Lang, GameSettings.Voice,
         };
 
         static string Pct(float v) => Mathf.RoundToInt(v * 100f).ToString();
@@ -165,6 +165,7 @@ namespace BloodRain.Presentation.Meta
                 case GameSettings.Lang:
                     string ln = GameSettings.LanguageNames.TryGetValue(s.Language, out var n) ? n : s.Language;
                     return (Loc.F("ui.settings.lang", ln), Loc.T("ui.settings.lang_sub"));
+                case GameSettings.AutoPickKey: return (Loc.T(s.AutoPick ? "ui.settings.autopick_on" : "ui.settings.autopick_off"), Loc.T("ui.settings.autopick_sub"));
                 case GameSettings.Voice: return (Loc.F("ui.settings.voice", Loc.T($"ui.settings.voice_{s.VoiceLanguage}")), Loc.T("ui.settings.voice_sub"));
             }
             return (key, "");

@@ -429,6 +429,7 @@ namespace BloodRain.Presentation
                 if (rise.HasValue)
                 {
                     vitals.Revive(rise.Value * vitals.MaxHealth);
+                    PushOnRevive(); // WP-21a 일어나며 둘레 잡몹을 밀어낸다
                     Debug.Log($"[LifeRunner] 재기 {_life.RevivalsUsed}/{Stats.Revival} → 기혈 {vitals.Health:0}");
                     StartCoroutine(ReviveRing());
                     return;
@@ -442,6 +443,33 @@ namespace BloodRain.Presentation
         static Sprite _ringSprite;
 
         // 재기 금빛 고리: 몸에서 0.6초(언스케일) 동안 커지며 옅어진다
+        /// <summary>WP-21a(2026-11-20 추천대로): 재기로 일어나면 화면 대각선 × pushViewDiagonal 안 잡몹을 pushKnockback 으로 밀어낸다.
+        /// 정예·땅의 주인은 그대로. 피해는 없다.</summary>
+        void PushOnRevive()
+        {
+            if (enemies == null || enemies.Sim == null || player == null) return;
+            var rv = _data.Balance.Revival;
+            var ws = WorldScale.Current;
+            Vector2 p = player.position;
+            float r = (ws != null ? ws.ViewDiagonal : 24f) * rv.PushViewDiagonal;
+            var near = new List<int>();
+            enemies.Sim.QueryCircle(new Unity.Mathematics.float2(p.x, p.y), r, near);
+            var sim = enemies.Sim;
+            foreach (int i in near)
+            {
+                var ag = sim.Get(i);
+                if (ag.Health <= 0f) continue;
+                var def = enemies.DefOf(ag.Kind);
+                if (def != null && (def.Family == "elite" || def.Family == "boss")) continue;
+                var d = new Vector2(ag.Pos.x - p.x, ag.Pos.y - p.y);
+                float m = d.magnitude;
+                if (m < 1e-5f) continue;
+                float kk = (ws != null ? ws.Speed(rv.PushKnockback) : rv.PushKnockback) * (1f - Mathf.Clamp01(def != null ? def.KnockbackResist : 0f));
+                ag.Knock += new Unity.Mathematics.float2(d.x / m, d.y / m) * kk;
+                sim.Set(i, ag);
+            }
+        }
+
         System.Collections.IEnumerator ReviveRing()
         {
             if (player == null) yield break;

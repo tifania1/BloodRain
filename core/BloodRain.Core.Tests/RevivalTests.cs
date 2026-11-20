@@ -28,6 +28,12 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0.5f, _d.Balance.Revival.HealthRatio);
         }
 
+        [Fact] public void 기획서_8장_재기_밀쳐내기와_데이터가_같다()
+        {
+            var r = _d.Balance.Revival;
+            Assert.Contains($"화면 대각선 {TestData.Num(r.PushViewDiagonal)}배 안 잡몹을 넉백 {TestData.Num(r.PushKnockback)}로", TestData.Gdd);
+        }
+
         [Fact] public void 재기_횟수만큼만_일어난다()
         {
             var life = NewLife();

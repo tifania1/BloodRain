@@ -475,6 +475,10 @@ namespace BloodRain.Core.Data
     public sealed class RevivalDef
     {
         public float HealthRatio = 0.5f;
+        /// <summary>일어날 때 밀어내는 반경 = 화면 대각선 × 이 값(WP-21a).</summary>
+        public float PushViewDiagonal = 0.3f;
+        /// <summary>밀어내는 세기(세계 m/s, 서장 각성 파동이 정예를 미는 8). 잡몹만.</summary>
+        public float PushKnockback = 8f;
     }
 
     public sealed class BalanceDef

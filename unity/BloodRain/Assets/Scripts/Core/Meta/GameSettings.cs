@@ -6,7 +6,7 @@
 //   언어(lang)는 Strings.Languages 차례로 돈다. 저장 낱말 'lang' 은 Unity Presentation/Loc 이 읽는 PlayerPrefs 낱말과 같다.
 //   정한 적 없으면 기기 언어(LanguageFor: 한국어·간체·번체, 그 밖은 영어 — Loc.FromSystem 과 같음). 웹은 한국어뿐이라 언어 단추가 없다.
 //   목소리(voice)는 14장 '목소리': 오의 기합을 한국어·중국어 두 벌 가운데 고른다(ko·zh). 정한 적 없으면 화면 언어가 중국어(간체·번체)일 때 zh, 그 밖은 ko.
-//   12장 목록 가운데 색각 보정·조작 재설정·자동 고르기는 아직 값이 없다(자동 고르기는 UI-01b, 색각 보정은 UI-03 사람 결정 대기).
+//   자동 고르기(autoPick, UI-01b 2026-11-20 추천대로): 켜면 레벨업 화면을 띄우지 않고 절기 짝 > 가진 것 레벨업 > 새 무공 > 새 심법 차례로 고른다. 색각 보정은 UI-03 사람 결정 대기.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,10 +20,10 @@ namespace BloodRain.Core.Meta
     public sealed class GameSettings
     {
         public const string Shake = "shake", Awaken = "awaken", Flash = "flash", BossBar = "bossbar", Rain = "rain",
-            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted", Lang = "lang", Voice = "voice";
+            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted", Lang = "lang", Voice = "voice", AutoPickKey = "autoPick";
 
         /// <summary>저장 낱말 전부(단추 차례, 웹 SET_HTML 과 같음 + 소리 끄기 + 언어 + 목소리).</summary>
-        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, Muted, Lang, Voice };
+        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, AutoPickKey, Muted, Lang, Voice };
 
         /// <summary>언어 단추에 그 언어 글자로 적는 이름(어느 화면 언어에서나 같다).</summary>
         public static readonly IReadOnlyDictionary<string, string> LanguageNames = new Dictionary<string, string>
@@ -67,6 +67,8 @@ namespace BloodRain.Core.Meta
         public string Language = "en";
         /// <summary>오의 기합 목소리 "ko" / "zh"(VoiceLanguages).</summary>
         public string VoiceLanguage = "ko";
+        /// <summary>레벨업 자동 고르기(UI-01b). 끄면 늘 화면에서 고른다.</summary>
+        public bool AutoPick;
 
         /// <summary>목소리 두 벌(14장).</summary>
         public static readonly string[] VoiceLanguages = { "ko", "zh" };
@@ -101,6 +103,7 @@ namespace BloodRain.Core.Meta
                 case Muted: MutedOn = !MutedOn; return true;
                 case Lang: Language = Strings.Languages[(Math.Max(0, Array.IndexOf(Strings.Languages, Language)) + 1) % Strings.Languages.Length]; return true;
                 case Voice: VoiceLanguage = VoiceLanguage == "ko" ? "zh" : "ko"; return true;
+                case AutoPickKey: AutoPick = !AutoPick; return true;
                 default: return false;
             }
         }
@@ -121,6 +124,7 @@ namespace BloodRain.Core.Meta
             Muted => Bool(MutedOn),
             Lang => Language,
             Voice => VoiceLanguage,
+            AutoPickKey => Bool(AutoPick),
             _ => null,
         };
 
@@ -143,6 +147,7 @@ namespace BloodRain.Core.Meta
                 case Muted: MutedOn = ReadBool(value, MutedOn); break;
                 case Lang: if (Array.IndexOf(Strings.Languages, value) >= 0) Language = value; break;
                 case Voice: if (Array.IndexOf(VoiceLanguages, value) >= 0) VoiceLanguage = value; break;
+                case AutoPickKey: AutoPick = ReadBool(value, AutoPick); break;
             }
         }
 

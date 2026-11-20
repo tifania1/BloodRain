@@ -130,6 +130,9 @@ namespace BloodRain.Presentation
             if (refillOnDeath) Health = MaxHealth;
         }
 
+        /// <summary>UI-01a(2026-11-20 추천대로): 레벨업 화면이 닫힌 뒤 맞은 뒤 무적과 같은 시간만큼 무적(닫히자마자 둘러싸여 맞지 않게).</summary>
+        public void Grace() => _iframe = Mathf.Max(_iframe, hitIframes);
+
         /// <summary>쓰러진 뒤 기혈을 이만큼으로 되살린다(서장 각성은 1). 맞은 뒤 무적도 준다.</summary>
         public void Revive(float health)
         {

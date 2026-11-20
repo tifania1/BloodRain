@@ -66,7 +66,7 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             foreach (var k in GameSettings.Keys)
-                if (k != GameSettings.Muted && k != GameSettings.Lang && k != GameSettings.Voice) Assert.Contains($"store.set('{k}'", html);
+                if (k != GameSettings.Muted && k != GameSettings.Lang && k != GameSettings.Voice && k != GameSettings.AutoPickKey) Assert.Contains($"store.set('{k}'", html);
             Assert.Contains("settings.shake === 1 ? 0.5 : settings.shake === 0.5 ? 0 : 1", html);
             Assert.Contains("settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1", html);
             Assert.Contains("{ auto: 'long', long: 'short', short: 'auto' }", html);

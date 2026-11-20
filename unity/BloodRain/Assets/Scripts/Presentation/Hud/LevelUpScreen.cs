@@ -111,7 +111,13 @@ namespace BloodRain.Presentation.Hud
             // C-07b 깨달음 화면이 먼저(열려 있거나 열릴 차례면 기다린다)
             bool insight = LifeRunner.Instance != null && LifeRunner.Instance.InsightBusy;
             // 연 프레임엔 키를 읽지 않는다(깨달음 카드를 고른 같은 숫자 키가 레벨업 카드까지 고르지 않게)
-            if (!_open && _pending > 0 && !zooming && !insight) { Open(); return; }
+            if (!_open && _pending > 0 && !zooming && !insight)
+            {
+                Open();
+                // UI-01b 설정 '자동 고르기': 화면을 띄우자마자 고른다(서장 첫 카드 한 장은 보여 준다 — 가르치는 자리)
+                if (Meta.SettingsScreen.Current.AutoPick && !_firstOpen) { _autoNow = true; AutoPick(); _autoNow = false; }
+                return;
+            }
             if (!_open) return;
             if (Time.timeScale != 0f && !zooming) Time.timeScale = 0f;
 
@@ -289,6 +295,9 @@ namespace BloodRain.Presentation.Hud
             HideTeach();
             _root.gameObject.SetActive(false);
             Time.timeScale = _savedTimeScale;
+            // UI-01a 닫힌 뒤 무적(맞은 뒤 무적과 같은 0.5초, 기획서 12장 '화면 편의 규칙')
+            if (vitals == null) vitals = FindFirstObjectByType<PlayerVitals>();
+            if (vitals != null && _pending == 0) vitals.Grace();
         }
 
         void Pick(int i)
