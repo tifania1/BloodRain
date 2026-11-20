@@ -1604,6 +1604,8 @@ namespace BloodRain.Presentation
                 if (a.AuraRadius > 0f && AuraOn(a, dt)) _auraOwners.Add(i);
                 if (a.Buff != 0f) { a.Buff = 0f; agents[i] = a; }
             }
+            var ink = InkFx; // 2026-11-21 깃발 기운이 닿는 반경을 바닥에(전엔 세진 적 몸만 핏빛으로 물듦)
+            if (ink != null) foreach (int o in _auraOwners) ink.BuffAura(new Vector2(agents[o].Pos.x, agents[o].Pos.y), agents[o].AuraRadius);
             foreach (int o in _auraOwners)
             {
                 var owner = agents[o];

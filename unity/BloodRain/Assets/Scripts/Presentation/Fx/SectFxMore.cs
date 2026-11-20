@@ -97,6 +97,13 @@ namespace BloodRain.Presentation.Fx
         readonly List<EShot> _eshots = new List<EShot>();
         readonly List<Ground> _grounds = new List<Ground>();
         readonly List<Vector3> _auras = new List<Vector3>();
+        readonly List<Vector3> _buffs = new List<Vector3>();
+
+        /// <summary>이번 프레임 깃발 기운(기수·포효한 혈사자) 하나: at 둘레 radius(월드) 안 적이 세진다.</summary>
+        public void BuffAura(Vector2 at, float radius)
+        {
+            if (_buffs.Count < 32 && radius > 1e-4f) _buffs.Add(new Vector3(at.x, at.y, radius));
+        }
         struct Lane { public Vector2 From; public float Ang, Len, Wid, K; }
         readonly List<Lane> _lanes = new List<Lane>();
 
@@ -155,9 +162,17 @@ namespace BloodRain.Presentation.Fx
 
         void DrawGroundLive()
         {
-            if (_auras.Count == 0 && _grounds.Count == 0 && _lanes.Count == 0) return;
+            if (_auras.Count == 0 && _grounds.Count == 0 && _lanes.Count == 0 && _buffs.Count == 0) return;
             bool plain = FxSettings.Simplified || Busy;
             var blood = Danger(PoolBlood);
+            foreach (var b in _buffs)
+            {
+                // 깃발 기운: 반경 테두리를 끊어진 핏빛 고리로(잡음이 천천히 돈다) + 아주 옅은 물
+                var at = new Vector2(b.x, b.y);
+                if (!plain) Quad(16, at, b.z * 2.2f, b.z * 2.2f, 0f, new Vector4(.9f, .3f, .1f, 0f), blood, .07f, 1f, 0f, 2.1f);
+                Quad(2, at, b.z * 2.1f, b.z * 2.1f, 0f, new Vector4(.95f, .028f, .75f, 0f), blood, .42f, 1f, 0f, 4.4f);
+            }
+            _buffs.Clear();
             foreach (var l in _lanes)
             {
                 // 혈무사 돌진 예고: 달려올 길에 옅은 핏빛 띠, 예고 동안 몸 쪽에서 차오르고 끝에 짙은 먹점(멈출 자리)
