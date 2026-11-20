@@ -216,6 +216,31 @@
     { "id": "gupa_yunhoe",   "nameKo": "구파윤회", "hanja": "九派輪廻", "when": "all_sects_lived" }
   ],
 
+  "achievements": [
+    {"id": "realm_iryu", "nameKo": "이류", "descKo": "처음으로 이류에 오른다", "when": "realm:iryu", "_note": "WP-43(2026-11-20 추천대로, decisions #40). Steam 업적 22개: 기획서에 이미 있는 '처음'만, 새 숫자 없음. when 토큰은 realm:<경지>·boss:<지역>·ending:<엔딩>·title:<칭호>·evolutions:all·secrets:all·sealstones:all. 판정은 Core Meta/Achievements 가 혼(Soul)으로 하고, 얻은 것은 혼에 남는다(회귀해도). hidden 은 Steam 에서 얻기 전까지 숨김"},
+    {"id": "realm_ilryu", "nameKo": "일류", "descKo": "처음으로 일류에 오른다", "when": "realm:ilryu"},
+    {"id": "realm_jeoljeong", "nameKo": "절정", "descKo": "처음으로 절정에 오른다", "when": "realm:jeoljeong"},
+    {"id": "realm_chojeoljeong", "nameKo": "초절정", "descKo": "처음으로 초절정에 오른다", "when": "realm:chojeoljeong"},
+    {"id": "realm_hwagyeong", "nameKo": "화경", "descKo": "처음으로 화경에 오른다", "when": "realm:hwagyeong"},
+    {"id": "realm_hyeongyeong", "nameKo": "현경", "descKo": "처음으로 현경에 오른다", "when": "realm:hyeongyeong"},
+    {"id": "lord_songshan", "nameKo": "혈나한 원각", "descKo": "혈나한 원각을 처음 쓰러뜨린다", "when": "boss:songshan"},
+    {"id": "lord_danggata", "nameKo": "독후 당소혜", "descKo": "독후 당소혜를 처음 쓰러뜨린다", "when": "boss:danggata"},
+    {"id": "lord_janggang", "nameKo": "혈귀 마천패", "descKo": "혈귀 마천패를 처음 쓰러뜨린다", "when": "boss:janggang"},
+    {"id": "lord_wudangsan", "nameKo": "혈허진인", "descKo": "혈허진인을 처음 쓰러뜨린다", "when": "boss:wudangsan"},
+    {"id": "lord_huashan", "nameKo": "낙매검선의 검혼", "descKo": "낙매검선의 검혼을 처음 쓰러뜨린다", "when": "boss:huashan"},
+    {"id": "lord_kunlun", "nameKo": "빙혈 설무향", "descKo": "빙혈 설무향을 처음 쓰러뜨린다", "when": "boss:kunlun"},
+    {"id": "lord_sipmandaesan", "nameKo": "혈영회주 혁련휘", "descKo": "혈영회주 혁련휘를 처음 쓰러뜨린다", "when": "boss:sipmandaesan"},
+    {"id": "ending_seal", "nameKo": "봉인", "descKo": "'봉인' 엔딩을 본다", "when": "ending:seal"},
+    {"id": "ending_inherit", "nameKo": "계승", "descKo": "'계승' 엔딩을 본다", "when": "ending:inherit"},
+    {"id": "ending_true", "nameKo": "의심(醫心)", "descKo": "'의심(醫心)' 엔딩을 본다", "when": "ending:true", "hidden": true},
+    {"id": "title_sikgaek", "nameKo": "식객", "descKo": "칭호 '식객'을 얻는다", "when": "title:sikgaek"},
+    {"id": "title_ilgeom_mujeok", "nameKo": "일검무적", "descKo": "칭호 '일검무적'을 얻는다", "when": "title:ilgeom_mujeok"},
+    {"id": "title_gupa_yunhoe", "nameKo": "구파윤회", "descKo": "칭호 '구파윤회'를 얻는다", "when": "title:gupa_yunhoe"},
+    {"id": "all_evolutions", "nameKo": "절기 대전", "descKo": "절기 16가지를 모두 한 번씩 깨운다", "when": "evolutions:all"},
+    {"id": "all_secrets", "nameKo": "비전 수집가", "descKo": "비전 여덟을 모두 찾는다", "when": "secrets:all", "hidden": true},
+    {"id": "all_seal_stones", "nameKo": "일곱 조각", "descKo": "한 회차에 봉인석 일곱을 모두 모은다", "when": "sealstones:all"}
+  ],
+
   "costumes": [
     { "id": "unhwa_harmony", "character": "unhwa", "when": "boss_in_harmony", "boss": "wongak", "_note": "기획서 10장 해금 표 '태극 구간만 지키며 원각 처치 → 운화 의상'. 그 땅의 주인과 싸우는 동안 음양이 한 번도 태극 구간을 벗어나지 않고 쓰러뜨리면 혼 해금 토큰 costume:<id>(Core Life.DefeatBoss). 의상 그림·이름·고르는 화면은 M3 운화 아트 뒤" }
   ],

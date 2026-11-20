@@ -172,6 +172,8 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> NewUnlocks { get; internal set; } = Array.Empty<string>();
         /// <summary>이 생으로 새로 얻은 칭호 id(cheonha.json titles).</summary>
         public IReadOnlyList<string> NewTitles { get; internal set; } = Array.Empty<string>();
+        /// <summary>이 생으로 새로 얻은 Steam 업적 id(WP-43, Meta.Achievements).</summary>
+        public IReadOnlyList<string> NewAchievements { get; internal set; } = Array.Empty<string>();
 
         public LifeSummary(int rebirthQi, IReadOnlyList<string> newSealStones, IReadOnlyList<string> newlyUnlockedSects,
             IReadOnlyList<string> newRegions, IReadOnlyList<string> newRealms, IReadOnlyList<string> newEvolutions, bool finalCleared,
@@ -422,7 +424,9 @@ namespace BloodRain.Core.Meta
         public bool Discover(string key)
         {
             if (!CodexKey.IsValid(_data.Synergies, key)) throw new ArgumentException($"도감에 없는 쪽입니다: {key}");
-            return _codex.Add(key);
+            if (!_codex.Add(key)) return false;
+            Achievements.Refresh(this); // 비전 여덟을 다 찾는 그 자리에서 업적
+            return true;
         }
         int _hints;
 
@@ -636,6 +640,7 @@ namespace BloodRain.Core.Meta
                 case EndingTrue: JourneyOver = true; break;
                 default: throw new InvalidOperationException($"모르는 엔딩입니다: {ending}");
             }
+            Achievements.Refresh(this);
             return Modes.Refresh(this);
         }
 
@@ -754,6 +759,7 @@ namespace BloodRain.Core.Meta
                 NewModes = Modes.Refresh(this),
                 NewUnlocks = newUnlocks,
                 NewTitles = newTitles,
+                NewAchievements = Achievements.Refresh(this),
             };
         }
 
@@ -953,6 +959,7 @@ namespace BloodRain.Core.Meta
             s._codex.UnionWith(f.Codex.Where(k => CodexKey.IsValid(data.Synergies, k)));
             // 없어진 문파 id 는 버린다. 해금·강화 여부는 쓸 때(ActivePinnedSect) 본다
             if (f.PinnedSect != null && s.C.Sects.Any(x => x.Id == f.PinnedSect)) s._pinnedSect = f.PinnedSect;
+            Achievements.Refresh(s); // 업적이 생기기 전 저장도 이미 갖춘 것은 얻은 것으로
             return s;
         }
     }

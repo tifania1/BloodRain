@@ -6,6 +6,17 @@ using System.Linq;
 
 namespace BloodRain.Core.Data
 {
+    /// <summary>Steam 업적 하나(WP-43, cheonha.json achievements). When 토큰은 Meta.Achievements 가 읽는다.
+    /// Hidden 이면 Steam 에서 얻기 전까지 이름·설명을 숨긴다(진엔딩·비전 다 찾음).</summary>
+    public sealed class AchievementDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        public string DescKo = "";
+        public string When = "";
+        public bool Hidden;
+    }
+
     /// <summary>칭호 하나. When: food_one_run(한 생 음식 Count 개), boss_single_weapon(공격 무공 하나만 든 채 땅의 주인 처치), all_sects_lived(모든 문파로 한 번씩 환생).</summary>
     public sealed class TitleDef
     {
@@ -59,6 +70,8 @@ namespace BloodRain.Core.Data
         public List<ModeDef> Modes = new List<ModeDef>();
         /// <summary>칭호(10장 해금 표, 모으기 보상이라 능력치 없음).</summary>
         public List<TitleDef> Titles = new List<TitleDef>();
+        /// <summary>Steam 업적 22개(WP-43, 2026-11-20 추천대로 — decisions #40). 판정은 Meta.Achievements.</summary>
+        public List<AchievementDef> Achievements = new List<AchievementDef>();
         /// <summary>의상 해금(10장 해금 표). 그림·이름은 아트 뒤라 조건만.</summary>
         public List<CostumeDef> Costumes = new List<CostumeDef>();
 

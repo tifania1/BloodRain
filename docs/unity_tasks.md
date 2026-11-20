@@ -1053,6 +1053,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 메뉴: 없음
   - 끝: 숭산 생(봉인석 0) 30분 현경에서 무너진 문파 땅의 주인이 하나 걸어 들어와 싸움이 시작되고, 40분에 둘째. 콘솔 에러 0
   - 찍기: `Captures/act2_lord.png`
+- [ ] WP-43U Steam 업적 켜기 · 먼저: Steamworks 앱 등록(backlog ST-05, 사람)과 Steamworks.NET 넣기(15장 기술 표), backlog WP-43(2026-11-20 Core 끝)
+  - 할 것: Steamworks 업적 22개를 `cheonha.json` achievements 의 id 그대로 만든다(이름·설명은 strings `cheonha.achievements.<id>.name/.desc` 네 언어, hidden 둘은 Steamworks '숨김'). 게임은 정산 뒤·엔딩 고른 뒤·도감 쪽을 찾은 뒤·저장을 읽은 뒤에 `Achievements.Earned(soul)` 을 돌며 `SteamUserStats.SetAchievement(id)` 후 `StoreStats()` 한 번(이미 켠 것을 또 켜도 해 없음). 새로 얻은 것만 알리려면 `LifeSummary.NewAchievements`
+  - 쓸 것: Core `Meta/Achievements.cs`(`Earned`·`Refresh`·`Token`), `AchievementTests`, 기획서 10장 'Steam 업적'
+  - 메뉴: 없음
+  - 끝: Steam 으로 켠 빌드에서 서장을 마치고 이류에 오른 혼으로 정산하면 Steam 오버레이에 '이류' 업적. 콘솔 에러 0
+  - 찍기: 없음
 - [ ] DM-01U 넥스트 페스트 데모 빌드 · 먼저: 화면 집중이 풀린 뒤(M3), backlog DM-01(2026-11-20 Core 끝)
   - 할 것: 데모 빌드 표시(스크립팅 심볼 `BLOODRAIN_DEMO` 또는 빌드 메뉴 'BloodRain/데모 빌드')일 때 ① 새 혼을 `Soul.NewDemo` 로 만든다 ② `SoulStore` 칸 파일 이름을 정식판과 따로(`demo_slot_N.json` 같은 꼴) ③ 원각을 쓰러뜨리면 데모 끝 화면(찜하기 안내 글, 객잔으로) ④ 타이틀의 정식판 전용 단추(모드 고르기 등) 숨김
   - 쓸 것: Core `Soul.Demo`·`Soul.NewDemo`·`CheonhaDef.Demo`(cheonha.json demo), `Presentation/Meta/SoulStore.cs`·`SlotSelectScreen.cs`
