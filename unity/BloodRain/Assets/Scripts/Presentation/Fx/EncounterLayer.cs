@@ -11,7 +11,7 @@ namespace BloodRain.Presentation.Fx
     // WP-39U 기연 사건(기획서 20장, synergies.json encounters). 웹 한 생 판(template.html 기연 갱신 줄)과 같은 셈.
     //   판 시작에 사건마다 나올 분(EncounterSpots.AppearMinute)을 뽑고, 그 분이 되면 EncounterRoller.Roll(id, ctx) — 형편이 안 맞으면 RetryMinutes 뒤 다시(EN-01U).
     //   ctx 의 Chapter·ChapterSchool 은 서 있는 땅(cheonha regions[].chapter·sect). 거리(고리·닿기·떠나기·줄어듦)는 synergies.json encounters[].spot.
-    //   나온 사건은 플레이어 둘레 고리(EncounterSpots.PlaceOffset)에 놓는다. 은거기인·유해·영약·속삭임은 원화(props_encounters, 2026-11-21), 검총·벼랑은 아직 자리 표시.
+    //   나온 사건은 플레이어 둘레 고리(EncounterSpots.PlaceOffset)에 놓는다. 은거기인·유해·영약·속삭임은 원화(props_encounters, 2026-11-21), 검총은 바위 무더기 + 검 다섯, 벼랑은 아직 자리 표시.
     //   은거기인: 1.7m 안에 머문 초(벗어나면 초당 0.5 씩 줄어듦)가 HermitReady 면 MeetHermit + 깨달음 고르기 한 번 더.
     //   유해: 1.3m 안에서 멈춰 선 초(움직이면 줄어듦)가 RelicReady 면 HonorRelic(그 땅 문파) — 진전 덧셈은 LifeRunner.ApplyStats 가 SchoolExtra 로.
     //   영약: 1.3m 안이면 TakeElixir(오의 가득·음양 0). 속삭임: 석상 3m 안에서 오의를 쓰면 AcceptWhisper, 다가갔다가 8m 밖으로 떠나면 거절.
@@ -425,9 +425,10 @@ namespace BloodRain.Presentation.Fx
             }
         }
 
-        static bool PlaceArt(EncounterDef e, GameObject go, SpriteRenderer body, float sc)
+        bool PlaceArt(EncounterDef e, GameObject go, SpriteRenderer body, float sc)
         {
             var art = PropArt.Instance;
+            if (e.Id == EncounterBoons.SwordTomb) return PlaceTomb(go, body, sc, art);
             string id = ArtOf(e.Id, out float meters);
             var sp = id != null && art != null ? art.Get(id) : null;
             if (sp == null) return false;
@@ -452,6 +453,43 @@ namespace BloodRain.Presentation.Fx
                 }
             }
             return true;
+        }
+
+        // 검총: 바위 무더기(prop_rocks_small) 위에 비스듬히 꽂힌 검 다섯 — 검몸·코등이·자루(2026-11-21, 전엔 흙빛 타원에 회색 막대)
+        bool PlaceTomb(GameObject go, SpriteRenderer body, float sc, PropArt art)
+        {
+            var sp = art != null ? art.Get("prop_rocks_small") : null;
+            if (sp == null) return false;
+            body.sprite = sp;
+            body.color = Color.white;
+            PropArt.Fit(go.transform, sp, 1.9f * sc);
+            float W = sp.rect.width / sp.pixelsPerUnit, H = sp.rect.height / sp.pixelsPerUnit;
+            var steel = new Color32(0x9A, 0xA0, 0xA6, 255);
+            var dark = new Color32(0x2A, 0x22, 0x1C, 255);
+            for (int i = 0; i < 5; i++)
+            {
+                var sword = new GameObject("검");
+                sword.transform.SetParent(go.transform, false);
+                sword.transform.localPosition = new Vector3((-0.28f + i * 0.14f) * W, (0.18f + (i % 2) * 0.06f - Mathf.Abs(i - 2) * 0.05f) * H, 0f);
+                sword.transform.localRotation = Quaternion.Euler(0, 0, (i - 2) * 8f + (i % 2 == 0 ? 3f : -5f));
+                Bar(sword.transform, "검몸", new Vector2(0f, 0.32f * H), new Vector2(0.028f * W, 0.62f * H), steel, 5);
+                Bar(sword.transform, "등", new Vector2(0.007f * W, 0.32f * H), new Vector2(0.008f * W, 0.6f * H), new Color32(0x5A, 0x5E, 0x63, 255), 6);
+                Bar(sword.transform, "코등이", new Vector2(0f, 0.64f * H), new Vector2(0.09f * W, 0.03f * H), dark, 6);
+                Bar(sword.transform, "자루", new Vector2(0f, 0.74f * H), new Vector2(0.024f * W, 0.18f * H), dark, 6);
+            }
+            return true;
+        }
+
+        void Bar(Transform parent, string name, Vector2 pos, Vector2 size, Color c, int order)
+        {
+            var b = new GameObject(name);
+            b.transform.SetParent(parent, false);
+            b.transform.localPosition = pos;
+            b.transform.localScale = new Vector3(size.x, size.y, 1f);
+            var r = b.AddComponent<SpriteRenderer>();
+            r.sprite = _square;
+            r.color = c;
+            r.sortingOrder = order;
         }
 
         static void SetRing(Spot s, float t)
