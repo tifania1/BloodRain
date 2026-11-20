@@ -351,7 +351,8 @@ namespace BloodRain.Presentation.Fx
         }
 
         // ── 마교 혈조 ─────────────────────────────────────────────
-        /// <summary>어두운 자주 할퀸 자국 한 갈래. len 은 갈래 길이(월드). 2단 마른 메아리, 3단 바닥에 잠깐 남는 자국, 4단 연분홍 빛.</summary>
+        /// <summary>어두운 자주 할퀸 자국 한 갈래. len 은 갈래 길이(월드). 2단 마른 메아리, 3단 바닥에 잠깐 남는 자국, 4단 연분홍 빛.
+        /// VIS-01U(2026-11-20 21:50 PC 에서 봄): 시안 굵기(.55m, 획 몫 .3)는 게임 카메라(대각선 36m)에선 2~3px 실금이라 거의 안 보였다 — 굵기 2배, 획 몫 .4.</summary>
         public void Claw(Vector2 from, float ra, float len, int stage, float delay)
         {
             float M = Meter;
@@ -362,12 +363,12 @@ namespace BloodRain.Presentation.Fx
                 Add(.34f, (f, k) =>
                 {
                     float pg = Mathf.Min(1f, f.T / .07f), ds = Mathf.Max(0f, (f.T - .12f) / .22f);
-                    if (stage >= 2) Quad(1, c + nrm * .06f * M, len * 1.02f, .62f * M, ra, new Vector4(.32f, 1f, 1.5f, 1f), FxRamp.Violet, .35f * (1f - k), pg, .2f + ds * .7f, f.Seed + 5f);
-                    Quad(1, c, len, .55f * M, ra, new Vector4(.3f, .9f, 1.5f, 1f), FxRamp.Violet, 1f, pg, ds, f.Seed);
-                    if (stage >= 4) Glow(1, c, len, .2f * M, ra, new Vector4(.22f, .4f, 1.5f, 1f), FxRamp.VGlow, .8f, pg, ds * 1.2f, f.Seed + 2f);
+                    if (stage >= 2) Quad(1, c + nrm * .1f * M, len * 1.02f, 1.24f * M, ra, new Vector4(.4f, 1f, 1.5f, 1f), FxRamp.Violet, .4f * (1f - k), pg, .2f + ds * .7f, f.Seed + 5f);
+                    Quad(1, c, len, 1.1f * M, ra, new Vector4(.4f, .9f, 1.5f, 1f), FxRamp.Violet, 1f, pg, ds, f.Seed);
+                    if (stage >= 4) Glow(1, c, len, .36f * M, ra, new Vector4(.26f, .4f, 1.5f, 1f), FxRamp.VGlow, .8f, pg, ds * 1.2f, f.Seed + 2f);
                 });
                 if (stage >= 3 && !FxSettings.Simplified)
-                    Add(.9f, (f, k) => Quad(1, c - Vector2.up * .3f * M, len * .95f, .4f * M, ra, new Vector4(.28f, 1f, 1.5f, 1f), FxRamp.Violet, .45f * (1f - k), 1f, .15f + k * .6f, f.Seed), true);
+                    Add(.9f, (f, k) => Quad(1, c - Vector2.up * .3f * M, len * .95f, .8f * M, ra, new Vector4(.36f, 1f, 1.5f, 1f), FxRamp.Violet, .55f * (1f - k), 1f, .15f + k * .6f, f.Seed), true);
             });
         }
 
@@ -375,7 +376,7 @@ namespace BloodRain.Presentation.Fx
         public void BloodMistAt(Vector2 at, float size, int stage)
         {
             float s = size * Meter;
-            Add(.7f, (g, k) => Quad(3, at, s * (.6f + .6f * Ez(k)), s * .7f * (.6f + .6f * Ez(k)), g.Seed, new Vector4(6f, .5f, .8f, 0f), FxRamp.BloodMist, (stage >= 2 ? .42f : .3f) * (1f - k), 1f, .15f + k * .7f, g.Seed), true);
+            Add(.7f, (g, k) => Quad(3, at, s * (.6f + .6f * Ez(k)), s * .7f * (.6f + .6f * Ez(k)), g.Seed, new Vector4(6f, .5f, .8f, 0f), FxRamp.BloodMist, (stage >= 2 ? .55f : .42f) * (1f - k), 1f, .15f + k * .7f, g.Seed), true);
         }
 
         /// <summary>흡혈: 맞은 적에서 몸으로 들어오는 가는 실(3단부터).</summary>
