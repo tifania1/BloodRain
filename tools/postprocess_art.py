@@ -78,7 +78,8 @@ def auto_bg(img: Image.Image, band: int = 16) -> tuple[tuple[int, int, int], int
     b = max(2, min(band, w // 8, h // 8))
     px = []
     for box in ((0, 0, w, b), (0, h - b, w, h), (0, b, b, h - b), (w - b, b, w, h - b)):
-        px.extend(rgb.crop(box).getdata())
+        raw = rgb.crop(box).tobytes()  # getdata 는 Pillow 14 에서 빠진다
+        px.extend(zip(raw[0::3], raw[1::3], raw[2::3]))
     bg = tuple(sorted(c[i] for c in px)[len(px) // 2] for i in range(3))
     dev = sorted(max(abs(c[0] - bg[0]), abs(c[1] - bg[1]), abs(c[2] - bg[2])) for c in px)
     p99 = dev[min(len(dev) - 1, int(len(dev) * 0.99))]
@@ -266,12 +267,14 @@ def main() -> int:
     ap.add_argument("--only")
     ap.add_argument("--redo-bg", action="store_true", help="imported 스프라이트의 배경 제거를 다시(PR-02)")
     ap.add_argument("--from-assets", action="store_true", help="--redo-bg 에서 원본이 없으면 Assets 그림으로")
+    ap.add_argument("--kind", help="--redo-bg 를 이 종류(character·enemy·…)만")
     args = ap.parse_args()
 
     rows = [json.loads(l) for l in QUEUE.read_text(encoding="utf-8").splitlines() if l.strip()]
     if args.redo_bg:
         n = sum(1 for row in rows
                 if row.get("status") == "imported" and (not args.only or row["id"] == args.only)
+                and (not args.kind or row["kind"] == args.kind)
                 and redo_bg(row, args.dry_run, args.from_assets))
         print(f"{n}개 다시 지움")
         return 0
