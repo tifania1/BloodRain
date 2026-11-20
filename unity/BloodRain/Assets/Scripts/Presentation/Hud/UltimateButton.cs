@@ -22,10 +22,11 @@ namespace BloodRain.Presentation.Hud
 
         static readonly Color Gold = new Color32(205, 160, 60, 255);
         static readonly Color Dim = new Color(0.12f, 0.10f, 0.09f, 0.55f);
-        static readonly Color Fill = new Color32(176, 40, 30, 220);
+        static readonly Color Fill = new Color32(176, 40, 30, 225);
+        static readonly Color InkRing = new Color(0.10f, 0.08f, 0.07f, 0.85f);
 
         RectTransform _root;
-        Image _fill, _ring;
+        Image _fill, _ring, _enso;
         TextMeshProUGUI _label;
         RawImage _slash;
         float _slashT = -1f;
@@ -64,7 +65,10 @@ namespace BloodRain.Presentation.Hud
             sr.sizeDelta = new Vector2(2600, 60); sr.localEulerAngles = new Vector3(0, 0, -18f);
             _slash.color = new Color(0.10f, 0.07f, 0.06f, 0f); // 먹빛(종이 바탕 위)
 
-            var disc = Sprite.Create(Disc(128), new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+            // 2026-11-21 납작한 단색 원판 → 먹 번진 원판 + 한 붓 원상(圓相) 고리 + 결 있는 주홍 차오름(낙관처럼)
+            var disc = Sprite.Create(Wash(128, 0.47f, 7), new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+            var wash = Sprite.Create(Wash(128, 0.5f, 19), new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+            var enso = Sprite.Create(Enso(192), new Rect(0, 0, 192, 192), new Vector2(0.5f, 0.5f));
             var btn = new GameObject("오의 버튼", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
             btn.transform.SetParent(_root, false);
             _ring = btn.GetComponent<Image>();
@@ -75,9 +79,14 @@ namespace BloodRain.Presentation.Hud
 
             _fill = new GameObject("차오름", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             _fill.transform.SetParent(btn.transform, false);
-            _fill.sprite = disc; _fill.color = Fill; _fill.raycastTarget = false;
+            _fill.sprite = wash; _fill.color = Fill; _fill.raycastTarget = false;
             _fill.type = Image.Type.Filled; _fill.fillMethod = Image.FillMethod.Vertical; _fill.fillOrigin = (int)Image.OriginVertical.Bottom;
-            var fr = _fill.rectTransform; fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one; fr.offsetMin = new Vector2(8, 8); fr.offsetMax = new Vector2(-8, -8);
+            var fr = _fill.rectTransform; fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one; fr.offsetMin = new Vector2(14, 14); fr.offsetMax = new Vector2(-14, -14);
+
+            _enso = new GameObject("원상", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            _enso.transform.SetParent(btn.transform, false);
+            _enso.sprite = enso; _enso.color = InkRing; _enso.raycastTarget = false;
+            var er = _enso.rectTransform; er.anchorMin = Vector2.zero; er.anchorMax = Vector2.one; er.offsetMin = new Vector2(-10, -10); er.offsetMax = new Vector2(10, 10);
 
             _label = new GameObject("글", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
             _label.transform.SetParent(btn.transform, false);
@@ -96,7 +105,10 @@ namespace BloodRain.Presentation.Hud
             var life = runner.Life;
             var c = life.Charge;
             _fill.fillAmount = c.Fraction;
-            _ring.color = c.IsFull ? Color.Lerp(Gold, Color.white, 0.25f + 0.25f * Mathf.Sin(Time.unscaledTime * 5f)) : Dim;
+            _ring.color = Dim;
+            _enso.color = c.IsFull ? Color.Lerp(Gold, Color.white, 0.2f + 0.2f * Mathf.Sin(Time.unscaledTime * 5f)) : InkRing;
+            // 다 차면 원상이 천천히 돈다(붓이 다시 지나가는 듯)
+            if (c.IsFull) _enso.rectTransform.localEulerAngles = new Vector3(0f, 0f, -Time.unscaledTime * 24f % 360f);
             // 글은 바뀔 때만 다시 만든다(매 프레임 문자열·TMP 다시 그리기 안 하게, 2026-11-20)
             int key = c.IsFull ? -1 : Mathf.RoundToInt(c.Value);
             if (key != _labelKey)
@@ -104,7 +116,7 @@ namespace BloodRain.Presentation.Hud
                 _labelKey = key;
                 _label.text = c.IsFull ? $"{Loc.T("ui.ultimate.ready")}\n<size=55%>{ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Ultimate) ?? ""}</size>" : $"<size=70%>{c.Value:0}</size>";
             }
-            _label.color = c.IsFull ? new Color(0.12f, 0.10f, 0.09f) : new Color(1f, 0.95f, 0.85f);
+            _label.color = c.IsFull ? new Color32(0xEF, 0xE6, 0xD2, 0xFF) : new Color(1f, 0.95f, 0.85f); // 다 차면 주홍 낙관 위 종이빛 글
 
             // 세상 시간이 멈춘 화면(레벨업·깨달음·보부상)에선 누르지 않는다
             // WP-69U: 오의 키는 조작 재설정을 따른다(8장 기본 E·마우스 오른쪽·RT — 전엔 Space 를 경공과 같이 썼음)
@@ -330,16 +342,57 @@ namespace BloodRain.Presentation.Hud
 
         static float Ez(float t) { t = Mathf.Clamp01(t); return 1f - (1f - t) * (1f - t) * (1f - t); }
 
-        static Texture2D Disc(int n)
+        /// <summary>먹·물감이 번진 원판(흰 바탕 알파, 색은 Image 가 곱함). 가장자리가 조금 들쭉날쭉하고 속에 옅은 결.</summary>
+        static Texture2D Wash(int n, float radius, int seed)
         {
             var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
             var px = new Color32[n * n];
-            float r = n / 2f;
+            var rng = new System.Random(seed);
+            float p1 = (float)rng.NextDouble() * 6.28f, p2 = (float)rng.NextDouble() * 6.28f, p3 = (float)rng.NextDouble() * 6.28f;
+            float c = n / 2f;
             for (int y = 0; y < n; y++)
                 for (int x = 0; x < n; x++)
                 {
-                    float d = Mathf.Sqrt((x + 0.5f - r) * (x + 0.5f - r) + (y + 0.5f - r) * (y + 0.5f - r));
-                    px[y * n + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(r - d) * 255));
+                    float dx = (x + 0.5f - c) / n, dy = (y + 0.5f - c) / n;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy), ang = Mathf.Atan2(dy, dx);
+                    float r = radius * (1f + 0.025f * Mathf.Sin(ang * 5f + p1) + 0.015f * Mathf.Sin(ang * 11f + p2));
+                    float a = Mathf.Clamp01((r - d) * n / 1.5f);
+                    if (a <= 0f) continue;
+                    // 가장자리에 물감이 고여 조금 짙고, 속은 옅은 결
+                    float edge = Mathf.Clamp01(1f - (r - d) / (radius * 0.18f));
+                    float grain = 0.9f + 0.06f * Mathf.Sin(dx * 40f + p3) * Mathf.Sin(dy * 33f - p1) + 0.04f * Mathf.Sin((dx + dy) * 70f);
+                    float v = Mathf.Clamp01(grain - 0.12f * edge);
+                    px[y * n + x] = new Color32((byte)(v * 255), (byte)(v * 255), (byte)(v * 255), (byte)(a * (0.88f + 0.12f * edge) * 255));
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return tex;
+        }
+
+        /// <summary>한 붓 원상(圓相): 들어가는 데가 굵고 돌아 나오며 가늘어지고 끝 쪽은 비백, 처음과 끝 사이가 조금 벌어진다.</summary>
+        static Texture2D Enso(int n)
+        {
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            var rng = new System.Random(3);
+            var streak = new float[9];
+            for (int i = 0; i < streak.Length; i++) streak[i] = (float)rng.NextDouble();
+            float c = n / 2f, a0 = 1.9f; // 왼쪽 위에서 시작
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = (x + 0.5f - c) / c, dy = (y + 0.5f - c) / c;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float u = Mathf.Repeat((a0 - Mathf.Atan2(dy, dx)) / (Mathf.PI * 2f), 1f); // 시계 방향으로 0 → 1
+                    if (u > 0.95f) continue;                                                   // 처음과 끝 사이 틈
+                    float th = Mathf.Lerp(0.11f, 0.035f, Mathf.Pow(u / 0.95f, 1.3f)) * (u < 0.04f ? Mathf.Lerp(0.6f, 1f, u / 0.04f) : 1f);
+                    float r0 = 0.84f + 0.025f * Mathf.Sin(u * 12.566f + 0.7f);
+                    float dd = Mathf.Abs(d - r0);
+                    float a = Mathf.Clamp01((th - dd) / 0.02f);
+                    if (a <= 0f) continue;
+                    int band = Mathf.Clamp((int)(((d - r0) / th * 0.5f + 0.5f) * streak.Length), 0, streak.Length - 1);
+                    if (u > 0.55f && streak[band] > 1.25f - u * 0.6f) a *= 0.25f;              // 끝 쪽 비백
+                    px[y * n + x] = new Color32(255, 255, 255, (byte)(a * 255));
                 }
             tex.SetPixels32(px);
             tex.Apply();
