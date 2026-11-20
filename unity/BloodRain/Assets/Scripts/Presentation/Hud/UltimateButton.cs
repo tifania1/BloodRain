@@ -229,7 +229,7 @@ namespace BloodRain.Presentation.Hud
                     if (fxN != null && fxN.Ready)
                     {
                         float vh = cam.orthographicSize, vw = vh * cam.aspect;
-                        fxN.NeedleRain(new Rect(center.x - vw, center.y - vh, vw * 2f, vh * 2f), 18);
+                        fxN.NeedleRain(new Rect(center.x - vw, center.y - vh, vw * 2f, vh * 2f), 26);
                         _slashT = -1f;
                     }
                     if (cast.Poisons && cast.PoisonTickSeconds > 0f)

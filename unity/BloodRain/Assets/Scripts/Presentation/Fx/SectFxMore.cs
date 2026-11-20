@@ -887,12 +887,18 @@ namespace BloodRain.Presentation.Fx
                 var dir = Dir(a);
                 After(d, () =>
                 {
-                    Add(.1f, (f, k) =>
+                    Add(.12f, (f, k) =>
                     {
-                        var at = p - dir * (1.6f * M * (1f - k));
-                        Quad(1, at, .9f * M, .07f * M, a, new Vector4(.3f, .2f, 2f, .4f), FxRamp.Iron, .9f, 1f, 0f, f.Seed);
+                        var at = p - dir * (2.4f * M * (1f - k));
+                        Quad(1, at, 1.5f * M, .12f * M, a, new Vector4(.3f, .2f, 2f, .4f), FxRamp.Iron, .95f, 1f, 0f, f.Seed);
+                        Glow(1, at + dir * .3f * M, .7f * M, .05f * M, a, new Vector4(.3f, .2f, 2f, .4f), FxRamp.Silver, .8f, 1f, 0f, f.Seed);   // 날 끝 빛
                     });
-                    After(.1f, () => { PoisonBloom(p, Rnd(.7f, 1.1f)); Drops(p, a + Mathf.PI, 3, 5f, FxRamp.PoisonInk, false, .07f, .7f); });
+                    After(.12f, () =>
+                    {
+                        Add(.22f, (g, k) => { float b = 1.5f * M * (1f + k * .6f); Glow(3, p, b, b, g.Seed, new Vector4(7f, .6f, .8f, 0f), FxRamp.Poison, .7f * (1f - k), 1f, k * .5f, g.Seed); });
+                        PoisonBloom(p, Rnd(1.2f, 1.8f));
+                        Drops(p, a + Mathf.PI, 4, 6f, FxRamp.PoisonInk, false, .08f, .7f);
+                    });
                 });
             }
         }
