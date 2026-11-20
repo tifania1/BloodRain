@@ -108,6 +108,11 @@ namespace BloodRain.Presentation.Meta
             var bg = Child("바탕", _root).gameObject.AddComponent<Image>();
             bg.color = PaperBg;
             Stretch(bg.rectTransform);
+            // 2026-11-21 판 바닥·정산과 같은 선지 결과 가장자리 어둡게(납작한 단색 종이였다)
+            var paper = Raw(_root, "Paper", BloodRain.Presentation.Fx.MapLayer.PaperTile, Color.white);
+            paper.uvRect = new Rect(0f, 0f, 1920f / 512f, 1080f / 512f);
+            Raw(_root, "Vignette", BloodRain.Presentation.Fx.MapLayer.VignetteTex, new Color(1f, 1f, 1f, 0.7f));
+            InkUi.Stroke(_root, new Vector2(0, 298), new Vector2(620, 16), new Color(Ink.r, Ink.g, Ink.b, 0.75f));
 
             Place(Text("머리", _root, Loc.T("ui.slot.title"), 56, FontStyles.Bold, Ink).rectTransform, new Vector2(0, 400), new Vector2(1600, 80));
             Place(Text("부제", _root, Loc.T("ui.slot.sub"), 28, FontStyles.Normal, InkLight).rectTransform, new Vector2(0, 335), new Vector2(1600, 40));
@@ -126,6 +131,9 @@ namespace BloodRain.Presentation.Meta
             var rt = (RectTransform)go.transform;
             Place(rt, pos, new Vector2(480, 560));
             go.GetComponent<Image>().color = Card;
+            InkUi.PaperGrainFill(rt, new Vector2(480, 560), 0.3f);
+            InkUi.Frame(rt, Vector2.zero, new Vector2(480, 560), 14f, 1.5f, new Color(Ink.r, Ink.g, Ink.b, s.IsEmpty ? 0.16f : 0.28f));
+            var drop = go.AddComponent<Shadow>(); drop.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.28f); drop.effectDistance = new Vector2(4f, -5f);
             var b = go.GetComponent<Button>();
             var cb = b.colors; cb.highlightedColor = new Color(1.06f, 1.03f, 0.96f); cb.disabledColor = new Color(0.8f, 0.8f, 0.8f, 0.7f); b.colors = cb;
             b.interactable = _ask.Slot == null;
@@ -233,6 +241,8 @@ namespace BloodRain.Presentation.Meta
             b.onClick.AddListener(onClick);
             var rt = (RectTransform)go.transform;
             Place(rt, pos, size);
+            InkUi.PaperGrainFill(rt, size, 0.3f);
+            var edge = go.AddComponent<Outline>(); edge.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.45f); edge.effectDistance = new Vector2(2f, -2f);
             var t = Text("글", rt, label, fontSize, FontStyles.Bold, textColor ?? Ink);
             Stretch(t.rectTransform);
             return rt;
@@ -249,6 +259,15 @@ namespace BloodRain.Presentation.Meta
             t.textWrappingMode = TextWrappingModes.Normal;
             t.raycastTarget = false;
             return t;
+        }
+
+        static RawImage Raw(RectTransform parent, string name, Texture tex, Color c)
+        {
+            var r = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)).GetComponent<RawImage>();
+            r.transform.SetParent(parent, false);
+            r.texture = tex; r.color = c; r.raycastTarget = false;
+            var rt = r.rectTransform; rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = rt.offsetMax = Vector2.zero;
+            return r;
         }
 
         static RectTransform Child(string name, Transform parent)
