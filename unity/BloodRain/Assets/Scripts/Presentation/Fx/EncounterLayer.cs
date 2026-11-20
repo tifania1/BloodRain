@@ -93,6 +93,12 @@ namespace BloodRain.Presentation.Fx
             _lastPos = me;
             float sc = Scale;
             var syn = DataBoot.Data.Synergies;
+            bool dashNow = DashingNow();
+            try { LoopSpots(dt, me, prev, moving, sc, syn, ultNow); } finally { _dashedLastFrame = dashNow; }
+        }
+
+        void LoopSpots(float dt, Vector2 me, Vector2 prev, bool moving, float sc, SynergyDefs syn, bool ultNow)
+        {
             for (int i = _spots.Count - 1; i >= 0; i--)
             {
                 var s = _spots[i];
@@ -171,11 +177,14 @@ namespace BloodRain.Presentation.Fx
         public bool LetterArmed { get; private set; }
         bool TombOpen => _tomb != null && _tomb.IsOpen;
 
-        bool Dashing()
+        // 경공은 짧아(0.2초 안팎) 프레임이 느리면 한 프레임 안에 끝난다. 이번 프레임이나 지난 프레임에 경공 중·경공 무적이었으면 경공으로 본다
+        bool _dashedLastFrame;
+        bool DashingNow()
         {
             var pc = runner != null && runner.player != null ? runner.player.GetComponent<PlayerController>() : null;
-            return pc != null && pc.Dash != null && pc.Dash.IsDashing;
+            return pc != null && pc.Dash != null && (pc.Dash.IsDashing || pc.Dash.Invulnerable);
         }
+        bool Dashing() => DashingNow() || _dashedLastFrame;
 
         /// <summary>이번 프레임에 prev → me 가 벼랑 띠(길이 bandLength, Normal 에 수직)를 넘었나.</summary>
         static bool CrossesBand(Spot s, Vector2 prev, Vector2 me, float sc)
