@@ -213,9 +213,10 @@ namespace BloodRain.Presentation.Meta
             var title = Text(_list, Loc.T("ui.settings.title"), 50, FontStyles.Bold, Paper);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -90), new Vector2(1000, 66));
 
-            const float w = 560, h = 82, gapX = 40, gapY = 14;
+            // 2026-11-21 칸이 열여섯이 되며 마지막 줄이 아래 '조작 재설정·돌아가기' 단추와 겹쳤다 — 칸 높이·사이를 줄임
+            const float w = 560, h = 74, gapX = 40, gapY = 10;
             int rows = (Order.Length + 1) / 2;
-            float top = 320;
+            float top = 330;
             for (int i = 0; i < Order.Length; i++)
             {
                 int col = i / rows, row = i % rows;
@@ -224,8 +225,8 @@ namespace BloodRain.Presentation.Meta
                 var (label, sub) = Label(s, key);
                 Item(pos, new Vector2(w, h), label, sub, () => Turn(key));
             }
-            Item(new Vector2(-180, -400), new Vector2(320, 66), Loc.T("ui.settings.controls"), "", () => { _controlsPage = true; _refused = null; Refill(); });
-            Item(new Vector2(180, -400), new Vector2(320, 66), Loc.T("ui.settings.back"), "", Close);
+            Item(new Vector2(-180, -420), new Vector2(320, 66), Loc.T("ui.settings.controls"), "", () => { _controlsPage = true; _refused = null; Refill(); });
+            Item(new Vector2(180, -420), new Vector2(320, 66), Loc.T("ui.settings.back"), "", Close);
         }
 
         // ---------------------------------------------------------------- 조작 재설정(WP-69U)
@@ -312,6 +313,7 @@ namespace BloodRain.Presentation.Meta
             b.transform.SetParent(frame.transform, false);
             b.GetComponent<Image>().color = Paper;
             Place((RectTransform)b.transform, new Vector2(0.5f, 0.5f), Vector2.zero, size);
+            InkUi.PaperGrainFill((RectTransform)b.transform, size, 0.3f);
             b.onClick.AddListener(() => onClick());
             var t = Text(b.transform, string.IsNullOrEmpty(sub) ? label : $"{label}\n<size=62%><alpha=#99>{sub}", 30, FontStyles.Bold, Ink);
             t.textWrappingMode = TextWrappingModes.NoWrap;
