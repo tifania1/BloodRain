@@ -1328,6 +1328,8 @@
   "ui.stat_help.Lifesteal": "Restore vitality equal to part of the damage you deal",
   "ui.stat_help.FoodHeal": "Food restores more vitality",
   "ui.stat_help.CritChance": "Higher chance of a big hit",
+  "ui.cave.title": "Training Cave",
+  "ui.cave.sub": "Done {0} / {1}  ·  Scroll with the mouse wheel",
   "ui.cave.prologue": "Finish the Prologue",
   "ui.cave.boss_first_kill": "First defeat of {0}",
   "ui.cave.kills_one_run": "Defeat {0} enemies in one life",

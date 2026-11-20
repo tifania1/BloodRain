@@ -1328,6 +1328,8 @@
   "ui.stat_help.Lifesteal": "按造成伤害的一部分回复气血",
   "ui.stat_help.FoodHeal": "食物回复的气血增加",
   "ui.stat_help.CritChance": "造成重击的几率提高",
+  "ui.cave.title": "修炼洞",
+  "ui.cave.sub": "已达成 {0} / {1}  ·  滚动鼠标滚轮",
   "ui.cave.prologue": "完成序章",
   "ui.cave.boss_first_kill": "首次击败{0}",
   "ui.cave.kills_one_run": "一世之内击败{0}名敌人",

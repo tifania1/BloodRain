@@ -953,14 +953,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 새 혼은 침방·연무장만 열리고, 혈정 있는 혼은 약방 짓기 버튼이 켜져 지으면 열림
   - 찍기: `docs/unity_shots/RM-03b/` 의 `inn.png`
 
-- [ ] EL-04U 약방 영약 고르기 · 먼저: RM-03b
+- [ ] EL-04U 약방 영약 고르기 · 먼저: RM-03b (진행: 2026-11-20 대화 세션 — `Meta/ApothecaryScreen` 를 객잔 본채 '약방'에 붙임(1~6 키, 칸은 InnDef.ElixirsAt, 혈정 모자라면 못 고름). 고른 id 는 `RebirthHandoff.Elixirs`, LifeRunner 가 새 생을 만들 때 `Apothecary.TryPrepare` → `TakeElixirs` → 저장. 대환단 레벨업은 LevelUpScreen 이 레벨을 보고 띄움. 남은 것: 혈정 3 이상 봉인석 둘 혼으로 소환단 부활까지 플레이 확인·찍기)
   - 할 것: 침방에서 몸을 고른 뒤(또는 약방 문을 누르면) `Apothecary.IsAvailable(soul)` 이면 영약 여섯 카드(이름·한자·설명·혈정)를 띄워 `elixirsPerLife` 개까지 고르게. 확정하면 `Apothecary.TryPrepare(soul, ids)` → 저장 → 생을 만든 직후 첫 Tick 전에 `life.TakeElixirs(list)`, 돌려받은 `AbsorbResult.LevelUps` 만큼 레벨업 화면을 띄움(대환단). 사망 처리는 지금처럼 `life.TryRevive(stats)` 하나로(소환단이 먼저 나옴).
   - 쓸 것: Core `Meta/Apothecary.cs`, `Run/Life.TakeElixirs`, cheonha.json `inn.elixirs`·`elixirsPerLife`, strings `cheonha.inn.elixirs.*`
   - 메뉴: 없음(Inn 씬 RM-03b 에 붙임)
   - 끝: 혈정 3 이상인 혼으로 소환단을 지니고 나가 한 번 쓰러지면 기혈 30%로 일어남, 혈정이 그만큼 줄어 저장됨, 콘솔 에러 0
   - 찍기: `docs/unity_shots/EL-04U/` 의 `apothecary.png`
 
-- [ ] EL-07U 수련동 도전 과제 목록 · 먼저: RM-03b
+- [ ] EL-07U 수련동 도전 과제 목록 · 먼저: RM-03b (진행: 2026-11-20 대화 세션 — `Meta/CaveScreen`(끌어 내리는 목록, ●/○, 진행·보상 글)을 객잔 본채 '수련동'에 붙임. 남은 것: 봉인석 셋 혼으로 열어 찍기)
   - 할 것: 수련동 문(`Inn.CanEnter(soul, "cave")`)을 누르면 `CaveList.Rows(soul)` 차례대로 한 줄씩: 조건 글(`row.ConditionKey`, 자리에 `Target`·땅의 주인 이름(`Subject`)·문파 수) + 진행 `ui.cave.progress`(`Progress` 가 있을 때) → 보상 글(`Rewards` 종류마다 `ui.cave.reward_*`, 이름은 문파·인물·무공·칭호·깨달음·연무장 능력치 이름 키) → 이룬 줄은 ✓, 못 이룬 줄은 흐리게. 보기만 하는 화면이라 누를 것 없음.
   - 쓸 것: Core `Meta/CaveList.cs`, strings `ui.cave.*`(네 언어), 웹 `caveRows`(같은 줄·같은 차례)
   - 메뉴: 없음(Inn 씬 RM-03b 에 붙임)

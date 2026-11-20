@@ -405,6 +405,8 @@
   "ui.stat_help.Lifesteal": "준 피해의 일부만큼 기혈이 찬다",
   "ui.stat_help.FoodHeal": "음식으로 차는 기혈이 늘어난다",
   "ui.stat_help.CritChance": "피해가 크게 들어갈 확률이 오른다",
+  "ui.cave.title": "수련동 修鍊洞",
+  "ui.cave.sub": "이룬 것 {0} / {1}  ·  마우스 휠로 내린다",
   "ui.cave.prologue": "서장 끝",
   "ui.cave.boss_first_kill": "{0} 첫 처치",
   "ui.cave.kills_one_run": "한 생에서 적 {0} 처치",

@@ -46,6 +46,7 @@ namespace BloodRain.Presentation.Meta
         TrainingScreen _training;
         SmithyScreen _smithy;
         ApothecaryScreen _apothecary;
+        CaveScreen _cave;
         SettingsScreen _settings;
 
         public bool IsOpen => _canvas != null && _canvas.activeSelf;
@@ -92,6 +93,7 @@ namespace BloodRain.Presentation.Meta
                 case "training": OpenTraining(); break;
                 case "smithy": OpenSmithy(); break;
                 case "apothecary": OpenApothecary(); break;
+                case "cave": OpenCave(); break;
                 default: Toast(Loc.F("ui.inn.soon_toast", Name(f))); break;
             }
         }
@@ -119,6 +121,18 @@ namespace BloodRain.Presentation.Meta
             }
             _canvas.SetActive(false);
             _training.Open(_soul);
+        }
+
+        void OpenCave()
+        {
+            if (_cave == null)
+            {
+                _cave = new GameObject("수련동 화면").AddComponent<CaveScreen>();
+                _cave.font = font;
+                _cave.Closed += () => { _canvas.SetActive(true); Refresh(); };
+            }
+            _canvas.SetActive(false);
+            _cave.Open(_soul);
         }
 
         void OpenApothecary()
