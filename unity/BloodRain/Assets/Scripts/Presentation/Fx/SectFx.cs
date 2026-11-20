@@ -161,8 +161,15 @@ namespace BloodRain.Presentation.Fx
             }
         }
 
+        /// <summary>시험용 성능 기록: 지난 프레임에 그린 장 수(Graphics.RenderMesh 한 번 = 한 장), 살아 있는 효과·튐 수.</summary>
+        public static int QuadsLastFrame;
+        static int _quadCount;
+        public int FxCount => _fx.Count;
+        public int DropCount => _drops.Count;
+
         void LateUpdate()
         {
+            QuadsLastFrame = _quadCount; _quadCount = 0;
             if (material == null) return;
             _rp = new RenderParams(material) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
             _z = ZUnder;
@@ -216,6 +223,7 @@ namespace BloodRain.Presentation.Fx
             _mpb.SetColor(IdC1, c.Mid);
             _mpb.SetColor(IdC2, c.Core);
             _z -= 0.0002f;   // 부른 순서대로 위에 쌓인다
+            _quadCount++;
             var m = Matrix4x4.TRS(new Vector3(pos.x, pos.y, _z), Quaternion.Euler(0f, 0f, rot * Mathf.Rad2Deg), new Vector3(w, h, 1f));
             Graphics.RenderMesh(_rp, _quad, 0, m);
         }

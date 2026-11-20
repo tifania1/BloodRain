@@ -1171,6 +1171,8 @@ namespace BloodRain.Presentation.Combat
         }
 
         readonly List<Proj> _projs = new List<Proj>();
+        /// <summary>시험용: 날고 있는 탄 수.</summary>
+        public int ProjCount => _projs.Count;
         readonly List<int> _targets = new List<int>();
         readonly List<int> _one1 = new List<int>(1);
 

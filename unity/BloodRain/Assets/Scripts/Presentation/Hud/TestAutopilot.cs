@@ -17,7 +17,9 @@ namespace BloodRain.Presentation.Hud
         public float fleeRadius = 6f;      // 이 거리 안의 적만 본다(Unity 좌표 = 세계 m)
         public float keepOut = 1.8f;      // 이보다 가까운 적에게서는 물러난다
 
-        float _wanderAngle, _pickWait, _logWait, _clock;
+        float _wanderAngle, _pickWait, _logWait, _clock, _worstMs, _sumUnscaled;
+        int _frames, _quadsMax;
+        BloodRain.Presentation.Fx.SectFx _sfx;
         LevelUpScreen _lu;
         BloodRain.Presentation.Fx.OrbLayer _orbs;
         PlayerController _pc;
@@ -112,13 +114,20 @@ namespace BloodRain.Presentation.Hud
             ControlInput.MoveOverride = Vector2.ClampMagnitude(move, 1f);
 
             _logWait += Time.deltaTime; _clock += Time.deltaTime;
+            // 성능 기록(2026-11-20 사람: 갈수록 끊긴다): 1초 동안 프레임 수·가장 긴 프레임, 그린 이펙트 장 수 최대
+            _frames++; _worstMs = Mathf.Max(_worstMs, Time.unscaledDeltaTime * 1000f); _sumUnscaled += Time.unscaledDeltaTime;
+            _quadsMax = Mathf.Max(_quadsMax, BloodRain.Presentation.Fx.SectFx.QuadsLastFrame);
             if (runner.vitals != null) MinHealthSeen = Mathf.Min(MinHealthSeen, runner.vitals.Health);
             if (_logWait >= 1f)
             {
                 _logWait = 0f;
+                if (_sfx == null) _sfx = FindFirstObjectByType<BloodRain.Presentation.Fx.SectFx>();
+                if (_orbs == null) _orbs = FindFirstObjectByType<BloodRain.Presentation.Fx.OrbLayer>();
+                string perf = $" | fps{(_sumUnscaled > 0f ? _frames / _sumUnscaled : 0f):0} 최장{_worstMs:0}ms 장{_quadsMax} 효과{(_sfx != null ? _sfx.FxCount : 0)} 튐{(_sfx != null ? _sfx.DropCount : 0)} 구슬{(_orbs != null && _orbs.Field != null ? _orbs.Field.Orbs.Count : 0)} 탄{(runner.weapons != null ? runner.weapons.ProjCount : 0)} GC{System.GC.GetTotalMemory(false) / 1048576f:0}MB/{System.GC.CollectionCount(0)}";
+                _frames = 0; _worstMs = 0f; _sumUnscaled = 0f; _quadsMax = 0;
                 var life = runner.Life;
                 if (life != null)
-                    _log.Append($"{(_pc != null && BloodRain.Sim.WorldScale.Current != null ? "장막" + BloodRain.Sim.WorldScale.Current.Scale.PushStrength(new System.Numerics.Vector2(p.x, p.y), new System.Numerics.Vector2(_pc.birthplace.x, _pc.birthplace.y), BloodRain.Sim.WorldScale.Current.Realm).ToString("0.00") + " " : "")}{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId} 맞음{(runner.vitals != null ? runner.vitals.Hits : 0)} 피해{(runner.vitals != null ? runner.vitals.DamageTaken : 0):0} 배속{Time.timeScale:0.##}\n");
+                    _log.Append($"{(_pc != null && BloodRain.Sim.WorldScale.Current != null ? "장막" + BloodRain.Sim.WorldScale.Current.Scale.PushStrength(new System.Numerics.Vector2(p.x, p.y), new System.Numerics.Vector2(_pc.birthplace.x, _pc.birthplace.y), BloodRain.Sim.WorldScale.Current.Realm).ToString("0.00") + " " : "")}{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId} 맞음{(runner.vitals != null ? runner.vitals.Hits : 0)} 피해{(runner.vitals != null ? runner.vitals.DamageTaken : 0):0} 배속{Time.timeScale:0.##}{perf}\n");
             }
         }
 
