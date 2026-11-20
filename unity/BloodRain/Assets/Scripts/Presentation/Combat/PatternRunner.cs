@@ -16,6 +16,7 @@ namespace BloodRain.Presentation.Combat
     //   - 길이·반경은 화면 기준 m 이라 싸움을 건 경지(Fight.Realm) 축척을 곱해 세계에 놓는다.
     //   - 피해 = BossPatterns.ScaleDamage(baseDamage, 싸움을 건 분, 그때 혈운 농도, damagePerMinute). 호신은 PlayerVitals 가 뺀다.
     //   - 지금 그리는 모양: cone(금강장)·summon_ring(십팔나한진)·circles(범종 낙하)·rotating_beams(붉은 빛줄기, 2막).
+    //     예고는 옅은 핏빛 물 + 짙은 테두리 + 판정까지 차오르는 안쪽(DrawTele, 2026-11-21).
     //     다른 땅의 주인 모양은 각자 항목(R-14U·R4-02U)에서 이 틀에 더한다.
     //   - BR-03 범종 낙하(leaveGimmick bell)는 원 자리마다 Core BellGimmick 을 남긴다. 닿으면 울려 둘레 적을 세우고(보스는 Stun),
     //     한 번 울렸거나 수명이 다하면 치운다. 싸움이 끝나도 남은 수명만큼은 둔다(웹 G.bells).
@@ -73,6 +74,9 @@ namespace BloodRain.Presentation.Combat
             public float Start;
             public GameObject Vis;
             public float FadeLeft = -1f;
+            // 그림 다시 그리기용(2026-11-21): 반경·길이·폭은 세계 길이, Offs 는 Center 기준 원 자리
+            public float R, Len, Wid;
+            public Vector2[] Offs;
         }
 
         void Awake() => Instance = this;
@@ -291,18 +295,19 @@ namespace BloodRain.Presentation.Combat
                 {
                     case "cone":
                         t.Center = boss;
-                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
-                        SetFan(t.Vis, Vector2.zero, p.Radius * _factor, t.Facing, p.AngleDegrees);
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        t.R = p.Radius * _factor;
                         break;
                     case "summon_ring":
-                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.35f), 2);
-                        SetRing(t.Vis, Vector2.zero, p.Radius * _factor, 0.25f * _factor);
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        t.R = p.Radius * _factor; t.Wid = 0.25f * _factor;
                         break;
                     case "circles":
                         var offs = BossPatterns.ScatterOffsets(p, _rng);
                         t.Circles = offs.Select(o => player + new Vector2(o.x, o.y) * _factor).ToArray();
-                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
-                        SetCircles(t.Vis, t.Circles.Select(c => c - player).ToArray(), p.Radius * _factor);
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        t.Offs = t.Circles.Select(c => c - player).ToArray();
+                        t.R = p.Radius * _factor;
                         t.Center = player;
                         break;
                     case "rotating_beams":
@@ -310,24 +315,24 @@ namespace BloodRain.Presentation.Combat
                         break;
                     case "bind_line":
                         t.Center = boss;
-                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
-                        SetBeam(t.Vis, p.Length * _factor, p.Width * _factor, t.Facing);
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        t.Len = p.Length * _factor; t.Wid = p.Width * _factor;
                         break;
                     case "summon":
-                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.3f), 2);
-                        SetRing(t.Vis, Vector2.zero, p.Scatter * _factor, 0.15f * _factor);
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        t.R = p.Scatter * _factor; t.Wid = 0.15f * _factor;
                         break;
                     case "jump_slam":
                         t.Cast = -100; // 판정은 _later 가 뛸 때마다 한다(Resolve 가 지우지 않게)
-                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
-                        SetCircles(t.Vis, new[] { Vector2.zero }, p.Radius * _factor);
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        t.Offs = new[] { Vector2.zero }; t.R = p.Radius * _factor;
                         ScheduleJumps(p, e.At, t);
                         break;
                     default:
                         Debug.LogWarning($"[PatternRunner] 아직 안 그리는 모양 {p.Shape} ({p.Id})");
                         break;
                 }
-                if (t.Vis != null) t.Vis.transform.position = new Vector3(t.Center.x, t.Center.y, 0f);
+                if (t.Vis != null) { t.Vis.transform.position = new Vector3(t.Center.x, t.Center.y, 0f); DrawTele(t, 0f, 0f); }
                 _teles.Add(t);
                 LastEvent = $"예고 {p.NameKo}";
                 return;
@@ -391,8 +396,8 @@ namespace BloodRain.Presentation.Combat
             if (tele != null)
             {
                 // 판정 순간 밝게 번쩍이고 사라진다
-                tele.FadeLeft = 0.25f;
-                SetColor(tele.Vis, new Color(1f, 0.25f, 0.15f, 0.6f));
+                tele.FadeLeft = TeleFlashSeconds;
+                DrawTele(tele, 1f, 1f);
             }
         }
 
@@ -409,9 +414,10 @@ namespace BloodRain.Presentation.Combat
                     {
                         Vector2 pl = runner.player.position;
                         var t = new Tele { P = p, Cast = -100 - kk, Start = _patterns.Elapsed, Center = pl };
-                        t.Vis = Shape(p.Id, new Color(0.8f, 0.05f, 0.05f, 0.25f), 2);
-                        SetCircles(t.Vis, new[] { Vector2.zero }, p.Radius * _factor);
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        t.Offs = new[] { Vector2.zero }; t.R = p.Radius * _factor;
                         t.Vis.transform.position = new Vector3(pl.x, pl.y, 0f);
+                        DrawTele(t, 0f, 0f);
                         _teles.Add(t);
                         slot[0] = t;
                     }));
@@ -426,8 +432,8 @@ namespace BloodRain.Presentation.Combat
                     if (BossPatterns.InCircle(p.Radius, d.x, d.y, PlayerRadius) && runner.vitals != null && runner.vitals.Hit(Scaled(p.BaseDamage)))
                         PlayerHits[p.Id] = PlayerHits.TryGetValue(p.Id, out var h) ? h + 1 : 1;
                     JumpLands++;
-                    t.FadeLeft = 0.25f;
-                    SetColor(t.Vis, new Color(1f, 0.25f, 0.15f, 0.6f));
+                    t.FadeLeft = TeleFlashSeconds;
+                    DrawTele(t, 1f, 1f);
                 }));
             }
         }
@@ -473,14 +479,15 @@ namespace BloodRain.Presentation.Combat
                 {
                     t.FadeLeft -= Time.deltaTime;
                     if (t.FadeLeft < 0f) Remove(t);
+                    else DrawTele(t, 1f, t.FadeLeft / TeleFlashSeconds);
                     continue;
                 }
                 if (t.Vis == null) continue;
                 // 십팔나한진: 예고 동안 원이 플레이어를 따라온다(판정 순간 그 자리에 선다)
                 if (t.P.Center == "player_at_resolve") { t.Center = player; t.Vis.transform.position = new Vector3(player.x, player.y, 0f); }
-                // 판정이 다가올수록 짙게
+                // 판정이 다가올수록 안쪽이 차오르고 테두리가 짙어진다
                 float k = t.P.TelegraphSeconds > 0f ? Mathf.Clamp01((_patterns.Elapsed - t.Start) / t.P.TelegraphSeconds) : 1f;
-                SetColor(t.Vis, new Color(0.8f, 0.05f, 0.05f, Mathf.Lerp(0.15f, 0.45f, k)));
+                DrawTele(t, k, 0f);
             }
         }
 
@@ -510,8 +517,7 @@ namespace BloodRain.Presentation.Combat
                     while (_beamVis.Count <= vi) _beamVis.Add(Shape("붉은 빛줄기", Color.red, 3));
                     var go = _beamVis[vi++];
                     go.transform.position = new Vector3(boss.x, boss.y, 0f);
-                    SetBeam(go, p.Length * _factor, p.Width * _factor, deg);
-                    SetColor(go, on == null ? new Color(0.9f, 0.1f, 0.1f, 0.15f) : new Color(0.95f, 0.08f, 0.1f, 0.6f));
+                    DrawBeam(go, p.Length * _factor, p.Width * _factor, deg, on != null);
                     if (on != null && BossPatterns.InBeam(p, d.x, d.y, deg, PlayerRadius)) hitNow = true;
                 }
                 if (hitNow && _beamHitLeft <= 0f && runner.vitals != null)
@@ -587,7 +593,7 @@ namespace BloodRain.Presentation.Combat
             _bells.Clear();
         }
 
-        // ---- 그리기(바닥 붉은 그림자. 붓 획 예고는 vfx.md 대로 나중에) ----
+        // ---- 그리기(범종·땅의 주인 표시는 단색 메쉬. 예고는 아래 '예고 그림') ----
 
         /// <summary>예고 그림을 지운다. Shape 가 그림마다 새로 만든 Mesh 도 같이(GameObject 만 지우면 Mesh 가 남아 땅의 주인 싸움 내내 쌓였다, 2026-11-20).</summary>
         static void Kill(GameObject go)
@@ -637,20 +643,6 @@ namespace BloodRain.Presentation.Combat
             m.RecalculateBounds();
         }
 
-        static void SetFan(GameObject go, Vector2 c, float r, float facing, float angle)
-        {
-            var v = new List<Vector3> { c };
-            var tri = new List<int>();
-            int seg = Mathf.Max(6, Mathf.CeilToInt(angle / 4f));
-            for (int i = 0; i <= seg; i++)
-            {
-                float a = (facing - angle * 0.5f + angle * i / seg) * Mathf.Deg2Rad;
-                v.Add(c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r);
-                if (i > 0) { tri.Add(0); tri.Add(i + 1); tri.Add(i); }
-            }
-            Apply(go, v, tri);
-        }
-
         static void SetRing(GameObject go, Vector2 c, float r, float w)
         {
             var v = new List<Vector3>();
@@ -691,13 +683,181 @@ namespace BloodRain.Presentation.Combat
             Apply(go, v, tri);
         }
 
-        static void SetBeam(GameObject go, float length, float width, float deg)
+        // ---- 예고 그림(2026-11-21) ----
+        // 예전엔 납작한 붉은 판 한 장이 짙어지기만 했다. 이제 옅은 핏빛 물(가운데 묽고 가장자리 짙게) + 짙은 테두리(= 맞는 경계)
+        // + 판정까지 안쪽에서 차오르는 물(차오름이 테두리에 닿는 순간이 판정)로 그린다. 판정 순간 밝은 핏빛으로 번쩍이고 스러진다.
+        // 모양은 판정 모양 그대로(원·부채꼴·띠·고리). 색은 모두 DangerColors(색각 보정)를 거친다. 메쉬는 예고마다 하나(Kill 이 지움).
+        static readonly Color TeleWash = new Color(0.62f, 0.04f, 0.05f, 0.25f);
+        static readonly Color TeleRim = new Color(0.36f, 0.02f, 0.03f, 1f);
+        static readonly Color TeleHot = new Color(1f, 0.25f, 0.15f, 1f);
+        const float TeleFlashSeconds = 0.25f;
+
+        sealed class MeshBuf
         {
-            float a = deg * Mathf.Deg2Rad;
-            var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+            public readonly List<Vector3> V = new List<Vector3>();
+            public readonly List<Color> C = new List<Color>();
+            public readonly List<int> T = new List<int>();
+            public void Clear() { V.Clear(); C.Clear(); T.Clear(); }
+        }
+        static readonly MeshBuf _buf = new MeshBuf();
+
+        static Color A(Color c, float a) { c.a = Mathf.Clamp01(a); return c; }
+        static Vector2 Dir(float deg) { float a = deg * Mathf.Deg2Rad; return new Vector2(Mathf.Cos(a), Mathf.Sin(a)); }
+        static void Push(MeshBuf b, Vector2 p, Color c) { b.V.Add(p); b.C.Add(c); }
+
+        static void BufDisc(MeshBuf b, Vector2 c, float r, Color cIn, Color cOut, int seg = 40)
+        {
+            if (r <= 1e-4f) return;
+            int o = b.V.Count;
+            Push(b, c, cIn);
+            for (int i = 0; i <= seg; i++)
+            {
+                Push(b, c + Dir(360f * i / seg) * r, cOut);
+                if (i > 0) { b.T.Add(o); b.T.Add(o + i + 1); b.T.Add(o + i); }
+            }
+        }
+
+        static void BufRing(MeshBuf b, Vector2 c, float r, float w, Color col, float from = 0f, float span = 360f)
+        {
+            if (r <= 1e-4f) return;
+            int o = b.V.Count, seg = Mathf.Max(8, Mathf.CeilToInt(span / 6f));
+            for (int i = 0; i <= seg; i++)
+            {
+                var d = Dir(from + span * i / seg);
+                Push(b, c + d * Mathf.Max(0f, r - w * 0.5f), col);
+                Push(b, c + d * (r + w * 0.5f), col);
+                if (i > 0) { int k = o + i * 2; b.T.Add(k - 2); b.T.Add(k - 1); b.T.Add(k); b.T.Add(k - 1); b.T.Add(k + 1); b.T.Add(k); }
+            }
+        }
+
+        static void BufFan(MeshBuf b, Vector2 c, float r, float facing, float angle, Color cIn, Color cOut)
+        {
+            if (r <= 1e-4f) return;
+            int o = b.V.Count, seg = Mathf.Max(6, Mathf.CeilToInt(angle / 4f));
+            Push(b, c, cIn);
+            for (int i = 0; i <= seg; i++)
+            {
+                Push(b, c + Dir(facing - angle * 0.5f + angle * i / seg) * r, cOut);
+                if (i > 0) { b.T.Add(o); b.T.Add(o + i + 1); b.T.Add(o + i); }
+            }
+        }
+
+        static void BufLine(MeshBuf b, Vector2 p0, Vector2 p1, float w, Color col)
+        {
+            var d = p1 - p0;
+            if (d.sqrMagnitude < 1e-8f) return;
+            var n = new Vector2(-d.y, d.x).normalized * (w * 0.5f);
+            int o = b.V.Count;
+            Push(b, p0 - n, col); Push(b, p0 + n, col); Push(b, p1 + n, col); Push(b, p1 - n, col);
+            b.T.Add(o); b.T.Add(o + 2); b.T.Add(o + 1); b.T.Add(o); b.T.Add(o + 3); b.T.Add(o + 2);
+        }
+
+        // c 에서 deg 쪽으로 length 뻗는 폭 width 띠. 가운데 줄 cMid, 양 가장자리 cEdge
+        static void BufBeam(MeshBuf b, Vector2 c, float length, float width, float deg, Color cMid, Color cEdge)
+        {
+            if (length <= 1e-4f) return;
+            var dir = Dir(deg);
             var n = new Vector2(-dir.y, dir.x) * (width * 0.5f);
-            var v = new List<Vector3> { -n, n, dir * length + n, dir * length - n };
-            Apply(go, v, new List<int> { 0, 2, 1, 0, 3, 2 });
+            var e = c + dir * length;
+            int o = b.V.Count;
+            Push(b, c - n, cEdge); Push(b, c, cMid); Push(b, c + n, cEdge);
+            Push(b, e - n, cEdge); Push(b, e, cMid); Push(b, e + n, cEdge);
+            b.T.Add(o); b.T.Add(o + 4); b.T.Add(o + 1); b.T.Add(o); b.T.Add(o + 3); b.T.Add(o + 4);
+            b.T.Add(o + 1); b.T.Add(o + 5); b.T.Add(o + 2); b.T.Add(o + 1); b.T.Add(o + 4); b.T.Add(o + 5);
+        }
+
+        static void BufBeamRim(MeshBuf b, Vector2 c, float length, float width, float deg, float w, Color col)
+        {
+            var dir = Dir(deg);
+            var n = new Vector2(-dir.y, dir.x) * (width * 0.5f);
+            var e = c + dir * length;
+            BufLine(b, c - n, e - n, w, col);
+            BufLine(b, c + n, e + n, w, col);
+            BufLine(b, e - n, e + n, w, col);
+        }
+
+        static void ApplyBuf(GameObject go, MeshBuf b)
+        {
+            if (go == null) return;
+            var m = go.GetComponent<MeshFilter>().sharedMesh;
+            m.Clear();
+            m.SetVertices(b.V);
+            m.SetColors(b.C);
+            m.SetTriangles(b.T, 0);
+            m.RecalculateBounds();
+        }
+
+        /// <summary>예고 하나를 다시 그린다. k = 판정까지 진행(0~1), flash = 판정 번쩍임(1 에서 0 으로).</summary>
+        void DrawTele(Tele t, float k, float flash)
+        {
+            if (t.Vis == null) return;
+            var b = _buf;
+            b.Clear();
+            Color wash = Hud.DangerColors.Of(TeleWash), rim = Hud.DangerColors.Of(TeleRim), hot = Hud.DangerColors.Of(TeleHot);
+            bool fl = flash > 0f;
+            if (fl) { wash = Color.Lerp(wash, hot, 0.55f); rim = Color.Lerp(rim, hot, 0.6f); }
+            float aIn = fl ? 0.4f * flash : 0.05f, aOut = fl ? 0.6f * flash : 0.2f + 0.1f * k;
+            float aFill = fl ? 0f : 0.14f + 0.14f * k, aRim = fl ? flash : 0.5f + 0.45f * k;
+            float rw = 0.07f * _factor;                 // 테두리 굵기(화면 m 0.07)
+            var p = t.P;
+            switch (p.Shape)
+            {
+                case "circles":
+                case "jump_slam":
+                    if (t.Offs == null) break;
+                    foreach (var o in t.Offs)
+                    {
+                        BufDisc(b, o, t.R, A(wash, aIn), A(wash, aOut));
+                        if (aFill > 0f) BufDisc(b, o, t.R * k, A(wash, aFill), A(wash, aFill * 1.5f));
+                        BufRing(b, o, t.R, rw, A(rim, aRim));
+                    }
+                    break;
+                case "cone":
+                {
+                    float ang = p.AngleDegrees;
+                    BufFan(b, Vector2.zero, t.R, t.Facing, ang, A(wash, aIn), A(wash, aOut));
+                    if (aFill > 0f) BufFan(b, Vector2.zero, t.R * k, t.Facing, ang, A(wash, aFill), A(wash, aFill * 1.5f));
+                    BufRing(b, Vector2.zero, t.R, rw, A(rim, aRim), t.Facing - ang * 0.5f, ang);
+                    if (ang < 359f)
+                    {
+                        BufLine(b, Vector2.zero, Dir(t.Facing - ang * 0.5f) * t.R, rw, A(rim, aRim));
+                        BufLine(b, Vector2.zero, Dir(t.Facing + ang * 0.5f) * t.R, rw, A(rim, aRim));
+                    }
+                    break;
+                }
+                case "bind_line":
+                    BufBeam(b, Vector2.zero, t.Len, t.Wid, t.Facing, A(wash, aIn), A(wash, aOut));
+                    if (aFill > 0f) BufBeam(b, Vector2.zero, t.Len * k, t.Wid, t.Facing, A(wash, aFill), A(wash, aFill * 1.5f));
+                    BufBeamRim(b, Vector2.zero, t.Len, t.Wid, t.Facing, rw, A(rim, aRim));
+                    break;
+                default: // summon_ring·summon: 적이 솟을 고리 띠. 차오름 대신 띠가 짙어지고 안팎 테두리
+                    BufRing(b, Vector2.zero, t.R, t.Wid, A(wash, fl ? 0.6f * flash : 0.18f + 0.3f * k));
+                    BufRing(b, Vector2.zero, t.R - t.Wid * 0.5f, rw * 0.7f, A(rim, aRim * 0.8f));
+                    BufRing(b, Vector2.zero, t.R + t.Wid * 0.5f, rw * 0.7f, A(rim, aRim * 0.8f));
+                    break;
+            }
+            ApplyBuf(t.Vis, b);
+        }
+
+        /// <summary>2막 붉은 빛줄기. 켜지기 전엔 옅은 띠와 테두리, 켜지면 가운데가 밝은 핏빛 빛줄기.</summary>
+        void DrawBeam(GameObject go, float length, float width, float deg, bool on)
+        {
+            var b = _buf;
+            b.Clear();
+            Color wash = Hud.DangerColors.Of(TeleWash), rim = Hud.DangerColors.Of(TeleRim), hot = Hud.DangerColors.Of(TeleHot);
+            float rw = 0.06f * _factor;
+            if (on)
+            {
+                BufBeam(b, Vector2.zero, length, width * 1.25f, deg, A(wash, 0.35f), A(wash, 0f));   // 번짐
+                BufBeam(b, Vector2.zero, length, width, deg, A(hot, 0.8f), A(wash, 0.5f));
+                BufBeamRim(b, Vector2.zero, length, width, deg, rw, A(rim, 0.75f));
+            }
+            else
+            {
+                BufBeam(b, Vector2.zero, length, width, deg, A(wash, 0.06f), A(wash, 0.2f));
+                BufBeamRim(b, Vector2.zero, length, width, deg, rw, A(rim, 0.45f));
+            }
+            ApplyBuf(go, b);
         }
 
         // ---- 시험 ----
