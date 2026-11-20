@@ -192,13 +192,24 @@ namespace BloodRain.Presentation.Fx
         {
             const int N = 64;
             var px = new Color[N * N];
+            // 2026-11-21 고른 삼각형 → 화살촉: 뒤가 오목하게 파이고 가장자리가 붓처럼 들쭉날쭉, 뒤쪽은 비백
+            var rng = new System.Random(9);
+            var ragT = new float[N]; var ragB = new float[N];
+            float et = 0f, eb = 0f;
+            for (int i = 0; i < N; i++)
+            {
+                et = Mathf.Clamp(et + ((float)rng.NextDouble() - 0.5f) * 0.06f, -0.04f, 0.04f); ragT[i] = et;
+                eb = Mathf.Clamp(eb + ((float)rng.NextDouble() - 0.5f) * 0.06f, -0.04f, 0.04f); ragB[i] = eb;
+            }
             for (int y = 0; y < N; y++)
                 for (int x = 0; x < N; x++)
                 {
                     float u = (x + 0.5f) / N, v = (y + 0.5f) / N - 0.5f;
-                    // 오른쪽을 가리키는 붓끝 삼각형
-                    float half = 0.42f * (1f - u);
-                    float a = Mathf.Clamp01((half - Mathf.Abs(v)) * N * 0.7f) * Mathf.Clamp01((u - 0.08f) * N * 0.5f);
+                    // 오른쪽을 가리키는 화살촉
+                    float half = (0.44f + (v > 0f ? ragT[x] : ragB[x])) * (1f - u);
+                    float back = 0.08f + 0.26f * Mathf.Abs(v) / 0.44f; // 오목한 뒤
+                    float a = Mathf.Clamp01((half - Mathf.Abs(v)) * N * 0.7f) * Mathf.Clamp01((u - back) * N * 0.5f);
+                    if (u < 0.4f && ((int)((v + 0.5f) * 11f) % 3 == 0)) a *= Mathf.Lerp(0.45f, 1f, u / 0.4f); // 뒤쪽 비백
                     px[y * N + x] = new Color(1, 1, 1, a);
                 }
             var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { name = "화살표", wrapMode = TextureWrapMode.Clamp };
