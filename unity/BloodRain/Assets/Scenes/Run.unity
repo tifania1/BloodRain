@@ -2687,6 +2687,12 @@ MonoBehaviour:
   showStats: 1
   damageMultiplier: 1
   enemyArt:
+  - {fileID: 2800000, guid: aed9dddb6a45451290039a8e181472cf, type: 3}
+  - {fileID: 2800000, guid: a651c37fbdd540e2a88226e82d96cc7e, type: 3}
+  - {fileID: 2800000, guid: 8ca0dea992f74f3e8ca1b4754e8fcac0, type: 3}
+  - {fileID: 2800000, guid: 9ef41ce5f05640b5bfad7475d2d390ca, type: 3}
+  - {fileID: 2800000, guid: fe2c0193878345a1b149b5b62b77f45e, type: 3}
+  - {fileID: 2800000, guid: 856626dbc6584602b0fe0085f169fcea, type: 3}
   - {fileID: 2800000, guid: 3b81e35faf3a4b96b890bd339163b81d, type: 3}
   - {fileID: 2800000, guid: 5d05c00150e0468bafd132a3fda9ca91, type: 3}
   - {fileID: 2800000, guid: 514c4b534c014978a7b436865132bce3, type: 3}
@@ -2695,11 +2701,13 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 5bbd79594f4440d68d17446cc0a91cef, type: 3}
   - {fileID: 2800000, guid: 6cea54c7329e4cdf9a561f73daf85c82, type: 3}
   - {fileID: 2800000, guid: 76f174ce17444922b8434be942367fe0, type: 3}
+  - {fileID: 2800000, guid: 6fec03bb4c9e4ee9ab4fc8fd875047b9, type: 3}
   - {fileID: 2800000, guid: ae52cdd278be4da5a239140385e381f0, type: 3}
   - {fileID: 2800000, guid: c5f64fb236d243aea154e981d8b90896, type: 3}
   - {fileID: 2800000, guid: 777069014aa94b25a4739960cc401707, type: 3}
   - {fileID: 2800000, guid: 3feabae1de8c42b784f458c6a289fbf2, type: 3}
   - {fileID: 2800000, guid: b56e72c94aa542adbf0165dcdde10814, type: 3}
+  - {fileID: 2800000, guid: 1732b5d0af734dbea70da771917db361, type: 3}
   - {fileID: 2800000, guid: bde36fd5d7a84854879ed5819cfc5fde, type: 3}
   - {fileID: 2800000, guid: 09b1686766094d8895832dc591e210b5, type: 3}
   - {fileID: 2800000, guid: 1d13687d917249fba079482f5d12f153, type: 3}
@@ -2714,6 +2722,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 862bf19b8ace4ecc9fa16c9fc4d89664, type: 3}
   - {fileID: 2800000, guid: f95bde81f6a14f55a027486f836a8cc1, type: 3}
   - {fileID: 2800000, guid: cb75ce52d1be49cdbc55ae60fa03b5bb, type: 3}
+  - {fileID: 2800000, guid: a6dbdefa406841519a42031f9d15be0b, type: 3}
   - {fileID: 2800000, guid: af0822ffe8224c5bb5d6b8e9f982421f, type: 3}
   - {fileID: 2800000, guid: f82c51169be34d8bad0f6edbf93cc40f, type: 3}
   levelUp: {fileID: 0}
