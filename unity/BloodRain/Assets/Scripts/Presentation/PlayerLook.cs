@@ -208,8 +208,45 @@ namespace BloodRain.Presentation
             float spriteUnits = sprites[found].rect.height / sprites[found].pixelsPerUnit;
             _height = person / bv; // 그림 전체 높이(부모 칸)
             _body.localScale = Vector3.one * (_height / spriteUnits);
+            MakeShadow(person);
             _last = transform.position;
             Place(0f, 0f);
+        }
+
+        static Sprite _shadowSprite;
+
+        /// <summary>
+        /// 발밑 먹 그림자(2026-11-21 — 옅은 몸이 같은 빛의 돌바닥·종이 위에서 묻혀 내 자리가 잘 안 보였다).
+        /// 몸 밑에 옅게 번지는 납작한 먹 타원 하나. 몸과 같이 기울거나 튀지 않는다.
+        /// </summary>
+        void MakeShadow(float person)
+        {
+            if (_shadowSprite == null)
+            {
+                const int n = 64;
+                var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+                var px = new Color32[n * n];
+                float c = (n - 1) / 2f;
+                for (int y = 0; y < n; y++)
+                    for (int x = 0; x < n; x++)
+                    {
+                        float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c)) / c;
+                        float a = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.2f, 1f, d));
+                        px[y * n + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                    }
+                tex.SetPixels32(px);
+                tex.Apply();
+                _shadowSprite = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), n);
+            }
+            var go = new GameObject("FootShadow");
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = new Vector3(0f, person * 0.02f, 0f);
+            go.transform.localScale = new Vector3(person * 0.62f, person * 0.2f, 1f);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = _shadowSprite;
+            sr.color = new Color(0.1f, 0.08f, 0.07f, 0.42f);
+            sr.sortingLayerID = Renderer.sortingLayerID;
+            sr.sortingOrder = Renderer.sortingOrder - 2;
         }
 
         void Place(float bob, float tilt)
