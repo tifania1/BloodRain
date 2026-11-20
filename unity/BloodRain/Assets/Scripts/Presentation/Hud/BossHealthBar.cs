@@ -18,7 +18,6 @@ namespace BloodRain.Presentation.Hud
         public float height = 12f;
 
         static readonly Color InkLine = new Color(0.10f, 0.08f, 0.07f, 0.8f);
-        static readonly Color Back = new Color(0.96f, 0.93f, 0.85f, 0.45f);
         static readonly Color Blood = new Color32(150, 22, 18, 255);
         static readonly Color Lag = new Color(0.85f, 0.65f, 0.55f, 0.9f);
         static readonly Color TextInk = new Color(0.12f, 0.10f, 0.09f, 1f);
@@ -49,7 +48,7 @@ namespace BloodRain.Presentation.Hud
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
             rt.pivot = new Vector2(0.5f, 1f);
             rt.anchoredPosition = new Vector2(0f, -top);
-            rt.sizeDelta = new Vector2(width, height + 34f);
+            rt.sizeDelta = new Vector2(width, StrokeH + 30f);
 
             var nameGo = new GameObject("이름", typeof(RectTransform), typeof(TextMeshProUGUI));
             nameGo.transform.SetParent(rt, false);
@@ -64,33 +63,28 @@ namespace BloodRain.Presentation.Hud
             nr.anchoredPosition = Vector2.zero;
             nr.sizeDelta = new Vector2(0f, 30f);
 
-            var frame = Bar("테", InkLine, rt, new Vector2(width + 4f, height + 4f));
-            var back = Bar("바탕", Back, frame, new Vector2(width, height));
-            _lag = Bar("늦은 칸", Lag, back, new Vector2(width, height), true);
-            _fill = Bar("기혈", Blood, back, new Vector2(width, height), true);
+            // 2026-11-21 납작한 네모 막대 → 붓 획 한 줄(먹 바탕 획 위에 핏빛 획이 줄어든다). 줄어든 끝은 텍스처를 잘라 보여 획이 눌리지 않는다
+            var back = Stroke("바탕", new Color(InkLine.r, InkLine.g, InkLine.b, 0.55f), rt, new Vector2(width, StrokeH), false);
+            _lagImg = Stroke("늦은 칸", Lag, back, new Vector2(width, StrokeH), true);
+            _fillImg = Stroke("기혈", Blood, back, new Vector2(width, StrokeH), true);
+            _lag = _lagImg.rectTransform; _fill = _fillImg.rectTransform;
             _root.SetActive(false);
         }
 
-        static RectTransform Bar(string name, Color c, RectTransform parent, Vector2 size, bool fromLeft = false)
+        const float StrokeH = 26f;
+        RawImage _fillImg, _lagImg;
+
+        static RawImage Stroke(string name, Color c, RectTransform parent, Vector2 size, bool fromLeft)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(parent, false);
-            go.GetComponent<Image>().color = c;
-            var r = (RectTransform)go.transform;
-            if (fromLeft)
-            {
-                r.anchorMin = r.anchorMax = new Vector2(0f, 0.5f);
-                r.pivot = new Vector2(0f, 0.5f);
-                r.anchoredPosition = Vector2.zero;
-            }
-            else
-            {
-                r.anchorMin = r.anchorMax = new Vector2(0.5f, 0f);
-                r.pivot = new Vector2(0.5f, 0f);
-                r.anchoredPosition = Vector2.zero;
-            }
+            var img = new GameObject(name, typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+            img.transform.SetParent(parent, false);
+            img.texture = InkUi.BrushStroke; img.color = c; img.raycastTarget = false;
+            var r = img.rectTransform;
+            if (fromLeft) { r.anchorMin = r.anchorMax = new Vector2(0f, 0.5f); r.pivot = new Vector2(0f, 0.5f); }
+            else { r.anchorMin = r.anchorMax = new Vector2(0.5f, 0f); r.pivot = new Vector2(0.5f, 0f); }
+            r.anchoredPosition = Vector2.zero;
             r.sizeDelta = size;
-            return r;
+            return img;
         }
 
         /// <summary>시험용: 지금 보이는가.</summary>
@@ -114,8 +108,10 @@ namespace BloodRain.Presentation.Hud
             float dt = Time.unscaledDeltaTime;
             _shown = Mathf.MoveTowards(_shown, ratio, dt * 2f);
             _lagShown = _lagShown < _shown ? _shown : Mathf.MoveTowards(_lagShown, _shown, dt * 0.35f);
-            _fill.sizeDelta = new Vector2(width * _shown, height);
-            _lag.sizeDelta = new Vector2(width * _lagShown, height);
+            _fill.sizeDelta = new Vector2(width * _shown, StrokeH);
+            _lag.sizeDelta = new Vector2(width * _lagShown, StrokeH);
+            _fillImg.uvRect = new Rect(0f, 0f, _shown, 1f);
+            _lagImg.uvRect = new Rect(0f, 0f, _lagShown, 1f);
         }
     }
 }
