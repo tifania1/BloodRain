@@ -167,7 +167,10 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0.3f, es.Single(e => e.Id == "seolsam").MaxHealth);
             Assert.Equal(2f, es.Single(e => e.Id == "hyeoljeongdan").BloodCrystalMultiplier);
             Assert.Equal(600f, es.Single(e => e.Id == "taegeukhwan").YinyangFreezeSeconds);
-            Assert.Equal(1, C.Inn.ElixirsPerLife);   // '약방 3단계에서 2개'는 단계가 정해진 뒤
+            Assert.Equal(1, C.Inn.ElixirsPerLife);   // 2026-11-20 EL-01a: 봉인석 다섯이면 2개(단계 없이)
+            Assert.Equal(1, C.Inn.ElixirsAt(4));
+            Assert.Equal(2, C.Inn.ElixirsAt(5));
+            Assert.Contains("봉인석 다섯을 모으면 2개", TestData.Gdd);
         }
 
         [Fact] public void 영약은_약방이_있어야_혈정을_써서_지닌다()

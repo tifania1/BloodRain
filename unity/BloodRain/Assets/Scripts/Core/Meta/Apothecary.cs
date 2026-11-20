@@ -21,7 +21,7 @@ namespace BloodRain.Core.Meta
         {
             var inn = soul.Data.Cheonha.Inn;
             if (ids.Count == 0) return new List<ElixirDef>();
-            if (!IsAvailable(soul) || ids.Count > inn.ElixirsPerLife || ids.Distinct().Count() != ids.Count) return null;
+            if (!IsAvailable(soul) || ids.Count > inn.ElixirsAt(soul.SealStoneCount) || ids.Distinct().Count() != ids.Count) return null;
             var picked = new List<ElixirDef>();
             foreach (var id in ids)
             {

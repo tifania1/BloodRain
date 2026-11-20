@@ -4243,7 +4243,9 @@ const curLifeSect = () => (NEXT_LIFE ? SECT_BY[NEXT_LIFE.sect] : LIFE_SECT);
 // 정산 때 처음 조건을 갖춘 시설과 지난 귀환 뒤 지은 시설은 다음 귀환의 운낭 facility:<id> 줄로(Core LifeSummary.NewFacilities + Inn.TryBuild)
 const INN_F = DATA.innFacilities || [];
 // 약방 영약(10장 '영약(약방)', cheonha.json inn.elixirs, Core Apothecary·Life.TakeElixirs): 약방에 들어갈 수 있으면 elixirsPerLife 개까지 골라 몸을 고를 때 혈정을 쓰고 지니고 나간다
-const ELIX = DATA.innElixirs || [], ELIX_MAX = DATA.elixirsPerLife || 1;
+const ELIX = DATA.innElixirs || [], ELIX_BASE = DATA.elixirsPerLife || 1;
+// EL-01a: 봉인석 elixirsMore.sealStones 개면 elixirsMore.elixirsPerLife 개(Core InnDef.ElixirsAt)
+const elixMax = seals => (DATA.elixirsMore && DATA.elixirsMore.sealStones > 0 && seals >= DATA.elixirsMore.sealStones) ? Math.max(ELIX_BASE, DATA.elixirsMore.elixirsPerLife) : ELIX_BASE;
 const elixAvail = m => { const f = INN_F.find(x => x.id === 'apothecary'); return !!f && !f.underRepair && facOpen(m, f); };
 // 수련동(10장 '객잔 시설' 수련동 '도전 과제 목록과 보상'·'해금과 도전 과제' 표): 혼 기록으로 이룬 것과 남은 것을 보여 주기만 한다.
 // 줄은 데이터에서 만든다 — 땅의 주인 첫 처치(그 땅으로 여는 문파·무공·대표 인물), 도전 과제 무공(weapons.json unlock 토큰), 칭호(cheonha.json titles), 역근·금두꺼비·의서.
@@ -4274,7 +4276,7 @@ function caveRows(m) {
 function innToggleElix(id) {
   const m = innMeta(), e = ELIX.find(x => x.id === id); if (!e || !elixAvail(m)) return;
   if (innElix.includes(id)) innElix = innElix.filter(x => x !== id);
-  else { const next = (innElix.length >= ELIX_MAX ? innElix.slice(1) : innElix).concat(id); if (next.reduce((a, k) => a + ELIX.find(x => x.id === k).cost, 0) <= (m.crystal || 0)) innElix = next; }
+  else { const next = (innElix.length >= elixMax((m.stones || []).length) ? innElix.slice(1) : innElix).concat(id); if (next.reduce((a, k) => a + ELIX.find(x => x.id === k).cost, 0) <= (m.crystal || 0)) innElix = next; }
   renderInn();
 }
 const facTok = id => 'facility:' + id;

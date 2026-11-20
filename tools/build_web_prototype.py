@@ -124,6 +124,7 @@ def data_blob() -> str:
         "innFacilities": drop_notes(load("cheonha")["inn"]["facilities"]),
         "innElixirs": drop_notes(load("cheonha")["inn"]["elixirs"]),
         "elixirsPerLife": load("cheonha")["inn"]["elixirsPerLife"],
+        "elixirsMore": load("cheonha")["inn"].get("elixirsMore"),
         # 칭호(WP-34, 10장 해금 표): cheonha.json titles
         "titles": [drop_notes(t) for t in load("cheonha").get("titles", [])],
         # 의상 해금(10장 해금 표 '태극 구간만 지키며 원각 처치'): cheonha.json costumes

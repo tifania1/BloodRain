@@ -226,8 +226,9 @@
       { "id": "ink",  "nameKo": "먹",       "rgb": [0.55, 0.55, 0.6] },
       { "id": "wash", "nameKo": "담묵",     "rgb": [0.82, 0.82, 0.85] }
     ] },
-    "_elixirs": "약방 영약(10장 '영약(약방)' 표 그대로). 약방이 열린 뒤 생을 시작할 때 혈정 cost 를 써서 elixirsPerLife 개까지 지니고 출발한다. 효과는 이번 생 한정: reviveHealthRatio 첫 사망 때 그 비율로 부활, startLevel 그 레벨로 시작, startUltimate 오의(진기) 게이지, maxHealth 최대 기혈 비율 더하기, bloodCrystalMultiplier 혈정 드롭 배율, yinyangFreezeSeconds 처음 그 초 동안 음양 게이지가 움직이지 않음. 10장의 '약방 3단계에서 2개'는 약방 단계가 기획서에 없어 아직 1(decisions 참고).",
+    "_elixirs": "약방 영약(10장 '영약(약방)' 표 그대로). 약방이 열린 뒤 생을 시작할 때 혈정 cost 를 써서 elixirsPerLife 개까지 지니고 출발한다. 효과는 이번 생 한정: reviveHealthRatio 첫 사망 때 그 비율로 부활, startLevel 그 레벨로 시작, startUltimate 오의(진기) 게이지, maxHealth 최대 기혈 비율 더하기, bloodCrystalMultiplier 혈정 드롭 배율, yinyangFreezeSeconds 처음 그 초 동안 음양 게이지가 움직이지 않음. 10장의 '약방 3단계에서 2개'는 2026-11-20 사람이 추천대로(EL-01a): 단계를 따로 두지 않고 봉인석 elixirsMore.sealStones(5)개를 모으면 elixirsMore.elixirsPerLife(2)개.",
     "elixirsPerLife": 1,
+    "elixirsMore": { "sealStones": 5, "elixirsPerLife": 2 },
     "elixirs": [
       { "id": "sohwandan", "nameKo": "소환단", "hanja": "小還丹", "descKo": "첫 사망 때 기혈 30%로 부활", "cost": 3, "reviveHealthRatio": 0.3 },
       { "id": "daehwandan", "nameKo": "대환단", "hanja": "大還丹", "descKo": "레벨 5로 시작", "cost": 6, "startLevel": 5 },

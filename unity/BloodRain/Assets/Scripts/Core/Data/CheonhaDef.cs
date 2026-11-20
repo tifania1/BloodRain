@@ -1,5 +1,6 @@
 #nullable enable
 // cheonha.json: 천하 한 장(기획서 7장)과 환혼·윤회의 기(10·21장). 규칙 계산은 Core/World, Core/Meta 에서 한다.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -92,9 +93,15 @@ namespace BloodRain.Core.Data
         public FacilityDef Facility(string id) => Facilities.First(f => f.Id == id);
         /// <summary>한 생에 지니고 출발하는 영약 수(10장 '영약(약방)').</summary>
         public int ElixirsPerLife = 1;
+        /// <summary>봉인석을 이만큼 모으면 지니는 영약 수가 늘어난다(EL-01a, '약방 3단계에서 2개'를 단계 없이).</summary>
+        public ElixirsMoreDef ElixirsMore = new ElixirsMoreDef();
+        /// <summary>이 봉인석 수에서 한 생에 지니고 출발하는 영약 수.</summary>
+        public int ElixirsAt(int sealStones) => ElixirsMore.SealStones > 0 && sealStones >= ElixirsMore.SealStones ? Math.Max(ElixirsPerLife, ElixirsMore.ElixirsPerLife) : ElixirsPerLife;
         public List<ElixirDef> Elixirs = new List<ElixirDef>();
         public SmithyDef Smithy = new SmithyDef();
     }
+
+    public sealed class ElixirsMoreDef { public int SealStones; public int ElixirsPerLife; }
 
     /// <summary>대장간 안(SM-01): 몸 색 셋, 무기 외형은 해금(skin:&lt;id&gt;)으로 얻어 고른다. 꾸미기만.</summary>
     public sealed class SmithyDef
