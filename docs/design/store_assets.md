@@ -16,7 +16,7 @@ PC 의 에셋 스토어 내려받기 폴더(`%APPDATA%\Unity\Asset Store-5.x`)�
 |---|---|---|---|
 | DOTween Pro | `Assets/Plugins/Demigiant` | `DOTween.Modules`(asmdef 를 손으로 만들었다 — 아래) | `Hud/RegionBanner.cs` 띠가 펼쳐지고 걷히는 움직임 |
 | Text Animator for Unity 2.X | `Assets/Plugins/Febucci` | `Febucci.TextAnimator.Runtime`·`.TMP.Runtime` | `Hud/RegionBanner.cs` 한자 이름이 한 글자씩 뜸 |
-| All In 1 Sprite Shader | `Assets/Plugins/AllIn1SpriteShader` | 코드 참조 없음(재질로만) | `Resources/Fx/PlayerAllIn1.mat` — 플레이어 몸 테두리·피격 번쩍임(`PlayerLook`) |
+| All In 1 Sprite Shader | `Assets/Plugins/AllIn1SpriteShader` | 코드 참조 없음(재질로만) | `Resources/Fx/PlayerAllIn1.mat` — 플레이어 몸 테두리(옅은 금빛 — 2026-11-21 크림빛이 옅은 바닥에서 묻혀 바꿈)·피격 번쩍임(`PlayerLook`) |
 | Damage Numbers Pro | `Assets/DamageNumbersPro` | `DamageNumbersPro` | Presentation·Editor asmdef 가 참조. `DamageNumberLayer.usePro`(지금 꺼짐 — 켜면 에디터가 죽어서, unity_tasks DN-01U)와 프리팹 짓기 메뉴. 지금 피해 숫자는 `Fx/DamageNumberLayer.cs` 의 TextMeshPro 풀 |
 
 - `BloodRain.Presentation.asmdef` 가 위 어셈블리 셋을 참조한다. 에셋이 없는 곳에서는 `RegionBanner.cs` 가 컴파일되지 않는다.
