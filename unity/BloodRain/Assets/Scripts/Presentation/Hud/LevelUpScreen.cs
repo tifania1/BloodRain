@@ -109,6 +109,8 @@ namespace BloodRain.Presentation.Hud
         /// <summary>지금 로드아웃의 연환·진전(복원한 비급만 켜짐).</summary>
         public SynergyState Synergy => BloodRain.Core.Build.Synergy.Compute(_data, _loadout, null, _restored);
 
+        BloodRain.Presentation.Fx.ChestLayer _chest;
+
         void Update()
         {
             int level = CurrentLevel();
@@ -117,8 +119,11 @@ namespace BloodRain.Presentation.Hud
             bool zooming = LifeRunner.Instance != null && LifeRunner.Instance.breakthrough != null && LifeRunner.Instance.breakthrough.IsPlaying;
             // C-07b 깨달음 화면이 먼저(열려 있거나 열릴 차례면 기다린다)
             bool insight = LifeRunner.Instance != null && LifeRunner.Instance.InsightBusy;
+            // 보갑 목록 창이 떠 있으면 닫힌 뒤에(2026-11-21 — 보갑과 진기 구슬을 같은 때 주우면 두 창이 겹쳤다)
+            if (_chest == null) _chest = FindFirstObjectByType<BloodRain.Presentation.Fx.ChestLayer>();
+            bool chest = _chest != null && _chest.ListOpen;
             // 연 프레임엔 키를 읽지 않는다(깨달음 카드를 고른 같은 숫자 키가 레벨업 카드까지 고르지 않게)
-            if (!_open && (_pending > 0 || _extraOffers != null) && !zooming && !insight)
+            if (!_open && (_pending > 0 || _extraOffers != null) && !zooming && !insight && !chest)
             {
                 Open();
                 // UI-01b 설정 '자동 고르기': 화면을 띄우자마자 고른다(서장 첫 카드 한 장은 보여 준다 — 가르치는 자리)
