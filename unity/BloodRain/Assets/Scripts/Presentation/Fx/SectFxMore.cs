@@ -28,6 +28,23 @@ namespace BloodRain.Presentation.Fx
         // 멈칫 표시(음공 기절·뇌부 감전·천설부 등 EnemySim Stun, 시안 sonic 의 머리 위 먹 점 셋). EnemyField 가 프레임마다 넘긴다
         readonly List<Vector3> _stuns = new List<Vector3>();
 
+        /// <summary>VF-04U 절기 탄이 맞힌 자리 폭발(r = 폭발 반경, 월드). palm 이면 파산장(회청 장력 터짐 + 먹 고리 + 바닥 금),
+        /// 아니면 만천성지 치명타(금빛 별 터짐 + 빛살 다섯). 전엔 AI 재료 fx_bomb_glow 한 장이었다.</summary>
+        public void EvoBurst(Vector2 at, float r, bool palm)
+        {
+            if (palm)
+            {
+                Add(.3f, (g, k) => { float e = Ez(Mathf.Min(1f, k * 3f)); Glow(3, at, 2f * r * e, 1.55f * r * e, g.Seed, new Vector4(7f, .55f, .8f, 0f), FxRamp.Palm, .85f * (1f - k), 1f, k * .5f, g.Seed); });
+                RingW(at, 2.36f * r, FxRamp.Ink, .3f, .45f);
+                if (!FxSettings.Simplified) CrackW(at - Vector2.up * .36f * r, 1.45f * r, FxRamp.Ink);
+            }
+            else
+            {
+                Add(.26f, (g, k) => { float e = Ez(Mathf.Min(1f, k * 3f)); Glow(3, at, 2f * r * e, 2f * r * e, g.Seed, new Vector4(5f, .8f, .8f, 0f), FxRamp.Finger, 1f - k, 1f, k * .4f, g.Seed); });
+                RaysW(at, 5, 1.18f * r, FxRamp.Finger);
+            }
+        }
+
         /// <summary>이번 프레임에 멈춰 선 적 하나. head 는 머리 위 자리, size 는 사람 하나 크기(월드).</summary>
         public void Stunned(Vector2 head, float size)
         {
@@ -66,7 +83,7 @@ namespace BloodRain.Presentation.Fx
             float al = 1f - Mathf.Max(0f, (k - .75f) / .25f);
             var d = Dir(p.Ang);
             var c0 = p.Pos - d * .39f * S;
-            var body = p.Evo ? FxRamp.Gold : FxRamp.Palm;
+            var body = FxRamp.Palm; // VF-04U 파산장도 회청 바람(시안 palm ev) — 전엔 절기면 금빛이었다
             if (st >= 3) Glow(0, c0, S * 1.15f, S * 1.15f, p.Ang, new Vector4(1.9f, .5f, 1f, .6f), FxRamp.Wash, .18f * al, 1f, 0f, p.Seed + 3f);
             if (st >= 2 && !FxSettings.Simplified)
                 for (int j = 1; j <= 2; j++)
@@ -79,6 +96,11 @@ namespace BloodRain.Presentation.Fx
             if (st >= 3 && !p.Evo && !FxSettings.Simplified && k < .8f && p.Age >= .45f && _stains.Count < MaxStains - 12 && Mathf.Floor(p.Age / .45f) != Mathf.Floor((p.Age - Time.deltaTime) / .45f))
             {
                 _stains.Add(new Stain { Pos = c0 - Vector2.up * .1f * S, Seed = p.Seed + p.Age, Rot = p.Ang, Size = .27f * S, Shape = 3, P = new Vector4(3f, .35f, .8f, 0f), C = FxRamp.Dust, A = .22f });
+            }
+            if (p.Evo)   // 파산장: 바람이 손바닥 모양(掌印)으로(시안 glow(7)·fx(7))
+            {
+                Glow(7, p.Pos - d * .048f * S, S * .62f, S * .5f, p.Ang, Vector4.zero, FxRamp.Palm, .75f * al, 1f, k > .75f ? (k - .75f) * 3f : .1f, p.Seed + 7f);
+                Quad(7, p.Pos - d * .07f * S, S * .66f, S * .52f, p.Ang, Vector4.zero, FxRamp.Ink, .28f * al, 1f, .2f, p.Seed + 8f);
             }
             if (st >= 5)
             {

@@ -1421,7 +1421,8 @@ namespace BloodRain.Presentation.Combat
                     {
                         float er = World.Length(p.Explode.Param("explodeRadius"));
                         float ed = p.Damage * p.Explode.Param("explodeDamage");
-                        if (!AddSpark("fx_bomb_glow", p.Pos, UnityEngine.Random.value * Mathf.PI * 2f, er * 2.2f, 0.25f, 0.05f))
+                        if (Sfx) _sfx.EvoBurst(p.Pos, er, p.Weapon != null && p.Weapon.Def.Behavior == "slow_projectile"); // VF-04U 파산장·만천성지 터짐(시안)
+                        else if (!AddSpark("fx_bomb_glow", p.Pos, UnityEngine.Random.value * Mathf.PI * 2f, er * 2.2f, 0.25f, 0.05f))
                             AddFxAt(p.Pos, 0f, Mathf.PI * 2f, er, 0.25f, new Color(1f, 0.92f, 0.55f, 0.75f));
                         sim.QueryCircle(new float2(p.Pos.x, p.Pos.y), er, _bounceNear);
                         _bounceEx.Clear();
