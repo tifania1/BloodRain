@@ -17,6 +17,8 @@ namespace BloodRain.Presentation.Hud
 
         float _wanderAngle, _pickWait, _logWait, _clock;
         LevelUpScreen _lu;
+        ScaleTestDriver _scale;
+        PlayerController _pc;
         readonly System.Text.StringBuilder _log = new System.Text.StringBuilder();
         public int Picks { get; private set; }
         public float MinHealthSeen { get; private set; } = float.MaxValue;
@@ -74,6 +76,11 @@ namespace BloodRain.Presentation.Hud
                 move = (to * 0.6f + side * 0.8f).normalized;
             }
             else move = new Vector2(Mathf.Cos(_wanderAngle), Mathf.Sin(_wanderAngle));
+            // 혈우 장막(경지마다 갈 수 있는 테두리)에 밀리기 시작하면 태어난 자리 쪽으로 돌아선다
+            if (_scale == null) _scale = FindFirstObjectByType<ScaleTestDriver>();
+            if (_pc == null) _pc = runner.player.GetComponent<PlayerController>();
+            if (_scale != null && _pc != null && _scale.PushStrength > 0.05f)
+                move = ((_pc.birthplace - p).normalized * 2f + move).normalized;
             ControlInput.MoveOverride = Vector2.ClampMagnitude(move, 1f);
 
             _logWait += Time.deltaTime; _clock += Time.deltaTime;

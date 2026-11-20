@@ -49,7 +49,13 @@ namespace BloodRain.Presentation.Hud
             }
             if (rain != null) rain.density = Density * BloodRain.Presentation.Meta.SettingsScreen.Current.RainScale; // WP-57U 설정 '혈우 연출'
 
-            int sec = Mathf.FloorToInt(elapsedOverride >= 0f ? elapsedOverride : Time.timeSinceLevelLoad);
+            // 시계는 생의 시각(Life.Minutes)을 보인다(2026-11-20 플레이 테스트). 정예 5분·장삼 9분 같은 사건이 이 시각으로 오는데,
+            // 전에는 Time.timeSinceLevelLoad(세상 배속이 곱해진 시간)를 보여서 타격 멈춤·느려짐이 쌓이면 화면 시계가 사건보다 늦게 갔다
+            var lr = LifeRunner.Instance;
+            float shown = elapsedOverride >= 0f ? elapsedOverride
+                        : lr != null && lr.Life != null ? lr.Life.Minutes * 60f
+                        : Time.timeSinceLevelLoad;
+            int sec = Mathf.FloorToInt(shown);
             if (sec != _shownSeconds && clockText != null)
             {
                 _shownSeconds = sec;

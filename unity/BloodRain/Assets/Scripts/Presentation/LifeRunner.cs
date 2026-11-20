@@ -40,6 +40,9 @@ namespace BloodRain.Presentation
         long _kills;
 
         public static LifeRunner Instance { get; private set; }
+        /// <summary>시험 메뉴 '빠르기 ×4'가 생의 시각도 같이 빨리 돌리려고 쓰는 배율(평소 1). 생의 시각은 세상 배속과 따로 흐르게 짜여 있어(레벨업 화면만 멈춤),
+        /// 이게 없으면 ×4 를 켜도 정예·장삼 같은 사건은 제 시각에 안 온다(2026-11-20 플레이 테스트에서 찾음).</summary>
+        public static float TestClockScale = 1f;
 
         Life _life;
         GameData _data;
@@ -538,7 +541,7 @@ namespace BloodRain.Presentation
         {
             if (_life == null || _life.Record != null) return;
             // 레벨업 화면 등으로 세상이 멈췄으면(timeScale 0) 생의 시간도 멈춘다
-            float dt = Time.timeScale > 0f ? Time.unscaledDeltaTime : 0f;
+            float dt = Time.timeScale > 0f ? Time.unscaledDeltaTime * TestClockScale : 0f;
             var pos = player != null ? WorldCoords.FromUnity(player.position) : _life.Position;
             int alive = enemies != null ? enemies.Count : 0;
             var second = _life.Tick(dt, pos, alive);

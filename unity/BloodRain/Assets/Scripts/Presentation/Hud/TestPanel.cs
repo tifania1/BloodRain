@@ -50,7 +50,7 @@ namespace BloodRain.Presentation.Hud
             if (_mapHud != null) _mapHud.RegionClicked = r => { if (!string.IsNullOrEmpty(r.Sect)) SwitchBody(r.Sect); };
         }
 
-        void OnDestroy() { if (_bg != null) Destroy(_bg); if (_fast && Time.timeScale > 1f) Time.timeScale = 1f; }
+        void OnDestroy() { if (_bg != null) Destroy(_bg); if (_fast && Time.timeScale > 1f) Time.timeScale = 1f; LifeRunner.TestClockScale = 1f; }
 
         void Update()
         {
@@ -60,6 +60,7 @@ namespace BloodRain.Presentation.Hud
                 && runner.vitals.Health < runner.vitals.MaxHealth) runner.vitals.Heal(runner.vitals.MaxHealth);
             // 빨리 감기: 다른 화면이 시간을 세웠다(0) 풀면(1) 다시 4배로. 세운 동안은 건드리지 않는다
             if (_fast && Time.timeScale == 1f) Time.timeScale = 4f;
+            LifeRunner.TestClockScale = _fast ? 4f : 1f;
             var ptr = Pointer.current;
             if (ptr != null)
             {

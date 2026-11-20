@@ -12,6 +12,7 @@ namespace BloodRain.Presentation.Hud
     //   ③ 왼쪽 위 무공 칸 + 심법 칸(Core HudSlots.Build — 칸 수는 Loadout 이 정함, 7칸째가 열리면 7). 그림이 없어 이름 첫 글자,
     //      문턱 무공(Ready)은 테두리 금빛이 뛰고, 그릇이 없으면(Waiting) 흐린 금빛, 절기(Evolved)는 굵은 금테. 그 아래 '경지 ◆◇'.
     //   ④ 캐릭터 머리 위 짧은 기혈 바(Balance.Contact.IsLowHealth 면 붉게, 웹 #B3261E)와 경공 충전 점(Dash.Charges/MaxCharges).
+    [DefaultExecutionOrder(300)]
     public sealed class TopHud : MonoBehaviour
     {
         public TMP_FontAsset font;
@@ -247,6 +248,14 @@ namespace BloodRain.Presentation.Hud
             if (lr.Kills != _lastKills) { _lastKills = lr.Kills; _kills.text = Loc.F("ui.hud.kills", lr.Kills.ToString("N0")); }
             if (life.Silver != _lastSilver) { _lastSilver = life.Silver; _silver.text = Loc.F("ui.hud.silver", life.Silver.ToString("N0")); }
             UpdateSlots(life);
+        }
+
+        // 머리 위 기혈 바는 카메라가 따라간 뒤(ScaleCamera.LateUpdate) 놓는다(2026-11-20 플레이 테스트: Update 에서 놓으면 한 프레임 늦어,
+        // 긴 프레임이나 경공처럼 크게 움직인 프레임에 바가 몸에서 떨어져 보였다). 실행 차례는 [DefaultExecutionOrder(300)]
+        void LateUpdate()
+        {
+            var lr = LifeRunner.Instance;
+            if (_fill == null || lr == null || lr.Life == null) return;
             UpdateHead();
         }
 
