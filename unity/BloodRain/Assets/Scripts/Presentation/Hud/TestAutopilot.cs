@@ -57,7 +57,10 @@ namespace BloodRain.Presentation.Hud
             if (sim != null)
             {
                 var agents = sim.Agents;
-                float k2 = keepOut * keepOut;
+                // 경지가 오르면 세상 배율이 바뀌니 거리도 경지 m 로 잰다(이류 돌파 뒤 1.8m 고정이면 몸에 닿는 거리 안에 서 있게 됨)
+                var wsk = BloodRain.Sim.WorldScale.Current;
+                float ko = wsk != null ? wsk.Length(keepOut) : keepOut;
+                float k2 = ko * ko;
                 for (int i = 0; i < sim.Count; i++)
                 {
                     var e = agents[i].Pos;
@@ -71,7 +74,7 @@ namespace BloodRain.Presentation.Hud
             _wanderAngle += dt * 0.4f;
             Vector2 move;
             if (away.sqrMagnitude > 1e-6f) move = away.normalized;
-            else if (nearD2 < fleeRadius * fleeRadius * 4f)
+            else if (BloodRain.Sim.WorldScale.Current == null || nearD2 < BloodRain.Sim.WorldScale.Current.Length(fleeRadius * 2f) * BloodRain.Sim.WorldScale.Current.Length(fleeRadius * 2f))
             {
                 var to = (nearest - p).normalized;
                 var side = new Vector2(-to.y, to.x);
@@ -92,14 +95,14 @@ namespace BloodRain.Presentation.Hud
                 if (_orbs == null) _orbs = FindFirstObjectByType<BloodRain.Presentation.Fx.OrbLayer>();
                 if (_orbs != null && _orbs.Field != null)
                 {
-                    float best = 144f; Vector2 tgt = Vector2.zero; bool found = false;
+                    float best = BloodRain.Sim.WorldScale.Current != null ? BloodRain.Sim.WorldScale.Current.Length(12f) * BloodRain.Sim.WorldScale.Current.Length(12f) : 144f; Vector2 tgt = Vector2.zero; bool found = false;
                     var list = _orbs.Field.Orbs;
                     for (int i = 0; i < list.Count; i++)
                     {
                         float m2 = (list[i].Pos - p).sqrMagnitude;
                         if (m2 < best) { best = m2; tgt = list[i].Pos; found = true; }
                     }
-                    if (found && (nearD2 > keepOut * keepOut * 4f)) move = ((tgt - p).normalized * 1.5f + move * 0.5f).normalized;
+                    if (found && (nearD2 > (BloodRain.Sim.WorldScale.Current != null ? BloodRain.Sim.WorldScale.Current.Length(keepOut * 2f) * BloodRain.Sim.WorldScale.Current.Length(keepOut * 2f) : keepOut * keepOut * 4f))) move = ((tgt - p).normalized * 1.5f + move * 0.5f).normalized;
                 }
             }
             ControlInput.MoveOverride = Vector2.ClampMagnitude(move, 1f);
