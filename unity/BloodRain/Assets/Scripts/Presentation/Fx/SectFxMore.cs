@@ -896,14 +896,15 @@ namespace BloodRain.Presentation.Fx
             Add(.6f, (f, k) =>
             {
                 float q = Ez(Mathf.Min(1f, f.T / .35f)), r = half * (.1f + .9f * q), S = 2f * r / .7f;
-                Quad(2, at, S, S, 0f, new Vector4(.7f, .06f, .6f, 0f), IceShot, .7f * (1f - k), 1f, 0f, f.Seed);
-                Glow(2, at, S * .97f, S * .97f, 0f, new Vector4(.7f, .025f, .4f, 0f), FxRamp.Pale, .6f * (1f - k), 1f, 0f, f.Seed + 1f);
-                Quad(5, at, half * 2.4f, half * 2.4f, 0f, new Vector4(.2f, 0f, 0f, 0f), FxRamp.Pale, .16f * (1f - k) * q, 1f, 0f, f.Seed);   // 화면을 덮는 옅은 눈빛
+                // 곤륜 설원(흰 바닥)에서도 보이게 고리는 남먹 + 얼음빛, 덮는 빛은 옅은 얼음 푸름
+                Quad(2, at, S, S, 0f, new Vector4(.7f, .05f, .6f, 0f), FxRamp.BlueInk, .6f * (1f - k), 1f, 0f, f.Seed);
+                Glow(2, at, S * .97f, S * .97f, 0f, new Vector4(.7f, .03f, .4f, 0f), IceShot, .7f * (1f - k), 1f, 0f, f.Seed + 1f);
+                Quad(5, at, half * 2.4f, half * 2.4f, 0f, new Vector4(.2f, 0f, 0f, 0f), IceShot, .14f * (1f - k) * q, 1f, 0f, f.Seed);   // 화면을 덮는 옅은 얼음빛
             });
             for (int i = 0; i < 3; i++)
             {
                 float a0 = i * 2.09f;
-                After(i * .05f, () => Drops(at, a0, 10, 22f, FxRamp.Pale, true, .16f, 1.1f));
+                After(i * .05f, () => Drops(at, a0, 10, 22f, IceShot, false, .16f, 1.1f));
             }
             HitFeel.Jolt(.6f, .3f);
         }
