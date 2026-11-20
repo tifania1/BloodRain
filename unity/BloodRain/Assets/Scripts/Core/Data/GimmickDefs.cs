@@ -108,6 +108,13 @@ namespace BloodRain.Core.Data
         public int SilverMax;
     }
 
+    /// <summary>청운진 수레와 장독(cheonha.json 의 이름 breakables). 장독은 술독, 수레는 검각 시렁과 같은 값(2026-11-20).</summary>
+    public sealed class BreakablesGimmickDef : GimmickDef
+    {
+        public BreakableGimmickDef Jar = new BreakableGimmickDef();
+        public BreakableGimmickDef Cart = new BreakableGimmickDef();
+    }
+
     /// <summary>낙석: periodSeconds 마다 플레이어 둘레 ±scatter 안 count 곳에 그림자가 지고 telegraphSeconds 뒤 떨어진다.</summary>
     public sealed class FallingRocksGimmickDef : GimmickDef
     {
@@ -185,6 +192,7 @@ namespace BloodRain.Core.Data
 
         public BreakableGimmickDef WineJars = new BreakableGimmickDef();
         public BreakableGimmickDef SwordRacks = new BreakableGimmickDef();
+        public BreakablesGimmickDef Breakables = new BreakablesGimmickDef();
         public FallingRocksGimmickDef FallingRocks = new FallingRocksGimmickDef();
         public PlumHeapGimmickDef PlumHeaps = new PlumHeapGimmickDef();
         public WeatherGimmickDef Blizzard = new WeatherGimmickDef();
@@ -196,7 +204,7 @@ namespace BloodRain.Core.Data
         public IEnumerable<GimmickDef> All => new GimmickDef[]
         {
             Bell, PagodaForest, Well, PoisonFog, Water, TaijiFloor,
-            WineJars, SwordRacks, FallingRocks, PlumHeaps, Blizzard, IceFloor, Campfire, BloodAltars, RedMoon,
+            WineJars, SwordRacks, Breakables, FallingRocks, PlumHeaps, Blizzard, IceFloor, Campfire, BloodAltars, RedMoon,
         };
 
         /// <summary>cheonha.json 의 기믹 이름으로 찾는다. 아직 수치가 없는 기믹이면 null.</summary>

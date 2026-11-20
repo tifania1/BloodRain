@@ -20,6 +20,16 @@ namespace BloodRain.Core.Tests
         {
             Assert.Equal($"무공에 {G.WineJars.HitsToBreak}번 맞으면 깨짐. {Num(G.WineJars.DropChance * 100)}%로 음식(최대 기혈 {Num(G.WineJars.HealMaxHealthRatio * 100)}% 회복)", Row("술독")[1]);
             Assert.Equal($"무공에 {G.SwordRacks.HitsToBreak}번 맞으면 무너짐. 은자 {G.SwordRacks.SilverMin}~{G.SwordRacks.SilverMax}", Row("검각 시렁")[1]);
+            // 청운진 수레·장독(GM-02, 2026-11-20): 술독·검각 시렁과 같은 값
+            var jar = G.Breakables.Jar; var cart = G.Breakables.Cart;
+            Assert.Equal($"청운진. 무공에 {jar.HitsToBreak}번 맞으면 깨짐. {Num(jar.DropChance * 100)}%로 음식(최대 기혈 {Num(jar.HealMaxHealthRatio * 100)}% 회복). 술독과 같은 값", Row("장독")[1]);
+            Assert.Equal($"청운진. 무공에 {cart.HitsToBreak}번 맞으면 무너짐. 은자 {cart.SilverMin}~{cart.SilverMax}. 검각 시렁과 같은 값", Row("수레")[1]);
+            foreach (var (mine, same) in new[] { (jar, G.WineJars), (cart, G.SwordRacks) })
+            {
+                Assert.Equal(same.HitsToBreak, mine.HitsToBreak); Assert.Equal(same.Drop, mine.Drop); Assert.Equal(same.DropChance, mine.DropChance);
+                Assert.Equal(same.HealMaxHealthRatio, mine.HealMaxHealthRatio); Assert.Equal(same.SilverMin, mine.SilverMin); Assert.Equal(same.SilverMax, mine.SilverMax);
+            }
+            Assert.Contains("부술 수 있는 수레와 장독", RegionRow("청운진")[5]);
             var r = G.FallingRocks;
             Assert.Equal($"{Num(r.PeriodSeconds)}초마다 플레이어 둘레 ±{Num(r.Scatter)}m 안 세 곳에 그림자, {Num(r.TelegraphSeconds)}초 뒤 반경 {Num(r.Radius)}m 바위. 플레이어는 최대 기혈 {Num(r.PlayerDamageMaxHealthRatio * 100)}%, 잡몹은 쓰러지고 정예·보스는 {Num(r.EliteDamageMaxHealthRatio * 100)}%", Row("낙석")[1]);
             Assert.Equal(3, r.Count);

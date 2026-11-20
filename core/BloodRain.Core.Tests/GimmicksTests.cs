@@ -36,7 +36,7 @@ namespace BloodRain.Core.Tests
             {
                 ["bell"] = "songshan", ["pagoda_forest"] = "songshan", ["well"] = "cheongun",
                 ["poison_fog"] = "danggata", ["water"] = "janggang", ["taiji_floor"] = "wudangsan",
-                ["wine_jars"] = "gaebang_hq", ["sword_racks"] = "namgung_manor", ["falling_rocks"] = "huashan", ["plum_heaps"] = "huashan",
+                ["wine_jars"] = "gaebang_hq", ["sword_racks"] = "namgung_manor", ["breakables"] = "cheongun", ["falling_rocks"] = "huashan", ["plum_heaps"] = "huashan",
                 ["blizzard"] = "kunlun", ["ice_floor"] = "kunlun", ["campfire"] = "kunlun", ["blood_altars"] = "sipmandaesan", ["red_moon"] = "sipmandaesan",
             };
             Assert.Equal(where.Keys.OrderBy(x => x), G.All.Select(g => g.Id).OrderBy(x => x));
@@ -56,7 +56,6 @@ namespace BloodRain.Core.Tests
                 ["bamboo_thicket"] = "대나무 덤불", ["cloud_sea"] = "운해", ["cliff_path"] = "잔도",
                 ["drifting_boats"] = "떠내려가는 배", ["reverse_wave"] = "역류 파도",
                 ["rising_blood"] = "차오르는 피",   // 봉마곡: 종장 혈해 '차오르는 피바다'(bosspatterns final)가 그것
-                ["breakables"] = "",                // 청운진 수레·장독(gimmicks.json _note '아직 없는 것')
             };
             var known = new HashSet<string>(G.All.Select(g => g.Id));
             var section = GddSection("지형 기믹 수치");

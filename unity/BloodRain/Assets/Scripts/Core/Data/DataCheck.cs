@@ -50,6 +50,8 @@ namespace BloodRain.Core.Data
             // 깨지는 기믹이 은자를 떨구면 최소 ≤ 최대.
             CheckSilver(p, "gimmicks.wineJars", d.Gimmicks.WineJars);
             CheckSilver(p, "gimmicks.swordRacks", d.Gimmicks.SwordRacks);
+            CheckSilver(p, "gimmicks.breakables.jar", d.Gimmicks.Breakables.Jar);
+            CheckSilver(p, "gimmicks.breakables.cart", d.Gimmicks.Breakables.Cart);
 
             // 글로 적은 규칙(QA-05): 코드가 아는 값이 하나뿐이라 데이터만 바꾸면 조용히 무시되던 것.
             var c = d.Cheonha;

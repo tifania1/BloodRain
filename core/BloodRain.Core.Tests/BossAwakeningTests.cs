@@ -42,7 +42,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("songshan", woke);
             Assert.All(woke, id => Assert.Equal(BossRegionState.Awake, life.State(id)));
             Assert.Empty(life.UpdateMinute(16f));                    // 한 번만
-            Assert.Empty(life.UpdateRealm(Level("jeoljeong")).Where(r => woke.Contains(r.Id))); // 절정에 올라도 다시 깨지 않음
+            Assert.DoesNotContain(life.UpdateRealm(Level("jeoljeong")), r => woke.Contains(r.Id)); // 절정에 올라도 다시 깨지 않음
 
             // 장막 밖 땅은 15분이 지나도 잠든 채(곤륜 출생 일류면 곤륜 하나)
             var far = Life("kunlun");
