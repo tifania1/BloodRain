@@ -127,7 +127,17 @@ namespace BloodRain.Presentation.Hud
         {
             var runner = LifeRunner.Instance;
             if (runner == null || runner.Life == null || Time.timeScale <= 0f) return;
-            if (runner.Life.UseUltimate()) Debug.Log($"[UltimateButton] 오의 {runner.Life.Body.Character.Ultimate} × {runner.Life.UltimateCasts}");
+            if (!runner.Life.UseUltimate()) return;
+            Debug.Log($"[UltimateButton] 오의 {runner.Life.Body.Character.Ultimate} × {runner.Life.UltimateCasts}");
+            // 태극무량: 피해 박자가 없어(TotalPulses 0) Strike 가 불리지 않는다 — 쓰는 순간 몸 둘레에 태극 원
+            var ult = Ultimates.Of(DataBoot.Data, runner.Life.Body.Character);
+            var inkFx = BloodRain.Presentation.Fx.SectFx.Instance;
+            if (ult.Id == "taiji_muryang" && inkFx != null && inkFx.Ready && runner.player != null)
+            {
+                var pl = runner.player;
+                float sc0 = BloodRain.Sim.WorldScale.Current != null ? BloodRain.Sim.WorldScale.Current.Length(1f) : 1f;
+                inkFx.TaijiShield(() => (Vector2)pl.position, ult.Param("radius", 3f) * sc0, ult.Param("durationSeconds", 5f));
+            }
         }
 
         void Strike(LifeRunner runner)
@@ -141,16 +151,7 @@ namespace BloodRain.Presentation.Hud
             float freeze = UltimateEffects.FreezeSeconds(ult);
             LastDamage = dmg;
             _slashT = 0f;
-            // 2026-11-21 몸마다 제 그림(사자후·천뢰낙·만천화우·역류·태극무량). 그림이 있는 오의는 일검 획을 띄우지 않는다
-            var inkFx = BloodRain.Presentation.Fx.SectFx.Instance;
-            if (inkFx != null && !inkFx.Ready) inkFx = null;
-            if (ult.Id == "taiji_muryang" && inkFx != null && runner.player != null)
-            {
-                var pl = runner.player;
-                float sc0 = BloodRain.Sim.WorldScale.Current != null ? BloodRain.Sim.WorldScale.Current.Length(1f) : 1f;
-                inkFx.TaijiShield(() => (Vector2)pl.position, ult.Param("radius", 3f) * sc0, ult.Param("durationSeconds", 5f));
-                _slashT = -1f;
-            }
+            // 2026-11-21 몸마다 제 그림(사자후·천뢰낙·만천화우·역류 — 아래 StrikeShaped, 태극무량은 때리는 박자가 없어 Use 에서). 그림이 있는 오의는 일검 획을 띄우지 않는다
             if ((dmg <= 0f && freeze <= 0f) || runner.enemies == null || runner.enemies.Sim == null) { LastHits = 0; return; }
             var cam = Camera.main;
             if (cam == null) return;
