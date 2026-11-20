@@ -166,7 +166,7 @@ namespace BloodRain.Presentation.Meta
             _points.Clear(); _lines.Clear(); _sel = null; _selRow = null;
             _chart = new GameObject("경맥도", typeof(RectTransform)).GetComponent<RectTransform>();
             _chart.SetParent(_root, false);
-            Place(_chart, new Vector2(0.5f, 0.5f), new Vector2(-330, -70), new Vector2(620, 820));
+            Place(_chart, new Vector2(0.5f, 0.5f), new Vector2(-380, -60), new Vector2(700, 880));
             DrawFigure(_chart);
             foreach (var ch in Channels)
                 for (int c = 0; c + 1 < ch.Length; c++) _lines.Add((Line(_chart, PointPos(ch[c]), PointPos(ch[c + 1])), ch));
@@ -175,11 +175,11 @@ namespace BloodRain.Presentation.Meta
             // 오른쪽: 고른 혈(이름·칸), 그 아래 전부 환불과 환혼 강화
             _detail = new GameObject("혈 설명", typeof(RectTransform)).GetComponent<RectTransform>();
             _detail.SetParent(_root, false);
-            Place(_detail, new Vector2(0.5f, 0.5f), new Vector2(440, 170), new Vector2(760, 230));
+            Place(_detail, new Vector2(0.5f, 1f), new Vector2(440, -320), new Vector2(760, 200));
             var hint = Text(_root, Loc.T("ui.meridian.hint"), 20, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.5f));
-            Place(hint.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(440, 310), new Vector2(760, 30));
+            Place(hint.rectTransform, new Vector2(0.5f, 1f), new Vector2(440, -205), new Vector2(760, 30));
 
-            float y = -260;
+            float y = -470;
             _refund = new GameObject("전부 환불", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
             _refund.transform.SetParent(_root, false);
             _refund.GetComponent<Image>().color = new Color(0.45f, 0.18f, 0.15f);
