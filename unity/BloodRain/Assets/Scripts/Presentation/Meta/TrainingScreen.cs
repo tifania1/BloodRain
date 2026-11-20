@@ -9,9 +9,11 @@ using UnityEngine.UI;
 
 namespace BloodRain.Presentation.Meta
 {
-    // 연무장 화면(TU-14, 기획서 10장 '연무장'·'환혼 강화'). 윤회의 기 잔고, 연무장 20항목(레벨, 다음 비용, 효과), 사기와 전부 환불.
-    // 아래에 침방 환혼 강화 두 줄(넷째 몸, 다시 고르기)을 같은 칸(MetaShopRow)으로 붙인다. 침방 화면도 같은 칸을 쓴다.
-    // 비용 공식·환불·레벨 상한은 Core Soul(Stats.TrainingCost) 그대로다.
+    // 연무장 화면(TU-14, 기획서 10장 '연무장'·'환혼 강화'·'경맥도'). 윤회의 기 잔고, 연무장 20항목, 사기와 전부 환불.
+    // GU-04U(2026-11-20): 목록 대신 경맥도 — 왼쪽에 앉은 운기 자세 사람 윤곽(코드로 그린 옅은 먹, 경맥도 원화가 오면 바꿈) 위 혈자리 20곳.
+    //   혈마다 둘레 점(최대 레벨만큼, 뚫은 만큼 금빛), 다 뚫으면 혈이 금빛. 큰 혈 셋(관원·노궁·용천)은 두 배 크기, 뚫을 때 그 경맥 줄이 한 번 빛남.
+    //   혈을 누르면(방향키로 옮기고 Enter 로 사기) 오른쪽에 혈 이름과 지금 목록과 같은 칸(MetaShopRow: 이름·점·레벨당 값·비용 단추).
+    //   아래에 전부 환불과 침방 환혼 강화 줄(MetaShopRow)은 그대로. 비용 공식·환불·레벨 상한은 Core Soul(Stats.TrainingCost) 그대로다.
     public sealed class TrainingScreen : MonoBehaviour
     {
         public TMP_FontAsset font;
@@ -26,6 +28,39 @@ namespace BloodRain.Presentation.Meta
         TextMeshProUGUI _balance, _refundLabel;
         Button _refund;
         readonly List<MetaShopRow> _rows = new List<MetaShopRow>();
+
+        // ── 경맥도(기획서 10장 표 그대로: 항목 → 혈자리, 자리는 그림 상자 안 0~1, y 는 아래로) ──
+        static readonly (string stat, float x, float y)[] Points =
+        {
+            ("Growth", 0.50f, 0.045f), ("Luck", 0.50f, 0.125f), ("Rerolls", 0.585f, 0.175f),
+            ("UltimateCharge", 0.50f, 0.30f), ("Magnet", 0.50f, 0.39f), ("MaxHealth", 0.50f, 0.48f), ("Revival", 0.50f, 0.555f),
+            ("Armor", 0.43f, 0.215f), ("Skips", 0.585f, 0.47f), ("Greed", 0.385f, 0.43f),
+            ("Area", 0.34f, 0.245f), ("ProjectileSpeed", 0.235f, 0.40f), ("CooldownReduction", 0.255f, 0.50f),
+            ("Duration", 0.28f, 0.555f), ("Might", 0.335f, 0.595f), ("Amount", 0.385f, 0.635f),
+            ("MoveSpeed", 0.67f, 0.60f), ("Recovery", 0.75f, 0.71f), ("Banishes", 0.64f, 0.80f), ("DashCharges", 0.53f, 0.845f),
+        };
+        static readonly HashSet<string> Big = new HashSet<string> { "Revival", "Amount", "DashCharges" };
+        // 경맥 줄(차례대로 잇는다). 큰 혈을 다 뚫으면 그 혈이 든 줄이 한 번 빛난다
+        static readonly string[][] Channels =
+        {
+            new[] { "Growth", "Luck", "UltimateCharge", "Magnet", "MaxHealth", "Revival" },          // 머리에서 임맥
+            new[] { "Growth", "Rerolls" },
+            new[] { "Armor", "Skips" },                                                               // 독맥(등)
+            new[] { "Magnet", "Greed" },
+            new[] { "Area", "ProjectileSpeed", "CooldownReduction", "Duration", "Might", "Amount" },  // 팔
+            new[] { "MoveSpeed", "Recovery", "Banishes", "DashCharges" },                             // 다리
+        };
+        static readonly Color Gold = new Color32(201, 162, 39, 255);
+        RectTransform _chart, _detail;
+        readonly Dictionary<string, (Image dot, Image[] pips, RectTransform rt)> _points = new Dictionary<string, (Image, Image[], RectTransform)>();
+        readonly List<(Image line, string[] channel)> _lines = new List<(Image, string[])>();
+        string _sel;
+        MetaShopRow _selRow;
+        static Sprite _circle;
+
+        /// <summary>시험용: 지금 고른 혈의 항목.</summary>
+        public string Selected => _sel;
+        public int PointCount => _points.Count;
 
         public Soul Soul => _soul;
 
@@ -45,7 +80,49 @@ namespace BloodRain.Presentation.Meta
         {
             if (_root == null) return;
             var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (kb != null && kb.escapeKey.wasPressedThisFrame) Close();
+            if (kb == null) return;
+            if (kb.escapeKey.wasPressedThisFrame) { Close(); return; }
+            // 방향키·WASD 로 그 쪽 가장 가까운 혈로, Enter·Space 로 뚫기
+            Vector2 dir = Vector2.zero;
+            if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) dir = Vector2.down;   // 그림 상자는 y 가 아래로
+            else if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) dir = Vector2.up;
+            else if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) dir = Vector2.left;
+            else if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) dir = Vector2.right;
+            if (dir != Vector2.zero) Move(dir);
+            else if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame) BuySelected();
+        }
+
+        void Move(Vector2 dir)
+        {
+            var from = PointPos(_sel);
+            string best = null; float bestScore = float.MaxValue;
+            foreach (var p in Points)
+            {
+                if (p.stat == _sel) continue;
+                var d = new Vector2(p.x, p.y) - from;
+                float along = Vector2.Dot(d, dir);
+                if (along <= 0.005f) continue;
+                float score = along + Mathf.Abs(Vector2.Dot(d, new Vector2(-dir.y, dir.x))) * 2.5f;
+                if (score < bestScore) { bestScore = score; best = p.stat; }
+            }
+            if (best != null) Select(best);
+        }
+
+        static Vector2 PointPos(string stat)
+        {
+            foreach (var p in Points) if (p.stat == stat) return new Vector2(p.x, p.y);
+            return new Vector2(0.5f, 0.5f);
+        }
+
+        /// <summary>고른 혈을 한 레벨 뚫는다(돈이 모자라거나 다 뚫었으면 그대로). 뚫었으면 true.</summary>
+        public bool BuySelected()
+        {
+            if (_soul == null || _sel == null) return false;
+            int before = _soul.TrainingLevel(_sel);
+            if (!_soul.TryBuyTraining(_sel)) return false;
+            if (Big.Contains(_sel) && _soul.TrainingLevel(_sel) >= _soul.TrainingMax(_sel) && before < _soul.TrainingMax(_sel)) FlashChannel(_sel);
+            Refresh();
+            return true;
         }
 
         void Start()
@@ -85,47 +162,196 @@ namespace BloodRain.Presentation.Meta
             _balance = Text(_root, "", 30, FontStyles.Bold, new Color32(176, 132, 40, 255));
             Place(_balance.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(1000, 44));
 
-            var items = soul.Data.Balance.Training.Items;
-            int half = (items.Count + 1) / 2;
-            for (int i = 0; i < items.Count; i++)
-            {
-                var row = MetaShopRow.Training(_root, font, soul, items[i], Refresh, 760);
-                var rt = row.Rect;
-                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
-                rt.anchoredPosition = new Vector2(i < half ? -420 : 420, -220 - (i % half) * 50);
-                _rows.Add(row);
-            }
+            // 왼쪽: 경맥도(사람 윤곽 + 경맥 줄 + 혈자리 20곳)
+            _points.Clear(); _lines.Clear(); _sel = null; _selRow = null;
+            _chart = new GameObject("경맥도", typeof(RectTransform)).GetComponent<RectTransform>();
+            _chart.SetParent(_root, false);
+            Place(_chart, new Vector2(0.5f, 0.5f), new Vector2(-330, -70), new Vector2(620, 820));
+            DrawFigure(_chart);
+            foreach (var ch in Channels)
+                for (int c = 0; c + 1 < ch.Length; c++) _lines.Add((Line(_chart, PointPos(ch[c]), PointPos(ch[c + 1])), ch));
+            foreach (var p in Points) MakePoint(soul, p.stat, p.x, p.y);
 
-            float y = -220 - half * 50 - 20;
+            // 오른쪽: 고른 혈(이름·칸), 그 아래 전부 환불과 환혼 강화
+            _detail = new GameObject("혈 설명", typeof(RectTransform)).GetComponent<RectTransform>();
+            _detail.SetParent(_root, false);
+            Place(_detail, new Vector2(0.5f, 0.5f), new Vector2(440, 170), new Vector2(760, 230));
+            var hint = Text(_root, Loc.T("ui.meridian.hint"), 20, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.5f));
+            Place(hint.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(440, 310), new Vector2(760, 30));
+
+            float y = -260;
             _refund = new GameObject("전부 환불", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
             _refund.transform.SetParent(_root, false);
             _refund.GetComponent<Image>().color = new Color(0.45f, 0.18f, 0.15f);
-            Place((RectTransform)_refund.transform, new Vector2(0.5f, 1f), new Vector2(0, y), new Vector2(360, 50));
+            Place((RectTransform)_refund.transform, new Vector2(0.5f, 1f), new Vector2(440, y), new Vector2(360, 50));
             _refundLabel = Text(_refund.transform, "", 22, FontStyles.Bold, Paper);
             var lr = _refundLabel.rectTransform; lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.offsetMin = lr.offsetMax = Vector2.zero;
             _refund.onClick.AddListener(() => { if (_soul.TrainingSpent > 0) { _soul.RefundTraining(); Refresh(); } });
 
             y -= 70;
             var uh = Text(_root, $"{Loc.T("ui.chimbang.upgrades")} <size=75%><alpha=#88>{Loc.T("ui.chimbang.name")}<alpha=#FF></size>", 26, FontStyles.Bold, Ink);
-            Place(uh.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, y), new Vector2(800, 40));
+            Place(uh.rectTransform, new Vector2(0.5f, 1f), new Vector2(440, y), new Vector2(760, 40));
             y -= 50;
             int k = 0;
             foreach (var u in soul.Data.Cheonha.Rebirth.Upgrades)
             {
-                var row = MetaShopRow.Upgrade(_root, font, soul, u, Refresh, 760);
+                var row = MetaShopRow.Upgrade(_root, font, soul, u, Refresh, 720);
                 row.Rect.anchorMin = row.Rect.anchorMax = new Vector2(0.5f, 1f);
-                row.Rect.anchoredPosition = new Vector2(k % 2 == 0 ? -420 : 420, y - (k / 2) * 50); // 셋째 줄부터 아래로(전엔 같은 자리에 겹쳤다)
+                row.Rect.anchoredPosition = new Vector2(440, y - k * 50);   // 경맥도 오른쪽에 한 줄씩
                 _rows.Add(row);
                 k++;
             }
             if (Closed != null) InnBack.Add(_root, font, Close);
+            Select(Points[0].stat);
             Refresh();
+        }
+
+        // ── 경맥도 그리기 ──
+
+        static Sprite Circle()
+        {
+            if (_circle != null) return _circle;
+            const int n = 64;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            var px = new Color32[n * n];
+            for (int yy = 0; yy < n; yy++)
+                for (int xx = 0; xx < n; xx++)
+                {
+                    float dx = (xx + 0.5f) / n * 2f - 1f, dy = (yy + 0.5f) / n * 2f - 1f, r = Mathf.Sqrt(dx * dx + dy * dy);
+                    px[yy * n + xx] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01((1f - r) * n * 0.5f) * 255));
+                }
+            tex.SetPixels32(px); tex.Apply();
+            _circle = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), n);
+            return _circle;
+        }
+
+        Image MakeImage(RectTransform parent, string name, Color c, bool round)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var im = go.GetComponent<Image>();
+            if (round) im.sprite = Circle();
+            im.color = c; im.raycastTarget = false;
+            return im;
+        }
+
+        // 그림 상자 안 0~1(y 아래로) → 상자 기준 자리
+        Vector2 At(float x, float y) => new Vector2((x - 0.5f) * _chart.sizeDelta.x, (0.5f - y) * _chart.sizeDelta.y);
+
+        void Blob(RectTransform parent, float x, float y, float w, float h, float rot, bool round)
+        {
+            var b = MakeImage(parent, "몸", new Color(Ink.r, Ink.g, Ink.b, 0.09f), round);
+            var rt = b.rectTransform; rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = At(x, y); rt.sizeDelta = new Vector2(w * _chart.sizeDelta.x, h * _chart.sizeDelta.y);
+            rt.localRotation = Quaternion.Euler(0, 0, rot);
+        }
+
+        // 몸을 살짝 튼 앉은 운기 자세(코드로 그린 옅은 먹 윤곽 — 경맥도 원화 ui_meridian_chart 가 오면 이 자리에 그림 한 장)
+        void DrawFigure(RectTransform chart)
+        {
+            Blob(chart, 0.5f, 0.10f, 0.20f, 0.13f, 0f, true);      // 머리
+            Blob(chart, 0.5f, 0.19f, 0.08f, 0.05f, 0f, false);     // 목
+            Blob(chart, 0.5f, 0.40f, 0.34f, 0.34f, 0f, true);      // 몸통
+            Blob(chart, 0.30f, 0.33f, 0.09f, 0.22f, -18f, true);   // 왼 윗팔
+            Blob(chart, 0.30f, 0.53f, 0.08f, 0.20f, 25f, true);    // 왼 아래팔
+            Blob(chart, 0.70f, 0.33f, 0.09f, 0.22f, 18f, true);    // 오른 윗팔
+            Blob(chart, 0.70f, 0.53f, 0.08f, 0.20f, -25f, true);   // 오른 아래팔
+            Blob(chart, 0.5f, 0.72f, 0.66f, 0.22f, 0f, true);      // 엇갈려 앉은 다리
+            Blob(chart, 0.5f, 0.84f, 0.30f, 0.07f, 0f, true);      // 발
+        }
+
+        Image Line(RectTransform chart, Vector2 a01, Vector2 b01)
+        {
+            var l = MakeImage(chart, "경맥", new Color(0.55f, 0.16f, 0.12f, 0.35f), false);
+            var a = At(a01.x, a01.y); var b = At(b01.x, b01.y);
+            var rt = l.rectTransform; rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = (a + b) * 0.5f;
+            rt.sizeDelta = new Vector2((b - a).magnitude, 3f);
+            rt.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg);
+            return l;
+        }
+
+        void MakePoint(Soul soul, string stat, float x, float y)
+        {
+            bool big = Big.Contains(stat);
+            float size = big ? 44f : 24f;
+            var go = new GameObject($"혈 {stat}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            go.transform.SetParent(_chart, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = At(x, y);
+            rt.sizeDelta = new Vector2(size + 26, size + 26);   // 누르기 쉬운 칸(투명)
+            go.GetComponent<Image>().color = new Color(1, 1, 1, 0.001f);
+            go.GetComponent<Button>().onClick.AddListener(() => Select(stat));
+            var dot = MakeImage(rt, "혈", Ink, true);
+            dot.rectTransform.sizeDelta = new Vector2(size, size);
+            int max = soul.TrainingMax(stat);
+            var pips = new Image[max];
+            float R = size * 0.5f + 8f;
+            for (int i = 0; i < max; i++)
+            {
+                float a = Mathf.PI * 0.5f - i * Mathf.PI * 2f / Mathf.Max(max, 1);
+                var p = MakeImage(rt, "점", Ink, true);
+                p.rectTransform.sizeDelta = new Vector2(7, 7);
+                p.rectTransform.anchoredPosition = new Vector2(Mathf.Cos(a) * R, Mathf.Sin(a) * R);
+                pips[i] = p;
+            }
+            _points[stat] = (dot, pips, rt);
+        }
+
+        void Select(string stat)
+        {
+            _sel = stat;
+            foreach (Transform c in _detail) Destroy(c.gameObject);
+            var item = _soul.Data.Balance.Training.Items.Find(i => i.Stat == stat);
+            var name = Text(_detail, $"{Loc.T($"ui.meridian.{stat}")}", 38, FontStyles.Bold, Ink);
+            Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -30), new Vector2(740, 52));
+            var place = Text(_detail, Big.Contains(stat) ? Loc.T("ui.meridian.big") : "", 20, FontStyles.Italic, Gold);
+            Place(place.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -72), new Vector2(740, 28));
+            _selRow = MetaShopRow.Training(_detail, font, _soul, item, Refresh, 720);
+            _selRow.Rect.anchorMin = _selRow.Rect.anchorMax = new Vector2(0.5f, 1f);
+            _selRow.Rect.anchoredPosition = new Vector2(0, -130);
+            Refresh();
+        }
+
+        float _flashUntil;
+        string[] _flashChannel;
+        void FlashChannel(string stat)
+        {
+            foreach (var ch in Channels) if (System.Array.IndexOf(ch, stat) >= 0) _flashChannel = ch;
+            _flashUntil = Time.unscaledTime + 0.9f;
+        }
+
+        void LateUpdate()
+        {
+            if (_root == null) return;
+            float k = _flashChannel != null && Time.unscaledTime < _flashUntil ? (_flashUntil - Time.unscaledTime) / 0.9f : 0f;
+            foreach (var (line, ch) in _lines)
+            {
+                bool lit = ch == _flashChannel && k > 0f;
+                line.color = lit ? Color.Lerp(new Color(0.55f, 0.16f, 0.12f, 0.35f), new Color(1f, 0.85f, 0.35f, 1f), Mathf.Sin(k * Mathf.PI)) : new Color(0.55f, 0.16f, 0.12f, 0.35f);
+                line.rectTransform.sizeDelta = new Vector2(line.rectTransform.sizeDelta.x, lit ? 6f : 3f);
+            }
+            // 고른 혈은 숨 쉬듯 테두리가 커졌다 작아진다
+            foreach (var kv in _points)
+            {
+                float s = kv.Key == _sel ? 1.15f + Mathf.Sin(Time.unscaledTime * 4f) * 0.08f : 1f;
+                kv.Value.dot.rectTransform.localScale = Vector3.one * s;
+            }
         }
 
         public void Refresh()
         {
             _balance.text = Loc.F("ui.qi.balance", _soul.RebirthQi.ToString("N0"));
             foreach (var r in _rows) r.Refresh();
+            _selRow?.Refresh();
+            foreach (var kv in _points)
+            {
+                int lv = _soul.TrainingLevel(kv.Key), max = _soul.TrainingMax(kv.Key);
+                bool full = lv >= max && max > 0;
+                kv.Value.dot.color = full ? Gold : lv > 0 ? new Color(0.55f, 0.16f, 0.12f, 0.9f) : new Color(Ink.r, Ink.g, Ink.b, kv.Key == _sel ? 0.75f : 0.35f);
+                for (int i = 0; i < kv.Value.pips.Length; i++) kv.Value.pips[i].color = i < lv ? Gold : new Color(Ink.r, Ink.g, Ink.b, 0.22f);
+            }
             _refund.interactable = _soul.TrainingSpent > 0;
             _refundLabel.text = $"{Loc.T("ui.training.refund")}  <size=80%>(+{_soul.TrainingSpent:N0})</size>";
         }

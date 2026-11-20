@@ -165,14 +165,14 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 숭산 낮 화면이 Bloom 을 켜기 전과 거의 같은 밝기이고 금빛 호·진기 구슬만 살짝 번짐, 장막 안에선 번짐이 눈에 띔. 효과 간소화에서 Bloom 꺼짐. 300마리에서 ms 를 daily 에. 콘솔 에러 0
   - 찍기: `docs/unity_shots/PP-01U/` 의 `day.png`·`rain.png`
 
-- [ ] GU-02U 대오 카드 금빛 테두리 · 먼저: backlog GU-02
+- [x] GU-02U 대오 카드 금빛 테두리 · 먼저: backlog GU-02 — **2026-11-20 16:30 대화 세션 끝**: `LevelUpScreen.MakeCard` 가 `Offer.Great` 면 금빛 테두리 두 겹·카드 위 '대오 · 두 단계 한 번에' 띠·뜰 때 0.1초 늦게 0.55초 금빛 스침(`Shimmer`, 실시간). PC 에서 나한권 대오 카드 4→6 단계를 띄워 고르니 나한권 6단계, 콘솔 에러 0. 소리는 효과음을 뺀 상태라 넘어감. 찍음 `docs/unity_shots/GU-02U/great_card.png`
   - 할 것: 레벨업 카드가 `Offer.Great`(= `CardText.Great`)면 금빛 테두리와 첫째 줄 옆 '대오' 배지를 붙인다. 첫째 줄 `Lv a→b` 는 2026-11-14 클라우드가 `LevelUpScreen` 571·582줄을 `lv + o.Levels` 로 바꿔 두 단계를 보인다(컴파일 확인 전 — 에러면 그것부터). 뜰 때 다른 카드보다 0.1초 늦게 반짝이게(레벨업 징 위에 맑은 소리 하나, 소리가 없으면 넘어감)
   - 쓸 것: 시안 `web/lookdev/levelup.html`(대오 빛줄기 0.1초 늦게·0.55초), `Presentation/Hud/LevelUpScreen.cs`(카드 그리기·DrawBadges), Core `Loadout.RollLevelUp`·`Offer.Great`·`LevelUpView.Card`, strings `ui.levelup.badge.great`, 확률은 balance.json `levelUp.greatChance`(직접 적지 않는다)
   - 메뉴: 없음
   - 끝: 기연을 크게 올린 시험 판(연무장 기연 최고)에서 금빛 카드가 보이고, 집으면 그 무공이 2레벨 오름. 콘솔 에러 0
   - 찍기: `docs/unity_shots/GU-02U/` 의 `great_card.png`
 
-- [ ] GU-01U 금빛 돈오 카드와 대성 · 먼저: backlog GU-01
+- [x] GU-01U 금빛 돈오 카드와 대성 · 먼저: backlog GU-01 — **2026-11-20 16:30 대화 세션 끝**: 열 때 `PendingDoneo` 를 카드 줄 아래 금빛 띠(연환 이름 · 돈오/대성 · 선택을 쓰지 않음, 금빛 스침)로 띄우고 누르면 `TakeDoneo`, 안 누르고 닫아도 닫을 때 `TakeAllDoneo`(자동 고르기·정진도 연환이 켜지게). PC 에서 나한권·장풍 Lv4 → 다음 레벨업에 '권장합일 돈오' 띠, 누르니 AwakenedLinks 에 gwonjang. 찍음 `docs/unity_shots/GU-01U/doneo_card.png`
   - 할 것: 레벨업 화면을 열 때 `_loadout.PendingDoneo(_restored)` 가 비어 있지 않으면 보통 카드 줄 위에 금빛 돈오 카드를 따로 한 장씩(연환 이름·두 무공 인장·`ui.levelup.doneo.badge`, 대성이면 `ui.levelup.doneo.grand`, 아래 작게 `ui.levelup.doneo.free`) 띄우고, 누르면 `TakeDoneo` → 시너지 다시 셈(LifeRunner 278줄과 같은 길). 보통 카드 고르기는 그대로 하나. 지금은 2026-11-14 클라우드가 `LevelUpScreen` Open 에 `_loadout.TakeAllDoneo(_restored)` 한 줄을 넣어 저절로 집게 해 둠(컴파일 확인 전 — 에러면 그것부터). 카드 화면을 붙이면 그 줄을 지운다. 처음 깨친 연환은 긴 돈오 연출(탁본 뒤집기 + 두 무공 색이 합쳐지는 획, 발견 연출 S-04 재활용)과 도감 등록, 대성은 이펙트에 두 무공이 합쳐진 모양(쌍검합벽이면 삼재 획 위에 푸른 검기). 다음 생 짝 무공 가중치는 `RollLevelUp(..., knownLinks)` 에 `Soul.Codex` 중 `link:` 쪽 id 를 넘긴다
   - 쓸 것: 시안 `web/lookdev/levelup.html`(열림·펼침·돈오 획 값), `Presentation/Hud/LevelUpScreen.cs`, Core `Loadout.PendingDoneo`·`TakeDoneo`·`DoneoCard`, `SynergyState.PendingLinks`·`IsGrand`, strings `ui.levelup.doneo.*`, 기획서 20장 '돈오'
   - 메뉴: 없음
