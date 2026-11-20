@@ -69,13 +69,29 @@ def remove_bg(img: Image.Image, tol: int = 28) -> Image.Image:
     return img
 
 
-def remove_bg_edges(img: Image.Image, tol: int = 28) -> Image.Image:
+def auto_bg(img: Image.Image, band: int = 16) -> tuple[tuple[int, int, int], int]:
+    """그림 가장자리 띠의 가운데 값을 배경색으로, 띠의 흔들림으로 tol 을 정한다(2026-11-21).
+    Artlist 그림 배경은 #F2EBDD 가 아니라 (245,238,227)·(251,241,224)처럼 그림마다 조금 다르고 거의 고르다(흔들림 99% 가 2 안).
+    고정 배경색 + tol 28(바깥 잇기 56)로는 화산 제자 흰 옷이 배경과 이어져 몸통이 뚫렸다. 고른 배경이면 tol 을 줄인다."""
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+    b = max(2, min(band, w // 8, h // 8))
+    px = []
+    for box in ((0, 0, w, b), (0, h - b, w, h), (0, b, b, h - b), (w - b, b, w, h - b)):
+        px.extend(rgb.crop(box).getdata())
+    bg = tuple(sorted(c[i] for c in px)[len(px) // 2] for i in range(3))
+    dev = sorted(max(abs(c[0] - bg[0]), abs(c[1] - bg[1]), abs(c[2] - bg[2])) for c in px)
+    p99 = dev[min(len(dev) - 1, int(len(dev) * 0.99))]
+    return bg, int(min(28, max(8, p99 * 3 + 4)))
+
+
+def remove_bg_edges(img: Image.Image, tol: int = 28, bg: tuple[int, int, int] = BG) -> Image.Image:
     """UI 바탕용. 배경색 가운데 그림 가장자리에서 이어진 곳만 투명하게 한다.
     카드 틀·족자처럼 먹 테두리 안쪽 종이가 배경색과 비슷해도 테두리에 막혀 남는다.
     속을 비울 틀은 Unity Image(Sliced)의 Fill Center 를 끈다."""
     img = img.convert("RGBA")
     rgb = img.convert("RGB")
-    r, g, b = ImageChops.difference(rgb, Image.new("RGB", rgb.size, BG)).split()
+    r, g, b = ImageChops.difference(rgb, Image.new("RGB", rgb.size, bg)).split()
     d = ImageChops.lighter(ImageChops.lighter(r, g), b)  # 채널별 차이 가운데 큰 값
     near = d.point(lambda v: 255 if v <= tol * 2 else 0)
     w, h = near.size
@@ -94,14 +110,14 @@ def remove_bg_edges(img: Image.Image, tol: int = 28) -> Image.Image:
 POCKET_MIN = 0.002  # 안쪽 빈 종이(팔과 몸 사이·수레바퀴 살 사이)로 볼 최소 넓이(그림 넓이 비율)
 
 
-def remove_bg_sprite(img: Image.Image, tol: int = 28) -> Image.Image:
+def remove_bg_sprite(img: Image.Image, tol: int = 28, bg: tuple[int, int, int] = BG) -> Image.Image:
     """스프라이트·초상·소품용(2026-11-08 클라우드, backlog PR-02).
     remove_bg 는 배경색과 비슷한 픽셀을 그림 안쪽까지 지워 얼굴·흰 옷·만두 속·등롱 종이가 비쳤다(초상 셋 넓이의 27~34%).
     그래서 가장자리에서 이어진 배경만 지우고(remove_bg_edges), 안쪽에 갇힌 곳은 '배경색 그대로인 넓은 덩이'만 지운다.
     그림 속 밝은 곳은 붓 결이 있어 배경색 tol/2 안에 넓게 고르지 않다는 것을 기댄 것이다."""
-    out = remove_bg_edges(img, tol)
+    out = remove_bg_edges(img, tol, bg)
     rgb = img.convert("RGB")
-    r, g, b = ImageChops.difference(rgb, Image.new("RGB", rgb.size, BG)).split()
+    r, g, b = ImageChops.difference(rgb, Image.new("RGB", rgb.size, bg)).split()
     d = ImageChops.lighter(ImageChops.lighter(r, g), b)
     a = out.getchannel("A")
     # 안쪽(알파가 남은 곳)이면서 배경색에 아주 가까운 픽셀
@@ -225,7 +241,8 @@ def process(row: dict, dry: bool) -> Path | None:
     if kind == "ui":
         img = trim(remove_bg_edges(img))
     elif cut_bg:
-        img = trim_and_square(remove_bg_sprite(img))
+        bg, tol = auto_bg(img)  # 2026-11-21 그림마다 배경색·tol(흰 옷이 뚫리지 않게)
+        img = trim_and_square(remove_bg_sprite(img, tol, bg))
     if kind == "tile":
         img = make_seamless(img)
     img.thumbnail((size, size), Image.LANCZOS)
