@@ -286,6 +286,7 @@ button { touch-action: manipulation; }
         <button class="b" id="introbtn" type="button">인트로<small>혈우 · 12컷</small></button>
         <button class="b" id="dexbtn" type="button">비급 도감<small id="dexcount">연환·진전·비전·기연</small></button>
         <button class="b" id="demobtn" type="button">절기 각성 보기<small>절정 돌파 직전에서 시작</small></button>
+        <button class="b main" id="newjourney" type="button" hidden>새 여정<small>진엔딩을 보았다 · 처음부터</small></button>
       </div>
       <div class="row">
         <button class="b" type="button" data-set="vol">음량 100%</button>
@@ -4508,6 +4509,7 @@ function traitLine(id) {
 }
 function openInn() {
   const m = innMeta();
+  if (m.journeyOver) { toTitle(); return; }   // WP-13f: 진엔딩 뒤엔 침방이 없다
   running = false; cancelAnimationFrame(rafId);
   ['title', 'result', 'pause', 'levelup', 'brk', 'chest', 'find', 'evopick', 'profirst', 'procut', 'ending'].forEach(id => $(id).hidden = true);
   $('hud').hidden = true; overlay = 'inn'; paused = false;
@@ -5767,6 +5769,7 @@ function endRun(won) {
   $('again').textContent = G.body ? '윤회 · 다음 생을 고른다' : '다시 하기';
   if (G.body) {
     const st = lifeSettle(), m = recordLife(st); G.settled = st;
+    if (m.journeyOver) $('again').textContent = '여정을 마쳤다 · 제목으로';   // WP-13f: 진엔딩 뒤엔 윤회가 없다(decisions #34)
     $('resline').textContent = `${G.body.nameKo}의 제자는 ${G.realm.nameKo}에서 쓰러졌다. 모은 기를 들고 다른 문파의 몸으로 다시 태어난다.`;
     if (G.endWay === 'zuohwa') {   // 좌화(7장 '생이 끝나는 세 가지'): 쓰러졌을 때와 같은 정산, 자막은 정산 서술 5번(inn_screens.md, Core InnDialogue.Settlement)
       $('restitle').textContent = uiT('ui.settle.end.zuohwa');
@@ -5836,7 +5839,7 @@ function showBest() {
   $('best').textContent = parts.join(' · ');
   $('dexcount').textContent = `찾은 비급 ${dex.size} / ${DEX_TOTAL}`;
 }
-function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst', 'ending'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); drawIdle(); }
+function toTitle() { running = false; cancelAnimationFrame(rafId); ['result', 'inn', 'pause', 'levelup', 'brk', 'chest', 'find', 'dex', 'evopick', 'procut', 'profirst', 'ending'].forEach(id => $(id).hidden = true); $('demobar').hidden = true; if (location.hash === '#awaken') history.replaceState(null, '', location.pathname + location.search); $('hud').hidden = true; $('title').hidden = false; overlay = null; paused = false; showBest(); showNewJourney(); drawIdle(); }
 
 function drawIdle() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -5955,7 +5958,18 @@ $('procutnext').addEventListener('click', nextCut);
 $('endingnext').addEventListener('click', nextEndingCut);
 $('profirsttitle').addEventListener('click', () => { $('profirst').hidden = true; toTitle(); });
 $('startfull').addEventListener('click', () => startRun('full'));
-$('again').addEventListener('click', () => (G && G.body ? openInn() : startRun(G ? G.mode : 'quick')));
+$('again').addEventListener('click', () => (G && G.body ? (soulLoad().journeyOver ? toTitle() : openInn()) : startRun(G ? G.mode : 'quick')));
+// 새 여정(WP-13f, 2026-11-20 추천대로 — decisions #34): 진엔딩을 본 혼은 환혼이 없다. 제목 화면에 '새 여정'이 나오고,
+//   한 번 누르면 묻고(글이 바뀜) 4초 안에 한 번 더 누르면 혼 기록(cheonha_meta2)을 지운다. 다음 생은 서장부터.
+let njUntil = 0;
+function showNewJourney() { const b = $('newjourney'); if (b) { b.hidden = !soulLoad().journeyOver; b.firstChild.textContent = '새 여정'; njUntil = 0; } }
+$('newjourney').addEventListener('click', () => {
+  const b = $('newjourney');
+  if (performance.now() > njUntil) { njUntil = performance.now() + 4000; b.firstChild.textContent = '한 번 더 누르면 혼 기록을 지운다'; return; }
+  try { localStorage.removeItem(SOUL_KEY); } catch (e) { /* 저장이 막힌 창 */ }
+  showNewJourney();
+});
+showNewJourney();
 $('innreroll').addEventListener('click', () => innReroll());
 $('inntitle').addEventListener('click', () => toTitle());
 $('totitle').addEventListener('click', toTitle);

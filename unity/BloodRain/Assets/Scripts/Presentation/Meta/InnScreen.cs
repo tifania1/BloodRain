@@ -41,7 +41,7 @@ namespace BloodRain.Presentation.Meta
         Soul _soul;
         GameObject _canvas;
         RectTransform _root, _grid;
-        TextMeshProUGUI _sub, _toast;
+        TextMeshProUGUI _sub, _toast, _startLabel;
         float _toastLeft;
         TrainingScreen _training;
         SmithyScreen _smithy;
@@ -69,8 +69,25 @@ namespace BloodRain.Presentation.Meta
         public void PressStart()
         {
             if (!IsOpen || _soul == null) return;
+            if (_soul.JourneyOver) { PressNewJourney(); return; }
             Hide();
             StartLife?.Invoke();
+        }
+
+        // WP-13f(2026-11-20 추천대로, decisions #34): 진엔딩을 본 혼은 환혼이 없다. '새 생 시작' 자리가 '새 여정'이 되고,
+        //   한 번 누르면 묻고(토스트) 4초 안에 한 번 더 누르면 이 칸의 혼 기록을 지운 뒤 타이틀로(다시 고르면 서장부터).
+        float _confirmUntil = -1f;
+        public void PressNewJourney()
+        {
+            if (!IsOpen || _soul == null || !_soul.JourneyOver) return;
+            if (Time.unscaledTime > _confirmUntil)
+            {
+                _confirmUntil = Time.unscaledTime + 4f;
+                Toast(Loc.T("ui.inn.new_journey_confirm"));
+                return;
+            }
+            SoulStore.DeleteSlot(SoulStore.Slot);
+            SceneManager.LoadScene("Boot");
         }
 
         public void PressFacility(string id)
@@ -222,9 +239,8 @@ namespace BloodRain.Presentation.Meta
             Place(_sub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 345), new Vector2(1180, 36));
 
             // 새 생 시작(침방)
-            var start = MakeButton(_root, "새 생 시작", Blood, out var sl, 40, PaperHot);
+            var start = MakeButton(_root, "새 생 시작", Blood, out _startLabel, 40, PaperHot);
             Place((RectTransform)start.transform, new Vector2(0.5f, 0.5f), new Vector2(0, 245), new Vector2(720, 110));
-            sl.text = $"{Loc.T("ui.inn.start")}\n<size=50%><alpha=#CC>{Loc.T("ui.inn.start_sub")}  ·  Enter</size>";
             start.onClick.AddListener(PressStart);
 
             var head = Text(_root, Loc.T("ui.inn.facilities"), 26, FontStyles.Bold, Ink);
@@ -255,7 +271,10 @@ namespace BloodRain.Presentation.Meta
         {
             if (_soul == null || _grid == null) return;
             var c = _soul.Data.Cheonha;
-            _sub.text = Loc.F("ui.inn.sub", _soul.Lives + 1, _soul.RebirthQi.ToString("N0"), _soul.BloodCrystal, _soul.SealStoneCount, c.Bosses.FinalRequires.SealStones);
+            _startLabel.text = _soul.JourneyOver
+                ? $"{Loc.T("ui.inn.new_journey")}\n<size=50%><alpha=#CC>{Loc.T("ui.inn.journey_over")}  ·  Enter</size>"
+                : $"{Loc.T("ui.inn.start")}\n<size=50%><alpha=#CC>{Loc.T("ui.inn.start_sub")}  ·  Enter</size>";
+            _sub.text = _soul.JourneyOver ? Loc.T("ui.inn.journey_over_sub") : Loc.F("ui.inn.sub", _soul.Lives + 1, _soul.RebirthQi.ToString("N0"), _soul.BloodCrystal, _soul.SealStoneCount, c.Bosses.FinalRequires.SealStones);
             for (int i = _grid.childCount - 1; i >= 0; i--) Destroy(_grid.GetChild(i).gameObject);
             for (int i = 0; i < FacilityOrder.Length; i++) Door(FacilityOrder[i], i + 1);
         }
@@ -265,7 +284,7 @@ namespace BloodRain.Presentation.Meta
             var f = _soul.Data.Cheonha.Inn.Facility(id);
             bool open = Inn.IsOpen(_soul, id), enter = Inn.CanEnter(_soul, id);
             bool buildable = !open && f.BuildBloodCrystal > 0 && Inn.MeetsRequirement(_soul, f);
-            bool ready = enter && id == "training"; // 지금 화면이 있는 시설
+            bool ready = enter && HasScreen(id); // 화면이 있는 시설(서고만 아직 없음)
             var color = ready ? new Color(0.30f, 0.24f, 0.18f) : buildable ? new Color(0.45f, 0.33f, 0.12f) : open ? new Color(0.42f, 0.38f, 0.33f) : new Color(0.62f, 0.58f, 0.52f);
             var b = MakeButton(_grid, id, color, out var label, 30, open || buildable ? PaperHot : new Color(0.95f, 0.92f, 0.86f, 0.75f));
             string state = ready ? Loc.T("ui.inn.enter")
@@ -278,6 +297,8 @@ namespace BloodRain.Presentation.Meta
             label.margin = new Vector4(14, 8, 14, 8);
             b.onClick.AddListener(() => PressFacility(id));
         }
+
+        static bool HasScreen(string id) => id == "training" || id == "smithy" || id == "apothecary" || id == "cave" || id == "haomun_board";
 
         static string Name(FacilityDef f) => Loc.T($"cheonha.inn.facilities.{f.Id}.name", f.NameKo);
 
