@@ -24,6 +24,8 @@ namespace BloodRain.Core.Progression
 
         /// <summary>지금까지 농도 덕에 더 받은 진기(심마 계산용, 쌓인 채로 둔다).</summary>
         public double ExtraXp => _extra;
+        /// <summary>심마 한 번에 음 쪽으로 기우는 칸(bloodArt.yinPerStep). 속삭임으로 빌린 혈공도 마교 값 그대로.</summary>
+        public int YinPerStep => _def.YinPerStep;
         /// <summary>심마로 기운 횟수.</summary>
         public int Steps { get; private set; }
 

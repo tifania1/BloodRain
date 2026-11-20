@@ -126,6 +126,7 @@ button { touch-action: manipulation; }
 .procut .b, .procut .b.main { color: #EFE6D2; background: transparent; border-color: #C9A227; }
 .procut .resimg { max-height: 58vh; }
 .procut .cutlines p.whisper { color: #B33A3A; font-style: italic; }
+.whisperline { color: #B33A3A; font-style: italic; }
 .procut .card[disabled] { opacity: .45; cursor: default; }
 .screen.veil { background: rgba(239,230,210,.84); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 /* margin:auto 는 화면보다 길어지면 0이 되어 위가 잘리지 않고 스크롤된다 */
@@ -569,7 +570,9 @@ const harmonyMul = () => sectT().harmonyBonusMultiplier ?? 1;   // 무당 2
 // 혈공(WP-23, 5장, cheonha.json sects[demonic].bloodArt — Core BloodArt 그대로): 구슬 진기 × 그 자리 혈운 농도^xpDensityExponent,
 // 농도 덕에 더 받은 진기 extraXpPerStep 마다 음양이 음으로 yinPerStep(심마). 몸의 오의(천마해체)를 쓰면 음양이 시작값으로 — 웹은 오의가 아직 모든 몸 일검이라 마교 몸이 오의를 쓰면 그렇게 본다.
 // 윤회의 기는 구슬 값 그대로(G.orbV·orbW 는 o.v 로 센다).
-const bloodArt = () => (G && G.body && G.body.bloodArt) || null;
+// WP-29a(2026-11-20 추천대로, decisions #36): 마교 몸이 아니어도 혈마의 속삭임을 받으면 마교 혈공이 그 생에만 그대로 켜진다(Core Life.LendBloodArt)
+const DEMONIC_ART = ((DATA.sects || []).find(s => s.bloodArt) || {}).bloodArt || null;
+const bloodArt = () => (G && G.body && (G.body.bloodArt || (G.whisperTaken ? DEMONIC_ART : null))) || null;
 function bloodOrbXp(v) {
   const A = bloodArt(); if (!A || !(A.xpDensityExponent > 0)) return v;
   const got = v * Math.pow(Math.max(0, G.dens || 1), A.xpDensityExponent), extra = got - v;
@@ -1842,7 +1845,8 @@ function endingCards(m, pick) {
   const box = $('endingcards'); box.innerHTML = '';
   endingsOpen(m).forEach((x, i) => {
     const d = END_BY[x.id], b = document.createElement('button'); b.type = 'button'; b.className = 'card'; b.disabled = x.lack.length > 0;
-    b.innerHTML = `<span class="ic">${d.nameKo[0]}</span><span><h3>${d.nameKo} <em>${i + 1}</em></h3><p>${d.descKo}${x.lack.length ? `<br><small>닫힘 — ${x.lack.join(' · ')}</small>` : ''}</p></span>`;
+    const wh = x.id === 'inherit' && (m.whispers || 0) > 0 ? `<small class="whisperline">혈마의 속삭임 ${m.whispers}번</small><br>` : '';   // WP-29a: 계승 표식은 세기만, 계승 카드 위에 한 줄
+    b.innerHTML = `<span class="ic">${d.nameKo[0]}</span><span><h3>${d.nameKo} <em>${i + 1}</em></h3><p>${wh}${d.descKo}${x.lack.length ? `<br><small>닫힘 — ${x.lack.join(' · ')}</small>` : ''}</p></span>`;
     if (!b.disabled) b.onclick = () => pick(x.id);
     box.appendChild(b);
   });
@@ -2571,12 +2575,12 @@ function readLetter() {
   letters.add(x.id); store.set('letters', [...letters]);
   showDiscovery('奇緣', '下五門', '하오문 밀서', `등롱 속에 운낭의 글씨가 든 쪽지가 있다. 「${x.hint[0]} ${x.hint[1]}」 — ${x.condition}`);
 }
-// 혈마의 속삭임을 받음(WP-29): 마도 진전 하나·회복 절반(healMul)·혼 기록에 계승 표식(whispers). '혈공'은 마교 몸이 아니면 무엇인지 기획서에 없어 아직 뺌(WP-29a)
+// 혈마의 속삭임을 받음(WP-29): 마도 진전 하나·회복 절반(healMul)·혼 기록에 계승 표식(whispers). 마교 몸이 아니면 마교 혈공이 그 생에만 켜진다(WP-29a, bloodArt)
 function whisperUlt() {
   const ev = G.enc && G.enc.whisper; if (!ev || !ev.on || ev.done || !G.body || Math.hypot(G.player.x - ev.x, G.player.y - ev.y) >= SPOT.whisper.reachRadius) return;
   ev.done = true; G.whisperTaken = true; discover('enc:whisper');
   G.syn.bonus.demonic = (G.syn.bonus.demonic || 0) + ENC_BY.whisper.params.schoolBonus; recomputeStats(); renderSlots();
-  showDiscovery('奇緣', '血魔', '혈마의 속삭임', '석상 앞에서 힘을 받아들였다. 이번 생 동안 마도 진전을 하나 더 가진 것으로 치고, 몸이 받는 회복은 절반이 된다.');
+  showDiscovery('奇緣', '血魔', '혈마의 속삭임', '석상 앞에서 힘을 받아들였다. 이번 생 동안 마도 진전을 하나 더 가진 것으로 치고, 몸이 받는 회복은 절반이 된다.' + (G.body.bloodArt ? '' : ' 마교의 혈공도 이 몸에 흐른다 — 혈운이 짙은 곳의 진기를 더 받지만 마음이 음으로 기운다.'));
 }
 function breakLantern(l) {
   if (l.silver) {   // 은빛 등롱: cycle.bloodmoon.manuscriptChance 로 의서 한 권(Core LifeLog.BreakSilverLantern). 안 나와도 보통 등롱처럼 한 가지는 떨군다

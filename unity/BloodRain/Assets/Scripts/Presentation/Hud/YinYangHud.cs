@@ -96,7 +96,7 @@ namespace BloodRain.Presentation.Hud
             if (_simmaSteps < 0) _simmaSteps = art.Steps; // 처음 본 값은 알리지 않는다
             if (art.Steps > _simmaSteps)
             {
-                int yinPer = life.Body.Sect?.BloodArt?.YinPerStep ?? 1;
+                int yinPer = art.YinPerStep;
                 _simma.text = Loc.F("ui.yinyang.simma", $"-{(art.Steps - _simmaSteps) * yinPer}");
                 _simmaSteps = art.Steps;
                 _simmaT = 1.6f;

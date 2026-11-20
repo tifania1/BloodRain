@@ -132,7 +132,16 @@ namespace BloodRain.Core.Run
         public LifeDirector Director { get; }
         public BossAwakening Bosses { get; }
         /// <summary>마교 몸의 혈공(5장). 다른 몸은 null.</summary>
-        public BloodArt? BloodArt { get; }
+        public BloodArt? BloodArt { get; private set; }
+
+        /// <summary>WP-29a(2026-11-20 추천대로, decisions #36): 마교 몸이 아닌데 혈마의 속삭임을 받으면 마교 혈공(cheonha.json 마교 bloodArt)이
+        /// 그 생에만 그대로 켜진다(진기 × 농도^0.25, 더 받은 진기 150마다 음 1). 시작값은 이 몸의 음양 시작값. 이미 혈공이 있으면 그대로.</summary>
+        void LendBloodArt()
+        {
+            if (BloodArt != null) return;
+            var art = _data.Cheonha.Sects.Select(s => s.BloodArt).FirstOrDefault(a => a != null);
+            if (art != null) BloodArt = new BloodArt(art, Loadout.Gauge, Body.YinyangStart);
+        }
         /// <summary>천마해체 8초(마교 몸만, 다른 몸은 null). UseUltimate 가 시작하고 Tick 이 줄인다(UltimateEffects).</summary>
         public DemonDissolution? Dissolution { get; }
         /// <summary>고른 깨달음이 붙이는 값. 고르면 TakeInsight(def, 지금 처치 수).</summary>
@@ -162,6 +171,7 @@ namespace BloodRain.Core.Run
         {
             if (!Encounters.AcceptWhisper()) return false;
             Log.Whispered = true;
+            LendBloodArt();
             return true;
         }
 
@@ -583,6 +593,7 @@ namespace BloodRain.Core.Run
             }
             InsightEffects.RestoreCounters(b.KillsAtSalgi, b.SimmaBaseline, b.BlockCooldown);
             Encounters.Restore(b.Encounters, b.EncounterSchools, b.SwordTombMight, b.WhisperTaken);
+            if (b.WhisperTaken) LendBloodArt();
             // 영약: 다시 걸지 않는다(오의·시작 레벨은 저장 값이 이미 담음). 지닌 목록과 혈정 배율·소환단·태극환 남은 시간만
             foreach (var id in b.Elixirs)
             {
