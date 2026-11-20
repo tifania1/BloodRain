@@ -186,8 +186,10 @@ namespace BloodRain.Presentation.Fx
                     if (sp > size * 40f) sp = 0f; // 순간 이동(밀려남·자리 옮김)은 걸음으로 치지 않는다
                     c.Speed = Mathf.Lerp(c.Speed, sp, 1f - Mathf.Exp(-dt * 8f));
                     c.Stride += c.Speed * dt / Mathf.Max(0.01f, size);
-                    if (Mathf.Abs(d.x) > size * 0.15f * dt) c.Face = d.x > 0f ? 1f : -1f;
-                    c.FaceShown = Mathf.MoveTowards(c.FaceShown, c.Face, dt * 9f);
+                    // 2026-11-21: 무리 속에서 밀리며 좌우가 자주 바뀌어, 돌아서는 중인 적이 세로 한 줄(폭 12%)로 화면 곳곳에 섰다.
+                    // 가로로 꽤 움직일 때만 돌아서고, 더 빨리 돌며, 가장 납작할 때도 폭 42% 에서 바로 뒤집는다
+                    if (Mathf.Abs(d.x) > size * 0.4f * dt) c.Face = d.x > 0f ? 1f : -1f;
+                    c.FaceShown = Mathf.MoveTowards(c.FaceShown, c.Face, dt * 12f);
                 }
                 var tex = c.Art != null ? c.Art : atlas;
                 if (!_textures.Contains(tex)) _textures.Add(tex);
@@ -285,7 +287,7 @@ namespace BloodRain.Presentation.Fx
                     }
                     if (squash > 0f) { sx *= 1f + 0.28f * squash; sy *= 1f - 0.22f * squash; tilt -= c.HitDirX * squash * 0.35f; } // 맞은 쪽 반대로 기울며 눌림
                     // 돌아설 때는 가로로 납작해졌다 펴진다(FaceShown -1~1). 0 을 지나며 그림이 뒤집힌다
-                    float face = Mathf.Abs(c.FaceShown) < 0.12f ? (c.FaceShown < 0f ? -0.12f : 0.12f) : c.FaceShown;
+                    float face = Mathf.Abs(c.FaceShown) < 0.42f ? (c.FaceShown < 0f ? -0.42f : 0.42f) : c.FaceShown;
                     float w2 = size * sx * face, h2 = size * sy;
                     float cs = Mathf.Cos(tilt), sn = Mathf.Sin(tilt);
                     float footX = c.Position.x + m.x * size, footY = c.Position.y + (m.y + hop + bob) * size - size * 0.5f;
