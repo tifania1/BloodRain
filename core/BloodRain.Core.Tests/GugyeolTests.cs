@@ -98,6 +98,36 @@ namespace BloodRain.Core.Tests
             Assert.Equal(first.Id, g.Pick(new[] { Silver, first })!.Value.Id);
         }
 
+        /// <summary>GU-11o1(2026-11-20 추천대로 — decisions #66): 구결이 켜진 동안 카드 한 장이 다음 걸음으로 바뀌어 뜨고, 고를 수 없는 걸음이면 안 바뀌어 멈춘다.</summary>
+        [Fact] public void 구결이_켜지면_다음_걸음_카드가_끼어_뜨고_못_고르는_걸음이면_멈춘다()
+        {
+            var (_, life) = NewLife();
+            var l = life.Loadout;
+            var unlocked = _d.Weapons.Where(w => w.Unlock == "start").Select(w => w.Id).Concat(_d.Passives.Select(p => p.Id)).ToHashSet();
+            var cand = l.Candidates(unlocked);
+            var target = cand.First(o => o.Kind == OfferKind.NewPassive);
+            string step = Gugyeol.Step(target)!;
+            for (int seed = 0; seed < 40; seed++)
+            {
+                var plain = l.RollLevelUp(new Random(seed), 0, unlocked);
+                var forced = l.RollLevelUp(new Random(seed), 0, unlocked, null, step);
+                Assert.Equal(plain.Count, forced.Count);                                 // 카드 수 그대로
+                Assert.Contains(forced, o => Gugyeol.Step(o) == step);
+                Assert.Equal(forced.Count, forced.Select(o => o.Kind + o.Id).Distinct().Count());
+                if (plain.Any(o => Gugyeol.Step(o) == step)) Assert.Equal(plain.Select(o => o.Id), forced.Select(o => o.Id));
+            }
+            var g = new GugyeolPlayer(new[] { step, "w:no_such_weapon" });
+            Assert.Equal(step, g.Next);
+            var offers = l.RollLevelUp(new Random(3), 0, unlocked, null, g.Next);
+            Assert.Equal(target.Id, g.Pick(offers)!.Value.Id);
+            Assert.Equal("w:no_such_weapon", g.Next);
+            var after = l.RollLevelUp(new Random(4), 0, unlocked, null, g.Next);   // 고를 수 없는 걸음: 카드는 그대로
+            Assert.Equal(l.RollLevelUp(new Random(4), 0, unlocked).Select(o => o.Id), after.Select(o => o.Id));
+            Assert.Null(g.Pick(after));
+            Assert.True(g.Stopped);
+            Assert.Null(g.Next);
+        }
+
         [Fact] public void 구결_시뮬레이터_보고서가_세_몸을_낸다()
         {
             var md = BloodRain.Sim.GugyeolSim.Report(BloodRain.Sim.SimData.Load(TestData.DataDir), seeds: 2);

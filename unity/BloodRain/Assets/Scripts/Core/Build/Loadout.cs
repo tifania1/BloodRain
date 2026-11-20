@@ -156,7 +156,10 @@ namespace BloodRain.Core.Build
         /// 뽑힌 것이 모두 새 무공이면 은자·음식을 한 장 더 붙인다(levelUp.fallbackWhenAllNewWeapons).</summary>
         /// <param name="knownLinks">장경각 도감에 오른 연환 id(지난 생들에서 깨친 것, Soul.Codex 의 link: 쪽). 그 연환의 짝 무공 카드는
         /// knownLinkWeight 배로 잘 뜬다(기획서 20장 '돈오'). null 이거나 가중치가 붙는 카드가 없으면 보통 추첨(난수 순서도 같다).</param>
-        public List<Offer> RollLevelUp(Random rng, float luck, ISet<string> unlocked, IReadOnlyCollection<string>? knownLinks = null)
+        /// <param name="forceStep">구결이 켜진 동안 다음 걸음(GugyeolPlayer.Next, GU-11o1 2026-11-20 추천대로 — decisions #66). 그 걸음이 지금 고를 수 있는
+        /// 카드면(후보에 있으면) 뽑힌 카드에 없을 때 맨 끝 카드(은자·음식이 아닌 것)를 그 카드로 바꾼다. 카드 수·대오 확률은 그대로.
+        /// 고를 수 없으면(칸이 참·최고 단계·파기) 바꾸지 않고, 구결은 Pick 에서 멈춘다.</param>
+        public List<Offer> RollLevelUp(Random rng, float luck, ISet<string> unlocked, IReadOnlyCollection<string>? knownLinks = null, string? forceStep = null)
         {
             var rule = _data.Balance.LevelUp;
             int count = rule.BaseChoices;
@@ -173,8 +176,19 @@ namespace BloodRain.Core.Build
                 pool.RemoveAt(i);
                 weights.RemoveAt(i);
             }
-            if (result.Count == 0 || (rule.FallbackWhenAllNewWeapons && result.All(o => o.Kind == OfferKind.NewWeapon)))
-                result.Add(new Offer(OfferKind.Fallback, "silver_or_food"));
+            // 은자·음식을 붙일지는 구결 카드로 바꾸기 전 뽑힌 대로 정한다(카드 수가 구결 때문에 달라지지 않게)
+            bool fallback = result.Count == 0 || (rule.FallbackWhenAllNewWeapons && result.All(o => o.Kind == OfferKind.NewWeapon));
+            if (forceStep != null && result.All(o => Gugyeol.Step(o) != forceStep))
+            {
+                var can = Candidates(unlocked);
+                int wi = can.FindIndex(o => Gugyeol.Step(o) == forceStep);
+                if (wi >= 0)
+                {
+                    int at = result.FindLastIndex(o => o.Kind != OfferKind.Fallback);
+                    if (at < 0) result.Add(can[wi]); else result[at] = can[wi];
+                }
+            }
+            if (fallback) result.Add(new Offer(OfferKind.Fallback, "silver_or_food"));
             MarkGreat(result, rng, luck);
             return result;
         }

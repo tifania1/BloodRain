@@ -4,6 +4,8 @@
 // "레벨업이 몰려오면 창이 흐름을 끊습니다. 지난 생의 고른 순서를 저장해 두면 앞부분은 그대로 자동으로 고릅니다."
 // 한 걸음 = 무공·심법 하나를 고른 것("w:<id>"·"p:<id>"). 새로 얻기와 레벨 올리기를 가리지 않고, 금빛 대오 카드도 한 걸음.
 // 은자·음식(Fallback)은 걸음으로 치지 않는다. 뜬 카드에 다음 걸음이 없으면 거기서 멈추고 그 생엔 다시 켜지지 않는다.
+// GU-11o1(2026-11-20 사람이 추천대로 — decisions #66): 구결이 켜진 동안 레벨업을 뽑을 때 Next 를 Loadout.RollLevelUp(forceStep) 에 넘기면
+// 카드 한 장이 다음 걸음 카드로 바뀌어 뜨고 Pick 이 그걸 고른다. 그 걸음을 지금 고를 수 없으면(칸이 참·최고 단계) 카드가 안 바뀌어 거기서 멈춘다.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +33,8 @@ namespace BloodRain.Core.Build
         /// <summary>어긋나서(또는 끝까지 따라서) 멈췄나. 멈추면 그 생엔 다시 고르지 않는다.</summary>
         public bool Stopped { get; private set; }
         public int Count => _steps.Count;
+        /// <summary>다음 걸음(RollLevelUp 의 forceStep 에 넘긴다). 멈췄거나 끝까지 왔으면 null.</summary>
+        public string? Next => Stopped || Done >= _steps.Count ? null : _steps[Done];
 
         public GugyeolPlayer(IEnumerable<string> steps) { _steps = steps.ToList(); Stopped = _steps.Count == 0; }
 
