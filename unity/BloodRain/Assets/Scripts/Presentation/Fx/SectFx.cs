@@ -416,7 +416,7 @@ namespace BloodRain.Presentation.Fx
             {
                 float bs = (1.2f + .28f * stage) * m;
                 var ba = at + Vector2.down * .1f * m;
-                Add(.16f, (f, k) => Quad(3, ba, bs * (1f + k * .45f), bs * (1f + k * .45f), f.Seed, new Vector4(8f, .85f, .8f, 0f), FxRamp.Ink, .5f * (1f - k), 1f, k * .5f, f.Seed), true);
+                Add(.16f, (f, k) => Quad(3, ba, bs * (1f + k * .45f), bs * (1f + k * .45f), f.Seed, new Vector4(8f, .85f, .8f, 0f), FxRamp.Ink, .4f * (1f - k), 1f, k * .5f, f.Seed), true);
             }
         }
 
@@ -457,7 +457,7 @@ namespace BloodRain.Presentation.Fx
         public void ImpactCut(Vector2 at)
         {
             float m = Meter;
-            Add(.07f, (f, k) => Quad(3, at, 3.3f * m, 3.3f * m, f.Seed, new Vector4(9f, 1f, .8f, 0f), FxRamp.Ink, .85f * (1f - k * k), 1f, 0f, f.Seed), true);
+            Add(.07f, (f, k) => Quad(3, at, 2.9f * m, 2.9f * m, f.Seed, new Vector4(9f, 1f, .8f, 0f), FxRamp.Ink, .72f * (1f - k * k), 1f, 0f, f.Seed), true);
             HitFeel.Jolt(.35f, .35f);
         }
 
@@ -470,7 +470,8 @@ namespace BloodRain.Presentation.Fx
             {
                 _lastKillBurst = _time;
                 float m = Meter;
-                Add(.22f, (f, k) => Quad(3, at, 2.3f * (1f + k * .6f) * m, 2.3f * (1f + k * .6f) * m, f.Seed, new Vector4(7f, .9f, .8f, 0f), FxRamp.Ink, .6f * (1f - k), 1f, k * .6f, f.Seed), true);
+                // 2026-11-21 일류 무리에서 새까만 별꼴이 여럿 겹쳐 무거워 보여 조금 작고 옅게(.6 → .45, 2.3 → 2m)
+                Add(.22f, (f, k) => Quad(3, at, 2f * (1f + k * .6f) * m, 2f * (1f + k * .6f) * m, f.Seed, new Vector4(7f, .9f, .8f, 0f), FxRamp.Ink, .45f * (1f - k), 1f, k * .6f, f.Seed), true);
             }
         }
 
