@@ -11,7 +11,7 @@ namespace BloodRain.Presentation.Fx
     // WP-39U 기연 사건(기획서 20장, synergies.json encounters). 웹 한 생 판(template.html 기연 갱신 줄)과 같은 셈.
     //   판 시작에 사건마다 나올 분(EncounterSpots.AppearMinute)을 뽑고, 그 분이 되면 EncounterRoller.Roll(id, ctx) — 형편이 안 맞으면 RetryMinutes 뒤 다시(EN-01U).
     //   ctx 의 Chapter·ChapterSchool 은 서 있는 땅(cheonha regions[].chapter·sect). 거리(고리·닿기·떠나기·줄어듦)는 synergies.json encounters[].spot.
-    //   나온 사건은 플레이어 둘레 고리(EncounterSpots.PlaceOffset)에 자리 표시로 놓는다(그림은 art_queue props_encounters 가 오면).
+    //   나온 사건은 플레이어 둘레 고리(EncounterSpots.PlaceOffset)에 놓는다. 은거기인·유해·영약·속삭임은 원화(props_encounters, 2026-11-21), 검총·벼랑은 아직 자리 표시.
     //   은거기인: 1.7m 안에 머문 초(벗어나면 초당 0.5 씩 줄어듦)가 HermitReady 면 MeetHermit + 깨달음 고르기 한 번 더.
     //   유해: 1.3m 안에서 멈춰 선 초(움직이면 줄어듦)가 RelicReady 면 HonorRelic(그 땅 문파) — 진전 덧셈은 LifeRunner.ApplyStats 가 SchoolExtra 로.
     //   영약: 1.3m 안이면 TakeElixir(오의 가득·음양 0). 속삭임: 석상 3m 안에서 오의를 쓰면 AcceptWhisper, 다가갔다가 8m 밖으로 떠나면 거절.
@@ -369,7 +369,10 @@ namespace BloodRain.Presentation.Fx
             float sc = Scale;
             var body = go.AddComponent<SpriteRenderer>();
             body.sortingOrder = 4;
-            switch (e.Id)
+            // 2026-11-21 원화(art_queue props_encounters → Parts/prop_enc_*)가 있으면 그 그림. 은거기인 곁엔 바둑판.
+            // 없으면 아래 네모·동그라미 자리 표시 그대로
+            if (PlaceArt(e, go, body, sc)) { }
+            else switch (e.Id)
             {
                 case EncounterBoons.Hermit: body.sprite = _square; body.color = new Color32(0xC9, 0xA4, 0x6A, 255); go.transform.localScale = new Vector3(0.9f, 0.6f, 1f) * sc; break;
                 case EncounterBoons.Relic: body.sprite = _square; body.color = new Color32(0x8A, 0x84, 0x78, 255); go.transform.localScale = new Vector3(1.0f, 0.35f, 1f) * sc; break;
@@ -407,6 +410,48 @@ namespace BloodRain.Presentation.Fx
             rs.sortingOrder = 3;
             _spots.Add(new Spot { Def = e, Pos = pos, Go = go, Ring = rs, School = school });
             Debug.Log($"[EncounterLayer] 기연의 기척: {e.Id} @ {pos}");
+        }
+
+        // 기연 원화와 긴 변(m). 앉은 노인·엎드린 승려·바위 틈 영약 뿌리·석상
+        static string ArtOf(string id, out float meters)
+        {
+            switch (id)
+            {
+                case EncounterBoons.Hermit: meters = 1.6f; return "prop_enc_hermit";
+                case EncounterBoons.Relic: meters = 1.9f; return "prop_enc_relic";
+                case EncounterBoons.Elixir: meters = 1.5f; return "prop_enc_elixir";
+                case EncounterBoons.Whisper: meters = 2.4f; return "prop_enc_whisper";
+                default: meters = 0f; return null;
+            }
+        }
+
+        static bool PlaceArt(EncounterDef e, GameObject go, SpriteRenderer body, float sc)
+        {
+            var art = PropArt.Instance;
+            string id = ArtOf(e.Id, out float meters);
+            var sp = id != null && art != null ? art.Get(id) : null;
+            if (sp == null) return false;
+            body.sprite = sp;
+            body.color = Color.white;
+            PropArt.Fit(go.transform, sp, meters * sc);
+            if (e.Id == EncounterBoons.Hermit)
+            {
+                var gsp = art.Get("prop_enc_go");
+                if (gsp != null)
+                {
+                    // 오른쪽 앞에 바둑판(긴 변 1.15m)
+                    float hl = Mathf.Max(sp.rect.width, sp.rect.height) / sp.pixelsPerUnit;
+                    float gl = Mathf.Max(gsp.rect.width, gsp.rect.height) / gsp.pixelsPerUnit;
+                    var gb = new GameObject("바둑판");
+                    gb.transform.SetParent(go.transform, false);
+                    gb.transform.localPosition = new Vector3(hl * 0.62f, -hl * 0.2f, 0f);
+                    gb.transform.localScale = Vector3.one * (1.15f / meters) * hl / gl;
+                    var gr = gb.AddComponent<SpriteRenderer>();
+                    gr.sprite = gsp;
+                    gr.sortingOrder = 4;
+                }
+            }
+            return true;
         }
 
         static void SetRing(Spot s, float t)

@@ -43,10 +43,12 @@ SHEETS: dict[str, list[str]] = {
     "props_songshan_pagodas": ["pagoda_seven", "pagoda_three", "stupa_bell", "pagoda_broken", "pagoda_mossy"],
     "props_songshan_far": ["far_temple", "far_peak", "far_pine_forest", "far_village", "far_pagoda_forest"],
     "props_cheonha_terrain": ["pine_gnarled", "terrain_house", "pagoda_tall", "peak_snow", "huts_thatched"],
+    # 기연 사건(2026-11-21 대화 세션): EncounterLayer 의 네모·동그라미 자리 표시를 바꿀 재료. 바둑판은 은거기인 곁에
+    "props_encounters": ["enc_go", "enc_hermit", "enc_relic", "enc_elixir", "enc_whisper"],
 }
 
 # 소품끼리 바짝 붙은 시트는 덩이 잇는 거리를 줄인다(기본 JOIN 이면 둘이 한 덩이가 됨)
-SHEET_JOIN: dict[str, int] = {"props_cheongun_village": 2, "props_songshan_halls": 2}
+SHEET_JOIN: dict[str, int] = {"props_cheongun_village": 2, "props_songshan_halls": 2, "props_encounters": 2}
 
 
 def _dilate(mask: list[bytearray], w: int, h: int, r: int) -> list[bytearray]:
