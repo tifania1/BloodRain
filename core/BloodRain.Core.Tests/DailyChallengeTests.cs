@@ -57,5 +57,33 @@ namespace BloodRain.Core.Tests
             var a = DailyChallenge.LifeRandom(s); var b = DailyChallenge.LifeRandom(s);
             Assert.Equal(Enumerable.Range(0, 20).Select(_ => a.Next()), Enumerable.Range(0, 20).Select(_ => b.Next()));
         }
+        [Fact] public void 일일_도전은_혼의_복사본으로_돌려_진짜_혼엔_안_남는다()
+        {
+            var soul = new Soul(_d);
+            soul.EndLife(soul.BeginLife(Rebirth.Prologue(_d)).Finish("fallen", 0));
+            soul.AddRebirthQi(5000);
+            Assert.True(soul.TryBuyTraining(_d.Balance.Training.Items[0].Stat));
+            var before = soul.ToJson();
+
+            var sand = DailyChallenge.Sandbox(soul);
+            var stat = _d.Balance.Training.Items[0].Stat;
+            Assert.Equal(1, sand.TrainingLevel(stat)); // 연무장은 받는다
+            var C = _d.Cheonha;
+            var body = DailyChallenge.Body(C, DailyChallenge.Seed(new DateTime(2026, 11, 20, 0, 0, 0, DateTimeKind.Utc)));
+            sand.EndLife(new LifeRecord(body.Sect.Id, "fallen", new RebirthQiLedger(C.RebirthQi).Settle(0), Array.Empty<string>(),
+                new[] { body.Region.Id }, "ilryu", Array.Empty<string>()));
+            sand.Discover(CodexKey.Secret(_d.Synergies.Secrets[0].Id));
+            Assert.Equal(before, soul.ToJson());
+            Assert.NotEqual(before, sand.ToJson());
+        }
+
+        [Fact] public void 리더보드는_날마다_따로_점수는_버틴_초()
+        {
+            Assert.Equal("daily_20261120", DailyChallenge.LeaderboardName(new DateTime(2026, 11, 20, 23, 59, 0, DateTimeKind.Utc)));
+            Assert.Equal("daily_20261107", DailyChallenge.LeaderboardName(new DateTime(2026, 11, 7, 0, 0, 0, DateTimeKind.Utc)));
+            Assert.Equal(0, DailyChallenge.Score(0));
+            Assert.Equal(754, DailyChallenge.Score(12.5719f));
+            Assert.Contains("버틴 시간이 리더보드에 오릅니다", Gdd);
+        }
     }
 }
