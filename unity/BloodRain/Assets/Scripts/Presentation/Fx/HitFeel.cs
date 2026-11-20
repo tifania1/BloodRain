@@ -37,6 +37,16 @@ namespace BloodRain.Presentation.Fx
             _ours = false;
         }
 
+        /// <summary>화면(레벨업·깨달음·보갑·상인·검총·절기 고르기·멈춤·천하도)이 세상을 멈추기 전에 '닫을 때 되돌릴 배속'을 여기서 받는다.
+        /// 타격 멈춤(0.02) 중에 화면이 열리면 전에는 0.02 를 기억했다가 닫을 때 되돌려, 세상이 거의 멈춘 채로 남았다
+        /// (2026-11-20 플레이 테스트: 이류 돌파 뒤 레벨업이 잦을 때 일어남 — 적은 멈추고 시계만 가서 기혈이 깎이는 것처럼 보임).
+        /// 타격 멈춤 중이면 그 멈춤을 거두고 1 을 돌려준다.</summary>
+        public static float ScaleToRestore()
+        {
+            if (Mathf.Abs(Time.timeScale - StopScale) < 1e-4f) { _ours = false; _stopUntil = -1f; return 1f; }
+            return Time.timeScale > 0f ? Time.timeScale : 1f;
+        }
+
         /// <summary>아주 짧게 멈춘다(실제 시간 seconds 초).</summary>
         public static void Stop(float seconds)
         {

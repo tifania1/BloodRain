@@ -40,7 +40,7 @@ namespace BloodRain.Presentation.Hud
             if (IsOpen) return;
             _life = life; _vitals = vitals; _orbs = orbs;
             _visit = new MerchantVisit(data.Balance.Merchant);
-            _prevScale = Time.timeScale > 0f ? Time.timeScale : 1f;
+            _prevScale = BloodRain.Presentation.Fx.HitFeel.ScaleToRestore(); // 타격 멈춤(0.02)을 기억하지 않게(2026-11-20)
             Time.timeScale = 0f;
             if (EventSystem.current == null) new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             Build();

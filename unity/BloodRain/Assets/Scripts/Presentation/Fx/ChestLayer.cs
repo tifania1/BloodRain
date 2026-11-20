@@ -210,7 +210,7 @@ namespace BloodRain.Presentation.Fx
                   : null;
             Debug.Log($"[ChestLayer] 보갑 → 강화 {result.Upgrades.Count}개(진전 덤 {extra}): {string.Join(", ", lines)}{(_hint != null ? " · " + _hint : "")}");
             _lines = lines;
-            _savedTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
+            _savedTimeScale = BloodRain.Presentation.Fx.HitFeel.ScaleToRestore(); // 타격 멈춤(0.02)을 기억하지 않게(2026-11-20)
             Time.timeScale = 0f;
             _openedAt = Time.unscaledTime;
         }

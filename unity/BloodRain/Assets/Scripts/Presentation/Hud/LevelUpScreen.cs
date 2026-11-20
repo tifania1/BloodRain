@@ -134,7 +134,7 @@ namespace BloodRain.Presentation.Hud
             SfxPlayer.Instance?.Play("sfx_levelup"); // SFX-14U
             _pending--;
             _banishMode = false;
-            _savedTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
+            _savedTimeScale = BloodRain.Presentation.Fx.HitFeel.ScaleToRestore(); // 타격 멈춤(0.02)을 기억하지 않게(2026-11-20)
             Time.timeScale = 0f;
             _firstOpen = !_firstDone && _prologue != null;
             _firstDone = true;

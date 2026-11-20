@@ -104,7 +104,7 @@ namespace BloodRain.Presentation.Hud
         {
             if (_open || runner == null || runner.Life == null || Map == null) return;
             if (runner.Life.Record != null || Time.timeScale <= 0f || WorldIntro.Playing) return; // 다른 화면이 세상을 멈췄으면 안 연다
-            _prevScale = Time.timeScale;
+            _prevScale = BloodRain.Presentation.Fx.HitFeel.ScaleToRestore(); // 타격 멈춤(0.02)을 기억하지 않게(2026-11-20)
             Time.timeScale = 0f;
             _open = true;
             _openedFrame = Time.frameCount;
