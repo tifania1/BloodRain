@@ -188,7 +188,7 @@ namespace BloodRain.Presentation.Hud
             }
 
             y += gap;
-            Head("무공 — 누를 때마다 다음 단계(1~5단)");
+            Head("무공 — 누를 때마다 다음 단계(1~5단), Lv8 이면 절기 깨우기");
             int max = data.Balance.Levels.WeaponMax;
             var ws = data.Weapons;
             for (int i = 0; i < ws.Count; i += 2)
@@ -201,7 +201,12 @@ namespace BloodRain.Presentation.Hud
                     string id = wdef.Id;
                     int next = NextStageLevel(wdef, lv, max);
                     string state = lv > 0 ? $"{WeaponGrowth.VisualStage(wdef, lv)}단 Lv{lv}" : "—";
-                    cells.Add(($"{Loc.Weapon(wdef)}  {state}", () => Raise(id, next), lv < max));
+                    // 2026-11-20 밤: 절기(VF-04U)를 웹 판에서 바로 보게 — Lv8 이면 짝 심법을 맞추고 깨운다(보갑·그릇 없이, 시험이니)
+                    var evoDef = EvoFor(data, id);
+                    bool evolved = System.Linq.Enumerable.Contains(life.Loadout.Evolved, id);
+                    if (evolved) cells.Add(($"{Loc.Weapon(wdef)}  절기", () => { }, false));
+                    else if (lv >= max && evoDef != null) cells.Add(($"{Loc.Weapon(wdef)}  → 절기", () => Awaken(evoDef), true));
+                    else cells.Add(($"{Loc.Weapon(wdef)}  {state}", () => Raise(id, next), lv < max));
                 }
                 Row(cells.ToArray());
             }
@@ -217,6 +222,22 @@ namespace BloodRain.Presentation.Hud
             int st = WeaponGrowth.VisualStage(w, level);
             for (int lv = level + 1; lv <= max; lv++) if (WeaponGrowth.VisualStage(w, lv) > st) return lv;
             return max;
+        }
+
+        static EvolutionDef EvoFor(GameData data, string weaponId)
+        {
+            foreach (var e in data.Evolutions) if (e.Weapon == weaponId) return e;
+            return null;
+        }
+
+        /// <summary>시험: 그 절기를 깨운다. 짝 심법을 각성 기준 레벨까지 올리고 Loadout.Evolve(보갑·그릇 없이).</summary>
+        public void Awaken(EvolutionDef evo)
+        {
+            var lo = runner.Life.Loadout;
+            if (lo == null || evo == null) return;
+            Raise(evo.Weapon, DataBoot.Data.Balance.Levels.WeaponMax);
+            Raise(evo.Passive, DataBoot.Data.Balance.Evolution.PairPassiveMinLevel);
+            lo.Evolve(evo);
         }
 
         /// <summary>그 무공을 level 까지. 칸이 모자라면 칸을 하나 늘린다(시험이니).</summary>
