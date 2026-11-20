@@ -32,7 +32,7 @@ namespace BloodRain.Presentation.Fx
 
         Material _mapMat, _vigMat, _mottleMat;
         [Tooltip("바닥 위 큰 먹 얼룩 세기(2026-11-21 — 12m 타일 되풀이가 눈에 띄어 41m 주기 얼룩으로 깬다)")]
-        [Range(0f, 0.3f)] public float mottle = 0.11f;
+        [Range(0f, 0.3f)] public float mottle = 0.13f;
         const float MottleTile = 41f;
         readonly Material[] _groundMats = new Material[4]; // 발밑(바탕·원화), 이웃(바탕·원화) — 그리는 차례대로
         /// <summary>지금 쓰는 천하도 그림(구석 지도·큰 지도가 같이 쓴다).</summary>
@@ -114,12 +114,14 @@ namespace BloodRain.Presentation.Fx
                     DrawGround(1, GroundRegion2, mat, scale, offset, Near * groundOpacity * GroundBlend);
                 }
                 // 큰 먹 얼룩: 타일(12m)과 주기가 다른 41m 판을 옅게 — 같은 돌판 무늬가 되풀이로 읽히지 않게
-                if (mottle > 0.001f && _mottleMat != null)
+                // 타일 되풀이가 읽히는 가까운 시야에서만(대각선 45m 까지 그대로, 100m 에서 0) — 일류쯤엔 41m 얼룩이 격자로 되풀이돼 구름처럼 덮였다
+                float mottleK = mottle * (1f - Mathf.Clamp01((diag - 45f) / 55f));
+                if (mottleK > 0.001f && _mottleMat != null)
                 {
                     _mottleMat.mainTextureScale = new Vector2(qw / MottleTile, qh / MottleTile);
                     _mottleMat.mainTextureOffset = new Vector2((c.x - qw / 2f) / MottleTile, (c.y - qh / 2f) / MottleTile);
                     mat.m23 = 0.57f;
-                    Draw(_mottleMat, mat, Near * mottle, new Color(0.13f, 0.11f, 0.10f, 1f));
+                    Draw(_mottleMat, mat, Near * mottleK, new Color(0.13f, 0.11f, 0.10f, 1f));
                 }
             }
             // 가장자리 어둡게(FL-01U): 화면에 붙인 판. 가운데는 투명
