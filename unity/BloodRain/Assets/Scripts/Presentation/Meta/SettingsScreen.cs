@@ -197,7 +197,7 @@ namespace BloodRain.Presentation.Meta
             sc.referenceResolution = new Vector2(1920, 1080);
             sc.matchWidthOrHeight = 0.5f;
             _root = (RectTransform)go.transform;
-            var dim = Img(_root, new Color(0.02f, 0.02f, 0.03f, 0.9f));
+            var dim = Img(_root, new Color(0.02f, 0.02f, 0.03f, 0.95f));   // .9 면 뒤 타이틀 단추가 칸 사이로 비쳤다
             Stretch(dim.rectTransform);
             _list = new GameObject("단추들", typeof(RectTransform)).GetComponent<RectTransform>();
             _list.SetParent(_root, false);
