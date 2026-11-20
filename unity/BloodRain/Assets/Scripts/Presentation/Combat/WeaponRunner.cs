@@ -307,6 +307,7 @@ namespace BloodRain.Presentation.Combat
         public readonly Dictionary<string, int> LinkFires = new Dictionary<string, int>();
         void Fired(string link) { LinkFires.TryGetValue(link, out int n); LinkFires[link] = n + 1; }
 
+        readonly HashSet<int> _thrallIds = new HashSet<int>();   // SC-06a 어강술: 사슬에 걸린 적 Id(내 편으로 빼고 남은 것을 다시 모을 때)
         readonly Dictionary<int, float> _pulled = new Dictionary<int, float>();              // 차력타력·견인타: 사슬에 끌려온 적 Id → 1초 동안
         readonly List<Vector2> _bladeAt = new List<Vector2>();                               // 검명: 지금 도는 태극검 자리
         float _bladeAtTime = -1f;
@@ -1025,6 +1026,24 @@ namespace BloodRain.Presentation.Combat
                         if (!_filtered.Contains(i)) _filtered.Add(i);
                     }
                     if (Sfx) { HitLook(s); Lunge(Mathf.Atan2(player.Facing.y, player.Facing.x), 0.3f); }
+                    // SC-06a 어강술: 끌려온 것 가운데 정신부에 멈춘 강시는 피해 대신 내 편으로(ThrallRunner). 사슬 피해 전에 빼야 쓰러지지 않는다
+                    var swT = Hud.SecretWatch.Instance;
+                    if (swT != null && swT.Effects.Thrall != null && _filtered.Count > 0)
+                    {
+                        _thrallIds.Clear();
+                        foreach (int i in _filtered) _thrallIds.Add(enemies.Sim.Agents[i].Id);
+                        var tr = ThrallRunner.Ensure(enemies);
+                        foreach (int id in _thrallIds)
+                        {
+                            int at = -1; var ag = enemies.Sim.Agents;
+                            for (int q = 0; q < enemies.Sim.Count; q++) if (ag[q].Id == id) { at = q; break; }
+                            if (at >= 0) tr.TryTake(swT.Effects, at);
+                        }
+                        // 빼고 남은 것만 다시 모은다(자리 번호가 바뀌었을 수 있어 Id 로)
+                        _filtered.Clear();
+                        var ag2 = enemies.Sim.Agents;
+                        for (int q = 0; q < enemies.Sim.Count; q++) if (_thrallIds.Contains(ag2[q].Id)) _filtered.Add(q);
+                    }
                     Deal(s, dmg, enemies.Damage(_filtered, dmg, P, 0f));
                     break;
                 }

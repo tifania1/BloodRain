@@ -818,6 +818,36 @@ function nakmaeReady() {
 function petals(e, P) {
   for (let i = 0; i < P.petals; i++) { const a = rand(0, TAU); addProj({ x: e.x, y: e.y, vx: Math.cos(a) * P.speed, vy: Math.sin(a) * P.speed, r: P.radius, dmg: P.damage * G.stats.might, pierce: 1, life: P.lifeSeconds, kind: 'petal', w: PETAL }); }
 }
+// 어강술 내 편 강시(SC-06a, 2026-11-20 사람이 추천대로 — Core Build.ThrallBand 와 같은 셈): 정신부에 멈춘 강시(family jiangshi, 정예·보스 빼고)를
+// 쇄겸술로 끌어오면 seconds 초 동안 내 편(최대 maxAllies). 가장 가까운 적을 제 걸음으로 쫓아 닿으면 제 접촉 피해를 hitIntervalSeconds 마다, 서로 통과, 끝나면 구슬 없이 사라진다.
+function takeThrall(e) {
+  const T = G.syn.secrets.has('eogang') && SECRET.eogang ? SECRET.eogang.params : null;
+  if (!T || e.boss || e.elite || e.dead || !(e.stun > 0 || G.freeze > 0) || (E_BY_ID[e.type] || {}).family !== 'jiangshi') return false;
+  const L = G.thralls || (G.thralls = []); if (L.length >= T.maxAllies) return false;
+  L.push({ x: e.x, y: e.y, r: e.r, speed: e.speed, dmg: e.dmg, sprite: e.sprite, born: e.born, left: T.seconds, cd: 0, dir: 1 });
+  e.dead = true;   // 무리에서 빠짐(killEnemy 를 안 거치니 구슬·처치 셈 없음)
+  addEffect('burst', e.x, e.y, { r: 0.8, color: '#C9A227' }); toast('어강술', '부적을 고쳐 붙였다 — 내 편');
+  return true;
+}
+function thrallTick(dt) {
+  const L = G.thralls; if (!L || !L.length) return;
+  const iv = SECRET.eogang.params.hitIntervalSeconds || 0.5;
+  for (let i = L.length - 1; i >= 0; i--) {
+    const t = L[i]; t.left -= dt; if (t.left <= 0) { L.splice(i, 1); continue; }
+    t.cd = Math.max(0, t.cd - dt);
+    const tg = nearestEnemies(t.x, t.y, 1, 30)[0]; if (!tg) continue;
+    let dx = tg.x - t.x, dy = tg.y - t.y, d = Math.hypot(dx, dy); const reach = t.r + tg.r;
+    if (d > reach) { const st = Math.min(d - reach * 0.5, t.speed * dt); t.x += dx / d * st; t.y += dy / d * st; t.dir = dx < 0 ? -1 : 1; d = Math.hypot(tg.x - t.x, tg.y - t.y); }
+    if (d <= reach && t.cd <= 0) { hurtEnemy(tg, t.dmg, null, 0, 0, 0); t.cd = iv; }
+  }
+}
+function drawThralls() {
+  for (const t of G.thralls || []) {
+    const sc = scaleOn() ? Math.pow(WD.scalePerRealm, (t.born || 0) - tierNow()) : 1;
+    ctx.fillStyle = 'rgba(201,162,39,0.28)'; ctx.beginPath(); ctx.ellipse(wx(t.x), wy(t.y + 0.2), t.r * 1.6 * PPM, t.r * 0.9 * PPM, 0, 0, TAU); ctx.fill();
+    drawSprite(t.sprite, t.x, t.y, sc, t.dir < 0, false, Math.min(1, t.left / 1.5));
+  }
+}
 // 남궁 진전 3: 검 계열 세 번째 공격마다 하늘에서 검기 하나
 function skySword(w) {
   const P = synEff('sky_sword'); if (!P || ++G.syn.swordN % P.everyAttacks !== 0) return;
@@ -840,6 +870,12 @@ function synTick(dt) {
   // 수로채 진전 3: 경공으로 지나가며 적을 끌고 간다
   const drg = synEff('dash_drag'); if (drg && p.dashT > 0) forNear(p.x, p.y, drg.dragRadius, e => { if (!e.boss && !e.elite) { e.x += p.dashVx * dt * drg.dragFactor; e.y += p.dashVy * dt * drg.dragFactor; } });
   schoolSummons(dt);   // 소림 4 나한 허상·개방 4 제자(SS-01)
+  thrallTick(dt);      // 어강술 내 편 강시(SC-06a)
+  // 비전 어강술(20장 비전 8, SC-06a): 뇌부·쇄겸술·도문심법을 지닌 채 이 판에 정신부를 세 장 이상(Core SecretChecker event talisman)
+  if (!S.secrets.has('eogang') && SECRET.eogang && !overlay) {
+    const er = SECRET.eogang.require;
+    if (Object.entries(er.levels).every(([id, lv]) => lvOf(id) >= lv) && (G.talis || 0) >= er.event.times) unlockSecret('eogang');
+  }
   // 비전 무극: 태극검 Lv8·양의심법 Lv5 를 지닌 채 음양 게이지가 0에서 3분(Core RunRecord.Tick — 움직이면 처음부터)
   if (!S.secrets.has('mugeuk')) {
     const mg = SECRET.mugeuk.require;
@@ -2419,6 +2455,7 @@ function fireWeapon(w) {
       }
       for (const e of far) {
         addEffect('bolt', p.x, p.y, { x2: e.x, y2: e.y, life: 0.2 });
+        if (takeThrall(e)) continue;   // 어강술: 정신부에 멈춘 강시는 피해 대신 내 편으로
         hurtEnemy(e, dmg, w, 0, 0, 0);
         if (!e.boss && !e.elite && !e.dead) { const d = Math.hypot(e.x - p.x, e.y - p.y) || 1, k = Math.min(1, TRIAL_W.pullTo / d); e.x = p.x + (e.x - p.x) * k; e.y = p.y + (e.y - p.y) * k; }
         e.slow = Math.max(e.slow || 0, slow);
@@ -5345,6 +5382,7 @@ function render() {
   drawEliteShapes();      // 검진 고리(WP-13d)
   drawLocalFx();   // 고유 적 탄·독기·돌진 예고(WP-13c)
   drawShadow();    // 혈마의 그림자
+  drawThralls();   // 어강술 내 편 강시
   // 적
   for (const e of G.enemies) {
     let sq = 1, lift = 0;

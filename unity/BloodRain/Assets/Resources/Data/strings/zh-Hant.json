@@ -610,6 +610,7 @@
   "ui.encounter.tomb.pass": "走過",
   "ui.encounter.tomb.only": "只剩這一把劍，無劍可插",
   "ui.encounter.cliff": "跳下懸崖——洞中石壁上刻著秘籍",
+  "ui.thrall.taken": "重貼符籙——為我所用",
   "ui.encounter.letter": "下五門密信 · {0}",
   "ui.encounter.letter_blank": "下五門密信 · 是張白紙",
   "ui.encounter.beast": "血晶 +{0}",

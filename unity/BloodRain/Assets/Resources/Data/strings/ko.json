@@ -52,6 +52,7 @@
   "ui.encounter.tomb.pass": "지나친다",
   "ui.encounter.tomb.only": "꽂을 검이 이것 하나뿐이다",
   "ui.encounter.cliff": "벼랑 아래로 뛰어내렸다 — 동굴 석벽에 비급이 새겨져 있다",
+  "ui.thrall.taken": "부적을 고쳐 붙였다 — 내 편",
   "ui.encounter.letter": "하오문 밀서 · {0}",
   "ui.encounter.letter_blank": "하오문 밀서 · 빈 종이다",
   "ui.encounter.beast": "혈정 +{0}",

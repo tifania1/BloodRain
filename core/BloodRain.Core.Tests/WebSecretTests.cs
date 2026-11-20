@@ -16,6 +16,17 @@ namespace BloodRain.Core.Tests
                 Assert.Contains($"unlockSecret('{s.Id}')", html);
         }
 
+        /// <summary>SC-06a 어강술: 웹도 Core ThrallBand 와 같은 셈(정신부에 멈춘 강시만, 최대 maxAllies, hitIntervalSeconds 마다 제 접촉 피해).</summary>
+        [Fact] public void 어강술_판정과_효과가_Core_와_같은_셈()
+        {
+            var html = Proto;
+            Assert.Contains("(G.talis || 0) >= er.event.times) unlockSecret('eogang')", html);
+            Assert.Contains("!(e.stun > 0 || G.freeze > 0) || (E_BY_ID[e.type] || {}).family !== 'jiangshi') return false;", html);
+            Assert.Contains("if (L.length >= T.maxAllies) return false;", html);
+            Assert.Contains("const iv = SECRET.eogang.params.hitIntervalSeconds", html);
+            Assert.Contains("if (takeThrall(e)) continue;", html);
+        }
+
         [Fact] public void 무명검_값은_데이터에서()
         {
             var html = Proto;
