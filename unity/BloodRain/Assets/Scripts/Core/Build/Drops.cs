@@ -15,6 +15,7 @@ namespace BloodRain.Core.Build
         public const string ChwigiTalisman = "chwigi_talisman";
         public const string JeongsinTalisman = "jeongsin_talisman";
         public const string SilverBag = "silver_bag";
+        public const string ThunderBomb = "thunder_bomb";
 
         /// <summary>등롱 하나를 부쉈을 때 나오는 것. 표 앞에서부터 깎는다(웹 프로토타입과 같은 순서).</summary>
         public static string RollLantern(DropsDef rule, Random rng)
@@ -49,6 +50,10 @@ namespace BloodRain.Core.Build
                 default: return 0;
             }
         }
+
+        /// <summary>등롱 벽력탄 한 방(7장 부적 드롭, 2026-11-20 LT-02): 일반 적은 남은 기혈 모두(쓰러짐), 정예·땅의 주인은 최대 기혈 × thunderBombEliteMaxHealthRatio.</summary>
+        public static float ThunderBombDamage(DropsDef rule, bool eliteOrBoss, float health, float maxHealth) =>
+            eliteOrBoss ? maxHealth * rule.ThunderBombEliteMaxHealthRatio : Math.Max(health, 0f) + 1f;
 
         /// <summary>은자 주머니 하나(탐욕·혈월 배율 전). 최소·최대를 모두 포함한다.</summary>
         public static int RollSilverBag(DropsDef rule, Random rng)

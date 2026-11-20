@@ -51,12 +51,20 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 등롱_비율은_기획서와_같고_합이_1이다()
         {
-            var m = Regex.Match(TestData.Gdd, @"등롱 하나를 부수면 만두 (\d+)%, 오리구이 (\d+)%, 취기부 (\d+)%, 정신부 (\d+)%, 은자 주머니 (\d+)%");
+            var m = Regex.Match(TestData.Gdd, @"등롱 하나를 부수면 만두 (\d+)%, 오리구이 (\d+)%, 취기부 (\d+)%, 정신부 (\d+)%, 은자 주머니 (\d+)%, 벽력탄 (\d+)%");
             Assert.True(m.Success, "기획서 8장 드롭 절에 등롱 비율 문단이 없다");
-            var kinds = new[] { Drops.Bun, Drops.Duck, Drops.ChwigiTalisman, Drops.JeongsinTalisman, Drops.SilverBag };
+            var kinds = new[] { Drops.Bun, Drops.Duck, Drops.ChwigiTalisman, Drops.JeongsinTalisman, Drops.SilverBag, Drops.ThunderBomb };
             Assert.Equal(kinds, R.Lantern.Select(l => l.Kind).ToArray());
             for (int i = 0; i < kinds.Length; i++) Assert.Equal(int.Parse(m.Groups[i + 1].Value) / 100f, R.Lantern[i].Weight, 4);
             Assert.Equal(1.0, R.Lantern.Sum(l => (double)l.Weight), 4);
+        }
+
+        [Fact] public void 벽력탄은_일반_적을_쓰러뜨리고_정예는_최대_기혈의_10퍼센트()
+        {
+            Assert.Equal(0.1f, R.ThunderBombEliteMaxHealthRatio);
+            Assert.True(Drops.ThunderBombDamage(R, false, 500f, 800f) > 500f);
+            Assert.Equal(80f, Drops.ThunderBombDamage(R, true, 500f, 800f), 3);
+            Assert.Contains("벽력탄(화면 안 일반 적은 모두 쓰러지고, 정예·땅의 주인은 최대 기혈의 10%를 잃음", TestData.Gdd);
         }
 
         [Fact] public void 등롱은_비율대로_나온다()

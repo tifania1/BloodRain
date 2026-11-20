@@ -383,6 +383,8 @@ namespace BloodRain.Core.Data
         public int EliteBloodCrystal = 1;
         /// <summary>정신부가 적을 멈추는 초(곤륜 진전 '정지 시간 2배' 같은 배율을 곱하기 전). 기획서 7장 부적 드롭.</summary>
         public float JeongsinFreezeSeconds = 5;
+        /// <summary>등롱 벽력탄: 화면 안 일반 적은 모두 쓰러지고 정예·땅의 주인은 최대 기혈의 이만큼(2026-11-20 LT-02).</summary>
+        public float ThunderBombEliteMaxHealthRatio = 0.1f;
         /// <summary>등롱이 서는 간격·자리·깨지는 판정(Drops.LanternDue 등). 없으면 웹 프로토타입 값.</summary>
         public LanternSpawnDef LanternSpawn = new LanternSpawnDef();
         public List<LanternDropDef> Lantern = new List<LanternDropDef>();

@@ -213,6 +213,7 @@ namespace BloodRain.Presentation.Fx
                 Drops.Duck => new Color(0.62f, 0.36f, 0.16f),
                 Drops.ChwigiTalisman => new Color(0.85f, 0.69f, 0.23f),
                 Drops.JeongsinTalisman => new Color(0.95f, 0.80f, 0.30f),
+                Drops.ThunderBomb => new Color(0.55f, 0.12f, 0.10f),
                 _ => new Color(0.79f, 0.81f, 0.84f),
             };
             var go = Make(kind, at, talisman ? _square : _circle, c, talisman ? 0.55f : 0.5f, 7);
@@ -255,6 +256,14 @@ namespace BloodRain.Presentation.Fx
                     Debug.Log($"[LanternLayer] 정신부 {secs:0.#}초 · 멈춘 적 {frozen}");
                     break;
                 }
+                case Drops.ThunderBomb:
+                {
+                    int hit = BombOnScreen();
+                    life.Log.UseTalisman();
+                    Pop(at, Loc.T("ui.drop.thunder"));
+                    Debug.Log($"[LanternLayer] 벽력탄 · 맞은 적 {hit}");
+                    break;
+                }
                 case Drops.SilverBag:
                 {
                     float greed = st != null ? st.Bonus[StatKind.Greed] : 0f;
@@ -280,6 +289,42 @@ namespace BloodRain.Presentation.Fx
                 if (Mathf.Abs(p.x - c.x) > w || Mathf.Abs(p.y - c.y) > h) _near.RemoveAt(i);
             }
             return field.Freeze(_near, seconds);
+        }
+
+        readonly List<int> _bombIds = new List<int>();
+        readonly List<int> _one = new List<int>();
+
+        /// <summary>등롱 벽력탄(LT-02): 화면 안 일반 적은 쓰러지고(진기 구슬은 보통처럼), 정예·땅의 주인은 최대 기혈 × thunderBombEliteMaxHealthRatio. 맞은 적 수.</summary>
+        int BombOnScreen()
+        {
+            var cam = Camera.main;
+            var field = runner.enemies;
+            if (cam == null || field == null) return 0;
+            float h = cam.orthographicSize, w = h * cam.aspect;
+            Vector2 c = cam.transform.position;
+            field.Sim.QueryCircle(new float2(c.x, c.y), Mathf.Sqrt(w * w + h * h), _near);
+            var agents = field.Sim.Agents;
+            _bombIds.Clear();
+            foreach (int i in _near)
+            {
+                var p = agents[i].Pos;
+                if (Mathf.Abs(p.x - c.x) <= w && Mathf.Abs(p.y - c.y) <= h) _bombIds.Add(agents[i].Id);
+            }
+            int hit = 0;
+            foreach (int id in _bombIds)
+            {
+                int j = -1;
+                for (int k = 0; k < field.Sim.Count; k++) if (field.Sim.Agents[k].Id == id) { j = k; break; }
+                if (j < 0) continue;
+                var a = field.Sim.Get(j);
+                var def = field.DefOf(a.Kind);
+                bool big = def != null && (def.Family == "elite" || def.Family == "boss");
+                float dmg = Drops.ThunderBombDamage(Rule, big, a.Health, a.MaxHealth);
+                _one.Clear(); _one.Add(j);
+                field.Damage(_one, dmg, PlayerPos, 0f);
+                hit++;
+            }
+            return hit;
         }
 
         void Pop(Vector2 at, string text) => _popups.Add((at, text, Time.unscaledTime));

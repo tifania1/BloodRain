@@ -536,7 +536,7 @@ const OP = B.orbPickup, LIM = B.limits; // 구슬 끌기·흡수·합치기, 화
 // 동시 적 수 상한(11장 '성능 상한', Core LimitsDef.CanSpawn, EN-03): 닿으면 생성 고리 보통 적·사건 무리만 건너뛴다. 정예·땅의 주인·금두꺼비는 그대로 세운다
 const ENEMY_CAP = (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) ? LIM.enemiesMobile : LIM.enemiesPc;
 const roomForFoe = () => G.enemies.length < ENEMY_CAP;
-const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver' };
+const LANTERN_KIND = { bun: 'food', duck: 'meat', chwigi_talisman: 'magnet', jeongsin_talisman: 'freeze', silver_bag: 'silver', thunder_bomb: 'bomb' };
 // 진소운 특성(characters.json trait)이 주는 레벨업 다시 고르기 몫. balance.json levelUp.traitRerolls
 const JIN = DATA.characters.find(c => c.id === 'jin_sowoon') || { maxHealth: 100, moveSpeed: 1 };
 // 한 생 시험(WP-14a): 주소 끝 ?life=<문파 id> 면 서장 밖 판을 그 문파 제자의 몸으로 연다(cheonha.json sects: 기혈·걸음·시작 무공·traitEffect.stats).
@@ -3335,6 +3335,11 @@ function pickup(dr) {
   else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal * otherHeal()); toast('오리구이', `기혈 +${Math.round(DR.duckHeal * G.stats.foodHeal * otherHeal())}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
   else if (dr.kind === 'freeze') { G.talis = (G.talis || 0) + 1; G.freeze = DR.jeongsinFreezeSeconds * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
+  else if (dr.kind === 'bomb') {   // 등롱 벽력탄(LT-02, Core Drops.ThunderBombDamage): 화면 안 일반 적은 쓰러지고 정예·땅의 주인은 최대 기혈 × thunderBombEliteMaxHealthRatio
+    const hw = viewW() / 2, hh = viewH() / 2;
+    for (const e of G.enemies.slice()) { if (e.dead || Math.abs(e.x - p.x) > hw || Math.abs(e.y - p.y) > hh) continue; if (e.elite || e.boss) hurtEnemy(e, e.maxHp * (DR.thunderBombEliteMaxHealthRatio || 0.1)); else killEnemy(e); }
+    addEffect('burst', p.x, p.y, { r: hw, color: '#C8392B' }); toast('벽력탄', '화면 안 강시가 쓰러진다');
+  }
   else if (dr.kind === 'silver') { addSilver(DR.silverBag[0] + Math.floor(Math.random() * (DR.silverBag[1] - DR.silverBag[0] + 1))); }
   else if (dr.kind === 'chest') openChest();
 }
