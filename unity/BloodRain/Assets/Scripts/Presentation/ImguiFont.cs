@@ -21,7 +21,14 @@ namespace BloodRain.Presentation
                 _nextTry = Time.unscaledTime + 2f; // 못 찾으면 2초에 한 번만 다시 찾는다
                 foreach (var fa in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
                 {
-                    if (fa != null && fa.name == KrName && fa.sourceFontFile != null) { _font = fa.sourceFontFile; break; }
+                    // 원본 Font 를 그대로 쓰면 TMP 동적 글꼴(같은 원본)과 글리프 자리가 엉켜 천하도 글자가 빠지거나 다른 글자로 그려졌다
+                    // (2026-11-21: '남궁세가'가 '가'만, '세상이 작아져'가 '생이 장아져', 嵩 빠짐). IMGUI 몫으로 한 벌 복제해 따로 쓴다
+                    if (fa != null && fa.name == KrName && fa.sourceFontFile != null)
+                    {
+                        _font = Object.Instantiate(fa.sourceFontFile);
+                        _font.name = fa.sourceFontFile.name + " (IMGUI)";
+                        break;
+                    }
                 }
                 return _font;
             }
