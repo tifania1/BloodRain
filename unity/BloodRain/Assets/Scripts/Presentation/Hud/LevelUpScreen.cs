@@ -48,6 +48,7 @@ namespace BloodRain.Presentation.Hud
         int _handledLevel = 1;
         int _pending;
         bool _open, _banishMode, _firstDone, _firstOpen;
+        bool _autoNow; // UI-01b 자동 고르기: 연 순간 고를 때만 입력 막음(Guarded)을 건너뛴다
         ChapterDef _prologue;
         float _savedTimeScale = 1f;
         // 복원한 비급(S-04, Soul.RestoredManuals). Synergy.Compute·Preview 에 늘 넘긴다 — null 을 넘기면 비급까지 다 켜진다.
@@ -193,7 +194,7 @@ namespace BloodRain.Presentation.Hud
         // ── UI-01U 열린 직후 입력 막기 · 옆 칸(기획서 12장 '레벨업 카드 규칙') ─────────────
         // 세상 시간이 멈춰 있으니 실제 시간으로 balance levelUp.inputGuardSeconds 동안 카드·단추를 안 받는다(달리며 누르던 키·클릭이 카드를 고르지 않게).
         float _openedAt = -999f;
-        bool Guarded => Time.unscaledTime - _openedAt < _data.Balance.LevelUp.InputGuardSeconds;
+        bool Guarded => !_autoNow && Time.unscaledTime - _openedAt < _data.Balance.LevelUp.InputGuardSeconds;
         RectTransform _slotPanel;
         readonly List<(bool weapon, string id, Image img)> _slotCells = new List<(bool, string, Image)>();
         static readonly Color CellEmpty = new Color(0.20f, 0.17f, 0.15f, 0.85f);

@@ -195,7 +195,7 @@ namespace BloodRain.Presentation.Hud
                     if (!hit) break;
                 }
                 _placed.Add(box);
-                bool lord = reg.Boss != null && life.Bosses.BossRegions.Contains(reg) && life.Bosses.State(reg.Id) == BloodRain.Core.World.BossRegionState.Awake;
+                bool lord = reg.Boss != null && System.Linq.Enumerable.Contains(life.Bosses.BossRegions, reg) && life.Bosses.State(reg.Id) == BloodRain.Core.World.BossRegionState.Awake;
                 if (lord) // EB-01a 깨어난 땅의 주인: 붉게 뛰는 고리
                 {
                     float lp = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3f);
