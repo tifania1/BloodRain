@@ -81,7 +81,7 @@ namespace BloodRain.Presentation.Hud
             _fill.transform.SetParent(btn.transform, false);
             _fill.sprite = wash; _fill.color = Fill; _fill.raycastTarget = false;
             _fill.type = Image.Type.Filled; _fill.fillMethod = Image.FillMethod.Vertical; _fill.fillOrigin = (int)Image.OriginVertical.Bottom;
-            var fr = _fill.rectTransform; fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one; fr.offsetMin = new Vector2(14, 14); fr.offsetMax = new Vector2(-14, -14);
+            var fr = _fill.rectTransform; fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one; fr.offsetMin = new Vector2(9, 9); fr.offsetMax = new Vector2(-9, -9);
 
             _enso = new GameObject("원상", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             _enso.transform.SetParent(btn.transform, false);
@@ -360,7 +360,7 @@ namespace BloodRain.Presentation.Hud
                     if (a <= 0f) continue;
                     // 가장자리에 물감이 고여 조금 짙고, 속은 옅은 결
                     float edge = Mathf.Clamp01(1f - (r - d) / (radius * 0.18f));
-                    float grain = 0.9f + 0.06f * Mathf.Sin(dx * 40f + p3) * Mathf.Sin(dy * 33f - p1) + 0.04f * Mathf.Sin((dx + dy) * 70f);
+                    float grain = 0.93f + 0.05f * Mathf.Sin(dx * 9f + p3) * Mathf.Sin(dy * 7f - p1) + 0.03f * Mathf.Sin(dx * 17f - dy * 13f + p2); // 결은 낮은 주파수로(높으면 빗금처럼 보였다)
                     float v = Mathf.Clamp01(grain - 0.12f * edge);
                     px[y * n + x] = new Color32((byte)(v * 255), (byte)(v * 255), (byte)(v * 255), (byte)(a * (0.88f + 0.12f * edge) * 255));
                 }
