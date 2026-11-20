@@ -21,7 +21,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 까닭과 본 것은 `docs/design/review_2026-11-13.md`. 대화 세션이 11-13 밤에 잡았던 HF-01U·HF-02U·VF-01U 는 2026-11-16 에 표시를 풀었다 — 남은 것은 각 항목 '진행'에 적혀 있고 PC Unity 세션이 이어서 한다.
 
-- [ ] PERF-01U 이펙트 그리기를 한 번에(인스턴싱) · 먼저: 없음 (2026-11-20 사람: "게임이 진행되면 점점 뚝뚝 끊긴다". 대화 세션이 잰 것: 자동 플레이 ×4, 일류 7분에 SectFx 가 프레임마다 300~680장을 Graphics.RenderMesh 한 번씩 그려 fps 80 → 50. 쓰러뜨릴 때마다 걸던 타격 멈춤은 뺐고(HitFeel 0.9초 간격, 큰 적·첫 타격 컷만), 300장이 넘는 프레임은 더하기 겹·튐을 줄이게 함 — 근본은 인스턴싱)
+- [ ] PERF-01U 이펙트 그리기를 한 번에(인스턴싱) · 먼저: 없음 (2026-11-20 12:30 더 잰 것: 진짜 주범은 오의 단추의 키 글 할당이었고 고침(프레임당 GC ~200KB → 19KB). 이 항목은 남은 그리기 호출 줄이기만 — 2026-11-20 사람: "게임이 진행되면 점점 뚝뚝 끊긴다". 대화 세션이 잰 것: 자동 플레이 ×4, 일류 7분에 SectFx 가 프레임마다 300~680장을 Graphics.RenderMesh 한 번씩 그려 fps 80 → 50. 쓰러뜨릴 때마다 걸던 타격 멈춤은 뺐고(HitFeel 0.9초 간격, 큰 적·첫 타격 컷만), 300장이 넘는 프레임은 더하기 겹·튐을 줄이게 함 — 근본은 인스턴싱)
   - 할 것: ① 먼저 지금 판에서 같은 조건(F2 자동 플레이·빠르기 ×4·안 죽기, 경지 +1 세 번)으로 자동 플레이 기록 끝의 `fps`·`최장`·`장` 을 5분 재어 결과 줄에 ② `FxInk.shader` 에 `#pragma multi_compile_instancing` 과 UNITY_INSTANCING_BUFFER(_P·_C0~2·_Shape·_Prog·_Diss·_Seed·_Alpha·_Add·_Hdr)를 넣고, SectFx.Quad 는 바로 그리지 말고 배열에 쌓아 LateUpdate 끝에 RenderMeshInstanced 두 번(캐릭터 밑 Under·위 Over, worldBounds 중심 z 를 0.02·-0.3 으로)으로. 부른 순서가 곧 그리는 순서라 겹 순서는 그대로 ③ 같은 조건으로 다시 재서 견준다
   - 쓸 것: `Fx/SectFx.cs`(Quad·LateUpdate·QuadsLastFrame), `Art/Shaders/FxInk.shader`, `Hud/TestAutopilot.cs` 성능 줄
   - 메뉴: 없음
