@@ -6,7 +6,7 @@
 // 가정(이 파일에서 새로 정함):
 //   - 지난 생은 모두 현경까지 올랐다고 친다(cheonha.md 에서 첫 생 현경이 20분쯤). 그러면 화경 → 현경 구간만 제 속도이고 나머지는 줄어든다.
 //   - 연무장(윤회의 기)은 0 으로 둔다. 가속에서 '빠르기'만 떼어 보려는 것이다(설계안: 기는 세기, 공력은 빠르기).
-//   - 감소율·상한을 바꾼 안 몇 개를 나란히 둔다. 설계안 추천은 4%·30%.
+//   - 감소율·상한을 바꾼 안 몇 개를 나란히 둔다. 정한 값은 4%·60%(2026-11-20 GU-11f1, cheonha.json pastLife), 옛 설계안은 4%·30%.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,8 +32,8 @@ namespace BloodRain.Sim
 
         static readonly (string name, float per, float max)[] Variants =
         {
-            ("설계안 4%·상한 30%", PastLifePower.DefaultCutPerCrossing, PastLifePower.DefaultMaxCut),
-            ("4%·상한 60%", 0.04f, 0.60f),
+            ("정한 값 4%·상한 60%", PastLifePower.DefaultCutPerCrossing, PastLifePower.DefaultMaxCut),
+            ("옛 설계안 4%·상한 30%", 0.04f, 0.30f),
             ("1%·상한 80%", 0.01f, 0.80f),
         };
 
@@ -80,10 +80,10 @@ namespace BloodRain.Sim
             double floorIlryu = design.Last().r.i;
             sb.AppendLine("## 읽을 것");
             sb.AppendLine();
-            sb.AppendLine($"- 설계안 규칙(4%·상한 30%)이면 마친 생 8번째쯤 상한에 닿아 그 뒤로는 더 빨라지지 않는다. 일류 {M(baseRow.i)} → {M(floorIlryu)}로 멈추고, 목표 곡선의 30·60·100 생(3:30·2:15·1:30)에는 못 미친다. 필요 진기를 30% 줄여도 시간이 30% 주는 것은 아니다(앞부분은 화력이 진기 흐름을 정하고, 레벨이 빨리 올라도 처치가 그만큼 늘지 않는다).");
-            sb.AppendLine("- 목표 곡선(100생에 일류 1:30)을 진기 감소만으로 맞추려면 상한이 훨씬 높아야 한다. 아래 두 안(상한 60%·80%)은 얼마나 가까워지는지 보려고 둔 것이고 정한 값이 아니다. 설계안 '네 층'의 나머지(시작 경지 고르기 — 30번 넘은 구간은 그 경지로 깨어남)가 100생 곡선의 큰 몫을 맡아야 한다.");
+            sb.AppendLine($"- 정한 규칙(4%·상한 60%, 2026-11-20)이면 마친 생 15번째쯤 상한에 닿는다. 일류 {M(baseRow.i)} → {M(floorIlryu)}로 멈추고, 목표 곡선의 30생(3:30)에 거의 맞는다. 60·100 생(2:15·1:30)은 진기 감소가 아니라 '그 경지로 깨어난다'(30번 넘은 구간)가 맡는다(decisions #62). 필요 진기를 60% 줄여도 시간이 60% 주는 것은 아니다(앞부분은 화력이 진기 흐름을 정하고, 레벨이 빨리 올라도 처치가 그만큼 늘지 않는다).");
+            sb.AppendLine("- 아래 두 안(옛 설계안 상한 30%·1%·상한 80%)은 견주려고 둔 것이다.");
             sb.AppendLine($"- 지금 데이터는 첫 생부터 일류 {M(baseRow.i)}·절정 {M(baseRow.j)}로 7장 목표(6:40·11:40)보다 이르다(처치 진기, P-02). 그래서 '마친 생 0' 줄이 목표 곡선 1~5 줄보다 앞서 있다.");
-            sb.AppendLine("- 감소율·상한을 무엇으로 할지는 사람 결정 대기(backlog GU-11f1).");
+            sb.AppendLine("- 감소율·상한은 2026-11-20 사람이 추천대로 정했다(backlog GU-11f1). 한 생(Life)이 혼의 전생의 공력을 RunXp 에 건다.");
             sb.AppendLine();
 
             foreach (var v in Variants)

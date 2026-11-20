@@ -137,6 +137,8 @@
     ]
   },
 
+  "_notePastLife": "전생의 공력(10장 '천하 확장: 전생의 공력'). 경지 구간을 한 번 넘을 때마다 그 구간 필요 진기 cutPerCrossing 씩 줄고 maxCut 까지. 가장 높이 오른 경지로 가는 구간은 제 속도. 같은 구간을 wakeCrossings 번 넘으면 그 경지로 깨어나기를 고를 수 있다. 2026-11-20 사람이 추천대로(GU-11f1, decisions #62): 4%·상한 60%(30생에 일류 3:32).",
+  "pastLife": { "cutPerCrossing": 0.04, "maxCut": 0.6, "wakeCrossings": 30 },
   "rebirth": {
     "_note": "환혼(21장). 해금한 문파에서 겹치지 않게 candidates 명. 해금한 문파가 모자라면 같은 문파가 성질만 달리해 나올 수 있다. 첫 환혼은 firstRebirth 고정, 성질 없음. 태어난 문파 진전 +homeSchoolTiers 단계.",
     "candidates": 3,

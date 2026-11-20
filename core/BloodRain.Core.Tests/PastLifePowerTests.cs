@@ -21,12 +21,16 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1f, PastLifePower.AfterLives(Realms, 0, "hyeongyeong").RequiredScale(5));
         }
 
-        [Fact] public void 넘을_때마다_4퍼센트씩_줄고_30퍼센트에서_멈춘다()
+        [Fact] public void 넘을_때마다_4퍼센트씩_줄고_60퍼센트에서_멈춘다()
         {
-            for (int n = 0; n <= 12; n++)
+            // 2026-11-20 GU-11f1 추천대로(decisions #62): 4%·상한 60%
+            Assert.Equal(0.04f, _d.Cheonha.PastLife.CutPerCrossing);
+            Assert.Equal(0.6f, _d.Cheonha.PastLife.MaxCut);
+            Assert.Equal(PastLifePower.WakeCrossings, _d.Cheonha.PastLife.WakeCrossings);
+            for (int n = 0; n <= 20; n++)
             {
                 var p = PastLifePower.AfterLives(Realms, n, "hyeongyeong");
-                Assert.Equal(1f - Math.Min(0.30f, 0.04f * n), p.RequiredScale(LevelOf("iryu")), 4); // 이류 → 일류 구간
+                Assert.Equal(1f - Math.Min(0.60f, 0.04f * n), p.RequiredScale(LevelOf("iryu")), 4); // 이류 → 일류 구간
             }
         }
 
@@ -47,7 +51,7 @@ namespace BloodRain.Core.Tests
             var xp = new RunXp(curve, new Realms(_d.Balance.Realms));
             int plain = xp.Required;
             xp.PastLife = PastLifePower.AfterLives(Realms, 10, "hyeongyeong");
-            Assert.Equal((int)Math.Ceiling(plain * 0.7 - 1e-6), xp.Required);
+            Assert.Equal((int)Math.Ceiling(plain * 0.6 - 1e-6), xp.Required);
             Assert.True(xp.Required >= 1);
         }
 
@@ -69,7 +73,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 가속_보고서가_목표_곡선과_나란히_선다()
         {
             var md = BloodRain.Sim.AccelerationSim.Report(BloodRain.Sim.SimData.Load(TestData.DataDir), seeds: 1);
-            Assert.Contains("## 설계안 4%·상한 30%", md);
+            Assert.Contains("## 정한 값 4%·상한 60%", md);
             Assert.Contains("| 100 |", md);
             Assert.Contains("1:30", md);
         }

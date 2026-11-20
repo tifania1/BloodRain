@@ -46,6 +46,7 @@ namespace BloodRain.Core.Data
         public PrologueBodyDef PrologueBody = new PrologueBodyDef();
         public BirthTraitsDef BirthTraits = new BirthTraitsDef();
         public RebirthDef Rebirth = new RebirthDef();
+        public PastLifeDef PastLife = new PastLifeDef();
         public RebirthQiDef RebirthQi = new RebirthQiDef();
         public MasteryDef Mastery = new MasteryDef();
         public LifeEndDef LifeEnd = new LifeEndDef();
@@ -380,6 +381,14 @@ namespace BloodRain.Core.Data
         /// <summary>무작위 후보에 붙는 '덕'(천하 확장 설계안 정한 것 7, GU-11g). 해금한 문파를 직접 고르는 길과 견줘 무작위 후보를 고를 까닭.
         /// 2026-11-20 GU-11g1: 덕 하나(복덕, 그 생 윤회의 기 +25%). 비어 있으면 후보에 덕이 붙지 않는다(난수도 안 쓴다).</summary>
         public List<RebirthBoonDef> Boons = new List<RebirthBoonDef>();
+    }
+
+    /// <summary>전생의 공력(10장, GU-11f1): 구간을 넘을 때마다 필요 진기 cutPerCrossing 씩, 상한 maxCut, wakeCrossings 번이면 그 경지로 깨어남.</summary>
+    public sealed class PastLifeDef
+    {
+        public float CutPerCrossing = 0.04f;
+        public float MaxCut = 0.6f;
+        public int WakeCrossings = 30;
     }
 
     public sealed class RebirthBoonDef

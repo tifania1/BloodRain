@@ -74,7 +74,10 @@ namespace BloodRain.Core.Run
             Body = body;
             Log = soul.BeginLife(body);
             Loadout = body.NewLoadout(_data);
-            Xp = new RunXp(new XpCurve(_data.Balance.XpCurve), new Realms(_data.Balance.Realms));
+            Xp = new RunXp(new XpCurve(_data.Balance.XpCurve), new Realms(_data.Balance.Realms))
+            {
+                PastLife = soul.PastLifePower(), // GU-11f1 전생의 공력: 넘어 본 구간은 필요 진기가 줄어든다(서장 첫 생은 넘은 구간이 없어 그대로)
+            };
             Regions = new Regions(_data);
             Scale = new Scale(_data);
             Chronicle = new Chronicle(_data.Chronicle, Regions, Scale);

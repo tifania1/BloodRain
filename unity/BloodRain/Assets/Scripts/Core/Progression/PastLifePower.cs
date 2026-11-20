@@ -16,7 +16,7 @@ namespace BloodRain.Core.Progression
     public sealed class PastLifePower
     {
         public const float DefaultCutPerCrossing = 0.04f;
-        public const float DefaultMaxCut = 0.30f;
+        public const float DefaultMaxCut = 0.60f; // 2026-11-20 GU-11f1(데이터는 cheonha.json pastLife)
         /// <summary>같은 구간을 이만큼 넘었으면 침방에서 그 경지로 깨어나기를 고를 수 있다(설계안·기획서 10장 '천하 확장: 전생의 공력').</summary>
         public const int WakeCrossings = 30;
 

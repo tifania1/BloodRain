@@ -494,12 +494,13 @@ namespace BloodRain.Core.Meta
         public bool HasReached(string realm) => _realms.Contains(realm);
         /// <summary>경지 구간을 넘은 횟수(가는 경지 id → 생 수, 서장 포함). 전생의 공력(GU-11f)이 읽는다. 이 칸이 생기기 전 저장은 0부터.</summary>
         public IReadOnlyDictionary<string, int> RealmCrossings => _crossings;
-        /// <summary>이 혼의 전생의 공력. 감소율·상한은 GU-11f1 결정 전이라 PastLifePower 기본값. 아직 Life 에 물리지 않았다.</summary>
+        /// <summary>이 혼의 전생의 공력(cheonha.json pastLife, GU-11f1). Life 가 생을 시작할 때 RunXp.PastLife 에 건다.</summary>
         public Progression.PastLifePower PastLifePower()
         {
             var realms = _data.Balance.Realms.OrderBy(r => r.Level).ToList();
             var top = realms.LastOrDefault(r => _realms.Contains(r.Id));
-            return new Progression.PastLifePower(realms, _crossings, top?.Id);
+            var pl = _data.Cheonha.PastLife;
+            return new Progression.PastLifePower(realms, _crossings, top?.Id, pl.CutPerCrossing, pl.MaxCut);
         }
         public bool HasAwakened(string evolution) => _evolutions.Contains(evolution);
 
