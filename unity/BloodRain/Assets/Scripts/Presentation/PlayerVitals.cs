@@ -188,7 +188,8 @@ namespace BloodRain.Presentation
             {
                 // 13장 '피격: 흰색 번쩍임 셰이더'. 피함·금종조는 지금처럼 청록으로 반쯤 비침
                 var ghost = new Color(0.55f, 0.9f, 0.95f, 0.35f);
-                _look.Renderer.color = _evadeFlash > 0f ? Color.Lerp(Color.white, ghost, _evadeFlash / 0.3f) : Color.white;
+                var bc = _look.BaseColor; // 대장간 몸 색·대신 쓴 그림 물들임(흰색으로 덮으면 사라진다)
+                _look.Renderer.color = _evadeFlash > 0f ? Color.Lerp(bc, ghost, _evadeFlash / 0.3f) : bc;
                 _look.Flash = _evadeFlash > 0f ? 0f : _flash / 0.25f;
             }
         }

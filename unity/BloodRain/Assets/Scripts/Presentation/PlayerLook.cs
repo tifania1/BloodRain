@@ -200,7 +200,8 @@ namespace BloodRain.Presentation
             _body.SetParent(transform, false);
             Renderer = go.AddComponent<SpriteRenderer>();
             Renderer.sprite = sprites[found];
-            Renderer.color = _standIn;
+            BaseColor = _standIn;
+            Renderer.color = BaseColor;
             if (flashMaterial != null) Renderer.sharedMaterial = flashMaterial;
             // 산 에셋 All In 1 Sprite Shader 재질(Resources/Fx/PlayerAllIn1 — 셰이더는 PC 에만, docs/design/store_assets.md).
             // 옅은 빛 테두리로 적 무리 속에서 내 몸이 묻히지 않게 하고, 피격 번쩍임은 그 셰이더의 Hit Effect 로 낸다. 셰이더가 없으면 옛 재질 그대로
@@ -278,6 +279,10 @@ namespace BloodRain.Presentation
 
         bool _tinted;
         Color _standIn = Color.white;
+
+        /// <summary>몸 그림의 바탕 빛(대장간 몸 색 × 대신 쓴 그림의 문파 물들임). PlayerVitals 가 피격·피함 빛을 이 위에 섞는다
+        /// (2026-11-21 — 전엔 PlayerVitals 가 매 프레임 흰색으로 덮어 대장간 몸 색이 첫 프레임 뒤 사라졌다).</summary>
+        public Color BaseColor { get; private set; } = Color.white;
         static readonly System.Collections.Generic.Dictionary<string, string> StandIn = new System.Collections.Generic.Dictionary<string, string>
         {
             ["huashan"] = "wudang", ["kunlun"] = "wudang", ["demonic"] = "tang",
@@ -291,7 +296,8 @@ namespace BloodRain.Presentation
             if (life == null || life.Soul == null) return;
             _tinted = true;
             var def = life.Soul.Data.Cheonha.Inn.Smithy.Tints.Find(t => t.Id == life.Soul.BodyTint);
-            if (def != null && def.Rgb.Length >= 3) Renderer.color = new Color(def.Rgb[0] * _standIn.r, def.Rgb[1] * _standIn.g, def.Rgb[2] * _standIn.b, Renderer.color.a);
+            if (def != null && def.Rgb.Length >= 3) BaseColor = new Color(def.Rgb[0] * _standIn.r, def.Rgb[1] * _standIn.g, def.Rgb[2] * _standIn.b, 1f);
+            Renderer.color = BaseColor;
         }
 
         void LateUpdate()
