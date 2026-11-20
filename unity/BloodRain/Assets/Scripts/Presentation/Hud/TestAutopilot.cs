@@ -13,7 +13,7 @@ namespace BloodRain.Presentation.Hud
         public LifeRunner runner;
         public bool On;
         public float fleeRadius = 6f;      // 이 거리 안의 적만 본다(Unity 좌표 = 세계 m)
-        public float wanderWeight = 0.35f;
+        public float keepOut = 1.8f;      // 이보다 가까운 적에게서는 물러난다
 
         float _wanderAngle, _pickWait, _logWait, _clock;
         LevelUpScreen _lu;
@@ -40,26 +40,36 @@ namespace BloodRain.Presentation.Hud
             }
             _pickWait = 0f;
 
-            // 걷기: 적에게서 멀어지기 + 배회
+            // 걷기: 사람처럼 무리 가장자리를 돈다 — 너무 가까운 적(keepOut 안)에게서는 물러나고, 아무도 가깝지 않으면
+            // 가장 가까운 적 쪽으로 다가가되 옆으로 비껴(접선) 돈다. 근접 무공(삼재검법)이 닿게 하려는 것(멀리 도망만 치면 처치 0)
             Vector2 p = runner.player.position;
-            Vector2 away = Vector2.zero;
+            Vector2 away = Vector2.zero, nearest = Vector2.zero;
+            float nearD2 = float.MaxValue;
             var sim = runner.enemies != null ? runner.enemies.Sim : null;
             if (sim != null)
             {
                 var agents = sim.Agents;
-                float r2 = fleeRadius * fleeRadius;
+                float k2 = keepOut * keepOut;
                 for (int i = 0; i < sim.Count; i++)
                 {
                     var e = agents[i].Pos;
                     var d = p - new Vector2(e.x, e.y);
                     float m2 = d.sqrMagnitude;
-                    if (m2 > r2 || m2 < 1e-4f) continue;
+                    if (m2 < nearD2) { nearD2 = m2; nearest = new Vector2(e.x, e.y); }
+                    if (m2 > k2 || m2 < 1e-4f) continue;
                     away += d / m2;
                 }
             }
             _wanderAngle += dt * 0.4f;
-            var wander = new Vector2(Mathf.Cos(_wanderAngle), Mathf.Sin(_wanderAngle));
-            var move = away.sqrMagnitude > 1e-6f ? away.normalized + wander * wanderWeight : wander;
+            Vector2 move;
+            if (away.sqrMagnitude > 1e-6f) move = away.normalized;
+            else if (nearD2 < fleeRadius * fleeRadius * 4f)
+            {
+                var to = (nearest - p).normalized;
+                var side = new Vector2(-to.y, to.x);
+                move = (to * 0.6f + side * 0.8f).normalized;
+            }
+            else move = new Vector2(Mathf.Cos(_wanderAngle), Mathf.Sin(_wanderAngle));
             ControlInput.MoveOverride = Vector2.ClampMagnitude(move, 1f);
 
             _logWait += Time.deltaTime; _clock += Time.deltaTime;
