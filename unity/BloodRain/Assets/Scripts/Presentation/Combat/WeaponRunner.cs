@@ -140,6 +140,7 @@ namespace BloodRain.Presentation.Combat
         readonly List<float> _xs = new List<float>(), _ys = new List<float>();
         readonly Dictionary<int, float> _mistSeconds = new Dictionary<int, float>(); // C-09e 칠보단혼무: 적 Id → 안개 안에 머문 초
         float _mistExec; // 칠보단혼무 executeSeconds(일곱 숨 점을 그리려고)
+        BloodRain.Presentation.Fx.AwakeningFx _awFx; // 절기 낙관 글꼴(Yuji Boku)을 빌린다
         readonly List<int> _executeIds = new List<int>();
         PlayerVitals _vitals; // 혈조 흡혈
         readonly Dictionary<string, float> _dealt = new Dictionary<string, float>();
@@ -471,6 +472,12 @@ namespace BloodRain.Presentation.Combat
             var ws = World;
             float dmg = Damage(s);
             s.Fired++;
+            // VF-04U 절기 큰 연출: 절기를 쓸 때 세 번에 한 번(6초에 한 번까지) 절기 한자 + 주홍 낙관, 짧은 멈춤
+            if (Sfx && EvoOf(s) is BloodRain.Core.Data.EvolutionDef sealEvo)
+            {
+                if (_awFx == null) _awFx = FindFirstObjectByType<BloodRain.Presentation.Fx.AwakeningFx>();
+                if (BloodRain.Presentation.Hud.EvoSeal.Fired(sealEvo.Hanja, _awFx != null ? _awFx.NameFont : null)) BloodRain.Presentation.Fx.HitFeel.Stop(0.05f);
+            }
             HitLook(s, false);   // 맞은 자리 그림의 종류·단계 기본값(앞 무공 것이 남지 않게). 네 무공은 피해 직전에 다시 고른다
             switch (s.Def.Behavior)
             {

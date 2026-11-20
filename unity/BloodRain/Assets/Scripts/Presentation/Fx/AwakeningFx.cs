@@ -18,6 +18,8 @@ namespace BloodRain.Presentation.Fx
         [SerializeField] Camera overlayCam;
         public const string OverlayLayerName = "AwakenOverlay";
         [SerializeField] TMP_FontAsset nameFont;
+        /// <summary>절기 이름 글꼴(Yuji Boku). 절기 낙관(Hud.EvoSeal)도 이 글꼴을 쓴다.</summary>
+        public TMP_FontAsset NameFont => nameFont;
         [Tooltip("설정의 화면 흔들림 100·50·0%")]
         [Range(0f, 1f)] [SerializeField] float shakeSetting = 1f;
         [Tooltip("기기의 '움직임 줄이기'. 켜지면 흔들림 0, 탁본 뒤집기 건너뜀")]
