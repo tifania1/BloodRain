@@ -716,8 +716,12 @@ namespace BloodRain.Presentation.Hud
             {
                 if (s.Tier == null && s.LockedTiers.Count == 0) continue;
                 var sc = SchoolTint.Of(s.School);
-                var seal = MakeImage(_sealRow, s.School.NameKo, s.Tier != null ? sc : new Color(sc.r, sc.g, sc.b, 0.35f));
+                // 2026-11-21 납작한 색 네모 → 찍은 인장처럼: 문파 색을 조금 먹으로 눌러 짙게, 종이 결, 안쪽 가는 종이빛 테, 조금씩 기울게
+                var seal = MakeImage(_sealRow, s.School.NameKo, s.Tier != null ? Color.Lerp(sc, Ink, 0.22f) : new Color(sc.r, sc.g, sc.b, 0.35f));
                 seal.rectTransform.sizeDelta = new Vector2(60, 60);
+                BloodRain.Presentation.Meta.InkUi.PaperGrainFill(seal.rectTransform, new Vector2(60, 60), 0.16f);
+                BloodRain.Presentation.Meta.InkUi.Frame(seal.rectTransform, Vector2.zero, new Vector2(60, 60), 4f, 1.5f, new Color(PaperHot.r, PaperHot.g, PaperHot.b, s.Tier != null ? 0.6f : 0.3f));
+                seal.rectTransform.localRotation = Quaternion.Euler(0f, 0f, ((s.School.Id.Length * 7) % 5 - 2) * 1.3f);
                 var t = MakeText(seal.rectTransform, "글", 18, PaperHot, TextAlignmentOptions.Center);
                 Stretch(t.rectTransform);
                 t.lineSpacing = -20;
