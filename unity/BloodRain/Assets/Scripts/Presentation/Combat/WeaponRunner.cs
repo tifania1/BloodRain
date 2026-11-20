@@ -1680,7 +1680,9 @@ namespace BloodRain.Presentation.Combat
                     bool heavy = crit || big || cut;
                     _sfx.Hit(at, ang, _hitKind, heavy, _hitStage, cut);
                     // HF-02U 치명타·큰 적·4단부터 첫 타격이면 짧게 멈추고 맞은 쪽으로 화면이 밀린다(단계가 오르면 더 세게)
-                    if (heavy) { BloodRain.Presentation.Fx.HitFeel.Stop(0.04f); BloodRain.Presentation.Fx.HitFeel.Shake(0.26f + 0.02f * _hitStage, ang); }
+                    // 멈춤은 큰 적·첫 타격 컷에만(치명타는 후반에 흔해 멈춤이 끊김처럼 느껴졌다, 2026-11-20). 치명타는 흔들림만
+                    if (big || cut) BloodRain.Presentation.Fx.HitFeel.Stop(0.04f);
+                    if (heavy) BloodRain.Presentation.Fx.HitFeel.Shake(0.26f + 0.02f * _hitStage, ang);
                 };
                 enemies.Killed += (at, agent) =>
                 {
@@ -1696,7 +1698,7 @@ namespace BloodRain.Presentation.Combat
                         var dot = enemies.LastKillDot;
                         _deathFx.Add(at, d, deadArt, deadSize, deadTint, dot ?? _hitKind, dot != null ? 3 : _hitStage);
                     }
-                    BloodRain.Presentation.Fx.HitFeel.Stop(0.03f + 0.005f * _hitStage); // 0.3초에 한 번까지(HitFeel)
+                    // 보통 적을 쓰러뜨릴 때는 멈추지 않는다(2026-11-20 사람: 갈수록 뚝뚝 끊긴다 — 후반엔 늘 무언가 쓰러져 0.3초마다 화면이 섰다). 흔들림만
                     BloodRain.Presentation.Fx.HitFeel.Shake(0.13f + 0.03f * _hitStage, ang);
                 };
             }

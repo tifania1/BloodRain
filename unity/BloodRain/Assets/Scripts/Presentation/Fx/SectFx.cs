@@ -90,7 +90,7 @@ namespace BloodRain.Presentation.Fx
         const float StainLife = 6f;
         const float ZUnder = 0.02f;     // 캐릭터(z 0) 뒤
         const float ZOver = -0.3f;      // 붓 획(-0.26~-0.28)보다 카메라 쪽
-        const int MaxDrops = 400, MaxStains = 48;
+        const int MaxDrops = 220, MaxStains = 48; // 튐 400 → 220(2026-11-20 끊김: 장마다 그리기 한 번이라 많으면 느려진다)
 
         static readonly int IdNoise = Shader.PropertyToID("_NoiseTex"), IdShape = Shader.PropertyToID("_Shape"), IdP = Shader.PropertyToID("_P"),
             IdProg = Shader.PropertyToID("_Prog"), IdDiss = Shader.PropertyToID("_Diss"), IdSeed = Shader.PropertyToID("_Seed"),
@@ -165,6 +165,10 @@ namespace BloodRain.Presentation.Fx
         public static int QuadsLastFrame;
         static int _quadCount;
         public int FxCount => _fx.Count;
+        /// <summary>바쁜 프레임: 지난 프레임에 그린 장이 이보다 많으면 빛의 더하기 겹을 빼고 튐을 줄인다(2026-11-20 사람: 갈수록 뚝뚝 끊긴다.
+        /// 한 장 = Graphics.RenderMesh 한 번이라 후반 600장 넘게 쌓이면 웹에서 특히 느리다).</summary>
+        public const int BusyQuads = 300;
+        static bool Busy => QuadsLastFrame > BusyQuads;
         public int DropCount => _drops.Count;
 
         void LateUpdate()
@@ -236,7 +240,7 @@ namespace BloodRain.Presentation.Fx
             float alpha = 1f, float prog = 1f, float diss = 0f, float seed = 0f)
         {
             Quad(shape, pos, w, h, rot, p, c, alpha, prog, diss, seed);
-            if (!FxSettings.Simplified) Quad(shape, pos, w, h, rot, p, c, alpha * .4f, prog, diss, seed, true);
+            if (!FxSettings.Simplified && !Busy) Quad(shape, pos, w, h, rot, p, c, alpha * .4f, prog, diss, seed, true);
         }
 
         void Add(float life, Action<Fx, float> draw, bool under = false)
@@ -258,6 +262,7 @@ namespace BloodRain.Presentation.Fx
         public void Drops(Vector2 at, float dir, int n, float speed, FxRamp c, bool glow, float size, float spread)
         {
             n = FxSettings.Scale(n);
+            if (Busy) n = (n + 2) / 3;
             for (int i = 0; i < n && _drops.Count < MaxDrops; i++)
             {
                 float a = dir + Rnd(-spread, spread), s = Rnd(speed * .35f, speed) * Meter;

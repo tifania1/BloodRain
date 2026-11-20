@@ -13,7 +13,7 @@ namespace BloodRain.Presentation.Fx
     public static class HitFeel
     {
         const float StopScale = 0.02f;   // 완전히 0 이면 dt 로 나누는 코드가 놀랄 수 있어 아주 느리게만
-        const float LockSeconds = 0.3f;
+        const float LockSeconds = 0.9f; // 0.3 → 0.9(2026-11-20 사람: 갈수록 뚝뚝 끊긴다 — 후반엔 쓰러뜨릴 때마다 멈춰 0.3초마다 화면이 섰다)
         const float MaxStop = 0.08f;
 
         const float ZoomMax = 0.05f;     // 눌림 1 이면 5% 당겨 본다
