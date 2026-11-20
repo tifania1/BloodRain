@@ -69,6 +69,8 @@ namespace BloodRain.Core.Data
         public string NameKo = "";
         public string Hanja = "";
         public string Motto = "";
+        /// <summary>문파 상징색 "#RRGGBB"(레벨업 카드 책등·인장, HUD 칸 글자). 종이 바탕 대비 3:1 이상(테스트).</summary>
+        public string Color = "";
         public string? Character;
         public List<string> Members = new List<string>();
         public List<SchoolTierDef> Tiers = new List<SchoolTierDef>();

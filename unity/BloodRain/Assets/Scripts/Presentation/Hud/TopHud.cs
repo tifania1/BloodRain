@@ -158,7 +158,7 @@ namespace BloodRain.Presentation.Hud
                 c.Glyph.text = string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1); // 아이콘 그림이 오기 전엔 이름 첫 글자(웹 GLYPH 자리)
                 c.Level.text = s.Level.ToString();
                 c.Inner.color = SlotPaper;
-                c.Glyph.color = TextInk;
+                c.Glyph.color = SchoolTint.OfMember(s.Id) ?? TextInk; // 글자는 문파 색(레벨업 카드 책등과 같은 색)
                 switch (s.Glow)
                 {
                     case SlotGlow.Ready: c.Frame.color = Color.Lerp(SlotInk, Gold, 0.55f + 0.45f * pulse); break;          // 금빛으로 뜀

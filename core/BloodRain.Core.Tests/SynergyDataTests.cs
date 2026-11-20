@@ -215,6 +215,56 @@ namespace BloodRain.Core.Tests
             }
         }
 
+        // 진전 문파 상징색(2026-11-20 사람: 레벨업 무공 선택지에 문파 색을 넣어 진전을 챙기기 쉽게).
+        // 카드 종이(#E8DEC7) 위 책등·인장 글자로 읽혀야 하고, 문파끼리 색으로 갈려야 한다.
+        static double Luminance(string hex)
+        {
+            double Ch(int i)
+            {
+                double c = int.Parse(hex.Substring(i, 2), NumberStyles.HexNumber) / 255.0;
+                return c <= 0.03928 ? c / 12.92 : System.Math.Pow((c + 0.055) / 1.055, 2.4);
+            }
+            return 0.2126 * Ch(1) + 0.7152 * Ch(3) + 0.0722 * Ch(5);
+        }
+
+        static double Hue(string hex)
+        {
+            double r = int.Parse(hex.Substring(1, 2), NumberStyles.HexNumber) / 255.0;
+            double g = int.Parse(hex.Substring(3, 2), NumberStyles.HexNumber) / 255.0;
+            double b = int.Parse(hex.Substring(5, 2), NumberStyles.HexNumber) / 255.0;
+            double max = System.Math.Max(r, System.Math.Max(g, b)), min = System.Math.Min(r, System.Math.Min(g, b)), d = max - min;
+            if (d < 1e-9) return 0;
+            double h = max == r ? (g - b) / d % 6 : max == g ? (b - r) / d + 2 : (r - g) / d + 4;
+            h *= 60; return h < 0 ? h + 360 : h;
+        }
+
+        [Fact] public void 진전_문파마다_상징색이_있고_종이_위에서_읽히며_서로_갈린다()
+        {
+            const string paper = "#E8DEC7";
+            foreach (var sc in S.Schools)
+            {
+                Assert.Matches("^#[0-9A-F]{6}$", sc.Color);
+                double contrast = (Luminance(paper) + 0.05) / (Luminance(sc.Color) + 0.05);
+                Assert.True(contrast >= 3.0, $"{sc.NameKo} {sc.Color} 종이 대비 {contrast:F2} < 3");
+            }
+            for (int i = 0; i < S.Schools.Count; i++)
+                for (int j = i + 1; j < S.Schools.Count; j++)
+                {
+                    var a = S.Schools[i]; var b = S.Schools[j];
+                    double dh = System.Math.Abs(Hue(a.Color) - Hue(b.Color)); dh = System.Math.Min(dh, 360 - dh);
+                    Assert.True(dh >= 15, $"{a.NameKo} {a.Color} 와 {b.NameKo} {b.Color} 색상 차 {dh:F0}도 < 15");
+                }
+        }
+
+        [Fact] public void 기획서_진전_절에_문파_상징색이_데이터와_같다()
+        {
+            var gdd = TestData.ReadText(Path.Combine(TestData.DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));
+            int start = gdd.IndexOf("### 진전(眞傳) 9문파");
+            Assert.True(start >= 0);
+            var section = gdd.Substring(start, gdd.IndexOf("### ", start + 5) - start);
+            foreach (var sc in S.Schools) Assert.Contains($"{sc.NameKo} `{sc.Color}`", section);
+        }
+
         [Fact] public void 기획서_기연_표의_확률과_기연_능력치_값이_데이터와_같다()
         {
             var gdd = TestData.ReadText(Path.Combine(TestData.DataDir, "..", "..", "..", "..", "..", "docs", "design", "gdd.md"));

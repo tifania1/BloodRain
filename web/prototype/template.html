@@ -3403,7 +3403,8 @@ function offerCard(o, idx) {
   if (o.kind !== 'gold') {
     const sc = SCHOOL_OF[o.id];
     if (sc) {
-      tag += ` <em class="sch">${sc.nameKo}</em>`;
+      tag += ` <em class="sch" style="color:${sc.color};border-color:${sc.color}">${sc.nameKo}</em>`;
+      b.style.boxShadow = `inset 6px 0 0 ${sc.color}`;   // 문파 상징색 책등(synergies.json color, 2026-11-20 — Unity 카드와 같은 색)
       if (o.kind === 'nw' || o.kind === 'np') { const n = (G.syn.counts[sc.id] || 0) + 1, tr = sc.tiers.find(x => x.count === n); if (tr) badges.push(G.soul0 && tr.tier === 'secret' && !(G.soul0.restored || []).includes(manualIdOf(sc, tr)) ? [`진전 ${sc.nameKo} ?`, `진전 ${sc.nameKo} ${n}: 찢긴 비급 — 장경각에서 복원해야 듣는다`] : [`진전 ${sc.nameKo} ${n}`, `진전 ${sc.nameKo} ${n}: ${tr.desc}${tr.proto ? '' : ' (정식판에서)'}`]); }
     }
     if (o.kind === 'nw' || o.kind === 'uw') for (const l of SYN.links) {

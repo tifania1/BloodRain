@@ -228,6 +228,14 @@ namespace BloodRain.Presentation.Hud
                 t.margin = new Vector4(2, 2, 2, 2);
                 if (s.Id != null)
                 {
+                    // 칸 아래에 문파 색 줄: 이미 가진 것 가운데 같은 색이 몇인지 카드와 견줘 보게
+                    var tint = SchoolTint.OfMember(s.Id);
+                    if (tint.HasValue)
+                    {
+                        var bar = MakeImage(cell.rectTransform, "문파 줄", tint.Value);
+                        Place(bar.rectTransform, new Vector2(0.5f, 0f), new Vector2(0, 4), new Vector2(66, 8));
+                        bar.raycastTarget = false;
+                    }
                     string name = weapon ? WeaponName(_data.Weapon(s.Id)) : SlotPassiveName(s.Id);
                     t.text = $"{Short(name)}\n<size=80%>Lv{s.Level}</size>";
                 }
@@ -435,8 +443,15 @@ namespace BloodRain.Presentation.Hud
             exit.callback.AddListener(_ => LightSlots(null));
             trig.triggers.Add(enter); trig.triggers.Add(exit);
 
-            var spine = MakeImage(card.rectTransform, "책등", _banishMode && o.Kind != OfferKind.Fallback ? Blood : Ink);
-            Place(spine.rectTransform, new Vector2(0f, 0.5f), new Vector2(9, 0), new Vector2(18, 460));
+            // 책등은 그 무공·심법 문파의 상징색(2026-11-20 사람: 색만 보고도 같은 문파를 모을 수 있게). 문파 없으면 먹, 파기 중이면 핏빛
+            Color? tint = o.Kind != OfferKind.Fallback ? SchoolTint.OfMember(o.Id) : null;
+            var spine = MakeImage(card.rectTransform, "책등", _banishMode && o.Kind != OfferKind.Fallback ? Blood : tint ?? Ink);
+            Place(spine.rectTransform, new Vector2(0f, 0.5f), new Vector2(11, 0), new Vector2(22, 460));
+            if (tint.HasValue)
+            {
+                var top = MakeImage(card.rectTransform, "문파 띠", tint.Value);
+                Place(top.rectTransform, new Vector2(0.5f, 1f), new Vector2(11, -4), new Vector2(308, 8));
+            }
 
             var k = MakeText(card.rectTransform, "갈래", 26, Blood, TextAlignmentOptions.Center);
             Place(k.rectTransform, new Vector2(0.5f, 1f), new Vector2(8, -50), new Vector2(290, 40));
@@ -467,7 +482,6 @@ namespace BloodRain.Presentation.Hud
         //   비급이 잠긴 연환이면 '?' 띠(이름을 감춘다).
 
         static readonly Color Gold = new Color(0.79f, 0.64f, 0.16f);
-        static readonly Color SealDim = new Color(0.55f, 0.10f, 0.08f, 0.35f);
 
         void DrawSynergy(RectTransform card, Offer o, TextMeshProUGUI kindText)
         {
@@ -479,9 +493,13 @@ namespace BloodRain.Presentation.Hud
                 var st = BloodRain.Core.Build.Synergy.Compute(_data, _loadout, null, _restored).School(pv.School.Id);
                 int next = pv.School.MaxTierCount;
                 foreach (var t in pv.School.Tiers) if (t.Count > pv.SchoolCountAfter && t.Count < next) next = t.Count;
-                var seal = MakeImage(card, "문파 인장", reaches ? Blood : SealDim);
+                // 인장도 문파 색: 새 단계에 닿으면 꽉 찬 색에 금테, 아니면 옅은 색 바탕에 그 색 글자
+                var sc = SchoolTint.Of(pv.School);
+                var seal = MakeImage(card, "문파 인장", reaches ? sc : new Color(sc.r, sc.g, sc.b, 0.22f));
                 Place(seal.rectTransform, new Vector2(1f, 1f), new Vector2(-46, -46), new Vector2(72, 72));
-                var sealText = MakeText(seal.rectTransform, "글", 20, reaches ? PaperHot : Blood, TextAlignmentOptions.Center);
+                var rim = seal.gameObject.AddComponent<Outline>();
+                rim.effectColor = reaches ? Gold : sc; rim.effectDistance = new Vector2(3, -3);
+                var sealText = MakeText(seal.rectTransform, "글", 20, reaches ? PaperHot : sc, TextAlignmentOptions.Center);
                 Stretch(sealText.rectTransform);
                 sealText.lineSpacing = -20;
                 // 영어는 이름 전체라 길다(L-01b2): 칸 안에서 줄이고, 머리글은 인장 왼쪽까지만 쓴다
@@ -597,7 +615,8 @@ namespace BloodRain.Presentation.Hud
             foreach (var s in syn.Schools)
             {
                 if (s.Tier == null && s.LockedTiers.Count == 0) continue;
-                var seal = MakeImage(_sealRow, s.School.NameKo, s.Tier != null ? Blood : SealDim);
+                var sc = SchoolTint.Of(s.School);
+                var seal = MakeImage(_sealRow, s.School.NameKo, s.Tier != null ? sc : new Color(sc.r, sc.g, sc.b, 0.35f));
                 seal.rectTransform.sizeDelta = new Vector2(60, 60);
                 var t = MakeText(seal.rectTransform, "글", 18, PaperHot, TextAlignmentOptions.Center);
                 Stretch(t.rectTransform);

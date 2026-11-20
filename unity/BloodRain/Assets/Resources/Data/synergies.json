@@ -1,5 +1,5 @@
 {
-  "_note": "무공끼리 만나는 법. 기획서 '20. 시너지와 기연'과 같은 내용이어야 한다. 연환은 공격 무공 둘(둘 다 minLevel 이상), 진전은 같은 문파 무공·심법 개수, 비전은 숨은 조건, 기연은 판 도중 사건. proto: true 는 웹 프로토타입에 들어간 것. 비전 require 와 기연 chapters·minMinute·needsChapterSchool 은 글(condition, where)을 Core 판정용으로 옮긴 것이라 글을 고치면 같이 고친다. 비전 effect·target·params 는 얻는 것(reward)의 숫자를 Core Build/SecretEffects 가 읽게 옮긴 것(target 은 그 효과가 붙는 무공).",
+  "_note": "무공끼리 만나는 법. 기획서 '20. 시너지와 기연'과 같은 내용이어야 한다. 연환은 공격 무공 둘(둘 다 minLevel 이상), 진전은 같은 문파 무공·심법 개수, 비전은 숨은 조건, 기연은 판 도중 사건. 진전 color 는 그 문파 상징색(레벨업 카드 책등·인장, HUD 칸 글자, 2026-11-20 사람). proto: true 는 웹 프로토타입에 들어간 것. 비전 require 와 기연 chapters·minMinute·needsChapterSchool 은 글(condition, where)을 Core 판정용으로 옮긴 것이라 글을 고치면 같이 고친다. 비전 effect·target·params 는 얻는 것(reward)의 숫자를 Core Build/SecretEffects 가 읽게 옮긴 것(target 은 그 효과가 붙는 무공).",
   "links": [
     { "id": "ssanggeom", "tier": "secret", "nameKo": "쌍검합벽", "hanja": "雙劍合璧", "a": "samjae_sword", "b": "changcheon_qi", "minLevel": 4, "proto": true,
       "params": { "damageBonus": 0.6 },
@@ -63,33 +63,33 @@
       "lore": "혈랑대는 창으로 구멍을 내고 손톱으로 거둔다." }
   ],
   "schools": [
-    { "id": "shaolin", "nameKo": "소림", "hanja": "少林", "motto": "금강", "character": "hyegong",
+    { "id": "shaolin", "nameKo": "소림", "hanja": "少林", "motto": "금강", "color": "#9E7412", "character": "hyegong",
       "members": ["nahan_fist", "geumgang", "sonic_qin", "cheongsim"],
       "tiers": [
         { "count": 2, "desc": "호신 +2", "proto": true, "stats": { "Armor": 2 } },
         { "count": 3, "desc": "기혈 +15%, 넉백 면역", "proto": true, "stats": { "MaxHealth": 0.15 } },
         { "count": 4, "proto": true, "desc": "기혈이 처음 50% 아래로 떨어지면 5초 동안 나한 허상 열여덟이 둘러싸 닿는 적을 밀쳐낸다(판마다 세 번)",
           "effect": "arhat_ring", "params": { "healthThreshold": 0.5, "seconds": 5, "images": 18, "timesPerRun": 3, "radius": 1.8, "knockback": 8 } } ] },
-    { "id": "wudang", "nameKo": "무당", "hanja": "武當", "motto": "태극", "character": "unhwa",
+    { "id": "wudang", "nameKo": "무당", "hanja": "武當", "motto": "태극", "color": "#4B4A9E", "character": "unhwa",
       "members": ["taiji_sword", "yangui", "unryong"],
       "tiers": [
         { "count": 2, "desc": "태극 구간이 ±25에서 ±35로 넓어진다", "proto": true, "harmonyRange": 35 },
         { "count": 3, "desc": "사량발천근: 태극 구간에 있는 동안 받는 피해 -20%, 줄인 피해의 열 배를 부딪힌 적에게 되돌린다", "proto": true,
           "effect": "harmony_deflect", "params": { "damageCut": 0.2, "reflectMultiplier": 10 } } ] },
-    { "id": "huashan", "nameKo": "화산", "hanja": "華山", "motto": "매화", "character": null,
+    { "id": "huashan", "nameKo": "화산", "hanja": "華山", "motto": "매화", "color": "#B8436C", "character": null,
       "members": ["falling_petals", "maehwa", "flash_finger"],
       "tiers": [
         { "count": 2, "desc": "치명 확률 +5%", "proto": true, "stats": { "CritChance": 0.05 } },
         { "count": 3, "desc": "치명타가 터질 때마다 매화 꽃잎 세 장이 튀어 근처 적을 벤다", "proto": true,
           "effect": "crit_petals", "params": { "petals": 3, "damage": 6, "speed": 7, "radius": 0.22, "lifeSeconds": 0.45 } } ] },
-    { "id": "gaebang", "nameKo": "개방", "hanja": "丐幇", "motto": "의", "character": "machil",
+    { "id": "gaebang", "nameKo": "개방", "hanja": "丐幇", "motto": "의", "color": "#9A5226", "character": "machil",
       "members": ["drunken_staff", "juseon", "palm_wind", "pasan"],
       "tiers": [
         { "count": 2, "desc": "음식 회복 +50%", "proto": true, "stats": { "FoodHeal": 0.5 } },
         { "count": 3, "tier": "secret", "desc": "기혈 30% 이하에서 공력 +30%", "proto": true, "effect": "low_health_might", "params": { "healthThreshold": 0.3, "damageBonus": 0.3 } },
         { "count": 4, "proto": true, "desc": "3분마다 개방 제자 셋이 나타나 10초 동안 함께 싸운다",
           "effect": "beggar_allies", "params": { "intervalSeconds": 180, "allies": 3, "seconds": 10, "damage": 20, "attackSeconds": 1, "knockback": 5 } } ] },
-    { "id": "tang", "nameKo": "사천당가", "hanja": "四川唐家", "motto": "암기", "character": "dang_yeonhwa",
+    { "id": "tang", "nameKo": "사천당가", "hanja": "四川唐家", "motto": "암기", "color": "#5F8420", "character": "dang_yeonhwa",
       "members": ["flying_dagger", "cheonsu", "poison_mist", "mandok", "thunder_bomb"],
       "tiers": [
         { "count": 2, "desc": "지속 피해 +20%", "proto": true, "stats": { "DotDamage": 0.2 } },
@@ -97,24 +97,24 @@
           "effect": "poison_spread", "params": { "radius": 2, "seconds": 2, "damagePerSecond": 5 } },
         { "count": 5, "desc": "20초마다 화면 안 모든 적에게 독침이 한 대씩 박힌다", "proto": true,
           "effect": "needle_rain", "params": { "intervalSeconds": 20, "damage": 8, "poisonSeconds": 2 } } ] },
-    { "id": "namgung", "nameKo": "남궁세가", "hanja": "南宮世家", "motto": "창궁", "character": "namgung_hyeon",
+    { "id": "namgung", "nameKo": "남궁세가", "hanja": "南宮世家", "motto": "창궁", "color": "#2B62B0", "character": "namgung_hyeon",
       "members": ["changcheon_qi", "noejeong", "cheongmyeong"],
       "tiers": [
         { "count": 2, "desc": "검 계열 무공 피해 +12%", "proto": true, "effect": "sword_damage", "params": { "damageBonus": 0.12 } },
         { "count": 3, "desc": "검 계열 무공의 세 번째 공격마다 하늘에서 검기 하나가 내리꽂힌다", "proto": true,
           "effect": "sky_sword", "params": { "everyAttacks": 3, "damageMultiplier": 1.2, "radius": 1.2, "delaySeconds": 0.22, "searchRange": 8 } } ] },
-    { "id": "waterfort", "nameKo": "장강수로채", "hanja": "長江水路寨", "motto": "수적", "character": "ha_yeon",
+    { "id": "waterfort", "nameKo": "장강수로채", "hanja": "長江水路寨", "motto": "수적", "color": "#1F7A64", "character": "ha_yeon",
       "members": ["chain_sickle", "suryong", "pear_spear", "cheollian"],
       "tiers": [
         { "count": 2, "desc": "은자 +30%", "proto": true, "stats": { "Greed": 0.3 } },
         { "count": 3, "desc": "경공 거리 +50%, 경공으로 지나간 적을 끌고 간다", "proto": true, "effect": "dash_drag", "params": { "distanceBonus": 0.5, "dragRadius": 1.0, "dragFactor": 0.9 } },
         { "count": 4, "desc": "정예 보갑에서 무공 강화가 하나 더 나온다", "chestUpgrades": 1, "proto": true } ] },
-    { "id": "kunlun", "nameKo": "곤륜", "hanja": "崑崙", "motto": "부적", "character": null,
+    { "id": "kunlun", "nameKo": "곤륜", "hanja": "崑崙", "motto": "부적", "color": "#24809A", "character": null,
       "members": ["thunder_talisman", "domun", "hwaryong"],
       "tiers": [
         { "count": 2, "desc": "정신부로 멈춘 적이 두 배 오래 멈춘다", "proto": true, "effect": "talisman_freeze", "params": { "freezeMultiplier": 2 } },
         { "count": 3, "tier": "secret", "desc": "강시 계열 적에게 피해 +25%", "proto": true, "effect": "jiangshi_damage", "params": { "damageBonus": 0.25 } } ] },
-    { "id": "demonic", "nameKo": "마도", "hanja": "魔道", "motto": "혈", "character": "baekya",
+    { "id": "demonic", "nameKo": "마도", "hanja": "魔道", "motto": "혈", "color": "#6A2A7C", "character": "baekya",
       "members": ["blood_claw", "hyeolhae"],
       "tiers": [
         { "count": 2, "desc": "흡혈 두 배, 대신 음식 회복 절반. '혈마의 속삭임'이 나타날 확률이 오른다", "proto": true,

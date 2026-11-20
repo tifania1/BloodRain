@@ -464,6 +464,9 @@ namespace BloodRain.Presentation.Meta
         /// <summary>문파마다 다른 차분한 단색(산문 그림이 오기 전 카드 바탕).</summary>
         static Color SectColor(string id)
         {
+            // 진전 문파 색이 있으면 그 색(레벨업 카드와 같은 색, 2026-11-20). 없으면 이름에서 고른 옅은 색
+            var tint = Hud.SchoolTint.OfSchoolId(id);
+            if (tint.HasValue) return tint.Value;
             uint h = 2166136261;
             foreach (char ch in id) h = (h ^ ch) * 16777619;
             float hue = (h % 360) / 360f;
