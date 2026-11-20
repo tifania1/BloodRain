@@ -47,6 +47,7 @@ namespace BloodRain.Presentation.Meta
         SmithyScreen _smithy;
         ApothecaryScreen _apothecary;
         CaveScreen _cave;
+        HaomunScreen _haomun;
         SettingsScreen _settings;
 
         public bool IsOpen => _canvas != null && _canvas.activeSelf;
@@ -94,6 +95,7 @@ namespace BloodRain.Presentation.Meta
                 case "smithy": OpenSmithy(); break;
                 case "apothecary": OpenApothecary(); break;
                 case "cave": OpenCave(); break;
+                case "haomun_board": OpenHaomun(); break;
                 default: Toast(Loc.F("ui.inn.soon_toast", Name(f))); break;
             }
         }
@@ -121,6 +123,18 @@ namespace BloodRain.Presentation.Meta
             }
             _canvas.SetActive(false);
             _training.Open(_soul);
+        }
+
+        void OpenHaomun()
+        {
+            if (_haomun == null)
+            {
+                _haomun = new GameObject("하오문 게시판 화면").AddComponent<HaomunScreen>();
+                _haomun.font = font;
+                _haomun.Closed += () => { SoulStore.Save(_soul); _canvas.SetActive(true); Refresh(); };
+            }
+            _canvas.SetActive(false);
+            _haomun.Open(_soul);
         }
 
         void OpenCave()

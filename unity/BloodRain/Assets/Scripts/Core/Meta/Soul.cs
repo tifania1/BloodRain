@@ -417,6 +417,29 @@ namespace BloodRain.Core.Meta
             if (!CodexKey.IsValid(_data.Synergies, key)) throw new ArgumentException($"도감에 없는 쪽입니다: {key}");
             return _codex.Add(key);
         }
+        int _hints;
+
+        /// <summary>하오문 게시판에서 산 힌트 수(EL-06).</summary>
+        public int HaomunHints => _hints;
+        /// <summary>다음 힌트 값(윤회의 기) = hintBaseRebirthQi × (산 수 + 1).</summary>
+        public int NextHintCost => C.Inn.HaomunBoard.HintBaseRebirthQi * (_hints + 1);
+        /// <summary>다음 힌트가 드러낼 비전(데이터 차례, 찾은 것·이미 드러난 것 빼고). 없으면 null.</summary>
+        public string? NextHintSecret => _data.Synergies.Secrets.Select(x => x.Id)
+            .FirstOrDefault(id => !_letters.Contains(id) && !_codex.Contains(CodexKey.Secret(id)));
+
+        /// <summary>하오문 게시판에서 힌트를 산다: 게시판에 들어갈 수 있고, 드러낼 비전이 남았고, 윤회의 기가 넉넉하면
+        /// 값을 치르고 그 비전의 조건을 밀서처럼 드러낸다(Letters). 드러낸 비전 id, 못 사면 null.</summary>
+        public string? TryBuyHint()
+        {
+            if (!Inn.CanEnter(this, "haomun_board")) return null;
+            var id = NextHintSecret;
+            if (id == null || _qi < NextHintCost) return null;
+            _qi -= NextHintCost;
+            _hints++;
+            _letters.Add(id);
+            return id;
+        }
+
         /// <summary>하오문 밀서로 조건을 본 비전 id(20장 기연). 장경각 도감이 '밀서: 조건' 한 줄을 더 보인다.</summary>
         public IReadOnlyCollection<string> Letters => _letters;
         readonly HashSet<string> _chronicle = new HashSet<string>(StringComparer.Ordinal);
@@ -771,6 +794,8 @@ namespace BloodRain.Core.Meta
             public int TrainingSpent;
             public SortedDictionary<string, int> RebirthUpgrades = new SortedDictionary<string, int>(StringComparer.Ordinal);
             public List<string> Unlocks = new List<string>();
+            /// <summary>하오문 게시판에서 산 힌트 수(EL-06).</summary>
+            public int HaomunHints;
             /// <summary>대장간 몸 색(SM-01). 빈 값은 문파 빛깔.</summary>
             public string BodyTint = "";
             public List<string> BossesKilled = new List<string>();
@@ -835,6 +860,7 @@ namespace BloodRain.Core.Meta
                 RebirthUpgrades = Sorted(_upgrades),
                 Unlocks = Sorted(_unlocks),
                 BodyTint = _bodyTint,
+                HaomunHints = _hints,
                 BossesKilled = Sorted(_bosses),
                 SealStones = Sorted(_sealStones),
                 VisitedRegions = Sorted(_visited),
@@ -893,6 +919,7 @@ namespace BloodRain.Core.Meta
             foreach (var kv in f.FinalClearsBySect) s._finalClears[kv.Key] = kv.Value;
             s._unlocks.UnionWith(f.Unlocks);
             if (f.BodyTint != null && s.C.Inn.Smithy.Tints.Any(t => t.Id == f.BodyTint)) s._bodyTint = f.BodyTint;
+            s._hints = Math.Max(0, f.HaomunHints);
             s._titles.UnionWith(f.Titles.Where(id => s.C.Titles.Any(t => t.Id == id)));
             s._letters.UnionWith(f.Letters.Where(id => data.Synergies.Secrets.Any(x => x.Id == id)));
             s._chronicle.UnionWith(f.Chronicle.Where(id => data.Chronicle.Events.Any(x => x.Id == id)));

@@ -221,6 +221,8 @@
       { "id": "haomun_board", "nameKo": "하오문 게시판", "require": { "bossKilled": "janggang", "unlock": "talk:unnang_haomun" } }
     ],
     "_smithy": "대장간 안(10장 '객잔 시설', 2026-11-20 SM-01 추천대로). 몸 색은 옷 빛깔 셋: 문파 기본(그림 그대로)·먹·담묵(13장 팔레트 안, 주홍·금은 뺌). rgb 는 몸 그림에 곱하는 색. 무기 외형은 대장간에서 사지 않고 해금 보상(혼 해금 skin:<id>)으로 얻어 여기서 고른다. 한 번 지은 뒤 바꾸기는 공짜, 꾸미기만(능력치 없음).",
+    "_haomunBoard": "하오문 게시판(10장 '객잔 시설'·20장 '힌트 구하기', 2026-11-20 EL-06 추천대로): 힌트 하나 = 윤회의 기 hintBaseRebirthQi × (산 힌트 수 + 1). 사면 하오문 밀서처럼 아직 못 찾은 비전 하나(데이터 차례, 이미 드러난 것 빼고)의 조건 한 줄이 장경각 도감에 드러난다.",
+    "haomunBoard": { "hintBaseRebirthQi": 300 },
     "smithy": { "tints": [
       { "id": "sect", "nameKo": "문파 빛깔", "rgb": [1, 1, 1] },
       { "id": "ink",  "nameKo": "먹",       "rgb": [0.55, 0.55, 0.6] },

@@ -99,7 +99,11 @@ namespace BloodRain.Core.Data
         public int ElixirsAt(int sealStones) => ElixirsMore.SealStones > 0 && sealStones >= ElixirsMore.SealStones ? Math.Max(ElixirsPerLife, ElixirsMore.ElixirsPerLife) : ElixirsPerLife;
         public List<ElixirDef> Elixirs = new List<ElixirDef>();
         public SmithyDef Smithy = new SmithyDef();
+        public HaomunBoardDef HaomunBoard = new HaomunBoardDef();
     }
+
+    /// <summary>하오문 게시판(EL-06): 힌트 하나 = HintBaseRebirthQi × (산 수 + 1).</summary>
+    public sealed class HaomunBoardDef { public int HintBaseRebirthQi = 300; }
 
     public sealed class ElixirsMoreDef { public int SealStones; public int ElixirsPerLife; }
 
