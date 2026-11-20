@@ -53,6 +53,7 @@ namespace BloodRain.Presentation.Meta
             _root = (RectTransform)go.transform;
             var bg = Img(_root, Paper, false);
             Stretch(bg.rectTransform);
+            InkUi.PaperBackdrop(_root);   // 2026-11-21 선지 결·가장자리 어둡게
 
             var rows = CaveList.Rows(soul);
             int done = rows.Count(r => r.Done);

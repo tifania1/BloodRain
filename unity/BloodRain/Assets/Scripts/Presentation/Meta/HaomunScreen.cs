@@ -58,6 +58,7 @@ namespace BloodRain.Presentation.Meta
             var bg = Img(_root, Paper);
             bg.rectTransform.anchorMin = Vector2.zero; bg.rectTransform.anchorMax = Vector2.one;
             bg.rectTransform.offsetMin = bg.rectTransform.offsetMax = Vector2.zero;
+            InkUi.PaperBackdrop(_root);   // 2026-11-21 선지 결·가장자리 어둡게
 
             Place(Text(_root, Loc.T("ui.haomun.title"), 44, FontStyles.Bold, Ink).rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -64), new Vector2(1000, 60));
             Place(Text(_root, Loc.T("ui.haomun.sub"), 22, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.6f)).rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -108), new Vector2(1400, 32));

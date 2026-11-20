@@ -63,6 +63,7 @@ namespace BloodRain.Presentation.Meta
             _root = (RectTransform)go.transform;
             var bg = Panel(_root, Paper);
             bg.anchorMin = Vector2.zero; bg.anchorMax = Vector2.one; bg.offsetMin = bg.offsetMax = Vector2.zero;
+            InkUi.PaperBackdrop(_root);   // 2026-11-21 선지 결·가장자리 어둡게
 
             var title = Text(_root, Loc.T("ui.library.title"), 44, FontStyles.Bold, Ink);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -64), new Vector2(1000, 60));

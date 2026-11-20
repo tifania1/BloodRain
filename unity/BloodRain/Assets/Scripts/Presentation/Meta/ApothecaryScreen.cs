@@ -70,6 +70,7 @@ namespace BloodRain.Presentation.Meta
             var bg = Img(_root, Paper);
             bg.rectTransform.anchorMin = Vector2.zero; bg.rectTransform.anchorMax = Vector2.one;
             bg.rectTransform.offsetMin = bg.rectTransform.offsetMax = Vector2.zero;
+            InkUi.PaperBackdrop(_root);   // 2026-11-21 선지 결·가장자리 어둡게
 
             Place(Text(_root, Loc.T("ui.apothecary.title"), 44, FontStyles.Bold, Ink).rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -64), new Vector2(1000, 60));
             Place(Text(_root, Loc.T("ui.apothecary.sub"), 22, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.6f)).rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -108), new Vector2(1400, 32));
@@ -84,6 +85,7 @@ namespace BloodRain.Presentation.Meta
                 b.transform.SetParent(_root, false);
                 var back = b.GetComponent<Image>();
                 Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(i % 2 == 0 ? -400 : 400, -260 - (i / 2) * 130), new Vector2(760, 110));
+                InkUi.PaperCard((RectTransform)b.transform, new Vector2(760, 110));
                 var label = Text(b.transform, "", 24, FontStyles.Normal, Ink);
                 var lr = label.rectTransform; lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.offsetMin = new Vector2(28, 8); lr.offsetMax = new Vector2(-28, -8);
                 label.alignment = TextAlignmentOptions.MidlineLeft;

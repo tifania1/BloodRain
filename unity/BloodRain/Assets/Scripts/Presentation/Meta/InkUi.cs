@@ -18,6 +18,25 @@ namespace BloodRain.Presentation.Meta
             return r;
         }
 
+        /// <summary>화면을 꽉 채우는 선지 결 + 가장자리 어둡게(객잔 시설 화면 바탕, 2026-11-21). 단색 바탕 바로 뒤에 부른다.</summary>
+        public static void PaperBackdrop(RectTransform root, float vignette = 0.6f)
+        {
+            var g = Raw(root, "PaperGrain", BloodRain.Presentation.Fx.MapLayer.PaperTile, Color.white);
+            Fill(g.rectTransform);
+            g.uvRect = new Rect(0f, 0f, 1920f / 512f, 1080f / 512f);
+            var v = Raw(root, "Vignette", BloodRain.Presentation.Fx.MapLayer.VignetteTex, new Color(1f, 1f, 1f, vignette));
+            Fill(v.rectTransform);
+        }
+
+        /// <summary>칸 하나를 종이로: 선지 결 + 안쪽 가는 먹 테.</summary>
+        public static void PaperCard(RectTransform card, Vector2 size, float grain = 0.3f, float frame = 0.22f)
+        {
+            PaperGrainFill(card, size, grain);
+            Frame(card, Vector2.zero, size, Mathf.Min(10f, size.y * 0.12f), 1.5f, new Color(Ink.r, Ink.g, Ink.b, frame));
+        }
+
+        static void Fill(RectTransform rt) { rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = rt.offsetMax = Vector2.zero; }
+
         /// <summary>부모를 꽉 채우는 선지 결(버튼 칸 같은 데 옅게 얹을 때).</summary>
         public static RawImage PaperGrainFill(RectTransform parent, Vector2 size, float alpha)
         {
