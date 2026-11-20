@@ -181,6 +181,90 @@ namespace BloodRain.Core.Data
         public bool ChestOnBreak;
     }
 
+    /// <summary>대나무 덤불(당가타): 탑림과 같은 무더기 + 베이면 가끔 음식, 다시 자람(2026-11-20 R-10).</summary>
+    public sealed class BambooThicketGimmickDef : GimmickDef
+    {
+        public float PatchRadius;
+        public float Spacing;
+        public float StalkRadius;
+        public float Jitter;
+        public float MinGap;
+        public float SkipChance;
+        public bool BlocksFlying;
+        public bool BlocksProjectiles;
+        public int HitsToBreak = 1;
+        public string Drop = "";
+        public float DropChance;
+        public float HealMaxHealthRatio;
+        public float RegrowSeconds;
+
+        /// <summary>탑림 배치 함수(PagodaForest.Layout)에 넘길 같은 꼴 값.</summary>
+        public PagodaForestGimmickDef AsPatch() => new PagodaForestGimmickDef
+        {
+            Id = Id, NameKo = NameKo, PatchRadius = PatchRadius, Spacing = Spacing, PagodaRadius = StalkRadius,
+            Jitter = Jitter, MinGap = MinGap, SkipChance = SkipChance, BlocksFlying = BlocksFlying, BlocksProjectiles = BlocksProjectiles,
+        };
+    }
+
+    /// <summary>떠내려오는 배(장강 수로): 물길마다 spacing 간격, 하류로 speed m/s.</summary>
+    public sealed class DriftingBoatsGimmickDef : GimmickDef
+    {
+        public float Speed;
+        public float Spacing;
+        public float Width;
+        public float Length;
+        public float DirectionDegrees;
+    }
+
+    /// <summary>역류 파도(장강 수로): 주기마다 예고 뒤 화면을 가로지르는 파도(Core SweepWave 모양).</summary>
+    public sealed class ReverseWaveGimmickDef : GimmickDef
+    {
+        public float FirstSeconds;
+        public float PeriodSeconds;
+        public float TelegraphSeconds;
+        public float Width;
+        public float ProjectileSpeed;
+        public float DirectionDegrees;
+        public float PlayerDamageMaxHealthRatio;
+        public float EliteDamageMaxHealthRatio;
+    }
+
+    /// <summary>운해(무당산): 주기마다 플레이어 둘레에 구름, 안에 들면 적이 놓친다.</summary>
+    public sealed class CloudSeaGimmickDef : GimmickDef
+    {
+        public float FirstSeconds;
+        public float PeriodSeconds;
+        public int Count;
+        public float Scatter;
+        public float Radius;
+        public float TelegraphSeconds;
+        public float LeaveSeconds;
+        public float DriftSpeed;
+        public float DriftDegrees;
+        public bool BossImmune;
+    }
+
+    /// <summary>잔도(화산): 벼랑 무더기를 잔도 둘이 가로·세로로 지른다.</summary>
+    public sealed class CliffPathGimmickDef : GimmickDef
+    {
+        public float PatchRadius;
+        public int Paths;
+        public float PathWidth;
+        public bool BlocksDash;
+        public bool BlocksFlying;
+        public bool BlocksProjectiles;
+    }
+
+    /// <summary>지역 안 배치 값(gimmick_start_values.md 2·3절). 기믹이 아니라 Find 에는 없다.</summary>
+    public sealed class GimmickLayoutDef
+    {
+        public float BellSpacing, PagodaSpacing, BambooSpacing, CliffSpacing, PlumSpacing;
+        public float WaterSpacing, WaterHalf, WaterWave, WaterWaveLen;
+        public float IceSpacing, IceHalf, IceWave, IceWaveLen;
+        public float TaijiSpacing, CampfireSpacing, FogOffset;
+        public float AltarRing, AltarOrderFromDegrees, IslandRing, FinalArenaRadius;
+    }
+
     public sealed class GimmicksDef
     {
         public BellGimmickDef Bell = new BellGimmickDef();
@@ -200,11 +284,18 @@ namespace BloodRain.Core.Data
         public CampfireGimmickDef Campfire = new CampfireGimmickDef();
         public BloodAltarGimmickDef BloodAltars = new BloodAltarGimmickDef();
         public WeatherGimmickDef RedMoon = new WeatherGimmickDef();
+        public BambooThicketGimmickDef BambooThicket = new BambooThicketGimmickDef();
+        public DriftingBoatsGimmickDef DriftingBoats = new DriftingBoatsGimmickDef();
+        public ReverseWaveGimmickDef ReverseWave = new ReverseWaveGimmickDef();
+        public CloudSeaGimmickDef CloudSea = new CloudSeaGimmickDef();
+        public CliffPathGimmickDef CliffPath = new CliffPathGimmickDef();
+        public GimmickLayoutDef Layout = new GimmickLayoutDef();
 
         public IEnumerable<GimmickDef> All => new GimmickDef[]
         {
             Bell, PagodaForest, Well, PoisonFog, Water, TaijiFloor,
             WineJars, SwordRacks, Breakables, FallingRocks, PlumHeaps, Blizzard, IceFloor, Campfire, BloodAltars, RedMoon,
+            BambooThicket, DriftingBoats, ReverseWave, CloudSea, CliffPath,
         };
 
         /// <summary>cheonha.json 의 기믹 이름으로 찾는다. 아직 수치가 없는 기믹이면 null.</summary>

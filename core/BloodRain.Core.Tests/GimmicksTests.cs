@@ -38,10 +38,11 @@ namespace BloodRain.Core.Tests
                 ["poison_fog"] = "danggata", ["water"] = "janggang", ["taiji_floor"] = "wudangsan",
                 ["wine_jars"] = "gaebang_hq", ["sword_racks"] = "namgung_manor", ["breakables"] = "cheongun", ["falling_rocks"] = "huashan", ["plum_heaps"] = "huashan",
                 ["blizzard"] = "kunlun", ["ice_floor"] = "kunlun", ["campfire"] = "kunlun", ["blood_altars"] = "sipmandaesan", ["red_moon"] = "sipmandaesan",
+                ["bamboo_thicket"] = "danggata", ["drifting_boats"] = "janggang", ["reverse_wave"] = "janggang", ["cloud_sea"] = "wudangsan", ["cliff_path"] = "huashan",
             };
             Assert.Equal(where.Keys.OrderBy(x => x), G.All.Select(g => g.Id).OrderBy(x => x));
             foreach (var (id, region) in where) Assert.Contains(id, _d.Cheonha.Region(region).Gimmicks);
-            Assert.Null(G.Find("bamboo_thicket")); // 아직 수치 없음
+            Assert.NotNull(G.Find("bamboo_thicket")); // 2026-11-20 R-10
         }
 
         /// <summary>
@@ -53,13 +54,12 @@ namespace BloodRain.Core.Tests
         {
             var pending = new Dictionary<string, string>
             {
-                ["bamboo_thicket"] = "대나무 덤불", ["cloud_sea"] = "운해", ["cliff_path"] = "잔도",
-                ["drifting_boats"] = "떠내려가는 배", ["reverse_wave"] = "역류 파도",
                 ["rising_blood"] = "차오르는 피",   // 봉마곡: 종장 혈해 '차오르는 피바다'(bosspatterns final)가 그것
             };
             var known = new HashSet<string>(G.All.Select(g => g.Id));
             var section = GddSection("지형 기믹 수치");
-            var stillMissing = section.Split('\n').Single(l => l.Contains("아직 수치가 없습니다"));
+            // 2026-11-20 R-10 '표대로'로 '아직 수치가 없습니다' 문장은 없어졌다. 남은 것은 봉마곡 차오르는 피(종장 혈해)뿐
+            Assert.DoesNotContain("아직 수치가 없습니다", section);
             foreach (var r in _d.Cheonha.Regions)
                 foreach (var id in r.Gimmicks)
                     Assert.True(known.Contains(id) || pending.ContainsKey(id), $"{r.Id} 의 기믹 '{id}' 가 gimmicks.json 에도 아직 목록에도 없다");
@@ -67,7 +67,7 @@ namespace BloodRain.Core.Tests
             {
                 Assert.DoesNotContain(id, known);   // 수치가 생겼으면 목록에서 뺄 것
                 Assert.Contains(_d.Cheonha.Regions, r => r.Gimmicks.Contains(id));
-                if (nameKo.Length > 0) Assert.Contains(nameKo, id == "rising_blood" ? section : stillMissing);
+                if (nameKo.Length > 0) Assert.Contains(nameKo, section);
             }
         }
 

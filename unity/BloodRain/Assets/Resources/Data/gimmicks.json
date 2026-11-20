@@ -1,5 +1,5 @@
 {
-  "_note": "지역 기믹 첫 묶음(기획서 7장 '지역과 혈운 농도' 표의 지형 기믹 칸, '지형 기믹 수치'). 각 항목의 id 가 cheonha.json regions[].gimmicks 에 쓰는 이름이다. 길이·반경은 화면 기준 m(축척 배율 1, 7장 '세상이 작아지는 규칙')이고, 세상에 놓을 때는 그 기믹이 생긴 경지의 축척 배율을 곱한다(Core/World/Gimmicks 는 배율을 인자로 받기만 한다). 시간은 세상 시간 초. 그 자리에 깔린 것(탑림·독안개·물)은 플레이어와 적에게 똑같이 작용하고, 손을 대야 움직이는 것(범종·우물·태극 바닥)은 플레이어만 쓴다. 둘째 묶음(술독·검각 시렁·낙석·매화 더미·눈보라·빙판·모닥불·혈제단·붉은 달)은 2026-10-30 예약 세션이 정했다(T-16). 청운진 수레·장독(breakables)은 2026-11-20 사람이 추천대로 정함(장독 = 술독 값, 수레 = 검각 시렁 값, decisions #53). 아직 없는 것: 대숲·운해·잔도·떠내려가는 배·역류 파도·차오르는 피.",
+  "_note": "지역 기믹 첫 묶음(기획서 7장 '지역과 혈운 농도' 표의 지형 기믹 칸, '지형 기믹 수치'). 각 항목의 id 가 cheonha.json regions[].gimmicks 에 쓰는 이름이다. 길이·반경은 화면 기준 m(축척 배율 1, 7장 '세상이 작아지는 규칙')이고, 세상에 놓을 때는 그 기믹이 생긴 경지의 축척 배율을 곱한다(Core/World/Gimmicks 는 배율을 인자로 받기만 한다). 시간은 세상 시간 초. 그 자리에 깔린 것(탑림·독안개·물)은 플레이어와 적에게 똑같이 작용하고, 손을 대야 움직이는 것(범종·우물·태극 바닥)은 플레이어만 쓴다. 둘째 묶음(술독·검각 시렁·낙석·매화 더미·눈보라·빙판·모닥불·혈제단·붉은 달)은 2026-10-30 예약 세션이 정했다(T-16). 청운진 수레·장독(breakables)은 2026-11-20 사람이 추천대로 정함(장독 = 술독 값, 수레 = 검각 시렁 값, decisions #53). 대숲·떠내려오는 배·역류 파도·운해·잔도와 배치(layout)는 2026-11-20 사람이 시작값 표대로 정함(R-10). 차오르는 피는 종장 혈해(bosspatterns.json final).",
 
   "bell": {
     "id": "bell",
@@ -172,5 +172,52 @@
     "periodSeconds": 180,
     "durationSeconds": 30,
     "enemyMoveSpeedMultiplier": 1.2
+  },
+
+  "bambooThicket": {
+    "id": "bamboo_thicket",
+    "nameKo": "대나무 덤불",
+    "_note": "당가타. 탑림과 같은 무더기(반경 12m, 3m 격자, 0.35m 흔듦, 15% 비움, 틈 1.1m)에 대나무 포기(반경 0.7m). 걷는 것은 막고 나는 적·투사체는 지나간다. 무공에 1번 맞으면 베이고 dropChance 로 음식(최대 기혈 20%), regrowSeconds 뒤 다시 자란다. 값 근거는 docs/design/gimmick_start_values.md 1-1(2026-11-20 사람이 '표대로').",
+    "patchRadius": 12, "spacing": 3.0, "stalkRadius": 0.7, "jitter": 0.35, "minGap": 1.1, "skipChance": 0.15,
+    "blocksFlying": false, "blocksProjectiles": false,
+    "hitsToBreak": 1, "drop": "food", "dropChance": 0.02, "healMaxHealthRatio": 0.2, "regrowSeconds": 90
+  },
+
+  "driftingBoats": {
+    "id": "drifting_boats",
+    "nameKo": "떠내려오는 배",
+    "_note": "장강 수로. 물길마다 폭 1.6m 배가 24m 간격으로 하류(동, 0°)로 초속 1.5m 떠간다. 배 위에선 물 감속이 없고 역류 파도를 맞지 않으며 배와 함께 떠간다. 플레이어·걷는 적. 배 길이는 근거가 없어 11-05 안 4m(gimmick_start_values.md 1-2 빈칸, '표대로'에 빈칸 값은 없어 옛 안을 씀).",
+    "speed": 1.5, "spacing": 24, "width": 1.6, "length": 4, "directionDegrees": 0
+  },
+
+  "reverseWave": {
+    "id": "reverse_wave",
+    "nameKo": "역류 파도",
+    "_note": "장강 수로(지역 기믹). 마천패 2막 역류 파도와 같은 모양(Core SweepWave)을 한 생 firstSeconds 에 처음, 그 뒤 periodSeconds 마다. telegraphSeconds 동안 강물이 붉어진 뒤 폭 width 파도가 하류에서 상류로(180°) projectileSpeed 로 화면을 가로지른다. 플레이어 최대 기혈 10%, 잡몹은 쓰러지고 정예·보스 5%. 배 위·경공 무적이면 안 맞는다. 그 순간 장강 수로에 서 있을 때만(gimmick_start_values.md 1-3).",
+    "firstSeconds": 120, "periodSeconds": 120, "telegraphSeconds": 1.5, "width": 3, "projectileSpeed": 300, "directionDegrees": 180,
+    "playerDamageMaxHealthRatio": 0.1, "eliteDamageMaxHealthRatio": 0.05
+  },
+
+  "cloudSea": {
+    "id": "cloud_sea",
+    "nameKo": "운해",
+    "_note": "무당산. 종장 역병 구름 박자: 한 생 firstSeconds 에 처음, 그 뒤 periodSeconds 마다 플레이어 둘레 ±scatter 안 count 곳에 반경 radius 구름이 telegraphSeconds 에 피어 leaveSeconds 머문다(driftSpeed 25 = 초속 1.15m). 안에 든 플레이어를 보스 뺀 적이 바로 놓친다(마지막 본 자리로 가서 맴돎, 원거리 적은 쏘지 않음). 흐르는 쪽은 근거가 없어 11-05 안 '바람 따라' 한쪽(동, 0°)(gimmick_start_values.md 1-4).",
+    "firstSeconds": 12, "periodSeconds": 12, "count": 3, "scatter": 10, "radius": 3.5, "telegraphSeconds": 1, "leaveSeconds": 12, "driftSpeed": 25, "driftDegrees": 0, "bossImmune": true
+  },
+
+  "cliffPath": {
+    "id": "cliff_path",
+    "nameKo": "잔도",
+    "_note": "화산. 반경 patchRadius 벼랑 무더기(걸을 수 없고 경공으로도 못 건넘)를 폭 pathWidth 잔도 둘이 가로·세로로 지른다. 나는 적·투사체는 지나간다(gimmick_start_values.md 1-5).",
+    "patchRadius": 12, "paths": 2, "pathWidth": 1.6, "blocksDash": true, "blocksFlying": false, "blocksProjectiles": false
+  },
+
+  "layout": {
+    "_note": "지역 안 어디에 몇 개(gimmick_start_values.md 2·3절, 2026-11-20 사람이 '표대로'). 격자는 지역 한가운데를 원점으로, 칸 자리에서 가장 가까운 지역이 그 땅일 때만 놓는다. halfOffset 격자는 반 칸 비키고 경지가 올라 칸이 모두 지역 밖이면 한가운데 하나. 경지가 바뀌면 그 축척으로 새로 깐다. 혈제단 켜지는 차례는 근거가 없어 11-05 안(북동부터 시계 방향).",
+    "bellSpacing": 30, "pagodaSpacing": 60, "bambooSpacing": 60, "cliffSpacing": 60, "plumSpacing": 30,
+    "waterSpacing": 24, "waterHalf": 4.5, "waterWave": 4, "waterWaveLen": 7,
+    "iceSpacing": 24, "iceHalf": 4.5, "iceWave": 4, "iceWaveLen": 7,
+    "taijiSpacing": 16, "campfireSpacing": 28, "fogOffset": 6,
+    "altarRing": 12, "altarOrderFromDegrees": 45, "islandRing": 12, "finalArenaRadius": 20
   }
 }
