@@ -131,29 +131,48 @@ namespace BloodRain.Presentation.Meta
             Stretch(img.GetComponent<RectTransform>());
             _image = img.GetComponent<RawImage>();
             _fit = img.GetComponent<AspectRatioFitter>();
-            _fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            _fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;   // 2026-11-21 인트로처럼 화면을 꽉 채운다(위아래 검은 띠 없이)
 
-            var band = new GameObject("자막 띠", typeof(RectTransform), typeof(Image));
+            // 자막 밑: 납작한 검은 띠 대신 아래로 갈수록 짙어지는 그늘(인트로와 같은 결)
+            var band = new GameObject("자막 띠", typeof(RectTransform), typeof(RawImage));
             band.transform.SetParent(root.transform, false);
             var br = band.GetComponent<RectTransform>();
             br.anchorMin = new Vector2(0f, 0f); br.anchorMax = new Vector2(1f, 0f);
             br.pivot = new Vector2(0.5f, 0f);
-            br.sizeDelta = new Vector2(0f, 200f);
+            br.sizeDelta = new Vector2(0f, 300f);
             br.anchoredPosition = Vector2.zero;
-            band.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.62f);
+            var shade = band.GetComponent<RawImage>();
+            shade.texture = Shade(); shade.color = new Color(0f, 0f, 0f, 0.8f); shade.raycastTarget = false;
 
             var txt = new GameObject("자막", typeof(RectTransform));
             txt.transform.SetParent(band.transform, false);
             var tr = txt.GetComponent<RectTransform>();
             Stretch(tr);
-            tr.offsetMin = new Vector2(160f, 20f); tr.offsetMax = new Vector2(-160f, -20f);
+            tr.offsetMin = new Vector2(160f, 30f); tr.offsetMax = new Vector2(-160f, -150f);   // 그늘 아래쪽(짙은 데)에 줄
             _text = txt.AddComponent<TextMeshProUGUI>();
             if (font != null) _text.font = font;
             _text.fontSize = 38;
             _text.alignment = TextAlignmentOptions.Center;
             _text.color = new Color(0.94f, 0.91f, 0.85f);
             _text.richText = true;
+            var mat = _text.fontMaterial;   // 그림 위에서도 읽히게 글 둘레 어두운 번짐
+            mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            mat.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0f, 0f, 0f, 0.85f));
+            mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0.5f);
+            mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0.6f);
+            _text.UpdateMeshPadding();
             root.SetActive(false);
+        }
+
+        static Texture2D _shade;
+        static Texture2D Shade()
+        {
+            if (_shade != null) return _shade;
+            const int h = 64;
+            _shade = new Texture2D(1, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, name = "CutShade" };
+            for (int y = 0; y < h; y++) _shade.SetPixel(0, y, new Color(1f, 1f, 1f, Mathf.SmoothStep(1f, 0f, y / (h - 1f))));
+            _shade.Apply();
+            return _shade;
         }
 
         static void Stretch(RectTransform r)
