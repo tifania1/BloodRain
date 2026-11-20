@@ -165,9 +165,9 @@ namespace BloodRain.Presentation.Meta
                 dim.rectTransform.anchorMin = Vector2.zero; dim.rectTransform.anchorMax = Vector2.one; dim.rectTransform.offsetMin = dim.rectTransform.offsetMax = Vector2.zero;
                 var sheet = new GameObject("Sheet", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
                 sheet.transform.SetParent(_root, false); sheet.color = new Color(Paper.r, Paper.g, Paper.b, 0.9f); sheet.raycastTarget = false;
-                Place(sheet.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(40, -10), new Vector2(1680, 1010));
-                InkUi.PaperGrain(_root, new Vector2(40, -10), new Vector2(1680, 1010), new Color(1f, 1f, 1f, 0.45f));
-                InkUi.Frame(_root, new Vector2(40, -10), new Vector2(1680, 1010), 16f, 2f, new Color(Ink.r, Ink.g, Ink.b, 0.35f));
+                Place(sheet.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(40, 5), new Vector2(1680, 1050));
+                InkUi.PaperGrain(_root, new Vector2(40, 5), new Vector2(1680, 1050), new Color(1f, 1f, 1f, 0.45f));
+                InkUi.Frame(_root, new Vector2(40, 5), new Vector2(1680, 1050), 16f, 2f, new Color(Ink.r, Ink.g, Ink.b, 0.35f));
             }
             else InkUi.PaperGrain(_root, Vector2.zero, new Vector2(1920, 1080), new Color(1f, 1f, 1f, 0.5f));
 
