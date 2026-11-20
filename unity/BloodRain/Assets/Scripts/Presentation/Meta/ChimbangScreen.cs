@@ -352,7 +352,7 @@ namespace BloodRain.Presentation.Meta
         }
 
         /// <summary>카드에서 글 바탕이 차지하는 높이(아래부터). 위는 산문 그림·이름.</summary>
-        const float TextTop = 0.62f;
+        const float TextTop = 0.6f; // 2026-11-21 0.62 → 0.6: 타고난 성질이 셋인 카드 끝 줄이 카드 밖으로 나갔다
 
         void BuildCard(RebirthCandidate cand, int index)
         {
@@ -411,9 +411,10 @@ namespace BloodRain.Presentation.Meta
             var body = Text("내용", rt, CardIntro(index) + CardBody(cand), 19, FontStyles.Normal);
             body.alignment = TextAlignmentOptions.TopLeft;
             body.textWrappingMode = TextWrappingModes.Normal;
-            body.lineSpacing = 6;
+            body.lineSpacing = 3;
             // 글이 길면 줄여서 카드 안에 둔다(SD-01U: 소림·남궁 카드 끝 줄이 카드 밖으로 나갔음). 17 은 1280x800 에서 12px 언저리
-            body.enableAutoSizing = true; body.fontSizeMin = 17; body.fontSizeMax = 19;
+            //   2026-11-21 성질 셋(약골·단명·천운) 개방 카드가 17 로도 넘쳐 줄 간격 6 → 3, 가장 작게 16
+            body.enableAutoSizing = true; body.fontSizeMin = 16; body.fontSizeMax = 19;
             var brt = body.rectTransform;
             brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, TextTop);
             brt.offsetMin = new Vector2(18, 16); brt.offsetMax = new Vector2(-18, -14);
