@@ -97,6 +97,15 @@ namespace BloodRain.Presentation.Fx
         readonly List<EShot> _eshots = new List<EShot>();
         readonly List<Ground> _grounds = new List<Ground>();
         readonly List<Vector3> _auras = new List<Vector3>();
+        struct Lane { public Vector2 From; public float Ang, Len, Wid, K; }
+        readonly List<Lane> _lanes = new List<Lane>();
+
+        /// <summary>이번 프레임 돌진 예고 하나(혈무사): from 에서 dir 쪽으로 len(월드), 폭 wid, k = 예고 진행 0~1.</summary>
+        public void DashLane(Vector2 from, Vector2 dir, float len, float wid, float k)
+        {
+            if (_lanes.Count < 48 && len > 1e-4f && dir.sqrMagnitude > 1e-8f)
+                _lanes.Add(new Lane { From = from, Ang = Mathf.Atan2(dir.y, dir.x), Len = len, Wid = wid, K = Mathf.Clamp01(k) });
+        }
 
         static Color Cc(float r, float g, float b) => new Color(r, g, b, 1f);
         // 웅덩이(모양 16)는 가장자리 열이 높다 → 심 색이 테두리에 고인다
@@ -146,9 +155,18 @@ namespace BloodRain.Presentation.Fx
 
         void DrawGroundLive()
         {
-            if (_auras.Count == 0 && _grounds.Count == 0) return;
+            if (_auras.Count == 0 && _grounds.Count == 0 && _lanes.Count == 0) return;
             bool plain = FxSettings.Simplified || Busy;
             var blood = Danger(PoolBlood);
+            foreach (var l in _lanes)
+            {
+                // 혈무사 돌진 예고: 달려올 길에 옅은 핏빛 띠, 예고 동안 몸 쪽에서 차오르고 끝에 짙은 먹점(멈출 자리)
+                var d = Dir(l.Ang);
+                Quad(5, l.From + d * l.Len * .5f, l.Len, l.Wid, l.Ang, new Vector4(.55f, 0f, 0f, 0f), blood, .14f + .1f * l.K);
+                if (l.K > .02f) Quad(5, l.From + d * l.Len * l.K * .5f, l.Len * l.K, l.Wid * .55f, l.Ang, new Vector4(.45f, 0f, 0f, 0f), blood, .32f);
+                Quad(5, l.From + d * l.Len, l.Wid * .5f, l.Wid * .5f, 0f, new Vector4(.4f, 0f, 0f, 0f), FxRamp.Ink, .35f + .4f * l.K);
+            }
+            _lanes.Clear();
             foreach (var a in _auras)
             {
                 // 독인 독안개: 테두리(맞는 반경)가 읽히는 옅은 독물 한 장 + 그 안을 천천히 도는 안개

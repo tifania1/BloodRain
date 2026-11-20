@@ -1647,7 +1647,17 @@ namespace BloodRain.Presentation
                 var baseTint = a.Kind >= 0 && a.Kind < _kinds.Count ? _kinds[a.Kind].Tint : view.Tint;
                 if (a.Buff > 0f) baseTint = Color.Lerp(baseTint, BuffTint, 0.45f); // 기수 깃발 아래: 핏빛이 돈다(이펙트 오기 전 임시)
                 if (a.Move == (byte)EnemyMove.Dash && a.Phase == (byte)DashPhase.Telegraph)
-                    view.Tint = Color.Lerp(baseTint, Hud.DangerColors.Of(TelegraphTint), Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임(이펙트 오기 전 임시)
+                {
+                    view.Tint = Color.Lerp(baseTint, Hud.DangerColors.Of(TelegraphTint), Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임
+                    // 2026-11-21 달려올 길도 바닥에(SectFx 돌진 띠). 길이 = 돌진 빠르기 × 돌진 초, 폭 = 사람 크기 절반
+                    var inkFx = InkFx;
+                    if (inkFx != null)
+                    {
+                        float pz = World.Length(view.Size > 0f ? view.Size : clusters.memberRealmMeters, a.BornRealm);
+                        float k = a.Telegraph > 0.01f ? 1f - a.PhaseLeft / a.Telegraph : 1f;
+                        inkFx.DashLane(view.Position, new Vector2(a.DashDir.x, a.DashDir.y), a.DashSpeed * a.DashSeconds * (1f + a.Buff), pz * 0.5f, k);
+                    }
+                }
                 else
                     view.Tint = baseTint;
                 // VF-02U 멈칫 표시: 머리 위에 먹 점 셋이 돈다(예고 동안 서는 dt×2 는 빼려고 0.12초 넘게 멈춘 것만)
