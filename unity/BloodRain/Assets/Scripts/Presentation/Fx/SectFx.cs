@@ -583,7 +583,7 @@ namespace BloodRain.Presentation.Fx
                         Glow(7, from + d0 * dj, sz * (1f - .1f * j), sz * .74f * (1f - .1f * j), ang, Vector4.zero, FxRamp.Gold, .36f / j, 1f, Mathf.Min(.98f, ds + .25f), f.Seed + j);
                     }
                 Quad(7, pos - d0 * reach * .045f + Vector2.down * reach * .03f, sz * 1.12f, sz * .86f, ang, Vector4.zero, FxRamp.Ink, .66f, 1f, ds, f.Seed);
-                Glow(7, pos, sz, sz * .74f, ang, Vector4.zero, FxRamp.Gold, 1f, 1f, ds, f.Seed);
+                Glow(7, pos, sz, sz * .74f, ang, Vector4.zero, FxRamp.Gold, L(stage, .82f, .88f, .94f, 1f, 1f), 1f, ds, f.Seed);
                 if (stage >= 4) Glow(7, pos + d0 * sz * .08f, sz * .62f, sz * .46f, ang, Vector4.zero, FxRamp.Hot, .9f * (1f - k), 1f, ds, f.Seed + 4f);   // 달아오른 심
             });
             After(.075f, () =>
@@ -592,8 +592,9 @@ namespace BloodRain.Presentation.Fx
                 float rs = reach * (last ? 1.85f : 1.45f) * m * (big ? 1.25f : 1f);
                 RingW(target, rs, FxRamp.Ink, .26f, .6f);
                 RingW(target, rs * .96f, FxRamp.Gold, .26f, 1f, true);
-                float b = rs * .68f;
-                Add(.12f, (g, k) => Glow(3, target, b * (1f + k * .5f), b * (1f + k * .5f), g.Seed, new Vector4(5f, .28f, .8f, 0f), FxRamp.Gold, 1f - k, 1f, 0f, g.Seed));
+                // 맞은 자리 금빛 터짐: 낮은 단계에선 작고 옅게(2026-11-21 — Bloom 이 붙은 뒤 1단 주먹부터 해처럼 하얗게 타올랐다. '절제'와 단계 오름)
+                float b = rs * L(stage, .52f, .56f, .6f, .64f, .68f), ba = L(stage, .5f, .6f, .72f, .86f, 1f);
+                Add(.12f, (g, k) => Glow(3, target, b * (1f + k * .5f), b * (1f + k * .5f), g.Seed, new Vector4(5f, .28f, .8f, 0f), FxRamp.Gold, (1f - k) * ba, 1f, 0f, g.Seed));
                 if (stage >= 2) CrackW(target + Vector2.down * reach * .2f, rs * .8f, FxRamp.Ink);
                 if (stage >= 4) RaysW(target, last ? 10 : 6, rs * .75f, FxRamp.Gold);
                 if (!last) return;
