@@ -30,7 +30,10 @@ namespace BloodRain.Presentation.Fx
         [Tooltip("PP-01U 가장자리 어둡게 세기(시안 finish.html 0.22)")]
         [Range(0f, 0.6f)] public float vignette = 0.22f;
 
-        Material _mapMat, _vigMat;
+        Material _mapMat, _vigMat, _mottleMat;
+        [Tooltip("바닥 위 큰 먹 얼룩 세기(2026-11-21 — 12m 타일 되풀이가 눈에 띄어 41m 주기 얼룩으로 깬다)")]
+        [Range(0f, 0.3f)] public float mottle = 0.11f;
+        const float MottleTile = 41f;
         readonly Material[] _groundMats = new Material[4]; // 발밑(바탕·원화), 이웃(바탕·원화) — 그리는 차례대로
         /// <summary>지금 쓰는 천하도 그림(구석 지도·큰 지도가 같이 쓴다).</summary>
         public Texture2D MapTexture { get; private set; }
@@ -77,6 +80,7 @@ namespace BloodRain.Presentation.Fx
             _mapMat = new Material(material) { name = "천하도", renderQueue = 2970, mainTexture = MapTexture };
             for (int i = 0; i < _groundMats.Length; i++) _groundMats[i] = new Material(material) { name = "지역 바닥 " + i, renderQueue = 2980 + i };
             _vigMat = new Material(material) { name = "가장자리 어둡게", renderQueue = 3990, mainTexture = MakeVignette() };
+            _mottleMat = new Material(material) { name = "바닥 얼룩", renderQueue = 2984, mainTexture = MakeMottle() };
         }
 
         void LateUpdate()
@@ -108,6 +112,14 @@ namespace BloodRain.Presentation.Fx
                 {
                     mat.m23 = 0.58f;
                     DrawGround(1, GroundRegion2, mat, scale, offset, Near * groundOpacity * GroundBlend);
+                }
+                // 큰 먹 얼룩: 타일(12m)과 주기가 다른 41m 판을 옅게 — 같은 돌판 무늬가 되풀이로 읽히지 않게
+                if (mottle > 0.001f && _mottleMat != null)
+                {
+                    _mottleMat.mainTextureScale = new Vector2(qw / MottleTile, qh / MottleTile);
+                    _mottleMat.mainTextureOffset = new Vector2((c.x - qw / 2f) / MottleTile, (c.y - qh / 2f) / MottleTile);
+                    mat.m23 = 0.57f;
+                    Draw(_mottleMat, mat, Near * mottle, new Color(0.13f, 0.11f, 0.10f, 1f));
                 }
             }
             // 가장자리 어둡게(FL-01U): 화면에 붙인 판. 가운데는 투명
@@ -236,6 +248,37 @@ namespace BloodRain.Presentation.Fx
         }
 
         /// <summary>가장자리 어둡게: 먹빛(#1C1A17), 가운데 0 → 모서리 0.6. 판 한 장을 화면 크기로 깐다.</summary>
+        /// <summary>이음매 없는 큰 얼룩(256px): 둘레가 이어지는 값 잡음 두 겹에서 짙은 덩이만 남긴다. 알파만 쓴다(색은 _Tint).</summary>
+        static Texture2D MakeMottle()
+        {
+            const int N = 256;
+            var rng = new System.Random(23);
+            float[,] g1 = new float[6, 6], g2 = new float[13, 13];
+            for (int y = 0; y < 6; y++) for (int x = 0; x < 6; x++) g1[x, y] = (float)rng.NextDouble();
+            for (int y = 0; y < 13; y++) for (int x = 0; x < 13; x++) g2[x, y] = (float)rng.NextDouble();
+            float Lattice(float[,] g, int n, float u, float v)
+            {
+                float fx = u * n, fy = v * n;
+                int x0 = Mathf.FloorToInt(fx), y0 = Mathf.FloorToInt(fy);
+                float tx = fx - x0, ty = fy - y0;
+                tx = tx * tx * (3f - 2f * tx); ty = ty * ty * (3f - 2f * ty);
+                int x1 = (x0 + 1) % n, y1 = (y0 + 1) % n; x0 %= n; y0 %= n;
+                return Mathf.Lerp(Mathf.Lerp(g[x0, y0], g[x1, y0], tx), Mathf.Lerp(g[x0, y1], g[x1, y1], tx), ty);
+            }
+            var px = new Color[N * N];
+            for (int y = 0; y < N; y++)
+                for (int x = 0; x < N; x++)
+                {
+                    float u = (x + 0.5f) / N, v = (y + 0.5f) / N;
+                    float n = Lattice(g1, 6, u, v) * 0.7f + Lattice(g2, 13, u, v) * 0.3f;
+                    float a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.5f, 0.8f, n));
+                    px[y * N + x] = new Color(1f, 1f, 1f, a);
+                }
+            var tex = new Texture2D(N, N, TextureFormat.RGBA32, true) { name = "바닥 얼룩", wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Bilinear };
+            tex.SetPixels(px); tex.Apply(true, true);
+            return tex;
+        }
+
         static Texture2D MakeVignette()
         {
             const int T = 128;
