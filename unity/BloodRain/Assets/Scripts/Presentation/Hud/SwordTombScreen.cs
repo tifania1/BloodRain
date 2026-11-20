@@ -96,6 +96,8 @@ namespace BloodRain.Presentation.Hud
                 b.transform.SetParent(frame.transform, false);
                 b.GetComponent<Image>().color = Paper;
                 Place((RectTransform)b.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(w, 360));
+                BloodRain.Presentation.Meta.InkUi.PaperGrainFill((RectTransform)b.transform, new Vector2(w, 360), 0.32f);   // 2026-11-21 선지 결·안쪽 먹 테
+                BloodRain.Presentation.Meta.InkUi.Frame((RectTransform)b.transform, Vector2.zero, new Vector2(w, 360), 12f, 1.5f, new Color(Ink.r, Ink.g, Ink.b, 0.22f));
                 int idx = pass ? -1 : i;
                 b.onClick.AddListener(() => Pick(idx));
 

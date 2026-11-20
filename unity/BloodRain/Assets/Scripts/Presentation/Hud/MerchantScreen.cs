@@ -72,6 +72,8 @@ namespace BloodRain.Presentation.Hud
             Stretch(dim.rectTransform);
             var card = Panel(_root, Paper);
             Place(card.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760, 520));
+            BloodRain.Presentation.Meta.InkUi.PaperGrainFill(card.rectTransform, new Vector2(760, 520), 0.32f);   // 2026-11-21 선지 결·안쪽 먹 테
+            BloodRain.Presentation.Meta.InkUi.Frame(card.rectTransform, Vector2.zero, new Vector2(760, 520), 14f, 1.5f, new Color(Ink.r, Ink.g, Ink.b, 0.25f));
 
             var title = Text(card.transform, Loc.T("ui.merchant.title"), 42, FontStyles.Bold, Ink);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -52), new Vector2(700, 56));
