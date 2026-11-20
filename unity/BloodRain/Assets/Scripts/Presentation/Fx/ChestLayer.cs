@@ -215,6 +215,9 @@ namespace BloodRain.Presentation.Fx
             _openedAt = Time.unscaledTime;
         }
 
+        /// <summary>시험 메뉴 '자동 플레이'가 보갑 목록을 닫는다(2026-11-20).</summary>
+        public void CloseListForTest() { if (_lines != null && Time.unscaledTime - _openedAt > 0.3f) CloseList(); }
+
         void CloseList()
         {
             _lines = null;

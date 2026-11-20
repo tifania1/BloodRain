@@ -28,6 +28,10 @@ namespace BloodRain.Presentation.Hud
             if (!On || runner == null || runner.player == null) { if (ControlInput.MoveOverride.HasValue && !On) ControlInput.MoveOverride = null; return; }
             float dt = Time.unscaledDeltaTime;
 
+            // 다른 멈춤 화면(깨달음·절기 고르기·검총·상인·보갑 목록): 잠깐 뒤 첫 칸을 고르거나 닫는다
+            if (_wait == null) _wait = new Waiters();
+            if (_wait.Handle(dt)) { ControlInput.MoveOverride = Vector2.zero; return; }
+
             // 레벨업 화면: 잠깐 뒤 자동으로 고른다
             if (_lu == null) _lu = FindFirstObjectByType<LevelUpScreen>();
             var lu = _lu;
@@ -80,6 +84,34 @@ namespace BloodRain.Presentation.Hud
                 var life = runner.Life;
                 if (life != null)
                     _log.Append($"{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId}\n");
+            }
+        }
+
+        Waiters _wait;
+        sealed class Waiters
+        {
+            InsightScreen _insight; EvolutionPickScreen _evo; SwordTombScreen _tomb; MerchantScreen _shop; BloodRain.Presentation.Fx.ChestLayer _chest;
+            float _t;
+            public int Handled;
+            public bool Handle(float dt)
+            {
+                if (_insight == null) _insight = Object.FindFirstObjectByType<InsightScreen>();
+                if (_evo == null) _evo = Object.FindFirstObjectByType<EvolutionPickScreen>();
+                if (_tomb == null) _tomb = Object.FindFirstObjectByType<SwordTombScreen>();
+                if (_shop == null) _shop = Object.FindFirstObjectByType<MerchantScreen>();
+                if (_chest == null) _chest = Object.FindFirstObjectByType<BloodRain.Presentation.Fx.ChestLayer>();
+                bool any = (_insight != null && _insight.IsOpen) || (_evo != null && _evo.IsOpen) || (_tomb != null && _tomb.IsOpen)
+                           || (_shop != null && _shop.IsOpen) || (_chest != null && _chest.ListOpen);
+                if (!any) { _t = 0f; return false; }
+                _t += dt;
+                if (_t < 0.6f) return true;
+                _t = 0f; Handled++;
+                if (_insight != null && _insight.IsOpen) _insight.Pick(0);
+                else if (_evo != null && _evo.IsOpen) _evo.Pick(0);
+                else if (_tomb != null && _tomb.IsOpen) _tomb.Pick(0);
+                else if (_shop != null && _shop.IsOpen) _shop.Close();
+                else if (_chest != null && _chest.ListOpen) _chest.CloseListForTest();
+                return true;
             }
         }
 
