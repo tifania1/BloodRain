@@ -47,8 +47,8 @@ namespace BloodRain.Core.Tests
         [Fact]
         public void decisions_표의_번호와_id_는_겹치지_않는다()
         {
+            // 표가 비어 있을 수 있다(2026-11-20 사람이 남은 40건을 한꺼번에 정함). 그때는 겹칠 것도 없다
             var ids = Listed();
-            Assert.NotEmpty(ids);
             Assert.Equal(ids.Length, ids.Distinct().Count());
         }
     }

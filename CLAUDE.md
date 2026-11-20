@@ -58,6 +58,7 @@
 - 이미지에 글자를 굽지 않는다. 모든 글자는 Unity에서 얹는다.
 - 배경음은 Gemini '음악 만들기'로 밤 생산 세션이 자동으로 뽑는다(2026-11-04·05). 필요한 곡은 `audio_queue/queue.jsonl` 에 `todo` 줄로, 문구는 `{STYLE}`(`audio_queue/STYLE.txt`)로 시작. 순서·다듬기는 `docs/design/audio_pipeline.md`.
 - 효과음은 직접 만든다(2026-11-05 사람). 음이 있는 소리는 코드로 합성, 나머지는 AI 후보 + 녹음 재료로 층을 쌓는다. `docs/design/sfx_research.md`, backlog SFX.
+  **2026-11-20 바뀜(사람이 SFX-18a 추천대로)**: 타격·휘두름·발소리는 에셋 스토어에서 사 둔 소리 묶음(Punch Sound Pack·Ultimate Sound FX Bundle·Footsteps Sound Pack 등, `docs/design/store_assets.md`)에서 고르고, 무공 고유음만 직접 만든다. 산 소리 파일도 **공개 저장소에 커밋하지 않는다**(PC 의 .gitignore 폴더에서 쓰고, 고른 목록과 쓰는 곳만 문서에). 이펙트 묶음은 쓰지 않는다(이펙트는 셰이더로만 그대로).
 
 ## 글쓰기
 - 문서·커밋 메시지·주석은 한국어. 사람이 실제로 말하듯 자연스럽게. 과장 없이.
