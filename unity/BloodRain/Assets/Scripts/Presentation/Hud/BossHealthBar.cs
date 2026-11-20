@@ -65,8 +65,8 @@ namespace BloodRain.Presentation.Hud
 
             // 2026-11-21 납작한 네모 막대 → 붓 획 한 줄(먹 바탕 획 위에 핏빛 획이 줄어든다). 줄어든 끝은 텍스처를 잘라 보여 획이 눌리지 않는다
             var back = Stroke("바탕", new Color(InkLine.r, InkLine.g, InkLine.b, 0.55f), rt, new Vector2(width, StrokeH), false);
-            _lagImg = Stroke("늦은 칸", Lag, back, new Vector2(width, StrokeH), true);
-            _fillImg = Stroke("기혈", Blood, back, new Vector2(width, StrokeH), true);
+            _lagImg = Stroke("늦은 칸", Lag, back.rectTransform, new Vector2(width, StrokeH), true);
+            _fillImg = Stroke("기혈", Blood, back.rectTransform, new Vector2(width, StrokeH), true);
             _lag = _lagImg.rectTransform; _fill = _fillImg.rectTransform;
             _root.SetActive(false);
         }
