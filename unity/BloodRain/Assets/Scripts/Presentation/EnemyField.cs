@@ -1180,7 +1180,7 @@ namespace BloodRain.Presentation
                 var s = _shots[i];
                 sr.transform.position = new Vector3(s.Pos.x, s.Pos.y, 0f);
                 sr.transform.localScale = Vector3.one * (s.Radius * 2f);
-                sr.color = Color.Lerp(s.Color, Color.black, 0.3f);
+                sr.color = Hud.DangerColors.Of(Color.Lerp(s.Color, Color.black, 0.3f)); // UI-03 색각 보정
             }
         }
 
@@ -1302,7 +1302,7 @@ namespace BloodRain.Presentation
                         s.At = p;
                         s.Left = tele;
                         s.Next = Mathf.Max(0f, mk.Interval - tele); // 표식부터 다음 표식까지 Interval(예고 동안은 Next 가 줄지 않는다)
-                        _pools.Add(new Pool { Pos = p, Radius = ws.Length(mk.Radius, a.BornRealm), Left = tele, Damage = 0f, Owner = -2, Color = MarkColor });
+                        _pools.Add(new Pool { Pos = p, Radius = ws.Length(mk.Radius, a.BornRealm), Left = tele, Damage = 0f, Owner = -2, Color = Hud.DangerColors.Of(MarkColor) });
                     }
                 }
                 _marks[a.Id] = s;
@@ -1355,7 +1355,7 @@ namespace BloodRain.Presentation
                         });
                         s.Cool = hk.Interval;
                     }
-                    else DrawHookLine(line++, at, at + s.Dir * range, HookAimColor, ws.Length(0.06f));
+                    else DrawHookLine(line++, at, at + s.Dir * range, Hud.DangerColors.Of(HookAimColor), ws.Length(0.06f));
                 }
                 else
                 {
@@ -1600,7 +1600,7 @@ namespace BloodRain.Presentation
                 var baseTint = a.Kind >= 0 && a.Kind < _kinds.Count ? _kinds[a.Kind].Tint : view.Tint;
                 if (a.Buff > 0f) baseTint = Color.Lerp(baseTint, BuffTint, 0.45f); // 기수 깃발 아래: 핏빛이 돈다(이펙트 오기 전 임시)
                 if (a.Move == (byte)EnemyMove.Dash && a.Phase == (byte)DashPhase.Telegraph)
-                    view.Tint = Color.Lerp(baseTint, TelegraphTint, Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임(이펙트 오기 전 임시)
+                    view.Tint = Color.Lerp(baseTint, Hud.DangerColors.Of(TelegraphTint), Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임(이펙트 오기 전 임시)
                 else
                     view.Tint = baseTint;
                 clusters.Add(view);

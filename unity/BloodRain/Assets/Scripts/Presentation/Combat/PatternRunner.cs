@@ -613,6 +613,7 @@ namespace BloodRain.Presentation.Combat
         static void SetColor(GameObject go, Color c)
         {
             if (go == null) return;
+            c = Hud.DangerColors.Of(c); // UI-03 색각 보정: 붉은 예고만
             _lastColor[go.GetInstanceID()] = c;
             var m = go.GetComponent<MeshFilter>().sharedMesh;
             if (m.vertexCount == 0) return;

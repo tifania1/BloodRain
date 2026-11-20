@@ -20,10 +20,11 @@ namespace BloodRain.Core.Meta
     public sealed class GameSettings
     {
         public const string Shake = "shake", Awaken = "awaken", Flash = "flash", BossBar = "bossbar", Rain = "rain",
-            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted", Lang = "lang", Voice = "voice", AutoPickKey = "autoPick";
+            AimMarker = "aim", AimModeKey = "aimMode", Numbers = "nums", Volume = "vol", Effects = "fx", Muted = "muted", Lang = "lang", Voice = "voice", AutoPickKey = "autoPick",
+            Cvd = "cvd";   // 색각 보정(UI-03, 2026-11-20): off · rg(적록) · by(청황)
 
         /// <summary>저장 낱말 전부(단추 차례, 웹 SET_HTML 과 같음 + 소리 끄기 + 언어 + 목소리).</summary>
-        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, AutoPickKey, Muted, Lang, Voice };
+        public static readonly IReadOnlyList<string> Keys = new[] { Shake, Awaken, Flash, BossBar, Rain, Volume, Effects, Numbers, AimModeKey, AimMarker, AutoPickKey, Cvd, Muted, Lang, Voice };
 
         /// <summary>언어 단추에 그 언어 글자로 적는 이름(어느 화면 언어에서나 같다).</summary>
         public static readonly IReadOnlyDictionary<string, string> LanguageNames = new Dictionary<string, string>
@@ -69,6 +70,18 @@ namespace BloodRain.Core.Meta
         public string VoiceLanguage = "ko";
         /// <summary>레벨업 자동 고르기(UI-01b). 끄면 늘 화면에서 고른다.</summary>
         public bool AutoPick;
+        /// <summary>색각 보정 "off" / "rg"(적록, 제1·2색약) / "by"(청황, 제3색약). 위험 표시(적 탄·예고)의 붉은빛만 바꾼다(12장, UI-03).</summary>
+        public string ColorVision = "off";
+        public static readonly string[] ColorVisions = { "off", "rg", "by" };
+
+        /// <summary>위험 표시 색(붉은빛 r,g,b)을 색각 보정에 맞게 바꾼다. 꺼져 있거나 붉은빛이 아니면 그대로.
+        /// 적록이면 주황·노랑 쪽, 청황이면 자홍 쪽으로 — 밝기(가장 센 칸)는 그대로 둔다.</summary>
+        public (float r, float g, float b) DangerColor(float r, float g, float b)
+        {
+            if (ColorVision == "off" || !(r > g + 0.3f && r > b + 0.3f)) return (r, g, b);
+            float v = Math.Max(r, Math.Max(g, b));
+            return ColorVision == "rg" ? (v, v * 0.62f, 0f) : (v * 0.9f, v * 0.12f, v * 0.85f);
+        }
 
         /// <summary>목소리 두 벌(14장).</summary>
         public static readonly string[] VoiceLanguages = { "ko", "zh" };
@@ -104,6 +117,7 @@ namespace BloodRain.Core.Meta
                 case Lang: Language = Strings.Languages[(Math.Max(0, Array.IndexOf(Strings.Languages, Language)) + 1) % Strings.Languages.Length]; return true;
                 case Voice: VoiceLanguage = VoiceLanguage == "ko" ? "zh" : "ko"; return true;
                 case AutoPickKey: AutoPick = !AutoPick; return true;
+                case Cvd: ColorVision = ColorVisions[(Math.Max(0, Array.IndexOf(ColorVisions, ColorVision)) + 1) % ColorVisions.Length]; return true;
                 default: return false;
             }
         }
@@ -125,6 +139,7 @@ namespace BloodRain.Core.Meta
             Lang => Language,
             Voice => VoiceLanguage,
             AutoPickKey => Bool(AutoPick),
+            Cvd => ColorVision,
             _ => null,
         };
 
@@ -148,6 +163,7 @@ namespace BloodRain.Core.Meta
                 case Lang: if (Array.IndexOf(Strings.Languages, value) >= 0) Language = value; break;
                 case Voice: if (Array.IndexOf(VoiceLanguages, value) >= 0) VoiceLanguage = value; break;
                 case AutoPickKey: AutoPick = ReadBool(value, AutoPick); break;
+                case Cvd: if (Array.IndexOf(ColorVisions, value) >= 0) ColorVision = value!; break;
             }
         }
 

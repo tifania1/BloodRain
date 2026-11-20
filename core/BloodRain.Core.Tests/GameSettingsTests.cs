@@ -29,6 +29,7 @@ namespace BloodRain.Core.Tests
             Assert.Equal(new[] { "1", "0.75", "0.5", "0.25", "0", "1" }, Cycle(GameSettings.Effects, 5));
             Assert.Equal(new[] { "true", "false", "true" }, Cycle(GameSettings.Numbers, 2));
             Assert.Equal(new[] { "false", "true" }, Cycle(GameSettings.Muted, 1));
+            Assert.Equal(new[] { "off", "rg", "by", "off" }, Cycle(GameSettings.Cvd, 3));   // UI-03 색각 보정
             Assert.False(GameSettings.Defaults().Turn("easy"));
         }
 
@@ -66,11 +67,26 @@ namespace BloodRain.Core.Tests
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
             foreach (var k in GameSettings.Keys)
-                if (k != GameSettings.Muted && k != GameSettings.Lang && k != GameSettings.Voice && k != GameSettings.AutoPickKey) Assert.Contains($"store.set('{k}'", html);
+                if (k != GameSettings.Muted && k != GameSettings.Lang && k != GameSettings.Voice && k != GameSettings.AutoPickKey && k != GameSettings.Cvd) Assert.Contains($"store.set('{k}'", html);
             Assert.Contains("settings.shake === 1 ? 0.5 : settings.shake === 0.5 ? 0 : 1", html);
             Assert.Contains("settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1", html);
             Assert.Contains("{ auto: 'long', long: 'short', short: 'auto' }", html);
             Assert.Contains("store.set('muted'", html);
+        }
+
+        [Fact]
+        public void 색각_보정은_붉은_위험_표시만_바꾼다()
+        {
+            var s = GameSettings.Defaults();
+            Assert.Equal((0.9f, 0.1f, 0.08f), s.DangerColor(0.9f, 0.1f, 0.08f));       // 끔이면 그대로
+            s.Turn(GameSettings.Cvd);                                                 // 적록
+            var rg = s.DangerColor(0.9f, 0.1f, 0.08f);
+            Assert.True(rg.g > 0.4f && rg.b < 0.05f);                                  // 주황
+            Assert.Equal((0.2f, 0.6f, 0.7f), s.DangerColor(0.2f, 0.6f, 0.7f));        // 붉지 않은 색(내 효과)은 그대로
+            s.Turn(GameSettings.Cvd);                                                 // 청황
+            var by = s.DangerColor(0.9f, 0.1f, 0.08f);
+            Assert.True(by.b > 0.6f && by.g < 0.2f);                                   // 자홍
+            Assert.Contains("색각 보정(끔·적록·청황 셋, 화면 전체가 아니라 적 탄·예고 색만)", TestData.ReadRepoFile("docs", "design", "gdd.md"));
         }
 
         [Fact]
