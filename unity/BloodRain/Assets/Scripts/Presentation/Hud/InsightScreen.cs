@@ -27,6 +27,10 @@ namespace BloodRain.Presentation.Hud
         Func<InsightDef, bool> _isDemonic;
         Action<InsightDef> _onPick;
         float _prevScale = 1f;
+        // BT-01U 열림 연출(레벨업 시안과 같은 결): 어둠이 먹처럼 번지고(0.25초), 카드가 두루마리처럼 위아래로 펼쳐짐(0.35초, 장마다 0.07초 늦게)
+        float _openAt;
+        Image _dim;
+        readonly List<RectTransform> _unfurl = new List<RectTransform>();
 
         public bool IsOpen => _root != null;
 
@@ -38,12 +42,14 @@ namespace BloodRain.Presentation.Hud
             Time.timeScale = 0f;
             if (EventSystem.current == null) new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             Build();
+            Animate();
         }
 
         void Update()
         {
             if (!IsOpen) return;
             if (Time.timeScale != 0f) Time.timeScale = 0f;
+            Animate();
             var kb = Keyboard.current;
             if (kb == null) return;
             if (kb.digit1Key.wasPressedThisFrame) Pick(0);
@@ -75,8 +81,11 @@ namespace BloodRain.Presentation.Hud
             sc.matchWidthOrHeight = 0.5f;
             _root = (RectTransform)go.transform;
 
-            var dim = Panel(_root, new Color(0.02f, 0.02f, 0.03f, 0.6f));
+            var dim = Panel(_root, new Color(0.02f, 0.02f, 0.03f, 0f));
             Stretch(dim.rectTransform);
+            _dim = dim;
+            _unfurl.Clear();
+            _openAt = Time.unscaledTime;
             var title = Text(_root, Loc.T("ui.insight.title"), 46, FontStyles.Bold, Paper);
             Place(title.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 330), new Vector2(1200, 64));
             var sub = Text(_root, Loc.T("ui.insight.sub"), 22, FontStyles.Italic, new Color(Paper.r, Paper.g, Paper.b, 0.7f));
@@ -91,6 +100,8 @@ namespace BloodRain.Presentation.Hud
                 bool demonic = _isDemonic != null && _isDemonic(d);
                 var frame = Panel(_root, demonic ? Blood : Gold);
                 Place(frame.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(x0 + i * (w + gap), -20), new Vector2(w + 8, 468));
+                frame.rectTransform.localScale = new Vector3(1f, 0.04f, 1f);
+                _unfurl.Add(frame.rectTransform);
                 var b = new GameObject(d.Id, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
                 b.transform.SetParent(frame.transform, false);
                 b.GetComponent<Image>().color = Paper;
@@ -116,6 +127,19 @@ namespace BloodRain.Presentation.Hud
                     var tag = Text(b.transform, Loc.T("ui.insight.demonic"), 20, FontStyles.Bold, Blood);
                     Place(tag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -24), new Vector2(w, 28));
                 }
+            }
+        }
+
+        void Animate()
+        {
+            float t = Time.unscaledTime - _openAt;
+            if (_dim != null) { var c = _dim.color; c.a = Mathf.Lerp(0f, 0.6f, Mathf.Clamp01(t / 0.25f)); _dim.color = c; }
+            for (int i = 0; i < _unfurl.Count; i++)
+            {
+                if (_unfurl[i] == null) continue;
+                float k = Mathf.Clamp01((t - 0.05f - i * 0.07f) / 0.35f);
+                float e = 1f - Mathf.Pow(1f - k, 3f);
+                _unfurl[i].localScale = new Vector3(1f, Mathf.Lerp(0.04f, 1f, e), 1f);
             }
         }
 
