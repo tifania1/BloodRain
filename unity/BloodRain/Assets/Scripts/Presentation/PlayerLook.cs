@@ -104,9 +104,60 @@ namespace BloodRain.Presentation
             }
         }
 
+        // VF-04U 팔선과해(취선봉 절기): 몸 둘레에 호박빛 분신이 서서 바깥으로 휩쓴다(시안 eightImm — 0.7초, 0.08초에 나타나 끝 40% 에 옅어짐, 비틀비틀)
+        struct Clone { public SpriteRenderer R; public float Age, Seed; }
+        readonly System.Collections.Generic.List<Clone> _clones = new System.Collections.Generic.List<Clone>();
+        const float CloneLife = 0.7f;
+        static readonly Color CloneAmber = new Color(0.62f, 0.4f, 0.16f, 0.55f);
+
+        /// <summary>분신 하나를 world 자리에 세운다(그림만). delay 초 뒤에 나타난다.</summary>
+        public void Clone(Vector2 world, float delay)
+        {
+            if (Renderer == null || BloodRain.Presentation.Fx.FxSettings.Simplified) return;
+            SpriteRenderer g = null;
+            for (int i = 0; i < _clones.Count; i++) if (_clones[i].Age >= CloneLife) { g = _clones[i].R; _clones.RemoveAt(i); break; }
+            if (g == null && _clones.Count < 24)
+            {
+                var go = new GameObject("Clone");
+                g = go.AddComponent<SpriteRenderer>();
+                g.sortingLayerID = Renderer.sortingLayerID;
+                g.sortingOrder = Renderer.sortingOrder - 1;
+            }
+            if (g == null) return;
+            g.sprite = Renderer.sprite;
+            g.flipX = world.x < transform.position.x;
+            var off = _body.position - transform.position;
+            g.transform.SetPositionAndRotation(new Vector3(world.x, world.y, transform.position.z) + off, Quaternion.identity);
+            g.transform.localScale = _body.lossyScale;
+            g.color = new Color(CloneAmber.r, CloneAmber.g, CloneAmber.b, 0f);
+            g.enabled = true;
+            _clones.Add(new Clone { R = g, Age = -delay, Seed = _clones.Count * 1.7f });
+        }
+
+        void TickClones(float dt)
+        {
+            for (int i = 0; i < _clones.Count; i++)
+            {
+                var c = _clones[i];
+                if (c.Age >= CloneLife) continue;
+                c.Age += dt;
+                if (c.Age >= 0f)
+                {
+                    float k = Mathf.Clamp01(c.Age / CloneLife);
+                    float al = Mathf.Min(1f, c.Age / 0.08f) * (1f - Mathf.Max(0f, (k - 0.6f) / 0.4f));
+                    var col = CloneAmber; col.a *= al;
+                    c.R.color = col;
+                    c.R.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Sin(c.Age * 14f + c.Seed) * 8.6f);
+                }
+                if (c.Age >= CloneLife) c.R.enabled = false;
+                _clones[i] = c;
+            }
+        }
+
         void OnDestroy()
         {
             foreach (var g in _ghosts) if (g.R != null) Destroy(g.R.gameObject);
+            foreach (var c in _clones) if (c.R != null) Destroy(c.R.gameObject);
         }
         Vector3 _last;
         bool _flip;
@@ -209,6 +260,7 @@ namespace BloodRain.Presentation
                 _lunge *= Mathf.Pow(0.0005f, dt);
             }
             TickGhosts(dt);
+            TickClones(dt);
 
             Renderer.GetPropertyBlock(_mpb);
             _mpb.SetFloat(FlashId, Mathf.Clamp01(Flash));

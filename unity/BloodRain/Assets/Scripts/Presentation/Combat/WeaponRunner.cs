@@ -864,6 +864,12 @@ namespace BloodRain.Presentation.Combat
                             int di = 0;
                             foreach (var a in WeaponShapes.ArcDirections(evo != null, dirN, () => UnityEngine.Random.value))
                             {
+                                // VF-04U 팔선과해: 갈래마다 몸 둘레(범위의 절반쯤)에 호박빛 분신이 0.03초씩 늦게 선다(그림만)
+                                if (evo != null && Sfx)
+                                {
+                                    if (_look == null && player != null) _look = player.GetComponent<PlayerLook>();
+                                    if (_look != null) _look.Clone(P + new Vector2(Mathf.Cos(a), Mathf.Sin(a) * 0.75f) * R * 0.55f, di * 0.03f);
+                                }
                                 if (Sfx)
                                 {
                                     // VF-01U(2026-11-16 다섯 단계): 거칠게 마른 갈색 호가 겹쳐 보이고(밑에 먹 받침), 한 박자 늦게 봉 끝에서 먼지와 술 방울이 터진다.
