@@ -1047,6 +1047,12 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
+- [ ] GU-11h4U 모여드는 땅의 주인과 싸움 · 먼저: 화면 집중이 풀린 뒤, backlog GU-11h4(2026-11-20 Core·알림 끝)
+  - 할 것: `LifeRunner.TickAct2` 가 `Life.TakeGatheringLords()` 로 받은 지역마다 지금은 붉은 알림만 띄운다. 그 땅의 주인을 플레이어 화면 밖 둘레에서 걸어 들어오게 놓고 싸움(`BossAwakening` 은 제 땅에서만 싸움을 거니, 자리를 플레이어 곁으로 하는 길을 Core 에 하나 더하거나 PatternRunner 가 그 자리에 세움). 60분 좌화 정산은 이미 됨
+  - 쓸 것: Core `Life.GatheringLordsDue`·`FallenLordRegions`·`BossAwakening.Engage`, `Presentation/Combat/PatternRunner.cs`
+  - 메뉴: 없음
+  - 끝: 숭산 생(봉인석 0) 30분 현경에서 무너진 문파 땅의 주인이 하나 걸어 들어와 싸움이 시작되고, 40분에 둘째. 콘솔 에러 0
+  - 찍기: `Captures/act2_lord.png`
 - [ ] DM-01U 넥스트 페스트 데모 빌드 · 먼저: 화면 집중이 풀린 뒤(M3), backlog DM-01(2026-11-20 Core 끝)
   - 할 것: 데모 빌드 표시(스크립팅 심볼 `BLOODRAIN_DEMO` 또는 빌드 메뉴 'BloodRain/데모 빌드')일 때 ① 새 혼을 `Soul.NewDemo` 로 만든다 ② `SoulStore` 칸 파일 이름을 정식판과 따로(`demo_slot_N.json` 같은 꼴) ③ 원각을 쓰러뜨리면 데모 끝 화면(찜하기 안내 글, 객잔으로) ④ 타이틀의 정식판 전용 단추(모드 고르기 등) 숨김
   - 쓸 것: Core `Soul.Demo`·`Soul.NewDemo`·`CheonhaDef.Demo`(cheonha.json demo), `Presentation/Meta/SoulStore.cs`·`SlotSelectScreen.cs`

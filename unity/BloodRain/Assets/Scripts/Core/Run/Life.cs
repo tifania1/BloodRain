@@ -255,7 +255,53 @@ namespace BloodRain.Core.Run
         /// <summary>끝났으면 정산 기록(Soul.EndLife 에 넘긴다).</summary>
         public LifeRecord? Record { get; private set; }
         /// <summary>혈마의 그림자 단계(0이면 없음).</summary>
-        public int ShadowStep => Director.ShadowStep(Minutes, Level, SealStones);
+        public int ShadowStep => ShadowReplaced ? 0 : Director.ShadowStep(Minutes, Level, SealStones);
+
+        /// <summary>2막 규칙(GU-11h4)이 켜졌으면 혈마의 그림자는 없고 모여드는 땅의 주인이 대신한다.</summary>
+        public bool ShadowReplaced => _data.Cheonha.LifeEnd.GatheringLords.EveryMinutes > 0;
+
+        /// <summary>혈월이 졌나(lifeEnd.endMinute, 60분). Presentation 이 좌화와 같은 정산으로 생을 닫는다.</summary>
+        public bool BloodMoonSet => _data.Cheonha.LifeEnd.EndMinute > 0 && Minutes >= _data.Cheonha.LifeEnd.EndMinute && !IsPrologue;
+
+        /// <summary>이번 생에 무너진 문파 땅 가운데 땅의 주인이 있고 아직 이 생에 안 쓰러뜨린 곳(무너진 차례).</summary>
+        public IReadOnlyList<string> FallenLordRegions =>
+            Chronicle.Events.Where(e => e.Kind == SectCrisisKind && e.Region != null && Crisis(e.Id) == CrisisState.Fallen)
+                .OrderBy(e => e.AtSeconds).Select(e => e.Region!).Distinct()
+                .Where(r => Regions.Region(r).Boss != null && !Log.BossesKilled.Contains(r)).ToList();
+
+        /// <summary>지금까지 모여들었어야 할 땅의 주인 수(GU-11h4): 현경이고 봉인석이 모자라면 fromMinute 에 1, everyMinutes 마다 +1, 무너진 땅 주인 수까지.</summary>
+        public int GatheringLordsDue
+        {
+            get
+            {
+                var end = _data.Cheonha.LifeEnd;
+                var g = end.GatheringLords;
+                if (g.EveryMinutes <= 0 || IsPrologue) return 0;
+                var need = _data.Cheonha.Bosses.FinalRequires;
+                if (Realm < Scale.RealmIndex(need.Realm) || SealStones >= need.SealStones || Minutes < g.FromMinute) return 0;
+                int n = 1 + (int)Math.Floor((Minutes - g.FromMinute) / g.EveryMinutes + 1e-4f);
+                return Math.Min(n, _gathered.Union(FallenLordRegions).Count());
+            }
+        }
+
+        readonly List<string> _gathered = new List<string>();
+        /// <summary>이미 모여든 땅의 주인 지역(온 차례).</summary>
+        public IReadOnlyList<string> GatheredLords => _gathered;
+
+        /// <summary>새로 모여들 땅의 주인 지역을 꺼내 간다(Presentation 이 알림·싸움을 건다).</summary>
+        public IReadOnlyList<string> TakeGatheringLords()
+        {
+            var news = new List<string>();
+            int due = GatheringLordsDue;
+            foreach (var r in FallenLordRegions)
+            {
+                if (_gathered.Count >= due) break;
+                if (_gathered.Contains(r)) continue;
+                _gathered.Add(r);
+                news.Add(r);
+            }
+            return news;
+        }
         /// <summary>지금 혈마의 그림자 세기(단계 0이면 Active 가 false).</summary>
         public BloodShadowStrength Shadow => BloodShadow.Strength(_data.Cheonha.LifeEnd.Shadow, ShadowStep);
         /// <summary>혈월 천하(회귀, 21장)면 적 기혈 배율(cheonha.json cycle.bloodmoon.enemyHealth), 아니면 1. EnemyScaling.HealthAt 결과에 곱한다.</summary>

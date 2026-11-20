@@ -174,11 +174,28 @@ namespace BloodRain.Core.Tests
             Assert.Equal(2, soul.Lives); // 서장 + 이번 생
         }
 
-        [Fact] public void 혈마의_그림자는_30분_현경에서_봉인석이_없으면_나온다()
+        /// <summary>GU-11h4(2026-11-20 추천대로 — decisions #64): 봉인석이 모자란 현경은 그림자 대신 모여드는 땅의 주인(30분에 하나, 10분마다 하나,
+        /// 무너진 문파 땅 주인 수까지), 60분에 혈월이 진다. 그림자 단계 셈(LifeDirector.ShadowStep)은 웹·시뮬레이션이 아직 써서 남아 있다.</summary>
+        [Fact] public void 혈월의_밤_2막은_그림자_대신_무너진_땅의_주인이_모여든다()
         {
             var (_, life) = NewLife();
             RunThirtyMinutes(_d, life);
-            Assert.Equal(1, life.ShadowStep);
+            Assert.True(life.ShadowReplaced);
+            Assert.Equal(0, life.ShadowStep);
+            Assert.Equal(1, life.Director.ShadowStep(life.Minutes, life.Level, life.SealStones));
+            var fallen = life.FallenLordRegions;
+            Assert.NotEmpty(fallen);
+            Assert.Equal(1, life.GatheringLordsDue);
+            var first = life.TakeGatheringLords();
+            Assert.Equal(new[] { fallen[0] }, first);
+            Assert.Empty(life.TakeGatheringLords());
+            Assert.False(life.BloodMoonSet);
+            while (life.Minutes < 40.05f) life.Tick(0.5f, life.Position, 100);
+            Assert.Equal(Math.Min(2, fallen.Count), life.GatheringLordsDue);
+            Assert.Equal(Math.Min(2, fallen.Count) - 1, life.TakeGatheringLords().Count);
+            while (life.Minutes < 60.01f) life.Tick(0.5f, life.Position, 100);
+            Assert.True(life.BloodMoonSet);
+            Assert.True(life.GatheringLordsDue <= fallen.Count);
         }
 
         [Fact] public void 마교_몸은_진기가_농도배이고_다른_몸은_그대로()

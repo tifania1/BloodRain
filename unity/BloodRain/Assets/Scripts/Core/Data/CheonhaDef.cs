@@ -473,9 +473,15 @@ namespace BloodRain.Core.Data
         public List<string> Ways = new List<string>();
         public float ShadowFromMinute;
         public float ShadowStepMinutes;
+        /// <summary>혈월의 밤 2막(GU-11h4): 봉인석이 모자란 현경에게 그림자 대신 모여드는 땅의 주인. EveryMinutes 가 0 이면 옛 그림자 규칙.</summary>
+        public GatheringLordsDef GatheringLords = new GatheringLordsDef();
+        /// <summary>이 분에 혈월이 지며 좌화와 같은 정산으로 생이 끝난다. 0 이면 끝 없음.</summary>
+        public float EndMinute;
         /// <summary>혈마의 그림자 한 단계의 세기(World/BloodShadow).</summary>
         public BloodShadowDef Shadow = new BloodShadowDef();
     }
+
+    public sealed class GatheringLordsDef { public float FromMinute; public float EveryMinutes; }
 
     public sealed class BloodShadowDef
     {

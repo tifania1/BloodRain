@@ -249,6 +249,26 @@ namespace BloodRain.Presentation
         GUIStyle _popupStyle;
 
         /// <summary>떠오르는 짧은 글(기연 쪽에서 씀). at 이 없으면 플레이어 자리.</summary>
+        // GU-11h4 혈월의 밤 2막: 무너진 땅의 주인이 모여들면 알림(싸움을 거는 것은 unity_tasks GU-11h4U), 60분에 혈월이 지면 좌화와 같은 정산
+        bool _moonSet;
+        void TickAct2()
+        {
+            var banner = GetComponent<RegionBanner>();
+            foreach (var id in _life.TakeGatheringLords())
+            {
+                var reg = _life.Regions.Region(id);
+                var bd = System.Linq.Enumerable.FirstOrDefault(DataBoot.Data.Bosses, b => b.Id == reg.Boss);
+                if (banner != null) banner.ShowEvent(reg, Loc.T("ui.gathering.title"), Loc.F("ui.gathering.sub", bd != null ? Loc.Boss(bd) : reg.Boss, Loc.Region(reg)), true);
+                Debug.Log($"[LifeRunner] 모여드는 땅의 주인: {id} ({_life.Minutes:0.0}분)");
+            }
+            if (!_moonSet && _life.BloodMoonSet && _life.Record == null)
+            {
+                _moonSet = true;
+                ShowPopup(Loc.T("ui.moonset"));
+                EndLife(LifeEndWay.Zuohwa);
+            }
+        }
+
         // GU-11m 문파의 위기: 그 자리에서 버티기 시작하면 땅 알림, 막으면 '막아 냈다'(처음이면 윤회의 기), 버티다 떠나면 짧은 알림
         readonly HashSet<string> _crisisShown = new HashSet<string>();
         void TickCrises()
@@ -619,6 +639,7 @@ namespace BloodRain.Presentation
                 if (banner != null) banner.ShowLord(NearestOf(wokeByTime, pos));
             }
             TickCrises();
+            TickAct2();
             TickInsights(dt);
             TickDissolution(dt);
             TickSummons(dt);
