@@ -572,6 +572,8 @@ namespace BloodRain.Presentation.Meta
         public static BloodRain.Core.Run.Life PendingLife;
         /// <summary>객잔에서 고른 모드 id(R4-05U, cheonha.json modes). 고르기 화면이 안 떴으면 null(천하).</summary>
         public static string Mode;
+        /// <summary>약방에서 고른 영약 id(EL-02U, 2026-11-20). 새 생이 시작할 때 Apothecary.TryPrepare 로 혈정을 쓰고 지니고 나간다. 쓰면 비운다.</summary>
+        public static readonly System.Collections.Generic.List<string> Elixirs = new System.Collections.Generic.List<string>();
 
         /// <summary>생이 끝났다. 다음 Run 은 침방에서 고른 몸으로(남은 몸·생을 쓰지 않게).</summary>
         public static void ClearBody()

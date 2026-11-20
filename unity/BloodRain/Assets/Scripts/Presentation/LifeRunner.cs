@@ -68,6 +68,13 @@ namespace BloodRain.Presentation
                     {
                         var body = RebirthHandoff.Body ?? Rebirth.Prologue(_data);
                         _life = new Life(soul, body, new System.Random());
+                        // EL-02U 약방에서 고른 영약: 혈정을 쓰고 이번 생에 건다(서장 몸엔 없음)
+                        if (!_life.IsPrologue && RebirthHandoff.Elixirs.Count > 0)
+                        {
+                            var picked = BloodRain.Core.Meta.Apothecary.TryPrepare(soul, RebirthHandoff.Elixirs);
+                            if (picked != null && picked.Count > 0) { _life.TakeElixirs(picked); SoulStore.Save(soul); }
+                            RebirthHandoff.Elixirs.Clear();
+                        }
                     }
                 }
                 return _life;

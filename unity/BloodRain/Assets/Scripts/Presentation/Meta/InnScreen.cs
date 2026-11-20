@@ -45,6 +45,7 @@ namespace BloodRain.Presentation.Meta
         float _toastLeft;
         TrainingScreen _training;
         SmithyScreen _smithy;
+        ApothecaryScreen _apothecary;
         SettingsScreen _settings;
 
         public bool IsOpen => _canvas != null && _canvas.activeSelf;
@@ -90,6 +91,7 @@ namespace BloodRain.Presentation.Meta
             {
                 case "training": OpenTraining(); break;
                 case "smithy": OpenSmithy(); break;
+                case "apothecary": OpenApothecary(); break;
                 default: Toast(Loc.F("ui.inn.soon_toast", Name(f))); break;
             }
         }
@@ -117,6 +119,18 @@ namespace BloodRain.Presentation.Meta
             }
             _canvas.SetActive(false);
             _training.Open(_soul);
+        }
+
+        void OpenApothecary()
+        {
+            if (_apothecary == null)
+            {
+                _apothecary = new GameObject("약방 화면").AddComponent<ApothecaryScreen>();
+                _apothecary.font = font;
+                _apothecary.Closed += () => { _canvas.SetActive(true); Refresh(); };
+            }
+            _canvas.SetActive(false);
+            _apothecary.Open(_soul);
         }
 
         void OpenSmithy()
