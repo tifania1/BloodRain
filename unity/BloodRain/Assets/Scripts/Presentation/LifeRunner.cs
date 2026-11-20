@@ -573,6 +573,9 @@ namespace BloodRain.Presentation
             float dt = Time.timeScale > 0f ? Time.unscaledDeltaTime * TestClockScale : 0f;
             var pos = player != null ? WorldCoords.FromUnity(player.position) : _life.Position;
             int alive = enemies != null ? enemies.Count : 0;
+            // WP-49a 내 이펙트 투명도 단축키(T, 조작 재설정을 따름): 설정 단추와 같은 차례, 바뀌면 짧은 알림
+            if (Time.timeScale > 0f && ControlInput.Pressed(BloodRain.Core.Meta.ControlAction.FxAlpha))
+                ShowPopup(Loc.F("ui.settings.fx", Mathf.RoundToInt(Meta.SettingsScreen.CycleEffects() * 100f)));
             var second = _life.Tick(dt, pos, alive);
             if (second != null) SpawnSecond(second);
             var wokeByTime = _life.TakeWokenByTime(); // EB-01a 15분 주인 깨어남: 기둥·화면 끝 표시·알림

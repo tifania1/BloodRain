@@ -119,6 +119,17 @@ namespace BloodRain.Presentation.Meta
             if (languageToo && Loc.Current.Lang != s.Language) Loc.Lang = s.Language;
         }
 
+        /// <summary>판 중 단축키(WP-49a T)로 내 이펙트 투명도를 설정 단추와 같은 차례로 한 칸. 저장하고 걸고, 바뀐 값(0~1)을 돌려준다.</summary>
+        public static float CycleEffects()
+        {
+            var s = Current;
+            s.Turn(GameSettings.Effects);
+            s.Save((k, v) => PlayerPrefs.SetString(k, v));
+            PlayerPrefs.Save();
+            Apply(s, false);
+            return s.EffectsAlpha;
+        }
+
         void Turn(string key)
         {
             var s = Current;

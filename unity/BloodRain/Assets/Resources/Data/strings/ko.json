@@ -353,6 +353,7 @@
   "ui.controls.reroll": "다시 고르기",
   "ui.controls.banish": "파기",
   "ui.controls.skip": "정진",
+  "ui.controls.fxAlpha": "내 이펙트 투명도",
   "ui.controls.none": "없음",
   "ui.controls.listen": "누를 키…",
   "ui.controls.refused": "쓸 수 없는 키입니다",

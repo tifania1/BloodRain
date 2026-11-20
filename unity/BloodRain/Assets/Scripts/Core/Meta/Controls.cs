@@ -18,10 +18,11 @@ namespace BloodRain.Core.Meta
     {
         public const string Up = "up", Down = "down", Left = "left", Right = "right",
             Dash = "dash", Ultimate = "ult", Pause = "pause",
-            Reroll = "reroll", Banish = "banish", Skip = "skip";
+            Reroll = "reroll", Banish = "banish", Skip = "skip",
+            FxAlpha = "fxAlpha";   // 내 이펙트 투명도(12장 'PC 는 판 중에도 단축키로', 2026-11-20 WP-49a)
 
         /// <summary>설정 화면 차례(8장 표 차례, 레벨업 단축키는 뒤에).</summary>
-        public static readonly IReadOnlyList<string> All = new[] { Up, Down, Left, Right, Dash, Ultimate, Pause, Reroll, Banish, Skip };
+        public static readonly IReadOnlyList<string> All = new[] { Up, Down, Left, Right, Dash, Ultimate, Pause, Reroll, Banish, Skip, FxAlpha };
     }
 
     public sealed class Controls
@@ -49,6 +50,7 @@ namespace BloodRain.Core.Meta
             [ControlAction.Reroll] = new[] { "<Keyboard>/r", null, null },
             [ControlAction.Banish] = new[] { "<Keyboard>/x", null, null },
             [ControlAction.Skip] = new[] { "<Keyboard>/z", null, null },
+            [ControlAction.FxAlpha] = new[] { "<Keyboard>/t", null, null },
         };
 
         readonly Dictionary<string, string?[]> _map;

@@ -1272,6 +1272,7 @@
   "ui.controls.reroll": "重選",
   "ui.controls.banish": "廢棄",
   "ui.controls.skip": "精進",
+  "ui.controls.fxAlpha": "我的特效透明度",
   "ui.controls.none": "無",
   "ui.controls.listen": "請按鍵…",
   "ui.controls.refused": "該按鍵無法使用",

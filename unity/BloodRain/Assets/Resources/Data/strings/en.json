@@ -1272,6 +1272,7 @@
   "ui.controls.reroll": "Reroll",
   "ui.controls.banish": "Discard",
   "ui.controls.skip": "Train",
+  "ui.controls.fxAlpha": "My Effects Opacity",
   "ui.controls.none": "None",
   "ui.controls.listen": "Press a key…",
   "ui.controls.refused": "That key can't be used",
