@@ -61,9 +61,10 @@ namespace BloodRain.Presentation.Combat
             var ring = new GameObject("금빛 원").AddComponent<SpriteRenderer>();
             ring.transform.SetParent(go.transform, false);
             ring.sprite = Dot();
-            ring.color = new Color(0.95f, 0.78f, 0.3f, 0.35f);
+            ring.color = new Color(0.95f, 0.78f, 0.3f, 0.2f);
             ring.sortingOrder = 5;
-            ring.transform.localScale = Vector3.one * 1.3f;
+            ring.transform.localScale = new Vector3(0.95f, 0.45f, 1f);
+            ring.transform.localPosition = new Vector3(0f, -0.35f, 0f);   // 발밑 납작한 금빛 그림자
             go.transform.position = new Vector3(a.Pos.x, a.Pos.y, -0.05f);
             _look[t.Id] = r;
             Debug.Log($"[어강술] 내 편 강시 {def.Id} · {Band.Count}/{fx.Thrall?.max} · 피해 {a.ContactDamage:0.#}");
