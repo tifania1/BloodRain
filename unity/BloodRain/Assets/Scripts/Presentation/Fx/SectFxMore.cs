@@ -921,7 +921,7 @@ namespace BloodRain.Presentation.Fx
             {
                 var c = center();
                 float on = Mathf.Min(1f, f.T / .3f) * (1f - Mathf.Max(0f, (f.T - (seconds - .5f)) / .5f));
-                Quad(16, c, 2.6f * Meter, 2.2f * Meter, f.T * .4f, new Vector4(.8f, .6f, .4f, 0f), FxRamp.BloodMist, .22f * on, 1f, 0f, f.Seed);
+                Quad(16, c, 2.6f * Meter, 2.2f * Meter, f.T * .4f, new Vector4(.8f, .7f, .4f, 0f), FxRamp.BloodMist, (.3f + .06f * Mathf.Sin(f.T * 6f)) * on, 1f, 0f, f.Seed);
                 if (f.T >= next && !Busy) { next = f.T + .25f; BloodMistAt(c + Dir(Rnd(0f, 6.28f)) * Rnd(.3f, .9f) * Meter, Rnd(.8f, 1.3f), 2); }
             }, true);
         }
