@@ -53,29 +53,32 @@ namespace BloodRain.Presentation.Hud
             // 가장 가까운 적 쪽으로 다가가되 옆으로 비껴(접선) 돈다. 근접 무공(삼재검법)이 닿게 하려는 것(멀리 도망만 치면 처치 0)
             Vector2 p = runner.player.position;
             Vector2 away = Vector2.zero, nearest = Vector2.zero;
-            float nearD2 = float.MaxValue;
+            float nearGap = float.MaxValue; // 가장 가까운 적 덩이 가장자리까지(세계 m)
             var sim = runner.enemies != null ? runner.enemies.Sim : null;
+            var wsk = BloodRain.Sim.WorldScale.Current;
             if (sim != null)
             {
                 var agents = sim.Agents;
-                // 경지가 오르면 세상 배율이 바뀌니 거리도 경지 m 로 잰다(이류 돌파 뒤 1.8m 고정이면 몸에 닿는 거리 안에 서 있게 됨)
-                var wsk = BloodRain.Sim.WorldScale.Current;
+                // 경지가 오르면 세상 배율이 바뀌니 거리도 경지 m 로 잰다. 이류부터 적이 덩이(4·9·16명)라 반경이 커지니
+                // 중심이 아니라 덩이 가장자리까지 잰다(중심으로 재면 덩이 속에 서 있게 돼 1초에 한 번씩 맞았다, 2026-11-20).
+                // 아래 경지에서 생긴 적은 밟히는 쪽이라 피하지 않는다.
                 float ko = wsk != null ? wsk.Length(keepOut) : keepOut;
-                float k2 = ko * ko;
                 for (int i = 0; i < sim.Count; i++)
                 {
-                    var e = agents[i].Pos;
-                    var d = p - new Vector2(e.x, e.y);
-                    float m2 = d.sqrMagnitude;
-                    if (m2 < nearD2) { nearD2 = m2; nearest = new Vector2(e.x, e.y); }
-                    if (m2 > k2 || m2 < 1e-4f) continue;
-                    away += d / m2;
+                    var a = agents[i];
+                    var d = p - new Vector2(a.Pos.x, a.Pos.y);
+                    float dist = d.magnitude;
+                    float gap = dist - a.Radius;
+                    if (wsk != null && !wsk.Scale.DealsContactDamage(a.BornRealm, wsk.Realm)) continue;
+                    if (gap < nearGap) { nearGap = gap; nearest = new Vector2(a.Pos.x, a.Pos.y); }
+                    if (gap > ko || dist < 1e-3f) continue;
+                    away += d / (dist * Mathf.Max(0.05f, gap));
                 }
             }
             _wanderAngle += dt * 0.4f;
             Vector2 move;
             if (away.sqrMagnitude > 1e-6f) move = away.normalized;
-            else if (BloodRain.Sim.WorldScale.Current == null || nearD2 < BloodRain.Sim.WorldScale.Current.Length(fleeRadius * 2f) * BloodRain.Sim.WorldScale.Current.Length(fleeRadius * 2f))
+            else if (wsk == null || nearGap < wsk.Length(fleeRadius * 2f))
             {
                 var to = (nearest - p).normalized;
                 var side = new Vector2(-to.y, to.x);
@@ -103,7 +106,7 @@ namespace BloodRain.Presentation.Hud
                         float m2 = (list[i].Pos - p).sqrMagnitude;
                         if (m2 < best) { best = m2; tgt = list[i].Pos; found = true; }
                     }
-                    if (found && (nearD2 > (BloodRain.Sim.WorldScale.Current != null ? BloodRain.Sim.WorldScale.Current.Length(keepOut * 2f) * BloodRain.Sim.WorldScale.Current.Length(keepOut * 2f) : keepOut * keepOut * 4f))) move = ((tgt - p).normalized * 1.5f + move * 0.5f).normalized;
+                    if (found && nearGap > (wsk != null ? wsk.Length(keepOut * 2f) : keepOut * 2f)) move = ((tgt - p).normalized * 1.5f + move * 0.5f).normalized;
                 }
             }
             ControlInput.MoveOverride = Vector2.ClampMagnitude(move, 1f);
