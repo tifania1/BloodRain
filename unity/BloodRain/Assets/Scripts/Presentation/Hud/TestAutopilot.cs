@@ -21,11 +21,12 @@ namespace BloodRain.Presentation.Hud
         LevelUpScreen _lu;
         BloodRain.Presentation.Fx.OrbLayer _orbs;
         PlayerController _pc;
-        readonly System.Text.StringBuilder _log = new System.Text.StringBuilder();
+        static readonly System.Text.StringBuilder _log = new System.Text.StringBuilder(); // 장면이 다시 열려도 이어 쌓는다
         public int Picks { get; private set; }
         public float MinHealthSeen { get; private set; } = float.MaxValue;
 
         void OnDisable() { ControlInput.MoveOverride = null; }
+        void OnDestroy() { if (On) _log.Append($"--- 장면 닫힘(기혈 {(runner != null && runner.vitals != null ? runner.vitals.Health : -1):0}) ---\n"); }
 
         void Update()
         {
@@ -147,6 +148,6 @@ namespace BloodRain.Presentation.Hud
         }
 
         /// <summary>쌓인 기록을 돌려주고 비운다.</summary>
-        public string Report() { var s = _log.ToString(); _log.Clear(); return s; }
+        public static string Report() { var s = _log.ToString(); _log.Clear(); return s; }
     }
 }
