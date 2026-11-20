@@ -862,6 +862,33 @@ namespace BloodRain.Presentation.Fx
             HitFeel.Jolt(.8f, .45f);
         }
 
+        /// <summary>
+        /// 일검(진소운 오의, 서장): 몸을 지나 바라보는 쪽으로 화면 끝에서 끝까지 한 획. at 은 몸, dir 은 바라보는 쪽, half 는 몸에서 화면 끝까지(월드).
+        /// 0.08초에 먹 획이 그어지고(뒤쪽 끝은 마른 비백), 가운데 흰 날빛, 획을 따라 먹 방울. 0.25초 머문 뒤 0.3초에 걸쳐 갈라져 사라진다.
+        /// </summary>
+        public void GreatSlash(Vector2 at, Vector2 dir, float half)
+        {
+            if (dir.sqrMagnitude < 1e-6f) dir = Vector2.right;
+            dir.Normalize();
+            float M = Meter, ang = Mathf.Atan2(dir.y, dir.x), len = half * 2f;
+            var mid = at;
+            Add(.58f, (f, k) =>
+            {
+                float t = f.T, prog = Mathf.Min(1f, t / .08f), diss = Mathf.Max(0f, (t - .28f) / .3f);
+                Quad(1, mid, len, 2.4f * M, ang, new Vector4(.32f, .45f, 1.2f, .55f), FxRamp.Ink, .92f, prog, diss, f.Seed);
+                Glow(1, mid + new Vector2(-dir.y, dir.x) * .12f * M, len * .96f, .7f * M, ang, new Vector4(.22f, .15f, 2f, .4f), FxRamp.Blade, .85f * (1f - diss), prog, diss * 1.2f, f.Seed + 3f);
+            });
+            After(.06f, () =>
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    var p = at + dir * Rnd(-half, half);
+                    Drops(p, ang + (i % 2 == 0 ? Mathf.PI * .5f : -Mathf.PI * .5f), 3, 9f, FxRamp.Ink, false, .12f, .5f);
+                }
+                HitFeel.Jolt(.9f, .55f);
+            });
+        }
+
         /// <summary>천뢰낙(남궁 오의): 낙뢰 여러 곳이 0.035초씩 어긋나게 떨어진다(5단 낙뢰 그림). R 은 한 곳 맞는 반경(월드).</summary>
         public void ThunderRain(Vector2[] pts, float R)
         {

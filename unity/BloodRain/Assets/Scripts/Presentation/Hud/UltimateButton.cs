@@ -162,6 +162,19 @@ namespace BloodRain.Presentation.Hud
             if (freeze > 0f) runner.enemies.Freeze(_near, freeze);
             var field = runner.enemies;
             if (StrikeShaped(runner, ult, dmg, center, cam)) return;
+            if (ult.Id == "il_geom")
+            {
+                // 2026-11-21 일검: 화면 가운데를 비스듬히 가르는 UI 획 대신 몸을 지나 바라보는 쪽으로 화면 끝에서 끝까지 한 획(세상 위)
+                var fxG = BloodRain.Presentation.Fx.SectFx.Instance;
+                var wrG = runner.weapons != null ? runner.weapons : Object.FindFirstObjectByType<WeaponRunner>();
+                if (fxG != null && fxG.Ready && runner.player != null)
+                {
+                    Vector2 face = wrG != null ? wrG.Facing : Vector2.right;
+                    float half = cam.orthographicSize * Mathf.Sqrt(1f + cam.aspect * cam.aspect) * 1.05f;
+                    fxG.GreatSlash(runner.player.position, face, half);
+                    _slashT = -1f;
+                }
+            }
             LastHits = dmg <= 0f ? 0 : UltimateEffects.CheonseolBu == ult.Id
                 ? field.Damage(_near, dmg, center, 0f, a => UltimateEffects.Damages(ult, field.DefOf(a.Kind)))
                 : field.Damage(_near, dmg, center, 0f);
