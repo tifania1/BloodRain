@@ -139,6 +139,7 @@ namespace BloodRain.Presentation.Combat
         readonly List<int> _filtered = new List<int>();
         readonly List<float> _xs = new List<float>(), _ys = new List<float>();
         readonly Dictionary<int, float> _mistSeconds = new Dictionary<int, float>(); // C-09e 칠보단혼무: 적 Id → 안개 안에 머문 초
+        float _mistExec; // 칠보단혼무 executeSeconds(일곱 숨 점을 그리려고)
         readonly List<int> _executeIds = new List<int>();
         PlayerVitals _vitals; // 혈조 흡혈
         readonly Dictionary<string, float> _dealt = new Dictionary<string, float>();
@@ -653,6 +654,7 @@ namespace BloodRain.Presentation.Combat
                     _executeIds.Clear();
                     if (mistEvo != null)
                     {
+                        _mistExec = mistEvo.Param("executeSeconds", 7f);
                         if (_mistSeconds.Count > 4096) _mistSeconds.Clear();
                         var ag = enemies.Sim.Agents;
                         foreach (int i in _near)
@@ -1521,13 +1523,15 @@ namespace BloodRain.Presentation.Combat
         float BurnDps(Slot s) => WeaponGrowth.At(s.Def.BurnPerSecond, s.level) * burnMultiplier * enemies.dotMultiplier;
 
         /// <summary>C-09c 벽력천화 불바다: left 초 동안 burnTickSeconds 마다 원 안 적의 화상을 다시 채운다(웹 fireField).</summary>
-        void BurnField(Slot s, Vector2 at, float R, float left)
+        void BurnField(Slot s, Vector2 at, float R, float left, bool first = true)
         {
             float tick = DataBoot.Data.Balance.EnemyStatus.BurnTickSeconds;
-            AddFxAt(at, 0f, Mathf.PI * 2f, R, tick * 1.2f, new Color(0.90f, 0.35f, 0.12f, 0.22f));
+            // VF-04U 벽력천화 불바다(시안 fireSea): 그을음 얼룩 위로 호박빛이 일렁이고 불꽃이 혀처럼 오른다. 처음 한 번만 깐다(전엔 틱마다 주황 원판)
+            if (Sfx) { if (first) _sfx.FireSea(at, R, left); }
+            else AddFxAt(at, 0f, Mathf.PI * 2f, R, tick * 1.2f, new Color(0.90f, 0.35f, 0.12f, 0.22f));
             enemies.Sim.QueryCircle(new float2(at.x, at.y), R, _near);
             enemies.AddDot(_near, (s.Def.BurnSeconds ?? 0f) * durationMultiplier, BurnDps(s), false);
-            if (left > tick) Later(tick, () => BurnField(s, at, R, left - tick));
+            if (left > tick) Later(tick, () => BurnField(s, at, R, left - tick, false));
         }
 
         // ── C-09e 흑룡탄 ──
@@ -2277,6 +2281,7 @@ namespace BloodRain.Presentation.Combat
             if (player == null) return;
             _mine = Mathf.Clamp01(BloodRain.Presentation.Meta.SettingsScreen.Current.EffectsAlpha);
             DrawBrushes();
+            DrawBreaths();
             DrawBolts(Time.deltaTime);
             DrawSparks(Time.deltaTime);
             var qi = Ai("fx_sword_qi_glow");
@@ -2316,6 +2321,20 @@ namespace BloodRain.Presentation.Combat
             foreach (var p in _projs)
                 if (!IsSectProj(p) && !ProjFx(p.Weapon, out _, out _, out _))
                     Draw(rp, disc, new Vector3(p.Pos.x, p.Pos.y, -0.26f), 0f, p.Radius, p.Color);
+        }
+
+        /// <summary>VF-04U 칠보단혼무: 안개에 머문 초만큼 적 머리 위에 먹 점(일곱째에 쓰러짐 — 규칙은 EvolvedHits.PoisonExecutes).</summary>
+        void DrawBreaths()
+        {
+            if (!Sfx || _mistSeconds.Count == 0 || _mistExec <= 0f || enemies == null || BloodRain.Presentation.Fx.FxSettings.Simplified) return;
+            var ag = enemies.Sim.Agents;
+            for (int i = 0; i < enemies.Sim.Count; i++)
+            {
+                if (!_mistSeconds.TryGetValue(ag[i].Id, out float t)) continue;
+                int n = Mathf.FloorToInt(t / _mistExec * 7f);
+                if (n < 1 || !enemies.LookOf(ag[i], out _, out float ps, out _)) continue;
+                _sfx.Breaths(new Vector2(ag[i].Pos.x, ag[i].Pos.y) + Vector2.up * ps * .7f, ps, n);
+            }
         }
 
         void Draw(RenderParams rp, Mesh mesh, Vector3 pos, float angle, float radius, Color col)

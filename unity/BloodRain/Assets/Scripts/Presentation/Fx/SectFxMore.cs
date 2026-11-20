@@ -45,14 +45,49 @@ namespace BloodRain.Presentation.Fx
             }
         }
 
+        /// <summary>VF-04U 벽력천화 불바다(시안 fireSea). R 은 불바다 반경(월드), seconds 동안. 바닥 겹(캐릭터 밑).</summary>
+        public void FireSea(Vector2 at, float R, float seconds)
+        {
+            float m = Meter;
+            Add(seconds, (f, k) =>
+            {
+                float t = f.T, al = Mathf.Min(1f, t / .3f) * (1f - Mathf.Max(0f, (k - .8f) / .2f));
+                Quad(3, at, R * 2.1f, R * 1.5f, f.Seed, new Vector4(7f, .35f, .85f, 0f), FxRamp.Soot, .3f * al, 1f, 0f, f.Seed);
+                Glow(3, at + Vector2.up * .05f * m, R * 1.8f * (1f + .04f * Mathf.Sin(t * 9f)), R * 1.25f, f.Seed + 1f, new Vector4(9f, .5f, .8f, 0f), FxRamp.Amber,
+                     (.32f + .1f * Mathf.Sin(t * 13f + f.Seed)) * al, 1f, .25f, f.Seed + Mathf.Floor(t * 6f) * .37f);
+                // 혀처럼 오르는 불(시안은 프레임마다 반 확률 — 여기선 초당 30개쯤)
+                if (!FxSettings.Simplified && k < .9f && Rnd(0f, 1f) < Time.deltaTime * 30f)
+                    Drops(at + new Vector2(Rnd(-.8f, .8f) * R, Rnd(-.45f, .45f) * R), Mathf.PI * .5f, 1, 2.6f, FxRamp.Amber, true, .14f, .15f);
+            }, true);
+        }
+
         /// <summary>이번 프레임에 멈춰 선 적 하나. head 는 머리 위 자리, size 는 사람 하나 크기(월드).</summary>
         public void Stunned(Vector2 head, float size)
         {
             if (_stuns.Count < 48) _stuns.Add(new Vector3(head.x, head.y, size));
         }
 
+        // 칠보단혼무 일곱 숨(시안: 안개에 든 적 머리 위 반원으로 먹 점이 한 숨에 하나, 여섯째부터 독빛). WeaponRunner 가 프레임마다 넘긴다
+        readonly List<Vector4> _breaths = new List<Vector4>();
+
+        /// <summary>이번 프레임 한 적의 숨 점 n 개(1~7). head 는 머리 위, size 는 사람 크기(월드).</summary>
+        public void Breaths(Vector2 head, float size, int n)
+        {
+            if (_breaths.Count < 64 && n > 0) _breaths.Add(new Vector4(head.x, head.y, size, Mathf.Min(7, n)));
+        }
+
         void DrawLive()
         {
+            foreach (var b in _breaths)
+            {
+                int n = (int)b.w;
+                for (int i = 0; i < n; i++)
+                {
+                    float a = Mathf.PI * (.15f + .7f * i / 6f);
+                    Quad(5, new Vector2(b.x + Mathf.Cos(a) * .32f * b.z, b.y + Mathf.Sin(a) * .2f * b.z), .12f * b.z, .12f * b.z, 0f, new Vector4(.4f, 0f, 0f, 0f), n >= 6 ? FxRamp.PoisonInk : FxRamp.Ink, .85f);
+                }
+            }
+            _breaths.Clear();
             foreach (var s in _stuns)
                 for (int i = 0; i < 3; i++)
                 {
