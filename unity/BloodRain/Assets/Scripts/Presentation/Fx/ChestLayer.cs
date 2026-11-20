@@ -246,29 +246,50 @@ namespace BloodRain.Presentation.Fx
                     float t = (Time.unscaledTime - born) / 2f;
                     if (t >= 1f) { _popups.RemoveAt(i); continue; }
                     var sp = cam.WorldToScreenPoint(at);
-                    GUI.color = new Color(1f, 0.82f, 0.38f, 1f - t * t);
-                    GUI.Label(new Rect(sp.x - 200f, Screen.height - sp.y - 70f - t * 40f, 400f, 34f), text, _style);
+                    float pk = Screen.height / 1080f;
+                    _style.fontSize = ImguiFont.Px(26f);
+                    ImguiFont.OutlinedLabel(new Rect(sp.x - 220f * pk, Screen.height - sp.y - (74f + t * 44f) * pk, 440f * pk, 38f * pk), text, _style,
+                        new Color(1f, 0.82f, 0.38f, 1f - t * t), new Color(0.1f, 0.08f, 0.07f, 0.9f), 1.6f * Mathf.Max(1f, pk));
                 }
                 GUI.color = Color.white;
             }
             if (_lines == null) return;
-            // 짧은 목록 화면: 가운데 종이 한 장(그림 오기 전 임시)
+            // 짧은 목록 화면: 가운데 종이 한 장. 2026-11-21 화면 크기에 맞추고(전엔 1080 기준 px 그대로) 선지 결·먹 테·제목 밑 붓 획
+            float k = Screen.height / 1080f;
             _titleStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 30, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.55f, 0.10f, 0.08f) } };
             _listStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 24, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.12f, 0.10f, 0.09f) } };
             _hintStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 19, wordWrap = true, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.55f, 0.36f, 0.06f) } };
-            float hintH = _hint != null ? 56f : 0f;
-            float w = 460f, h = 130f + _lines.Count * 40f + hintH;
+            _titleStyle.fontSize = ImguiFont.Px(34f); _listStyle.fontSize = ImguiFont.Px(26f); _hintStyle.fontSize = ImguiFont.Px(20f);
+            float lineH = 44f * k, hintH = _hint != null ? 64f * k : 0f;
+            float w = 540f * k, h = 160f * k + _lines.Count * lineH + hintH;
             var r = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
-            GUI.color = new Color(0.05f, 0.04f, 0.04f, 0.6f);
+            GUI.color = new Color(0.05f, 0.04f, 0.04f, 0.62f);
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+            GUI.color = new Color(0.10f, 0.08f, 0.07f, 0.75f);
+            GUI.DrawTexture(new Rect(r.x - 2f * k, r.y - 2f * k, r.width + 4f * k, r.height + 4f * k), Texture2D.whiteTexture);
             GUI.color = new Color(0.91f, 0.87f, 0.78f);
             GUI.DrawTexture(r, Texture2D.whiteTexture);
+            var tile = MapLayer.PaperTile;
+            if (tile != null)
+            {
+                GUI.color = new Color(1f, 1f, 1f, 0.5f);
+                GUI.DrawTextureWithTexCoords(r, tile, new Rect(0f, 0f, r.width / 512f, r.height / 512f));
+            }
+            var ink = new Color(0.12f, 0.10f, 0.09f, 0.3f);
+            float ins = 12f * k, lw = Mathf.Max(1f, 1.5f * k);
+            GUI.color = ink;
+            GUI.DrawTexture(new Rect(r.x + ins, r.y + ins, r.width - ins * 2f, lw), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(r.x + ins, r.yMax - ins - lw, r.width - ins * 2f, lw), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(r.x + ins, r.y + ins, lw, r.height - ins * 2f), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(r.xMax - ins - lw, r.y + ins, lw, r.height - ins * 2f), Texture2D.whiteTexture);
+            GUI.color = new Color(0.12f, 0.10f, 0.09f, 0.75f);
+            GUI.DrawTexture(new Rect(r.center.x - 150f * k, r.y + 66f * k, 300f * k, 12f * k), BloodRain.Presentation.Meta.InkUi.BrushStroke);
             GUI.color = Color.white;
-            GUI.Label(new Rect(r.x, r.y + 14f, w, 40f), Loc.T("ui.chest.title"), _titleStyle);
+            GUI.Label(new Rect(r.x, r.y + 20f * k, w, 44f * k), Loc.T("ui.chest.title"), _titleStyle);
             for (int i = 0; i < _lines.Count; i++)
-                GUI.Label(new Rect(r.x, r.y + 64f + i * 40f, w, 36f), _lines[i], _listStyle);
-            if (_hint != null) GUI.Label(new Rect(r.x + 20f, r.yMax - 46f - hintH, w - 40f, hintH), _hint, _hintStyle);
-            GUI.Label(new Rect(r.x, r.yMax - 46f, w, 34f), Loc.T("ui.chest.close"), _listStyle);
+                GUI.Label(new Rect(r.x, r.y + 88f * k + i * lineH, w, 40f * k), _lines[i], _listStyle);
+            if (_hint != null) GUI.Label(new Rect(r.x + 24f * k, r.yMax - 52f * k - hintH, w - 48f * k, hintH), _hint, _hintStyle);
+            GUI.Label(new Rect(r.x, r.yMax - 52f * k, w, 38f * k), Loc.T("ui.chest.close"), _listStyle);
         }
 
         // PR-01U 연 보갑: 그림이 있으면 열린 그림으로 바꿔 목록을 닫은 뒤 잠깐(세상 시간 0.8초) 두었다 지운다. 없으면 바로 지움
