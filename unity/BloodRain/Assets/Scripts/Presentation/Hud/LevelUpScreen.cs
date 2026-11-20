@@ -449,6 +449,9 @@ namespace BloodRain.Presentation.Hud
             var (kind, name, level, note) = Describe(o);
             var card = MakeImage(_cardRow, $"카드 {index + 1}", Paper);
             card.rectTransform.sizeDelta = new Vector2(330, 460);
+            // 2026-11-21 종이 결과 안쪽 가는 먹 테(납작한 크림색 판이었다)
+            BloodRain.Presentation.Meta.InkUi.PaperGrainFill(card.rectTransform, new Vector2(330, 460), 0.32f);
+            BloodRain.Presentation.Meta.InkUi.Frame(card.rectTransform, new Vector2(11, 0), new Vector2(308, 460), 12f, 1.5f, new Color(Ink.r, Ink.g, Ink.b, 0.28f));
             card.raycastTarget = true;
             var btn = card.gameObject.AddComponent<Button>();
             var cols = btn.colors;
@@ -823,6 +826,8 @@ namespace BloodRain.Presentation.Hud
             Place(img.rectTransform, new Vector2(0.5f, 0.5f), pos, new Vector2(320, 72));
             var b = img.gameObject.AddComponent<Button>();
             b.onClick.AddListener(onClick);
+            BloodRain.Presentation.Meta.InkUi.PaperGrainFill(img.rectTransform, new Vector2(320, 72), 0.3f);
+            var edge = img.gameObject.AddComponent<Outline>(); edge.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.5f); edge.effectDistance = new Vector2(2f, -2f);
             label = MakeText(img.rectTransform, "글", 30, Ink, TextAlignmentOptions.Center);
             Stretch(label.rectTransform);
             return b;
