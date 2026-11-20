@@ -141,6 +141,16 @@ namespace BloodRain.Presentation.Hud
             float freeze = UltimateEffects.FreezeSeconds(ult);
             LastDamage = dmg;
             _slashT = 0f;
+            // 2026-11-21 몸마다 제 그림(사자후·천뢰낙·만천화우·역류·태극무량). 그림이 있는 오의는 일검 획을 띄우지 않는다
+            var inkFx = BloodRain.Presentation.Fx.SectFx.Instance;
+            if (inkFx != null && !inkFx.Ready) inkFx = null;
+            if (ult.Id == "taiji_muryang" && inkFx != null && runner.player != null)
+            {
+                var pl = runner.player;
+                float sc0 = BloodRain.Sim.WorldScale.Current != null ? BloodRain.Sim.WorldScale.Current.Length(1f) : 1f;
+                inkFx.TaijiShield(() => (Vector2)pl.position, ult.Param("radius", 3f) * sc0, ult.Param("durationSeconds", 5f));
+                _slashT = -1f;
+            }
             if ((dmg <= 0f && freeze <= 0f) || runner.enemies == null || runner.enemies.Sim == null) { LastHits = 0; return; }
             var cam = Camera.main;
             if (cam == null) return;
@@ -190,6 +200,8 @@ namespace BloodRain.Presentation.Hud
                         hits += field.Damage(_near, dmg, at, 0f);
                     }
                     LastHits = hits;
+                    var fxT = BloodRain.Presentation.Fx.SectFx.Instance;
+                    if (fxT != null && fxT.Ready) { fxT.ThunderRain(LastStrikePoints, cast.StrikeRadius(sc)); _slashT = -1f; }
                     return true;
                 }
                 case "saja_hu":
@@ -212,6 +224,13 @@ namespace BloodRain.Presentation.Hud
                 }
                 case "mancheon_hwau":
                 {
+                    var fxN = BloodRain.Presentation.Fx.SectFx.Instance;
+                    if (fxN != null && fxN.Ready)
+                    {
+                        float vh = cam.orthographicSize, vw = vh * cam.aspect;
+                        fxN.NeedleRain(new Rect(center.x - vw, center.y - vh, vw * 2f, vh * 2f), 18);
+                        _slashT = -1f;
+                    }
                     if (cast.Poisons && cast.PoisonTickSeconds > 0f)
                     {
                         float might = runner.Stats != null ? runner.Stats.Might : 1f;
@@ -251,6 +270,8 @@ namespace BloodRain.Presentation.Hud
                     // 넉백은 from 에서 바깥쪽이라, from 을 몸 한참 뒤에 두면 모두 바라보는 쪽으로 나란히 밀린다
                     LastSweepReach = reach;
                     LastHits = field.Damage(_picked, dmg, me - face * 10000f, waveMps);
+                    var fxW = BloodRain.Presentation.Fx.SectFx.Instance;
+                    if (fxW != null && fxW.Ready) { fxW.Tide(me, face, reach, cast.WaveWidth(sc)); _slashT = -1f; }
                     return true;
                 }
                 case "palbang_pungu":

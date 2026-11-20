@@ -862,6 +862,78 @@ namespace BloodRain.Presentation.Fx
             HitFeel.Jolt(.8f, .45f);
         }
 
+        /// <summary>천뢰낙(남궁 오의): 낙뢰 여러 곳이 0.035초씩 어긋나게 떨어진다(5단 낙뢰 그림). R 은 한 곳 맞는 반경(월드).</summary>
+        public void ThunderRain(Vector2[] pts, float R)
+        {
+            if (pts == null) return;
+            for (int i = 0; i < pts.Length; i++)
+            {
+                var p = pts[i];
+                if (i == 0) Strike(p, R, 5, true);
+                else After(i * .035f, () => Strike(p, R, 5, false));
+            }
+            HitFeel.Jolt(.7f, .45f);
+        }
+
+        /// <summary>만천화우(당가 오의) 한 박자: view(월드 사각형) 안 무작위 n 곳에 암기가 비스듬히 꽂히고 독 꽃이 번진다.</summary>
+        public void NeedleRain(Rect view, int n)
+        {
+            float M = Meter;
+            if (Busy) n = (n + 1) / 2;
+            for (int i = 0; i < n; i++)
+            {
+                var p = new Vector2(Rnd(view.xMin, view.xMax), Rnd(view.yMin, view.yMax));
+                float a = -Mathf.PI * .5f + Rnd(-.5f, .5f), d = Rnd(0f, .5f);
+                var dir = Dir(a);
+                After(d, () =>
+                {
+                    Add(.1f, (f, k) =>
+                    {
+                        var at = p - dir * (1.6f * M * (1f - k));
+                        Quad(1, at, .9f * M, .07f * M, a, new Vector4(.3f, .2f, 2f, .4f), FxRamp.Iron, .9f, 1f, 0f, f.Seed);
+                    });
+                    After(.1f, () => { PoisonBloom(p, Rnd(.7f, 1.1f)); Drops(p, a + Mathf.PI, 3, 5f, FxRamp.PoisonInk, false, .07f, .7f); });
+                });
+            }
+        }
+
+        /// <summary>역류(수로채 오의): from 에서 face 쪽 reach(월드)까지 물살이 0.35초에 밀려 나간다 — 젖은 자국 띠 + 말려 부서지는 물보라.</summary>
+        public void Tide(Vector2 from, Vector2 face, float reach, float width)
+        {
+            if (face.sqrMagnitude < 1e-6f) face = Vector2.right;
+            face.Normalize();
+            float ang = Mathf.Atan2(face.y, face.x);
+            int n = Mathf.Clamp(Mathf.RoundToInt(reach / Mathf.Max(width * .7f, 1e-4f)), 4, 16);
+            for (int i = 0; i < n; i++)
+            {
+                float t = (i + .5f) / n;
+                var p = from + face * reach * t + new Vector2(-face.y, face.x) * Rnd(-.15f, .15f) * width;
+                After(t * .35f, () =>
+                {
+                    Add(.9f, (f, k) => Quad(16, p, width * 2.4f, width * 1.8f, ang, new Vector4(.85f, .5f, .35f, 0f), FxRamp.Water, .4f * (1f - k * k), 1f, k * .5f, f.Seed), true);
+                    Add(.4f, (f, k) => Glow(17, p, width * 1.7f, width * 1.7f, ang + Mathf.PI * .5f, new Vector4(.24f, .45f, .7f, 0f), FxRamp.Water, .85f * (1f - k * k), Mathf.Min(1f, k * 3f), Mathf.Max(0f, k - .4f), f.Seed));
+                    Drops(p, ang, 4, 9f, FxRamp.Water, true, .1f, .6f);
+                });
+            }
+            HitFeel.Jolt(.6f, .35f);
+        }
+
+        /// <summary>태극무량(무당 오의): seconds 동안 몸 둘레 반경 R(월드)에 흑백 태극이 천천히 돌고 테두리에 먹·흰 고리. 들고 날 때 0.25·0.4초 번짐.</summary>
+        public void TaijiShield(Func<Vector2> center, float R, float seconds)
+        {
+            seconds = Mathf.Max(.5f, seconds);
+            Add(seconds, (f, k) =>
+            {
+                var c = center();
+                float on = Mathf.Min(1f, f.T / .25f) * (1f - Mathf.Max(0f, (f.T - (seconds - .4f)) / .4f));
+                Quad(10, c, R * 2.1f, R * 2.1f, -f.T * .9f, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Taiji, .2f * on, 1f, 0f, f.Seed);
+                float S = 2f * R / .7f;
+                Quad(2, c, S, S, 0f, new Vector4(.7f, .035f, .5f, 0f), FxRamp.Ink, .5f * on, 1f, 0f, f.Seed);
+                Glow(2, c, S * .985f, S * .985f, 0f, new Vector4(.7f, .016f, .4f, 0f), FxRamp.Pale, .55f * on * (.75f + .25f * Mathf.Sin(f.T * 5f)), 1f, 0f, f.Seed + 1f);
+            }, true);
+            RingW(center(), R * 2.6f, FxRamp.Ink, .45f, .55f);
+        }
+
         // ── 음공 ─────────────────────────────────────────────
         /// <summary>현이 떨리고 먹 파문이 R(월드)까지 번진다. 2단 마른 메아리 고리, 3단 안쪽 담채, 5단 현에 흰 빛. gold 는 절기·금강후.</summary>
         public void Sonic(Func<Vector2> center, float R, int stage, bool gold = false)
