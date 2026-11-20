@@ -113,7 +113,7 @@
   "ui.map.born": "태어난 곳",
   "ui.map.lord_awake": "주인이 깨어남",
   "ui.lord_woke.title": "주인이 깨어났다",
-  "ui.lord_woke.sub": "{0}의 {1}  ·  혈운 기둥을 찾아가라",
+  "ui.lord_woke.sub": "{1}({0})  ·  혈운 기둥을 찾아가라",
   "ui.map.title": "천하도 天下圖",
   "ui.map.foot": "붉은 점이 지금 자리, 붉은 고리가 혈우 장막이다. 경지가 오르면 세상이 작아져 장막이 넓어진다  ·  M · Esc 닫기",
   "ui.per_second": "초당 {0}",

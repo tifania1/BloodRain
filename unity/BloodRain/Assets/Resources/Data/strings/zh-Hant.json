@@ -666,7 +666,7 @@
   "ui.map.born": "出生之地",
   "ui.map.lord_awake": "主人已醒",
   "ui.lord_woke.title": "主人已醒",
-  "ui.lord_woke.sub": "{0}之{1}  ·  去尋血雲之柱",
+  "ui.lord_woke.sub": "{1}（{0}）  ·  去尋血雲之柱",
   "ui.map.title": "天下圖",
   "ui.map.foot": "紅點是你所在之處，紅圈是血雨帷幕。境界越高，天下越小，帷幕越寬  ·  M · Esc 關閉",
   "ui.per_second": "每秒 {0}",
