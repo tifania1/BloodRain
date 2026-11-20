@@ -1063,6 +1063,10 @@ namespace BloodRain.Presentation
             if (breakthrough == null || ws == null || player == null) return;
             bool revisit = r.Breakthroughs.All(i => !i.LongCinematic);
             breakthrough.Play(ws, from, LevelFloat, player, revisit);
+            // BT-01U 새 경지 한자 낙관(줌·쓸림은 그대로, 다시 오른 경지는 시각 절반)
+            var newRealm = _life.Scale.Realms[_life.Realm];
+            var luf = FindFirstObjectByType<LevelUpScreen>();
+            Hud.RealmSeal.Show(newRealm, _life.Scale.ClusterSize(_life.Realm), revisit, luf != null ? luf.font : null);
         }
 
         void OnGUI()
