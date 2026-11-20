@@ -816,6 +816,7 @@ namespace BloodRain.Presentation.Combat
                     float R = ws.Length((s.Def.StrikeRadius ?? 1.2f) * (thEvo != null ? thEvo.Param("radiusMultiplier", 1f) : 1f));
                     float fuse = s.Def.FuseSeconds ?? 0.4f, kb = ws.Speed(Knock(s));
                     float shock = (thEvo != null || Has(s, "감전")) ? s.Def.ShockSeconds ?? 0.5f : 0f;
+                    if (thEvo != null && Sfx) _sfx.FiveTalismans(() => P, fuse);   // VF-04U 오뢰정법: 하늘에 오각으로 선 부적 다섯
                     for (int k = 0; k < Mathf.Min(n, _targets.Count); k++)
                     {
                         var e = enemies.Sim.Agents[_targets[k]];
@@ -1203,7 +1204,7 @@ namespace BloodRain.Presentation.Combat
                         {
                             _filtered.Clear();
                             int spearSt = FxStage(s), spearK = 0;
-                            if (Sfx) { Lunge(baseA, 0.3f); HitLook(s); }
+                            if (Sfx) { Lunge(baseA, 0.3f); HitLook(s); if (spearEvo != null) _sfx.PearWhirl(() => P, 0.9f); }   // VF-04U 백화난무창 배꽃 소용돌이
                             foreach (var a in dirs)
                             {
                                 float ca = Mathf.Cos(a), sa = Mathf.Sin(a);

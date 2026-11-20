@@ -327,6 +327,19 @@ namespace BloodRain.Presentation.Fx
             }
         }
 
+        /// <summary>VF-04U 백화난무창(이화창 절기): 몸 둘레에 흰 배꽃이 소용돌이친다(시안 hundredFlowers — 반경 1~2.6m, 돌아가는 쪽으로 흩날림). dur 동안.</summary>
+        public void PearWhirl(Func<Vector2> center, float dur)
+        {
+            if (FxSettings.Simplified) return;
+            float m = Meter;
+            Add(dur, (f, k) =>
+            {
+                if (Rnd(0f, 1f) >= Time.deltaTime * 36f) return;
+                float q = f.T * 6f + Rnd(0f, 6.28f), r = Rnd(1f, 2.6f) * m;
+                Petals(center() + new Vector2(Mathf.Cos(q) * r, Mathf.Sin(q) * r * .62f), q + Mathf.PI * .5f, 1, 4f, .2f, .22f, FxRamp.Pale);
+            });
+        }
+
         // 가는 먹 검선. 2단 꽃잎이 따라 나부끼고, 3단 연분홍 담채, 4단 흰 날빛
         void DrawPetalShot(LiveProj p)
         {
@@ -352,6 +365,22 @@ namespace BloodRain.Presentation.Fx
                 var pp = Vector2.Lerp(a0, at + Vector2.up * .9f * m, qq) + Vector2.up * (Mathf.Sin(q * Mathf.PI) * 1.2f * m);
                 Quad(12, pp, .5f * size * m, .9f * size * m, q < 1f ? f.T * 14f : 0f, default, FxRamp.Talis, flick, 1f, 0f, f.Seed);
                 if (q >= 1f && stage >= 2) Quad(2, at + Vector2.up * .15f * m, 1.6f * size * m, m, 0f, new Vector4(.55f + .1f * Mathf.Sin(f.T * 30f), .1f, .5f, 0f), FxRamp.Ink, .5f, 1f, 0f, f.Seed);
+            });
+        }
+
+        /// <summary>VF-04U 오뢰정법(뇌부 절기): 몸 위 하늘에 부적 다섯이 오각으로 서서 돌고 그 둘레에 푸른 뇌기가 짙어진다(시안 fiveThunder). fuse 동안.</summary>
+        public void FiveTalismans(Func<Vector2> center, float fuse)
+        {
+            float m = Meter;
+            Add(fuse + .05f, (f, k) =>
+            {
+                var c = center() + Vector2.up * 3.4f * m;
+                for (int i = 0; i < 5; i++)
+                {
+                    float a = -Mathf.PI * .5f + i * 1.2566f + f.T * .6f;
+                    Quad(12, c + new Vector2(Mathf.Cos(a) * 1.4f * m, Mathf.Sin(a) * .5f * m), .45f * m, .8f * m, 0f, default, FxRamp.Talis, Mathf.Min(1f, f.T / .1f), 1f, 0f, f.Seed + i);
+                }
+                Glow(2, c, 3.2f * m, 1.1f * m, 0f, new Vector4(.85f, .04f, .3f, 0f), FxRamp.Thunder, .5f * k, 1f, 0f, f.Seed);
             });
         }
 
