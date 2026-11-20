@@ -112,6 +112,9 @@ namespace BloodRain.Presentation.Fx
                 var sh = Shader.Find("BloodRain/FxInk");
                 if (sh != null) material = new Material(sh);
             }
+            // 한 번에 그리기(PERF-01U)는 재질에 인스턴싱이 켜져 있어야 한다. 에셋을 바꾸지 않게 복사본에 켠다
+            if (material != null && !material.enableInstancing && SystemInfo.supportsInstancing)
+                material = new Material(material) { enableInstancing = true };
             _mpb = new MaterialPropertyBlock();
             _quad = MakeQuad();
             _noise = MakeNoise();
@@ -176,6 +179,9 @@ namespace BloodRain.Presentation.Fx
             QuadsLastFrame = _quadCount; _quadCount = 0;
             if (material == null) return;
             _rp = new RenderParams(material) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
+            _batching = Instanced && SystemInfo.supportsInstancing && material.enableInstancing;
+            _linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
+            _n = 0; _call = 0;
             _z = ZUnder;
             // 큰 타격에 종이가 잠깐 어두워져 빛이 산다(HitFeel.Jolt). 바닥 위·캐릭터 밑에 화면을 덮는 먹 한 장
             float dim = HitFeel.DimAlpha;
@@ -192,6 +198,7 @@ namespace BloodRain.Presentation.Fx
                 else Quad(s.Shape, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, s.P, s.C, s.A * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
             }
             foreach (var f in _fx) if (f.Under) f.Draw(f, f.T / f.Life);
+            _underEnd = _n;
             _z = ZOver;
             foreach (var f in _fx) if (!f.Under) f.Draw(f, f.T / f.Life);
             DrawLive();
@@ -210,13 +217,37 @@ namespace BloodRain.Presentation.Fx
                 if (d.Glow) Glow(5, d.Pos, d.Size * (1f + sp * .09f), d.Size * (1f - k * .5f), rot, p, d.C, al);
                 else Quad(5, d.Pos, d.Size * (1f + sp * .09f), d.Size * (1f - k * .5f), rot, p, d.C, al);
             }
+            if (_batching)
+            {
+                Flush(0, _underEnd, ZUnder);
+                Flush(_underEnd, _n, ZOver);
+                _batching = false;   // LateUpdate 밖에서 부르면 예전처럼 바로 그린다
+            }
         }
+
+        /// <summary>한 번에 그리기를 쓸지(PERF-01U). 끄면 예전처럼 장마다 RenderMesh — 견주기용.</summary>
+        public static bool Instanced = true;
 
         // ── 한 장 그리기 ─────────────────────────────────────────────
         /// <summary>FxInk 사각형 한 장. w·h 는 월드 크기(음수면 뒤집힘), rot 은 라디안.</summary>
         public void Quad(int shape, Vector2 pos, float w, float h, float rot, Vector4 p, FxRamp c,
             float alpha = 1f, float prog = 1f, float diss = 0f, float seed = 0f, bool add = false)
         {
+            _z -= 0.0002f;   // 부른 순서대로 위에 쌓인다
+            _quadCount++;
+            var m = Matrix4x4.TRS(new Vector3(pos.x, pos.y, _z), Quaternion.Euler(0f, 0f, rot * Mathf.Rad2Deg), new Vector3(w, h, 1f));
+            if (_batching)
+            {
+                // PERF-01U: 바로 그리지 않고 쌓았다가 LateUpdate 끝에 한 번에(부른 순서 = 그리는 순서)
+                if (_n == _bMat.Length) GrowBatch();
+                _bMat[_n] = m; _bShape[_n] = shape; _bP[_n] = p; _bProg[_n] = prog; _bDiss[_n] = diss; _bSeed[_n] = seed;
+                _bAlpha[_n] = alpha; _bAdd[_n] = add ? 1f : 0f; _bHdr[_n] = add ? GlowHdr : 1f;
+                // SetColor 는 선형 공간이면 색을 바꿔 넣지만 SetVectorArray 는 안 바꾼다 — 여기서 같게 맞춘다
+                if (_linear) { _bC0[_n] = c.Edge.linear; _bC1[_n] = c.Mid.linear; _bC2[_n] = c.Core.linear; }
+                else { _bC0[_n] = c.Edge; _bC1[_n] = c.Mid; _bC2[_n] = c.Core; }
+                _n++;
+                return;
+            }
             _mpb.Clear();
             _mpb.SetTexture(IdNoise, _noise);
             _mpb.SetFloat(IdShape, shape);
@@ -231,10 +262,57 @@ namespace BloodRain.Presentation.Fx
             _mpb.SetColor(IdC0, c.Edge);
             _mpb.SetColor(IdC1, c.Mid);
             _mpb.SetColor(IdC2, c.Core);
-            _z -= 0.0002f;   // 부른 순서대로 위에 쌓인다
-            _quadCount++;
-            var m = Matrix4x4.TRS(new Vector3(pos.x, pos.y, _z), Quaternion.Euler(0f, 0f, rot * Mathf.Rad2Deg), new Vector3(w, h, 1f));
             Graphics.RenderMesh(_rp, _quad, 0, m);
+        }
+
+        // ── 한 번에 그리기(PERF-01U, 2026-11-20) ─────────────────────────
+        // 예전엔 장마다 Graphics.RenderMesh 한 번이라 후반 300~680장이면 그리기 호출만으로 fps 가 80 → 50 이었다.
+        // 이제 LateUpdate 동안 쌓아 두고 끝에 캐릭터 밑(Under)·위(Over) 두 묶음을 RenderMeshInstanced 로 그린다.
+        // 한 묶음 안에서는 넣은 차례대로 그려지니 겹 순서는 전과 같다. 인스턴싱이 안 되는 기기는 예전 길.
+        const int Chunk = 500;   // 한 번 부를 때 장 수(인스턴스 상수 버퍼 크기 안쪽)
+        bool _batching, _linear;
+        int _n, _underEnd;
+        Matrix4x4[] _bMat = new Matrix4x4[1024];
+        float[] _bShape = new float[1024], _bProg = new float[1024], _bDiss = new float[1024], _bSeed = new float[1024],
+            _bAlpha = new float[1024], _bAdd = new float[1024], _bHdr = new float[1024];
+        Vector4[] _bP = new Vector4[1024], _bC0 = new Vector4[1024], _bC1 = new Vector4[1024], _bC2 = new Vector4[1024];
+        readonly Matrix4x4[] _cMat = new Matrix4x4[Chunk];
+        readonly float[] _cShape = new float[Chunk], _cProg = new float[Chunk], _cDiss = new float[Chunk], _cSeed = new float[Chunk],
+            _cAlpha = new float[Chunk], _cAdd = new float[Chunk], _cHdr = new float[Chunk];
+        readonly Vector4[] _cP = new Vector4[Chunk], _cC0 = new Vector4[Chunk], _cC1 = new Vector4[Chunk], _cC2 = new Vector4[Chunk];
+        readonly List<MaterialPropertyBlock> _mpbs = new List<MaterialPropertyBlock>();
+        int _call;
+
+        void GrowBatch()
+        {
+            int n = _bMat.Length * 2;
+            Array.Resize(ref _bMat, n); Array.Resize(ref _bShape, n); Array.Resize(ref _bProg, n); Array.Resize(ref _bDiss, n);
+            Array.Resize(ref _bSeed, n); Array.Resize(ref _bAlpha, n); Array.Resize(ref _bAdd, n); Array.Resize(ref _bHdr, n);
+            Array.Resize(ref _bP, n); Array.Resize(ref _bC0, n); Array.Resize(ref _bC1, n); Array.Resize(ref _bC2, n);
+        }
+
+        void Flush(int from, int to, float zCenter)
+        {
+            for (int s = from; s < to; s += Chunk)
+            {
+                int c = Mathf.Min(Chunk, to - s);
+                // 부를 때마다 따로 된 블록(같은 프레임의 앞 묶음 값을 덮지 않게)
+                if (_call == _mpbs.Count) _mpbs.Add(new MaterialPropertyBlock());
+                var _mpbI = _mpbs[_call++];
+                var rp = new RenderParams(material) { matProps = _mpbI, layer = gameObject.layer, worldBounds = new Bounds(new Vector3(0f, 0f, zCenter), Vector3.one * 1e7f) };
+                Array.Copy(_bMat, s, _cMat, 0, c); Array.Copy(_bShape, s, _cShape, 0, c); Array.Copy(_bProg, s, _cProg, 0, c);
+                Array.Copy(_bDiss, s, _cDiss, 0, c); Array.Copy(_bSeed, s, _cSeed, 0, c); Array.Copy(_bAlpha, s, _cAlpha, 0, c);
+                Array.Copy(_bAdd, s, _cAdd, 0, c); Array.Copy(_bHdr, s, _cHdr, 0, c); Array.Copy(_bP, s, _cP, 0, c);
+                Array.Copy(_bC0, s, _cC0, 0, c); Array.Copy(_bC1, s, _cC1, 0, c); Array.Copy(_bC2, s, _cC2, 0, c);
+                _mpbI.Clear();
+                _mpbI.SetTexture(IdNoise, _noise);
+                _mpbI.SetFloat(IdTime, _time);
+                _mpbI.SetFloatArray(IdShape, _cShape); _mpbI.SetFloatArray(IdProg, _cProg); _mpbI.SetFloatArray(IdDiss, _cDiss);
+                _mpbI.SetFloatArray(IdSeed, _cSeed); _mpbI.SetFloatArray(IdAlpha, _cAlpha); _mpbI.SetFloatArray(IdAdd, _cAdd);
+                _mpbI.SetFloatArray(IdHdr, _cHdr); _mpbI.SetVectorArray(IdP, _cP);
+                _mpbI.SetVectorArray(IdC0, _cC0); _mpbI.SetVectorArray(IdC1, _cC1); _mpbI.SetVectorArray(IdC2, _cC2);
+                Graphics.RenderMeshInstanced(rp, _quad, 0, _cMat, c);
+            }
         }
 
         /// <summary>더하기 겹의 HDR 배수(PP-01U). Bloom 문턱 1 을 기·금빛만 넘게 한다. 1 이면 예전과 같다.</summary>
