@@ -1054,7 +1054,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
   - 끝: 숭산 한 생 10분쯤에서 저장하고 나가 이어 하면 시각·레벨·무공·음양·오의·은자·깨달음·영약이 같고 콘솔 에러 0
   - 찍기: `Captures/` 의 `resume_before.png`·`resume_after.png`
 
-- [ ] GM-01U M2 지역 기믹(청운진 우물·부서지는 수레와 장독, 숭산 범종·탑림, 개방 술독, 남궁 검각 시렁) · 먼저: 없음(R-10 2026-11-20 '표대로' — 자리·개수는 gimmicks.json layout, 놓는 함수 Core `GimmickLayout.Near`) (2026-11-10 클라우드가 넣음 — M2 '숭산 일대' 기믹인데 Unity 항목이 없었음. 원각 범종 낙하가 남기는 종은 BR-03)
+- [ ] GM-01U M2 지역 기믹(청운진 우물·부서지는 수레와 장독, 숭산 범종·탑림, 개방 술독, 남궁 검각 시렁) · 먼저: 없음 (진행: 2026-11-20 대화 세션 — 숭산 범종·탑림 끝: `Fx/GimmickLayer`(LifeRunner 가 붙임)가 Core `GimmickLayout.Near` 로 플레이어 둘레 화면 1.2배 안 칸만 깐다. 범종 30m 격자·한가운데 하나·닿으면 둘레 적 기절·쿨 중엔 흐림·먹 고리, 탑림 60m 반 칸 격자에 `PagodaForest.Layout` 돌탑(원화 다섯 벌), 플레이어는 PlayerController 가 `Resolve`, 걷는 적은 EnemyField 가 Step 뒤 `PushAgents`(나는 적 빼고). 돌파하면 새 축척으로 다시 깜. 숭산 삼류에서 돌탑 무더기·범종 찍어 봄(PC `Captures/pagoda2.png`). 남은 것: 청운진 우물·장독·수레, 개방 술독, 남궁 시렁 — 자리·개수가 시작값 표 2절에 없다(우물은 서장 판에만). 범종 격자 규칙(30m, 한가운데 하나)을 그대로 쓸지 사람에게 물을 것)(R-10 2026-11-20 '표대로' — 자리·개수는 gimmicks.json layout, 놓는 함수 Core `GimmickLayout.Near`) (2026-11-10 클라우드가 넣음 — M2 '숭산 일대' 기믹인데 Unity 항목이 없었음. 원각 범종 낙하가 남기는 종은 BR-03)
   - 할 것: 지역마다 그 지역 기믹을 지금 경지 축척으로 깐다(7장 '그 지역 안에서만', 경지가 바뀌면 새로). 범종 `BellGimmick`(지역 종이라 수명·횟수 없음, 60초 쿨다운), 탑림 `PagodaForest.Layout` 돌탑을 이동 막는 원으로(날짐승은 통과 — `BlocksMovement`), 우물 `WellGimmick`(한 번 회복), 술독·검각 시렁 `BreakableGimmick`(무공에 맞으면 Hit, 깨지면 음식 또는 은자 5~10). 자리·개수는 R-10 결정 뒤 그 표대로.
   - 쓸 것: Core `World/Gimmicks.cs`·`Gimmicks2.cs`, gimmicks.json `bell`·`pagodaForest`·`well`·`wineJars`·`swordRacks`, cheonha.json regions `gimmicks`, 웹 lookdev `cheonha.html` 범종·탑림 깔기(LD.bellSpacing 30·pagodaSpacing 60)
   - 메뉴: R-13U 와 같은 `BloodRain/Bootstrap/Run 씬에 지역 기믹 붙이기`
