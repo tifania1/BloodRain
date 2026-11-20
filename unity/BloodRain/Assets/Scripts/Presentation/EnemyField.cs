@@ -973,8 +973,8 @@ namespace BloodRain.Presentation
         // ── 적의 탄(혈궁수 화살·매화검귀 꽃잎·설인 얼음) ─────────────────
         //   EnemySim 이 Fire 를 세운 적마다 EnemyDef.Shoot 대로 플레이어 쪽으로 Count 발(Spread 도 사이에 고르게).
         //   탄은 초속 Speed, Range 날아가면 사라지고, 플레이어 몸 원에 닿으면 ProjectileDamage(무적이면 그냥 지나간다). 탄은 세계 m.
-        //   그림은 이펙트가 오기 전 임시 점(종류 색).
-        struct Shot { public Vector2 Pos, Vel; public float Left, Radius, Damage; public Color Color; public bool Poison, Reflected; } // Poison: 독 탄(당가 몸이면 맞아도 0, R-04Ub). 아직 쏘는 적 없음 — 정예 E-01 암기 강시부터
+        //   그림은 SectFx 가 수묵으로(혈궁수 화살·매화 꽃잎·얼음덩이·분신 기 구슬, 2026-11-21). SectFx 가 없는 씬만 예전 임시 점(종류 색).
+        struct Shot { public Vector2 Pos, Vel; public float Left, Radius, Damage; public Color Color; public bool Poison, Reflected; public SectFx.EnemyShotLook Look; } // Poison: 독 탄(당가 몸이면 맞아도 0, R-04Ub). 아직 쏘는 적 없음 — 정예 E-01 암기 강시부터
         readonly List<Shot> _shots = new List<Shot>();
         readonly List<SpriteRenderer> _shotViews = new List<SpriteRenderer>();
         Sprite _dot;
@@ -1017,11 +1017,17 @@ namespace BloodRain.Presentation
                     {
                         Pos = from, Vel = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * speed,
                         Left = a.ShootRange, Radius = ws.Length(sh.Radius, a.BornRealm), Damage = SpawnDamage(def.ProjectileDamage) * (1f + a.Buff),
-                        Color = _kinds[a.Kind].Tint,
+                        Color = _kinds[a.Kind].Tint, Look = ShotLookOf(def),
                     });
                 }
             }
         }
+
+        static SectFx.EnemyShotLook ShotLookOf(EnemyDef def) =>
+            def.Behavior == "petal_shot" ? SectFx.EnemyShotLook.Petal : def.Behavior == "ice_throw" ? SectFx.EnemyShotLook.Ice : SectFx.EnemyShotLook.Arrow;
+
+        /// <summary>수묵 이펙트 층이 있으면 적 탄·장판을 거기 그린다(없으면 예전 임시 점·원).</summary>
+        static SectFx InkFx => SectFx.Instance != null && SectFx.Instance.Ready ? SectFx.Instance : null;
 
         // ── 혈영 분신(C-02b mimic) ─────────────────────────────
         // Core Mimicry.Weapons 가 준 무공(잡몹: 시작 무공 하나, 피해 0.3배·쿨 2배 — 배율은 backlog C-14 결정 대기)을 적이 쓴다.
@@ -1107,6 +1113,7 @@ namespace BloodRain.Presentation
                         {
                             Pos = from, Vel = dir * speed, Left = reach * 1.2f,
                             Radius = ws.Length(w.Shot?.Radius ?? 0.25f, a.BornRealm), Damage = dmg, Color = _kinds[a.Kind].Tint,
+                            Look = SectFx.EnemyShotLook.Qi,
                         });
                     }
                     else
@@ -1172,7 +1179,8 @@ namespace BloodRain.Presentation
                 tex.Apply();
                 _dot = Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), N);
             }
-            while (_shotViews.Count < _shots.Count)
+            var ink = InkFx;
+            while (ink == null && _shotViews.Count < _shots.Count)
             {
                 var go = new GameObject("적 탄");
                 go.transform.SetParent(transform, false);
@@ -1181,10 +1189,12 @@ namespace BloodRain.Presentation
                 sr.sortingOrder = 30;
                 _shotViews.Add(sr);
             }
+            if (ink != null)
+                foreach (var s in _shots) ink.EnemyShot(s.Look, s.Pos, s.Vel, s.Radius, s.Reflected);
             for (int i = 0; i < _shotViews.Count; i++)
             {
                 var sr = _shotViews[i];
-                bool on = i < _shots.Count;
+                bool on = ink == null && i < _shots.Count;
                 if (sr.enabled != on) sr.enabled = on;
                 if (!on) continue;
                 var s = _shots[i];
@@ -1198,8 +1208,8 @@ namespace BloodRain.Presentation
         //   EnemyDef.Pool 이 있는 적은 Interval 초마다 그때 플레이어 발밑에 반경 Radius(경지 m) 웅덩이를 깔고 Seconds 초 남긴다.
         //   한 적이 깐 것은 Max 개까지(넘으면 오래된 것부터). 플레이어가 하나라도 밟고 있으면 1초마다 ZoneDamagePerSecond 를 한 번
         //   (겹쳐 밟아도 한 번, 무적이면 Hit 이 걸러 냄). 화면 밖(대각선 절반 너머) 혈술사는 깔지 않는다. 깐 적이 쓰러져도 웅덩이는 남는다.
-        //   첫 웅덩이는 나온 뒤 0~Interval 사이. 그림은 이펙트가 오기 전 임시 핏빛 원.
-        struct Pool { public Vector2 Pos; public float Radius, Left, Damage; public int Owner; public Color Color; public bool Poison, Reflected; }
+        //   첫 웅덩이는 나온 뒤 0~Interval 사이. 그림은 SectFx 가 수묵으로(번져 고였다 갈라져 마름, 2026-11-21). SectFx 가 없으면 예전 임시 원.
+        struct Pool { public Vector2 Pos; public float Radius, Left, Damage, Age, Seed; public int Owner; public Color Color; public bool Poison, Reflected; public SectFx.GroundLook Look; }
         readonly List<Pool> _pools = new List<Pool>();
         readonly List<SpriteRenderer> _poolViews = new List<SpriteRenderer>();
         readonly Dictionary<int, float> _poolTimers = new Dictionary<int, float>();
@@ -1231,11 +1241,14 @@ namespace BloodRain.Presentation
                         for (int k = 0; k < _pools.Count; k++)
                             if (_pools[k].Owner == a.Id) { mine++; if (oldest < 0) oldest = k; }
                         if (pool.Max > 0 && mine >= pool.Max && oldest >= 0) _pools.RemoveAt(oldest);
+                        float pr0 = ws.Length(pool.Radius, a.BornRealm);
                         _pools.Add(new Pool
                         {
-                            Pos = p, Radius = ws.Length(pool.Radius, a.BornRealm), Left = pool.Seconds,
+                            Pos = p, Radius = pr0, Left = pool.Seconds,
                             Damage = SpawnDamage(def.ZoneDamagePerSecond) * (1f + a.Buff), Owner = a.Id, Color = PoolColor,
+                            Look = SectFx.GroundLook.Blood, Seed = (float)_rng.NextDouble() * 7f,
                         });
+                        InkFx?.GroundBorn(SectFx.GroundLook.Blood, p, pr0);
                     }
                     t += pool.Interval;
                 }
@@ -1248,6 +1261,7 @@ namespace BloodRain.Presentation
             {
                 var q = _pools[k];
                 q.Left -= dt;
+                q.Age += dt;
                 if (q.Left <= 0f) { _pools.RemoveAt(k); continue; }
                 _pools[k] = q;
                 float r = q.Radius + pr * 0.5f; // 몸 가운데가 웅덩이 가장자리를 넘어서면 밟은 것
@@ -1270,7 +1284,7 @@ namespace BloodRain.Presentation
         // ── 표식 뒤 순간이동(혈영자객 mark_teleport) ─────────────────
         //   EnemyDef.Mark 가 있는 적은 처음 나타나면 바로, 그 뒤 Interval 초마다 그때 플레이어 발밑에 반경 Radius(경지 m) 붉은 표식을 찍고
         //   Telegraph 초 뒤 그 자리로 옮긴다. 그 순간 플레이어가 표식 안이면 접촉 피해 한 번(기수 깃발 배율, 무적이면 Hit 이 거름).
-        //   걸음(speed 0)은 시뮬이 그대로 돌린다. 표식 그림은 웅덩이 줄에 피해 0 으로 얹는다(이펙트 오기 전 임시).
+        //   걸음(speed 0)은 시뮬이 그대로 돌린다. 표식은 웅덩이 줄에 피해 0 으로 얹는다 — 그림은 붉은 고리 안이 예고 시간만큼 차오름(SectFx, 2026-11-21).
         struct MarkState { public float Next, Left; public Vector2 At; }
         readonly Dictionary<int, MarkState> _marks = new Dictionary<int, MarkState>();
         static readonly Color MarkColor = new Color(0.85f, 0.08f, 0.06f, 0.35f);
@@ -1312,7 +1326,8 @@ namespace BloodRain.Presentation
                         s.At = p;
                         s.Left = tele;
                         s.Next = Mathf.Max(0f, mk.Interval - tele); // 표식부터 다음 표식까지 Interval(예고 동안은 Next 가 줄지 않는다)
-                        _pools.Add(new Pool { Pos = p, Radius = ws.Length(mk.Radius, a.BornRealm), Left = tele, Damage = 0f, Owner = -2, Color = Hud.DangerColors.Of(MarkColor) });
+                        _pools.Add(new Pool { Pos = p, Radius = ws.Length(mk.Radius, a.BornRealm), Left = tele, Damage = 0f, Owner = -2, Color = Hud.DangerColors.Of(MarkColor),
+                                              Look = SectFx.GroundLook.Mark, Seed = (float)_rng.NextDouble() * 7f });
                     }
                 }
                 _marks[a.Id] = s;
@@ -1456,18 +1471,22 @@ namespace BloodRain.Presentation
                     if (d.EnemyDamage > 0f && _splinterHits.Count > 0) Damage(_splinterHits, d.EnemyDamage, pos, 0f);
                     if (d.PlayerDamage > 0f && vitals != null && (pos - p).sqrMagnitude <= (r + pr) * (r + pr)) HitPlayer(SpawnDamage(d.PlayerDamage));
                     // 터진 자리를 0.3초 비춘다(이펙트 오기 전 임시)
-                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = 0.3f, Damage = 0f, Owner = -1, Color = SplinterColor });
+                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = 0.3f, Damage = 0f, Owner = -1, Color = SplinterColor, Look = SectFx.GroundLook.Splinter, Seed = (float)_rng.NextDouble() * 7f });
+                    InkFx?.GroundBorn(SectFx.GroundLook.Splinter, pos, r);
                 }
                 else if (def.OnDeath == "poison_pool" && d.Seconds > 0f)
                 {
-                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = d.Seconds, Damage = SpawnDamage(d.PerSecond), Owner = -1, Color = PoisonColor, Poison = true });
+                    _pools.Add(new Pool { Pos = pos, Radius = r, Left = d.Seconds, Damage = SpawnDamage(d.PerSecond), Owner = -1, Color = PoisonColor, Poison = true,
+                                          Look = SectFx.GroundLook.Poison, Seed = (float)_rng.NextDouble() * 7f });
+                    InkFx?.GroundBorn(SectFx.GroundLook.Poison, pos, r);
                 }
             }
         }
 
         void DrawPools()
         {
-            while (_poolViews.Count < _pools.Count)
+            var ink = InkFx;
+            while (ink == null && _poolViews.Count < _pools.Count)
             {
                 var go = new GameObject("피 웅덩이");
                 go.transform.SetParent(transform, false);
@@ -1476,10 +1495,12 @@ namespace BloodRain.Presentation
                 sr.sortingOrder = 2;
                 _poolViews.Add(sr);
             }
+            if (ink != null)
+                foreach (var q in _pools) ink.GroundZone(q.Look, q.Pos, q.Radius, q.Age, q.Left, q.Seed);
             for (int i = 0; i < _poolViews.Count; i++)
             {
                 var sr = _poolViews[i];
-                bool on = i < _pools.Count && _dot != null;
+                bool on = ink == null && i < _pools.Count && _dot != null;
                 if (sr.enabled != on) sr.enabled = on;
                 if (!on) continue;
                 var q = _pools[i];
@@ -1493,7 +1514,7 @@ namespace BloodRain.Presentation
         }
 
         // 독인 poison_aura(enemies.json zoneRadius·zoneDamagePerSecond, 기획서 6장 '제 몸 둘레 반경 1.5m 독안개, 초당 4'):
-        // 웅덩이와 같은 줄에서 큰 값 하나를 1초에 한 번. 안개 그림은 몸을 따라다니는 옅은 초록 원(임시).
+        // 웅덩이와 같은 줄에서 큰 값 하나를 1초에 한 번. 안개 그림은 몸을 따라다니는 옅은 독물과 도는 안개(SectFx, 2026-11-21 — 없으면 임시 초록 원).
         readonly List<SpriteRenderer> _zoneViews = new List<SpriteRenderer>();
 
         float StepZones(Vector2 p, float pr)
@@ -1511,6 +1532,8 @@ namespace BloodRain.Presentation
                 float zr = ws.Length(def.ZoneRadius, a.BornRealm);
                 float r = zr + pr * 0.5f;
                 if (!PoisonImmune && (at - p).sqrMagnitude <= r * r) hurt = Mathf.Max(hurt, def.ZoneDamagePerSecond * (1f + a.Buff)); // R-04Ub 당가는 독안개 무효
+                var ink = InkFx;
+                if (ink != null) { ink.PoisonAura(at, zr); continue; } // 2026-11-21 수묵 독안개(SectFx). 없으면 예전 임시 원
                 if (_dot == null) continue;
                 if (shown == _zoneViews.Count)
                 {

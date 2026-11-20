@@ -197,6 +197,7 @@ namespace BloodRain.Presentation.Fx
                 if (s.Shape == 0) Quad(3, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, new Vector4(3f, .35f, .8f, 0f), FxRamp.Ink, .26f * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
                 else Quad(s.Shape, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, s.P, s.C, s.A * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
             }
+            DrawGroundLive();   // 적이 깐 웅덩이·독안개·표식(바닥 겹, 2026-11-21)
             foreach (var f in _fx) if (f.Under) f.Draw(f, f.T / f.Life);
             _underEnd = _n;
             _z = ZOver;

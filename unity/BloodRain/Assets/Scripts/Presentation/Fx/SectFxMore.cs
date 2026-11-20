@@ -85,6 +85,181 @@ namespace BloodRain.Presentation.Fx
             if (_breaths.Count < 64 && n > 0) _breaths.Add(new Vector4(head.x, head.y, size, Mathf.Min(7, n)));
         }
 
+        // ── 적 쪽 그림(2026-11-21) ─────────────────────────────────────
+        // 적 탄·피 웅덩이·독 장판·독안개·혈영자객 표식이 '이펙트 오기 전 임시' 점과 원(SpriteRenderer)이었다. 혈술사 웅덩이가 겹치면
+        // 플레이어 둘레가 납작한 붉은 판, 혈궁수 화살은 잿빛 동그라미였다. EnemyField 가 프레임마다 자리·크기만 넘기고 여기서 수묵으로 그린다.
+        // 판정은 그대로 EnemyField 몫이고 그림의 테두리 = 맞는 반경. 위험 붉은빛은 DangerColors(UI-03 색각 보정)를 거친다.
+        public enum EnemyShotLook { Arrow, Petal, Ice, Qi }
+        public enum GroundLook { Blood, Poison, Splinter, Mark }
+
+        struct EShot { public EnemyShotLook Look; public Vector2 Pos, Vel; public float R; public bool Back; }
+        struct Ground { public GroundLook Look; public Vector2 Pos; public float R, Age, Left, Seed; }
+        readonly List<EShot> _eshots = new List<EShot>();
+        readonly List<Ground> _grounds = new List<Ground>();
+        readonly List<Vector3> _auras = new List<Vector3>();
+
+        static Color Cc(float r, float g, float b) => new Color(r, g, b, 1f);
+        // 웅덩이(모양 16)는 가장자리 열이 높다 → 심 색이 테두리에 고인다
+        static readonly FxRamp PoolBlood = new FxRamp(Cc(.56f, .08f, .07f), Cc(.4f, .04f, .04f), Cc(.2f, .02f, .02f));
+        static readonly FxRamp PoolVenom = new FxRamp(Cc(.36f, .56f, .2f), Cc(.22f, .42f, .12f), Cc(.09f, .22f, .05f));
+        static readonly FxRamp ArrowHead = new FxRamp(Cc(.35f, .03f, .03f), Cc(.72f, .08f, .06f), Cc(.95f, .3f, .2f));
+        static readonly FxRamp PlumShot = new FxRamp(Cc(.45f, .05f, .14f), Cc(.74f, .16f, .28f), Cc(.95f, .55f, .55f));
+        static readonly FxRamp IceShot = new FxRamp(Cc(.42f, .58f, .74f), Cc(.74f, .87f, .96f), Cc(1f, 1f, 1f));
+        static readonly FxRamp QiShot = new FxRamp(Cc(.3f, .04f, .08f), Cc(.55f, .07f, .1f), Cc(.85f, .25f, .2f));
+
+        static FxRamp Danger(FxRamp c) => new FxRamp(Hud.DangerColors.Of(c.Edge), Hud.DangerColors.Of(c.Mid), Hud.DangerColors.Of(c.Core));
+
+        /// <summary>이번 프레임 적 탄 하나. radius 는 맞는 반경(월드), vel 은 월드/초, back 이면 태극무량에 되돌려진 탄.</summary>
+        public void EnemyShot(EnemyShotLook look, Vector2 pos, Vector2 vel, float radius, bool back)
+        {
+            if (_eshots.Count < 256) _eshots.Add(new EShot { Look = look, Pos = pos, Vel = vel, R = radius, Back = back });
+        }
+
+        /// <summary>이번 프레임 바닥 장판 하나. radius 는 맞는 반경(월드), age 는 깔린 지 초, left 는 남은 초, seed 는 장판마다 다른 값(0~7).</summary>
+        public void GroundZone(GroundLook look, Vector2 pos, float radius, float age, float left, float seed)
+        {
+            if (_grounds.Count < 128) _grounds.Add(new Ground { Look = look, Pos = pos, R = radius, Age = age, Left = left, Seed = seed });
+        }
+
+        /// <summary>이번 프레임 독인 둘레 독안개 하나(radius 월드).</summary>
+        public void PoisonAura(Vector2 at, float radius)
+        {
+            if (_auras.Count < 64) _auras.Add(new Vector3(at.x, at.y, radius));
+        }
+
+        /// <summary>장판이 깔리는 순간 한 번: 핏방울·독물이 튀고(웅덩이), 나뭇조각이 사방으로(목인나한). radius 는 월드.</summary>
+        public void GroundBorn(GroundLook look, Vector2 at, float radius)
+        {
+            if (FxSettings.Simplified) return;
+            float m = Mathf.Max(Meter, 1e-4f);
+            // 튐은 초속이 drag 로 줄어 대략 초속 × 0.26 만큼 간다 → 반경 몇 배를 거꾸로 셈
+            switch (look)
+            {
+                case GroundLook.Blood: Drops(at, Rnd(0f, 6.28f), 7, radius / m * 2.2f, Danger(PoolBlood), false, .13f, 3.14f); break;
+                case GroundLook.Poison: Drops(at, Rnd(0f, 6.28f), 5, radius / m * 1.6f, PoolVenom, false, .12f, 3.14f); break;
+                case GroundLook.Splinter:
+                    Drops(at, Rnd(0f, 6.28f), 12, radius / m * 3.6f, FxRamp.Brown, false, .17f, 3.14f);
+                    CrackW(at, radius * 1.3f, FxRamp.Soot);
+                    break;
+            }
+        }
+
+        void DrawGroundLive()
+        {
+            if (_auras.Count == 0 && _grounds.Count == 0) return;
+            bool plain = FxSettings.Simplified || Busy;
+            var blood = Danger(PoolBlood);
+            foreach (var a in _auras)
+            {
+                // 독인 독안개: 테두리(맞는 반경)가 읽히는 옅은 독물 한 장 + 그 안을 천천히 도는 안개
+                var at = new Vector2(a.x, a.y);
+                float R = a.z, sd = Mathf.Repeat(a.x * 1.7f + a.y * .9f, 7f);
+                Quad(16, at, R * 2.2f, R * 2.2f, 0f, new Vector4(.9f, .6f, .2f, 0f), PoolVenom, .28f, 1f, 0f, 3.3f);
+                if (!plain) Quad(3, at, R * 1.9f, R * 1.55f, _time * .35f + sd, new Vector4(5f, .3f, .8f, 0f), FxRamp.MistG, .25f, 1f, .2f, 1.7f);
+            }
+            _auras.Clear();
+            foreach (var g in _grounds)
+            {
+                float fade = Mathf.Clamp01(g.Left / .5f), k = Mathf.Clamp01(g.Age / Mathf.Max(.05f, g.Age + g.Left));
+                switch (g.Look)
+                {
+                    case GroundLook.Blood:
+                    case GroundLook.Poison:
+                    {
+                        // 웅덩이: 0.35초에 번져 나가 고였다가, 마르기 직전 0.6초에 가장자리부터 갈라져 스러진다
+                        bool v = g.Look == GroundLook.Poison;
+                        float e = Ez(Mathf.Min(1f, g.Age / .35f));
+                        float s = g.R * 2.2f * (.55f + .45f * e);
+                        float dry = Mathf.Clamp01(1f - g.Left / .6f) * .85f;
+                        Quad(16, g.Pos, s, s, g.Seed, new Vector4(.9f, .9f, .2f, 0f), v ? PoolVenom : blood, .62f * Mathf.Min(1f, g.Age / .15f), 1f, dry, g.Seed);
+                        if (plain) break;
+                        if (!v)
+                        {
+                            // 핏물 결이 가장자리에서 안으로 천천히 밀려든다(1.6초에 한 번)
+                            float ph = Mathf.Repeat(_time / 1.6f + g.Seed * .13f, 1f);
+                            Quad(2, g.Pos, s, s, 0f, new Vector4(.88f - .5f * ph, .05f, .6f, 0f), blood, 1.2f * ph * (1f - ph) * e * fade, 1f, 0f, g.Seed);
+                        }
+                        else
+                            for (int i = 0; i < 3; i++)
+                            {
+                                // 독 거품: 군데군데 부풀었다 터진다(터질 때마다 자리를 옮김)
+                                float tt = _time * .8f + i * .37f + g.Seed * .21f, ph = Mathf.Repeat(tt, 1f);
+                                float an = g.Seed * 2.3f + i * 2.1f + Mathf.Floor(tt) * 1.7f;
+                                var bp = g.Pos + Dir(an) * g.R * (.2f + .45f * Mathf.Repeat(an * .61f, 1f));
+                                float bs = g.R * (.12f + .16f * ph);
+                                Quad(2, bp, bs * 2f, bs * 2f, 0f, new Vector4(.6f, .14f, .3f, 0f), PoolVenom, .55f * (1f - ph) * e * fade, 1f, 0f, g.Seed + i);
+                            }
+                        break;
+                    }
+                    case GroundLook.Splinter:
+                        // 목인나한 터짐(0.3초): 나뭇결 고리가 터지는 반경(= 맞는 반경)까지 퍼지고 가운데 그을음
+                        Quad(2, g.Pos, g.R * 2.1f, g.R * 2.1f, 0f, new Vector4(.15f + .8f * Ez(k), .08f * (1f - k * .5f) + .02f, .5f, 0f), FxRamp.Brown, .75f * (1f - k * k), 1f, 0f, g.Seed);
+                        Quad(3, g.Pos, g.R * 1.3f * Ez(Mathf.Min(1f, k * 2f)), g.R * 1.1f * Ez(Mathf.Min(1f, k * 2f)), g.Seed, new Vector4(9f, .7f, .8f, 0f), FxRamp.Soot, .4f * (1f - k), 1f, k * .6f, g.Seed);
+                        break;
+                    default:
+                        // 혈영자객 표식: 붉은 고리 안이 예고 시간만큼 차오르고, 다 차면 그 자리로 온다
+                        Quad(2, g.Pos, g.R * 2.15f, g.R * 2.15f, 0f, new Vector4(.93f, .045f, .2f, 0f), blood, .85f, 1f, 0f, g.Seed);
+                        Quad(5, g.Pos, g.R * 2f * Ez(k), g.R * 2f * Ez(k), 0f, new Vector4(.7f, 0f, 0f, 0f), blood, .3f + .25f * k, 1f, 0f, g.Seed);
+                        break;
+                }
+            }
+            _grounds.Clear();
+        }
+
+        void DrawEnemyShots()
+        {
+            if (_eshots.Count == 0) return;
+            float m = Meter;
+            bool plain = FxSettings.Simplified || Busy;
+            var head = Danger(ArrowHead); var plum = Danger(PlumShot); var qi = Danger(QiShot);
+            foreach (var s in _eshots)
+            {
+                float sp = s.Vel.magnitude, r = s.R;
+                var dir = sp > 1e-6f ? s.Vel / sp : Vector2.right;
+                float ang = Mathf.Atan2(dir.y, dir.x);
+                float seed = Mathf.Repeat(ang * 3.7f, 7f);   // 탄마다 날아가는 방향이 고정이라 프레임마다 잡음이 튀지 않는다
+                switch (s.Look)
+                {
+                    case EnemyShotLook.Arrow:
+                    {
+                        // 혈궁수 화살: 먹 한 획 화살대(머리 쪽이 굵다) + 핏빛 촉, 뒤로 옅은 바람결
+                        float L = Mathf.Max(r * 4.5f, .95f * m);
+                        if (!plain) Quad(1, s.Pos - dir * L * 1.05f, L * 1.5f, r * 1.3f, ang, new Vector4(.45f, .7f, 2.5f, 1f), FxRamp.Ink, .22f, 1f, .25f, seed);
+                        Quad(1, s.Pos - dir * L * .42f, L, Mathf.Max(r * 1.2f, .26f * m), ang, new Vector4(.42f, .2f, 1f, 1f), FxRamp.Ink, .92f, 1f, 0f, seed);
+                        Quad(5, s.Pos, r * 1.9f, r * 1.15f, ang, new Vector4(.55f, 0f, 0f, 0f), FxRamp.Ink, .85f);
+                        Quad(5, s.Pos, r * 1.45f, r * .8f, ang, new Vector4(.45f, 0f, 0f, 0f), s.Back ? FxRamp.Gold : head, 1f);
+                        break;
+                    }
+                    case EnemyShotLook.Petal:
+                    {
+                        // 매화검귀 꽃잎: 짙은 매화빛 꽃잎이 흔들리며 날고 먹 그림자 한 겹
+                        float rot = ang + Mathf.Sin(_time * 7f + seed) * .6f;
+                        if (!plain) Quad(1, s.Pos - dir * r * 2.2f, r * 4f, r * 1.2f, ang, new Vector4(.4f, .6f, 2f, 1f), plum, .3f, 1f, .3f, seed);
+                        Quad(11, s.Pos + new Vector2(.03f, -.03f) * m, r * 2.8f, r * 1.75f, rot, default, FxRamp.Ink, .55f);
+                        Quad(11, s.Pos, r * 2.4f, r * 1.5f, rot, default, s.Back ? FxRamp.Gold : plum, .97f);
+                        break;
+                    }
+                    case EnemyShotLook.Ice:
+                    {
+                        // 설인 얼음덩이: 구르는 얼음 조각(밝은 색이라 Glow 가 먹 테를 깐다) + 서릿발 꼬리
+                        if (!plain) Quad(1, s.Pos - dir * r * 2f, r * 4.5f, r * 1.4f, ang, new Vector4(.45f, .7f, 2f, 1f), FxRamp.Silver, .35f, 1f, .3f, seed);
+                        Glow(3, s.Pos, r * 2.1f, r * 1.8f, _time * 2.5f + seed, new Vector4(6f, .45f, .8f, 0f), s.Back ? FxRamp.Gold : IceShot, .95f, 1f, 0f, seed);
+                        break;
+                    }
+                    default:
+                    {
+                        // 혈영 분신이 흉내 낸 무공: 먹 구슬에 핏빛 심과 번짐
+                        if (!plain) Quad(1, s.Pos - dir * r * 2.4f, r * 5f, r * 1.6f, ang, new Vector4(.5f, .6f, 2.5f, 1f), FxRamp.Ink, .45f, 1f, .2f, seed);
+                        Quad(5, s.Pos, r * 2.6f, r * 2.6f, 0f, new Vector4(.15f, 0f, 0f, 0f), qi, .45f);
+                        Quad(5, s.Pos, r * 1.7f, r * 1.7f, 0f, new Vector4(.6f, 0f, 0f, 0f), FxRamp.Ink, .95f);
+                        Quad(5, s.Pos, r * .9f, r * .9f, 0f, new Vector4(.5f, 0f, 0f, 0f), s.Back ? FxRamp.Gold : qi, .95f);
+                        break;
+                    }
+                }
+            }
+            _eshots.Clear();
+        }
+
         void DrawLive()
         {
             foreach (var b in _breaths)
@@ -107,6 +282,7 @@ namespace BloodRain.Presentation.Fx
                     Quad(5, new Vector2(s.x + Mathf.Cos(aa) * .3f * s.z, s.y + Mathf.Sin(aa) * .1f * s.z), .13f * s.z, .13f * s.z, 0f, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Ink, .8f);
                 }
             _stuns.Clear();
+            DrawEnemyShots();
             foreach (var p in _live)
             {
                 switch (p.Look)
