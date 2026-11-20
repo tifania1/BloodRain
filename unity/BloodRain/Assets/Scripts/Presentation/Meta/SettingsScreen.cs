@@ -250,7 +250,7 @@ namespace BloodRain.Presentation.Meta
                 var r = Text(_list, $"{Loc.T("ui.controls.refused")} · {_refused}", 26, FontStyles.Normal, new Color(0.95f, 0.45f, 0.4f));
                 Place(r.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -140), new Vector2(1000, 36));
             }
-            const float h = 58, gapY = 10, top = 330;
+            const float h = 54, gapY = 8, top = 340;   // 2026-11-21 행동이 열하나라 마지막 줄이 '돌아가기'와 겹쳤다
             var acts = ControlAction.All;
             for (int i = 0; i < acts.Count; i++)
             {
@@ -273,7 +273,7 @@ namespace BloodRain.Presentation.Meta
                     _refused = null; Refill();
                 });
             }
-            Item(new Vector2(0, -400), new Vector2(320, 66), Loc.T("ui.settings.back"), "", () => { StopListen(); _controlsPage = false; Refill(); });
+            Item(new Vector2(0, -430), new Vector2(320, 66), Loc.T("ui.settings.back"), "", () => { StopListen(); _controlsPage = false; Refill(); });
         }
 
         void Listen(string action, int slot)
