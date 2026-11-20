@@ -207,8 +207,9 @@ namespace BloodRain.Presentation.Fx
                 float k = d.T / d.Life, sp = d.Vel.magnitude / Mathf.Max(Meter, 1e-6f);
                 if (d.Shape != 0)
                 {
-                    // 꽃잎처럼 밝은 조각은 먹 그림자를 한 겹(종이 바닥에 묻혔다, 2026-11-20). 바쁜 프레임엔 뺀다
-                    if (!Busy && IsLight(d.C)) Quad(d.Shape, d.Pos + new Vector2(.03f, -.03f) * Meter, d.Size * 2.3f, d.Size * 1.4f, d.Rot + d.T * d.Spin, default, FxRamp.Ink, .45f * (1f - k * k));
+                    // 꽃잎처럼 밝은 조각은 먹 그림자를 한 겹(종이 바닥에 묻혔다, 2026-11-20). 바쁜 프레임엔 빼되 꽃잎(모양 11)은 늘 —
+                    // VIS-01U 21시: 이화창 배꽃·낙화검우 꽃잎이 바쁜 프레임에 그림자가 빠져 잿빛·연분홍만 남아 안 읽혔다(인스턴싱 뒤라 한 겹 더 그려도 싸다)
+                    if ((!Busy || d.Shape == 11) && IsLight(d.C)) Quad(d.Shape, d.Pos + new Vector2(.035f, -.035f) * Meter, d.Size * 2.4f, d.Size * 1.5f, d.Rot + d.T * d.Spin, default, FxRamp.Ink, (d.Shape == 11 ? .62f : .45f) * (1f - k * k));
                     Quad(d.Shape, d.Pos, d.Size * 2f, d.Size * 1.15f, d.Rot + d.T * d.Spin, default, d.C, .95f * (1f - k * k)); continue;
                 }
                 float rot = Mathf.Atan2(d.Vel.y, d.Vel.x);

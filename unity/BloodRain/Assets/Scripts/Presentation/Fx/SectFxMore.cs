@@ -224,7 +224,7 @@ namespace BloodRain.Presentation.Fx
             Quad(1, p.Pos - d * tl * .5f, tl, .18f * m, p.Ang, new Vector4(.25f, .2f, 2f, 1f), FxRamp.Ink, .9f * al, 1f, 0f, p.Seed + 1f); // 굵기 .1 → .18(2026-11-20 잘 안 보였다)
             if (st >= 4) Glow(1, p.Pos - d * tl * .5f, tl, .06f * m, p.Ang, new Vector4(.2f, .1f, 2f, 1f), FxRamp.White, .8f * al, 1f, 0f, p.Seed + 2f);
             float dt = Time.deltaTime;
-            if (st >= 2 && dt > 0f && Rnd(0f, 1f) < dt / (st >= 4 ? .03f : .05f)) Petals(p.Pos - d * .3f * m, p.Ang + Mathf.PI, 1, 1.5f, 1f, .16f, FxRamp.Petal);
+            if (st >= 2 && dt > 0f && Rnd(0f, 1f) < dt / (st >= 4 ? .03f : .05f)) Petals(p.Pos - d * .3f * m, p.Ang + Mathf.PI, 1, 1.5f, 1f, .21f, FxRamp.Petal);   // VIS-01U: 꽃잎 .16 → .21
         }
 
         // ── 곤륜 뇌부 ─────────────────────────────────────────────
@@ -438,7 +438,7 @@ namespace BloodRain.Presentation.Fx
                 if (stage >= 4) Glow(1, h - d * tl * .4f, tl * .8f, L(stage, .08f, .08f, .08f, .1f, .13f) * M, a, new Vector4(.3f, .1f, 3f, 1f), FxRamp.White, .85f * al, 1f, 0f, f.Seed + 1f);
                 Glow(5, h, .3f * M, .3f * M, 0f, new Vector4(.2f, 0f, 0f, 0f), FxRamp.White, .8f * al);
             });
-            if (stage >= 3) After(dur, () => Petals(origin() + d * len, a, spin ? 10 : 6, 3f + stage * .4f, 1.2f, .22f, FxRamp.Pale));
+            if (stage >= 3) After(dur, () => Petals(origin() + d * len, a, spin ? 10 : 6, 3f + stage * .4f, 1.2f, .28f, FxRamp.Pale));   // VIS-01U: 배꽃 조각 .22 → .28
             // VF-25: 찌른 길이 먹 한 획으로 잠깐 남는다(삼재검법 반원이 남듯)
             if (stage >= 2)
                 After(dur, () =>

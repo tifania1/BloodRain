@@ -51,7 +51,10 @@ namespace BloodRain.Presentation.Fx
                 }
             if (dir.sqrMagnitude < 1e-6f) dir = Vector2.right;
             _g.Add(new Ghost { Pos = at, Dir = dir.normalized, Life = life, Size = size, Art = art, Look = look, Tint = tint, Spin = Random.value < .5f ? -1f : 1f });
-            if (look == Look.Petal && SectFx.Instance != null) SectFx.Instance.Petals(at + Vector2.up * size * .4f, Mathf.Atan2(dir.y, dir.x), 5, 3.5f, 2.2f, .2f, FxRamp.Petal);
+            // HF-03U(2026-11-20 21시, 아침 사진에서 화산·마교 쓰러짐이 잘 안 읽힘): 꽃잎은 더 많이·크게(그림자는 SectFx 가 늘 깐다),
+            // 혈조는 몸에서 핏방울이 공격한 쪽으로 빨려 나간다(빨리는 먹빛 붉은 방울)
+            if (look == Look.Petal && SectFx.Instance != null) SectFx.Instance.Petals(at + Vector2.up * size * .4f, Mathf.Atan2(dir.y, dir.x), 9, 3.8f, 2.4f, .26f, FxRamp.Petal);
+            if (look == Look.Wither && SectFx.Instance != null) SectFx.Instance.Drops(at + Vector2.up * size * .35f, Mathf.Atan2(-dir.y, -dir.x), 7, 7f, FxRamp.BloodMist, false, .12f, .45f);
         }
 
         void Awake()
@@ -114,11 +117,11 @@ namespace BloodRain.Presentation.Fx
                     case Look.Sweep:   // 물살에 쓸려 간다
                         Draw(rp, g.Art, g.Pos + g.Dir * (s * 1.5f * Ez(k)), -g.Dir.x * 28f * k, s, s * (1f - .25f * k), Color.Lerp(c, new Color(.58f, .84f, .88f, 1f), k), k);
                         break;
-                    case Look.Petal:   // 연분홍으로 물들며 흩어진다
-                        Draw(rp, g.Art, g.Pos, 0f, s, s, Color.Lerp(c, new Color(.95f, .72f, .8f, 1f), Mathf.Min(1f, k * 2f)), .15f + k * .85f);
+                    case Look.Petal:   // 짙은 분홍으로 물들며 위로 살짝 떠 흩어진다(HF-03U: 옅은 연분홍은 종이에 묻혔다)
+                        Draw(rp, g.Art, g.Pos + Vector2.up * (s * .15f * Ez(k)), g.Spin * 8f * k, s * (1f - .15f * k), s * (1f - .15f * k), Color.Lerp(c, new Color(.82f, .38f, .52f, 1f), Mathf.Min(1f, k * 3f)), .1f + k * .9f);
                         break;
-                    case Look.Wither:  // 빨려 들며 오그라든다
-                        Draw(rp, g.Art, g.Pos - g.Dir * (s * .5f * Ez(k)), 0f, s * (1f - .55f * k), s * (1f - .3f * k), Color.Lerp(c, new Color(.5f, .2f, .38f, 1f), Mathf.Min(1f, k * 3f)), k);
+                    case Look.Wither:  // 피를 빨리며 검붉게 오그라든다(HF-03U: 자주가 흐렸다)
+                        Draw(rp, g.Art, g.Pos - g.Dir * (s * .5f * Ez(k)), 0f, s * (1f - .6f * k), s * (1f - .35f * k), Color.Lerp(c, new Color(.36f, .06f, .12f, 1f), Mathf.Min(1f, k * 3.5f)), k * k);
                         break;
                     case Look.Ash:     // 그을려 재가 되어 떠오른다
                         Draw(rp, g.Art, g.Pos + Vector2.up * (s * .3f * k), 0f, s, s, Color.Lerp(c, new Color(.2f, .15f, .1f, 1f), Mathf.Min(1f, k * 4f)), k);
