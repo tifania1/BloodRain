@@ -1614,10 +1614,12 @@ namespace BloodRain.Presentation
                 else
                     view.Tint = baseTint;
                 // VF-02U 멈칫 표시: 머리 위에 먹 점 셋이 돈다(예고 동안 서는 dt×2 는 빼려고 0.12초 넘게 멈춘 것만)
-                if (a.Stun > 0.12f && SectFx.Instance != null && !FxSettings.Simplified)
+                if ((a.Stun > 0.12f || a.Slow >= 0.4f) && SectFx.Instance != null && !FxSettings.Simplified)
                 {
                     float ps = World.Length(view.Size > 0f ? view.Size : clusters.memberRealmMeters, a.BornRealm);
-                    SectFx.Instance.Stunned(view.Position + Vector2.up * ps * 0.68f, ps);
+                    if (a.Stun > 0.12f) SectFx.Instance.Stunned(view.Position + Vector2.up * ps * 0.68f, ps);
+                    // VF-04U 무겁게 늦춰진 적(태극양의검 검은 검·쇄겸술 Lv8 — 둔화 40% 넘게, 독무 안개 30% 는 뺌) 발밑 먹 띠
+                    if (a.Slow >= 0.4f) SectFx.Instance.Slowed(view.Position - Vector2.up * ps * 0.45f, ps, a.Slow);
                 }
                 clusters.Add(view);
             }

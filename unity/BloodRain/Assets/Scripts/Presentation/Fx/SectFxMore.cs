@@ -61,6 +61,15 @@ namespace BloodRain.Presentation.Fx
             }, true);
         }
 
+        // 무겁게 늦춰진 적 발밑 먹 띠(시안 태극양의검 검은 검 — e.sl). EnemyField 가 프레임마다 넘긴다
+        readonly List<Vector4> _slows = new List<Vector4>();
+
+        /// <summary>이번 프레임에 크게 늦춰진 적 하나(feet 발밑, size 사람 크기, slow 0~1).</summary>
+        public void Slowed(Vector2 feet, float size, float slow)
+        {
+            if (_slows.Count < 48) _slows.Add(new Vector4(feet.x, feet.y, size, slow));
+        }
+
         /// <summary>이번 프레임에 멈춰 선 적 하나. head 는 머리 위 자리, size 는 사람 하나 크기(월드).</summary>
         public void Stunned(Vector2 head, float size)
         {
@@ -88,6 +97,9 @@ namespace BloodRain.Presentation.Fx
                 }
             }
             _breaths.Clear();
+            foreach (var w in _slows)
+                Quad(2, new Vector2(w.x, w.y), .79f * w.z, .32f * w.z, 0f, new Vector4(.7f, .18f, .5f, 0f), FxRamp.Ink, .55f * Mathf.Min(1f, w.w * 2f));
+            _slows.Clear();
             foreach (var s in _stuns)
                 for (int i = 0; i < 3; i++)
                 {
