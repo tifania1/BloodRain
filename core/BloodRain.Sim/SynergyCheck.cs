@@ -184,8 +184,8 @@ namespace BloodRain.Sim
                     case "punghwa": Add("풍화", 0.3 * ws["palm_wind"].Dps); break; // 크기 30%와 화상을 합쳐 3할
                     case "jeomhyeol": Add("점혈", ws["pear_spear"].Dps * ((K.JeomhyeolCrit is double jc ? 1 + Math.Min(1, crit + jc) : 2) / (1 + crit) - 1)); break; // 늘 치명
                     case "noehwa": Add("뇌화", Math.Min(ws["thunder_bomb"].Rate, ws["thunder_talisman"].Rate) * ws["thunder_bomb"].Hit); break;
-                    case "geommyeong": Add("검명", 0.5 * ws["sonic_qin"].Dps); break;
-                    case "chwijung": Add("취중", 0.3 * ws["falling_petals"].Dps); break;
+                    case "geommyeong": Add("검명", l.Param("damageRatio") * ws["sonic_qin"].Dps); break; // synergies.json params(LK-01a)
+                    case "chwijung": Add("취중", l.Param("dpsRatio") * ws["falling_petals"].Dps); break;
                     default: break; // 범위·제어·흡혈: 보스 한 마리 화력엔 0
                 }
             }

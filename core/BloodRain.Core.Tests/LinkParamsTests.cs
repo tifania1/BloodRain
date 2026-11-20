@@ -15,23 +15,29 @@ namespace BloodRain.Core.Tests
         static readonly Dictionary<string, (string Key, float Value, string Text)[]> Expected = new Dictionary<string, (string, float, string)[]>
         {
             ["ssanggeom"] = new[] { ("damageBonus", 0.6f, "피해 +60%") },
-            ["geomhwa"] = new[] { ("petals", 3f, "꽃잎 세 장") },
+            ["geomhwa"] = new[] { ("petals", 3f, "꽃잎 세 장"), ("petalDamageRatio", 1f, "&검화 꽃잎 한 장은 낙화검우 꽃잎 한 방") },
             ["gwonjang"] = new[] { ("palmDamageRatio", 0.5f, "장풍 피해 50%"), ("palmSpeed", 9f, "@권장합일 장풍은 초속 9m"), ("palmLifeSeconds", 0.9f, "@9m·0.9초"), ("palmRadius", 0.45f, "@0.9초·반경 0.45m") },
             ["geumganghu"] = new[] { ("radiusBonus", 0.4f, "음파 반경 +40%"), ("stunChanceMultiplier", 2f, "기절 확률 2배") },
             ["dokbi"] = new[] { ("extraPierce", 1f, "관통 +1") },
             ["amgi"] = new[] { ("daggers", 1f, "비도 한 자루") },
             ["punghwa"] = new[] { ("sizeBonus", 0.3f, "크기 +30%"), ("burnSeconds", 2f, "@풍화 화상은 2초"), ("burnDps", 6f, "@2초·초당 6") },
             ["jeomhyeol"] = new[] { ("stopSeconds", 0.5f, "0.5초 멈추고") },
-            ["noehwa"] = new[] { ("radiusMultiplier", 2f, "두 배 범위") },
+            ["noehwa"] = new[] { ("radiusMultiplier", 2f, "두 배 범위"), ("nearRadiusRatio", 1f, "&뇌화 '가까이'는 벽력탄 폭발 반경 안") },
             ["hyeoldok"] = new[] { ("spreadRadius", 2f, "주변 2m") },
-            ["chwijung"] = new[] { ("seconds", 2f, "2초 동안") },
-            ["hyeolchang"] = new[] { ("bleedSeconds", 3f, "3초 출혈"), ("lifestealMultiplier", 3f, "흡혈 3배") },
+            ["chwijung"] = new[] { ("seconds", 2f, "2초 동안"), ("dpsRatio", 0.3f, "&취중매화 회오리는 낙화검우 초당 피해의 30%") },
+            ["hyeolchang"] = new[] { ("bleedSeconds", 3f, "3초 출혈"), ("lifestealMultiplier", 3f, "흡혈 3배"), ("bleedPerSecondRatio", 0.1f, "&혈창 출혈은 이화창 한 방의 10%를 초마다") },
+            // LK-01a(2026-11-20): 표에 숫자가 없던 넷은 짝 무공 값을 빌린다('짝 무공 값을 빌리는 것' 문단)
+            ["inroe"] = new[] { ("boltDamageRatio", 1f, "&인뢰검 낙뢰와 감전은 뇌부 한 방 그대로") },
+            ["geommyeong"] = new[] { ("damageRatio", 0.5f, "&검명 작은 음파는 음공 한 번의 피해·반경 50%"), ("radiusRatio", 0.5f, "&음공 한 번의 피해·반경 50%") },
+            ["charyeok"] = new[] { ("impactDamageRatio", 1f, "&차력타력·견인타 부딪힘은 태극검·취선봉 한 방") },
+            ["gyeonin"] = new[] { ("impactDamageRatio", 1f, "&차력타력·견인타 부딪힘은 태극검·취선봉 한 방") },
         };
 
-        /// <summary>표에 숫자가 없어 params 를 안 둔 연환(LK-01a 사람 결정 대기).</summary>
-        static readonly string[] NoNumbers = { "inroe", "geommyeong", "charyeok", "gyeonin" };
+        /// <summary>표에 숫자가 없어 params 를 안 둔 연환. LK-01a(2026-11-20)로 다 채워 비었다.</summary>
+        static readonly string[] NoNumbers = { };
 
         static string DetailLine => TestData.Gdd.Split('\n').Single(x => x.StartsWith("표에 없는 세부 값: 권장합일"));
+        static string BorrowLine => TestData.Gdd.Split('\n').Single(x => x.StartsWith("짝 무공 값을 빌리는 것"));
 
         static string GddRow(LinkDef l)
         {
@@ -52,6 +58,7 @@ namespace BloodRain.Core.Tests
                 {
                     Assert.Equal(value, l.Param(key), 3);
                     if (text.StartsWith("@")) Assert.Contains(text.Substring(1), DetailLine);
+                    else if (text.StartsWith("&")) Assert.Contains(text.Substring(1), BorrowLine);
                     else Assert.Contains(text, row);
                 }
             }

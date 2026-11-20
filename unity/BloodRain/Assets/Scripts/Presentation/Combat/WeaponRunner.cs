@@ -300,7 +300,7 @@ namespace BloodRain.Presentation.Combat
         readonly List<Blast> _blasts = new List<Blast>();                                    // 뇌화: 최근 벽력탄 폭발(1초 안)
         readonly List<int> _spread = new List<int>();
         readonly List<Vector2> _spreadAt = new List<Vector2>();
-        const float NoehwaWindowSeconds = 1f, WhirlTurnPerSecond = 6f;                     // 뇌화 '가까이'의 시간 쪽, 취중매화 도는 빠르기(모양만)
+        const float NoehwaWindowSeconds = 1f, WhirlTurnPerSecond = 6f, WhirlRehit = 0.5f;                     // 뇌화 '가까이'의 시간 쪽, 취중매화 도는 빠르기(모양만)
 
         /// <summary>시험용: 연환 효과가 난 횟수(연환 id → 번). LinkTestMenu 가 찍는다.</summary>
         public readonly Dictionary<string, int> LinkFires = new Dictionary<string, int>();
@@ -444,13 +444,13 @@ namespace BloodRain.Presentation.Combat
                                 else if (!AddBrush(s, a) || evo != null || sg) AddFx(a, Mathf.PI, R, 0.22f, evo != null || sg ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.95f, 0.93f, 0.85f, 0.75f));
                                 Deal(s, d2, HitArc(P, R, a, d2, kb));
                             }
-                            // LK-01Ub 연환 검화: 벤 자리(첫 방향 사거리 0.6)에서 낙화검우 꽃잎 petals 장이 피어 흩어짐. 꽃잎 한 장 = 낙화검우 한 방(표에 피해가 없어 LK-01a 결정 전)
+                            // LK-01Ub 연환 검화: 벤 자리(첫 방향 사거리 0.6)에서 낙화검우 꽃잎 petals 장이 피어 흩어짐. 꽃잎 한 장 = 낙화검우 한 방 × petalDamageRatio(1, LK-01a)
                             if (Link("geomhwa", "petals") is float pn && SlotOf("falling_petals") is Slot pet)
                             {
                                 var psh = ShotOf(pet);
                                 var cut = P + new Vector2(Mathf.Cos(dirs[0]), Mathf.Sin(dirs[0])) * R * 0.6f; Fired("geomhwa");
                                 for (int q = 0; q < Mathf.RoundToInt(pn); q++)
-                                    Shoot(pet, dirs[0] + UnityEngine.Random.Range(-1f, 1f), ws.Speed(psh.Speed), ws.Length(psh.Radius), Damage(pet), 0, psh.LifeSeconds, 0, 0f, ws.Speed(Knock(pet)),
+                                    Shoot(pet, dirs[0] + UnityEngine.Random.Range(-1f, 1f), ws.Speed(psh.Speed), ws.Length(psh.Radius), Damage(pet) * (Link("geomhwa", "petalDamageRatio") ?? 1f), 0, psh.LifeSeconds, 0, 0f, ws.Speed(Knock(pet)),
                                           new Color(0.95f, 0.60f, 0.68f, 0.9f), cut);
                             }
                         });
@@ -542,12 +542,12 @@ namespace BloodRain.Presentation.Combat
                         Color = arrayEvo != null ? new Color(0.95f, 0.82f, 0.40f, 0.85f) : new Color(0.55f, 0.75f, 0.95f, 0.8f), Sweep = true, Sweeps = sweeps, Weapon = s, Damage = dmg, Hit = new HashSet<int>(),
                     });
                     // LK-01Ub 연환 인뢰검: 낙뢰가 검기 원을 타고 한 바퀴(뇌부 개수만큼 고르게, 검기 한 바퀴 시간 동안) 돌고, 다 돈 뒤 원 안 적 감전.
-                    // 낙뢰 하나 = 뇌부 한 방·뇌부 반경, 감전 = 뇌부 shockSeconds(표에 피해가 없어 LK-01a 결정 전)
+                    // 낙뢰 하나 = 뇌부 한 방 × boltDamageRatio(1)·뇌부 반경, 감전 = 뇌부 shockSeconds(LK-01a: 뇌부 값 그대로)
                     if (LinkOn("inroe") && SlotOf("thunder_talisman") is Slot tal)
                     {
                         int bolts = Mathf.Max(1, WeaponGrowth.Projectiles(tal.Def, tal.level));
                         float round = (s.Def.SweepSeconds ?? 0.36f) * sweeps, a0 = UnityEngine.Random.value * Mathf.PI * 2f;
-                        float br = ws.Length(tal.Def.StrikeRadius ?? 1.2f), shock = tal.Def.ShockSeconds ?? 0.5f, tdmg = Damage(tal);
+                        float br = ws.Length(tal.Def.StrikeRadius ?? 1.2f), shock = tal.Def.ShockSeconds ?? 0.5f, tdmg = Damage(tal) * (Link("inroe", "boltDamageRatio") ?? 1f);
                         for (int k = 0; k < bolts; k++)
                         {
                             float ba = a0 + Mathf.PI * 2f * k / bolts;
@@ -818,16 +818,22 @@ namespace BloodRain.Presentation.Combat
                                 else AddFx(a, Mathf.PI, R, 0.26f, evo != null ? new Color(1f, 0.82f, 0.38f, 0.55f) : new Color(0.80f, 0.62f, 0.38f, 0.7f));
                                 Deal(s, dmg, HitArc(P, R, a, dmg, kb, stun, bossStun));
                             }
-                            // LK-01Ub 연환 견인타: 봉이 닿는 원(R) 안 끌려오는 적을 받아쳐 날려 보냄, 부딪히면 둘 다 피해(취선봉 한 방, LK-01a 결정 전)
+                            // LK-01Ub 연환 견인타: 봉이 닿는 원(R) 안 끌려오는 적을 받아쳐 날려 보냄, 부딪히면 둘 다 피해(취선봉 한 방 × impactDamageRatio, LK-01a)
                             if (_pulled.Count > 0 && LinkOn("gyeonin"))
                             {
                                 _rebound.Clear();
                                 enemies.Sim.QueryCircle(new float2(P.x, P.y), R, _reboundNear);
                                 foreach (int j in _reboundNear) { int pid = enemies.Sim.Agents[j].Id; if (_pulled.TryGetValue(pid, out var pu) && pu > Time.time && !_rebound.Contains(pid)) _rebound.Add(pid); }
-                                if (_rebound.Count > 0) Rebound(_rebound, s, dmg, "gyeonin");
+                                if (_rebound.Count > 0) Rebound(_rebound, s, dmg * (Link("gyeonin", "impactDamageRatio") ?? 1f), "gyeonin");
                             }
-                            // LK-01Ub 연환 취중매화: 봉이 닿는 원(R) 안 낙화검우 꽃잎을 감아 seconds 초 몸 둘레 회오리로(피해는 꽃잎 한 방 그대로 — LK-01a 결정 전)
-                            if (Link("chwijung", "seconds") is float ws_)
+                            // LK-01Ub 연환 취중매화: 봉이 닿는 원(R) 안 낙화검우 꽃잎을 감아 seconds 초 몸 둘레 회오리로.
+                            // LK-01a: 회오리 피해 = 낙화검우 초당 피해 × dpsRatio(0.3). 꽃잎마다 WhirlRehit 초에 한 번 같은 적을 다시 맞히니,
+                            // 한 장의 한 방 = 초당 피해 × 0.3 × WhirlRehit ÷ 꽃잎 수(감긴 꽃잎이 다 맞히면 한 적에 초당 30%)
+                            if (Link("chwijung", "seconds") is float ws_ && SlotOf("falling_petals") is Slot petSlot)
+                            {
+                                int fpn = Mathf.Max(1, WeaponGrowth.Projectiles(petSlot.Def, petSlot.level));
+                                float fpcd = Mathf.Max(0.05f, WeaponGrowth.Cooldown(petSlot.Def, petSlot.level) * (1f - cooldownReduction));
+                                float whirlHit = Damage(petSlot) * fpn / fpcd * (Link("chwijung", "dpsRatio") ?? 0.3f) * WhirlRehit / fpn;
                                 for (int q = 0; q < _projs.Count; q++)
                                 {
                                     var pr = _projs[q];
@@ -835,9 +841,10 @@ namespace BloodRain.Presentation.Combat
                                     var off = pr.Pos - P;
                                     if (off.magnitude > R) continue;
                                     pr.Whirl = ws_ * durationMultiplier; pr.WhirlR = Mathf.Max(off.magnitude, R * 0.5f); pr.WhirlA = Mathf.Atan2(off.y, off.x);
-                                    pr.Pierce = 999; pr.Color = new Color(0.98f, 0.62f, 0.70f, 0.95f); Fired("chwijung");
+                                    pr.Pierce = 999; pr.Damage = whirlHit; pr.Color = new Color(0.98f, 0.62f, 0.70f, 0.95f); Fired("chwijung");
                                     _projs[q] = pr;
                                 }
+                            }
                         });
                     break;
                 }
@@ -904,7 +911,7 @@ namespace BloodRain.Presentation.Combat
                                 foreach (int id in still) { int j = IndexOf(id); if (j >= 0) push.Add(j); }
                                 if (push.Count > 0) Deal(s, bdmg, enemies.Damage(push, bdmg, P, 0f));
                             }
-                            if (_rebound.Count > 0) Rebound(_rebound, s, bdmg, "charyeok");
+                            if (_rebound.Count > 0) Rebound(_rebound, s, bdmg * (Link("charyeok", "impactDamageRatio") ?? 1f), "charyeok");
                         });
                     }
                     break;
@@ -1062,14 +1069,15 @@ namespace BloodRain.Presentation.Combat
                                     enemies.Sim.Set(i, a);
                                 }
                             Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
-                            // LK-01Ub 연환 검명: 음파 안에서 도는 태극검마다 작은 음파 한 번 더(반경 절반·음공 한 방 — 표에 크기·피해가 없어 LK-01a 결정 전)
+                            // LK-01Ub 연환 검명: 음파 안에서 도는 태극검마다 작은 음파 한 번 더(LK-01a: 음공 한 번의 반경 × radiusRatio·피해 × damageRatio, 둘 다 0.5)
                             if (Time.time - _bladeAtTime < 0.2f && _bladeAt.Count > 0 && LinkOn("geommyeong"))
                                 foreach (var bat in _bladeAt)
                                 {
                                     if ((bat - P).magnitude > R) continue;
-                                    AddFxAt(bat, 0f, Mathf.PI * 2f, R * 0.5f, 0.3f, new Color(0.80f, 0.85f, 0.95f, 0.35f));
-                                    enemies.Sim.QueryCircle(new float2(bat.x, bat.y), R * 0.5f, _reboundNear);
-                                    Deal(s, dmg, enemies.Damage(_reboundNear, dmg, bat, kb * 0.5f));
+                                    float gr = R * (Link("geommyeong", "radiusRatio") ?? 0.5f), gd = dmg * (Link("geommyeong", "damageRatio") ?? 0.5f);
+                                    AddFxAt(bat, 0f, Mathf.PI * 2f, gr, 0.3f, new Color(0.80f, 0.85f, 0.95f, 0.35f));
+                                    enemies.Sim.QueryCircle(new float2(bat.x, bat.y), gr, _reboundNear);
+                                    Deal(s, gd, enemies.Damage(_reboundNear, gd, bat, kb * 0.5f));
                                     Fired("geommyeong");
                                 }
                         });
@@ -1109,13 +1117,13 @@ namespace BloodRain.Presentation.Combat
                                     if (WeaponShapes.ThrustHits((e.Pos.x - P.x) / unit, (e.Pos.y - P.y) / unit, e.Radius / unit, a, R / unit)) _filtered.Add(i);
                                 }
                             }
-                            // LK-01Ub 연환 혈창: 꿰뚫린 적 bleedSeconds 출혈(이화창 한 방을 그 초에 나눠 — 표에 출혈 피해가 없어 LK-01a 결정 전, '불붙음'은 아님)
+                            // LK-01Ub 연환 혈창: 꿰뚫린 적 bleedSeconds 출혈, 초당 이화창 한 방 × bleedPerSecondRatio(0.1, LK-01a — 3초면 30%). '불붙음'은 아님
                             if (Link("hyeolchang", "bleedSeconds") is float bs && _filtered.Count > 0)
                             {
                                 float bsec = bs * durationMultiplier;
                                 Trim(_bleed);
                                 foreach (int i in _filtered) _bleed[enemies.Sim.Agents[i].Id] = Time.time + bsec;
-                                enemies.AddDot(_filtered, bsec, dmg / bs * enemies.dotMultiplier, false, false); Fired("hyeolchang");
+                                enemies.AddDot(_filtered, bsec, dmg * (Link("hyeolchang", "bleedPerSecondRatio") ?? 0.1f) * enemies.dotMultiplier, false, false); Fired("hyeolchang");
                             }
                             // LK-01Ub 연환 점혈창: 지풍에 맞아 멈춘 적을 찌르면 확정 치명타
                             if (Link("jeomhyeol", "stopSeconds") != null) enemies.sureCrit = id => { bool on = _pressed.TryGetValue(id, out var pt) && pt > Time.time; if (on) Fired("jeomhyeol_crit"); return on; };
@@ -1253,7 +1261,7 @@ namespace BloodRain.Presentation.Combat
                 {
                     // LK-01Ub 취중매화: 봉에 감긴 꽃잎이 몸 둘레를 돈다. 다 뚫고, 0.5초마다 같은 적을 다시 맞힐 수 있음
                     p.Whirl -= dt; p.WhirlA += WhirlTurnPerSecond * dt; p.WhirlHit -= dt;
-                    if (p.WhirlHit <= 0f) { p.Hit.Clear(); p.WhirlHit = 0.5f; }
+                    if (p.WhirlHit <= 0f) { p.Hit.Clear(); p.WhirlHit = WhirlRehit; }
                     p.Pos = P + new Vector2(Mathf.Cos(p.WhirlA), Mathf.Sin(p.WhirlA)) * p.WhirlR;
                     p.Life = p.Whirl > 0f ? Mathf.Max(p.Life, 0.05f) : 0f;
                 }
@@ -1397,7 +1405,7 @@ namespace BloodRain.Presentation.Combat
         }
 
         /// <summary>LK-01Ub 연환 뇌화: 낙뢰가 최근(NoehwaWindowSeconds 안) 폭발 원 안에 떨어지면 그 자리에서 반경 × radiusMultiplier 로 한 번 더(벽력탄 한 방).
-        /// '가까이'는 표에 거리가 없어 폭발 원 안·1초 안으로 둔다(LK-01a 결정 전). 한 폭발은 한 번만.</summary>
+        /// '가까이'는 폭발 반경 × nearRadiusRatio(1, LK-01a)·1초 안. 한 폭발은 한 번만.</summary>
         void Noehwa(Vector2 at)
         {
             for (int k = _blasts.Count - 1; k >= 0; k--) if (_blasts[k].T < Time.time - NoehwaWindowSeconds) _blasts.RemoveAt(k);
@@ -1405,7 +1413,7 @@ namespace BloodRain.Presentation.Combat
             for (int k = 0; k < _blasts.Count; k++)
             {
                 var b = _blasts[k];
-                if ((at - b.At).magnitude > b.R) continue;
+                if ((at - b.At).magnitude > b.R * (Link("noehwa", "nearRadiusRatio") ?? 1f)) continue;
                 _blasts.RemoveAt(k); Fired("noehwa");
                 AddFxAt(b.At, 0f, Mathf.PI * 2f, b.R * rm, 0.3f, new Color(1f, 0.85f, 0.45f, 0.45f));
                 BombBlast(bomb, b.At, b.R * rm, Damage(bomb), World.Speed(Knock(bomb)), false);
