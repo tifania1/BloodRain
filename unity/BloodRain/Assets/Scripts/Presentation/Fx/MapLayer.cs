@@ -11,6 +11,7 @@ namespace BloodRain.Presentation.Fx
     //     타일이 불투명이라 삼류·이류에서는 지도가 안 보이고, 일류를 지나며 바닥이 걷히고 지도가 드러난다.
     //   - 소품 층이 화면에 비해 너무 작아지면 지도로 넘긴다: PropLayer 가 FadeFor(크기) 를 곱한다.
     // 그리는 순서: 지도(2970) → 바닥(2980) → 소품(2990) → 나머지(3000~).
+    [DefaultExecutionOrder(500)] // 카메라(ScaleCamera)가 이 프레임 자리·크기를 정한 뒤에 바닥 판을 깐다. 돌파 줌 중 한 프레임 늦어 화면 끝에 바닥 없는 띠가 보였다(2026-11-20)
     public sealed class MapLayer : MonoBehaviour
     {
         const float GroundTile = 12f; // 선지 한 장이 덮는 길이(m). 결이 잘아서 되풀이로 안 읽힌다
