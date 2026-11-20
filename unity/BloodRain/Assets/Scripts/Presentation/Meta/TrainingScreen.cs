@@ -17,6 +17,8 @@ namespace BloodRain.Presentation.Meta
     public sealed class TrainingScreen : MonoBehaviour
     {
         public TMP_FontAsset font;
+        /// <summary>연무장 그림(bg_training_yard, InnFlow → InnScreen 이 넣는다). 비면 종이만.</summary>
+        public Sprite background;
         [Tooltip("시험용: 이만큼 윤회의 기를 가진 혼으로 연다(0 이면 안 연다)")]
         public int demoQi;
 
@@ -154,11 +156,26 @@ namespace BloodRain.Presentation.Meta
             bg.color = Paper; bg.raycastTarget = false;
             bg.rectTransform.anchorMin = Vector2.zero; bg.rectTransform.anchorMax = Vector2.one;
             bg.rectTransform.offsetMin = bg.rectTransform.offsetMax = Vector2.zero;
+            // 2026-11-21 연무장 그림(bg_training_yard) 위에 옅게 비치는 종이 한 장 + 결·먹 테두리. 그림이 없으면 종이 결만
+            if (background != null)
+            {
+                bg.sprite = background; bg.color = Color.white; bg.preserveAspect = false;
+                var dim = new GameObject("Dim", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+                dim.transform.SetParent(_root, false); dim.color = new Color(0.05f, 0.04f, 0.04f, 0.3f); dim.raycastTarget = false;
+                dim.rectTransform.anchorMin = Vector2.zero; dim.rectTransform.anchorMax = Vector2.one; dim.rectTransform.offsetMin = dim.rectTransform.offsetMax = Vector2.zero;
+                var sheet = new GameObject("Sheet", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+                sheet.transform.SetParent(_root, false); sheet.color = new Color(Paper.r, Paper.g, Paper.b, 0.9f); sheet.raycastTarget = false;
+                Place(sheet.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(40, -10), new Vector2(1680, 1010));
+                InkUi.PaperGrain(_root, new Vector2(40, -10), new Vector2(1680, 1010), new Color(1f, 1f, 1f, 0.45f));
+                InkUi.Frame(_root, new Vector2(40, -10), new Vector2(1680, 1010), 16f, 2f, new Color(Ink.r, Ink.g, Ink.b, 0.35f));
+            }
+            else InkUi.PaperGrain(_root, Vector2.zero, new Vector2(1920, 1080), new Color(1f, 1f, 1f, 0.5f));
 
             var title = Text(_root, Loc.T("ui.training.title"), 44, FontStyles.Bold, Ink);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -64), new Vector2(1000, 60));
             var sub = Text(_root, Loc.T("ui.training.sub"), 22, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.55f));
             Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -108), new Vector2(1000, 32));
+            InkUi.Stroke(_root, new Vector2(0, 540 - 180), new Vector2(460, 12), new Color(Ink.r, Ink.g, Ink.b, 0.7f));
             _balance = Text(_root, "", 30, FontStyles.Bold, new Color32(176, 132, 40, 255));
             Place(_balance.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(1000, 44));
 

@@ -23,6 +23,8 @@ namespace BloodRain.Presentation.Meta
     {
         public TMP_FontAsset font;
         public Sprite background;
+        /// <summary>연무장 바탕(InnFlow 가 넣는다). 비면 종이만.</summary>
+        public Sprite trainingBackground;
         [Tooltip("대장간 몸 색 미리 보기 그림(InnFlow 가 침방 문파 그림 하나를 넘긴다)")]
         public Sprite bodyPreview;
 
@@ -136,6 +138,7 @@ namespace BloodRain.Presentation.Meta
             {
                 _training = new GameObject("연무장 화면").AddComponent<TrainingScreen>();
                 _training.font = font;
+                _training.background = trainingBackground;
                 _training.Closed += () => { SoulStore.Save(_soul); _canvas.SetActive(true); Refresh(); };
             }
             _canvas.SetActive(false);

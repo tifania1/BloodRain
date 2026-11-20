@@ -11,6 +11,10 @@ namespace BloodRain.Presentation.Meta
     public sealed class InnFlow : MonoBehaviour
     {
         public ChimbangScreen chimbang;
+        [Tooltip("객잔 본채 바탕(bg_inn_hub). 비면 침방 바탕")]
+        public Sprite hubBackground;
+        [Tooltip("연무장 바탕(bg_training_yard). 비면 종이만")]
+        public Sprite trainingBackground;
 
         Soul _soul;
 
@@ -33,7 +37,8 @@ namespace BloodRain.Presentation.Meta
             Inn.Refresh(_soul); // 조건을 갖춘 시설을 혼에 적는다(정산 뒤)
             _hub = new GameObject("객잔 본채").AddComponent<InnScreen>();
             _hub.font = chimbang.font;
-            _hub.background = chimbang.background;
+            _hub.background = hubBackground != null ? hubBackground : chimbang.background; // 2026-11-21 본채 그림이 따로 있었는데 침방 그림을 쓰고 있었다
+            _hub.trainingBackground = trainingBackground;
             _hub.bodyPreview = System.Linq.Enumerable.FirstOrDefault(System.Linq.Enumerable.Select(chimbang.sectArt, a => a.art), a => a != null); // 대장간 몸 색 미리 보기
             _hub.StartLife += OpenChimbang;
             ShowHub();

@@ -679,6 +679,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Meta.InnFlow
   chimbang: {fileID: 1869565987}
+  hubBackground: {fileID: 21300000, guid: 53d245706d4b4703b5191bf32c5a192c, type: 3}
+  trainingBackground: {fileID: 21300000, guid: 49b66539611d4eb793fa3cbe6274adaf, type: 3}
 --- !u!4 &2095910847
 Transform:
   m_ObjectHideFlags: 0
