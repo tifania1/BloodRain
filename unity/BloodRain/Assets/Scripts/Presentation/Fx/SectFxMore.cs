@@ -836,13 +836,14 @@ namespace BloodRain.Presentation.Fx
             });
             for (int i = 0; i < 3; i++)
             {
-                float al = 1f - i * .3f, th = .14f - i * .035f;
+                float al = 1f - i * .3f, th = .1f - i * .025f;
                 Action wave = () => Add(spread + .22f, (f, k) =>
                 {
                     float q = Mathf.Min(1f, f.T / spread), r = R * (.08f + .92f * Ez(q)), fade = 1f - Mathf.Max(0f, (f.T - spread) / .22f);
-                    float S = 2f * r / .9f;
-                    Quad(2, c0, S, S, 0f, new Vector4(.9f, th, .55f, 0f), FxRamp.Ink, .72f * al * fade, 1f, 0f, f.Seed);
-                    Glow(2, c0, S * .96f, S * .96f, 0f, new Vector4(.9f, th * .35f, .45f, 0f), FxRamp.Gold, .55f * al * fade, 1f, 0f, f.Seed + 2f);
+                    // 고리 반지름을 사각형의 .7 에 두어 두께가 사각형 끝에 잘리지 않게(.9 면 네모난 테두리가 보였다)
+                    float S = 2f * r / .7f;
+                    Quad(2, c0, S, S, 0f, new Vector4(.7f, th, .55f, 0f), FxRamp.Ink, .72f * al * fade, 1f, 0f, f.Seed);
+                    Glow(2, c0, S * .96f, S * .96f, 0f, new Vector4(.7f, th * .35f, .45f, 0f), FxRamp.Gold, .55f * al * fade, 1f, 0f, f.Seed + 2f);
                 });
                 if (i == 0) wave(); else After(i * .07f, wave);
             }
