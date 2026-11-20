@@ -243,7 +243,7 @@ namespace BloodRain.Presentation.Hud
             float a = Mathf.Clamp01(p / 0.08f) * (1f - Mathf.Clamp01((p - 0.62f) / 0.25f));
             if (a <= 0.01f) return;
             var reg = life.Body.Region;
-            float cy = Screen.height * 0.3f;
+            float cy = Screen.height * 0.22f;   // 2026-11-21 0.3 이면 아래 줄(어느 문파 제자)이 태어난 자리 고리·머리 위 기혈 바에 걸렸다
             var ink = new Color(Ink.r, Ink.g, Ink.b, a); var paper = new Color(Paper.r, Paper.g, Paper.b, a * 0.9f);
             _label.alignment = TextAnchor.MiddleCenter; _label.fontStyle = FontStyle.Bold;
             string han = Loc.Hanja(reg.Hanja);
