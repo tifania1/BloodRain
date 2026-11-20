@@ -241,9 +241,12 @@ namespace BloodRain.Presentation.Fx
                     }
                     case EnemyShotLook.Ice:
                     {
-                        // 설인 얼음덩이: 구르는 얼음 조각(밝은 색이라 Glow 가 먹 테를 깐다) + 서릿발 꼬리
+                        // 설인 얼음덩이: 구르는 뭉툭한 얼음 조각에 먹 그림자 + 서릿발 꼬리(Glow 로 그리면 흰 섬광처럼 보여 빛 겹은 뺌)
+                        float rot = _time * 1.5f + seed;
+                        var ice = new Vector4(5f, .25f, .8f, 0f);
                         if (!plain) Quad(1, s.Pos - dir * r * 2f, r * 4.5f, r * 1.4f, ang, new Vector4(.45f, .7f, 2f, 1f), FxRamp.Silver, .35f, 1f, .3f, seed);
-                        Glow(3, s.Pos, r * 2.1f, r * 1.8f, _time * 2.5f + seed, new Vector4(6f, .45f, .8f, 0f), s.Back ? FxRamp.Gold : IceShot, .95f, 1f, 0f, seed);
+                        Quad(3, s.Pos + new Vector2(.03f, -.03f) * m, r * 2.3f, r * 2f, rot, ice, FxRamp.Ink, .6f, 1f, 0f, seed);
+                        Quad(3, s.Pos, r * 2f, r * 1.75f, rot, ice, s.Back ? FxRamp.Gold : IceShot, .95f, 1f, 0f, seed);
                         break;
                     }
                     default:
