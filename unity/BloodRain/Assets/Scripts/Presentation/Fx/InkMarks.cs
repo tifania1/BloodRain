@@ -73,7 +73,11 @@ namespace BloodRain.Presentation.Fx
             Vector2 away = player != null ? pos - (Vector2)player.position : Random.insideUnitCircle;
             float ang = (away.sqrMagnitude > 1e-6f ? Mathf.Atan2(away.y, away.x) * Mathf.Rad2Deg : Random.value * 360f) + Random.Range(-25f, 25f);
             Splat(pos, r * splatScale, ang);
-            Ground(pos, r * groundScale);
+            // 바닥 자국은 사람 크기에 묶는다(2026-11-21): 일류부터 적 하나가 여럿을 품은 덩이라 반지름이 커서,
+            //   덩이 반지름 × 3 자국이 겹겹이 쌓여 플레이어 둘레 바닥이 큰 먹구름으로 덮였다
+            float gs = r * groundScale;
+            if (enemies != null && enemies.LookOf(a, out _, out float person, out _) && person > 0f) gs = Mathf.Min(gs, person * 2.4f);
+            Ground(pos, gs);
         }
 
         /// <summary>먹 튐 하나(시험에서도 부른다).</summary>
