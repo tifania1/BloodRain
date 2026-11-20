@@ -819,6 +819,48 @@ namespace BloodRain.Presentation.Fx
             });
         }
 
+        // ── 오의 ─────────────────────────────────────────────
+        /// <summary>
+        /// 사자후(소림 오의, 기획서 5장 '반경 6m 원형 음파, 0.3초에 반경까지'). c0 은 외친 자리, R 은 맞는 반경(월드), spread 는 퍼지는 초.
+        /// 몸에서 금빛 기합 터짐 → 먹 소리결 세 겹이 spread 초에 R 까지(뒤 둘은 0.07초씩 늦게, 옅고 가늘게) → 끝자리 바닥 금·먼지·사방 빛살.
+        /// 소리결은 외친 자리에 남는다(몸을 따라오지 않음).
+        /// </summary>
+        public void Roar(Vector2 c0, float R, float spread = .3f)
+        {
+            spread = Mathf.Max(.1f, spread);
+            bool simple = FxSettings.Simplified;
+            Add(.2f, (g, k) =>
+            {
+                float s = R * .5f * (1f + k * .7f);
+                Glow(3, c0, s, s, g.Seed, new Vector4(10f, .5f, .8f, 0f), FxRamp.Gold, .8f * (1f - k), 1f, 0f, g.Seed);
+            });
+            for (int i = 0; i < 3; i++)
+            {
+                float al = 1f - i * .3f, th = .14f - i * .035f;
+                Action wave = () => Add(spread + .22f, (f, k) =>
+                {
+                    float q = Mathf.Min(1f, f.T / spread), r = R * (.08f + .92f * Ez(q)), fade = 1f - Mathf.Max(0f, (f.T - spread) / .22f);
+                    float S = 2f * r / .9f;
+                    Quad(2, c0, S, S, 0f, new Vector4(.9f, th, .55f, 0f), FxRamp.Ink, .72f * al * fade, 1f, 0f, f.Seed);
+                    Glow(2, c0, S * .96f, S * .96f, 0f, new Vector4(.9f, th * .5f, .45f, 0f), FxRamp.Gold, .75f * al * fade, 1f, 0f, f.Seed + 2f);
+                });
+                if (i == 0) wave(); else After(i * .07f, wave);
+            }
+            if (!simple)
+                Add(spread + .3f, (f, k) =>
+                {
+                    float q = Mathf.Min(1f, f.T / spread), r = R * Ez(q);
+                    Quad(5, c0, r * 2f, r * 2f, 0f, new Vector4(.75f, 0f, 0f, 0f), FxRamp.Gold, .07f * (1f - k), 1f, 0f, f.Seed);   // 소리가 지나간 공기
+                }, true);
+            After(spread * .9f, () =>
+            {
+                CrackW(c0, R * 1.9f, FxRamp.Ink);
+                RaysW(c0, 16, R * .9f, FxRamp.Gold);
+                Drops(c0, 0f, 30, 20f, FxRamp.Ink, false, .14f, Mathf.PI);
+            });
+            HitFeel.Jolt(1f, .8f);
+        }
+
         // ── 음공 ─────────────────────────────────────────────
         /// <summary>현이 떨리고 먹 파문이 R(월드)까지 번진다. 2단 마른 메아리 고리, 3단 안쪽 담채, 5단 현에 흰 빛. gold 는 절기·금강후.</summary>
         public void Sonic(Func<Vector2> center, float R, int stage, bool gold = false)

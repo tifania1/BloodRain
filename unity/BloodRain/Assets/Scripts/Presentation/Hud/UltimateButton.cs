@@ -27,7 +27,7 @@ namespace BloodRain.Presentation.Hud
         RectTransform _root;
         Image _fill, _ring;
         TextMeshProUGUI _label;
-        Image _slash;
+        RawImage _slash;
         float _slashT = -1f;
         readonly System.Collections.Generic.List<int> _near = new System.Collections.Generic.List<int>();
 
@@ -55,7 +55,9 @@ namespace BloodRain.Presentation.Hud
             _root = (RectTransform)go.transform;
 
             // 일검 붓 획(화면 가운데를 비스듬히 가른다)
-            _slash = new GameObject("일검", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            // 2026-11-21 납작한 먹 막대 → 붓 획 텍스처(양끝이 가늘고 끝에 비백)
+            _slash = new GameObject("일검", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)).GetComponent<RawImage>();
+            _slash.texture = BloodRain.Presentation.Meta.InkUi.BrushStroke;
             _slash.transform.SetParent(_root, false);
             _slash.raycastTarget = false;
             var sr = _slash.rectTransform; sr.anchorMin = sr.anchorMax = new Vector2(0.5f, 0.5f);
@@ -116,7 +118,7 @@ namespace BloodRain.Presentation.Hud
                 _slashT += Time.unscaledDeltaTime;
                 float t = _slashT / 0.6f;
                 var col = _slash.color; col.a = t < 0.15f ? t / 0.15f : Mathf.Clamp01(1f - (t - 0.15f) / 0.85f); _slash.color = col;
-                _slash.rectTransform.sizeDelta = new Vector2(2600, Mathf.Lerp(90f, 12f, t));
+                _slash.rectTransform.sizeDelta = new Vector2(Mathf.Lerp(2200f, 2800f, Ez(t)), Mathf.Lerp(150f, 70f, t));
                 if (t >= 1f) _slashT = -1f;
             }
         }
@@ -203,6 +205,9 @@ namespace BloodRain.Presentation.Hud
                     }
                     if (cast.StunSeconds > 0f) field.Freeze(_picked, cast.StunSeconds);
                     LastHits = field.Damage(_picked, dmg, me, 0f);
+                    // 2026-11-21 사자후 그림: 화면을 가르는 일검 획 대신 몸에서 퍼지는 금빛·먹 소리결(전엔 일검 획 하나뿐이었다)
+                    var ink = BloodRain.Presentation.Fx.SectFx.Instance;
+                    if (ink != null && ink.Ready) { ink.Roar(me, ult.Param("radius") * sc, ult.Param("spreadSeconds", 0.3f)); _slashT = -1f; }
                     return true;
                 }
                 case "mancheon_hwau":
@@ -277,6 +282,8 @@ namespace BloodRain.Presentation.Hud
         }
         /// <summary>시험용: 팔방풍우로 쏜 연타 수(누적).</summary>
         public int VolleysFired { get; private set; }
+
+        static float Ez(float t) { t = Mathf.Clamp01(t); return 1f - (1f - t) * (1f - t) * (1f - t); }
 
         static Texture2D Disc(int n)
         {
