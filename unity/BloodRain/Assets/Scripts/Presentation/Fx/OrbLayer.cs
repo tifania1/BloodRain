@@ -130,7 +130,7 @@ namespace BloodRain.Presentation.Fx
             var ws = WorldScale.Current;
             if (ws == null || _mat == null || Field.Count == 0) return;
             var rp = new RenderParams(_mat) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, Vector3.one * 1e7f) };
-            float baseSize = ws.Length(orbRealmMeters);
+            float baseSize = ws.Length(orbRealmMeters) * 1.2f;   // 구슬 그림에 테두리·기운 테가 생겨 몸이 줄어든 만큼(2026-11-21)
             // 13장: 진기 구슬 청 / 녹 / 적 = 1 / 5 / 25. 합친 구슬은 값으로 색을 고르고 크게.
             var blue = new Vector4(0.36f, 0.62f, 0.86f, 1f);
             var green = new Vector4(0.40f, 0.72f, 0.42f, 1f);

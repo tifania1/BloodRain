@@ -69,6 +69,11 @@ namespace BloodRain.Presentation.Hud
             var nr = _needle.rectTransform; nr.anchorMin = nr.anchorMax = new Vector2(0.5f, 0.5f); nr.pivot = new Vector2(0.5f, 0f);
             nr.anchoredPosition = new Vector2(0, 64); nr.sizeDelta = new Vector2(6, 22);
 
+            // 글 밑 옅은 종이 타원(2026-11-21 — 돌바닥·소품 위에서 글이 묻혔다)
+            var soft = Sprite.Create(BakeSoft(64), new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f));
+            var back = Img(_root, "글 바탕", soft, new Color(0.95f, 0.92f, 0.84f, 0.8f));
+            var bkr = back.rectTransform; bkr.anchorMin = bkr.anchorMax = Vector2.zero; bkr.pivot = new Vector2(0.5f, 0.5f);
+            bkr.anchoredPosition = new Vector2(110, 62); bkr.sizeDelta = new Vector2(230, 40);
             var t = new GameObject("값", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
             t.transform.SetParent(_root, false);
             if (font != null) t.font = font;
@@ -204,6 +209,23 @@ namespace BloodRain.Presentation.Hud
         }
 
         // 꽉 찬 원(테두리 판). 가장자리 1.5칸을 부드럽게
+        /// <summary>가장자리가 부드럽게 풀리는 둥근 판(글 밑 종이 번짐).</summary>
+        static Texture2D BakeSoft(int n)
+        {
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            float r = n / 2f;
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float d = Mathf.Sqrt((x + 0.5f - r) * (x + 0.5f - r) + (y + 0.5f - r) * (y + 0.5f - r)) / r;
+                    px[y * n + x] = new Color32(255, 255, 255, (byte)(Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.45f, 1f, d)) * 255));
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return tex;
+        }
+
         static Texture2D BakeDisc(int n)
         {
             var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };

@@ -593,7 +593,7 @@ namespace BloodRain.Presentation.Fx
                 onLand?.Invoke(target);
                 float rs = reach * (last ? 1.85f : 1.45f) * m * (big ? 1.25f : 1f);
                 RingW(target, rs, FxRamp.Ink, .26f, .6f);
-                RingW(target, rs * .96f, FxRamp.Gold, .26f, 1f, true);
+                RingW(target, rs * .96f, FxRamp.Gold, .26f, L(stage, .55f, .65f, .78f, .9f, 1f), true);   // 낮은 단계는 금빛 고리도 옅게(Bloom 에 하얗게 탔다)
                 // 맞은 자리 금빛 터짐: 낮은 단계에선 작고 옅게(2026-11-21 — Bloom 이 붙은 뒤 1단 주먹부터 해처럼 하얗게 타올랐다. '절제'와 단계 오름)
                 float b = rs * L(stage, .52f, .56f, .6f, .64f, .68f), ba = L(stage, .5f, .6f, .72f, .86f, 1f);
                 Add(.12f, (g, k) =>
