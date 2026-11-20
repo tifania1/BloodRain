@@ -72,10 +72,10 @@ namespace BloodRain.Presentation.Fx
             // 회청 바람이 종이 바닥에 묻혀서 먹 받침을 먼저(2026-11-20)
             Quad(0, c0 - d * .03f * S, S * 1.08f, S * 1.08f, p.Ang, new Vector4(2f, st >= 2 ? .56f : .48f, 1f, .55f), FxRamp.Ink, .45f * al, Mathf.Min(1f, p.Age / .08f), k > .75f ? (k - .75f) * 3f : 0f, p.Seed);
             Quad(0, c0, S, S, p.Ang, new Vector4(2f, st >= 2 ? .46f : .38f, 1f, .55f), body, .95f * al, Mathf.Min(1f, p.Age / .08f), k > .75f ? (k - .75f) * 3f : 0f, p.Seed);
-            // 3단 흙먼지 자국(시안 palm: 0.3초마다 지나간 바닥에 옅은 흙빛, 6초에 걸쳐 마름)
-            if (st >= 3 && !p.Evo && !FxSettings.Simplified && k < .8f && p.Age >= .3f && Mathf.Floor(p.Age / .3f) != Mathf.Floor((p.Age - Time.deltaTime) / .3f))
+            // 3단 흙먼지 자국(시안 palm 은 0.3초마다, 지나간 바닥에 옅은 흙빛, 6초에 걸쳐 마름).
+            // Lv8 장풍 여러 줄기에서 바닥 자국 칸(48)을 흙먼지가 36칸까지 차지해 독 꽃·그을음을 밀어냈다(2026-11-20 PC) — 0.45초마다, 칸이 36 넘게 차면 안 남김
+            if (st >= 3 && !p.Evo && !FxSettings.Simplified && k < .8f && p.Age >= .45f && _stains.Count < MaxStains - 12 && Mathf.Floor(p.Age / .45f) != Mathf.Floor((p.Age - Time.deltaTime) / .45f))
             {
-                if (_stains.Count >= MaxStains) _stains.RemoveAt(0);
                 _stains.Add(new Stain { Pos = c0 - Vector2.up * .1f * S, Seed = p.Seed + p.Age, Rot = p.Ang, Size = .27f * S, Shape = 3, P = new Vector4(3f, .35f, .8f, 0f), C = FxRamp.Dust, A = .22f });
             }
             if (st >= 5)
