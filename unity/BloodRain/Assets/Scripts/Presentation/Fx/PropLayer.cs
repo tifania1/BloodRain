@@ -131,6 +131,8 @@ namespace BloodRain.Presentation.Fx
                 // 긴 변이 s. 원화는 가로세로 비가 달라 그 비대로 늘린다(임시 그림은 정사각 1)
                 float asp = _aspect[slot];
                 float sw = asp >= 1f ? s : s * asp, sh = asp >= 1f ? s / asp : s;
+                if (p.Kind != PropKind.Mount) alpha *= HudFade(u.x - sw * 0.5f, u.x + sw * 0.5f, u.y - sh * 0.15f, u.y + sh * 0.85f, c, w, h);
+                if (alpha <= 0.02f) continue;
                 _m[slot].Add(Matrix4x4.TRS(new Vector3(u.x, u.y + sh * 0.35f, 0.5f), Quaternion.identity, new Vector3(sw, sh, 1f)));
                 _t[slot].Add(new Vector4(1f, 1f, 1f, alpha));
                 drawn++;
@@ -156,6 +158,23 @@ namespace BloodRain.Presentation.Fx
                         Graphics.RenderMeshInstanced(rp, _quad, 0, _mBuf, n);
                     }
                 }
+        }
+
+        // HUD 귀퉁이(왼쪽 위 무공 칸, 오른쪽 위 경지·처치 글과 지도, 아래 음양·오의 동그라미) 밑에 든 소품은 옅게.
+        //   소나무가 무공 칸·처치 글을 덮어 글이 묻혔다(2026-11-21, GR-01U·HF-03U 에서 여러 번 본 것). 화면 비율(0~1)로 잰다.
+        const float HudTop = 0.8f, HudTopSide = 0.22f, HudBottom = 0.22f, HudBottomSide = 0.13f, HudAlpha = 0.3f;
+
+        static float HudFade(float xMin, float xMax, float yMin, float yMax, Vector2 c, float w, float h)
+        {
+            float vL = (xMin - (c.x - w)) / (2f * w), vR = (xMax - (c.x - w)) / (2f * w);
+            float vB = (yMin - (c.y - h)) / (2f * h), vT = (yMax - (c.y - h)) / (2f * h);
+            // 귀퉁이 안으로 들어간 깊이(가장자리 0.06 에 걸쳐 0 → 1) — 카메라가 움직일 때 툭 바뀌지 않게
+            const float E = 0.06f;
+            float side = Mathf.Max(Mathf.Clamp01((HudTopSide - vL) / E), Mathf.Clamp01((vR - (1f - HudTopSide)) / E));
+            float top = vB < 1f ? Mathf.Clamp01((vT - HudTop) / E) * side : 0f;
+            float sideB = Mathf.Max(Mathf.Clamp01((HudBottomSide - vL) / E), Mathf.Clamp01((vR - (1f - HudBottomSide)) / E));
+            float bottom = vT > 0f ? Mathf.Clamp01((HudBottom - vB) / E) * sideB : 0f;
+            return Mathf.Lerp(1f, HudAlpha, Mathf.Max(top, bottom));
         }
 
         static Mesh MakeQuad()
