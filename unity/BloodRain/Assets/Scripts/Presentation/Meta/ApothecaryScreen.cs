@@ -85,7 +85,7 @@ namespace BloodRain.Presentation.Meta
                 b.transform.SetParent(_root, false);
                 var back = b.GetComponent<Image>();
                 Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(i % 2 == 0 ? -400 : 400, -260 - (i / 2) * 130), new Vector2(760, 110));
-                InkUi.PaperCard((RectTransform)b.transform, new Vector2(760, 110));
+                InkUi.PaperCard((RectTransform)b.transform, new Vector2(760, 110), 0.12f, 0.3f);
                 var label = Text(b.transform, "", 24, FontStyles.Normal, Ink);
                 var lr = label.rectTransform; lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.offsetMin = new Vector2(28, 8); lr.offsetMax = new Vector2(-28, -8);
                 label.alignment = TextAlignmentOptions.MidlineLeft;
