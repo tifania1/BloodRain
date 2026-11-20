@@ -139,13 +139,13 @@ namespace BloodRain.Presentation.Hud
             sc.matchWidthOrHeight = 0.5f;
             _root = (RectTransform)go.transform;
 
-            var dim = Panel(_root, new Color(0.02f, 0.02f, 0.03f, 0.72f));
+            var dim = Panel(_root, new Color(0.02f, 0.02f, 0.03f, 0.86f));   // .72 면 위 HUD(시간·땅 이름·체력바)가 제목 밑으로 비쳤다
             Stretch(dim.rectTransform);
 
             var title = Text(_root, Loc.T("ui.pause.title"), 54, FontStyles.Bold, Paper);
-            Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -90), new Vector2(1200, 70));
+            Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -100), new Vector2(1200, 70));
             var sub = Text(_root, Loc.T("ui.pause.sub"), 22, FontStyles.Italic, new Color(Paper.r, Paper.g, Paper.b, 0.7f));
-            Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -140), new Vector2(1200, 32));
+            Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(1200, 32));
 
             // 세 판: 칸 · 능력치 · 무공별 피해
             var left = Sheet(new Vector2(-560, 20), new Vector2(460, 640));
@@ -167,6 +167,9 @@ namespace BloodRain.Presentation.Hud
             Place(frame.rectTransform, new Vector2(0.5f, 0.5f), pos, size + new Vector2(6, 6));
             var p = Panel(frame.transform, Paper);
             Place(p.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, size);
+            // 2026-11-21 선지 결과 안쪽 가는 먹 테(납작한 크림색 판이었다)
+            BloodRain.Presentation.Meta.InkUi.PaperGrainFill(p.rectTransform, size, 0.32f);
+            BloodRain.Presentation.Meta.InkUi.Frame(p.rectTransform, Vector2.zero, size, 12f, 1.5f, new Color(Ink.r, Ink.g, Ink.b, 0.22f));
             return p.rectTransform;
         }
 
@@ -290,6 +293,7 @@ namespace BloodRain.Presentation.Hud
             b.transform.SetParent(frame.transform, false);
             b.GetComponent<Image>().color = enabled ? Paper : new Color(Paper.r, Paper.g, Paper.b, 0.5f);
             Place((RectTransform)b.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(260, 60));
+            BloodRain.Presentation.Meta.InkUi.PaperGrainFill((RectTransform)b.transform, new Vector2(260, 60), 0.3f);
             b.interactable = enabled;
             if (enabled && onClick != null) b.onClick.AddListener(() => onClick());
             var t = Text(b.transform, label, 28, FontStyles.Bold, enabled ? Ink : new Color(Ink.r, Ink.g, Ink.b, 0.4f));
