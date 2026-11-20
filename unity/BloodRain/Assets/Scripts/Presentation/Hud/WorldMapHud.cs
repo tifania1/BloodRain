@@ -206,7 +206,7 @@ namespace BloodRain.Presentation.Hud
                 _label.alignment = TextAnchor.UpperCenter;
                 _label.fontSize = Mathf.RoundToInt((cur ? 18f : 16f) * k); _label.fontStyle = FontStyle.Bold;
                 string han = Loc.Hanja(reg.Hanja);
-                Outlined(new Rect(box.x, box.y, box.width, 26f * k), string.IsNullOrEmpty(han) ? Loc.Region(reg) : Loc.Region(reg) + " " + han, cur ? Crimson : Ink, Paper, k);
+                OutlinedPair(new Rect(box.x, box.y, box.width, 26f * k), Loc.Region(reg), han, cur ? Crimson : Ink, Paper, k);
                 _label.fontSize = Mathf.RoundToInt(12f * k); _label.fontStyle = FontStyle.Normal;
                 string sub = Loc.F("ui.density", reg.Density.ToString("0.0")) + (born ? "  ·  " + Loc.T("ui.map.born") : "") + (lord ? "  ·  " + Loc.T("ui.map.lord_awake") : "");
                 Outlined(new Rect(box.x, box.y + 22f * k, box.width, 20f * k), sub, lord ? Crimson : born ? GoldInk : new Color(Ink.r, Ink.g, Ink.b, 0.85f), Paper, k);
@@ -250,7 +250,9 @@ namespace BloodRain.Presentation.Hud
             if (!string.IsNullOrEmpty(han))
             {
                 _label.fontSize = Mathf.RoundToInt(66f * k);
+                if (ImguiFont.Lacks(han)) _label.font = ImguiFont.Hanja; // 丐 같은 KR 글꼴에 없는 한자
                 Outlined(new Rect(0, cy - 60f * k, Screen.width, 84f * k), han, ink, paper, k * 1.6f);
+                _label.font = null;
             }
             _label.fontSize = Mathf.RoundToInt(26f * k);
             Outlined(new Rect(0, cy + 28f * k, Screen.width, 36f * k), Loc.Region(reg), ink, paper, k);
@@ -267,6 +269,29 @@ namespace BloodRain.Presentation.Hud
             GUI.color = c;
             GUI.DrawTexture(new Rect(cx - size / 2f, cy - size / 2f, size, size), t);
             GUI.color = Color.white;
+        }
+
+        /// <summary>'이름 한자'를 가운데 맞춰 한 줄로. 한자에 KR 글꼴에 없는 글자가 있으면 한자만 한자 글꼴(ImguiFont.Hanja)로 따로 그린다.</summary>
+        void OutlinedPair(Rect r, string ko, string han, Color fg, Color bg, float k)
+        {
+            var hf = ImguiFont.Hanja;
+            if (string.IsNullOrEmpty(han) || hf == null || !ImguiFont.Lacks(han))
+            {
+                Outlined(r, string.IsNullOrEmpty(han) ? ko : ko + " " + han, fg, bg, k);
+                return;
+            }
+            var align = _label.alignment;
+            float wKo = _label.CalcSize(new GUIContent(ko + " ")).x;
+            _label.font = hf;
+            float wHan = _label.CalcSize(new GUIContent(han)).x;
+            _label.font = null;
+            float x0 = r.center.x - (wKo + wHan) * 0.5f;
+            _label.alignment = TextAnchor.UpperLeft;
+            Outlined(new Rect(x0, r.y, wKo + 4f, r.height), ko + " ", fg, bg, k);
+            _label.font = hf;
+            Outlined(new Rect(x0 + wKo, r.y, wHan + 4f, r.height), han, fg, bg, k);
+            _label.font = null;
+            _label.alignment = align;
         }
 
         /// <summary>테두리 두른 글: 바탕색으로 여덟 방향에 한 번씩, 그 위에 글자색.</summary>

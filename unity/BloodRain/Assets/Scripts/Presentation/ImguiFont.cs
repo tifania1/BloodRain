@@ -34,6 +34,38 @@ namespace BloodRain.Presentation
             }
         }
 
+        const string HanName = "NotoSerifTC SDF";
+        static Font _han;
+        static float _nextHanTry;
+
+        /// <summary>KR 글꼴에 없는 한자(丐·罩 — Noto Serif KR 에 아예 없다)를 그릴 IMGUI 한자 글꼴(TC 원본 한 벌). 없으면 null.
+        /// TMP 는 SC·TC 를 대체 글꼴로 걸어 두어 괜찮지만 IMGUI 는 대체가 없어 천하도 '丐幇總舵'의 丐 가 빈칸이었다(2026-11-21 웹 판).</summary>
+        public static Font Hanja
+        {
+            get
+            {
+                if (_han != null || Time.unscaledTime < _nextHanTry) return _han;
+                _nextHanTry = Time.unscaledTime + 2f;
+                foreach (var fa in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
+                    if (fa != null && fa.name == HanName && fa.sourceFontFile != null)
+                    {
+                        _han = Object.Instantiate(fa.sourceFontFile);
+                        _han.name = fa.sourceFontFile.name + " (IMGUI)";
+                        break;
+                    }
+                return _han;
+            }
+        }
+
+        /// <summary>IMGUI 한글 글꼴에 없는 CJK 글자가 들어 있나(그러면 Hanja 글꼴로 그린다).</summary>
+        public static bool Lacks(string s)
+        {
+            var f = Font;
+            if (f == null || string.IsNullOrEmpty(s)) return false;
+            foreach (char c in s) if (c >= 0x2E80 && !f.HasCharacter(c)) return true;
+            return false;
+        }
+
         /// <summary>
         /// 테두리 두른 IMGUI 글(2026-11-21 — 줍는 글 '혈정 +1'·'은자 +3' 이 테두리 없이 돌바닥·종이 바닥에 묻혔다).
         /// 테두리색으로 여덟 방향에 한 번씩 그린 뒤 글자색. 알파는 둘 다 fg.a 를 따른다.
