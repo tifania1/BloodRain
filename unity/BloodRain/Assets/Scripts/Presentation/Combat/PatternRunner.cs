@@ -574,7 +574,7 @@ namespace BloodRain.Presentation.Combat
             SfxPlayer.Instance?.Play("sfx_gimmick_bell");
             // 울림: 종 둘레 금빛 소리 고리 + 먹 고리가 적을 세우는 반경까지(지역 범종 GimmickLayer 와 같게)
             var fx = Fx.SectFx.Instance;
-            if (fx != null && fx.Ready) { fx.RingW(at, bell.TouchRadius * 3f, Fx.FxRamp.Gold, 0.5f, 0.8f, true); fx.RingW(at, bell.StunRadius * 2.2f, Fx.FxRamp.Ink, 0.55f, 0.7f); }
+            if (fx != null && fx.Ready) { fx.RingW(at, bell.TouchRadius * 3f, Fx.FxRamp.Gold, 0.5f, 0.8f, true); fx.RingW(at, bell.StunRadius * 2.2f, Fx.FxRamp.Ink, 0.55f, 0.32f); }
             var sim = runner.enemies.Sim;
             if (sim == null) return;
             int stunned = 0;

@@ -273,7 +273,7 @@ namespace BloodRain.Presentation.Fx
             var fx = SectFx.Instance;
             if (fx != null && fx.Ready)
             {
-                fx.RingW(b.At, b.G.StunRadius * 2.2f, FxRamp.Ink, 0.55f, 0.7f);
+                fx.RingW(b.At, b.G.StunRadius * 2.2f, FxRamp.Ink, 0.55f, 0.32f);
                 fx.RingW(b.At, b.G.TouchRadius * 3f, FxRamp.Gold, 0.45f, 0.8f, true);
             }
             else StartCoroutine(RingWave(b.At, b.G.StunRadius));
