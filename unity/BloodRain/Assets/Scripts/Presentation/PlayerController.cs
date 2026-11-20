@@ -151,7 +151,8 @@ namespace BloodRain.Presentation
             if (step != Vector2.zero)
             {
                 var kept = _ws.Scale.KeepInside(pos + new System.Numerics.Vector2(step.x, step.y), birth, _ws.Realm);
-                transform.position = new Vector3(kept.X, kept.Y, transform.position.z);
+                var free = Fx.GimmickLayer.Resolve(new Vector2(kept.X, kept.Y), _ws.Length(bodyRealmMeters) * 0.5f); // GM-01U 탑림 돌탑에 막힘
+                transform.position = new Vector3(free.x, free.y, transform.position.z);
             }
             transform.localScale = Vector3.one * _ws.Length(bodyRealmMeters);
         }

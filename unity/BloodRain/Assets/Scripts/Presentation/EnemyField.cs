@@ -926,6 +926,7 @@ namespace BloodRain.Presentation
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
                       1f, DataBoot.Data.Balance.EnemyStatus.KnockbackKeepPerSecond,
                       sectTrait.NearEnemySlowRadius(ws.RealmFactor), sectTrait.EnemySpeedMultiplier(0f), DataBoot.Data.Balance.EnemyStatus.SlowFadePerSecond); // R-04Ub 곤륜 설한기: 몸 가까운 적 느려짐
+            Fx.GimmickLayer.PushAgents(_sim, k => k >= 0 && k < _kinds.Count && _kinds[k].Def.IgnoresTerrain); // GM-01U 탑림 돌탑은 걷는 적을 막음
             // 접촉 피해(C-03): 플레이어 원에 닿은 적, 같은 적은 contact.sameEnemyIntervalSeconds 마다 한 번
             if (vitals != null)
             {
