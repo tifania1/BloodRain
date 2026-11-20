@@ -370,7 +370,7 @@ namespace BloodRain.Presentation.Hud
         }
 
         /// <summary>한 붓 원상(圓相): 들어가는 데가 굵고 돌아 나오며 가늘어지고 끝 쪽은 비백, 처음과 끝 사이가 조금 벌어진다.</summary>
-        static Texture2D Enso(int n)
+        internal static Texture2D Enso(int n)
         {
             var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
             var px = new Color32[n * n];

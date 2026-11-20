@@ -53,9 +53,11 @@ namespace BloodRain.Presentation.Hud
             _vignette = Img(_root, "역류 맥동", vig, new Color(0.6f, 0.03f, 0.02f, 0f));
             var vr = _vignette.rectTransform; vr.anchorMin = Vector2.zero; vr.anchorMax = Vector2.one; vr.offsetMin = vr.offsetMax = Vector2.zero;
 
-            var circle = Sprite.Create(BakeDisc(128), new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+            // 2026-11-21 테두리를 꽉 찬 원판에서 한 붓 원상(圓相) 고리로(오의 단추와 같은 붓). 빛(금·먹·핏빛)의 뜻은 그대로
+            var circle = Sprite.Create(UltimateButton.Enso(192), new Rect(0, 0, 192, 192), new Vector2(0.5f, 0.5f));
             _ring = Img(_root, "테두리", circle, Gold);
-            Place(_ring.rectTransform, new Vector2(110, 160), 150);
+            Place(_ring.rectTransform, new Vector2(110, 160), 176);
+            _ring.rectTransform.localEulerAngles = new Vector3(0f, 0f, 150f); // 오의 단추와 붓 시작 자리가 겹치지 않게
             var taiji = Sprite.Create(BakeTaiji(256), new Rect(0, 0, 256, 256), new Vector2(0.5f, 0.5f));
             var sym = Img(_root, "태극", taiji, Color.white);
             _symbol = sym.rectTransform;
@@ -220,23 +222,6 @@ namespace BloodRain.Presentation.Hud
                 {
                     float d = Mathf.Sqrt((x + 0.5f - r) * (x + 0.5f - r) + (y + 0.5f - r) * (y + 0.5f - r)) / r;
                     px[y * n + x] = new Color32(255, 255, 255, (byte)(Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.45f, 1f, d)) * 255));
-                }
-            tex.SetPixels32(px);
-            tex.Apply();
-            return tex;
-        }
-
-        static Texture2D BakeDisc(int n)
-        {
-            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
-            var px = new Color32[n * n];
-            float r = n / 2f;
-            for (int y = 0; y < n; y++)
-                for (int x = 0; x < n; x++)
-                {
-                    float d = Mathf.Sqrt((x + 0.5f - r) * (x + 0.5f - r) + (y + 0.5f - r) * (y + 0.5f - r));
-                    byte a = (byte)(Mathf.Clamp01(r - d) * 255);
-                    px[y * n + x] = new Color32(255, 255, 255, a);
                 }
             tex.SetPixels32(px);
             tex.Apply();
