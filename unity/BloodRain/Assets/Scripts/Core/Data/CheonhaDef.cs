@@ -17,6 +17,15 @@ namespace BloodRain.Core.Data
         public bool Hidden;
     }
 
+    /// <summary>보스 연전(7장 '모드', WP-38). 시작 경지·시작 무공 레벨·처치마다 레벨업 수·기혈을 잴 분.</summary>
+    public sealed class BossRushDef
+    {
+        public string StartRealm = "";
+        public int StartWeaponLevel;
+        public int LevelUpsPerKill;
+        public float HealthMinute;
+    }
+
     /// <summary>칭호 하나. When: food_one_run(한 생 음식 Count 개), boss_single_weapon(공격 무공 하나만 든 채 땅의 주인 처치), all_sects_lived(모든 문파로 한 번씩 환생).</summary>
     public sealed class TitleDef
     {
@@ -72,6 +81,8 @@ namespace BloodRain.Core.Data
         public List<TitleDef> Titles = new List<TitleDef>();
         /// <summary>Steam 업적 22개(WP-43, 2026-11-20 추천대로 — decisions #40). 판정은 Meta.Achievements.</summary>
         public List<AchievementDef> Achievements = new List<AchievementDef>();
+        /// <summary>보스 연전 규칙(WP-38, decisions #39). Meta.BossRush.</summary>
+        public BossRushDef BossRush = new BossRushDef();
         /// <summary>의상 해금(10장 해금 표). 그림·이름은 아트 뒤라 조건만.</summary>
         public List<CostumeDef> Costumes = new List<CostumeDef>();
 

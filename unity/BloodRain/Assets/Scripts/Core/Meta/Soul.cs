@@ -459,6 +459,18 @@ namespace BloodRain.Core.Meta
         readonly HashSet<string> _crisesBlocked = new HashSet<string>(StringComparer.Ordinal);
         /// <summary>어느 생에서든 막은 문파의 위기(연표 사건 id, GU-11m). 처음 막은 사건만 윤회의 기(rebirthQi.crisisFirstBlock). 회귀해도 남는다.</summary>
         public IReadOnlyCollection<string> CrisesBlocked => _crisesBlocked;
+        /// <summary>보스 연전을 다 깬 가장 빠른 시간(초). 0 이면 아직 못 깸(WP-38 — 혼엔 이것만 남는다).</summary>
+        public int BossRushBestSeconds { get; private set; }
+
+        /// <summary>보스 연전을 다 깬 시간을 적는다(진짜 혼에 — 판은 복사본으로 돌린다). 가장 빠른 기록이 바뀌면 true.</summary>
+        public bool RecordBossRush(int seconds)
+        {
+            if (seconds <= 0) throw new ArgumentException("보스 연전 시간이 0 이하입니다");
+            if (BossRushBestSeconds > 0 && BossRushBestSeconds <= seconds) return false;
+            BossRushBestSeconds = seconds;
+            return true;
+        }
+
         /// <summary>혈마의 속삭임을 받은 생의 수(20장 '계승 엔딩 표식'). 무엇을 바꾸는지는 WP-29a 결정 대기라 세기만 한다.</summary>
         public int WhispersTotal { get; private set; }
         /// <summary>얻은 칭호 id(cheonha.json titles, 10장 해금 표). 모으기 보상이라 능력치는 없다.</summary>
@@ -846,6 +858,7 @@ namespace BloodRain.Core.Meta
             /// <summary>막은 문파의 위기(GU-11m). 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public List<string> CrisesBlocked = new List<string>();
             public int Whispers;
+            public int BossRushBest;
             /// <summary>엔딩(4장). 이 칸들이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public bool EndingPending;
             public List<string> EndingsSeen = new List<string>();
@@ -905,6 +918,7 @@ namespace BloodRain.Core.Meta
                 Chronicle = Sorted(_chronicle),
                 CrisesBlocked = Sorted(_crisesBlocked),
                 Whispers = WhispersTotal,
+                BossRushBest = BossRushBestSeconds,
                 EndingPending = EndingPending,
                 EndingsSeen = Sorted(_endingsSeen),
                 JourneyOver = JourneyOver,
@@ -932,6 +946,7 @@ namespace BloodRain.Core.Meta
                 TalismansUsedTotal = Math.Max(0, f.TalismansUsed),
                 GoldenToadsTotal = Math.Max(0, f.GoldenToads),
                 WhispersTotal = Math.Max(0, f.Whispers),
+                BossRushBestSeconds = Math.Max(0, f.BossRushBest),
                 EndingPending = f.EndingPending,
                 JourneyOver = f.JourneyOver,
             };
