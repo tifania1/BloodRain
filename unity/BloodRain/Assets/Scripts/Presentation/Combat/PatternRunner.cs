@@ -220,11 +220,11 @@ namespace BloodRain.Presentation.Combat
 
         void Clear()
         {
-            foreach (var t in _teles) if (t.Vis != null) Destroy(t.Vis);
+            foreach (var t in _teles) if (t.Vis != null) Kill(t.Vis);
             _teles.Clear();
-            foreach (var b in _beamVis) if (b != null) Destroy(b);
+            foreach (var b in _beamVis) if (b != null) Kill(b);
             _beamVis.Clear();
-            if (_bossMark != null) Destroy(_bossMark);
+            if (_bossMark != null) Kill(_bossMark);
             _bossMark = null;
         }
 
@@ -486,7 +486,7 @@ namespace BloodRain.Presentation.Combat
 
         void Remove(Tele t)
         {
-            if (t.Vis != null) Destroy(t.Vis);
+            if (t.Vis != null) Kill(t.Vis);
             _teles.Remove(t);
         }
 
@@ -548,7 +548,7 @@ namespace BloodRain.Presentation.Combat
                 if (bell.TryRing(Vector2.Distance(player, at))) Ring(bell, at);
                 if (bell.Gone)
                 {
-                    if (vis != null) Destroy(vis);
+                    if (vis != null) Kill(vis);
                     _bells.RemoveAt(i);
                 }
             }
@@ -583,11 +583,19 @@ namespace BloodRain.Presentation.Combat
 
         void ClearBells()
         {
-            foreach (var b in _bells) if (b.vis != null) Destroy(b.vis);
+            foreach (var b in _bells) if (b.vis != null) Kill(b.vis);
             _bells.Clear();
         }
 
         // ---- 그리기(바닥 붉은 그림자. 붓 획 예고는 vfx.md 대로 나중에) ----
+
+        /// <summary>예고 그림을 지운다. Shape 가 그림마다 새로 만든 Mesh 도 같이(GameObject 만 지우면 Mesh 가 남아 땅의 주인 싸움 내내 쌓였다, 2026-11-20).</summary>
+        static void Kill(GameObject go)
+        {
+            var mf = go.GetComponent<MeshFilter>();
+            if (mf != null && mf.sharedMesh != null) Destroy(mf.sharedMesh);
+            Destroy(go);
+        }
 
         GameObject Shape(string name, Color c, int order)
         {

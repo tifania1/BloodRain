@@ -123,12 +123,23 @@ namespace BloodRain.Presentation.Hud
                 _logWait = 0f;
                 if (_sfx == null) _sfx = FindFirstObjectByType<BloodRain.Presentation.Fx.SectFx>();
                 if (_orbs == null) _orbs = FindFirstObjectByType<BloodRain.Presentation.Fx.OrbLayer>();
-                string perf = $" | fps{(_sumUnscaled > 0f ? _frames / _sumUnscaled : 0f):0} 최장{_worstMs:0}ms 장{_quadsMax} 효과{(_sfx != null ? _sfx.FxCount : 0)} 튐{(_sfx != null ? _sfx.DropCount : 0)} 구슬{(_orbs != null && _orbs.Field != null ? _orbs.Field.Orbs.Count : 0)} 탄{(runner.weapons != null ? runner.weapons.ProjCount : 0)} GC{System.GC.GetTotalMemory(false) / 1048576f:0}MB/{System.GC.CollectionCount(0)}";
+                string perf = $" | fps{(_sumUnscaled > 0f ? _frames / _sumUnscaled : 0f):0} 최장{_worstMs:0}ms 장{_quadsMax} 효과{(_sfx != null ? _sfx.FxCount : 0)} 튐{(_sfx != null ? _sfx.DropCount : 0)} 구슬{(_orbs != null && _orbs.Field != null ? _orbs.Field.Orbs.Count : 0)} 탄{(runner.weapons != null ? runner.weapons.ProjCount : 0)} GC{System.GC.GetTotalMemory(false) / 1048576f:0}MB/{System.GC.CollectionCount(0)} 네이티브{UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / 1048576L}MB{ObjectCounts()}";
                 _frames = 0; _worstMs = 0f; _sumUnscaled = 0f; _quadsMax = 0;
                 var life = runner.Life;
                 if (life != null)
                     _log.Append($"{(_pc != null && BloodRain.Sim.WorldScale.Current != null ? "장막" + BloodRain.Sim.WorldScale.Current.Scale.PushStrength(new System.Numerics.Vector2(p.x, p.y), new System.Numerics.Vector2(_pc.birthplace.x, _pc.birthplace.y), BloodRain.Sim.WorldScale.Current.Realm).ToString("0.00") + " " : "")}{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId} 맞음{(runner.vitals != null ? runner.vitals.Hits : 0)} 피해{(runner.vitals != null ? runner.vitals.DamageTaken : 0):0} 배속{Time.timeScale:0.##}{perf}\n");
             }
+        }
+
+        // 누수 찾기(2026-11-20 사람: 갈수록 끊기고 Unity 가 닫혔다 — 누수 의심): 10초마다 만들어진 텍스처·메시·재질·게임 오브젝트 수.
+        // 생 하나 안에서 이 수가 계속 오르면 어딘가 만들고 안 지운다
+        float _countWait;
+        string ObjectCounts()
+        {
+            _countWait += 1f;
+            if (_countWait < 10f) return "";
+            _countWait = 0f;
+            return $" 텍스처{Resources.FindObjectsOfTypeAll<Texture2D>().Length} 메시{Resources.FindObjectsOfTypeAll<Mesh>().Length} 재질{Resources.FindObjectsOfTypeAll<Material>().Length} 오브젝트{Resources.FindObjectsOfTypeAll<GameObject>().Length}";
         }
 
         Waiters _wait;
