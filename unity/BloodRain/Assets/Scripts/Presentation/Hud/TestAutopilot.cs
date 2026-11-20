@@ -114,7 +114,7 @@ namespace BloodRain.Presentation.Hud
                 _logWait = 0f;
                 var life = runner.Life;
                 if (life != null)
-                    _log.Append($"{(_pc != null && BloodRain.Sim.WorldScale.Current != null ? "장막" + BloodRain.Sim.WorldScale.Current.Scale.PushStrength(new System.Numerics.Vector2(p.x, p.y), new System.Numerics.Vector2(_pc.birthplace.x, _pc.birthplace.y), BloodRain.Sim.WorldScale.Current.Realm).ToString("0.00") + " " : "")}{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId}\n");
+                    _log.Append($"{(_pc != null && BloodRain.Sim.WorldScale.Current != null ? "장막" + BloodRain.Sim.WorldScale.Current.Scale.PushStrength(new System.Numerics.Vector2(p.x, p.y), new System.Numerics.Vector2(_pc.birthplace.x, _pc.birthplace.y), BloodRain.Sim.WorldScale.Current.Realm).ToString("0.00") + " " : "")}{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId} 맞음{(runner.vitals != null ? runner.vitals.Hits : 0)} 피해{(runner.vitals != null ? runner.vitals.DamageTaken : 0):0} 배속{Time.timeScale:0.##}\n");
             }
         }
 
