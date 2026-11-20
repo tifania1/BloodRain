@@ -20,6 +20,10 @@ namespace BloodRain.Presentation
 
         public static SfxPlayer Instance { get; private set; }
 
+        /// <summary>효과음을 켜는가. 2026-11-20 사람: "효과음이 너무 허접해 보이니 다 빼자" — 소리 묶음을 고르고 다시 다듬을 때까지 끈다.
+        /// 배경음은 그대로(BgmPlayer). 돌파 때 배경음을 낮추는 것(Hush 의 SfxGate)도 그대로 돈다.</summary>
+        public static bool Enabled = false;
+
         /// <summary>SfxGate 가 막아 버린 수(디버그).</summary>
         public int Dropped { get; private set; }
         /// <summary>실제로 튼 수(디버그).</summary>
@@ -116,6 +120,7 @@ namespace BloodRain.Presentation
 
         void PlayClip(string id)
         {
+            if (!Enabled) return;
             if (_byId == null)
             {
                 _byId = new Dictionary<string, List<Clip>>();

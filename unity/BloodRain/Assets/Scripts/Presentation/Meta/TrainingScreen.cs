@@ -29,6 +29,25 @@ namespace BloodRain.Presentation.Meta
 
         public Soul Soul => _soul;
 
+        /// <summary>'객잔으로'(Esc)로 닫혔다(객잔 본채가 다시 뜬다, 2026-11-20).</summary>
+        public event System.Action Closed;
+        public bool IsOpen => _root != null;
+
+        public void Close()
+        {
+            if (_root == null) return;
+            Destroy(_root.gameObject);
+            _root = null;
+            Closed?.Invoke();
+        }
+
+        void Update()
+        {
+            if (_root == null) return;
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb != null && kb.escapeKey.wasPressedThisFrame) Close();
+        }
+
         void Start()
         {
             if (EventSystem.current == null) new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
@@ -47,6 +66,7 @@ namespace BloodRain.Presentation.Meta
             var go = new GameObject("연무장", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             go.transform.SetParent(transform, false);
             go.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+            go.GetComponent<Canvas>().sortingOrder = 30; // 객잔 본채(20)·침방 위
             var sc = go.GetComponent<CanvasScaler>();
             sc.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             sc.referenceResolution = new Vector2(1920, 1080);
@@ -98,6 +118,7 @@ namespace BloodRain.Presentation.Meta
                 _rows.Add(row);
                 k++;
             }
+            if (Closed != null) InnBack.Add(_root, font, Close);
             Refresh();
         }
 

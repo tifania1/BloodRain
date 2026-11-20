@@ -47,6 +47,19 @@ namespace BloodRain.Presentation.Meta
         public bool loadRunScene;
 
         public event Action<RebirthBody> Chosen;
+        /// <summary>'객잔으로'(Esc)를 눌렀다. 객잔 본채(InnScreen)가 다시 뜬다(2026-11-20). 구독자가 없으면 단추도 없다.</summary>
+        public event Action Back;
+
+        /// <summary>침방 화면을 보이거나 감춘다(객잔 본채가 위에 뜰 때 감춘다).</summary>
+        public void SetVisible(bool on) { if (_root != null) _root.gameObject.SetActive(on); }
+        public bool Visible => _root != null && _root.gameObject.activeSelf;
+        Button _backButton;
+
+        public void PressBack()
+        {
+            if (_done || Back == null || !Visible) return;
+            Back.Invoke();
+        }
         public RebirthDraw Draw { get; private set; }
 
         static readonly Color Paper = new Color(0.91f, 0.87f, 0.78f);
@@ -91,6 +104,7 @@ namespace BloodRain.Presentation.Meta
             Say(Talk.Show(), true);
             _map.SetSoul(soul);
             BuildUpgrades(soul);
+            if (Back != null && _backButton == null) _backButton = InnBack.Add(_root, font, PressBack);
             ClosePinPicker();
             RefreshPin();
             Refresh();
@@ -257,12 +271,13 @@ namespace BloodRain.Presentation.Meta
         void Update()
         {
             var kb = Keyboard.current;
-            if (kb == null || Draw == null) return;
+            if (kb == null || Draw == null || !Visible) return;
             if (_pinPicker != null)
             {
                 if (kb.escapeKey.wasPressedThisFrame) ClosePinPicker();
                 return;
             }
+            if (kb.escapeKey.wasPressedThisFrame) { PressBack(); return; }
             Key[] keys = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4 };
             for (int i = 0; i < keys.Length; i++)
                 if (kb[keys[i]].wasPressedThisFrame) Choose(i);
