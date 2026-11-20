@@ -269,7 +269,14 @@ namespace BloodRain.Presentation.Fx
                     sim.Set(i, a);
                     stunned++;
                 }
-            StartCoroutine(RingWave(b.At, b.G.StunRadius));
+            // 울림(2026-11-21): 먹 고리가 세우는 반경까지 + 종 둘레 금빛 소리 고리(떨어진 범종과 같게). SectFx 가 없으면 예전 선 고리
+            var fx = SectFx.Instance;
+            if (fx != null && fx.Ready)
+            {
+                fx.RingW(b.At, b.G.StunRadius * 2.2f, FxRamp.Ink, 0.55f, 0.7f);
+                fx.RingW(b.At, b.G.TouchRadius * 3f, FxRamp.Gold, 0.45f, 0.8f, true);
+            }
+            else StartCoroutine(RingWave(b.At, b.G.StunRadius));
             Debug.Log($"[GimmickLayer] 범종 울림 — 세운 적 {stunned}");
         }
 
