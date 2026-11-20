@@ -35,7 +35,9 @@ namespace BloodRain.Presentation.Fx
                 var d = at - awayFrom.Value;
                 push = d.sqrMagnitude > 1e-6f ? d.normalized * size * 3f : Vector2.zero;
             }
-            for (int i = 0; i < blotsPerBurst; i++)
+            // 돌파 쓸림처럼 한꺼번에 수백이 밟히면 먹점이 천 개 넘게 떴다(2026-11-20 재 봄: 오브젝트 1,008개). 많이 떠 있으면 덜 찍는다
+            int n = _live.Count > 300 ? 0 : _live.Count > 120 ? 2 : blotsPerBurst;
+            for (int i = 0; i < n; i++)
             {
                 float a = (float)(_rng.NextDouble() * Mathf.PI * 2);
                 float r = (float)_rng.NextDouble() * size * 0.5f;

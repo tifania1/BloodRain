@@ -74,8 +74,18 @@ namespace BloodRain.Presentation
         public static string? Label(string action, int slot)
         {
             var p = Current.Get(action, slot);
-            return p == null ? null : InputControlPath.ToHumanReadableString(p, InputControlPath.HumanReadableStringOptions.OmitDevice);
+            if (p == null) return null;
+            // ToHumanReadableString 은 부를 때마다 장치 배치를 뒤져 한 번에 수십 KB 를 만든다. 오의 단추가 매 프레임 불러
+            // 프레임마다 180KB 가 쌓이고 GC 로 끊겼다(2026-11-20 재 봄). 키 경로 → 글을 기억해 둔다(경로가 바뀌면 새 칸)
+            if (!_labels.TryGetValue(p, out var label))
+            {
+                label = InputControlPath.ToHumanReadableString(p, InputControlPath.HumanReadableStringOptions.OmitDevice);
+                _labels[p] = label;
+            }
+            return label;
         }
+
+        static readonly System.Collections.Generic.Dictionary<string, string> _labels = new System.Collections.Generic.Dictionary<string, string>();
 
         /// <summary>그 행동의 첫 키 글(레벨업 단축키 표시용). 키가 없으면 null.</summary>
         public static string? FirstLabel(string action)

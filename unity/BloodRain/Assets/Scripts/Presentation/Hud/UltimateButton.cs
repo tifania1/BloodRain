@@ -85,6 +85,8 @@ namespace BloodRain.Presentation.Hud
             var lr = _label.rectTransform; lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.offsetMin = lr.offsetMax = Vector2.zero;
         }
 
+        int _labelKey = int.MinValue;
+
         void Update()
         {
             var runner = LifeRunner.Instance;
@@ -93,7 +95,13 @@ namespace BloodRain.Presentation.Hud
             var c = life.Charge;
             _fill.fillAmount = c.Fraction;
             _ring.color = c.IsFull ? Color.Lerp(Gold, Color.white, 0.25f + 0.25f * Mathf.Sin(Time.unscaledTime * 5f)) : Dim;
-            _label.text = c.IsFull ? $"{Loc.T("ui.ultimate.ready")}\n<size=55%>{ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Ultimate) ?? ""}</size>" : $"<size=70%>{c.Value:0}</size>";
+            // 글은 바뀔 때만 다시 만든다(매 프레임 문자열·TMP 다시 그리기 안 하게, 2026-11-20)
+            int key = c.IsFull ? -1 : Mathf.RoundToInt(c.Value);
+            if (key != _labelKey)
+            {
+                _labelKey = key;
+                _label.text = c.IsFull ? $"{Loc.T("ui.ultimate.ready")}\n<size=55%>{ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Ultimate) ?? ""}</size>" : $"<size=70%>{c.Value:0}</size>";
+            }
             _label.color = c.IsFull ? new Color(0.12f, 0.10f, 0.09f) : new Color(1f, 0.95f, 0.85f);
 
             // 세상 시간이 멈춘 화면(레벨업·깨달음·보부상)에선 누르지 않는다
