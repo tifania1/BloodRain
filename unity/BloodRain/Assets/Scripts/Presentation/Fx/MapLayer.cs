@@ -176,6 +176,11 @@ namespace BloodRain.Presentation.Fx
             return m;
         }
 
+        static Texture2D _paperShared, _vigShared;
+        /// <summary>선지 한 장과 가장자리 어둡게 판을 UI 화면도 같이 쓴다(정산 화면, 2026-11-21). 장면이 바뀌며 지워졌으면 다시 만든다.</summary>
+        public static Texture2D PaperTile { get { if (_paperShared == null) _paperShared = MakePaperTile(); return _paperShared; } }
+        public static Texture2D VignetteTex { get { if (_vigShared == null) _vigShared = MakeVignette(); return _vigShared; } }
+
         /// <summary>FL-01U 선지 한 장(512px, 이음매 없음): 종이 빛 바탕에 옅은 얼룩(되풀이 잡음 두 겹)·섬유 획·티.
         /// 벽돌 줄눈과 'v' 풀은 뺐다 — 같은 무늬가 화면 가득 되풀이돼 원화보다 먼저 눈에 들어왔다.</summary>
         static Texture2D MakePaperTile()
