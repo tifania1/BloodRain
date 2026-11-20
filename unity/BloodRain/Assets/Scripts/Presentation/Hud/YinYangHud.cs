@@ -19,6 +19,7 @@ namespace BloodRain.Presentation.Hud
         public float follow = 8f;
 
         static readonly Color Gold = new Color32(205, 160, 60, 255);
+        static readonly Color LabelGold = new Color32(128, 88, 18, 255);
         static readonly Color InkRing = new Color(0.12f, 0.10f, 0.09f, 0.85f);
         static readonly Color Blood = new Color32(170, 22, 20, 255);
 
@@ -74,6 +75,7 @@ namespace BloodRain.Presentation.Hud
             t.fontSize = 22; t.alignment = TextAlignmentOptions.Center; t.raycastTarget = false;
             t.textWrappingMode = TextWrappingModes.NoWrap;
             _label = t;
+            InkHalo.Apply(t);
             var lr = t.rectTransform; lr.anchorMin = lr.anchorMax = Vector2.zero; lr.pivot = new Vector2(0.5f, 0.5f);
             lr.anchoredPosition = new Vector2(110, 62); lr.sizeDelta = new Vector2(220, 30);
 
@@ -84,6 +86,7 @@ namespace BloodRain.Presentation.Hud
             s.textWrappingMode = TextWrappingModes.NoWrap;
             s.color = new Color(Simma.r, Simma.g, Simma.b, 0f);
             _simma = s;
+            InkHalo.Apply(s);
             var sr = s.rectTransform; sr.anchorMin = sr.anchorMax = Vector2.zero; sr.pivot = new Vector2(0.5f, 0.5f);
             sr.anchoredPosition = new Vector2(110, 255); sr.sizeDelta = new Vector2(260, 32);
         }
@@ -142,7 +145,8 @@ namespace BloodRain.Presentation.Hud
                 : gauge.Value > 0 ? Loc.T("ui.yinyang.yang") : Loc.T("ui.yinyang.yin");
             if (band == YinYangBand.Extreme) name = Loc.F("ui.yinyang.extreme", name);
             _label.text = $"{name} <size=80%>{gauge.Value:+0;-0;0} · ±{gauge.HarmonyRange}</size>";
-            _label.color = c;
+            // 글자는 테두리 금빛보다 짙게(2026-11-21 — 밝은 금빛 글이 돌바닥 위에서 안 읽혔다). 뒤에 종이빛 번짐
+            _label.color = band == YinYangBand.Harmony ? LabelGold : c;
 
             // C-08b 기혈역류: 바늘(극성일 때만, 다음 역류까지), 역류 중엔 화면 가장자리 맥동. 끊기 창 동안 더 빠르게
             var b = lr.Life.Backlash;

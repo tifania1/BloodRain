@@ -183,20 +183,46 @@ namespace BloodRain.Presentation.Fx
             return m;
         }
 
-        /// <summary>그림이 오기 전 임시: 가운데가 밝은 둥근 구슬.</summary>
+        /// <summary>
+        /// 진기 구슬 한 알(2026-11-21 — 전엔 가운데가 밝은 민무늬 원판이라 파란 점이 흩뿌려진 것처럼 보였다).
+        /// 색은 _Tint 가 곱하니 여기선 밝기만: 옅은 기운 테(바깥) → 먹 테두리(짙게, 종이 위에서 또렷이) → 왼쪽 위가 밝은 몸 → 작은 빛점.
+        /// </summary>
         static Texture2D MakeOrbTexture()
         {
-            const int n = 32;
+            const int n = 64;
             var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
             var px = new Color32[n * n];
             float c = (n - 1) / 2f;
             for (int y = 0; y < n; y++)
             for (int x = 0; x < n; x++)
             {
-                float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c)) / c;
-                float a = Mathf.Clamp01((1f - d) * 3f);
-                float glow = Mathf.Lerp(1f, 0.75f, d);
-                px[y * n + x] = new Color(glow, glow, glow, a);
+                float u = (x - c) / c, v = (y - c) / c, d = Mathf.Sqrt(u * u + v * v);
+                const float body = .5f, rim = .62f;
+                float val, a;
+                if (d <= body)
+                {
+                    // 몸: 왼쪽 위에서 빛을 받은 구슬. 가장자리로 갈수록 조금 어둡게
+                    float lit = Mathf.Clamp01(.5f + .5f * (-u * .55f + v * .65f) / body);
+                    val = Mathf.Lerp(.5f, .92f, lit) * Mathf.Lerp(1f, .8f, Mathf.Pow(d / body, 3f));
+                    float hx = u + .2f, hy = v - .22f, hd = Mathf.Sqrt(hx * hx + hy * hy);
+                    val = Mathf.Max(val, 1f - Mathf.SmoothStep(0f, 1f, hd / .16f) * .08f - (hd < .16f ? 0f : 1f));
+                    a = 1f;
+                }
+                else if (d <= rim)
+                {
+                    // 먹 테두리: 안쪽이 짙고 바깥으로 살짝 풀림
+                    float k = (d - body) / (rim - body);
+                    val = Mathf.Lerp(.2f, .32f, k);
+                    a = 1f - Mathf.SmoothStep(.7f, 1f, k) * .35f;
+                }
+                else
+                {
+                    // 기운 테: 옅게 번지는 빛
+                    float k = Mathf.Clamp01((d - rim) / (1f - rim));
+                    val = .95f;
+                    a = .38f * (1f - k) * (1f - k);
+                }
+                px[y * n + x] = new Color(val, val, val, a);
             }
             tex.SetPixels32(px);
             tex.Apply();
