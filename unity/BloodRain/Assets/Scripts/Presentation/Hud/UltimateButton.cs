@@ -132,6 +132,11 @@ namespace BloodRain.Presentation.Hud
             // 태극무량: 피해 박자가 없어(TotalPulses 0) Strike 가 불리지 않는다 — 쓰는 순간 몸 둘레에 태극 원
             var ult = Ultimates.Of(DataBoot.Data, runner.Life.Body.Character);
             var inkFx = BloodRain.Presentation.Fx.SectFx.Instance;
+            if (ult.Id == "cheonma_haeche" && inkFx != null && inkFx.Ready && runner.player != null)
+            {
+                var plm = runner.player;
+                inkFx.BloodFrenzy(() => (Vector2)plm.position, ult.Param("durationSeconds", 8f));
+            }
             if (ult.Id == "taiji_muryang" && inkFx != null && inkFx.Ready && runner.player != null)
             {
                 var pl = runner.player;
@@ -162,6 +167,11 @@ namespace BloodRain.Presentation.Hud
             if (freeze > 0f) runner.enemies.Freeze(_near, freeze);
             var field = runner.enemies;
             if (StrikeShaped(runner, ult, dmg, center, cam)) return;
+            if (ult.Id == UltimateEffects.CheonseolBu)
+            {
+                var fxS = BloodRain.Presentation.Fx.SectFx.Instance;
+                if (fxS != null && fxS.Ready && runner.player != null) { fxS.FrostBurst(runner.player.position, r); _slashT = -1f; }
+            }
             if (ult.Id == "il_geom")
             {
                 // 2026-11-21 일검: 화면 가운데를 비스듬히 가르는 UI 획 대신 몸을 지나 바라보는 쪽으로 화면 끝에서 끝까지 한 획(세상 위)

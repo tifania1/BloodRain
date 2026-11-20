@@ -889,6 +889,42 @@ namespace BloodRain.Presentation.Fx
             });
         }
 
+        /// <summary>천설부(곤륜 오의): 몸에서 서릿발 고리가 화면 끝까지 퍼지고, 화면에 옅은 눈빛이 0.6초 덮이며 얼음 조각이 흩날린다. half 는 몸에서 화면 귀퉁이까지(월드).</summary>
+        public void FrostBurst(Vector2 at, float half)
+        {
+            float M = Meter;
+            Add(.6f, (f, k) =>
+            {
+                float q = Ez(Mathf.Min(1f, f.T / .35f)), r = half * (.1f + .9f * q), S = 2f * r / .7f;
+                Quad(2, at, S, S, 0f, new Vector4(.7f, .06f, .6f, 0f), IceShot, .7f * (1f - k), 1f, 0f, f.Seed);
+                Glow(2, at, S * .97f, S * .97f, 0f, new Vector4(.7f, .025f, .4f, 0f), FxRamp.Pale, .6f * (1f - k), 1f, 0f, f.Seed + 1f);
+                Quad(5, at, half * 2.4f, half * 2.4f, 0f, new Vector4(.2f, 0f, 0f, 0f), FxRamp.Pale, .16f * (1f - k) * q, 1f, 0f, f.Seed);   // 화면을 덮는 옅은 눈빛
+            });
+            for (int i = 0; i < 3; i++)
+            {
+                float a0 = i * 2.09f;
+                After(i * .05f, () => Drops(at, a0, 10, 22f, FxRamp.Pale, true, .16f, 1.1f));
+            }
+            HitFeel.Jolt(.6f, .3f);
+        }
+
+        /// <summary>천마해체(마교 오의): seconds 동안 몸 둘레에 핏빛 안개가 피어오르고, 처음에 짙은 자주 고리가 터진다.</summary>
+        public void BloodFrenzy(Func<Vector2> center, float seconds)
+        {
+            seconds = Mathf.Max(.5f, seconds);
+            var c0 = center();
+            RingW(c0, 6f * Meter, FxRamp.Violet, .45f, .7f);
+            RingW(c0, 5.8f * Meter, FxRamp.VGlow, .45f, .6f, true);
+            float next = 0f;
+            Add(seconds, (f, k) =>
+            {
+                var c = center();
+                float on = Mathf.Min(1f, f.T / .3f) * (1f - Mathf.Max(0f, (f.T - (seconds - .5f)) / .5f));
+                Quad(16, c, 2.6f * Meter, 2.2f * Meter, f.T * .4f, new Vector4(.8f, .6f, .4f, 0f), FxRamp.BloodMist, .22f * on, 1f, 0f, f.Seed);
+                if (f.T >= next && !Busy) { next = f.T + .25f; BloodMistAt(c + Dir(Rnd(0f, 6.28f)) * Rnd(.3f, .9f) * Meter, Rnd(.8f, 1.3f), 2); }
+            }, true);
+        }
+
         /// <summary>천뢰낙(남궁 오의): 낙뢰 여러 곳이 0.035초씩 어긋나게 떨어진다(5단 낙뢰 그림). R 은 한 곳 맞는 반경(월드).</summary>
         public void ThunderRain(Vector2[] pts, float R)
         {
