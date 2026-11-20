@@ -892,6 +892,7 @@
   "ui.title.start": "Start",
   "ui.title.continue": "Continue",
   "ui.title.intro": "Replay Intro",
+  "ui.intro.skip": "Skip",
   "ui.slot.title": "Which soul will you carry on?",
   "ui.slot.sub": "Each slot keeps a soul of its own",
   "ui.slot.name": "Slot {0}",

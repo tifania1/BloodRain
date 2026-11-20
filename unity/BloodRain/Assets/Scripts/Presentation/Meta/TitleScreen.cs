@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using BloodRain.Presentation.Hud;
 using TMPro;
@@ -21,6 +22,8 @@ namespace BloodRain.Presentation.Meta
         public Sprite background;
         public TMP_FontAsset font;       // 본문(NotoSerif)
         public TMP_FontAsset brushFont;  // 제목(Yuji Boku 동적)
+        [Tooltip("DL-07b 인트로 컷 그림 열둘(Assets/Art/Cutscenes/sb_intro_*.jpg)")]
+        public List<Texture2D> introArt = new List<Texture2D>();
 
         static readonly Color PaperBg = new Color32(0xEF, 0xE6, 0xD2, 0xFF);
         static readonly Color Paper = new Color(0.94f, 0.90f, 0.82f, 0.92f);
@@ -86,16 +89,26 @@ namespace BloodRain.Presentation.Meta
             if (CanContinue) Button("이어하기", root, Loc.T("ui.title.continue"), ref y, true, ContinueGame);
             Button("설정", root, Loc.T("ui.settings.title"), ref y, true, OpenSettings); // WP-57U
             Button("크레딧", root, Loc.T("ui.title.credits"), ref y, true, OpenCredits);  // TT-02U
-            Button("인트로", root, Loc.T("ui.title.intro"), ref y, false, null);         // DL-07b 가 생기면 잇는다
+            Button("인트로", root, Loc.T("ui.title.intro"), ref y, introArt.Count > 0, OpenIntro);   // DL-07b
         }
 
-        /// <summary>SV-01Ub 시작 → 저장 칸 고르기. 칸을 고르면 그 화면이 서장·객잔으로 보낸다.</summary>
+        /// <summary>SV-01Ub 시작 → 저장 칸 고르기. 칸을 고르면 그 화면이 서장·객잔으로 보낸다.
+        /// 빈 칸(새 혼)을 고르면 서장으로 가기 전에 인트로 컷신(DL-07b)부터.</summary>
         public void StartGame()
         {
-            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen || SlotSelectScreen.AnyOpen) return;
-            // 인트로 컷신(DL-07b)이 생기면 빈 칸을 골랐을 때 그것부터
+            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen || SlotSelectScreen.AnyOpen || IntroScreen.AnyOpen) return;
+            if (introArt.Count > 0) SlotSelectScreen.BeforeNewSoul = go => IntroScreen.Show(font, brushFont, introArt, go);
             SlotSelectScreen.Show(font, () => Debug.Log("[타이틀] 칸 고르기 닫음"));
         }
+
+        /// <summary>DL-07b 인트로 다시 보기. 끝나면 타이틀 그대로.</summary>
+        public void OpenIntro()
+        {
+            if (_leaving || SettingsScreen.AnyOpen || CreditsScreen.AnyOpen || SlotSelectScreen.AnyOpen || IntroScreen.AnyOpen) return;
+            IntroScreen.Show(font, brushFont, introArt, () => Debug.Log("[타이틀] 인트로 끝"));
+        }
+
+        void OnDestroy() => SlotSelectScreen.BeforeNewSoul = null;
 
         /// <summary>WP-57U 설정. 언어가 바뀌면 타이틀을 새 글로 다시 그린다.</summary>
         public void OpenSettings()

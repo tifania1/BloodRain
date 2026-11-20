@@ -892,6 +892,7 @@
   "ui.title.start": "開始",
   "ui.title.continue": "繼續遊戲",
   "ui.title.intro": "重看開場動畫",
+  "ui.intro.skip": "跳過",
   "ui.slot.title": "要延續哪一縷魂？",
   "ui.slot.sub": "每個存檔各留一縷魂",
   "ui.slot.name": "存檔 {0}",

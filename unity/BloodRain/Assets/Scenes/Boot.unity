@@ -279,6 +279,19 @@ MonoBehaviour:
   background: {fileID: 21300000, guid: 610c41ef5316476398f3759243e16a39, type: 3}
   font: {fileID: 11400000, guid: 5e3379dbe8202b44da1439d0a7a7fbc1, type: 2}
   brushFont: {fileID: 11400000, guid: e876e0950ba942e4eab7f279cf11a18d, type: 2}
+  introArt:
+  - {fileID: 2800000, guid: c17f1a6d62553b04b9b4d445c25c7fd7, type: 3}
+  - {fileID: 2800000, guid: e36a00d5a747bc74397b892025b6612f, type: 3}
+  - {fileID: 2800000, guid: c43369a4063afd643af97fc36e7698bf, type: 3}
+  - {fileID: 2800000, guid: 880a1587255b14b448b2b805f3f6f4b2, type: 3}
+  - {fileID: 2800000, guid: 6fa4c2b89d504f74d95c3a5620d67ca4, type: 3}
+  - {fileID: 2800000, guid: ac847a7755db58e439c8aef3597364d1, type: 3}
+  - {fileID: 2800000, guid: 72a835f17103b9948ae513cf44897552, type: 3}
+  - {fileID: 2800000, guid: 89955026824ad494ab46e6ef74816cb2, type: 3}
+  - {fileID: 2800000, guid: 3cd1d7d5027f1cd4284fb192ee2372ff, type: 3}
+  - {fileID: 2800000, guid: 845ab7983475dfe41a8452b63603b547, type: 3}
+  - {fileID: 2800000, guid: bd9a3e1d223829f4a943f42df8dc97d0, type: 3}
+  - {fileID: 2800000, guid: 004d2cff197fb114a89c22d9cd43e4e1, type: 3}
 --- !u!4 &1548701553
 Transform:
   m_ObjectHideFlags: 0

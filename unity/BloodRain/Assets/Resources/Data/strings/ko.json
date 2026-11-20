@@ -330,6 +330,7 @@
   "ui.title.start": "시작",
   "ui.title.continue": "이어하기",
   "ui.title.intro": "인트로 다시 보기",
+  "ui.intro.skip": "건너뛰기",
   "ui.slot.title": "어느 혼으로 잇겠소",
   "ui.slot.sub": "칸마다 다른 혼이 따로 남는다",
   "ui.slot.name": "{0}번 칸",

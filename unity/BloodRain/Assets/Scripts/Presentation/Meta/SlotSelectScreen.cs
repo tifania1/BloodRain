@@ -63,6 +63,9 @@ namespace BloodRain.Presentation.Meta
         /// <summary>이어하기로 갈 칸(없으면 null — 이어하기를 안 보임).</summary>
         public static int? ContinueSlot() => SoulSlots.ContinueSlot(LastUsedSlot, ReadSlots());
 
+        /// <summary>DL-07b 빈 칸(새 혼)을 골랐을 때 서장으로 가기 전에 부르는 것(타이틀이 인트로 컷신을 건다). 인자는 '이제 가라'.</summary>
+        public static Action<Action> BeforeNewSoul;
+
         /// <summary>칸을 지금 칸으로 두고 마지막으로 쓴 칸으로 적은 뒤 갈 곳으로.</summary>
         public static void Enter(SoulSlotSummary slot)
         {
@@ -72,6 +75,8 @@ namespace BloodRain.Presentation.Meta
             RebirthHandoff.Soul = null; // 다른 칸의 혼을 들고 넘어가지 않게
             var scene = SoulSlots.DestinationOf(slot) == SlotDestination.Inn ? "Inn" : "Run";
             Debug.Log($"[칸 고르기] {slot.Slot}번 칸 → {scene}");
+            var before = BeforeNewSoul;
+            if (slot.IsEmpty && before != null) { BeforeNewSoul = null; before(() => SceneManager.LoadScene(scene)); return; }
             SceneManager.LoadScene(scene);
         }
 
