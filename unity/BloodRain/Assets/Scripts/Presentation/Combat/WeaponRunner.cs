@@ -1566,14 +1566,25 @@ namespace BloodRain.Presentation.Combat
             int steps = WeaponShapes.GatherSteps(secs);
             // 사슬: 몸에서 가까운 적 여덟에게 어두운 줄기
             var agents = enemies.Sim.Agents;
-            int shown = 0;
-            foreach (int i in _gather)
+            float erEarly = ws.Length(evo.Param("explosionRadius") * areaMultiplier * explosionAreaMultiplier);
+            if (Sfx)
             {
-                if (shown++ >= 8) break;
-                var e = agents[i]; Vector2 d = new Vector2(e.Pos.x, e.Pos.y) - P;
-                AddFxAt(P, Mathf.Atan2(d.y, d.x), 0.05f, d.magnitude, secs, new Color(0.12f, 0.10f, 0.16f, 0.8f));
+                // VF-04U 흑룡탄(시안 blackDragon): 모일 자리에서 먹 사슬 여덟 + 검은 물 소용돌이
+                var ends = new Vector2[Mathf.Min(8, _gather.Count)];
+                for (int q = 0; q < ends.Length; q++) { var e = agents[_gather[q]]; ends[q] = new Vector2(e.Pos.x, e.Pos.y); }
+                _sfx.DragonGather(c, ends, secs, erEarly / 2.5f);
             }
-            AddFxAt(c, 0f, Mathf.PI * 2f, ws.Length(0.8f), secs, new Color(0.15f, 0.08f, 0.20f, 0.35f)); // 모이는 자리
+            else
+            {
+                int shown = 0;
+                foreach (int i in _gather)
+                {
+                    if (shown++ >= 8) break;
+                    var e = agents[i]; Vector2 d = new Vector2(e.Pos.x, e.Pos.y) - P;
+                    AddFxAt(P, Mathf.Atan2(d.y, d.x), 0.05f, d.magnitude, secs, new Color(0.12f, 0.10f, 0.16f, 0.8f));
+                }
+                AddFxAt(c, 0f, Mathf.PI * 2f, ws.Length(0.8f), secs, new Color(0.15f, 0.08f, 0.20f, 0.35f)); // 모이는 자리
+            }
             for (int k = 1; k <= steps; k++)
             {
                 int kk = k;
@@ -1592,8 +1603,12 @@ namespace BloodRain.Presentation.Combat
                     if (kk != steps) return;
                     float ER = ws.Length(evo.Param("explosionRadius") * areaMultiplier * explosionAreaMultiplier);
                     float rot = UnityEngine.Random.value * Mathf.PI * 2f;
-                    bool ink = AddSpark("fx_bomb_ink_1", c, rot, ER * 2.4f, 0.55f, 0.08f, false, 1f, new Color(0.10f, 0.06f, 0.14f, 1f));
-                    if (!ink) AddFxAt(c, 0f, Mathf.PI * 2f, ER, 0.35f, new Color(0.20f, 0.10f, 0.28f, 0.75f));
+                    if (Sfx) { _sfx.DragonBurst(c, ER); BloodRain.Presentation.Fx.HitFeel.Shake(0.3f, Mathf.PI * 0.5f); }   // VF-04U 검은 물이 용처럼 솟구침(시안)
+                    else
+                    {
+                        bool ink = AddSpark("fx_bomb_ink_1", c, rot, ER * 2.4f, 0.55f, 0.08f, false, 1f, new Color(0.10f, 0.06f, 0.14f, 1f));
+                        if (!ink) AddFxAt(c, 0f, Mathf.PI * 2f, ER, 0.35f, new Color(0.20f, 0.10f, 0.28f, 0.75f));
+                    }
                     enemies.Sim.QueryCircle(new float2(c.x, c.y), ER, _gather);
                     BloodRain.Presentation.Fx.LanternLayer.Strike(c, ER);
                     float hit = dmg * evo.Param("damageMultiplier", 1f);

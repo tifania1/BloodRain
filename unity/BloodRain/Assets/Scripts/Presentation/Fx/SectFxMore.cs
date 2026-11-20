@@ -485,6 +485,51 @@ namespace BloodRain.Presentation.Fx
             });
         }
 
+        /// <summary>VF-04U 흑룡탄(쇄겸술 절기) 끌어모으기 — 시안 blackDragon: 모일 자리 c 에서 적들에게 먹 사슬(가는 줄 + 마디), 가운데 검은 물 소용돌이가 secs 동안 짙어진다.
+        /// ends 는 끌려오는 적의 처음 자리(사슬 끝은 secs 동안 c 쪽으로 따라온다 — 규칙의 끌어모음과 같은 꼴), u 는 시안 1m 가 몇 월드인가(터짐 반경 ÷ 2.5).</summary>
+        public void DragonGather(Vector2 c, Vector2[] ends, float secs, float u)
+        {
+            Add(secs, (f, k) =>
+            {
+                foreach (var e0 in ends)
+                {
+                    var e = Vector2.Lerp(e0, c, k * k);
+                    var v = e - c; float L = v.magnitude;
+                    if (L < .05f * u) continue;
+                    float an = Mathf.Atan2(v.y, v.x);
+                    Quad(1, (c + e) * .5f, L, .07f * u, an, new Vector4(.3f, 0f, 0f, 1f), FxRamp.Ink, .5f);
+                    if (!FxSettings.Simplified)
+                        for (float d = .3f * u; d < L; d += .4f * u) Quad(5, c + v / L * d, .24f * u, .16f * u, an, new Vector4(.55f, 0f, 0f, 0f), FxRamp.Ink, .9f);
+                }
+                Quad(2, c, 3.6f * u * (1f - k * .6f), 2.2f * u * (1f - k * .6f), 0f, new Vector4(.6f, .14f, .7f, 0f), FxRamp.WaterInk, .7f * k, 1f, 0f, f.Seed);
+                Glow(2, c, 3.3f * u * (1f - k * .6f), 2f * u * (1f - k * .6f), 0f, new Vector4(.55f, .07f, .7f, 0f), FxRamp.Water, .8f * k, 1f, 0f, f.Seed + 1f);
+            }, true);
+        }
+
+        /// <summary>VF-04U 흑룡탄 터짐 — 시안: 검은 물이 용처럼 솟구치고(획 셋 + 물빛) 먹이 터지며 고리 둘·물방울·젖은 자국. ER 은 터짐 반경(월드).</summary>
+        public void DragonBurst(Vector2 c, float ER)
+        {
+            float u = ER / 2.5f;
+            Add(.7f, (g, k) =>
+            {
+                float q = Ez(Mathf.Min(1f, k * 2f));
+                for (int j = 0; j < 3; j++)
+                    Quad(1, c + new Vector2(Mathf.Sin(g.T * 9f + j * 2f) * .3f * u * (1f - k), q * 2.6f * u + j * .5f * u), 3.8f * u * q + .4f * u, 1.1f * u * (1f - k * .5f),
+                         Mathf.PI * .5f + Mathf.Sin(g.T * 6f + j) * .25f, new Vector4(.4f, .9f, 2f, 1f), j > 0 ? FxRamp.WaterInk : FxRamp.Ink, .85f * (1f - k), 1f, k * .6f, g.Seed + j);
+                Glow(1, c + Vector2.up * q * 2.4f * u, 3.6f * u * q + .3f * u, .35f * u, Mathf.PI * .5f, new Vector4(.3f, .4f, 2f, 1f), FxRamp.Water, .7f * (1f - k), 1f, 0f, g.Seed + 5f);
+            });
+            Add(.3f, (g, k) => { float e = Ez(Mathf.Min(1f, k * 3f)); Quad(3, c, ER * 2.6f * e, ER * 1.9f * e, g.Seed, new Vector4(9f, .7f, .8f, 0f), FxRamp.Ink, .85f * (1f - k), 1f, k * .5f, g.Seed); });
+            RingW(c, ER * 2.6f, FxRamp.WaterInk, .4f, .7f);
+            RingW(c, ER * 2.5f, FxRamp.Water, .4f, .9f, true);
+            Drops(c, Mathf.PI * .5f, 22, 12f, FxRamp.Water, false, .15f, 1.4f);
+            Drops(c, 0f, 14, 9f, FxRamp.Ink, false, .14f, 3.14f);
+            if (!FxSettings.Simplified)
+            {
+                if (_stains.Count >= MaxStains) _stains.RemoveAt(0);
+                _stains.Add(new Stain { Pos = c - Vector2.up * .4f * u, Seed = Rnd(0f, 9f), Rot = 0f, Size = ER * 1.1f, Shape = 16, P = new Vector4(.8f, 1.4f, .35f, 0f), C = FxRamp.WaterInk, A = .35f });
+            }
+        }
+
         /// <summary>VF-04U 혈마수(혈조 절기): 할퀸 자국이 손이 된다 — 어두운 자주 큰 손바닥이 앞에 서고(시안 demonHand), 손가락은 Claw 갈래가 맡는다.
         /// R 은 갈래 길이(월드). 시안 비율: 손은 몸에서 R × .28 앞, 크기 R × .54.</summary>
         public void DemonHand(Vector2 from, float a, float R)
