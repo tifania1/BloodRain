@@ -27,7 +27,7 @@ namespace BloodRain.Presentation.Fx
         public float splatSeconds = 0.45f;
         [Tooltip("적 반지름에 곱하는 크기")]
         public float splatScale = 3.2f, groundScale = 3.0f;
-        public int maxGround = 240, maxSplats = 300, newPerFrame = 12;
+        public int maxGround = 160, maxSplats = 300, newPerFrame = 12;
 
         struct Mark { public Vector2 Pos; public float Angle, Size, Age; public int Tex; }
 
@@ -140,7 +140,7 @@ namespace BloodRain.Presentation.Fx
                 {
                     float k = m.Age / dryingSeconds;            // 0 → 1
                     s = m.Size * (1f + 0.08f * Mathf.Clamp01(m.Age / 0.3f)); // 깔린 직후 살짝 번짐
-                    alpha = 0.55f * (1f - k * k);               // 처음엔 진하다가 끝에 빨리 마름
+                    alpha = 0.4f * (1f - k * k);                // 처음엔 진하다가 끝에 빨리 마름(2026-11-21 .55 → .4: 일류에서 잿빛 동그라미가 바닥을 메웠다)
                     dissolve = Mathf.Clamp01((k - 0.55f) / 0.45f);
                 }
                 else

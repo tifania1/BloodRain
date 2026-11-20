@@ -2083,7 +2083,7 @@ MonoBehaviour:
   splatSeconds: 0.45
   splatScale: 3.2
   groundScale: 3
-  maxGround: 240
+  maxGround: 160
   maxSplats: 300
   newPerFrame: 12
 --- !u!4 &1595655303

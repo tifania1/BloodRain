@@ -416,7 +416,7 @@ namespace BloodRain.Presentation.Fx
             {
                 float bs = (1.2f + .28f * stage) * m;
                 var ba = at + Vector2.down * .1f * m;
-                Add(.16f, (f, k) => Quad(3, ba, bs * (1f + k * .45f), bs * (1f + k * .45f), f.Seed, new Vector4(8f, .85f, .8f, 0f), FxRamp.Ink, .4f * (1f - k), 1f, k * .5f, f.Seed), true);
+                Add(.16f, (f, k) => Quad(3, ba, bs * (1f + k * .45f), bs * (1f + k * .45f), f.Seed, new Vector4(8f, .85f, .8f, 0f), FxRamp.Ink, .3f * (1f - k), 1f, k * .5f, f.Seed), true);
             }
         }
 
@@ -466,12 +466,12 @@ namespace BloodRain.Presentation.Fx
         {
             // 바닥 먹 자국은 InkMarks 가 이미 남긴다. 여기서 또 남기면 몸 둘레가 잿빛으로 뭉친다(11-13 Unity 에서 확인)
             Drops(at, dir, Mathf.RoundToInt(8 * L(stage, .8f, 1f, 1.2f, 1.45f, 1.7f)), 9f + stage, FxRamp.Ink, false, .15f, 1.1f);
-            if (stage >= 3 && !FxSettings.Simplified && _time - _lastKillBurst > .03f)
+            if (stage >= 3 && !FxSettings.Simplified && _time - _lastKillBurst > .06f) // .03 → .06: 무리를 베면 터짐 여럿이 겹쳐 새까매졌다
             {
                 _lastKillBurst = _time;
                 float m = Meter;
                 // 2026-11-21 일류 무리에서 새까만 별꼴이 여럿 겹쳐 무거워 보여 조금 작고 옅게(.6 → .45, 2.3 → 2m)
-                Add(.22f, (f, k) => Quad(3, at, 2f * (1f + k * .6f) * m, 2f * (1f + k * .6f) * m, f.Seed, new Vector4(7f, .9f, .8f, 0f), FxRamp.Ink, .45f * (1f - k), 1f, k * .6f, f.Seed), true);
+                Add(.22f, (f, k) => Quad(3, at, 2f * (1f + k * .6f) * m, 2f * (1f + k * .6f) * m, f.Seed, new Vector4(7f, .9f, .8f, 0f), FxRamp.Ink, .38f * (1f - k), 1f, k * .6f, f.Seed), true);
             }
         }
 
