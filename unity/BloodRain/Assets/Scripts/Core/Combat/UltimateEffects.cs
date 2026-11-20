@@ -1,6 +1,7 @@
 #nullable enable
 // 오의를 쓴 뒤 남는 효과(기획서 5장 '오의 상세'). 한 방 피해는 Ultimates, 여기는 그 밖의 것. 값은 characters.json ultimates[].params.
-//   천설부(곤륜)   화면 안 모든 적 freezeSeconds(3초) 얼림. 피해 공력 x8 은 강시 계열(enemies.json family "jiangshi")에만.
+//   천설부(곤륜)   화면 안 모든 적 freezeSeconds(3초) 얼림. 피해 공력 x8 은 강시 계열(enemies.json family "jiangshi" 또는 undead 표시 — 이름에 '강시'가 든 지역 적·정예)에만.
+//                  땅의 주인에는 표시가 없어 한 방이 안 들어간다(decisions #30, 오의 한 번에 보스가 녹지 않게).
 //                  땅의 주인도 얼린다(5장 '모든 적'). 얼어 있는 동안은 6장 '보스가 기절한 동안은 패턴 시계도 멈춘다'와 같이 다룬다.
 //                  부적 진전 '정신부로 멈춘 적이 두 배'(talisman_freeze)는 정신부 무공 몫이라 여기 곱하지 않는다.
 //   천마해체(마교) durationSeconds(8초) 동안 초당 최대 기혈 × healthCostPerSecond(2%) 소모, 모든 피해 × damageMultiplier(2), 흡혈 + lifesteal(10%).
@@ -25,6 +26,18 @@ namespace BloodRain.Core.Combat
         /// <summary>그 계열 적이 오의 한 방을 맞는가. 천설부는 강시 계열만, 나머지 오의는 모두.</summary>
         public static bool Damages(UltimateDef ult, string enemyFamily) =>
             ult.Id != CheonseolBu || enemyFamily == JiangshiFamily;
+
+        /// <summary>천설부가 보는 '강시 계열'인가: family jiangshi 이거나 undead 표시가 있는 적.</summary>
+        public static bool IsJiangshi(EnemyDef? enemy) =>
+            enemy != null && (enemy.Family == JiangshiFamily || enemy.Undead);
+
+        /// <summary>그 적이 오의 한 방을 맞는가(적 정의로 — undead 표시까지 봄). 정의가 없으면 계열 없는 적으로 본다.</summary>
+        public static bool Damages(UltimateDef ult, EnemyDef? enemy) =>
+            ult.Id != CheonseolBu || IsJiangshi(enemy);
+
+        /// <summary>그 적에게 들어가는 오의 한 방 피해(적 정의로).</summary>
+        public static float HitDamageOn(UltimateDef ult, EnemyDef? enemy, float startWeaponHit, float powerMultiplier = 1f) =>
+            Damages(ult, enemy) ? Ultimates.HitDamage(ult, startWeaponHit, powerMultiplier) : 0f;
 
         /// <summary>그 적에게 들어가는 오의 한 방 피해. startWeaponHit 는 Ultimates.StartWeaponHit, powerMultiplier 는 Life.UltimatePowerMultiplier.</summary>
         public static float HitDamageOn(UltimateDef ult, string enemyFamily, float startWeaponHit, float powerMultiplier = 1f) =>

@@ -41,6 +41,25 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0f, UltimateEffects.HitDamageOn(u, other.Family, 10f, 1.25f));
         }
 
+        [Fact] public void 천설부_강시_계열은_이름에_강시가_든_적과_정예까지_땅의_주인은_빼고()
+        {
+            // decisions #30(QA-10a, 2026-11-20 추천대로): family jiangshi 넷 + undead 표시(빙강시·흑백 쌍강시·강시 정예 여덟)
+            var u = U(UltimateEffects.CheonseolBu);
+            foreach (var e in _d.Enemies)
+            {
+                bool named = e.NameKo.Contains("강시");
+                bool expected = named || e.Family == UltimateEffects.JiangshiFamily;
+                Assert.True(expected == UltimateEffects.IsJiangshi(e), $"{e.Id}({e.NameKo}) 강시 계열 판정이 {UltimateEffects.IsJiangshi(e)}");
+                Assert.Equal(expected, UltimateEffects.Damages(u, e));
+                if (e.Undead) Assert.NotEqual(UltimateEffects.JiangshiFamily, e.Family); // 표시는 계열이 다른 강시에만
+            }
+            var ice = _d.Enemies.Single(e => e.Id == "ice_gangsi");
+            Assert.Equal(10f * 8f, UltimateEffects.HitDamageOn(u, ice, 10f), 3);
+            Assert.Equal(0f, UltimateEffects.HitDamageOn(u, ice.Family, 10f)); // 계열 글만 넘기면 예전처럼 빠짐
+            Assert.False(UltimateEffects.Damages(u, (BloodRain.Core.Data.EnemyDef?)null));
+            Assert.True(_d.Enemies.Count(e => e.Undead) >= 10);
+        }
+
         [Fact] public void 다른_오의는_얼리지_않고_계열을_가리지_않는다()
         {
             foreach (var u in _d.Ultimates.Where(u => u.Id != UltimateEffects.CheonseolBu))

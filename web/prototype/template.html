@@ -2749,7 +2749,7 @@ function ultPulse(u, C, c) {
     if (c === 0) addEffect('ring', p.x, p.y, { r: Math.hypot(hw, hh), color: '#5E7F4A', life: 0.7 });
   } else if (u.id === 'cheonseol_bu') {   // 화면 안 모든 적 freezeSeconds 얼림(땅의 주인도), 피해는 강시 계열(family jiangshi)만 — QA-10a 결정 전
     const fz = UPar(u, 'freezeSeconds', 0);
-    for (const e of G.enemies) if (onScreen(e)) { e.stun = Math.max(e.stun || 0, fz); if ((E_BY_ID[e.type] || {}).family === 'jiangshi') hurtEnemy(e, hit, null, 0, 0, 0); }
+    for (const e of G.enemies) if (onScreen(e)) { e.stun = Math.max(e.stun || 0, fz); { const d = E_BY_ID[e.type] || {}; if (d.family === 'jiangshi' || d.undead) hurtEnemy(e, hit, null, 0, 0, 0); } }
     if (c === 0) addEffect('ring', p.x, p.y, { r: Math.hypot(hw, hh), color: '#8FA8B8', life: 0.8 });
   }
 }

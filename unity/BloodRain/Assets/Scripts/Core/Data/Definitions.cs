@@ -227,6 +227,9 @@ namespace BloodRain.Core.Data
         /// <summary>둘레 적 강화 반경(m)과 이동·피해 배율 덧셈(기수 5m, +0.2).</summary>
         public float AuraRadius;
         public float AuraBonus;
+        /// <summary>계열(family)은 달라도 강시다(이름에 '강시'가 든 지역 적·정예 — 흑백 쌍강시·빙강시·강시 도부수 등).
+        /// 천설부의 '강시 계열'이 이것도 본다(UltimateEffects.IsJiangshi, decisions #30). 땅의 주인에는 달지 않는다.</summary>
+        public bool Undead;
         /// <summary>지형을 무시하고 날아다닌다(비강).</summary>
         public bool IgnoresTerrain;
         /// <summary>물 구역에서만 솟아난다(수귀).</summary>

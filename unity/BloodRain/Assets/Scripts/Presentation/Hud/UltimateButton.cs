@@ -150,7 +150,7 @@ namespace BloodRain.Presentation.Hud
             var field = runner.enemies;
             if (StrikeShaped(runner, ult, dmg, center, cam)) return;
             LastHits = dmg <= 0f ? 0 : UltimateEffects.CheonseolBu == ult.Id
-                ? field.Damage(_near, dmg, center, 0f, a => UltimateEffects.Damages(ult, field.DefOf(a.Kind)?.Family ?? ""))
+                ? field.Damage(_near, dmg, center, 0f, a => UltimateEffects.Damages(ult, field.DefOf(a.Kind)))
                 : field.Damage(_near, dmg, center, 0f);
         }
 
