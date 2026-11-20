@@ -459,7 +459,7 @@ namespace BloodRain.Presentation.Meta
             string leader = lc != null ? Loc.Character(lc) : s.Leader;
             sb.Append(leader != null ? Loc.F("ui.chimbang.leader", leader) + "\n" : $"<color={MutedHex}>{Loc.T("ui.chimbang.no_leader")}</color>\n");
             sb.Append('\n');
-            if (cand.Traits.Count == 0) sb.Append($"<color={MutedHex}>{Loc.T("ui.chimbang.no_trait")}</color>");
+            if (cand.Traits.Count == 0) sb.Append($"<color={MutedHex}>{Loc.T("ui.chimbang.no_trait")}</color>").Append('\n'); // 2026-11-21 줄바꿈이 없어 뒤 '천운'이 같은 줄에 붙었다
             foreach (var t in cand.Traits) sb.Append(TraitLine(t)).Append('\n');
             // GU-11g1 무작위 후보의 덕(천운 — 그 생 윤회의 기 +25%). 직접 고른 몸엔 없다
             var boon = cand.Boon != null ? _data.Cheonha.Rebirth.Boons.FirstOrDefault(b => b.Id == cand.Boon) : null;
