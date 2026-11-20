@@ -842,7 +842,7 @@ namespace BloodRain.Presentation.Fx
                     float q = Mathf.Min(1f, f.T / spread), r = R * (.08f + .92f * Ez(q)), fade = 1f - Mathf.Max(0f, (f.T - spread) / .22f);
                     float S = 2f * r / .9f;
                     Quad(2, c0, S, S, 0f, new Vector4(.9f, th, .55f, 0f), FxRamp.Ink, .72f * al * fade, 1f, 0f, f.Seed);
-                    Glow(2, c0, S * .96f, S * .96f, 0f, new Vector4(.9f, th * .5f, .45f, 0f), FxRamp.Gold, .75f * al * fade, 1f, 0f, f.Seed + 2f);
+                    Glow(2, c0, S * .96f, S * .96f, 0f, new Vector4(.9f, th * .35f, .45f, 0f), FxRamp.Gold, .55f * al * fade, 1f, 0f, f.Seed + 2f);
                 });
                 if (i == 0) wave(); else After(i * .07f, wave);
             }
@@ -854,11 +854,11 @@ namespace BloodRain.Presentation.Fx
                 }, true);
             After(spread * .9f, () =>
             {
-                CrackW(c0, R * 1.9f, FxRamp.Ink);
-                RaysW(c0, 16, R * .9f, FxRamp.Gold);
+                CrackW(c0, R * .8f, FxRamp.Ink);   // 1.9 R 이면 화면을 덮는 잿빛 쐐기 별이 됐다
+                RaysW(c0, 12, R * .85f, FxRamp.Gold);
                 Drops(c0, 0f, 30, 20f, FxRamp.Ink, false, .14f, Mathf.PI);
             });
-            HitFeel.Jolt(1f, .8f);
+            HitFeel.Jolt(.8f, .45f);
         }
 
         // ── 음공 ─────────────────────────────────────────────
