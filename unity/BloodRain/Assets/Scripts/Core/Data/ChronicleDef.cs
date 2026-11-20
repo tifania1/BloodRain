@@ -11,10 +11,23 @@ namespace BloodRain.Core.Data
         /// <summary>사건 종류 넷(문파의 위기·강호의 움직임·기연·인물의 운명).</summary>
         public List<ChronicleKindDef> Kinds = new List<ChronicleKindDef>();
         public List<ChronicleEventDef> Events = new List<ChronicleEventDef>();
+        /// <summary>문파의 위기를 막는 판정과 못 막았을 때(GU-11m).</summary>
+        public ChronicleCrisisDef Crisis = new ChronicleCrisisDef();
 
         public static string EventNameKey(ChronicleEventDef e) => $"chronicle.events.{e.Id}.name";
         public static string EventPlaceKey(ChronicleEventDef e) => $"chronicle.events.{e.Id}.place";
         public static string KindNameKey(ChronicleKindDef k) => $"chronicle.kinds.{k.Id}.name";
+    }
+
+    /// <summary>chronicle.json crisis(GU-11m, 2026-11-20 추천대로 — decisions #65).</summary>
+    public sealed class ChronicleCrisisDef
+    {
+        /// <summary>사건 시각부터 그 반경 안에서 몇 초 버티면 막음.</summary>
+        public float HoldSeconds = 60f;
+        /// <summary>무너진 문파 땅(사건 지역)에 더하는 혈운 농도.</summary>
+        public float FallenRegionDensity = 1f;
+        /// <summary>무너진 위기 하나마다 천하 모든 땅에 더하는 혈운 농도(쌓임).</summary>
+        public float FallenEachDensity = 0.1f;
     }
 
     public sealed class ChronicleKindDef

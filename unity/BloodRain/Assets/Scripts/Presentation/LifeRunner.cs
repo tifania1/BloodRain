@@ -249,6 +249,32 @@ namespace BloodRain.Presentation
         GUIStyle _popupStyle;
 
         /// <summary>떠오르는 짧은 글(기연 쪽에서 씀). at 이 없으면 플레이어 자리.</summary>
+        // GU-11m 문파의 위기: 그 자리에서 버티기 시작하면 땅 알림, 막으면 '막아 냈다'(처음이면 윤회의 기), 버티다 떠나면 짧은 알림
+        readonly HashSet<string> _crisisShown = new HashSet<string>();
+        void TickCrises()
+        {
+            var banner = GetComponent<RegionBanner>();
+            foreach (var (id, qi) in _life.TakeCrisesBlocked())
+            {
+                var e = _life.Chronicle.Event(id);
+                string name = Loc.T(BloodRain.Core.Data.ChronicleDef.EventNameKey(e), e.NameKo);
+                if (banner != null && e.Region != null) banner.ShowEvent(_life.Regions.Region(e.Region), Loc.T("ui.crisis.blocked"), qi > 0 ? Loc.F("ui.crisis.blocked_qi", name, qi) : name, false);
+            }
+            foreach (var e in _life.Chronicle.Events)
+            {
+                if (e.Kind != BloodRain.Core.Run.Life.SectCrisisKind || e.Region == null) continue;
+                var st = _life.Crisis(e.Id);
+                string name = Loc.T(BloodRain.Core.Data.ChronicleDef.EventNameKey(e), e.NameKo);
+                if (st == BloodRain.Core.Run.CrisisState.Present && _crisisShown.Add(e.Id))
+                {
+                    if (banner != null) banner.ShowEvent(_life.Regions.Region(e.Region), Loc.T("ui.crisis.title"),
+                        Loc.F("ui.crisis.hold", name, Mathf.RoundToInt(DataBoot.Data.Chronicle.Crisis.HoldSeconds)), true);
+                }
+                else if (st == BloodRain.Core.Run.CrisisState.Fallen && _crisisShown.Contains(e.Id) && _crisisShown.Add(e.Id + ":broken"))
+                    ShowPopup(Loc.F("ui.crisis.broken", name));
+            }
+        }
+
         public void ShowPopup(string text, Vector2? at = null) =>
             _popups.Add((at ?? (player != null ? (Vector2)player.position : Vector2.zero), text, Time.unscaledTime));
 
@@ -592,6 +618,7 @@ namespace BloodRain.Presentation
                 var banner = GetComponent<RegionBanner>();
                 if (banner != null) banner.ShowLord(NearestOf(wokeByTime, pos));
             }
+            TickCrises();
             TickInsights(dt);
             TickDissolution(dt);
             TickSummons(dt);

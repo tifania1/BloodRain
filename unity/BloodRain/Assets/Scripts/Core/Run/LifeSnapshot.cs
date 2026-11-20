@@ -53,6 +53,10 @@ namespace BloodRain.Core.Run
         public LifeBoonsSnapshot? Boons;
         /// <summary>고른 차례(구결 걸음). 옛 저장엔 없어 null — 그때는 되돌린 무공·심법으로 채운 차례가 남는다.</summary>
         public List<string>? PickOrder;
+        /// <summary>문파의 위기(GU-11m): 막은 것·버티다 떠난 것·버티는 중인 초. 옛 저장엔 없어 null.</summary>
+        public List<string>? CrisesBlocked;
+        public List<string>? CrisisBroken;
+        public Dictionary<string, float>? CrisisHeld;
 
         public static LifeSnapshot Capture(Life life) => new LifeSnapshot
         {
@@ -77,6 +81,9 @@ namespace BloodRain.Core.Run
             Silver = life.Silver,
             Evolved = life.Loadout.Evolved.ToList(),
             Chronicle = life.Log.Chronicle.ToList(),
+            CrisesBlocked = life.Log.CrisesBlocked.ToList(),
+            CrisisBroken = life.CrisisBroken.ToList(),
+            CrisisHeld = life.CrisisHeld.ToDictionary(kv => kv.Key, kv => kv.Value),
             PickOrder = life.Loadout.PickOrder.ToList(),
             BossesKilled = life.Log.BossesKilled.ToList(),
             Links = life.Loadout.AwakenedLinks.ToList(),

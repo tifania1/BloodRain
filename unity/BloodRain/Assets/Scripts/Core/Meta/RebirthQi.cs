@@ -11,10 +11,10 @@ using BloodRain.Core.Data;
 
 namespace BloodRain.Core.Meta
 {
-    public enum RebirthQiBonusKind { BossFirstKill, BossRepeatKill, FirstVisitRegion, FirstReachRealm }
+    public enum RebirthQiBonusKind { BossFirstKill, BossRepeatKill, FirstVisitRegion, FirstReachRealm, CrisisFirstBlock }
 
     /// <summary>정산 화면 줄. 위에서부터 이 순서로 보여 준다.</summary>
-    public enum RebirthQiLineKind { Orbs, BossFirstKill, BossRepeatKill, FirstVisitRegion, FirstReachRealm, Silver, Traits, BloodMoon }
+    public enum RebirthQiLineKind { Orbs, BossFirstKill, BossRepeatKill, FirstVisitRegion, FirstReachRealm, CrisisFirstBlock, Silver, Traits, BloodMoon }
 
     /// <summary>보너스 하나(무엇 때문에, 얼마).</summary>
     public readonly struct RebirthQiBonusEntry
@@ -101,6 +101,7 @@ namespace BloodRain.Core.Meta
             RebirthQiBonusKind.BossFirstKill => RebirthQiLineKind.BossFirstKill,
             RebirthQiBonusKind.BossRepeatKill => RebirthQiLineKind.BossRepeatKill,
             RebirthQiBonusKind.FirstVisitRegion => RebirthQiLineKind.FirstVisitRegion,
+            RebirthQiBonusKind.CrisisFirstBlock => RebirthQiLineKind.CrisisFirstBlock,
             _ => RebirthQiLineKind.FirstReachRealm,
         };
     }
@@ -156,6 +157,7 @@ namespace BloodRain.Core.Meta
             RebirthQiBonusKind.BossFirstKill => _def.BossFirstKill,
             RebirthQiBonusKind.BossRepeatKill => _def.BossRepeatKill,
             RebirthQiBonusKind.FirstVisitRegion => _def.FirstVisitRegion,
+            RebirthQiBonusKind.CrisisFirstBlock => _def.CrisisFirstBlock,
             _ => _def.FirstReachRealm,
         };
 

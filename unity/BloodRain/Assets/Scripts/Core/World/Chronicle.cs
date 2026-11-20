@@ -62,6 +62,8 @@ namespace BloodRain.Core.World
         {
             var kinds = new HashSet<string>(_def.Kinds.Select(k => k.Id));
             var ids = new HashSet<string>();
+            if (!(_def.Crisis.HoldSeconds > 0) || _def.Crisis.FallenRegionDensity < 0 || _def.Crisis.FallenEachDensity < 0)
+                throw new InvalidOperationException("chronicle.json crisis: holdSeconds 는 0보다 크고 농도는 0 이상");
             foreach (var e in _def.Events)
             {
                 if (string.IsNullOrEmpty(e.Id) || !ids.Add(e.Id))

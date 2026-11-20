@@ -204,6 +204,7 @@ namespace BloodRain.Presentation.Meta
             RebirthQiLineKind.BossRepeatKill => (Loc.T("ui.settle.line.boss"), Loc.F("ui.settle.line.boss_repeat", line.Count)),
             RebirthQiLineKind.FirstVisitRegion => (Loc.T("ui.settle.line.first_region"), Loc.F("ui.settle.regions_count", line.Count)),
             RebirthQiLineKind.FirstReachRealm => (Loc.T("ui.settle.line.first_realm"), $"{line.Count}"),
+            RebirthQiLineKind.CrisisFirstBlock => (Loc.T("ui.settle.line.crisis"), $"{line.Count}"),
             RebirthQiLineKind.Silver => (Loc.T("ui.settle.line.silver"), Loc.F("ui.settle.line.silver_note", line.Count.ToString("N0"))),
             RebirthQiLineKind.Traits => (Loc.T("ui.settle.line.traits"), $"{(res.TraitBonus >= 0 ? "+" : "")}{Mathf.RoundToInt(res.TraitBonus * 100)}%"),
             RebirthQiLineKind.BloodMoon => (Loc.T("ui.settle.line.blood_moon"), $"×{res.RewardMultiplier:0.##}"),

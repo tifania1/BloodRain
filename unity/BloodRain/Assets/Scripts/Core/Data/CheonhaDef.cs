@@ -445,6 +445,8 @@ namespace BloodRain.Core.Data
         public int BossRepeatKill;
         public int FirstVisitRegion;
         public int FirstReachRealm;
+        /// <summary>문파의 위기를 처음 막은 사건마다(혼에 한 번, GU-11m).</summary>
+        public int CrisisFirstBlock;
         public List<RebirthQiTargetDef> Targets = new List<RebirthQiTargetDef>();
     }
 

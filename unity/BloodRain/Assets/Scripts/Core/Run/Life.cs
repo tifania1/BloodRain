@@ -221,7 +221,22 @@ namespace BloodRain.Core.Run
         /// <summary>천하 연표(chronicle.json). 서장에서는 보지 않는다.</summary>
         public Chronicle Chronicle { get; }
         /// <summary>지금 자리의 혈운 농도. 적 기혈·피해는 EnemyScaling.HealthAt·DamageAt 에 이 값을 넘긴다.</summary>
-        public float Density => Regions.Density(Position, SealStones);
+        public float Density => Regions.Density(Position, SealStones) + CrisisDensity(RegionId);
+
+        /// <summary>무너진 문파 때문에 더해지는 혈운 농도(GU-11m, chronicle.json crisis): 무너진 위기 하나마다 천하 모든 땅 + fallenEachDensity,
+        /// 그 위기 지역(강시 문파 땅)이면 + fallenRegionDensity. 이번 생에만.</summary>
+        public float CrisisDensity(string regionId)
+        {
+            var d = _data.Chronicle.Crisis;
+            float add = 0f;
+            foreach (var e in Chronicle.Events)
+            {
+                if (e.Kind != SectCrisisKind || Crisis(e.Id) != CrisisState.Fallen) continue;
+                add += d.FallenEachDensity;
+                if (e.Region == regionId) add += d.FallenRegionDensity;
+            }
+            return add;
+        }
         /// <summary>지금 가진 봉인석 수(생이 시작될 때 혼의 수 + 이번 생에 새로 얻은 것).</summary>
         public int SealStones => _bossRecord.SealStones;
         /// <summary>서 있는 지역(가장 가까운 지역 중심).</summary>
@@ -295,6 +310,7 @@ namespace BloodRain.Core.Run
             if (wokeByTime.Count > 0) _wokenByTime.AddRange(wokeByTime);
             Director.BossFight = Bosses.InFight;
             NoteChronicle(Minutes - dt / 60f);
+            HoldCrises(dt);
             NoteFightHarmony();
 
             _secondAcc += dt;
@@ -319,15 +335,44 @@ namespace BloodRain.Core.Run
             }
         }
 
-        /// <summary>문파의 위기(연표 kind sect_crisis)가 이번 생에 어떻게 됐나. 설계안 '못 막으면 강시 문파' 중 '못 막음'만 판정한다:
-        /// 사건 시각이 지났는데 그 자리에 없었으면(겪음 기록이 없으면) Fallen. 있었으면 Present — 막았는지는 사건 속 내용(적·보상)이 생긴 뒤 정한다.
-        /// 결과는 이 생에만 남는다(혼에는 겪은 기록만). 겪음 기록과 시각에서 다시 나오므로 생 도중 저장에 따로 담지 않는다.</summary>
+        /// <summary>문파의 위기(연표 kind sect_crisis)가 이번 생에 어떻게 됐나(GU-11m, 2026-11-20 추천대로 — decisions #65).
+        /// 사건 시각이 지났는데 그 자리에 없었으면(겪음 기록이 없으면) Fallen. 있었으면 Present(버티는 중) — 그 뒤 crisis.holdSeconds 초를
+        /// 겪음과 같은 반경 안에서 버티면 Blocked, 한 번이라도 반경 밖으로 나가면 Fallen. 결과는 이 생에만(혼에는 겪은·막은 기록만).</summary>
         public CrisisState Crisis(string chronicleEvent)
         {
             var e = Chronicle.Event(chronicleEvent);
             if (e.Kind != SectCrisisKind) throw new ArgumentException($"문파의 위기가 아닙니다: {chronicleEvent}");
+            if (Log.CrisesBlocked.Contains(e.Id)) return CrisisState.Blocked;
+            if (_crisisBroken.Contains(e.Id)) return CrisisState.Fallen;
             if (Log.Chronicle.Contains(e.Id)) return CrisisState.Present;
             return Minutes * 60f >= e.AtSeconds && !IsPrologue ? CrisisState.Fallen : CrisisState.Ahead;
+        }
+
+        readonly Dictionary<string, float> _crisisHeld = new Dictionary<string, float>(StringComparer.Ordinal);
+        readonly HashSet<string> _crisisBroken = new HashSet<string>(StringComparer.Ordinal);
+        /// <summary>버티는 중인 위기의 버틴 초(생 도중 저장용).</summary>
+        public IReadOnlyDictionary<string, float> CrisisHeld => _crisisHeld;
+        /// <summary>그 자리에 있었지만 버티지 못하고 떠난 위기(생 도중 저장용).</summary>
+        public IReadOnlyCollection<string> CrisisBroken => _crisisBroken;
+        /// <summary>이번 생에 막은 위기마다 받은 윤회의 기(처음 막은 것만, 0이면 이미 막아 본 사건). 화면 알림용으로 한 번 꺼내 간다.</summary>
+        readonly List<(string id, int qi)> _blockedNow = new List<(string, int)>();
+        public IReadOnlyList<(string id, int qi)> TakeCrisesBlocked() { var l = _blockedNow.ToList(); _blockedNow.Clear(); return l; }
+
+        void HoldCrises(float dt)
+        {
+            float hold = _data.Chronicle.Crisis.HoldSeconds;
+            foreach (var e in Chronicle.Events)
+            {
+                if (e.Kind != SectCrisisKind || e.Everywhere || !Log.Chronicle.Contains(e.Id)) continue;
+                if (Log.CrisesBlocked.Contains(e.Id) || _crisisBroken.Contains(e.Id)) continue;
+                bool near = Vector2.Distance(Chronicle.Position(e)!.Value, Position) <= Scale.ViewDiagonal(Level) * 0.5f;
+                if (!near) { _crisisBroken.Add(e.Id); _crisisHeld.Remove(e.Id); continue; }
+                _crisisHeld.TryGetValue(e.Id, out var held);
+                // 사건 시각을 넘긴 몫만 센다(겪은 프레임은 시각 뒤 남은 초만)
+                held = Math.Min(held + dt, Minutes * 60f - e.AtSeconds);
+                if (held >= hold) { _crisisHeld.Remove(e.Id); _blockedNow.Add((e.Id, Log.BlockCrisis(e.Id))); }
+                else _crisisHeld[e.Id] = held;
+            }
         }
 
         public const string SectCrisisKind = "sect_crisis";
@@ -497,6 +542,9 @@ namespace BloodRain.Core.Run
             foreach (var w in s.Evolved)
                 Loadout.Evolve(_data.Evolutions.FirstOrDefault(e => e.Weapon == w) ?? throw new InvalidOperationException($"절기가 없는 무공입니다: {w}"));
             foreach (var e in s.Chronicle) Log.Witness(e);
+            foreach (var e in s.CrisesBlocked ?? new List<string>()) Log.BlockCrisis(e);
+            foreach (var e in s.CrisisBroken ?? new List<string>()) _crisisBroken.Add(e);
+            foreach (var kv in s.CrisisHeld ?? new Dictionary<string, float>()) _crisisHeld[kv.Key] = kv.Value;
             foreach (var id in s.Awakened)
             {
                 if (_data.Evolutions.All(e => e.Id != id)) throw new InvalidOperationException($"없는 절기입니다: {id}");
@@ -699,6 +747,6 @@ namespace BloodRain.Core.Run
         }
     }
 
-    /// <summary>문파의 위기 판정(Life.Crisis). Ahead: 시각 전. Present: 그 시각에 그 자리에 있었음(막았는지는 사건 내용이 생긴 뒤). Fallen: 없었음 — 강시 문파.</summary>
-    public enum CrisisState { Ahead, Present, Fallen }
+    /// <summary>문파의 위기 판정(Life.Crisis). Ahead: 시각 전. Present: 그 자리에서 버티는 중. Blocked: 막음. Fallen: 없었거나 버티지 못하고 떠남 — 강시 문파.</summary>
+    public enum CrisisState { Ahead, Present, Fallen, Blocked }
 }

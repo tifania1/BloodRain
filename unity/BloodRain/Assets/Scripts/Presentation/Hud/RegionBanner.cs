@@ -62,6 +62,13 @@ namespace BloodRain.Presentation.Hud
             Play(region, Loc.T("ui.lord_woke.title"), Loc.F("ui.lord_woke.sub", Loc.Region(region), boss), Blood);
         }
 
+        /// <summary>그 땅에서 일어난 일 알림(문파의 위기 GU-11m 등). red 면 붉은 글씨.</summary>
+        public void ShowEvent(RegionDef region, string big, string sub, bool red)
+        {
+            if (region == null) return;
+            Play(region, big, sub, red ? Blood : Ink);
+        }
+
         void Play(RegionDef region, string big, string sub, Color bigColor)
         {
             if (_canvas == null) Build();

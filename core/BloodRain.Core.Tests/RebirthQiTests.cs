@@ -158,9 +158,9 @@ namespace BloodRain.Core.Tests
             Assert.Equal(0, l.Settle(-50).FromSilver);
             Assert.Throws<ArgumentOutOfRangeException>(() => l.AddOrb(-1, 1f));
             Assert.Throws<ArgumentOutOfRangeException>(() => l.AddOrb(1, 0f));
-            Assert.Equal(new[] { Def.BossFirstKill, Def.BossRepeatKill, Def.FirstVisitRegion, Def.FirstReachRealm },
+            Assert.Equal(new[] { Def.BossFirstKill, Def.BossRepeatKill, Def.FirstVisitRegion, Def.FirstReachRealm, Def.CrisisFirstBlock },
                 Enum.GetValues(typeof(RebirthQiBonusKind)).Cast<RebirthQiBonusKind>().Select(l.AmountOf));
-            Assert.Equal(new[] { 300, 100, 50, 100 }, new[] { Def.BossFirstKill, Def.BossRepeatKill, Def.FirstVisitRegion, Def.FirstReachRealm });
+            Assert.Equal(new[] { 300, 100, 50, 100, 150 }, new[] { Def.BossFirstKill, Def.BossRepeatKill, Def.FirstVisitRegion, Def.FirstReachRealm, Def.CrisisFirstBlock });
         }
     }
 }

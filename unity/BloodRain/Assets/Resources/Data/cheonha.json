@@ -157,6 +157,7 @@
   },
 
   "rebirthQi": {
+    "_noteCrisis": "crisisFirstBlock: 문파의 위기(chronicle.json sect_crisis)를 처음 막은 사건마다(혼에 한 번, GU-11m 2026-11-20 추천대로 — 땅의 주인 첫 처치 300의 절반, 첫 경지 100보다 조금 위).",
     "_note": "윤회의 기(10장) = (1 + 성질 보너스) x (perOrbValue x 합(진기 구슬 값 x 그 자리 혈운 농도) + 보너스 + leftoverSilverRate x 남은 은자). 진기 구슬 값은 심득 배율 전. targets 는 혈운 농도 1, 평균 빌드 기준 기획 목표(분 → 보너스 빼고 진기만으로 남는 양).",
     "perOrbValue": 0.04,
     "leftoverSilverRate": 0.5,
@@ -164,6 +165,7 @@
     "bossRepeatKill": 100,
     "firstVisitRegion": 50,
     "firstReachRealm": 100,
+    "crisisFirstBlock": 150,
     "targets": [ { "minute": 5, "level": 15, "qi": 40 }, { "minute": 10, "level": 30, "qi": 170 }, { "minute": 20, "level": 60, "qi": 800 }, { "minute": 30, "level": 90, "qi": 2000 } ]
   },
 

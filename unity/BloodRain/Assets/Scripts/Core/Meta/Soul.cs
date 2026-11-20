@@ -118,6 +118,8 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> Chronicle { get; }
         /// <summary>이번 생에 고른 차례(구결 걸음, Build.Gugyeol). Life.End 가 채운다. 혼이 문파마다 마지막 것을 남긴다.</summary>
         public IReadOnlyList<string> PickOrder { get; internal set; } = Array.Empty<string>();
+        /// <summary>이번 생에 막은 문파의 위기(연표 사건 id, GU-11m). 혼이 '막은 사건'으로 남긴다(처음 막은 것만 윤회의 기).</summary>
+        public IReadOnlyList<string> CrisesBlocked { get; internal set; } = Array.Empty<string>();
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
@@ -445,6 +447,9 @@ namespace BloodRain.Core.Meta
         readonly HashSet<string> _chronicle = new HashSet<string>(StringComparer.Ordinal);
         /// <summary>어느 생에서든 겪은 연표 사건 id(chronicle.json, GU-11h5). 연표 화면이 먹으로 진하게 그린다. 회귀해도 남는다.</summary>
         public IReadOnlyCollection<string> Chronicle => _chronicle;
+        readonly HashSet<string> _crisesBlocked = new HashSet<string>(StringComparer.Ordinal);
+        /// <summary>어느 생에서든 막은 문파의 위기(연표 사건 id, GU-11m). 처음 막은 사건만 윤회의 기(rebirthQi.crisisFirstBlock). 회귀해도 남는다.</summary>
+        public IReadOnlyCollection<string> CrisesBlocked => _crisesBlocked;
         /// <summary>혈마의 속삭임을 받은 생의 수(20장 '계승 엔딩 표식'). 무엇을 바꾸는지는 WP-29a 결정 대기라 세기만 한다.</summary>
         public int WhispersTotal { get; private set; }
         /// <summary>얻은 칭호 id(cheonha.json titles, 10장 해금 표). 모으기 보상이라 능력치는 없다.</summary>
@@ -736,6 +741,7 @@ namespace BloodRain.Core.Meta
             if (record.Whispered) WhispersTotal++;
             _letters.UnionWith(record.Letters.Where(id => _data.Synergies.Secrets.Any(x => x.Id == id)));
             _chronicle.UnionWith(record.Chronicle.Where(id => _data.Chronicle.Events.Any(x => x.Id == id)));
+            _crisesBlocked.UnionWith(record.CrisesBlocked.Where(id => _data.Chronicle.Events.Any(x => x.Id == id)));
             if (record.Sect != null && record.PickOrder.Count > 0) _gugyeol[record.Sect] = record.PickOrder.ToList();
             return new LifeSummary(record.RebirthQi.Total, newStones, newSects, newRegions, newRealms, newEvolutions, sealedEnd, newTorn, record.BloodCrystal)
             {
@@ -824,6 +830,8 @@ namespace BloodRain.Core.Meta
             public List<string> Letters = new List<string>();
             /// <summary>겪은 연표 사건. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public List<string> Chronicle = new List<string>();
+            /// <summary>막은 문파의 위기(GU-11m). 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
+            public List<string> CrisesBlocked = new List<string>();
             public int Whispers;
             /// <summary>엔딩(4장). 이 칸들이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public bool EndingPending;
@@ -881,6 +889,7 @@ namespace BloodRain.Core.Meta
                 Titles = Sorted(_titles),
                 Letters = Sorted(_letters),
                 Chronicle = Sorted(_chronicle),
+                CrisesBlocked = Sorted(_crisesBlocked),
                 Whispers = WhispersTotal,
                 EndingPending = EndingPending,
                 EndingsSeen = Sorted(_endingsSeen),
@@ -923,6 +932,7 @@ namespace BloodRain.Core.Meta
             s._titles.UnionWith(f.Titles.Where(id => s.C.Titles.Any(t => t.Id == id)));
             s._letters.UnionWith(f.Letters.Where(id => data.Synergies.Secrets.Any(x => x.Id == id)));
             s._chronicle.UnionWith(f.Chronicle.Where(id => data.Chronicle.Events.Any(x => x.Id == id)));
+            s._crisesBlocked.UnionWith((f.CrisesBlocked ?? new List<string>()).Where(id => data.Chronicle.Events.Any(x => x.Id == id)));
             s._bosses.UnionWith(f.BossesKilled);
             s._sealStones.UnionWith(f.SealStones);
             s._visited.UnionWith(f.VisitedRegions);
@@ -956,6 +966,7 @@ namespace BloodRain.Core.Meta
         readonly int _eliteCrystal;
         readonly IReadOnlyList<SecretDef> _secrets;
         readonly HashSet<string> _lettersKnown;
+        readonly HashSet<string> _crisesKnown;
         RealmDef _highest;
         int _eliteKills;
         int _spiritBeasts;
@@ -985,6 +996,7 @@ namespace BloodRain.Core.Meta
             _eliteCrystal = soul.Data.Balance.Drops.EliteBloodCrystal;
             _secrets = soul.Data.Synergies.Secrets;
             _lettersKnown = new HashSet<string>(soul.Letters, StringComparer.Ordinal);
+            _crisesKnown = new HashSet<string>(soul.CrisesBlocked, StringComparer.Ordinal);
             Enter(body.Region.Id);
         }
 
@@ -1136,7 +1148,8 @@ namespace BloodRain.Core.Meta
         /// <summary>생이 끝났다. 남은 은자로 정산해 기록을 만든다(혼에는 Soul.EndLife 로 옮긴다).</summary>
         public LifeRecord Finish(string endWay, int leftoverSilver) =>
             new LifeRecord(Body.Sect?.Id, endWay, Qi.Settle(leftoverSilver), _bosses, _visited, _highest.Id, _evolutions, Manuscripts, _torn,
-                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss, _letters, Whispered, _chronicle);
+                BloodCrystal, Kills, Dashes, TalismansUsed, GoldenToads, FoodEaten, SingleWeaponBoss, _letters, Whispered, _chronicle)
+            { CrisesBlocked = _crisesBlocked.ToList() };
 
         /// <summary>생 도중 저장을 되돌릴 때(Life.Restore) 세던 수와 모은 목록을 저장 값으로 놓는다. 막 만든 일지에만.
         /// 땅의 주인·경지·밟은 땅·절기·연표처럼 혼 장부를 다시 세야 하는 것은 각자의 메서드로 다시 부르니 여기서 안 다룬다.</summary>
@@ -1177,6 +1190,17 @@ namespace BloodRain.Core.Meta
             if (_chronicle.Contains(chronicleEvent)) return false;
             _chronicle.Add(chronicleEvent);
             return true;
+        }
+
+        readonly List<string> _crisesBlocked = new List<string>();
+        /// <summary>이번 생에 막은 문파의 위기(막은 차례).</summary>
+        public IReadOnlyList<string> CrisesBlocked => _crisesBlocked;
+        /// <summary>문파의 위기를 막았다(Life 가 판정). 혼에 처음이면 윤회의 기(rebirthQi.crisisFirstBlock)를 장부에 적고 그 양을, 아니면 0.</summary>
+        public int BlockCrisis(string chronicleEvent)
+        {
+            if (_crisesBlocked.Contains(chronicleEvent)) return 0;
+            _crisesBlocked.Add(chronicleEvent);
+            return _crisesKnown.Contains(chronicleEvent) ? 0 : Qi.AddBonus(RebirthQiBonusKind.CrisisFirstBlock, chronicleEvent);
         }
 
         /// <summary>이번 생에 혈마의 속삭임을 받았나. Life 가 EncounterBoons.AcceptWhisper 때 켠다.</summary>
