@@ -12,6 +12,8 @@ namespace BloodRain.Presentation.Hud
     {
         public LifeRunner runner;
         public bool On;
+        /// <summary>장면이 다시 열려도(서장 다시 하기·새 생) 켜 둔 채로(TestPanel 이 새 것에 넣는다).</summary>
+        public static bool Sticky;
         public float fleeRadius = 6f;      // 이 거리 안의 적만 본다(Unity 좌표 = 세계 m)
         public float keepOut = 1.8f;      // 이보다 가까운 적에게서는 물러난다
 
@@ -109,7 +111,7 @@ namespace BloodRain.Presentation.Hud
                 _logWait = 0f;
                 var life = runner.Life;
                 if (life != null)
-                    _log.Append($"{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId}\n");
+                    _log.Append($"{(_pc != null && BloodRain.Sim.WorldScale.Current != null ? "장막" + BloodRain.Sim.WorldScale.Current.Scale.PushStrength(new System.Numerics.Vector2(p.x, p.y), new System.Numerics.Vector2(_pc.birthplace.x, _pc.birthplace.y), BloodRain.Sim.WorldScale.Current.Realm).ToString("0.00") + " " : "")}{_clock:0}s 분{life.Minutes:0.0} 경지{life.Realm} Lv{life.Level} 기혈{(runner.vitals != null ? runner.vitals.Health : -1):0}/{(runner.vitals != null ? runner.vitals.MaxHealth : -1):0} 적{(runner.enemies != null ? runner.enemies.Count : 0)} 땅{life.RegionId}\n");
             }
         }
 
