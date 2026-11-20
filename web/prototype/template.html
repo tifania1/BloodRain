@@ -708,7 +708,7 @@ function spawnSpiritBeast(chapter) {
   spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale, { beast: name });
   toast('기연의 기척', chapter === 'chapter6' ? '눈밭에 하얀 아이 하나가 뛰어간다 — 설삼 동자다' : '하얀 학 한 마리가 낮게 날아 달아난다');
 }
-function newEnc() { const o = {}; for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast']) { const sp = ENC_BY[key].spot; o[key] = { at: rand(sp.appearFromMinute, sp.appearToMinute), on: false, done: false, prog: 0 }; } return o; }   // 나올 분은 synergies.json encounters[].spot(Core EncounterSpots.AppearMinute). 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
+function newEnc() { const o = {}; for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast', 'cliff']) { const sp = ENC_BY[key].spot; o[key] = { at: rand(sp.appearFromMinute, sp.appearToMinute), on: false, done: false, prog: 0 }; } return o; }   // 나올 분은 synergies.json encounters[].spot(Core EncounterSpots.AppearMinute). 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
 const SPOT = Object.fromEntries(SYN.encounters.filter(e => e.spot).map(e => [e.id, e.spot]));   // 놓는 고리·닿는 거리·떠나는 거리(Core EncounterSpots)
 const encProg = (key, prog, dt, inReach) => inReach ? prog + dt : Math.max(0, prog - (SPOT[key].decayPerSecond || 0) * dt);   // Core EncounterSpots.Progress
 const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n && !(G.syn.locked[id] || []).includes(n);   // 잠긴 비급 단계는 건너뛴다(개방 3 이 잠겨도 4 는 켜짐)
@@ -892,8 +892,8 @@ function synTick(dt) {
   // 비전 무명검: 다른 공격 무공 없이 삼재검법 하나만 Lv8로 게임 시간 10분
   if (!S.secrets.has('mumyeong') && !overlay && G.weapons.length === 1 && G.weapons[0].id === 'samjae_sword' && G.weapons[0].lv >= 8 && G.gm >= 10) unlockSecret('mumyeong');
   // 기연 사건 두 가지
-  for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast']) {
-    const ev = G.enc[key]; if (!ev || ev.done || ((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb' || key === 'spiritbeast') && !G.body)) continue;
+  for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast', 'cliff']) {
+    const ev = G.enc[key]; if (!ev || ev.done || ((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb' || key === 'spiritbeast' || key === 'cliff') && !G.body)) continue;
     if (!ev.on) {
       if (G.gm >= ev.at && !overlay && G.body && !ev.rolled) {   // 한 생 판: 나올 때가 되면 한 번 굴린다
         const c = encCtx(), e = ENC_BY[key];
@@ -906,12 +906,20 @@ function synTick(dt) {
       }
       if (G.gm >= ev.at && !overlay) {
         const a = rand(0, TAU), R = ENC_BY[key].spot.ringRadius; ev.x = p.x + Math.cos(a) * R; ev.y = p.y + Math.sin(a) * R; ev.on = true;
+        if (key === 'cliff') { ev.nx = Math.cos(a); ev.ny = Math.sin(a); ev.side = -1; }   // 벼랑 끝 띠는 플레이어 쪽을 향해 가로로(Unity EncounterLayer 와 같음)
         const sc0 = SCHOOL_BY[ev.school || 'shaolin'];
-        toast('기연의 기척', key === 'hermit' ? '어디선가 바둑돌 놓는 소리가 들린다' : key === 'elixir' ? '바위 틈에서 은은한 빛이 샌다' : key === 'whisper' ? '빗속에 붉은 석상 하나가 서 있다. 깨어나십시오…' : key === 'sword_tomb' ? '벼랑 끝에 녹슨 검들이 꽂혀 있다' : sc0.id === 'shaolin' ? '쓰러진 승려 하나가 눈에 띈다' : `쓰러진 ${sc0.nameKo} 무인 하나가 눈에 띈다`);
+        toast('기연의 기척', key === 'hermit' ? '어디선가 바둑돌 놓는 소리가 들린다' : key === 'elixir' ? '바위 틈에서 은은한 빛이 샌다' : key === 'whisper' ? '빗속에 붉은 석상 하나가 서 있다. 깨어나십시오…' : key === 'cliff' ? '바람이 낭떠러지 아래에서 불어 올라온다 — 경공으로 뛰어내릴 수 있다' : key === 'sword_tomb' ? '벼랑 끝에 녹슨 검들이 꽂혀 있다' : sc0.id === 'shaolin' ? '쓰러진 승려 하나가 눈에 띈다' : `쓰러진 ${sc0.nameKo} 무인 하나가 눈에 띈다`);
       }
       continue;
     }
     const d = Math.hypot(p.x - ev.x, p.y - ev.y);
+    if (key === 'cliff') {
+      // 벼랑 기연(WP-32a): 경공 중에 길이 bandLength 띠를 넘으면 뛰어내려 카드 셋(가진 무공 둘 +2단계·못 연 무공 하나, Core EncounterBoons.CliffOffers)
+      const side = Math.sign((p.x - ev.x) * ev.nx + (p.y - ev.y) * ev.ny) || ev.side, along = Math.abs(-(p.x - ev.x) * ev.ny + (p.y - ev.y) * ev.nx);
+      if (side !== ev.side && p.dashT > 0 && along <= ENC_BY.cliff.params.bandLength / 2 && !overlay) { ev.done = true; discover('enc:cliff'); openCliff(); }
+      ev.side = side;
+      continue;
+    }
     if (key === 'hermit') {
       ev.prog = encProg(key, ev.prog, dt, d < SPOT.hermit.reachRadius);
       if (ev.prog >= ENC_BY.hermit.params.staySeconds && !overlay) { ev.done = true; ev.met = true; discover('enc:hermit'); showInsightChoice('은거기인', '노인이 바둑돌 하나를 내려놓으며 한 수 일러 준다', '기연'); }
@@ -939,6 +947,14 @@ function synTick(dt) {
   }
 }
 function drawEncounters() {
+  { const ev = G.enc && G.enc.cliff;   // 벼랑 끝 띠(그림 전 자리 표시): 짙은 먹 띠와 그 너머 낭떠러지 그림자
+    if (ev && ev.on && !ev.done) {
+      const L = ENC_BY.cliff.params.bandLength / 2, tx = -ev.ny, ty = ev.nx;
+      ctx.save(); ctx.fillStyle = 'rgba(12,10,10,0.5)'; ctx.beginPath();
+      for (const [a, b] of [[-L, 0], [L, 0], [L, 4], [-L, 4]]) ctx.lineTo(wx(ev.x + tx * a + ev.nx * b), wy(ev.y + ty * a + ev.ny * b));
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#3A302A'; ctx.lineWidth = 0.35 * PPM; ctx.beginPath(); ctx.moveTo(wx(ev.x - tx * L), wy(ev.y - ty * L)); ctx.lineTo(wx(ev.x + tx * L), wy(ev.y + ty * L)); ctx.stroke(); ctx.restore();
+    } }
   for (const key of ['relic', 'hermit', 'elixir', 'whisper', 'sword_tomb']) {
     const ev = G.enc[key]; if (!ev || !ev.on || ev.done) continue;
     const x = wx(ev.x), y = wy(ev.y), s = PPM, ring = SPOT[key].reachRadius * s, need = key === 'hermit' ? ENC_BY.hermit.params.staySeconds : ENC_BY.relic.params.bowSeconds;
@@ -3422,6 +3438,24 @@ function rollOffers() {
   if (!out.length || (B.levelUp.fallbackWhenAllNewWeapons && out.every(o => o.kind === 'nw'))) out.push({ kind: 'gold' });
   return out;
 }
+// 벼랑 기연 카드(WP-32a, Core EncounterBoons.CliffOffers 와 같은 셈): 가진 무공(최고 단계·절기 아님) 무작위 둘에 +levels, 무공 칸이 비었으면 못 연 무공 하나
+// (이 혼이 아직 못 연 것 먼저, 없으면 안 가진 아무 무공), 못 내면 가진 무공 한 장 더. 레벨업 화면 틀로 띄운다(레벨업 차례는 줄지 않음)
+function openCliff() {
+  const P = ENC_BY.cliff.params, max = B.levels.weaponMax;
+  const ups = G.weapons.filter(w => w.lv < max && !w.evolved).map(w => w.id).sort(() => Math.random() - 0.5);
+  const offers = ups.slice(0, 2).map(id => ({ kind: 'uw', id, levels: Math.min(P.levels, max - G.weapons.find(w => w.id === id).lv) }));
+  if (G.weapons.length < G.weaponSlots) {
+    const notOwned = DATA.weapons.filter(w => !G.weapons.some(x => x.id === w.id)), locked = notOwned.filter(w => !(G.wpool || START_WEAPONS).includes(w.id));
+    const pool = locked.length ? locked : notOwned; if (pool.length) offers.push({ kind: 'nw', id: pool[Math.floor(Math.random() * pool.length)].id });
+  } else if (ups[2]) offers.push({ kind: 'uw', id: ups[2], levels: Math.min(P.levels, max - G.weapons.find(w => w.id === ups[2]).lv) });
+  toast('벼랑 기연', '벼랑 아래로 뛰어내렸다 — 동굴 석벽에 비급이 새겨져 있다');
+  if (!offers.length) return;
+  overlayAt = performance.now(); overlay = 'levelup'; currentOffers = offers;
+  $('lutitle').textContent = '벼랑 아래 동굴'; $('lusub').textContent = '석벽의 비급 하나를 익힌다'; $('luhelp').hidden = true;
+  const box = $('lucards'); box.innerHTML = '';
+  offers.forEach((o, i) => { const c = offerCard(o, i); c.onclick = () => chooseOffer(i); box.appendChild(c); });
+  $('lurest').textContent = ''; renderLuSlots(null); $('levelup').hidden = false; focusFirst(box.firstChild);
+}
 function offerCard(o, idx) {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'card';
   let g = '金', title = '은자 주머니', tag = '', desc = '은자 +50, 기혈 +30', synLineEvo = '';
@@ -3429,8 +3463,8 @@ function offerCard(o, idx) {
   if (o.kind === 'uw' || o.kind === 'nw') {
     const def = W_BY_ID[o.id], cur = G.weapons.find(w => w.id === o.id), lv = cur ? cur.lv : 0;
     g = GLYPH[o.id]; title = def.nameKo; b.classList.add(def.yinyang);
-    tag = cur ? `Lv ${lv} → ${lv + 1}` : '<span class="new">새 무공</span>';
-    const d0 = cur ? lerp(def.damageLv1, def.damageLv8, (lv - 1) / 7) : 0, d1 = lerp(def.damageLv1, def.damageLv8, lv / 7);
+    tag = cur ? `Lv ${lv} → ${Math.min(B.levels.weaponMax, lv + (o.levels || 1))}` : '<span class="new">새 무공</span>';
+    const d0 = cur ? lerp(def.damageLv1, def.damageLv8, (lv - 1) / 7) : 0, d1 = lerp(def.damageLv1, def.damageLv8, (Math.min(B.levels.weaponMax, lv + (o.levels || 1)) - 1) / 7);
     const ms = def.milestones && def.milestones[String(lv + 1)];
     desc = cur ? `피해 ${d0.toFixed(0)} → ${d1.toFixed(0)}${ms ? ` · ${ms}` : ''}` : BEHAVIOR_TEXT[def.behavior];
     const evo = EVO_BY_W[o.id]; if (evo) badges.push([`짝 ${P_BY_ID[evo.passive].nameKo}`, `절기 짝: ${P_BY_ID[evo.passive].nameKo} Lv${EV.pairPassiveMinLevel}`]);
@@ -3480,7 +3514,7 @@ const BEHAVIOR_TEXT = {
 };
 function applyOffer(o) {
   if (o.kind === 'nw') { G.weapons.push({ id: o.id, lv: 1, cd: 0.2, evolved: false, dealt: 0, n: 0, t0: G.t }); yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); }   // t0: 얻은 때(멈춤 화면 초당 피해)
-  else if (o.kind === 'uw') { const w = G.weapons.find(w => w.id === o.id); w.lv++; yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); }
+  else if (o.kind === 'uw') { const w = G.weapons.find(w => w.id === o.id); for (let k = 0; k < (o.levels || 1) && w.lv < B.levels.weaponMax; k++) { w.lv++; yyShift(W_BY_ID[o.id].yinyang, B.yinyang.weaponPerLevel); } }   // levels: 벼랑 기연 +2
   else if (o.kind === 'np') { G.passives.push({ id: o.id, lv: 1 }); const d = P_BY_ID[o.id]; yyShift(d.yinyang, d.yinyangPerLevelOverride || B.yinyang.passivePerLevel); }
   else if (o.kind === 'up') { const p = G.passives.find(p => p.id === o.id); p.lv++; const d = P_BY_ID[o.id]; yyShift(d.yinyang, d.yinyangPerLevelOverride || B.yinyang.passivePerLevel); }
   else if (o.kind === 'gold') { const fc = B.levelUp.fallbackCard; addSilver(fc.silver); G.player.hp = Math.min(G.player.maxHp, G.player.hp + fc.heal); }
