@@ -2460,6 +2460,11 @@ MonoBehaviour:
   - prop_chest_open
   - prop_chwigi_talisman
   - prop_duck
+  - prop_enc_elixir
+  - prop_enc_go
+  - prop_enc_hermit
+  - prop_enc_relic
+  - prop_enc_whisper
   - prop_far_pagoda_forest
   - prop_far_peak
   - prop_far_pine_forest
@@ -2507,6 +2512,11 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 508eac2d33d4483ab606f7538463cd62, type: 3}
   - {fileID: 21300000, guid: b6c3d3b1b4c8488bb49a08b0ff237d7e, type: 3}
   - {fileID: 21300000, guid: ce2c34ee6f5147ebb4cf7c30ab22a4aa, type: 3}
+  - {fileID: 21300000, guid: fc29f74acdac42a181fe333253bff65d, type: 3}
+  - {fileID: 21300000, guid: 435db80c51564f7cad6026d6b05ab258, type: 3}
+  - {fileID: 21300000, guid: b333390850a3417da915f119cc2556d3, type: 3}
+  - {fileID: 21300000, guid: 4c1c4974f56a466aa647d9e84b490168, type: 3}
+  - {fileID: 21300000, guid: 910e6ef516714a459503c7288925442a, type: 3}
   - {fileID: 21300000, guid: 57e395c5c4a64db8908219553b287a42, type: 3}
   - {fileID: 21300000, guid: 7e63e7732d384d6f80f60443a4267fd1, type: 3}
   - {fileID: 21300000, guid: f9ad0da3b3914ac7b38d39bea104fdd5, type: 3}
