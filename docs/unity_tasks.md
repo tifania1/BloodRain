@@ -1047,8 +1047,8 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
-- [ ] GU-11h4U 모여드는 땅의 주인과 싸움 · 먼저: 화면 집중이 풀린 뒤, backlog GU-11h4(2026-11-20 Core·알림 끝)
-  - 할 것: `LifeRunner.TickAct2` 가 `Life.TakeGatheringLords()` 로 받은 지역마다 지금은 붉은 알림만 띄운다. 그 땅의 주인을 플레이어 화면 밖 둘레에서 걸어 들어오게 놓고 싸움(`BossAwakening` 은 제 땅에서만 싸움을 거니, 자리를 플레이어 곁으로 하는 길을 Core 에 하나 더하거나 PatternRunner 가 그 자리에 세움). 60분 좌화 정산은 이미 됨
+- [ ] GU-11h4U 모여드는 땅의 주인 눈으로 확인 · 먼저: 화면 집중이 풀린 뒤, backlog GU-11h4(2026-11-20 Core·알림·싸움 걸기 끝 — `Life.NoteGathering` 이 `BossAwakening.Summon` 으로 걸고 PatternRunner 가 플레이어 곁에 세움)
+  - 할 것: 봉인석 0 혼으로 숭산 생을 F2 로 현경·30분까지 당겨(LifeRunner.TestClockScale) 붉은 '땅의 주인이 모여든다' 알림 뒤 무너진 문파 주인이 곁에 서서 싸움이 걸리는지, 쓰러뜨린 뒤 40분에 둘째가 오는지, 60분에 혈월이 지며 좌화 정산이 뜨는지. 보스가 화면 밖에서 걸어 들어오는 연출은 원하면 PatternRunner.BeginFight 의 자리(지금 오른쪽 6m)를 화면 밖으로
   - 쓸 것: Core `Life.GatheringLordsDue`·`FallenLordRegions`·`BossAwakening.Engage`, `Presentation/Combat/PatternRunner.cs`
   - 메뉴: 없음
   - 끝: 숭산 생(봉인석 0) 30분 현경에서 무너진 문파 땅의 주인이 하나 걸어 들어와 싸움이 시작되고, 40분에 둘째. 콘솔 에러 0

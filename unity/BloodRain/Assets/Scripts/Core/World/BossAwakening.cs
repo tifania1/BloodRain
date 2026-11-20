@@ -330,6 +330,17 @@ namespace BloodRain.Core.World
             return Begin(_regions.Region(regionId), level, minute);
         }
 
+        /// <summary>혈월의 밤 2막(GU-11h4): 무너진 땅의 주인이 플레이어에게 모여든다 — 제 땅이 아니어도 바로 싸움을 건다(보스는 Presentation 이 플레이어 곁에 세운다).
+        /// 이미 싸우는 중이거나 그 땅 주인을 이번 생에 쓰러뜨렸으면 null. 잠든 땅이면 깨워서 건다.</summary>
+        public BossFight? Summon(string regionId, float level, float minute)
+        {
+            if (InFight) return null;
+            var st = State(regionId);
+            if (st == BossRegionState.Defeated || st == BossRegionState.Fighting) return null;
+            _state[regionId] = BossRegionState.Awake;
+            return Begin(_regions.Region(regionId), level, minute);
+        }
+
         BossFight Begin(RegionDef region, float level, float minute)
         {
             var boss = _data.Bosses.First(b => b.Id == region.Boss);

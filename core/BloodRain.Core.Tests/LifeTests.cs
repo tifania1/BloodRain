@@ -186,13 +186,23 @@ namespace BloodRain.Core.Tests
             var fallen = life.FallenLordRegions;
             Assert.NotEmpty(fallen);
             Assert.Equal(1, life.GatheringLordsDue);
+            life.Tick(0.1f, life.Position, 100);
             var first = life.TakeGatheringLords();
             Assert.Equal(new[] { fallen[0] }, first);
             Assert.Empty(life.TakeGatheringLords());
+            // 모여든 주인과 싸움이 걸린다(제 땅이 아니어도). 현경 장막은 넓어 다른 깨어난 주인과 먼저 싸우는 중일 수 있어, 그 싸움을 끝내 가며 본다
+            bool met = false;
+            for (int k = 0; k < 12 && !met; k++)
+            {
+                if (life.Bosses.InFight && life.Bosses.Fight!.Region.Id == first[0]) { met = true; break; }
+                if (life.Bosses.InFight) life.Bosses.Defeat();
+                life.Tick(0.1f, life.Position, 100);
+            }
+            Assert.True(met);
             Assert.False(life.BloodMoonSet);
             while (life.Minutes < 40.05f) life.Tick(0.5f, life.Position, 100);
-            Assert.Equal(Math.Min(2, fallen.Count), life.GatheringLordsDue);
-            Assert.Equal(Math.Min(2, fallen.Count) - 1, life.TakeGatheringLords().Count);
+            Assert.Equal(Math.Min(2, fallen.Count + 1), life.GatheringLordsDue);
+            Assert.Single(life.TakeGatheringLords());   // 둘째는 알림, 싸움은 지금 싸움이 끝난 뒤
             while (life.Minutes < 60.01f) life.Tick(0.5f, life.Position, 100);
             Assert.True(life.BloodMoonSet);
             Assert.True(life.GatheringLordsDue <= fallen.Count);

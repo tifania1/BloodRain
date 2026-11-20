@@ -285,22 +285,38 @@ namespace BloodRain.Core.Run
         }
 
         readonly List<string> _gathered = new List<string>();
+        readonly List<string> _gatherNews = new List<string>();
+        readonly List<string> _summonQueue = new List<string>();
         /// <summary>이미 모여든 땅의 주인 지역(온 차례).</summary>
         public IReadOnlyList<string> GatheredLords => _gathered;
 
-        /// <summary>새로 모여들 땅의 주인 지역을 꺼내 간다(Presentation 이 알림·싸움을 건다).</summary>
+        /// <summary>새로 모여든 땅의 주인 지역을 꺼내 간다(Presentation 의 알림용, 한 번만). 싸움은 Life.Tick 이 차례로 건다.</summary>
         public IReadOnlyList<string> TakeGatheringLords()
         {
-            var news = new List<string>();
+            var l = _gatherNews.ToList();
+            _gatherNews.Clear();
+            return l;
+        }
+
+        /// <summary>Tick 마다: 때가 된 주인을 모여든 목록에 넣고, 싸움 중이 아니면 기다리는 주인과 싸움을 건다(BossAwakening.Summon).</summary>
+        void NoteGathering()
+        {
             int due = GatheringLordsDue;
-            foreach (var r in FallenLordRegions)
+            if (due > _gathered.Count)
+                foreach (var r in FallenLordRegions)
+                {
+                    if (_gathered.Count >= due) break;
+                    if (_gathered.Contains(r)) continue;
+                    _gathered.Add(r);
+                    _gatherNews.Add(r);
+                    _summonQueue.Add(r);
+                }
+            while (_summonQueue.Count > 0 && !Bosses.InFight)
             {
-                if (_gathered.Count >= due) break;
-                if (_gathered.Contains(r)) continue;
-                _gathered.Add(r);
-                news.Add(r);
+                var r = _summonQueue[0];
+                _summonQueue.RemoveAt(0);
+                if (Bosses.Summon(r, Level, Minutes) != null) break;
             }
-            return news;
         }
         /// <summary>지금 혈마의 그림자 세기(단계 0이면 Active 가 false).</summary>
         public BloodShadowStrength Shadow => BloodShadow.Strength(_data.Cheonha.LifeEnd.Shadow, ShadowStep);
@@ -362,6 +378,7 @@ namespace BloodRain.Core.Run
             MoveTo(position);
 
             Bosses.Tick(dt, Position, Level, Minutes);
+            NoteGathering();
             var wokeByTime = Bosses.UpdateMinute(Minutes); // 15분이면 경지가 모자라도 장막 안 주인이 깨어난다(EB-01a)
             if (wokeByTime.Count > 0) _wokenByTime.AddRange(wokeByTime);
             Director.BossFight = Bosses.InFight;
@@ -601,6 +618,9 @@ namespace BloodRain.Core.Run
             foreach (var e in s.CrisesBlocked ?? new List<string>()) Log.BlockCrisis(e);
             foreach (var e in s.CrisisBroken ?? new List<string>()) _crisisBroken.Add(e);
             foreach (var kv in s.CrisisHeld ?? new Dictionary<string, float>()) _crisisHeld[kv.Key] = kv.Value;
+            // 모여든 주인은 다시 알리지 않는다. 아직 안 쓰러뜨린 주인은 다시 싸움 차례에 넣는다
+            foreach (var r in s.Gathered ?? new List<string>())
+                if (!_gathered.Contains(r)) { _gathered.Add(r); if (!s.BossesKilled.Contains(r)) _summonQueue.Add(r); }
             foreach (var id in s.Awakened)
             {
                 if (_data.Evolutions.All(e => e.Id != id)) throw new InvalidOperationException($"없는 절기입니다: {id}");
