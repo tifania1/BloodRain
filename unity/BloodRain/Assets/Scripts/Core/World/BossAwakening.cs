@@ -132,10 +132,11 @@ namespace BloodRain.Core.World
         readonly List<RegionDef> _bossRegions;
         readonly Dictionary<string, BossRegionState> _state = new Dictionary<string, BossRegionState>();
 
-        public BossAwakening(GameData data, string birthRegionId, IBossRecord record)
-            : this(data, new Scale(data), new Regions(data), birthRegionId, record) { }
+        public BossAwakening(GameData data, string birthRegionId, IBossRecord record, IReadOnlyCollection<string>? onlyBosses = null)
+            : this(data, new Scale(data), new Regions(data), birthRegionId, record, onlyBosses) { }
 
-        public BossAwakening(GameData data, Scale scale, Regions regions, string birthRegionId, IBossRecord record)
+        /// <param name="onlyBosses">이 지역의 땅의 주인만 둔다(데모 DM-01, cheonha.json demo.bosses). null 이면 모두.</param>
+        public BossAwakening(GameData data, Scale scale, Regions regions, string birthRegionId, IBossRecord record, IReadOnlyCollection<string>? onlyBosses = null)
         {
             _data = data;
             _scale = scale;
@@ -146,8 +147,9 @@ namespace BloodRain.Core.World
             _birthCenter = regions.Center(_birth);
             _awakenFrom = scale.RealmIndex(_rules.AwakenFrom);
             _finalRealm = scale.RealmIndex(_rules.FinalRequires.Realm);
-            _bossRegions = regions.All.Where(r => r.Boss != null).ToList();
-            foreach (var r in _bossRegions) _state[r.Id] = BossRegionState.Dormant;
+            _bossRegions = regions.All.Where(r => r.Boss != null && (onlyBosses == null || onlyBosses.Contains(r.Id))).ToList();
+            // 데모에서 빠진 땅도 '잠듦'으로 둔다(지도·화면이 묻다가 깨지지 않게). 깨우는 판정은 _bossRegions 만 돈다
+            foreach (var r in regions.All.Where(r => r.Boss != null)) _state[r.Id] = BossRegionState.Dormant;
         }
 
         public RegionDef Birthplace => _birth;

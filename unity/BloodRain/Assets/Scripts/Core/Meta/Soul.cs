@@ -213,6 +213,11 @@ namespace BloodRain.Core.Meta
 
         public Soul(GameData data) { _data = data; }
 
+        /// <summary>넥스트 페스트 데모 혼(DM-01, 2026-11-20 추천대로 — decisions #41). 후보 몸은 cheonha.json demo.sects, 무공은 처음부터 나오는 것만,
+        /// 땅의 주인은 demo.bosses 만 깨어난다. 정식판 혼과 따로 저장한다(저장 칸은 Presentation 몫). 한 번 정하면 바뀌지 않는다.</summary>
+        public bool Demo { get; private set; }
+        public static Soul NewDemo(GameData data) => new Soul(data) { Demo = true };
+
         public GameData Data => _data;
         CheonhaDef C => _data.Cheonha;
 
@@ -500,10 +505,10 @@ namespace BloodRain.Core.Meta
         }
 
         /// <summary>환생할 수 있는 문파(데이터 순서).</summary>
-        public IReadOnlyList<string> UnlockedSects => C.Sects.Where(s => IsUnlocked(s.Unlock)).Select(s => s.Id).ToList();
+        public IReadOnlyList<string> UnlockedSects => C.Sects.Where(s => IsUnlocked(s.Unlock) && (!Demo || C.Demo.Sects.Contains(s.Id))).Select(s => s.Id).ToList();
 
         /// <summary>레벨업 카드에 나올 수 있는 무공(Loadout.Candidates 의 unlocked).</summary>
-        public HashSet<string> UnlockedWeapons() => new HashSet<string>(_data.Weapons.Where(w => IsUnlocked(w.Unlock)).Select(w => w.Id));
+        public HashSet<string> UnlockedWeapons() => new HashSet<string>(_data.Weapons.Where(w => IsUnlocked(w.Unlock) && (!Demo || w.Unlock == UnlockToken.Start)).Select(w => w.Id));
 
         /// <summary>깬 장(cheonha.json chapter 값). 서장을 마쳤으면 prologue, 땅의 주인을 쓰러뜨린 땅의 장, 종장을 깼으면 final. Build.RunRecord 에 넘긴다.</summary>
         public IReadOnlyList<string> ClearedChapters
@@ -811,6 +816,8 @@ namespace BloodRain.Core.Meta
             public List<string> AwakenedEvolutions = new List<string>();
             public int Lives;
             public bool PrologueDone;
+            /// <summary>데모 혼(DM-01). 이 칸이 생기기 전 저장은 정식판 혼.</summary>
+            public bool Demo;
             public SortedDictionary<string, int> LivesBySect = new SortedDictionary<string, int>(StringComparer.Ordinal);
             /// <summary>문파마다 마지막 생의 고른 차례(구결). 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             /// <summary>경지 구간을 넘은 횟수. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
@@ -876,6 +883,7 @@ namespace BloodRain.Core.Meta
                 AwakenedEvolutions = Sorted(_evolutions),
                 Lives = Lives,
                 PrologueDone = PrologueDone,
+                Demo = Demo,
                 LivesBySect = Sorted(_livesBySect),
                 RealmCrossings = Sorted(_crossings),
                 Gugyeol = new SortedDictionary<string, List<string>>(_gugyeol.ToDictionary(kv => kv.Key, kv => kv.Value.ToList()), StringComparer.Ordinal),
@@ -912,6 +920,7 @@ namespace BloodRain.Core.Meta
                 _trainingSpent = f.TrainingSpent,
                 Lives = f.Lives,
                 PrologueDone = f.PrologueDone,
+                Demo = f.Demo,
                 Manuscripts = f.Manuscripts,
                 Cycle = Math.Max(1, f.Cycle),
                 TalismansUsedTotal = Math.Max(0, f.TalismansUsed),

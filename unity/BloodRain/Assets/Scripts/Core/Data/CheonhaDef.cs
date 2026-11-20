@@ -53,6 +53,8 @@ namespace BloodRain.Core.Data
         public LifeEndDef LifeEnd = new LifeEndDef();
         public CycleDef Cycle = new CycleDef();
         public InnDef Inn = new InnDef();
+        /// <summary>넥스트 페스트 데모 범위(DM-01, 2026-11-20 추천대로 — decisions #41). Soul.Demo 인 혼만 이 안에서 논다.</summary>
+        public DemoDef Demo = new DemoDef();
         /// <summary>모드와 열리는 시점(기획서 7장 '모드'). Meta.Modes.</summary>
         public List<ModeDef> Modes = new List<ModeDef>();
         /// <summary>칭호(10장 해금 표, 모으기 보상이라 능력치 없음).</summary>
@@ -249,6 +251,13 @@ namespace BloodRain.Core.Data
         public List<string> Gimmicks = new List<string>();
         public bool Final;
         public int HiddenUntilSealStones;
+    }
+
+    /// <summary>cheonha.json demo(DM-01): 후보 몸 문파, 깨어나는 땅의 주인(지역 id), 무공은 처음부터 나오는 것(unlock start)만.</summary>
+    public sealed class DemoDef
+    {
+        public List<string> Sects = new List<string>();
+        public List<string> Bosses = new List<string>();
     }
 
     public sealed class BossRulesDef

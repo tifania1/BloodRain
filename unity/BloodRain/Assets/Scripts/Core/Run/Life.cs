@@ -92,7 +92,7 @@ namespace BloodRain.Core.Run
             Backlash = new Backlash(_data.Balance.Yinyang.Extreme, Charge);
             Director = new LifeDirector(_data, rng);
             _bossRecord = new BossRecord(soul.SealStones, soul.SealStoneCount);
-            Bosses = new BossAwakening(_data, body.Region.Id, _bossRecord);
+            Bosses = new BossAwakening(_data, body.Region.Id, _bossRecord, soul.Demo ? _data.Cheonha.Demo.Bosses : null);
             if (body.Sect?.BloodArt is { } art) BloodArt = new BloodArt(art, Loadout.Gauge, body.YinyangStart);
             InsightEffects = new InsightEffects(body.Character.StartWeapon);
             Encounters = new EncounterBoons(_data);
