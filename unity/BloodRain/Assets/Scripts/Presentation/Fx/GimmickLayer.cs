@@ -135,12 +135,22 @@ namespace BloodRain.Presentation.Fx
             var def = DataBoot.Data.Gimmicks.PagodaForest;
             var patch = new Patch { At = WorldCoords.ToUnity(c) };
             var rng = new System.Random(unchecked((int)(key ^ (key >> 32))));
+            // 그림만 흔드는 따로 된 난수(배치 난수를 건드리면 막힘 자리가 바뀐다). 2026-11-21: 같은 크기·같은 방향 탑이 격자로 서서 묘지 판처럼 딱딱했다
+            var look = new System.Random(unchecked((int)(key ^ (key >> 32)) * 31 + 7));
             int v = 0;
             foreach (var s in PagodaForest.Layout(def, rng, k))
             {
                 var at = patch.At + new Vector2(s.X, -s.Y);
                 patch.Stones.Add((at, s.Radius));
-                var go = PropArt.Make(transform, "돌탑", PagodaArt[(v++ + (int)(key & 7)) % PagodaArt.Length], at + new Vector2(0f, s.Radius * 0.9f), s.Radius * 3.2f, 3);
+                float sz = 0.86f + 0.3f * (float)look.NextDouble();
+                var go = PropArt.Make(transform, "돌탑", PagodaArt[(v++ + (int)(key & 7)) % PagodaArt.Length], at + new Vector2(0f, s.Radius * 0.9f * sz), s.Radius * 3.2f * sz, 3);
+                if (go != null)
+                {
+                    var sr = go.GetComponent<SpriteRenderer>();
+                    sr.flipX = look.NextDouble() < 0.5;
+                    float g = 0.86f + 0.14f * (float)look.NextDouble();
+                    sr.color = new Color(g, g * 0.99f, g * 0.97f, 1f);
+                }
                 if (go == null) go = Disc("돌탑", at, s.Radius, new Color(0.30f, 0.29f, 0.27f, 0.95f), 3);
                 patch.Gos.Add(go);
             }
