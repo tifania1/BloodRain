@@ -56,6 +56,14 @@ namespace BloodRain.Core.Tests
             Assert.Contains($"기절 {Pct(qin.Param("stunChance"))}%", Effect("sonic_qin"));
             Assert.Contains($"상시 {Of("pear_spear").Param("directions")}방향 찌르기", Effect("pear_spear"));
             Assert.Contains($"기혈 {Num(Of("falling_petals").Param("healPerHit"))} 회복", Effect("falling_petals"));
+            // WP-19a(2026-11-20 추천대로): 빈 숫자 넷은 같은 무공 기존 값에서
+            Assert.Contains($"검은 검은 둔화 {Pct(taiji.Param("blackSlow"))}%", Effect("taiji_sword"));
+            Assert.Equal(_d.Weapon("chain_sickle").Slow![1], taiji.Param("blackSlow"), 3);             // 쇄겸술 Lv8 둔화
+            Assert.Contains($"{Num(qin.Param("stackWindowSeconds"))}초 안에 다시 맞으면 +1배씩", Effect("sonic_qin"));
+            Assert.Contains($"폭 {Num(BloodRain.Core.Combat.WeaponShapes.Trial.SpearWidth)}m에 이화창 한 방", Effect("pear_spear"));
+            Assert.Equal(1f, Of("pear_spear").Param("dashStrikeDamageRatio"));
+            Assert.Contains($"반경 {Num(Of("falling_petals").Param("stormRadius"))}m를 돎", Effect("falling_petals"));
+            Assert.Equal(_d.Weapon("falling_petals").Range, Of("falling_petals").Param("stormRadius"), 3);  // 낙화검우 사거리
         }
 
         /// <summary>흑룡탄(R-17, 2026-11-05 사람이 추천대로): 모으는 반경 = 쇄겸술 사거리, 0.6초, 폭발 2.5m·한 방의 3배.</summary>

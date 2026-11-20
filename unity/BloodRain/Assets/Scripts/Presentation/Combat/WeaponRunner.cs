@@ -210,6 +210,7 @@ namespace BloodRain.Presentation.Combat
             Hook();
             float dt = Time.deltaTime;
             SectFxTick(dt);
+            TickDashStrike();
             foreach (var s in slots)
             {
                 s.Cooldown -= dt;
@@ -313,6 +314,70 @@ namespace BloodRain.Presentation.Combat
         const float PulledSeconds = 1f, ReboundKnockTimes = 3f;                              // 끌려온 적을 받아칠 수 있는 시간, 되튕길 때 넉백 배수(모양만, LK-01a 결정 전)
 
         /// <summary>LK-01Ub 차력타력·견인타: 끌려온 적(Id)을 몸 바깥으로 크게 튕기고(넉백 × ReboundKnockTimes), 그 자리 1m 안 다른 적과 부딪혀 둘 다 피해(짝 무공 한 방).</summary>
+        // WP-19a 파천금음 겹침: 적 id → (마지막으로 맞은 시각, 겹 수)
+        readonly Dictionary<int, (float t, int n)> _qinStack = new Dictionary<int, (float, int)>();
+        readonly List<int>[] _qinIds = { new List<int>(), new List<int>(), new List<int>(), new List<int>() };
+
+        /// <summary>음파 안(_near) 적을 겹 수(1~stackDamageMax)대로 나눠 피해 × 겹 수. 쓰러짐으로 자리 번호가 바뀌니 id 로 나눈 뒤 다시 찾는다.</summary>
+        void QinStacked(Slot s, BloodRain.Core.Data.EvolutionDef evo, float dmg, float kb)
+        {
+            float win = evo.Param("stackWindowSeconds", 1f), now = Time.time;
+            int max = Mathf.Clamp(Mathf.RoundToInt(evo.Param("stackDamageMax", 3f)), 1, _qinIds.Length);
+            foreach (var l in _qinIds) l.Clear();
+            var agents = enemies.Sim.Agents;
+            foreach (int i in _near)
+            {
+                int id = agents[i].Id, n = 1;
+                if (_qinStack.TryGetValue(id, out var v) && now - v.t <= win) n = Mathf.Min(v.n + 1, max);
+                _qinStack[id] = (now, n);
+                _qinIds[n - 1].Add(id);
+            }
+            for (int n = max; n >= 1; n--)
+            {
+                var ids = _qinIds[n - 1];
+                if (ids.Count == 0) continue;
+                _filtered.Clear();
+                foreach (int id in ids) { int j = IndexOf(id); if (j >= 0) _filtered.Add(j); }
+                if (_filtered.Count > 0) Deal(s, dmg * n, enemies.Damage(_filtered, dmg * n, P, kb));
+            }
+            if (_qinStack.Count > 2000) { var old = new List<int>(); foreach (var kv in _qinStack) if (now - kv.Value.t > win) old.Add(kv.Key); foreach (int k in old) _qinStack.Remove(k); }
+        }
+
+        // WP-19a 백화난무창 '경공 경로를 따라 창격': 경공이 끝나면 지나온 길(폭 SpearWidth 0.6m)에 이화창 한 방 × dashStrikeDamageRatio
+        PlayerController _dashPc;
+        Vector2? _dashFrom;
+        void TickDashStrike()
+        {
+            if (_dashPc == null) _dashPc = player;
+            if (_dashPc == null || _dashPc.Dash == null || player == null) return;
+            var spear = SlotOf("pear_spear");
+            var evo = spear != null ? EvoOf(spear) : null;
+            if (evo == null) { _dashFrom = null; return; }
+            bool dashing = _dashPc.Dash.IsDashing;
+            if (dashing && _dashFrom == null) _dashFrom = P;
+            else if (!dashing && _dashFrom is Vector2 from)
+            {
+                _dashFrom = null;
+                var to = P; var d = to - from; float len = d.magnitude;
+                var ws = World;
+                float unit = ws.Length(1f);
+                if (len < unit * 0.3f) return;
+                float a = Mathf.Atan2(d.y, d.x), dmg = Damage(spear) * evo.Param("dashStrikeDamageRatio", 1f);
+                if (Sfx) _sfx.Thrust(() => from, a, len, FxStage(spear), false, true);
+                else AddFxAt(from, a, 0.10f, len, 0.15f, new Color(1f, 0.82f, 0.38f, 0.8f));
+                var mid = (from + to) * 0.5f;
+                enemies.Sim.QueryCircle(new float2(mid.x, mid.y), len * 0.5f + unit, _near);
+                _filtered.Clear();
+                var agents = enemies.Sim.Agents;
+                foreach (int i in _near)
+                {
+                    var e = agents[i];
+                    if (WeaponShapes.ThrustHits((e.Pos.x - from.x) / unit, (e.Pos.y - from.y) / unit, e.Radius / unit, a, len / unit)) _filtered.Add(i);
+                }
+                if (_filtered.Count > 0) { HitLook(spear, false); Deal(spear, dmg, enemies.Damage(_filtered, dmg, from, ws.Speed(Knock(spear)))); }
+            }
+        }
+
         void Rebound(List<int> ids, Slot by, float dmg, string link)
         {
             var ws = World;
@@ -909,6 +974,9 @@ namespace BloodRain.Presentation.Combat
                             {
                                 push.Clear();
                                 foreach (int id in still) { int j = IndexOf(id); if (j >= 0) push.Add(j); }
+                                // WP-19a 절기 태극양의검: 검은 검은 둔화 blackSlow(쇄겸술 Lv8 값 50%). 피해(자리 번호가 바뀜) 전에
+                                if (evo != null && evo.Param("blackSlow", 0f) > 0f)
+                                    foreach (int j in push) { var ba = enemies.Sim.Get(j); ba.Slow = Mathf.Max(ba.Slow, evo.Param("blackSlow")); enemies.Sim.Set(j, ba); }
                                 if (push.Count > 0) Deal(s, bdmg, enemies.Damage(push, bdmg, P, 0f));
                             }
                             if (_rebound.Count > 0) Rebound(_rebound, s, bdmg * (Link("charyeok", "impactDamageRatio") ?? 1f), "charyeok");
@@ -1042,7 +1110,7 @@ namespace BloodRain.Presentation.Combat
                 {
                     // 음공(R-12Ub, 9장): 몸에서 반경 range 음파, stunChance(5→15%) 로 SonicStunSeconds 기절, 넉백 knockback.
                     // Lv6 '음파 2겹'은 SonicSecondRingDelay 뒤 한 번 더(Core WeaponShapes.RingDelays·RingStuns, 웹 ring_wave).
-                    // 절기 파천금음: 기절 stunChance(30%). '겹칠수록 피해 증폭(stackDamageMax)'은 숫자가 없어 웹처럼 아직 안 붙임
+                    // 절기 파천금음: 기절 stunChance(30%). 겹침(WP-19a): 같은 적이 stackWindowSeconds(1초) 안에 다시 맞으면 피해 +1배씩, 최대 stackDamageMax(3배)
                     var qinEvo = EvoOf(s);
                     float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s));
                     float chance = qinEvo != null ? qinEvo.Param("stunChance") : WeaponGrowth.At(s.Def.StunChance, s.level, 0f);
@@ -1068,7 +1136,8 @@ namespace BloodRain.Presentation.Combat
                                     a.Stun = Mathf.Max(a.Stun, WeaponShapes.Trial.SonicStunSeconds);
                                     enemies.Sim.Set(i, a);
                                 }
-                            Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
+                            if (qinEvo != null) QinStacked(s, qinEvo, dmg, kb);
+                            else Deal(s, dmg, enemies.Damage(_near, dmg, P, kb));
                             // LK-01Ub 연환 검명: 음파 안에서 도는 태극검마다 작은 음파 한 번 더(LK-01a: 음공 한 번의 반경 × radiusRatio·피해 × damageRatio, 둘 다 0.5)
                             if (Time.time - _bladeAtTime < 0.2f && _bladeAt.Count > 0 && LinkOn("geommyeong"))
                                 foreach (var bat in _bladeAt)
@@ -1087,7 +1156,7 @@ namespace BloodRain.Presentation.Combat
                 {
                     // 이화창(R-12Ub, 9장): 앞 range 관통 찌르기 hits(1→3)회를 ThrustGapSeconds 간격, 가까운 적 쪽(사거리 1.25배 안, 없으면 바라보는 쪽).
                     // Lv7 '회전 찌르기'는 네 방향, 절기 백화난무창은 directions 방향(Core WeaponShapes.ThrustDirections·ThrustHits, 웹 pierce_thrust).
-                    // '경공 경로를 따라 창격 폭풍'은 숫자가 없어 웹처럼 아직 안 붙임
+                    // '경공 경로를 따라 창격 폭풍'은 TickDashStrike(WP-19a)
                     var spearEvo = EvoOf(s);
                     float R = ws.Length(s.Def.Range * areaMultiplier * RangeMul(s));
                     int hits = Mathf.Max(1, Mathf.RoundToInt(WeaponGrowth.At(s.Def.Hits, s.level, 1f)));
@@ -1135,7 +1204,8 @@ namespace BloodRain.Presentation.Combat
                 case "petal_scatter":
                 {
                     // 낙화검우(R-12Ub, 9장): 꽃잎 검기 projectiles(6→14)+개수 발을 가까운 적 쪽 PetalSpreadRad 부채꼴 안 무작위로. 탄은 shot.
-                    // Lv6 '관통 +1'. 절기 매화만개: 한 바퀴 고르게, 맞힐 때마다 기혈 healPerHit(Core WeaponShapes.PetalAngles, 웹 petal_scatter)
+                    // Lv6 '관통 +1'. 절기 매화만개: 한 바퀴 고르게, 맞힐 때마다 기혈 healPerHit(Core WeaponShapes.PetalAngles, 웹 petal_scatter).
+                    // WP-19a 폭풍: 꽃잎이 몸 둘레 stormRadius(6m, 낙화검우 사거리)를 다음 쿨까지 돈다. 도는 빠르기는 꽃잎 탄 빠르기 ÷ 반경, 같은 적은 WhirlRehit 마다
                     var petalEvo = EvoOf(s);
                     int n = WeaponGrowth.Projectiles(s.Def, s.level) + extraAmount;
                     var shot = ShotOf(s);
@@ -1148,7 +1218,14 @@ namespace BloodRain.Presentation.Combat
                               petalEvo != null ? new Color(0.95f, 0.55f, 0.62f, 0.9f) : new Color(0.92f, 0.70f, 0.75f, 0.9f));
                         if (petalEvo != null && _projs.Count > before)
                         {
-                            var pr = _projs[_projs.Count - 1]; pr.Heal = petalEvo.Param("healPerHit"); _projs[_projs.Count - 1] = pr;
+                            var pr = _projs[_projs.Count - 1]; pr.Heal = petalEvo.Param("healPerHit");
+                            float stormR = petalEvo.Param("stormRadius", 0f);
+                            if (stormR > 0f)
+                            {
+                                pr.Whirl = Mathf.Max(0.5f, WeaponGrowth.Cooldown(s.Def, s.level) * (1f - cooldownReduction)) * durationMultiplier;
+                                pr.WhirlR = ws.Length(stormR * areaMultiplier); pr.WhirlA = a; pr.WhirlW = shot.Speed / stormR; pr.Pierce = 999;
+                            }
+                            _projs[_projs.Count - 1] = pr;
                         }
                     }
                     break;
@@ -1175,7 +1252,7 @@ namespace BloodRain.Presentation.Combat
             public BloodRain.Core.Data.EvolutionDef Explode;    // C-09c 만천성지: 맞힌 자리 작은 폭발(explodeOnCrit 이면 치명타일 때만)
             public float Heal;                                  // R-12Ub 매화만개: 맞힐 때마다 기혈 회복(healPerHit)
             public bool Fire;                                   // LK-01Ua 풍화: 불붙은 적을 지난 장풍이 불을 실음
-            public float Whirl, WhirlR, WhirlA, WhirlHit;       // LK-01Ub 취중매화: 남은 회오리 초, 몸에서 거리·각, 같은 적 다시 맞히기까지
+            public float Whirl, WhirlR, WhirlA, WhirlHit, WhirlW;       // LK-01Ub 취중매화: 남은 회오리 초, 몸에서 거리·각, 같은 적 다시 맞히기까지
         }
 
         readonly List<Proj> _projs = new List<Proj>();
@@ -1260,7 +1337,7 @@ namespace BloodRain.Presentation.Combat
                 if (p.Whirl > 0f)
                 {
                     // LK-01Ub 취중매화: 봉에 감긴 꽃잎이 몸 둘레를 돈다. 다 뚫고, 0.5초마다 같은 적을 다시 맞힐 수 있음
-                    p.Whirl -= dt; p.WhirlA += WhirlTurnPerSecond * dt; p.WhirlHit -= dt;
+                    p.Whirl -= dt; p.WhirlA += (p.WhirlW > 0f ? p.WhirlW : WhirlTurnPerSecond) * dt; p.WhirlHit -= dt;
                     if (p.WhirlHit <= 0f) { p.Hit.Clear(); p.WhirlHit = WhirlRehit; }
                     p.Pos = P + new Vector2(Mathf.Cos(p.WhirlA), Mathf.Sin(p.WhirlA)) * p.WhirlR;
                     p.Life = p.Whirl > 0f ? Mathf.Max(p.Life, 0.05f) : 0f;
