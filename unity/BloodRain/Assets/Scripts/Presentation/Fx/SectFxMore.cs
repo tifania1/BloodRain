@@ -90,10 +90,11 @@ namespace BloodRain.Presentation.Fx
         }
 
         // 천지인 삼검(삼재검법 절기) 검기 — 시안 qiWave: 먹 초승달 + 마른 메아리 + 흰 청록 날빛. VF-04U(2026-11-20, 전엔 금빛 원판이 날아갔다).
-        // size 는 검기 판정 반경 R. 시안처럼 S = 2R/.78 이면 초승달 앞날이 판정 원 가장자리에 온다
+        // size 는 검기 판정 반경 R(절기 waveRadius 0.7m). 시안은 화면에 맞춰 판정과 그림을 함께 2.6배로 키웠는데, 여기선 판정은 그대로 두고
+        // 그림만 1.8배(S = 2 × 1.8R / .78) — 판정 그대로면 화면에서 손톱만 했다(2026-11-20 PC)
         void DrawQiWave(LiveProj p)
         {
-            float S = p.Size / .39f, k = p.Age / Mathf.Max(.01f, p.Age + p.Left);
+            float S = p.Size * 4.6f, k = p.Age / Mathf.Max(.01f, p.Age + p.Left);
             float al = 1f - Mathf.Max(0f, (k - .7f) / .3f);
             var d = Dir(p.Ang);
             if (!FxSettings.Simplified) Quad(0, p.Pos - d * .064f * S, S * 1.1f, S * 1.1f, p.Ang, new Vector4(1.6f, .5f, 1f, .8f), FxRamp.Ink, .35f * al, 1f, .3f, p.Seed + 1f);
@@ -102,10 +103,10 @@ namespace BloodRain.Presentation.Fx
         }
 
         // 백보신권(나한권 절기) 날아가는 권경 — 시안 fistFly: 금빛 권영 + 잔상 셋 + 달아오른 심, 지나간 길에 0.12초마다 먹 금. VF-04U(2026-11-20, 전엔 금빛 원판).
-        // size 는 권경 판정 반경. 시안 권영 크기 2.4m = 판정 반경 1.2m 의 두 배
+        // size 는 권경 판정 반경(절기 projectileRadius 0.6m). 시안 권영은 2.4m(반경의 4배) — 판정은 그대로 두고 그림은 3.2배
         void DrawFistFly(LiveProj p)
         {
-            float sz = p.Size * 2f, k = p.Age / Mathf.Max(.01f, p.Age + p.Left);
+            float sz = p.Size * 3.2f, k = p.Age / Mathf.Max(.01f, p.Age + p.Left);
             float al = 1f - Mathf.Max(0f, (k - .8f) / .2f);
             var d = Dir(p.Ang);
             if (!FxSettings.Simplified)
