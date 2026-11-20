@@ -86,6 +86,10 @@ namespace BloodRain.Presentation.Fx
             for (int i = 0; i < _m.Length; i++) { _m[i] = new List<Matrix4x4>(); _t[i] = new List<Vector4>(); }
             for (int i = 0; i < _dBuf.Length; i++) _dBuf[i] = 0f;
             Debug.Log($"[소품 층] {_field.Props.Count}개 (산·전각 {_field.Landmarks.Count}), 원화 {_artCount}/{Kinds * Variants}벌");
+            // 2026-11-21 바닥 잔무늬(풀포기·잔돌·먹 번짐·꽃잎·잎)도 같은 재질로 이 층에 붙인다(씬을 안 고침)
+            var detail = GetComponent<GroundDetailLayer>();
+            if (detail == null) detail = gameObject.AddComponent<GroundDetailLayer>();
+            detail.material = material;
         }
 
         void LateUpdate()
