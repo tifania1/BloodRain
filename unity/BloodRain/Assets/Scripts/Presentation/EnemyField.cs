@@ -58,14 +58,14 @@ namespace BloodRain.Presentation
             public float Size;      // 덩이 안 사람 크기(경지 m)
         }
 
-        [Tooltip("적 원화(enemy_<id>·elite_<id>). 'BloodRain/Bootstrap/적 원화를 덩이에' 메뉴가 Assets/Art/Enemies 에서 채운다.")]
+        [Tooltip("적 원화(enemy_<id>·elite_<id>·boss_<id>). 'BloodRain/Bootstrap/적 원화를 덩이에' 메뉴가 Assets/Art/Enemies·Bosses 에서 채운다.")]
         public Texture2D[] enemyArt = new Texture2D[0];
 
         Kind MakeKind(EnemyDef def, EnemyMove move, float weight)
         {
             Texture2D art = null;
             foreach (var t in enemyArt)
-                if (t != null && (t.name == "enemy_" + def.Id || t.name == "elite_" + def.Id)) { art = t; break; }
+                if (t != null && (t.name == "enemy_" + def.Id || t.name == "elite_" + def.Id || t.name == "boss_" + def.Id)) { art = t; break; }
             // 원화가 색을 갖고 있으니 종류 색은 원화 없는 종류만
             return new Kind { Def = def, Move = move, Tint = art != null ? Color.white : TintOf(def.Family), Weight = weight, Art = art, Size = KindSize(def) };
         }
@@ -74,6 +74,7 @@ namespace BloodRain.Presentation
         static float KindSize(EnemyDef def)
         {
             if (def.Family == "elite") return 2.6f;
+            if (def.Family == "boss") return 4.2f; // 웹 KIND_SIZE.boss(2026-11-21 전엔 기본 1.3 이라 원각이 잡몹만 했다)
             switch (def.Id)
             {
                 case "donggap": return 1.6f;
@@ -112,6 +113,19 @@ namespace BloodRain.Presentation
             if (id.Contains("ghost") || id.Contains("clone") || id.Contains("sulsa") || id.Contains("assassin") || move == EnemyMove.Curve) return ClusterMotion.Float;
             if (def.Family == "elite" || def.Family == "boss" || id.Contains("yeti")) return ClusterMotion.Heavy;
             return ClusterMotion.Walk;
+        }
+
+        /// <summary>이름으로 원화 한 장(enemyArt 안). 없으면 null. 땅의 주인 2막 그림(boss_wongak_p2) 바꾸기에 쓴다.</summary>
+        public Texture2D ArtNamed(string name)
+        {
+            foreach (var t in enemyArt) if (t != null && t.name == name) return t;
+            return null;
+        }
+
+        /// <summary>id 적의 그림을 바꾼다(2막 원각처럼 모습이 바뀔 때). 덩이 그림만 — 종류 원화는 그대로.</summary>
+        public void SetViewArt(int id, Texture2D art)
+        {
+            if (art != null && _views.TryGetValue(id, out var v)) v.Art = art;
         }
 
         /// <summary>HF-03U 그 적의 그림 한 장·크기(월드)·색. 쓰러지는 모습(DeathLayer)이 쓴다.</summary>
@@ -669,7 +683,7 @@ namespace BloodRain.Presentation
             int id = _sim.Spawn(a);
             if (id < 0) return -1;
             var tint = kindIndex >= 0 ? _kinds[kindIndex].Tint : TintOf(def.Family);
-            _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Art = _kinds[kindIndex].Art, Size = _kinds[kindIndex].Size, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f, Motion = MotionOf(_kinds[kindIndex].Def, move) };
+            _views[id] = new ClusterView { BornRealm = realm, Seed = id, Tint = tint, Art = _kinds[kindIndex].Art, Size = _kinds[kindIndex].Size, Position = pos, HopDuty = EnemySim.HopDuty, HopBeat = move == EnemyMove.Hop ? a.Hop : -2f, Motion = MotionOf(_kinds[kindIndex].Def, move), Single = def.Family == "boss" };
             if (def.Twin != null && !_spawningTwin)
             {
                 // 흑백 쌍강시(enemies.json twin, 기획서 6장): 플레이어 쪽 방향에 직각으로 Gap m 옆에 짝을 하나 더 세운다

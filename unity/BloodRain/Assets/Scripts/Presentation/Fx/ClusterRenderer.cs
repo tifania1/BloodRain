@@ -28,6 +28,8 @@ namespace BloodRain.Presentation.Fx
         /// 맞으면 덩이 사람 모두가 0.055초 따뜻한 흰빛으로 섞이고(세기 0.28 — vfx.md '절제'), 0.16초 동안 가로로 퍼지고 세로로 눌리며 맞은 쪽 반대로 기운다(시안 sects.html hit).</summary>
         public float HitAt = -10f;
         public float HitDirX;
+        /// <summary>땅의 주인처럼 경지와 상관없이 늘 한 사람(웹 clusterOf 가 boss 는 1). 2026-11-21: 원각이 절정에서 여러 명으로 그려질 뻔했다.</summary>
+        public bool Single;
 
         internal int Drawn = -1;          // 지난 프레임에 그린 사람 수
         internal Vector2 LastPos; internal bool HasLast;
@@ -150,7 +152,7 @@ namespace BloodRain.Presentation.Fx
             _textures.Clear();
             foreach (var c in _clusters)
             {
-                int target = ws.Scale.DrawMembers(c.BornRealm, c.Health);
+                int target = c.Single ? (c.Health > 0f ? 1 : 0) : ws.Scale.DrawMembers(c.BornRealm, c.Health);
                 if (c.Drawn < 0) c.Drawn = target;
                 if (target < c.Drawn)
                 {
@@ -165,7 +167,7 @@ namespace BloodRain.Presentation.Fx
                 int upto = fadeK < 1f ? Mathf.Max(c.Drawn, c.FadeFrom) : c.Drawn;
                 if (upto <= 0) continue;
 
-                int n = ws.Scale.ClusterSize(c.BornRealm);
+                int n = c.Single ? 1 : ws.Scale.ClusterSize(c.BornRealm);
                 float size = ws.Length(c.Size > 0f ? c.Size : memberRealmMeters, c.BornRealm);
                 if (cull && cam != null)
                 {

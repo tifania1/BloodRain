@@ -282,6 +282,8 @@ namespace BloodRain.Presentation.Combat
             if (e.Kind == BossPatternEventKind.Phase2)
             {
                 _towardPlayerAtPhase2 = Deg(player - boss);
+                // 2막 모습(boss_<id>_p2 원화가 있으면 — 원각은 핏빛 각성 모습)
+                if (_fight != null) runner.enemies.SetViewArt(_bossId, runner.enemies.ArtNamed("boss_" + _fight.Boss.Id + "_p2"));
                 LastEvent = "2막";
                 Debug.Log("[PatternRunner] 2막");
                 return;
