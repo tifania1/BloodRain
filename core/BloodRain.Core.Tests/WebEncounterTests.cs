@@ -40,8 +40,8 @@ namespace BloodRain.Core.Tests
         [Fact] public void 영약은_한_생_판에서_오의_가득_음양_0()
         {
             var html = Proto;
-            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast'])", html);
-            Assert.Contains("((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb' || key === 'spiritbeast') && !G.body)", html);
+            Assert.Contains("for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast', 'cliff'])", html);
+            Assert.Contains("((key === 'elixir' || key === 'letter' || key === 'whisper' || key === 'sword_tomb' || key === 'spiritbeast' || key === 'cliff') && !G.body)", html);
             Assert.Contains("discover('enc:elixir'); G.ult = B.ultimateCharge.max; G.yy = 0;", html);
             Assert.Contains("| 영약 | 빛나는 덩굴·바위 틈(천년하수오, 공청석유) | 줍는다 | 오의 게이지 가득, 음양 0 |", Gdd);
         }

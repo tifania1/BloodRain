@@ -177,7 +177,7 @@
       "require": { "onlyWeapon": "samjae_sword", "levels": { "samjae_sword": 8 }, "counts": { "elapsedSeconds": 600 } } }
   ],
   "encounters": [
-    { "id": "cliff", "spot": { "appearFromMinute": 3, "appearToMinute": 14, "ringRadius": 10 }, "nameKo": "벼랑 기연", "where": "벽이 있는 장(서장·3·4·5장) 맵 끝의 벼랑",
+    { "id": "cliff", "proto": true, "spot": { "appearFromMinute": 3, "appearToMinute": 14, "ringRadius": 10 }, "nameKo": "벼랑 기연", "where": "벽이 있는 장(서장·3·4·5장) 맵 끝의 벼랑",
       "how": "경공으로 벼랑 밖으로 뛰어내린다. 판마다 한 번",
       "reward": "떨어진 동굴 석벽의 비급: 가진 무공 하나 +2레벨, 또는 아직 못 연 무공 하나를 이번 판에 배운다", "chance": 0.35,
       "chapters": ["prologue", "chapter3", "chapter4", "chapter5"], "params": { "bandLength": 4, "levels": 2 },

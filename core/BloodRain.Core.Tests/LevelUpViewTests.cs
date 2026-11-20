@@ -129,7 +129,7 @@ namespace BloodRain.Core.Tests
         public void 카드_글은_웹_offerCard_와_같은_셈()
         {
             var html = System.IO.File.ReadAllText(System.IO.Path.Combine(TestData.RepoRoot, "web", "prototype", "template.html"));
-            Assert.Contains("d1 = lerp(def.damageLv1, def.damageLv8, lv / 7)", html);
+            Assert.Contains("d1 = lerp(def.damageLv1, def.damageLv8, (Math.min(B.levels.weaponMax, lv + (o.levels || 1)) - 1) / 7)", html);   // 벼랑 기연 +2 단계면 그 단계 피해
             Assert.Contains("const ms = def.milestones && def.milestones[String(lv + 1)];", html);
             Assert.Contains("if (o.kind === 'uw' && lv + 1 >= B.levels.weaponMax && evo && pairLv(cur) >= EV.pairPassiveMinLevel)", html);
             Assert.Contains("if (ww && !ww.evolved && ww.lv >= B.levels.weaponMax && lv + 1 === EV.pairPassiveMinLevel)", html);
