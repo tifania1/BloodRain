@@ -38,7 +38,7 @@ namespace BloodRain.Presentation.Fx
         };
         static readonly Mix Default = new Mix { Grass = 0.16f, Stone = 0.16f, Ink = 0.06f, Leaf = 0.04f };
 
-        static readonly Color StoneC = new Color(0.62f, 0.60f, 0.57f);
+        static readonly Color StoneC = new Color(0.76f, 0.74f, 0.70f);
         static readonly Color InkC = new Color(0.12f, 0.10f, 0.09f, 0.22f);
         static readonly Color PetalC = new Color(0.94f, 0.66f, 0.72f);
         static readonly Color LeafC = new Color(0.58f, 0.48f, 0.30f);
@@ -180,7 +180,7 @@ namespace BloodRain.Presentation.Fx
                     int px = cx * S + (int)x, py = cy * S + (int)y;
                     if (x < 1 || y < 1 || x >= S - 1 || y >= S - 1) return;
                     int i = py * W + px;
-                    if (alpha > a[i]) { v[i] = Mathf.Lerp(v[i], val, Mathf.Clamp01((alpha - a[i]) / Mathf.Max(0.001f, alpha)) ); a[i] = alpha; }
+                    if (alpha > a[i]) { v[i] = val; a[i] = alpha; } // 더 진한 쪽이 이긴다(겹친 붓 자국이 쌓여 짙어지지 않게)
                 }
                 void Dot(int cx, int cy, float x, float y, float rad, float val, float alpha)
                 {
@@ -247,7 +247,7 @@ namespace BloodRain.Presentation.Fx
                                 float top = Mathf.Clamp01(0.5f + ly * 0.5f);                  // 위 1, 아래 0
                                 float body = Mathf.Lerp(0.6f, 0.92f, top);
                                 float rim = Mathf.Clamp01((d - 0.8f) / 0.2f) * Mathf.Clamp01(0.75f - top);   // 아래쪽 둘레만 먹
-                                float val = Mathf.Lerp(body, 0.2f, rim);
+                                float val = Mathf.Lerp(body, 0.3f, rim);
                                 Put(cx, 0, ox + dx, oy + dy, val, Mathf.Clamp01((1.04f - d) / 0.06f));
                             }
                     }
