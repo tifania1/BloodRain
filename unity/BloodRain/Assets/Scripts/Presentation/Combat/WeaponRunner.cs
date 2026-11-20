@@ -1083,7 +1083,8 @@ namespace BloodRain.Presentation.Combat
                     if (Sfx)
                     {
                         // VF-02U 어두운 자주 할퀸 자국 + 끝의 옅은 피안개(시안 claws)
-                        Lunge(baseA, 0.38f);
+                        Lunge(baseA, evo != null ? 0.55f : 0.38f);
+                        if (evo != null) _sfx.DemonHand(P, baseA, R);   // VF-04U 혈마수: 큰 자주 손바닥
                         _sfx.BloodMistAt(P + new Vector2(Mathf.Cos(baseA), Mathf.Sin(baseA)) * (R + ws.Length(0.3f)), 1.8f * (1f + 0.08f * clawSt), clawSt);
                     }
                     foreach (var a in WeaponShapes.ClawAngles(baseA, n))

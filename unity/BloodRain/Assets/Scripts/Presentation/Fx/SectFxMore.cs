@@ -485,6 +485,21 @@ namespace BloodRain.Presentation.Fx
             });
         }
 
+        /// <summary>VF-04U 혈마수(혈조 절기): 할퀸 자국이 손이 된다 — 어두운 자주 큰 손바닥이 앞에 서고(시안 demonHand), 손가락은 Claw 갈래가 맡는다.
+        /// R 은 갈래 길이(월드). 시안 비율: 손은 몸에서 R × .28 앞, 크기 R × .54.</summary>
+        public void DemonHand(Vector2 from, float a, float R)
+        {
+            float sz = R * .54f;
+            var d = Dir(a);
+            var at = from + d * R * .28f;
+            Add(.5f, (f, k) =>
+            {
+                float q = Ez(Mathf.Min(1f, f.T / .1f)), ds = Mathf.Max(0f, (f.T - .22f) / .28f);
+                Quad(7, at, sz * q, sz * .8f * q, a, Vector4.zero, FxRamp.Violet, .9f, 1f, ds, f.Seed);
+                Glow(7, at + d * .048f * sz, sz * .55f * q, sz * .4f * q, a, Vector4.zero, FxRamp.VGlow, .55f * (1f - k), 1f, ds, f.Seed + 2f);
+            });
+        }
+
         /// <summary>할퀸 끝에서 피어나는 옅은 피안개. size 는 미터.</summary>
         public void BloodMistAt(Vector2 at, float size, int stage)
         {
