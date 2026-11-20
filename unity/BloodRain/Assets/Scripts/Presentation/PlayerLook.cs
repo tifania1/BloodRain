@@ -173,6 +173,23 @@ namespace BloodRain.Presentation
                     if (names[i] == id && i < sprites.Length && sprites[i] != null) found = i;
                 if (found >= 0) break;
             }
+            // 2026-11-21 몸 그림이 아직 없는 문파(화산·곤륜·마교)는 붉은 동그라미 대신 결이 비슷한 문파 그림을 그 문파 빛으로 조금 물들여 쓴다
+            //   화산·곤륜은 도가라 무당 옷, 마교는 짙은 옷의 당가. 그림이 들어오면 위에서 제 그림을 먼저 찾으므로 저절로 바뀐다
+            if (found < 0 && body.Sect != null && StandIn.TryGetValue(body.Sect.Id, out var alt))
+            {
+                string g = body.Female ? "f" : "m", o = body.Female ? "m" : "f";
+                foreach (var id in new[] { $"char_{alt}_{g}", $"char_{alt}_{o}" })
+                {
+                    for (int i = 0; i < names.Length && found < 0; i++)
+                        if (names[i] == id && i < sprites.Length && sprites[i] != null) found = i;
+                    if (found >= 0) break;
+                }
+                if (found >= 0)
+                {
+                    var tint = Hud.SchoolTint.OfSchoolId(body.Sect.Id);
+                    if (tint.HasValue) _standIn = Color.Lerp(Color.white, tint.Value, 0.35f);
+                }
+            }
             if (found < 0) return; // 자리 표시(동그라미) 그대로
             SpriteId = names[found];
             _move = GetComponent<PlayerController>();
@@ -183,6 +200,7 @@ namespace BloodRain.Presentation
             _body.SetParent(transform, false);
             Renderer = go.AddComponent<SpriteRenderer>();
             Renderer.sprite = sprites[found];
+            Renderer.color = _standIn;
             if (flashMaterial != null) Renderer.sharedMaterial = flashMaterial;
             // 산 에셋 All In 1 Sprite Shader 재질(Resources/Fx/PlayerAllIn1 — 셰이더는 PC 에만, docs/design/store_assets.md).
             // 옅은 빛 테두리로 적 무리 속에서 내 몸이 묻히지 않게 하고, 피격 번쩍임은 그 셰이더의 Hit Effect 로 낸다. 셰이더가 없으면 옛 재질 그대로
@@ -259,6 +277,11 @@ namespace BloodRain.Presentation
         }
 
         bool _tinted;
+        Color _standIn = Color.white;
+        static readonly System.Collections.Generic.Dictionary<string, string> StandIn = new System.Collections.Generic.Dictionary<string, string>
+        {
+            ["huashan"] = "wudang", ["kunlun"] = "wudang", ["demonic"] = "tang",
+        };
 
         /// <summary>대장간 몸 색(SM-01, cheonha.json inn.smithy.tints)을 몸 그림에 곱한다. 생이 생긴 뒤 한 번.</summary>
         void ApplyTint()
@@ -268,7 +291,7 @@ namespace BloodRain.Presentation
             if (life == null || life.Soul == null) return;
             _tinted = true;
             var def = life.Soul.Data.Cheonha.Inn.Smithy.Tints.Find(t => t.Id == life.Soul.BodyTint);
-            if (def != null && def.Rgb.Length >= 3) Renderer.color = new Color(def.Rgb[0], def.Rgb[1], def.Rgb[2], Renderer.color.a);
+            if (def != null && def.Rgb.Length >= 3) Renderer.color = new Color(def.Rgb[0] * _standIn.r, def.Rgb[1] * _standIn.g, def.Rgb[2] * _standIn.b, Renderer.color.a);
         }
 
         void LateUpdate()
