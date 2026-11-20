@@ -37,18 +37,35 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 덕_목록이_비면_후보와_난수가_예전과_같다()
         {
-            Assert.Empty(_d.Cheonha.Rebirth.Boons);
-            var a = new RebirthDraw(_d.Cheonha, Unlocked, 3, 1, false, new Random(7));
-            var b = Rebirth.Roll(_d.Cheonha, Unlocked, 3, new Random(7));
+            var files = GameData.FileNames.ToDictionary(n => n, n => File.ReadAllText(Path.Combine(TestData.DataDir, n + ".json")));
+            files["cheonha"] = System.Text.RegularExpressions.Regex.Replace(files["cheonha"], "\"boons\": \\[[^\\]]*\\]", "\"boons\": []");
+            var c = GameData.FromJson(files).Cheonha;
+            Assert.Empty(c.Rebirth.Boons);
+            var a = new RebirthDraw(c, Unlocked, 3, 1, false, new Random(7));
+            var b = Rebirth.Roll(c, Unlocked, 3, new Random(7));
             Assert.Equal(b.Select(x => x.Sect.Id + string.Join(",", x.Traits.Select(t => t.Id)) + x.Female), a.Candidates.Select(x => x.Sect.Id + string.Join(",", x.Traits.Select(t => t.Id)) + x.Female));
             Assert.All(a.Candidates, x => Assert.Null(x.Boon));
+        }
+
+        [Fact] public void 덕은_복덕_하나고_그_생_윤회의_기_25퍼센트()
+        {
+            // 2026-11-20 GU-11g1(decisions #63 추천대로): 무작위 후보에만, 직접 고른 몸엔 없음
+            var boon = Assert.Single(_d.Cheonha.Rebirth.Boons);
+            Assert.Equal(0.25f, boon.RebirthQi);
+            var draw = new RebirthDraw(_d.Cheonha, Unlocked, 3, 1, false, new Random(5));
+            Assert.All(draw.Candidates, x => Assert.Equal(boon.Id, x.Boon));
+            var body = draw.Choose(0);
+            float traits = draw.Candidates[0].Traits.Sum(t => t.RebirthQi);
+            Assert.Equal(traits + 0.25f, body.RebirthQiBonus, 4);
+            var direct = draw.ChooseDirect("shaolin");
+            Assert.Null(direct.Boon);
+            Assert.Equal(0f, direct.RebirthQiBonus);
         }
 
         [Fact] public void 덕이_있으면_무작위_후보마다_하나씩_붙고_몸까지_간다()
         {
             var files = GameData.FileNames.ToDictionary(n => n, n => File.ReadAllText(Path.Combine(TestData.DataDir, n + ".json")));
-            Assert.Contains("\"boons\": []", files["cheonha"]);
-            files["cheonha"] = files["cheonha"].Replace("\"boons\": []", "\"boons\": [{\"id\": \"test_a\", \"nameKo\": \"시험 덕\"}, {\"id\": \"test_b\", \"nameKo\": \"시험 덕 둘\"}]");
+            files["cheonha"] = System.Text.RegularExpressions.Regex.Replace(files["cheonha"], "\"boons\": \\[[^\\]]*\\]", "\"boons\": [{\"id\": \"test_a\", \"nameKo\": \"시험 덕\"}, {\"id\": \"test_b\", \"nameKo\": \"시험 덕 둘\"}]");
             var c = GameData.FromJson(files).Cheonha;
             var draw = new RebirthDraw(c, Unlocked, 3, 1, false, new Random(3));
             Assert.All(draw.Candidates, x => Assert.Contains(x.Boon, new[] { "test_a", "test_b" }));

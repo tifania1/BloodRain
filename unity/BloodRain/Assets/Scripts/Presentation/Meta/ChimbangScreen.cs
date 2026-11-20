@@ -459,6 +459,10 @@ namespace BloodRain.Presentation.Meta
             sb.Append('\n');
             if (cand.Traits.Count == 0) sb.Append($"<color={MutedHex}>{Loc.T("ui.chimbang.no_trait")}</color>");
             foreach (var t in cand.Traits) sb.Append(TraitLine(t)).Append('\n');
+            // GU-11g1 무작위 후보의 덕(천운 — 그 생 윤회의 기 +25%). 직접 고른 몸엔 없다
+            var boon = cand.Boon != null ? _data.Cheonha.Rebirth.Boons.FirstOrDefault(b => b.Id == cand.Boon) : null;
+            if (boon != null)
+                sb.Append($"<color=#9A7A1E><b>{Loc.T($"cheonha.rebirth.boons.{boon.Id}.name", boon.NameKo)} {Loc.Hanja(boon.Hanja)}</b>  {Loc.F("ui.chimbang.boon", Mathf.RoundToInt(boon.RebirthQi * 100))}</color>").Append('\n');
             return sb.ToString().TrimEnd('\n');
         }
 

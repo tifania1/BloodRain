@@ -97,7 +97,7 @@ namespace BloodRain.Core.Meta
         public SectTrait SectTrait { get; }
         /// <summary>여자 몸인가(후보에서 그대로). 서장 진소운은 남자.</summary>
         public bool Female { get; internal set; }
-        /// <summary>무작위 후보에 붙어 온 덕 id(GU-11g). 효과는 아직 없다(사람 결정 대기, decisions #63).</summary>
+        /// <summary>무작위 후보에 붙어 온 덕 id(GU-11g). 효과는 몸의 RebirthQiBonus 에 이미 더해져 있다(GU-11g1).</summary>
         public string? Boon { get; internal set; }
 
         /// <summary>이 몸으로 시작하는 로드아웃(시작 무공 Lv1, 음양 게이지는 이 몸의 시작값과 태극 구간).</summary>
@@ -305,6 +305,7 @@ namespace BloodRain.Core.Meta
             var traits = cand.Traits;
             int yinyang = traits.Sum(t => t.YinyangStart);
             float qi = traits.Sum(t => t.RebirthQi);
+            if (cand.Boon != null) qi += c.Rebirth.Boons.FirstOrDefault(b => b.Id == cand.Boon)?.RebirthQi ?? 0f; // GU-11g1 덕
             var school = new Dictionary<string, int>();
             if (c.Rebirth.HomeSchoolTiers != 0) school[cand.Sect.Id] = c.Rebirth.HomeSchoolTiers;
             return new RebirthBody(cand.Sect, cand.Region, CharacterOf(cand.Sect, yinyang), traits, TraitStats(traits), qi, school) { Female = cand.Female, Boon = cand.Boon };
