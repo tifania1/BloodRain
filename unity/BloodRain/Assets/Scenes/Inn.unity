@@ -610,6 +610,22 @@ MonoBehaviour:
   sectArt:
   - sectId: shaolin
     art: {fileID: 21300000, guid: 8e92ba17fd45479f88b7decdd1aecbf3, type: 3}
+  - sectId: gaebang
+    art: {fileID: 21300000, guid: 246eb250bac84b4295359aeb05c2b209, type: 3}
+  - sectId: namgung
+    art: {fileID: 21300000, guid: 5c17d9f003ac41c3858055b784f8f84d, type: 3}
+  - sectId: tang
+    art: {fileID: 21300000, guid: bf711fbb12bc440c879d3b80bad50c58, type: 3}
+  - sectId: waterfort
+    art: {fileID: 21300000, guid: 313bd05e8695407496cc4f67aa657efc, type: 3}
+  - sectId: wudang
+    art: {fileID: 21300000, guid: 8e86db923fe04a0799650ddaed02f7ca, type: 3}
+  - sectId: huashan
+    art: {fileID: 21300000, guid: 971c3913b8fc472aa8a4bdbb81bfaf21, type: 3}
+  - sectId: kunlun
+    art: {fileID: 21300000, guid: 6a697f0bbc6a40eda53a8a424732d148, type: 3}
+  - sectId: demonic
+    art: {fileID: 21300000, guid: 722b05f86ffd4d7d81b62785f3825434, type: 3}
   wallMap: {fileID: 0}
   allSects: 0
   extraCandidates: 0
