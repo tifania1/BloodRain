@@ -30,6 +30,7 @@ PC 의 에셋 스토어 내려받기 폴더(`%APPDATA%\Unity\Asset Store-5.x`)�
 사람이 고르면 넣는다. 그림체가 수묵이라 3D·만화풍 묶음은 뺐다.
 
 - 소리: Punch Sound Pack, Ultimate Sound FX Bundle, Monster Sounds Pack, Footsteps Sound Pack, Total Music Collection — 지금 게임에 타격·휘두름 소리가 하나도 없다. 에셋 스토어 음원은 게임에 넣어 팔 수 있다(Artlist 스톡과 다름). 다만 2026-11-05 에 "효과음은 직접 만든다"고 정했으니 사람이 바꾸라고 해야 쓴다
+  - **2026-11-20 정함(SFX-18a 추천대로, decisions #60)**: 타격·휘두름·발소리는 이 묶음에서 고르고 무공 고유음만 직접 만든다. 이펙트 묶음은 쓰지 않는다(이펙트는 셰이더로만). 산 소리 파일은 공개 저장소에 커밋하지 않고, 고른 목록과 쓰는 곳만 문서에 적는다. 같은 날 13:01 사람이 "효과음이 허접하니 다 빼자"고 해 지금 게임엔 효과음이 없으니, 고르는 일은 효과음을 다시 넣을 때 한다
 - 손맛: Feel(More Mountains) — 흔들림·멈춤·튐을 한데 묶은 것. 지금은 `HitFeel` 을 직접 짰다
 - 화면 글자·UI: UI Particle Image, 6000 Fantasy Icons / 5000 Fantasy Icons(그림체가 맞는지 봐야 함)
 - 이펙트: Magic Slashes FX, Magic swords VFX, Blood Effects Pack, Blood Gush, Procedural Lightning, Stylized Shoot & Hit Vol.2, Cartoon FX 4 Remaster, RPG VFX Bundle — 2026-11-17 에 "이펙트는 셰이더로만"이라고 정한 까닭이 재료를 뽑을 곳이 없어서였으니, 사 둔 묶음을 재료로 쓸지는 사람이 정할 일
