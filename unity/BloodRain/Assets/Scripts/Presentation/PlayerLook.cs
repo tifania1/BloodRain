@@ -105,8 +105,8 @@ namespace BloodRain.Presentation
         }
 
         // VF-04U 팔선과해(취선봉 절기): 몸 둘레에 호박빛 분신이 서서 바깥으로 휩쓴다(시안 eightImm — 0.7초, 0.08초에 나타나 끝 40% 에 옅어짐, 비틀비틀)
-        struct Clone { public SpriteRenderer R; public float Age, Seed; }
-        readonly System.Collections.Generic.List<Clone> _clones = new System.Collections.Generic.List<Clone>();
+        struct CloneFx { public SpriteRenderer R; public float Age, Seed; }
+        readonly System.Collections.Generic.List<CloneFx> _clones = new System.Collections.Generic.List<CloneFx>();
         const float CloneLife = 0.7f;
         static readonly Color CloneAmber = new Color(0.62f, 0.4f, 0.16f, 0.55f);
 
@@ -131,7 +131,7 @@ namespace BloodRain.Presentation
             g.transform.localScale = _body.lossyScale;
             g.color = new Color(CloneAmber.r, CloneAmber.g, CloneAmber.b, 0f);
             g.enabled = true;
-            _clones.Add(new Clone { R = g, Age = -delay, Seed = _clones.Count * 1.7f });
+            _clones.Add(new CloneFx { R = g, Age = -delay, Seed = _clones.Count * 1.7f });
         }
 
         void TickClones(float dt)
