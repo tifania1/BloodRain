@@ -152,8 +152,8 @@ namespace BloodRain.Presentation.Hud
             Time.timeScale = 0f;
             _firstOpen = !_extraNow && !_firstDone && _prologue != null;
             if (!_extraNow) _firstDone = true;
-            // GU-01 돈오: 금빛 돈오 카드 화면(unity_tasks GU-01U)이 붙기 전까지는 열 때 저절로 집는다(안 그러면 연환이 영영 안 켜짐).
-            _loadout.TakeAllDoneo(_restored);
+            // GU-01U 돈오: 깨칠 연환이 있으면 카드 줄 아래 금빛 돈오 카드로 띄운다(누르면 깨침, 선택을 쓰지 않음). 안 누르고 닫아도 닫을 때 깨친다
+            _doneo = _loadout.PendingDoneo(_restored);
             if (_extraNow) { _offers = _extraOffers; _extraOffers = null; }
             else _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _root.gameObject.SetActive(true);
@@ -300,6 +300,8 @@ namespace BloodRain.Presentation.Hud
 
         void Close()
         {
+            // 돈오는 공짜라 남은 것은 닫을 때 깨친다(자동 고르기·정진으로 닫아도 연환이 켜지게)
+            if (_doneo.Count > 0) { _loadout.TakeAllDoneo(_restored); _doneo.Clear(); }
             _open = false;
             HideTeach();
             _root.gameObject.SetActive(false);
@@ -426,6 +428,7 @@ namespace BloodRain.Presentation.Hud
             _title.text = _banishMode ? Loc.T("ui.levelup.title_banish") : Loc.F("ui.levelup.title", _handledLevel - _pending);
             for (int i = _cardRow.childCount - 1; i >= 0; i--) Destroy(_cardRow.GetChild(i).gameObject);
             for (int i = 0; i < _offers.Count; i++) MakeCard(i, _offers[i]);
+            DrawDoneo();
             BuildSlotPanel();
             LightSlots(null);
 
@@ -489,9 +492,85 @@ namespace BloodRain.Presentation.Hud
             d.textWrappingMode = TextWrappingModes.Normal;
             d.text = note;
             d.enableAutoSizing = true; d.fontSizeMin = 16; d.fontSizeMax = 24;
+            // GU-02U 대오 카드: 금빛 테두리 두 겹 + 위에 '대오' 띠, 뜰 때 0.1초 늦게 금빛이 스친다
+            if (o.Great)
+            {
+                var o1 = card.gameObject.AddComponent<Outline>(); o1.effectColor = Gold; o1.effectDistance = new Vector2(5, -5);
+                var o2 = card.gameObject.AddComponent<Outline>(); o2.effectColor = new Color(1f, 0.86f, 0.4f, 0.7f); o2.effectDistance = new Vector2(-5, 5);
+                var gb = MakeImage(card.rectTransform, "대오 띠", Gold);
+                Place(gb.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, 16), new Vector2(250, 34));
+                var gt = MakeText(gb.rectTransform, "글", 20, Ink, TextAlignmentOptions.Center);
+                Stretch(gt.rectTransform);
+                gt.enableAutoSizing = true; gt.fontSizeMin = 12; gt.fontSizeMax = 20;
+                gt.text = Loc.T("ui.levelup.badge.great");
+                StartCoroutine(Shimmer(card, 0.1f));
+            }
             var key = MakeText(card.rectTransform, "키", 26, new Color(0.45f, 0.4f, 0.35f), TextAlignmentOptions.Center);
             Place(key.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 26), new Vector2(290, 36));
             key.text = (index + 1).ToString();
+        }
+
+        // ── GU-01U 돈오 카드: 카드 줄 아래 금빛 띠 한 장씩(연환 이름 · 돈오/대성 · 선택을 쓰지 않음). 누르면 TakeDoneo ──
+        List<DoneoCard> _doneo = new List<DoneoCard>();
+        RectTransform _doneoRow;
+
+        /// <summary>시험용: 지금 떠 있는 돈오 카드 수.</summary>
+        public int DoneoShown => _doneo.Count;
+
+        void DrawDoneo()
+        {
+            if (_doneoRow != null) Destroy(_doneoRow.gameObject);
+            _doneoRow = null;
+            if (_doneo.Count == 0 || _banishMode) return;
+            _doneoRow = new GameObject("돈오", typeof(RectTransform), typeof(HorizontalLayoutGroup)).GetComponent<RectTransform>();
+            _doneoRow.SetParent(_root, false);
+            Place(_doneoRow, new Vector2(0.5f, 0.5f), new Vector2(0, -282), new Vector2(1500, 66));
+            var h = _doneoRow.GetComponent<HorizontalLayoutGroup>();
+            h.spacing = 18; h.childAlignment = TextAnchor.MiddleCenter;
+            h.childControlWidth = h.childControlHeight = false; h.childForceExpandWidth = h.childForceExpandHeight = false;
+            foreach (var dc in _doneo.ToArray())
+            {
+                var card = dc;
+                var pill = MakeImage(_doneoRow, "돈오 카드", new Color(0.30f, 0.22f, 0.08f, 0.96f));
+                pill.rectTransform.sizeDelta = new Vector2(440, 62);
+                pill.raycastTarget = true;
+                var rim = pill.gameObject.AddComponent<Outline>(); rim.effectColor = Gold; rim.effectDistance = new Vector2(3, -3);
+                var b = pill.gameObject.AddComponent<Button>();
+                b.onClick.AddListener(() => TakeDoneo(card));
+                var t = MakeText(pill.rectTransform, "글", 24, Gold, TextAlignmentOptions.Center);
+                Stretch(t.rectTransform);
+                t.margin = new Vector4(12, 2, 12, 2);
+                t.enableAutoSizing = true; t.fontSizeMin = 14; t.fontSizeMax = 24;
+                string name = Loc.T($"synergies.links.{card.Link.Id}.name", card.Link.NameKo);
+                t.text = $"<b>{name}</b>  {Loc.T(card.Grand ? "ui.levelup.doneo.grand" : "ui.levelup.doneo.badge")}\n<size=70%><alpha=#BB>{Loc.T("ui.levelup.doneo.free")}</size>";
+                StartCoroutine(Shimmer(pill, 0.1f));
+            }
+        }
+
+        void TakeDoneo(DoneoCard card)
+        {
+            if (!_open || Guarded || !_doneo.Contains(card)) return;
+            _loadout.TakeDoneo(card);
+            _doneo.Remove(card);
+            Debug.Log($"[LevelUpScreen] 돈오 {card.Link.Id}{(card.Grand ? " 대성" : "")}");
+            Refresh();
+        }
+
+        // GU-02U 대오·돈오 카드가 뜰 때 다른 카드보다 조금 늦게 금빛이 한 번 스친다(시안 levelup.html: 0.1초 늦게, 0.55초). 세상 시간이 멈춰 있어 실시간으로
+        System.Collections.IEnumerator Shimmer(Graphic target, float delay)
+        {
+            if (target == null) yield break;
+            var glow = MakeImage(target.rectTransform, "금빛", new Color(1f, 0.86f, 0.4f, 0f));
+            Stretch(glow.rectTransform);
+            glow.raycastTarget = false;
+            float t0 = Time.unscaledTime + delay, dur = 0.55f;
+            while (glow != null && Time.unscaledTime < t0 + dur)
+            {
+                float k = Mathf.Clamp01((Time.unscaledTime - t0) / dur);
+                var c = glow.color; c.a = k <= 0f ? 0f : Mathf.Sin(k * Mathf.PI) * 0.45f; glow.color = c;
+                yield return null;
+            }
+            if (glow != null) Destroy(glow.gameObject);
         }
 
         // ── 시너지 표시(S-04 첫 판, 기획서 20장, 웹 프로토타입 offerCard) ─────────────
