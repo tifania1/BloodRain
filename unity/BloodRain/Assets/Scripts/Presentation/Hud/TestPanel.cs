@@ -188,7 +188,7 @@ namespace BloodRain.Presentation.Hud
             }
 
             y += gap;
-            Head("무공 — 누를 때마다 다음 단계(1~5단), Lv8 이면 절기 깨우기");
+            Head("무공 — 누르면 다음 단계, Lv8 은 절기");
             int max = data.Balance.Levels.WeaponMax;
             var ws = data.Weapons;
             for (int i = 0; i < ws.Count; i += 2)
