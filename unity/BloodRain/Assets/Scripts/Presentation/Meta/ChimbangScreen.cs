@@ -330,8 +330,9 @@ namespace BloodRain.Presentation.Meta
 
             _cards = Rect("후보 카드", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
             // 왼쪽은 후보 카드, 오른쪽 벽에는 중원 지도(TU-12)
-            _cards.sizeDelta = new Vector2(1200, 640);
-            _cards.anchoredPosition = new Vector2(-330, -30);
+            // 카드 650px(2026-11-21 600 → 650): 성질 둘 + 천운 카드는 끝 두 줄이 카드 밖으로 나갔다. 위 바라는 문파 줄·아래 다시 고르기 단추와 안 겹치게 20px 내림
+            _cards.sizeDelta = new Vector2(1200, 660);
+            _cards.anchoredPosition = new Vector2(-330, -50);
             _map = gameObject.AddComponent<ChimbangMap>();
             var regions = new BloodRain.Core.World.Regions(_data);
             var wall = wallMap != null ? wallMap : BloodRain.Presentation.Fx.Biomes.MakeMap(regions, new BloodRain.Sim.PropField(regions));
@@ -351,7 +352,7 @@ namespace BloodRain.Presentation.Meta
         }
 
         /// <summary>카드에서 글 바탕이 차지하는 높이(아래부터). 위는 산문 그림·이름.</summary>
-        const float TextTop = 0.6f;
+        const float TextTop = 0.62f;
 
         void BuildCard(RebirthCandidate cand, int index)
         {
@@ -359,7 +360,7 @@ namespace BloodRain.Presentation.Meta
             var btn = MakeButton($"{index + 1} {sect.NameKo}", _cards, SectColor(sect.Id), out var label, 1, Ink);
             Destroy(label.gameObject);
             var rt = (RectTransform)btn.transform;
-            rt.sizeDelta = new Vector2(280, 600);
+            rt.sizeDelta = new Vector2(280, 650);
             int i = index;
             btn.onClick.AddListener(() => Choose(i));
             // 커서가 가면 벽 지도에 그 문파 자리와 장막 원(TU-12)
