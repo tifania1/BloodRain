@@ -336,14 +336,17 @@ namespace BloodRain.Presentation.Fx
             var cam = Camera.main;
             if (cam == null) return;
             _style ??= new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            _style.fontSize = ImguiFont.Px(24f);
+            float k = Screen.height / 1080f;
             for (int i = _popups.Count - 1; i >= 0; i--)
             {
                 var (at, text, born) = _popups[i];
                 float t = (Time.unscaledTime - born) / 1.4f;
                 if (t >= 1f) { _popups.RemoveAt(i); continue; }
                 var sp = cam.WorldToScreenPoint(at);
-                GUI.color = new Color(0.94f, 0.88f, 0.70f, 1f - t * t);
-                GUI.Label(new Rect(sp.x - 150f, Screen.height - sp.y - 40f - t * 40f, 300f, 30f), text, _style);
+                // 옅은 금빛 글 + 먹 테두리(옅은 종이 바닥에서도 읽히게)
+                ImguiFont.OutlinedLabel(new Rect(sp.x - 200f * k, Screen.height - sp.y - (44f + t * 44f) * k, 400f * k, 36f * k), text, _style,
+                    new Color(0.96f, 0.86f, 0.52f, 1f - t * t), new Color(0.1f, 0.08f, 0.07f, 0.9f), 1.6f * Mathf.Max(1f, k));
             }
             GUI.color = Color.white;
         }
