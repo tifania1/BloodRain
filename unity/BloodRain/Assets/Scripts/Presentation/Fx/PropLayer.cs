@@ -160,9 +160,11 @@ namespace BloodRain.Presentation.Fx
                 }
         }
 
-        // HUD 귀퉁이(왼쪽 위 무공 칸, 오른쪽 위 경지·처치 글과 지도, 아래 음양·오의 동그라미) 밑에 든 소품은 옅게.
+        // HUD 귀퉁이(왼쪽 위 무공 칸, 오른쪽 위 경지·처치 글과 지도, 아래 음양·오의 동그라미)와 위 가운데 시계 줄 밑에 든 소품은 옅게.
         //   소나무가 무공 칸·처치 글을 덮어 글이 묻혔다(2026-11-21, GR-01U·HF-03U 에서 여러 번 본 것). 화면 비율(0~1)로 잰다.
         const float HudTop = 0.8f, HudTopSide = 0.22f, HudBottom = 0.22f, HudBottomSide = 0.13f, HudAlpha = 0.3f;
+        // 위 가운데 시계·지역 줄(2026-11-21 숭산 이류에서 집 한 채가 '숭산 · 혈운' 줄을 덮음). 가운데 ±HudClockHalf, 위에서 1-HudClockBottom 만큼
+        const float HudClockBottom = 0.88f, HudClockHalf = 0.13f;
 
         static float HudFade(float xMin, float xMax, float yMin, float yMax, Vector2 c, float w, float h)
         {
@@ -174,7 +176,9 @@ namespace BloodRain.Presentation.Fx
             float top = vB < 1f ? Mathf.Clamp01((vT - HudTop) / E) * side : 0f;
             float sideB = Mathf.Max(Mathf.Clamp01((HudBottomSide - vL) / E), Mathf.Clamp01((vR - (1f - HudBottomSide)) / E));
             float bottom = vT > 0f ? Mathf.Clamp01((HudBottom - vB) / E) * sideB : 0f;
-            return Mathf.Lerp(1f, HudAlpha, Mathf.Max(top, bottom));
+            float mid = Mathf.Clamp01((Mathf.Min(vR, 0.5f + HudClockHalf) - Mathf.Max(vL, 0.5f - HudClockHalf)) / E);
+            float clock = vB < 1f ? Mathf.Clamp01((vT - HudClockBottom) / E) * mid : 0f;
+            return Mathf.Lerp(1f, HudAlpha, Mathf.Max(Mathf.Max(top, bottom), clock));
         }
 
         static Mesh MakeQuad()
