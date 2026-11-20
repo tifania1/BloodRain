@@ -545,9 +545,10 @@ namespace BloodRain.Presentation.Fx
             Drops(at, 0f, Mathf.RoundToInt(6f * m), 8f + stage, FxRamp.Ink, false, .12f, Mathf.PI);
             if (stage >= 2 && !FxSettings.Simplified)
             {
-                var pit = new FxRamp(FxRamp.Brown.Mid, FxRamp.Brown.Core, FxRamp.Ink.Core);
+                // 패인 자리: 2026-11-21 먹 심(Ink.Core)·알파 .62 라 일류 무리 속에서 새까만 오린 종이 덩이로 보였다 → 갈색 담채, 옅게, 조금 작게
+                var pit = FxRamp.Brown;
                 var pa = at + Vector2.down * .1f * w;
-                Add(.6f, (f, k) => Quad(3, pa, 2.7f * m * w, 2.7f * m * .7f * w, f.Seed, new Vector4(9f, 1f, .8f, 0f), pit, .62f * (1f - k) * (1f - k), 1f, k * .4f, f.Seed), true);
+                Add(.6f, (f, k) => Quad(3, pa, 2.3f * m * w, 2.3f * m * .7f * w, f.Seed, new Vector4(9f, 1f, .8f, 0f), pit, .4f * (1f - k) * (1f - k), 1f, k * .4f, f.Seed), true);
             }
             Drops(at, 0f, Mathf.RoundToInt(9f * m), 6f + stage, FxRamp.Amber, true, .13f, Mathf.PI);
             if (stage >= 3) Drops(at, Mathf.PI * .5f, Mathf.RoundToInt(6f * m), 10f, FxRamp.Wine, false, .14f, .9f);
