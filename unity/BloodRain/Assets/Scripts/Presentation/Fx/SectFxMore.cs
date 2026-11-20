@@ -871,12 +871,12 @@ namespace BloodRain.Presentation.Fx
             if (dir.sqrMagnitude < 1e-6f) dir = Vector2.right;
             dir.Normalize();
             float M = Meter, ang = Mathf.Atan2(dir.y, dir.x), len = half * 2f;
-            var mid = at;
+            var mid = at + Vector2.up * .35f * M;   // 발밑이 아니라 몸통을 지나게
             Add(.58f, (f, k) =>
             {
                 float t = f.T, prog = Mathf.Min(1f, t / .08f), diss = Mathf.Max(0f, (t - .28f) / .3f);
-                Quad(1, mid, len, 2.4f * M, ang, new Vector4(.32f, .45f, 1.2f, .55f), FxRamp.Ink, .92f, prog, diss, f.Seed);
-                Glow(1, mid + new Vector2(-dir.y, dir.x) * .12f * M, len * .96f, .7f * M, ang, new Vector4(.22f, .15f, 2f, .4f), FxRamp.Blade, .85f * (1f - diss), prog, diss * 1.2f, f.Seed + 3f);
+                Quad(1, mid, len, 4.2f * M, ang, new Vector4(.48f, .45f, 1.2f, .55f), FxRamp.Ink, .92f, prog, diss, f.Seed);
+                Glow(1, mid + new Vector2(-dir.y, dir.x) * .15f * M, len * .96f, 1.1f * M, ang, new Vector4(.3f, .15f, 2f, .4f), FxRamp.Blade, .85f * (1f - diss), prog, diss * 1.2f, f.Seed + 3f);
             });
             After(.06f, () =>
             {
