@@ -96,7 +96,7 @@ namespace BloodRain.Presentation.Fx
                     int kind; Color col; float size;
                     float pick = r0;
                     if ((pick -= mix.Grass) < 0f) { kind = (hs & 1) == 0 ? 0 : 1; col = mix.GrassC; size = 0.55f + 0.35f * U(hs, 1); }
-                    else if ((pick -= mix.Stone) < 0f) { kind = (hs & 2) == 0 ? 2 : 3; col = StoneC; size = 0.45f + 0.35f * U(hs, 1); }
+                    else if ((pick -= mix.Stone) < 0f) { kind = (hs & 2) == 0 ? 2 : 3; col = StoneC; size = 0.6f + 0.4f * U(hs, 1); }
                     else if ((pick -= mix.Ink) < 0f) { kind = (hs & 4) == 0 ? 4 : 5; col = InkC; size = 0.9f + 0.9f * U(hs, 1); }
                     else if ((pick -= mix.Petal) < 0f) { kind = 6; col = PetalC; size = 0.5f + 0.3f * U(hs, 1); }
                     else { kind = 7; col = LeafC; size = 0.5f + 0.3f * U(hs, 1); }
@@ -214,29 +214,41 @@ namespace BloodRain.Presentation.Fx
                         }
                     }
                 }
-                // 2·3 잔돌: 둥근 돌 셋~넷, 위가 밝고 아래 테가 먹
+                // 2·3 잔돌: 들쭉날쭉한 납작 돌(큰 것 하나 + 작은 것, 또는 작은 것 넷). 위가 밝고 아래쪽에만 먹 테, 오른쪽 아래로 옅은 그늘
+                //   (처음엔 고른 타원에 둘레 전체 먹 테라 물방울·거품처럼 읽혔다)
                 for (int cell = 2; cell < 4; cell++)
                 {
                     int cx = cell % 4;
-                    int n = cell == 2 ? 3 : 5;
+                    int n = cell == 2 ? 2 : 4;
                     for (int s = 0; s < n; s++)
                     {
-                        float ox = 30 + R() * 68f, oy = 30 + R() * 60f;
-                        float rx = (s == 0 ? 22f : 9f + R() * 10f), ry = rx * (0.6f + R() * 0.25f);
-                        float rot = R() * Mathf.PI;
+                        float ox = 36 + R() * 56f, oy = 40 + R() * 48f;
+                        float rx = cell == 2 && s == 0 ? 26f : 9f + R() * 9f, ry = rx * (0.5f + R() * 0.2f);
+                        float rot = (R() - 0.5f) * 0.9f;
+                        float ph1 = R() * 6.28f, ph2 = R() * 6.28f;
                         float cs = Mathf.Cos(rot), sn = Mathf.Sin(rot);
-                        int r = Mathf.CeilToInt(rx + 2);
+                        int r = Mathf.CeilToInt(rx + 6);
+                        // 그늘(먼저 — 돌이 더 진한 알파로 덮는다)
+                        for (int dy = -r; dy <= r; dy++)
+                            for (int dx = -r; dx <= r; dx++)
+                            {
+                                float lx = (dx - rx * 0.18f) / (rx * 1.05f), ly = (dy + ry * 0.35f) / (ry * 0.9f);
+                                float d = lx * lx + ly * ly;
+                                if (d < 1f) Put(cx, 0, ox + dx, oy + dy, 0.15f, 0.35f * (1f - d));
+                            }
                         for (int dy = -r; dy <= r; dy++)
                             for (int dx = -r; dx <= r; dx++)
                             {
                                 float lx = (dx * cs + dy * sn) / rx, ly = (-dx * sn + dy * cs) / ry;
-                                float d = Mathf.Sqrt(lx * lx + ly * ly);
-                                if (d > 1.08f) continue;
-                                float edge = Mathf.Clamp01((d - 0.78f) / 0.2f);
-                                float light = 0.95f - 0.25f * Mathf.Clamp01(0.5f - dy / (2f * ry)); // 위(+y)가 밝다
-                                float val = Mathf.Lerp(light, 0.22f, edge);
-                                float al = Mathf.Clamp01((1.08f - d) / 0.08f);
-                                Put(cx, 0, ox + dx, oy + dy, val, al);
+                                float ang = Mathf.Atan2(ly, lx);
+                                float rr = 1f + 0.12f * Mathf.Sin(ang * 3f + ph1) + 0.06f * Mathf.Sin(ang * 5f + ph2);
+                                float d = Mathf.Sqrt(lx * lx + ly * ly) / rr;
+                                if (d > 1.04f) continue;
+                                float top = Mathf.Clamp01(0.5f + ly * 0.5f);                  // 위 1, 아래 0
+                                float body = Mathf.Lerp(0.6f, 0.92f, top);
+                                float rim = Mathf.Clamp01((d - 0.8f) / 0.2f) * Mathf.Clamp01(0.75f - top);   // 아래쪽 둘레만 먹
+                                float val = Mathf.Lerp(body, 0.2f, rim);
+                                Put(cx, 0, ox + dx, oy + dy, val, Mathf.Clamp01((1.04f - d) / 0.06f));
                             }
                     }
                 }
