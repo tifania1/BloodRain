@@ -1613,6 +1613,12 @@ namespace BloodRain.Presentation
                     view.Tint = Color.Lerp(baseTint, Hud.DangerColors.Of(TelegraphTint), Mathf.PingPong(Time.time * 8f, 1f)); // 예고: 붉게 깜빡임(이펙트 오기 전 임시)
                 else
                     view.Tint = baseTint;
+                // VF-02U 멈칫 표시: 머리 위에 먹 점 셋이 돈다(예고 동안 서는 dt×2 는 빼려고 0.12초 넘게 멈춘 것만)
+                if (a.Stun > 0.12f && SectFx.Instance != null && !FxSettings.Simplified)
+                {
+                    float ps = World.Length(view.Size > 0f ? view.Size : clusters.memberRealmMeters, a.BornRealm);
+                    SectFx.Instance.Stunned(view.Position + Vector2.up * ps * 0.68f, ps);
+                }
                 clusters.Add(view);
             }
         }

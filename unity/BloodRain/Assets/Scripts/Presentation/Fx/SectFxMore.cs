@@ -25,8 +25,24 @@ namespace BloodRain.Presentation.Fx
             _live.Add(new LiveProj { Look = look, Pos = pos, Ang = ang, Size = size, Age = age, Left = left, Run = run, Seed = seed, Stage = stage, Evo = evo });
         }
 
+        // 멈칫 표시(음공 기절·뇌부 감전·천설부 등 EnemySim Stun, 시안 sonic 의 머리 위 먹 점 셋). EnemyField 가 프레임마다 넘긴다
+        readonly List<Vector3> _stuns = new List<Vector3>();
+
+        /// <summary>이번 프레임에 멈춰 선 적 하나. head 는 머리 위 자리, size 는 사람 하나 크기(월드).</summary>
+        public void Stunned(Vector2 head, float size)
+        {
+            if (_stuns.Count < 48) _stuns.Add(new Vector3(head.x, head.y, size));
+        }
+
         void DrawLive()
         {
+            foreach (var s in _stuns)
+                for (int i = 0; i < 3; i++)
+                {
+                    float aa = _time * 5f + i * 2.09f + s.x * .7f;
+                    Quad(5, new Vector2(s.x + Mathf.Cos(aa) * .3f * s.z, s.y + Mathf.Sin(aa) * .1f * s.z), .13f * s.z, .13f * s.z, 0f, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Ink, .8f);
+                }
+            _stuns.Clear();
             foreach (var p in _live)
             {
                 switch (p.Look)
@@ -56,6 +72,12 @@ namespace BloodRain.Presentation.Fx
             // 회청 바람이 종이 바닥에 묻혀서 먹 받침을 먼저(2026-11-20)
             Quad(0, c0 - d * .03f * S, S * 1.08f, S * 1.08f, p.Ang, new Vector4(2f, st >= 2 ? .56f : .48f, 1f, .55f), FxRamp.Ink, .45f * al, Mathf.Min(1f, p.Age / .08f), k > .75f ? (k - .75f) * 3f : 0f, p.Seed);
             Quad(0, c0, S, S, p.Ang, new Vector4(2f, st >= 2 ? .46f : .38f, 1f, .55f), body, .95f * al, Mathf.Min(1f, p.Age / .08f), k > .75f ? (k - .75f) * 3f : 0f, p.Seed);
+            // 3단 흙먼지 자국(시안 palm: 0.3초마다 지나간 바닥에 옅은 흙빛, 6초에 걸쳐 마름)
+            if (st >= 3 && !p.Evo && !FxSettings.Simplified && k < .8f && p.Age >= .3f && Mathf.Floor(p.Age / .3f) != Mathf.Floor((p.Age - Time.deltaTime) / .3f))
+            {
+                if (_stains.Count >= MaxStains) _stains.RemoveAt(0);
+                _stains.Add(new Stain { Pos = c0 - Vector2.up * .1f * S, Seed = p.Seed + p.Age, Rot = p.Ang, Size = .27f * S, Shape = 3, P = new Vector4(3f, .35f, .8f, 0f), C = FxRamp.Dust, A = .22f });
+            }
             if (st >= 5)
             {
                 Glow(0, c0 + d * .013f * S, S, S, p.Ang, new Vector4(1.8f, .07f, 1f, .3f), FxRamp.White, .7f * al, 1f, 0f, p.Seed + 5f);
