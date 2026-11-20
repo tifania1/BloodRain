@@ -220,6 +220,12 @@
       { "id": "cave",        "nameKo": "수련동",        "require": { "sealStones": 3 } },
       { "id": "haomun_board", "nameKo": "하오문 게시판", "require": { "bossKilled": "janggang", "unlock": "talk:unnang_haomun" } }
     ],
+    "_smithy": "대장간 안(10장 '객잔 시설', 2026-11-20 SM-01 추천대로). 몸 색은 옷 빛깔 셋: 문파 기본(그림 그대로)·먹·담묵(13장 팔레트 안, 주홍·금은 뺌). rgb 는 몸 그림에 곱하는 색. 무기 외형은 대장간에서 사지 않고 해금 보상(혼 해금 skin:<id>)으로 얻어 여기서 고른다. 한 번 지은 뒤 바꾸기는 공짜, 꾸미기만(능력치 없음).",
+    "smithy": { "tints": [
+      { "id": "sect", "nameKo": "문파 빛깔", "rgb": [1, 1, 1] },
+      { "id": "ink",  "nameKo": "먹",       "rgb": [0.55, 0.55, 0.6] },
+      { "id": "wash", "nameKo": "담묵",     "rgb": [0.82, 0.82, 0.85] }
+    ] },
     "_elixirs": "약방 영약(10장 '영약(약방)' 표 그대로). 약방이 열린 뒤 생을 시작할 때 혈정 cost 를 써서 elixirsPerLife 개까지 지니고 출발한다. 효과는 이번 생 한정: reviveHealthRatio 첫 사망 때 그 비율로 부활, startLevel 그 레벨로 시작, startUltimate 오의(진기) 게이지, maxHealth 최대 기혈 비율 더하기, bloodCrystalMultiplier 혈정 드롭 배율, yinyangFreezeSeconds 처음 그 초 동안 음양 게이지가 움직이지 않음. 10장의 '약방 3단계에서 2개'는 약방 단계가 기획서에 없어 아직 1(decisions 참고).",
     "elixirsPerLife": 1,
     "elixirs": [

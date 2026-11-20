@@ -170,8 +170,22 @@ namespace BloodRain.Presentation
             _body.localPosition = rot * up + new Vector3(0f, bob * _height, 0f);
         }
 
+        bool _tinted;
+
+        /// <summary>대장간 몸 색(SM-01, cheonha.json inn.smithy.tints)을 몸 그림에 곱한다. 생이 생긴 뒤 한 번.</summary>
+        void ApplyTint()
+        {
+            if (_tinted || Renderer == null) return;
+            var life = LifeRunner.Instance != null ? LifeRunner.Instance.Life : null;
+            if (life == null || life.Soul == null) return;
+            _tinted = true;
+            var def = life.Soul.Data.Cheonha.Inn.Smithy.Tints.Find(t => t.Id == life.Soul.BodyTint);
+            if (def != null && def.Rgb.Length >= 3) Renderer.color = new Color(def.Rgb[0], def.Rgb[1], def.Rgb[2], Renderer.color.a);
+        }
+
         void LateUpdate()
         {
+            ApplyTint();
             if (_body == null) return;
             float dt = Time.deltaTime;
             var p = transform.position;

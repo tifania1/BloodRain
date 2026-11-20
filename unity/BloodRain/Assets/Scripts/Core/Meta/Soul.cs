@@ -194,6 +194,7 @@ namespace BloodRain.Core.Meta
         readonly Dictionary<string, int> _training = new Dictionary<string, int>();
         readonly Dictionary<string, int> _upgrades = new Dictionary<string, int>();
         readonly HashSet<string> _unlocks = new HashSet<string>();
+        string _bodyTint = "";
         readonly HashSet<string> _endingsSeen = new HashSet<string>();
         readonly HashSet<string> _bosses = new HashSet<string>();
         readonly HashSet<string> _sealStones = new HashSet<string>();
@@ -378,6 +379,23 @@ namespace BloodRain.Core.Meta
 
         /// <summary>도전 과제처럼 땅의 주인 말고 다른 데서 오는 해금.</summary>
         public void Unlock(string token) => _unlocks.Add(token);
+
+        // ---- 대장간(SM-01, 꾸미기만) ----
+
+        /// <summary>고른 몸 색 id(cheonha.json inn.smithy.tints). 안 골랐으면 첫 칸(문파 빛깔).</summary>
+        public string BodyTint => string.IsNullOrEmpty(_bodyTint) ? (C.Inn.Smithy.Tints.FirstOrDefault()?.Id ?? "") : _bodyTint;
+
+        /// <summary>몸 색을 고른다. 대장간을 지었고 있는 색이면 바꾸고 true(공짜).</summary>
+        public bool TrySetBodyTint(string tintId)
+        {
+            if (!Inn.IsOpen(this, "smithy")) return false;
+            if (C.Inn.Smithy.Tints.All(t => t.Id != tintId)) return false;
+            _bodyTint = tintId;
+            return true;
+        }
+
+        /// <summary>얻은 무기 외형 id(해금 skin:&lt;id&gt;). 대장간에서 고른다.</summary>
+        public IReadOnlyList<string> WeaponSkins => _unlocks.Where(u => u.StartsWith("skin:", StringComparison.Ordinal)).Select(u => u.Substring(5)).OrderBy(x => x, StringComparer.Ordinal).ToList();
 
         /// <summary>지금까지 모든 생에서 쓴 정신부 수(도전 과제 seal_talisman_N_total).</summary>
         public int TalismansUsedTotal { get; private set; }
@@ -753,6 +771,8 @@ namespace BloodRain.Core.Meta
             public int TrainingSpent;
             public SortedDictionary<string, int> RebirthUpgrades = new SortedDictionary<string, int>(StringComparer.Ordinal);
             public List<string> Unlocks = new List<string>();
+            /// <summary>대장간 몸 색(SM-01). 빈 값은 문파 빛깔.</summary>
+            public string BodyTint = "";
             public List<string> BossesKilled = new List<string>();
             public List<string> SealStones = new List<string>();
             public List<string> VisitedRegions = new List<string>();
@@ -814,6 +834,7 @@ namespace BloodRain.Core.Meta
                 TrainingSpent = _trainingSpent,
                 RebirthUpgrades = Sorted(_upgrades),
                 Unlocks = Sorted(_unlocks),
+                BodyTint = _bodyTint,
                 BossesKilled = Sorted(_bosses),
                 SealStones = Sorted(_sealStones),
                 VisitedRegions = Sorted(_visited),
@@ -871,6 +892,7 @@ namespace BloodRain.Core.Meta
             if (f.Gugyeol != null) foreach (var kv in f.Gugyeol) s._gugyeol[kv.Key] = kv.Value.ToList();
             foreach (var kv in f.FinalClearsBySect) s._finalClears[kv.Key] = kv.Value;
             s._unlocks.UnionWith(f.Unlocks);
+            if (f.BodyTint != null && s.C.Inn.Smithy.Tints.Any(t => t.Id == f.BodyTint)) s._bodyTint = f.BodyTint;
             s._titles.UnionWith(f.Titles.Where(id => s.C.Titles.Any(t => t.Id == id)));
             s._letters.UnionWith(f.Letters.Where(id => data.Synergies.Secrets.Any(x => x.Id == id)));
             s._chronicle.UnionWith(f.Chronicle.Where(id => data.Chronicle.Events.Any(x => x.Id == id)));

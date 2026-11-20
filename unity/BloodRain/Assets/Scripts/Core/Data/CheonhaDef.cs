@@ -93,6 +93,21 @@ namespace BloodRain.Core.Data
         /// <summary>한 생에 지니고 출발하는 영약 수(10장 '영약(약방)').</summary>
         public int ElixirsPerLife = 1;
         public List<ElixirDef> Elixirs = new List<ElixirDef>();
+        public SmithyDef Smithy = new SmithyDef();
+    }
+
+    /// <summary>대장간 안(SM-01): 몸 색 셋, 무기 외형은 해금(skin:&lt;id&gt;)으로 얻어 고른다. 꾸미기만.</summary>
+    public sealed class SmithyDef
+    {
+        public List<BodyTintDef> Tints = new List<BodyTintDef>();
+    }
+
+    public sealed class BodyTintDef
+    {
+        public string Id = "";
+        public string NameKo = "";
+        /// <summary>몸 그림에 곱하는 색 [r, g, b].</summary>
+        public float[] Rgb = { 1f, 1f, 1f };
     }
 
     /// <summary>약방 영약 하나(10장 '영약(약방)'). 효과는 이번 생 한정이고 0 인 칸은 효과 없음.</summary>

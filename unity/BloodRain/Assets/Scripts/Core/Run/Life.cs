@@ -114,6 +114,8 @@ namespace BloodRain.Core.Run
         public bool IsPrologue => Prologue != null;
 
         public RebirthBody Body { get; }
+        /// <summary>이 생을 사는 혼(대장간 몸 색 등 꾸미기를 화면이 읽는다).</summary>
+        public Soul Soul => _soul;
         public LifeLog Log { get; }
         public Loadout Loadout { get; }
         public RunXp Xp { get; }

@@ -34,6 +34,7 @@ namespace BloodRain.Presentation.Meta
             _hub = new GameObject("객잔 본채").AddComponent<InnScreen>();
             _hub.font = chimbang.font;
             _hub.background = chimbang.background;
+            _hub.bodyPreview = System.Linq.Enumerable.FirstOrDefault(System.Linq.Enumerable.Select(chimbang.sectArt, a => a.art), a => a != null); // 대장간 몸 색 미리 보기
             _hub.StartLife += OpenChimbang;
             ShowHub();
             Debug.Log($"[객잔] 혼 {_soul.Lives}생, 윤회의 기 {_soul.RebirthQi:N0}, 객잔 본채를 엽니다");

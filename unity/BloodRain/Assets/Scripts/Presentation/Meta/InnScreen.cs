@@ -23,6 +23,8 @@ namespace BloodRain.Presentation.Meta
     {
         public TMP_FontAsset font;
         public Sprite background;
+        [Tooltip("대장간 몸 색 미리 보기 그림(InnFlow 가 침방 문파 그림 하나를 넘긴다)")]
+        public Sprite bodyPreview;
 
         public event Action StartLife;
 
@@ -42,6 +44,7 @@ namespace BloodRain.Presentation.Meta
         TextMeshProUGUI _sub, _toast;
         float _toastLeft;
         TrainingScreen _training;
+        SmithyScreen _smithy;
         SettingsScreen _settings;
 
         public bool IsOpen => _canvas != null && _canvas.activeSelf;
@@ -86,6 +89,7 @@ namespace BloodRain.Presentation.Meta
             switch (id)
             {
                 case "training": OpenTraining(); break;
+                case "smithy": OpenSmithy(); break;
                 default: Toast(Loc.F("ui.inn.soon_toast", Name(f))); break;
             }
         }
@@ -113,6 +117,18 @@ namespace BloodRain.Presentation.Meta
             }
             _canvas.SetActive(false);
             _training.Open(_soul);
+        }
+
+        void OpenSmithy()
+        {
+            if (_smithy == null)
+            {
+                _smithy = new GameObject("대장간 화면").AddComponent<SmithyScreen>();
+                _smithy.font = font;
+                _smithy.Closed += () => { SoulStore.Save(_soul); _canvas.SetActive(true); Refresh(); };
+            }
+            _canvas.SetActive(false);
+            _smithy.Open(_soul, bodyPreview);
         }
 
         void Update()
