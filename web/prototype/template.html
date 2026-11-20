@@ -5068,7 +5068,8 @@ function drawRegionGimmicks() {
 // 수치는 gimmicks.json(water·taijiFloor·campfire·pagodaForest, 탑림이 가운데 종 둘레를 비울 때 bell.touchRadius).
 // 놓는 간격(물길 간격·반폭·굽이, 태극 바닥·모닥불·탑림 무더기 간격)은 gimmicks.json 에 아직 없어 시안 LD 의 놀이판 값을 그대로 쓴다
 // (gimmick_draft.md 2절 안과 같은 값. R-10·R4-07 이 데이터에 넣으면 두 판 다 거기서 읽게 바꿀 것 — CheonhaGimmickTests 가 시안 LD 와 같은지 본다).
-const CHG_LD = { waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7, taijiSpacing: 16, campfireSpacing: 28, pagodaSpacing: 60, bellSpacing: 30 };
+// 지역 안 배치 값: gimmicks.json layout(R-10, 2026-11-20 사람이 '표대로' — 시안 LD 놀이판 값과 같음). 데이터가 없으면 시안 값
+const CHG_LD = (() => { const L = (DATA.gimmicks || {}).layout || {}, d = { waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7, taijiSpacing: 16, campfireSpacing: 28, pagodaSpacing: 60, bellSpacing: 30 }; for (const k of Object.keys(d)) if (typeof L[k] === 'number') d[k] = L[k]; return d; })();
 const CHG_G = {   // 시안 함수 안의 G 자리. 이 판의 한 판 상태(G)를 그때그때 읽는다
   get tier() { return tierNow(); },
   get t() { return G.t; },

@@ -1,3 +1,4 @@
+using BloodRain.Core.Data;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -60,8 +61,10 @@ namespace BloodRain.Core.Tests
         [Fact]
         public void 놓는_간격은_시안_LD_놀이판_값과_같다()
         {
-            // gimmicks.json 에 배치 값이 아직 없어(R-10·R4-07) 프로토타입은 시안 LD 값을 CHG_LD 로 옮겨 쓴다. 둘이 어긋나면 안 된다
-            var ld = Regex.Match(Proto, @"const CHG_LD = \{(.*?)\};");
+            // 프로토타입 CHG_LD 는 gimmicks.json layout 을 읽고(R-10, 2026-11-20), 데이터가 없을 때의 기본값은 시안 LD 값이다. 셋이 어긋나면 안 된다
+            Assert.Contains("const L = (DATA.gimmicks || {}).layout || {}", Proto);
+            var ld = Regex.Match(Proto, @"const CHG_LD = \(\(\) => \{ const L = \(DATA\.gimmicks \|\| \{\}\)\.layout \|\| \{\}, d = \{(.*?)\};");
+            var layout = TestData.Load().Gimmicks.Layout;
             Assert.True(ld.Success);
             var pairs = Regex.Matches(ld.Groups[1].Value, @"(\w+): ([\d.]+)");
             Assert.Equal(8, pairs.Count);
@@ -71,6 +74,9 @@ namespace BloodRain.Core.Tests
                 var sian = Regex.Match(Sian, @"^\s+(?:\w+: [\d.]+, )*" + key + @": ([\d.]+)", RegexOptions.Multiline);
                 Assert.True(sian.Success, $"시안 LD 에 {key} 가 없다");
                 Assert.Equal(double.Parse(sian.Groups[1].Value, CultureInfo.InvariantCulture), double.Parse(p.Groups[2].Value, CultureInfo.InvariantCulture));
+                var prop = typeof(GimmickLayoutDef).GetField(char.ToUpperInvariant(key[0]) + key.Substring(1));
+                Assert.True(prop != null, $"gimmicks.json layout 에 {key} 가 없다");
+                Assert.Equal(double.Parse(p.Groups[2].Value, CultureInfo.InvariantCulture), (double)(float)prop!.GetValue(layout)!, 3);
             }
         }
 
