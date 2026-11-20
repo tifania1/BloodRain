@@ -125,23 +125,25 @@ namespace BloodRain.Presentation.Hud
         Waiters _wait;
         sealed class Waiters
         {
-            InsightScreen _insight; EvolutionPickScreen _evo; SwordTombScreen _tomb; MerchantScreen _shop; BloodRain.Presentation.Fx.ChestLayer _chest;
+            BloodRain.Presentation.Meta.CutScreen _cut; InsightScreen _insight; EvolutionPickScreen _evo; SwordTombScreen _tomb; MerchantScreen _shop; BloodRain.Presentation.Fx.ChestLayer _chest;
             float _t;
             public int Handled;
             public bool Handle(float dt)
             {
+                if (_cut == null) _cut = Object.FindFirstObjectByType<BloodRain.Presentation.Meta.CutScreen>();
                 if (_insight == null) _insight = Object.FindFirstObjectByType<InsightScreen>();
                 if (_evo == null) _evo = Object.FindFirstObjectByType<EvolutionPickScreen>();
                 if (_tomb == null) _tomb = Object.FindFirstObjectByType<SwordTombScreen>();
                 if (_shop == null) _shop = Object.FindFirstObjectByType<MerchantScreen>();
                 if (_chest == null) _chest = Object.FindFirstObjectByType<BloodRain.Presentation.Fx.ChestLayer>();
-                bool any = (_insight != null && _insight.IsOpen) || (_evo != null && _evo.IsOpen) || (_tomb != null && _tomb.IsOpen)
+                bool any = (_cut != null && _cut.IsOpen) || (_insight != null && _insight.IsOpen) || (_evo != null && _evo.IsOpen) || (_tomb != null && _tomb.IsOpen)
                            || (_shop != null && _shop.IsOpen) || (_chest != null && _chest.ListOpen);
                 if (!any) { _t = 0f; return false; }
                 _t += dt;
                 if (_t < 0.6f) return true;
                 _t = 0f; Handled++;
-                if (_insight != null && _insight.IsOpen) _insight.Pick(0);
+                if (_cut != null && _cut.IsOpen) _cut.Next(); // 컷은 읽을 틈 없이 넘긴다(시험)
+                else if (_insight != null && _insight.IsOpen) _insight.Pick(0);
                 else if (_evo != null && _evo.IsOpen) _evo.Pick(0);
                 else if (_tomb != null && _tomb.IsOpen) _tomb.Pick(0);
                 else if (_shop != null && _shop.IsOpen) _shop.Close();

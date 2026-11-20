@@ -298,6 +298,11 @@ namespace BloodRain.Presentation.Meta
             bg.preserveAspect = false;
             bg.raycastTarget = false;
 
+            // 머리글 바탕 종이 띠: 침방 그림의 들보·말린 약초 위에 먹 글자가 바로 얹혀 읽히지 않았다(2026-11-20 플레이 시험)
+            var band = Rect("머리글 바탕", root, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f)).gameObject.AddComponent<Image>();
+            band.color = new Color(Paper.r, Paper.g, Paper.b, 0.88f);
+            band.raycastTarget = false;
+            Place(band.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -132), new Vector2(1580, 196));
             var title = Text("제목", root, Loc.T("ui.chimbang.title"), 46, FontStyles.Bold);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -70), new Vector2(1200, 70));
             _sub = Text("부제", root, "", 26, FontStyles.Normal);
