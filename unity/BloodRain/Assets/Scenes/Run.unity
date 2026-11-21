@@ -1144,6 +1144,7 @@ MonoBehaviour:
   usePaintedMap: 0
   blendBand: 90
   vignette: 0.22
+  mottle: 0.13
 --- !u!114 &680656955
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1311,7 +1312,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.PlayerLook
   names:
+  - char_baekya
   - char_dang_yeonhwa
+  - char_demonic_f
+  - char_demonic_m
   - char_gaebang_f
   - char_gaebang_m
   - char_ha_yeon
@@ -1319,6 +1323,8 @@ MonoBehaviour:
   - char_huashan_m
   - char_hyegong
   - char_jinsowoon
+  - char_kunlun_f
+  - char_kunlun_m
   - char_machil
   - char_namgung_f
   - char_namgung_hyeon
@@ -1332,7 +1338,10 @@ MonoBehaviour:
   - char_wudang_f
   - char_wudang_m
   sprites:
+  - {fileID: 21300000, guid: e8dde998830746d2bb0af0c48e0d49c7, type: 3}
   - {fileID: 21300000, guid: bd8673ea9bf842838bd5f0c917f550e6, type: 3}
+  - {fileID: 21300000, guid: 312e4270b63c44e2b9ee68d7484f49d0, type: 3}
+  - {fileID: 21300000, guid: fb3746c33d5945fdaecd51c48be0cc46, type: 3}
   - {fileID: 21300000, guid: 75ebfe15a29844cd854810d663d15398, type: 3}
   - {fileID: 21300000, guid: d13ba6483932492bb4a521f46b1faf23, type: 3}
   - {fileID: 21300000, guid: acdfc382b5ad4952b8dda99747045f49, type: 3}
@@ -1340,6 +1349,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c7298e71d3ecf2040bf2834b08c0f0b4, type: 3}
   - {fileID: 21300000, guid: f6c3a6b7382b45a7a91d76a66734cea1, type: 3}
   - {fileID: 21300000, guid: 0a1f0104865a4648acf559f35391fe86, type: 3}
+  - {fileID: 21300000, guid: b1e38d551cd24514a9f0f7e4ed8ba69f, type: 3}
+  - {fileID: 21300000, guid: a91823f389ad48d38bdd4fc0f1b60803, type: 3}
   - {fileID: 21300000, guid: 0a34c371139d49ddb86911e94f58d0cf, type: 3}
   - {fileID: 21300000, guid: c062ab7ec88b4005a52af84fdc533a4e, type: 3}
   - {fileID: 21300000, guid: a879a2f21b2f46b881ecc448f1d81cc0, type: 3}
@@ -1373,7 +1384,17 @@ MonoBehaviour:
   - 0.0546875
   - 0.0546875
   - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
+  - 0.0546875
   bodyV:
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  - 0.890625
+  - 0.890625
   - 0.890625
   - 0.890625
   - 0.890625
@@ -2724,6 +2745,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: c5f64fb236d243aea154e981d8b90896, type: 3}
   - {fileID: 2800000, guid: 777069014aa94b25a4739960cc401707, type: 3}
   - {fileID: 2800000, guid: 3feabae1de8c42b784f458c6a289fbf2, type: 3}
+  - {fileID: 2800000, guid: 8af2b6ebad0043fa8a2a7c34aa222a2e, type: 3}
   - {fileID: 2800000, guid: b56e72c94aa542adbf0165dcdde10814, type: 3}
   - {fileID: 2800000, guid: 1732b5d0af734dbea70da771917db361, type: 3}
   - {fileID: 2800000, guid: bde36fd5d7a84854879ed5819cfc5fde, type: 3}
@@ -2737,12 +2759,15 @@ MonoBehaviour:
   - {fileID: 2800000, guid: d7e26652105f4d0faa549bc78917c9ef, type: 3}
   - {fileID: 2800000, guid: 9ae97057abd84295a202b125956d3fb6, type: 3}
   - {fileID: 2800000, guid: 9501bb24196e4d38a71dc6a7ce3229bd, type: 3}
+  - {fileID: 2800000, guid: a35f1198462749788430be11499ae892, type: 3}
   - {fileID: 2800000, guid: 862bf19b8ace4ecc9fa16c9fc4d89664, type: 3}
   - {fileID: 2800000, guid: f95bde81f6a14f55a027486f836a8cc1, type: 3}
   - {fileID: 2800000, guid: cb75ce52d1be49cdbc55ae60fa03b5bb, type: 3}
+  - {fileID: 2800000, guid: a8f1af3e4bce4601890082378dfd4947, type: 3}
   - {fileID: 2800000, guid: a6dbdefa406841519a42031f9d15be0b, type: 3}
   - {fileID: 2800000, guid: af0822ffe8224c5bb5d6b8e9f982421f, type: 3}
   - {fileID: 2800000, guid: f82c51169be34d8bad0f6edbf93cc40f, type: 3}
+  - {fileID: 2800000, guid: 49f2d494ea0e47ce934657f8a85df4da, type: 3}
   levelUp: {fileID: 0}
 --- !u!114 &1925260474
 MonoBehaviour:
