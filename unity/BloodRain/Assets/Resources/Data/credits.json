@@ -20,7 +20,8 @@
           "copyright": "© 2017-2024 Adobe (http://www.adobe.com/).",
           "license": "ofl",
           "covers": [
-            "NotoSerifKR-Regular.otf"
+            "NotoSerifKR-Regular.otf",
+            "NotoSerifKR-Imgui.otf"
           ]
         },
         {
@@ -40,7 +41,8 @@
           "copyright": "© 2017-2024 Adobe (http://www.adobe.com/).",
           "license": "ofl",
           "covers": [
-            "NotoSerifTC-Regular.otf"
+            "NotoSerifTC-Regular.otf",
+            "NotoSerifTC-Imgui.otf"
           ]
         },
         {

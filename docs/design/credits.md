@@ -8,7 +8,7 @@
 
 | 갈래 | 무엇 | 라이선스 | 크레딧에 꼭 적어야 하나 | credits.json |
 |---|---|---|---|---|
-| 글꼴 | Noto Serif KR·SC·TC (`Art/Fonts`) | SIL OFL 1.1 | 예. 글꼴을 같이 내보내는 사본마다 저작권 줄과 라이선스 원문을 둬야 한다(따로 된 글 파일, 사람이 읽는 머리말, 쉽게 볼 수 있는 메타데이터 중 하나면 됨, OFL 2조) | 저작권 줄은 글꼴 파일 이름표 0번 그대로 `© 2017-2024 Adobe (http://www.adobe.com/).`, 원문 한 벌 |
+| 글꼴 | Noto Serif KR·SC·TC (`Art/Fonts`, IMGUI 몫 KR·TC 복사본 `Resources/ImguiFonts`) | SIL OFL 1.1 | 예. 글꼴을 같이 내보내는 사본마다 저작권 줄과 라이선스 원문을 둬야 한다(따로 된 글 파일, 사람이 읽는 머리말, 쉽게 볼 수 있는 메타데이터 중 하나면 됨, OFL 2조) | 저작권 줄은 글꼴 파일 이름표 0번 그대로 `© 2017-2024 Adobe (http://www.adobe.com/).`, 원문 한 벌 |
 | 글꼴 | Yuji Boku (`Art/Fonts`) | SIL OFL 1.1 | 예 | `Copyright 2021 The Yuji Project Authors (https://github.com/Kinutafontfactory/Yuji)` |
 | 글꼴 | Liberation Sans (`TextMesh Pro/Fonts`, TMP 기본 글꼴) | SIL OFL 1.1 | 예. `TextMesh Pro/Resources` 의 기본 글꼴 에셋이 이 파일을 쓰고, Resources 는 통째로 빌드에 들어간다 | OFL 파일 머리의 저작권 두 줄(Google 2010, Red Hat 2012, 예약 이름 포함) |
 | 엔진 | Unity | Unity 이용약관 | 아니오. Personal 판은 시작할 때 'Made with Unity' 화면이 뜨는 것으로 끝난다(추정). 관례로 이름만 적는다 | 이름만, 라이선스 없음 |
