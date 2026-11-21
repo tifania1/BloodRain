@@ -109,13 +109,28 @@ def remove_bg_edges(img: Image.Image, tol: int = 28, bg: tuple[int, int, int] = 
 
 
 POCKET_MIN = 0.002  # 안쪽 빈 종이(팔과 몸 사이·수레바퀴 살 사이)로 볼 최소 넓이(그림 넓이 비율)
+POCKET_RING = 7  # 덩이 둘레를 볼 폭(MaxFilter 크기, 둘레 3px)
+POCKET_EDGE_MIN = 0.4  # 둘레 가운데 배경과 뚜렷이 다른(먹 선·짙은 색) 몫이 이만큼은 돼야 빈 종이로 본다
+
+
+def pocket_is_gap(d: Image.Image, one: Image.Image, tol: int) -> bool:
+    """갇힌 배경색 덩이가 진짜 빈 종이(팔과 몸 사이)인지, 흰 옷·흰 털 속 고른 곳인지(2026-11-22 클라우드).
+    빈 종이는 몸의 먹 윤곽에 둘러싸이고, 흰 옷 속 고른 곳은 옅은 옷감에 둘러싸인다.
+    곤륜 제자 남·여 낱장, 설인 왕 가슴이 뒤쪽이라 뚫렸다(daily 2026-11-21 21:47·23:47)."""
+    ring = ImageChops.subtract(one.filter(ImageFilter.MaxFilter(POCKET_RING)), one)
+    n = ring.histogram()[255]
+    if n == 0:
+        return True
+    dark = ImageChops.multiply(ring, d.point(lambda v: 255 if v > tol * 3 else 0))
+    return dark.histogram()[255] >= n * POCKET_EDGE_MIN
 
 
 def remove_bg_sprite(img: Image.Image, tol: int = 28, bg: tuple[int, int, int] = BG) -> Image.Image:
     """스프라이트·초상·소품용(2026-11-08 클라우드, backlog PR-02).
     remove_bg 는 배경색과 비슷한 픽셀을 그림 안쪽까지 지워 얼굴·흰 옷·만두 속·등롱 종이가 비쳤다(초상 셋 넓이의 27~34%).
     그래서 가장자리에서 이어진 배경만 지우고(remove_bg_edges), 안쪽에 갇힌 곳은 '배경색 그대로인 넓은 덩이'만 지운다.
-    그림 속 밝은 곳은 붓 결이 있어 배경색 tol/2 안에 넓게 고르지 않다는 것을 기댄 것이다."""
+    그림 속 밝은 곳은 붓 결이 있어 배경색 tol/2 안에 넓게 고르지 않다는 것을 기댄 것이다.
+    2026-11-22: Artlist 그림은 흰 옷·흰 털 속이 배경색처럼 고르게 나와 이 기댐이 깨졌다 — 둘레가 먹 윤곽인 덩이만 지운다(pocket_is_gap)."""
     out = remove_bg_edges(img, tol, bg)
     rgb = img.convert("RGB")
     r, g, b = ImageChops.difference(rgb, Image.new("RGB", rgb.size, bg)).split()
@@ -139,7 +154,7 @@ def remove_bg_sprite(img: Image.Image, tol: int = 28, bg: tuple[int, int, int] =
             continue
         ImageDraw.floodfill(flat, seed, 128)
         one = flat.point(lambda v: 255 if v == 128 else 0)
-        if one.histogram()[255] >= need:
+        if one.histogram()[255] >= need and pocket_is_gap(d, one, tol):
             cut = ImageChops.lighter(cut, one)
         flat = ImageChops.subtract(flat, flat.point(lambda v: 127 if v == 128 else 0))  # 128 → 1(다시 안 봄)
         seeds = ImageChops.subtract(seeds, one)

@@ -34,6 +34,17 @@ class RemoveBgSpriteTests(unittest.TestCase):
         self.assertLess(a.getpixel((90, 200)), 30)
         self.assertGreater(a.getpixel((301, 196)), 200)
 
+    def test_흰_옷_속_고른_곳은_남긴다(self):
+        # 흰 털옷 안쪽이 배경색 그대로 고르게 나온 경우(곤륜 낱장·설인 왕). 둘레가 먹이 아니라 옅은 옷감이다
+        im = Image.new("RGB", (400, 400), pa.BG)
+        d = ImageDraw.Draw(im)
+        d.ellipse((40, 40, 360, 360), fill=(20, 20, 20))
+        d.ellipse((60, 60, 340, 340), fill=(250, 247, 240))  # 흰 옷감(배경과 tol/2 보다 멂)
+        d.rectangle((150, 150, 250, 250), fill=pa.BG)  # 옷감 속 배경색 그대로인 넓은 곳
+        a = pa.remove_bg_sprite(im).getchannel("A")
+        self.assertEqual(a.getpixel((200, 200)), 255)
+        self.assertEqual(a.getpixel((5, 5)), 0)
+
     def test_예전_방식은_얼굴을_뚫었다(self):
         # 바꾼 까닭을 남겨 둠: remove_bg 는 tol 안쪽이면 어디든 지운다
         self.assertLess(pa.remove_bg(figure()).getchannel("A").getpixel((200, 200)), 255)

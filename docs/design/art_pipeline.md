@@ -82,7 +82,7 @@
    - 받으려고 연 탭은 끝나면 닫는다.
 6. **기계 검수와 반영.** 작업 폴더 `E:\Unity\BloodRain-art` 에서 돌린다.
    - 이펙트 재료: `python tools/import_vfx_ai.py --inbox E:/Unity/BloodRain`. 바탕이 단색인지, 덮임 양, 가장자리 걸림, 먹에 색이 섞였는지를 본다. 통과하면 `Assets/Art/VFX/AI/<id>_stroke.png`(먹) 또는 `<id>_gold.png`·`<id>_core.png`·`<id>_shade.png`(빛과 그 밑 먹 받침)와 `ai.json` 에 들어가고 미리보기 `docs/vfx_preview/ai_<날짜>.png` 가 나온다. 먹 알파에는 감마 0.75 를 걸어 옅은 자락(안개 끝)을 살린다(ai.json 줄의 `inkGamma`, 2026-11-02 V-11). 감마를 바꾸면 `--reink --inbox …` 로 이미 반영된 먹 재료를 원본에서 다시 키잉하고, `--gamma-preview <id>…` 로 전후를 한 장에 본다.
-   - 원화: `postprocess_art.py`. 배경은 그림 가장자리에서 이어진 곳만 지운다(2026-11-08 PR-02 — 예전엔 배경색과 비슷하면 얼굴·흰 옷까지 지웠다). 스프라이트·초상·소품은 안쪽에 갇힌 배경색 그대로인 넓은 덩이(팔과 몸 사이, 수레바퀴 살 사이)도 지운다. UI 바탕(`ui`)은 틀 안쪽 종이를 남기고, 정사각으로 만들지 않는다. 소품 시트(`props_pickups`·`props_items`·`props_breakables`)는 들인 뒤 `python tools/split_props.py` 로 낱장 `Props/Parts/` 를 다시 만든다(새 시트를 낱장으로 쓰려면 그 파일 SHEETS 에 프롬프트 차례대로 이름을 더함). 스토어 시안(`store`)은 배경도 크기도 손대지 않고 `Assets/Art/Store/` 에 jpg 로 두며, 마무리는 사람이 한다. 무엇을 뽑는지는 `art_list.md`.
+   - 원화: `postprocess_art.py`. 배경은 그림 가장자리에서 이어진 곳만 지운다(2026-11-08 PR-02 — 예전엔 배경색과 비슷하면 얼굴·흰 옷까지 지웠다). 스프라이트·초상·소품은 안쪽에 갇힌 배경색 그대로인 넓은 덩이(팔과 몸 사이, 수레바퀴 살 사이)도 지운다 — 둘레가 먹 윤곽인 덩이만(2026-11-22, 흰 옷·흰 털 속 고른 곳이 뚫리던 것. 곤륜 낱장 둘·설인 왕은 PC art_inbox 원본으로 다시 돌려 볼 것). UI 바탕(`ui`)은 틀 안쪽 종이를 남기고, 정사각으로 만들지 않는다. 소품 시트(`props_pickups`·`props_items`·`props_breakables`)는 들인 뒤 `python tools/split_props.py` 로 낱장 `Props/Parts/` 를 다시 만든다(새 시트를 낱장으로 쓰려면 그 파일 SHEETS 에 프롬프트 차례대로 이름을 더함). 스토어 시안(`store`)은 배경도 크기도 손대지 않고 `Assets/Art/Store/` 에 jpg 로 두며, 마무리는 사람이 한다. 무엇을 뽑는지는 `art_list.md`.
 7. **눈 검수.** 미리보기를 직접 열어 본다. 미리보기는 원본 | 게임 색 | 그어짐 50% | 흩어짐 40% 순서다. 아래 중 하나라도 해당하면 `import_vfx_ai.py --reject <id> "<이유>"` 로 떨어뜨린다.
    - 글자나 낙관이 들어 있다.
    - 모양이 무엇인지 안 읽힌다.
