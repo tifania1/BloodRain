@@ -91,8 +91,48 @@ namespace BloodRain.Presentation.Fx
             if (proNormal == null || proCrit == null) { usePro = false; return false; }
             _tplNormal = MakeTemplate(proNormal, Ink);
             _tplCrit = MakeTemplate(proCrit, Vermilion);
+            _atlasBase = AtlasCount();
             _proReady = true;
             return true;
+        }
+
+        // 2026-11-22 클라우드: 11-18 에 Pro 를 켜자 2048 아틀라스 크기(4MB) 올리기가 수천 번 쌓여 에디터가 죽었다.
+        //   우리 글꼴은 동적·여러 장 아틀라스(NotoSerifKR + 뒤받침 셋)라, 어떤 글자를 넣다 실패하면 TMP 가 새 아틀라스를
+        //   계속 만드는 길이 의심된다. 원인을 찾을 때까지 Spawn 마다 아틀라스 장 수를 세어, 늘어나면 바로 Pro 를 끄고
+        //   예전 풀로 돌아간다(에디터가 죽기 전에 멈추고, 어떤 글꼴이 늘었는지 남긴다).
+        int _atlasBase;
+        const int AtlasGrowLimit = 2;
+
+        int AtlasCount()
+        {
+            if (font == null) return 0;
+            int n = font.atlasTextureCount;
+            var fb = font.fallbackFontAssetTable;
+            if (fb != null)
+                for (int i = 0; i < fb.Count; i++)
+                    if (fb[i] != null) n += fb[i].atlasTextureCount;
+            return n;
+        }
+
+        string AtlasReport()
+        {
+            if (font == null) return "글꼴 없음";
+            var sb = new System.Text.StringBuilder();
+            sb.Append(font.name).Append('=').Append(font.atlasTextureCount);
+            var fb = font.fallbackFontAssetTable;
+            if (fb != null)
+                for (int i = 0; i < fb.Count; i++)
+                    if (fb[i] != null) sb.Append(", ").Append(fb[i].name).Append('=').Append(fb[i].atlasTextureCount);
+            return sb.ToString();
+        }
+
+        void GuardAtlas(string where)
+        {
+            if (!_proReady) return;
+            if (AtlasCount() <= _atlasBase + AtlasGrowLimit) return;
+            Debug.LogError($"[피해 숫자] Damage Numbers Pro 를 끔 — {where} 뒤 글꼴 아틀라스가 늘어남({_atlasBase} 장 → {AtlasReport()}). unity_tasks DN-01U");
+            usePro = false;
+            _proReady = false;
         }
 
         // 프리팹을 꺼진 채로 한 벌 복제해 글꼴·종이색 테두리·색을 얹고, 그것을 Spawn 원본으로 쓴다(풀도 이 원본 기준).
@@ -138,6 +178,7 @@ namespace BloodRain.Presentation.Fx
             var c = dn.combinationSettings;
             c.maxDistance = combinePx * worldPerPx;
             dn.combinationSettings = c;
+            GuardAtlas("Spawn");
         }
 
         void LateUpdate()
@@ -148,6 +189,7 @@ namespace BloodRain.Presentation.Fx
                 _nums = new DamageNumbers(DataBoot.Data.Balance);
             }
             Hook();
+            GuardAtlas("프레임");
             _nums.Tick(Time.deltaTime);
 
             var cam = Camera.main;
