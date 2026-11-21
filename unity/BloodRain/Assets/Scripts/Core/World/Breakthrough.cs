@@ -115,6 +115,16 @@ namespace BloodRain.Core.World
             ToRealm = _scale.RealmIndex((int)Math.Floor(toLevel));
         }
 
+        /// <summary>
+        /// 시험용 멈춤: 연출 시계가 clockT 를 넘지 않게 이번 실제 dt 를 줄인다(이미 넘었으면 0).
+        /// 다시 오른 경지는 시계가 실제 시간보다 빨리 가니 속도로 나눠야 한다 — 안 나누면 한 번에 지나쳐 끝난다.
+        /// </summary>
+        public float ClampDtToClock(float clockT, float unscaledDt)
+        {
+            float left = (clockT - _t) / _speed;
+            return left <= 0f ? 0f : Math.Min(left, unscaledDt);
+        }
+
         /// <summary>연출 시계를 실제 시간으로 민다. 이번에 지나간 장면 신호를 돌려준다.</summary>
         public BreakthroughCue Tick(float unscaledDt)
         {

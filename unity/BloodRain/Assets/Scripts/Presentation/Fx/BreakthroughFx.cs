@@ -161,7 +161,7 @@ namespace BloodRain.Presentation.Fx
         {
             if (!IsPlaying) return;
             float dt = Time.unscaledDeltaTime;
-            if (debugFreezeAt >= 0f) dt = Mathf.Clamp(debugFreezeAt - _bt.Elapsed, 0f, dt);
+            if (debugFreezeAt >= 0f) dt = _bt.ClampDtToClock(debugFreezeAt, dt);
             Step(dt);
         }
 

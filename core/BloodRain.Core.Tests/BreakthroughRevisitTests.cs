@@ -30,6 +30,17 @@ namespace BloodRain.Core.Tests
             Assert.False(b.SpawnHeld); // 생성 멈춤도 같이 줄어든다
         }
 
+        [Fact] public void 시험_멈춤은_줄인_연출에서도_그_시각에_선다()
+        {
+            // 2026-11-22 PC: debugFreezeAt 0.9 를 걸어도 다시 오른 경지(시계 2배)에서 Elapsed 1.8 로 지나쳐 끝났음
+            var b = new Breakthrough(_d);
+            b.Start(9, 10, revisit: true);
+            for (int i = 0; i < 10; i++) b.Tick(b.ClampDtToClock(0.9f, 1f));
+            Assert.Equal(0.9f, b.Elapsed, 4);
+            Assert.True(b.IsActive);
+            Assert.Equal(0f, b.ClampDtToClock(0.5f, 0.1f));
+        }
+
         [Fact] public void 줄인_연출도_쓸림_반경과_끝_화면은_처음과_같다()
         {
             var a = new Breakthrough(_d);
