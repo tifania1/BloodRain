@@ -15,6 +15,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 - **화면 집중(2026-11-13)**: '할 차례' 맨 위 '0. 화면 집중' 절만 한다. A~F 절의 열린 항목은 사람이 풀 때까지 얼림(컴파일 에러 고치기는 예외).
 - 핵심 줄기: Run 씬에 Core `Life` 가 아직 없다(레벨은 OrbLayer 시험 RunXp, 적은 EnemyField 시험 생성, 혼은 저장 안 됨). 'B. 한 생 뼈대'가 끝나야 그 아래 대부분이 풀린다. A 를 끝내면 B 부터.
 
+- 시작할 때 PC 저장소에 변경이 남아 있으면(2026-11-22 20:37 차례가 이것으로 건너뜀): 남은 것이 Unity 가 다시 쓰는 글꼴 SDF 에셋(`Assets/Art/Fonts/*SDF.asset`)·`ProjectSettings/*.asset` 뿐이면 건너뛰지 말고 `git add -u` → `git status` 로 본 뒤 "Unity 저장 뒤 설정"으로 커밋·푸시하고 평소 차례를 돈다(CLAUDE.md 'PC 저장소에 커밋 안 된 변경을 남기지 않는다', 2026-11-18 사람이 같은 파일을 커밋하라고 함). 씬·스크립트·프리팹 같은 다른 파일이 섞여 있을 때만 건너뛰고 daily 에 파일 이름을 적는다.
 - 열린 씬을 밖에서 바꿀 때(2026-11-21 새벽): Unity 에 열려 있는 씬(.unity)을 저장소에서 바꾼 커밋을 당기면 'The open scene(s) have been modified externally' 창이 떠서 그 뒤 MCP 명령이 모두 멈춘다(TCS timed out, 'unityMCP unavailable'). 당기기 전에 바뀔 씬이 아닌 씬을 열어 두거나, 창이 뜨면 Reload 를 누른다(화면 잡기가 안 되면 UI Automation 으로 단추 창을 찾아 WM_LBUTTONDOWN/UP 를 보냄).
 
 ## 할 차례
