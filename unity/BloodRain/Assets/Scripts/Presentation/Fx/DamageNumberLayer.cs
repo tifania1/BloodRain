@@ -22,7 +22,7 @@ namespace BloodRain.Presentation.Fx
         public float risePx = 26f;
         public int sortingOrder = 400;
         /// <summary>Damage Numbers Pro 프리팹으로 띄운다(2026-11-18 DN-01U). 끄거나 프리팹이 없으면 예전 TextMeshPro 풀.</summary>
-        public bool usePro = false; // 2026-11-18 PC: 켜고 숫자를 띄우자 D3D12 텍스처 올리기로 메모리가 34GB 까지 차 에디터가 두 번 죽음. 원인 찾기 전까지 끔(unity_tasks DN-01U)
+        public bool usePro = true; // 2026-11-23 PC: 켬. 11-18 엔 켜자 동적 글꼴 아틀라스가 불어나 에디터가 죽었으나 정적 숫자 글꼴(Fx/DamageDigits SDF)로 고친 뒤 일류 적 40~55 덩이에서 켠 것·끈 것 fps 같음(unity_tasks DN-01U). 문제가 생기면 GuardAtlas 가 스스로 끈다
         /// <summary>잇달아 들어간 숫자를 합치는 거리(1080 높이 화면 기준 px). 화면 거리라 경지 축척과 상관없다.</summary>
         public float combinePx = 48f;
         /// <summary>Resources/Fx 의 프리팹(메뉴 `BloodRain/Bootstrap/피해 숫자 프리팹 짓기(DNP)`).</summary>
