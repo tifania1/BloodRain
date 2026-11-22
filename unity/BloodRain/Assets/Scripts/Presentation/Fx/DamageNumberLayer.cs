@@ -27,6 +27,7 @@ namespace BloodRain.Presentation.Fx
         public float combinePx = 48f;
         /// <summary>Resources/Fx 의 프리팹(메뉴 `BloodRain/Bootstrap/피해 숫자 프리팹 짓기(DNP)`).</summary>
         public DamageNumbersPro.DamageNumber proNormal, proCrit;
+        public TMP_FontAsset proFont; // 숫자만 든 정적 SDF(Resources/Fx/DamageDigits SDF)
         DamageNumbersPro.DamageNumber _tplNormal, _tplCrit;
         bool _proReady;
 
@@ -89,6 +90,10 @@ namespace BloodRain.Presentation.Fx
             if (proNormal == null) proNormal = Resources.Load<DamageNumbersPro.DamageNumber>("Fx/DamageNumberInk");
             if (proCrit == null) proCrit = Resources.Load<DamageNumbersPro.DamageNumber>("Fx/DamageNumberCrit");
             if (proNormal == null || proCrit == null) { usePro = false; return false; }
+            // 2026-11-22 PC: 동적 글꼴을 끼우면 숫자 하나에 아틀라스가 한 프레임에 4 → 17 장으로 늘어 에디터가 죽는다.
+            //   숫자만 든 정적 SDF(메뉴 '피해 숫자 글꼴 굽기(정적)')를 쓴다. 없으면 Pro 를 켜지 않는다.
+            if (proFont == null) proFont = Resources.Load<TMP_FontAsset>("Fx/DamageDigits SDF");
+            if (proFont == null) { Debug.LogWarning("[피해 숫자] Fx/DamageDigits SDF 가 없어 Pro 를 안 켬"); usePro = false; return false; }
             _tplNormal = MakeTemplate(proNormal, Ink);
             _tplCrit = MakeTemplate(proCrit, Vermilion);
             _atlasBase = AtlasCount();
@@ -144,7 +149,8 @@ namespace BloodRain.Presentation.Fx
             var dn = go.GetComponent<DamageNumbersPro.DamageNumber>();
             foreach (var t in go.GetComponentsInChildren<TMP_Text>(true))
             {
-                if (font != null) t.font = font;
+                t.font = proFont;
+                foreach (var sub in t.GetComponentsInChildren<TMP_SubMesh>(true)) DestroyImmediate(sub.gameObject);
                 t.fontSharedMaterial = OutlineMat(t);
                 t.color = color;
             }
