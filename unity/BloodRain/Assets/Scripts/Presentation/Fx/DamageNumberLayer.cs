@@ -42,6 +42,7 @@ namespace BloodRain.Presentation.Fx
         readonly List<int> _shownValue = new List<int>();
         readonly List<bool> _shownCrit = new List<bool>();
         Material _mat;
+        Material _proMat; // Pro 는 숫자 전용 정적 SDF 라 아틀라스가 다르다 — 예전 풀의 _mat 과 나눠 쓰면 Pro 가 꺼진 뒤 예전 풀 글자가 깨진다
         bool _hooked;
 
         /// <summary>시험용: 떠 있는 숫자 수.</summary>
@@ -64,6 +65,7 @@ namespace BloodRain.Presentation.Fx
         void OnDestroy()
         {
             if (_mat != null) Destroy(_mat);
+            if (_proMat != null) Destroy(_proMat);
         }
 
         void Hook()
@@ -154,6 +156,11 @@ namespace BloodRain.Presentation.Fx
                 t.fontSharedMaterial = OutlineMat(t);
                 t.color = color;
             }
+            // 2026-11-22 클라우드(컴파일 확인 전): PC 가 본 '치명 숫자가 주홍이 아니라 먹빛' — DNP 는 숫자를 그릴 때
+            //   numberSettings 의 색(customColor·color)을 서식 태그로 덮어써서 TMP 정점 색만 바꿔서는 안 먹는다.
+            //   데모 Clear 프리팹의 숫자 색이 어두운 값으로 켜져 있던 것으로 보고, 원본에서 우리 색을 직접 넣는다.
+            dn.numberSettings.customColor = true;
+            dn.numberSettings.color = color;
             foreach (var r in go.GetComponentsInChildren<Renderer>(true)) r.sortingOrder = sortingOrder;
             if (DataBoot.Data != null) dn.maxActiveInstances = DataBoot.Data.Balance.Limits.DamageNumbers;
             return dn;
@@ -161,16 +168,16 @@ namespace BloodRain.Presentation.Fx
 
         Material OutlineMat(TMP_Text t)
         {
-            if (_mat == null)
+            if (_proMat == null)
             {
-                // 종이색 테두리 한 장을 모두가 나눠 쓴다(정점 알파가 테두리까지 옅게 한다)
-                _mat = new Material(t.fontSharedMaterial);
-                _mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-                _mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.25f);
-                _mat.SetColor(ShaderUtilities.ID_OutlineColor, Paper);
-                _mat.SetFloat(ShaderUtilities.ID_FaceDilate, 0.1f);
+                // 종이색 테두리 한 장을 Pro 원본 둘이 나눠 쓴다(t.font 를 proFont 로 바꾼 뒤라 숫자 아틀라스를 가리킨다)
+                _proMat = new Material(t.fontSharedMaterial);
+                _proMat.EnableKeyword(ShaderUtilities.Keyword_Outline);
+                _proMat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.25f);
+                _proMat.SetColor(ShaderUtilities.ID_OutlineColor, Paper);
+                _proMat.SetFloat(ShaderUtilities.ID_FaceDilate, 0.1f);
             }
-            return _mat;
+            return _proMat;
         }
 
         void SpawnPro(in DamageNumber it)
