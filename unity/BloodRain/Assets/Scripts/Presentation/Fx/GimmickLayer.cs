@@ -126,6 +126,14 @@ namespace BloodRain.Presentation.Fx
             Vector2 at = WorldCoords.ToUnity(c);
             float size = g.TouchRadius * 1.6f;
             var go = PropArt.Make(transform, "범종", "prop_stupa_bell", at, size, 3);
+            if (go != null)
+            {
+                // 2026-11-23: 가운데 pivot 그림이 기믹 자리에 가운데로 앉아, 지역 한가운데에서 태어난 몸과 늘 겹쳐 보였다.
+                //   그림 발밑(아래 끝에서 조금 올라온 자리)을 기믹 자리에 맞추고, TickBells 가 몸 발밑과 y 로 앞뒤를 가린다.
+                var sp = go.GetComponent<SpriteRenderer>().sprite;
+                float h = sp.bounds.size.y * go.transform.localScale.y;
+                go.transform.position = new Vector3(at.x, at.y + h * 0.42f, 0f);
+            }
             if (go == null) go = Disc("범종", at, g.TouchRadius * 0.6f, new Color(0.62f, 0.48f, 0.20f, 0.95f), 3);
             return new Bell { G = g, At = at, Go = go };
         }
@@ -245,6 +253,12 @@ namespace BloodRain.Presentation.Fx
             {
                 b.G.Tick(dt);
                 if (b.G.TryRing(Vector2.Distance(player, b.At))) Ring(b);
+                if (b.Go != null)
+                {
+                    // 몸(정렬 20) 발밑이 범종 발밑보다 위(뒤)면 범종이 몸을 가리고, 아래(앞)면 몸이 범종 앞에 선다
+                    var so = b.Go.GetComponent<SpriteRenderer>();
+                    if (so != null) so.sortingOrder = player.y > b.At.y ? 21 : 3;
+                }
                 if (b.Flash > 0f && b.Go != null)
                 {
                     b.Flash -= dt;
