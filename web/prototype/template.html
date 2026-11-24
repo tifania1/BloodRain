@@ -2315,7 +2315,7 @@ function gatheringTick() {
   if (due > G.gathered.length) for (const r of fallenLordRegs()) {
     if (G.gathered.length >= due) break;
     if (G.gathered.includes(r)) continue;
-    G.gathered.push(r); G.gatherQ.push(r); toast(`${r.nameKo}의 주인이 모여든다`, '무너진 문파의 땅에서 혈월을 따라왔다');
+    G.gathered.push(r); G.gatherQ.push(r); toast(uiT('ui.gathering.title'), uiT('ui.gathering.sub', (BOSS_BY[r.boss] || { nameKo: r.boss }).nameKo, r.nameKo));   // Unity LifeRunner 와 같은 글
   }
   while (G.gatherQ.length && !G.lordF) {
     const r = G.gatherQ.shift(); if (G.lords[r.id] === 'down') continue;
@@ -4316,17 +4316,18 @@ function crisisStep(dt) {
     if (st === 'blocked' || st === 'fallen' || now < e.atSeconds) continue;
     const near = Math.hypot(r.x - px, r.y - py) <= R;
     if (!st) {   // 시각이 막 지남: 그 자리에 있었으면 겪음, 없었으면 무너짐
-      if (near) { C[e.id] = 'present'; H[e.id] = 0; toast(e.placeKo || r.nameKo, `${e.nameKo} — ${CRISIS.holdSeconds}초를 이 자리에서 버티면 막는다`); }
-      else { C[e.id] = 'fallen'; toast(e.placeKo || r.nameKo, `${e.nameKo} — 그 자리에 없어 문파가 무너졌다. 혈운이 짙어진다`); }
+      // 알림은 Unity LifeRunner 와 같이: 그 자리에 있을 때만 '버티면 막는다', 없던 위기는 말없이 무너진다(혈운만 짙어짐)
+      if (near) { C[e.id] = 'present'; H[e.id] = 0; toast(uiT('ui.crisis.title'), uiT('ui.crisis.hold', e.nameKo, Math.round(CRISIS.holdSeconds || 60))); }
+      else C[e.id] = 'fallen';
       continue;
     }
-    if (!near) { C[e.id] = 'fallen'; toast(e.placeKo || r.nameKo, `자리를 떠나 ${e.nameKo}을(를) 막지 못했다`); continue; }
+    if (!near) { C[e.id] = 'fallen'; toast(e.placeKo || r.nameKo, uiT('ui.crisis.broken', e.nameKo)); continue; }
     H[e.id] = Math.min(H[e.id] + dt * G.timeScale, now - e.atSeconds);
     if (H[e.id] >= (CRISIS.holdSeconds || 60)) {
       C[e.id] = 'blocked';
       const first = !((G.soul0 || {}).crisesBlocked || []).includes(e.id) && !(G.crisesBlocked || []).includes(e.id);
       (G.crisesBlocked = G.crisesBlocked || []).push(e.id);
-      toast(e.placeKo || r.nameKo, `${e.nameKo}을(를) 막았다` + (first ? ` · 윤회의 기 +${QI.crisisFirstBlock || 0}` : ''));
+      toast(uiT('ui.crisis.blocked'), first ? uiT('ui.crisis.blocked_qi', e.nameKo, QI.crisisFirstBlock || 0) : e.nameKo);
     }
   }
 }
