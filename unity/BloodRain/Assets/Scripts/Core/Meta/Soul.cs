@@ -120,6 +120,8 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> PickOrder { get; internal set; } = Array.Empty<string>();
         /// <summary>이번 생에 막은 문파의 위기(연표 사건 id, GU-11m). 혼이 '막은 사건'으로 남긴다(처음 막은 것만 윤회의 기).</summary>
         public IReadOnlyList<string> CrisesBlocked { get; internal set; } = Array.Empty<string>();
+        /// <summary>생이 끝날 때 가장 높은 레벨(balance levels.weaponMax)이던 무공(무공 성취, GU-06). Life.End 가 채운다.</summary>
+        public IReadOnlyList<string> MasteredWeapons { get; internal set; } = Array.Empty<string>();
 
         public LifeRecord(string? sect, string endWay, RebirthQiResult rebirthQi, IEnumerable<string> bossesKilled,
             IEnumerable<string> visitedRegions, string highestRealm, IEnumerable<string> awakenedEvolutions, int manuscripts = 0,
@@ -206,6 +208,7 @@ namespace BloodRain.Core.Meta
         readonly HashSet<string> _realms = new HashSet<string>();
         readonly HashSet<string> _evolutions = new HashSet<string>();
         readonly Dictionary<string, int> _livesBySect = new Dictionary<string, int>();
+        readonly Dictionary<string, int> _mastery = new Dictionary<string, int>(StringComparer.Ordinal);
         readonly Dictionary<string, int> _crossings = new Dictionary<string, int>(StringComparer.Ordinal);
         readonly Dictionary<string, List<string>> _gugyeol = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         readonly Dictionary<string, int> _finalClears = new Dictionary<string, int>();
@@ -578,6 +581,16 @@ namespace BloodRain.Core.Meta
         public bool PrologueDone { get; private set; }
         /// <summary>문파별로 마친 생 수.</summary>
         public IReadOnlyDictionary<string, int> LivesBySect => _livesBySect;
+        /// <summary>무공 성취(GU-06, roguelike_benchmark 안 ③): 그 무공을 가장 높은 레벨까지 올리고 마친 생 수.</summary>
+        public IReadOnlyDictionary<string, int> WeaponMastery => _mastery;
+        /// <summary>그 무공의 성취 단계: 0 입문, 1 소성(1생), 2 대성(3생). 문턱은 추천값(MasteryLives).</summary>
+        public int MasteryStage(string weaponId)
+        {
+            int n = _mastery.TryGetValue(weaponId, out var v) ? v : 0;
+            return n >= MasteryLives[1] ? 2 : n >= MasteryLives[0] ? 1 : 0;
+        }
+        /// <summary>소성·대성이 되는 생 수(추천값, roguelike_benchmark ③ — 사람이 바꿀 수 있음).</summary>
+        public static readonly int[] MasteryLives = { 1, 3 };
         /// <summary>그 문파 몸으로 산 마지막 생의 고른 차례(구결). 없으면 빈 목록.</summary>
         public IReadOnlyList<string> GugyeolOf(string sectId) => _gugyeol.TryGetValue(sectId, out var l) ? l : (IReadOnlyList<string>)Array.Empty<string>();
         /// <summary>다음 환혼이 첫 환혼(서장을 마치고 아직 문파로 산 적 없음)인가.</summary>
@@ -750,6 +763,8 @@ namespace BloodRain.Core.Meta
             Lives++;
             if (record.Sect == null) PrologueDone = true;
             else _livesBySect[record.Sect] = (_livesBySect.TryGetValue(record.Sect, out var n) ? n : 0) + 1;
+            foreach (var w in record.MasteredWeapons.Distinct())
+                _mastery[w] = (_mastery.TryGetValue(w, out var m) ? m : 0) + 1;
 
             bool sealedEnd = record.EndWay == "sealed";
             if (sealedEnd)
@@ -837,6 +852,8 @@ namespace BloodRain.Core.Meta
             /// <summary>데모 혼(DM-01). 이 칸이 생기기 전 저장은 정식판 혼.</summary>
             public bool Demo;
             public SortedDictionary<string, int> LivesBySect = new SortedDictionary<string, int>(StringComparer.Ordinal);
+            /// <summary>무공 성취(GU-06). 옛 저장엔 없어 빈 표.</summary>
+            public SortedDictionary<string, int> Mastery = new SortedDictionary<string, int>(StringComparer.Ordinal);
             /// <summary>문파마다 마지막 생의 고른 차례(구결). 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             /// <summary>경지 구간을 넘은 횟수. 이 칸이 생기기 전 저장은 비어 있는 것으로 읽는다.</summary>
             public SortedDictionary<string, int> RealmCrossings = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -904,6 +921,7 @@ namespace BloodRain.Core.Meta
                 PrologueDone = PrologueDone,
                 Demo = Demo,
                 LivesBySect = Sorted(_livesBySect),
+                Mastery = Sorted(_mastery),
                 RealmCrossings = Sorted(_crossings),
                 Gugyeol = new SortedDictionary<string, List<string>>(_gugyeol.ToDictionary(kv => kv.Key, kv => kv.Value.ToList()), StringComparer.Ordinal),
                 FinalClearsBySect = Sorted(_finalClears),
@@ -953,6 +971,7 @@ namespace BloodRain.Core.Meta
             foreach (var kv in f.Training) s._training[kv.Key] = kv.Value;
             foreach (var kv in f.RebirthUpgrades) s._upgrades[kv.Key] = kv.Value;
             foreach (var kv in f.LivesBySect) s._livesBySect[kv.Key] = kv.Value;
+            foreach (var kv in f.Mastery ?? new SortedDictionary<string, int>(StringComparer.Ordinal)) s._mastery[kv.Key] = Math.Max(0, kv.Value);
             if (f.RealmCrossings != null) foreach (var kv in f.RealmCrossings) if (data.Balance.Realms.Any(r => r.Id == kv.Key)) s._crossings[kv.Key] = kv.Value;
             if (f.Gugyeol != null) foreach (var kv in f.Gugyeol) s._gugyeol[kv.Key] = kv.Value.ToList();
             foreach (var kv in f.FinalClearsBySect) s._finalClears[kv.Key] = kv.Value;

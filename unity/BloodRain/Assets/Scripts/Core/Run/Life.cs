@@ -845,6 +845,8 @@ namespace BloodRain.Core.Run
                 throw new InvalidOperationException("서장은 장삼을 쓰러뜨려야 끝납니다. 그 전에 그만두면 RestartPrologue 로 처음부터");
             Record = Log.Finish(way, leftoverSilver ?? Silver);
             Record.PickOrder = Loadout.PickOrder.ToList();
+            int max = _data.Balance.Levels.WeaponMax;
+            Record.MasteredWeapons = Loadout.Weapons.Where(kv => kv.Value >= max).Select(kv => kv.Key).OrderBy(x => x, StringComparer.Ordinal).ToList();
             return Record;
         }
     }
