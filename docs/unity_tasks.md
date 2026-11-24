@@ -24,7 +24,7 @@ Unity 에디터가 있어야 하는 일만 적는다. PC Unity 예약 세션(202
 
 backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절 끝난 항목들)이 기준이다. 0절에 남은 열린 항목(GR-01U·PR-02U·FL-01U·HF-03U·VF-02U·SFX-17U)은 이 절 다음에 그대로 이어 간다. 클라우드가 RG-02·GU-10d 로 항목을 더 채운다.
 
-- [ ] BELL-01U 범종을 종 그림으로 확인 · 먼저: 없음 (2026-11-24 16:12 사람: "종 모양으로 하자". 같은 날 대화 세션이 `Art/Props/prop_bell.png` 를 다듬어 `Parts/prop_bell.png`(535×640, 새 meta)로 넣고, Run 씬 PropArt 목록 맨 앞에 손으로 한 줄 넣음. `GimmickLayer.MakeBell`·`PatternRunner` 범종 낙하가 `prop_bell` 을 먼저 찾고 없으면 옛 탑 `prop_stupa_bell`)
+- [x] BELL-01U 범종을 종 그림으로 확인 · 먼저: 없음 — 2026-11-24 20:45 PC: 컴파일 에러 0, `prop_bell.png` 는 Sprite. 메뉴로 다시 채워도 손으로 넣은 줄과 같음(52 = 52, 맨 앞 prop_bell, 이름·그림 어긋남 0). 숭산 소림 몸 태어난 자리 범종이 종 그림이고 몸이 범종 앞에 섬(`region_bell.png`). 원각 ForceFight 의 범종 낙하로 떨어진 셋도 종 그림(`bell_drop.png`) — 돌 받침째 떨어진 게 크게 어색하진 않지만 지역 범종과 똑같아 보여 어느 게 떨어진 것인지 구분이 안 됨(받침 없는 종을 따로 뽑을지는 사람이 봄). 콘솔 에러 0. 찍음 `docs/unity_shots/BELL-01U/` (2026-11-24 16:12 사람: "종 모양으로 하자". 같은 날 대화 세션이 `Art/Props/prop_bell.png` 를 다듬어 `Parts/prop_bell.png`(535×640, 새 meta)로 넣고, Run 씬 PropArt 목록 맨 앞에 손으로 한 줄 넣음. `GimmickLayer.MakeBell`·`PatternRunner` 범종 낙하가 `prop_bell` 을 먼저 찾고 없으면 옛 탑 `prop_stupa_bell`)
   - 할 것: ① Unity 를 열어 컴파일 에러 0, `prop_bell.png` 가 Sprite 로 들어왔는지 ② 메뉴로 소품 목록을 다시 채워 손으로 넣은 줄과 같은지(이름 수 = 그림 수, 맨 앞 prop_bell) ③ 숭산 소림 몸으로 태어나 지역 범종이 종 그림인지, 몸과 겹칠 때 앞뒤가 맞는지(발밑 맞춤은 탑 기준 0.42 — 종은 돌 받침이 밑에 있어 그대로 맞을 것) ④ F2 시험 메뉴로 원각 2막(`PatternRunner.ForceFight("wongak")`)을 불러 '범종 낙하'의 떨어지는 범종이 종 그림인지. 돌 받침째 떨어지는 게 어색하면 결과 줄에 적는다(받침 없는 종을 따로 뽑을지는 사람이 봄)
   - 쓸 것: `Fx/GimmickLayer.cs`, `Combat/PatternRunner.cs`, `Fx/PropArt.cs`, `Art/Props/Parts/prop_bell.png`
   - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
