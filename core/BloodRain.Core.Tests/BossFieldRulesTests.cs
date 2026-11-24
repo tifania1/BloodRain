@@ -271,6 +271,17 @@ namespace BloodRain.Core.Tests
                 Assert.DoesNotContain(old, html);
         }
 
+        /// <summary>WP-16: 합친 판(template.html)도 같은 셈을 쓴다 — 시안을 확인판으로 남겨도 본판이 따로 어긋나지 않게.</summary>
+        [Fact] public void 웹_합친_판도_Core_와_같은_셈을_쓴다()
+        {
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            string N(float v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            Assert.Contains("const BIG_DIPPER = [" + string.Join(", ", BossPatterns.BigDipperShape.Select(s => $"[{N(s.x)}, {N(s.y)}]")) + "];", html);
+            foreach (var used in new[] { "MOVE * P.pullSpeedRatio * dt", "e.hp * P.healthShare", ".rejoinSeconds || 4",
+                "(P.turnDegreesPerSecond || 0) * D2R * dt", "e.hfSide && P.alternate ? -e.hfSide", "yyBand().band === 'harmony' ? 0 : Math.sign(G.yy)" })
+                Assert.Contains(used, html);
+        }
+
         [Fact] public void 기획서_태극권_줄에_끌리는_세기가_있다()
         {
             var row = GddTable(GddSection("혈허진인")).Single(r => r[0] == "태극권");

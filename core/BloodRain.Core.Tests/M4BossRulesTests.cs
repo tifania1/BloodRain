@@ -175,5 +175,25 @@ namespace BloodRain.Core.Tests
             var iframe = html.Split('\n').Single(l => l.Contains("p.iframe = LD.hitIframe; G.trauma"));
             Assert.False(iframe.IndexOf("//", StringComparison.Ordinal) is var c && c >= 0 && c < iframe.IndexOf("p.iframe", StringComparison.Ordinal));
         }
+
+        /// <summary>WP-16: 합친 판(template.html)도 땅의 주인 패턴 모양을 다 알고 같은 셈을 쓴다. 종장 줄어드는 섬은 아직 시안에만(WP-17).</summary>
+        [Fact] public void 웹_합친_판도_땅의_주인_모양을_Core_와_같은_셈으로_쓴다()
+        {
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            var used = _d.BossPatterns.Values.SelectMany(s => s.Patterns.Concat(s.Phase2)).Select(p => p.Shape).Distinct().Where(s => s != "shrinking_islands");
+            Assert.All(used, shape => Assert.Contains($"'{shape}'", html));
+            foreach (var same in new[]
+            {
+                "Math.max(1, Math.ceil(pt.leaveSeconds / pt.hitIntervalSeconds - 1e-4))",          // SpiralShotsPerArm
+                "start + 360 * i / pt.count + (pt.waveOffsetDegrees || 0) * wave",                  // RadialBurstDegrees
+                "P.viewScale > 0 ? P.viewScale : 1",                                                // ViewScaleAt
+                "P.count > 1 ? P.length * i / (P.count - 1) : 0",                                   // ChainCircleOffset
+                "P.count * P.telegraphSeconds + (P.count - 1) * P.waveIntervalSeconds",             // BlinkSlamSeconds
+                "Math.max(P.minRadius, A.R - P.shrinkPerSecond * dt",                                // ArenaRadiusStep
+                "P.slowedNearMultiplier",
+                "cloneOf: e",                                                                        // BossClones
+            })
+                Assert.Contains(same, html);
+        }
     }
 }
