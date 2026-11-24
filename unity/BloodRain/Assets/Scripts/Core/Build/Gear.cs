@@ -40,6 +40,16 @@ namespace BloodRain.Core.Build
         }
 
         public GearGradeDef? GradeDef(GameData data) => GearId == null ? null : data.Gear.Grades[Grade];
+
+        /// <summary>이어하기 저장에서 되돌린다(LifeSnapshot). 빈손이면 gearId null. 없는 병기·등급이면 던진다.</summary>
+        public void Restore(GameData data, string? gearId, int grade)
+        {
+            if (gearId == null) { GearId = null; Grade = -1; return; }
+            Gear.Def(data, gearId);
+            if (grade < 0 || grade >= data.Gear.Grades.Count) throw new ArgumentOutOfRangeException(nameof(grade), grade, $"없는 병기 등급입니다: {gearId}");
+            GearId = gearId;
+            Grade = grade;
+        }
     }
 
     public static class Gear

@@ -155,7 +155,7 @@ namespace BloodRain.Core.Run
         /// 검총 공력은 CurrentStats 가 저절로 더하고, 진전 덧셈은 Body.ComputeSynergy(…, Encounters.SchoolExtra) 로 넘긴다.</summary>
         public EncounterBoons Encounters { get; }
 
-        /// <summary>이번 생 병기 칸(기획서 8장 '문파 병기와 6단', gear.json). 생이 끝나면 버린다. 이어하기 저장에는 아직 안 든다.</summary>
+        /// <summary>이번 생 병기 칸(기획서 8장 '문파 병기와 6단', gear.json). 생이 끝나면 버린다. 이어하기 저장(LifeSnapshot Gear·GearGrade)에 든다.</summary>
         public GearSlot GearSlot { get; } = new GearSlot();
 
         /// <summary>지금 땅에서 그 적을 쓰러뜨렸을 때 떨어뜨릴 병기 id(없으면 null). 서장에는 병기가 없다. luck 은 기연(StatSheet.Luck).</summary>
@@ -640,6 +640,7 @@ namespace BloodRain.Core.Run
             // 모여든 주인은 다시 알리지 않는다. 아직 안 쓰러뜨린 주인은 다시 싸움 차례에 넣는다
             foreach (var r in s.Gathered ?? new List<string>())
                 if (!_gathered.Contains(r)) { _gathered.Add(r); if (!s.BossesKilled.Contains(r)) _summonQueue.Add(r); }
+            GearSlot.Restore(_data, s.Gear, s.GearGrade);
             foreach (var id in s.Awakened)
             {
                 if (_data.Evolutions.All(e => e.Id != id)) throw new InvalidOperationException($"없는 절기입니다: {id}");

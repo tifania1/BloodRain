@@ -59,6 +59,9 @@ namespace BloodRain.Core.Run
         public Dictionary<string, float>? CrisisHeld;
         /// <summary>2막(GU-11h4): 이미 모여든 땅의 주인 지역. 옛 저장엔 없어 null.</summary>
         public List<string>? Gathered;
+        /// <summary>병기 칸(GU-10b3): 쥔 병기 id 와 등급 자리. 빈손이거나 옛 저장이면 null.</summary>
+        public string? Gear;
+        public int GearGrade = -1;
 
         public static LifeSnapshot Capture(Life life) => new LifeSnapshot
         {
@@ -87,6 +90,8 @@ namespace BloodRain.Core.Run
             CrisisBroken = life.CrisisBroken.ToList(),
             CrisisHeld = life.CrisisHeld.ToDictionary(kv => kv.Key, kv => kv.Value),
             Gathered = life.GatheredLords.ToList(),
+            Gear = life.GearSlot.GearId,
+            GearGrade = life.GearSlot.Grade,
             PickOrder = life.Loadout.PickOrder.ToList(),
             BossesKilled = life.Log.BossesKilled.ToList(),
             Links = life.Loadout.AwakenedLinks.ToList(),

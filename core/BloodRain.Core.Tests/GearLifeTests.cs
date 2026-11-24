@@ -100,5 +100,29 @@ namespace BloodRain.Core.Tests
             var b = new Loadout(_d, _d.Characters[0]).RollLevelUp(new Random(5), 0, unlocked, gear: low);
             Assert.Equal(a.Select(o => o.ToString()), b.Select(o => o.ToString()));
         }
+
+        [Fact]
+        public void 이어하기_저장에_병기_칸이_든다()
+        {
+            var life = NewLife();
+            life.PickGear("vajra_beads");
+            life.PickGear("vajra_beads");
+            var snap = Newtonsoft.Json.JsonConvert.DeserializeObject<LifeSnapshot>(Newtonsoft.Json.JsonConvert.SerializeObject(LifeSnapshot.Capture(life)))!;
+            Assert.Equal("vajra_beads", snap.Gear);
+            Assert.Equal(1, snap.GearGrade);
+            var back = NewLife();
+            back.Restore(snap);
+            Assert.Equal("vajra_beads", back.GearSlot.GearId);
+            Assert.Equal(1, back.GearSlot.Grade);
+        }
+
+        [Fact]
+        public void 옛_저장은_빈손으로_돌아온다()
+        {
+            var back = NewLife();
+            back.Restore(LifeSnapshot.Capture(NewLife()));
+            Assert.True(back.GearSlot.Empty);
+            Assert.Equal(-1, back.GearSlot.Grade);
+        }
     }
 }
