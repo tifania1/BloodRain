@@ -125,7 +125,8 @@ namespace BloodRain.Presentation.Fx
             var g = new BellGimmick(def, k);
             Vector2 at = WorldCoords.ToUnity(c);
             float size = g.TouchRadius * 1.6f;
-            var go = PropArt.Make(transform, "범종", "prop_stupa_bell", at, size, 3);
+            // 2026-11-24 사람이 종 모양으로 정함(전엔 탑 모양 prop_stupa_bell). 목록에 아직 없으면 탑으로
+            var go = PropArt.Make(transform, "범종", "prop_bell", at, size, 3) ?? PropArt.Make(transform, "범종", "prop_stupa_bell", at, size, 3);
             if (go != null)
             {
                 // 2026-11-23: 가운데 pivot 그림이 기믹 자리에 가운데로 앉아, 지역 한가운데에서 태어난 몸과 늘 겹쳐 보였다.

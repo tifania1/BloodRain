@@ -2480,6 +2480,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.PropArt
   names:
+  - prop_bell
   - prop_bell_tower
   - prop_blood_crystal
   - prop_boulder_mossy
@@ -2532,6 +2533,7 @@ MonoBehaviour:
   - prop_village_house
   - prop_wine_jar
   sprites:
+  - {fileID: 21300000, guid: ff8d7d114e1d4099b2bb6e84b84f5d52, type: 3}
   - {fileID: 21300000, guid: 3a6d1678a0c9426c8ee8cf2a5e98ff34, type: 3}
   - {fileID: 21300000, guid: b7e7fc4136924c37ab4b4753e9212d57, type: 3}
   - {fileID: 21300000, guid: fd8e30bdd8934a79bcb78cb6170f35b6, type: 3}

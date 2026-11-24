@@ -536,7 +536,8 @@ namespace BloodRain.Presentation.Combat
         {
             var bell = BellGimmick.FromBossDrop(DataBoot.Data.Gimmicks.Bell, p, _factor);
             // 지역 범종(GimmickLayer)과 같은 그림·크기(2026-11-21 — 전엔 먹 원 + 金 테두리 자리 표시). 떨어질 때 먹 고리가 퍼진다
-            var vis = Fx.PropArt.Make(transform, "범종", "prop_stupa_bell", at, bell.TouchRadius * 1.6f, 4);
+            var vis = Fx.PropArt.Make(transform, "범종", "prop_bell", at, bell.TouchRadius * 1.6f, 4)   // 2026-11-24 사람: 종 모양
+                   ?? Fx.PropArt.Make(transform, "범종", "prop_stupa_bell", at, bell.TouchRadius * 1.6f, 4);
             if (vis == null)
             {
                 vis = Shape("범종", new Color(0.08f, 0.07f, 0.06f, 0.85f), 4);
