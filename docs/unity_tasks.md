@@ -45,11 +45,36 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: F2 로 금강 염주 신병 + 나한권 절기를 쥐면 6단 각성이 한 번 뜨고 나한권이 시안 6단 모양으로 나온다. 떨어진 병기를 주우면 칸·알림이 바뀐다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `GU-10U` 폴더에 떨어진 병기·HUD 칸·6단 나한권 한 장씩
 
-- [ ] RG-01U 개방 총타를 숭산 수준으로 · 먼저: backlog RG-02(빠진 것 표와 '쓸 것'을 클라우드가 채움). 그 전에 해도 된다면: F2 로 개방 몸으로 바꿔 개방 총타에서 한 생을 자동 플레이로 굴려 보고, 숭산과 비교해 눈에 띄게 빠진 것(바닥·소품·적 원화·기믹 그림·침방 카드)을 이 줄 '진행'에 적기만
-- [ ] RG-02U 남궁세가를 숭산 수준으로 · 먼저: RG-01U 와 같음
+- [ ] RG-01U 개방 총타를 숭산 수준으로 · 먼저: 없음 (표는 `docs/design/region_parity.md`(2026-11-24). 범위는 decisions #61 이 정해지기 전까지 바닥·소품·기믹·배경음 넷 — 개방·남궁엔 고유 적·정예·땅의 주인이 기획서에 없다)
+  - 할 것: ① 소품: 시트 `Art/Props/props_gaebang_hq.png` 를 낱장으로 나눠 `Art/Props/Parts` 에(숭산 시트를 나눈 것과 같은 길 — PR-02U 옛 줄), `소품 그림 목록 채우기` 다시 ② 지역 소품 벌: backlog RG-01a 가 `PropLayer` 를 지역 표로 바꾸면 개방 총타 줄에 나눈 낱장 이름을 채운다(그 전이면 이 칸은 '진행'에 낱장 이름만 적어 둠) ③ 술독 기믹 화면: `GimmickLayer` 에 숭산 범종처럼 개방 총타 술독(`gimmicks.json` wineJars — 무공 한 번에 깨짐, 60% 음식) 깔기, 그림 `prop_wine_jar`, 자리는 Core `GimmickLayout` ④ 바닥 세기(`Biomes.ArtOf` gaebang_hq 0.26)가 누렇지 않은지
+  - 쓸 것: `Fx/PropLayer.cs`, `Fx/GimmickLayer.cs`, `Fx/Biomes.cs`, Core `World.GimmickLayout`, `Resources/Data/gimmicks.json` wineJars, `Art/Props/Parts/prop_wine_jar.png`
+  - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
+  - 끝: F2 로 개방 몸으로 태어나 삼류·이류에서 숭산 전각·소나무 대신 개방 총타 소품이 서고, 술독이 깨지며 음식을 떨군다. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `RG-01U` 폴더에 삼류·이류 한 장씩
+- [ ] RG-02U 남궁세가를 숭산 수준으로 · 먼저: RG-01U(같은 틀을 먼저 만든 뒤)
+  - 할 것: RG-01U 와 같은 차례 — 시트 `props_namgung_manor.png` 낱장, 지역 소품 벌, 검각 시렁 기믹(`gimmicks.json` swordRacks — 세 번 맞으면 무너지고 은자 5~10, 그림 `prop_sword_rack`), 바닥 세기(0.5)
+  - 쓸 것: RG-01U 와 같음, gimmicks swordRacks, `Art/Props/Parts/prop_sword_rack.png`
+  - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
+  - 끝: 남궁 몸 삼류·이류에서 남궁세가 소품, 시렁이 세 번에 무너지며 은자. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `RG-02U` 폴더에 두 장
 - [ ] RG-03U 당가타(땅의 주인 당소혜)를 숭산 수준으로 — 땅의 주인 원화·예고는 EF-02U 와 같은 틀 · 먼저: RG-02U
+  - 할 것: ① 소품 시트 둘(`props_danggata_bamboo`·`props_danggata_halls`) 낱장·지역 벌 ② 기믹 둘: 대숲(`gimmicks.json` bambooThicket — 탑림과 같은 무더기, 걷는 것만 막고 한 번에 베임) — 숭산 탑림 코드를 본떠, 독안개(poisonFog — 샘에서 퍼졌다 걷힘, 안에서 초당 피해)는 먹·초록 담채 원(FxInk 셰이더) ③ 당소혜 '독안개 반쪽'(half_map_poison_fog) 예고가 숭산 범종 낙하만큼 읽히는지 보고 옅으면 진하게
+  - 쓸 것: `Fx/GimmickLayer.cs`(탑림 갈래), `Combat/PatternRunner.cs`, gimmicks bambooThicket·poisonFog, bosspatterns dang_sohye
+  - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
+  - 끝: 당가 몸 한 생에서 대숲이 길을 막고 베이며, 독안개가 퍼졌다 걷히고, 당소혜 독안개 예고가 한눈에 보인다. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `RG-03U` 폴더에 대숲·독안개·당소혜 예고 한 장씩
 - [ ] RG-04U 장강 수로(땅의 주인 마천패)를 숭산 수준으로 · 먼저: RG-03U
+  - 할 것: ① 소품 시트 둘(`props_changjiang_pier`·`props_changjiang_reeds`) 낱장·지역 벌 ② 물: `Art/Tiles/tile_changjiang_water.png` 를 물길 바닥으로(물길 자리는 gimmicks water), 물 안 감속 ③ 떠도는 배(driftingBoats — 24m 간격, 초속 1.5m 하류로)·역류 파도(reverseWave — 예고 동안 강물이 붉어짐, Core SweepWave) ④ 마천패 물기둥(water_pillar) 예고
+  - 쓸 것: gimmicks water·driftingBoats·reverseWave, Core `SweepWave`, `Fx/Biomes.cs`, bosspatterns ma_cheonpae
+  - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
+  - 끝: 수로채 몸 한 생에서 물길·배·역류 파도가 보이고 배 위에선 안 느려진다. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `RG-04U` 폴더에 물길·배·역류 예고 한 장씩
 - [ ] RG-05U 무당산(땅의 주인 혈허진인)을 숭산 수준으로 · 먼저: RG-04U (2026-11-24 클라우드가 바닥 원화 `tile_wudang_stone` 을 Resources 로 옮기고 `Biomes.ArtOf` 에 세기 0.4 로 넣음 — 먼저 F2 로 무당 몸에서 바닥이 너무 짙거나 누렇지 않은지 보고 세기만 고쳐도 됨, 먼저를 안 기다려도 됨)
+  - 할 것: ① 바닥: 클라우드가 넣은 `tile_wudang_stone` 세기(0.4) 확인 ② 소품 시트 둘(`props_wudang_temple`·`props_wudang_cliffs`) 낱장·지역 벌 ③ 태극 바닥(taijiFloor — 밟으면 게이지 반대 속성 피해 +, 쿨다운 동안 옅어짐)·운해(cloud_sea) ④ 혈허진인 칠성검 낙하(seven_star_sword_drop) 예고
+  - 쓸 것: `Fx/Biomes.cs` ArtOf wudangsan, gimmicks taijiFloor·cloudSea, bosspatterns hyeolheo
+  - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
+  - 끝: 무당 몸 한 생에서 돌 바닥·무당 소품·태극 바닥이 보이고 밟으면 효과가 난다. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `RG-05U` 폴더에 바닥·태극 바닥·칠성검 예고 한 장씩
 
 ### 0. 화면 집중 (2026-11-13 ~ 2026-11-24, 끝남 — 남은 열린 항목은 0-1 다음에 이어 감)
 
