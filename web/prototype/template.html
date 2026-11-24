@@ -1681,6 +1681,9 @@ function lordFxStep(dt) {
   if (G.lordDraw) G.lordDraw = G.lordDraw.filter(o => !o.e.dead && !((o.kind === 'wave' || o.kind === 'cloud') && o.left <= 0));
   if (G.viewMulT) { G.viewMulT.t -= dt; if (G.viewMulT.t <= 0) G.viewMulT = null; }
 }
+// 차오르는 피바다 섬(Core BossPatterns.IslandRadius = ClosingRadius, OnIsland: 몸 가운데가 섬 하나라도 안이면 섬 위)
+const islandRadius = (pt, t) => Math.max(pt.minRadius, pt.radius - pt.shrinkPerSecond * Math.max(0, t));
+const onIsland = (pt, t, islands, x, y) => { const r = islandRadius(pt, t); return islands.some(c => (x - c[0]) * (x - c[0]) + (y - c[1]) * (y - c[1]) <= r * r); };
 // 2막에 들어서면 한 번 켜져 싸움이 끝날 때까지 도는 패턴(continuous, 시안 2막 진입과 같음)
 function lordContinuous(e, P) {
   const dmg = P.baseDamage * (1 + B.enemyScaling.damagePerMinute * G.gm), sp = (P.projectileSpeed || 0) / 100 * MOVE;
@@ -1733,6 +1736,17 @@ function lordContinuous(e, P) {
       A.R = Math.max(P.minRadius, A.R - P.shrinkPerSecond * dt * (P.slowedNear === 'campfire' && G.campOn && nearCampfireC(G.player.x, G.player.y) ? P.slowedNearMultiplier : 1)); A.hit -= dt;
       const dx = G.player.x - A.x, dy = G.player.y - A.y;
       if (A.hit <= 0 && dx * dx + dy * dy > (A.R + 0.35) * (A.R + 0.35)) { A.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
+      return true;
+    });
+  } else if (P.shape === 'shrinking_islands') {   // 차오르는 피바다(혈해 2막, Core IslandRadius·OnIsland — 시안과 같음, WP-17): 섬 count 개를 보스 자리 둘레 layout.islandRing 원 위에 고루(첫 섬은 플레이어 쪽).
+    // 예고 뒤 섬 반경이 radius 에서 shrinkPerSecond 로 minRadius 까지 줄고, 몸 가운데가 어느 섬에도 없으면(피 위) hitIntervalSeconds 마다 맞는다
+    const a0 = Math.atan2(G.player.y - e.y, G.player.x - e.x), RR = ((DATA.gimmicks || {}).layout || {}).islandRing ?? 12;
+    const I = draw({ kind: 'islands', P, t: 0, R: P.radius, warm: P.telegraphSeconds, hit: 0, list: Array.from({ length: P.count }, (_, i) => [e.x + Math.cos(a0 + i * TAU / P.count) * RR, e.y + Math.sin(a0 + i * TAU / P.count) * RR]) });
+    lordFx(dt => {
+      if (e.dead) return false;
+      if (I.warm > 0) { I.warm -= dt; return true; }
+      I.t += dt; I.R = islandRadius(P, I.t); I.hit -= dt;
+      if (I.hit <= 0 && !onIsland(P, I.t, I.list, G.player.x, G.player.y)) { I.hit = P.hitIntervalSeconds; hurtPlayer(dmg, e); }
       return true;
     });
   } else if (P.shape === 'split_field') lordSplitField(e, P);
@@ -2091,6 +2105,12 @@ function drawLords(now) {
     if (o.kind === 'beams') { ctx.strokeStyle = o.warm > 0 ? 'rgba(179,38,30,0.25)' : 'rgba(179,38,30,0.6)'; ctx.lineWidth = Math.max(2, P.width * PPM); for (let i = 0; i < P.count; i++) { const a = o.a + i * TAU / P.count; ctx.beginPath(); ctx.moveTo(wx(e.x), wy(e.y)); ctx.lineTo(wx(e.x + Math.cos(a) * P.length), wy(e.y + Math.sin(a) * P.length)); ctx.stroke(); } }
     else if (o.kind === 'wave') { const nx = -Math.sin(o.a), ny = Math.cos(o.a), L = viewDiag(); ctx.strokeStyle = o.warm > 0 ? 'rgba(179,38,30,0.3)' : 'rgba(150,30,26,0.6)'; ctx.lineWidth = Math.max(3, P.width * PPM); ctx.beginPath(); ctx.moveTo(wx(o.x - nx * L), wy(o.y - ny * L)); ctx.lineTo(wx(o.x + nx * L), wy(o.y + ny * L)); ctx.stroke(); }
     else if (o.kind === 'cloud') { ctx.fillStyle = o.warm > 0 ? 'rgba(110,130,70,0.15)' : 'rgba(110,130,70,0.35)'; ctx.beginPath(); ctx.arc(wx(o.x), wy(o.y), P.radius * PPM, 0, TAU); ctx.fill(); }
+    else if (o.kind === 'islands') {   // 피바다: 섬 바깥이 피
+      ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); for (const [x, y] of o.list) { ctx.moveTo(wx(x) + o.R * PPM, wy(y)); ctx.arc(wx(x), wy(y), o.R * PPM, 0, TAU); }
+      ctx.fillStyle = o.warm > 0 ? `rgba(120,15,15,${(0.25 * (1 - o.warm / P.telegraphSeconds)).toFixed(3)})` : 'rgba(120,15,15,0.42)'; ctx.fill('evenodd');
+      ctx.strokeStyle = 'rgba(60,10,10,0.7)'; ctx.lineWidth = 2; ctx.setLineDash(o.warm > 0 ? [6, 6] : []);
+      for (const [x, y] of o.list) { ctx.beginPath(); ctx.arc(wx(x), wy(y), o.R * PPM, 0, TAU); ctx.stroke(); } ctx.setLineDash([]);
+    }
     else if (o.kind === 'arena') { ctx.beginPath(); ctx.rect(-50, -50, VW + 100, VH + 100); ctx.arc(wx(o.x), wy(o.y), o.R * PPM, 0, TAU, true); ctx.fillStyle = o.warm > 0 ? 'rgba(150,190,215,0.12)' : 'rgba(150,190,215,0.32)'; ctx.fill('evenodd'); ctx.strokeStyle = 'rgba(80,120,150,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(wx(o.x), wy(o.y), o.R * PPM, 0, TAU); ctx.stroke(); }
     ctx.restore();
   }

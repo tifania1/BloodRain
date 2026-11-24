@@ -107,6 +107,23 @@ namespace BloodRain.Core.Tests
             Assert.Equal(new[] { "hyeoleui", "hyeolhae", "jinhyeolma" }, _d.FinalBoss.Stages.Select(s => s.Id));
         }
 
+        /// <summary>WP-17: 합친 판(template.html)도 종장 단계 모양을 다 알고, 차오르는 피바다를 Core IslandRadius·OnIsland 와 같은 셈으로 쓴다.</summary>
+        [Fact] public void 웹_합친_판도_종장_단계_모양을_Core_와_같은_셈으로_쓴다()
+        {
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            Assert.All(_d.FinalBoss.Stages.SelectMany(s => s.Set.Patterns.Concat(s.Set.Phase2)).Select(p => p.Shape).Distinct(),
+                shape => Assert.Contains($"P.shape === '{shape}'", html));
+            foreach (var same in new[]
+            {
+                "Math.max(pt.minRadius, pt.radius - pt.shrinkPerSecond * Math.max(0, t))",   // IslandRadius = ClosingRadius
+                "(x - c[0]) * (x - c[0]) + (y - c[1]) * (y - c[1]) <= r * r",                // OnIsland: 몸 가운데
+                "((DATA.gimmicks || {}).layout || {}).islandRing",                          // 섬 고리는 gimmicks.json layout
+                "a0 + i * TAU / P.count",                                                    // 첫 섬은 플레이어 쪽, 고루
+            })
+                Assert.Contains(same, html);
+            Assert.Contains("\"layout\"", ReadRepoFile("tools", "build_web_prototype.py"));
+        }
+
         /// <summary>R4-12: 웹 천하 시안의 엔딩 고르기·회귀·혈월 천하·모드 열림이 Core Soul·Modes 와 같은 규칙이다.</summary>
         [Fact] public void 웹_천하_시안의_엔딩과_회귀가_Core_와_같은_규칙이다()
         {

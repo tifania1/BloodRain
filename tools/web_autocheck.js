@@ -321,6 +321,19 @@ async function finalRuns(browser, base) {
       for (let i = 0; i < 10 && overlay === 'ending'; i++) nextEndingCut();
       if (overlay !== 'result' || !soulLoad().journeyOver) bad.push(`의심 뒤 여정이 안 끝남(${overlay})`);
       names.push('의심');
+      // 혈해: 단계가 서자마자 차오르는 피바다(WP-17). 섬 밖에 세워 두면 맞고, 섬 가운데는 섬 위
+      $('result').hidden = true; overlay = null; startRun('full'); G.auto = false; running = false;
+      const si = FB.stages.findIndex(s => s.id === 'hyeolhae'), e4 = finalStage(LORD_REGS.find(x => x.final), FB.shadows.length + si, si, { x: G.player.x + 5, y: G.player.y });
+      const I = (G.lordDraw || []).find(o => o.kind === 'islands' && o.e === e4);
+      if (!I) bad.push('혈해에 피바다가 안 섬');
+      else {
+        const hp0 = G.player.maxHp = G.player.hp = 1e6; let off = 0;
+        for (let i = 0; i < 120; i++) { G.player.x = e4.x; G.player.y = e4.y; if (!onIsland(I.P, I.t, I.list, G.player.x, G.player.y)) off++; step(1 / 30); if (i % 15 === 0) render(); }
+        if (!off || G.player.hp >= hp0) bad.push(`피 위에 서 있어도 안 맞음(섬 밖 ${off}프레임)`);
+        if (!onIsland(I.P, I.t, I.list, I.list[0][0], I.list[0][1])) bad.push('섬 가운데가 섬 위가 아님');
+        if (!(I.R < I.P.radius && I.R >= I.P.minRadius)) bad.push(`섬 반경이 안 줄어듦(${I.R})`);
+        names.push('피바다');
+      }
       localStorage.removeItem('cheonha_meta2');
     } catch (err) { bad.push('오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]); }
     return { bad, names };
