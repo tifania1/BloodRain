@@ -2204,6 +2204,7 @@ function weaponDamage(w) {
 }
 function hurtEnemy(e, dmg, w, kx, ky, kb, sureCrit) {   // sureCrit: 반드시 치명타(연환 점혈창, Unity enemies.sureCrit)
   if (e.dead) return;
+  if (w && G.bambooOn) cutBambooC(e.x, e.y, e.r + 0.5);   // 대나무 덤불: 무공이 닿은 자리 둘레 포기를 벤다(LG-04)
   if (e.elite || e.boss) dmg *= G.stats.elite;
   if (G.diss > 0) dmg *= UPar(ULT_BY.cheonma_haeche, 'damageMultiplier', 1);   // 천마해체: 모든 피해 2배(WP-25)
   if (e.poison > 0 && sectT().poisonedTargetDamage) dmg *= 1 + sectT().poisonedTargetDamage;   // 당가 중독된 적 +20%(WP-20)
@@ -2929,6 +2930,7 @@ function update(dt) {
   // 혈우 장막(WP-12, 7장): 축척 시험에서만. 태어난 곳(0,0) 둘레, 반경 = boundary0Meters × boundaryPerRealm^경지, 현경부터 없음
   const cr = curtainR(dt); if (cr !== Infinity) { const U = worldU(), hx = G.home.x / U, hy = G.home.y / U, d = Math.hypot(p.x - hx, p.y - hy) * U, lim = cr - 0.5 * U; if (d > lim) { p.x = hx + (p.x - hx) * lim / d; p.y = hy + (p.y - hy) * lim / d; } }   // 장막은 절대 m, 내 자리는 싸움 좌표(WP-15)
   if (G.pagodaOn) pushPagodaC(p, B.stats.playerBodyRadius, false);   // 탑림: 몸 반지름으로 돌탑에 막힌다(WP-13b)
+  if (G.bambooOn) pushBambooC(p, B.stats.playerBodyRadius, false);   // 대나무 덤불(LG-04)
   p.iframe = Math.max(0, p.iframe - dt); p.block = Math.max(0, p.block - dt); p.hurt = Math.max(0, (p.hurt || 0) - dt);
   if (p.dashCharges < p.dashMax) { p.dashRecharge += dt; if (p.dashRecharge >= B.dash.rechargeSeconds) { p.dashRecharge = 0; p.dashCharges++; } }
   // 회복
@@ -3036,6 +3038,7 @@ function update(dt) {
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
     if (G.pagodaOn) pushPagodaC(e, e.r, !!(E_BY_ID[e.type] || {}).ignoresTerrain);   // 탑림: 걷는 적은 막히고 나는 적은 지나간다(WP-13b)
+    if (G.bambooOn) pushBambooC(e, e.r, !!(E_BY_ID[e.type] || {}).ignoresTerrain);   // 대나무 덤불(LG-04)
     e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
     if (Math.abs(vx) > 0.05) e.dir = vx > 0 ? 1 : -1;
     // 떨어진 적은 반대편으로 옮겨 다시 쓴다
@@ -3481,7 +3484,7 @@ function pickup(dr) {
   const p = G.player;
   if (dr.kind === 'food' || dr.kind === 'meat') G.food = (G.food || 0) + 1;   // 칭호 '식객'(WP-34, Core LifeLog.EatFood)
   if ((dr.kind === 'food' || dr.kind === 'meat') && G.syn.secrets.has('chwiseon')) G.drunkFood = (G.drunkFood || 0) + 1;   // 비전 취선
-  if (dr.kind === 'food') { p.hp = Math.min(p.maxHp, p.hp + DR.bunHeal * G.stats.foodHeal * otherHeal()); toast('만두', `기혈 +${Math.round(DR.bunHeal * G.stats.foodHeal * otherHeal())}`); }
+  if (dr.kind === 'food') { const fh = (dr.heal != null ? dr.heal : DR.bunHeal) * G.stats.foodHeal * otherHeal(); p.hp = Math.min(p.maxHp, p.hp + fh); toast(dr.name || '만두', `기혈 +${Math.round(fh)}`); }   // 대나무 덤불 음식은 최대 기혈 비율(LG-04)
   else if (dr.kind === 'meat') { p.hp = Math.min(p.maxHp, p.hp + DR.duckHeal * G.stats.foodHeal * otherHeal()); toast('오리구이', `기혈 +${Math.round(DR.duckHeal * G.stats.foodHeal * otherHeal())}`); }
   else if (dr.kind === 'magnet') { for (const o of G.orbs) o.pull = true; toast('취기부', '진기 구슬이 모두 끌려온다'); }
   else if (dr.kind === 'freeze') { G.talis = (G.talis || 0) + 1; G.freeze = DR.jeongsinFreezeSeconds * ((synEff('talisman_freeze') || {}).freezeMultiplier || 1); toast('정신부', `강시들이 ${G.freeze}초간 멈춘다`); }
@@ -5282,7 +5285,7 @@ function regionGimmicksStep(dt) {
   cloudSeaStep(dt); reverseWaveStep(dt);   // 운해·역류 파도(LG-01·02)
   // 바닥 기믹(WP-13b 둘째 조각, 시안 regionGimmicks 와 같은 규칙, 값은 gimmicks.json). 자리 판정은 위 CHG(시안 함수)로 절대 m 에서
   const U = worldU(), ax = p.x * U, ay = p.y * U, gw = GIMW.water, tj = GIMW.taijiFloor, cf = GIMW.campfire;
-  G.waterOn = !!gw && hereHas(gw.id); G.campOn = !!cf && hereHas(cf.id); G.pagodaOn = !!GIMW.pagodaForest && hereHas(GIMW.pagodaForest.id);
+  G.waterOn = !!gw && hereHas(gw.id); G.campOn = !!cf && hereHas(cf.id); G.pagodaOn = !!GIMW.pagodaForest && hereHas(GIMW.pagodaForest.id); G.bambooOn = !!GIMW.bambooThicket && hereHas(GIMW.bambooThicket.id);
   boatsStep(dt);   // 떠내려오는 배(LG-03)
   // 물(장강 수로): 물 위 걸음 moveSpeedMultiplier. 경공 뒤 waterWalkSeconds 동안 수상비, 수로채 몸(traitEffect ignoresWater)은 늘 그대로
   if (p.walkT > 0) p.walkT -= dt;
@@ -5318,6 +5321,7 @@ function regionGimmicksStep(dt) {
     }
   }
   if (G.pagodaOn && !G.pagodaHint) { const pt = CHG.pagodaPatchAt(ax, ay); if (pt && Math.hypot(ax - pt.x, ay - pt.y) < pt.R) { G.pagodaHint = true; toast(GIMW.pagodaForest.nameKo, '돌탑 사이 좁은 길 · 걷는 것은 모두 막힌다'); } }
+  if (G.bambooOn && !G.bambooHint) { const pt = CHG.bambooPatchAt(ax, ay); if (pt && Math.hypot(ax - pt.x, ay - pt.y) < pt.R) { G.bambooHint = true; toast(GIMW.bambooThicket.nameKo, '대숲이 길을 막는다 · 무공에 베이면 열린다'); } }
   bloodAltarsStep();   // 혈제단(십만대산, WP-13b 마지막 조각)
 }
 // ───────── 혈제단(십만대산, WP-13b 마지막 조각) ─────────
@@ -5404,7 +5408,7 @@ function drawRegionGimmicks() {
 // 놓는 간격(물길 간격·반폭·굽이, 태극 바닥·모닥불·탑림 무더기 간격)은 gimmicks.json 에 아직 없어 시안 LD 의 놀이판 값을 그대로 쓴다
 // (gimmick_draft.md 2절 안과 같은 값. R-10·R4-07 이 데이터에 넣으면 두 판 다 거기서 읽게 바꿀 것 — CheonhaGimmickTests 가 시안 LD 와 같은지 본다).
 // 지역 안 배치 값: gimmicks.json layout(R-10, 2026-11-20 사람이 '표대로' — 시안 LD 놀이판 값과 같음). 데이터가 없으면 시안 값
-const CHG_LD = (() => { const L = (DATA.gimmicks || {}).layout || {}, d = { waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7, taijiSpacing: 16, campfireSpacing: 28, pagodaSpacing: 60, bellSpacing: 30 }; for (const k of Object.keys(d)) if (typeof L[k] === 'number') d[k] = L[k]; return d; })();
+const CHG_LD = (() => { const L = (DATA.gimmicks || {}).layout || {}, d = { waterSpacing: 24, waterHalf: 4.5, waterWave: 4, waterWaveLen: 7, taijiSpacing: 16, campfireSpacing: 28, pagodaSpacing: 60, bellSpacing: 30, bambooSpacing: 60 }; for (const k of Object.keys(d)) if (typeof L[k] === 'number') d[k] = L[k]; return d; })();
 const CHG_G = {   // 시안 함수 안의 G 자리. 이 판의 한 판 상태(G)를 그때그때 읽는다
   get tier() { return tierNow(); },
   get t() { return G.t; },
@@ -5414,6 +5418,10 @@ const CHG_G = {   // 시안 함수 안의 G 자리. 이 판의 한 판 상태(G)
   get pagodaCache() { return G.pagodaCache || (G.pagodaCache = new Map()); },
   get pagodaTier() { return G.pagodaTier; },
   set pagodaTier(v) { G.pagodaTier = v; },
+  get bambooCache() { return G.bambooCache || (G.bambooCache = new Map()); },
+  get bambooTier() { return G.bambooTier; },
+  set bambooTier(v) { G.bambooTier = v; },
+  get bambooCut() { return G.bambooCut || (G.bambooCut = new Map()); },
 };
 const CHG = ((G, GIM, LD, REGIONS) => {
   const INK = '#1A1A1A', PAPER = '#EFE6D2', sc = t => Math.pow(WD.scalePerRealm, t);
@@ -5580,7 +5588,74 @@ const CHG = ((G, GIM, LD, REGIONS) => {
       }
     }
   }
-  return { sync, inWater, pagodaPatchAt, pushOutOfPagodas, taijiPads, songBells, campfires, nearCampfire, drawCampfires, drawWaterways, drawTaijiPads, drawPagodas };
+  // 대나무 덤불(당가타, LG-04 — Core BambooThicketGimmick): 탑림과 같은 무더기 놓기(layout.bambooSpacing, 포기 반경 stalkRadius).
+  // 걷는 것만 막고, 무공에 hitsToBreak 번 맞으면 베이고(dropChance 로 음식) regrowSeconds 뒤 다시 선다. 베인 포기는 bambooCut[무더기 키:번호] = 다시 서는 시각
+  function bambooPatchAt(x, y) {
+    const def = GIM.bambooThicket; if (!def) return null;
+    if (G.bambooTier !== G.tier) { G.bambooCache.clear(); G.bambooCut.clear(); G.bambooTier = G.tier; }
+    const r = nearestTwo(x, y).a; if (!regionHas(r, def.id)) return null;
+    const k = sc(G.tier), sp = LD.bambooSpacing * k, center = sp * 0.5 > regionHalfGap(r);
+    const i = center ? 0 : Math.floor((x - r.x) / sp), j = center ? 0 : Math.floor((y - r.y) / sp), key = `${r.id}:${center ? 'c' : i + ',' + j}`;
+    if (G.bambooCache.has(key)) return G.bambooCache.get(key);
+    const cx = center ? r.x : r.x + (i + 0.5) * sp, cy = center ? r.y : r.y + (j + 0.5) * sp;
+    let patch = null;
+    if (nearestTwo(cx, cy).a === r) {
+      const seed = (G.tier * 6007 + (i + 512) * 92821 + (j + 512) * 1046527 + r.id.length * 37) >>> 0;
+      const stalks = pagodaLayout(Object.assign({}, def, { pagodaRadius: def.stalkRadius }), rng(seed), k).map(s => ({ x: cx + s.x, y: cy + s.y, r: s.r }))
+        .filter(s => nearestTwo(s.x, s.y).a === r);
+      patch = { key, x: cx, y: cy, R: def.patchRadius * k, stones: stalks };
+    }
+    G.bambooCache.set(key, patch);
+    return patch;
+  }
+  function bambooStanding(pt, i) {
+    const c = G.bambooCut.get(pt.key + ':' + i); if (c == null) return true;
+    if (G.t >= c) { G.bambooCut.delete(pt.key + ':' + i); return true; }
+    return false;
+  }
+  function pushOutOfBamboo(o, rad, flying) {
+    const def = GIM.bambooThicket; if (!def || (flying && !def.blocksFlying)) return;
+    const pt = bambooPatchAt(o.x, o.y); if (!pt || Math.hypot(o.x - pt.x, o.y - pt.y) > pt.R + rad) return;
+    pt.stones.forEach((s, i) => {
+      const dx = o.x - s.x, dy = o.y - s.y, d = Math.hypot(dx, dy), m = s.r + rad;
+      if (d >= m || !bambooStanding(pt, i)) return;
+      if (d < 1e-6) { o.x = s.x + m; return; }
+      o.x = s.x + dx / d * m; o.y = s.y + dy / d * m;
+    });
+  }
+  // 무공이 (x, y) 둘레 rad 에 닿았다: 선 포기를 벤다. 벤 자리 목록을 돌려준다(음식은 부르는 쪽이 굴림). 맞은 수는 포기마다 센다(hitsToBreak)
+  function cutBamboo(x, y, rad) {
+    const def = GIM.bambooThicket, out = []; if (!def) return out;
+    const pt = bambooPatchAt(x, y); if (!pt || Math.hypot(x - pt.x, y - pt.y) > pt.R + rad) return out;
+    pt.stones.forEach((s, i) => {
+      if (Math.hypot(x - s.x, y - s.y) > s.r + rad || !bambooStanding(pt, i)) return;
+      const hk = pt.key + ':' + i + ':h', h = (G.bambooCut.get(hk) || 0) + 1;
+      if (h < Math.max(1, def.hitsToBreak)) { G.bambooCut.set(hk, h); return; }
+      G.bambooCut.delete(hk); G.bambooCut.set(pt.key + ':' + i, G.t + def.regrowSeconds); out.push(s);
+    });
+    return out;
+  }
+  function drawBamboo() {
+    if (GIM.bambooThicket && PPM * sc(G.tier) > 0.5) {   // 대나무 덤불: 선 포기는 마디 진 푸른 대 둘셋, 베인 포기는 밑동만
+      const k = sc(G.tier), sp = LD.bambooSpacing * k, x0 = camX - VW / 2 / PPM, x1 = camX + VW / 2 / PPM, y0 = camY - VH / 2 / PPM, y1 = camY + VH / 2 / PPM;
+      const seen = new Set();
+      for (let x = x0 - sp / 2; x <= x1 + sp; x += sp / 2) for (let y = y0 - sp / 2; y <= y1 + sp; y += sp / 2) {
+        const pt = bambooPatchAt(x, y); if (!pt || seen.has(pt)) continue; seen.add(pt);
+        pt.stones.forEach((s, i) => {
+          const X = sx(s.x), Y = sy(s.y), R = s.r * PPM; if (X < -R * 2 || X > VW + R * 2 || Y < -R * 6 || Y > VH + R * 2) return;
+          ctx.fillStyle = 'rgba(26,26,26,0.2)'; ctx.beginPath(); ctx.ellipse(X, Y + R * 0.15, R * 1.05, R * 0.45, 0, 0, TAU); ctx.fill();
+          const up = bambooStanding(pt, i);
+          for (let c = -1; c <= 1; c++) {
+            const bx = X + c * R * 0.45, h = up ? R * (3.2 + 0.6 * ((i * 7 + c * 3 + 9) % 3)) : R * 0.35, w = Math.max(2, R * 0.22);
+            ctx.fillStyle = up ? '#4F7A45' : '#8A9A6A'; ctx.fillRect(bx - w / 2, Y - h, w, h);
+            if (up) { ctx.fillStyle = INK; for (let n = 1; n < 4; n++) ctx.fillRect(bx - w / 2, Y - h * n / 4, w, Math.max(1, w * 0.18)); }
+          }
+          if (up) { ctx.fillStyle = 'rgba(70,120,60,0.55)'; ctx.beginPath(); ctx.ellipse(X, Y - R * 3.3, R * 1.1, R * 0.5, -0.3, 0, TAU); ctx.fill(); }
+        });
+      }
+    }
+  }
+  return { sync, inWater, pagodaPatchAt, pushOutOfPagodas, taijiPads, songBells, campfires, nearCampfire, drawCampfires, drawWaterways, drawTaijiPads, drawPagodas, bambooPatchAt, pushOutOfBamboo, cutBamboo, drawBamboo };
 })(CHG_G, GIMW, CHG_LD, LORD_REGS);
 // 싸움 좌표로 부르는 다리: 시안 함수는 절대 m 를 받는다
 const inWaterC = (x, y) => CHG.inWater(x * worldU(), y * worldU());
@@ -5590,12 +5665,27 @@ function pushPagodaC(o, rad, flying) {   // 탑림: 걷는 몸을 돌탑 밖으�
   CHG.pushOutOfPagodas(a, rad * U, flying);
   o.x = a.x / U; o.y = a.y / U;
 }
+function pushBambooC(o, rad, flying) {   // 대나무 덤불: 걷는 몸을 선 포기 밖으로(Core BambooThicketGimmick.Blocks)
+  const U = worldU(), a = { x: o.x * U, y: o.y * U };
+  CHG.pushOutOfBamboo(a, rad * U, flying);
+  o.x = a.x / U; o.y = a.y / U;
+}
+// 무공이 적에게 닿은 자리 둘레(적 반경 + 0.5m)의 포기를 벤다. 무공 판정이 한곳에 모이지 않아 '적에게 닿은 무공'을 무공이 지나간 자리로 친다(LG-04, 프로토타입 셈)
+function cutBambooC(x, y, rad) {
+  const def = GIMW.bambooThicket; if (!def || !G.bambooOn) return;
+  const U = worldU();
+  for (const s of CHG.cutBamboo(x * U, y * U, rad * U)) {
+    addEffect('burst', s.x / U, s.y / U, { r: 0.6, color: '#6E8F5A' });
+    G.bambooCuts = (G.bambooCuts || 0) + 1;
+    if (def.dropChance > 0 && Math.random() < def.dropChance) G.drops.push({ x: s.x / U, y: s.y / U, kind: 'food', t: 0, heal: G.player.maxHp * def.healMaxHealthRatio, name: def.nameKo });
+  }
+}
 // 태극 바닥 기운(Core TaijiBlessing.DamageMultiplier): 걸린 속성 무공만 피해 +oppositeAspectDamageBonus, 중립 무공은 그대로
 const taijiBlessMul = aspect => G.bless && G.bless.t > 0 && aspect === G.bless.aspect ? 1 + GIMW.taijiFloor.oppositeAspectDamageBonus : 1;
 function drawGroundGimmicks(now) {   // 시안 drawGimmicks 와 같은 차례(모닥불 → 물길 → 태극 바닥 → 탑림)
   if (!SCALE_MODE || isPro()) return;
   const U = worldU(); CHG.sync(G.cam.x * U, G.cam.y * U, PPM / U);
-  CHG.drawCampfires(now); CHG.drawWaterways(); CHG.drawTaijiPads(); CHG.drawPagodas();
+  CHG.drawCampfires(now); CHG.drawWaterways(); CHG.drawTaijiPads(); CHG.drawPagodas(); CHG.drawBamboo();
 }
 // 지역 정예(WP-13d 첫 조각): 축척 모드에서 1장 밖 땅에 서 있으면 1장 정예 차례(enemies.json elites.chapter1 의 몇 번째)와 같은 자리의
 // 그 땅 정예(elites.<장>)로 바꾼다. 프로토타입 castPattern 이 아는 모양(아래 ELITE_SHAPES)의 첫 패턴만 — 모르는 모양이면 1장 정예 그대로.

@@ -139,11 +139,12 @@ async function lifeRuns(browser, base) {
     const p = await openPage(browser, base + '/?life=' + sect, label);
     const r = await protoRun(p, 'full', 400, label);
     const where = await p.page.evaluate(() => __hyeolu.state().chRegion || '');
-    // 운해·역류 파도·배(LG-01~03): 그 땅에 있었으면 몇 번 일어났는지
+    // 운해·역류 파도·배·대숲(LG-01~04): 그 땅에 있었으면 몇 번 일어났는지
     const gim = await p.page.evaluate(() => { const G = __hyeolu.state(), o = [];
       if (G.cloudN) o.push(`운해 ${G.cloudN}곳·숨음 ${Math.round(G.cloudHidT || 0)}초`);
       if (G.rwaveN) o.push(`역류 ${G.rwaveN}번·쓸림 ${G.rwaveKills || 0}`);
       if (G.boatT) o.push(`배 위 ${Math.round(G.boatT)}초`);
+      if (G.bambooCuts) o.push(`대숲 벰 ${G.bambooCuts}`);
       return o.join(' '); });
     const vis = await liveCheck(p, label, 1200, PROTO_SCREENS);
     if (sect === 'demonic') await shot(p, 'life_demonic');
