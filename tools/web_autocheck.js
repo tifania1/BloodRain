@@ -2,7 +2,7 @@
 // 콘솔 오류·페이지 오류·멈춤(시계가 안 감)·숫자 깨짐(NaN)·화면 막힘(화면 둘이 겹쳐 뜸)을 찾는다.
 // 쓰는 법:
 //   python tools/build_web_prototype.py
-//   node tools/web_autocheck.js [--runs 3] [--shots <폴더>] [--only prologue,songshan,life,m3]
+//   node tools/web_autocheck.js [--runs 3] [--shots <폴더>] [--only prologue,songshan,life,m3,lords,final,crisis,flow,weapons,manuals,links]
 //   한 생(life)만 몇 몸: SECTS=waterfort,wudang node tools/web_autocheck.js --only life
 // 끝 줄에 '문제 N' 을 찍고, 문제가 있으면 1 로 끝난다. 손맛 숫자는 건드리지 않고 보기만 한다.
 const http = require('http');

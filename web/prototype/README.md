@@ -161,7 +161,7 @@ HUD·멈춤 화면·조작 안내의 말은 `Resources/Data/strings/ko.json` 의
 
 ```
 python tools/build_web_prototype.py
-node tools/web_autocheck.js                     # 서장·숭산·한 생 아홉 몸(life)·M3 세 지역·땅의 주인 훑기·종장·이어 받기·무공 해금과 절기(weapons)·비급 층(manuals)·연환 셋(links), 3판씩(3분 남짓)
+node tools/web_autocheck.js                     # 서장·숭산·한 생 아홉 몸(life)·M3 세 지역·땅의 주인 훑기·종장(혈해 피바다까지)·문파의 위기와 모여드는 땅의 주인(crisis)·이어 받기·무공 해금과 절기(weapons)·비급 층(manuals)·연환 셋(links), 3판씩(3분 남짓)
 node tools/web_autocheck.js --runs 5 --only m3 --shots <폴더>   # 고른 것만, 판 끝 화면을 찍어 둔다
 ```
 
