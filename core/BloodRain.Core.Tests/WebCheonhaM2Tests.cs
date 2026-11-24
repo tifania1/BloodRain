@@ -42,10 +42,12 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1, _d.Balance.Drops.EliteBloodCrystal);
             Assert.Equal(5, _d.Cheonha.Bosses.FirstKill.BloodCrystal);
             Assert.Equal(5, _d.Cheonha.Bosses.RepeatKill.BloodCrystal);
-            var html = Html();
-            Assert.Contains("BR.firstKill.bloodCrystal", html);
-            Assert.Contains("BR.repeatKill.bloodCrystal", html);
-            Assert.Contains("BAL.drops.eliteBloodCrystal", html);
+            // 2026-11-25(WP-16)부터 합친 판이 원본: 땅의 주인 처치는 lordRules(cheonha.json bosses)의 첫·다시 처치 몫, 정예는 drops.eliteBloodCrystal
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("K = first ? LR.firstKill : LR.repeatKill", html);
+            Assert.Contains("crystal: K.bloodCrystal || 0", html);
+            Assert.Contains("G.eliteKills * ((B.drops && B.drops.eliteBloodCrystal) || 0)", html);
+            Assert.Contains("\"lordRules\": drop_notes(load(\"cheonha\")[\"bosses\"])", Build());
             Assert.Matches(@"for k in \([^)]*""drops""[^)]*\)\}", Build());   // balance 묶음 칸 목록 안에
         }
 
@@ -59,7 +61,7 @@ namespace BloodRain.Core.Tests
             foreach (var e in evs) Assert.Contains(_d.Enemies, x => x.Id == e.Enemy);
             Assert.Contains("events=[", Build());
             Assert.Contains("\"eventFoes\"", Build());
-            Assert.Contains("function lifeEvents()", Html());
+            Assert.Contains("DATA.lifePlan.events.map(e =>", ReadRepoFile("web", "prototype", "template.html"));
         }
     }
 }
