@@ -59,5 +59,24 @@ namespace BloodRain.Core.Tests
             var back = Soul.FromJson(_d, soul.ToJson());
             Assert.Equal(1, back.MasteryStage("nahan_fist"));
         }
+    
+        [Fact]
+        public void 대성한_시작_무공은_Lv2_로_시작한다()
+        {
+            var soul = Fresh();
+            for (int i = 0; i < 2; i++) LiveMaxed(soul, true);
+            var before = Born(soul, _d);
+            Assert.Equal(1, before.Loadout.Weapons["nahan_fist"]);
+            Assert.False(before.StartMastered);
+            int gauge = before.Loadout.Gauge.Value;
+            while (before.Loadout.Weapons["nahan_fist"] < _d.Balance.Levels.WeaponMax)
+                before.Loadout.Apply(new Offer(OfferKind.UpgradeWeapon, "nahan_fist"));
+            soul.EndLife(before.End(LifeEndWay.Fallen, 0));
+            var life = Born(soul, _d);
+            Assert.True(life.StartMastered);
+            Assert.Equal(Life.MasteredStartLevel, life.Loadout.Weapons["nahan_fist"]);
+            Assert.Empty(life.Loadout.PickOrder);
+            Assert.Equal(gauge, life.Loadout.Gauge.Value);
+        }
     }
 }

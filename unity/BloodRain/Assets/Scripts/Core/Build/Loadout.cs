@@ -72,6 +72,13 @@ namespace BloodRain.Core.Build
             _weapons[character.StartWeapon] = 1;
         }
 
+        /// <summary>무공 성취 대성(GU-06): 시작 무공을 그 레벨로 놓고 생을 시작한다. 시작 상태라 음양은 움직이지 않고 고른 차례에도 안 든다.</summary>
+        internal void StartWeaponAt(string weaponId, int level)
+        {
+            if (!_weapons.TryGetValue(weaponId, out var now)) throw new InvalidOperationException($"가진 무공이 아닙니다: {weaponId}");
+            _weapons[weaponId] = Math.Max(now, Math.Min(level, WeaponMax));
+        }
+
         int WeaponMax => _data.Balance.Levels.WeaponMax;
         int PassiveMax => _data.Balance.Levels.PassiveMax;
 

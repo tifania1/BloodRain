@@ -46,6 +46,13 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: F2 로 금강 염주 신병 + 나한권 절기를 쥐면 6단 각성이 한 번 뜨고 나한권이 시안 6단 모양으로 나온다. 떨어진 병기를 주우면 칸·알림이 바뀐다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `GU-10U` 폴더에 떨어진 병기·HUD 칸·6단 나한권 한 장씩
 
+- [ ] GU-06U 무공 성취 화면: 대성 시작 무공 금빛 테두리·장경각 도감 도장 · 먼저: 없음(Core 는 2026-11-24 GU-06 — `Life.StartMastered`, `Soul.MasteryStage`)
+  - 할 것: ① 생을 시작할 때 `Life.StartMastered` 면 시작 무공(`Body.Character.StartWeapon`) 이펙트에 금빛 테두리(SectFx 날 테두리 색을 황토 금빛으로 한 단 밝게 — 11-17 '주황 → 황토' 규칙 안에서), HUD 그 무공 칸에 작은 '大成' 도장(문파 색 아님, 금빛) ② 장경각 도감 무공 쪽: 무공마다 `Soul.MasteryStage(id)` 로 입문(도장 없음)·소성(小成, 먹 도장)·대성(大成, 금빛 도장)
+  - 쓸 것: Core `Life.StartMastered`·`Life.MasteredStartLevel`(2)·`Soul.MasteryStage`·`Soul.WeaponMastery`. 시험은 F2 로 못 만드니 혼 저장의 `Mastery` 칸에 `nahan_fist: 3` 을 손으로 넣고 이어하기
+  - 메뉴: 없음
+  - 끝: 나한권 대성 혼으로 소림 몸에 태어나면 나한권이 Lv2·금빛 테두리, 장경각 도감 나한권에 대성 도장. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `GU-06U` 폴더에 시작 화면 무공 칸·도감 한 장씩
+
 - [ ] RG-01U 개방 총타를 숭산 수준으로 · 먼저: 없음 (표는 `docs/design/region_parity.md`(2026-11-24). 범위는 decisions #61 이 정해지기 전까지 바닥·소품·기믹·배경음 넷 — 개방·남궁엔 고유 적·정예·땅의 주인이 기획서에 없다)
   - 할 것: ① 소품: 시트 `Art/Props/props_gaebang_hq.png` 를 낱장으로 나눠 `Art/Props/Parts` 에(숭산 시트를 나눈 것과 같은 길 — PR-02U 옛 줄), `소품 그림 목록 채우기` 다시 ② 지역 소품 벌(backlog RG-01a 를 여기서): `PropLayer.ArtIds` 를 지역 id → 열두 장 표로(표에 없는 지역은 지금 벌). 재질을 Start 에 칸 열둘로 한 번 만들고 칸마다 묶어 그리니, (지역, 칸)마다 재질을 늦게 만들고 소품이 선 지역(Core `Regions` 로 그 자리 지역)으로 묶어 그린다. 개방 총타 줄에 나눈 낱장 이름을 채운다 ③ 술독 기믹 화면: `GimmickLayer` 에 숭산 범종처럼 개방 총타 술독(`gimmicks.json` wineJars — 무공 한 번에 깨짐, 60% 음식) 깔기, 그림 `prop_wine_jar`, 자리는 Core `GimmickLayout` ④ 바닥 세기(`Biomes.ArtOf` gaebang_hq 0.26)가 누렇지 않은지
   - 쓸 것: `Fx/PropLayer.cs`, `Fx/GimmickLayer.cs`, `Fx/Biomes.cs`, Core `World.GimmickLayout`, `Resources/Data/gimmicks.json` wineJars, `Art/Props/Parts/prop_wine_jar.png`

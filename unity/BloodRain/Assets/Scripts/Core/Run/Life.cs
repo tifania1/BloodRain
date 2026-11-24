@@ -74,6 +74,12 @@ namespace BloodRain.Core.Run
             Body = body;
             Log = soul.BeginLife(body);
             Loadout = body.NewLoadout(_data);
+            // GU-06 무공 성취: 시작 무공이 대성(3생)이면 Lv2 로 시작한다. 서장 몸은 혼이 아직 없어 그대로
+            if (!body.IsPrologue && soul.MasteryStage(body.Character.StartWeapon) >= 2)
+            {
+                Loadout.StartWeaponAt(body.Character.StartWeapon, MasteredStartLevel);
+                StartMastered = true;
+            }
             Xp = new RunXp(new XpCurve(_data.Balance.XpCurve), new Realms(_data.Balance.Realms))
             {
                 PastLife = soul.PastLifePower(), // GU-11f1 전생의 공력: 넘어 본 구간은 필요 진기가 줄어든다(서장 첫 생은 넘은 구간이 없어 그대로)
@@ -106,6 +112,11 @@ namespace BloodRain.Core.Run
                 PrologueSpawns = new PrologueDirector(_data, rng);
             }
         }
+
+        /// <summary>대성한 시작 무공이 생을 시작하는 레벨(기획서 10장 '무공 성취', 추천값).</summary>
+        public const int MasteredStartLevel = 2;
+        /// <summary>시작 무공이 대성이라 Lv2 로 시작했다(화면은 이 무공 이펙트에 금빛 테두리를 세운다).</summary>
+        public bool StartMastered { get; }
 
         /// <summary>서장 차례(서장 몸일 때만). 장삼 등장은 Tick 이 알아서 알린다.</summary>
         public Prologue? Prologue { get; }
