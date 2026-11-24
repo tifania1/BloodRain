@@ -193,6 +193,43 @@ namespace BloodRain.Presentation.Hud
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f);
             FillCells(_wCells, _view.Weapons, true, pulse);
             FillCells(_pCells, _view.Passives, false, pulse);
+            UpdateGearCell(life);
+        }
+
+        // GU-10U ② 병기 칸(2026-11-24): 무공 칸 줄 오른쪽에 반 칸 띄워 한 칸. 병기 이름 첫 글자 + 등급 점(●○○○), 테두리는 문파 상징색.
+        // 빈손이면 숨김. 그림은 art_queue 가 올 때까지 글자
+        Cell _gearCell;
+        string _gearShown;
+        int _gearGradeShown = -2;
+
+        void UpdateGearCell(BloodRain.Core.Run.Life life)
+        {
+            var slot = life.GearSlot;
+            if (_gearCell == null)
+            {
+                _gearCell = MakeCell(0, 0);
+                _gearCell.Frame.name = "병기 칸";
+                _gearCell.Level.fontSize = 10;
+                _gearCell.Level.alignment = TextAlignmentOptions.Bottom;
+                _gearCell.Level.characterSpacing = -8f;
+            }
+            float x = (_wCells.Count + 0.5f) * (SlotSize + SlotGap);
+            _gearCell.Frame.rectTransform.anchoredPosition = new Vector2(x, 0);
+            if (slot.Empty) { _gearCell.Frame.gameObject.SetActive(false); _gearShown = null; return; }
+            _gearCell.Frame.gameObject.SetActive(true);
+            if (slot.GearId == _gearShown && slot.Grade == _gearGradeShown) return;
+            _gearShown = slot.GearId; _gearGradeShown = slot.Grade;
+            var data = DataBoot.Data;
+            var def = Gear.Def(data, slot.GearId);
+            string name = Loc.T($"gear.{def.Id}.name", def.NameKo);
+            _gearCell.Glyph.text = string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1);
+            var tint = SchoolTint.OfSchoolId(def.Sect);
+            _gearCell.Glyph.color = tint ?? TextInk;
+            _gearCell.Frame.color = tint.HasValue ? Color.Lerp(tint.Value, SlotInk, 0.25f) : SlotInk;
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < data.Gear.Grades.Count; i++) sb.Append(i <= slot.Grade ? '●' : '○');
+            _gearCell.Level.text = sb.ToString();
+            _gearCell.Level.color = data.Gear.Grades[slot.Grade].Sixth ? new Color(0.55f, 0.36f, 0.06f, 1f) : TextInk;
         }
 
         void UpdateHead()
