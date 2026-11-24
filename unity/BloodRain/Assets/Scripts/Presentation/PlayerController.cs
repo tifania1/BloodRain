@@ -125,7 +125,8 @@ namespace BloodRain.Presentation
 
         void Update()
         {
-            float dt = Time.deltaTime;
+            // 스크린샷 도구가 시간 배율을 바꾸는 프레임에 deltaTime 이 0 아래로 와 Core Dash.Tick 이 예외를 던지던 것(2026-11-11·25 PC 콘솔)을 막는다.
+            float dt = Mathf.Max(0f, Time.deltaTime);
             var move = ReadMove();
             bool bound = _bindLeft > 0f;
             if (bound) { _bindLeft = Mathf.Max(0f, _bindLeft - dt); move = Vector2.zero; }
