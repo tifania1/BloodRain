@@ -69,7 +69,7 @@ namespace BloodRain.Core.Tests
             var layout = TestData.Load().Gimmicks.Layout;
             Assert.True(ld.Success);
             var pairs = Regex.Matches(ld.Groups[1].Value, @"(\w+): ([\d.]+)");
-            Assert.Equal(11, pairs.Count);   // LG-04 bambooSpacing, LG-05a cliffSpacing·plumSpacing 더함
+            Assert.Equal(15, pairs.Count);   // LG-04 bambooSpacing, LG-05a cliffSpacing·plumSpacing, LG-05b ice 넷 더함
             foreach (Match p in pairs)
             {
                 var key = p.Groups[1].Value;
@@ -123,7 +123,7 @@ namespace BloodRain.Core.Tests
         {
             // LG-01 운해·LG-02 역류 파도: 빌드가 두 값을 넣고, 웹 박자 식이 Core BloomsBetween·StartsBetween 과 같은 꼴
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"cloudSea\", \"reverseWave\", \"driftingBoats\", \"bambooThicket\", \"cliffPath\", \"plumHeaps\"", build);
+            Assert.Contains("\"cloudSea\", \"reverseWave\", \"driftingBoats\", \"bambooThicket\", \"cliffPath\", \"plumHeaps\", \"iceFloor\"", build);
             foreach (var key in new[]
             {
                 "const up = Math.floor((b - first) / period) + 1, bef = a < first ? 0 : Math.floor((a - first) / period) + 1",
@@ -140,6 +140,8 @@ namespace BloodRain.Core.Tests
                 // LG-05a 잔도·매화 더미
                 "LD.cliffSpacing * k", "def.patchRadius * k, half: def.pathWidth * k / 2", "def.paths >= 2 && Math.abs(dx) <= pt.half", "LD.plumSpacing * k",
                 "g.touchRadius * k", "G.t + g.regrowSeconds", "p.maxHp * g.healMaxHealthRatio * otherHeal()",
+                // LG-05b 빙판: 물길과 같은 띠(ice 값), 바라는 속도로 inertiaSeconds 에 걸쳐(Core IceFloorGimmick.Step), 나는 적은 flyingIgnores
+                "LD.iceSpacing * k", "LD.iceHalf * k", "Math.min(1, dt / def.inertiaSeconds)", "(flying && def.flyingIgnores)",
             })
                 Assert.Contains(key, Proto);
             // 박자 값이 Core 와 같은지(웹 식을 그대로 C# 으로): 운해 12초마다, 역류 120초마다

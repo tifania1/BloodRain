@@ -146,6 +146,7 @@ async function lifeRuns(browser, base) {
       if (G.boatT) o.push(`배 위 ${Math.round(G.boatT)}초`);
       if (G.bambooCuts) o.push(`대숲 벰 ${G.bambooCuts}`);
       if (G.plumN) o.push(`매화 ${G.plumN}번`);
+      if (G.iceT) o.push(`빙판 ${Math.round(G.iceT)}초`);
       return o.join(' '); });
     const vis = await liveCheck(p, label, 1200, PROTO_SCREENS);
     if (sect === 'demonic') await shot(p, 'life_demonic');
