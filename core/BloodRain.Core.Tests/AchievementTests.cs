@@ -98,5 +98,18 @@ namespace BloodRain.Core.Tests
             var back = Soul.FromJson(_d, json);
             Assert.Equal(new[] { "realm_iryu" }, Achievements.Earned(back));
         }
+
+        [Fact] public void 웹_합친_판도_데이터의_조건_갈래를_다_안다()
+        {
+            // LG-06(2026-11-25): 웹 achMeets 가 Core Achievements.Meets 와 같은 갈래를 본다. 데이터에 새 갈래가 생기면 웹도 같이.
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"achievements\": [drop_notes(a) for a in load(\"cheonha\").get(\"achievements\", [])]", build);
+            foreach (var kind in C.Achievements.Select(a => Achievements.Parse(a.When).kind).Distinct())
+                Assert.Contains($"case '{kind}':", html);
+            Assert.Contains("m.newAch = achRefresh(m);", html);
+            Assert.Contains("'achievement:' + a.id", html);
+            Assert.Equal("achievement:x", Achievements.Token("x"));
+        }
     }
 }
