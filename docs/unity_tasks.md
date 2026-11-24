@@ -1150,7 +1150,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
 
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
-- [ ] GU-11h4U 모여드는 땅의 주인 눈으로 확인 · 먼저: 화면 집중이 풀린 뒤, backlog GU-11h4(2026-11-20 Core·알림·싸움 걸기 끝 — `Life.NoteGathering` 이 `BossAwakening.Summon` 으로 걸고 PatternRunner 가 플레이어 곁에 세움)
+- [ ] GU-11h4U 모여드는 땅의 주인 눈으로 확인 · 먼저: 없음(화면 집중은 2026-11-24 풀림. 웹 합친 판에도 2026-11-25 같은 규칙이 들어가 `?life=shaolin` 에서 먼저 볼 수 있음), backlog GU-11h4(2026-11-20 Core·알림·싸움 걸기 끝 — `Life.NoteGathering` 이 `BossAwakening.Summon` 으로 걸고 PatternRunner 가 플레이어 곁에 세움)
   - 할 것: 봉인석 0 혼으로 숭산 생을 F2 로 현경·30분까지 당겨(LifeRunner.TestClockScale) 붉은 '땅의 주인이 모여든다' 알림 뒤 무너진 문파 주인이 곁에 서서 싸움이 걸리는지, 쓰러뜨린 뒤 40분에 둘째가 오는지, 60분에 혈월이 지며 좌화 정산이 뜨는지. 보스가 화면 밖에서 걸어 들어오는 연출은 원하면 PatternRunner.BeginFight 의 자리(지금 오른쪽 6m)를 화면 밖으로
   - 쓸 것: Core `Life.GatheringLordsDue`·`FallenLordRegions`·`BossAwakening.Engage`, `Presentation/Combat/PatternRunner.cs`
   - 메뉴: 없음
