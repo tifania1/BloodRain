@@ -107,6 +107,7 @@ def data_blob() -> str:
         "lordCutImages": {f.stem: image_uri(f.name, 720) for f in sorted(CUTS.glob("sb_*_*_[0-9].jpg"))
                           if f.stem.rsplit("_", 2)[1] in ("meet", "down")},
         "ui": ui_strings(),
+        "foeArt": foe_art(),
         # 천하 축척(WP-12): 화면 대각선 = view0Meters × scalePerRealm^(경지 순번 + viewInRealmShare × 경지 안 진행), 7장
         "world": {k: v for k, v in load("cheonha")["world"].items() if k in ("view0Meters", "scalePerRealm", "viewInRealmShare", "boundary0Meters", "boundaryPerRealm", "noBoundaryFrom", "widthMeters", "heightMeters", "land", "rivers")},
         # 적 한 덩이·밟힘·돌파 연출(WP-15, 7장): 경지별 덩이 크기, 밟힌 진기·쓸림, 연출 시각
@@ -259,6 +260,20 @@ def jpeg_bytes(img: Image.Image, quality: int = 78) -> bytes:
     buf = io.BytesIO()
     img.convert("RGB").save(buf, "JPEG", quality=quality, optimize=True, progressive=True)
     return buf.getvalue()
+
+
+def foe_art() -> dict:
+    """적·정예·땅의 주인 원화(Art/Enemies·Art/Bosses png, 투명 바탕)를 작게 줄여 넣는다(WP-13c·d·e '제 그림').
+    키는 파일 이름 그대로(enemy_<적 id>·elite_<정예 id>·boss_<주인 id>), 프로토타입 drawFoe 가 있으면 그것으로 그린다."""
+    out = {}
+    for folder, size in ((ROOT / "unity" / "BloodRain" / "Assets" / "Art" / "Enemies", 96), (ROOT / "unity" / "BloodRain" / "Assets" / "Art" / "Bosses", 160)):
+        for f in sorted(folder.glob("*.png")):
+            img = Image.open(f).convert("RGBA")
+            img.thumbnail((size, size), Image.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, "PNG", optimize=True)
+            out[f.stem] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    return out
 
 
 def image_uri(file: str, size: int) -> str:

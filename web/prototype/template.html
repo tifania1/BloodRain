@@ -1346,7 +1346,32 @@ const KIND_SIZE = { sigang: 1.3, hyeol_gangsi: 1.3, donggap: 1.6, hyeolin: 1.2, 
 // 같은 날 숭산 공통 적 다섯(비강·혈궁수·혈영자객·혈술사·기수)도 혈무사 그림을 빌려 쓰던 것을 같은 방식으로 더함.
 const LOCAL_SPRITES = ['bigang', 'hyeol_gungsu', 'hyeolyeong_assassin', 'hyeol_sulsa', 'gisu', 'poison_toad', 'golden_centipede', 'dogin', 'water_ghost', 'water_bandit', 'twin_gangsi', 'plum_sword_ghost', 'ice_gangsi', 'snow_wolf', 'yeti', 'demon_cultist', 'blood_shadow_clone', 'blood_lion'];
 for (const k of LOCAL_SPRITES) KIND_SIZE[k] = KIND_SIZE.hyeol_musa;
-function buildSprites() { for (const k in KIND_SIZE) sprites[k] = makeSprite(k, KIND_SIZE[k]); }
+function buildSprites() { for (const k in KIND_SIZE) sprites[k] = makeSprite(k, KIND_SIZE[k]); for (const k in FOE_IMG) if (FOE_IMG[k].complete) bakeFoeArt(k); }
+// 적·정예·땅의 주인 원화(WP-13c·d·e '제 그림'): 빌드가 Art/Enemies·Art/Bosses png 를 줄여 DATA.foeArt 로 넣는다(enemy_<id>·elite_<id>·boss_<id>).
+// 있으면 drawFoe 가 그것으로 그리고(foeArtName), 없는 것은 먹선 그림 그대로. 크기는 원래 그림 칸(적 KIND_SIZE·정예 2.6·주인 4.2)과 같아 맞는 판정은 안 바뀐다.
+// 주소 끝 ?art=0 이면 먹선 그림만.
+const FOE_IMG = {};
+if (new URLSearchParams(location.search).get('art') !== '0') for (const [k, uri] of Object.entries(DATA.foeArt || {})) { const im = new Image(); im.onload = () => { if (VW) bakeFoeArt(k); }; im.src = uri; FOE_IMG[k] = im; }
+function foeArtSize(k) {
+  if (k.startsWith('boss_')) return KIND_SIZE.boss;
+  if (k.startsWith('elite_')) return KIND_SIZE.elite;
+  const t = k.slice(6), sp = t === 'mogin_nahan' ? 'mogin' : t === 'golden_toad' ? 'toad' : t;
+  return KIND_SIZE[sp] || KIND_SIZE.hyeol_musa;
+}
+function bakeFoeArt(k) {
+  const im = FOE_IMG[k], S = Math.ceil(foeArtSize(k) * PPM0 * DPR * 1.25), c = off(S, S), g = c.getContext('2d');
+  g.drawImage(im, 0, -0.12 * S, S, S);   // 원화는 발이 칸 바닥 언저리라 drawSprite 발 자리(0.82)에 맞게 조금 올린다
+  const w = off(S, S), wg = w.getContext('2d');
+  wg.drawImage(c, 0, 0); wg.globalCompositeOperation = 'source-in'; wg.fillStyle = '#FFF8EC'; wg.fillRect(0, 0, S, S);
+  sprites['art:' + k] = { img: c, white: w, size: S / DPR };
+}
+function foeArtName(e) {
+  let k;
+  if (e.boss) k = e.lordBoss ? 'boss_' + e.lordBoss : e.jang ? 'boss_jang_sam' : e.phase2 ? 'boss_wongak_p2' : 'boss_wongak';
+  else if (e.elite) k = e.eliteKey && ELITES[e.eliteKey] ? 'elite_' + ELITES[e.eliteKey].id : null;
+  else k = 'enemy_' + e.type;
+  return k && sprites['art:' + k] ? 'art:' + k : e.sprite;
+}
 
 // 숭산 소림 사찰 마당 바닥 (절차적, 이음새 없음)
 function buildGround() {
@@ -4032,12 +4057,13 @@ function closeOverlay(id, keepPaused) {
 // 많이 겹치면 느려서 그리는 장 수는 9장까지, 장마다 크기를 줄여 덩이 전체 넓이는 비슷하게. 사람 수는 맞을수록 남은 기혈 비율만큼 준다.
 function drawFoe(e, lift, sc, sq) {
   const white = e.flash > 0 ? (e.boss || e.elite ? 0.3 : 0.6) : false, alpha = e.stun > 0 || G.freeze > 0 ? 0.7 : 1, n = membersOf(e);
-  if (n <= 1) return drawSprite(e.sprite, e.x, e.y - lift, sc, e.dir < 0, white, alpha, sq);
+  const spr = foeArtName(e);   // 원화가 있으면 그것(WP-13c·d·e)
+  if (n <= 1) return drawSprite(spr, e.x, e.y - lift, sc, e.dir < 0, white, alpha, sq);
   const m = Math.min(n, 9), k = sc * Math.max(0.42, 1.25 / Math.sqrt(m)), R = e.r * 2.2 * sc, pts = [];
   for (let i = 0; i < m; i++) { const a = i * 2.39996 + (e.hop || 0), d = Math.sqrt((i + 0.5) / m) * R; pts.push([Math.cos(a) * d, Math.sin(a) * d * 0.8]); }
   pts.sort((a, b) => a[1] - b[1]);
   if (clusterOf(e) >= 16) { ctx.fillStyle = 'rgba(26,26,26,0.10)'; ctx.beginPath(); ctx.ellipse(wx(e.x), wy(e.y), R * 1.3 * PPM, R * 1.05 * PPM, 0, 0, TAU); ctx.fill(); }   // 군단부터 먹 그림자
-  for (const [dx, dy] of pts) drawSprite(e.sprite, e.x + dx, e.y + dy - lift, k, e.dir < 0, white, alpha, sq);
+  for (const [dx, dy] of pts) drawSprite(spr, e.x + dx, e.y + dy - lift, k, e.dir < 0, white, alpha, sq);
 }
 // 돌파 연출 그림(WP-15): 0~0.2초 흑백 심상이 화면이 물러나는 동안 걷히고, 새 경지 글자가 낙관처럼 찍힌다
 function drawBreakthrough() {

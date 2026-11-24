@@ -118,5 +118,19 @@ namespace BloodRain.Core.Tests
             Assert.Equal(2, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 240f));
             Assert.Equal(d.Count, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 9999f));
         }
+
+        [Fact]
+        public void 프로토타입은_적_정예_땅의_주인_원화가_있으면_그것으로_그린다()
+        {
+            // WP-13c·d·e '제 그림': 빌드가 Art/Enemies·Art/Bosses 를 foeArt 로 넣고, drawFoe 가 파일 이름 규칙(enemy_·elite_·boss_ + id)으로 고른다
+            var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"foeArt\": foe_art(),", build);
+            foreach (var key in new[] { "k = e.lordBoss ? 'boss_' + e.lordBoss : e.jang ? 'boss_jang_sam'", "'elite_' + ELITES[e.eliteKey].id", "k = 'enemy_' + e.type;", "const spr = foeArtName(e);", "get('art') !== '0'" })
+                Assert.Contains(key, Proto);
+            // 데이터의 정예·땅의 주인 id 가운데 원화 파일 이름과 맞는 것이 있어야 규칙이 산다
+            var art = System.IO.Path.Combine(TestData.RepoRoot, "unity", "BloodRain", "Assets", "Art");
+            Assert.True(System.IO.File.Exists(System.IO.Path.Combine(art, "Enemies", "elite_poison_toad_king.png")));
+            Assert.True(System.IO.File.Exists(System.IO.Path.Combine(art, "Bosses", "boss_hyeolheo.png")));
+        }
     }
 }
