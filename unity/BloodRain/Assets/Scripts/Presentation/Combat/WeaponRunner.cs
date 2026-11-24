@@ -1867,8 +1867,16 @@ namespace BloodRain.Presentation.Combat
             if (_look != null) _look.Lunge(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)), World.Length(meters));
         }
 
-        /// <summary>vfx.md 이펙트 다섯 단계(2026-11-16). 셈은 Core `WeaponGrowth.VisualStage`. 붓 획 텍스처는 여전히 세 단계(BrushTier).</summary>
-        static int FxStage(Slot s) => s.Def == null ? 1 : WeaponGrowth.VisualStage(s.Def, s.level);
+        /// <summary>vfx.md 이펙트 다섯 단계(2026-11-16). 셈은 Core `WeaponGrowth.VisualStage`. 붓 획 텍스처는 여전히 세 단계(BrushTier).
+        /// GU-10U ④(2026-11-25): 6단(신병합일, Core `Life.IsSixth`)이면 6. 6단은 5단 값 위에 얹는다(ByStage·SectFx.L 이 5단 값을 그대로 씀 — 시안 sects.html 의 L()).
+        /// 몸에서 오르는 문파 기운은 GearDropLayer.TickAura. 문파마다 6단 고유의 한 수(검강·금강의 손 등)는 규칙이 정해진 뒤(sinbyeong.md 6단 표).</summary>
+        static int FxStage(Slot s)
+        {
+            if (s.Def == null) return 1;
+            var lr = LifeRunner.Instance;
+            if (lr != null && lr.Life != null && lr.Life.IsSixth(s.id)) return 6;
+            return WeaponGrowth.VisualStage(s.Def, s.level);
+        }
 
         /// <summary>단계(1~5)마다 값 하나(시안의 L([..])).</summary>
         static float ByStage(int st, float a, float b, float c, float d, float e)

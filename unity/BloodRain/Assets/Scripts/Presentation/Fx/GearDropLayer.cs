@@ -202,10 +202,73 @@ namespace BloodRain.Presentation.Fx
             foreach (var (sr, _) in cols) if (sr != null) Destroy(sr.gameObject);
         }
 
+        // ---------- GU-10U ④ 6단 동안 몸에서 오르는 문파 기운(시안 sects.html: tier>=6 이면 초당 14개, 몸 둘레 ±0.7m 에서 1.2~2.4m/초로 오르고 0.5~0.9초) ----------
+        // 무공 그림은 FxStage 가 6을 넘겨 5단 값 위에 얹는다(WeaponRunner). 문파 밖 무공·시안이 없는 무공도 이 기운은 같다.
+        sealed class Mote { public SpriteRenderer Sr; public Vector2 Off, Vel; public float Age, Life; }
+        readonly List<Mote> _motes = new List<Mote>();
+        float _moteAcc;
+        /// <summary>시험용: 지금 6단인 무공이 있나, 떠 있는 기운 수.</summary>
+        public bool AuraOn { get; private set; }
+        public int AuraMotes { get; private set; }
+
+        void TickAura()
+        {
+            var life = runner.Life;
+            string six = null;
+            if (!life.GearSlot.Empty)
+                foreach (var wid in life.Loadout.Evolved)
+                    if (life.IsSixth(wid)) { six = wid; break; }
+            AuraOn = six != null;
+            float dt = Time.deltaTime, sc = Scale;
+            if (AuraOn && runner.player != null)
+            {
+                var def = Gear.Def(DataBoot.Data, life.GearSlot.GearId);
+                Color tint = SchoolTint.OfSchoolId(def.Sect) ?? new Color(0.85f, 0.69f, 0.23f);
+                _moteAcc += dt * (FxSettings.Simplified ? 5f : 14f);
+                while (_moteAcc >= 1f)
+                {
+                    _moteAcc -= 1f;
+                    Mote m = null;
+                    foreach (var q in _motes) if (!q.Sr.enabled) { m = q; break; }
+                    if (m == null)
+                    {
+                        var sr = new GameObject("신병합일 기운").AddComponent<SpriteRenderer>();
+                        sr.transform.SetParent(transform, false);
+                        sr.sprite = _shade;
+                        sr.sortingOrder = 24; // 몸(20) 앞
+                        m = new Mote { Sr = sr };
+                        _motes.Add(m);
+                    }
+                    m.Off = new Vector2(Random.Range(-0.7f, 0.7f), Random.Range(0f, 0.6f));
+                    m.Vel = new Vector2(Random.Range(-0.2f, 0.2f), Random.Range(1.2f, 2.4f));
+                    m.Age = 0f; m.Life = Random.Range(0.5f, 0.9f);
+                    m.Sr.color = new Color(Mathf.Lerp(tint.r, 1f, 0.15f), Mathf.Lerp(tint.g, 1f, 0.15f), Mathf.Lerp(tint.b, 1f, 0.15f), 0f); // 밝은 돌바닥에서도 읽히게 흰빛은 조금만
+                    m.Sr.enabled = true;
+                }
+            }
+            var at = PlayerPos;
+            int live = 0;
+            foreach (var m in _motes)
+            {
+                if (!m.Sr.enabled) continue;
+                m.Age += dt;
+                if (m.Age >= m.Life) { m.Sr.enabled = false; continue; }
+                live++;
+                float k = m.Age / m.Life;
+                var p = m.Off + m.Vel * m.Age;
+                m.Sr.transform.position = new Vector3(at.x + p.x * sc, at.y + p.y * sc, 0f);
+                float s = 0.13f * 4f * (1f - 0.4f * k) * sc; // 시안 size .13 은 빛 번짐까지 친 크기라 부드러운 점으로는 4배여야 비슷하게 읽힘, 위로 가며 작아짐
+                m.Sr.transform.localScale = new Vector3(s, s * 1.5f, 1f);
+                var c = m.Sr.color; c.a = Mathf.Min(1f, m.Age / 0.08f) * (1f - k) * 0.85f; m.Sr.color = c;
+            }
+            AuraMotes = live;
+        }
+
         void Update()
         {
             if (!Alive) return;
             TickSixth();
+            TickAura();
             float dt = Time.deltaTime;
             var me = PlayerPos;
             float sc = Scale;
