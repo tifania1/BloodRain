@@ -748,7 +748,7 @@ namespace BloodRain.Presentation.Combat
                     for (int k = 0; k < shots; k++)
                         Later(k * gap, () =>
                         {
-                            float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * size);
+                            float r = ws.Length(shot.Radius * WeaponGrowth.Area(s.Def, s.level) * areaMultiplier * GearArea(s) * size);
                             int before = _projs.Count;
                             Shoot(s, AimAngle(ws.Length(Aim.ProjectileReach(shot.Speed, shot.LifeSeconds * durationMultiplier))), ws.Speed(shot.Speed), r, dmg, pierce, shot.LifeSeconds * durationMultiplier, 0, shot.Homing, kb,
                                   palmEvo != null ? new Color(1f, 0.80f, 0.35f, 0.65f) : new Color(0.95f, 0.85f, 0.55f, 0.55f));
@@ -1272,7 +1272,7 @@ namespace BloodRain.Presentation.Combat
                             if (stormR > 0f)
                             {
                                 pr.Whirl = Mathf.Max(0.5f, WeaponGrowth.Cooldown(s.Def, s.level) * (1f - cooldownReduction)) * durationMultiplier;
-                                pr.WhirlR = ws.Length(stormR * areaMultiplier); pr.WhirlA = a; pr.WhirlW = shot.Speed / stormR; pr.Pierce = 999;
+                                pr.WhirlR = ws.Length(stormR * areaMultiplier * GearArea(s)); pr.WhirlA = a; pr.WhirlW = shot.Speed / stormR; pr.Pierce = 999;
                             }
                             _projs[_projs.Count - 1] = pr;
                         }
@@ -1570,7 +1570,7 @@ namespace BloodRain.Presentation.Combat
         bool BlackDragon(Slot s, BloodRain.Core.Data.EvolutionDef evo, float dmg, float slow)
         {
             var ws = World;
-            float GR = ws.Length(evo.Param("gatherRadius") * areaMultiplier);
+            float GR = ws.Length(evo.Param("gatherRadius") * areaMultiplier * GearArea(s));
             enemies.Sim.QueryCircle(new float2(P.x, P.y), GR, _gather);
             if (_gather.Count == 0) { s.Fired--; return false; }
             var f = Facing;
@@ -1580,7 +1580,7 @@ namespace BloodRain.Presentation.Combat
             int steps = WeaponShapes.GatherSteps(secs);
             // 사슬: 몸에서 가까운 적 여덟에게 어두운 줄기
             var agents = enemies.Sim.Agents;
-            float erEarly = ws.Length(evo.Param("explosionRadius") * areaMultiplier * explosionAreaMultiplier);
+            float erEarly = ws.Length(evo.Param("explosionRadius") * areaMultiplier * explosionAreaMultiplier * GearArea(s));
             if (Sfx)
             {
                 // VF-04U 흑룡탄(시안 blackDragon): 모일 자리에서 먹 사슬 여덟 + 검은 물 소용돌이
@@ -1615,7 +1615,7 @@ namespace BloodRain.Presentation.Combat
                         enemies.Sim.Set(i, a);
                     }
                     if (kk != steps) return;
-                    float ER = ws.Length(evo.Param("explosionRadius") * areaMultiplier * explosionAreaMultiplier);
+                    float ER = ws.Length(evo.Param("explosionRadius") * areaMultiplier * explosionAreaMultiplier * GearArea(s));
                     float rot = UnityEngine.Random.value * Mathf.PI * 2f;
                     if (Sfx) { _sfx.DragonBurst(c, ER); BloodRain.Presentation.Fx.HitFeel.Shake(0.3f, Mathf.PI * 0.5f); }   // VF-04U 검은 물이 용처럼 솟구침(시안)
                     else
@@ -1914,7 +1914,7 @@ namespace BloodRain.Presentation.Combat
             var ws = World;
             if (!Nearest(ws.Length(t.Param("searchRange")), out var dir)) return;
             var at = P + dir;
-            float R = ws.Length(t.Param("radius")) * areaMultiplier;
+            float R = ws.Length(t.Param("radius")) * areaMultiplier * GearArea(s); // GU-10U 병기 범위
             float dmg = Damage(s) * t.Param("damageMultiplier");
             float delay = t.Param("delaySeconds");
             AddFxAt(at, 0f, Mathf.PI * 2f, R, delay, new Color(0.55f, 0.75f, 0.95f, 0.25f)); // 떨어질 자리
