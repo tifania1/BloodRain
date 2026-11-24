@@ -2489,6 +2489,7 @@ MonoBehaviour:
   - prop_chest_closed
   - prop_chest_open
   - prop_chwigi_talisman
+  - prop_cook_fire_pot
   - prop_duck
   - prop_enc_elixir
   - prop_enc_go
@@ -2508,6 +2509,7 @@ MonoBehaviour:
   - prop_lantern
   - prop_lantern_silver
   - prop_market_stall
+  - prop_mat_lean_to
   - prop_mountain_gate
   - prop_pagoda_broken
   - prop_pagoda_mossy
@@ -2518,8 +2520,10 @@ MonoBehaviour:
   - prop_pine_cliff
   - prop_pine_gnarled
   - prop_pine_old
+  - prop_rag_awning
   - prop_rocks_small
   - prop_seal_stone_shard
+  - prop_shrine_bridge
   - prop_shrub
   - prop_silver_bag
   - prop_stone_lantern
@@ -2532,6 +2536,7 @@ MonoBehaviour:
   - prop_thunder_bomb
   - prop_village_house
   - prop_wine_jar
+  - prop_wine_jar_pile
   sprites:
   - {fileID: 21300000, guid: ff8d7d114e1d4099b2bb6e84b84f5d52, type: 3}
   - {fileID: 21300000, guid: 3a6d1678a0c9426c8ee8cf2a5e98ff34, type: 3}
@@ -2542,6 +2547,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d1541ed99bbd4c22a265c9885ad5d891, type: 3}
   - {fileID: 21300000, guid: 508eac2d33d4483ab606f7538463cd62, type: 3}
   - {fileID: 21300000, guid: b6c3d3b1b4c8488bb49a08b0ff237d7e, type: 3}
+  - {fileID: 21300000, guid: 28763434008d470789799c4a57c695fc, type: 3}
   - {fileID: 21300000, guid: ce2c34ee6f5147ebb4cf7c30ab22a4aa, type: 3}
   - {fileID: 21300000, guid: fc29f74acdac42a181fe333253bff65d, type: 3}
   - {fileID: 21300000, guid: 435db80c51564f7cad6026d6b05ab258, type: 3}
@@ -2561,6 +2567,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d75aab99b897455cade68f5fe2b51fb6, type: 3}
   - {fileID: 21300000, guid: 2315c06016d74d19b6b6fa768310df54, type: 3}
   - {fileID: 21300000, guid: 55a8136fadb648e99e1352e68b21b07a, type: 3}
+  - {fileID: 21300000, guid: 4bb279e8b075498b98a406f6234ff1f7, type: 3}
   - {fileID: 21300000, guid: 5957fefd3369454baa016ad0445a4e24, type: 3}
   - {fileID: 21300000, guid: 3d41602679894a1198f18ec517bcb0fd, type: 3}
   - {fileID: 21300000, guid: 7051f0059c55414e89ff11be8b8d5fdd, type: 3}
@@ -2571,8 +2578,10 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c9bde75a5d78477682e800a04b87e58c, type: 3}
   - {fileID: 21300000, guid: bbffbafbb12f434cb859af6277e7888e, type: 3}
   - {fileID: 21300000, guid: fc52d01c021f44b28e3d1c678d3d8d5a, type: 3}
+  - {fileID: 21300000, guid: c49ec0e0063e4e5e9edede51deae65bd, type: 3}
   - {fileID: 21300000, guid: e7e3c2f5b87d4383b0b90b828509f6f4, type: 3}
   - {fileID: 21300000, guid: 6c31a754973c4888a23c65edfd5ee830, type: 3}
+  - {fileID: 21300000, guid: 1cb555f7c10d49e6b163402cad05a110, type: 3}
   - {fileID: 21300000, guid: 9dcb03558dc94a349ba6d189f4f4c926, type: 3}
   - {fileID: 21300000, guid: c401985236444296a9450cda3b0293c0, type: 3}
   - {fileID: 21300000, guid: b509deb2933845bfa7fff248b217b067, type: 3}
@@ -2585,6 +2594,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: f401fdfa1bc24625b53416f1269107ee, type: 3}
   - {fileID: 21300000, guid: 249c37b8ed594f4da29d75875d0be976, type: 3}
   - {fileID: 21300000, guid: 97fb31992eee49fc83a06efcacde56cc, type: 3}
+  - {fileID: 21300000, guid: 41bd45af4159491da5574848705e3f6d, type: 3}
 --- !u!1 &1700858264
 GameObject:
   m_ObjectHideFlags: 0
