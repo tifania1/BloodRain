@@ -2954,6 +2954,7 @@ function update(dt) {
   lordTick(dt);             // 땅의 주인 깨어남·싸움 원(WP-13e)
   shadowTick(dt);           // 혈마의 그림자(현경 뒤 봉인석이 모자랄 때)
   trackChRegion();          // 밟은 땅(그리기 고리 밖 sim 에서도 정예·무리·고유 적이 땅을 알게)
+  crisisStep(dt);           // 문파의 위기(GU-11m): 겪음·버팀·무너짐
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
   ultStep(dt);   // 오의 박자·천마해체(WP-25)
   eliteShapesStep(dt);      // 정예 돌진·검진 고리·분신(WP-13d)
@@ -4261,8 +4262,41 @@ function trackChRegion() {
     if (first && G.t > 0.5) toast(r.nameKo, `${r.hanja} · 처음 밟은 땅 · 윤회의 기 +${QI.firstVisitRegion}`); else if (G.chRegion) toast(r.nameKo, r.hanja);
     G.chRegion = r.id;
   }
-  if (r) G.dens = densityAt(G.player.x * worldU(), G.player.y * worldU());
+  if (r) G.dens = densityAt(G.player.x * worldU(), G.player.y * worldU()) + crisisDensity(r.id);
   return r;
+}
+// 문파의 위기(GU-11m·GU-11h5, 2026-11-20 추천대로 — Core Life.NoteChronicle·HoldCrises·Crisis·CrisisDensity, chronicle.json crisis). 한 생 판에서만.
+// 사건 시각에 그 자리(지금 화면 대각선 절반 안)에 있으면 겪음 → 그 뒤 holdSeconds 를 같은 반경 안에서 버티면 막음(혼에 처음이면 윤회의 기 crisisFirstBlock).
+// 그 시각에 없었거나 버티다 반경 밖으로 나가면 무너짐: 그 땅 혈운 농도 +fallenRegionDensity, 무너진 문파 하나마다 천하 모든 땅 +fallenEachDensity
+const CHRON = DATA.chronicle || { crisis: {}, events: [] }, CRISIS = CHRON.crisis || {};
+const CRISES = (CHRON.events || []).map(e => ({ e, r: CH_REGS.find(x => x.id === e.region) })).filter(c => c.r);
+function crisisDensity(regionId) {
+  let add = 0;
+  for (const { e } of CRISES) if ((G.crisis || {})[e.id] === 'fallen') { add += CRISIS.fallenEachDensity || 0; if (e.region === regionId) add += CRISIS.fallenRegionDensity || 0; }
+  return add;
+}
+function crisisStep(dt) {
+  if (!G.body || !SCALE_MODE || isPro() || !CRISES.length) return;
+  const C = G.crisis = G.crisis || {}, H = G.crisisHeld = G.crisisHeld || {}, now = G.gm * 60, U = worldU();
+  const px = G.player.x * U, py = G.player.y * U, R = viewDiag() * U * 0.5;
+  for (const { e, r } of CRISES) {
+    const st = C[e.id];
+    if (st === 'blocked' || st === 'fallen' || now < e.atSeconds) continue;
+    const near = Math.hypot(r.x - px, r.y - py) <= R;
+    if (!st) {   // 시각이 막 지남: 그 자리에 있었으면 겪음, 없었으면 무너짐
+      if (near) { C[e.id] = 'present'; H[e.id] = 0; toast(e.placeKo || r.nameKo, `${e.nameKo} — ${CRISIS.holdSeconds}초를 이 자리에서 버티면 막는다`); }
+      else { C[e.id] = 'fallen'; toast(e.placeKo || r.nameKo, `${e.nameKo} — 그 자리에 없어 문파가 무너졌다. 혈운이 짙어진다`); }
+      continue;
+    }
+    if (!near) { C[e.id] = 'fallen'; toast(e.placeKo || r.nameKo, `자리를 떠나 ${e.nameKo}을(를) 막지 못했다`); continue; }
+    H[e.id] = Math.min(H[e.id] + dt * G.timeScale, now - e.atSeconds);
+    if (H[e.id] >= (CRISIS.holdSeconds || 60)) {
+      C[e.id] = 'blocked';
+      const first = !((G.soul0 || {}).crisesBlocked || []).includes(e.id) && !(G.crisesBlocked || []).includes(e.id);
+      (G.crisesBlocked = G.crisesBlocked || []).push(e.id);
+      toast(e.placeKo || r.nameKo, `${e.nameKo}을(를) 막았다` + (first ? ` · 윤회의 기 +${QI.crisisFirstBlock || 0}` : ''));
+    }
+  }
 }
 // 혈운 농도(10장): 가장 가까운 두 지역을 거리로 섞는다 v = (v1·d2 + v2·d1) / (d1 + d2). 천하 시안 densityAt 과 같은 식
 function densityAt(x, y) {
@@ -4293,6 +4327,8 @@ function lifeSettle() {
   if (lk2.length) rows.push([`혈영 다시 처치 ${lk2.length} × ${LR.repeatKill.rebirthQi}`, lk2.map(k => k.name).join(', '), lk2.reduce((a, k) => a + k.qi, 0)]);
   if (newVisits.length) rows.push([`처음 밟은 땅 ${newVisits.length} × ${QI.firstVisitRegion}`, newVisits.map(id => (CH_REGS.find(r => r.id === id) || { nameKo: id }).nameKo).join(', '), newVisits.length * QI.firstVisitRegion]);
   if (newRealms.length) rows.push([`처음 오른 경지 ${newRealms.length} × ${QI.firstReachRealm}`, newRealms.map(id => B.realms.find(r => r.id === id).nameKo).join(', '), newRealms.length * QI.firstReachRealm]);
+  const newBlocks = (G.crisesBlocked || []).filter(id => !(s0.crisesBlocked || []).includes(id));   // Core 줄 순서: 오른 경지 → 처음 막은 위기 → 은자
+  if (newBlocks.length) rows.push([`처음 막은 문파의 위기 ${newBlocks.length} × ${QI.crisisFirstBlock}`, newBlocks.map(id => (CRISES.find(c => c.e.id === id) || { e: { nameKo: id } }).e.nameKo).join(', '), newBlocks.length * QI.crisisFirstBlock]);
   rows.push([`남은 은자 ${G.silver} × ${QI.leftoverSilverRate}`, '쓰지 못한 은자도 기로 남는다', Math.round(QI.leftoverSilverRate * G.silver)]);
   // 타고난 성질(둔재·단명): 성질 배율 전 합 × 보너스, 반올림(Core FromTraits)
   if (G.body.qiBonus) rows.push([`타고난 성질 × ${(1 + G.body.qiBonus).toFixed(2)}`, G.body.traits.filter(id => TRAIT_BY[id].rebirthQi).map(id => `${TRAIT_BY[id].nameKo} +${Math.round(TRAIT_BY[id].rebirthQi * 100)}%`).join(', '), Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)]);
@@ -4317,7 +4353,7 @@ function lifeSettle() {
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
   // 찢긴 비급(20장, Core LifeLog.NoteSynergy → Soul.EndLife newTorn): 이번 생에 조건을 갖춘 잠긴 비급 가운데 처음 오르는 것
   const newTorn = [...G.syn.torn].filter(id => !(s0.torn || []).includes(id) && !(s0.restored || []).includes(id));
-  return { rows, total, crystal, top, newVisits, newRealms, newUnlocks, newWeapons, newTorn, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, newCostumes, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
+  return { rows, total, crystal, top, newVisits, newRealms, newBlocks, newUnlocks, newWeapons, newTorn, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, newCostumes, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -4325,6 +4361,7 @@ function recordLife(st) {
   m.visited = Array.isArray(m.visited) ? m.visited : []; m.reached = Array.isArray(m.reached) ? m.reached : [];
   for (const id of st.newVisits) if (!m.visited.includes(id)) m.visited.push(id);
   for (const id of st.newRealms) if (!m.reached.includes(id)) m.reached.push(id);
+  m.crisesBlocked = Array.isArray(m.crisesBlocked) ? m.crisesBlocked : []; for (const id of st.newBlocks || []) if (!m.crisesBlocked.includes(id)) m.crisesBlocked.push(id);   // 문파의 위기(GU-11m)
   // 땅의 주인(WP-13e): 봉인석·처치 수·열린 문파(시안 endLife 와 같은 칸)
   m.stones = Array.isArray(m.stones) ? m.stones : []; m.bossKills = m.bossKills && typeof m.bossKills === 'object' ? m.bossKills : {};
   if (!Array.isArray(m.unlocked)) m.unlocked = START_SECTS.slice();

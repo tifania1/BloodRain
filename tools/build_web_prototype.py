@@ -152,6 +152,9 @@ def data_blob() -> str:
         "gimmicks": {k: drop_notes(v) for k, v in load("gimmicks").items() if k in ("poisonFog", "fallingRocks", "blizzard", "redMoon", "water", "taijiFloor", "campfire", "pagodaForest", "bell", "bloodAltars", "layout")},   # layout: 지역 안 배치 값(R-10, 2026-11-20 — 프로토타입 CHG_LD 가 읽음)
         # 한 생 시간표(WP-14b): ?life= 판이 1장 시간표 대신 chapters.json life 의 bands·events 를 쓴다
         "lifePlan": {k: drop_notes(next(c for c in load("chapters")["chapters"] if c["id"] == "life")[k]) for k in ("bands", "events")},
+        # 문파의 위기(GU-11m·GU-11h5, chronicle.json): 한 생 판에서 사건 시각에 그 자리에 있으면 겪고, holdSeconds 버티면 막음, 아니면 무너져 혈운 농도가 오른다
+        "chronicle": {"crisis": drop_notes(load("chronicle")["crisis"]),
+                      "events": [{k: e.get(k) for k in ("id", "kind", "atSeconds", "region", "nameKo", "placeKo")} for e in load("chronicle")["events"] if e["kind"] == "sect_crisis" and e.get("region")]},
         "lifeLocalShare": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["localShare"],
         "eliteFallback": next(c for c in load("chapters")["chapters"] if c["id"] == "life")["eliteFallback"],
         # 한 생 시험(WP-14a): 주소 끝 ?life=<문파> 면 그 문파 몸(기혈·걸음·시작 무공·타고난 능력치)으로 그 문파 땅에서 한 생을 연다

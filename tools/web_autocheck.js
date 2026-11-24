@@ -14,7 +14,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const RUNS = parseInt(opt('runs', '3'), 10);
 const SHOTS = opt('shots', '');
-const ONLY = (opt('only', 'prologue,songshan,life,m3,lords,final,flow,weapons,manuals,links')).split(',');
+const ONLY = (opt('only', 'prologue,songshan,life,m3,lords,final,crisis,flow,weapons,manuals,links')).split(',');
 const SITE = path.join(__dirname, '..', 'web', 'prototype', 'site');
 if (!fs.existsSync(path.join(SITE, 'index.html'))) { console.log('X  site/ 가 없다. python tools/build_web_prototype.py 를 먼저 돌린다'); process.exit(1); }
 
@@ -474,6 +474,34 @@ async function linkRuns(browser, base) {
   await p.ctx.close();
 }
 
+// 문파의 위기(GU-11m): 개방 몸은 제 땅에서 개방 총타 위기를 겪고 60초 버텨 막는다, 소림 몸은 그 시각 멀리 있어 무너지고 혈운이 짙어진다
+async function crisisRuns(browser, base) {
+  for (const [sect, want] of [['gaebang', 'blocked'], ['shaolin', 'fallen']]) {
+    const label = `문파의 위기 ${sect}`;
+    const p = await openPage(browser, base + '/?life=' + sect, label);
+    const r = await p.page.evaluate((want) => {
+      const bad = [];
+      try {
+        startRun('full'); G.auto = false; running = false;
+        const c = CRISES.find(x => x.e.id === 'gaebang_scatter');
+        if (!c) return { bad: ['gaebang_scatter 사건이 데이터에 없음'], st: '' };
+        G.player.maxHp = G.player.hp = 1e9;
+        G.t = (c.e.atSeconds - 0.5) / G.timeScale;
+        for (let i = 0; i < 30 * 65 && !['blocked', 'fallen'].includes((G.crisis || {})[c.e.id]); i++) { G.player.hp = G.player.maxHp; step(1 / 30); if (overlay) { overlay = null; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); } }
+        const st = (G.crisis || {})[c.e.id];
+        if (st !== want) bad.push(`${c.e.id} 이 ${want} 가 아니라 ${st}`);
+        if (want === 'blocked' && !lifeSettle().rows.some(x => x[0].startsWith('처음 막은 문파의 위기'))) bad.push('정산에 막은 위기 줄 없음');
+        if (want === 'fallen' && Math.abs(crisisDensity('songshan') - CRISIS.fallenEachDensity) > 1e-6) bad.push(`무너진 뒤 숭산 농도 덧이 ${crisisDensity('songshan')}`);
+        return { bad, st };
+      } catch (err) { return { bad: ['오류: ' + err.message], st: '' }; }
+    }, want);
+    for (const b of r.bad) problems.push(`${label}: ${b}`);
+    flush(p, label);
+    rows.push({ what: label, res: r.bad.length ? '문제' : `통과(${r.st})` });
+    await p.ctx.close();
+  }
+}
+
 (async () => {
   const srv = await serve();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -486,6 +514,7 @@ async function linkRuns(browser, base) {
     if (ONLY.includes('m3')) await m3Runs(browser, base);
     if (ONLY.includes('lords')) await lordRuns(browser, base);
     if (ONLY.includes('final')) await finalRuns(browser, base);
+    if (ONLY.includes('crisis')) await crisisRuns(browser, base);
     if (ONLY.includes('flow')) await flowRuns(browser, base);
     if (ONLY.includes('weapons')) await weaponRuns(browser, base);
     if (ONLY.includes('manuals')) await manualRuns(browser, base);
