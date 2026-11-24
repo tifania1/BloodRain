@@ -570,7 +570,7 @@ function sectBonus(k) {   // Core SectTrait.Bonus(healthRatio, moving) 가운데
 const healMul = () => (sectT().healingMultiplier ?? 1) * (G && G.whisperTaken ? ENC_BY.whisper.params.healingMultiplier : 1);   // 마교 0.5, 혈마의 속삭임을 받으면 또 절반(WP-29)
 const harmonyMul = () => sectT().harmonyBonusMultiplier ?? 1;   // 무당 2
 // 혈공(WP-23, 5장, cheonha.json sects[demonic].bloodArt — Core BloodArt 그대로): 구슬 진기 × 그 자리 혈운 농도^xpDensityExponent,
-// 농도 덕에 더 받은 진기 extraXpPerStep 마다 음양이 음으로 yinPerStep(심마). 몸의 오의(천마해체)를 쓰면 음양이 시작값으로 — 웹은 오의가 아직 모든 몸 일검이라 마교 몸이 오의를 쓰면 그렇게 본다.
+// 농도 덕에 더 받은 진기 extraXpPerStep 마다 음양이 음으로 yinPerStep(심마). 몸의 오의(천마해체)를 쓰면 음양이 시작값으로(WP-25 부터 몸마다 문파 오의 — useUlt 의 resetUltimate).
 // 윤회의 기는 구슬 값 그대로(G.orbV·orbW 는 o.v 로 센다).
 // WP-29a(2026-11-20 추천대로, decisions #36): 마교 몸이 아니어도 혈마의 속삭임을 받으면 마교 혈공이 그 생에만 그대로 켜진다(Core Life.LendBloodArt)
 const DEMONIC_ART = ((DATA.sects || []).find(s => s.bloodArt) || {}).bloodArt || null;

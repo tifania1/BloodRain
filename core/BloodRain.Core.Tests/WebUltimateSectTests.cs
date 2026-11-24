@@ -1,3 +1,4 @@
+using System.Linq;
 using Xunit;
 using static BloodRain.Core.Tests.TestData;
 
@@ -32,6 +33,24 @@ namespace BloodRain.Core.Tests
                 Assert.Contains(k, html);
             Assert.Contains("if (G.taiji > 0) return;   // 태극무량: 받는 피해 무효", html);
             Assert.Contains("if (!b.refl && Math.hypot(p.x - b.x, p.y - b.y)", html);   // 되돌린 탄은 나를 안 맞힘
+        }
+
+        [Fact] public void 아홉_문파_오의가_모두_웹_오의_목록에_있다()
+        {
+            // WP-16: 시안(WebUltimateTests)이 보던 것을 합친 판에서도 — 목록에 없는 오의는 일검으로 바뀌어 버린다(bodyUlt)
+            var html = Proto;
+            var line = html.Split('\n').Single(l => l.StartsWith("const WEB_ULTS = new Set("));
+            foreach (var sect in Load().Cheonha.Sects)
+                Assert.Contains($"'{sect.Ultimate}'", line);
+        }
+
+        [Fact] public void 게이지는_처치_피격_정예와_태극_배율과_경지_보상을_따른다()
+        {
+            var html = Proto;
+            foreach (var used in new[] { "addUlt(B.ultimateCharge.perHit)", "e.elite ? B.ultimateCharge.perElite : B.ultimateCharge.perKill",
+                "B.yinyang.harmony.ultimateChargeBonus * harmonyMul()", "sectT().harmonyBonusMultiplier ?? 1",
+                "t === 'double_ultimate'", "/^ultimate_power_(\\d+(?:\\.\\d+)?)$/" })
+                Assert.Contains(used, html);
         }
     }
 }
