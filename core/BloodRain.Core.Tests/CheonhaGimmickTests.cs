@@ -96,7 +96,27 @@ namespace BloodRain.Core.Tests
             foreach (var key in new[] { "E_BY_ID[type].onlyInWater && !inWaterC(x, y)", "D.pull && d < D.pull.range && p.dashT <= 0", "G.pullStamp !== G.t && inWaterC(e.x, e.y)", "const v = D.pull.speed * dt" })
                 Assert.Contains(key, Proto);
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"water\", \"taijiFloor\", \"campfire\", \"pagodaForest\", \"bell\"", build);
+            Assert.Contains("\"water\", \"taijiFloor\", \"campfire\", \"pagodaForest\", \"bell\", \"bloodAltars\"", build);
+        }
+
+        [Fact]
+        public void 프로토타입_혈제단은_gimmicks_값과_Core_LitCount_를_따른다()
+        {
+            // 자리(layout.altarRing 고리, 북동부터 시계 방향), 켜진 수(Core BloodAltarGimmick.LitCount 와 같은 식), 강화(걸음·피해), 기혈(적 기혈 식), 부수면 보갑
+            foreach (var key in new[]
+            {
+                "L.altarRing ?? 12", "L.altarOrderFromDegrees ?? 45", "(a0 - 90 * i) * Math.PI / 180",
+                "t < d.firstLightSeconds ? 0 : Math.min(d.count, 1 + (d.lightEverySeconds > 0 ? Math.floor((t - d.firstLightSeconds) / d.lightEverySeconds) : d.count))",
+                "GIMW.bloodAltars.enemyMoveSpeedMultiplier", "src && src.altarBuffed) dmg *= GIMW.bloodAltars.enemyDamageMultiplier", "d.health * foeHpMul()",
+                "if (e.altar) return altarDown(e);", "GIMW.bloodAltars.chestOnBreak", "st.ratio = st.e.hp / st.e.maxHp",
+            })
+                Assert.Contains(key, Proto);
+            // 웹 식이 Core 와 같은 값을 내는지: 120초 0개 미만, 120초 1, 239초 1, 240초 2, 아주 나중에 상한 4
+            var d = TestData.Load().Gimmicks.BloodAltars;
+            Assert.Equal(0, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 119f));
+            Assert.Equal(1, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 120f));
+            Assert.Equal(2, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 240f));
+            Assert.Equal(d.Count, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 9999f));
         }
     }
 }

@@ -2186,6 +2186,7 @@ function hurtEnemy(e, dmg, w, kx, ky, kb, sureCrit) {   // sureCrit: 반드시 �
   return crit;
 }
 function killEnemy(e, crushed) {
+  if (e.altar) return altarDown(e);   // 혈제단: 처치 셈·진기·오의 없이 보갑만
   e.dead = true; G.kills += clusterOf(e);
   if (e.elite && G.body) G.eliteKills++;   // 혈정(WP-14c)   // 처치 수는 덩이 속 사람 수(축척 시험, 7장). 진기는 덩이 하나에 적 하나 값
   // 흑백 쌍강시(WP-13c): 짝이 살아 있으면 reviveSeconds 뒤 짝 곁에서 반 기혈로 일어난다(시안과 같음)
@@ -2277,6 +2278,7 @@ function hurtPlayer(dmg, src, kind) {
   if (G.taiji > 0) return;   // 태극무량: 받는 피해 무효(WP-25)
   if (G.insights.includes('geumjong') && p.block <= 0) { p.block = IP.geumjong.intervalSeconds; addEffect('ring', p.x, p.y, { r: 1.2, color: '#C9A227', life: 0.4 }); return; }
   if (G.empower) dmg *= G.empower.dmg;   // 혈월(WP-13e): 화면 위 적 피해
+  if (src && src.altarBuffed) dmg *= GIMW.bloodAltars.enemyDamageMultiplier;   // 켜진 혈제단 곁 적(WP-13b)
   if (G.shadow && kind !== 'shadow' && kind !== 'self') dmg *= shadowStrength(G.shadow.step).enemyMul;   // 혈마의 그림자: 화면 위 다른 적 피해
   dmg *= yyFieldMul();   // 흑백 구역(WP-13e)
   { const ev = sectBonus('Evade'); if (ev > 0 && Math.random() < ev) { addEffect('ring', p.x, p.y, { r: 0.8, color: '#8FA8B8', life: 0.25 }); return; } }   // 수로채 움직이는 동안 회피 15%(WP-20, Core Evade.Roll)
@@ -2914,6 +2916,7 @@ function update(dt) {
     e.flash = Math.max(0, e.flash - dt); e.contact = Math.max(0, e.contact - dt); e.life += dt;
     if (e.poison > 0) e.poison -= dt; if (e.fire > 0) e.fire -= dt;
     if (e.burn > 0) { e.burn -= dt; e.burnAcc = (e.burnAcc || 0) + dt; if (e.burnAcc >= B.enemyStatus.burnTickSeconds) { e.burnAcc = 0; hurtEnemy(e, e.burnDps * B.enemyStatus.burnTickSeconds, e.burnW, 0, 0, 0); if (e.dead) continue; } }
+    if (e.altar) { e.x = e.homeX; e.y = e.homeY; e.kbx = e.kby = 0; e.stun = 0; continue; }   // 혈제단: 움직이지 않고 닿아도 안 아프다
     if (e.stun > 0 || freezeOn) { e.stun -= dt; e.kbx *= 0.85; e.kby *= 0.85; continue; }
     let dx = p.x - e.x, dy = p.y - e.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
     const slow = 1 - e.slow; e.slow = Math.max(0, e.slow - dt * B.enemyStatus.slowFadePerSecond);
@@ -2937,6 +2940,7 @@ function update(dt) {
     if (e.roarT > 0) { vx *= 1 + (e.roarBonus || 0); vy *= 1 + (e.roarBonus || 0); }   // 혈사자 포효(WP-13c)
     if (e.flagT > 0) { e.flagT -= dt; vx *= 1 + (e.flag || 0); vy *= 1 + (e.flag || 0); if (e.flagT <= 0) e.flag = 0; }   // 기수 깃발(WP-50)
     if (G.wEnemy && G.wEnemy !== 1 && !e.boss) { vx *= G.wEnemy; vy *= G.wEnemy; }   // 눈보라·붉은 달(WP-13b)
+    e.altarBuffed = nearLitAltar(e); if (e.altarBuffed) { const am = GIMW.bloodAltars.enemyMoveSpeedMultiplier; vx *= am; vy *= am; }   // 켜진 혈제단 곁(피해는 hurtPlayer 에서)
     if (G.waterOn && !e.boss && e.type !== 'water_ghost' && !(E_BY_ID[e.type] || {}).ignoresTerrain && inWaterC(e.x, e.y)) { const wm = or1(GIMW.water.moveSpeedMultiplier); vx *= wm; vy *= wm; }   // 물: 나는 적·수귀는 그대로(WP-13b)
     if (G.campOn && (E_BY_ID[e.type] || {}).family === GIMW.campfire.slowedFamily && nearCampfireC(e.x, e.y)) { const cm = or1(GIMW.campfire.slowedMoveSpeedMultiplier); vx *= cm; vy *= cm; }   // 모닥불 곁 빙강시(WP-13b)
     if (G.empower && !e.boss) { vx *= G.empower.spd; vy *= G.empower.spd; }   // 혈월(WP-13e)
@@ -5090,6 +5094,60 @@ function regionGimmicksStep(dt) {
     }
   }
   if (G.pagodaOn && !G.pagodaHint) { const pt = CHG.pagodaPatchAt(ax, ay); if (pt && Math.hypot(ax - pt.x, ay - pt.y) < pt.R) { G.pagodaHint = true; toast(GIMW.pagodaForest.nameKo, '돌탑 사이 좁은 길 · 걷는 것은 모두 막힌다'); } }
+  bloodAltarsStep();   // 혈제단(십만대산, WP-13b 마지막 조각)
+}
+// ───────── 혈제단(십만대산, WP-13b 마지막 조각) ─────────
+// 값은 gimmicks.json bloodAltars, 자리는 layout(altarRing·altarOrderFromDegrees — gimmick_start_values.md 2절, 2026-11-20 '표대로').
+// 지역 한가운데 둘레 altarRing m 고리의 네 귀퉁이에 넷, 켜지는 차례는 북동(45°)부터 시계 방향. 길이는 지금 경지 화면 m(= 싸움 좌표, worldU 가 곧 축척)라
+// 경지가 바뀌면 새 축척으로 다시 놓고, 부순 것과 깎인 기혈 비율은 그대로 둔다. 켜진 수는 한 생 시계(Core BloodAltarGimmick.LitCount).
+// 제단은 적 목록에 '움직이지 않는 정예'(altar)로 넣어 무공이 그대로 깎게 한다 — 걷기·접촉·밟힘·처치 셈은 건너뛰고, 부수면 보갑 하나.
+// 켜지기 전에도 깎을 수 있다(기획서에 없음 — 미리 부수면 그 제단은 켜지지 않는다).
+const altarLitCount = (d, t) => t < d.firstLightSeconds ? 0 : Math.min(d.count, 1 + (d.lightEverySeconds > 0 ? Math.floor((t - d.firstLightSeconds) / d.lightEverySeconds) : d.count));
+function bloodAltarsStep() {
+  const d = GIMW.bloodAltars; if (!d) return;
+  const L = (DATA.gimmicks || {}).layout || {}, ring = L.altarRing ?? 12, a0 = L.altarOrderFromDegrees ?? 45, tier = tierNow();
+  const reg = CH_REGS.find(r => r.gimmicks.includes(d.id)); if (!reg) return;
+  // 경지가 바뀌면 지금 놓인 것을 거두고(기혈 비율은 남김) 다음에 그 땅에 서 있을 때 새 축척으로 다시 놓는다
+  if (G.altarSt && G.altarTier !== tier) {
+    for (const st of G.altarSt) if (st.e) { if (!st.e.dead) st.ratio = st.e.hp / st.e.maxHp; st.e.dead = true; st.e = null; }
+    G.altarTier = -1;
+  }
+  if (hereHas(d.id) && G.altarTier !== tier) {
+    if (!G.altarSt) { G.altarSt = Array.from({ length: d.count }, () => ({ broken: false, ratio: 1, e: null })); toast(d.nameKo, `제단 ${d.count}개 · 켜지면 둘레 ${d.buffRadius}m 적이 세진다 · 부수면 보갑`); }
+    const U = worldU(), hp = d.health * foeHpMul();
+    G.altarSt.forEach((st, i) => {
+      if (st.broken) return;
+      const a = (a0 - 90 * i) * Math.PI / 180, x = reg.x / U + Math.cos(a) * ring, y = reg.y / U - Math.sin(a) * ring;   // y 는 남쪽이 + (북동 → 남동 → 남서 → 북서)
+      st.e = spawnEnemy('sigang', x, y, { altar: true, altarIdx: i, homeX: x, homeY: y, elite: true, name: d.nameKo, sprite: 'altar', hp: hp * st.ratio, maxHp: hp, speed: 0, dmg: 0, r: 0.9, kbRes: 1, xp: 0, born: 99 });
+    });
+    G.altarTier = tier;
+  }
+  // 켜졌고 안 부서진 제단(적 고리가 걸음·피해를 곱한다)
+  const n = altarLitCount(d, G.t); G.altarLit = [];
+  if (G.altarSt) G.altarSt.forEach((st, i) => { if (i < n && !st.broken && st.e && !st.e.dead) { G.altarLit.push(st.e); if (!st.e.lit) { st.e.lit = true; toast(d.nameKo, '제단에 불이 켜졌다 · 둘레 적이 세진다'); } } });
+}
+function nearLitAltar(e) {
+  if (!G.altarLit || !G.altarLit.length || e.altar) return false;
+  const R = GIMW.bloodAltars.buffRadius;
+  for (const a of G.altarLit) if (Math.hypot(e.x - a.x, e.y - a.y) <= R) return true;
+  return false;
+}
+function altarDown(e) {
+  e.dead = true; const st = G.altarSt && G.altarSt[e.altarIdx]; if (st) { st.broken = true; st.e = null; }
+  addEffect('burst', e.x, e.y, { r: 2.4, color: '#5A1A1A' }); sfx('kill');
+  if (GIMW.bloodAltars.chestOnBreak) G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 });
+  toast(GIMW.bloodAltars.nameKo, '제단이 무너졌다 · 보갑');
+}
+function drawAltar(e) {
+  const X = wx(e.x), Y = wy(e.y), s = e.r * PPM;
+  if (e.lit) {   // 켜진 제단: 강화 반경 점선 + 붉은 불
+    ctx.strokeStyle = 'rgba(179,38,30,0.45)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.arc(X, Y, GIMW.bloodAltars.buffRadius * PPM, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    const g = ctx.createRadialGradient(X, Y - s, 0, X, Y - s, s * 1.6); g.addColorStop(0, 'rgba(179,38,30,0.7)'); g.addColorStop(1, 'rgba(179,38,30,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y - s, s * 1.6, 0, TAU); ctx.fill();
+  }
+  ctx.fillStyle = e.flash > 0 ? '#8A7F70' : '#3A3430'; ctx.fillRect(X - s, Y - s * 0.6, s * 2, s * 1.2);   // 돌 제단
+  ctx.fillStyle = '#1A1A1A'; ctx.fillRect(X - s * 1.15, Y + s * 0.5, s * 2.3, s * 0.3);
+  ctx.fillStyle = e.lit ? '#B3261E' : '#5A5048'; ctx.fillRect(X - s * 0.5, Y - s * 0.9, s, s * 0.3);
+  const bw = 1.8 * PPM; ctx.fillStyle = 'rgba(26,26,26,.25)'; ctx.fillRect(X - bw / 2, Y - s * 1.6, bw, 5); ctx.fillStyle = '#B3261E'; ctx.fillRect(X - bw / 2, Y - s * 1.6, bw * Math.max(0, e.hp / e.maxHp), 5);
 }
 function drawRegionGimmicks() {
   for (const f of G.fogs || []) { const R = fogR(f) * PPM; if (R < 1) continue; const g = ctx.createRadialGradient(wx(f.x), wy(f.y), 0, wx(f.x), wy(f.y), R); g.addColorStop(0, 'rgba(90,130,60,0.30)'); g.addColorStop(1, 'rgba(90,130,60,0.05)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(f.x), wy(f.y), R, 0, TAU); ctx.fill(); }
@@ -5420,6 +5478,7 @@ function render() {
   drawThralls();   // 어강술 내 편 강시
   // 적
   for (const e of G.enemies) {
+    if (e.altar) { drawAltar(e); continue; }
     let sq = 1, lift = 0;
     if (e.behavior === 'hop_chase' && !e.elite && !e.boss && !(e.stun > 0) && !(G.freeze > 0)) { const h = e.hop; if (h < HOP_DUTY) { lift = Math.sin(h / HOP_DUTY * Math.PI) * 0.35; sq = 1 + lift * 0.25; } else sq = 0.86 + (h - HOP_DUTY) * 0.5; }
     // 아래 경지에서 생긴 적은 그 축척만큼 작게(WP-15). 자리·r 은 돌파 때 이미 줄였다
@@ -5504,6 +5563,7 @@ function drawEdgeHints() {
   }
   const off = [];
   for (const e of G.enemies) {
+    if (e.altar) continue;   // 혈제단은 화면 밖 표시에 안 띄운다
     const kind = e.boss ? 'boss' : e.elite ? 'elite' : e.type === 'golden_toad' ? 'toad' : null; if (!kind || e.hp <= 0) continue;
     const x = wx(e.x), y = wy(e.y); if (x >= 0 && x <= VW && y >= 0 && y <= VH) continue;
     off.push({ kind, x, y, d: Math.hypot(x - VW / 2, y - VH / 2) });
