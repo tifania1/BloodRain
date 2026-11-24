@@ -69,7 +69,7 @@ namespace BloodRain.Core.Tests
             var layout = TestData.Load().Gimmicks.Layout;
             Assert.True(ld.Success);
             var pairs = Regex.Matches(ld.Groups[1].Value, @"(\w+): ([\d.]+)");
-            Assert.Equal(9, pairs.Count);   // LG-04 대숲 간격 bambooSpacing 더함
+            Assert.Equal(11, pairs.Count);   // LG-04 bambooSpacing, LG-05a cliffSpacing·plumSpacing 더함
             foreach (Match p in pairs)
             {
                 var key = p.Groups[1].Value;
@@ -123,7 +123,7 @@ namespace BloodRain.Core.Tests
         {
             // LG-01 운해·LG-02 역류 파도: 빌드가 두 값을 넣고, 웹 박자 식이 Core BloomsBetween·StartsBetween 과 같은 꼴
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"cloudSea\", \"reverseWave\", \"driftingBoats\", \"bambooThicket\"", build);
+            Assert.Contains("\"cloudSea\", \"reverseWave\", \"driftingBoats\", \"bambooThicket\", \"cliffPath\", \"plumHeaps\"", build);
             foreach (var key in new[]
             {
                 "const up = Math.floor((b - first) / period) + 1, bef = a < first ? 0 : Math.floor((a - first) / period) + 1",
@@ -137,6 +137,9 @@ namespace BloodRain.Core.Tests
                 // LG-04 대나무 덤불: 탑림 놓기(포기 반경 stalkRadius), 걷는 것만 막음, 맞은 수·다시 서는 시각·음식은 데이터
                 "LD.bambooSpacing * k", "pagodaRadius: def.stalkRadius", "flying && !def.blocksFlying", "Math.max(1, def.hitsToBreak)",
                 "G.t + def.regrowSeconds", "def.dropChance", "G.player.maxHp * def.healMaxHealthRatio", "if (w && G.bambooOn) cutBambooC(",
+                // LG-05a 잔도·매화 더미
+                "LD.cliffSpacing * k", "def.patchRadius * k, half: def.pathWidth * k / 2", "def.paths >= 2 && Math.abs(dx) <= pt.half", "LD.plumSpacing * k",
+                "g.touchRadius * k", "G.t + g.regrowSeconds", "p.maxHp * g.healMaxHealthRatio * otherHeal()",
             })
                 Assert.Contains(key, Proto);
             // 박자 값이 Core 와 같은지(웹 식을 그대로 C# 으로): 운해 12초마다, 역류 120초마다
