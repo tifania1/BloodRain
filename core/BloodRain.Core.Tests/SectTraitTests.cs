@@ -97,10 +97,10 @@ namespace BloodRain.Core.Tests
             var e = C.Sect("demonic").TraitEffect!;
             Assert.Contains($"{Pct(e.LowHealthFullAt)} 이하 최대 +50%", Cell("마교"));
             Assert.Contains($"{Pct(e.LowHealthFullAt)} 이하에서 쾌속 +{e.LowHealthCooldownReduction.ToString(Inv)}", TestData.GddSection("한눈에 보기"));
-            // 웹 천하 시안도 같은 셈(쾌속 합에 더하고 상한에서 자름)
-            var html = TestData.ReadRepoFile("web", "lookdev", "cheonha.html");
-            Assert.Contains("harmonyCdr() + lowHealthCdr())", html);
-            Assert.Contains("(1 - p.hp / p.maxHp) / (1 - full)", html);
+            // 웹 합친 판도 같은 셈(쾌속 합에 더하고 상한에서 자름). 2026-11-25(WP-16)까지는 천하 시안을 봤다
+            var html = TestData.ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("T.lowHealthCooldownReduction * clamp((1 - clamp(hr, 0, 1)) / (1 - full), 0, 1)", html);
+            Assert.Contains("Math.min(B.stats.cooldownReductionCap, S.cdr + sectBonus('CooldownReduction'))", html);
         }
 
         [Fact] public void 아홉_문파_모두_효과_칸이_있고_능력치_이름은_모두_읽힌다()
