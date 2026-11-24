@@ -132,6 +132,8 @@ def data_blob() -> str:
         "costumes": [drop_notes(c) for c in load("cheonha").get("costumes", [])],
         # 모드와 열리는 조건(7장 '모드', Core Meta/Modes). 웹은 열림만 셈하고 모드 자체는 없다(WP-67)
         "modes": [drop_notes(m) for m in load("cheonha").get("modes", [])],
+        # Steam 업적 22(20장 'Steam 업적', Core Meta/Achievements). 웹은 정산 때 처음 갖춘 것을 혼 기록에 적고 정산 화면에 한 줄
+        "achievements": [drop_notes(a) for a in load("cheonha").get("achievements", [])],
         # 땅의 주인 컷 줄(docs/story/boss_cuts.md): 프로토타입은 만남 첫 줄·2막 예고·처치 첫 줄·혈영 메아리만 알림으로
         "lordLines": {l["id"]: {"cuts": drop_notes(l.get("cuts", [])), "phase2Ko": l.get("phase2Ko"), "echoKo": l.get("echoKo"), "bloodMoonKo": l.get("bloodMoonKo")} for l in load("dialogue")["lords"]["list"]},
         "lordPatterns": {k: drop_notes(v) for k, v in load("bosspatterns")["bosses"].items() if not k.startswith("_") and k != "jang_sam"},

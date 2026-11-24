@@ -4438,6 +4438,7 @@ function recordLife(st) {
     else if (st.ending === 'true') m.journeyOver = true;
   }
   m.newModes = modeRefresh(m);   // Core LifeSummary.NewModes(EndLife·ChooseEnding 뒤 Modes.Refresh)
+  m.newAch = achRefresh(m);   // 업적(Core Soul.EndLife·ChooseEnding 뒤 Achievements.Refresh)
   soulSave(m);
   return m;
 }
@@ -4529,6 +4530,28 @@ function modeMeets(m, d) {
 function modeRefresh(m) {
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : []; const opened = [];
   for (const d of MODES) { const t = 'mode:' + d.id; if (m.unlocks.includes(t) || !modeMeets(m, d)) continue; m.unlocks.push(t); opened.push(d.id); }
+  return opened;
+}
+// 업적(20장 'Steam 업적', cheonha.json achievements, Core Meta/Achievements): 조건은 혼 기록만 보고, 얻은 것은 unlocks 에 achievement:<id> 로 남아 회귀해도 그대로.
+//   절기 다 깨움·비전 다 찾음은 Core 가 혼(HasAwakened·Codex)으로 보는데, 웹은 그 둘을 혼 기록이 아니라 이 창의 각성 기록(awoke)·도감(dex)에 두니 그것을 본다.
+//   땅의 주인은 Core 가 지역 id(boss:<지역>), 웹 bossKills 는 땅의 주인 id 라 BOSS_OF_REGION 으로 바꿔 본다.
+const ACHS = DATA.achievements || [];
+function achMeets(m, a) {
+  const i = a.when.indexOf(':'), kind = a.when.slice(0, i), arg = a.when.slice(i + 1);
+  switch (kind) {
+    case 'realm': return (m.reached || []).includes(arg);
+    case 'boss': return ((m.bossKills || {})[BOSS_OF_REGION[arg]] || 0) > 0;
+    case 'ending': return (m.endingsSeen || []).includes(arg);
+    case 'title': return (m.titles || []).includes(arg);
+    case 'evolutions': return DATA.evolutions.every(e => seenAwaken.has(e.id));
+    case 'secrets': return SYN.secrets.every(x => dex.has('secret:' + x.id));
+    case 'sealstones': return LR && LR.finalRequires ? (m.stones || []).length >= LR.finalRequires.sealStones : false;
+    default: return false;
+  }
+}
+function achRefresh(m) {   // Core Achievements.Refresh
+  m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : []; const opened = [];
+  for (const a of ACHS) { const t = 'achievement:' + a.id; if (m.unlocks.includes(t) || !achMeets(m, a)) continue; m.unlocks.push(t); opened.push(a.id); }
   return opened;
 }
 function facRefresh(m) {   // Core Inn.Refresh
@@ -6386,6 +6409,7 @@ function endRun(won) {
     }
     facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
     if ((st.newTitles || []).length) facts.push([st.newTitles.map(id => TITLE_BY[id].nameKo).join(' · '), '새 칭호']);   // WP-34
+    if ((m.newAch || []).length) facts.push([m.newAch.map(id => (ACHS.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 업적']);   // 20장 'Steam 업적'
     if ((m.newModes || []).length) facts.push([m.newModes.map(id => (MODES.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 모드 · 이 판엔 아직 없다']);   // WP-67
     if ((st.newCostumes || []).length) facts.push([st.newCostumes.map(t => { const c = (DATA.costumes || []).find(x => 'costume:' + x.id === t); return c ? `${SPK[c.character] || c.character} 의상` : t; }).join(' · '), '새 의상 · 그림은 아직']);   // WP-51
     if ((st.newTorn || []).length) facts.push([st.newTorn.map(manualName).join(' · '), '찢긴 비급 · 장경각에 올랐다']);   // 20장 '비급 층과 해금'
