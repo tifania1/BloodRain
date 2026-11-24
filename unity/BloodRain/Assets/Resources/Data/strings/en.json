@@ -12,6 +12,7 @@
       "dialogue",
       "enemies",
       "evolutions",
+      "gear",
       "gimmicks",
       "insights",
       "passives",
@@ -1478,5 +1479,19 @@
   "cheonha.achievements.all_secrets.name": "Keeper of Secrets",
   "cheonha.achievements.all_secrets.desc": "Discover all eight Secret Arts",
   "cheonha.achievements.all_seal_stones.name": "Seven Shards",
-  "cheonha.achievements.all_seal_stones.desc": "Gather all seven seal stones in one cycle"
+  "cheonha.achievements.all_seal_stones.desc": "Gather all seven seal stones in one cycle",
+  "gear.grades.beom.name": "Common Arm",
+  "gear.grades.yang.name": "Fine Arm",
+  "gear.grades.myeong.name": "Famed Arm",
+  "gear.grades.sin.name": "Divine Arm",
+  "gear.mumyeong_iron_sword.name": "Nameless Iron Sword",
+  "gear.vajra_beads.name": "Vajra Prayer Beads",
+  "gear.drunken_immortal_staff.name": "Drunken Immortal Staff",
+  "gear.changcheon_blade.name": "Azure Sky Sword",
+  "gear.azure_scale_dagger.name": "Azure Scale Dagger",
+  "gear.water_parting_sickle.name": "Water-Parting Sickle",
+  "gear.black_tortoise_sword.name": "Black Tortoise Sword",
+  "gear.plum_blossom_sword.name": "Plum Blossom Sword",
+  "gear.thunder_seal.name": "Thunder Seal",
+  "gear.blood_claw_gauntlet.name": "Blood Claw Gauntlet"
 }

@@ -12,6 +12,7 @@
       "dialogue",
       "enemies",
       "evolutions",
+      "gear",
       "gimmicks",
       "insights",
       "passives",
@@ -1478,5 +1479,19 @@
   "cheonha.achievements.all_secrets.name": "秘传尽得",
   "cheonha.achievements.all_secrets.desc": "寻得全部八门秘传",
   "cheonha.achievements.all_seal_stones.name": "七片封石",
-  "cheonha.achievements.all_seal_stones.desc": "一轮之中集齐七块封印石"
+  "cheonha.achievements.all_seal_stones.desc": "一轮之中集齐七块封印石",
+  "gear.grades.beom.name": "凡兵",
+  "gear.grades.yang.name": "良兵",
+  "gear.grades.myeong.name": "名兵",
+  "gear.grades.sin.name": "神兵",
+  "gear.mumyeong_iron_sword.name": "無名铁剑",
+  "gear.vajra_beads.name": "金刚念珠",
+  "gear.drunken_immortal_staff.name": "醉仙杖",
+  "gear.changcheon_blade.name": "蒼天剑",
+  "gear.azure_scale_dagger.name": "青鳞匕",
+  "gear.water_parting_sickle.name": "分水镰",
+  "gear.black_tortoise_sword.name": "玄武剑",
+  "gear.plum_blossom_sword.name": "梅花剑",
+  "gear.thunder_seal.name": "霹雳印",
+  "gear.blood_claw_gauntlet.name": "血爪手甲"
 }

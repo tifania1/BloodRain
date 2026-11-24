@@ -43,6 +43,8 @@ namespace BloodRain.Core.Data
         public CreditsDef Credits { get; private set; } = new CreditsDef();
         /// <summary>천하 연표(chronicle.json, 설계안 cheonha_expansion '천하 연표'). 판정은 World.Chronicle.</summary>
         public ChronicleDef Chronicle { get; private set; } = new ChronicleDef();
+        /// <summary>문파 병기와 등급(gear.json, 기획서 8장 '문파 병기와 6단'). 판정은 Build.Gear.</summary>
+        public GearFileDef Gear { get; private set; } = new GearFileDef();
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -96,10 +98,11 @@ namespace BloodRain.Core.Data
                 Dialogue = Read<DialogueDef>("dialogue"),
                 Credits = Read<CreditsDef>("credits"),
                 Chronicle = Read<ChronicleDef>("chronicle"),
+                Gear = Read<GearFileDef>("gear"),
             };
         }
 
-        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha", "bosspatterns", "gimmicks", "dialogue", "credits", "chronicle" };
+        public static readonly string[] FileNames = { "weapons", "passives", "evolutions", "characters", "enemies", "balance", "synergies", "insights", "chapters", "cheonha", "bosspatterns", "gimmicks", "dialogue", "credits", "chronicle", "gear" };
 
         public WeaponDef Weapon(string id) => Weapons.First(w => w.Id == id);
         public PassiveDef Passive(string id) => Passives.First(p => p.Id == id);

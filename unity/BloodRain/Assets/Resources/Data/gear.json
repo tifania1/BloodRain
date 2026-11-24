@@ -1,0 +1,157 @@
+{
+  "_note": "문파 병기(기획서 8장 '문파 병기와 6단', 설계 docs/design/sinbyeong.md). 병기 칸은 한 생에 하나, 주운 생에서만 쓴다. 같은 병기를 다시 주우면 한 등급 오르고(처음은 범병), 다른 병기를 주우면 그것으로 바꿔 범병부터. 그 문파 땅에서 droppers 의 적을 쓰러뜨리면 drop.chance(+ 기연 1마다 luckBonus)로, guaranteed 의 정예를 쓰러뜨리면 확정으로 떨어진다. 그 땅의 주인을 쓰러뜨리면 그 문파 병기를 쥐고 있을 때 한 등급 오른다. 등급 피해·범위는 그 문파 무공 전부(synergies schools members 가운데 무공, 문파가 없는 병기는 weapon 하나)에 든다. 6단(신병합일)은 신병 등급 + weapon(대표 무공)이 절기로 깨어 있을 때. 판정은 Core Build.Gear.",
+  "_noteTemp": "drop 숫자와 등급 offerWeight 는 임시(설계안 추천값). backlog GU-10c 시뮬레이션 뒤 확정한다. droppers 가 빈 문파는 아직 '강시가 된 그 문파 제자' 일반 적이 없는 곳이라 정예에서만 나온다(backlog GU-10b2).",
+  "drop": {
+    "chance": 0.0015,
+    "luckBonus": 5e-05
+  },
+  "grades": [
+    {
+      "id": "beom",
+      "nameKo": "범병",
+      "hanja": "凡兵",
+      "damage": 0.05,
+      "area": 0,
+      "offerWeight": 1,
+      "sixth": false
+    },
+    {
+      "id": "yang",
+      "nameKo": "양병",
+      "hanja": "良兵",
+      "damage": 0.1,
+      "area": 0.05,
+      "offerWeight": 1,
+      "sixth": false
+    },
+    {
+      "id": "myeong",
+      "nameKo": "명병",
+      "hanja": "名兵",
+      "damage": 0.15,
+      "area": 0.1,
+      "offerWeight": 1.5,
+      "sixth": false
+    },
+    {
+      "id": "sin",
+      "nameKo": "신병",
+      "hanja": "神兵",
+      "damage": 0.2,
+      "area": 0.1,
+      "offerWeight": 1.5,
+      "sixth": true
+    }
+  ],
+  "gear": [
+    {
+      "id": "mumyeong_iron_sword",
+      "nameKo": "무명 철검",
+      "hanja": "無名鐵劍",
+      "sect": null,
+      "weapon": "samjae_sword",
+      "droppers": [],
+      "guaranteed": [],
+      "source": "relic:songshan"
+    },
+    {
+      "id": "vajra_beads",
+      "nameKo": "금강 염주",
+      "hanja": "金剛念珠",
+      "sect": "shaolin",
+      "weapon": "nahan_fist",
+      "droppers": [],
+      "guaranteed": [
+        "gyeyul_monk",
+        "acting_abbot"
+      ]
+    },
+    {
+      "id": "drunken_immortal_staff",
+      "nameKo": "취선장",
+      "hanja": "醉仙杖",
+      "sect": "gaebang",
+      "weapon": "drunken_staff",
+      "droppers": [],
+      "guaranteed": []
+    },
+    {
+      "id": "changcheon_blade",
+      "nameKo": "창천검",
+      "hanja": "蒼天劍",
+      "sect": "namgung",
+      "weapon": "changcheon_qi",
+      "droppers": [],
+      "guaranteed": []
+    },
+    {
+      "id": "azure_scale_dagger",
+      "nameKo": "청린비",
+      "hanja": "靑鱗匕",
+      "sect": "tang",
+      "weapon": "flying_dagger",
+      "droppers": [],
+      "guaranteed": [
+        "tang_dart_gangsi"
+      ]
+    },
+    {
+      "id": "water_parting_sickle",
+      "nameKo": "분수겸",
+      "hanja": "分水鎌",
+      "sect": "waterfort",
+      "weapon": "chain_sickle",
+      "droppers": [],
+      "guaranteed": []
+    },
+    {
+      "id": "black_tortoise_sword",
+      "nameKo": "현무검",
+      "hanja": "玄武劍",
+      "sect": "wudang",
+      "weapon": "taiji_sword",
+      "droppers": [
+        "twin_gangsi"
+      ],
+      "guaranteed": [
+        "twin_gangsi_great",
+        "sword_array_taoist"
+      ]
+    },
+    {
+      "id": "plum_blossom_sword",
+      "nameKo": "매화검",
+      "hanja": "梅花劍",
+      "sect": "huashan",
+      "weapon": "falling_petals",
+      "droppers": [
+        "plum_sword_ghost"
+      ],
+      "guaranteed": [
+        "huashan_elder_gangsi"
+      ]
+    },
+    {
+      "id": "thunder_seal",
+      "nameKo": "벽력인",
+      "hanja": "霹靂印",
+      "sect": "kunlun",
+      "weapon": "thunder_talisman",
+      "droppers": [
+        "ice_gangsi"
+      ],
+      "guaranteed": []
+    },
+    {
+      "id": "blood_claw_gauntlet",
+      "nameKo": "혈조 수갑",
+      "hanja": "血爪手甲",
+      "sect": "demonic",
+      "weapon": "blood_claw",
+      "droppers": [],
+      "guaranteed": [
+        "four_guardian_gangsi"
+      ]
+    }
+  ]
+}
