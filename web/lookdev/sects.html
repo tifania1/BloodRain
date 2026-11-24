@@ -35,7 +35,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 </style>
 <div class="wrap">
   <h1>문파 이펙트 시안 <small>2026-11-17 · 여섯 단계 · 열 무공</small></h1>
-  <p class="lead">무공이 깊어질수록 초식에서 기, 강기로 올라가는 여섯 단계입니다. 1~5단은 무공 레벨로 오르고, 6단 신병합일은 절기를 깨운 무공에 그 문파의 신병까지 지녔을 때만 열립니다(6단 시안은 삼재검법·소림·개방·남궁·당가·수로채·마교 일곱, 나머지는 5단 모습에 기운만 얹었습니다). 5단과 6단 사이의 '절기'는 모양이 바뀌는 단계로, 열여섯 무공 모두의 시안이 있습니다. 6단은 절기 모양 위에 병기의 한 수가 얹힙니다(글자와 낙관은 세 번에 한 번). 타격감은 '절제'가 기본입니다 — 화면 흔들림과 흰 번쩍임을 줄이고, 무공의 성질마다 적이 다르게 쓰러집니다. 아래 줄이 그 단계에서 새로 붙는 것입니다.</p>
+  <p class="lead">무공이 깊어질수록 초식에서 기, 강기로 올라가는 여섯 단계입니다. 1~5단은 무공 레벨로 오르고, 6단 신병합일은 절기를 깨운 무공에 그 문파의 신병까지 지녔을 때만 열립니다(6단 시안은 삼재검법·소림·개방·남궁·당가·수로채·무당·화산·마교 아홉, 나머지는 5단 모습에 기운만 얹었습니다). 5단과 6단 사이의 '절기'는 모양이 바뀌는 단계로, 열여섯 무공 모두의 시안이 있습니다. 6단은 절기 모양 위에 병기의 한 수가 얹힙니다(글자와 낙관은 세 번에 한 번). 타격감은 '절제'가 기본입니다 — 화면 흔들림과 흰 번쩍임을 줄이고, 무공의 성질마다 적이 다르게 쓰러집니다. 아래 줄이 그 단계에서 새로 붙는 것입니다.</p>
   <div class="bar">
     <div class="grp" id="gStyle"><span>문파</span></div>
     <div class="grp" id="gTier"><span>단계</span></div>
@@ -328,6 +328,7 @@ function die(e,kind,dir,heavy){const st=tier;if(st<=2){e.die=null;return;}e.die=
  if(e.die==='blue'||e.die==='thunder'||e.die==='silver'||e.die==='fire'){e.kx=e.ky=0;}                                        // 뇌: 그을린 채 굳었다 바스러짐 · 비도: 박힌 채 섰다가 쓰러짐
  if(e.die==='water'){e.kx+=Math.cos(dir)*7;e.ky+=Math.sin(dir)*7;addFx(.5,(f,k)=>fx(1,e.x,e.y+.5,3.2,.8,dir,{p:[.4,.6,2,1],c:WATER,alpha:.6*(1-k),prog:Math.min(1,f.t/.12),diss:k*.7,seed:f.seed}),null,true);}   // 물살에 쓸려 간다
  if(e.die==='petal')petals(e.x,e.y+.9,dir,12,5,3.14,.2);                                                       // 꽃잎으로 흩어진다
+ if(st>=6&&style==='huashan')plumKill(e.x,e.y);   // 화산 6단: 쓰러진 자리에 매화
  if(st>=6&&style==='dangga'&&e.psn>0&&(e.gen||0)<3){const x=e.x,y=e.y,gn=(e.gen||0)+1;later(.28,()=>bloom(x,y,gn));}   // 당가 6단: 독으로 쓰러진 적이 독 꽃으로 핀다
  if(e.die==='violet'&&st>=6&&ALLY.length<4&&(heavy||Math.random()<.35)){const x=e.x,y=e.y;later(.8,()=>ALLY.push({x,y,t:0,cd:.5,seed:Math.random()*7}));}}   // 마교 6단: 피를 빨린 적이 강시로 일어나 같이 싸운다
 // 5단 마무리: 검 갈라진 반쪽이 먹으로 흩어짐 · 권 날아간 끝에 금가루 · 봉 흙먼지 두 겹 · 뇌·불 재가 되어 위로 날림 · 독 꺼진 자리 독 꽃 · 비도 쓰러질 때 바늘 빛 · 물 물보라 · 꽃잎 두 배 · 마교 피안개 터짐
@@ -398,11 +399,11 @@ const STY={
   evo:{name:'흑룡탄',han:'黑龍呑',step:'(절기 · 쇄겸술 Lv8 + 수룡 Lv3) 사슬이 하나가 아니다. 8m 안의 적에게 먹 사슬이 한꺼번에 박혀 0.6초에 한곳으로 끌어모으고, 모인 자리에서 검은 물이 용처럼 솟구치며 터진다(2.5m, 3배)'},
   fire(a){if(EV()){blackDragon(a);if(tier>=6)later(1.45,()=>flail(a));return;}const n=L([1,1,2,2,3]);for(let i=0;i<n;i++)later(i*.1,()=>chain(a+(i-(n-1)/2)*.6,i===0));if(tier>=5)later(.5,wave);}},
  wudang:{label:'무당 · 태극검',who:'흑백 두 자루가 느리게 돈다',cd:3.2,
-  steps:['검은 검과 흰 검 두 자루가 느리게 둥글게 돈다. 맞은 적은 부드러운 파문에 밀려난다','궤적이 길어지고 바닥에 옅은 태극이 번진다','세 자루. 파문이 두 겹, 섬광이 열십자','흰 검에 날빛, 바닥 태극이 커지고 짙어진다. 첫 타격에 임팩트 컷','다섯 자루가 돌다 끝에 한데 모여 큰 태극이 펼쳐지며 둘레를 밀어낸다'],
+  steps:['검은 검과 흰 검 두 자루가 느리게 둥글게 돈다. 맞은 적은 부드러운 파문에 밀려난다','궤적이 길어지고 바닥에 옅은 태극이 번진다','세 자루. 파문이 두 겹, 섬광이 열십자','흰 검에 날빛, 바닥 태극이 커지고 짙어진다. 첫 타격에 임팩트 컷','다섯 자루가 돌다 끝에 한데 모여 큰 태극이 펼쳐지며 둘레를 밀어낸다','현무검을 쥔다(태극합일). 몸 둘레에 큰 태극 원이 늘 깔린다. 원 안의 적은 무겁게 느려지고, 몸에 닿으려 들이친 적은 태극이 받아 되돌려 낸다(병기의 한 수)'],
   evo:{name:'태극양의검',han:'太極兩儀劍',step:'(절기 · 태극검 Lv8 + 양의 Lv3) 흑백 검 여덟 자루가 쉬지 않고 돈다. 흰 검은 크게 밀어내고 검은 검은 적을 무겁게 늦춘다(먹 띠). 바닥 태극 안에서 맞으면 피해 +30%, 맞은 자리에 작은 태극'},
   fire(a){taiji(a,EV());}},
  huashan:{label:'화산 · 낙화검우',who:'가는 검선과 매화 꽃잎',cd:1.4,lv:['Lv1–3','Lv4–5','Lv6','(없음)','Lv7–8'],
-  steps:['가는 먹 검선 여섯이 부채꼴로 스치고 맞은 자리에 꽃잎이 흩날린다','여덟. 검선 뒤로 꽃잎이 나부끼며 따라가고 맞은 자리에 먹 터짐','(Lv6 관통 +1) 열. 검선이 둘을 꿰뚫고 연분홍 담채가 번진다','이 무공은 마일스톤이 Lv6 하나라 4단이 없다(3단 → 5단). 5단 가는 길의 겉: 검선에 흰 날빛, 꽃잎이 더 많이','열넷. 치명타면 큰 꽃잎 세 장이 터지고(진전) 화면이 눌린다'],
+  steps:['가는 먹 검선 여섯이 부채꼴로 스치고 맞은 자리에 꽃잎이 흩날린다','여덟. 검선 뒤로 꽃잎이 나부끼며 따라가고 맞은 자리에 먹 터짐','(Lv6 관통 +1) 열. 검선이 둘을 꿰뚫고 연분홍 담채가 번진다','이 무공은 마일스톤이 Lv6 하나라 4단이 없다(3단 → 5단). 5단 가는 길의 겉: 검선에 흰 날빛, 꽃잎이 더 많이','열넷. 치명타면 큰 꽃잎 세 장이 터지고(진전) 화면이 눌린다','매화검을 쥔다(매화합일). 쓰러진 적마다 그 자리에 매화가 한 송이 핀다. 스물네 송이가 차면 화면 안 모든 적 위로 꽃비가 한 번 쏟아진다(병기의 한 수)'],
   evo:{name:'매화만개',han:'梅花滿開',step:'(절기 · 낙화검우 Lv8 + 매화 Lv3) 검선 대신 매화 폭풍. 꽃잎 수십 장이 화면 끝까지 몸을 둘러 돌며 닿는 적을 베고, 닿을 때마다 연분홍 꽃잎 하나가 몸으로 돌아온다(기혈 0.2 회복)'},
   fire(a){if(EV())return;const n=L([6,8,10,12,14]),spr=L([.9,1,1.1,1.2,1.3]);for(let i=0;i<n;i++)later(i*.012,()=>petalShot(a+(i/(n-1)-.5)*spr+rnd(-.05,.05)));}},
  gonryun:{label:'곤륜 · 뇌부',who:'부적이 붙고 한 박자 뒤 낙뢰',cd:2.0,lv:['Lv1–2','Lv3–4','Lv5','Lv6','Lv7–8'],
@@ -705,6 +706,24 @@ function flail(a){let src=null,bd=99;for(const e of E){if(e.dead>=0)continue;con
   for(const e of E){if(e.dead>=0||seen.has(e))continue;if(Math.hypot(e.x-x,e.y-y)<1.3+e.r){seen.add(e);hit(e,(14+tier*3)*1.5,q+Math.PI/2,9,'water',seen.size%4===1);}}},
   [{t:life-.05,f:()=>{const q=a0+Math.PI*3,x=Math.cos(q)*R*1.6,y=Math.sin(q)*R*1.2;ring(x,y+.5,4,WATERINK,false,.35,.6);ring(x,y+.5,3.8,WATER,false,.35,.9,true);drops(x,y+.5,q,16,10,WATER,false,.14,1.4);
    ST.push({x,y:y-.3,t:0,seed:Math.random()*9,rot:0,s:1.4,c:WATERINK,a:.35,sh:16,p:[.8,1.4,.35]});shake(.2,q);}}]);}
+// ── 6단 무당·화산(2026-11-24 GU-10e) ──
+const TJR=4;let PLUM=0;
+function taijiTick(dt){if(old||tier<6||style!=='wudang')return;                                                // 태극합일: 원 안은 느려지고, 몸에 들이친 적은 되돌려 낸다
+ for(const e of E){if(e.dead>=0)continue;const d=Math.hypot(e.x-Pl.x,(e.y-Pl.y)/.62);if(d>TJR)continue;e.sl=Math.max(e.sl||0,.2);
+  if(d<1.5&&time-(e.tr||-9)>1.2){e.tr=time;const an=Math.atan2(e.y-Pl.y,e.x-Pl.x);e.kx+=Math.cos(an)*11;e.ky+=Math.sin(an)*11;hit(e,6+tier,an,0,'ink',false);
+   const x=e.x,y=e.y;addFx(.35,(f,k)=>{fx(10,x,y+.6,1.4*(1+k),.9*(1+k),f.t*4,{p:[.3],c:TAIJI,alpha:.6*(1-k),seed:f.seed});});ring(x,y+.5,2,PALE,false,.3,.8,true);}}}
+function drawTaiji(){if(old||tier<6||style!=='wudang')return;const S=TJR*2;                                       // 늘 깔린 큰 태극 원(천천히 돈다)
+ fx(10,Pl.x,Pl.y+.1,S,S*.62,-time*.35,{p:[.3],c:TAIJI,alpha:.2,seed:3});
+ fx(2,Pl.x,Pl.y+.1,S*1.02,S*.64,0,{p:[.97,.025,.6],c:INK,alpha:.35,seed:5});glow(2,Pl.x,Pl.y+.1,S,S*.62,0,{p:[.97,.015,.6],c:PALE,alpha:.5,seed:6});}
+function plumKill(x,y){ST.push({x,y,t:0,seed:Math.random()*9,rot:rnd(0,6.28),s:.55,c:PETAL,a:.75,sh:11});petals(x,y+.8,1.57,4,3,3.14,.16);   // 한 송이
+ if(++PLUM>=24){PLUM=0;later(.25,plumRain);}}
+function plumRain(){const live=E.filter(e=>e.dead<0&&Math.abs(e.x-Pl.x)<11&&Math.abs(e.y-Pl.y)<7);              // 꽃비: 화면 안 모든 적
+ addFx(1.4,(f,k)=>{glow(2,Pl.x,Pl.y+.7,18,11,0,{p:[.9,.05,.6],c:PETAL,alpha:.3*Math.sin(k*Math.PI),seed:f.seed});
+  if(Math.random()<.9)for(let i=0;i<4;i++)PT.push({x:Pl.x+rnd(-10,10),y:Pl.y+rnd(2,7),vx:rnd(-.6,.6),vy:rnd(-3,-1.6),t:0,life:rnd(.8,1.3),col:PETAL,size:rnd(.16,.26),sh:11,rot:rnd(0,6.28),spin:rnd(-6,6)});},null,true);
+ live.forEach((e,i)=>later(.2+i*.02,()=>{if(e.dead<0)hit(e,(10+tier*2)*2,-Math.PI/2,2,'petal',i===0);petals(e.x,e.y+1.2,-1.57,5,4,1,.2);}));
+ if(evoN++%3===0)sealFx();}
+function drawPlum(){if(old||tier<6||style!=='huashan')return;for(let i=0;i<24;i++){const a=-Math.PI/2+i*6.283/24,x=Pl.x+Math.cos(a)*1.1,y=Pl.y+1.1+Math.sin(a)*.7;   // 찬 송이 수(머리 위 고리)
+ fx(5,x,y,.16,.16,0,{p:[.3],c:i<PLUM?PETAL:INK,alpha:i<PLUM?.95:.18});}}
 // ── VF-23 나머지 절기 일곱 ──
 function blackDragon(a){const R0=8,cx=Math.cos(a)*3,cy=Math.sin(a)*2;const got=E.filter(e=>e.dead<0&&Math.hypot(e.x-cx,e.y-cy)<R0).slice(0,14);   // 흑룡탄
  Pl.lunge=.4;Pl.la=a;for(const e of got)e.pull={x:cx+rnd(-.4,.4),y:cy+rnd(-.3,.3),t:0};
@@ -866,7 +885,7 @@ function claws(a,flip,fin){const st=tier,n=L([3,3,4,4,5]),len=2.6*L(TS)*(fin?1.3
 function step(dt){
  for(let i=LATER.length-1;i>=0;i--){const l=LATER[i];l.t-=dt;if(l.t<=0){LATER.splice(i,1);l.f();}}
  cool-=dt;if(cool<=0){const tg=nearest(4.2);if(tg){Pl.face=Math.atan2(tg.y,tg.x);STY[style].fire(Pl.face);fired++;cool=STY[style].cd/(EV()&&STY[style].evo.rate||1)+(style==='gaebang'&&tier>=5?.5:0);if(EV()&&(style==='palm'||style==='bomb'||style==='samjae'||style==='shaolin'||style==='gaebang'||style==='dangga'||style==='namgung'&&fired%2===0||style==='suro'||style==='gonryun'||style==='wudang'||style==='sonic'||style==='spear'&&fired%2===0||style==='magyo'||style==='huashan'&&fired%3===0||style==='finger'&&fired%12===0)){if(evoN++%3===0)sealFx();}}else cool=.1;}
- if(SEAL&&(SEAL.t+=dt)>SEAL.life)SEAL=null;arrayTick(dt);stormTick(dt);
+ if(SEAL&&(SEAL.t+=dt)>SEAL.life)SEAL=null;arrayTick(dt);stormTick(dt);taijiTick(dt);
  Pl.lunge*=Math.pow(.0005,dt);Pl.sway*=Math.pow(.02,dt);
  if(tier>=6&&!old&&Math.random()<dt*14)PT.push({x:Pl.x+rnd(-.7,.7),y:Pl.y+rnd(0,.6),vx:rnd(-.2,.2),vy:rnd(1.2,2.4),t:0,life:rnd(.5,.9),col:AURA[style]||GOLD,add:true,size:.13});   // 6단: 몸에서 기운이 오른다
  let alive=0;for(let i=E.length-1;i>=0;i--){const e=E[i];
@@ -896,7 +915,7 @@ function draw(){
  for(const s of ST){const k=s.t/8;fx(s.sh||3,s.x,s.y,s.s*2*(s.wm||1),s.s*1.4*(s.hm||1),s.rot,{p:s.p||[3,.35,.8],c:s.c||INK,alpha:(s.a||.26)*(1-k)*(1-k),diss:.12+k*.5,seed:s.seed});}   // VF-19: 문파마다 자국 모양(KM)
  if(flashW>0)fx(5,cam[0],cam[1],VW*3,VW*3,0,{p:[.98],c:WHITE,alpha:flashW*.2,add:true});   // 낙뢰 때 화면이 약하게 번쩍
  for(const f of FX.slice())if(f.under)f.draw(f,f.t/f.life);
- drawArray();drawStorm();
+ drawTaiji();drawArray();drawStorm();drawPlum();
  for(const e of E)if(e.dead<0&&e.sl>0)fx(2,e.x,e.y+.1,1.5,.6,0,{p:[.7,.18,.5],c:INK,alpha:.55*Math.min(1,e.sl),seed:e.seed});   // 태극양의검 검은 검: 늦춰진 적 발밑 먹 띠
  const list=E.slice().sort((a,b)=>b.y-a.y);let pd=false;
  const drawP=()=>{const lx=Math.cos(Pl.la)*Pl.lunge,ly=Math.sin(Pl.la)*Pl.lunge;fx(5,Pl.x+lx,Pl.y+ly-.02,1.5,.55,0,{p:[.2],c:INK,alpha:.22});
