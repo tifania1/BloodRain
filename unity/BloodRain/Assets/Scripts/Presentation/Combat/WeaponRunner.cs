@@ -253,7 +253,20 @@ namespace BloodRain.Presentation.Combat
         }
 
         float Damage(Slot s) => WeaponMath.DamageAt(s.Def, s.level) * mightMultiplier * effects.WeaponDamageMultiplier(s.Def, healthRatio)
-            * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s) * AspectDamage(s) * SecretDamage(s);
+            * (insightDamage != null ? insightDamage(s.id) : 1f) * EvoDamage(s) * AspectDamage(s) * SecretDamage(s) * GearDamage(s);
+
+        // GU-10U 문파 병기 등급 피해·범위(Core Life.GearDamageMultiplier·GearAreaMultiplier). 빈손이면 1
+        static float GearDamage(Slot s)
+        {
+            var lr = LifeRunner.Instance;
+            return lr != null && lr.Life != null ? lr.Life.GearDamageMultiplier(s.id) : 1f;
+        }
+
+        static float GearArea(Slot s)
+        {
+            var lr = LifeRunner.Instance;
+            return lr != null && lr.Life != null ? lr.Life.GearAreaMultiplier(s.id) : 1f;
+        }
 
         // SC-01U 비전 무명검: 대상 무공(삼재검법) 피해 × (1 + damageBonus)(Core SecretEffects.WeaponDamageMultiplier)
         static float SecretDamage(Slot s)
@@ -447,7 +460,7 @@ namespace BloodRain.Presentation.Combat
             if (EvoOf(s) != null) m *= DataBoot.Data.Balance.Evolution.DamageMultiplier;
             return m;
         }
-        float RangeMul(Slot s) => insightRange != null ? insightRange(s.Def) : 1f;
+        float RangeMul(Slot s) => (insightRange != null ? insightRange(s.Def) : 1f) * GearArea(s); // GU-10U 병기 등급 범위도 여기서
 
         // C-07b 깨달음(InsightEffects): 일검파만 무공 피해, 이기어검 근접 범위. LifeRunner 가 넣는다
         [NonSerialized] public Func<string, float> insightDamage;

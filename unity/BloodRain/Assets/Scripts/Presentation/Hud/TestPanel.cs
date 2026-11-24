@@ -177,6 +177,24 @@ namespace BloodRain.Presentation.Hud
             EnsureAuto();
             Row((_auto.On ? "자동 플레이 켬" : "자동 플레이 끔", () => { _auto.On = !_auto.On; TestAutopilot.Sticky = _auto.On; }, true));
 
+            // GU-10U ⑤ 병기 쥐기(2026-11-24): 누르면 그 병기를 쥔다(같은 것이면 한 등급, 다르면 바꿔 범병). 시험이라 떨어뜨리기 없이 바로
+            y += gap;
+            var slot = life.GearSlot;
+            var grade = slot.GradeDef(data);
+            Head(slot.Empty ? "병기 — 빈손, 누르면 쥠" : $"병기 — {BloodRain.Core.Build.Gear.Def(data, slot.GearId).NameKo} · {grade?.NameKo}");
+            var gears = data.Gear.Gear;
+            for (int i = 0; i < gears.Count; i += 3)
+            {
+                var cells = new List<(string, System.Action, bool)>();
+                for (int j = i; j < Mathf.Min(i + 3, gears.Count); j++)
+                {
+                    string gid = gears[j].Id;
+                    bool held = slot.GearId == gid;
+                    cells.Add((held ? $"{gears[j].NameKo} ▲" : gears[j].NameKo, () => life.PickGear(gid), true));
+                }
+                Row(cells.ToArray());
+            }
+
             y += gap;
             Head("몸 바꾸기 — 그 문파 땅에서 새 생");
             var sects = data.Cheonha.Sects;
