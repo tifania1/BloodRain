@@ -29,7 +29,8 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] GU-06 무공 성취 입문·소성·대성(안 ③): 혼에 무공별 사용 누적, 단계마다 작은 보너스·도감 표시. Core·저장 칸·테스트·기획서 10장 (진행: 2026-11-24 셈과 저장 — `LifeRecord.MasteredWeapons`·`Soul.WeaponMastery`·`MasteryStage`(1생 소성·3생 대성), 혼 저장 `Mastery` 칸, `WeaponMasteryTests` 둘, 기획서 10장 절. 21시: 대성 Lv2 시작 `Life.StartMastered`·`Loadout.StartWeaponAt`(음양 안 움직임), 테스트 하나, 화면은 unity_tasks GU-06U. 남은 것: 소성이 둘째 초식을 여는 것(GU-05a 뒤))
 - [ ] GU-07 대표 인물의 신물(안 ⑦): 대표 인물과 인연을 맺으면 신물 하나. 데이터·Core·기획서 21장. 대사는 docs/story 와 dialogue.json (진행: 2026-11-24 설계안 `design/sinmul.md` — 일곱, 진소운은 주인공이라 뺌. 먼저: GU-07a)
 - [ ] GU-07a 사람 결정 대기(decisions #63, 추천: `design/sinmul.md` 설계안대로) — 신물 일곱의 이름과 값. 벤치마크에 혜공의 염주 예 하나뿐이라 나머지 여섯은 새로 지은 추천값
-- [ ] GU-08 합격 절기 셋을 얼리 액세스 범위로(안 ⑤) + `sim/meta.md` 다시 돌린 뒤 단전 한도 판단(안 ⑥ 뒷부분)
+- [ ] GU-08 합격 절기 셋을 얼리 액세스 범위로(안 ⑤) + `sim/meta.md` 다시 돌린 뒤 단전 한도 판단(안 ⑥ 뒷부분) (진행: 2026-11-24 설계안 `design/hapgyeok.md` — 합격 셋 모양·값, meta 다시 돌림(바뀐 숫자 없음, 60생 안팎에 연무장 59레벨 다 삼) → 단전 한도 넣자는 추천. 먼저: GU-08a)
+- [ ] GU-08a 사람 결정 대기(decisions #64, 추천: `design/hapgyeok.md` 설계안대로) — 합격 절기 셋의 값·해금과 단전 한도 숫자(20 + 경지마다 5)
 - (GU-09 혈서와 문파별 깃발(안 ⑧)은 얼리 액세스 뒤라 그대로 얼림)
 
 줄기 ② 다른 지역을 숭산 수준으로(Unity 화면 일은 unity_tasks RG-xxU, 클라우드는 그 앞일):
