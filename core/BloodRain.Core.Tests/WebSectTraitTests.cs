@@ -60,7 +60,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("B.yinyang.harmony.cooldownReduction * harmonyMul()", html);   // 무당
             Assert.Contains("B.yinyang.harmony.ultimateChargeBonus * harmonyMul()", html);
             Assert.Contains("regen * dt * otherHeal()", html);   // 마교 회복 절반(otherHeal = healMul × 흡혈대법)
-            Assert.Contains("const ns = nearSlow(d)", html);   // 곤륜
+            Assert.Contains("const ns = nearSlow(rd)", html);   // 곤륜(rd: 운해에 숨어도 진짜 거리, WP-18a)
             Assert.Contains("!poisonImmuneNow()) p.hp -=", html);
             Assert.Contains("const poisonImmuneNow = () => !!(sectT().poisonImmune || passiveMaxBonus().poisonImmune);", html);   // 당가 독안개
             Assert.Contains("G.yy = clamp(G.body.yy || 0, B.yinyang.min, B.yinyang.max)", html);   // 음양 시작

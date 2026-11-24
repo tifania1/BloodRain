@@ -1,3 +1,4 @@
+using System;
 using BloodRain.Core.Data;
 using System.Globalization;
 using System.Linq;
@@ -115,6 +116,35 @@ namespace BloodRain.Core.Tests
             Assert.Equal(1, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 120f));
             Assert.Equal(2, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 240f));
             Assert.Equal(d.Count, BloodRain.Core.World.BloodAltarGimmick.LitCount(d, 9999f));
+        }
+
+        [Fact]
+        public void 프로토타입_운해와_역류_파도는_gimmicks_값과_Core_박자를_따른다()
+        {
+            // WP-18a 운해·WP-18b 역류 파도: 빌드가 두 값을 넣고, 웹 박자 식이 Core BloomsBetween·StartsBetween 과 같은 꼴
+            var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
+            Assert.Contains("\"cloudSea\", \"reverseWave\"", build);
+            foreach (var key in new[]
+            {
+                "const up = Math.floor((b - first) / period) + 1, bef = a < first ? 0 : Math.floor((a - first) / period) + 1",
+                "cs.driftSpeed / 100 * MOVE", "cs.driftDegrees * Math.PI / 180", "rand(-1, 1) * cs.scatter", "<= cs.radius",
+                "since < cs.telegraphSeconds", "cs.telegraphSeconds + cs.leaveSeconds", "G.cloudHide && G.cloudLast && !e.boss", "!(G.cloudHide && !e.boss)",
+                "rw.projectileSpeed / 100 * MOVE", "rw.directionDegrees * Math.PI / 180", "rw.playerDamageMaxHealthRatio", "rw.eliteDamageMaxHealthRatio",
+                "G.t - w.t0 - rw.telegraphSeconds", "!(p.dashT > 0) && !onBoatW(p.x, p.y)", "cloudSeaStep(dt); reverseWaveStep(dt);",
+            })
+                Assert.Contains(key, Proto);
+            // 박자 값이 Core 와 같은지(웹 식을 그대로 C# 으로): 운해 12초마다, 역류 120초마다
+            static int Times(float first, float period, float a, float b)
+            {
+                if (!(period > 0) || b < first) return 0;
+                int up = (int)Math.Floor((b - first) / period) + 1, bef = a < first ? 0 : (int)Math.Floor((a - first) / period) + 1;
+                return Math.Max(0, up - bef);
+            }
+            var g = TestData.Load().Gimmicks;
+            foreach (var (a, b) in new[] { (0f, 11.9f), (11.9f, 12f), (12f, 23.9f), (23.95f, 24.01f), (100f, 160f) })
+                Assert.Equal(BloodRain.Core.World.CloudSeaGimmick.BloomsBetween(g.CloudSea, a, b), Times(g.CloudSea.FirstSeconds, g.CloudSea.PeriodSeconds, a, b));
+            foreach (var (a, b) in new[] { (0f, 119.9f), (119.9f, 120f), (120f, 239f), (239.9f, 240.1f), (0f, 600f) })
+                Assert.Equal(BloodRain.Core.World.ReverseWaveGimmick.StartsBetween(g.ReverseWave, a, b), Times(g.ReverseWave.FirstSeconds, g.ReverseWave.PeriodSeconds, a, b));
         }
 
         [Fact]

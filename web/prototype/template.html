@@ -3001,7 +3001,12 @@ function update(dt) {
     if (e.burn > 0) { e.burn -= dt; e.burnAcc = (e.burnAcc || 0) + dt; if (e.burnAcc >= B.enemyStatus.burnTickSeconds) { e.burnAcc = 0; hurtEnemy(e, e.burnDps * B.enemyStatus.burnTickSeconds, e.burnW, 0, 0, 0); if (e.dead) continue; } }
     if (e.altar) { e.x = e.homeX; e.y = e.homeY; e.kbx = e.kby = 0; e.stun = 0; continue; }   // 혈제단: 움직이지 않고 닿아도 안 아프다
     if (e.stun > 0 || freezeOn) { e.stun -= dt; e.kbx *= 0.85; e.kby *= 0.85; continue; }
-    let dx = p.x - e.x, dy = p.y - e.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    let dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    const rdx = dx, rdy = dy, rd = d;   // 진짜 거리(접촉·옮겨 쓰기용). 운해에 숨으면 걸음만 놓친 자리로
+    if (G.cloudHide && G.cloudLast && !e.boss) {   // 운해(WP-18a): 들어간 자리 둘레 1.5m 를 맴돈다
+      const ang = e.life * 1.3 + (e.cph ??= Math.random() * TAU), tx = G.cloudLast.x + Math.cos(ang) * 1.5 - e.x, ty = G.cloudLast.y + Math.sin(ang) * 1.5 - e.y;
+      d = Math.hypot(tx, ty) || 1; dx = tx / d; dy = ty / d;
+    }
     const slow = 1 - e.slow; e.slow = Math.max(0, e.slow - dt * B.enemyStatus.slowFadePerSecond);
     let vx = 0, vy = 0;
     if (e.boss) (e.jang ? jangSamAI : e.lord ? lordAI : bossAI)(e, dt, dx, dy, d);
@@ -3027,19 +3032,19 @@ function update(dt) {
     if (G.waterOn && !e.boss && e.type !== 'water_ghost' && !(E_BY_ID[e.type] || {}).ignoresTerrain && inWaterC(e.x, e.y)) { const wm = or1(GIMW.water.moveSpeedMultiplier); vx *= wm; vy *= wm; }   // 물: 나는 적·수귀는 그대로(WP-13b)
     if (G.campOn && (E_BY_ID[e.type] || {}).family === GIMW.campfire.slowedFamily && nearCampfireC(e.x, e.y)) { const cm = or1(GIMW.campfire.slowedMoveSpeedMultiplier); vx *= cm; vy *= cm; }   // 모닥불 곁 빙강시(WP-13b)
     if (G.empower && !e.boss) { vx *= G.empower.spd; vy *= G.empower.spd; }   // 혈월(WP-13e)
-    { const ns = nearSlow(d); if (ns !== 1) { vx *= ns; vy *= ns; } }   // 곤륜 설한기(WP-20)
+    { const ns = nearSlow(rd); if (ns !== 1) { vx *= ns; vy *= ns; } }   // 곤륜 설한기(WP-20)
     if (!e.boss && !e.elite) { e.x += (vx * slow + e.kbx) * dt; e.y += (vy * slow + e.kby) * dt; }
     else { e.x += e.kbx * dt; e.y += e.kby * dt; }
     if (G.pagodaOn) pushPagodaC(e, e.r, !!(E_BY_ID[e.type] || {}).ignoresTerrain);   // 탑림: 걷는 적은 막히고 나는 적은 지나간다(WP-13b)
     e.kbx *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt); e.kby *= Math.pow(B.enemyStatus.knockbackKeepPerSecond, dt);
     if (Math.abs(vx) > 0.05) e.dir = vx > 0 ? 1 : -1;
     // 떨어진 적은 반대편으로 옮겨 다시 쓴다
-    if (d > diag * B.spawnTarget.recycleBeyondDiagonal && e.behavior !== 'line_charge' && !e.boss && !e.elite && e.behavior !== 'flee') {
-      e.x = p.x + dx * diag * B.spawnTarget.recycleToDiagonal; e.y = p.y + dy * diag * B.spawnTarget.recycleToDiagonal;
+    if (rd > diag * B.spawnTarget.recycleBeyondDiagonal && e.behavior !== 'line_charge' && !e.boss && !e.elite && e.behavior !== 'flee') {
+      e.x = p.x + rdx * diag * B.spawnTarget.recycleToDiagonal; e.y = p.y + rdy * diag * B.spawnTarget.recycleToDiagonal;
     }
     // 접촉 피해
-    if (d < e.r + B.stats.playerBodyRadius && lowBorn(e)) { killEnemy(e, true); addEffect('burst', e.x, e.y, { r: e.r * 1.6, color: '#786E5F' }); continue; }   // 밟힘(WP-15)
-    if (d < e.r + B.stats.playerBodyRadius && e.contact <= 0) {
+    if (rd < e.r + B.stats.playerBodyRadius && lowBorn(e)) { killEnemy(e, true); addEffect('burst', e.x, e.y, { r: e.r * 1.6, color: '#786E5F' }); continue; }   // 밟힘(WP-15)
+    if (rd < e.r + B.stats.playerBodyRadius && e.contact <= 0) {
       e.contact = B.contact.sameEnemyIntervalSeconds;
       const h0 = p.hp; hurtPlayer(e.dmg * (1 + (e.flagT > 0 ? e.flag || 0 : 0)), e);
       const ed = E_BY_ID[e.type];
@@ -5023,7 +5028,7 @@ const LOCAL_BEH = {
   ice_throw(e, dt, dx, dy, d) {
     const D = E_BY_ID[e.type], sh = D.shoot;
     e.cd = (e.cd == null ? sh.interval * Math.random() : e.cd) - dt;
-    if (e.cd <= 0 && d < sh.range) {
+    if (e.cd <= 0 && d < sh.range && !(G.cloudHide && !e.boss)) {   // 운해에 숨은 동안 쏘지 않는다(WP-18a)
       e.cd = sh.interval;
       const n = Math.max(1, sh.count || 1), sp = (sh.spread || 0) * Math.PI / 180, a0 = Math.atan2(dy, dx);
       for (let i = 0; i < n; i++) {
@@ -5169,6 +5174,52 @@ function drawEliteShapes() {
     ctx.restore();
   }
 }
+// 운해(무당산, WP-18a — Core CloudSeaGimmick 과 같은 셈, 값은 gimmicks.json cloudSea): 한 생 firstSeconds 에 처음, 그 뒤 periodSeconds 마다
+// 플레이어 둘레 ±scatter 안 count 곳에 반경 radius 구름이 telegraphSeconds 에 피어 leaveSeconds 머물며 driftDegrees 쪽으로 driftSpeed 로 흐른다.
+// 덮은 구름 안에 들면 보스 뺀 적이 플레이어를 놓친다 — 들어간 자리(G.cloudLast)로 가서 맴돌고, 원거리 적은 쏘지 않는다. 싸움 좌표 m 그대로(낙석·독안개처럼 축척 곱 없음).
+const timesBetween = (first, period, a, b) => { if (!(period > 0) || b < first) return 0; const up = Math.floor((b - first) / period) + 1, bef = a < first ? 0 : Math.floor((a - first) / period) + 1; return Math.max(0, up - bef); };   // Core BloomsBetween·StartsBetween
+const cloudAt = (cs, c) => { const a = cs.driftDegrees * Math.PI / 180, v = cs.driftSpeed / 100 * MOVE * Math.max(0, G.t - c.t0); return { x: c.x + Math.cos(a) * v, y: c.y + Math.sin(a) * v }; };
+function cloudSeaStep(dt) {
+  const cs = GIMW.cloudSea, p = G.player; if (!cs) return;
+  if (!G.clouds) G.clouds = [];
+  if (hereHas(cs.id) && timesBetween(cs.firstSeconds, cs.periodSeconds, G.t - dt, G.t) > 0) {
+    for (let i = 0; i < cs.count; i++) G.clouds.push({ x: p.x + rand(-1, 1) * cs.scatter, y: p.y + rand(-1, 1) * cs.scatter, t0: G.t });
+    G.cloudN = (G.cloudN || 0) + cs.count;   // 자동 점검이 센다
+    if (!G.cloudHint) { G.cloudHint = true; toast(cs.nameKo, '구름 속에 들면 적이 나를 놓친다'); }
+  }
+  G.clouds = G.clouds.filter(c => G.t - c.t0 < cs.telegraphSeconds + cs.leaveSeconds);
+  let hid = false;
+  for (const c of G.clouds) { const since = G.t - c.t0; if (since < cs.telegraphSeconds) continue; const q = cloudAt(cs, c); if (Math.hypot(p.x - q.x, p.y - q.y) <= cs.radius) { hid = true; break; } }
+  if (hid && !G.cloudHide) G.cloudLast = { x: p.x, y: p.y };
+  if (hid) G.cloudHidT = (G.cloudHidT || 0) + dt;
+  G.cloudHide = hid;
+}
+// 역류 파도(장강 수로, WP-18b — Core ReverseWaveGimmick, 값은 gimmicks.json reverseWave): firstSeconds 에 처음, 그 뒤 periodSeconds 마다 telegraphSeconds 동안 강물이 붉어진 뒤
+// 폭 width 파도 앞머리가 directionDegrees 쪽으로 projectileSpeed(100 = 기본 걸음) 로 화면을 가로지른다. 그 순간 장강 수로에 서 있을 때만 일어난다.
+// 맞으면 플레이어 최대 기혈 playerDamageMaxHealthRatio, 잡몹은 쓰러지고 정예·보스 eliteDamageMaxHealthRatio. 경공 무적·배 위면 안 맞는다. 하나는 한 파도에 한 번만.
+function reverseWaveStep(dt) {
+  const rw = GIMW.reverseWave, p = G.player; if (!rw) return;
+  if (!G.rwave && hereHas(rw.id) && timesBetween(rw.firstSeconds, rw.periodSeconds, G.t - dt, G.t) > 0) {
+    const a = rw.directionDegrees * Math.PI / 180, half = viewDiag() / 2;
+    G.rwave = { t0: G.t, dx: Math.cos(a), dy: Math.sin(a), sx: p.x - Math.cos(a) * half, sy: p.y - Math.sin(a) * half, span: half * 2, hit: new Set() };
+    toast(rw.nameKo, '강물이 붉어진다 · 경공으로 넘거나 배에 올라라');
+    G.rwaveN = (G.rwaveN || 0) + 1;
+  }
+  const w = G.rwave; if (!w) return;
+  const go = G.t - w.t0 - rw.telegraphSeconds; if (go < 0) return;
+  const run = rw.projectileSpeed / 100 * MOVE * go; if (run > w.span + rw.width) { G.rwave = null; return; }
+  const fx = w.sx + w.dx * run, fy = w.sy + w.dy * run, hw = rw.width / 2;
+  w.fx = fx; w.fy = fy;
+  const inBand = (x, y) => Math.abs((x - fx) * w.dx + (y - fy) * w.dy) <= hw;
+  if (!w.hit.has(p) && inBand(p.x, p.y)) { w.hit.add(p); if (!(p.dashT > 0) && !onBoatW(p.x, p.y) && !G.won && !G.demo) { p.hp -= p.maxHp * rw.playerDamageMaxHealthRatio * (G.easy ? 0.5 : 1); addEffect('ring', p.x, p.y, { r: 1.2, color: '#7FA3B8', life: 0.35 }); } }
+  for (const e of G.enemies) {
+    if (e.dead || e.altar || w.hit.has(e) || !inBand(e.x, e.y)) continue;
+    w.hit.add(e); if (onBoatW(e.x, e.y)) continue;
+    if (!e.boss && !e.elite) { killEnemy(e); G.rwaveKills = (G.rwaveKills || 0) + 1; continue; }
+    e.hp -= e.maxHp * rw.eliteDamageMaxHealthRatio; e.flash = 0.12; if (e.hp <= 0) killEnemy(e);
+  }
+}
+const onBoatW = (x, y) => false;   // 떠내려오는 배는 아직 이 판에 없다(WP-18c)
 function regionGimmicksStep(dt) {
   if (!SCALE_MODE || isPro()) return;
   const bz = weatherOnW(GIMW.blizzard), rm = weatherOnW(GIMW.redMoon);
@@ -5200,6 +5251,7 @@ function regionGimmicksStep(dt) {
     }
   }
   G.rocks = G.rocks.filter(r => r.t > 0);
+  cloudSeaStep(dt); reverseWaveStep(dt);   // 운해·역류 파도(WP-18)
   // 바닥 기믹(WP-13b 둘째 조각, 시안 regionGimmicks 와 같은 규칙, 값은 gimmicks.json). 자리 판정은 위 CHG(시안 함수)로 절대 m 에서
   const U = worldU(), ax = p.x * U, ay = p.y * U, gw = GIMW.water, tj = GIMW.taijiFloor, cf = GIMW.campfire;
   G.waterOn = !!gw && hereHas(gw.id); G.campOn = !!cf && hereHas(cf.id); G.pagodaOn = !!GIMW.pagodaForest && hereHas(GIMW.pagodaForest.id);
@@ -5293,6 +5345,18 @@ function drawAltar(e) {
   const bw = 1.8 * PPM; ctx.fillStyle = 'rgba(26,26,26,.25)'; ctx.fillRect(X - bw / 2, Y - s * 1.6, bw, 5); ctx.fillStyle = '#B3261E'; ctx.fillRect(X - bw / 2, Y - s * 1.6, bw * Math.max(0, e.hp / e.maxHp), 5);
 }
 function drawRegionGimmicks() {
+  { const cs = GIMW.cloudSea; if (cs) for (const c of G.clouds || []) {   // 운해: 피는 동안 옅게 커지고, 머무는 동안 흰 구름, 사라질 때 옅어짐
+    const since = G.t - c.t0, q = cloudAt(cs, c), k = since < cs.telegraphSeconds ? since / cs.telegraphSeconds : Math.min(1, (cs.telegraphSeconds + cs.leaveSeconds - since) / 1.5);
+    const R = cs.radius * PPM * (since < cs.telegraphSeconds ? 0.5 + 0.5 * k : 1), X = wx(q.x), Y = wy(q.y); if (R < 1) continue;
+    const g = ctx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, `rgba(252,252,250,${0.85 * k})`); g.addColorStop(0.75, `rgba(214,220,224,${0.6 * k})`); g.addColorStop(1, 'rgba(120,135,150,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, R, 0, TAU); ctx.fill();
+    ctx.strokeStyle = `rgba(90,105,120,${0.35 * k})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, R * 0.92, 0, TAU); ctx.stroke(); } }   // 종이 바탕에서도 보이게 푸른 잿빛 테
+  { const rw = GIMW.reverseWave, w = G.rwave; if (rw && w) {   // 역류 파도: 예고 동안 화면 가장자리가 붉게, 그 뒤 푸른 물머리 띠
+    if (G.t - w.t0 < rw.telegraphSeconds) { const k = 0.25 + 0.2 * Math.sin((G.t - w.t0) * 12); ctx.fillStyle = `rgba(179,38,30,${k * 0.35})`; ctx.fillRect(0, 0, VW, VH); }
+    else if (w.fx != null) { const L = viewDiag() * PPM, nx = -w.dy, ny = w.dx, X = wx(w.fx), Y = wy(w.fy), hw = rw.width / 2 * PPM;
+      ctx.save(); ctx.translate(X, Y); ctx.rotate(Math.atan2(ny, nx)); const g = ctx.createLinearGradient(0, -hw, 0, hw); g.addColorStop(0, 'rgba(40,78,108,0.75)'); g.addColorStop(1, 'rgba(40,78,108,0)');
+      ctx.fillStyle = g; ctx.fillRect(-L, -hw, 2 * L, 2 * hw);
+      ctx.strokeStyle = 'rgba(250,250,246,0.9)'; ctx.lineWidth = 3; ctx.beginPath(); for (let x = -L; x <= L; x += 24) ctx.lineTo(x, -hw + 4 * Math.sin(x * 0.05 + G.t * 9)); ctx.stroke(); ctx.restore(); } } }   // 앞머리(나아가는 쪽, 회전한 틀의 -y)에 흰 물보라
   for (const f of G.fogs || []) { const R = fogR(f) * PPM; if (R < 1) continue; const g = ctx.createRadialGradient(wx(f.x), wy(f.y), 0, wx(f.x), wy(f.y), R); g.addColorStop(0, 'rgba(90,130,60,0.30)'); g.addColorStop(1, 'rgba(90,130,60,0.05)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx(f.x), wy(f.y), R, 0, TAU); ctx.fill(); }
   for (const r of G.rocks || []) { const q = 1 - r.t / r.life; ctx.fillStyle = `rgba(26,26,26,${0.12 + 0.3 * q})`; ctx.beginPath(); ctx.ellipse(wx(r.x), wy(r.y), r.r * PPM * (0.4 + 0.6 * q), r.r * PPM * 0.6 * (0.4 + 0.6 * q), 0, 0, TAU); ctx.fill(); }
 }

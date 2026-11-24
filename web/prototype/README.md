@@ -99,6 +99,7 @@ HUD·멈춤 화면·조작 안내의 말은 `Resources/Data/strings/ko.json` 의
 천하 시안에 있던 지역 콘텐츠를 한 생 판으로 옮기는 중이다. 값은 모두 데이터(gimmicks·enemies·bosspatterns·chapters·cheonha.json)에서 읽고, 지금 경지 축척을 곱한다.
 - 밟은 땅: 가장 가까운 지역(봉마곡 뺌)이 위쪽 글이 되고, 처음 들어서면 지명 알림과 윤회의 기 +50.
 - 지역 기믹(`regionGimmicksStep`·`weatherOnW`): 독안개(당가타, 안에서 진기 2배)·낙석(화산)·눈보라(곤륜)·붉은 달(십만대산).
+- 운해(무당산, `cloudSeaStep`, LG-01)·역류 파도(장강 수로, `reverseWaveStep`, LG-02): Core 박자 그대로. 운해 덮은 구름 안이면 보스 뺀 적이 들어간 자리를 맴돌고 원거리 적은 안 쏜다. 역류 파도는 경공 중 안 맞고, 떠내려오는 배(LG-03)는 아직 없다.
 - 바닥에 깔린 기믹(WP-13b 둘째 조각): 물길(장강 수로)·태극 바닥(무당산)·모닥불(곤륜 설원)·탑림(숭산). 놓는 자리·판정·그림은 천하 시안 함수를 글자 그대로 옮긴 `CHG`(nearestTwo·inWater·pagodaLayout·pagodaPatchAt·pushOutOfPagodas·taijiPads·campfires·drawCampfires·drawWaterways·drawTaijiPads·drawPagodas — `CheonhaGimmickTests` 가 두 본문이 같은지 본다, 시안을 고치면 여기도). 시안 함수는 절대 m 로 돌고 `CHG_G`·`sync` 가 이 판 값(싸움 좌표 × `worldU()`)을 넣어 준다. 효과는 이 판 코드로 gimmicks.json 값을 읽는다: 물 위 걸음 0.7배(경공 뒤 3초 수상비, 수로채 몸·나는 적·수귀는 그대로), 태극 바닥은 게이지 반대 속성 무공만 30초 +30%(Core `TaijiBlessing`), 모닥불 곁 초당 기혈 1%·빙강시 걸음 0.5배·설무향 이동 범위 축소 절반, 탑림은 걷는 몸·적을 막음. 놓는 간격(물길·태극 바닥·모닥불·탑림 무더기)은 gimmicks.json 에 아직 없어 시안 `LD` 놀이판 값을 `CHG_LD` 로 옮겨 씀(R-10·R4-07 이 데이터에 넣으면 거기서 읽게). 범종 30m 격자는 1장 마당 범종과 겹쳐 아직 안 옮김, 혈제단은 자리(R4-07) 뒤.
 - 고유 적: 1장 밖 땅이면 life.localShare 비율로 그 땅 적을 섞는다. 제 동작(`LOCAL_BEH`·`spawnLocalGroup`)이 있는 것: 독인·매화검귀·설인·혈사자·금선지네·쌍강시·마교도·설랑·수적·독두꺼비·혈영 분신·수귀(물에서만 솟고, 물 위에서 4m 안이면 초속 1.5m 끌어당김, 여럿이어도 한 번, 경공 중엔 안 끌림 — WP-13c). 그림은 먹선 자리 표시(`LOCAL_SPRITES`).
 - 정예: 그 땅 정예 표(없으면 숭산 표)의 5·10·15분 차례, bosspatterns.json 패턴 가운데 프로토타입이 아는 모양만 차례로.
