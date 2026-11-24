@@ -121,9 +121,9 @@ namespace BloodRain.Core.Tests
         [Fact]
         public void 프로토타입_운해와_역류_파도는_gimmicks_값과_Core_박자를_따른다()
         {
-            // WP-18a 운해·WP-18b 역류 파도: 빌드가 두 값을 넣고, 웹 박자 식이 Core BloomsBetween·StartsBetween 과 같은 꼴
+            // LG-01 운해·LG-02 역류 파도: 빌드가 두 값을 넣고, 웹 박자 식이 Core BloomsBetween·StartsBetween 과 같은 꼴
             var build = TestData.ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"cloudSea\", \"reverseWave\"", build);
+            Assert.Contains("\"cloudSea\", \"reverseWave\", \"driftingBoats\"", build);
             foreach (var key in new[]
             {
                 "const up = Math.floor((b - first) / period) + 1, bef = a < first ? 0 : Math.floor((a - first) / period) + 1",
@@ -131,6 +131,9 @@ namespace BloodRain.Core.Tests
                 "since < cs.telegraphSeconds", "cs.telegraphSeconds + cs.leaveSeconds", "G.cloudHide && G.cloudLast && !e.boss", "!(G.cloudHide && !e.boss)",
                 "rw.projectileSpeed / 100 * MOVE", "rw.directionDegrees * Math.PI / 180", "rw.playerDamageMaxHealthRatio", "rw.eliteDamageMaxHealthRatio",
                 "G.t - w.t0 - rw.telegraphSeconds", "!(p.dashT > 0) && !onBoatW(p.x, p.y)", "cloudSeaStep(dt); reverseWaveStep(dt);",
+                // LG-03 배: 간격·속도·크기는 데이터, 물길 가운데 줄은 drawWaterways 와 같은 굽이 식, 배 위면 물 감속 없음
+                "db.spacing", "db.speed * G.t", "db.length / 2", "db.width / 2", "cy + j * sp - W * Math.sin((x - cx) / L)",
+                "CHG.inWater(ax, ay) && !onBoatW(p.x, p.y)", "inWaterC(e.x, e.y) && !onBoatW(e.x, e.y)", "boatsStep(dt);",
             })
                 Assert.Contains(key, Proto);
             // 박자 값이 Core 와 같은지(웹 식을 그대로 C# 으로): 운해 12초마다, 역류 120초마다
