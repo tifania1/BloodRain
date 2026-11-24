@@ -14,6 +14,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [ ] WS-02 사람 결정 대기(decisions #59, 추천: `design/sect_arts.md` 설계안대로) — 소림 새 넷을 데이터·Core 에: weapons.json·strings·기획서 9장 표·gdd_changes, 새 방식이면 Core `WeaponShapes` 셈 + 테스트, 레벨업 풀 규칙, 시뮬레이터로 숭산 한 생 경지 시각이 목표 안인지. 먼저: WS-01 을 사람이 확인
 - [ ] WS-03 unity_tasks 에 WS-03U(새 넷 WeaponRunner 판정·SectFx 다섯 단계·아이콘 art_queue) 항목을 '0-1. 다음 단계'에. 웹 시안 `sects.html` 에 넷 먼저. 먼저: WS-02
 - [ ] WS-04 나머지 아홉 문파로 같은 순서(문파 하나 = 설계 확인 → 데이터 → 화면). 순서는 몸으로 사는 생이 많은 개방·남궁부터. 먼저: WS-03 (진행: 2026-11-24 21시 개방 설계안을 미리 `design/sect_arts_gaebang.md` — 결정 대기 #65. 남궁은 다음에)
+- [ ] WS-04a 사람 결정 대기(decisions #65, 추천: `design/sect_arts_gaebang.md` 설계안대로) — 개방 다섯(취선봉·장풍 + 비석봉·연환각·취팔선보). 소림(#59)이 정해진 뒤 같은 길로 데이터에
 
 줄기 ① 기획 업그레이드 — 병기와 6단(`docs/design/sinbyeong.md` '정한 것'·'만드는 순서'):
 - [x] GU-10b 2026-11-24 — `gear.json`(병기 열·등급 넷, 확률은 임시), Core `Build.Gear`·`GearSlot`(줍기·등급 오름·땅의 주인 등급 오름·떨어뜨리기·문파 무공 보너스·6단 `Gear.VisualStage`), strings 셋, 기획서 8장 표 둘, `GearTests` 9개. 떨어뜨리는 적은 데이터 `droppers`(일반 적, 확률)·`guaranteed`(정예, 확정) — 강시가 된 제자 일반 적이 없는 땅은 정예에서만. 원래: Core 병기: `gear.json`(병기 열, 등급 넷 — sinbyeong 표 그대로), `GameData.FileNames`·strings 키, 문파 강시 처치 때 드랍 판정, 병기 칸(한 생에 하나, 주우면 바꿈), 등급 오름, 6단 조건(그 문파 병기를 쥐고 무공 Lv8 → `WeaponGrowth.VisualStage` 가 6) + 테스트. 기획서 8·10장 표와 gdd_changes 한 줄. 확률 숫자는 GU-10c 뒤에 확정이니 처음엔 설계안 추천값을 '임시'로
