@@ -3,6 +3,7 @@
 // 쓰는 법:
 //   python tools/build_web_prototype.py
 //   node tools/web_autocheck.js [--runs 3] [--shots <폴더>] [--only prologue,songshan,life,m3]
+//   한 생(life)만 몇 몸: SECTS=waterfort,wudang node tools/web_autocheck.js --only life
 // 끝 줄에 '문제 N' 을 찍고, 문제가 있으면 1 로 끝난다. 손맛 숫자는 건드리지 않고 보기만 한다.
 const http = require('http');
 const fs = require('fs');
@@ -132,7 +133,7 @@ async function prologueRuns(browser, base) {
 // 합친 판 한 생(WP-16): 주소 끝 ?life=<문파> 로 아홉 몸 모두 제 땅에서 400초. 지역 기믹·고유 적·정예·원화가 다 이 판에 들어와(WP-13)
 // 시안(m3)이 보던 것을 본판에서 본다. 판마다 한 번(RUNS 와 상관없이), 끝 화면이 겹치지 않는지도.
 async function lifeRuns(browser, base) {
-  const sects = ['shaolin', 'gaebang', 'namgung', 'tang', 'waterfort', 'wudang', 'huashan', 'kunlun', 'demonic'];
+  const sects = (process.env.SECTS || 'shaolin,gaebang,namgung,tang,waterfort,wudang,huashan,kunlun,demonic').split(',');
   for (const sect of sects) {
     const label = `한 생 ${sect}`;
     const p = await openPage(browser, base + '/?life=' + sect, label);

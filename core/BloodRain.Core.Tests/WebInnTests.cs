@@ -9,7 +9,6 @@ namespace BloodRain.Core.Tests
     public class WebInnTests
     {
         static string Proto => ReadRepoFile("web", "prototype", "template.html");
-        static string Sian => ReadRepoFile("web", "lookdev", "cheonha.html");
 
         [Fact] public void 빌드가_환혼과_타고난_성질을_넣는다()
         {
@@ -18,16 +17,14 @@ namespace BloodRain.Core.Tests
             Assert.Contains("\"birthTraits\": drop_notes(load(\"cheonha\")[\"birthTraits\"])", build);
         }
 
-        [Fact] public void 연무장_비용_식이_시안과_같다()
+        [Fact] public void 연무장_비용_식()
         {
             Assert.Contains("Math.round(it.baseCost * (lv + 1) * (1 + B.training.costGrowthPerBought * bought))", Proto);
-            Assert.Contains("Math.round(it.baseCost * (lv + 1) * (1 + BAL.training.costGrowthPerBought * bought))", Sian);
         }
 
-        [Fact] public void 환혼_강화_값과_후보_수가_시안과_같다()
+        [Fact] public void 환혼_강화_값과_후보_수()
         {
             Assert.Contains("lv >= u.maxLevel ? null : u.costPerLevel ? u.baseCost * (lv + 1) : u.baseCost", Proto);
-            Assert.Contains("lv >= u.maxLevel ? null : u.costPerLevel ? u.baseCost * (lv + 1) : u.baseCost", Sian);
             Assert.Contains("RB.candidates + upgEffect(m, 'candidates')", Proto);
             Assert.Contains("RB.firstRebirth.map(id => ({ sect: id, traits: RB.firstRebirthTraits ? rollTraits(rnd) : [] }))", Proto);
         }
@@ -54,12 +51,11 @@ namespace BloodRain.Core.Tests
             Assert.Contains("bedLine('pick:female')", html);
         }
 
-        [Fact] public void 서장_끝은_이_판의_침방으로_잇고_서장_정산은_시안과_같은_셈()
+        [Fact] public void 서장_끝은_이_판의_침방으로_잇고_서장_정산은_구슬_농도_첫_방문_첫_경지()
         {
             var html = Proto;
             Assert.Contains("if (SCALE_MODE) { $('profirst').hidden = true; overlay = null; recordPrologue(G.orbRaw, G.realm.id); openInn(); return; }", html);
             Assert.Contains("Math.round(QI.perOrbValue * Math.max(0, orbRaw || 0) * home.density + visits.length * QI.firstVisitRegion + realms.length * QI.firstReachRealm)", html);
-            Assert.Contains("Math.round(orbQi + visits.length * QI.firstVisitRegion + realms.length * QI.firstReachRealm)", Sian);
             Assert.Contains("__hyeolu.prologueEnd(900, 'ilryu')", ReadRepoFile("tools", "web_autocheck.js"));
         }
 
