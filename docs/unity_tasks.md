@@ -46,7 +46,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: F2 로 금강 염주 신병 + 나한권 절기를 쥐면 6단 각성이 한 번 뜨고 나한권이 시안 6단 모양으로 나온다. 떨어진 병기를 주우면 칸·알림이 바뀐다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `GU-10U` 폴더에 떨어진 병기·HUD 칸·6단 나한권 한 장씩
 
-- [ ] GU-06U 무공 성취 화면: 대성 시작 무공 금빛 테두리·장경각 도감 도장 · 먼저: 없음(Core 는 2026-11-24 GU-06 — `Life.StartMastered`, `Soul.MasteryStage`)
+- [ ] GU-06U 무공 성취 화면: 대성 시작 무공 금빛 테두리·장경각 도감 도장 · 먼저: 없음(Core 는 2026-11-24 GU-06 — `Life.StartMastered`, `Soul.MasteryStage`) (진행: 2026-11-25 02:55 PC — ① 의 HUD 도장: `TopHud.UpdateMasteryStamp` — `Life.StartMastered` 면 시작 무공 칸 왼쪽 위에 금빛 작은 패(24×14, 8도 기울임)에 흰 '大成'. 시험은 Play 중 혼 `_mastery["nahan_fist"]=3` 을 넣고 `TestPanel.SwitchBody("shaolin")` — 나한권이 Lv2 로 시작(레벨업 카드 '2 → 3 단계'), 도장 뜸, 글꼴 NotoSerifKR SDF 에 大成 둘 다 있음(네모 없음). 콘솔 에러는 시간 0.1배 때 Dash.Tick dt 예외 하나(도구 몫). 찍음 `hud_mastered.png`(1280 폭이라 도장이 아주 작음 — 사람이 크기 봄). **이 PC 혼 저장에 나한권 성취 3 이 들어감**(시험 칸). 남은 것: ① 이펙트 금빛 테두리 — SectFx 를 부르는 곳이 서른 군데쯤이라 무공마다 테두리 색을 넘기기보다 SectFx 에 '대성 무공' 표시를 두고 날 테두리 램프를 바꾸는 길을 찾아야 함 ② 장경각에 무공 쪽이 아직 없다 — 지금 `Meta/LibraryScreen.cs` 는 찢긴 비급 복원 한 쪽뿐이라, 무공 쪽(탭이나 둘째 쪽)과 새 strings 키가 먼저 필요. 어디에 둘지는 클라우드가 정해 주면 좋음)
   - 할 것: ① 생을 시작할 때 `Life.StartMastered` 면 시작 무공(`Body.Character.StartWeapon`) 이펙트에 금빛 테두리(SectFx 날 테두리 색을 황토 금빛으로 한 단 밝게 — 11-17 '주황 → 황토' 규칙 안에서), HUD 그 무공 칸에 작은 '大成' 도장(문파 색 아님, 금빛) ② 장경각 도감 무공 쪽: 무공마다 `Soul.MasteryStage(id)` 로 입문(도장 없음)·소성(小成, 먹 도장)·대성(大成, 금빛 도장)
   - 쓸 것: Core `Life.StartMastered`·`Life.MasteredStartLevel`(2)·`Soul.MasteryStage`·`Soul.WeaponMastery`. 시험은 F2 로 못 만드니 혼 저장의 `Mastery` 칸에 `nahan_fist: 3` 을 손으로 넣고 이어하기
   - 메뉴: 없음

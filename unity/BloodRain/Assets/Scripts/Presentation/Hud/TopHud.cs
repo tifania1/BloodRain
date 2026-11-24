@@ -194,6 +194,42 @@ namespace BloodRain.Presentation.Hud
             FillCells(_wCells, _view.Weapons, true, pulse);
             FillCells(_pCells, _view.Passives, false, pulse);
             UpdateGearCell(life);
+            UpdateMasteryStamp(life);
+        }
+
+        // GU-06U ①(2026-11-25): 시작 무공이 대성(Core Life.StartMastered — 혼의 MasteryStage 2, Lv2 로 시작)이면 그 무공 칸 왼쪽 위에 작은 '大成' 도장.
+        // 문파 색이 아니라 금빛(금테 절기와 같은 금). 글자는 칸 글꼴, 없는 한자는 대체 글꼴이 채운다.
+        TextMeshProUGUI _masterStamp;
+        static readonly Color StampGold = new Color(0.72f, 0.52f, 0.12f, 1f);
+
+        void UpdateMasteryStamp(BloodRain.Core.Run.Life life)
+        {
+            int at = -1;
+            if (life.StartMastered && life.Body?.Character != null)
+            {
+                var start = life.Body.Character.StartWeapon;
+                for (int i = 0; i < _view.Weapons.Count && i < _wCells.Count; i++)
+                    if (_view.Weapons[i].Id == start) { at = i; break; }
+            }
+            if (at < 0) { if (_masterStamp != null) _masterStamp.transform.parent.gameObject.SetActive(false); return; }
+            if (_masterStamp == null)
+            {
+                var bg = Img(_slotRoot, "대성 도장", StampGold);
+                var br = bg.rectTransform;
+                br.anchorMin = br.anchorMax = new Vector2(0, 1); br.pivot = new Vector2(0.5f, 0.5f);
+                br.sizeDelta = new Vector2(24, 14);
+                br.localRotation = Quaternion.Euler(0, 0, 8f);
+                _masterStamp = Text(br, "大成", 11, TextAlignmentOptions.Center, Vector2.zero);
+                var tr = _masterStamp.rectTransform; tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one; tr.pivot = new Vector2(0.5f, 0.5f);
+                tr.offsetMin = tr.offsetMax = Vector2.zero;
+                _masterStamp.text = "大成";
+                _masterStamp.color = new Color(0.98f, 0.95f, 0.86f, 1f);
+                _masterStamp.characterSpacing = -6f;
+            }
+            var root = (RectTransform)_masterStamp.transform.parent;
+            root.gameObject.SetActive(true);
+            root.SetAsLastSibling();
+            root.anchoredPosition = new Vector2(at * (SlotSize + SlotGap) + 6f, -2f);
         }
 
         // GU-10U ② 병기 칸(2026-11-24): 무공 칸 줄 오른쪽에 반 칸 띄워 한 칸. 병기 이름 첫 글자 + 등급 점(●○○○), 테두리는 문파 상징색.
