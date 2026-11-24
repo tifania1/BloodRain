@@ -2325,6 +2325,8 @@ function gatheringTick() {
 }
 function shadowTick(dt) {
   if (G.won) return;
+  // 혈월이 진다(GU-11h4, Core Life.BloodMoonSet): 한 생이 lifeEnd.endMinute(60분)에 이르면 좌화와 같은 정산으로 닫는다
+  if (G.body && !isPro() && LE && LE.endMinute > 0 && G.gm >= LE.endMinute && running) { toast('혈월이 진다', '밤이 끝났다. 자리에 앉아 숨을 거둔다'); G.endWay = 'zuohwa'; endRun(false); return; }
   if (gatheringOn()) { G.shadow = null; gatheringTick(); return; }
   const n = shadowStep(), p = G.player;
   if (!n) { G.shadow = null; return; }   // 봉인석을 다 모으면 사라진다

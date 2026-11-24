@@ -46,6 +46,7 @@ namespace BloodRain.Core.Tests
                 "c.r.boss && G.lords[c.r.id] !== 'down'",                                          // Core FallenLordRegions: 주인이 있고 이 생에 안 쓰러뜨린 땅
                 "sort((a, b) => a.e.atSeconds - b.e.atSeconds)",                                   // 무너진 차례
                 "while (G.gatherQ.length && !G.lordF)",                                            // 싸움 중이 아니면 하나씩(Core NoteGathering)
+                "LE.endMinute > 0 && G.gm >= LE.endMinute && running) {",                         // Core BloodMoonSet: 60분에 좌화 정산
             })
                 Assert.Contains(used, html);
             Assert.Contains("\"lifeEnd\": drop_notes(load(\"cheonha\")[\"lifeEnd\"])", ReadRepoFile("tools", "build_web_prototype.py"));

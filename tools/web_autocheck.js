@@ -518,6 +518,9 @@ async function gatheringRun(browser, base) {
       if (!e || e.lord !== 'wudangsan') bad.push(`먼저 무너진 무당산 주인이 안 옴(${e && e.lord})`);
       else if (Math.hypot(e.x - G.player.x, e.y - G.player.y) > viewDiag()) bad.push('모여든 주인이 곁에 없음');
       if ((G.gathered || []).length !== 1) bad.push(`30분에 모여든 수 ${(G.gathered || []).length}`);
+      // 60분: 혈월이 지며 좌화 정산
+      running = true; G.t = (LE.endMinute * 60 + 0.5) / G.timeScale; step(1 / 30);
+      if (running || G.endWay !== 'zuohwa' || overlay !== 'result') bad.push(`60분에 생이 안 닫힘(running ${running}, ${G.endWay}, ${overlay})`);
       return { bad, who: e ? e.name : '' };
     } catch (err) { return { bad: ['오류: ' + err.message], who: '' }; }
   });
