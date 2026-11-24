@@ -31,7 +31,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: 지역 범종·떨어지는 범종이 종 그림, 웹 판에도 들어감(그날 04:37 빌드)
   - 찍기: `docs/unity_shots/BELL-01U/` 지역 범종 한 장, 범종 낙하 한 장
 
-- [ ] FONT-02U 다시 줄인 글꼴 받고 동적 글꼴 비우기 · 먼저: 없음 (2026-11-24 밤 개발 세션이 병기 한자 여섯 凡良杖鱗匕鎌 때문에 `tools/subset_fonts.py` 를 다시 돌림 — 글꼴 넷의 글리프 번호가 바뀜)
+- [x] FONT-02U 다시 줄인 글꼴 받고 동적 글꼴 비우기 · 먼저: 없음 — 2026-11-24 20:55 PC: Unity 를 켜자 `[FontCacheReset]` 이 글꼴 파일이 바뀐 것을 알아 넷을 저절로 비움. Play 한 번에 KR 이 다시 203자 찼던 것을 넷 다 `ClearFontAssetData` 로 0 으로 비우고 저장(SC·TC·Yuji 는 이미 0 이라 변경 없음, KR SDF 만 커밋). 한국어 레벨업 카드·HUD, 간체 레벨업 카드(顿悟到来·罗汉拳·配对 金刚体), 번체 HUD(三流·擊殺·太極·天下圖·羅) 모두 네모·엉뚱한 글자 0, 콘솔 에러 0. 눈에 띈 것: 언어를 Play 중에 바꾸면 위 가운데 지역 줄(청운진·혈운)은 한국어로 남음 — 글꼴 문제 아님 (2026-11-24 밤 개발 세션이 병기 한자 여섯 凡良杖鱗匕鎌 때문에 `tools/subset_fonts.py` 를 다시 돌림 — 글꼴 넷의 글리프 번호가 바뀜)
   - 할 것: 받아온 뒤 동적 글꼴 에셋 넷(`NotoSerifKR SDF`·`NotoSerifSC SDF`·`NotoSerifTC SDF`·`YujiBoku Dynamic SDF`) Inspector 톱니 → 'Clear Dynamic Data', Run 씬을 켜 한국어·간체·번체 HUD·레벨업 카드에 엉뚱한 글자·네모가 없는지. 끝나면 `git add -u` 로 SDF 에셋 변경을 "Unity 저장 뒤 설정"으로 커밋
   - 쓸 것: `tools/subset_fonts.py`, WEB-01U 줄 ①
   - 메뉴: 없음
