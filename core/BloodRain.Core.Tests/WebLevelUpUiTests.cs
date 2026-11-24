@@ -107,5 +107,17 @@ namespace BloodRain.Core.Tests
             Assert.Contains("ctx.fillStyle = `rgba(110,22,20,${0.22 * settings.rain})`;", html);
             Assert.Contains("if (settings.aim > 0) {", html);
         }
+
+        [Fact] public void 닫힌_뒤_무적과_자동_고르기()
+        {
+            var html = Proto;
+            // UI-01a: 닫히면 맞은 뒤 무적과 같은 값, 쌓인 레벨업이 남으면 마지막에만
+            Assert.Contains("function levelUpClosed() { if (!(G.pendingLevels > 0)) G.player.iframe = Math.max(G.player.iframe || 0, HIT_IFRAMES); }", html);
+            Assert.Contains("applyOffer(currentOffers[i]); closeOverlay('levelup'); levelUpClosed();", html);
+            // UI-01b: 설정 단추 두 곳(제목·멈춤), 서장 첫 레벨업은 보이고, 차례는 짝 > 가진 것 > 새 무공 > 새 심법
+            Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(html, "data-set=\"autoPick\"").Count);
+            Assert.Contains("if (settings.autoPick && !firstPro && !G.auto && currentOffers.length)", html);
+            Assert.Contains("return o.kind === 'uw' || o.kind === 'up' ? 1 : o.kind === 'nw' ? 2 : o.kind === 'np' ? 3 : 4;", html);
+        }
     }
 }

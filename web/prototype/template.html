@@ -299,6 +299,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="aimMode">조준 가까운 적</button>
         <button class="b" type="button" data-set="aim">방향 표시 보통</button>
         <button class="b" type="button" data-set="nums">피해 숫자 보임</button>
+        <button class="b" type="button" data-set="autoPick">자동 고르기 끔</button>
         <button class="b" type="button" data-set="fx">내 이펙트 100%</button>
       </div>
       <div class="keys"><span data-s="ui.hud.move">이동</span> <kbd>WASD</kbd>·<kbd>방향키</kbd> · <span data-s="ui.hud.dash">경공</span> <kbd>Space</kbd> · <span data-s="ui.hud.ult">오의</span> <kbd>E</kbd> · <span data-s="ui.hud.pause">멈춤</span> <kbd>Esc</kbd> · <span data-s="ui.hud.pick">고르기</span> <kbd>1</kbd>~<kbd>4</kbd><br>휴대폰은 화면 아무 곳이나 끌어서 이동, 오른쪽 아래 버튼으로 경공·오의</div>
@@ -402,6 +403,7 @@ button { touch-action: manipulation; }
         <button class="b" type="button" data-set="aimMode"></button>
         <button class="b" type="button" data-set="aim"></button>
         <button class="b" type="button" data-set="nums"></button>
+        <button class="b" type="button" data-set="autoPick"></button>
         <button class="b" type="button" data-set="fx"></button>
       </div>
     </div>
@@ -1107,6 +1109,7 @@ const settings = {
   aim: store.get('aim') ?? 1,                             // 바라보는 방향 표시 크기 1 / 1.6 / 0(12장 '조준')
   aimMode: store.get('aimMode') || 'near',                // 조준 방식: near 가까운 적(기본) / move 이동 방향(12장 '조준', aimAngle)
   nums: store.get('nums') ?? true,                        // 피해 숫자 표시 켬/끔(12장 설정)
+  autoPick: store.get('autoPick') ?? false,               // 자동 고르기(12장 '몰아 고르기와 자동 고르기', UI-01b): 켜면 레벨업 화면 없이 고른다
   vol: store.get('vol') ?? 1,                             // 음량 1 / 0.75 / 0.5 / 0.25(12장 설정 '음량'). 끄기는 소리 단추
   fx: store.get('fx') ?? 1,                               // 내 이펙트 투명도: 1 / 0.75 / 0.5 / 0.25 / 0 (12장 '0~100%')
 };
@@ -3536,7 +3539,9 @@ function openLevelUp() {
   const realm = REALMS.find(r => r.level === lvNow && r.level > G.realm.level);
   if (realm) return openBreakthrough(realm);
   overlay = 'levelup'; sfx('level');
+  const firstPro = !!G.firstLevelUp;   // 서장 첫 레벨업 한 장은 자동 고르기여도 보여 준다(12장)
   currentOffers = rollOffers();
+  if (settings.autoPick && !firstPro && !G.auto && currentOffers.length) { applyOffer(currentOffers[autoPickIndex(currentOffers)]); closeOverlay('levelup'); levelUpClosed(); return; }
   $('lutitle').textContent = `Lv ${lvNow}`;
   $('lusub').textContent = '무공이나 심법 하나를 고르시오';
   const help = statFirstHelp(currentOffers); $('luhelp').textContent = help; $('luhelp').hidden = !help;   // 능력치 이름 첫 풀이(12장)
@@ -3554,7 +3559,21 @@ function openLevelUp() {
 function chooseOffer(i) {
   if (overlay !== 'levelup' || !currentOffers[i] || tooSoon()) return;
   if (G.banishMode) return banishOffer(i);
-  applyOffer(currentOffers[i]); closeOverlay('levelup');
+  applyOffer(currentOffers[i]); closeOverlay('levelup'); levelUpClosed();
+}
+// 레벨업이 닫힌 뒤 무적(12장 '레벨업 입력', UI-01a): 맞은 뒤 무적과 같은 HIT_IFRAMES. 쌓인 레벨업이 남아 다음 창이 바로 뜨면 마지막에만
+function levelUpClosed() { if (!(G.pendingLevels > 0)) G.player.iframe = Math.max(G.player.iframe || 0, HIT_IFRAMES); }
+// 자동 고르기 차례(12장, UI-01b — Unity LevelUpScreen.AutoPick 과 같음): 절기 짝·문턱 배지가 붙는 카드 > 가진 무공·심법 레벨업 > 새 무공 > 새 심법, 같으면 맨 왼쪽.
+// 짝 배지는 offerCard 와 같은 조건(무공은 절기가 있으면, 심법은 그 절기 무공이 풀에 있으면)
+function autoPickIndex(offers) {
+  const rank = o => {
+    const w = o.kind === 'uw' || o.kind === 'nw', q = o.kind === 'up' || o.kind === 'np';
+    const evoW = q ? DATA.evolutions.find(e => e.passive === o.id) : null;
+    if ((w && EVO_BY_W[o.id]) || (evoW && (G.wpool || START_WEAPONS).includes(evoW.weapon))) return 0;
+    return o.kind === 'uw' || o.kind === 'up' ? 1 : o.kind === 'nw' ? 2 : o.kind === 'np' ? 3 : 4;
+  };
+  let best = 0; offers.forEach((o, i) => { if (rank(o) < rank(offers[best])) best = i; });
+  return best;
 }
 // 레벨업 옆 칸(12장 '화면 편의 규칙'): 지금 무공·심법 칸, 고르려는 카드가 켜는 칸(오를 칸·새로 들어갈 칸·절기 짝 칸)을 빛낸다
 function cardLights(o) {
@@ -3592,7 +3611,7 @@ function rerollOffers() { if (overlay !== 'levelup' || G.rerolls <= 0 || tooSoon
 function skipOffer() {
   if (overlay !== 'levelup' || tooSoon()) return;
   if (G.body) { if (!(G.skips > 0)) return; G.skips--; }
-  addUlt(B.ultimateCharge.perSkip, true); closeOverlay('levelup');
+  addUlt(B.ultimateCharge.perSkip, true); closeOverlay('levelup'); levelUpClosed();
 }
 
 function openBreakthrough(realm) {
@@ -6126,6 +6145,7 @@ const SET_TURN = {
   aim: () => { settings.aim = settings.aim === 1 ? 1.6 : settings.aim === 1.6 ? 0 : 1; store.set('aim', settings.aim); },
   aimMode: () => { settings.aimMode = settings.aimMode === 'move' ? 'near' : 'move'; store.set('aimMode', settings.aimMode); },
   nums: () => { settings.nums = !settings.nums; store.set('nums', settings.nums); },
+  autoPick: () => { settings.autoPick = !settings.autoPick; store.set('autoPick', settings.autoPick); },
   vol: () => { settings.vol = settings.vol > 0.25 ? settings.vol - 0.25 : 1; store.set('vol', settings.vol); if (audio.master) audio.master.gain.value = settings.vol; sfx('level'); },
   fx: () => { settings.fx = settings.fx > 0 ? Math.round((settings.fx - 0.25) * 100) / 100 : 1; store.set('fx', settings.fx); },
 };
@@ -6156,10 +6176,11 @@ function syncMute() {
     vol: `음량 ${Math.round(settings.vol * 100)}%<small>${audio.muted ? '지금은 소리 꺼짐' : '효과음 전체'}</small>`,
     fx: `내 이펙트 ${Math.round(settings.fx * 100)}%<small>${settings.fx < 1 ? '적 탄·예고는 그대로' : '무공 효과 투명도'}</small>`,
     nums: settings.nums ? '피해 숫자 보임<small>때린 자리에 숫자</small>' : '피해 숫자 숨김<small>숫자 없이</small>',
+    autoPick: settings.autoPick ? '자동 고르기 켬<small>절기 짝 > 가진 것 > 새 무공 > 새 심법</small>' : '자동 고르기 끔<small>레벨업마다 직접 고른다</small>',
     aimMode: settings.aimMode === 'move' ? '조준 이동 방향<small>움직인 쪽으로 쏜다</small>' : '조준 가까운 적<small>없으면 움직인 쪽</small>',
     aim: { 1: '방향 표시 보통<small>바라보는 쪽 꺾쇠</small>', 1.6: '방향 표시 크게<small>바라보는 쪽 꺾쇠</small>', 0: '방향 표시 끔<small>꺾쇠 없음</small>' }[settings.aim] || '방향 표시 보통',
   };
-  for (const b of document.querySelectorAll('[data-set]')) { b.innerHTML = SET_HTML[b.dataset.set]; if (b.dataset.set === 'flash' || b.dataset.set === 'bossbar' || b.dataset.set === 'nums') b.setAttribute('aria-pressed', String(!settings[b.dataset.set])); }
+  for (const b of document.querySelectorAll('[data-set]')) { b.innerHTML = SET_HTML[b.dataset.set]; if (b.dataset.set === 'flash' || b.dataset.set === 'bossbar' || b.dataset.set === 'nums') b.setAttribute('aria-pressed', String(!settings[b.dataset.set])); else if (b.dataset.set === 'autoPick') b.setAttribute('aria-pressed', String(settings.autoPick)); }
 }
 
 // 조이스틱 그리기 (렌더 뒤에 덧그림)
