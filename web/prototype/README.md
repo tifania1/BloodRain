@@ -10,7 +10,7 @@
 - 이펙트 시안 `web/lookdev/*.html` 도 같은 빌드로 `/lookdev/` 아래에 올라간다(예: https://bloodrain-proto.pages.dev/lookdev/samjae.html).
 - 이펙트 갤러리(V-09): https://bloodrain-proto.pages.dev/lookdev/vfx_gallery.html. 원본 `web/lookdev/vfx_gallery.html`. 빌드가 `Assets/Art/VFX` 의 Brush·Common·AI png·json 을 `site/lookdev/vfx/` 로 복사하고, 갤러리가 그걸 읽어 `BrushStroke.shader` 와 같은 식(그어짐·흩어짐·담채·빛 더하기)으로 캔버스에 돌린다. 일렁임은 noise_2 로 uv 를 흔드는 시안(V-08 이 셰이더에 넣을 때 기준). 빌드한 사이트에서만 열린다(file:// 로는 텍스처를 못 읽음).
 - 효과음 듣기(SFX-04): https://bloodrain-proto.pages.dev/lookdev/sfx_listen.html. 원본 `web/lookdev/sfx_listen.html`. 빌드가 `sfx_queue` 줄을 넣고 `Assets/Audio/SFX` 의 ogg·sfx.json 을 `site/lookdev/sfx/` 로 복사한다. 후보를 번호를 가리고 섞어 들려 주고, 고른 것을 feedback.md 에 붙일 줄('sfx_levelup 2·4 고름')로 만든다. AI 후보는 PC 의 `art_inbox/sfx` 폴더를 열면 같이 뜬다. 프로토타입도 같은 파일로 레벨업 징·보스 등장 징·범종·진기 흡수 풍경(연속 흡수 때 5음 음계로 오름)을 틀고, 못 읽으면 예전 발진기 소리로 돌아간다.
-- 천하 시안(기획서 7·10·21장의 천하 한 장 + 환혼 + 윤회의 기): https://bloodrain-proto.pages.dev/lookdev/cheonha.html. 원본 `web/lookdev/cheonha.html`. 아래 '천하 시안' 절 참고.
+- 천하 시안(기획서 7·10·21장의 천하 한 장 + 환혼 + 윤회의 기): https://bloodrain-proto.pages.dev/lookdev/cheonha.html. 원본 `web/lookdev/cheonha.html`. 아래 '천하 시안' 절 참고. 2026-11-25 부터 본판은 합친 판(`template.html`, 한 생 `?life=<문파>`)이다 — 지역 기믹·고유 적·정예·땅의 주인·원화가 다 들어왔다(WP-13). 시안은 '천하 지도 보기'와 땅의 주인 훑기 확인용으로만 남겨 둔다(합친 판의 바닥 기믹 함수가 시안 함수를 글자 그대로 옮긴 것이라 `CheonhaGimmickTests` 가 둘을 견준다).
 - 경지 돌파 시안(VF-11): https://bloodrain-proto.pages.dev/lookdev/breakthrough.html. 원본 `web/lookdev/breakthrough.html`. 기획서 7장 돌파 연출 시간표대로 낙관·물러남·쓸림·깨달음 카드. 주소 끝에 `#jin@0.9` 처럼 붙이면 그 연출 시각에 멈춘다.
 
 ## 묶기와 올리기
@@ -161,7 +161,7 @@ HUD·멈춤 화면·조작 안내의 말은 `Resources/Data/strings/ko.json` 의
 
 ```
 python tools/build_web_prototype.py
-node tools/web_autocheck.js                     # 서장·숭산·M3 세 지역·땅의 주인 훑기·종장·이어 받기·무공 해금과 절기(weapons)·비급 층(manuals)·연환 셋(links), 3판씩(3분 남짓)
+node tools/web_autocheck.js                     # 서장·숭산·한 생 아홉 몸(life)·M3 세 지역·땅의 주인 훑기·종장·이어 받기·무공 해금과 절기(weapons)·비급 층(manuals)·연환 셋(links), 3판씩(3분 남짓)
 node tools/web_autocheck.js --runs 5 --only m3 --shots <폴더>   # 고른 것만, 판 끝 화면을 찍어 둔다
 ```
 
@@ -174,6 +174,7 @@ node tools/web_autocheck.js --runs 5 --only m3 --shots <폴더>   # 고른 것�
 - 그리기: 자동 판 0.5초마다 한 번 그려 본다(`sim` 만으로는 그리기 오류가 안 드러난다). 판이 끝나면 실제 rAF 고리를 2초 넘게 돌린다
 - 화면 막힘: 판 끝에 화면(레벨업·결과·정산 등)이 둘 넘게 함께 떠 있음. 서장은 장삼 뒤 끝 컷 → 첫 환혼까지 단추로 넘겨 본다
 - 1장 프로토타입: 화면을 닫은 직후처럼 `lastTs` 가 rAF 시각보다 늦은 프레임 30번, 쓰러진 프레임 끝에 레벨업이 남은 경우
+- 한 생 아홉 몸(`life`, WP-16): 합친 판 `?life=<문파>` 로 소림·개방·남궁·당가·수로채·무당·화산·곤륜·마교 몸이 제 땅에서 400초씩, 판 하나씩. 값 깨짐·그리기 오류·멈춤·화면 겹침
 - 천하 시안: 당가·수로채·무당(제 땅이 M3)·소림 몸으로 400초. 셋째 판은 절정으로 올려 그 땅의 주인과 바로 붙임. 땅의 주인 여덟(봉마곡 뺌)은 초절정·죽지 않는 몸으로 60초씩 붙이고 기혈을 붙잡아(40초부터 2막) 패턴이 다 돌게
 - 비급 층(`manuals`, WP-44): 남궁 판에서 쌍검합벽 조건을 갖추면 잠긴 채 찢긴 비급 → 정산이 혼 기록 torn 에 → 장경각 복원(수리 중을 잠시 풀고) → 다음 생에 켜짐, 침방 지도가 그려졌는지
 - 연환 셋(`links`, LK-02): 1장 판에 나한권·음공·섬광지·이화창·독무·혈조를 Lv4 로 쥐고 몸 둘레에 시강을 세워 10초 — 금강후(나한권 때리는 동안)·점혈창(혈도 짚힌 적)·혈독(번짐)이 한 번이라도 나는지

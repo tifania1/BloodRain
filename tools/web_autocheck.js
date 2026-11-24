@@ -2,7 +2,7 @@
 // 콘솔 오류·페이지 오류·멈춤(시계가 안 감)·숫자 깨짐(NaN)·화면 막힘(화면 둘이 겹쳐 뜸)을 찾는다.
 // 쓰는 법:
 //   python tools/build_web_prototype.py
-//   node tools/web_autocheck.js [--runs 3] [--shots <폴더>] [--only prologue,songshan,m3]
+//   node tools/web_autocheck.js [--runs 3] [--shots <폴더>] [--only prologue,songshan,life,m3]
 // 끝 줄에 '문제 N' 을 찍고, 문제가 있으면 1 로 끝난다. 손맛 숫자는 건드리지 않고 보기만 한다.
 const http = require('http');
 const fs = require('fs');
@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const RUNS = parseInt(opt('runs', '3'), 10);
 const SHOTS = opt('shots', '');
-const ONLY = (opt('only', 'prologue,songshan,m3,lords,final,flow,weapons,manuals,links')).split(',');
+const ONLY = (opt('only', 'prologue,songshan,life,m3,lords,final,flow,weapons,manuals,links')).split(',');
 const SITE = path.join(__dirname, '..', 'web', 'prototype', 'site');
 if (!fs.existsSync(path.join(SITE, 'index.html'))) { console.log('X  site/ 가 없다. python tools/build_web_prototype.py 를 먼저 돌린다'); process.exit(1); }
 
@@ -125,6 +125,23 @@ async function prologueRuns(browser, base) {
     }
     flush(p, label);
     rows.push({ what: label, res: `${Math.round(r.t)}초 Lv${r.lv} 처치 ${r.kills} ${r.won ? '장삼 격파' : r.hp <= 0 ? '쓰러짐' : '버팀'} → ${flow || vis.join('·') || '전투'}` });
+    await p.ctx.close();
+  }
+}
+
+// 합친 판 한 생(WP-16): 주소 끝 ?life=<문파> 로 아홉 몸 모두 제 땅에서 400초. 지역 기믹·고유 적·정예·원화가 다 이 판에 들어와(WP-13)
+// 시안(m3)이 보던 것을 본판에서 본다. 판마다 한 번(RUNS 와 상관없이), 끝 화면이 겹치지 않는지도.
+async function lifeRuns(browser, base) {
+  const sects = ['shaolin', 'gaebang', 'namgung', 'tang', 'waterfort', 'wudang', 'huashan', 'kunlun', 'demonic'];
+  for (const sect of sects) {
+    const label = `한 생 ${sect}`;
+    const p = await openPage(browser, base + '/?life=' + sect, label);
+    const r = await protoRun(p, 'full', 400, label);
+    const where = await p.page.evaluate(() => __hyeolu.state().chRegion || '');
+    const vis = await liveCheck(p, label, 1200, PROTO_SCREENS);
+    if (sect === 'demonic') await shot(p, 'life_demonic');
+    flush(p, label);
+    rows.push({ what: label, res: `${where} ${Math.round(r.t)}초 Lv${r.lv} 처치 ${r.kills} ${r.hp <= 0 ? '쓰러짐' : '버팀'} → ${vis.join('·') || '전투'}` });
     await p.ctx.close();
   }
 }
@@ -451,6 +468,7 @@ async function linkRuns(browser, base) {
   try {
     if (ONLY.includes('prologue')) await prologueRuns(browser, base);
     if (ONLY.includes('songshan')) await songshanRuns(browser, base);
+    if (ONLY.includes('life')) await lifeRuns(browser, base);
     if (ONLY.includes('m3')) await m3Runs(browser, base);
     if (ONLY.includes('lords')) await lordRuns(browser, base);
     if (ONLY.includes('final')) await finalRuns(browser, base);
