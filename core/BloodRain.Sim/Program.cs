@@ -27,6 +27,7 @@
 //   dotnet run --project core/BloodRain.Sim -c Release -- --acceleration docs/design/sim/acceleration.md   회귀 가속: 마친 생 수마다 일류·절정·현경 도달(GU-11f)
 //   dotnet run --project core/BloodRain.Sim -c Release -- --chronicle docs/design/sim/chronicle.md   천하 연표: 숭산·개방·남궁 몸이 사건에 제때 닿는지(GU-11e)
 //   dotnet run --project core/BloodRain.Sim -c Release -- --gugyeol docs/design/sim/gugyeol.md   구결: 같은 몸 두 생에 앞 생 차례를 몇 걸음 따르나(GU-11o)
+//   dotnet run --project core/BloodRain.Sim -c Release -- --gear docs/design/sim/gear.md   문파 병기: 한 생에 줍는 수와 끝 등급(GU-10c)
 //   dotnet run --project core/BloodRain.Sim -- --frenzy docs/design/sim/frenzy.md      마교 '마인의 피' 곡선 세 안의 공격 빈도(R-04c 견주기)
 // 그 밖에: --data <데이터 폴더>, --minutes <분>, 무리 가정 바꿔 보기 --crowd-radius <m> --max-density <마리/㎡> --arrival <초>
 using System;
@@ -43,7 +44,7 @@ namespace BloodRain.Sim
         {
             Console.OutputEncoding = Encoding.UTF8;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "", mimic = "", metaPace = "", silver = "", manuscript = "", frenzy = "", chronicle = "", gugyeol = "", acceleration = "", cheonha60 = "";
+            string policy = "average", report = "", scenario = "baseline", synergy = "", cheonha = "", meta = "", clusterXp = "", encounters = "", contact = "", yinyang = "", bloodArt = "", rebirth = "", gimmicks = "", dodge = "", shadow = "", insights = "", decisions = "", secrets = "", awakenings = "", prologue = "", mimic = "", metaPace = "", silver = "", manuscript = "", frenzy = "", chronicle = "", gugyeol = "", acceleration = "", cheonha60 = "", gear = "";
             string? dataDir = null;
             int seed = 1, seeds = 0;
             double minutes = Assumptions.RunMinutes;
@@ -83,6 +84,7 @@ namespace BloodRain.Sim
                     case "--manuscript": manuscript = Next(); break;
                     case "--frenzy": frenzy = Next(); break;
                     case "--chronicle": chronicle = Next(); break;
+                    case "--gear": gear = Next(); break;
                     case "--gugyeol": gugyeol = Next(); break;
                     case "--acceleration": acceleration = Next(); break;
                     case "--cheonha60": cheonha60 = Next(); break;
@@ -93,7 +95,7 @@ namespace BloodRain.Sim
                     case "--help":
                         Console.WriteLine("dotnet run --project core/BloodRain.Sim -- [--policy average|greedy|slow] [--seed N] [--seeds N] [--scenario id] [--data 폴더] [--minutes 분]");
                         Console.WriteLine("  무리 가정: [--crowd-radius m] [--max-density 마리/㎡] [--arrival 초]");
-                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --meta-pace --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue --mimic --silver --manuscript --frenzy --chronicle --gugyeol --acceleration --cheonha60");
+                        Console.WriteLine("  보고서(경로를 주면 그 파일을 다시 쓴다): --report --synergy --cheonha --meta --meta-pace --cluster-xp --encounters --contact --yinyang --insights --decisions --blood-art --rebirth --gimmicks --dodge --shadow --secrets --awakenings --prologue --mimic --silver --manuscript --frenzy --chronicle --gugyeol --acceleration --cheonha60 --gear");
                         Console.WriteLine($"  조정 시험 id: {string.Join(", ", Scenarios.All.Select(s => s.Id))}");
                         return 0;
                     default:
@@ -172,6 +174,13 @@ namespace BloodRain.Sim
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(gugyeol))!);
                 File.WriteAllText(gugyeol, GugyeolSim.Report(data, seeds > 0 ? seeds : 30), new UTF8Encoding(false));
                 Console.WriteLine($"보고서를 썼습니다: {gugyeol}");
+                return 0;
+            }
+            if (gear.Length > 0)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(gear))!);
+                File.WriteAllText(gear, GearSim.Report(data, seeds > 0 ? seeds : 30), new UTF8Encoding(false));
+                Console.WriteLine($"보고서를 썼습니다: {gear}");
                 return 0;
             }
             if (chronicle.Length > 0)

@@ -41,6 +41,8 @@ namespace BloodRain.Sim
         public Dictionary<int, int> LevelByMinute = new Dictionary<int, int>();
         /// <summary>분마다 서 있던 지역 id. [0] 은 태어난 순간, [k] 는 k분째(기연 시뮬레이션이 쓴다).</summary>
         public List<string> RegionByMinute = new List<string>();
+        /// <summary>분마다 쓰러뜨린 잡몹 수. [k] 는 k분째 1분 동안(RunSimulator 누적 처치의 차, 병기 시뮬레이션이 쓴다).</summary>
+        public List<int> KillsByMinute = new List<int>();
         public RebirthQiResult Qi = null!;
     }
 
@@ -187,6 +189,14 @@ namespace BloodRain.Sim
             res.Qi = record.RebirthQi;
             res.Visited = record.VisitedRegions.ToList();
             res.Bosses = lines.Values.OrderBy(l => l.WokeAt).ToList();
+            int prevKills = 0;
+            for (int m = 0; m < (int)Math.Ceiling(minutes); m++)
+            {
+                var s = snaps.FirstOrDefault(x => x.Minute == m + 1);
+                int k = s?.Kills ?? prevKills;
+                res.KillsByMinute.Add(Math.Max(0, k - prevKills));
+                prevKills = Math.Max(prevKills, k);
+            }
             return (res, record);
         }
 
