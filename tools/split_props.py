@@ -45,6 +45,8 @@ SHEETS: dict[str, list[str]] = {
     "props_cheonha_terrain": ["pine_gnarled", "terrain_house", "pagoda_tall", "peak_snow", "huts_thatched"],
     # 기연 사건(2026-11-21 대화 세션): EncounterLayer 의 네모·동그라미 자리 표시를 바꿀 재료. 바둑판은 은거기인 곁에
     "props_encounters": ["enc_go", "enc_hermit", "enc_relic", "enc_elixir", "enc_whisper"],
+    # 개방 총타 지역 소품(RG-01U, 2026-11-25 PC). 프롬프트 차례: 다리 밑 사당, 거적 움막, 넝마 차양, 깨진 술독 더미, 솥 걸린 모닥불
+    "props_gaebang_hq": ["shrine_bridge", "mat_lean_to", "rag_awning", "wine_jar_pile", "cook_fire_pot"],
 }
 
 # 소품끼리 바짝 붙은 시트는 덩이 잇는 거리를 줄인다(기본 JOIN 이면 둘이 한 덩이가 됨)
