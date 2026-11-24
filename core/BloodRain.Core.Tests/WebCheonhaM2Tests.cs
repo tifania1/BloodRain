@@ -29,10 +29,12 @@ namespace BloodRain.Core.Tests
             var m = _d.Enemy("mogin_nahan");
             Assert.Equal("splinter_burst", m.OnDeath);
             Assert.NotNull(m.Death);
-            var html = Html();
-            Assert.Contains("d.onDeath === 'splinter_burst'", html);
-            Assert.Contains("d.death.enemyDamage * f.maxHp / d.health", html);
-            Assert.Contains("d.death.playerDamage * f.dmg / d.contactDamage", html);
+            // 2026-11-25(WP-16)부터 합친 판이 원본(전엔 시안만 데이터를 읽고 합친 판은 반경 1.6·30 으로 박혀 있었다)
+            var html = ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("D.onDeath === 'splinter_burst' && D.death) splinterBurst(e, D)", html);
+            Assert.Contains("toFoe = D.death.enemyDamage * e.maxHp / D.health", html);
+            Assert.Contains("hurtPlayer(D.death.playerDamage * dmgScale(e), e)", html);
+            Assert.DoesNotContain("hurtEnemy(o, 30, null", html);
         }
 
         [Fact] public void 정산_혈정은_Core_와_같은_값을_쓴다()

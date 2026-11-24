@@ -2239,7 +2239,9 @@ function killEnemy(e, crushed) {
   if (e.boss && e.jang) { G.won = true; cue('boss_kill'); setTimeout(proCutsWhenFree, 1000 * (PD.lineSeconds + 0.4)); return; } // 장삼 마지막 줄을 듣고 컷으로
   if (e.boss) { G.won = true; for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25); setTimeout(() => endRun(true), 1600); return; }
   if (e.xp > 0) dropOrb(e.x, e.y, lowBorn(e) ? e.xp * CRUSH.xpPerCrushed : e.xp);   // 아래 경지에서 생긴 적은 진기 0.3배(cheonha.json crush)
-  if (e.type === 'mogin_nahan') { addEffect('burst', e.x, e.y, { r: 1.6, color: '#8B6A45' }); forNear(e.x, e.y, 1.6, o => { if (o !== e) hurtEnemy(o, 30, null, 0, 0, 0); }); }
+  // 목인나한 나뭇조각(6장, enemies.json onDeath splinter_burst — 2026-11-25 WP-16 에 시안 splinter 를 옮김. 전엔 반경 1.6·적 30·플레이어 0 으로 박혀 있었다):
+  // 반경 death.radius 안의 다른 적(보스 빼고)에게 제 기혈 비율만큼(40 ÷ 120), 플레이어에게 접촉 피해 비율만큼(6 ÷ 10) 한 번
+  { const D = E_BY_ID[e.type]; if (D && D.onDeath === 'splinter_burst' && D.death) splinterBurst(e, D); }
   if (e.elite) { G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 }); }
   if (Math.random() < DR.enemySilverChance) G.drops.push({ x: e.x, y: e.y, kind: 'silver', t: 0 });
 }
@@ -4963,6 +4965,12 @@ const LOCAL_BEH = {
   },
 };
 // 무리로 나오는 고유 적(시안 spawnLocal 과 같은 규칙): 금선지네 한 줄, 쌍강시 둘, 마교도 가로줄, 설랑 떼
+function splinterBurst(e, D) {
+  const R = D.death.radius, toFoe = D.death.enemyDamage * e.maxHp / D.health, p = G.player;
+  addEffect('burst', e.x, e.y, { r: R, color: '#8B6A45' });
+  if (toFoe > 0) forNear(e.x, e.y, R, o => { if (o !== e && !o.dead && !o.boss && Math.hypot(o.x - e.x, o.y - e.y) < R + o.r) hurtEnemy(o, toFoe, null, 0, 0, 0); });
+  if (D.death.playerDamage > 0 && Math.hypot(p.x - e.x, p.y - e.y) < R + B.stats.playerBodyRadius) hurtPlayer(D.death.playerDamage * dmgScale(e), e);
+}
 function spawnLocalGroup(type, x, y) {
   if (E_BY_ID[type].onlyInWater && !inWaterC(x, y)) return null;   // 수귀는 물에서만 솟는다(onlyInWater, WP-13c). 그 자리가 물이 아니면 이번 차례는 건너뜀(시안 spawnLocal 과 같음)
   const D = E_BY_ID[type], p = G.player, f = spawnEnemy(type, x, y);
