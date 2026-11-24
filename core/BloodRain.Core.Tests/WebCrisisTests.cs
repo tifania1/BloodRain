@@ -34,5 +34,21 @@ namespace BloodRain.Core.Tests
             Assert.True(html.IndexOf("처음 오른 경지 ${newRealms.length}") < html.IndexOf("처음 막은 문파의 위기 ${newBlocks.length}"));
             Assert.True(html.IndexOf("처음 막은 문파의 위기 ${newBlocks.length}") < html.IndexOf("rows.push([`남은 은자"));
         }
+
+        [Fact] public void 이막은_그림자_대신_무너진_땅의_주인이_모여든다()
+        {
+            var html = Proto;
+            foreach (var used in new[]
+            {
+                "|| gatheringOn()) return 0;",                                                     // Core ShadowReplaced: 그림자 단계 0
+                "const n = 1 + Math.floor((G.gm - g.fromMinute) / g.everyMinutes + 1e-4), all = new Set((G.gathered || []).concat(fallenLordRegs()));",
+                "return Math.min(n, all.size);",                                                   // Core GatheringLordsDue
+                "c.r.boss && G.lords[c.r.id] !== 'down'",                                          // Core FallenLordRegions: 주인이 있고 이 생에 안 쓰러뜨린 땅
+                "sort((a, b) => a.e.atSeconds - b.e.atSeconds)",                                   // 무너진 차례
+                "while (G.gatherQ.length && !G.lordF)",                                            // 싸움 중이 아니면 하나씩(Core NoteGathering)
+            })
+                Assert.Contains(used, html);
+            Assert.Contains("\"lifeEnd\": drop_notes(load(\"cheonha\")[\"lifeEnd\"])", ReadRepoFile("tools", "build_web_prototype.py"));
+        }
     }
 }

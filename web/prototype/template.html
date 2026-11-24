@@ -2284,7 +2284,7 @@ function addUlt(v, flat) {
 // (이미 더 가까우면 그대로). 화면 위 다른 적 피해도 단계마다 커진다. 처음 나타나는 자리는 적이 생기는 고리, 몸 반지름 SHADOW_R 은 프로토타입 값(기획서에 없음)
 const LE = DATA.lifeEnd || null, SHADOW_R = 0.5;
 function shadowStep() {
-  if (!LE || !LE.shadow || !lordsOn() || !LR.finalRequires) return 0;
+  if (!LE || !LE.shadow || !lordsOn() || !LR.finalRequires || gatheringOn()) return 0;   // 2막 규칙이 켜지면 그림자는 없다(Core Life.ShadowReplaced)
   const top = REALMS.findIndex(x => x.id === LR.finalRequires.realm);
   if (top < 0 || tierNow() < top || sealHeld() >= LR.finalRequires.sealStones || G.gm < LE.shadowFromMinute) return 0;
   return LE.shadowStepMinutes <= 0 ? 1 : 1 + Math.floor((G.gm - LE.shadowFromMinute) / LE.shadowStepMinutes + 1e-4);
@@ -2294,8 +2294,38 @@ function shadowStrength(n) {
   let speed = d.moveSpeed + d.speedPerStep * k; if (d.maxSpeed > 0) speed = Math.min(d.maxSpeed, speed);
   return { dmg: d.contactDamage * Math.pow(d.damageGrowth, k), speed, hit: d.hitIntervalSeconds, enemyMul: 1 + d.enemyDamagePerStep * k };
 }
+// 혈월의 밤 2막(GU-11h4, 2026-11-20 추천대로 — Core Life.GatheringLordsDue·FallenLordRegions·NoteGathering, cheonha.json lifeEnd.gatheringLords):
+// 현경인데 봉인석이 모자라면 그림자 대신 이번 생에 무너진 문파 땅의 주인(아직 안 쓰러뜨린 곳, 무너진 차례)이 fromMinute 에 하나, everyMinutes 마다 하나 더 모여든다.
+// 싸움 중이 아니면 기다리는 주인과 바로 싸움(Core BossAwakening.Summon) — 자리는 플레이어 곁(화면 대각선 0.3, 프로토타입 값)
+const gatheringOn = () => !!(LE && LE.gatheringLords && LE.gatheringLords.everyMinutes > 0);
+function fallenLordRegs() {
+  const out = [];
+  for (const c of CRISES.slice().sort((a, b) => a.e.atSeconds - b.e.atSeconds)) if ((G.crisis || {})[c.e.id] === 'fallen' && c.r.boss && G.lords[c.r.id] !== 'down' && !out.includes(c.r)) out.push(c.r);
+  return out;
+}
+function gatheringDue() {
+  if (!gatheringOn() || !lordsOn() || !LR.finalRequires) return 0;
+  const g = LE.gatheringLords, top = REALMS.findIndex(x => x.id === LR.finalRequires.realm);
+  if (top < 0 || tierNow() < top || sealHeld() >= LR.finalRequires.sealStones || G.gm < g.fromMinute) return 0;
+  const n = 1 + Math.floor((G.gm - g.fromMinute) / g.everyMinutes + 1e-4), all = new Set((G.gathered || []).concat(fallenLordRegs()));
+  return Math.min(n, all.size);
+}
+function gatheringTick() {
+  const due = gatheringDue(); G.gathered = G.gathered || []; G.gatherQ = G.gatherQ || [];
+  if (due > G.gathered.length) for (const r of fallenLordRegs()) {
+    if (G.gathered.length >= due) break;
+    if (G.gathered.includes(r)) continue;
+    G.gathered.push(r); G.gatherQ.push(r); toast(`${r.nameKo}의 주인이 모여든다`, '무너진 문파의 땅에서 혈월을 따라왔다');
+  }
+  while (G.gatherQ.length && !G.lordF) {
+    const r = G.gatherQ.shift(); if (G.lords[r.id] === 'down') continue;
+    const e = lordBegin(r), p = G.player, a = rand(0, TAU), R = viewDiag() * 0.3;
+    e.x = p.x + Math.cos(a) * R; e.y = p.y + Math.sin(a) * R;
+  }
+}
 function shadowTick(dt) {
   if (G.won) return;
+  if (gatheringOn()) { G.shadow = null; gatheringTick(); return; }
   const n = shadowStep(), p = G.player;
   if (!n) { G.shadow = null; return; }   // 봉인석을 다 모으면 사라진다
   let S = G.shadow;

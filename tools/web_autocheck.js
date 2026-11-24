@@ -501,6 +501,31 @@ async function crisisRuns(browser, base) {
     await p.ctx.close();
   }
 }
+// 혈월의 밤 2막(GU-11h4): 현경·봉인석 모자람·30분이면 그림자 대신 무너진 문파 땅의 주인이 곁으로 모여든다
+async function gatheringRun(browser, base) {
+  const label = '모여드는 땅의 주인';
+  const p = await openPage(browser, base + '/?life=shaolin', label);
+  const r = await p.page.evaluate(() => {
+    const bad = [];
+    try {
+      startRun('full'); G.auto = false; running = false;
+      G.realm = REALMS.find(x => x.id === LR.finalRequires.realm); recomputeStats();
+      G.crisis = { wudang_barrier: 'fallen', danggata_poison: 'fallen' };
+      G.t = (LE.gatheringLords.fromMinute * 60 - 1) / G.timeScale; G.player.maxHp = G.player.hp = 1e9;
+      for (let i = 0; i < 60; i++) { G.player.hp = G.player.maxHp; step(1 / 30); }
+      if (G.shadow) bad.push('그림자가 나옴');
+      const e = G.lordF;
+      if (!e || e.lord !== 'wudangsan') bad.push(`먼저 무너진 무당산 주인이 안 옴(${e && e.lord})`);
+      else if (Math.hypot(e.x - G.player.x, e.y - G.player.y) > viewDiag()) bad.push('모여든 주인이 곁에 없음');
+      if ((G.gathered || []).length !== 1) bad.push(`30분에 모여든 수 ${(G.gathered || []).length}`);
+      return { bad, who: e ? e.name : '' };
+    } catch (err) { return { bad: ['오류: ' + err.message], who: '' }; }
+  });
+  for (const b of r.bad) problems.push(`${label}: ${b}`);
+  flush(p, label);
+  rows.push({ what: label, res: r.bad.length ? '문제' : `통과(${r.who})` });
+  await p.ctx.close();
+}
 
 (async () => {
   const srv = await serve();
@@ -514,7 +539,7 @@ async function crisisRuns(browser, base) {
     if (ONLY.includes('m3')) await m3Runs(browser, base);
     if (ONLY.includes('lords')) await lordRuns(browser, base);
     if (ONLY.includes('final')) await finalRuns(browser, base);
-    if (ONLY.includes('crisis')) await crisisRuns(browser, base);
+    if (ONLY.includes('crisis')) { await crisisRuns(browser, base); await gatheringRun(browser, base); }
     if (ONLY.includes('flow')) await flowRuns(browser, base);
     if (ONLY.includes('weapons')) await weaponRuns(browser, base);
     if (ONLY.includes('manuals')) await manualRuns(browser, base);
