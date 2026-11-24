@@ -21,7 +21,7 @@
 | 남궁세가(남궁) | ○ | △ 시트 `props_namgung_manor` 만 | — | — | — | ✕ 검 시렁(`sword_racks`) | △ | ○ 남녀 |
 | 당가타(당가) | ○ | △ 시트 둘(`danggata_bamboo`·`danggata_halls`) | ○ 셋 | ○ 셋 | ○ 당소혜, 패턴 셋(분신 그림 있음) | ✕ 독안개·대숲 | △ | ○ 남녀 |
 | 장강 수로(수로채) | ○(+ 물 타일 `Art/Tiles/tile_changjiang_water` △) | △ 시트 둘(`changjiang_pier`·`changjiang_reeds`) | ○ 둘 | ○ 셋 | ○ 마천패, 패턴 셋 | ✕ 물·떠도는 배·역류 | △ | ○ 남녀 |
-| 무당산(무당) | △ `Art/Tiles/tile_wudang_stone`·`tile_wudang_mountain` 이 Resources 밖, ArtOf 줄 없음 → 지금은 코드 타일 | △ 시트 둘(`wudang_temple`·`wudang_cliffs`) | ○ 흑백 쌍강시 | ○ 셋 | ○ 혈허진인, 패턴 셋 | ✕ 태극 바닥·운해 | △ | ○ 남녀 |
+| 무당산(무당) | ○ 2026-11-24 RG-01c 로 `tile_wudang_stone` 을 Resources 로 옮기고 ArtOf 한 줄(세기는 Unity 에서 눈으로). `tile_wudang_mountain` 은 그대로 Art/Tiles | △ 시트 둘(`wudang_temple`·`wudang_cliffs`) | ○ 흑백 쌍강시 | ○ 셋 | ○ 혈허진인, 패턴 셋 | ✕ 태극 바닥·운해 | △ | ○ 남녀 |
 | 화산(화산) | ○ | △ 시트 `huashan_cliff` | △ 매화검귀 — art_queue generated(`docs/art_trial` 에 시안), 아직 안 들임 | ○ 셋 | ○ 낙매검선의 검혼, 패턴 셋 | ✕ 벼랑길·낙석·매화 더미 | △ | ○ 남녀 |
 | 곤륜 설원(곤륜) | ○ | ✕ `props_kunlun_snow` art_queue todo | ○ 셋 | ○ 셋 | ○ 설무향, 패턴 셋 | ✕ 눈보라·얼음 바닥·모닥불 | △ | ○ 남녀 |
 | 십만대산(마교) | ○ | ✕ `props_sipmandaesan_altars` todo | ○ 셋 | ○ 셋 | ○ 혁련휘, 패턴 셋 | ✕ 혈제단·붉은 달 | △ | ○ 남녀 |
@@ -32,7 +32,7 @@
 1. **지역 소품이 가장 큰 구멍이다.** 시트는 일곱 지역 것이 다 들어와 있는데 낱장으로 나뉜 것은 숭산·청운진뿐이고, PropLayer 는 지역을 가리지 않고 같은 열두 장을 깐다. 그래서 어느 땅에 가도 숭산 전각·소나무가 선다. → RG-01a(코드, 지역마다 ArtIds 벌) + Unity 에서 시트를 낱장으로 나누는 일(PR-02U 와 같은 메뉴)
 2. **기믹 화면은 숭산 둘뿐이다.** Core 값(`gimmicks.json`, R-10 표)은 열여덟 가지가 다 있다. 지역마다 Unity 몫.
 3. **개방 총타·남궁세가는 고유 적·정예·땅의 주인이 기획서에 없다**(M2 '문파 셋의 땅'이라 문파 시작점으로만 쓰는 땅). 숭산 수준으로 올리려면 무엇을 넣을지부터 사람이 정해야 한다 → RG-01b 사람 결정 대기.
-4. **무당산 바닥은 원화가 이미 있다.** `Art/Tiles` 에서 `Resources/Art/Tiles` 로 옮기고 ArtOf 에 한 줄이면 된다 → RG-01c.
+4. **무당산 바닥은 원화가 이미 있었다.** `Art/Tiles` 에서 `Resources/Art/Tiles` 로 옮기고 ArtOf 에 한 줄 → RG-01c(같은 날 끝).
 5. 배경음은 지역 차이가 아니라 전부 사람 귀 검수 대기라 이 표에서는 같은 칸(△)이다. 격해진 판은 숭산만 있다(BGM-02b 가 '숭산으로 먼저 시험'으로 정함).
 6. 땅의 주인 패턴 예고는 PatternRunner 가 모양 갈래(부채꼴·원·줄·소환·회전 빔·뛰어 내려찍기)로 그려 지역마다 따로 만들 것은 적다. 원각처럼 땅마다 하나 있는 '고유 그림'(범종 낙하)은 당가타 독안개 반쪽, 장강 물기둥, 무당 칠성검 낙하 같은 것이 숭산 수준의 몫이다 — 화면에서 볼 일이라 RG-xxU 에 적는다.
 

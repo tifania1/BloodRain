@@ -83,6 +83,8 @@ namespace BloodRain.Presentation.Fx
             ["huashan"] = ("tile_huashan_rock", 0.4f),
             ["kunlun"] = ("tile_kunlun_snow", 0.45f),
             ["sipmandaesan"] = ("tile_sipmandaesan_stone", 0.24f),
+            // 2026-11-24 RG-01c: 무당산 돌 바닥(Art/Tiles 에 있던 것을 옮김). 세기는 화산 바위와 같게 두고 Unity 에서 눈으로 맞춤
+            ["wudangsan"] = ("tile_wudang_stone", 0.4f),
         };
         static readonly Dictionary<string, Texture2D> Arts = new Dictionary<string, Texture2D>();
 
