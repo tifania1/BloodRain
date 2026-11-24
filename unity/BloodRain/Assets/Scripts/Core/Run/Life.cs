@@ -155,6 +155,25 @@ namespace BloodRain.Core.Run
         /// 검총 공력은 CurrentStats 가 저절로 더하고, 진전 덧셈은 Body.ComputeSynergy(…, Encounters.SchoolExtra) 로 넘긴다.</summary>
         public EncounterBoons Encounters { get; }
 
+        /// <summary>이번 생 병기 칸(기획서 8장 '문파 병기와 6단', gear.json). 생이 끝나면 버린다. 이어하기 저장에는 아직 안 든다.</summary>
+        public GearSlot GearSlot { get; } = new GearSlot();
+
+        /// <summary>지금 땅에서 그 적을 쓰러뜨렸을 때 떨어뜨릴 병기 id(없으면 null). 서장에는 병기가 없다. luck 은 기연(StatSheet.Luck).</summary>
+        public string? RollGearDrop(string enemyId, float luck, Random rng) =>
+            IsPrologue ? null : Build.Gear.RollDrop(_data, RegionId, enemyId, luck, rng);
+
+        /// <summary>떨어진 병기를 줍는다. 돌려주는 값은 주운 뒤 등급 자리(0 = 범병).</summary>
+        public int PickGear(string gearId) => GearSlot.Pick(_data, gearId);
+
+        /// <summary>그 무공 피해 배율(1 + 병기 등급 보너스).</summary>
+        public float GearDamageMultiplier(string weaponId) => 1f + (float)Build.Gear.DamageBonus(_data, GearSlot, weaponId);
+
+        /// <summary>그 무공 범위 배율(1 + 병기 등급 보너스).</summary>
+        public float GearAreaMultiplier(string weaponId) => 1f + (float)Build.Gear.AreaBonus(_data, GearSlot, weaponId);
+
+        /// <summary>그 무공이 6단(신병합일)인지.</summary>
+        public bool IsSixth(string weaponId) => Build.Gear.IsSixth(_data, GearSlot, weaponId, Loadout.Evolved.Contains(weaponId));
+
         /// <summary>몸이 받는 회복 전부에 곱하는 수: 문파 고유 능력(마교 0.5) × 혈마의 속삭임(받았으면 0.5).
         /// 흡혈대법 같은 깨달음 배율(InsightEffects.OtherHealMultiplier)은 Presentation 이 따로 곱한다.</summary>
         public float HealingMultiplier => Body.SectTrait.HealingMultiplier * Encounters.HealingMultiplier;
@@ -760,6 +779,11 @@ namespace BloodRain.Core.Run
             kill.BloodCrystal = info.BloodCrystal;
             _bossRecord.Apply(kill);
             kill.Woken = Bosses.Refresh();
+            // 기획서 8장 '문파 병기와 6단': 그 땅 문파 병기를 쥐고 있으면 한 등급, 유품 병기는 계정 첫 처치에 그 자리에 떨어뜨린다
+            var landSect = _data.Cheonha.Regions.FirstOrDefault(r => r.Id == kill.RegionId)?.Sect;
+            kill.GearGradedUp = GearSlot.GradeUpIfSect(_data, landSect);
+            if (info.FirstOnAccount)
+                kill.GearDrop = _data.Gear.Gear.FirstOrDefault(g => g.Source == "relic:" + kill.RegionId)?.Id;
             return kill;
         }
 

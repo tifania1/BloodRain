@@ -112,6 +112,10 @@ namespace BloodRain.Core.World
         public List<string> UnlockWeapons = new List<string>();
         public int RebirthQi;
         public int BloodCrystal;
+        /// <summary>쥔 문파 병기가 이 땅 문파 것이라 한 등급 올랐는지(기획서 8장 '문파 병기와 6단').</summary>
+        public bool GearGradedUp;
+        /// <summary>쓰러진 자리에 떨어뜨릴 병기 id(무명 철검처럼 그 땅의 주인 첫 처치 때 받는 유품). 없으면 null.</summary>
+        public string? GearDrop;
         /// <summary>보갑 하나(절기 계기, 8장).</summary>
         public bool Chest;
         /// <summary>이 처치로 봉인석이 늘어 새로 깨어난 땅(일곱째면 봉마곡). Life.DefeatBoss 가 채운다.</summary>

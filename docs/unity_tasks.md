@@ -38,9 +38,9 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: 세 언어에서 네모·엉뚱한 글자 0, 콘솔 에러 0, PC 저장소 깨끗함
   - 찍기: 없음(이상하면 `docs/unity_shots/` 의 `FONT-02U` 폴더에)
 
-- [ ] GU-10U 문파 병기 화면: 떨어진 병기·HUD 병기 칸·6단 각성 · 먼저: backlog GU-10b3(Core `Life` 가 병기 칸을 들고 처치 때 떨어뜨리기를 부름 — 그 전에는 F2 시험 메뉴로 병기를 쥐여 주는 단추만 먼저 붙여도 됨)
+- [ ] GU-10U 문파 병기 화면: 떨어진 병기·HUD 병기 칸·6단 각성 · 먼저: 없음(Core 는 2026-11-24 GU-10b3 로 붙음)
   - 할 것: ① 떨어진 병기: 땅에 꽂힌 병기 하나(그림은 art_queue 가 올 때까지 문파 상징색 막대) 위에 문파 빛 기둥(FxInk 셰이더 `Glow`, 위로 갈수록 옅게), 닿으면 줍고 '금강 염주 · 범병' 한 줄 알림(Text Animator), 등급이 오르면 '양병으로' ② HUD 병기 칸: 무공 칸 옆 작은 칸 하나, 병기 이름 첫 글자 + 등급 점(●○○○), 문파 상징색 테두리 ③ 6단 각성: `Gear.IsSixth` 가 처음 참이 되면 절기 각성 연출(1.5초판)에 '신병합일' 글자와 몸에서 오르는 문파 빛 ④ SectFx 6단: 그 무공 그리기에 `Gear.VisualStage` 6 을 넘겨 시안 `web/lookdev/sects.html` 6단 값(삼재검법·나한권·취선봉·창천검기 넷만 시안이 있음, 나머지는 5단 + 빛 기둥) ⑤ F2 시험 메뉴에 '병기 쥐기(문파·등급)' 단추
-  - 쓸 것: Core `Build.Gear`·`GearSlot`(`Pick`·`GradeDef`·`DamageBonus`·`IsSixth`·`VisualStage`), `Resources/Data/gear.json`(이름·한자·등급), strings `gear.*`, 문파 상징색 `synergies.json` schools[].color, `docs/design/sinbyeong.md`, `docs/design/vfx.md`
+  - 쓸 것: Core `Life.RollGearDrop`(적이 쓰러질 때, 기연은 StatSheet.Luck)·`Life.PickGear`·`Life.GearDamageMultiplier`·`GearAreaMultiplier`(WeaponRunner 피해·범위에 곱함)·`Life.IsSixth`, `DefeatBoss` 결과 `BossKill.GearGradedUp`·`GearDrop`(그 자리에 떨어뜨림), 레벨업은 `Loadout.RollLevelUp(..., gear: life.GearSlot)`, `Build.Gear`·`GearSlot`(`GradeDef`·`VisualStage`), `Resources/Data/gear.json`(이름·한자·등급), strings `gear.*`, 문파 상징색 `synergies.json` schools[].color, `docs/design/sinbyeong.md`, `docs/design/vfx.md`
   - 메뉴: 없음
   - 끝: F2 로 금강 염주 신병 + 나한권 절기를 쥐면 6단 각성이 한 번 뜨고 나한권이 시안 6단 모양으로 나온다. 떨어진 병기를 주우면 칸·알림이 바뀐다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `GU-10U` 폴더에 떨어진 병기·HUD 칸·6단 나한권 한 장씩

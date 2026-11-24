@@ -156,17 +156,18 @@ namespace BloodRain.Core.Build
         /// 뽑힌 것이 모두 새 무공이면 은자·음식을 한 장 더 붙인다(levelUp.fallbackWhenAllNewWeapons).</summary>
         /// <param name="knownLinks">장경각 도감에 오른 연환 id(지난 생들에서 깨친 것, Soul.Codex 의 link: 쪽). 그 연환의 짝 무공 카드는
         /// knownLinkWeight 배로 잘 뜬다(기획서 20장 '돈오'). null 이거나 가중치가 붙는 카드가 없으면 보통 추첨(난수 순서도 같다).</param>
+        /// <param name="gear">이번 생 병기 칸. 등급 offerWeight(명병부터 ×1.5, gear.json)를 그 문파 무공·심법 카드에 곱한다(기획서 8장 '문파 병기와 6단'). null 이면 그대로.</param>
         /// <param name="forceStep">구결이 켜진 동안 다음 걸음(GugyeolPlayer.Next, GU-11o1 2026-11-20 추천대로 — decisions #66). 그 걸음이 지금 고를 수 있는
         /// 카드면(후보에 있으면) 뽑힌 카드에 없을 때 맨 끝 카드(은자·음식이 아닌 것)를 그 카드로 바꾼다. 카드 수·대오 확률은 그대로.
         /// 고를 수 없으면(칸이 참·최고 단계·파기) 바꾸지 않고, 구결은 Pick 에서 멈춘다.</param>
-        public List<Offer> RollLevelUp(Random rng, float luck, ISet<string> unlocked, IReadOnlyCollection<string>? knownLinks = null, string? forceStep = null)
+        public List<Offer> RollLevelUp(Random rng, float luck, ISet<string> unlocked, IReadOnlyCollection<string>? knownLinks = null, string? forceStep = null, GearSlot? gear = null)
         {
             var rule = _data.Balance.LevelUp;
             int count = rule.BaseChoices;
             if (count < rule.MaxChoices && rng.NextDouble() < Math.Min(1.0, luck / rule.LuckForFourthChoice)) count++;
 
             var pool = Candidates(unlocked);
-            var weights = pool.Select(o => KnownLinkWeight(o, knownLinks)).ToList();
+            var weights = pool.Select(o => KnownLinkWeight(o, knownLinks) * Gear.OfferWeight(_data, gear, o.Id)).ToList();
             bool weighted = weights.Any(w => w != 1.0);
             var result = new List<Offer>();
             while (result.Count < count && pool.Count > 0)

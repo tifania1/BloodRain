@@ -86,6 +86,20 @@ namespace BloodRain.Core.Build
         public static double AreaBonus(GameData data, GearSlot slot, string weaponId) =>
             AppliesTo(data, slot, weaponId) ? slot.GradeDef(data)!.Area : 0;
 
+        /// <summary>그 카드(무공·심법 id)의 레벨업 뽑기 무게: 쥔 병기 문파의 시너지 구성원이면 등급 offerWeight, 아니면 1.
+        /// 문파 없는 병기는 대표 무공 하나에만.</summary>
+        public static double OfferWeight(GameData data, GearSlot? slot, string offerId)
+        {
+            if (slot?.GearId == null) return 1.0;
+            double w = slot.GradeDef(data)!.OfferWeight;
+            if (w <= 0 || w == 1.0) return 1.0;
+            var g = Def(data, slot.GearId);
+            if (g.Weapon == offerId) return w;
+            if (g.Sect == null) return 1.0;
+            var school = data.Synergies.Schools.FirstOrDefault(s => s.Id == g.Sect);
+            return school != null && school.Members.Contains(offerId) ? w : 1.0;
+        }
+
         /// <summary>6단(신병합일)인지: 쥔 병기가 6단 등급이고, 그 무공이 병기의 대표 무공이고, 절기로 깨어 있다.</summary>
         public static bool IsSixth(GameData data, GearSlot slot, string weaponId, bool awakened)
         {
