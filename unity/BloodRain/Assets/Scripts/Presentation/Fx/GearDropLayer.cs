@@ -126,9 +126,86 @@ namespace BloodRain.Presentation.Fx
             Debug.Log($"[GearDropLayer] 떨어짐 {def.NameKo}{(relic ? " (유품)" : "")}");
         }
 
+        // ---------- GU-10U ③ 6단 각성(신병합일) ----------
+        // Life.IsSixth 가 그 무공에 처음 참이 되면 절기 각성 연출 짧은 판(1.5초)을 '神兵合一' 이름 카드로 한 번,
+        // 몸에서 문파 빛이 위로 오른다. 다른 각성이 도는 중이면 끝날 때까지 기다린다.
+        readonly HashSet<string> _sixthShown = new HashSet<string>();
+        AwakeningFx _awFx;
+        public const string SixthHanja = "神兵合一";
+        /// <summary>시험용: 6단 각성이 뜬 수.</summary>
+        public int SixthCount { get; private set; }
+
+        void TickSixth()
+        {
+            var life = runner.Life;
+            if (life.GearSlot.Empty || runner.player == null) return;
+            foreach (var wid in life.Loadout.Evolved)
+            {
+                if (_sixthShown.Contains(wid) || !life.IsSixth(wid)) continue;
+                if (_awFx == null) _awFx = FindFirstObjectByType<AwakeningFx>();
+                if (_awFx != null && _awFx.IsPlaying) return; // 앞선 절기 각성이 끝난 뒤에
+                _sixthShown.Add(wid);
+                PlaySixth(wid);
+                return;
+            }
+        }
+
+        void PlaySixth(string weaponId)
+        {
+            var def = Gear.Def(DataBoot.Data, runner.Life.GearSlot.GearId);
+            Color tint = SchoolTint.OfSchoolId(def.Sect) ?? new Color(0.85f, 0.69f, 0.23f);
+            SixthCount++;
+            if (_awFx != null)
+            {
+                var evo = new EvolutionDef { Id = "sixth_" + weaponId, NameKo = "신병합일", Hanja = SixthHanja, Weapon = weaponId };
+                _awFx.Play(evo, runner.player, firstOnAccount: false, BloodRain.Core.Combat.AwakeningLength.Short, forceLong: false);
+            }
+            StartCoroutine(RisingLight(tint));
+            Debug.Log($"[GearDropLayer] 6단 각성 신병합일 {def.NameKo} · {weaponId}{(_awFx == null ? " · 씬에 AwakeningFx 없음" : "")}");
+        }
+
+        // 몸에서 오르는 문파 빛: 빛 기둥 셋이 차례로 솟아 위로 옅어진다(실제 시간, 각성 겹 레이어라 흑백을 안 받음).
+        System.Collections.IEnumerator RisingLight(Color tint)
+        {
+            float sc = Scale;
+            int layer = LayerMask.NameToLayer(AwakeningFx.OverlayLayerName);
+            var cols = new List<(SpriteRenderer sr, float delay)>();
+            for (int i = 0; i < 3; i++)
+            {
+                var sr = new GameObject("신병합일 빛 " + i).AddComponent<SpriteRenderer>();
+                sr.transform.SetParent(transform, false);
+                sr.sprite = _pillar;
+                sr.sortingOrder = 490 + i;
+                if (layer >= 0) sr.gameObject.layer = layer;
+                sr.color = new Color(tint.r, tint.g, tint.b, 0f);
+                cols.Add((sr, i * 0.18f));
+            }
+            const float Dur = 1.5f;
+            float t = 0f;
+            while (t < Dur + 0.4f)
+            {
+                t += Time.unscaledDeltaTime;
+                var at = runner != null && runner.player != null ? runner.player.position : Vector3.zero;
+                for (int i = 0; i < cols.Count; i++)
+                {
+                    var (sr, delay) = cols[i];
+                    float k = Mathf.Clamp01((t - delay) / (Dur - delay));
+                    float rise = 1f - (1f - k) * (1f - k);
+                    float a = k <= 0f ? 0f : Mathf.Sin(k * Mathf.PI) * (i == 0 ? 0.9f : 0.6f);
+                    float wdt = (i == 0 ? 2.2f : 1.3f) * sc;
+                    sr.transform.position = at + new Vector3((i - 1) * 0.35f * sc, (0.5f + rise * 2.5f) * sc, 0f);
+                    sr.transform.localScale = new Vector3(wdt, (0.8f + rise * 0.9f) * sc, 1f);
+                    sr.color = new Color(Mathf.Lerp(tint.r, 1f, 0.25f), Mathf.Lerp(tint.g, 1f, 0.25f), Mathf.Lerp(tint.b, 1f, 0.25f), a);
+                }
+                yield return null;
+            }
+            foreach (var (sr, _) in cols) if (sr != null) Destroy(sr.gameObject);
+        }
+
         void Update()
         {
             if (!Alive) return;
+            TickSixth();
             float dt = Time.deltaTime;
             var me = PlayerPos;
             float sc = Scale;
