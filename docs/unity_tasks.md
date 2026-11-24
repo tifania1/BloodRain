@@ -67,19 +67,19 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 찍기: `docs/unity_shots/` 의 `RG-02U` 폴더에 두 장
 - [ ] RG-03U 당가타(땅의 주인 당소혜)를 숭산 수준으로 — 땅의 주인 원화·예고는 EF-02U 와 같은 틀 · 먼저: RG-02U
   - 할 것: ① 소품 시트 둘(`props_danggata_bamboo`·`props_danggata_halls`) 낱장·지역 벌 ② 기믹 둘: 대숲(`gimmicks.json` bambooThicket — 탑림과 같은 무더기, 걷는 것만 막고 한 번에 베임) — 숭산 탑림 코드를 본떠, 독안개(poisonFog — 샘에서 퍼졌다 걷힘, 안에서 초당 피해)는 먹·초록 담채 원(FxInk 셰이더) ③ 당소혜 '독안개 반쪽'(half_map_poison_fog) 예고가 숭산 범종 낙하만큼 읽히는지 보고 옅으면 진하게
-  - 쓸 것: `Fx/GimmickLayer.cs`(탑림 갈래), `Combat/PatternRunner.cs`, gimmicks bambooThicket·poisonFog, bosspatterns dang_sohye
+  - 쓸 것: `Fx/GimmickLayer.cs`(탑림 갈래), `Combat/PatternRunner.cs`, gimmicks bambooThicket·poisonFog, bosspatterns dang_sohye. 웹 합친 판 본보기(2026-11-25 LG-04): `template.html` `CHG.bambooPatchAt`·`cutBamboo`·`drawBamboo`
   - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
   - 끝: 당가 몸 한 생에서 대숲이 길을 막고 베이며, 독안개가 퍼졌다 걷히고, 당소혜 독안개 예고가 한눈에 보인다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `RG-03U` 폴더에 대숲·독안개·당소혜 예고 한 장씩
 - [ ] RG-04U 장강 수로(땅의 주인 마천패)를 숭산 수준으로 · 먼저: RG-03U
   - 할 것: ① 소품 시트 둘(`props_changjiang_pier`·`props_changjiang_reeds`) 낱장·지역 벌 ② 물: `Art/Tiles/tile_changjiang_water.png` 를 물길 바닥으로(물길 자리는 gimmicks water), 물 안 감속 ③ 떠도는 배(driftingBoats — 24m 간격, 초속 1.5m 하류로)·역류 파도(reverseWave — 예고 동안 강물이 붉어짐, Core SweepWave) ④ 마천패 물기둥(water_pillar) 예고
-  - 쓸 것: gimmicks water·driftingBoats·reverseWave, Core `SweepWave`, `Fx/Biomes.cs`, bosspatterns ma_cheonpae
+  - 쓸 것: gimmicks water·driftingBoats·reverseWave, Core `SweepWave`, `Fx/Biomes.cs`, bosspatterns ma_cheonpae. 웹 합친 판 본보기(2026-11-25 LG-02·03): `reverseWaveStep`(붉은 예고·흰 물보라 앞머리), `boatsW`·`boatsStep`(배는 굽이 물길 가운데 줄을 따라 기울어 흐름 — Core 는 곧은 물길)
   - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
   - 끝: 수로채 몸 한 생에서 물길·배·역류 파도가 보이고 배 위에선 안 느려진다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `RG-04U` 폴더에 물길·배·역류 예고 한 장씩
 - [ ] RG-05U 무당산(땅의 주인 혈허진인)을 숭산 수준으로 · 먼저: RG-04U (2026-11-24 클라우드가 바닥 원화 `tile_wudang_stone` 을 Resources 로 옮기고 `Biomes.ArtOf` 에 세기 0.4 로 넣음 — 먼저 F2 로 무당 몸에서 바닥이 너무 짙거나 누렇지 않은지 보고 세기만 고쳐도 됨, 먼저를 안 기다려도 됨)
   - 할 것: ① 바닥: 클라우드가 넣은 `tile_wudang_stone` 세기(0.4) 확인 ② 소품 시트 둘(`props_wudang_temple`·`props_wudang_cliffs`) 낱장·지역 벌 ③ 태극 바닥(taijiFloor — 밟으면 게이지 반대 속성 피해 +, 쿨다운 동안 옅어짐)·운해(cloud_sea) ④ 혈허진인 칠성검 낙하(seven_star_sword_drop) 예고
-  - 쓸 것: `Fx/Biomes.cs` ArtOf wudangsan, gimmicks taijiFloor·cloudSea, bosspatterns hyeolheo
+  - 쓸 것: `Fx/Biomes.cs` ArtOf wudangsan, gimmicks taijiFloor·cloudSea, bosspatterns hyeolheo. 웹 합친 판 본보기(2026-11-25 LG-01): `cloudSeaStep`(숨으면 적이 들어간 자리 둘레를 맴돌고 원거리 적은 안 쏨), 구름은 흰 빛에 푸른 잿빛 테라야 종이 바닥에서 보임
   - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
   - 끝: 무당 몸 한 생에서 돌 바닥·무당 소품·태극 바닥이 보이고 밟으면 효과가 난다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `RG-05U` 폴더에 바닥·태극 바닥·칠성검 예고 한 장씩
