@@ -6,11 +6,10 @@ using Xunit;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>바닥에 깔린 지역 기믹(물길·태극 바닥·모닥불·탑림·범종 격자, WP-13b). 1장 프로토타입(template.html)이
-    /// 천하 시안(cheonha.html)의 배치·판정·그림 함수를 글자 그대로 옮겨 쓰는지 본다. 시안을 고치면 프로토타입도 같이 고쳐야 통과한다.</summary>
+    /// <summary>바닥에 깔린 지역 기믹(물길·태극 바닥·모닥불·탑림·범종 격자, WP-13b). 원래는 천하 시안(cheonha.html)이 원본이고
+    /// 합친 판(template.html)이 글자 그대로 옮겨 썼는지 봤다. 2026-11-25(WP-16)부터 합친 판이 원본이다 — 시안을 줄여도 이 테스트는 안 깨진다.</summary>
     public class CheonhaGimmickTests
     {
-        static readonly string Sian = TestData.ReadRepoFile("web", "lookdev", "cheonha.html");
         static readonly string Proto = TestData.ReadRepoFile("web", "prototype", "template.html");
 
         // 들여쓰기만 다를 수 있다(프로토타입은 CHG 안이라 두 칸 들여 씀)
@@ -43,9 +42,11 @@ namespace BloodRain.Core.Tests
         [InlineData("drawWaterways")]
         [InlineData("drawTaijiPads")]
         [InlineData("drawPagodas")]
-        public void 프로토타입_바닥_기믹_함수는_시안과_글자가_같다(string name)
+        public void 프로토타입에_바닥_기믹_함수가_있다(string name)
         {
-            Assert.Equal(Func(Sian, name, ""), Func(Proto, name, "  "));
+            // CHG 안이라 두 칸 들여 쓴다. 몸이 비어 있으면 안 된다
+            var f = Func(Proto, name, "  ");
+            Assert.True(f.Split('\n').Length >= 3, $"{name} 몸이 비었다");
         }
 
         [Theory]
@@ -53,15 +54,15 @@ namespace BloodRain.Core.Tests
         [InlineData("const regionHalfGap = ")]
         [InlineData("const nearCampfire = ")]
         [InlineData("const sx = x => ")]
-        public void 프로토타입_바닥_기믹_한_줄짜리도_시안과_같다(string prefix)
+        public void 프로토타입에_바닥_기믹_한_줄짜리가_있다(string prefix)
         {
-            Assert.Equal(Line(Sian, prefix), Line(Proto, prefix));
+            Assert.True(Line(Proto, prefix).Length > prefix.Length + 3, prefix);
         }
 
         [Fact]
-        public void 놓는_간격은_시안_LD_놀이판_값과_같다()
+        public void 놓는_간격_기본값은_gimmicks_json_layout_과_같다()
         {
-            // 프로토타입 CHG_LD 는 gimmicks.json layout 을 읽고(R-10, 2026-11-20), 데이터가 없을 때의 기본값은 시안 LD 값이다. 셋이 어긋나면 안 된다
+            // 프로토타입 CHG_LD 는 gimmicks.json layout 을 읽고(R-10, 2026-11-20), 데이터가 없을 때의 기본값도 그 값과 같아야 한다(옛 시안 LD 값에서 온 것)
             Assert.Contains("const L = (DATA.gimmicks || {}).layout || {}", Proto);
             var ld = Regex.Match(Proto, @"const CHG_LD = \(\(\) => \{ const L = \(DATA\.gimmicks \|\| \{\}\)\.layout \|\| \{\}, d = \{(.*?)\};");
             var layout = TestData.Load().Gimmicks.Layout;
@@ -71,9 +72,6 @@ namespace BloodRain.Core.Tests
             foreach (Match p in pairs)
             {
                 var key = p.Groups[1].Value;
-                var sian = Regex.Match(Sian, @"^\s+(?:\w+: [\d.]+, )*" + key + @": ([\d.]+)", RegexOptions.Multiline);
-                Assert.True(sian.Success, $"시안 LD 에 {key} 가 없다");
-                Assert.Equal(double.Parse(sian.Groups[1].Value, CultureInfo.InvariantCulture), double.Parse(p.Groups[2].Value, CultureInfo.InvariantCulture));
                 var prop = typeof(GimmickLayoutDef).GetField(char.ToUpperInvariant(key[0]) + key.Substring(1));
                 Assert.True(prop != null, $"gimmicks.json layout 에 {key} 가 없다");
                 Assert.Equal(double.Parse(p.Groups[2].Value, CultureInfo.InvariantCulture), (double)(float)prop!.GetValue(layout)!, 3);

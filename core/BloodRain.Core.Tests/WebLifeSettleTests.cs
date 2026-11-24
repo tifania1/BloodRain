@@ -32,10 +32,9 @@ namespace BloodRain.Core.Tests
             Assert.DoesNotContain("perOrbValue = 0.04", html);
         }
 
-        [Fact] public void 혈운_농도는_시안과_같은_두_지역_섞기()
+        [Fact] public void 혈운_농도는_두_지역_섞기()
         {
             Assert.Contains("return (a.density * db + b.density * da) / (da + db);", Proto);
-            Assert.Contains("return (a.density * db + b.density * da) / (da + db);", ReadRepoFile("web", "lookdev", "cheonha.html"));
         }
 
         [Fact] public void 혼_기록은_시안과_같은_열쇠()

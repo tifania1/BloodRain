@@ -97,15 +97,14 @@ namespace BloodRain.Core.Tests
                 d.Dialogue.Mok.Lines.Count(l => l.When.StartsWith("manuscript:")));
         }
 
-        [Fact] public void 꽃잎_나선_셈은_시안과_글자_그대로()
+        // 원래 시안과 글자 그대로인지 봤다. 2026-11-25(WP-16)부터 합친 판이 원본
+        [Fact] public void 꽃잎_나선_셈이_프로토타입에_있다()
         {
-            var sian = ReadRepoFile("web", "lookdev", "cheonha.html");
             foreach (var line in new[] {
                 "const spiralShotsPerArm = pt => pt.hitIntervalSeconds > 0 ? Math.max(1, Math.ceil(pt.leaveSeconds / pt.hitIntervalSeconds - 1e-4)) : 1;",
                 "const spiralShotDegrees = (pt, start, arm, shot) => start + 360 * arm / Math.max(1, pt.count) + pt.turnDegreesPerSecond * shot * pt.hitIntervalSeconds;" })
             {
                 Assert.Contains(line, Proto);
-                Assert.Contains(line, sian);
             }
         }
 
