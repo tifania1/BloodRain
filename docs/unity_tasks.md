@@ -31,6 +31,20 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: 지역 범종·떨어지는 범종이 종 그림, 웹 판에도 들어감(그날 04:37 빌드)
   - 찍기: `docs/unity_shots/BELL-01U/` 지역 범종 한 장, 범종 낙하 한 장
 
+- [ ] FONT-02U 다시 줄인 글꼴 받고 동적 글꼴 비우기 · 먼저: 없음 (2026-11-24 밤 개발 세션이 병기 한자 여섯 凡良杖鱗匕鎌 때문에 `tools/subset_fonts.py` 를 다시 돌림 — 글꼴 넷의 글리프 번호가 바뀜)
+  - 할 것: 받아온 뒤 동적 글꼴 에셋 넷(`NotoSerifKR SDF`·`NotoSerifSC SDF`·`NotoSerifTC SDF`·`YujiBoku Dynamic SDF`) Inspector 톱니 → 'Clear Dynamic Data', Run 씬을 켜 한국어·간체·번체 HUD·레벨업 카드에 엉뚱한 글자·네모가 없는지. 끝나면 `git add -u` 로 SDF 에셋 변경을 "Unity 저장 뒤 설정"으로 커밋
+  - 쓸 것: `tools/subset_fonts.py`, WEB-01U 줄 ①
+  - 메뉴: 없음
+  - 끝: 세 언어에서 네모·엉뚱한 글자 0, 콘솔 에러 0, PC 저장소 깨끗함
+  - 찍기: 없음(이상하면 `docs/unity_shots/` 의 `FONT-02U` 폴더에)
+
+- [ ] GU-10U 문파 병기 화면: 떨어진 병기·HUD 병기 칸·6단 각성 · 먼저: backlog GU-10b3(Core `Life` 가 병기 칸을 들고 처치 때 떨어뜨리기를 부름 — 그 전에는 F2 시험 메뉴로 병기를 쥐여 주는 단추만 먼저 붙여도 됨)
+  - 할 것: ① 떨어진 병기: 땅에 꽂힌 병기 하나(그림은 art_queue 가 올 때까지 문파 상징색 막대) 위에 문파 빛 기둥(FxInk 셰이더 `Glow`, 위로 갈수록 옅게), 닿으면 줍고 '금강 염주 · 범병' 한 줄 알림(Text Animator), 등급이 오르면 '양병으로' ② HUD 병기 칸: 무공 칸 옆 작은 칸 하나, 병기 이름 첫 글자 + 등급 점(●○○○), 문파 상징색 테두리 ③ 6단 각성: `Gear.IsSixth` 가 처음 참이 되면 절기 각성 연출(1.5초판)에 '신병합일' 글자와 몸에서 오르는 문파 빛 ④ SectFx 6단: 그 무공 그리기에 `Gear.VisualStage` 6 을 넘겨 시안 `web/lookdev/sects.html` 6단 값(삼재검법·나한권·취선봉·창천검기 넷만 시안이 있음, 나머지는 5단 + 빛 기둥) ⑤ F2 시험 메뉴에 '병기 쥐기(문파·등급)' 단추
+  - 쓸 것: Core `Build.Gear`·`GearSlot`(`Pick`·`GradeDef`·`DamageBonus`·`IsSixth`·`VisualStage`), `Resources/Data/gear.json`(이름·한자·등급), strings `gear.*`, 문파 상징색 `synergies.json` schools[].color, `docs/design/sinbyeong.md`, `docs/design/vfx.md`
+  - 메뉴: 없음
+  - 끝: F2 로 금강 염주 신병 + 나한권 절기를 쥐면 6단 각성이 한 번 뜨고 나한권이 시안 6단 모양으로 나온다. 떨어진 병기를 주우면 칸·알림이 바뀐다. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `GU-10U` 폴더에 떨어진 병기·HUD 칸·6단 나한권 한 장씩
+
 - [ ] RG-01U 개방 총타를 숭산 수준으로 · 먼저: backlog RG-02(빠진 것 표와 '쓸 것'을 클라우드가 채움). 그 전에 해도 된다면: F2 로 개방 몸으로 바꿔 개방 총타에서 한 생을 자동 플레이로 굴려 보고, 숭산과 비교해 눈에 띄게 빠진 것(바닥·소품·적 원화·기믹 그림·침방 카드)을 이 줄 '진행'에 적기만
 - [ ] RG-02U 남궁세가를 숭산 수준으로 · 먼저: RG-01U 와 같음
 - [ ] RG-03U 당가타(땅의 주인 당소혜)를 숭산 수준으로 — 땅의 주인 원화·예고는 EF-02U 와 같은 틀 · 먼저: RG-02U
