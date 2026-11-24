@@ -152,6 +152,7 @@ namespace BloodRain.Presentation
             if (GetComponent<LanternLayer>() == null) gameObject.AddComponent<LanternLayer>().runner = this;
             if (GetComponent<EncounterLayer>() == null) gameObject.AddComponent<EncounterLayer>().runner = this; // WP-39U 기연
             if (GetComponent<ChestLayer>() == null) gameObject.AddComponent<ChestLayer>().runner = this; // C-09d 보갑·각성
+            if (GetComponent<Fx.GearDropLayer>() == null) gameObject.AddComponent<Fx.GearDropLayer>().runner = this; // GU-10U 떨어진 문파 병기
             if (GetComponent<Combat.PatternRunner>() == null) gameObject.AddComponent<Combat.PatternRunner>().runner = this; // BR-01 땅의 주인 패턴
             if (GetComponent<BossHealthBar>() == null) // UI-01U 땅의 주인 체력바(설정에서 끔)
             {

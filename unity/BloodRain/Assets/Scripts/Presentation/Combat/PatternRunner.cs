@@ -250,6 +250,9 @@ namespace BloodRain.Presentation.Combat
             {
                 var kill = life.DefeatBoss(_fight.IsFinal ? life.Silver : (int?)null);
                 if (kill.Chest) BloodRain.Presentation.Fx.ChestLayer.Instance?.Place(at); // BR-02 처치 보갑(C-09d 보갑 길)
+                // GU-10U 그 땅 문파 병기를 쥐었으면 한 등급, 유품은 그 자리에(닿으면 바꿔 쥘지 묻는다)
+                if (kill.GearGradedUp) BloodRain.Presentation.Fx.GearDropLayer.Instance?.NoteGradedUp();
+                if (kill.GearDrop != null) BloodRain.Presentation.Fx.GearDropLayer.Instance?.DropAt(at + new Vector2(1.2f, 0f) * (WorldScale.Current != null ? WorldScale.Current.Length(1f) : 1f), kill.GearDrop, relic: true);
                 var notice = BossKillNotice.Of(DataBoot.Data, Loc.Current, kill); // BR-02 짧은 붓글씨(종장이면 null)
                 var banner = runner.GetComponent<BloodRain.Presentation.Hud.BossKillBanner>();
                 if (notice != null && banner != null) banner.Show(notice);
