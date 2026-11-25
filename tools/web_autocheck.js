@@ -510,7 +510,7 @@ async function crisisRuns(browser, base) {
     await p.ctx.close();
   }
 }
-// 일일 도전(MD-01): mode:daily 가 열린 혼이면 침방에 단추가 뜨고, 같은 날 같은 몸, 끝나면 혼이 시작 때 그대로(Core DailyChallenge.Sandbox)
+// 일일 도전(MO-01): mode:daily 가 열린 혼이면 침방에 단추가 뜨고, 같은 날 같은 몸, 끝나면 혼이 시작 때 그대로(Core DailyChallenge.Sandbox)
 async function dailyRun(browser, base) {
   const label = '일일 도전';
   const p = await openPage(browser, base + '/?life=shaolin', label);
@@ -538,7 +538,7 @@ async function dailyRun(browser, base) {
   rows.push({ what: label, res: r.bad.length ? '문제' : `통과(${r.sect})` });
   await p.ctx.close();
 }
-// 보스 연전(MD-02): 봉인 엔딩 뒤 열린 혼으로 현경·Lv8 시작, 주인 일곱을 차례로, 다 넘으면 가장 빠른 시간만 남고 혼은 그대로
+// 보스 연전(MO-02): 봉인 엔딩 뒤 열린 혼으로 현경·Lv8 시작, 주인 일곱을 차례로, 다 넘으면 가장 빠른 시간만 남고 혼은 그대로
 async function rushRun(browser, base) {
   const label = '보스 연전';
   const p = await openPage(browser, base + '/?life=shaolin', label);

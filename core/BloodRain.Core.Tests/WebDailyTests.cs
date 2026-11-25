@@ -5,7 +5,7 @@ using static BloodRain.Core.Tests.TestData;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>MD-01 웹 몫: 웹 한 생 판의 일일 도전이 Core DailyChallenge 와 같은 시드 셈·같은 '혼에 안 남김' 규칙인지 글로 본다.</summary>
+    /// <summary>MO-01 웹 몫: 웹 한 생 판의 일일 도전이 Core DailyChallenge 와 같은 시드 셈·같은 '혼에 안 남김' 규칙인지 글로 본다.</summary>
     public class WebDailyTests
     {
         static string Proto => ReadRepoFile("web", "prototype", "template.html");

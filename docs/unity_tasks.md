@@ -1081,7 +1081,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
 
 - [ ] DD-01U 일일 도전 판 열기 · 먼저: RM-03b
   - 할 것: 모드 고르기(12장 '모드 선택', `Modes.IsOpen(soul, "daily")` 일 때만)에서 일일 도전을 누르면 `var seed = DailyChallenge.Seed(DateTime.UtcNow)` → `Rebirth.Body(C, DailyChallenge.Body(C, seed))` 몸 카드 한 장(고르기 없음) → `new Life(DailyChallenge.Sandbox(soul), body, DailyChallenge.LifeRandom(seed))`. 같은 날 두 번 열면 같은 몸·같은 사건 차례. 끝나면 혼에 넘기지 않고 정산만 — 복사본 혼(Sandbox)째 버리고 진짜 혼은 저장하지 않는다(WP-37 정함: 연무장·환혼 강화는 받고 혼엔 아무것도 안 남김, 몇 번이든 됨). 리더보드는 Steamworks 를 붙인 뒤: `DailyChallenge.LeaderboardName(DateTime.UtcNow)` 리더보드에 내 기록이 없을 때만 `DailyChallenge.Score(life.Minutes)`(버틴 초)를 올림 — 그날 첫 판만.
-  - 쓸 것: Core `Meta/DailyChallenge.cs`, `Meta/Modes.cs`, cheonha.json `modes`. 웹 본보기(2026-11-25 MD-01): template.html `startDaily`·`dailyRestore`(혼 떠 두고 되돌림)
+  - 쓸 것: Core `Meta/DailyChallenge.cs`, `Meta/Modes.cs`, cheonha.json `modes`. 웹 본보기(2026-11-25 MO-01): template.html `startDaily`·`dailyRestore`(혼 떠 두고 되돌림)
   - 메뉴: 없음
   - 끝: 봉인석 셋인 시험 혼으로 일일 도전을 두 번 열어 같은 문파·같은 성질, 콘솔 에러 0
   - 찍기: `docs/unity_shots/DD-01U/` 의 `daily.png`
@@ -1167,7 +1167,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 찍기: `Captures/act2_lord.png`
 - [ ] WP-38U 보스 연전 판 · 먼저: 화면 집중이 풀린 뒤, DD-01U(모드 고르기), backlog WP-38(2026-11-20 Core 끝)
   - 할 것: 모드 고르기에서 보스 연전(`Modes.IsOpen(soul, BossRush.ModeId)`)을 누르면 침방처럼 해금한 문파 몸 하나를 고르고, `DailyChallenge.Sandbox(soul)` 복사본으로 한 생을 `bossRush.startRealm`(현경)·시작 무공 Lv `startWeaponLevel`(8) 로 시작. `var rush = new BossRush(data)` 로 `rush.Current` 땅 주인을 플레이어 곁에 바로 세워(`BossAwakening.Summon` 처럼, 기혈은 `rush.CurrentHealth`) 싸우고, 쓰러뜨리면 `rush.Defeat()` 만큼 레벨업·기혈 가득 → 다음. 멈춤·레벨업 화면이 아닐 때만 `rush.Tick(dt)`. 다 깨면 진짜 혼에 `soul.RecordBossRush(rush.ClearSeconds.Value)` 하고 저장, 정산은 걸린 시간·가장 빠른 시간만. 잡몹은 없음(추천안에 없어 넣지 않음 — 넣고 싶으면 사람에게)
-  - 쓸 것: Core `Meta/BossRush.cs`·`Soul.RecordBossRush`·`BossRushBestSeconds`, `BossRushTests`, 기획서 7장 '보스 연전'. 웹 본보기(2026-11-25 MD-02): template.html `rushSetup`·`rushTick`·`rushDown` — 웹에선 무공 하나 Lv8 로 원각 기혈 9만이 거의 안 깎인다, 화면에서도 그러면 사람에게
+  - 쓸 것: Core `Meta/BossRush.cs`·`Soul.RecordBossRush`·`BossRushBestSeconds`, `BossRushTests`, 기획서 7장 '보스 연전'. 웹 본보기(2026-11-25 MO-02): template.html `rushSetup`·`rushTick`·`rushDown` — 웹에선 무공 하나 Lv8 로 원각 기혈 9만이 거의 안 깎인다, 화면에서도 그러면 사람에게
   - 메뉴: 없음
   - 끝: 봉인 엔딩을 본 시험 혼으로 보스 연전을 열어 원각부터 시작, 원각을 쓰러뜨리면 레벨업 세 번 뒤 당소혜. 콘솔 에러 0
   - 찍기: `Captures/boss_rush.png`

@@ -1851,7 +1851,7 @@ function lordWake() {
 }
 const lordEngageR = () => WD.view0Meters * Math.pow(WD.scalePerRealm, realmProgress()) * LR.engageViewMultiple;   // 절대 m, Core EngageRadius(그 레벨 화면 대각선 — 그리기의 부드러운 G.viewD 말고 목표 값이라 sim 에서도 같다)
 function lordTick(dt) {
-  if (G.rush) { rushTick(dt); return; }   // 보스 연전: 땅의 깨어남 대신 차례대로(MD-02)
+  if (G.rush) { rushTick(dt); return; }   // 보스 연전: 땅의 깨어남 대신 차례대로(MO-02)
   if (!lordsOn()) return;
   lordWake();
   const just = G.lordJust; G.lordJust = [];   // 막 깨어난 곳은 이번 프레임에만 본다(Core QA-05)
@@ -4667,7 +4667,7 @@ function dailyRestore() {
   const X = G && (G.daily || G.rush); if (!X || X.restored) return; X.restored = true;
   try { localStorage.setItem(SOUL_KEY, X.snap); } catch (e) { /* 막혀도 정산은 보인다 */ }
 }
-// 보스 연전(7장 '모드', Core Meta/BossRush, MD-02): 봉인 엔딩 뒤 열린다(mode:boss_rush). 단추를 누르고 후보 카드에서 몸을 고르면
+// 보스 연전(7장 '모드', Core Meta/BossRush, MO-02): 봉인 엔딩 뒤 열린다(mode:boss_rush). 단추를 누르고 후보 카드에서 몸을 고르면
 //   그 몸으로 현경·시작 무공 Lv8 에서 땅의 주인 일곱(봉마곡 빼고 데이터 차례 = Core BossRegions)을 연달아. 주인은 곁(화면 대각선 0.3, 모여드는 주인과 같은 자리)에 세우고
 //   기혈은 기준 체력 × healthCurve(healthMinute 분). 쓰러뜨리면 레벨업 levelUpsPerKill 번·기혈 가득. 땅의 깨어남·그림자·문파의 위기는 안 돈다.
 //   혼은 일일 도전처럼 시작 때로 되돌리고(Core Sandbox) 다 깬 시간(가장 빠른 것)만 혼 bossRushBest 에(Core Soul.RecordBossRush)
@@ -6524,7 +6524,7 @@ function endRun(won) {
     if ((st.newTitles || []).length) facts.push([st.newTitles.map(id => TITLE_BY[id].nameKo).join(' · '), '새 칭호']);   // WP-34
     if ((m.newMastery || []).length) facts.push([m.newMastery.map(x => `${(W_BY_ID[x.id] || {}).nameKo || x.id} ${x.stage >= 2 ? '大成' : '小成'}`).join(' · '), '무공 성취']);   // 10장 '무공 성취'
     if ((m.newAch || []).length) facts.push([m.newAch.map(id => (ACHS.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 업적']);   // 20장 'Steam 업적'
-    if ((m.newModes || []).length) facts.push([m.newModes.map(id => (MODES.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 모드 · 침방에서']);   // WP-67, MD-01·02
+    if ((m.newModes || []).length) facts.push([m.newModes.map(id => (MODES.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 모드 · 침방에서']);   // WP-67, MO-01·02
     if ((st.newCostumes || []).length) facts.push([st.newCostumes.map(t => { const c = (DATA.costumes || []).find(x => 'costume:' + x.id === t); return c ? `${SPK[c.character] || c.character} 의상` : t; }).join(' · '), '새 의상 · 그림은 아직']);   // WP-51
     if ((st.newTorn || []).length) facts.push([st.newTorn.map(manualName).join(' · '), '찢긴 비급 · 장경각에 올랐다']);   // 20장 '비급 층과 해금'
     if (st.newWeapons.length) facts.push([st.newWeapons.map(id => W_BY_ID[id].nameKo).join(' · '), '새로 얻은 무공 · 다음 생부터']);   // Core LifeSummary.NewUnlocks(R-08U 정산 줄과 같은 말)
