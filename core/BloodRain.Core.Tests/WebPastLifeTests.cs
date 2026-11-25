@@ -66,5 +66,21 @@ namespace BloodRain.Core.Tests
             })
                 Assert.Contains(used, html);
         }
+
+        [Fact] public void 웹_깨어나기는_30번_넘은_구간까지_레벨업을_몰아서()
+        {
+            var d = Load();
+            var pl = new PastLifePower(d.Balance.Realms, new Dictionary<string, int> { ["iryu"] = 31, ["ilryu"] = 30, ["jeoljeong"] = 12 }, "jeoljeong",
+                d.Cheonha.PastLife.CutPerCrossing, d.Cheonha.PastLife.MaxCut);
+            Assert.Equal(new[] { "iryu", "ilryu" }, pl.WakeRealms());   // 2026-11-26 브라우저로 같은 혼을 열어 침방 단추가 삼류·이류·일류였음
+            Assert.Equal(PastLifePower.WakeCrossings, d.Cheonha.PastLife.WakeCrossings);
+            var html = Proto;
+            foreach (var used in new[]
+            {
+                "for (const r of RL_ALL.slice(1)) { if ((cr[r.id] || 0) < (PL.wakeCrossings || 30)) break; wake.push(r.id); }",
+                "if (!G.rush && G.body && NEXT_LIFE && NEXT_LIFE.wake) { const R = REALMS.find(r => r.id === NEXT_LIFE.wake); if (R) while (G.level < R.level) { G.level++; G.pendingLevels++; } }",
+            })
+                Assert.Contains(used, html);
+        }
     }
 }

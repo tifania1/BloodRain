@@ -320,6 +320,7 @@ button { touch-action: manipulation; }
       <canvas id="innmap" width="600" height="390" style="width:100%;max-width:600px;display:block;margin:10px auto;border:1px solid #1a1a1a" role="img" aria-label="침방 벽의 중원 지도"></canvas>
       <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button><button class="b" id="indaily" type="button" hidden>일일 도전</button><button class="b" id="inrush" type="button" hidden>보스 연전</button></div>
       <div class="row" id="indirect" hidden></div>
+      <div class="row" id="inwake" hidden></div>
       <div class="subtle" id="innqi"></div>
       <h4 class="innh">객잔 시설</h4>
       <div class="innmeta" id="innfac"></div>
@@ -1076,7 +1077,8 @@ function pastLifeOf(m) {
   let hi = 0; RL_ALL.forEach((r, i) => { if ((m && m.reached || []).includes(r.id)) hi = i; });   // Soul._realms 가운데 가장 높은 것(없으면 삼류)
   const cutFor = seg => seg <= 0 || seg >= RL_ALL.length || seg >= hi ? 0 : Math.min(PL.maxCut, PL.cutPerCrossing * (cr[RL_ALL[seg].id] || 0));
   const segOf = level => { let at = 0; RL_ALL.forEach((r, i) => { if (r.level <= level) at = i; }); return at + 1 < RL_ALL.length ? at + 1 : -1; };
-  return { cutFor, scale: level => { const sg = segOf(level); return sg < 0 ? 1 : 1 - cutFor(sg); } };
+  const wake = []; for (const r of RL_ALL.slice(1)) { if ((cr[r.id] || 0) < (PL.wakeCrossings || 30)) break; wake.push(r.id); }   // Core PastLifePower.WakeRealms(WX-04)
+  return { cutFor, wake, scale: level => { const sg = segOf(level); return sg < 0 ? 1 : 1 - cutFor(sg); } };
 }
 function xpReq(level) {
   const base = xpCurveReq(level);
@@ -1497,6 +1499,8 @@ function newRun(mode) {
   recomputeStats();
   G.player.hp = G.player.maxHp;
   if (G.rush && G.body && BR) rushSetup();
+  // 그 경지로 깨어나기(10장 '천하 확장: 전생의 공력', WX-04): 같은 구간을 30번 넘은 데까지 그 경지 문턱 레벨에서 시작하고, 건너뛴 레벨업(돌파 포함)은 처음에 몰아 고른다
+  if (!G.rush && G.body && NEXT_LIFE && NEXT_LIFE.wake) { const R = REALMS.find(r => r.id === NEXT_LIFE.wake); if (R) while (G.level < R.level) { G.level++; G.pendingLevels++; } }
   if (G.body && G.elix && G.elix.length) {
     for (const e of G.elix) if (e.startUltimate > 0) G.ult = Math.min(B.ultimateCharge.max, (G.ult || 0) + e.startUltimate);   // 공청석유
     const lv = Math.max(0, ...G.elix.map(e => e.startLevel || 0)); while (G.level < lv) { G.level++; G.pendingLevels++; }   // 대환단: 오른 만큼 레벨업 고르기
@@ -4520,7 +4524,7 @@ function fmtStat(k, v) {
 }
 // 연무장에서 이 판이 찍게 하는 항목: balance.json training 가운데 이 판 능력치가 받는 것만, 데이터 순서대로
 const TRAIN_ITEMS = B.training.items.filter(i => statOn(i.stat));
-let NEXT_LIFE = null, innCands = [], innRerolls = 0, innElix = [];
+let NEXT_LIFE = null, innCands = [], innRerolls = 0, innElix = [], innWake = null;   // innWake: 그 경지로 깨어나기(WX-04), null 이면 삼류부터
 const curLifeSect = () => (NEXT_LIFE ? SECT_BY[NEXT_LIFE.sect] : LIFE_SECT);
 // 객잔 시설(10장 '객잔 시설', cheonha.json inn, Core Inn): 조건(서장·봉인석·땅의 주인 처치 지역·해금 토큰)을 갖추면 열리고, 혈정으로 짓는 시설(약방·대장간)은 조건을 갖춘 뒤 짓는다.
 // 한 번 열리면 혼 기록 unlocks 에 facility:<id> 로 남아 회귀로 봉인석이 지워져도 열려 있다. 수리 중(underRepair)이면 문만. 시설 안 화면은 약방 영약(EL-03)·수련동 도전 과제(EL-05)만 있고 대장간 꾸미기·하오문 게시판은 아직 없다.
@@ -5010,6 +5014,11 @@ function renderInn() {
   const rr = $('innreroll'), have = upgEffect(m, 'rerolls');
   rr.hidden = !m.lives || !have; rr.disabled = innRerolls <= 0;
   rr.innerHTML = `다시 고르기 <small>남은 ${innRerolls}/${have} · R</small>`;
+  { const wr = $('inwake'), wl = m.lives ? pastLifeOf(m).wake : []; wr.hidden = !wl.length; wr.innerHTML = ''; if (innWake && !wl.includes(innWake)) innWake = null;
+    if (wl.length) { const h = document.createElement('span'); h.className = 'subtle'; h.textContent = '깨어날 경지 · 건너뛴 레벨업은 처음에 몰아서'; wr.appendChild(h); }
+    for (const id of wl.length ? [null].concat(wl) : []) { const r = id ? RL_ALL.find(x => x.id === id) : RL_ALL[0], b = document.createElement('button'); b.type = 'button'; b.className = 'b';
+      b.textContent = r.nameKo; b.setAttribute('aria-pressed', innWake === id ? 'true' : 'false'); b.style.background = innWake === id ? 'var(--paper2, #eadfc8)' : '';
+      b.onclick = () => { innWake = id; renderInn(); }; wr.appendChild(b); } }
   { const dr = $('indirect'), list = m.lives ? (DATA.sects || []).filter(s => m.unlocked.includes(s.id)) : []; dr.hidden = !list.length; dr.innerHTML = '';
     if (list.length) { const h = document.createElement('span'); h.className = 'subtle'; h.textContent = '직접 고르기 · 성질·덕 없이'; dr.appendChild(h); }
     for (const s of list) { const b = document.createElement('button'); b.type = 'button'; b.className = 'b'; b.textContent = s.nameKo; b.onclick = () => chooseDirect(s.id); dr.appendChild(b); } }
@@ -5105,7 +5114,8 @@ function chooseLife(i, cand = innCands[i]) {
   if (rushSnap) pick.length = 0;   // 연전엔 영약을 안 쓴다
   if (pick.length && elixAvail(m) && (m.crystal || 0) >= cost) { m.crystal -= cost; soulSave(m); } else pick.length = 0;   // Core Apothecary.TryPrepare: 안 되면 아무것도 안 씀
   if (rushSnap) { RUSH = { snap: rushSnap }; innRush = false; }
-  NEXT_LIFE = Object.assign({}, cand, { elixirs: pick }); innElix = []; $('inn').hidden = true; overlay = null;
+  const wk = !rushSnap && innWake && pastLifeOf(m).wake.includes(innWake) ? innWake : null; innWake = null;
+  NEXT_LIFE = Object.assign({}, cand, { elixirs: pick, wake: wk }); innElix = []; $('inn').hidden = true; overlay = null;
   startRun('full');
   if (said.length) toast('목 노인', said.map(l => l.textKo).join(' '));   // 고른 뒤 줄은 새 생 첫 화면에 자막 하나로(자막 줄은 넷까지라 마당 줄이 밀리지 않게)
 }
