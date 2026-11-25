@@ -82,5 +82,20 @@ namespace BloodRain.Core.Tests
             })
                 Assert.Contains(used, html);
         }
+
+        [Fact] public void 웹_구결이_Core_Gugyeol_과_같은_걸음과_멈춤이다()
+        {
+            Assert.Equal("w:nahan_fist", BloodRain.Core.Build.Gugyeol.Step(new BloodRain.Core.Build.Offer(BloodRain.Core.Build.OfferKind.UpgradeWeapon, "nahan_fist")));
+            var html = Proto;
+            foreach (var used in new[]
+            {
+                "const gugStep = o => o && (o.kind === 'nw' || o.kind === 'uw') ? 'w:' + o.id : o && (o.kind === 'np' || o.kind === 'up') ? 'p:' + o.id : null;",   // Gugyeol.Step
+                "let at = -1; currentOffers.forEach((o, i) => { if (o.kind !== 'gold') at = i; });",                                                                  // RollLevelUp forceStep: 맨 끝 은자·음식 아닌 카드
+                "if (!hit) { X.stopped = true;",                                                                                                                       // GugyeolPlayer.Pick: 없으면 멈춤
+                "m.gugyeol[st.sect] = G.pickOrder.slice();",                                                                                                          // Soul.EndLife: 문파마다 마지막 생
+                "if (!firstPro && gugFollow()) return;",
+            })
+                Assert.Contains(used, html);
+        }
     }
 }

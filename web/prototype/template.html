@@ -1480,7 +1480,10 @@ function newRun(mode) {
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : [], NEXT_LIFE ? NEXT_LIFE.boon : null);
     G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(sister 줄, 후보 카드 femaleBodiesKo)
     { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; G.skips = Math.max(0, Math.round(bodyStat('Skips'))); G.revivals = Math.max(0, Math.round(bodyStat('Revival'))); if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
-    G.soul0 = soulLoad(); G.past = pastLifeOf(G.soul0); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
+    G.soul0 = soulLoad(); G.past = pastLifeOf(G.soul0); G.pickOrder = [];
+    // 구결(WX-05): 이 문파로 산 마지막 생의 차례
+    { const st = !G.rush && G.soul0.gugyeol && Array.isArray(G.soul0.gugyeol[LS.id]) ? G.soul0.gugyeol[LS.id] : []; G.gug = { steps: st, done: 0, stopped: !st.length }; }
+    G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
     G.wpool = weaponPoolOf(G.soul0); G.dashes = 0; G.talis = 0;   // 무공 해금(WP-17): 혼 기록으로 연 무공까지 레벨업 풀에, 도전 과제 셈(경공·정신부, 처치는 G.kills)
     G.lords = {}; G.lordJust = []; G.lordGrace = null; G.lordF = null; G.lordKills = [];   // 땅의 주인(WP-13e): 지역별 깨어남·싸움·처치   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (G.moon) toast(`혈월 천하 · ${G.soul0.cycle}회차`, `적 기혈 ×${BM.enemyHealth} · 걸음 ×${BM.enemySpeed} · 보상 ×${BM.rewards}`);
@@ -3686,7 +3689,8 @@ function openLevelUp() {
   overlay = 'levelup'; sfx('level');
   const firstPro = !!G.firstLevelUp;   // 서장 첫 레벨업 한 장은 자동 고르기여도 보여 준다(12장)
   currentOffers = rollOffers();
-  if (settings.autoPick && !firstPro && !G.auto && currentOffers.length) { applyOffer(currentOffers[autoPickIndex(currentOffers)]); closeOverlay('levelup'); levelUpClosed(); return; }
+  if (!firstPro && gugFollow()) return;   // 구결(WX-05): 다음 걸음 카드를 띄우고 저절로 고름
+  if (settings.autoPick && !firstPro && !G.auto && currentOffers.length) { pickRecord(currentOffers[autoPickIndex(currentOffers)]); applyOffer(currentOffers[autoPickIndex(currentOffers)]); closeOverlay('levelup'); levelUpClosed(); return; }
   $('lutitle').textContent = `Lv ${lvNow}`;
   $('lusub').textContent = '무공이나 심법 하나를 고르시오';
   const help = statFirstHelp(currentOffers); $('luhelp').textContent = help; $('luhelp').hidden = !help;   // 능력치 이름 첫 풀이(12장)
@@ -3701,10 +3705,29 @@ function openLevelUp() {
   $('levelup').hidden = false;
   focusFirst(box.firstChild);
 }
+// 구결(口訣, 10장 '천하 확장: 전생의 공력', WX-05 — Core Build.Gugyeol·GugyeolPlayer·Loadout.RollLevelUp(forceStep)): 한 걸음 = 무공·심법 하나를 고른 것('w:'·'p:', 새로 얻기·올리기 가리지 않음, 은자·음식은 안 셈).
+//   혼은 문파마다 그 몸으로 산 마지막 생의 차례를 남기고(gugyeol), 다음 생 레벨업에서 다음 걸음이 뜬 카드에 없으면 고를 수 있을 때 맨 끝 카드(은자·음식 아닌 것)를 그것으로 바꿔
+//   저절로 고른다. 못 고르면(칸이 참·최고 단계) 그 생엔 멈춘다. 켜고 끄는 단추·해금 조건은 기획서에 없어 웹은 늘 켠다
+const gugStep = o => o && (o.kind === 'nw' || o.kind === 'uw') ? 'w:' + o.id : o && (o.kind === 'np' || o.kind === 'up') ? 'p:' + o.id : null;
+function pickRecord(o) { const st = gugStep(o); if (st && G.body) (G.pickOrder = G.pickOrder || []).push(st); }
+function gugFollow() {
+  const X = G.gug; if (!X || X.stopped) return false;
+  const next = X.steps[X.done];
+  if (!currentOffers.some(o => gugStep(o) === next)) {
+    const can = candidates().find(o => gugStep(o) === next);
+    let at = -1; currentOffers.forEach((o, i) => { if (o.kind !== 'gold') at = i; });
+    if (can && at >= 0) currentOffers[at] = can;
+  }
+  const hit = currentOffers.filter(o => gugStep(o) === next).sort((a, b) => (b.levels || 1) - (a.levels || 1))[0];
+  if (!hit) { X.stopped = true; toast('구결이 끊겼다', `${X.done}/${X.steps.length}걸음까지 지난 생 그대로`); return false; }
+  X.done++; if (X.done >= X.steps.length) { X.stopped = true; toast('구결을 다 따랐다', `${X.done}걸음 · 여기서부터는 새 길`); }
+  pickRecord(hit); applyOffer(hit); closeOverlay('levelup'); levelUpClosed();
+  return true;
+}
 function chooseOffer(i) {
   if (overlay !== 'levelup' || !currentOffers[i] || tooSoon()) return;
   if (G.banishMode) return banishOffer(i);
-  applyOffer(currentOffers[i]); closeOverlay('levelup'); levelUpClosed();
+  pickRecord(currentOffers[i]); applyOffer(currentOffers[i]); closeOverlay('levelup'); levelUpClosed();
 }
 // 레벨업이 닫힌 뒤 무적(12장 '레벨업 입력', UI-01a): 맞은 뒤 무적과 같은 HIT_IFRAMES. 쌓인 레벨업이 남아 다음 창이 바로 뜨면 마지막에만
 function levelUpClosed() { if (!(G.pendingLevels > 0)) G.player.iframe = Math.max(G.player.iframe || 0, HIT_IFRAMES); }
@@ -4459,6 +4482,7 @@ function recordLife(st) {
   m.visited = Array.isArray(m.visited) ? m.visited : []; m.reached = Array.isArray(m.reached) ? m.reached : [];
   for (const id of st.newVisits) if (!m.visited.includes(id)) m.visited.push(id);
   for (const id of st.newRealms) if (!m.reached.includes(id)) m.reached.push(id);
+  if (st.sect && G.pickOrder && G.pickOrder.length) { m.gugyeol = m.gugyeol && typeof m.gugyeol === 'object' ? m.gugyeol : {}; m.gugyeol[st.sect] = G.pickOrder.slice(); }   // 구결: 문파마다 마지막 생(Core Soul.EndLife)
   m.crossings = m.crossings && typeof m.crossings === 'object' ? m.crossings : {};
   for (const r of B.realms.slice(1, st.top + 1)) m.crossings[r.id] = (m.crossings[r.id] || 0) + 1;   // 전생의 공력: 이번 생에 넘은 구간마다 +1(Core Soul.EndLife)
   m.crisesBlocked = Array.isArray(m.crisesBlocked) ? m.crisesBlocked : []; for (const id of st.newBlocks || []) if (!m.crisesBlocked.includes(id)) m.crisesBlocked.push(id);   // 문파의 위기(GU-11m)
