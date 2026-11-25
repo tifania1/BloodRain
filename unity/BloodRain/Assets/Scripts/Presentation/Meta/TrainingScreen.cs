@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace BloodRain.Presentation.Meta
 {
     // 연무장 화면(TU-14, 기획서 10장 '연무장'·'환혼 강화'·'경맥도'). 윤회의 기 잔고, 연무장 20항목, 사기와 전부 환불.
-    // GU-04U(2026-11-20): 목록 대신 경맥도 — 왼쪽에 앉은 운기 자세 사람 윤곽(코드로 그린 옅은 먹, 경맥도 원화가 오면 바꿈) 위 혈자리 20곳.
+    // GU-04U(2026-11-20): 목록 대신 경맥도 — 왼쪽에 앉은 운기 자세 사람(2026-11-25 원화 ui_meridian_chart, 없으면 코드로 그린 옅은 먹 윤곽) 위 혈자리 20곳.
     //   혈마다 둘레 점(최대 레벨만큼, 뚫은 만큼 금빛), 다 뚫으면 혈이 금빛. 큰 혈 셋(관원·노궁·용천)은 두 배 크기, 뚫을 때 그 경맥 줄이 한 번 빛남.
     //   혈을 누르면(방향키로 옮기고 Enter 로 사기) 오른쪽에 혈 이름과 지금 목록과 같은 칸(MetaShopRow: 이름·점·레벨당 값·비용 단추).
     //   아래에 전부 환불과 침방 환혼 강화 줄(MetaShopRow)은 그대로. 비용 공식·환불·레벨 상한은 Core Soul(Stats.TrainingCost) 그대로다.
@@ -32,7 +32,8 @@ namespace BloodRain.Presentation.Meta
         readonly List<MetaShopRow> _rows = new List<MetaShopRow>();
 
         // ── 경맥도(기획서 10장 표 그대로: 항목 → 혈자리, 자리는 그림 상자 안 0~1, y 는 아래로) ──
-        static readonly (string stat, float x, float y)[] Points =
+        // 코드로 그린 윤곽용 자리(원화가 없을 때)
+        static readonly (string stat, float x, float y)[] FigurePoints =
         {
             ("Growth", 0.50f, 0.045f), ("Luck", 0.50f, 0.125f), ("Rerolls", 0.585f, 0.175f),
             ("UltimateCharge", 0.50f, 0.30f), ("Magnet", 0.50f, 0.39f), ("MaxHealth", 0.50f, 0.48f), ("Revival", 0.50f, 0.555f),
@@ -41,6 +42,23 @@ namespace BloodRain.Presentation.Meta
             ("Duration", 0.28f, 0.555f), ("Might", 0.335f, 0.595f), ("Amount", 0.385f, 0.635f),
             ("MoveSpeed", 0.67f, 0.60f), ("Recovery", 0.75f, 0.71f), ("Banishes", 0.64f, 0.80f), ("DashCharges", 0.53f, 0.845f),
         };
+        // 원화 ui_meridian_chart(1003×1024) 위 자리 — 그림 전체 0~1, y 아래로(2026-11-25 그림을 보고 맞춤:
+        //   백회는 정수리, 인당은 미간, 풍지는 귀 뒤, 임맥 넷은 그림의 가운데 줄, 대추·명문은 몸을 튼 오른쪽 목덜미·허리,
+        //   팔 여섯은 왼팔 어깨에서 손바닥, 다리 넷은 오른 엉덩이에서 오른발 발바닥)
+        static readonly (string stat, float x, float y)[] ArtPoints =
+        {
+            ("Growth", 0.489f, 0.125f), ("Luck", 0.436f, 0.188f), ("Rerolls", 0.546f, 0.227f),
+            ("UltimateCharge", 0.496f, 0.386f), ("Magnet", 0.496f, 0.454f), ("MaxHealth", 0.496f, 0.547f), ("Revival", 0.496f, 0.607f),
+            ("Armor", 0.560f, 0.295f), ("Skips", 0.610f, 0.564f), ("Greed", 0.437f, 0.503f),
+            ("Area", 0.399f, 0.327f), ("ProjectileSpeed", 0.304f, 0.571f), ("CooldownReduction", 0.264f, 0.617f),
+            ("Duration", 0.229f, 0.645f), ("Might", 0.152f, 0.652f), ("Amount", 0.199f, 0.693f),
+            ("MoveSpeed", 0.678f, 0.684f), ("Recovery", 0.758f, 0.757f), ("Banishes", 0.688f, 0.793f), ("DashCharges", 0.618f, 0.828f),
+        };
+        /// <summary>경맥도 원화(Resources/Art/UI/ui_meridian_chart). 없으면 코드로 그린 윤곽과 그 자리.</summary>
+        static Sprite ChartArt => _chartArtLoaded ? _chartArt : LoadChartArt();
+        static Sprite _chartArt; static bool _chartArtLoaded;
+        static Sprite LoadChartArt() { _chartArtLoaded = true; return _chartArt = Resources.Load<Sprite>("Art/UI/ui_meridian_chart"); }
+        static (string stat, float x, float y)[] Points => ChartArt != null ? ArtPoints : FigurePoints;
         static readonly HashSet<string> Big = new HashSet<string> { "Revival", "Amount", "DashCharges" };
         // 경맥 줄(차례대로 잇는다). 큰 혈을 다 뚫으면 그 혈이 든 줄이 한 번 빛난다
         static readonly string[][] Channels =
@@ -183,8 +201,18 @@ namespace BloodRain.Presentation.Meta
             _points.Clear(); _lines.Clear(); _sel = null; _selRow = null;
             _chart = new GameObject("경맥도", typeof(RectTransform)).GetComponent<RectTransform>();
             _chart.SetParent(_root, false);
-            Place(_chart, new Vector2(0.5f, 0.5f), new Vector2(-380, -60), new Vector2(700, 880));
-            DrawFigure(_chart);
+            var art = ChartArt;
+            // 원화는 그 비율대로(가로 700 에 맞춤), 없으면 코드 윤곽용 700×880
+            Place(_chart, new Vector2(0.5f, 0.5f), new Vector2(-380, -60),
+                art != null ? new Vector2(700, 700f * art.rect.height / art.rect.width) : new Vector2(700, 880));
+            if (art != null)
+            {
+                var sheet = MakeImage(_chart, "경맥도 그림", Color.white, false);
+                sheet.sprite = art; sheet.raycastTarget = false;
+                var srt = sheet.rectTransform; srt.anchorMin = Vector2.zero; srt.anchorMax = Vector2.one;
+                srt.offsetMin = srt.offsetMax = Vector2.zero;
+            }
+            else DrawFigure(_chart);
             foreach (var ch in Channels)
                 for (int c = 0; c + 1 < ch.Length; c++) _lines.Add((Line(_chart, PointPos(ch[c]), PointPos(ch[c + 1])), ch));
             foreach (var p in Points) MakePoint(soul, p.stat, p.x, p.y);
@@ -263,7 +291,7 @@ namespace BloodRain.Presentation.Meta
             rt.localRotation = Quaternion.Euler(0, 0, rot);
         }
 
-        // 몸을 살짝 튼 앉은 운기 자세(코드로 그린 옅은 먹 윤곽 — 경맥도 원화 ui_meridian_chart 가 오면 이 자리에 그림 한 장)
+        // 몸을 살짝 튼 앉은 운기 자세(코드로 그린 옅은 먹 윤곽 — 원화 ui_meridian_chart 가 Resources 에 없을 때만)
         void DrawFigure(RectTransform chart)
         {
             Blob(chart, 0.5f, 0.10f, 0.20f, 0.13f, 0f, true);      // 머리
