@@ -319,6 +319,7 @@ button { touch-action: manipulation; }
       <div class="cards" id="inncards"></div>
       <canvas id="innmap" width="600" height="390" style="width:100%;max-width:600px;display:block;margin:10px auto;border:1px solid #1a1a1a" role="img" aria-label="침방 벽의 중원 지도"></canvas>
       <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button><button class="b" id="indaily" type="button" hidden>일일 도전</button><button class="b" id="inrush" type="button" hidden>보스 연전</button></div>
+      <div class="row" id="indirect" hidden></div>
       <div class="subtle" id="innqi"></div>
       <h4 class="innh">객잔 시설</h4>
       <div class="innmeta" id="innfac"></div>
@@ -5009,6 +5010,9 @@ function renderInn() {
   const rr = $('innreroll'), have = upgEffect(m, 'rerolls');
   rr.hidden = !m.lives || !have; rr.disabled = innRerolls <= 0;
   rr.innerHTML = `다시 고르기 <small>남은 ${innRerolls}/${have} · R</small>`;
+  { const dr = $('indirect'), list = m.lives ? (DATA.sects || []).filter(s => m.unlocked.includes(s.id)) : []; dr.hidden = !list.length; dr.innerHTML = '';
+    if (list.length) { const h = document.createElement('span'); h.className = 'subtle'; h.textContent = '직접 고르기 · 성질·덕 없이'; dr.appendChild(h); }
+    for (const s of list) { const b = document.createElement('button'); b.type = 'button'; b.className = 'b'; b.textContent = s.nameKo; b.onclick = () => chooseDirect(s.id); dr.appendChild(b); } }
   const rb = $('inrush'), ron0 = rushOpen(m); rb.hidden = !ron0; if (!ron0) innRush = false;
   if (ron0) { const best = { s: m.bossRushBest }; rb.setAttribute('aria-pressed', innRush ? 'true' : 'false'); rb.style.background = innRush ? 'var(--paper2, #eadfc8)' : '';
     rb.innerHTML = `보스 연전 <small>${innRush ? '몸을 고르면 시작' : `땅의 주인 ${rushOrder().length}`}${best && best.s != null ? ` · 가장 빠름 ${Math.floor(best.s / 60)}:${String(best.s % 60).padStart(2, '0')}` : ''}</small>`; }
@@ -5086,15 +5090,22 @@ function yardLine(body) {
   const text = body.female && l.sister && l.sister[slot] ? l.sister[slot] : l[kind][+i];
   return { name: SPK[l.id] || (DATA.characters.find(c => c.id === l.id) || {}).nameKo || l.id, text, slot };
 }
-function chooseLife(i) {
-  if (overlay !== 'inn' || !innCands[i]) return;
+// 직접 고르기(21장 '천하 확장: 직접 고르기와 덕', WX-03): 첫 환혼이 아니면 해금한 문파를 데이터 차례로 직접 골라 태어난다 — 성질·덕 없음,
+//   성별은 후보와 같은 규칙(Core RebirthDraw.DirectChoices·ChooseDirect → Rebirth.Direct)
+function chooseDirect(sect) {
+  const m = innMeta(); if (overlay !== 'inn' || !m.lives || !m.unlocked.includes(sect) || !SECT_BY[sect]) return;
+  const c = { sect, traits: [], female: rollFemale(sect, Math.random), boon: null, direct: true }; cardTexts([c]);
+  chooseLife(-1, c);
+}
+function chooseLife(i, cand = innCands[i]) {
+  if (overlay !== 'inn' || !cand) return;
   const rushSnap = innRush && rushOpen(innMeta()) ? JSON.stringify(soulLoad()) : null;   // 연전은 고르는 말까지 혼에 안 남긴다
-  const m = innMeta(), said = rushSnap ? [] : talkPick(m, innCands[i]); soulSave(m);
+  const m = innMeta(), said = rushSnap ? [] : talkPick(m, cand); soulSave(m);
   const pick = innElix.map(id => ELIX.find(x => x.id === id)).filter(Boolean), cost = pick.reduce((a, e) => a + e.cost, 0);
   if (rushSnap) pick.length = 0;   // 연전엔 영약을 안 쓴다
   if (pick.length && elixAvail(m) && (m.crystal || 0) >= cost) { m.crystal -= cost; soulSave(m); } else pick.length = 0;   // Core Apothecary.TryPrepare: 안 되면 아무것도 안 씀
   if (rushSnap) { RUSH = { snap: rushSnap }; innRush = false; }
-  NEXT_LIFE = Object.assign({}, innCands[i], { elixirs: pick }); innElix = []; $('inn').hidden = true; overlay = null;
+  NEXT_LIFE = Object.assign({}, cand, { elixirs: pick }); innElix = []; $('inn').hidden = true; overlay = null;
   startRun('full');
   if (said.length) toast('목 노인', said.map(l => l.textKo).join(' '));   // 고른 뒤 줄은 새 생 첫 화면에 자막 하나로(자막 줄은 넷까지라 마당 줄이 밀리지 않게)
 }

@@ -54,5 +54,17 @@ namespace BloodRain.Core.Tests
                 Assert.Contains(used, html);
             Assert.Contains("\"maleOnlySects\", \"boons\")", ReadRepoFile("tools", "build_web_prototype.py"));
         }
+
+        [Fact] public void 웹_직접_고르기는_해금_문파에서_성질_덕_없이()
+        {
+            var html = Proto;
+            foreach (var used in new[]
+            {
+                "if (overlay !== 'inn' || !m.lives || !m.unlocked.includes(sect) || !SECT_BY[sect]) return;",           // 첫 환혼은 없음(Core DirectChoices 빈 목록)
+                "const c = { sect, traits: [], female: rollFemale(sect, Math.random), boon: null, direct: true };",       // Rebirth.Direct: 성질·덕 없음, 성별은 같은 규칙
+                "list = m.lives ? (DATA.sects || []).filter(s => m.unlocked.includes(s.id)) : []",                        // 데이터 차례
+            })
+                Assert.Contains(used, html);
+        }
     }
 }
