@@ -56,6 +56,10 @@ button { touch-action: manipulation; }
 .slot.ready { box-shadow: 0 0 0 2px var(--gold); animation: ready 1.3s ease-in-out infinite; }
 .slot.wait { box-shadow: 0 0 0 2px rgba(201,162,39,.45); }
 .slot.glow { animation: glow .45s ease-in-out infinite alternate; }
+.slot.mastered { border-color: var(--gold); box-shadow: 0 0 0 1.5px var(--gold); }
+.slot .mstamp { position: absolute; left: -6px; top: -7px; font: 700 8px/1 var(--font-num); font-style: normal; background: var(--gold); color: #fff; padding: 1px 2px; border-radius: 2px; transform: rotate(-8deg); }
+.dexitem .mst { font-style: normal; font-size: 11px; font-weight: 700; padding: 0 3px; margin-left: 4px; border-radius: 2px; color: var(--paper); background: var(--ink); }
+.dexitem .mst.gold { background: var(--gold); }
 @keyframes ready { 50% { box-shadow: 0 0 0 2px var(--gold), 0 0 10px 3px rgba(201,162,39,.75); } }
 @keyframes glow { to { box-shadow: 0 0 0 2px var(--gold), 0 0 14px 5px rgba(201,162,39,.9); } }
 .vessel { font: 700 12px/1.4 var(--font-body); color: #7A5A10; letter-spacing: .04em; }
@@ -1046,8 +1050,13 @@ function renderDex() {
   const E = SYN.encounters.map(x => { const ok = dex.has('enc:' + x.id);
     return ok ? item(true, x.nameKo, `${x.reward}<span class="lore">${x.where}</span>`) : item(false, `???<i>${x.proto ? '' : '정식판'}</i>`, x.where); });
   const cnt = pre => [...dex].filter(k => k.startsWith(pre)).length;
+  // 무공 성취(10장, GU-06): 장경각 도감 무공 쪽 도장 — 입문은 도장 없음, 소성 먹 도장, 대성 금빛 도장. 비급 수(DEX_TOTAL)에는 안 셈
+  const sm = soulLoad(), Mw = DATA.weapons.map(w => { const st = masteryStage(sm, w.id), n = (sm.mastery && sm.mastery[w.id]) || 0;
+    return item(st > 0, `${w.nameKo}${st ? `<i class="mst${st >= 2 ? ' gold' : ''}">${st >= 2 ? '大成' : '小成'}</i>` : '<i>입문</i>'}`,
+      st >= 2 ? `Lv${B.levels.weaponMax} 로 마친 생 ${n}. 이 무공으로 시작하는 몸은 2단계로 태어난다`
+      : `Lv${B.levels.weaponMax} 로 마친 생 ${n} — ${st ? `${MASTERY_LIVES[1]}생이면 대성` : `${MASTERY_LIVES[0]}생이면 소성`}`); });
   $('dexsum').textContent = `찾은 비급 ${dex.size} / ${DEX_TOTAL} · 못 찾은 칸은 시구가 길을 알려 준다`;
-  $('dexbody').innerHTML = grp('연환', L, cnt('link:')) + grp('진전', C, cnt('school:')) + grp('비전', Sx, cnt('secret:')) + grp('기연', E, cnt('enc:'));
+  $('dexbody').innerHTML = grp('연환', L, cnt('link:')) + grp('진전', C, cnt('school:')) + grp('비전', Sx, cnt('secret:')) + grp('기연', E, cnt('enc:')) + grp('무공 성취', Mw, DATA.weapons.filter(w => masteryStage(sm, w.id) > 0).length);
 }
 
 // 경험치: balance.json xpCurve
@@ -1214,6 +1223,10 @@ const WD = DATA.world;
 // 돌파하면 싸움 좌표에 있던 것(나·적·구슬·탄·장판)을 모두 1/2.25 로 줄인다 — 아래 경지에서 생긴 것이 발밑으로 작아진다.
 const CL_SIZE = DATA.clusterSize || {}, CRUSH = DATA.crush || { xpPerCrushed: 0.3, sweepViewMultiple: 0.6, sweepAtSeconds: 0.8 };
 const BRK = DATA.breakthrough || { timeScale: 0.05, zoomFromSeconds: 0.2, zoomToSeconds: 1.4 };
+// 무공 성취(GU-06, 10장 '무공 성취', Core Soul.MasteryStage): 그 무공을 Lv 최고로 올린 채 마친 생 수가 1이면 소성, 3이면 대성(Core Soul.MasteryLives, WebMasteryTests).
+// 대성 무공을 시작 무공으로 가진 몸으로 태어나면 Lv2 로 시작(Core Life.StartMastered, 음양은 안 움직임). 혼 기록 m.mastery = { 무공 id: 생 수 }
+const MASTERY_LIVES = [1, 3];
+function masteryStage(m, id) { const n = (m && m.mastery && m.mastery[id]) || 0; return n >= MASTERY_LIVES[1] ? 2 : n >= MASTERY_LIVES[0] ? 1 : 0; }
 const MASTERY = DATA.mastery || { revisitInsightChoicesBonus: 0, shortBreakthroughWhenRevisited: false };   // 한 번 깨친 길(21장, cheonha.json mastery)
 const scaleOn = () => SCALE_MODE && !isPro();
 const tierNow = () => Math.max(0, REALMS.indexOf(G.realm));
@@ -1451,7 +1464,11 @@ function newRun(mode) {
     // 약방 영약(Core Life.TakeElixirs): 만년설삼은 recomputeStats, 소환단은 hurtPlayer, 레벨·오의는 아래 recomputeStats 뒤
     G.elix = (NEXT_LIFE && NEXT_LIFE.elixirs) || []; G.elixRevive = (G.elix.find(e => e.reviveHealthRatio > 0) || {}).reviveHealthRatio || 0;
     G.elixCrystal = G.elix.reduce((a, e) => a * (e.bloodCrystalMultiplier > 0 ? e.bloodCrystalMultiplier : 1), 1); G.yyFreeze = Math.max(0, ...G.elix.map(e => e.yinyangFreezeSeconds || 0));
-    if (wd && LIFE_BEH.has(wd.behavior)) G.weapons = [{ id: wd.id, lv: 1, cd: 0.4, evolved: false, dealt: 0, n: 0 }];
+    if (wd && LIFE_BEH.has(wd.behavior)) {
+      G.startMastered = masteryStage(G.soul0, wd.id) >= 2;   // 대성이면 Lv2 시작(Core Life.MasteredStartLevel), yyShift 없음
+      G.weapons = [{ id: wd.id, lv: G.startMastered ? Math.min(2, B.levels.weaponMax) : 1, cd: 0.4, evolved: false, dealt: 0, n: 0, mastered: G.startMastered }];
+      if (G.startMastered) toast('大成', `${wd.nameKo} — 몸에 익은 무공이라 2단계로 시작한다`);
+    }
   }
   recomputeStats();
   G.player.hp = G.player.maxHp;
@@ -4396,7 +4413,7 @@ function lifeSettle() {
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
   // 찢긴 비급(20장, Core LifeLog.NoteSynergy → Soul.EndLife newTorn): 이번 생에 조건을 갖춘 잠긴 비급 가운데 처음 오르는 것
   const newTorn = [...G.syn.torn].filter(id => !(s0.torn || []).includes(id) && !(s0.restored || []).includes(id));
-  return { rows, total, crystal, top, newVisits, newRealms, newBlocks, newUnlocks, newWeapons, newTorn, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, newCostumes, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
+  return { rows, total, crystal, top, newVisits, newRealms, newBlocks, newUnlocks, newWeapons, newTorn, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, newCostumes, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, mastered: [...new Set(G.weapons.filter(w => w.lv >= B.levels.weaponMax).map(w => w.id))].sort(), sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -4417,6 +4434,9 @@ function recordLife(st) {
   m.toads = (m.toads || 0) + (st.toads || 0);
   m.titles = Array.isArray(m.titles) ? m.titles : []; for (const t of st.newTitles || []) if (!m.titles.includes(t)) m.titles.push(t);   // 칭호(WP-34)
   m.sectLives = m.sectLives && typeof m.sectLives === 'object' ? m.sectLives : {}; if (st.sect) m.sectLives[st.sect] = (m.sectLives[st.sect] || 0) + 1;   // 문파별 생 수(Core Soul livesBySect)   // 금두꺼비 누적(Core Soul.GoldenToadsTotal, WP-33)
+  // 무공 성취(Core Soul.EndLife: MasteredWeapons 마다 +1). 소성·대성에 처음 오른 것은 정산 '무공 성취' 줄
+  m.mastery = m.mastery && typeof m.mastery === 'object' ? m.mastery : {}; m.newMastery = [];
+  for (const id of st.mastered || []) { const s0 = masteryStage(m, id); m.mastery[id] = (m.mastery[id] || 0) + 1; const s1 = masteryStage(m, id); if (s1 > s0) m.newMastery.push({ id, stage: s1 }); }
   m.unlocks = Array.isArray(m.unlocks) ? m.unlocks : [];
   for (const t of st.newUnlocks || []) if (!m.unlocks.includes(t)) m.unlocks.push(t);
   if (st.extremeKill && !m.unlocks.includes('boss_at_extreme')) m.unlocks.push('boss_at_extreme');   // 역근 해금(WP-35)
@@ -6282,7 +6302,7 @@ function renderSlots() {
   const ws = $('wslots'), ps = $('pslots');
   ws.innerHTML = G.weapons.map(w => {
     const th = atThreshold(w), cls = w.evolved ? (G.glow && G.glow.w === w ? ' evo glow' : ' evo') : th ? (spareVessel() ? ' ready' : ' wait') : '';
-    return `<span class="slot${cls}" title="${W_BY_ID[w.id].nameKo}${th ? ' · 절기 문턱' : ''}">${GLYPH[w.id]}<b>${w.evolved ? '絶' : w.lv}</b></span>`;
+    return `<span class="slot${cls}${w.mastered ? ' mastered' : ''}" title="${W_BY_ID[w.id].nameKo}${th ? ' · 절기 문턱' : ''}${w.mastered ? ' · 大成' : ''}">${GLYPH[w.id]}<b>${w.evolved ? '絶' : w.lv}</b>${w.mastered ? '<em class="mstamp">大成</em>' : ''}</span>`;
   }).join('');
   // 절기 그릇: ◆ 채운 것, ◇ 빈 것. 그릇이 없을 땐 숨긴다.
   const vt = vesselsAt(G.level), vu = evolvedCount(), vEl = $('vessel');
@@ -6409,6 +6429,7 @@ function endRun(won) {
     }
     facts.push([`+${st.crystal}`, `혈정 · 모두 ${m.crystal}`], [`${G.stepped.length}`, '밟은 땅']);
     if ((st.newTitles || []).length) facts.push([st.newTitles.map(id => TITLE_BY[id].nameKo).join(' · '), '새 칭호']);   // WP-34
+    if ((m.newMastery || []).length) facts.push([m.newMastery.map(x => `${(W_BY_ID[x.id] || {}).nameKo || x.id} ${x.stage >= 2 ? '大成' : '小成'}`).join(' · '), '무공 성취']);   // 10장 '무공 성취'
     if ((m.newAch || []).length) facts.push([m.newAch.map(id => (ACHS.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 업적']);   // 20장 'Steam 업적'
     if ((m.newModes || []).length) facts.push([m.newModes.map(id => (MODES.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 모드 · 이 판엔 아직 없다']);   // WP-67
     if ((st.newCostumes || []).length) facts.push([st.newCostumes.map(t => { const c = (DATA.costumes || []).find(x => 'costume:' + x.id === t); return c ? `${SPK[c.character] || c.character} 의상` : t; }).join(' · '), '새 의상 · 그림은 아직']);   // WP-51
