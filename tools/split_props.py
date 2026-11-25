@@ -47,6 +47,13 @@ SHEETS: dict[str, list[str]] = {
     "props_encounters": ["enc_go", "enc_hermit", "enc_relic", "enc_elixir", "enc_whisper"],
     # 개방 총타 지역 소품(RG-01U, 2026-11-25 PC). 프롬프트 차례: 다리 밑 사당, 거적 움막, 넝마 차양, 깨진 술독 더미, 솥 걸린 모닥불
     "props_gaebang_hq": ["shrine_bridge", "mat_lean_to", "rag_awning", "wine_jar_pile", "cook_fire_pot"],
+    # 지역 소품 다섯 장(RG-02U~05U·R4-13c 앞일, 2026-11-25 19시 클라우드 — 덩이 수가 다섯으로 맞고 눈으로 프롬프트 차례와 같음을 봄).
+    # 남궁·장강 나루·무당 벼랑·화산·곤륜·봉마곡은 덩이가 붙거나 먹 튐이 떨어져 수가 안 맞아 아직(JOIN 을 시트마다 맞춰야 함)
+    "props_danggata_halls": ["tang_clan_hall", "herb_store_stilts", "roofed_well", "poison_jar_row", "bamboo_fence"],
+    "props_danggata_bamboo": ["bamboo_clump", "bamboo_brush", "bamboo_fallen", "rock_violet_fungus", "poison_pond"],
+    "props_changjiang_reeds": ["reed_bed", "reed_clump", "sunken_boat", "willow_water", "river_stones"],
+    "props_wudang_temple": ["taoist_hall", "round_pavilion", "stone_stairs", "incense_cauldron", "blank_stele"],
+    "props_sipmandaesan_altars": ["blood_altar", "blood_altar_broken", "black_watchtower", "rock_spire", "spear_rack"],
 }
 
 # 소품끼리 바짝 붙은 시트는 덩이 잇는 거리를 줄인다(기본 JOIN 이면 둘이 한 덩이가 됨)

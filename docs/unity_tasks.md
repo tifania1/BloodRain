@@ -66,19 +66,19 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: 남궁 몸 삼류·이류에서 남궁세가 소품, 시렁이 세 번에 무너지며 은자. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `RG-02U` 폴더에 두 장
 - [ ] RG-03U 당가타(땅의 주인 당소혜)를 숭산 수준으로 — 땅의 주인 원화·예고는 EF-02U 와 같은 틀 · 먼저: RG-02U
-  - 할 것: ① 소품 시트 둘(`props_danggata_bamboo`·`props_danggata_halls`) 낱장·지역 벌 ② 기믹 둘: 대숲(`gimmicks.json` bambooThicket — 탑림과 같은 무더기, 걷는 것만 막고 한 번에 베임) — 숭산 탑림 코드를 본떠, 독안개(poisonFog — 샘에서 퍼졌다 걷힘, 안에서 초당 피해)는 먹·초록 담채 원(FxInk 셰이더) ③ 당소혜 '독안개 반쪽'(half_map_poison_fog) 예고가 숭산 범종 낙하만큼 읽히는지 보고 옅으면 진하게
+  - 할 것: ① 소품 시트 둘(`props_danggata_bamboo`·`props_danggata_halls`) 낱장(2026-11-25 클라우드가 `tools/split_props.py` 로 열 장 나눔 — tang_clan_hall·herb_store_stilts·roofed_well·poison_jar_row·bamboo_fence·bamboo_clump·bamboo_brush·bamboo_fallen·rock_violet_fungus·poison_pond, `소품 그림 목록 채우기`만 다시)·지역 벌 ② 기믹 둘: 대숲(`gimmicks.json` bambooThicket — 탑림과 같은 무더기, 걷는 것만 막고 한 번에 베임) — 숭산 탑림 코드를 본떠, 독안개(poisonFog — 샘에서 퍼졌다 걷힘, 안에서 초당 피해)는 먹·초록 담채 원(FxInk 셰이더) ③ 당소혜 '독안개 반쪽'(half_map_poison_fog) 예고가 숭산 범종 낙하만큼 읽히는지 보고 옅으면 진하게
   - 쓸 것: `Fx/GimmickLayer.cs`(탑림 갈래), `Combat/PatternRunner.cs`, gimmicks bambooThicket·poisonFog, bosspatterns dang_sohye. 웹 합친 판 본보기(2026-11-25 LG-04): `template.html` `CHG.bambooPatchAt`·`cutBamboo`·`drawBamboo`
   - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
   - 끝: 당가 몸 한 생에서 대숲이 길을 막고 베이며, 독안개가 퍼졌다 걷히고, 당소혜 독안개 예고가 한눈에 보인다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `RG-03U` 폴더에 대숲·독안개·당소혜 예고 한 장씩
 - [ ] RG-04U 장강 수로(땅의 주인 마천패)를 숭산 수준으로 · 먼저: RG-03U
-  - 할 것: ① 소품 시트 둘(`props_changjiang_pier`·`props_changjiang_reeds`) 낱장·지역 벌 ② 물: `Art/Tiles/tile_changjiang_water.png` 를 물길 바닥으로(물길 자리는 gimmicks water), 물 안 감속 ③ 떠도는 배(driftingBoats — 24m 간격, 초속 1.5m 하류로)·역류 파도(reverseWave — 예고 동안 강물이 붉어짐, Core SweepWave) ④ 마천패 물기둥(water_pillar) 예고
+  - 할 것: ① 소품 시트 둘(`props_changjiang_pier`·`props_changjiang_reeds`) 낱장(2026-11-25 클라우드가 갈대 쪽 다섯 — reed_bed·reed_clump·sunken_boat·willow_water·river_stones. 나루 시트는 덩이 넷으로 붙어 아직)·지역 벌 ② 물: `Art/Tiles/tile_changjiang_water.png` 를 물길 바닥으로(물길 자리는 gimmicks water), 물 안 감속 ③ 떠도는 배(driftingBoats — 24m 간격, 초속 1.5m 하류로)·역류 파도(reverseWave — 예고 동안 강물이 붉어짐, Core SweepWave) ④ 마천패 물기둥(water_pillar) 예고
   - 쓸 것: gimmicks water·driftingBoats·reverseWave, Core `SweepWave`, `Fx/Biomes.cs`, bosspatterns ma_cheonpae. 웹 합친 판 본보기(2026-11-25 LG-02·03): `reverseWaveStep`(붉은 예고·흰 물보라 앞머리), `boatsW`·`boatsStep`(배는 굽이 물길 가운데 줄을 따라 기울어 흐름 — Core 는 곧은 물길)
   - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
   - 끝: 수로채 몸 한 생에서 물길·배·역류 파도가 보이고 배 위에선 안 느려진다. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `RG-04U` 폴더에 물길·배·역류 예고 한 장씩
 - [ ] RG-05U 무당산(땅의 주인 혈허진인)을 숭산 수준으로 · 먼저: RG-04U (2026-11-24 클라우드가 바닥 원화 `tile_wudang_stone` 을 Resources 로 옮기고 `Biomes.ArtOf` 에 세기 0.4 로 넣음 — 먼저 F2 로 무당 몸에서 바닥이 너무 짙거나 누렇지 않은지 보고 세기만 고쳐도 됨, 먼저를 안 기다려도 됨)
-  - 할 것: ① 바닥: 클라우드가 넣은 `tile_wudang_stone` 세기(0.4) 확인 ② 소품 시트 둘(`props_wudang_temple`·`props_wudang_cliffs`) 낱장·지역 벌 ③ 태극 바닥(taijiFloor — 밟으면 게이지 반대 속성 피해 +, 쿨다운 동안 옅어짐)·운해(cloud_sea) ④ 혈허진인 칠성검 낙하(seven_star_sword_drop) 예고
+  - 할 것: ① 바닥: 클라우드가 넣은 `tile_wudang_stone` 세기(0.4) 확인 ② 소품 시트 둘(`props_wudang_temple`·`props_wudang_cliffs`) 낱장(2026-11-25 클라우드가 전각 쪽 다섯 — taoist_hall·round_pavilion·stone_stairs·incense_cauldron·blank_stele. 벼랑 시트는 먹 튐 조각이 떨어져 덩이 일곱이라 아직)·지역 벌 ③ 태극 바닥(taijiFloor — 밟으면 게이지 반대 속성 피해 +, 쿨다운 동안 옅어짐)·운해(cloud_sea) ④ 혈허진인 칠성검 낙하(seven_star_sword_drop) 예고
   - 쓸 것: `Fx/Biomes.cs` ArtOf wudangsan, gimmicks taijiFloor·cloudSea, bosspatterns hyeolheo. 웹 합친 판 본보기(2026-11-25 LG-01): `cloudSeaStep`(숨으면 적이 들어간 자리 둘레를 맴돌고 원거리 적은 안 쏨), 구름은 흰 빛에 푸른 잿빛 테라야 종이 바닥에서 보임
   - 메뉴: `BloodRain/Bootstrap/소품 그림 목록 채우기`
   - 끝: 무당 몸 한 생에서 돌 바닥·무당 소품·태극 바닥이 보이고 밟으면 효과가 난다. 콘솔 에러 0
@@ -1043,7 +1043,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
 
 - [ ] R4-13c 세 지역 기믹 중 자리가 있는 다섯(화산 잔도·매화 더미, 곤륜 빙판·모닥불, 십만대산 혈제단) · 먼저: GM-01U(같은 `Fx/GimmickLayer` 틀 — 범종·탑림이 이미 이 틀로 깔림), R4-13b (2026-11-25 클라우드 LG-07: R4-07 이 11-20 에 자리를 정했는데 Unity 줄이 없었음. 웹 합친 판에 다섯 다 있어 `?life=huashan`·`kunlun`·`demonic` 이 본보기)
   - 할 것: GimmickLayer 가 서 있는 지역의 기믹을 지금 경지 축척으로 `GimmickLayout.Near`(플레이어 둘레 화면 1.2배)로 깐다. ① 잔도(화산): `layout.cliffSpacing` 60m 반 칸 격자에 반경 `cliffPath.patchRadius` 12m 벼랑, 폭 1.6m 널판 길 가로·세로 하나씩. `CliffPathGimmick.OnCliff`·`Blocks(flying, projectile, dashing)` — 걷는 몸은 경공 중에도 막고(벼랑에 들면 가장 가까운 길이나 무더기 밖으로), 나는 적·투사체는 지나감. ② 매화 더미(화산): `plumSpacing` 30m 격자(한가운데 포함)에 `PlumHeapGimmick` 하나씩, 닿으면 `TryUse` 로 최대 기혈 15%(× `Life.HealingMultiplier`)·`Tick` 으로 90초 뒤 다시 핌. ③ 빙판(곤륜): `iceSpacing`·`iceHalf`·`iceWave`·`iceWaveLen` 굽이 띠(물길과 같은 꼴), 띠 위 플레이어·걷는 적 속도는 `IceFloorGimmick.Step(현재, 바라는, dt, onIce, flying)`. ④ 모닥불(곤륜): `campfireSpacing` 28m 격자, `CampfireGimmick.Heal`(초당 최대 기혈 1%)·`EnemyMoveSpeed`(빙강시 0.5배), 설무향 2막 축소 원은 곁에서 절반(이미 `BossPatterns` 셈). ⑤ 혈제단(십만대산): 한가운데 둘레 `altarRing` 12m 귀퉁이 넷(북동 `altarOrderFromDegrees` 45° 부터 시계 방향), `BloodAltarGimmick.LitCount(한 생 초)` 만큼 켜짐, 켜진 제단 `Near`(8m) 안 적은 `EnemyDamage`·`EnemyMoveSpeed`, 기혈 1,500(적 기혈 식) 깎아 부수면 보갑(`Chest`). 켜지기 전에도 깎을 수 있고 미리 부순 제단은 안 켜짐(웹 WP-13b 와 같게).
-  - 쓸 것: Core `World/Gimmicks2.cs`(PlumHeapGimmick·IceFloorGimmick·CampfireGimmick·BloodAltarGimmick)·`Gimmicks3.cs`(CliffPathGimmick)·`GimmickLayout.cs`, gimmicks.json `cliffPath`·`plumHeaps`·`iceFloor`·`campfire`·`bloodAltars`·`layout`, 웹 `template.html` 본보기 `pushCliffC`·`plumStep`·`iceStep`·`campfires`·`bloodAltarsStep`·`drawAltar`. 그림: 매화 더미·모닥불·혈제단 원화가 `Resources/Art/Parts` 에 없으면 웹처럼 코드 그림(먹 원·붉은 단)으로 두고 art_queue 를 보지 않음
+  - 쓸 것: Core `World/Gimmicks2.cs`(PlumHeapGimmick·IceFloorGimmick·CampfireGimmick·BloodAltarGimmick)·`Gimmicks3.cs`(CliffPathGimmick)·`GimmickLayout.cs`, gimmicks.json `cliffPath`·`plumHeaps`·`iceFloor`·`campfire`·`bloodAltars`·`layout`, 웹 `template.html` 본보기 `pushCliffC`·`plumStep`·`iceStep`·`campfires`·`bloodAltarsStep`·`drawAltar`. 그림: 혈제단은 2026-11-25 클라우드가 나눈 `Art/Props/Parts/prop_blood_altar.png`(켜짐)·`prop_blood_altar_broken.png`(부서짐)을 씀. 매화 더미·모닥불 원화가 `Art/Props/Parts` 에 없으면 웹처럼 코드 그림(먹 원·붉은 단)으로 두고 art_queue 를 보지 않음
   - 메뉴: R-13U 와 같은 `BloodRain/Bootstrap/Run 씬에 지역 기믹 붙이기`, 시험은 F2 `TestPanel` 경지 바꾸기 + 지도(M)로 그 땅에 감
   - 끝: 화산에서 벼랑에 걸어 못 들어가고(경공도), 매화 더미에 닿으면 기혈이 차고 꽃이 짐. 곤륜 빙판 위에서 멈출 때 미끄러지고 모닥불 곁에서 기혈이 참. 십만대산에서 120초에 제단 하나가 붉게 켜지고 둘레 적이 빨라짐, 부수면 보갑. 경지를 올리면 새 축척으로 다시 깔림. 콘솔 에러 0
   - 찍기: `docs/unity_shots/R4-13c/` 의 `cliff.png`, `plum.png`, `ice.png`, `campfire.png`, `altar.png`
