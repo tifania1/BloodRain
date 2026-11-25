@@ -69,6 +69,18 @@ namespace BloodRain.Core.Progression
             Total = Math.Max(0, total);
         }
 
+        /// <summary>진기를 먹지 않고 그 레벨로 바로 오른다(침방 '그 경지로 깨어나기', Life.WakeAt). 모은 진기는 0, 판 전체 진기(Total)는 그대로.
+        /// 지금보다 낮거나 같으면 아무것도 바꾸지 않는다. 넘은 경지는 Absorb 와 같이 Breakthroughs 에 담는다.</summary>
+        public AbsorbResult JumpTo(int level)
+        {
+            int from = Level;
+            if (level <= from) return new AbsorbResult(from, from, None);
+            Level = level;
+            Xp = 0;
+            var list = new List<RealmDef>(_realms.Breakthroughs(from, Level, _mode));
+            return new AbsorbResult(from, Level, list.Count == 0 ? None : list);
+        }
+
         /// <summary>구슬 하나(또는 한 프레임 흡수 합계)를 더한다. 배율은 여기서 곱한다.</summary>
         public AbsorbResult Absorb(double orbXp)
         {

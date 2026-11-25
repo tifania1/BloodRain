@@ -561,6 +561,28 @@ namespace BloodRain.Core.Run
             return new AbsorbResult(from, Xp.Level, breaks);
         }
 
+        /// <summary>침방에서 고른 '깨어날 경지'(WakeAt). 삼류부터 시작했으면 null.</summary>
+        public string? WokeRealm { get; private set; }
+
+        /// <summary>그 경지로 깨어난다(기획서 10장 '천하 확장: 전생의 공력' — 같은 구간을 30번 넘었으면 침방에서 그 경지로 깨어나기, WX-01U ②).
+        /// 생을 시작할 때(첫 Tick 전) 한 번, 영약 앞이든 뒤든 부른다. 그 경지 문턱 레벨로 바로 오르고(진기는 먹지 않음 — 웹 NEXT_LIFE.wake 와 같음)
+        /// 돌아온 Xp.LevelUps 만큼 레벨업 고르기를 처음에 몰아 띄운다(대환단과 같은 길). 넘은 경지는 혼 장부에 돌파로 적고(Breakthroughs, 다 다시 오른 경지라 짧음)
+        /// 절정을 넘었으면 땅의 주인이 깨어난다(WokenBosses). 물러나는 돌파 연출과 생성 멈춤은 걸지 않는다 — 처음부터 그 경지 축척으로 산다.
+        /// 고를 수 없는 경지(혼의 PastLifePower().WakeRealms() 밖)면 ArgumentException.</summary>
+        public LifeAbsorb WakeAt(string realmId)
+        {
+            if (IsPrologue) throw new InvalidOperationException("서장 몸은 깨어날 경지를 고르지 않습니다");
+            if (Minutes > 0 || WokeRealm != null) throw new InvalidOperationException("깨어날 경지는 생을 시작할 때 한 번 고른다");
+            if (!_soul.PastLifePower().WakeRealms().Contains(realmId))
+                throw new ArgumentException($"아직 그 경지로 깨어날 수 없습니다: {realmId}", nameof(realmId));
+            var realm = _data.Balance.Realms.First(r => r.Id == realmId);
+            WokeRealm = realmId;
+            var r = Xp.JumpTo(realm.Level);
+            var infos = r.Breakthroughs.Select(b => Log.Breakthrough(b.Id)).ToList();
+            var woken = r.Breakthroughs.Count > 0 ? Bosses.UpdateRealm(Xp.Level) : new List<RegionDef>();
+            return new LifeAbsorb(r, infos, woken);
+        }
+
         /// <summary>이번 생에 쓴 재기 횟수.</summary>
         public int RevivalsUsed { get; private set; }
 
