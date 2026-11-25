@@ -90,6 +90,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] CX-01 2026-11-26 — 웹 연표 화면: 빌드 `chronicleAll`(사건 열하나 전부), 한 생 판 `chronicleStep` 이 Core `Life.NoteChronicle` 처럼 사건 시각에 화면 대각선 절반 안이면(천하 전체 사건은 minRealm 이상이면) `G.witnessed`, 정산 때 혼 `m.chronicle`(Core `Soul.Chronicle`). 객잔 '연표' 단추·일시정지 '연표' 단추 → 가로 시각·세로 사건 자리 표, 겪은 사건은 먹 칸, 막은 위기는 주홍 '止', 모르는 칸은 비움. 확인 `WebChronicleTests`
 - [ ] CX-02 사람 결정 대기(decisions #70, 추천: 소문 = 그 사건 자리 땅을 밟아 본 혼이면 흐리게, 목표 = 침방에서 아직 못 막은 위기 하나, 막으면 처음 막은 몫 150 에 75 더) — 정해지면 Core `Soul`(소문·목표)·cheonha.json rebirthQi·기획서 12·10장·웹 연표 흐린 칸과 침방 목표 고르기, Unity 는 unity_tasks
 - [x] CX-03 2026-11-26 — unity_tasks '0-1. 다음 단계'에 CX-01U(Unity 연표 화면 — 객잔·일시정지, 웹 CX-01 표를 본보기로, `Soul.Chronicle`·`crisesBlocked`)
+- [x] CX-04 2026-11-26 — 연표 진영 갈래: 빌드가 사건 `branches`·문파 `camp` 를 넣고, 연표 칸에 지금 몸 진영의 갈래 이름(무림맹 집결 — 정파 '원군을 얻음'·마교 '포위를 뚫어야 함', Core `Chronicle.BranchFor`), 칸에 마우스를 올리면 갈래 전부. 갈래 숫자는 7장에 없어 이름만
 
 ## 화면 집중 (2026-11-13 ~ 2026-11-24, 끝남)
 

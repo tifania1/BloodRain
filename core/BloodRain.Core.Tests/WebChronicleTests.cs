@@ -12,7 +12,8 @@ namespace BloodRain.Core.Tests
 
         [Fact] public void 빌드가_사건_전부와_자리_칸을_넣는다()
         {
-            Assert.Contains("\"chronicleAll\": [{k: e.get(k) for k in (\"id\", \"kind\", \"atSeconds\", \"region\", \"pos\", \"offset\", \"minRealm\", \"everywhere\", \"nameKo\", \"placeKo\")} for e in load(\"chronicle\")[\"events\"]]", Build);
+            Assert.Contains("\"chronicleAll\": [{k: e.get(k) for k in (\"id\", \"kind\", \"atSeconds\", \"region\", \"pos\", \"offset\", \"minRealm\", \"everywhere\", \"nameKo\", \"placeKo\", \"branches\")} for e in load(\"chronicle\")[\"events\"]]", Build);
+            Assert.Contains("\"camp\": s.get(\"camp\")", Build);
         }
 
         [Fact] public void 겪음_판정이_Core_와_같다()
@@ -26,6 +27,7 @@ namespace BloodRain.Core.Tests
                 "if (!G.body || !SCALE_MODE || isPro() || G.rush || !CHRON_ALL.length) return;",    // 서장은 안 봄
                 "x = r.x + ((e.offset || [])[0] || 0)",                                              // Chronicle.Position: 지역 가운데 + offset
                 "m.chronicle.push(id)",                                                              // Soul.Chronicle
+                "(e.branches || []).find(b => b.camp === G.body.camp)",                              // Chronicle.BranchFor(CX-04)
             })
                 Assert.Contains(used, html);
         }

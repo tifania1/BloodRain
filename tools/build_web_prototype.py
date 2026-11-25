@@ -115,7 +115,7 @@ def data_blob() -> str:
         "crush": drop_notes(load("cheonha")["crush"]),
         "breakthrough": drop_notes(load("cheonha")["breakthrough"]),
         "mastery": drop_notes(load("cheonha")["mastery"]),
-        "chronicleAll": [{k: e.get(k) for k in ("id", "kind", "atSeconds", "region", "pos", "offset", "minRealm", "everywhere", "nameKo", "placeKo")} for e in load("chronicle")["events"]],   # 연표 화면(CX-01, 12장): 사건 전부
+        "chronicleAll": [{k: e.get(k) for k in ("id", "kind", "atSeconds", "region", "pos", "offset", "minRealm", "everywhere", "nameKo", "placeKo", "branches")} for e in load("chronicle")["events"]],   # 연표 화면(CX-01, 12장): 사건 전부, 진영 갈래(CX-04)
         "gear": drop_notes(load("gear")),   # 문파 병기(GX-01~04, 8장): 병기 열·등급 넷·떨어뜨리는 확률
         # 축척 시험(WP-12)이 1장 마당을 중원 한 장의 숭산 자리에 놓고 둘레 지명을 그린다
         "regions": [{"id": r["id"], "nameKo": r["nameKo"], "hanja": r["hanja"], "pos": r["pos"], "chapter": r.get("chapter"), "final": bool(r.get("final")), "gimmicks": r.get("gimmicks", []), "density": r["density"], "boss": r.get("boss"), "sealStone": r.get("sealStone"), "sect": r.get("sect")} for r in load("cheonha")["regions"]],
@@ -170,7 +170,7 @@ def data_blob() -> str:
                    "stats": (s.get("traitEffect") or {}).get("stats", {}), "unlock": s.get("unlock"), "leader": s.get("leader"),
                    # 고유 능력 나머지(WP-20, Core SectTrait)와 음양 시작·태극 구간
                    "trait": {k: v for k, v in (s.get("traitEffect") or {}).items() if k != "stats"},
-                   "yinyangStart": s.get("yinyangStart", 0), "harmonyRange": s.get("harmonyRange"),
+                   "camp": s.get("camp"), "yinyangStart": s.get("yinyangStart", 0), "harmonyRange": s.get("harmonyRange"),
                    "bloodArt": drop_notes(s["bloodArt"]) if s.get("bloodArt") else None, "ultimate": s.get("ultimate")} for s in load("cheonha")["sects"]],   # 혈공(WP-23, 마교만)
         # 침방·연무장(WP-14d, 10·21장): 환생 후보 수·첫 환혼·환혼 강화, 타고난 성질. 연무장 값은 balance.json training(위 balance 묶음)
         "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades", "femaleRatio", "maleOnlySects", "boons")},
