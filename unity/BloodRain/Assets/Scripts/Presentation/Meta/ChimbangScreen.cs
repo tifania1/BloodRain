@@ -108,6 +108,7 @@ namespace BloodRain.Presentation.Meta
             ClosePinPicker();
             RefreshPin();
             Refresh();
+            BuildDirectRow();
         }
 
         // ---- 바라는 문파(SV-02U, 기획서 21장 환혼 강화 '바라는 문파') ----
@@ -261,6 +262,51 @@ namespace BloodRain.Presentation.Meta
                 SoulStore.SaveDialogue(_progress);
             }
             else body = Draw.Choose(index);
+            Send(body);
+        }
+
+        // ---- WX-01U ① 직접 고르기(21장 '천하 확장: 직접 고르기와 덕', Core RebirthDraw.ChooseDirect) ----
+        // 첫 환혼이 아니면 후보 카드 아래 한 줄: 해금한 문파를 데이터 차례로 단추. 누르면 성질·덕 없는 그 문파 몸으로.
+        RectTransform _directRow;
+        /// <summary>시험용: 직접 고르기 줄의 문파 단추 수(줄이 없으면 0).</summary>
+        public int DirectCount => _directRow != null ? Draw.DirectChoices.Count : 0;
+
+        void BuildDirectRow()
+        {
+            if (_directRow != null) Destroy(_directRow.gameObject);
+            _directRow = null;
+            if (Draw == null || Draw.IsFirst || Draw.DirectChoices.Count == 0) return;
+            _directRow = Rect("직접 고르기", _root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f));
+            Place(_directRow, new Vector2(0.5f, 0f), new Vector2(-330, 138), new Vector2(1240, 40));
+            var back = _directRow.gameObject.AddComponent<Image>();
+            back.color = new Color(Paper.r, Paper.g, Paper.b, 0.85f);
+            back.raycastTarget = false;
+            var h = _directRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.spacing = 6; h.childAlignment = TextAnchor.MiddleCenter;
+            h.childControlWidth = h.childControlHeight = false;
+            h.childForceExpandWidth = h.childForceExpandHeight = false;
+            var head = Text("머리", _directRow, $"<alpha=#AA>{Loc.T("ui.chimbang.direct")}<alpha=#FF>", 18, FontStyles.Italic);
+            head.rectTransform.sizeDelta = new Vector2(230, 34);
+            foreach (var s in Draw.DirectChoices)
+            {
+                var b = MakeButton($"직접 {s.NameKo}", _directRow, SectColor(s.Id), out var lab, 18, Paper);
+                ((RectTransform)b.transform).sizeDelta = new Vector2(92, 34);
+                lab.text = Loc.Sect(s);
+                lab.enableAutoSizing = true; lab.fontSizeMin = 10; lab.fontSizeMax = 18;
+                string id = s.Id;
+                b.onClick.AddListener(() => ChooseDirect(id));
+            }
+        }
+
+        public void ChooseDirect(string sectId)
+        {
+            if (Draw == null || _done || Draw.IsFirst) return;
+            _done = true;
+            Send(Draw.ChooseDirect(sectId));
+        }
+
+        void Send(RebirthBody body)
+        {
             RebirthHandoff.Body = body;
             RebirthHandoff.Soul = _soul;
             Debug.Log($"[침방] {body.Sect?.NameKo} 제자로 환생 · {body.Region.NameKo}(혈운 {body.Region.Density:0.0}) · 성질 {string.Join(",", body.Traits.Select(t => t.NameKo))}");

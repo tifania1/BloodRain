@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using BloodRain.Core.Build;
 using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
@@ -127,7 +127,7 @@ namespace BloodRain.Presentation.Hud
             {
                 Open();
                 // UI-01b 설정 '자동 고르기': 화면을 띄우자마자 고른다(서장 첫 카드 한 장은 보여 준다 — 가르치는 자리)
-                if (Meta.SettingsScreen.Current.AutoPick && !_firstOpen && !_extraNow) { _autoNow = true; AutoPick(); _autoNow = false; }
+                if (Meta.SettingsScreen.Current.AutoPick && !_firstOpen && !_extraNow && !_gugAuto) { _autoNow = true; AutoPick(); _autoNow = false; }
                 return;
             }
             if (!_open) return;
@@ -135,7 +135,7 @@ namespace BloodRain.Presentation.Hud
 
             var kb = Keyboard.current;
             if (kb == null) return;
-            if (Guarded) return;   // UI-01U 열린 직후 입력 막기
+            if (Guarded || _gugAuto) return;   // UI-01U 열린 직후 입력 막기
             if (kb.digit1Key.wasPressedThisFrame) Pick(0);
             else if (kb.digit2Key.wasPressedThisFrame) Pick(1);
             else if (kb.digit3Key.wasPressedThisFrame) Pick(2);
@@ -159,12 +159,53 @@ namespace BloodRain.Presentation.Hud
             if (!_extraNow) _firstDone = true;
             // GU-01U 돈오: 깨칠 연환이 있으면 카드 줄 아래 금빛 돈오 카드로 띄운다(누르면 깨침, 선택을 쓰지 않음). 안 누르고 닫아도 닫을 때 깨친다
             _doneo = _loadout.PendingDoneo(_restored);
+            // WX-01U ③ 구결: 이 문파로 산 마지막 생의 차례가 남았으면 그 걸음을 뽑힌 카드에 넣는다(forceStep)
+            var gugLife = LifeRunner.Instance != null ? LifeRunner.Instance.Life : null;
+            var gug = !_extraNow && !_firstOpen && gugLife != null && !gugLife.IsPrologue ? gugLife.Gugyeol : null;
             if (_extraNow) { _offers = _extraOffers; _extraOffers = null; }
-            else _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked);
+            else _offers = _firstOpen ? _loadout.RollFirstLevelUp(_rng, Luck(), _unlocked, _prologue) : _loadout.RollLevelUp(_rng, Luck(), _unlocked, forceStep: gug?.Next);
             _root.gameObject.SetActive(true);
             _openedAt = Time.unscaledTime;
             ShowTeach();
             Refresh();
+            if (gug != null) TryGugyeol(gug);
+        }
+
+        // ── WX-01U ③ 구결(10장 '천하 확장: 전생의 공력', Core Build.GugyeolPlayer) ─────────────
+        // 다음 걸음 카드가 떴으면 0.35초 금빛으로 빛낸 뒤 저절로 고른다(마지막 걸음이면 '다 따랐다' 한 줄을 1.2초 보이고).
+        // 처음 어긋난 순간엔 '구결이 끊겼다 n/m걸음' 한 줄을 띄우고 사람이 고른다. 멈춘 뒤로는 그 생엔 다시 안 따른다.
+        bool _gugAuto;
+        /// <summary>시험용: 구결이 카드를 고르는 중인가.</summary>
+        public bool GugyeolPicking => _gugAuto;
+
+        void TryGugyeol(GugyeolPlayer g)
+        {
+            if (g.Stopped) return;
+            var pick = g.Pick(_offers);
+            if (pick == null) { ShowLine(Loc.F("ui.gugyeol.broken", g.Done, g.Count)); return; }
+            int idx = _offers.IndexOf(pick.Value);
+            if (idx < 0) return;
+            _gugAuto = true;
+            StartCoroutine(GugyeolPick(idx, g.Stopped ? Loc.F("ui.gugyeol.done", g.Done) : null));
+        }
+
+        System.Collections.IEnumerator GugyeolPick(int idx, string doneLine)
+        {
+            yield return null;   // Refresh 가 지운 옛 카드가 사라진 뒤
+            if (idx < _cardRow.childCount && _cardRow.GetChild(idx).GetComponent<Graphic>() is { } card)
+                StartCoroutine(Shimmer(card, 0f));
+            if (doneLine != null) ShowLine(doneLine);
+            float t0 = Time.unscaledTime, wait = doneLine != null ? 1.2f : 0.35f;
+            while (_open && Time.unscaledTime - t0 < wait) yield return null;
+            _gugAuto = false;
+            if (_open && idx < _offers.Count) { _autoNow = true; _banishMode = false; Pick(idx); _autoNow = false; }
+        }
+
+        void ShowLine(string line)
+        {
+            if (_teach == null) return;
+            _teach.text = line;
+            _teach.gameObject.SetActive(true);
         }
 
         // ── GU-03U 생마다 한 줄 가르치기(기획서 12장 '가르치는 순서') ─────────────
