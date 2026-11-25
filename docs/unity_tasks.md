@@ -91,6 +91,12 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 메뉴: 없음
   - 끝: 연무장 왼쪽이 원화 경맥도이고 혈 20곳이 그림의 몸 위에 겹치지 않게 앉음. 콘솔 에러 0
   - 찍기: `docs/unity_shots/` 의 `GU-04Ua` 폴더에 연무장 한 장
+- [ ] WX-01U 회귀 가속 셋을 침방·레벨업에(직접 고르기·깨어날 경지·구결) · 먼저: 없음 (2026-11-26 00시 클라우드 — Core 는 다 있고 웹 합친 판에 본보기를 넣음: backlog WX-01~05·07)
+  - 할 것: ① 침방(첫 환혼 아닐 때) 후보 카드 아래 '직접 고르기 · 성질·덕 없이' 단추 줄 — 해금 문파 데이터 차례, 누르면 `RebirthDraw.ChooseDirect(문파)` 몸으로 생 시작 ② 같은 곳에 '깨어날 경지' 단추 줄 — `soul.PastLifePower().WakeRealms()` 가 비어 있지 않을 때만(삼류 + 그 목록), 고르면 그 경지 문턱 레벨에서 시작하고 건너뛴 레벨업은 처음에 몰아 고르기(대환단 영약과 같은 길, 돌파·깨달음도 그 길로) ③ 레벨업 화면: `life.Gugyeol.Next` 가 있으면 `RollLevelUp(..., forceStep: life.Gugyeol.Next)` 로 뽑고 `life.Gugyeol.Pick(offers)` 가 고른 카드를 0.3초쯤 빛낸 뒤 저절로 고름. null 이면 평소대로 사람이 고르고, 그 순간 처음 멈췄으면 '구결이 끊겼다 n/m걸음' 한 줄, 다 따랐으면 '구결을 다 따랐다'. 침방 윗줄에 전생의 공력(구간마다 -n%)이 있으면 한 줄
+  - 쓸 것: Core `RebirthDraw.DirectChoices`·`ChooseDirect`, `Progression.PastLifePower.WakeRealms`·`CutForSegment`, `Run.Life.Gugyeol`(WX-07, 저장을 되돌려도 `Resume` 으로 이어 감). 웹 본보기: template.html `chooseDirect`·`inwake`(renderInn)·`gugFollow`·`pastLifeOf`
+  - 메뉴: 없음
+  - 끝: 소림으로 한 생 산 시험 혼에서 다시 소림을 고르면 첫 레벨업 몇 번이 저절로 넘어가고 차례가 지난 생과 같음, 직접 고르기 단추로 성질 없는 몸이 됨, crossings 를 30 넣은 시험 혼으로 '일류'를 고르면 Lv20 에서 레벨업을 몰아 고름. 콘솔 에러 0
+  - 찍기: `docs/unity_shots/` 의 `WX-01U` 폴더에 침방(직접·깨어날 경지 줄) 한 장
 
 ### 0. 화면 집중 (2026-11-13 ~ 2026-11-24, 끝남 — 남은 열린 항목은 0-1 다음에 이어 감)
 

@@ -38,6 +38,16 @@ namespace BloodRain.Core.Build
 
         public GugyeolPlayer(IEnumerable<string> steps) { _steps = steps.ToList(); Stopped = _steps.Count == 0; }
 
+        /// <summary>생 도중 저장을 되돌릴 때(Life.Restore): 그 생에 이미 고른 차례(Loadout.PickOrder)만큼 따라온 것으로 놓는다.
+        /// 앞에서부터 구결과 같은 만큼 Done, 그 안에서 어긋났거나 구결을 다 따랐으면 멈춘 것으로.</summary>
+        public void Resume(IReadOnlyList<string> picked)
+        {
+            int n = 0;
+            while (n < picked.Count && n < _steps.Count && picked[n] == _steps[n]) n++;
+            Done = n;
+            Stopped = _steps.Count == 0 || n >= _steps.Count || n < picked.Count;
+        }
+
         /// <summary>뜬 카드 가운데 다음 걸음과 같은 것을 고른다(같은 것이 여럿이면 금빛 대오 카드 먼저). 없으면 멈추고 null.</summary>
         public Offer? Pick(IReadOnlyList<Offer> offers)
         {

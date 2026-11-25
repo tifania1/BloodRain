@@ -84,6 +84,9 @@ namespace BloodRain.Core.Run
             {
                 PastLife = soul.PastLifePower(), // GU-11f1 전생의 공력: 넘어 본 구간은 필요 진기가 줄어든다(서장 첫 생은 넘은 구간이 없어 그대로)
             };
+            // 구결(10장 '천하 확장: 전생의 공력', WX-07): 이 문파 몸으로 산 마지막 생의 차례. 레벨업을 뽑을 때 Gugyeol.Next 를 RollLevelUp 의 forceStep 으로,
+            // 뜬 카드에서 Gugyeol.Pick 으로 고른다(화면 쪽 일). 서장 몸·처음 사는 문파는 비어 있어 처음부터 멈춰 있다
+            Gugyeol = new GugyeolPlayer(body.IsPrologue || body.Sect == null ? (IReadOnlyList<string>)Array.Empty<string>() : soul.GugyeolOf(body.Sect.Id));
             Regions = new Regions(_data);
             Scale = new Scale(_data);
             Chronicle = new Chronicle(_data.Chronicle, Regions, Scale);
@@ -129,6 +132,8 @@ namespace BloodRain.Core.Run
         public Soul Soul => _soul;
         public LifeLog Log { get; }
         public Loadout Loadout { get; }
+        /// <summary>구결(WX-07): 이 문파로 산 마지막 생의 고른 차례를 앞부분만 따라 고른다. 레벨업 화면이 Next·Pick 을 쓴다.</summary>
+        public GugyeolPlayer Gugyeol { get; }
         public RunXp Xp { get; }
         public Regions Regions { get; }
         public Scale Scale { get; }
@@ -642,6 +647,7 @@ namespace BloodRain.Core.Run
                 if (more > 0) Loadout.Apply(new Offer(OfferKind.UpgradePassive, kv.Key, more));
             }
             if (s.PickOrder != null) Loadout.RestorePickOrder(s.PickOrder);
+            Gugyeol.Resume(Loadout.PickOrder);   // 저장한 생이 구결을 어디까지 따랐나
             foreach (var w in s.Evolved)
                 Loadout.Evolve(_data.Evolutions.FirstOrDefault(e => e.Weapon == w) ?? throw new InvalidOperationException($"절기가 없는 무공입니다: {w}"));
             foreach (var e in s.Chronicle) Log.Witness(e);

@@ -78,6 +78,42 @@ namespace BloodRain.Core.Tests
             return taken;
         }
 
+        [Fact] public void 한_생이_이_문파의_마지막_차례를_구결로_들고_저장을_되돌려도_이어_간다()
+        {
+            var (soul, life) = NewLife();
+            Assert.True(life.Gugyeol.Stopped);   // 처음 사는 소림은 구결이 비어 있음
+            var steps = PlayPicks(life, 6, 5).Select(Gugyeol.Step).Where(s => s != null).Select(s => s!).ToList();
+            soul.EndLife(life.End(LifeEndWay.Fallen, 0));
+
+            var (_, next) = NewLife(soul);
+            Assert.False(next.Gugyeol.Stopped);
+            Assert.Equal(steps[0], next.Gugyeol.Next);
+            // 두 걸음 따라 고른 뒤 저장 → 되돌리면 셋째 걸음부터
+            var all = _d.Weapons.Select(w => w.Id).Concat(_d.Passives.Select(p => p.Id)).ToHashSet();
+            var rng = new Random(9);
+            for (int i = 0; i < 2; i++)
+            {
+                var offers = next.Loadout.RollLevelUp(rng, 0, all, forceStep: next.Gugyeol.Next);
+                var pick = next.Gugyeol.Pick(offers);
+                Assert.NotNull(pick);
+                next.Loadout.Apply(pick!.Value);
+            }
+            var snap = LifeSnapshot.Capture(next);
+            var (_, back) = NewLife(soul);
+            back.Restore(snap);
+            Assert.Equal(2, back.Gugyeol.Done);
+            Assert.Equal(steps[2], back.Gugyeol.Next);
+
+            // 어긋난 차례로 저장된 생은 되돌려도 멈춰 있다
+            var g = new GugyeolPlayer(new[] { "w:a", "w:b" });
+            g.Resume(new[] { "w:a", "p:x" });
+            Assert.True(g.Stopped);
+            g = new GugyeolPlayer(new[] { "w:a", "w:b" });
+            g.Resume(new[] { "w:a", "w:b", "p:x" });
+            Assert.True(g.Stopped);
+            Assert.Equal(2, g.Done);
+        }
+
         [Fact] public void 생이_끝나면_혼이_문파마다_마지막_차례를_남기고_저장한다()
         {
             var (soul, life) = NewLife();
