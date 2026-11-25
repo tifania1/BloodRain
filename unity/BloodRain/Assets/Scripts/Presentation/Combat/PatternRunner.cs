@@ -314,7 +314,8 @@ namespace BloodRain.Presentation.Combat
                         t.R = p.Radius * _factor; t.Wid = 0.25f * _factor;
                         break;
                     case "circles":
-                        var offs = BossPatterns.ScatterOffsets(p, _rng);
+                        // 2026-11-26 RG-05U: 칠성검진(arrangement big_dipper)이 일곱 원이 한 점에 겹쳐 나왔다 — Core CircleCenters 가 배치를 고른다
+                        var offs = BloodRain.Core.Combat.PatternShapes.CircleCenters(p, _rng, Deg(boss - player));
                         t.Circles = offs.Select(o => player + new Vector2(o.x, o.y) * _factor).ToArray();
                         t.Vis = Shape(p.Id, TeleWash, 2);
                         t.Offs = t.Circles.Select(c => c - player).ToArray();
