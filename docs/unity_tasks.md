@@ -1091,7 +1091,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 할 것: 모드 고르기(12장 '모드 선택', `Modes.IsOpen(soul, "daily")` 일 때만)에서 일일 도전을 누르면 `var seed = DailyChallenge.Seed(DateTime.UtcNow)` → `Rebirth.Body(C, DailyChallenge.Body(C, seed))` 몸 카드 한 장(고르기 없음) → `new Life(DailyChallenge.Sandbox(soul), body, DailyChallenge.LifeRandom(seed))`. 같은 날 두 번 열면 같은 몸·같은 사건 차례. 끝나면 혼에 넘기지 않고 정산만 — 복사본 혼(Sandbox)째 버리고 진짜 혼은 저장하지 않는다(WP-37 정함: 연무장·환혼 강화는 받고 혼엔 아무것도 안 남김, 몇 번이든 됨). 리더보드는 Steamworks 를 붙인 뒤: `DailyChallenge.LeaderboardName(DateTime.UtcNow)` 리더보드에 내 기록이 없을 때만 `DailyChallenge.Score(life.Minutes)`(버틴 초)를 올림 — 그날 첫 판만.
   - 쓸 것: Core `Meta/DailyChallenge.cs`, `Meta/Modes.cs`, cheonha.json `modes`. 웹 본보기(2026-11-25 MO-01): template.html `startDaily`·`dailyRestore`(혼 떠 두고 되돌림)
   - 메뉴: 없음
-  - 끝: 봉인석 셋인 시험 혼으로 일일 도전을 두 번 열어 같은 문파·같은 성질, 콘솔 에러 0
+  - 끝: 봉인석 셋인 시험 혼으로 일일 도전을 두 번 열어 같은 문파·같은 성질, 같은 날 웹 dev 판(침방 '일일 도전' 단추 글)과도 같은 몸(2026-11-26 DD-02 로 웹이 Core Body 와 같은 수열 — 예: UTC 2026-11-25 남궁·음체·여자), 콘솔 에러 0
   - 찍기: `docs/unity_shots/DD-01U/` 의 `daily.png`
 
 - [ ] EL-08U 도감 찾은 쪽 적기 · 먼저: RM-03b

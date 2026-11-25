@@ -1060,10 +1060,26 @@ function renderDex() {
 }
 
 // 경험치: balance.json xpCurve
-function xpReq(level) {
+function xpCurveReq(level) {
   for (const s of B.xpCurve.segments) if (level >= s.fromLevel && level <= s.toLevel) return s.base + s.step * (level - s.anchor);
   const s = B.xpCurve.segments[B.xpCurve.segments.length - 1];
   return s.base + s.step * (level - s.anchor);
+}
+// 전생의 공력(10장 '천하 확장: 전생의 공력', WX-01): 혼이 경지 구간마다 넘은 횟수(crossings, Core Soul.RealmCrossings)를 세고,
+//   넘어 본 구간은 한 번에 cutPerCrossing(4%)씩 필요 진기가 줄어 maxCut(60%)에서 멈춘다. 지금까지 가장 높이 오른 경지로 가는 구간과 그 위는 제 속도.
+//   Core Progression.PastLifePower.RequiredScale·RunXp.Required(올림) 와 같은 셈. 한 생이 시작할 때 G.past 로 굳힌다(서장 첫 생은 넘은 구간이 없어 그대로)
+const PL = DATA.pastLife || { cutPerCrossing: 0, maxCut: 0, wakeCrossings: 30 };
+const RL_ALL = B.realms.slice().sort((a, b) => a.level - b.level);
+function pastLifeOf(m) {
+  const cr = m && m.crossings && typeof m.crossings === 'object' ? m.crossings : {};
+  let hi = 0; RL_ALL.forEach((r, i) => { if ((m && m.reached || []).includes(r.id)) hi = i; });   // Soul._realms 가운데 가장 높은 것(없으면 삼류)
+  const cutFor = seg => seg <= 0 || seg >= RL_ALL.length || seg >= hi ? 0 : Math.min(PL.maxCut, PL.cutPerCrossing * (cr[RL_ALL[seg].id] || 0));
+  const segOf = level => { let at = 0; RL_ALL.forEach((r, i) => { if (r.level <= level) at = i; }); return at + 1 < RL_ALL.length ? at + 1 : -1; };
+  return { cutFor, scale: level => { const sg = segOf(level); return sg < 0 ? 1 : 1 - cutFor(sg); } };
+}
+function xpReq(level) {
+  const base = xpCurveReq(level);
+  return G && G.past ? Math.max(1, Math.ceil(base * G.past.scale(level) - 1e-6)) : base;
 }
 function spawnTarget(min) {
   const p = B.spawnTarget.points;
@@ -1461,7 +1477,7 @@ function newRun(mode) {
     G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
     G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(sister 줄, 후보 카드 femaleBodiesKo)
     { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; G.skips = Math.max(0, Math.round(bodyStat('Skips'))); G.revivals = Math.max(0, Math.round(bodyStat('Revival'))); if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
-    G.soul0 = soulLoad(); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
+    G.soul0 = soulLoad(); G.past = pastLifeOf(G.soul0); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
     G.wpool = weaponPoolOf(G.soul0); G.dashes = 0; G.talis = 0;   // 무공 해금(WP-17): 혼 기록으로 연 무공까지 레벨업 풀에, 도전 과제 셈(경공·정신부, 처치는 G.kills)
     G.lords = {}; G.lordJust = []; G.lordGrace = null; G.lordF = null; G.lordKills = [];   // 땅의 주인(WP-13e): 지역별 깨어남·싸움·처치   // 정산(WP-14c): 시작할 때 혼 기록, 밟은 땅, Σ구슬 값·Σ(값 × 농도), 정예 수
     if (G.moon) toast(`혈월 천하 · ${G.soul0.cycle}회차`, `적 기혈 ×${BM.enemyHealth} · 걸음 ×${BM.enemySpeed} · 보상 ×${BM.rewards}`);
@@ -4438,6 +4454,8 @@ function recordLife(st) {
   m.visited = Array.isArray(m.visited) ? m.visited : []; m.reached = Array.isArray(m.reached) ? m.reached : [];
   for (const id of st.newVisits) if (!m.visited.includes(id)) m.visited.push(id);
   for (const id of st.newRealms) if (!m.reached.includes(id)) m.reached.push(id);
+  m.crossings = m.crossings && typeof m.crossings === 'object' ? m.crossings : {};
+  for (const r of B.realms.slice(1, st.top + 1)) m.crossings[r.id] = (m.crossings[r.id] || 0) + 1;   // 전생의 공력: 이번 생에 넘은 구간마다 +1(Core Soul.EndLife)
   m.crisesBlocked = Array.isArray(m.crisesBlocked) ? m.crisesBlocked : []; for (const id of st.newBlocks || []) if (!m.crisesBlocked.includes(id)) m.crisesBlocked.push(id);   // 문파의 위기(GU-11m)
   // 땅의 주인(WP-13e): 봉인석·처치 수·열린 문파(시안 endLife 와 같은 칸)
   m.stones = Array.isArray(m.stones) ? m.stones : []; m.bossKills = m.bossKills && typeof m.bossKills === 'object' ? m.bossKills : {};
@@ -4991,7 +5009,9 @@ function renderInn() {
   const db = $('indaily'), don = dailyOpen(m); db.hidden = !don;
   if (don) { const c = dailyBody(), bd = (store.get('daily') || {})[dailyKey()], g = bd ? bd.gs : null;
     db.innerHTML = `일일 도전 <small>오늘 ${SECT_BY[c.sect].nameKo} ${c.female ? '여제자' : '제자'}${c.traits.length ? ' · ' + c.traits.map(id => (TRAIT_BY[id] || {}).nameKo || id).join('·') : ''}${g != null ? ` · 오늘 기록 ${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}` : ''}</small>`; }
-  $('innqi').textContent = `윤회의 기 ${m.qi.toLocaleString()} · 혈정 ${(m.crystal || 0).toLocaleString()} · 열린 문파 ${m.unlocked.length}/${(DATA.sects || []).length}`;
+  { const pl = pastLifeOf(m), cuts = RL_ALL.slice(1).map((r, i) => [r, pl.cutFor(i + 1)]).filter(x => x[1] > 0);
+    $('innqi').textContent = `윤회의 기 ${m.qi.toLocaleString()} · 혈정 ${(m.crystal || 0).toLocaleString()} · 열린 문파 ${m.unlocked.length}/${(DATA.sects || []).length}`
+      + (cuts.length ? ` · 전생의 공력 ${cuts.map(([r, c]) => `${r.nameKo} -${Math.round(c * 100)}%`).join(' ')}` : ''); }
   const fb = $('innfac'); fb.innerHTML = '';
   for (const f of INN_F) {
     const b = document.createElement('button'); b.type = 'button';
@@ -6311,6 +6331,8 @@ function recordPrologue(orbRaw, realmId) {
   m.qi += total; m.best = Math.max(m.best || 0, top);
   for (const id of visits) m.visited.push(id);
   for (const id of realms) m.reached.push(id);
+  m.crossings = m.crossings && typeof m.crossings === 'object' ? m.crossings : {};
+  for (const r of B.realms.slice(1, top + 1)) m.crossings[r.id] = (m.crossings[r.id] || 0) + 1;   // 서장 생도 한 번으로(Core 와 같음)
   m.prologue = { qi: total, orb: Math.round(orbRaw || 0), realm: B.realms[top].id };
   facRefresh(m);   // 연무장(서장 끝)이 열린다. 서장 귀환엔 대사가 없어 새로 연 목록은 버린다
   modeRefresh(m);   // 천하 모드(서장 끝, Core EndLife 의 Modes.Refresh)

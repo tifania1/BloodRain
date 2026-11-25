@@ -69,6 +69,13 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] DD-02 2026-11-26 — 웹 `netRandom`(.NET System.Random(seed) 빼기 생성기를 그대로)과 `rollTraitsNet` 으로 `dailyBody` 가 Core `DailyChallenge.Body`(Rebirth.Roll 아홉 문파·1명) 와 같은 차례로 뽑음. node 로 2026-11-01~12-10 사십 날 문파·성질·성별·LifeRandom 첫 수까지 Core 와 다 같음을 봄. `WebDailyTests` 에 네 날 고정값. 쓰지 않게 된 `seededRnd` 지움
 - [x] DD-03 2026-11-26 — 일일 도전 한 생의 사건 일정 난수 `EV_RND` 를 Core `LifeRandom` 과 같은 시드(seed ^ 0x5bd1e995)로: 금두꺼비·은빛 등롱 시각, 기연 사건 나오는 시각·나올지, 지역 무리 고르기. 평소 판은 그대로 Math.random. 적 뽑기·연출은 프레임마다라 고정 안 함(웹끼리도 Unity 와도 사건 '차례'까지 같지는 않음 — Unity Life 가 같은 난수를 다른 차례로 씀)
 
+로드맵에서 채움, 2026-11-26 00시 둘째(10장 '천하 확장: 전생의 공력'·21장 — 2026-11-18·20 정해져 Core·데이터에 다 있는데 웹 합친 판엔 회귀 가속이 하나도 없었다. 사람이 웹 판으로 '회귀할수록 빨라지는' 느낌을 보려면 필요):
+- [x] WX-01 2026-11-26 — 웹 전생의 공력: 혼 `crossings`(정산·서장 정산 때 넘은 구간마다 +1, Core Soul.EndLife), 생 시작 때 `G.past = pastLifeOf(혼)`, `xpReq` 가 Core RunXp.Required 처럼 구간 몫만큼 줄여 올림(가장 높이 오른 경지로 가는 구간은 제 속도), 빌드가 cheonha.json `pastLife` 를 넣음, 침방 윗줄에 '전생의 공력 이류 -n% …'. node 로 같은 혼을 돌린 필요 진기 여덟 레벨이 Core 와 같음(`WebPastLifeTests`)
+- [ ] WX-02 웹 천운 덕: 침방 무작위 후보마다 덕 하나(cheonha.json rebirth.boons, Core `Rebirth.WithBoons`), 천운이면 카드에 금빛 한 줄·그 생 윤회의 기 +25%(Core `Rebirth.Body` RebirthQiBonus). 빌드 rebirth 키에 boons
+- [ ] WX-03 웹 직접 고르기: 침방에서 해금한 문파를 직접 골라 성질·덕 없는 몸(Core `RebirthDraw.DirectChoices`·`ChooseDirect`, 첫 환혼 말고). 21장 '지금 기획서에서 고칠 곳'
+- [ ] WX-04 웹 그 경지로 깨어나기: 같은 구간을 30번(pastLife.wakeCrossings) 넘었으면 침방에서 그 경지로 시작을 고름, 건너뛴 레벨업은 시작할 때 한꺼번에(Core `PastLifePower.WakeRealms`). 시험은 혼에 crossings 를 넣어서
+- [ ] WX-05 웹 구결: 문파마다 그 몸으로 산 마지막 생의 고른 차례를 혼에(Core `Soul` Gugyeol), 다음 생 레벨업에 다음 걸음 카드 한 장을 바꿔 띄우고 저절로 고름, 못 고르면 그 생엔 멈춤(Core `Build.Gugyeol`·`GugyeolPlayer`·`Loadout.RollLevelUp(forceStep)`). 켜고 끄는 단추·해금 조건은 기획서에 없음 — 웹은 늘 켜고 HUD 에 '구결 n걸음'
+
 ## 화면 집중 (2026-11-13 ~ 2026-11-24, 끝남)
 
 2026-11-24 사람이 풀었다. 아래 열린 항목(사람 눈이 필요한 것, PC 몫)은 지우지 않고 이어 간다. 새 일은 위 '다음 단계' 절에서. 11-13 당시 규칙: 숭산 한 생(서장 → 절정, 원각)이 예쁘고 손맛 날 때까지 이 절만 했다. Unity 몫은 unity_tasks '0. 화면 집중'.
