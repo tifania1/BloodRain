@@ -1184,7 +1184,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 메뉴: 새로 '데모 빌드'
   - 끝: 데모 빌드로 서장 → 소림·개방·남궁 중 하나 → 무공 카드에 처음 아홉만 → 원각 처치 뒤 데모 끝 화면. 정식판 저장이 그대로
   - 찍기: `Captures/demo_end.png`
-- [ ] SV-03U 생 도중 끄고 이어 하기 · 먼저: B 절(Run 씬에 Core `Life`), 화면 집중이 풀린 뒤 (2026-11-18 클라우드가 넣음 — 천하 확장으로 한 생이 60분까지 늘어 중간 저장이 필요, backlog GU-11h1·GU-11h2 의 Core 는 끝)
+- [ ] SV-03U 생 도중 끄고 이어 하기 · 먼저: 없음(B 절 Run 씬 Core `Life` 는 됨, 화면 집중은 2026-11-24 풀림) (2026-11-18 클라우드가 넣음 — 천하 확장으로 한 생이 60분까지 늘어 중간 저장이 필요, backlog GU-11h1·GU-11h2 의 Core 는 끝)
   - 할 것: 멈춤 화면 '저장하고 나가기'에서 `SaveGame.Ongoing = LifeSnapshot.Capture(life)` 로 칸 파일을 쓰고 타이틀로. 타이틀 '이어하기'는 `Ongoing` 이 있으면 같은 몸(`Rebirth.Body(c, Ongoing.Candidate(c))` — 지역·성질·성별·덕까지 저장돼 있다)으로 새 `Life` 를 만들고 첫 Tick 전에 `Life.Restore(Ongoing)`, 적·탄은 비운 채 생성 규칙대로 다시 채운다. 이어 한 뒤 바로 `Ongoing = null` 로 저장(같은 판을 두 번 이어 하지 않게). 생이 끝나면(정산) `Ongoing` 은 늘 null
   - 쓸 것: Core `Run/LifeSnapshot.cs`(머리 주석에 담는 것·안 담는 것), `Life.Restore`, `Meta/SaveGame.cs`('life' 칸, 깨진 칸은 버림), `LifeSnapshotTests`
   - 메뉴: 없음

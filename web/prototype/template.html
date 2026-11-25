@@ -6680,7 +6680,7 @@ $('btndash').addEventListener('click', e => { if (e.detail === 0) doDash(); });
 $('btnult').addEventListener('click', e => { if (e.detail === 0) useUlt(); });
 $('pausebtn').addEventListener('click', () => togglePause());
 $('resume').addEventListener('click', () => togglePause(false));
-// 좌화(WP-26): 한 생 판에서 생을 스스로 닫는다. 멈춤 뒤 그만두기도 좌화처럼 정산한다(15장 저장 — 한 생 도중 저장은 없다)
+// 좌화(WP-26): 한 생 판에서 생을 스스로 닫는다. 멈춤 뒤 그만두기도 좌화처럼 정산한다(웹 판엔 한 생 도중 저장이 없다 — 15장 '저장')
 function zuohwa() { if (!running || !G.body) return; togglePause(false); G.endWay = 'zuohwa'; endRun(false); }
 $('zuohwa').addEventListener('click', zuohwa);
 $('quit').addEventListener('click', () => (G && G.body && running ? zuohwa() : toTitle()));
