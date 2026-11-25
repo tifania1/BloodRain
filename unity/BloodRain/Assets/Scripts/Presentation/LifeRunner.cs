@@ -185,6 +185,7 @@ namespace BloodRain.Presentation
             if (TestPanel.Allowed && GetComponent<TestPanel>() == null) gameObject.AddComponent<TestPanel>().runner = this; // 시험 메뉴(F2, 개발 판만)
             if (GetComponent<RegionBanner>() == null) gameObject.AddComponent<RegionBanner>().runner = this; // 다른 땅에 들어설 때 알림
             if (GetComponent<Fx.GimmickLayer>() == null) gameObject.AddComponent<Fx.GimmickLayer>().runner = this; // GM-01U 숭산 범종·탑림
+            if (GetComponent<Fx.WaterLayer>() == null) gameObject.AddComponent<Fx.WaterLayer>().runner = this; // RG-04U 장강 물길·떠내려오는 배
             WorldIntro.Begin(); // 천하 한 장에서 태어난 자리로 내려오며 시작
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             if (cuts == null) cuts = FindFirstObjectByType<CutScreen>();
