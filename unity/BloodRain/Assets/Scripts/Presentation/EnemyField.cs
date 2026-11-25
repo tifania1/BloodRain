@@ -946,7 +946,8 @@ namespace BloodRain.Presentation
             ApplyAuras(dt);
             StepFollow(new float2(p.x, p.y));
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
-            _sim.Step(dt, new float2(p.x, p.y), new float2(_heading.x, _heading.y), cell,
+            var chase = Fx.CloudSeaLayer.Decoy ?? p; // RG-05U 운해에 숨으면 숨은 자리를 쫓아 맴돎
+            _sim.Step(dt, new float2(chase.x, chase.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
                       1f, DataBoot.Data.Balance.EnemyStatus.KnockbackKeepPerSecond,
                       sectTrait.NearEnemySlowRadius(ws.RealmFactor), sectTrait.EnemySpeedMultiplier(0f), DataBoot.Data.Balance.EnemyStatus.SlowFadePerSecond); // R-04Ub 곤륜 설한기: 몸 가까운 적 느려짐
@@ -1013,6 +1014,7 @@ namespace BloodRain.Presentation
                 if (a.Fire == 0) continue;
                 a.Fire = 0;
                 agents[i] = a;
+                if (Fx.CloudSeaLayer.Decoy.HasValue) continue; // RG-05U 운해에 숨은 플레이어는 원거리 적이 쏘지 않는다
                 if (a.Kind < 0 || a.Kind >= _kinds.Count) continue;
                 var def = _kinds[a.Kind].Def;
                 var sh = def.Shoot;

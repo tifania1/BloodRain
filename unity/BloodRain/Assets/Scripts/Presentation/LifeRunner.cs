@@ -187,6 +187,7 @@ namespace BloodRain.Presentation
             if (GetComponent<Fx.GimmickLayer>() == null) gameObject.AddComponent<Fx.GimmickLayer>().runner = this; // GM-01U 숭산 범종·탑림
             if (GetComponent<Fx.WaterLayer>() == null) gameObject.AddComponent<Fx.WaterLayer>().runner = this; // RG-04U 장강 물길·떠내려오는 배
             if (GetComponent<Fx.TaijiLayer>() == null) gameObject.AddComponent<Fx.TaijiLayer>().runner = this; // RG-05U 무당산 태극 바닥
+            if (GetComponent<Fx.CloudSeaLayer>() == null) gameObject.AddComponent<Fx.CloudSeaLayer>().runner = this; // RG-05U 무당산 운해
             WorldIntro.Begin(); // 천하 한 장에서 태어난 자리로 내려오며 시작
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
             if (cuts == null) cuts = FindFirstObjectByType<CutScreen>();
