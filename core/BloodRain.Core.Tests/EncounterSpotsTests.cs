@@ -74,7 +74,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 웹_프로토타입이_같은_값을_읽는다()
         {
             var html = TestData.ReadRepoFile("web", "prototype", "template.html");
-            Assert.Contains("o[key] = { at: rand(sp.appearFromMinute, sp.appearToMinute)", html);
+            Assert.Contains("o[key] = { at: evRand(sp.appearFromMinute, sp.appearToMinute)", html);
             Assert.Contains("R = ENC_BY[key].spot.ringRadius;", html);
             Assert.Contains("const encProg = (key, prog, dt, inReach) =>", html);
             foreach (var id in new[] { "hermit", "relic", "elixir", "whisper", "sword_tomb" })

@@ -714,7 +714,7 @@ function spawnSpiritBeast(chapter) {
   spawnEnemy('golden_toad', p.x + (x - p.x) * B.spawnTarget.toadRingScale, p.y + (y - p.y) * B.spawnTarget.toadRingScale, { beast: name });
   toast('기연의 기척', chapter === 'chapter6' ? '눈밭에 하얀 아이 하나가 뛰어간다 — 설삼 동자다' : '하얀 학 한 마리가 낮게 날아 달아난다');
 }
-function newEnc() { const o = {}; for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast', 'cliff']) { const sp = ENC_BY[key].spot; o[key] = { at: rand(sp.appearFromMinute, sp.appearToMinute), on: false, done: false, prog: 0 }; } return o; }   // 나올 분은 synergies.json encounters[].spot(Core EncounterSpots.AppearMinute). 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
+function newEnc() { const o = {}; for (const key of ['relic', 'hermit', 'elixir', 'letter', 'whisper', 'sword_tomb', 'spiritbeast', 'cliff']) { const sp = ENC_BY[key].spot; o[key] = { at: evRand(sp.appearFromMinute, sp.appearToMinute), on: false, done: false, prog: 0 }; } return o; }   // 나올 분은 synergies.json encounters[].spot(Core EncounterSpots.AppearMinute). 영약·밀서·속삭임·검총·영물은 한 생 판만(WP-28~32)
 const SPOT = Object.fromEntries(SYN.encounters.filter(e => e.spot).map(e => [e.id, e.spot]));   // 놓는 고리·닿는 거리·떠나는 거리(Core EncounterSpots)
 const encProg = (key, prog, dt, inReach) => inReach ? prog + dt : Math.max(0, prog - (SPOT[key].decayPerSecond || 0) * dt);   // Core EncounterSpots.Progress
 const sch = (id, n) => !!G && !!G.syn && (G.syn.tier[id] || 0) >= n && !(G.syn.locked[id] || []).includes(n);   // 잠긴 비급 단계는 건너뛴다(개방 3 이 잠겨도 4 는 켜짐)
@@ -905,7 +905,7 @@ function synTick(dt) {
         const c = encCtx(), e = ENC_BY[key];
         if (!encCanAppear(e, c)) { ev.at = G.gm + 1; continue; }
         ev.rolled = true;
-        if (!(Math.random() < encChance(e, c))) { ev.done = true; continue; }
+        if (!(EV_RND() < encChance(e, c))) { ev.done = true; continue; }
         if (key === 'relic') ev.school = c.school;
         if (key === 'letter') { ev.done = true; G.letterArmed = true; continue; }   // 하오문 밀서: 다음에 부수는 등롱 속에 쪽지(WP-30)
         if (key === 'spiritbeast') { ev.done = true; spawnSpiritBeast(c.chapter); continue; }   // 영물: 금두꺼비처럼 달아나는 것(WP-32)
@@ -1425,10 +1425,15 @@ function buildVignette() {
 
 // ───────── 게임 상태 ─────────
 let G = null;            // 한 판의 상태
+// 한 생 사건 일정 난수(DD-03): 보통은 Math.random, 일일 도전이면 Core DailyChallenge.LifeRandom 과 같은 시드(seed ^ 0x5bd1e995)의 netRandom —
+//   금두꺼비·은빛 등롱 시각, 기연 사건 나오는 시각·나올지, 지역 무리 고르기가 그날 웹끼리 같다(적 뽑기·화면 흔들림은 프레임마다라 고정이 아님)
+let EV_RND = Math.random;
+const evRand = (a, b) => a + EV_RND() * (b - a);
 let running = false, paused = false, overlay = null;
 
 function newRun(mode) {
   const quick = mode === 'quick';
+  EV_RND = DAILY ? netRandom(DAILY.seed ^ 0x5bd1e995).nextDouble : Math.random;   // makeEvents·newEnc 보다 먼저
   G = {
     mode, easy: settings.easy, timeScale: quick ? 4 : 1, xpMult: quick ? 4 : 1,
     t: 0, gm: 0, kills: 0, silver: 0, level: 1, xp: 0,
@@ -1489,10 +1494,10 @@ function makeEvents(mode) {
   // 보부상은 openMerchant(WP-22). 은빛 등롱은 window 안 무작위 시각에 chance(없으면 1)로 — 혈월 회차에만 놓는다(이벤트 쪽에서 G.moon 을 봄)
   if (mode !== 'prologue' && curLifeSect() && SCALE_MODE && DATA.lifePlan) return DATA.lifePlan.events.map(e =>
     e.kind === 'charge' ? { at: e.at, kind: 'charge', n: e.count } : e.kind === 'elite' ? (e.roaming ? { at: e.at, kind: 'elite', roam: e.enemy } : { at: e.at, kind: 'elite', nth: e.nth })
-    : e.kind === 'toad' ? { at: rand(e.window[0], e.window[1]), kind: 'toad' } : e.kind === 'ring' ? { at: e.at, kind: 'ring', n: e.count }
+    : e.kind === 'toad' ? { at: evRand(e.window[0], e.window[1]), kind: 'toad' } : e.kind === 'ring' ? { at: e.at, kind: 'ring', n: e.count }
     : e.kind === 'group' ? { at: e.at, kind: 'group', enemy: e.enemy, n: e.count, local: e.local }
     : e.kind === 'merchant' ? { at: e.at, kind: 'merchant' }   // 보부상(WP-22)
-    : e.kind === 'silver_lantern' ? (Math.random() < (e.chance ?? 1) ? { at: rand(e.window[0], e.window[1]), kind: 'silver_lantern' } : null) : null).filter(Boolean).sort((a, b) => a.at - b.at);
+    : e.kind === 'silver_lantern' ? (EV_RND() < (e.chance ?? 1) ? { at: evRand(e.window[0], e.window[1]), kind: 'silver_lantern' } : null) : null).filter(Boolean).sort((a, b) => a.at - b.at);
   // 옛 1장 시간대별 흐름(천하 구조 전 기획서 7장 표). 시각은 게임 분. 지금 흐름은 chapters.json life(기획서 7장 '한 생의 시간대별 흐름').
   return [
     { at: 3.5, kind: 'charge', n: 14 }, { at: 5, kind: 'elite', type: 'dongin' },
@@ -3226,7 +3231,7 @@ function runEvent(ev) {
     cue('first_charge');
   } else if (ev.kind === 'elite') { const ek = ev.roam ? (Object.keys(ELITES).find(k => ELITES[k].id === ev.roam) || Object.keys(ELITES)[0]) : ev.nth ? lifeEliteKey(ev.nth) : regionEliteKey(ev.type); /* 떠도는 정예(EB-01a) */ spawnElite(ek); cue('elite_spawn:' + ELITES[ek].id); }
   else if (ev.kind === 'group') {   // 한 생 무리(WP-14b): 서 있는 땅 고유 적 하나를 골라 count 마리 한 덩어리로, 고유 적이 없는 땅이면 enemy
-    const r = CH_REGS.find(x => x.id === G.chRegion), list = ev.local && r && LOCAL_BY[r.chapter], type = list ? list[Math.floor(Math.random() * list.length)] : ev.enemy;
+    const r = CH_REGS.find(x => x.id === G.chRegion), list = ev.local && r && LOCAL_BY[r.chapter], type = list ? list[Math.floor(EV_RND() * list.length)] : ev.enemy;
     const a = rand(0, TAU), cx = p.x + Math.cos(a) * diag * 0.55, cy = p.y + Math.sin(a) * diag * 0.55;
     for (let i = 0; i < ev.n && roomForFoe(); i++) spawnEnemy(type, cx + rand(-2, 2), cy + rand(-2, 2));
     toast(E_BY_ID[type] ? E_BY_ID[type].nameKo + ' 무리' : '무리', '한 떼가 몰려온다');
@@ -4645,8 +4650,9 @@ function drawCandidates(m, rnd = Math.random) {
   return out;
 }
 // 일일 도전(7장 '모드', Core Meta/DailyChallenge): 봉인석 셋이면 열린다(mode:daily). 그날(UTC 날짜) 시드 하나로 아홉 문파 전부에서 몸 하나.
-//   시드 셈(날짜 숫자 → lowbias32)은 Core DailyChallenge.Seed 와 같다. 몸을 뽑는 난수는 웹 제 것(.NET Random 이 아니라)이라 Unity 판과 몸은 다를 수 있다 — 같은 날 웹끼리는 같다.
-//   사건·적 뽑기는 아직 Math.random 이라 고정이 아니다(프로토타입). 연무장·환혼 강화는 받고 혼엔 아무것도 안 남긴다(Core Sandbox): 시작 때 혼을 떠 두고 끝나면 되돌린다.
+//   시드 셈(날짜 숫자 → lowbias32)은 Core DailyChallenge.Seed 와 같다. 몸도 Core DailyChallenge.Body 와 같다(DD-02): .NET System.Random(seed) 수열을 그대로 옮긴 netRandom 으로
+//   Rebirth.Roll(아홉 문파, 1명)과 같은 차례(문파 Next(0, 9) → 성질 수 NextDouble → 성질마다 Next(남은 수) → 성별 NextDouble)로 뽑는다.
+//   사건 일정(금두꺼비·은빛 등롱 시각, 기연 사건, 지역 무리)은 LifeRandom 과 같은 시드의 EV_RND 로 그날 웹끼리 같다(DD-03). 적 뽑기는 아직 Math.random(프로토타입). 연무장·환혼 강화는 받고 혼엔 아무것도 안 남긴다(Core Sandbox): 시작 때 혼을 떠 두고 끝나면 되돌린다.
 //   남는 것은 그날 첫 판의 버틴 시간(리더보드 대신 이 브라우저 store 'daily')뿐 — 몇 번이든 해 볼 수 있다
 function dailySeed(d = new Date()) {
   let x = (d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()) >>> 0;
@@ -4654,18 +4660,46 @@ function dailySeed(d = new Date()) {
   return (x & 0x7fffffff) >>> 0;
 }
 const dailyKey = (d = new Date()) => 'daily_' + d.toISOString().slice(0, 10).replace(/-/g, '');   // Core DailyChallenge.LeaderboardName
-const seededRnd = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+// .NET System.Random(int seed) — Knuth 빼기 생성기(.NET Framework·Mono·.NET 5+ 의 시드 준 Random 이 모두 이 수열). Core 가 시드로 뽑는 것을 웹이 똑같이 따라가려고
+function netRandom(seed) {
+  const MBIG = 2147483647, a = new Array(56).fill(0);
+  let mj = 161803398 - (seed === -2147483648 ? MBIG : Math.abs(seed | 0)), mk = 1, ii;
+  a[55] = mj;
+  for (let i = 1; i < 55; i++) { ii = (21 * i) % 55; a[ii] = mk; mk = mj - mk; if (mk < 0) mk += MBIG; mj = a[ii]; }
+  for (let k = 1; k < 5; k++) for (let i = 1; i < 56; i++) { a[i] -= a[1 + (i + 30) % 55]; if (a[i] < 0) a[i] += MBIG; }
+  let inext = 0, inextp = 21;
+  const sample = () => {
+    if (++inext >= 56) inext = 1; if (++inextp >= 56) inextp = 1;
+    let r = a[inext] - a[inextp]; if (r === MBIG) r--; if (r < 0) r += MBIG; a[inext] = r;
+    return r * (1 / MBIG);
+  };
+  return { nextDouble: sample, next: (lo, hi) => Math.floor(sample() * (hi - lo)) + lo };
+}
+// Core Rebirth.RollTraits 와 같은 차례: 성질 수(countWeights 비율, NextDouble × 합) → 이미 붙은 것·안 맞는 쌍을 뺀 남은 성질에서 Next(남은 수) → 데이터 차례로
+function rollTraitsNet(R) {
+  const w = BT.countWeights.map(x => Math.max(0, x)), total = w.reduce((p, q) => p + q, 0);
+  let n = 0;
+  if (total > 0) { let r = R.nextDouble() * total; n = w.length - 1; for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) { n = i; break; } } }
+  const chosen = [];
+  for (let k = 0; k < n; k++) {
+    const opts = BT.list.map(t => t.id).filter(id => chosen.every(c => c !== id && !clashT(c, id)));
+    if (!opts.length) break;
+    chosen.push(opts[R.next(0, opts.length)]);
+  }
+  return BT.list.map(t => t.id).filter(id => chosen.includes(id));
+}
 function dailyBody(seed = dailySeed()) {
-  const rnd = seededRnd(seed), all = (DATA.sects || []).map(s => s.id).filter(id => SECT_BY[id]);
-  const c = { sect: all[Math.floor(rnd() * all.length)], traits: rollTraits(rnd) };
-  c.female = rollFemale(c.sect, rnd); cardTexts([c], rnd);
+  const R = netRandom(seed), all = (DATA.sects || []).map(s => s.id).filter(id => SECT_BY[id]);
+  const c = { sect: all[R.next(0, all.length)], traits: rollTraitsNet(R) };   // Rebirth.Roll(count 1): Swap(picks, 0, Next(0, 9)) → WithTraits
+  c.female = !(RB.maleOnlySects || []).includes(c.sect) && R.nextDouble() < (RB.femaleRatio || 0);   // Rebirth.RollFemale
+  cardTexts([c], R.nextDouble);   // 카드 글은 몸을 다 뽑은 뒤라 Core 와 어긋나지 않는다
   return c;
 }
 const dailyOpen = m => (m.unlocks || []).includes('mode:daily');
 let DAILY = null, RUSH = null;   // RUSH: 다음 생이 보스 연전이면 { snap }   // 다음 생이 일일 도전이면 { key, snap(시작 때 혼 JSON) }. newRun 이 G.daily 로 옮긴다
 function startDaily() {
   const m = innMeta(); if (overlay !== 'inn' || !dailyOpen(m)) return;
-  DAILY = { key: dailyKey(), snap: JSON.stringify(soulLoad()) };
+  DAILY = { key: dailyKey(), seed: dailySeed(), snap: JSON.stringify(soulLoad()) };
   NEXT_LIFE = Object.assign({}, dailyBody(), { elixirs: [] }); innElix = []; $('inn').hidden = true; overlay = null;
   startRun('full');
   toast('일일 도전', `오늘의 몸 · 혼에는 아무것도 남지 않는다. 버틴 시간만 오늘 기록으로`);

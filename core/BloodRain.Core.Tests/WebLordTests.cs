@@ -82,7 +82,7 @@ namespace BloodRain.Core.Tests
         {
             var html = Proto;
             // 은빛 등롱은 chapters.json life 이벤트, 혈월 회차에만(Core ManuscriptsHere), 의서 확률은 cycle.bloodmoon.manuscriptChance
-            Assert.Contains("e.kind === 'silver_lantern' ? (Math.random() < (e.chance ?? 1)", html);
+            Assert.Contains("e.kind === 'silver_lantern' ? (EV_RND() < (e.chance ?? 1)", html);
             Assert.Contains("if (G.moon) { const a = rand(0, TAU)", html);
             Assert.Contains("Math.random() < BM.manuscriptChance", html);
             Assert.Contains("m.manuscripts = (m.manuscripts || 0) + (st.manus || 0);", html);
