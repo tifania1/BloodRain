@@ -73,6 +73,7 @@ namespace BloodRain.Presentation.Fx
         /// <summary>무공이 이 원 안을 쳤다(WeaponRunner). 안에 든 등롱은 깨진다. 웹 hitLanterns 처럼 등롱 반경 0.4m 를 더한다.</summary>
         public static void Strike(Vector2 center, float radius)
         {
+            GimmickLayer.Strike(center, radius); // RG-03U 같은 자리의 대나무 포기도 벤다
             var l = Instance;
             if (l == null || l._lanterns.Count == 0) return;
             float sc = Scale;
@@ -200,6 +201,9 @@ namespace BloodRain.Presentation.Fx
             Pop(at, Loc.F("ui.drop.manuscript_count", total));
             Debug.Log($"[LanternLayer] 의서 한 권 · 모두 {total}권");
         }
+
+        /// <summary>RG-03U 대나무 덤불이 떨군 음식(만두 하나). 줍기·회복은 등롱 음식과 같다.</summary>
+        public static void DropFood(Vector2 at) { if (Instance != null) Instance.AddDrop(at, Drops.Bun); }
 
         void AddDrop(Vector2 at, string kind)
         {

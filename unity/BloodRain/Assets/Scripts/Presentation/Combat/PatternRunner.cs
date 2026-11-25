@@ -77,7 +77,13 @@ namespace BloodRain.Presentation.Combat
             // 그림 다시 그리기용(2026-11-21): 반경·길이·폭은 세계 길이, Offs 는 Center 기준 원 자리
             public float R, Len, Wid;
             public Vector2[] Offs;
+            // half_field(당소혜 독안개, RG-03U): 덮는 쪽(+1 오른쪽·-1 왼쪽), 판정 뒤 깔린 동안 남은 초·다음 피해까지
+            public int Side;
+            public float FogLeft = -1f, HitLeft;
         }
+        readonly Dictionary<BossPatternDef, HalfFieldFog> _halfFogs = new Dictionary<BossPatternDef, HalfFieldFog>();
+        /// <summary>시험용: 반쪽 독안개가 플레이어를 맞힌 수.</summary>
+        public int HalfFogHits { get; private set; }
 
         void Awake() => Instance = this;
         void OnDestroy() { if (Instance == this) Instance = null; Clear(); ClearBells(); }
@@ -333,6 +339,16 @@ namespace BloodRain.Presentation.Combat
                         t.Offs = new[] { Vector2.zero }; t.R = p.Radius * _factor;
                         ScheduleJumps(p, e.At, t);
                         break;
+                    case "half_field":
+                    {
+                        // RG-03U: 보스를 지나는 세로줄로 둘로 나눠 한쪽을 덮는다(Core HalfFieldFog). 첫 시전은 플레이어 쪽, 그다음 번갈아
+                        if (!_halfFogs.TryGetValue(p, out var hf)) _halfFogs[p] = hf = new HalfFieldFog(p);
+                        t.Center = boss;
+                        t.Side = hf.Choose((player.x - boss.x) / _factor);
+                        t.R = 60f * _factor; // 화면을 넘게(삼류 화면 대각선 ~29m)
+                        t.Vis = Shape(p.Id, TeleWash, 2);
+                        break;
+                    }
                     default:
                         Debug.LogWarning($"[PatternRunner] 아직 안 그리는 모양 {p.Shape} ({p.Id})");
                         break;
@@ -349,6 +365,12 @@ namespace BloodRain.Presentation.Combat
             var tele = _teles.FirstOrDefault(x => x.P == p && x.Cast == e.Cast && x.FadeLeft < 0f);
             if (p.Continuous) { if (tele != null) Remove(tele); return; } // 2막 빛줄기는 UpdateBeams 가 맞힌다
             if (p.Shape == "jump_slam") return; // ScheduleJumps 가 뛸 때마다
+            if (p.Shape == "half_field")
+            {
+                // 판정부터 leaveSeconds 동안 깔려 hitIntervalSeconds 마다 맞힌다(UpdateTeles)
+                if (tele != null) { tele.FogLeft = Mathf.Max(0.1f, p.LeaveSeconds); tele.HitLeft = 0f; DrawTele(tele, 1f, 0f); }
+                return;
+            }
             float pr = PlayerRadius;
             bool hit = false;
             switch (p.Shape)
@@ -480,6 +502,23 @@ namespace BloodRain.Presentation.Combat
             for (int i = _teles.Count - 1; i >= 0; i--)
             {
                 var t = _teles[i];
+                if (t.FogLeft >= 0f)
+                {
+                    t.FogLeft -= Time.deltaTime;
+                    if (t.FogLeft < 0f) { t.FadeLeft = TeleFlashSeconds; continue; }
+                    t.HitLeft -= Time.deltaTime;
+                    if (t.HitLeft <= 0f && HalfFieldFog.Covers(t.Side, (player.x - t.Center.x) / _factor, PlayerRadius))
+                    {
+                        t.HitLeft = Mathf.Max(0.1f, t.P.HitIntervalSeconds);
+                        if (runner.vitals != null && runner.vitals.Hit(Scaled(t.P.BaseDamage)))
+                        {
+                            HalfFogHits++;
+                            PlayerHits[t.P.Id] = PlayerHits.TryGetValue(t.P.Id, out var hh) ? hh + 1 : 1;
+                        }
+                    }
+                    DrawTele(t, 1f, 0f);
+                    continue;
+                }
                 if (t.FadeLeft >= 0f)
                 {
                     t.FadeLeft -= Time.deltaTime;
@@ -845,6 +884,20 @@ namespace BloodRain.Presentation.Combat
                     if (aFill > 0f) BufBeam(b, Vector2.zero, t.Len * k, t.Wid, t.Facing, A(wash, aFill), A(wash, aFill * 1.5f));
                     BufBeamRim(b, Vector2.zero, t.Len, t.Wid, t.Facing, rw, A(rim, aRim));
                     break;
+                case "half_field":
+                {
+                    // 덮는 쪽 반판: 예고 동안 독 담채가 옅게 차오르고(경계에 핏빛 테), 깔리면 짙은 독 녹색 + 경계 먹 띠
+                    float deg = t.Side >= 0 ? 0f : 180f;
+                    var fog = new Color(0.30f, 0.52f, 0.20f, 1f);
+                    bool on = t.FogLeft >= 0f;
+                    float pulse = on ? 0.5f + 0.5f * Mathf.Sin(Time.time * 5f) : 0f;
+                    float aFog = on ? 0.34f + 0.06f * pulse : fl ? 0.3f * flash : 0.08f + 0.2f * k;
+                    BufBeam(b, Vector2.zero, t.R, t.R * 2f, deg, A(fog, aFog), A(fog, aFog));
+                    if (!on && aFill > 0f) BufBeam(b, Vector2.zero, t.R * k, t.R * 2f, deg, A(wash, aFill * 0.6f), A(wash, aFill * 0.6f));
+                    Color edge = on ? new Color(0.10f, 0.20f, 0.08f, 1f) : rim;
+                    BufLine(b, new Vector2(0f, -t.R), new Vector2(0f, t.R), rw * (on ? 2.2f : 1.6f), A(edge, on ? 0.8f : aRim));
+                    break;
+                }
                 default: // summon_ring·summon: 적이 솟을 고리 띠. 차오름 대신 띠가 짙어지고 안팎 테두리
                     BufRing(b, Vector2.zero, t.R, t.Wid, A(wash, fl ? 0.6f * flash : 0.18f + 0.3f * k));
                     BufRing(b, Vector2.zero, t.R - t.Wid * 0.5f, rw * 0.7f, A(rim, aRim * 0.8f));

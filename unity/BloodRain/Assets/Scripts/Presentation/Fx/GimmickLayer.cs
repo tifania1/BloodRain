@@ -23,12 +23,14 @@ namespace BloodRain.Presentation.Fx
         static readonly string[] PagodaArt = { "prop_pagoda_seven", "prop_pagoda_three", "prop_pagoda_tall", "prop_pagoda_mossy", "prop_pagoda_broken" };
 
         sealed class Bell { public BellGimmick G; public Vector2 At; public GameObject Go; public float Flash; }
-        sealed class Patch { public Vector2 At; public readonly List<(Vector2 at, float r)> Stones = new List<(Vector2, float)>(); public readonly List<GameObject> Gos = new List<GameObject>(); }
+        // 돌탑·대나무 포기 하나. 대나무는 베이면 Up 이 거짓이 되고(막지 않음) RegrowAt(한 생 초) 에 다시 선다(RG-03U)
+        sealed class Stalk { public Vector2 At; public float R; public bool Bamboo; public bool Up = true; public int Hits; public float RegrowAt; public GameObject Go; public Vector3 Scale; public Vector3 Pos; }
+        sealed class Patch { public Vector2 At; public bool Bamboo; public readonly List<Stalk> Stones = new List<Stalk>(); public readonly List<GameObject> Gos = new List<GameObject>(); }
 
         readonly Dictionary<long, Bell> _bells = new Dictionary<long, Bell>();
         readonly Dictionary<long, Patch> _patches = new Dictionary<long, Patch>();
         // 돌탑 공간 칸(막힘 판정이 둘레 칸만 보게)
-        readonly Dictionary<long, List<(Vector2 at, float r)>> _grid = new Dictionary<long, List<(Vector2, float)>>();
+        readonly Dictionary<long, List<Stalk>> _grid = new Dictionary<long, List<Stalk>>();
         float _cell = 4f;
         int _realm = -1;
         string _region = "";
@@ -59,6 +61,8 @@ namespace BloodRain.Presentation.Fx
                 Lay(life, p, view * 1.2f);
             }
             TickBells(Time.deltaTime, p);
+            TickBamboo(life.Minutes * 60f);
+            TickFog(life, p, Time.deltaTime);
         }
 
         void Lay(BloodRain.Core.Run.Life life, Vector2 p, float radius)
@@ -76,7 +80,18 @@ namespace BloodRain.Presentation.Fx
             foreach (var reg in regions.All)
             {
                 if (reg.Gimmicks == null) continue;
-                bool bell = reg.Gimmicks.Contains("bell"), pagoda = reg.Gimmicks.Contains("pagoda_forest");
+                bool bell = reg.Gimmicks.Contains("bell"), pagoda = reg.Gimmicks.Contains("pagoda_forest"), bamboo = reg.Gimmicks.Contains("bamboo_thicket");
+                if (bamboo)
+                {
+                    // RG-03U 당가타 대나무 덤불: 탑림과 같은 60m 반 칸 격자 무더기(gimmick_start_values 2절)
+                    float br = data.Gimmicks.BambooThicket.PatchRadius * k;
+                    foreach (var c in GimmickLayout.Near(regions, reg, lay.BambooSpacing * k, true, around, radius + br, life.SealStones))
+                    {
+                        long key = Key(c) ^ 0x5A5A5A5AL;
+                        wantPatches.Add(key);
+                        if (!_patches.ContainsKey(key)) _patches[key] = MakeBamboo(c, k, key);
+                    }
+                }
                 if (!bell && !pagoda) continue;
                 var patchCenters = new List<System.Numerics.Vector2>();
                 if (pagoda)
@@ -150,7 +165,8 @@ namespace BloodRain.Presentation.Fx
             foreach (var s in PagodaForest.Layout(def, rng, k))
             {
                 var at = patch.At + new Vector2(s.X, -s.Y);
-                patch.Stones.Add((at, s.Radius));
+                var st = new Stalk { At = at, R = s.Radius };
+                patch.Stones.Add(st);
                 float sz = 0.86f + 0.3f * (float)look.NextDouble();
                 var go = PropArt.Make(transform, "돌탑", PagodaArt[(v++ + (int)(key & 7)) % PagodaArt.Length], at + new Vector2(0f, s.Radius * 0.9f * sz), s.Radius * 3.2f * sz, 3);
                 if (go != null)
@@ -161,11 +177,180 @@ namespace BloodRain.Presentation.Fx
                     sr.color = new Color(g, g * 0.99f, g * 0.97f, 1f);
                 }
                 if (go == null) go = Disc("돌탑", at, s.Radius, new Color(0.30f, 0.29f, 0.27f, 0.95f), 3);
+                st.Go = go;
                 patch.Gos.Add(go);
             }
             return patch;
         }
 
+        // ── RG-03U 당가타 대나무 덤불(2026-11-26) ─────────────────────────
+        //   탑림과 같은 무더기·같은 막힘(Resolve·PushAgents). 무공이 친 원(LanternLayer.Strike 가 같이 부름)에 든 선 포기는
+        //   hitsToBreak 번에 베이고 dropChance 로 만두 하나, regrowSeconds 뒤 다시 선다. 그림은 당가타 낱장 bamboo_clump·bamboo_brush.
+        static readonly string[] BambooArt = { "prop_bamboo_clump", "prop_bamboo_brush", "prop_bamboo_clump" };
+        readonly System.Random _bambooRng = new System.Random(4127);
+        public int BambooCut { get; private set; }
+
+        Patch MakeBamboo(System.Numerics.Vector2 c, float k, long key)
+        {
+            var def = DataBoot.Data.Gimmicks.BambooThicket;
+            var patch = new Patch { At = WorldCoords.ToUnity(c), Bamboo = true };
+            var rng = new System.Random(unchecked((int)(key ^ (key >> 32))));
+            var look = new System.Random(unchecked((int)(key ^ (key >> 32)) * 31 + 11));
+            int v = 0;
+            foreach (var s in BambooThicketGimmick.Layout(def, rng, k))
+            {
+                var at = patch.At + new Vector2(s.X, -s.Y);
+                var st = new Stalk { At = at, R = s.Radius, Bamboo = true };
+                patch.Stones.Add(st);
+                float sz = 0.85f + 0.35f * (float)look.NextDouble();
+                var go = PropArt.Make(transform, "대나무", BambooArt[(v++ + (int)(key & 3)) % BambooArt.Length], at + new Vector2(0f, s.Radius * 1.4f * sz), s.Radius * 4.2f * sz, 3);
+                if (go != null)
+                {
+                    var sr = go.GetComponent<SpriteRenderer>();
+                    sr.flipX = look.NextDouble() < 0.5;
+                    // 발밑 y 로 앞뒤(몸 정렬 20 근처). 무더기 안 포기끼리도 아래 것이 앞
+                    sr.sortingOrder = 3;
+                }
+                if (go == null) go = Disc("대나무", at, s.Radius, new Color(0.31f, 0.48f, 0.27f, 0.95f), 3);
+                st.Go = go; st.Scale = go.transform.localScale; st.Pos = go.transform.position;
+                patch.Gos.Add(go);
+            }
+            return patch;
+        }
+
+        /// <summary>무공이 이 원 안을 쳤다(LanternLayer.Strike 가 같이 부른다). 선 대나무 포기를 벤다.</summary>
+        public static void Strike(Vector2 center, float radius)
+        {
+            var me = _instance;
+            if (me == null || me._grid.Count == 0 || me.runner == null || me.runner.Life == null) return;
+            var def = DataBoot.Data.Gimmicks.BambooThicket;
+            float now = me.runner.Life.Minutes * 60f;
+            int c0 = Mathf.FloorToInt((center.x - radius) / me._cell) - 1, c1 = Mathf.FloorToInt((center.x + radius) / me._cell) + 1;
+            int r0 = Mathf.FloorToInt((center.y - radius) / me._cell) - 1, r1 = Mathf.FloorToInt((center.y + radius) / me._cell) + 1;
+            if ((c1 - c0) * (r1 - r0) > 400) return; // 화면을 덮는 큰 원은 셈이 커서 건너뛴다(지역 기믹은 가까운 무공 몫)
+            for (int y = r0; y <= r1; y++)
+            for (int x = c0; x <= c1; x++)
+            {
+                if (!me._grid.TryGetValue(CellKey(x, y), out var list)) continue;
+                foreach (var s in list)
+                {
+                    if (!s.Bamboo || !s.Up || (s.At - center).magnitude > s.R + radius) continue;
+                    s.Hits++;
+                    if (!BambooThicketGimmick.Breaks(def, s.Hits)) continue;
+                    me.Cut(s, now, def);
+                }
+            }
+        }
+
+        void Cut(Stalk s, float now, BambooThicketGimmickDef def)
+        {
+            s.Up = false; s.Hits = 0;
+            s.RegrowAt = BambooThicketGimmick.RegrowAt(def, now);
+            BambooCut++;
+            if (s.Go != null)
+            {
+                // 밑동만 남는다: 아래 끝을 붙잡고 키를 1/4 로, 마른 빛
+                var sr = s.Go.GetComponent<SpriteRenderer>();
+                float h = sr != null && sr.sprite != null ? sr.sprite.bounds.size.y * s.Scale.y : 0f;
+                s.Go.transform.localScale = new Vector3(s.Scale.x, s.Scale.y * 0.22f, s.Scale.z);
+                s.Go.transform.position = s.Pos - new Vector3(0f, h * 0.39f, 0f);
+                if (sr != null) sr.color = new Color(0.62f, 0.64f, 0.5f, 1f);
+            }
+            var fx = SectFx.Instance;
+            if (fx != null && fx.Ready) fx.Drops(s.At + new Vector2(0f, s.R), Mathf.PI * 0.5f, 5, 5f, FxRamp.Poison, false, .1f, 1.3f);
+            if (BambooThicketGimmick.DropsFood(def, _bambooRng)) LanternLayer.DropFood(s.At);
+        }
+
+        void TickBamboo(float now)
+        {
+            foreach (var patch in _patches.Values)
+            {
+                if (!patch.Bamboo) continue;
+                foreach (var s in patch.Stones)
+                {
+                    if (s.Up || now < s.RegrowAt) continue;
+                    s.Up = true;
+                    if (s.Go != null)
+                    {
+                        s.Go.transform.localScale = s.Scale; s.Go.transform.position = s.Pos;
+                        var sr = s.Go.GetComponent<SpriteRenderer>();
+                        if (sr != null) sr.color = Color.white;
+                    }
+                }
+            }
+        }
+
+        // ── RG-03U 당가타 독안개(2026-11-26) ─────────────────────────────
+        //   한 생 시계로 퍼짐이 시작될 때 당가타에 서 있으면 내 둘레 fogOffset(6m × 축척) 안 한 곳에 샘(웹 WP-13b 와 같음).
+        //   반경은 Core PoisonFogGimmick.RadiusAt, 안에선 플레이어·적 모두 HealthLoss(당가 몸은 독 면역, 보스 면역). 그림은 독 담채 + 먹 테.
+        PoisonFogGimmick _fog;
+        Vector2 _fogAt;
+        float _fogSeed;
+        readonly System.Random _fogRng = new System.Random(911);
+        public bool FogActive => _fog != null;
+        public float FogRadius { get; private set; }
+        public Vector2 FogAt => _fogAt;
+
+        void TickFog(BloodRain.Core.Run.Life life, Vector2 p, float dt)
+        {
+            var def = DataBoot.Data.Gimmicks.PoisonFog;
+            float now = life.Minutes * 60f;
+            var phase = PoisonFogGimmick.PhaseAt(def, now);
+            if (phase == FogPhase.Clear) { _fog = null; FogRadius = 0f; return; }
+            if (_fog == null)
+            {
+                // 퍼짐이 막 시작됐고 지금 당가타(독안개가 있는 땅)에 서 있을 때만
+                if (phase != FogPhase.Spreading || !HereHas(life, "poison_fog")) return;
+                float k = life.Scale.Factor(life.Realm);
+                float off = DataBoot.Data.Gimmicks.Layout.FogOffset * k;
+                float a = (float)(_fogRng.NextDouble() * Mathf.PI * 2f), d = off * Mathf.Sqrt((float)_fogRng.NextDouble());
+                _fogAt = p + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d;
+                _fog = new PoisonFogGimmick(def, k);
+                _fogSeed = (float)_fogRng.NextDouble() * 7f;
+            }
+            FogRadius = _fog.RadiusAt(now);
+            if (FogRadius <= 0f) return;
+            var vitals = runner.vitals;
+            if (vitals != null && (p - _fogAt).magnitude <= FogRadius)
+                vitals.Drain(_fog.HealthLoss(GimmickTargetKind.Player, vitals.MaxHealth, dt, life.Body.SectTrait.PoisonImmune));
+            var en = runner.enemies;
+            var sim = en != null ? en.Sim : null;
+            if (sim == null) return;
+            float r2 = FogRadius * FogRadius;
+            for (int i = sim.Count - 1; i >= 0; i--)
+            {
+                var ag = sim.Get(i);
+                if (ag.Health <= 0f) continue;
+                var dv = new Vector2(ag.Pos.x, ag.Pos.y) - _fogAt;
+                if (dv.sqrMagnitude > r2) continue;
+                var ed = en.DefOf(ag.Kind);
+                var kind = ed != null && ed.Family == "boss" ? GimmickTargetKind.Boss : ed != null && ed.Family == "elite" ? GimmickTargetKind.Elite : GimmickTargetKind.Normal;
+                float loss = _fog.HealthLoss(kind, ag.MaxHealth, dt);
+                if (loss <= 0f) continue;
+                ag.Health -= loss;
+                if (ag.Health <= 0f) { en.Kill(i); continue; }
+                sim.Set(i, ag);
+            }
+        }
+
+        static bool HereHas(BloodRain.Core.Run.Life life, string gimmick)
+        {
+            foreach (var r in life.Regions.All)
+                if (r.Id == life.RegionId) return r.Gimmicks != null && r.Gimmicks.Contains(gimmick);
+            return false;
+        }
+
+        void LateUpdate()
+        {
+            if (_fog == null || FogRadius <= 0f) return;
+            var fx = SectFx.Instance;
+            if (fx == null || !fx.Ready) return;
+            // 독 담채 안개 두 겹(천천히 돈다) + 먹·독 테 — 옅은 종이 바닥에서도 경계가 읽히게
+            float t = Time.time * 0.12f, D = FogRadius * 2f;
+            fx.Quad(3, _fogAt, D * 1.08f, D * 0.96f, t + _fogSeed, new Vector4(5f, .35f, .85f, 0f), FxRamp.Poison, .30f, 1f, .2f, _fogSeed);
+            fx.Quad(3, _fogAt, D * 0.86f, D * 0.92f, -t * 1.3f + _fogSeed * 2f, new Vector4(5f, .3f, .8f, 0f), FxRamp.MistG, .22f, 1f, .25f, _fogSeed + 3f);
+            fx.Quad(2, _fogAt, D, D, 0f, new Vector4(.97f, .03f, .45f, 0f), FxRamp.PoisonInk, .45f, 1f, .15f, _fogSeed);
+        }
         static Sprite _disc;
         GameObject Disc(string name, Vector2 at, float r, Color c, int order)
         {
@@ -198,8 +383,8 @@ namespace BloodRain.Presentation.Fx
             foreach (var patch in _patches.Values)
                 foreach (var s in patch.Stones)
                 {
-                    long key = CellKey(s.at);
-                    if (!_grid.TryGetValue(key, out var list)) _grid[key] = list = new List<(Vector2, float)>();
+                    long key = CellKey(s.At);
+                    if (!_grid.TryGetValue(key, out var list)) _grid[key] = list = new List<Stalk>();
                     list.Add(s);
                     n++;
                 }
@@ -222,10 +407,11 @@ namespace BloodRain.Presentation.Fx
                 if (!me._grid.TryGetValue(CellKey(x, y), out var list)) continue;
                 foreach (var s in list)
                 {
-                    var d = pos - s.at;
-                    float min = s.r + r, m = d.magnitude;
+                    if (!s.Up) continue; // 베인 대나무는 지나간다
+                    var d = pos - s.At;
+                    float min = s.R + r, m = d.magnitude;
                     if (m >= min) continue;
-                    pos = m < 1e-4f ? s.at + new Vector2(min, 0f) : s.at + d / m * min;
+                    pos = m < 1e-4f ? s.At + new Vector2(min, 0f) : s.At + d / m * min;
                 }
             }
             return pos;
@@ -332,6 +518,7 @@ namespace BloodRain.Presentation.Fx
             foreach (var b in _bells.Values) if (b.Go != null) Destroy(b.Go);
             foreach (var p in _patches.Values) foreach (var g in p.Gos) if (g != null) Destroy(g);
             _bells.Clear(); _patches.Clear(); _grid.Clear(); StoneCount = 0;
+            _fog = null;
         }
     }
 }
