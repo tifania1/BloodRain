@@ -1022,6 +1022,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 쓸 것: Core `Combat/FinalFight.cs`·`BossPatterns`(R4-03 모양 함수), bosspatterns.json `final`
   - 메뉴: `BloodRain/Test/종장 부르기(플레이 중)/<단계>`
   - 끝: 단계마다 모양이 천하 시안과 같고, 마지막 단계를 넘기면 진엔딩 조건 판정
+  - 소품(2026-11-25 클라우드): 봉마곡 낱장 `prop_split_rock_gate`·`blood_pool`·`dead_tree`·`broken_stele`·`dipper_stones` 가 Art/Props/Parts 에 — `소품 그림 목록 채우기` 뒤 봉마곡 지역 벌로(RG-01U ② 틀)
   - 바닥(2026-11-25 클라우드): 봉마곡 원화 `tile_bongmagok_ground` 를 Resources 로 옮기고 `Biomes.ArtOf` 에 세기 0.4 로 넣음 — 봉마곡에 들어서서 바닥이 너무 짙거나 옅으면 그 숫자만 고침
   - 찍기: `docs/unity_shots/R4-03U/` 의 `<단계>.png`
 

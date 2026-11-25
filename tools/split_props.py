@@ -18,7 +18,7 @@ import sys
 import uuid
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 ROOT = Path(__file__).resolve().parents[1]
 PROPS = ROOT / "unity" / "BloodRain" / "Assets" / "Art" / "Props"
@@ -53,11 +53,13 @@ SHEETS: dict[str, list[str]] = {
     "props_changjiang_reeds": ["reed_bed", "reed_clump", "sunken_boat", "willow_water", "river_stones"],
     "props_wudang_temple": ["taoist_hall", "round_pavilion", "stone_stairs", "incense_cauldron", "blank_stele"],
     "props_sipmandaesan_altars": ["blood_altar", "blood_altar_broken", "black_watchtower", "rock_spire", "spear_rack"],
-    # 덩이 잇는 거리·작은 덩이 버림을 시트마다 맞춘 다섯(같은 날, 눈으로 차례 확인). 봉마곡은 북두 일곱 돌이 흩어져 아직
+    # 덩이 잇는 거리·작은 덩이 버림을 시트마다 맞춘 다섯(같은 날, 눈으로 차례 확인). 
     "props_namgung_manor": ["manor_gate", "white_wall", "stone_lions", "sword_pavilion", "lotus_pavilion"],
     "props_changjiang_pier": ["river_pier", "covered_boat", "cargo_raft", "river_watchtower", "rope_oars"],
     "props_wudang_cliffs": ["misty_crag", "pine_ledge", "sitting_rock", "low_cloud", "mossy_boulders"],
     "props_huashan_cliff": ["plank_walkway", "plum_tree", "plum_petal_heap", "granite_boulder", "loose_rocks"],
+    # 봉마곡: 읽는 차례가 고목이 비석보다 앞(프롬프트와 다름, 눈으로 봄). 북두 돌 일곱은 SHEET_MERGE_TAIL 로 한 장
+    "props_bongmagok_valley": ["split_rock_gate", "blood_pool", "dead_tree", "broken_stele", "dipper_stones"],
     "props_kunlun_snow": ["campfire_ring", "snow_gate_pillar", "frosted_pines", "ice_sheet", "snow_crate"],
 }
 
@@ -65,6 +67,8 @@ SHEETS: dict[str, list[str]] = {
 SHEET_JOIN: dict[str, int] = {"props_cheongun_village": 2, "props_songshan_halls": 2, "props_encounters": 2,
                                "props_namgung_manor": 2, "props_changjiang_pier": 2}
 # 먹 튐·떨어진 사슬 끝 같은 작은 덩이가 따로 잡히는 시트는 이보다 작은 덩이(칸 너비 x 높이)를 버린다(2026-11-25 클라우드)
+# 읽는 차례 이 번째부터 끝까지를 한 소품으로 묶는 시트(봉마곡 북두 일곱 돌, 2026-11-25 클라우드)
+SHEET_MERGE_TAIL: dict[str, int] = {"props_bongmagok_valley": 4}
 SHEET_MIN_AREA: dict[str, int] = {"props_changjiang_pier": 40000, "props_wudang_cliffs": 40000, "props_huashan_cliff": 40000, "props_kunlun_snow": 40000}
 
 
@@ -145,6 +149,18 @@ def find_parts(img: Image.Image, join: int = JOIN, min_area: int = 0) -> list[tu
     return [(b, big.point(lambda v, k=ids[b]: 255 if v == k else 0)) for b in order]
 
 
+def merge_tail(parts, k: int):
+    """읽는 차례 k 번째부터 끝까지를 한 덩이로(흩어진 작은 것들이 한 소품일 때 — 북두 일곱 돌)."""
+    if len(parts) <= k + 1:
+        return parts
+    tail = parts[k:]
+    box = (min(b[0] for b, _ in tail), min(b[1] for b, _ in tail), max(b[2] for b, _ in tail), max(b[3] for b, _ in tail))
+    mask = tail[0][1]
+    for _, m in tail[1:]:
+        mask = ImageChops.lighter(mask, m)
+    return parts[:k] + [(box, mask)]
+
+
 def reading_order(boxes: list[tuple[int, int, int, int]], height: int) -> list[tuple[int, int, int, int]]:
     """가운데 높이가 시트 높이 0.15 안이면 같은 줄, 줄 안에서는 왼쪽부터."""
     rows: list[list[tuple[int, int, int, int]]] = []
@@ -203,6 +219,8 @@ def main() -> int:
             continue  # 아직 안 뽑은 시트
         img = Image.open(src).convert("RGBA")
         parts = find_parts(img, SHEET_JOIN.get(sheet, JOIN), SHEET_MIN_AREA.get(sheet, 0))
+        if sheet in SHEET_MERGE_TAIL:
+            parts = merge_tail(parts, SHEET_MERGE_TAIL[sheet])
         if len(parts) != len(names):
             problems.append(f"{sheet}: 덩이 {len(parts)}개, 이름 {len(names)}개")
             continue
