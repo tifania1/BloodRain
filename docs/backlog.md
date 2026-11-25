@@ -43,6 +43,8 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] RG-01c 2026-11-24 — 옮기고 ArtOf `wudangsan` 0.4. 화면 확인은 unity_tasks RG-05U 줄에. 원래: 무당산 바닥 원화: `Art/Tiles/tile_wudang_stone.png`(+meta)를 `Resources/Art/Tiles` 로 옮기고 `Biomes.ArtOf` 에 한 줄(세기 0.4 로 두고 Unity 에서 눈으로)
 - [x] RG-02 2026-11-24 — unity_tasks RG-01U~05U 에 할 것·쓸 것·메뉴·끝·찍기를 채움(개방 술독·남궁 시렁·당가 대숲과 독안개·장강 물과 배·무당 태극 바닥, 지역 소품 낱장). 원래: RG-01 표를 보고 unity_tasks '0-1. 다음 단계'의 RG-xxU 항목(지역 하나씩: 개방 총타 → 남궁세가 → 당가타 → 장강 수로 → 무당산. 화산부터는 M4 라 표만)에 '쓸 것'·'끝'을 구체로 채운다. 먼저: RG-01
 
+- [x] RG-04c 2026-11-26 — PC 가 RG-04U·05U 에서 막혔던 Core 자리 함수(2026-11-26 00:37 PC Unity 세션이 남김): `GimmickLayout` 에 굽이 띠 `InBand`·`InWater`·`InIce`·`BandCenterY`·`BandSlope`·`BandRows`, 굽이 배 `CurvedBoats`·`OnCurvedBoat`(웹 boatsW·boatUnder), 엇갈린 격자 `StaggeredNear`(웹 taijiPads). 테스트 `GimmickBandTests` 다섯. unity_tasks RG-04U·05U 에 쓰는 법
+
 로드맵에서 채움, 2026-11-25 03시(줄기 ② 와 M3 '당가타·장강·무당산' — 7장 지역 표·gimmicks.json 에 값이 다 있는데 웹 합친 판엔 없던 지역 기믹. 웹이 먼저 돌아가면 RG-03U~05U 가 볼 본보기가 된다):
 - [x] LG-01 2026-11-25 — 운해(무당산): Core `CloudSeaGimmick` 박자·흐름 그대로 12초마다 셋, 덮은 구름 안이면 보스 뺀 적이 들어간 자리 둘레를 맴돌고 원거리 적은 안 쏨(접촉·옮겨 쓰기·곤륜 설한기는 진짜 거리 `rd`). 흰 구름에 푸른 잿빛 테. autocheck life 에 '운해 n곳·숨음 n초'
 - [x] LG-02 2026-11-25 — 역류 파도(장강 수로): 120초마다 1.5초 화면이 붉은 뒤 폭 3m 물머리가 동 → 서로 걸음 3배로 화면을 건넘(Core `ReverseWaveGimmick`), 플레이어 최대 기혈 10%(경공 중 안 맞음)·잡몹 쓰러짐·정예와 보스 5%, 하나는 한 번. 흰 물보라 앞머리. autocheck '역류 n번·쓸림 n'
