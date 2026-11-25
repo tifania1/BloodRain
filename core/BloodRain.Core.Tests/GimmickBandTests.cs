@@ -77,5 +77,15 @@ namespace BloodRain.Core.Tests
             // 칸 번호는 자리마다 하나
             Assert.Equal(pads.Count, pads.Select(p => (p.I, p.J)).Distinct().Count());
         }
+
+        [Fact] public void 웹_합친_판과_같은_식을_쓴다()
+        {
+            // 웹이 식을 바꾸면 Core 도 같이 바꾸라는 표시(Unity RG-04U·05U 가 Core 를 쓰니 둘이 어긋나면 화면이 달라진다)
+            var proto = TestData.ReadRepoFile("web", "prototype", "template.html");
+            Assert.Contains("v = y - a.y + LD.waterWave * k * Math.sin((x - a.x) / (LD.waterWaveLen * k))", proto);
+            Assert.Contains("v = y - a.y + LD.iceWave * k * Math.sin((x - a.x) / (LD.iceWaveLen * k))", proto);
+            Assert.Contains("const x = r.x + (i + (j & 1) * 0.5) * sp, y = r.y + j * sp;", proto);
+            Assert.Contains("slope = -W / L * Math.cos((x - cx) / L)", proto);
+        }
     }
 }
