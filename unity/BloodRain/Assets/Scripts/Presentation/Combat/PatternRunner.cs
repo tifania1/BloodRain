@@ -865,6 +865,18 @@ namespace BloodRain.Presentation.Combat
                         BufDisc(b, o, t.R, A(wash, aIn), A(wash, aOut));
                         if (aFill > 0f) BufDisc(b, o, t.R * k, A(wash, aFill), A(wash, aFill * 1.5f));
                         BufRing(b, o, t.R, rw, A(rim, aRim));
+                        if (p.Id == "water_pillar" && !fl)
+                        {
+                            // RG-04U 마천패 물기둥: 예고 동안 원 안에서 물이 끓는다 — 옅은 물빛 거품 고리 다섯이 제각각 부풀었다 꺼짐
+                            var foam = new Color(0.82f, 0.93f, 0.97f, 1f);
+                            float seed = o.x * 3.1f + o.y * 1.7f;
+                            for (int q = 0; q < 5; q++)
+                            {
+                                float ph = Mathf.Repeat(Time.time * 1.6f + q * 0.37f + seed, 1f);
+                                float ang = (seed * 57f + q * 137.5f) * Mathf.Deg2Rad, d = t.R * (0.2f + 0.55f * Mathf.Repeat(seed + q * 0.29f, 1f));
+                                BufRing(b, o + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * d, t.R * (0.06f + 0.16f * ph), rw * 0.8f, A(foam, (0.35f + 0.5f * k) * (1f - ph)));
+                            }
+                        }
                     }
                     break;
                 case "cone":
