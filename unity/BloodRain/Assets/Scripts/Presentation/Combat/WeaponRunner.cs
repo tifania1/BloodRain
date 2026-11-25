@@ -218,7 +218,10 @@ namespace BloodRain.Presentation.Combat
                 s.Cooldown -= dt;
                 if (s.Cooldown > 0f) continue;
                 // 겨눌 적이 없으면 쿨다운을 쓰지 않고 다음 프레임에 다시 본다(뇌부)
-                if (!Fire(s)) { s.Cooldown = 0f; continue; }
+                SectFx.Mastered = MasteredStart(s);   // GU-06U ①: 대성으로 시작한 무공이면 이번에 만드는 이펙트 테두리가 금빛
+                bool fired;
+                try { fired = Fire(s); } finally { SectFx.Mastered = false; }
+                if (!fired) { s.Cooldown = 0f; continue; }
                 SkySword(s); // C-06c 남궁 3
                 // 쿨다운 0(독무처럼 상시)이면 tickSeconds 마다 한 번, 섬광지는 1 / shotsPerSecond(WeaponGrowth.Cooldown)
                 float cd = s.Def.Cooldown <= 0f && s.Def.ShotsPerSecond == null ? Tick(s)
@@ -2290,8 +2293,18 @@ namespace BloodRain.Presentation.Combat
                      : p.Weapon.Def.Behavior == "petal_scatter" ? SectFx.ProjLook.Petal
                      : p.Weapon.Def.Behavior == "front_arc" ? SectFx.ProjLook.QiWave
                      : p.Weapon.Def.Behavior == "melee_combo" ? SectFx.ProjLook.Fist : SectFx.ProjLook.Dagger;
+            SectFx.Mastered = MasteredStart(p.Weapon);
             _sfx.Proj(look, p.Pos, ang, p.Radius, p.Age, Mathf.Max(0f, p.Life), run, st, evo);
+            SectFx.Mastered = false;
             return true;
+        }
+
+        /// <summary>GU-06U ①: 이 생이 대성으로 시작했고(Core Life.StartMastered) 이 무공이 그 시작 무공인지.</summary>
+        static bool MasteredStart(Slot s)
+        {
+            if (s == null) return false;
+            var life = LifeRunner.Instance != null ? LifeRunner.Instance.Life : null;
+            return life != null && life.StartMastered && life.Body?.Character != null && life.Body.Character.StartWeapon == s.id;
         }
 
         bool ProjFx(Slot s, out AiFx f, out float realmMeters, out float radiusTimes)

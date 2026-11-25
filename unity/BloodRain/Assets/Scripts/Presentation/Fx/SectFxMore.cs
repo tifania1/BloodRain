@@ -11,7 +11,7 @@ namespace BloodRain.Presentation.Fx
     {
         public enum ProjLook { Palm, Finger, Dagger, Petal, QiWave, Fist }
 
-        struct LiveProj { public ProjLook Look; public Vector2 Pos; public float Ang, Size, Age, Left, Seed, Run; public int Stage; public bool Evo; }
+        struct LiveProj { public ProjLook Look; public Vector2 Pos; public float Ang, Size, Age, Left, Seed, Run; public int Stage; public bool Evo, Gold; }
         readonly List<LiveProj> _live = new List<LiveProj>();
 
         static float Ez(float t) => 1f - (1f - t) * (1f - t) * (1f - t);
@@ -22,7 +22,7 @@ namespace BloodRain.Presentation.Fx
             if (_live.Count >= 256) return;
             // 난 때는 탄마다 다르고 프레임이 가도 같다 → 씨앗으로 쓴다(잡음이 프레임마다 튀지 않게)
             float seed = Mathf.Repeat((_time - age) * 7.13f, 7f);
-            _live.Add(new LiveProj { Look = look, Pos = pos, Ang = ang, Size = size, Age = age, Left = left, Run = run, Seed = seed, Stage = stage, Evo = evo });
+            _live.Add(new LiveProj { Look = look, Pos = pos, Ang = ang, Size = size, Age = age, Left = left, Run = run, Seed = seed, Stage = stage, Evo = evo, Gold = Mastered });
         }
 
         // 멈칫 표시(음공 기절·뇌부 감전·천설부 등 EnemySim Stun, 시안 sonic 의 머리 위 먹 점 셋). EnemyField 가 프레임마다 넘긴다
@@ -321,6 +321,7 @@ namespace BloodRain.Presentation.Fx
             DrawEnemyShots();
             foreach (var p in _live)
             {
+                _gild = p.Gold;   // GU-06U 대성 무공의 탄은 테두리가 금빛
                 switch (p.Look)
                 {
                     case ProjLook.Palm: DrawPalm(p); break;

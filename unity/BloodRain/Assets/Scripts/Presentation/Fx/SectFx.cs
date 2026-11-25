@@ -67,7 +67,7 @@ namespace BloodRain.Presentation.Fx
         sealed class Fx
         {
             public float T, Life, Seed;
-            public bool Under;
+            public bool Under, Gold;
             public Action<Fx, float> Draw;
         }
         // Shape 가 0 이 아니면 그 모양 조각(11 꽃잎)이 Rot + T × Spin 으로 돌며 흩날린다
@@ -198,11 +198,13 @@ namespace BloodRain.Presentation.Fx
                 else Quad(s.Shape, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, s.P, s.C, s.A * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
             }
             DrawGroundLive();   // 적이 깐 웅덩이·독안개·표식(바닥 겹, 2026-11-21)
-            foreach (var f in _fx) if (f.Under) f.Draw(f, f.T / f.Life);
+            foreach (var f in _fx) if (f.Under) { _gild = f.Gold; f.Draw(f, f.T / f.Life); }
             _underEnd = _n;
             _z = ZOver;
-            foreach (var f in _fx) if (!f.Under) f.Draw(f, f.T / f.Life);
+            foreach (var f in _fx) if (!f.Under) { _gild = f.Gold; f.Draw(f, f.T / f.Life); }
+            _gild = false;
             DrawLive();
+            _gild = false;
             foreach (var d in _drops)
             {
                 float k = d.T / d.Life, sp = d.Vel.magnitude / Mathf.Max(Meter, 1e-6f);
@@ -237,6 +239,7 @@ namespace BloodRain.Presentation.Fx
         {
             _z -= 0.0002f;   // 부른 순서대로 위에 쌓인다
             _quadCount++;
+            if (_gild) c = Gild(c);
             var m = Matrix4x4.TRS(new Vector3(pos.x, pos.y, _z), Quaternion.Euler(0f, 0f, rot * Mathf.Rad2Deg), new Vector3(w, h, 1f));
             if (_batching)
             {
@@ -337,11 +340,31 @@ namespace BloodRain.Presentation.Fx
 
         void Add(float life, Action<Fx, float> draw, bool under = false)
         {
-            _fx.Add(new Fx { Life = life, Draw = draw, Under = under, Seed = Rnd(0f, 7f) });
+            _fx.Add(new Fx { Life = life, Draw = draw, Under = under, Seed = Rnd(0f, 7f), Gold = Mastered });
         }
 
-        /// <summary>t 초 뒤(이펙트 시계)에 부른다.</summary>
-        public void After(float t, Action f) => _later.Add(new Later { T = t, F = f });
+        /// <summary>t 초 뒤(이펙트 시계)에 부른다. 부를 때의 대성 표시(Mastered)를 그대로 가져간다.</summary>
+        public void After(float t, Action f)
+        {
+            if (Mastered) { var g = f; f = () => { bool was = Mastered; Mastered = true; try { g(); } finally { Mastered = was; } }; }
+            _later.Add(new Later { T = t, F = f });
+        }
+
+        // ── 대성 무공 금빛 테두리(GU-06U ①, 2026-11-25) ─────────────────
+        /// <summary>WeaponRunner 가 대성으로 시작한 무공(Core Life.StartMastered)을 쓰는 동안 참으로 둔다.
+        /// 그동안 만든 효과·튐·탄은 날 테두리(램프 Edge)가 황토 금빛 쪽으로 한 단 밝아진다(11-17 '주황 → 황토' 규칙 안).
+        /// 무공마다 서른 군데 그리기를 고치지 않으려고 Add·After·Drops·Proj 가 만들 때 이 표시를 붙잡아 둔다.</summary>
+        public static bool Mastered;
+        /// <summary>대성 테두리 세기(0 이면 끔). 밝은 램프는 이만큼, 먹 램프(그림자·받침)는 절반만 — 먹 받침이 옅은 금빛 테두리로 읽힌다.</summary>
+        public static float MasteredGild = .6f;
+        static readonly Color MasterEdge = new Color(.86f, .66f, .2f, 1f);
+        bool _gild;
+        static FxRamp Gild(FxRamp c)
+        {
+            float lum = .2126f * c.Mid.r + .7152f * c.Mid.g + .0722f * c.Mid.b;
+            float k = lum < .15f ? MasteredGild * .5f : MasteredGild;
+            return new FxRamp(Color.Lerp(c.Edge, MasterEdge, k), c.Mid, c.Core);
+        }
 
         static Vector2 Dir(float a) => new Vector2(Mathf.Cos(a), Mathf.Sin(a));
 
@@ -355,6 +378,7 @@ namespace BloodRain.Presentation.Fx
         {
             n = FxSettings.Scale(n);
             if (Busy) n = (n + 2) / 3;
+            if (Mastered) c = Gild(c);
             for (int i = 0; i < n && _drops.Count < MaxDrops; i++)
             {
                 float a = dir + Rnd(-spread, spread), s = Rnd(speed * .35f, speed) * Meter;

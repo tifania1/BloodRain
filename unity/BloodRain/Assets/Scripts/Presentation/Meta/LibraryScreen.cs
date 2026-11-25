@@ -81,7 +81,72 @@ namespace BloodRain.Presentation.Meta
                 var pos = new Vector2(i < half ? -440 : 440, -260 - (i % half) * 92);
                 _rows.Add(MakeRow(ids[i], pos));
             }
+            MakeMastery(-260 - half * 92 - 30);
             Refresh();
+        }
+
+        // ---- 무공 성취(GU-06U ②, 2026-11-25) ----
+        // 웹 합친 판 비급 도감 '무공 성취' 무리(renderDex 의 Mw)와 같은 꼴: 무공마다 한 칸,
+        // 입문은 도장 없이 '입문', 소성은 먹 도장 小成, 대성은 금빛 도장 大成. 밑에 'Lv8 로 마친 생 n'.
+        // 단계는 Core Soul.MasteryStage(1생 소성·3생 대성), 생 수는 Soul.WeaponMastery.
+        readonly List<(string Id, TextMeshProUGUI Name, Image Stamp, TextMeshProUGUI StampText, TextMeshProUGUI Lives, Image Back)> _mastery
+            = new List<(string, TextMeshProUGUI, Image, TextMeshProUGUI, TextMeshProUGUI, Image)>();
+
+        void MakeMastery(float top)
+        {
+            _mastery.Clear();
+            var head = Text(_root, Loc.T("ui.library.mastery"), 30, FontStyles.Bold, Ink);
+            Place(head.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, top - 20), new Vector2(800, 40));
+            var sub = Text(_root, Loc.T("ui.library.mastery_sub"), 18, FontStyles.Italic, new Color(Ink.r, Ink.g, Ink.b, 0.55f));
+            Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, top - 54), new Vector2(1600, 28));
+            var ws = _soul.Data.Weapons;
+            int cols = Mathf.Max(1, (ws.Count + 1) / 2);
+            const float W = 214f, H = 104f, Gap = 8f;
+            for (int i = 0; i < ws.Count; i++)
+            {
+                int c = i % cols, row = i / cols;
+                var pos = new Vector2((c - (cols - 1) * 0.5f) * (W + Gap), top - 130 - row * (H + Gap));
+                var back = Panel(_root, Color.clear);
+                Place(back, new Vector2(0.5f, 1f), pos, new Vector2(W, H));
+                var name = Text(back, Loc.Weapon(ws[i]), 22, FontStyles.Bold, Ink);
+                name.alignment = TextAlignmentOptions.Left;
+                Place(name.rectTransform, new Vector2(0f, 1f), new Vector2(12 + 70, -26), new Vector2(150, 30));
+                var stamp = Panel(back, Color.clear);
+                Place(stamp, new Vector2(1f, 1f), new Vector2(-34, -30), new Vector2(54, 30));
+                stamp.localRotation = Quaternion.Euler(0, 0, 8f);
+                var st = Text(stamp, "", 18, FontStyles.Bold, Paper);
+                var sr = st.rectTransform; sr.anchorMin = Vector2.zero; sr.anchorMax = Vector2.one; sr.offsetMin = sr.offsetMax = Vector2.zero;
+                var lives = Text(back, "", 16, FontStyles.Normal, new Color(Ink.r, Ink.g, Ink.b, 0.65f));
+                lives.alignment = TextAlignmentOptions.Left;
+                Place(lives.rectTransform, new Vector2(0f, 0f), new Vector2(12 + 95, 24), new Vector2(190, 26));
+                _mastery.Add((ws[i].Id, name, stamp.GetComponent<Image>(), st, lives, back.GetComponent<Image>()));
+            }
+        }
+
+        void RefreshMastery()
+        {
+            foreach (var m in _mastery)
+            {
+                int stage = _soul.MasteryStage(m.Id);
+                int n = _soul.WeaponMastery.TryGetValue(m.Id, out var v) ? v : 0;
+                m.Name.color = stage == 0 ? new Color(Ink.r, Ink.g, Ink.b, 0.6f) : Ink;
+                m.Back.color = stage == 2 ? new Color(Gold.r, Gold.g, Gold.b, 0.16f)
+                             : stage == 1 ? new Color(Ink.r, Ink.g, Ink.b, 0.07f)
+                             : new Color(Ink.r, Ink.g, Ink.b, 0.03f);
+                if (stage == 0)
+                {
+                    m.Stamp.color = Color.clear;
+                    m.StampText.text = Loc.T("ui.library.mastery_novice");
+                    m.StampText.color = new Color(Ink.r, Ink.g, Ink.b, 0.45f);
+                }
+                else
+                {
+                    m.Stamp.color = stage == 2 ? Gold : new Color(Ink.r, Ink.g, Ink.b, 0.85f);
+                    m.StampText.text = stage == 2 ? "大成" : "小成";
+                    m.StampText.color = Paper;
+                }
+                m.Lives.text = n > 0 ? Loc.F("ui.library.mastery_lives", n) : "";
+            }
         }
 
         Row MakeRow(string id, Vector2 pos)
@@ -125,6 +190,7 @@ namespace BloodRain.Presentation.Meta
             _balance.text = Loc.F("ui.library.balance", _soul.RebirthQi.ToString("N0"), _soul.SealStoneCount);
             int torn = _soul.TornManuals.Count, restored = _soul.RestoredManuals.Count;
             _cost.text = Loc.F("ui.library.cost", torn, _rows.Count, restored, stones, qi.ToString("N0"));
+            RefreshMastery();
             foreach (var r in _rows)
             {
                 bool isTorn = _soul.TornManuals.Contains(r.Id);
