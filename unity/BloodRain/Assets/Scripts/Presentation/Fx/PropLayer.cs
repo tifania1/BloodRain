@@ -33,17 +33,37 @@ namespace BloodRain.Presentation.Fx
             "prop_temple_main_hall", "prop_temple_side_hall", "prop_bell_tower",
             "prop_peak_snow", "prop_far_peak", "prop_peak_snow",
         };
-        readonly float[] _aspect = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+        // RG-01U ②(2026-11-25): 지역마다 소품 벌. 표는 docs/design/region_parity.md '지역 소품 벌 추천'(클라우드 19시).
+        //   종류(나무·집·전각·산)마다 셋, null 인 종류는 위 기본 벌(청운진·숭산과 같음). 이름 앞 prop_ 는 붙여 쓴다.
+        //   기믹 그림(혈제단·매화 더미·모닥불·빙판·잔도·독 웅덩이·술독·검각 시렁·우물)은 벌에 넣지 않는다.
+        static readonly Dictionary<string, string[][]> RegionArt = new Dictionary<string, string[][]>
+        {
+            ["gaebang_hq"] = new[] { new[] { "pine_old", "shrub", "pine_gnarled" }, new[] { "mat_lean_to", "rag_awning", "huts_thatched" }, new[] { "shrine_bridge", "cook_fire_pot", "village_house" }, null },
+            ["namgung_manor"] = new[] { new[] { "pine_old", "pine_gnarled", "pine_cliff" }, new[] { "white_wall", "stone_lions", "village_house" }, new[] { "manor_gate", "lotus_pavilion", "temple_side_hall" }, null },
+            ["danggata"] = new[] { new[] { "bamboo_clump", "bamboo_brush", "bamboo_fallen" }, new[] { "herb_store_stilts", "poison_jar_row", "bamboo_fence" }, new[] { "tang_clan_hall", "rock_violet_fungus", "temple_side_hall" }, null },
+            ["janggang"] = new[] { new[] { "willow_water", "reed_bed", "reed_clump" }, new[] { "covered_boat", "cargo_raft", "rope_oars" }, new[] { "river_pier", "river_watchtower", "sunken_boat" }, new[] { "river_stones", "far_peak", "peak_snow" } },
+            ["wudangsan"] = new[] { new[] { "pine_ledge", "pine_cliff", "pine_old" }, new[] { "sitting_rock", "mossy_boulders", "incense_cauldron" }, new[] { "taoist_hall", "round_pavilion", "blank_stele" }, new[] { "misty_crag", "far_peak", "misty_crag" } },
+            ["huashan"] = new[] { new[] { "plum_tree", "pine_cliff", "pine_gnarled" }, new[] { "granite_boulder", "loose_rocks", "boulder_mossy" }, null, null },
+            ["kunlun"] = new[] { new[] { "frosted_pines", "pine_cliff", "frosted_pines" }, new[] { "snow_crate", "snow_gate_pillar", "huts_thatched" }, null, new[] { "peak_snow", "far_peak", "peak_snow" } },
+            ["sipmandaesan"] = new[] { new[] { "rock_spire", "pine_gnarled", "rock_spire" }, new[] { "spear_rack", "black_watchtower", "huts_thatched" }, new[] { "black_watchtower", "temple_side_hall", "stone_lantern" }, null },
+            ["bongmagok"] = new[] { new[] { "dead_tree", "pine_gnarled", "dead_tree" }, new[] { "broken_stele", "dipper_stones", "split_rock_gate" }, new[] { "blood_pool", "split_rock_gate", "broken_stele" }, null },
+        };
+
+        // 벌 0 = 기본(ArtIds). 벌 n = RegionArt 의 한 지역. 칸 = 벌 × 12 + 종류 × 3 + 벌 안 번호
+        readonly List<string[]> _sets = new List<string[]>();
+        byte[] _setOf;   // 소품마다 선 지역의 벌(Start 에 한 번, Core Regions.Nearest)
+        float[] _aspect;
         int _artCount;
         public int ArtSlots => _artCount;
+        public int Sets => _sets.Count;
 
         PropField _field;
         Material[] _mats;
         Mesh _quad;
         MaterialPropertyBlock _mpb;
         readonly List<int> _query = new List<int>();
-        readonly List<Matrix4x4>[] _m = new List<Matrix4x4>[Kinds * Variants];
-        readonly List<Vector4>[] _t = new List<Vector4>[Kinds * Variants];
+        List<Matrix4x4>[] _m;
+        List<Vector4>[] _t;
         readonly Matrix4x4[] _mBuf = new Matrix4x4[Batch];
         readonly Vector4[] _tBuf = new Vector4[Batch];
         readonly float[] _dBuf = new float[Batch];
@@ -62,34 +82,70 @@ namespace BloodRain.Presentation.Fx
             _field = new PropField(regions, seed);
             _quad = MakeQuad();
             _mpb = new MaterialPropertyBlock();
-            _mats = new Material[Kinds * Variants];
-            for (int k = 0; k < Kinds; k++)
-                for (int v = 0; v < Variants; v++)
-                {
-                    var m = new Material(material) { name = $"소품 {(PropKind)k} {v}", renderQueue = 2990 };
-                    int slot = k * Variants + v;
-                    // PR-02U: 원화가 있으면(PropArt 목록) 그 그림, 없으면 웹 시안 도형 임시 그림
-                    var sp = PropArt.Instance != null ? PropArt.Instance.Get(ArtIds[slot]) : null;
-                    if (sp != null)
-                    {
-                        m.mainTexture = sp.texture;
-                        var r = sp.textureRect;
-                        var ts = new Vector2(sp.texture.width, sp.texture.height);
-                        m.mainTextureScale = new Vector2(r.width / ts.x, r.height / ts.y);
-                        m.mainTextureOffset = new Vector2(r.x / ts.x, r.y / ts.y);
-                        _aspect[slot] = r.width / Mathf.Max(1f, r.height);
-                        _artCount++;
-                    }
-                    else m.mainTexture = PropTextures.Make((PropKind)k, v);
-                    _mats[slot] = m;
-                }
-            for (int i = 0; i < _m.Length; i++) { _m[i] = new List<Matrix4x4>(); _t[i] = new List<Vector4>(); }
+
+            // RG-01U ②: 벌 목록과 소품마다 선 지역의 벌
+            _sets.Clear();
+            _sets.Add(ArtIds);
+            var setByRegion = new Dictionary<string, int>();
+            foreach (var kv in RegionArt)
+            {
+                var ids = new string[Kinds * Variants];
+                for (int k = 0; k < Kinds; k++)
+                    for (int v = 0; v < Variants; v++)
+                        ids[k * Variants + v] = kv.Value[k] != null ? "prop_" + kv.Value[k][v] : ArtIds[k * Variants + v];
+                setByRegion[kv.Key] = _sets.Count;
+                _sets.Add(ids);
+            }
+            var props = _field.Props;
+            _setOf = new byte[props.Count];
+            for (int i = 0; i < props.Count; i++)
+                _setOf[i] = (byte)(setByRegion.TryGetValue(regions.Nearest(props[i].Pos).Id, out int si) ? si : 0);
+
+            int slots = _sets.Count * Kinds * Variants;
+            _mats = new Material[slots];
+            _aspect = new float[slots];
+            _m = new List<Matrix4x4>[slots];
+            _t = new List<Vector4>[slots];
+            for (int i = 0; i < slots; i++) _aspect[i] = 1f;
+            for (int i = 0; i < Kinds * Variants; i++) Mat(i);   // 기본 벌은 미리(원화 수를 로그로). 지역 벌은 처음 보일 때 만든다
             for (int i = 0; i < _dBuf.Length; i++) _dBuf[i] = 0f;
-            Debug.Log($"[소품 층] {_field.Props.Count}개 (산·전각 {_field.Landmarks.Count}), 원화 {_artCount}/{Kinds * Variants}벌");
+            Debug.Log($"[소품 층] {_field.Props.Count}개 (산·전각 {_field.Landmarks.Count}), 원화 {_artCount}/{Kinds * Variants}벌, 지역 벌 {_sets.Count - 1}");
             // 2026-11-21 바닥 잔무늬(풀포기·잔돌·먹 번짐·꽃잎·잎)도 같은 재질로 이 층에 붙인다(씬을 안 고침)
             var detail = GetComponent<GroundDetailLayer>();
             if (detail == null) detail = gameObject.AddComponent<GroundDetailLayer>();
             detail.material = material;
+        }
+
+        /// <summary>칸(벌 × 12 + 종류 × 3 + 번호)의 재질. 처음 부를 때 만든다. 원화가 없으면 기본 벌 그림, 그것도 없으면 웹 시안 도형 임시 그림.</summary>
+        Material Mat(int slot)
+        {
+            if (_mats[slot] != null) return _mats[slot];
+            int set = slot / (Kinds * Variants), local = slot % (Kinds * Variants);
+            int k = local / Variants, v = local % Variants;
+            var m = new Material(material) { name = $"소품 {set} {(PropKind)k} {v}", renderQueue = 2990 };
+            // PR-02U: 원화가 있으면(PropArt 목록) 그 그림
+            var pa = PropArt.Instance;
+            var sp = pa != null ? pa.Get(_sets[set][local]) : null;
+            if (sp == null && set != 0 && pa != null)
+            {
+                sp = pa.Get(ArtIds[local]);
+                Debug.LogWarning($"[소품 층] {_sets[set][local]} 원화가 PropArt 목록에 없어 기본 벌 그림으로(소품 그림 목록 채우기)");
+            }
+            if (sp != null)
+            {
+                m.mainTexture = sp.texture;
+                var r = sp.textureRect;
+                var ts = new Vector2(sp.texture.width, sp.texture.height);
+                m.mainTextureScale = new Vector2(r.width / ts.x, r.height / ts.y);
+                m.mainTextureOffset = new Vector2(r.x / ts.x, r.y / ts.y);
+                _aspect[slot] = r.width / Mathf.Max(1f, r.height);
+                if (set == 0) _artCount++;
+            }
+            else m.mainTexture = PropTextures.Make((PropKind)k, v);
+            _mats[slot] = m;
+            _m[slot] = new List<Matrix4x4>();
+            _t[slot] = new List<Vector4>();
+            return m;
         }
 
         void LateUpdate()
@@ -110,7 +166,7 @@ namespace BloodRain.Presentation.Fx
             _field.Query(a, b, _query);
             LastQueried = _query.Count;
 
-            for (int i = 0; i < _m.Length; i++) { _m[i].Clear(); _t[i].Clear(); }
+            for (int i = 0; i < _m.Length; i++) if (_m[i] != null) { _m[i].Clear(); _t[i].Clear(); }
             int drawn = 0;
             var props = _field.Props;
             foreach (int i in _query)
@@ -131,7 +187,8 @@ namespace BloodRain.Presentation.Fx
                 // 웹은 발밑이 그림 아래에서 0.15 위(그림 위끝이 자리 - 0.85×크기). Unity 는 y 가 위로라 가운데 = 자리 + 0.35×크기
                 float s = p.S;
                 if (u.x + s < c.x - w || u.x - s > c.x + w || u.y - s > c.y + h || u.y + s < c.y - h) continue;
-                int slot = (int)p.Kind * Variants + p.Variant;
+                int slot = _setOf[i] * Kinds * Variants + (int)p.Kind * Variants + p.Variant;
+                if (_mats[slot] == null) Mat(slot);   // 지역 벌은 처음 보일 때(가로세로 비를 알아야 해서 여기서)
                 // 긴 변이 s. 원화는 가로세로 비가 달라 그 비대로 늘린다(임시 그림은 정사각 1)
                 float asp = _aspect[slot];
                 float sw = asp >= 1f ? s : s * asp, sh = asp >= 1f ? s / asp : s;
@@ -146,10 +203,12 @@ namespace BloodRain.Presentation.Fx
             // 산 → 전각 → 집 → 나무 순으로(큰 것이 뒤에)
             int[] order = { (int)PropKind.Mount, (int)PropKind.Temple, (int)PropKind.House, (int)PropKind.Tree };
             foreach (int k in order)
+                for (int set = 0; set < _sets.Count; set++)
                 for (int v = 0; v < Variants; v++)
                 {
-                    int slot = k * Variants + v;
+                    int slot = set * Kinds * Variants + k * Variants + v;
                     var ms = _m[slot]; var ts = _t[slot];
+                    if (ms == null || ms.Count == 0) continue;
                     var rp = new RenderParams(_mats[slot]) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(new Vector3(c.x, c.y, 0.5f), new Vector3(1e6f, 1e6f, 1f)) };
                     for (int start = 0; start < ms.Count; start += Batch)
                     {

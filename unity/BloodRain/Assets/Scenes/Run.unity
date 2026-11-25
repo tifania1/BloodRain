@@ -2480,16 +2480,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: BloodRain.Presentation::BloodRain.Presentation.Fx.PropArt
   names:
+  - prop_bamboo_brush
+  - prop_bamboo_clump
+  - prop_bamboo_fallen
+  - prop_bamboo_fence
   - prop_bell
   - prop_bell_tower
+  - prop_black_watchtower
+  - prop_blank_stele
+  - prop_blood_altar
+  - prop_blood_altar_broken
   - prop_blood_crystal
+  - prop_blood_pool
   - prop_boulder_mossy
+  - prop_broken_stele
   - prop_bun
+  - prop_campfire_ring
+  - prop_cargo_raft
   - prop_cart
   - prop_chest_closed
   - prop_chest_open
   - prop_chwigi_talisman
   - prop_cook_fire_pot
+  - prop_covered_boat
+  - prop_dead_tree
+  - prop_dipper_stones
   - prop_duck
   - prop_enc_elixir
   - prop_enc_go
@@ -2502,14 +2517,25 @@ MonoBehaviour:
   - prop_far_temple
   - prop_far_village
   - prop_fence
+  - prop_frosted_pines
+  - prop_granite_boulder
   - prop_haystack
+  - prop_herb_store_stilts
   - prop_huts_thatched
+  - prop_ice_sheet
+  - prop_incense_cauldron
   - prop_inn
   - prop_jeongsin_talisman
   - prop_lantern
   - prop_lantern_silver
+  - prop_loose_rocks
+  - prop_lotus_pavilion
+  - prop_low_cloud
+  - prop_manor_gate
   - prop_market_stall
   - prop_mat_lean_to
+  - prop_misty_crag
+  - prop_mossy_boulders
   - prop_mountain_gate
   - prop_pagoda_broken
   - prop_pagoda_mossy
@@ -2519,35 +2545,79 @@ MonoBehaviour:
   - prop_peak_snow
   - prop_pine_cliff
   - prop_pine_gnarled
+  - prop_pine_ledge
   - prop_pine_old
+  - prop_plank_walkway
+  - prop_plum_petal_heap
+  - prop_plum_tree
+  - prop_poison_jar_row
+  - prop_poison_pond
   - prop_rag_awning
+  - prop_reed_bed
+  - prop_reed_clump
+  - prop_river_pier
+  - prop_river_stones
+  - prop_river_watchtower
+  - prop_rock_spire
+  - prop_rock_violet_fungus
   - prop_rocks_small
+  - prop_roofed_well
+  - prop_rope_oars
+  - prop_round_pavilion
   - prop_seal_stone_shard
   - prop_shrine_bridge
   - prop_shrub
   - prop_silver_bag
+  - prop_sitting_rock
+  - prop_snow_crate
+  - prop_snow_gate_pillar
+  - prop_spear_rack
+  - prop_split_rock_gate
   - prop_stone_lantern
+  - prop_stone_lions
+  - prop_stone_stairs
   - prop_storage_jar
   - prop_stupa_bell
+  - prop_sunken_boat
+  - prop_sword_pavilion
   - prop_sword_rack
+  - prop_tang_clan_hall
+  - prop_taoist_hall
   - prop_temple_main_hall
   - prop_temple_side_hall
   - prop_terrain_house
   - prop_thunder_bomb
   - prop_village_house
+  - prop_white_wall
+  - prop_willow_water
   - prop_wine_jar
   - prop_wine_jar_pile
   sprites:
+  - {fileID: 21300000, guid: 858f13e8ca134b8582817a3a40984dff, type: 3}
+  - {fileID: 21300000, guid: 903cd8a92aa24e9aa0c37ded5388e3e7, type: 3}
+  - {fileID: 21300000, guid: 9a4fb212688e4c709c415f6c638dc20c, type: 3}
+  - {fileID: 21300000, guid: 2c6761c33dd14377ae1f88b9c0f69ba7, type: 3}
   - {fileID: 21300000, guid: ff8d7d114e1d4099b2bb6e84b84f5d52, type: 3}
   - {fileID: 21300000, guid: 3a6d1678a0c9426c8ee8cf2a5e98ff34, type: 3}
+  - {fileID: 21300000, guid: 1c414c0fcd004829bbffa652da4888d0, type: 3}
+  - {fileID: 21300000, guid: 4c368540262c48669ff9cb0a8ece76b1, type: 3}
+  - {fileID: 21300000, guid: 0435aa69383740e79eecf95ad3ba791d, type: 3}
+  - {fileID: 21300000, guid: d5d7523c7426411ca02fa6106114373e, type: 3}
   - {fileID: 21300000, guid: b7e7fc4136924c37ab4b4753e9212d57, type: 3}
+  - {fileID: 21300000, guid: 255a5066d76545e3a5489eedc3be0d8b, type: 3}
   - {fileID: 21300000, guid: fd8e30bdd8934a79bcb78cb6170f35b6, type: 3}
+  - {fileID: 21300000, guid: 1323824c342047d7983b16291dbe5f38, type: 3}
   - {fileID: 21300000, guid: 6f72840fd6814b4d880cd0a65478898d, type: 3}
+  - {fileID: 21300000, guid: 7646d33f507942d289e0b81526440dc0, type: 3}
+  - {fileID: 21300000, guid: 0522e7b38e6d4b18ad16b7483552af22, type: 3}
   - {fileID: 21300000, guid: a34058c1a50a4a8aa0a43584281ec224, type: 3}
   - {fileID: 21300000, guid: d1541ed99bbd4c22a265c9885ad5d891, type: 3}
   - {fileID: 21300000, guid: 508eac2d33d4483ab606f7538463cd62, type: 3}
   - {fileID: 21300000, guid: b6c3d3b1b4c8488bb49a08b0ff237d7e, type: 3}
   - {fileID: 21300000, guid: 28763434008d470789799c4a57c695fc, type: 3}
+  - {fileID: 21300000, guid: 93851b573ff24372bde0b46c4e1a38b3, type: 3}
+  - {fileID: 21300000, guid: 777f93ee8a13484da87d1ed03b2f7926, type: 3}
+  - {fileID: 21300000, guid: d1fff79848ae44dcaf898931a2f43cfa, type: 3}
   - {fileID: 21300000, guid: ce2c34ee6f5147ebb4cf7c30ab22a4aa, type: 3}
   - {fileID: 21300000, guid: fc29f74acdac42a181fe333253bff65d, type: 3}
   - {fileID: 21300000, guid: 435db80c51564f7cad6026d6b05ab258, type: 3}
@@ -2560,14 +2630,25 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 4b5ff9a8b11e40998145740e1ecec69c, type: 3}
   - {fileID: 21300000, guid: 0249d39504724689a91ddd59d1d28e1c, type: 3}
   - {fileID: 21300000, guid: 187d4fb1f47140e89de1ac13177f28e8, type: 3}
+  - {fileID: 21300000, guid: abb3917d3882448f9a9d868fcf69a0ac, type: 3}
+  - {fileID: 21300000, guid: 58c73ea0999341338fac08385edd1a13, type: 3}
   - {fileID: 21300000, guid: 1ca9dffdcf504046b3189ac035bf115d, type: 3}
+  - {fileID: 21300000, guid: f09361b843e7400491a24ae5d3b30c4f, type: 3}
   - {fileID: 21300000, guid: 2bb69e03c9c04124acbd63ed6ac82eb8, type: 3}
+  - {fileID: 21300000, guid: 64c4c9e409914d598a27bee8b1e61479, type: 3}
+  - {fileID: 21300000, guid: aa6d680207294b2ba7378ea2d1a8cc2b, type: 3}
   - {fileID: 21300000, guid: 615472acb33f4289898de06ca3fe1d80, type: 3}
   - {fileID: 21300000, guid: f10e710ca24d4358b8344fe64ca06c7a, type: 3}
   - {fileID: 21300000, guid: d75aab99b897455cade68f5fe2b51fb6, type: 3}
   - {fileID: 21300000, guid: 2315c06016d74d19b6b6fa768310df54, type: 3}
+  - {fileID: 21300000, guid: 69d9b37727bd495994bc1bcc3dceb9f6, type: 3}
+  - {fileID: 21300000, guid: 4fc8737e775b40e4acf0d6590e8941fd, type: 3}
+  - {fileID: 21300000, guid: 060bc11b04f7432c9729c084260bc42e, type: 3}
+  - {fileID: 21300000, guid: 41a4a538eed141c698ab4f670578ca3f, type: 3}
   - {fileID: 21300000, guid: 55a8136fadb648e99e1352e68b21b07a, type: 3}
   - {fileID: 21300000, guid: 4bb279e8b075498b98a406f6234ff1f7, type: 3}
+  - {fileID: 21300000, guid: f442adb8d60e4ad49cd94ebcf22848d0, type: 3}
+  - {fileID: 21300000, guid: d6d71c6c156d40d398053c6ac11bc72d, type: 3}
   - {fileID: 21300000, guid: 5957fefd3369454baa016ad0445a4e24, type: 3}
   - {fileID: 21300000, guid: 3d41602679894a1198f18ec517bcb0fd, type: 3}
   - {fileID: 21300000, guid: 7051f0059c55414e89ff11be8b8d5fdd, type: 3}
@@ -2577,22 +2658,51 @@ MonoBehaviour:
   - {fileID: 21300000, guid: b972926a3f4342049350bd3707062f44, type: 3}
   - {fileID: 21300000, guid: c9bde75a5d78477682e800a04b87e58c, type: 3}
   - {fileID: 21300000, guid: bbffbafbb12f434cb859af6277e7888e, type: 3}
+  - {fileID: 21300000, guid: 2c32f7a14cef48c988e316f91e09d58c, type: 3}
   - {fileID: 21300000, guid: fc52d01c021f44b28e3d1c678d3d8d5a, type: 3}
+  - {fileID: 21300000, guid: 7174537c1af74ac790bcbedeed7fd48c, type: 3}
+  - {fileID: 21300000, guid: 9bbd559e0aaa4dd8aa466d78ad6390af, type: 3}
+  - {fileID: 21300000, guid: cf8d78ac06554b3da24a849be1df55b9, type: 3}
+  - {fileID: 21300000, guid: 18d71b299a304c0ab19f0e4fbbb0ffe4, type: 3}
+  - {fileID: 21300000, guid: 86d17c05b9db48f58905d7f667acd0fe, type: 3}
   - {fileID: 21300000, guid: c49ec0e0063e4e5e9edede51deae65bd, type: 3}
+  - {fileID: 21300000, guid: f894cb9a72084d2890080e0a5330f4f8, type: 3}
+  - {fileID: 21300000, guid: 9187b5f82af845e3b080a78349417343, type: 3}
+  - {fileID: 21300000, guid: 1eeaebcd25e44886bed1c737784a98c2, type: 3}
+  - {fileID: 21300000, guid: 46b2dc47930d4f7192cacfba2432a8b3, type: 3}
+  - {fileID: 21300000, guid: aa5ef38ef74e437087bb0200481d5e31, type: 3}
+  - {fileID: 21300000, guid: 30fca9803ab5418c8c237900aa7622da, type: 3}
+  - {fileID: 21300000, guid: b6d5406db4e44dafa6f617eca44127e6, type: 3}
   - {fileID: 21300000, guid: e7e3c2f5b87d4383b0b90b828509f6f4, type: 3}
+  - {fileID: 21300000, guid: 1806d0030cfd47bfbdd0b6e4c8c746c6, type: 3}
+  - {fileID: 21300000, guid: c8d4b4c7235945e18d4eb19480c82f42, type: 3}
+  - {fileID: 21300000, guid: 12f36d89f35846aa90e110f30bdde00f, type: 3}
   - {fileID: 21300000, guid: 6c31a754973c4888a23c65edfd5ee830, type: 3}
   - {fileID: 21300000, guid: 1cb555f7c10d49e6b163402cad05a110, type: 3}
   - {fileID: 21300000, guid: 9dcb03558dc94a349ba6d189f4f4c926, type: 3}
   - {fileID: 21300000, guid: c401985236444296a9450cda3b0293c0, type: 3}
+  - {fileID: 21300000, guid: 46458d2fa26346f89672168d20717d15, type: 3}
+  - {fileID: 21300000, guid: 70cfa10c70c446ae9dc49247e5644001, type: 3}
+  - {fileID: 21300000, guid: 3f262367eb404d229fd20d0d9c7c3b5e, type: 3}
+  - {fileID: 21300000, guid: 5ed5fec6f39949168a20fab7520322a4, type: 3}
+  - {fileID: 21300000, guid: 8ee781c370444c52a01a7cd6b3241dc4, type: 3}
   - {fileID: 21300000, guid: b509deb2933845bfa7fff248b217b067, type: 3}
+  - {fileID: 21300000, guid: 8b3a2dfefe27401881e5e72131bfba6a, type: 3}
+  - {fileID: 21300000, guid: 97633bb30d6f4895bf2bfb69e6594f36, type: 3}
   - {fileID: 21300000, guid: 004bd5efdfbe4f9cbfe5a7c4b7b551be, type: 3}
   - {fileID: 21300000, guid: 183af3d09c2646bcae31e3cf42c5e772, type: 3}
+  - {fileID: 21300000, guid: 71729da993bb4804ba8549a5dead0f4c, type: 3}
+  - {fileID: 21300000, guid: 04e30e62e8844e4d9134daecd06112c5, type: 3}
   - {fileID: 21300000, guid: ebe0747e23f5451c855a70656a79f1ee, type: 3}
+  - {fileID: 21300000, guid: 3eac2175e8d94c8b87a116ac115a8397, type: 3}
+  - {fileID: 21300000, guid: c698d77b66e6402387dcb0f8542abe8e, type: 3}
   - {fileID: 21300000, guid: 504502d70e044bd0b40c66a9dc9af9a1, type: 3}
   - {fileID: 21300000, guid: 2222a71f52d547268fca421cb848306e, type: 3}
   - {fileID: 21300000, guid: 850b90e9458843de89e29fd46a0b6fb8, type: 3}
   - {fileID: 21300000, guid: f401fdfa1bc24625b53416f1269107ee, type: 3}
   - {fileID: 21300000, guid: 249c37b8ed594f4da29d75875d0be976, type: 3}
+  - {fileID: 21300000, guid: 3d6d50430a224bf4b0a42152b4ae163c, type: 3}
+  - {fileID: 21300000, guid: 2d5be4d8794b4a409a9cfb5c833d374c, type: 3}
   - {fileID: 21300000, guid: 97fb31992eee49fc83a06efcacde56cc, type: 3}
   - {fileID: 21300000, guid: 41bd45af4159491da5574848705e3f6d, type: 3}
 --- !u!1 &1700858264
