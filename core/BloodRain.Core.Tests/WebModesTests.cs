@@ -29,7 +29,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("modeRefresh(m);   // 천하 모드(서장 끝", html);
             Assert.Contains("m.newModes = modeRefresh(m);", html);
             Assert.True(html.IndexOf("m.newModes = modeRefresh(m);") > html.IndexOf("if (!m.endingsSeen.includes(st.ending)) m.endingsSeen.push(st.ending);"), "엔딩을 적은 뒤에 센다");
-            Assert.Contains("'새 모드 · 일일 도전은 침방에서(보스 연전은 아직)'", html);
+            Assert.Contains("'새 모드 · 침방에서'", html);
             Assert.Contains("\"modes\": [drop_notes(m) for m in load(\"cheonha\").get(\"modes\", [])]", ReadRepoFile("tools", "build_web_prototype.py"));
         }
     }

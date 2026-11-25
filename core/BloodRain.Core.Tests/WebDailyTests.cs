@@ -34,5 +34,22 @@ namespace BloodRain.Core.Tests
             Assert.Contains("dailyRestore(); led.hidden = true;", html);
             Assert.True(html.IndexOf("if (G.body && G.daily) {", StringComparison.Ordinal) < html.IndexOf("const st = lifeSettle(), m = recordLife(st)", StringComparison.Ordinal));
         }
+
+        [Fact] public void 보스_연전은_현경_Lv8_로_주인을_데이터_차례대로_잡몹_없이()
+        {
+            var html = Proto;
+            foreach (var used in new[]
+            {
+                $"(m.unlocks || []).includes('mode:{BossRush.ModeId}')",
+                "const rushOrder = () => CH_REGS.filter(r => r.boss && !r.final);",          // Core CheonhaDef.BossRegions
+                "REALMS.find(x => x.id === BR.startRealm)",
+                "Math.min(BR.startWeaponLevel, B.levels.weaponMax)",
+                "e.hp = e.maxHp = base * lordHpMult(BR.healthMinute);",                     // Core BossRush.Health
+                "G.pendingLevels += BR.levelUpsPerKill; G.player.hp = G.player.maxHp;",      // Core BossRush.Defeat
+                "if (G.spawnAcc >= 1 && !G.rush) {",
+                "if (X.done && (best.s == null || X.clear < best.s)) { mr.bossRushBest = X.clear; soulSave(mr); }",   // Core Soul.RecordBossRush
+            })
+                Assert.Contains(used, html);
+        }
     }
 }

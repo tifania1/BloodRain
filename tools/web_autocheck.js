@@ -538,6 +538,50 @@ async function dailyRun(browser, base) {
   rows.push({ what: label, res: r.bad.length ? '문제' : `통과(${r.sect})` });
   await p.ctx.close();
 }
+// 보스 연전(MD-02): 봉인 엔딩 뒤 열린 혼으로 현경·Lv8 시작, 주인 일곱을 차례로, 다 넘으면 가장 빠른 시간만 남고 혼은 그대로
+async function rushRun(browser, base) {
+  const label = '보스 연전';
+  const p = await openPage(browser, base + '/?life=shaolin', label);
+  const r = await p.page.evaluate(() => {
+    const bad = [];
+    try {
+      const m0 = innMeta(); m0.lives = 5; m0.unlocks = ['mode:boss_rush']; m0.endingsSeen = ['seal']; soulSave(m0);
+      openInn();
+      if ($('inrush').hidden) bad.push('침방에 보스 연전 단추가 없음');
+      const before = localStorage.getItem(SOUL_KEY);
+      toggleRush(); chooseLife(0); G.auto = false; running = false;
+      if (!G.rush) bad.push('연전 판이 아님');
+      if (G.realm.id !== BR.startRealm) bad.push(`시작 경지 ${G.realm.id}`);
+      if (G.weapons[0].lv !== BR.startWeaponLevel) bad.push(`시작 무공 Lv${G.weapons[0].lv}`);
+      G.player.maxHp = G.player.hp = 1e9; G.auto = true;
+      for (let i = 0; i < 30 * 20; i++) { G.player.hp = G.player.maxHp; step(1 / 30); if (overlay) { overlay = null; G.pendingLevels = 0; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); } }
+      if (!G.lordF || !isFinite(G.lordF.hp) || !(G.lordF.hp < G.lordF.maxHp)) bad.push(`20초 싸워도 첫 주인 기혈이 그대로(${G.lordF && G.lordF.hp})`);
+      G.auto = false;
+      const order = rushOrder(), seen = [];
+      for (let k = 0; k < order.length && running === false; k++) {
+        for (let i = 0; i < 10 && !G.lordF; i++) step(1 / 30);
+        const e = G.lordF; if (!e) { bad.push(`${k + 1}번째 주인이 안 섬`); break; }
+        seen.push(e.lord);
+        const def = BOSS_BY[e.lordBoss], base = def.phases ? def.phases.reduce((a, b) => a + b, 0) : def.health;
+        if (Math.abs(e.maxHp - base * lordHpMult(BR.healthMinute)) > 1e-6) bad.push(`${def.id} 기혈 ${e.maxHp}`);
+        const lv0 = G.pendingLevels; running = true; e.hp = 0; lordDown(e); e.dead = true;
+        if (G.rush.i < order.length && G.pendingLevels - lv0 !== BR.levelUpsPerKill) bad.push(`${def.id} 뒤 레벨업 ${G.pendingLevels - lv0}`);
+        if (G.rush.i < order.length) { running = false; G.pendingLevels = 0; G.enemies = G.enemies.filter(x => x !== e); }
+      }
+      if (seen.join() !== order.map(x => x.id).join()) bad.push(`차례가 다름 ${seen.join()}`);
+      if (!G.rush.done) bad.push('다 넘지 못함');
+      const after = soulLoad(), b0 = JSON.parse(before);
+      if (!(after.bossRushBest >= 0)) bad.push('가장 빠른 시간이 혼에 안 남음');
+      delete after.bossRushBest; if (JSON.stringify(after) !== JSON.stringify(b0)) bad.push('끝난 뒤 혼이 가장 빠른 시간 말고도 바뀜');
+      if (G.enemies.some(x => !x.boss && !x.dead)) bad.push('잡몹이 나옴');
+      return { bad, n: seen.length };
+    } catch (err) { return { bad: ['오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]], n: 0 }; }
+  });
+  for (const b of r.bad) problems.push(`${label}: ${b}`);
+  flush(p, label);
+  rows.push({ what: label, res: r.bad.length ? '문제' : `통과(주인 ${r.n})` });
+  await p.ctx.close();
+}
 // 혈월의 밤 2막(GU-11h4): 현경·봉인석 모자람·30분이면 그림자 대신 무너진 문파 땅의 주인이 곁으로 모여든다
 async function gatheringRun(browser, base) {
   const label = '모여드는 땅의 주인';
@@ -580,7 +624,7 @@ async function gatheringRun(browser, base) {
     if (ONLY.includes('lords')) await lordRuns(browser, base);
     if (ONLY.includes('final')) await finalRuns(browser, base);
     if (ONLY.includes('crisis')) { await crisisRuns(browser, base); await gatheringRun(browser, base); }
-    if (ONLY.includes('daily')) await dailyRun(browser, base);
+    if (ONLY.includes('daily')) { await dailyRun(browser, base); await rushRun(browser, base); }
     if (ONLY.includes('flow')) await flowRuns(browser, base);
     if (ONLY.includes('weapons')) await weaponRuns(browser, base);
     if (ONLY.includes('manuals')) await manualRuns(browser, base);

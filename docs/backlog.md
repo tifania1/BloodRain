@@ -61,7 +61,7 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 
 로드맵에서 채움, 2026-11-25 20시(M4 '메타 전체'의 모드 — 7장 '모드' 표·cheonha.json modes·bossRush·Core DailyChallenge·BossRush 에 다 있는데 웹 합친 판엔 '새 모드 · 이 판엔 아직 없다'로만 뜨던 것. Unity DD-01U·WP-38U 가 볼 본보기):
 - [x] MD-01 2026-11-25 — 웹 일일 도전: 침방에 '일일 도전' 단추(mode:daily 열린 혼만, 오늘 몸·성질·오늘 최고를 단추에), 시드는 Core `DailyChallenge.Seed` 와 같은 lowbias32(2026-11-25 → 303744310, node·Core 같음), 아홉 문파 전부에서 몸 하나. 시작 때 혼을 떠 두고 끝나면 되돌림(Sandbox), 정산 대신 '오늘 최고'만 store 'daily' 에. `WebDailyTests` 둘, autocheck `daily`. 정한 것: 몸 뽑는 난수는 웹 제 것이라 Unity 판과 같은 날 몸이 다를 수 있음, 사건·적은 아직 Math.random
-- [ ] MD-02 웹 보스 연전: mode:boss_rush 열린 혼이면 침방에서 몸 하나 골라 현경·시작 무공 Lv8 로, 땅의 주인 일곱을 `bossRush` 차례로 곁에 세우고(모여드는 주인 자리와 같은 0.3 대각선), 하나 쓰러뜨리면 레벨업 셋·기혈 가득, 기혈은 기준 체력 × healthCurve(20분). 혼은 일일 도전처럼 되돌리고 다 깬 시간만(Core `Soul.RecordBossRush` 처럼 가장 빠른 것). 테스트·autocheck. 웹 본보기는 MD-01 의 `startDaily`·`dailyRestore`
+- [x] MD-02 2026-11-25 — 웹 보스 연전: 침방 '보스 연전' 단추(mode:boss_rush 열린 혼만)를 누르고 후보 카드에서 몸을 고르면 현경·시작 무공 Lv8, 땅의 주인 일곱을 데이터 차례(봉마곡 빼고)로 곁(대각선 0.3)에 세움, 기혈은 기준 체력 × healthCurve(20분), 쓰러뜨리면 레벨업 셋·기혈 가득. 잡몹·사건·그림자·위기 없음(WP-38U '잡몹은 없음'). 혼은 시작 때로 되돌리고 다 깨면 `bossRushBest`(가장 빠른 것)만 남김. `WebDailyTests` 하나 더, autocheck `daily` 에 연전(일곱 차례·기혈·레벨업·혼). 볼 것: 무공 하나(Lv8)로 원각 기혈 9만은 자동 판 20초에 200 남짓 깎임 — 설계(#39)대로 옮겼지만 사실상 못 깸, 사람이 해 보고 정할 것
 
 ## 화면 집중 (2026-11-13 ~ 2026-11-24, 끝남)
 
