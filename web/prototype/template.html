@@ -4640,7 +4640,7 @@ function drawCandidates(m, rnd = Math.random) {
 // 일일 도전(7장 '모드', Core Meta/DailyChallenge): 봉인석 셋이면 열린다(mode:daily). 그날(UTC 날짜) 시드 하나로 아홉 문파 전부에서 몸 하나.
 //   시드 셈(날짜 숫자 → lowbias32)은 Core DailyChallenge.Seed 와 같다. 몸을 뽑는 난수는 웹 제 것(.NET Random 이 아니라)이라 Unity 판과 몸은 다를 수 있다 — 같은 날 웹끼리는 같다.
 //   사건·적 뽑기는 아직 Math.random 이라 고정이 아니다(프로토타입). 연무장·환혼 강화는 받고 혼엔 아무것도 안 남긴다(Core Sandbox): 시작 때 혼을 떠 두고 끝나면 되돌린다.
-//   남는 것은 그날 최고 버틴 시간(리더보드 대신 이 브라우저 store 'daily')뿐
+//   남는 것은 그날 첫 판의 버틴 시간(리더보드 대신 이 브라우저 store 'daily')뿐 — 몇 번이든 해 볼 수 있다
 function dailySeed(d = new Date()) {
   let x = (d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()) >>> 0;
   x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0; x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0; x ^= x >>> 16;
@@ -4949,7 +4949,7 @@ function renderInn() {
     rb.innerHTML = `보스 연전 <small>${innRush ? '몸을 고르면 시작' : `땅의 주인 ${rushOrder().length}`}${best && best.s != null ? ` · 가장 빠름 ${Math.floor(best.s / 60)}:${String(best.s % 60).padStart(2, '0')}` : ''}</small>`; }
   const db = $('indaily'), don = dailyOpen(m); db.hidden = !don;
   if (don) { const c = dailyBody(), bd = (store.get('daily') || {})[dailyKey()], g = bd ? bd.gs : null;
-    db.innerHTML = `일일 도전 <small>오늘 ${SECT_BY[c.sect].nameKo} ${c.female ? '여제자' : '제자'}${c.traits.length ? ' · ' + c.traits.map(id => (TRAIT_BY[id] || {}).nameKo || id).join('·') : ''}${g != null ? ` · 오늘 최고 ${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}` : ''}</small>`; }
+    db.innerHTML = `일일 도전 <small>오늘 ${SECT_BY[c.sect].nameKo} ${c.female ? '여제자' : '제자'}${c.traits.length ? ' · ' + c.traits.map(id => (TRAIT_BY[id] || {}).nameKo || id).join('·') : ''}${g != null ? ` · 오늘 기록 ${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}` : ''}</small>`; }
   $('innqi').textContent = `윤회의 기 ${m.qi.toLocaleString()} · 혈정 ${(m.crystal || 0).toLocaleString()} · 열린 문파 ${m.unlocked.length}/${(DATA.sects || []).length}`;
   const fb = $('innfac'); fb.innerHTML = '';
   for (const f of INN_F) {
@@ -6487,13 +6487,13 @@ function endRun(won) {
   // 한 생(WP-14c): 윤회의 기 정산 줄을 보여 주고 혼 기록에 새긴다
   const led = $('resledger'); led.hidden = !G.body; led.innerHTML = '';
   $('again').textContent = G.body ? '윤회 · 다음 생을 고른다' : '다시 하기';
-  if (G.body && G.daily) {   // 일일 도전: 정산 없이 혼을 시작 때로 되돌리고(Core DailyChallenge.Sandbox) 그날 최고 버틴 시간만(Score)
+  if (G.body && G.daily) {   // 일일 도전: 정산 없이 혼을 시작 때로 되돌리고(Core DailyChallenge.Sandbox) 그날 첫 판의 버틴 시간만(Score)
     dailyRestore(); led.hidden = true;
     const all = store.get('daily') || {}, prev = all[G.daily.key];
-    if (!prev || gs > prev.gs) { all[G.daily.key] = { gs, level: G.level, kills: G.kills }; store.set('daily', all); }
+    if (!prev) { all[G.daily.key] = { gs, level: G.level, kills: G.kills }; store.set('daily', all); }   // 리더보드엔 그날 첫 판만(Core DailyChallenge 머리말) — 다시 해 볼 수는 있다
     $('restitle').textContent = '일일 도전'; $('again').textContent = '침방으로';
     $('resline').textContent = `${G.body.nameKo}의 제자로 ${Math.floor(gs / 60)}분 ${gs % 60}초를 버텼다. 이 생은 혼에 남지 않는다.`;
-    facts.push([prev && prev.gs >= gs ? `${Math.floor(prev.gs / 60)}:${String(prev.gs % 60).padStart(2, '0')}` : '새 기록', '오늘 최고']);
+    facts.push([prev ? `${Math.floor(prev.gs / 60)}:${String(prev.gs % 60).padStart(2, '0')}` : '이 판', prev ? '오늘 기록(첫 판) · 이 판은 연습' : '오늘 기록(첫 판)']);
   } else if (G.body && G.rush) {   // 보스 연전: 혼을 되돌리고 다 깼으면 가장 빠른 시간만(Core Soul.RecordBossRush)
     dailyRestore(); led.hidden = true;
     const X = G.rush, n = rushOrder().length, mr = soulLoad(), best = { s: mr.bossRushBest };
