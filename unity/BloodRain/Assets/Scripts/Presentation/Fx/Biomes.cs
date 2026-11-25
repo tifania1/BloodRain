@@ -9,7 +9,7 @@ namespace BloodRain.Presentation.Fx
     // 지역마다 다른 바닥과, 지역 자료로 그린 천하도(2026-11-17 밤 사람: "누런 끼 빼고 각 지역마다의 특색을 살린 그래픽으로,
     // 지역을 이동할 때마다 맞는 이미지가 나와야", "지도가 현실 지역 위치랑 안 맞는다").
     //   - 바닥: 지역 하나에 512px 이음매 없는 타일 한 장을 코드로 그린다. 빛깔은 종이 누런빛을 버리고 지역 빛(돌·대숲·눈·물가…)으로.
-    //     원화 타일이 있는 지역(ArtOf 표 — 아홉)은 지역 바탕빛 위에 원화를 옅게 얹어 쓴다(Resources/Art/Tiles).
+    //     원화 타일이 있는 지역(ArtOf 표 — 열하나 다)은 지역 바탕빛 위에 원화를 옅게 얹어 쓴다(Resources/Art/Tiles).
     //   - 천하도: 옛 수묵 지도 그림은 땅 자리(cheonha.json regions.pos)와 맞지 않았다. 땅 모양(PropField.InLand)·지역 자리·산 자리·
     //     두 큰 강을 자료에서 바로 그려 지도와 실제 자리가 늘 맞게 한다.
     // 처음 쓸 때 한 번 그려 두고 다시 쓴다(지역은 열하나, 한 장 0.1초 안쪽).
@@ -85,6 +85,8 @@ namespace BloodRain.Presentation.Fx
             ["sipmandaesan"] = ("tile_sipmandaesan_stone", 0.24f),
             // 2026-11-24 RG-01c: 무당산 돌 바닥(Art/Tiles 에 있던 것을 옮김). 세기는 화산 바위와 같게 두고 Unity 에서 눈으로 맞춤
             ["wudangsan"] = ("tile_wudang_stone", 0.4f),
+            // 2026-11-25 봉마곡 혈지(종장) 바닥: Art/Tiles 에 들어와 있던 것을 옮김(RG-01c 와 같은 길). 세기는 Unity 에서 눈으로(R4-03U)
+            ["bongmagok"] = ("tile_bongmagok_ground", 0.4f),
         };
         static readonly Dictionary<string, Texture2D> Arts = new Dictionary<string, Texture2D>();
 

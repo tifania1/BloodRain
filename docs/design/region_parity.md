@@ -22,10 +22,12 @@
 | 당가타(당가) | ○ | △ 시트 둘(`danggata_bamboo`·`danggata_halls`) | ○ 셋 | ○ 셋 | ○ 당소혜, 패턴 셋(분신 그림 있음) | ✕ 독안개·대숲 | △ | ○ 남녀 |
 | 장강 수로(수로채) | ○(+ 물 타일 `Art/Tiles/tile_changjiang_water` △) | △ 시트 둘(`changjiang_pier`·`changjiang_reeds`) | ○ 둘 | ○ 셋 | ○ 마천패, 패턴 셋 | ✕ 물·떠도는 배·역류 | △ | ○ 남녀 |
 | 무당산(무당) | ○ 2026-11-24 RG-01c 로 `tile_wudang_stone` 을 Resources 로 옮기고 ArtOf 한 줄(세기는 Unity 에서 눈으로). `tile_wudang_mountain` 은 그대로 Art/Tiles | △ 시트 둘(`wudang_temple`·`wudang_cliffs`) | ○ 흑백 쌍강시 | ○ 셋 | ○ 혈허진인, 패턴 셋 | ✕ 태극 바닥·운해 | △ | ○ 남녀 |
-| 화산(화산) | ○ | △ 시트 `huashan_cliff` | △ 매화검귀 — art_queue generated(`docs/art_trial` 에 시안), 아직 안 들임 | ○ 셋 | ○ 낙매검선의 검혼, 패턴 셋 | ✕ 벼랑길·낙석·매화 더미 | △ | ○ 남녀 |
-| 곤륜 설원(곤륜) | ○ | ✕ `props_kunlun_snow` art_queue todo | ○ 셋 | ○ 셋 | ○ 설무향, 패턴 셋 | ✕ 눈보라·얼음 바닥·모닥불 | △ | ○ 남녀 |
-| 십만대산(마교) | ○ | ✕ `props_sipmandaesan_altars` todo | ○ 셋 | ○ 셋 | ○ 혁련휘, 패턴 셋 | ✕ 혈제단·붉은 달 | △ | ○ 남녀 |
-| 봉마곡 혈지(종장) | ✕ `tile_bongmagok_ground` todo | ✕ `props_bongmagok_valley` todo | — | — | ○ 단목현 원화, 패턴은 `bosspatterns.final`(혈영 차례) | ✕ 차오르는 피(`rising_blood`) | △ 종장 세 곡 | — |
+| 화산(화산) | ○ | △ 시트 `huashan_cliff` | △ 매화검귀 — art_queue generated(`docs/art_trial` 에 시안), 아직 안 들임(2026-11-25 그대로) | ○ 셋 | ○ 낙매검선의 검혼, 패턴 셋 | ✕ 벼랑길·낙석·매화 더미 | △ | ○ 남녀 |
+| 곤륜 설원(곤륜) | ○ | △ 시트 `props_kunlun_snow` 만(2026-11-25 확인, imported) | ○ 셋 | ○ 셋 | ○ 설무향, 패턴 셋 | ✕ 눈보라·얼음 바닥·모닥불 | △ | ○ 남녀 |
+| 십만대산(마교) | ○ | △ 시트 `props_sipmandaesan_altars` 만(2026-11-25 확인) | ○ 셋 | ○ 셋 | ○ 혁련휘, 패턴 셋 | ✕ 혈제단·붉은 달 | △ | ○ 남녀 |
+| 봉마곡 혈지(종장) | ○ 2026-11-25 `tile_bongmagok_ground` 를 Resources 로 옮기고 ArtOf 한 줄(세기 0.4, Unity 에서 눈으로) | △ 시트 `props_bongmagok_valley` 만 | — | — | ○ 단목현 원화, 패턴은 `bosspatterns.final`(혈영 차례) | ✕ 차오르는 피(`rising_blood`) | △ 종장 세 곡 | — |
+
+2026-11-25 19시 덧붙임: 기획서에 값이 있는 지역 기믹은 이제 웹 합친 판에 다 있다(LG-01~05, 혈제단 WP-13b, 피바다 섬 WP-17) — 표의 '기믹 화면' ✕ 는 Unity 기준 그대로이고, Unity 줄은 RG-03U~05U·R-13U·R4-13b·R4-13c 에 있다. 놓는 자리가 없는 넷(우물·술독·시렁·수레와 장독)만 결정 대기 #67.
 
 ## 읽은 것
 
