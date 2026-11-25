@@ -2895,11 +2895,16 @@ function readMove() {
 // 시험용 자동 조종: 가까운 적은 피하고, 옆으로 돌며, 가까운 구슬·물건·범종은 줍는다. 사람보다 서툴다.
 function autopilot() {
   const p = G.player; let x = 0, y = 0, nearest = null, nd = 1e9;
-  const keep = G.boss ? 4.5 : 1.9; // 검이 닿는 거리를 유지한다
+  // 빙판 위(LG-05b): 멈추는 데 inertiaSeconds 가 걸리니 그동안 미끄러질 거리의 절반만큼 더 떨어져 다닌다(사람이 얼음에서 하듯)
+  const ice = G.iceOn && GIMW.iceFloor && GIMW.iceFloor.inertiaSeconds > 0 && onIceC(p.x, p.y);
+  const slide = ice ? G.stats.move * GIMW.iceFloor.inertiaSeconds * 0.5 : 0;
+  const keep = (G.boss ? 4.5 : 1.9) + slide; // 검이 닿는 거리를 유지한다
+  const ahead = ice ? GIMW.iceFloor.inertiaSeconds * 0.5 : 0;   // 빙판에선 미끄러지는 적이 곧 올 자리를 본다
   for (const e of G.enemies) {
-    const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy) || 1e-3;
+    const ex = e.x + (ahead && e.ivx != null ? e.ivx * ahead : 0), ey = e.y + (ahead && e.ivy != null ? e.ivy * ahead : 0);
+    const dx = p.x - ex, dy = p.y - ey, d = Math.hypot(dx, dy) || 1e-3;
     if (d < nd && e.type !== 'golden_toad') { nd = d; nearest = e; }
-    const danger = (e.boss ? 5 : e.elite ? 3.2 : 1.2) + e.r;
+    const danger = (e.boss ? 5 : e.elite ? 3.2 : 1.2) + e.r + slide;
     if (d < danger) { const w = (danger - d) / danger * (e.boss || e.elite ? 3 : 1); x += dx / d * w; y += dy / d * w; }
   }
   for (const pr of G.projs) if (pr.enemy) { const dx = p.x - pr.x, dy = p.y - pr.y, d = Math.hypot(dx, dy) || 1; if (d < 3) { x += -pr.vy / 6 * (3 - d); y += pr.vx / 6 * (3 - d); } }
@@ -2925,6 +2930,8 @@ function autopilot() {
   if (!best) for (const o of G.orbs) { const d = Math.hypot(o.x - p.x, o.y - p.y); if (d < bd) { bd = d; best = o; } }
   if (best && push < 0.5) { const d = Math.hypot(best.x - p.x, best.y - p.y) || 1; x += (best.x - p.x) / d; y += (best.y - p.y) / d; }
   if (!nearest && !best) { const a = G.t * 0.3; x = Math.cos(a); y = Math.sin(a); }
+  // 빙판 위: 지금 미끄러지는 쪽을 빼고 바라는 쪽을 더 세게 눌러 방향을 빨리 튼다
+  if (ice && p.ivx != null) { const sp = G.stats.move || 1, m = Math.hypot(x, y) || 1; x = x / m * 2 - p.ivx / sp; y = y / m * 2 - p.ivy / sp; }
   return [x, y];
 }
 
