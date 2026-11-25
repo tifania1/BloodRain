@@ -59,6 +59,8 @@ namespace BloodRain.Presentation.Meta
         static Sprite _chartArt; static bool _chartArtLoaded;
         static Sprite LoadChartArt() { _chartArtLoaded = true; return _chartArt = Resources.Load<Sprite>("Art/UI/ui_meridian_chart"); }
         static (string stat, float x, float y)[] Points => ChartArt != null ? ArtPoints : FigurePoints;
+        // 경맥 줄 색 — 원화가 있으면 그림의 남빛 경맥 줄과 겹쳐 지저분해 옅게(2026-11-25 PC GU-04Ua: 0.35 → 0.18)
+        static Color LineColor => new Color(0.55f, 0.16f, 0.12f, ChartArt != null ? 0.18f : 0.35f);
         static readonly HashSet<string> Big = new HashSet<string> { "Revival", "Amount", "DashCharges" };
         // 경맥 줄(차례대로 잇는다). 큰 혈을 다 뚫으면 그 혈이 든 줄이 한 번 빛난다
         static readonly string[][] Channels =
@@ -307,7 +309,7 @@ namespace BloodRain.Presentation.Meta
 
         Image Line(RectTransform chart, Vector2 a01, Vector2 b01)
         {
-            var l = MakeImage(chart, "경맥", new Color(0.55f, 0.16f, 0.12f, 0.35f), false);
+            var l = MakeImage(chart, "경맥", LineColor, false);
             var a = At(a01.x, a01.y); var b = At(b01.x, b01.y);
             var rt = l.rectTransform; rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = (a + b) * 0.5f;
@@ -374,7 +376,7 @@ namespace BloodRain.Presentation.Meta
             foreach (var (line, ch) in _lines)
             {
                 bool lit = ch == _flashChannel && k > 0f;
-                line.color = lit ? Color.Lerp(new Color(0.55f, 0.16f, 0.12f, 0.35f), new Color(1f, 0.85f, 0.35f, 1f), Mathf.Sin(k * Mathf.PI)) : new Color(0.55f, 0.16f, 0.12f, 0.35f);
+                line.color = lit ? Color.Lerp(LineColor, new Color(1f, 0.85f, 0.35f, 1f), Mathf.Sin(k * Mathf.PI)) : LineColor;
                 line.rectTransform.sizeDelta = new Vector2(line.rectTransform.sizeDelta.x, lit ? 6f : 3f);
             }
             // 고른 혈은 숨 쉬듯 테두리가 커졌다 작아진다
