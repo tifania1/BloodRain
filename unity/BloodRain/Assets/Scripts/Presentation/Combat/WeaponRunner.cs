@@ -285,7 +285,8 @@ namespace BloodRain.Presentation.Combat
             if (lr == null || lr.Life == null) return 1f;
             var sw = Hud.SecretWatch.Instance;
             float? secret = sw != null ? sw.Effects.AspectDamageBonus(s.Def.Aspect) : null;
-            return lr.Life.Loadout.Gauge.AspectDamageMultiplier(s.Def.Aspect, secret);
+            return lr.Life.Loadout.Gauge.AspectDamageMultiplier(s.Def.Aspect, secret)
+                * BloodRain.Presentation.Fx.TaijiLayer.DamageMultiplier(s.Def.Aspect); // RG-05U 무당산 태극 바닥 기운(반대 속성 +30%)
         }
 
         // LK-01Ua 연환: 켜진 연환의 값(아니면 null — 비급 잠김도 null). 상태는 LevelUpScreen.Synergy(복원한 비급까지 넘기는 같은 셈)를 0.5초마다 다시 셈
