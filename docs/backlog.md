@@ -86,6 +86,11 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] GX-03 2026-11-26 — 레벨업 뽑기 무게 × `gearOfferWeight`(Core `Gear.OfferWeight`, 쥔 병기 문파 시너지 구성원 카드에 등급 offerWeight)
 - [x] GX-04 2026-11-26 — `lordDown`: 그 땅 문파 병기를 쥐었으면 한 등급(`GradeUpIfSect`), 계정 첫 처치면 유품 병기(무명 철검, source relic:지역)를 그 자리에. 6단 조건(`gearSixth`, Core `IsSixth`)이면 대표 무공 칸에 '神'. 확인 `WebGearTests` 넷
 
+로드맵에서 채움, 2026-11-26 02시 둘째(12장 '천하 확장: 연표 화면과 이번 생의 목표' — 설계안 진행 순서 2 '연표 화면은 웹 시안으로 먼저 본다'. 겪음 기록은 Core·Unity 저장에 다 있는데 화면이 어디에도 없었다):
+- [x] CX-01 2026-11-26 — 웹 연표 화면: 빌드 `chronicleAll`(사건 열하나 전부), 한 생 판 `chronicleStep` 이 Core `Life.NoteChronicle` 처럼 사건 시각에 화면 대각선 절반 안이면(천하 전체 사건은 minRealm 이상이면) `G.witnessed`, 정산 때 혼 `m.chronicle`(Core `Soul.Chronicle`). 객잔 '연표' 단추·일시정지 '연표' 단추 → 가로 시각·세로 사건 자리 표, 겪은 사건은 먹 칸, 막은 위기는 주홍 '止', 모르는 칸은 비움. 확인 `WebChronicleTests`
+- [ ] CX-02 사람 결정 대기(decisions #70, 추천: 소문 = 그 사건 자리 땅을 밟아 본 혼이면 흐리게, 목표 = 침방에서 아직 못 막은 위기 하나, 막으면 처음 막은 몫 150 에 75 더) — 정해지면 Core `Soul`(소문·목표)·cheonha.json rebirthQi·기획서 12·10장·웹 연표 흐린 칸과 침방 목표 고르기, Unity 는 unity_tasks
+- [x] CX-03 2026-11-26 — unity_tasks '0-1. 다음 단계'에 CX-01U(Unity 연표 화면 — 객잔·일시정지, 웹 CX-01 표를 본보기로, `Soul.Chronicle`·`crisesBlocked`)
+
 ## 화면 집중 (2026-11-13 ~ 2026-11-24, 끝남)
 
 2026-11-24 사람이 풀었다. 아래 열린 항목(사람 눈이 필요한 것, PC 몫)은 지우지 않고 이어 간다. 새 일은 위 '다음 단계' 절에서. 11-13 당시 규칙: 숭산 한 생(서장 → 절정, 원각)이 예쁘고 손맛 날 때까지 이 절만 했다. Unity 몫은 unity_tasks '0. 화면 집중'.

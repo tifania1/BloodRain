@@ -115,6 +115,7 @@ def data_blob() -> str:
         "crush": drop_notes(load("cheonha")["crush"]),
         "breakthrough": drop_notes(load("cheonha")["breakthrough"]),
         "mastery": drop_notes(load("cheonha")["mastery"]),
+        "chronicleAll": [{k: e.get(k) for k in ("id", "kind", "atSeconds", "region", "pos", "offset", "minRealm", "everywhere", "nameKo", "placeKo")} for e in load("chronicle")["events"]],   # 연표 화면(CX-01, 12장): 사건 전부
         "gear": drop_notes(load("gear")),   # 문파 병기(GX-01~04, 8장): 병기 열·등급 넷·떨어뜨리는 확률
         # 축척 시험(WP-12)이 1장 마당을 중원 한 장의 숭산 자리에 놓고 둘레 지명을 그린다
         "regions": [{"id": r["id"], "nameKo": r["nameKo"], "hanja": r["hanja"], "pos": r["pos"], "chapter": r.get("chapter"), "final": bool(r.get("final")), "gimmicks": r.get("gimmicks", []), "density": r["density"], "boss": r.get("boss"), "sealStone": r.get("sealStone"), "sect": r.get("sect")} for r in load("cheonha")["regions"]],

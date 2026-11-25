@@ -319,7 +319,7 @@ button { touch-action: manipulation; }
       <p class="mok" id="innmok" hidden></p>
       <div class="cards" id="inncards"></div>
       <canvas id="innmap" width="600" height="390" style="width:100%;max-width:600px;display:block;margin:10px auto;border:1px solid #1a1a1a" role="img" aria-label="침방 벽의 중원 지도"></canvas>
-      <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button><button class="b" id="indaily" type="button" hidden>일일 도전</button><button class="b" id="inrush" type="button" hidden>보스 연전</button></div>
+      <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button><button class="b" id="chronbtn" type="button" hidden>연표</button><button class="b" id="indaily" type="button" hidden>일일 도전</button><button class="b" id="inrush" type="button" hidden>보스 연전</button></div>
       <div class="row" id="indirect" hidden></div>
       <div class="row" id="inwake" hidden></div>
       <div class="subtle" id="innqi"></div>
@@ -397,6 +397,7 @@ button { touch-action: manipulation; }
       <div class="row">
         <button class="b main" id="resume" type="button" data-s="ui.pause.resume">계속하기</button>
         <button class="b" id="dexbtn2" type="button">비급 도감</button>
+        <button class="b" id="chronbtn2" type="button" hidden>연표</button>
         <button class="b" id="zuohwa" type="button" data-s="ui.settle.end.zuohwa" hidden>좌화 坐化</button>
         <button class="b" id="quit" type="button" data-s="ui.pause.quit">객잔으로</button>
       </div>
@@ -427,6 +428,14 @@ button { touch-action: manipulation; }
     </div>
   </div>
 
+  <div class="screen veil" id="chron" hidden>
+    <div class="panel">
+      <div class="brush" style="font-size:52px">천하 연표</div>
+      <div class="subtle" id="chronsum"></div>
+      <div id="chronbody" style="width:100%; overflow-x:auto"></div>
+      <button class="b main" id="chronclose" type="button">닫기 <small>Esc</small></button>
+    </div>
+  </div>
   <div class="screen veil" id="dex" hidden>
     <div class="panel">
       <div class="brush" style="font-size:52px">비급 도감</div>
@@ -3093,6 +3102,7 @@ function update(dt) {
   shadowTick(dt);           // 혈마의 그림자(현경 뒤 봉인석이 모자랄 때)
   trackChRegion();          // 밟은 땅(그리기 고리 밖 sim 에서도 정예·무리·고유 적이 땅을 알게)
   crisisStep(dt);           // 문파의 위기(GU-11m): 겪음·버팀·무너짐
+  chronicleStep();          // 연표 겪음(CX-01, Core Life.NoteChronicle)
   regionGimmicksStep(dt);   // 독안개·낙석(WP-13b)
   ultStep(dt);   // 오의 박자·천마해체(WP-25)
   eliteShapesStep(dt);      // 정예 돌진·검진 고리·분신(WP-13d)
@@ -4442,6 +4452,52 @@ function crisisDensity(regionId) {
   for (const { e } of CRISES) if ((G.crisis || {})[e.id] === 'fallen') { add += CRISIS.fallenEachDensity || 0; if (e.region === regionId) add += CRISIS.fallenRegionDensity || 0; }
   return add;
 }
+// 천하 연표(CX-01, 기획서 12장 '천하 확장: 연표 화면과 이번 생의 목표', 7장 '천하 연표', chronicle.json events — Core Life.NoteChronicle·Chronicle.Position·RequiredRealm).
+// 한 생 판에서 사건 시각이 지나는 순간 그 자리가 화면 대각선 절반 안이면 '겪음'(천하 전체 사건은 minRealm 에 올라 있으면). 서장·보스 연전은 안 봄. 혼 m.chronicle 에 쌓인다
+const CHRON_ALL = (DATA.chronicleAll || []).map(e => {
+  let x = null, y = null;
+  if (!e.everywhere) {
+    if (e.pos) [x, y] = toLocal(e.pos);
+    else { const r = CH_REGS.find(q => q.id === e.region); if (r) { x = r.x + ((e.offset || [])[0] || 0); y = r.y + ((e.offset || [])[1] || 0); } }
+  }
+  return Object.assign({}, e, { x, y });
+}).filter(e => e.everywhere || e.x != null);
+const chronMinRealm = e => (e.minRealm ? Math.max(0, REALMS.findIndex(r => r.id === e.minRealm)) : 0);
+function chronicleStep() {
+  if (!G.body || !SCALE_MODE || isPro() || G.rush || !CHRON_ALL.length) return;
+  const now = G.gm * 60, from = G.chronFrom == null ? -1 : G.chronFrom; G.chronFrom = now;
+  const U = worldU(), px = G.player.x * U, py = G.player.y * U, R = viewDiag() * U * 0.5, ri = REALMS.indexOf(G.realm);
+  for (const e of CHRON_ALL) {
+    if (e.atSeconds <= from || e.atSeconds > now) continue;
+    const seen = e.everywhere ? ri >= chronMinRealm(e) : Math.hypot(e.x - px, e.y - py) <= R;
+    if (seen && !(G.witnessed = G.witnessed || []).includes(e.id)) G.witnessed.push(e.id);
+  }
+}
+let chronReturn = null;
+function openChron() {
+  chronReturn = overlay;
+  if (overlay === 'pause') $('pause').hidden = true;
+  if (running) overlay = 'chron';
+  renderChron(); $('chron').hidden = false; focusFirst($('chronclose'));
+}
+function closeChron() {
+  $('chron').hidden = true;
+  if (chronReturn === 'pause') { overlay = 'pause'; $('pause').hidden = false; } else if (running) overlay = null;
+  chronReturn = null;
+}
+// 가로는 시각, 세로는 땅(사건 자리 이름). 겪은 사건은 먹으로 진하게, 모르는 칸은 비워 둔다. 막은 문파의 위기는 주홍 낙관 '止'.
+// '소문으로 들은 사건(흐리게)'은 무엇이 소문인지 기획서에 없어 아직 없다(decisions #70)
+function renderChron() {
+  const m = soulLoad(), known = new Set([...(m.chronicle || []), ...((G && G.witnessed) || [])]), blocked = new Set([...(m.crisesBlocked || []), ...((G && G.crisesBlocked) || [])]);
+  const times = [...new Set(CHRON_ALL.map(e => e.atSeconds))].sort((a, b) => a - b), places = [...new Set(CHRON_ALL.map(e => e.placeKo))];
+  const mmss = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  const cell = (pl, t) => CHRON_ALL.filter(e => e.placeKo === pl && e.atSeconds === t).map(e => known.has(e.id)
+    ? `<div style="background:#1A1A1A;color:#EFE6D2;padding:3px 5px;font-size:12px;line-height:1.3">${e.nameKo}${blocked.has(e.id) ? ' <b style="color:#E2685E">止</b>' : ''}</div>`
+    : '').join('');
+  $('chronsum').textContent = `겪은 사건 ${CHRON_ALL.filter(e => known.has(e.id)).length} / ${CHRON_ALL.length} · 모르는 칸은 비워 둔다`;
+  $('chronbody').innerHTML = `<table style="border-collapse:collapse;font-size:12px;min-width:100%"><tr><th></th>${times.map(t => `<th style="padding:2px 4px;font-weight:normal">${mmss(t)}</th>`).join('')}</tr>`
+    + places.map(pl => `<tr><th style="text-align:right;padding:2px 6px;font-weight:normal;white-space:nowrap">${pl}</th>${times.map(t => `<td style="border:1px dashed #b9ad94;padding:2px;min-width:64px;vertical-align:top">${cell(pl, t)}</td>`).join('')}</tr>`).join('') + '</table>';
+}
 function crisisStep(dt) {
   if (!G.body || !SCALE_MODE || isPro() || !CRISES.length || G.rush) return;
   const C = G.crisis = G.crisis || {}, H = G.crisisHeld = G.crisisHeld || {}, now = G.gm * 60, U = worldU();
@@ -4521,7 +4577,7 @@ function lifeSettle() {
   const newWeapons = DATA.weapons.filter(w => !soulUnlocked(s0, w.unlock) && (newUnlocks.includes(w.unlock) || (w.unlock.startsWith('boss:') && firstBoss.has(BOSS_OF_REGION[w.unlock.slice(5)])))).map(w => w.id);
   // 찢긴 비급(20장, Core LifeLog.NoteSynergy → Soul.EndLife newTorn): 이번 생에 조건을 갖춘 잠긴 비급 가운데 처음 오르는 것
   const newTorn = [...G.syn.torn].filter(id => !(s0.torn || []).includes(id) && !(s0.restored || []).includes(id));
-  return { rows, total, crystal, top, newVisits, newRealms, newBlocks, newUnlocks, newWeapons, newTorn, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, newCostumes, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, mastered: [...new Set(G.weapons.filter(w => w.lv >= B.levels.weaponMax).map(w => w.id))].sort(), sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
+  return { rows, total, crystal, top, newVisits, newRealms, newBlocks, witnessed: (G.witnessed || []).slice(), newUnlocks, newWeapons, newTorn, talis: G.talis || 0, toads: G.toads || 0, extremeKill: !!G.extremeKill, newTitles, newCostumes, lordKills: LK, manus: G.manus || 0, finalClear: !!G.finalClear, ending: G.ending || null, mastered: [...new Set(G.weapons.filter(w => w.lv >= B.levels.weaponMax).map(w => w.id))].sort(), sect: G.body ? G.body.id : null, topId: B.realms[top].id, letter: !!G.letterPicked, endWay: G.endWay || 'fallen', whisper: !!G.whisperTaken, hermit: !!(G.enc && G.enc.hermit && G.enc.hermit.met), shadow: !!G.shadowChased };
 }
 function recordLife(st) {
   const m = soulLoad();
@@ -4532,6 +4588,7 @@ function recordLife(st) {
   if (st.sect && G.pickOrder && G.pickOrder.length) { m.gugyeol = m.gugyeol && typeof m.gugyeol === 'object' ? m.gugyeol : {}; m.gugyeol[st.sect] = G.pickOrder.slice(); }   // 구결: 문파마다 마지막 생(Core Soul.EndLife)
   m.crossings = m.crossings && typeof m.crossings === 'object' ? m.crossings : {};
   for (const r of B.realms.slice(1, st.top + 1)) m.crossings[r.id] = (m.crossings[r.id] || 0) + 1;   // 전생의 공력: 이번 생에 넘은 구간마다 +1(Core Soul.EndLife)
+  m.chronicle = Array.isArray(m.chronicle) ? m.chronicle : []; for (const id of st.witnessed || []) if (!m.chronicle.includes(id)) m.chronicle.push(id);   // 연표 겪음(CX-01, Core Soul.Chronicle)
   m.crisesBlocked = Array.isArray(m.crisesBlocked) ? m.crisesBlocked : []; for (const id of st.newBlocks || []) if (!m.crisesBlocked.includes(id)) m.crisesBlocked.push(id);   // 문파의 위기(GU-11m)
   // 땅의 주인(WP-13e): 봉인석·처치 수·열린 문파(시안 endLife 와 같은 칸)
   m.stones = Array.isArray(m.stones) ? m.stones : []; m.bossKills = m.bossKills && typeof m.bossKills === 'object' ? m.bossKills : {};
@@ -5082,6 +5139,7 @@ function renderInn() {
     b.onclick = () => chooseLife(i); b.onmouseenter = b.onfocus = () => drawInnMap(m, i); box.appendChild(b);
   });
   drawInnMap(m, 0);
+  $('chronbtn').hidden = !CHRON_ALL.length;   // 연표 화면(CX-01): 객잔
   const rr = $('innreroll'), have = upgEffect(m, 'rerolls');
   rr.hidden = !m.lives || !have; rr.disabled = innRerolls <= 0;
   rr.innerHTML = `다시 고르기 <small>남은 ${innRerolls}/${have} · R</small>`;
@@ -6733,7 +6791,7 @@ function togglePause(force) {
         + `<p>${BEHAVIOR_TEXT[d.behavior]} · 짝 심법 ${P_BY_ID[d.pairPassive].nameKo}${sc ? ` · 진전 ${sc.nameKo}` : ''}${ln.length ? ` · 연환 ${ln.map(l => `「${l.nameKo}」${G.syn.links.has(l.id) ? '(완성)' : ''}`).join(' ')}` : ''}</p></details>`; }).join('')
       + (G.insights.length ? `<p class="subtle">깨달음: ${G.insights.map(id => INSIGHTS.find(i => i.id === id).name).join(', ')}</p>` : '')
       + synSummaryHtml() + evoTableHtml();
-    $('zuohwa').hidden = !G.body;
+    $('zuohwa').hidden = !G.body; $('chronbtn2').hidden = !G.body || !CHRON_ALL.length;   // 연표 화면(CX-01): 일시정지
     $('pause').hidden = false; focusFirst($('resume'));
   } else { overlay = null; $('pause').hidden = true; lastTs = performance.now(); }
 }
@@ -6793,8 +6851,9 @@ window.addEventListener('keydown', e => {
   input.keys.add(e.code);
   if (overlay === 'intro') { if (e.code === 'Escape') endIntro(); else if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); nextIntro(); } return; }   // 인트로(WP-55)
   if (!running && overlay === 'inn') { const n = parseInt(e.key, 10); if (n >= 1 && n <= innCands.length) chooseLife(n - 1); if (e.code === 'KeyR') innReroll(); return; }   // 침방(WP-14d)
-  if (!running) { if (!$('dex').hidden) { if (e.code === 'Escape') closeDex(); return; } if (e.code === 'Enter' && !$('title').hidden) startRun('quick'); return; }
+  if (!running) { if (!$('chron').hidden) { if (e.code === 'Escape') closeChron(); return; } if (!$('dex').hidden) { if (e.code === 'Escape') closeDex(); return; } if (e.code === 'Enter' && !$('title').hidden) startRun('quick'); return; }
   if (overlay === 'dex') { if (e.code === 'Escape' || e.code === 'Enter') closeDex(); return; }
+  if (overlay === 'chron') { if (e.code === 'Escape' || e.code === 'Enter') closeChron(); return; }
   if (overlay === 'find') { if (['Enter', 'Space', 'Escape'].includes(e.code)) { e.preventDefault(); closeOverlay('find'); } return; }
   if (overlay === 'levelup') {
     if (arrowFocus(e, $('levelup'))) return;
@@ -6880,6 +6939,7 @@ $('indaily').addEventListener('click', () => startDaily());
 $('inrush').addEventListener('click', () => toggleRush());
 $('inntitle').addEventListener('click', () => toTitle());
 $('totitle').addEventListener('click', toTitle);
+$('chronbtn').addEventListener('click', openChron); $('chronbtn2').addEventListener('click', openChron); $('chronclose').addEventListener('click', closeChron);
 $('dexbtn').addEventListener('click', openDex); $('dexbtn2').addEventListener('click', openDex); $('dexclose').addEventListener('click', closeDex);
 $('findok').addEventListener('click', () => closeOverlay('find'));
 $('demobtn').addEventListener('click', () => { ensureAudio(); startDemo(); });
