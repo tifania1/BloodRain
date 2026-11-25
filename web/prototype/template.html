@@ -3339,7 +3339,7 @@ function castPattern(e, P, dmg, dx, dy) {
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       const cx = P.center === 'boss' ? e.x : G.player.x, cy = P.center === 'boss' ? e.y : G.player.y;   // center boss(수귀 우두머리·설랑 왕)면 제 둘레
-      for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, Math.max(1.5, P.scatter || 0)); spawnEnemy(P.summon, cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
+      for (let i = 0; i < P.count; i++) { const a = rand(0, TAU), r = rand(1.5, Math.max(1.5, P.scatter || 0)); spawnEnemy(P.summon, cx + Math.cos(a) * r, cy + Math.sin(a) * r, { summon: true }); }   // summon: 주인·정예가 부른 것(보스 연전 '잡몹 없음'과 갈라 봄)
       sfx('gong');
     } });
   } else if (P.shape === 'summon_ring') {
@@ -3348,7 +3348,7 @@ function castPattern(e, P, dmg, dx, dy) {
     G.zones.push({ delay: P.telegraphSeconds, apply: () => {
       if (e.dead) return;
       const cx = G.player.x, cy = G.player.y;
-      for (let i = 0; i < P.count; i++) { const a = i / P.count * TAU, m = spawnEnemy(P.summon || 'sigang', cx + Math.cos(a) * P.radius, cy + Math.sin(a) * P.radius); if (P.summonSpeed) m.speed = P.summonSpeed / 100 * MOVE; m.xp = 0; }
+      for (let i = 0; i < P.count; i++) { const a = i / P.count * TAU, m = spawnEnemy(P.summon || 'sigang', cx + Math.cos(a) * P.radius, cy + Math.sin(a) * P.radius, { summon: true }); if (P.summonSpeed) m.speed = P.summonSpeed / 100 * MOVE; m.xp = 0; }
       sfx('gong');
     } });
   } else if (P.shape === 'pull_line') {
@@ -3532,7 +3532,7 @@ function bossAI(e, dt, dx, dy, d) {
     e.timer = e.phase2 ? 3.2 : 4.2;
     if (pat === 'cone') { e.cur = 'cone'; e.windup = 0.8; e.ca = Math.atan2(dy, dx); foeEffect('cone', e.x, e.y, { a: e.ca, r: 9, life: 0.8 }); }
     else if (pat === 'arhat') {
-      for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; spawnEnemy('mogin_nahan', p.x + Math.cos(a) * 8, p.y + Math.sin(a) * 8, { behavior: 'chase', speed: 0.5 * MOVE }); }
+      for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; spawnEnemy('mogin_nahan', p.x + Math.cos(a) * 8, p.y + Math.sin(a) * 8, { behavior: 'chase', speed: 0.5 * MOVE, summon: true }); }
       toast('십팔나한진', '한 곳을 뚫고 나가라');
     } else {
       for (let i = 0; i < 3; i++) { const bx = p.x + rand(-2.5, 2.5), by = p.y + rand(-2.5, 2.5); G.zones.push({ delay: 1.2, mark: { x: bx, y: by, r: 1.8 }, apply: () => { if (e.dead) return; foeEffect('boom', bx, by, { r: 1.8, life: 0.3 }); sfx('gong'); if (Math.hypot(G.player.x - bx, G.player.y - by) < 1.8) hurtPlayer(30); const BD = ((DATA.lordPatterns || {}).wongak || { patterns: [] }).patterns.find(x => x.leaveGimmick === 'bell'); if (BD) G.bells.push({ x: bx, y: by, cd: 0, life: BD.leaveSeconds || null, uses: BD.leaveUses || null, drop: true }); } }); }   // 떨어진 범종이 남는다(6장 범종 낙하 줄, bosspatterns.json bell_drop_x3)

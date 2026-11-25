@@ -573,7 +573,7 @@ async function rushRun(browser, base) {
       const after = soulLoad(), b0 = JSON.parse(before);
       if (!(after.bossRushBest >= 0)) bad.push('가장 빠른 시간이 혼에 안 남음');
       delete after.bossRushBest; if (JSON.stringify(after) !== JSON.stringify(b0)) bad.push('끝난 뒤 혼이 가장 빠른 시간 말고도 바뀜');
-      if (G.enemies.some(x => !x.boss && !x.dead)) bad.push('잡몹이 나옴');
+      { const extra = G.enemies.filter(x => !x.boss && !x.dead && !x.summon && !x.cloneOf); if (extra.length) bad.push('잡몹이 나옴 ' + [...new Set(extra.map(x => x.type + (x.xp === 0 ? '(xp0)' : '')))].join(',')); }
       return { bad, n: seen.length };
     } catch (err) { return { bad: ['오류: ' + err.message + ' ' + (err.stack || '').split('\n')[1]], n: 0 }; }
   });
