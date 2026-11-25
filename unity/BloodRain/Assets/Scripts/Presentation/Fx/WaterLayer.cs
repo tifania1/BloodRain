@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BloodRain.Core.Combat;
 using BloodRain.Core.Data;
 using BloodRain.Core.World;
 using BloodRain.Sim;
@@ -20,9 +21,8 @@ namespace BloodRain.Presentation.Fx
         const float WaterAlpha = 0.9f;
         static readonly string[] BoatArt = { "prop_covered_boat", "prop_cargo_raft" };
 
-        Material _waterMat, _edgeMat;
+        Material _waterMat, _edgeMat, _waveMat;
         Mesh _water, _edge;
-        MaterialPropertyBlock _mpb;
         static readonly int IdTint = Shader.PropertyToID("_Tint");
         static readonly int IdDissolve = Shader.PropertyToID("_Dissolve");
 
@@ -49,9 +49,10 @@ namespace BloodRain.Presentation.Fx
             if (tex != null) tex.wrapMode = TextureWrapMode.Repeat;
             _waterMat = new Material(map.material) { name = "장강 물길", renderQueue = 2987, mainTexture = tex != null ? tex : Texture2D.whiteTexture };
             _edgeMat = new Material(map.material) { name = "장강 물가 테", renderQueue = 2986, mainTexture = Texture2D.whiteTexture };
+            _waveMat = new Material(map.material) { name = "역류 파도", renderQueue = 2989, mainTexture = Texture2D.whiteTexture };
             _water = new Mesh { name = "물길" }; _water.MarkDynamic();
             _edge = new Mesh { name = "물가" }; _edge.MarkDynamic();
-            _mpb = new MaterialPropertyBlock();
+            _mpbs = new[] { new MaterialPropertyBlock(), new MaterialPropertyBlock(), new MaterialPropertyBlock(), new MaterialPropertyBlock() };
             _walk = new WaterWalk(DataBoot.Data.Gimmicks.Water);
             _pc = runner != null && runner.player != null ? runner.player.GetComponent<PlayerController>() : null;
             if (_pc != null) _pc.Dashed += OnDash;
@@ -95,22 +96,140 @@ namespace BloodRain.Presentation.Fx
             if (_pc != null)
                 _pc.TerrainMultiplier = WaterGimmick.MoveSpeedMultiplier(g.Water, PlayerInWater && !PlayerOnBoat, false, _walk.Active, life.Body.SectTrait.IgnoresWater);
             SlowEnemies(life, g, k);
+            TickWave(life, g, k, wp, view);
+        }
+
+        // ---- 역류 파도(gimmicks reverseWave) ----
+        //   한 생 시계로 예고가 시작될 때 장강 수로에 서 있으면 한 번: 예고 telegraphSeconds 동안 강물이 붉어지고(웹 reverseWaveStep),
+        //   그 뒤 폭 width 파도 앞머리가 하류에서 상류로(directionDegrees) 플레이어 뒤 화면 대각선 0.55 배에서 출발해 그 두 배를 간다(SweepWave 와 같은 꼴).
+        //   플레이어는 한 번 최대 기혈 10%(배 위·경공 무적이면 안 맞음), 잡몹은 쓰러지고 정예·보스는 지나는 동안 나눠 5%.
+        float _lastSec = -1f;
+        bool _waveOn, _waveHitPlayer;
+        float _waveWarn, _waveMoved, _waveLen;
+        System.Numerics.Vector2 _waveFront;
+        Mesh _quad;
+        public bool WaveTelegraph => _waveOn && _waveWarn > 0f;
+        public bool WaveMoving => _waveOn && _waveWarn <= 0f;
+        public int WaveKills { get; private set; }
+
+        bool _forceWave;
+        /// <summary>시험: 다음 프레임에 역류 파도를 띄운다(한 생 2분을 안 기다리게).</summary>
+        public void ForceWave() => _forceWave = true;
+
+        void TickWave(BloodRain.Core.Run.Life life, GimmicksDef g, float k, System.Numerics.Vector2 wp, float view)
+        {
+            var def = g.ReverseWave;
+            float now = life.Minutes * 60f;
+            if (_forceWave || (_lastSec >= 0f && !_waveOn && ReverseWaveGimmick.StartsBetween(def, _lastSec, now) > 0 && HereHas(life, def.Id)))
+            {
+                _forceWave = false;
+                _waveOn = true; _waveHitPlayer = false;
+                _waveWarn = def.TelegraphSeconds;
+                float back = view * SweepWave.StartViewMultiple;
+                _waveFront = wp - ReverseWaveGimmick.Direction(def) * back;
+                _waveLen = back * 2f; _waveMoved = 0f;
+            }
+            _lastSec = now;
+            if (!_waveOn) return;
+            float dt = Time.deltaTime;
+            if (_waveWarn > 0f) { _waveWarn -= dt; return; }
+            var ws = WorldScale.Current;
+            float speed = ws.Speed(ReverseWaveGimmick.SpeedMetersPerSecond(def, DataBoot.Data.Balance.Stats.MoveBase));
+            var dir = ReverseWaveGimmick.Direction(def);
+            _waveFront += dir * speed * dt; _waveMoved += speed * dt;
+            if (_waveMoved >= _waveLen) { _waveOn = false; return; }
+            // 플레이어
+            var vitals = runner.vitals;
+            if (!_waveHitPlayer && vitals != null && ReverseWaveGimmick.Hits(def, _waveFront, wp, k))
+            {
+                _waveHitPlayer = true;
+                if (!ReverseWaveGimmick.Immune(PlayerOnBoat, _pc != null && _pc.Invulnerable))
+                    vitals.Drain(ReverseWaveGimmick.Damage(def, GimmickTargetKind.Player, vitals.MaxHealth));
+            }
+            // 적: 잡몹은 쓰러짐, 정예·보스는 띠를 지나는 동안 나눠서(띠 폭 / 속도 초에 걸쳐 합이 5%)
+            var en = runner.enemies;
+            var sim = en != null ? en.Sim : null;
+            if (sim == null) return;
+            float share = Mathf.Clamp01(speed * dt / Mathf.Max(0.01f, def.Width * k));
+            for (int i = sim.Count - 1; i >= 0; i--)
+            {
+                var ag = sim.Get(i);
+                if (ag.Health <= 0f) continue;
+                if (!ReverseWaveGimmick.Hits(def, _waveFront, WorldCoords.FromUnity(new Vector2(ag.Pos.x, ag.Pos.y)), k)) continue;
+                var ed = en.DefOf(ag.Kind);
+                var kind = ed != null && ed.Family == "boss" ? GimmickTargetKind.Boss : ed != null && ed.Family == "elite" ? GimmickTargetKind.Elite : GimmickTargetKind.Normal;
+                if (kind == GimmickTargetKind.Normal) { en.Kill(i); WaveKills++; continue; }
+                ag.Health -= ReverseWaveGimmick.Damage(def, kind, ag.MaxHealth) * share;
+                if (ag.Health <= 0f) { en.Kill(i); continue; }
+                sim.Set(i, ag);
+            }
+        }
+
+        static bool HereHas(BloodRain.Core.Run.Life life, string gimmick)
+        {
+            foreach (var r in life.Regions.All)
+                if (r.Id == life.RegionId) return r.Gimmicks != null && r.Gimmicks.Contains(gimmick);
+            return false;
         }
 
         void LateUpdate()
         {
-            if (!_any || _water == null) return;
-            Draw(_edgeMat, _edge, new Color(0.16f, 0.2f, 0.21f, 0.32f));
-            Draw(_waterMat, _water, new Color(1f, 1f, 1f, WaterAlpha));
+            if (_water == null) return;
+            if (_any)
+            {
+                Draw(_edgeMat, _edge, new Color(0.16f, 0.2f, 0.21f, 0.32f));
+                // 예고 동안 강물이 붉어짐(숨쉬듯 두 번)
+                var tint = new Color(1f, 1f, 1f, WaterAlpha);
+                if (WaveTelegraph)
+                {
+                    float t = 1f - _waveWarn / Mathf.Max(0.01f, DataBoot.Data.Gimmicks.ReverseWave.TelegraphSeconds);
+                    float r = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2f));
+                    tint = Color.Lerp(tint, new Color(1f, 0.42f, 0.36f, WaterAlpha), r);
+                }
+                Draw(_waterMat, _water, tint);
+            }
+            if (WaveMoving) DrawWave();
         }
 
-        void Draw(Material m, Mesh mesh, Color tint)
+        // 파도 앞머리: 나아가는 쪽에 수직인 긴 띠 — 짙은 물빛 몸통 위에 흰 물보라 줄(웹 '흰 물보라 앞머리')
+        void DrawWave()
         {
-            _mpb.Clear();
-            _mpb.SetVector(IdTint, new Vector4(tint.r, tint.g, tint.b, tint.a));
-            _mpb.SetFloat(IdDissolve, 0f);
-            var rp = new RenderParams(m) { matProps = _mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, new Vector3(1e7f, 1e7f, 10f)) };
-            Graphics.RenderMesh(rp, mesh, 0, Matrix4x4.Translate(new Vector3(0f, 0f, 0.55f)));
+            if (_quad == null) _quad = MakeQuad();
+            var def = DataBoot.Data.Gimmicks.ReverseWave;
+            var ws = WorldScale.Current;
+            float k = runner.Life.Scale.Factor(runner.Life.Realm);
+            float w = def.Width * k, len = ws.Scale.ViewDiagonal(ws.Level) * 1.3f;
+            var dir = ReverseWaveGimmick.Direction(def);
+            var ud = new Vector2(dir.X, -dir.Y); // 세계 y 가 아래로
+            float ang = Mathf.Atan2(ud.y, ud.x) * Mathf.Rad2Deg;
+            var c = WorldCoords.ToUnity(_waveFront);
+            var rot = Quaternion.Euler(0f, 0f, ang);
+            Draw(_waveMat, _quad, new Color(0.18f, 0.32f, 0.36f, 0.55f), Matrix4x4.TRS(new Vector3(c.x - ud.x * w * 0.35f, c.y - ud.y * w * 0.35f, 0.5f), rot, new Vector3(w * 1.3f, len, 1f)));
+            Draw(_waveMat, _quad, new Color(0.96f, 0.98f, 1f, 0.85f), Matrix4x4.TRS(new Vector3(c.x + ud.x * w * 0.3f, c.y + ud.y * w * 0.3f, 0.49f), rot, new Vector3(w * 0.4f, len, 1f)));
+        }
+
+        MaterialPropertyBlock[] _mpbs; // Start 에서 만든다(필드 초기화에선 못 만듦)
+        int _mpbAt;
+
+        static Mesh MakeQuad()
+        {
+            var m = new Mesh { name = "파도 판" };
+            m.SetVertices(new List<Vector3> { new Vector3(-.5f, -.5f), new Vector3(-.5f, .5f), new Vector3(.5f, .5f), new Vector3(.5f, -.5f) });
+            m.SetUVs(0, new List<Vector2> { new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0) });
+            m.SetTriangles(new[] { 0, 1, 2, 0, 2, 3 }, 0);
+            return m;
+        }
+
+        void Draw(Material m, Mesh mesh, Color tint) => Draw(m, mesh, tint, Matrix4x4.Translate(new Vector3(0f, 0f, 0.55f)));
+
+        void Draw(Material m, Mesh mesh, Color tint, Matrix4x4 at)
+        {
+            var mpb = _mpbs[_mpbAt++ & 3]; // 한 프레임에 네 번까지 그려 블록을 나눠 둔다
+            mpb.Clear();
+            mpb.SetVector(IdTint, new Vector4(tint.r, tint.g, tint.b, tint.a));
+            mpb.SetFloat(IdDissolve, 0f);
+            var rp = new RenderParams(m) { matProps = mpb, layer = gameObject.layer, worldBounds = new Bounds(Vector3.zero, new Vector3(1e7f, 1e7f, 10f)) };
+            Graphics.RenderMesh(rp, mesh, 0, at);
         }
 
         // 띠 모양 메시를 새로 짓는다. 지역마다 물(gimmicks water)이 있으면 그 원점의 띠 j 를 BandRows 로 고르고,
