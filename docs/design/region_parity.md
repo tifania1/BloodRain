@@ -29,6 +29,23 @@
 
 2026-11-25 19시 덧붙임: 지역 소품 시트 열한 장(개방은 PC 가 04시에)을 다 낱장으로 나눔(RG-01e·f·g) — 표의 '지역 소품' △ 는 이제 '낱장 있음, PropLayer 지역 벌(RG-01U ②)만 남음'으로 읽는다.  기획서에 값이 있는 지역 기믹은 이제 웹 합친 판에 다 있다(LG-01~05, 혈제단 WP-13b, 피바다 섬 WP-17) — 표의 '기믹 화면' ✕ 는 Unity 기준 그대로이고, Unity 줄은 RG-03U~05U·R-13U·R4-13b·R4-13c 에 있다. 놓는 자리가 없는 넷(우물·술독·시렁·수레와 장독)만 결정 대기 #67.
 
+## 지역 소품 벌 추천(2026-11-25 19시 클라우드, RG-01U ② 에 붙여 쓸 표)
+
+`PropLayer.ArtIds` 는 종류(나무·집·전각·산) × 벌 셋 = 열두 칸이다. 지역마다 아래 열두 장을 쓰고, 줄에 없는 지역(청운진·숭산)과 빈 칸은 지금 벌 그대로. 이름은 `Art/Props/Parts/prop_<이름>.png`. 눈으로 보고 바꿔도 된다(그림 고르기는 추천일 뿐).
+기믹 그림으로 남겨 둘 낱장은 벌에 넣지 않았다: blood_altar·blood_altar_broken(혈제단), plum_petal_heap(매화 더미), campfire_ring(모닥불), ice_sheet(빙판), plank_walkway(잔도), poison_pond(독 웅덩이), wine_jar_pile(술독), sword_pavilion(검각 시렁 자리), roofed_well(우물 — 청운진 것이 따로 있으면 그쪽).
+
+| 지역 | 나무 셋 | 집 셋 | 전각 셋 | 산 셋 |
+|---|---|---|---|---|
+| gaebang_hq | pine_old · shrub · pine_gnarled | mat_lean_to · rag_awning · huts_thatched | shrine_bridge · cook_fire_pot · village_house | 지금 벌 |
+| namgung_manor | pine_old · pine_gnarled · pine_cliff | white_wall · stone_lions · village_house | manor_gate · lotus_pavilion · temple_side_hall | 지금 벌 |
+| danggata | bamboo_clump · bamboo_brush · bamboo_fallen | herb_store_stilts · poison_jar_row · bamboo_fence | tang_clan_hall · rock_violet_fungus · temple_side_hall | 지금 벌 |
+| janggang | willow_water · reed_bed · reed_clump | covered_boat · cargo_raft · rope_oars | river_pier · river_watchtower · sunken_boat | river_stones · far_peak · peak_snow |
+| wudangsan | pine_ledge · pine_cliff · pine_old | sitting_rock · mossy_boulders · incense_cauldron | taoist_hall · round_pavilion · blank_stele | misty_crag · far_peak · misty_crag |
+| huashan | plum_tree · pine_cliff · pine_gnarled | granite_boulder · loose_rocks · boulder_mossy | 지금 벌 | 지금 벌 |
+| kunlun | frosted_pines · pine_cliff · frosted_pines | snow_crate · snow_gate_pillar · huts_thatched | 지금 벌 | peak_snow · far_peak · peak_snow |
+| sipmandaesan | rock_spire · pine_gnarled · rock_spire | spear_rack · black_watchtower · huts_thatched | black_watchtower · temple_side_hall · stone_lantern | 지금 벌 |
+| bongmagok | dead_tree · pine_gnarled · dead_tree | broken_stele · dipper_stones · split_rock_gate | blood_pool · split_rock_gate · broken_stele | 지금 벌 |
+
 ## 읽은 것
 
 1. **지역 소품이 가장 큰 구멍이다.** 시트는 일곱 지역 것이 다 들어와 있는데 낱장으로 나뉜 것은 숭산·청운진뿐이고, PropLayer 는 지역을 가리지 않고 같은 열두 장을 깐다. 그래서 어느 땅에 가도 숭산 전각·소나무가 선다. → RG-01a(코드, 지역마다 ArtIds 벌) + Unity 에서 시트를 낱장으로 나누는 일(PR-02U 와 같은 메뉴)
