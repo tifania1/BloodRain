@@ -13,7 +13,7 @@ namespace BloodRain.Core.Tests
         [Fact] public void 빌드가_환혼과_타고난_성질을_넣는다()
         {
             var build = ReadRepoFile("tools", "build_web_prototype.py");
-            Assert.Contains("\"rebirth\": {k: v for k, v in drop_notes(load(\"cheonha\")[\"rebirth\"]).items() if k in (\"candidates\", \"firstRebirth\", \"firstRebirthTraits\", \"upgrades\", \"femaleRatio\", \"maleOnlySects\")}", build);
+            Assert.Contains("\"rebirth\": {k: v for k, v in drop_notes(load(\"cheonha\")[\"rebirth\"]).items() if k in (\"candidates\", \"firstRebirth\", \"firstRebirthTraits\", \"upgrades\", \"femaleRatio\", \"maleOnlySects\", \"boons\")}", build);
             Assert.Contains("\"birthTraits\": drop_notes(load(\"cheonha\")[\"birthTraits\"])", build);
         }
 

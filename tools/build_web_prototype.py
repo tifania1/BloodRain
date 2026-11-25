@@ -171,7 +171,7 @@ def data_blob() -> str:
                    "yinyangStart": s.get("yinyangStart", 0), "harmonyRange": s.get("harmonyRange"),
                    "bloodArt": drop_notes(s["bloodArt"]) if s.get("bloodArt") else None, "ultimate": s.get("ultimate")} for s in load("cheonha")["sects"]],   # 혈공(WP-23, 마교만)
         # 침방·연무장(WP-14d, 10·21장): 환생 후보 수·첫 환혼·환혼 강화, 타고난 성질. 연무장 값은 balance.json training(위 balance 묶음)
-        "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades", "femaleRatio", "maleOnlySects")},
+        "rebirth": {k: v for k, v in drop_notes(load("cheonha")["rebirth"]).items() if k in ("candidates", "firstRebirth", "firstRebirthTraits", "upgrades", "femaleRatio", "maleOnlySects", "boons")},
         # 침방 목 노인 줄·후보 카드 글(21장, docs/story/mok.md·sects.md). 고르는 규칙은 Core InnDialogue BedroomTalk 와 같게
         "bedroom": drop_notes(load("dialogue")["bedroom"]["lines"]),
         "cards": drop_notes(load("dialogue")["cards"]["list"]),

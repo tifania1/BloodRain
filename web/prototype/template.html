@@ -1474,7 +1474,7 @@ function newRun(mode) {
   const LS = curLifeSect();
   if (LS && mode !== 'prologue' && SCALE_MODE) {
     const reg = CH_REGS.find(r => r.id === LS.region), wd = W_BY_ID[LS.startWeapon];
-    G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : []);
+    G.body = lifeBody(LS, NEXT_LIFE ? NEXT_LIFE.traits : [], NEXT_LIFE ? NEXT_LIFE.boon : null);
     G.body.female = !!(NEXT_LIFE && NEXT_LIFE.female);   // 몸 성별(21장): 능력치는 같고 대표 인물 호칭·대사만(sister 줄, 후보 카드 femaleBodiesKo)
     { const tb = B.training.items.find(i => i.stat === 'Banishes'), tr = B.training.items.find(i => i.stat === 'Rerolls'), mm = innMeta(); G.banishes = tb ? Math.min(mm.train.Banishes || 0, tb.maxLevel) * tb.perLevel : 0; G.skips = Math.max(0, Math.round(bodyStat('Skips'))); G.revivals = Math.max(0, Math.round(bodyStat('Revival'))); if (tr) G.rerolls += Math.min(mm.train.Rerolls || 0, tr.maxLevel) * tr.perLevel; }   // 연무장 파기·다시 고르기 횟수(10장)
     G.soul0 = soulLoad(); G.past = pastLifeOf(G.soul0); G.moon = (G.soul0.cycle || 1) >= 2; G.stepped = []; G.orbV = 0; G.orbW = 0; G.eliteKills = 0; G.dens = 1;
@@ -4424,7 +4424,7 @@ function lifeSettle() {
   if (newBlocks.length) rows.push([`처음 막은 문파의 위기 ${newBlocks.length} × ${QI.crisisFirstBlock}`, newBlocks.map(id => (CRISES.find(c => c.e.id === id) || { e: { nameKo: id } }).e.nameKo).join(', '), newBlocks.length * QI.crisisFirstBlock]);
   rows.push([`남은 은자 ${G.silver} × ${QI.leftoverSilverRate}`, '쓰지 못한 은자도 기로 남는다', Math.round(QI.leftoverSilverRate * G.silver)]);
   // 타고난 성질(둔재·단명): 성질 배율 전 합 × 보너스, 반올림(Core FromTraits)
-  if (G.body.qiBonus) rows.push([`타고난 성질 × ${(1 + G.body.qiBonus).toFixed(2)}`, G.body.traits.filter(id => TRAIT_BY[id].rebirthQi).map(id => `${TRAIT_BY[id].nameKo} +${Math.round(TRAIT_BY[id].rebirthQi * 100)}%`).join(', '), Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)]);
+  if (G.body.qiBonus) rows.push([`타고난 성질 × ${(1 + G.body.qiBonus).toFixed(2)}`, G.body.traits.filter(id => TRAIT_BY[id].rebirthQi).map(id => `${TRAIT_BY[id].nameKo} +${Math.round(TRAIT_BY[id].rebirthQi * 100)}%`).concat(G.body.boon ? [`${BOON_BY[G.body.boon].nameKo} +${Math.round(BOON_BY[G.body.boon].rebirthQi * 100)}%`] : []).join(', '), Math.round(rows.reduce((a, r) => a + r[2], 0) * G.body.qiBonus)]);
   // 혈월 천하: (줄 합 + 성질) × (rewards − 1) 을 한 줄로 반올림(Core RebirthQiLedger.Settle fromMoon). 혈정은 땅의 주인 하나마다·정예 몫 한 번에 곱해 반올림(Core KillBoss·BloodCrystal)
   if (G.moon) rows.push([`혈월 천하 × ${BM.rewards}`, '혈월 아래서는 혼에 남는 기도 짙다', Math.round(rows.reduce((a, r) => a + r[2], 0) * (BM.rewards - 1))]);
   const total = rows.reduce((a, r) => a + r[2], 0);
@@ -4661,9 +4661,14 @@ function trainCost(m, it) {
 }
 // 몸 성별(21장): 성질을 다 굴린 뒤 후보 차례대로, maleOnlySects 는 늘 남자(Core RebirthDraw.RollFemale). 능력치는 같고 말만 바뀐다
 const rollFemale = (sect, rnd) => !(RB.maleOnlySects || []).includes(sect) && rnd() < (RB.femaleRatio || 0);
+// 덕(21장 '천하 확장', WX-02): 첫 환혼이 아닌 무작위 후보마다 rebirth.boons 에서 하나(Core Rebirth.WithBoons — 지금은 천운 하나라 모든 후보가 천운).
+//   직접 고른 몸(WX-03)은 덕이 없다 — 무작위에 맡긴 값이다. 천운은 그 생 윤회의 기 +25%(Core Rebirth.Body 가 성질과 같은 칸에 더함)
+const BOONS = RB.boons || [], BOON_BY = Object.fromEntries(BOONS.map(b => [b.id, b]));
+const boonLine = id => { const b = BOON_BY[id]; return b ? `<p class="tr" style="color:var(--gold,#b8860b)"><b style="color:inherit">${b.nameKo}(${b.hanja})</b>덕 · 이 생 윤회의 기 +${Math.round((b.rebirthQi || 0) * 100)}%</p>` : ''; };
 function drawCandidates(m, rnd = Math.random) {
   const out = drawSects(m, rnd);
   for (const c of out) c.female = rollFemale(c.sect, rnd);
+  if (m.lives > 0 && BOONS.length) for (const c of out) c.boon = BOONS[Math.floor(rnd() * BOONS.length)].id;
   cardTexts(out, rnd);
   return out;
 }
@@ -4785,13 +4790,14 @@ function drawSects(m, rnd) {
   return out;
 }
 // 몸: 문파 바탕 능력치(traitEffect.stats) + 연무장 + 타고난 성질. 덧셈을 모아 recomputeStats 가 한 번에(시안 bodyOf 와 같은 방식)
-function lifeBody(sect, traits) {
+function lifeBody(sect, traits, boon) {
   const m = innMeta(), stats = Object.assign({}, sect.stats || {});
   const add = (k, v) => { stats[k] = (stats[k] || 0) + v; };
   for (const it of TRAIN_ITEMS) { const lv = Math.min(m.train[it.stat] || 0, trainMax(m, it)); if (lv > 0) add(it.stat, it.perLevel * lv); }
   let qiBonus = 0, yy = sect.yinyangStart || 0;   // 음양 시작: 문파 + 음체·양체(Core Rebirth: sect.YinyangStart + 성질 합)
   for (const id of traits || []) { const t = TRAIT_BY[id]; if (!t) continue; for (const k in t.stats) add(k, t.stats[k]); qiBonus += t.rebirthQi || 0; yy += t.yinyangStart || 0; }
-  return Object.assign({}, sect, { stats, traits: (traits || []).filter(id => TRAIT_BY[id]), qiBonus, yy });
+  if (boon && BOON_BY[boon]) qiBonus += BOON_BY[boon].rebirthQi || 0;   // 덕(Core Rebirth.Body: 성질 RebirthQi 와 같은 칸)
+  return Object.assign({}, sect, { stats, traits: (traits || []).filter(id => TRAIT_BY[id]), qiBonus, yy, boon: boon && BOON_BY[boon] ? boon : null });
 }
 const NUM_KO = ['', '하나', '둘', '셋', '넷', '다섯'];
 // 목 노인(dialogue.json bedroom, Core BedroomTalk): 첫 환혼·문파 첫 환생 줄은 늘 하고, 나머지는 한 침방에 한 마디. 그 침방에 앞 줄이 나왔으면 안 한다.
@@ -4996,7 +5002,7 @@ function renderInn() {
     b.innerHTML = `<span class="ic">${s.nameKo[0]}</span><span><h3>${s.nameKo} ${c.female ? '여제자' : '제자'} <em>${i + 1} · ${r ? r.nameKo + '에서 태어난다 · 혈운 ' + r.density.toFixed(1) : ''}</em></h3>`
       + (c.text ? `<p>${c.text.intro}</p><p class="body">${c.text.body}</p>` : '')
       + `<p>${w ? w.nameKo : s.startWeapon}${has ? '' : '(이 판엔 동작이 없어 삼재검법)'} · 기혈 ${s.maxHealth} · 걸음 ${Math.round(s.moveSpeed * 100)}%</p>`
-      + (c.traits.length ? c.traits.map(traitLine).join('') : '<p class="tr">타고난 성질 없음</p>') + `</span>`;
+      + (c.traits.length ? c.traits.map(traitLine).join('') : '<p class="tr">타고난 성질 없음</p>') + (c.boon ? boonLine(c.boon) : '') + `</span>`;
     b.onclick = () => chooseLife(i); b.onmouseenter = b.onfocus = () => drawInnMap(m, i); box.appendChild(b);
   });
   drawInnMap(m, 0);
