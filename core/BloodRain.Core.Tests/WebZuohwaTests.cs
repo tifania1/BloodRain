@@ -18,7 +18,7 @@ namespace BloodRain.Core.Tests
             Assert.Contains("id=\"zuohwa\" type=\"button\" data-s=\"ui.settle.end.zuohwa\"", html);
             Assert.Contains("$('zuohwa').hidden = !G.body;", html);
             Assert.Contains("G.endWay = 'zuohwa'; endRun(false);", html);
-            // 한 생 판에서 '객잔으로'도 좌화처럼 정산(15장: 한 생 도중 저장은 없다)
+            // 한 생 판에서 '객잔으로'도 좌화처럼 정산(웹 판엔 한 생 도중 저장이 없다 — 15장 '저장')
             Assert.Contains("G && G.body && running ? zuohwa() : toTitle()", html);
         }
 
