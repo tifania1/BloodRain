@@ -57,6 +57,7 @@ button { touch-action: manipulation; }
 .slot.wait { box-shadow: 0 0 0 2px rgba(201,162,39,.45); }
 .slot.glow { animation: glow .45s ease-in-out infinite alternate; }
 .slot.mastered { border-color: var(--gold); box-shadow: 0 0 0 1.5px var(--gold); }
+.slot.gear { border-color: var(--seal, #B3261E); background: #F3E7C9; }   /* 문파 병기 칸(GX-01) */
 .slot .mstamp { position: absolute; left: -6px; top: -7px; font: 700 8px/1 var(--font-num); font-style: normal; background: var(--gold); color: #fff; padding: 1px 2px; border-radius: 2px; transform: rotate(-8deg); }
 .dexitem .mst { font-style: normal; font-size: 11px; font-weight: 700; padding: 0 3px; margin-left: 4px; border-radius: 2px; color: var(--paper); background: var(--ink); }
 .dexitem .mst.gold { background: var(--gold); }
@@ -1247,6 +1248,45 @@ const BRK = DATA.breakthrough || { timeScale: 0.05, zoomFromSeconds: 0.2, zoomTo
 const MASTERY_LIVES = [1, 3];
 function masteryStage(m, id) { const n = (m && m.mastery && m.mastery[id]) || 0; return n >= MASTERY_LIVES[1] ? 2 : n >= MASTERY_LIVES[0] ? 1 : 0; }
 const MASTERY = DATA.mastery || { revisitInsightChoicesBonus: 0, shortBreakthroughWhenRevisited: false };   // 한 번 깨친 길(21장, cheonha.json mastery)
+// 문파 병기(GX-01~04, 기획서 8장 '문파 병기와 6단', gear.json — Core Build.Gear·GearSlot, Life.RollGearDrop·PickGear·DefeatBoss 와 같은 규칙).
+// 칸은 한 생에 하나(G.gear = { id, grade }, 생이 끝나면 버림). 같은 병기를 다시 주우면 한 등급, 다른 병기면 바꿔 범병부터. 한 생 판에서만(서장은 없음)
+const GEAR = DATA.gear || { drop: { chance: 0, luckBonus: 0 }, grades: [], gear: [] };
+const GEAR_BY = Object.fromEntries(GEAR.gear.map(g => [g.id, g]));
+const gearOfSect = s => (s ? GEAR.gear.find(g => g.sect === s) || null : null);
+const gearGrade = () => (G && G.gear ? GEAR.grades[G.gear.grade] : null);
+function gearDropChance(luck) { return Math.max(0, Math.min(1, GEAR.drop.chance + Math.max(0, luck) * GEAR.drop.luckBonus)); }   // Core Gear.DropChance
+function gearRollDrop(enemyId) {   // Core Gear.RollDrop: 그 땅 문파 병기. guaranteed 정예는 확정(난수 안 씀), droppers 적은 확률
+  if (!G.body || isPro() || !G.chRegion) return null;
+  const r = CH_REGS.find(x => x.id === G.chRegion), g = gearOfSect(r && r.sect);
+  if (!g) return null;
+  if (g.guaranteed.includes(enemyId)) return g.id;
+  if (!g.droppers.includes(enemyId)) return null;
+  return Math.random() < gearDropChance(G.stats.luck || 0) ? g.id : null;
+}
+function gearPick(id) {   // Core GearSlot.Pick
+  if (G.gear && G.gear.id === id) G.gear.grade = Math.min(G.gear.grade + 1, GEAR.grades.length - 1);
+  else G.gear = { id, grade: 0 };
+  return G.gear.grade;
+}
+function gearGradeUpIfSect(sect) {   // Core GearSlot.GradeUpIfSect(땅의 주인 처치)
+  if (!G.gear || !sect || GEAR_BY[G.gear.id].sect !== sect || G.gear.grade >= GEAR.grades.length - 1) return false;
+  G.gear.grade++; return true;
+}
+function gearApplies(id) {   // Core Gear.AppliesTo: 문파 병기면 그 문파 무공 전부(synergies schools members), 문파 없는 병기면 대표 무공 하나
+  if (!G || !G.gear) return false;
+  const g = GEAR_BY[G.gear.id]; if (g.weapon === id) return true; if (!g.sect) return false;
+  const sc = SYN.schools.find(s => s.id === g.sect); return !!sc && sc.members.includes(id) && !!W_BY_ID[id];
+}
+const gearDamageMul = id => 1 + (gearApplies(id) ? gearGrade().damage : 0);   // Core Life.GearDamageMultiplier
+const gearAreaMul = id => 1 + (gearApplies(id) ? gearGrade().area : 0);       // Core Life.GearAreaMultiplier
+function gearOfferWeight(id) {   // Core Gear.OfferWeight: 쥔 병기 문파의 시너지 구성원(무공·심법) 카드는 등급 offerWeight, 문파 없는 병기는 대표 무공 하나
+  if (!G || !G.gear || !id) return 1;
+  const w = gearGrade().offerWeight; if (w <= 0 || w === 1) return 1;
+  const g = GEAR_BY[G.gear.id]; if (g.weapon === id) return w; if (!g.sect) return 1;
+  const sc = SYN.schools.find(s => s.id === g.sect); return sc && sc.members.includes(id) ? w : 1;
+}
+const gearSixth = w => !!(G && G.gear && w.evolved && gearGrade().sixth && GEAR_BY[G.gear.id].weapon === w.id);   // Core Gear.IsSixth(6단 한 수는 GU-10f 결정 뒤)
+function gearDropAt(x, y, id) { if (id) G.drops.push({ x, y, kind: 'gear', gear: id, t: 0 }); }
 const scaleOn = () => SCALE_MODE && !isPro();
 const tierNow = () => Math.max(0, REALMS.indexOf(G.realm));
 const worldU = () => scaleOn() ? Math.pow(WD.scalePerRealm, tierNow()) : 1;
@@ -2133,9 +2173,12 @@ function lordDown(e) {
   G.lordKills.push(kill);
   for (let i = 0; i < 20; i++) dropOrb(e.x + rand(-2, 2), e.y + rand(-2, 2), 25);
   G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 });   // 처치 보갑(Core BossKill.Chest)
+  // 문파 병기(GX-04, Core Life.DefeatBoss): 그 땅 문파 병기를 쥐고 있으면 한 등급, 유품 병기(source relic:지역)는 계정 첫 처치에 그 자리에
+  if (gearGradeUpIfSect(r.sect)) { const g = GEAR_BY[G.gear.id]; setTimeout(() => toast(g.nameKo, `${GEAR.grades[G.gear.grade].nameKo}(${GEAR.grades[G.gear.grade].hanja})으로 올랐다`), 2600); renderSlots(); }
   // 처치 컷 첫 줄을 알림으로. 대표 인물 합류 줄은 Core 처럼 객잔에 돌아와서(innReturn)
   // 처치 컷 넷(WP-56)은 계정 첫 처치에만. 컷을 안 띄우는 때(자동 판)는 첫 줄만 알림으로
   const acctFirst = first && !((G.soul0.bossKills || {})[def.id] > 0) && !G.lordKills.some(x => x !== kill && x.boss === def.id);
+  if (acctFirst) gearDropAt(e.x + 1.5, e.y, (GEAR.gear.find(g => g.source === 'relic:' + r.id) || {}).id);   // 무명 철검: 원각 계정 첫 처치(Core BossKill.GearDrop)
   if (!(acctFirst && lordCuts(def.id, 'kill'))) { const k1 = lordLine(def.id, 'kill1'); if (k1) setTimeout(() => toast(def.nameKo, k1), 1800); }
   const lines = [kill.stone ? `봉인석 ${kill.stone}` : '', sect ? `${sect.nameKo}의 몸으로 환생할 수 있다` : '', `윤회의 기 +${kill.qi} · 혈정 +${kill.crystal}`].filter(Boolean);
   toast(`${e.name} — 쓰러뜨렸다`, first ? lines.join(' · ') : `혈영으로 다시 일어날 것이다 · ${lines.join(' · ')}`);
@@ -2251,6 +2294,7 @@ function weaponDamage(w) {
   const swd = synEff('sword_damage'); if (swd && def.category === 'sword') d *= 1 + swd.damageBonus;
   const lhm = synEff('low_health_might'); if (lhm && G.player.hp < G.player.maxHp * lhm.healthThreshold) d *= 1 + lhm.damageBonus;
   if (G.syn.secrets.has('mumyeong') && w.id === SECRET.mumyeong.target) d *= 1 + SECRET.mumyeong.params.damageBonus;
+  d *= gearDamageMul(w.id);   // 문파 병기 등급(GX-02, Core Life.GearDamageMultiplier)
   return d;
 }
 function hurtEnemy(e, dmg, w, kx, ky, kb, sureCrit) {   // sureCrit: 반드시 치명타(연환 점혈창, Unity enemies.sureCrit)
@@ -2315,6 +2359,7 @@ function killEnemy(e, crushed) {
   // 반경 death.radius 안의 다른 적(보스 빼고)에게 제 기혈 비율만큼(40 ÷ 120), 플레이어에게 접촉 피해 비율만큼(6 ÷ 10) 한 번
   { const D = E_BY_ID[e.type]; if (D && D.onDeath === 'splinter_burst' && D.death) splinterBurst(e, D); }
   if (e.elite) { G.drops.push({ x: e.x, y: e.y, kind: 'chest', t: 0 }); }
+  gearDropAt(e.x, e.y, gearRollDrop(e.elite && e.eliteKey && ELITES[e.eliteKey] ? ELITES[e.eliteKey].id : e.type));   // 문파 병기(GX-01, Core Life.RollGearDrop)
   if (Math.random() < DR.enemySilverChance) G.drops.push({ x: e.x, y: e.y, kind: 'silver', t: 0 });
 }
 function dropOrb(x, y, v) {
@@ -2455,7 +2500,7 @@ function aimAngle(reach) {
 
 // 무공 실행 (weapons.json behavior 별)
 function fireWeapon(w) {
-  const def = W_BY_ID[w.id], p = G.player, S = G.stats, t = (w.lv - 1) / 7;
+  const def = W_BY_ID[w.id], p = G.player, gam = gearAreaMul(w.id), S = gam !== 1 ? Object.assign({}, G.stats, { area: G.stats.area * gam }) : G.stats, t = (w.lv - 1) / 7;   // 문파 병기 범위(GX-02, Core Life.GearAreaMultiplier)
   const ep = (EVO_BY_W[w.id] || {}).params || {}; // 절기 수치(evolutions.json params)
   const dmg = weaponDamage(w);
   const igi = G.insights.includes('igi') && IGI_BEH.includes(def.behavior) ? 1 + IP.igi.rangeBonus : 1;   // 이기어검: 근접 다섯 갈래만(insights.json weaponBehaviors, Core InsightEffects.WeaponRangeMultiplier)
@@ -3555,6 +3600,7 @@ function pickup(dr) {
   }
   else if (dr.kind === 'silver') { addSilver(DR.silverBag[0] + Math.floor(Math.random() * (DR.silverBag[1] - DR.silverBag[0] + 1))); }
   else if (dr.kind === 'chest') openChest();
+  else if (dr.kind === 'gear') { const g = GEAR_BY[dr.gear], gr = GEAR.grades[gearPick(dr.gear)]; toast(`${g.nameKo}(${g.hanja})`, `${gr.nameKo} — ${g.sect ? (SCHOOL_BY[g.sect] || {}).nameKo + ' 무공' : W_BY_ID[g.weapon].nameKo} 피해 +${Math.round(gr.damage * 100)}%${gr.area ? ` · 범위 +${Math.round(gr.area * 100)}%` : ''}`); renderSlots(); }   // GX-01, Core Life.PickGear
 }
 
 function gainXp(v) {
@@ -3585,7 +3631,8 @@ function rollOffers() {
   const pool = candidates(), out = [];
   // 이미 가진 것을 조금 더 자주 보여 준다(뱀서류 관례)
   while (out.length < n && pool.length) {
-    const weights = pool.map(c => c.kind === 'uw' || c.kind === 'up' ? 1.6 : 1), sum = weights.reduce((a, b) => a + b, 0);
+    const weights = pool.map(c => (c.kind === 'uw' || c.kind === 'up' ? 1.6 : 1) * gearOfferWeight(c.id)),   // 병기 등급 무게(GX-03, Core Loadout.RollLevelUp gear:)
+          sum = weights.reduce((a, b) => a + b, 0);
     let r = Math.random() * sum, i = 0; for (; i < pool.length; i++) { r -= weights[i]; if (r <= 0) break; }
     out.push(pool.splice(Math.min(i, pool.length - 1), 1)[0]);
   }
@@ -6395,6 +6442,12 @@ function firstRebirth(id) { location.href = `lookdev/cheonha.html#first=${id}&or
 function drawDrop(d) {
   const x = wx(d.x), y = wy(d.y) - Math.sin(d.t * 3) * 3, r = 0.28 * PPM;
   ctx.lineWidth = 2; ctx.strokeStyle = '#1A1A1A';
+  if (d.kind === 'gear') {   // 문파 병기(GX-01): 땅에 꽂힌 병기 둘레에 문파 빛 기둥(Unity GearDropLayer 와 같은 생각)
+    const g = GEAR_BY[d.gear], col = (g.sect && SCHOOL_BY[g.sect] && SCHOOL_BY[g.sect].color) || '#C9A227';
+    ctx.save(); ctx.globalAlpha = 0.28 + 0.12 * Math.sin(d.t * 3); ctx.fillStyle = col; ctx.fillRect(x - r * 0.6, y - r * 7, r * 1.2, r * 7.5); ctx.restore();
+    ctx.fillStyle = '#EFE6D2'; ctx.beginPath(); ctx.arc(x, y, r * 1.3, 0, TAU); ctx.fill(); ctx.strokeStyle = col; ctx.stroke();
+    ctx.fillStyle = '#1A1A1A'; ctx.font = `${Math.round(r * 1.5)}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.hanja[g.hanja.length - 1], x, y); return;
+  }
   if (d.kind === 'chest') { ctx.fillStyle = '#5B4A2E'; ctx.fillRect(x - r * 1.4, y - r, r * 2.8, r * 2); ctx.strokeRect(x - r * 1.4, y - r, r * 2.8, r * 2); ctx.fillStyle = '#C9A227'; ctx.fillRect(x - r * 1.4, y - r * 0.2, r * 2.8, r * 0.4); ctx.beginPath(); ctx.arc(x, y, r * 2.2 + Math.sin(d.t * 4) * 3, 0, TAU); ctx.strokeStyle = 'rgba(201,162,39,.7)'; ctx.stroke(); return; }
   const glyph = { food: '饅', meat: '鴨', magnet: '吸', freeze: '定', silver: '銀' }[d.kind];
   ctx.fillStyle = d.kind === 'freeze' || d.kind === 'magnet' ? '#D8B13A' : '#EFE6D2';
@@ -6492,9 +6545,10 @@ function drawRain() {
 let hudAcc = 0;
 function renderSlots() {
   const ws = $('wslots'), ps = $('pslots');
-  ws.innerHTML = G.weapons.map(w => {
+  const gg = gearGrade(), gd = gg && GEAR_BY[G.gear.id];   // 병기 칸(GX-01): 쥔 병기 한 글자와 등급 한자, 6단이면 그 무공 칸에 '神'
+  ws.innerHTML = (gd ? `<span class="slot gear" title="${gd.nameKo} · ${gg.nameKo}">${gd.hanja[gd.hanja.length - 1]}<b>${gg.hanja[0]}</b></span>` : '') + G.weapons.map(w => {
     const th = atThreshold(w), cls = w.evolved ? (G.glow && G.glow.w === w ? ' evo glow' : ' evo') : th ? (spareVessel() ? ' ready' : ' wait') : '';
-    return `<span class="slot${cls}${w.mastered ? ' mastered' : ''}" title="${W_BY_ID[w.id].nameKo}${th ? ' · 절기 문턱' : ''}${w.mastered ? ' · 大成' : ''}">${GLYPH[w.id]}<b>${w.evolved ? '絶' : w.lv}</b>${w.mastered ? '<em class="mstamp">大成</em>' : ''}</span>`;
+    return `<span class="slot${cls}${w.mastered ? ' mastered' : ''}" title="${W_BY_ID[w.id].nameKo}${th ? ' · 절기 문턱' : ''}${w.mastered ? ' · 大成' : ''}">${GLYPH[w.id]}<b>${gearSixth(w) ? '神' : w.evolved ? '絶' : w.lv}</b>${w.mastered ? '<em class="mstamp">大成</em>' : ''}</span>`;
   }).join('');
   // 절기 그릇: ◆ 채운 것, ◇ 빈 것. 그릇이 없을 땐 숨긴다.
   const vt = vesselsAt(G.level), vu = evolvedCount(), vEl = $('vessel');

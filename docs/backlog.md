@@ -80,6 +80,12 @@ Unity 에디터가 필요한 항목은 `[U]` 표시이고 `docs/unity_tasks.md` 
 - [x] WX-06 2026-11-26 (이 세션에서 본 것) — autocheck `daily` 보스 연전이 넷에 둘꼴로 '잡몹이 나옴'으로 떨어지던 것: 원각 십팔나한진·나한 부르기가 부른 시강·목인나한이었음(정규 잡몹 아님). 주인·정예 패턴이 부른 적에 `summon` 표시를 붙이고 점검이 그것과 분신(cloneOf)을 뺌. 네 번 다 통과. 가끔 나던 '20초 싸워도 첫 주인 기혈이 그대로'는 이번 네 번엔 안 나옴 — 다시 나면 첫 주인이 화면 밖에 서는지 볼 것
 - [x] WX-07 2026-11-26 — Core `Life.Gugyeol`(이 문파 몸으로 산 마지막 생의 차례, 서장·처음 문파는 멈춘 채)과 `GugyeolPlayer.Resume`(생 도중 저장을 되돌리면 이미 고른 차례만큼 Done, 어긋났으면 멈춤), `GugyeolTests` 하나. Unity 화면은 unity_tasks WX-01U(직접 고르기·깨어날 경지·구결)
 
+로드맵에서 채움, 2026-11-26 02시(8장 '문파 병기와 6단' — gear.json·Core `Build.Gear`·`Life` 에 다 있는데 웹 합친 판엔 병기가 하나도 없었다. 결정 열한 건이 다음 단계 절을 막고 있어 웹에서 먼저 해 볼 수 있게):
+- [x] GX-01 2026-11-26 — 웹 떨어뜨리기·줍기: 빌드가 `gear` 를 넣고, `killEnemy` 가 `gearRollDrop`(Core `Gear.RollDrop` — 그 땅 문파 병기, guaranteed 정예 확정, droppers 적은 chance + 기연 × luckBonus, 서장 없음)으로 떨어뜨림, 땅에 꽂힌 병기는 문파 빛 기둥 + 한자 한 글자, 주우면 `gearPick`(같은 병기 한 등급·다른 병기 범병). HUD 무공 칸 앞에 병기 칸(끝 한자 + 등급 첫 한자)
+- [x] GX-02 2026-11-26 — 등급 피해·범위: `weaponDamage` × `gearDamageMul`, `fireWeapon` 의 S.area × `gearAreaMul`(Core `AppliesTo` — 문파 무공 전부, 문파 없는 병기는 대표 무공 하나)
+- [x] GX-03 2026-11-26 — 레벨업 뽑기 무게 × `gearOfferWeight`(Core `Gear.OfferWeight`, 쥔 병기 문파 시너지 구성원 카드에 등급 offerWeight)
+- [x] GX-04 2026-11-26 — `lordDown`: 그 땅 문파 병기를 쥐었으면 한 등급(`GradeUpIfSect`), 계정 첫 처치면 유품 병기(무명 철검, source relic:지역)를 그 자리에. 6단 조건(`gearSixth`, Core `IsSixth`)이면 대표 무공 칸에 '神'. 확인 `WebGearTests` 넷
+
 ## 화면 집중 (2026-11-13 ~ 2026-11-24, 끝남)
 
 2026-11-24 사람이 풀었다. 아래 열린 항목(사람 눈이 필요한 것, PC 몫)은 지우지 않고 이어 간다. 새 일은 위 '다음 단계' 절에서. 11-13 당시 규칙: 숭산 한 생(서장 → 절정, 원각)이 예쁘고 손맛 날 때까지 이 절만 했다. Unity 몫은 unity_tasks '0. 화면 집중'.
