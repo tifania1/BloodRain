@@ -2,7 +2,7 @@
 // 콘솔 오류·페이지 오류·멈춤(시계가 안 감)·숫자 깨짐(NaN)·화면 막힘(화면 둘이 겹쳐 뜸)을 찾는다.
 // 쓰는 법:
 //   python tools/build_web_prototype.py
-//   node tools/web_autocheck.js [--runs 3] [--shots <폴더>] [--only prologue,songshan,life,m3,lords,final,crisis,flow,weapons,manuals,links]
+//   node tools/web_autocheck.js [--runs 3] [--shots <폴더>] [--only prologue,songshan,life,m3,lords,final,crisis,daily,flow,weapons,manuals,links]
 //   한 생(life)만 몇 몸: SECTS=waterfort,wudang node tools/web_autocheck.js --only life
 // 끝 줄에 '문제 N' 을 찍고, 문제가 있으면 1 로 끝난다. 손맛 숫자는 건드리지 않고 보기만 한다.
 const http = require('http');
@@ -14,7 +14,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const RUNS = parseInt(opt('runs', '3'), 10);
 const SHOTS = opt('shots', '');
-const ONLY = (opt('only', 'prologue,songshan,life,m3,lords,final,crisis,flow,weapons,manuals,links')).split(',');
+const ONLY = (opt('only', 'prologue,songshan,life,m3,lords,final,crisis,daily,flow,weapons,manuals,links')).split(',');
 const SITE = path.join(__dirname, '..', 'web', 'prototype', 'site');
 if (!fs.existsSync(path.join(SITE, 'index.html'))) { console.log('X  site/ 가 없다. python tools/build_web_prototype.py 를 먼저 돌린다'); process.exit(1); }
 
@@ -510,6 +510,34 @@ async function crisisRuns(browser, base) {
     await p.ctx.close();
   }
 }
+// 일일 도전(MD-01): mode:daily 가 열린 혼이면 침방에 단추가 뜨고, 같은 날 같은 몸, 끝나면 혼이 시작 때 그대로(Core DailyChallenge.Sandbox)
+async function dailyRun(browser, base) {
+  const label = '일일 도전';
+  const p = await openPage(browser, base + '/?life=shaolin', label);
+  const r = await p.page.evaluate(() => {
+    const bad = [];
+    try {
+      const m0 = innMeta(); m0.lives = 3; m0.qi = 1234; m0.unlocks = ['mode:daily']; soulSave(m0);
+      openInn();
+      if ($('indaily').hidden) bad.push('침방에 일일 도전 단추가 없음');
+      const a = dailyBody(), b = dailyBody();
+      if (a.sect !== b.sect || a.traits.join() !== b.traits.join() || a.female !== b.female) bad.push('같은 날 몸이 다름');
+      const before = localStorage.getItem(SOUL_KEY);
+      startDaily(); G.auto = false; running = false;
+      if (!G.daily || G.body.id !== a.sect) bad.push(`일일 도전 몸이 아님(${G.body && G.body.id})`);
+      G.player.maxHp = G.player.hp = 1e9;
+      for (let i = 0; i < 30 * 40; i++) { G.player.hp = G.player.maxHp; step(1 / 30); if (overlay) { overlay = null; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); } }
+      running = true; endRun(false);
+      if (localStorage.getItem(SOUL_KEY) !== before) bad.push('끝난 뒤 혼이 시작 때와 다름');
+      if (!(store.get('daily') || {})[dailyKey()]) bad.push('오늘 기록이 안 남음');
+      return { bad, sect: a.sect };
+    } catch (err) { return { bad: ['오류: ' + err.message], sect: '' }; }
+  });
+  for (const b of r.bad) problems.push(`${label}: ${b}`);
+  flush(p, label);
+  rows.push({ what: label, res: r.bad.length ? '문제' : `통과(${r.sect})` });
+  await p.ctx.close();
+}
 // 혈월의 밤 2막(GU-11h4): 현경·봉인석 모자람·30분이면 그림자 대신 무너진 문파 땅의 주인이 곁으로 모여든다
 async function gatheringRun(browser, base) {
   const label = '모여드는 땅의 주인';
@@ -552,6 +580,7 @@ async function gatheringRun(browser, base) {
     if (ONLY.includes('lords')) await lordRuns(browser, base);
     if (ONLY.includes('final')) await finalRuns(browser, base);
     if (ONLY.includes('crisis')) { await crisisRuns(browser, base); await gatheringRun(browser, base); }
+    if (ONLY.includes('daily')) await dailyRun(browser, base);
     if (ONLY.includes('flow')) await flowRuns(browser, base);
     if (ONLY.includes('weapons')) await weaponRuns(browser, base);
     if (ONLY.includes('manuals')) await manualRuns(browser, base);

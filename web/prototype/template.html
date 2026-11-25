@@ -318,7 +318,7 @@ button { touch-action: manipulation; }
       <p class="mok" id="innmok" hidden></p>
       <div class="cards" id="inncards"></div>
       <canvas id="innmap" width="600" height="390" style="width:100%;max-width:600px;display:block;margin:10px auto;border:1px solid #1a1a1a" role="img" aria-label="침방 벽의 중원 지도"></canvas>
-      <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button></div>
+      <div class="row"><button class="b" id="innreroll" type="button" hidden>다시 고르기</button><button class="b" id="indaily" type="button" hidden>일일 도전</button></div>
       <div class="subtle" id="innqi"></div>
       <h4 class="innh">객잔 시설</h4>
       <div class="innmeta" id="innfac"></div>
@@ -1445,7 +1445,9 @@ function newRun(mode) {
     freeze: 0, cam: { x: 0, y: 0, shake: 0, trauma: 0 }, stats: null, fps: 60, salgiBonus: 0, salgiBase: 0, pendingLevels: 0,
     syn: newSyn(), enc: newEnc(), awaken: null, glow: null, evoLog: [], demo: false,
     cues: { fired: new Set(), realms: new Set([REALMS[0].id]), q: [], clock: 0 },
+    daily: DAILY,
   };
+  DAILY = null;
   grid = new Map();
   G.home = { x: 0, y: 0 };   // 태어난 자리(절대 m, 숭산 마당 = 0,0). 혈우 장막의 가운데
   const LS = curLifeSect();
@@ -4632,6 +4634,33 @@ function drawCandidates(m, rnd = Math.random) {
   cardTexts(out, rnd);
   return out;
 }
+// 일일 도전(7장 '모드', Core Meta/DailyChallenge): 봉인석 셋이면 열린다(mode:daily). 그날(UTC 날짜) 시드 하나로 아홉 문파 전부에서 몸 하나.
+//   시드 셈(날짜 숫자 → lowbias32)은 Core DailyChallenge.Seed 와 같다. 몸을 뽑는 난수는 웹 제 것(.NET Random 이 아니라)이라 Unity 판과 몸은 다를 수 있다 — 같은 날 웹끼리는 같다.
+//   사건·적 뽑기는 아직 Math.random 이라 고정이 아니다(프로토타입). 연무장·환혼 강화는 받고 혼엔 아무것도 안 남긴다(Core Sandbox): 시작 때 혼을 떠 두고 끝나면 되돌린다.
+//   남는 것은 그날 최고 버틴 시간(리더보드 대신 이 브라우저 store 'daily')뿐
+function dailySeed(d = new Date()) {
+  let x = (d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()) >>> 0;
+  x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0; x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0; x ^= x >>> 16;
+  return (x & 0x7fffffff) >>> 0;
+}
+const dailyKey = (d = new Date()) => 'daily_' + d.toISOString().slice(0, 10).replace(/-/g, '');   // Core DailyChallenge.LeaderboardName
+const seededRnd = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+function dailyBody(seed = dailySeed()) {
+  const rnd = seededRnd(seed), all = (DATA.sects || []).map(s => s.id).filter(id => SECT_BY[id]);
+  const c = { sect: all[Math.floor(rnd() * all.length)], traits: rollTraits(rnd) };
+  c.female = rollFemale(c.sect, rnd); cardTexts([c], rnd);
+  return c;
+}
+const dailyOpen = m => (m.unlocks || []).includes('mode:daily');
+let DAILY = null;   // 다음 생이 일일 도전이면 { key, snap(시작 때 혼 JSON) }. newRun 이 G.daily 로 옮긴다
+function startDaily() {
+  const m = innMeta(); if (overlay !== 'inn' || !dailyOpen(m)) return;
+  DAILY = { key: dailyKey(), snap: JSON.stringify(soulLoad()) };
+  NEXT_LIFE = Object.assign({}, dailyBody(), { elixirs: [] }); innElix = []; $('inn').hidden = true; overlay = null;
+  startRun('full');
+  toast('일일 도전', `오늘의 몸 · 혼에는 아무것도 남지 않는다. 버틴 시간만 오늘 기록으로`);
+}
+function dailyRestore() { if (!G || !G.daily || G.daily.done) return; G.daily.done = true; try { localStorage.setItem(SOUL_KEY, G.daily.snap); } catch (e) { /* 막혀도 정산은 보인다 */ } }
 // 후보 카드 글(dialogue.json cards, Core BedroomTalk.CardTexts): 문파 한 줄 소개 + '그날 밤 숨진 몸' 하나, 같은 문파 두 장이면 다른 번호, 여자 몸이면 같은 번호의 femaleBodiesKo
 function cardTexts(list, rnd = Math.random) {
   const used = {};
@@ -4875,6 +4904,9 @@ function renderInn() {
   const rr = $('innreroll'), have = upgEffect(m, 'rerolls');
   rr.hidden = !m.lives || !have; rr.disabled = innRerolls <= 0;
   rr.innerHTML = `다시 고르기 <small>남은 ${innRerolls}/${have} · R</small>`;
+  const db = $('indaily'), don = dailyOpen(m); db.hidden = !don;
+  if (don) { const c = dailyBody(), bd = (store.get('daily') || {})[dailyKey()], g = bd ? bd.gs : null;
+    db.innerHTML = `일일 도전 <small>오늘 ${SECT_BY[c.sect].nameKo} ${c.female ? '여제자' : '제자'}${c.traits.length ? ' · ' + c.traits.map(id => (TRAIT_BY[id] || {}).nameKo || id).join('·') : ''}${g != null ? ` · 오늘 최고 ${Math.floor(g / 60)}:${String(g % 60).padStart(2, '0')}` : ''}</small>`; }
   $('innqi').textContent = `윤회의 기 ${m.qi.toLocaleString()} · 혈정 ${(m.crystal || 0).toLocaleString()} · 열린 문파 ${m.unlocked.length}/${(DATA.sects || []).length}`;
   const fb = $('innfac'); fb.innerHTML = '';
   for (const f of INN_F) {
@@ -6409,7 +6441,14 @@ function endRun(won) {
   // 한 생(WP-14c): 윤회의 기 정산 줄을 보여 주고 혼 기록에 새긴다
   const led = $('resledger'); led.hidden = !G.body; led.innerHTML = '';
   $('again').textContent = G.body ? '윤회 · 다음 생을 고른다' : '다시 하기';
-  if (G.body) {
+  if (G.body && G.daily) {   // 일일 도전: 정산 없이 혼을 시작 때로 되돌리고(Core DailyChallenge.Sandbox) 그날 최고 버틴 시간만(Score)
+    dailyRestore(); led.hidden = true;
+    const all = store.get('daily') || {}, prev = all[G.daily.key];
+    if (!prev || gs > prev.gs) { all[G.daily.key] = { gs, level: G.level, kills: G.kills }; store.set('daily', all); }
+    $('restitle').textContent = '일일 도전'; $('again').textContent = '침방으로';
+    $('resline').textContent = `${G.body.nameKo}의 제자로 ${Math.floor(gs / 60)}분 ${gs % 60}초를 버텼다. 이 생은 혼에 남지 않는다.`;
+    facts.push([prev && prev.gs >= gs ? `${Math.floor(prev.gs / 60)}:${String(prev.gs % 60).padStart(2, '0')}` : '새 기록', '오늘 최고']);
+  } else if (G.body) {
     const st = lifeSettle(), m = recordLife(st); G.settled = st;
     if (m.journeyOver) $('again').textContent = '여정을 마쳤다 · 제목으로';   // WP-13f: 진엔딩 뒤엔 윤회가 없다(decisions #34)
     $('resline').textContent = `${G.body.nameKo}의 제자는 ${G.realm.nameKo}에서 쓰러졌다. 모은 기를 들고 다른 문파의 몸으로 다시 태어난다.`;
@@ -6431,7 +6470,7 @@ function endRun(won) {
     if ((st.newTitles || []).length) facts.push([st.newTitles.map(id => TITLE_BY[id].nameKo).join(' · '), '새 칭호']);   // WP-34
     if ((m.newMastery || []).length) facts.push([m.newMastery.map(x => `${(W_BY_ID[x.id] || {}).nameKo || x.id} ${x.stage >= 2 ? '大成' : '小成'}`).join(' · '), '무공 성취']);   // 10장 '무공 성취'
     if ((m.newAch || []).length) facts.push([m.newAch.map(id => (ACHS.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 업적']);   // 20장 'Steam 업적'
-    if ((m.newModes || []).length) facts.push([m.newModes.map(id => (MODES.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 모드 · 이 판엔 아직 없다']);   // WP-67
+    if ((m.newModes || []).length) facts.push([m.newModes.map(id => (MODES.find(x => x.id === id) || {}).nameKo || id).join(' · '), '새 모드 · 일일 도전은 침방에서(보스 연전은 아직)']);   // WP-67, MD-01
     if ((st.newCostumes || []).length) facts.push([st.newCostumes.map(t => { const c = (DATA.costumes || []).find(x => 'costume:' + x.id === t); return c ? `${SPK[c.character] || c.character} 의상` : t; }).join(' · '), '새 의상 · 그림은 아직']);   // WP-51
     if ((st.newTorn || []).length) facts.push([st.newTorn.map(manualName).join(' · '), '찢긴 비급 · 장경각에 올랐다']);   // 20장 '비급 층과 해금'
     if (st.newWeapons.length) facts.push([st.newWeapons.map(id => W_BY_ID[id].nameKo).join(' · '), '새로 얻은 무공 · 다음 생부터']);   // Core LifeSummary.NewUnlocks(R-08U 정산 줄과 같은 말)
@@ -6615,6 +6654,7 @@ $('newjourney').addEventListener('click', () => {
 });
 showNewJourney();
 $('innreroll').addEventListener('click', () => innReroll());
+$('indaily').addEventListener('click', () => startDaily());
 $('inntitle').addEventListener('click', () => toTitle());
 $('totitle').addEventListener('click', toTitle);
 $('dexbtn').addEventListener('click', openDex); $('dexbtn2').addEventListener('click', openDex); $('dexclose').addEventListener('click', closeDex);
