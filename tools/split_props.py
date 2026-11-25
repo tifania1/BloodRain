@@ -48,16 +48,24 @@ SHEETS: dict[str, list[str]] = {
     # 개방 총타 지역 소품(RG-01U, 2026-11-25 PC). 프롬프트 차례: 다리 밑 사당, 거적 움막, 넝마 차양, 깨진 술독 더미, 솥 걸린 모닥불
     "props_gaebang_hq": ["shrine_bridge", "mat_lean_to", "rag_awning", "wine_jar_pile", "cook_fire_pot"],
     # 지역 소품 다섯 장(RG-02U~05U·R4-13c 앞일, 2026-11-25 19시 클라우드 — 덩이 수가 다섯으로 맞고 눈으로 프롬프트 차례와 같음을 봄).
-    # 남궁·장강 나루·무당 벼랑·화산·곤륜·봉마곡은 덩이가 붙거나 먹 튐이 떨어져 수가 안 맞아 아직(JOIN 을 시트마다 맞춰야 함)
     "props_danggata_halls": ["tang_clan_hall", "herb_store_stilts", "roofed_well", "poison_jar_row", "bamboo_fence"],
     "props_danggata_bamboo": ["bamboo_clump", "bamboo_brush", "bamboo_fallen", "rock_violet_fungus", "poison_pond"],
     "props_changjiang_reeds": ["reed_bed", "reed_clump", "sunken_boat", "willow_water", "river_stones"],
     "props_wudang_temple": ["taoist_hall", "round_pavilion", "stone_stairs", "incense_cauldron", "blank_stele"],
     "props_sipmandaesan_altars": ["blood_altar", "blood_altar_broken", "black_watchtower", "rock_spire", "spear_rack"],
+    # 덩이 잇는 거리·작은 덩이 버림을 시트마다 맞춘 다섯(같은 날, 눈으로 차례 확인). 봉마곡은 북두 일곱 돌이 흩어져 아직
+    "props_namgung_manor": ["manor_gate", "white_wall", "stone_lions", "sword_pavilion", "lotus_pavilion"],
+    "props_changjiang_pier": ["river_pier", "covered_boat", "cargo_raft", "river_watchtower", "rope_oars"],
+    "props_wudang_cliffs": ["misty_crag", "pine_ledge", "sitting_rock", "low_cloud", "mossy_boulders"],
+    "props_huashan_cliff": ["plank_walkway", "plum_tree", "plum_petal_heap", "granite_boulder", "loose_rocks"],
+    "props_kunlun_snow": ["campfire_ring", "snow_gate_pillar", "frosted_pines", "ice_sheet", "snow_crate"],
 }
 
 # 소품끼리 바짝 붙은 시트는 덩이 잇는 거리를 줄인다(기본 JOIN 이면 둘이 한 덩이가 됨)
-SHEET_JOIN: dict[str, int] = {"props_cheongun_village": 2, "props_songshan_halls": 2, "props_encounters": 2}
+SHEET_JOIN: dict[str, int] = {"props_cheongun_village": 2, "props_songshan_halls": 2, "props_encounters": 2,
+                               "props_namgung_manor": 2, "props_changjiang_pier": 2}
+# 먹 튐·떨어진 사슬 끝 같은 작은 덩이가 따로 잡히는 시트는 이보다 작은 덩이(칸 너비 x 높이)를 버린다(2026-11-25 클라우드)
+SHEET_MIN_AREA: dict[str, int] = {"props_changjiang_pier": 40000, "props_wudang_cliffs": 40000, "props_huashan_cliff": 40000, "props_kunlun_snow": 40000}
 
 
 def _dilate(mask: list[bytearray], w: int, h: int, r: int) -> list[bytearray]:
@@ -96,7 +104,7 @@ def _dilate(mask: list[bytearray], w: int, h: int, r: int) -> list[bytearray]:
     return col
 
 
-def find_parts(img: Image.Image, join: int = JOIN) -> list[tuple[tuple[int, int, int, int], Image.Image]]:
+def find_parts(img: Image.Image, join: int = JOIN, min_area: int = 0) -> list[tuple[tuple[int, int, int, int], Image.Image]]:
     """덩이마다 ((왼, 위, 오른, 아래), 그 덩이만 255 인 시트 크기 마스크) — 읽는 차례(줄 → 왼쪽부터).
     칸이 서로 겹쳐도 마스크로 거르니 옆 덩이 끝이 묻어오지 않는다."""
     a = img.getchannel("A")
@@ -129,7 +137,7 @@ def find_parts(img: Image.Image, join: int = JOIN) -> list[tuple[tuple[int, int,
                         seen[ny][nx] = 1
                         stack.append((nx, ny))
             box = (l * s, t * s, min(a.width, (r + 1) * s), min(a.height, (b + 1) * s))
-            if (box[2] - box[0]) * (box[3] - box[1]) >= MIN_AREA:
+            if (box[2] - box[0]) * (box[3] - box[1]) >= max(MIN_AREA, min_area):
                 boxes.append((box, n))
     big = label.resize(img.size, Image.NEAREST)
     order = reading_order([b for b, _ in boxes], img.height)
@@ -194,7 +202,7 @@ def main() -> int:
         if not src.exists():
             continue  # 아직 안 뽑은 시트
         img = Image.open(src).convert("RGBA")
-        parts = find_parts(img, SHEET_JOIN.get(sheet, JOIN))
+        parts = find_parts(img, SHEET_JOIN.get(sheet, JOIN), SHEET_MIN_AREA.get(sheet, 0))
         if len(parts) != len(names):
             problems.append(f"{sheet}: 덩이 {len(parts)}개, 이름 {len(names)}개")
             continue
