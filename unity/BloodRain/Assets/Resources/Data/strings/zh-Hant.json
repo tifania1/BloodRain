@@ -907,6 +907,7 @@
   "ui.pause.title": "運氣調息",
   "ui.pause.sub": "暫停中",
   "ui.pause.resume": "繼續",
+  "ui.pause.save_quit": "儲存並退出",
   "ui.pause.quit": "回客棧",
   "ui.title.start": "開始",
   "ui.title.continue": "繼續遊戲",

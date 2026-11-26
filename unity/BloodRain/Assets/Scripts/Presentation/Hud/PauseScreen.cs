@@ -165,10 +165,20 @@ namespace BloodRain.Presentation.Hud
             FillDamage(right);
 
             // 단추 줄
-            Button(Loc.T("ui.pause.resume"), new Vector2(-450, 70), Gold, true, Close);
-            Button(Loc.T("ui.settings.title"), new Vector2(-150, 70), Gold, true, OpenSettings); // WP-57U
-            Button(Loc.T("ui.chronicle.open"), new Vector2(150, 70), Gold, true, OpenChronicle); // CX-01U
-            Button(Loc.T("ui.settle.end.zuohwa"), new Vector2(450, 70), Blood, !life.IsPrologue, Zuohwa);
+            Button(Loc.T("ui.pause.resume"), new Vector2(-600, 70), Gold, true, Close);
+            Button(Loc.T("ui.settings.title"), new Vector2(-300, 70), Gold, true, OpenSettings); // WP-57U
+            Button(Loc.T("ui.chronicle.open"), new Vector2(0, 70), Gold, true, OpenChronicle); // CX-01U
+            Button(Loc.T("ui.pause.save_quit"), new Vector2(300, 70), Gold, !life.IsPrologue, SaveAndQuit); // SV-03U(서장 몸은 이어 할 몸 재료가 없어 잠금)
+            Button(Loc.T("ui.settle.end.zuohwa"), new Vector2(600, 70), Blood, !life.IsPrologue, Zuohwa);
+        }
+
+        /// <summary>SV-03U 지금 생을 저장 칸에 쓰고 타이틀로. 타이틀 '이어하기'(또는 그 칸 고르기)가 같은 몸으로 되돌린다.</summary>
+        public void SaveAndQuit()
+        {
+            if (!IsOpen || runner == null) return;
+            Destroy(_root.gameObject);
+            _root = null;
+            if (!runner.SaveAndQuit()) Time.timeScale = _prevScale;
         }
 
         RectTransform Sheet(Vector2 pos, Vector2 size)

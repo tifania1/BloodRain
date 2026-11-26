@@ -706,12 +706,15 @@ namespace BloodRain.Presentation.Meta
         public static readonly System.Collections.Generic.List<string> Elixirs = new System.Collections.Generic.List<string>();
         /// <summary>침방에서 고른 깨어날 경지 id(WX-01U ②). null 이면 삼류부터. 새 생이 시작할 때 Life.WakeAt 으로 걸고 비운다.</summary>
         public static string WakeRealm;
+        /// <summary>SV-03U 이어 할 생(저장 칸의 SaveGame.Ongoing). 이어하기가 Body 와 같이 채우고, LifeRunner 가 새 Life 에 Life.Restore 한 뒤 비운다.</summary>
+        public static BloodRain.Core.Run.LifeSnapshot Resume;
 
         /// <summary>생이 끝났다. 다음 Run 은 침방에서 고른 몸으로(남은 몸·생을 쓰지 않게).</summary>
         public static void ClearBody()
         {
             Body = null;
             PendingLife = null;
+            Resume = null;
         }
     }
 }

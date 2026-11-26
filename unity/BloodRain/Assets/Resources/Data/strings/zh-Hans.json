@@ -907,6 +907,7 @@
   "ui.pause.title": "运气调息",
   "ui.pause.sub": "暂停中",
   "ui.pause.resume": "继续",
+  "ui.pause.save_quit": "保存并退出",
   "ui.pause.quit": "回客栈",
   "ui.title.start": "开始",
   "ui.title.continue": "继续游戏",

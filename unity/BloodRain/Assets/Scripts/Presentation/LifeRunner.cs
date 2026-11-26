@@ -68,8 +68,13 @@ namespace BloodRain.Presentation
                         _life = RebirthHandoff.PendingLife;
                         RebirthHandoff.PendingLife = null;
                     }
+                    else if (RebirthHandoff.Resume != null && RebirthHandoff.Body != null && TryResume(soul))
+                    {
+                        // SV-03U 생 도중 저장을 이어 함: 영약·깨어날 경지는 처음 생을 열 때 이미 걸렸으니 다시 안 건다. 적·탄은 생성 규칙대로 다시 채워진다
+                    }
                     else
                     {
+                        RebirthHandoff.Resume = null;
                         var body = RebirthHandoff.Body ?? Rebirth.Prologue(_data);
                         _life = new Life(soul, body, new System.Random());
                         int startLevel = _life.Level;
@@ -92,6 +97,42 @@ namespace BloodRain.Presentation
                 }
                 return _life;
             }
+        }
+
+        /// <summary>SV-03U: 같은 몸으로 새 Life 를 만들어 저장한 생을 되돌린다. 되돌린 뒤 바로 칸의 Ongoing 을 비워 쓴다(같은 판을 두 번 이어 하지 않게).
+        /// 되돌리지 못하면(다른 몸·모르는 판) false — 부른 쪽이 그 몸으로 새 생을 연다.</summary>
+        bool TryResume(Soul soul)
+        {
+            var snap = RebirthHandoff.Resume;
+            RebirthHandoff.Resume = null;
+            var life = new Life(soul, RebirthHandoff.Body, new System.Random());
+            try { life.Restore(snap); }
+            catch (System.InvalidOperationException e)
+            {
+                Debug.LogWarning($"[이어하기] 저장한 생을 못 되돌려 새 생으로 엽니다: {e.Message}");
+                return false;
+            }
+            _life = life;
+            StartLevelUps = 0;
+            // SoulStore.Save 는 Ongoing 없이 혼·대사만 다시 쓴다
+            SoulStore.Save(soul);
+            Debug.Log($"[이어하기] {snap.Sect} {snap.Minutes:0.0}분 Lv{_life.Level} 에서 이어 함");
+            return true;
+        }
+
+        /// <summary>SV-03U 멈춤 화면 '저장하고 나가기': 지금 생을 칸 파일의 Ongoing 으로 쓰고 타이틀로. 서장 몸이면 이어 할 몸 재료가 없어 안 한다.</summary>
+        public bool SaveAndQuit()
+        {
+            if (_life == null || _life.IsPrologue || _life.Record != null) return false;
+            var soul = RebirthHandoff.Soul ?? SoulStore.Load(DataBoot.Data);
+            var game = new BloodRain.Core.Meta.SaveGame(soul, SoulStore.LoadDialogue()) { Ongoing = BloodRain.Core.Run.LifeSnapshot.Capture(_life) };
+            SoulStore.SaveAll(game);
+            Debug.Log($"[저장하고 나가기] {SoulStore.Slot}번 칸 {_life.Minutes:0.0}분 Lv{_life.Level}");
+            RebirthHandoff.ClearBody();
+            RebirthHandoff.Soul = null;
+            Time.timeScale = 1f;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Boot");
+            return true;
         }
 
         void Awake()

@@ -344,6 +344,7 @@
   "ui.pause.title": "운기조식",
   "ui.pause.sub": "잠시 멈춤",
   "ui.pause.resume": "계속하기",
+  "ui.pause.save_quit": "저장하고 나가기",
   "ui.pause.quit": "객잔으로",
   "ui.title.start": "시작",
   "ui.title.continue": "이어하기",

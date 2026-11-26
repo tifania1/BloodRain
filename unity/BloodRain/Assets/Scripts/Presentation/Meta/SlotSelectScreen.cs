@@ -73,11 +73,43 @@ namespace BloodRain.Presentation.Meta
             PlayerPrefs.SetInt(LastSlotKey, slot.Slot);
             PlayerPrefs.Save();
             RebirthHandoff.Soul = null; // 다른 칸의 혼을 들고 넘어가지 않게
+            RebirthHandoff.Resume = null;
             var scene = SoulSlots.DestinationOf(slot) == SlotDestination.Inn ? "Inn" : "Run";
+            // SV-03U 생 도중 저장이 든 칸: 객잔이 아니라 그 몸으로 Run 에 들어가 LifeRunner 가 되돌린다
+            if (!slot.IsEmpty && TryPrepareResume()) scene = "Run";
             Debug.Log($"[칸 고르기] {slot.Slot}번 칸 → {scene}");
             var before = BeforeNewSoul;
             if (slot.IsEmpty && before != null) { BeforeNewSoul = null; before(() => SceneManager.LoadScene(scene)); return; }
             SceneManager.LoadScene(scene);
+        }
+
+        /// <summary>지금 칸에 이어 할 생(SaveGame.Ongoing)이 있으면 그 몸·혼·저장을 RebirthHandoff 에 싣는다. 몸 재료가 없는 옛 저장이면 false(객잔으로).</summary>
+        static bool TryPrepareResume()
+        {
+            var data = DataBoot.Data;
+            var game = SoulStore.LoadGame(data);
+            var snap = game.Ongoing;
+            if (snap == null) return false;
+            var cand = snap.Candidate(data.Cheonha);
+            if (cand == null) { Debug.LogWarning("[이어하기] 저장한 생에 몸 재료가 없어 객잔으로 갑니다"); return false; }
+            try
+            {
+                RebirthHandoff.ClearBody();
+                RebirthHandoff.Soul = game.Soul;
+                RebirthHandoff.Body = Rebirth.Body(data.Cheonha, cand);
+                RebirthHandoff.Mode = null;
+                RebirthHandoff.WakeRealm = null;
+                RebirthHandoff.Elixirs.Clear();
+                RebirthHandoff.Resume = snap;
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[이어하기] 저장한 몸을 못 만들어 객잔으로 갑니다: {e.Message}");
+                RebirthHandoff.ClearBody();
+                RebirthHandoff.Soul = null;
+                return false;
+            }
         }
 
         // ---------------------------------------------------------------- 화면
