@@ -56,6 +56,8 @@ namespace BloodRain.Presentation
         public float DashDistanceMultiplier { get; set; } = 1f;
         /// <summary>RG-04U 땅 걸음 배율(장강 물길 0.7 등). Fx.WaterLayer 가 프레임마다 넣는다. 경공 미끄러짐에는 안 곱한다.</summary>
         public float TerrainMultiplier { get; set; } = 1f;
+        /// <summary>R-13U 수귀 끌기 등 바깥에서 이번 걸음에 더할 거리(Unity m). 걸을 때만 쓰고 쓴 뒤 0 으로. Fx.WaterLayer 가 넣는다.</summary>
+        public Vector2 ExternalPull { get; set; }
         /// <summary>PM-01U 금강체 최대 덧붙임(넉백 면역). 지금 Run 씬엔 플레이어를 미는 것이 없어 표시만 둔다.
         /// 정예·땅의 주인 패턴 넉백(BR-01)·기수 깃발 등 플레이어를 미는 쪽이 생기면 이 값이 참일 때 밀지 않는다.</summary>
         public bool KnockbackImmune { get; set; }
@@ -150,7 +152,9 @@ namespace BloodRain.Presentation
                 float speed = _ws.Speed(_baseMove * _moveMultiplier * _slowMul * TerrainMultiplier);
                 var push = _ws.Scale.PushVelocity(pos, birth, _ws.Realm, speed);
                 step = (Vector2.ClampMagnitude(move, 1f) * speed + new Vector2(push.X, push.Y)) * dt;
+                if (!bound) step += ExternalPull;
             }
+            ExternalPull = Vector2.zero;
             if (step != Vector2.zero)
             {
                 var kept = _ws.Scale.KeepInside(pos + new System.Numerics.Vector2(step.x, step.y), birth, _ws.Realm);

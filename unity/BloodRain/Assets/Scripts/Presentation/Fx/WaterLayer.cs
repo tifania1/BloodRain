@@ -96,7 +96,44 @@ namespace BloodRain.Presentation.Fx
             if (_pc != null)
                 _pc.TerrainMultiplier = WaterGimmick.MoveSpeedMultiplier(g.Water, PlayerInWater && !PlayerOnBoat, false, _walk.Active, life.Body.SectTrait.IgnoresWater);
             SlowEnemies(life, g, k);
+            PullByGhosts(life, g, k, wp);
             TickWave(life, g, k, wp, view);
+        }
+
+        // ---- R-13U 수귀 끌어당김(enemies.json pull, Core WaterGhost.PullOffset + PullStep) ----
+        //   물 위 수귀가 pull.range m 안이면 수귀 쪽으로 초속 pull.speed m, 여럿이면 가장 큰 하나. 경공 중엔 안 끌림.
+        //   웹처럼 아래 경지에서 생긴 수귀(BornRealm < 지금 경지)는 안 끈다.
+        readonly PullStep _pull = new PullStep();
+        /// <summary>시험용: 이번 프레임 끌기 거리(세계 m)와 지금까지 끌린 프레임 수.</summary>
+        public float LastPull { get; private set; }
+        public int PulledFrames { get; private set; }
+
+        void PullByGhosts(BloodRain.Core.Run.Life life, GimmicksDef g, float k, System.Numerics.Vector2 wp)
+        {
+            _pull.Reset();
+            LastPull = 0f;
+            var field = runner.enemies;
+            if (!_any || field == null || field.Sim == null || _pc == null) return;
+            bool dashing = _pc.Dash != null && _pc.Dash.IsDashing;
+            float dt = Time.deltaTime;
+            if (dashing || dt <= 0f) return;
+            var sim = field.Sim;
+            int realm = life.Realm;
+            for (int i = 0; i < sim.Count; i++)
+            {
+                var a = sim.Get(i);
+                if (a.Health <= 0f) continue;
+                var def = field.DefOf(a.Kind);
+                if (def == null || def.Pull == null || a.BornRealm < realm) continue;
+                var at = WorldCoords.FromUnity(new Vector2(a.Pos.x, a.Pos.y));
+                bool inWater = GimmickLayout.InWater(life.Regions, g, k, at, life.SealStones);
+                _pull.Offer(WaterGhost.PullOffset(def.Pull, at, wp, inWater, dashing, dt));
+            }
+            var off = _pull.Offset;
+            if (off == System.Numerics.Vector2.Zero) return;
+            LastPull = off.Length();
+            PulledFrames++;
+            _pc.ExternalPull += new Vector2(off.X, -off.Y); // 세계 y 는 아래로
         }
 
         // ---- 역류 파도(gimmicks reverseWave) ----

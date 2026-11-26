@@ -473,8 +473,25 @@ namespace BloodRain.Presentation.Combat
         {
             var def = DataBoot.Data.Enemy(p.Summon);
             if (def == null) { Debug.LogWarning($"[PatternRunner] 소환 적 없음 {p.Summon}"); return; }
-            foreach (var o in offsets) runner.enemies.SpawnAt(def, center + new Vector2(o.x, o.y) * _factor);
+            foreach (var o in offsets)
+            {
+                var at = center + new Vector2(o.x, o.y) * _factor;
+                if (def.OnlyInWater && runner.Life != null)
+                {
+                    // R-13U 마천패 '수귀 소환': 물속에서 올라오니 가장 가까운 물길 가운데 줄로 옮기고, 못 붙이면 그 하나는 안 솟음
+                    var life = runner.Life;
+                    float k = life.Scale.Factor(life.Realm);
+                    float maxShift = Mathf.Max(p.Scatter, 6f) * _factor;
+                    var q = WaterGhost.SnapToWater(life.Regions, DataBoot.Data.Gimmicks, k, WorldCoords.FromUnity(at), maxShift, life.SealStones);
+                    if (q == null) { SummonSkipped++; continue; }
+                    at = WorldCoords.ToUnity(q.Value);
+                }
+                runner.enemies.SpawnAt(def, at);
+            }
         }
+
+        /// <summary>시험용: 물에 못 붙여 건너뛴 수귀 소환 수.</summary>
+        public int SummonSkipped { get; private set; }
 
         void SummonRing(BossPatternDef p, Vector2 center)
         {

@@ -861,9 +861,28 @@ namespace BloodRain.Presentation
                 foreach (var sp in s.Spawns)
                 {
                     if (!Room()) break;
-                    enemies.SpawnAt(_data.Enemy(sp.Enemy), RingPos());
+                    SpawnHere(_data.Enemy(sp.Enemy), RingPos());
                 }
             foreach (var e in s.Events) SpawnEvent(e);
+        }
+
+        /// <summary>시험·디버그: 물이 아닌 자리라 건너뛴 수귀 수.</summary>
+        public int WaterSkipped { get; private set; }
+
+        // R-13U 수귀(onlyInWater)는 고른 자리가 물이 아니면 그 차례를 건너뛴다(Core WaterGhost.CanSpawnAt, 웹 spawnLocalGroup 과 같음).
+        int SpawnHere(EnemyDef def, Vector2 at)
+        {
+            if (def != null && def.OnlyInWater && _life != null)
+            {
+                var g = _data.Gimmicks;
+                float k = _life.Scale.Factor(_life.Realm);
+                if (!BloodRain.Core.World.WaterGhost.CanSpawnAt(def, _life.Regions, g, k, WorldCoords.FromUnity(at), _life.SealStones))
+                {
+                    WaterSkipped++;
+                    return -1;
+                }
+            }
+            return enemies.SpawnAt(def, at);
         }
 
         // 사건 모양은 웹 프로토타입 runEvent 와 같다(혈인 떼 한 줄 벽, 동갑시 포위 원, 금두꺼비는 가까운 고리).
@@ -888,7 +907,7 @@ namespace BloodRain.Presentation
                     {
                         if (i == gap || i == gap + 1) continue;
                         if (!Room()) break;
-                        enemies.SpawnAt(enemy, p - ax * diag * 0.6f + along * (i - n / 2f) * step);
+                        SpawnHere(enemy, p - ax * diag * 0.6f + along * (i - n / 2f) * step);
                     }
                     break;
                 }
@@ -899,7 +918,7 @@ namespace BloodRain.Presentation
                     {
                         if (!Room()) break;
                         float a = i / (float)n * Mathf.PI * 2f;
-                        enemies.SpawnAt(enemy, p + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * diag * 0.6f);
+                        SpawnHere(enemy, p + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * diag * 0.6f);
                     }
                     break;
                 }
@@ -910,14 +929,14 @@ namespace BloodRain.Presentation
                     var at = RingPos();
                     float spread = diag * 0.08f;
                     for (int i = 0; i < n && Room(); i++)
-                        enemies.SpawnAt(enemy, at + Random.insideUnitCircle * spread);
+                        SpawnHere(enemy, at + Random.insideUnitCircle * spread);
                     break;
                 }
                 case WaveEventKind.Elite:
-                    enemies.SpawnAt(_data.Enemy(e.Enemy), ElitePos());
+                    SpawnHere(_data.Enemy(e.Enemy), ElitePos());
                     break;
                 case WaveEventKind.Toad:
-                    enemies.SpawnAt(_data.Enemy(e.Enemy), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
+                    SpawnHere(_data.Enemy(e.Enemy), RingPos(_data.Balance.SpawnTarget.ToadRingScale));
                     break;
                 case WaveEventKind.Merchant:
                     OpenMerchant();
