@@ -1245,7 +1245,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: 열 장면 모두 10장씩(사람이 고름)
   - 찍기: `docs/unity_shots/ST-03/<no>_<id>/`
 
-- [ ] VX-01U 적 피격 흰 번쩍임과 사라질 때 붉은 경계(13장 '움직임은 이미지 한 장 + 연출로') · 먼저: 없음
+- [x] VX-01U 적 피격 흰 번쩍임과 사라질 때 붉은 경계(13장 '움직임은 이미지 한 장 + 연출로') · 먼저: 없음 — 2026-11-27 00:45 PC: ① `ClusterInk.shader` 디졸브 가장자리를 안쪽 주홍 #B3261E → 바깥 먹으로, dissolve 0.55 넘으면 전체가 먹으로 식음(끄트머리 갈래에만 ALU 몇 개라 적 300 프레임 시간 영향 없음). ② `_Flash` 는 HF-01U 로 이미 있었음(0.055초·0.28배) — 이번에 설정 '피격 번쩍임' 끔·효과 간소화면 끄게 `ClusterRenderer` 에 묶음. 도끼 강시를 dissolve 0·0.3·0.5·0.7·0.88·번쩍 여섯 칸으로 구워 `docs/unity_shots/VX-01U/dissolve.png`(붉은 테 0.3·0.5 칸에 1.4k·3.3k 픽셀, 0.7 칸은 먹으로 식음). Run Play 15초 콘솔 에러 0
   - 할 것: 13장 '피격: 흰색 번쩍임 셰이더. 사망: 먹물이 번지며 사라지는 디졸브 셰이더(노이즈 텍스처, 붉은 경계가 검게 식음)'. 지금 `ClusterInk.shader` 디졸브 가장자리는 늘 `_InkColor`(먹)이고 맞을 때 번쩍임은 없다(2026-11-08 클라우드가 13장을 맞대다 찾음). ① 가장자리 색: 지워지는 테두리 안쪽(막 지워진 쪽)은 주홍 #B3261E(13장 색표 '주홍(혈우)'), 바깥(아직 남은 쪽)으로 갈수록 먹으로 — `n` 이 `cut - _EdgeWidth` 에서 `cut` 으로 갈 때 주홍 → 먹. 디졸브가 끝에 가까울수록(dissolve → 1) 전체가 먹 쪽으로 식게. ② 인스턴스 값 `_Flash`(0~1) 를 더해 `col.rgb = lerp(col.rgb, 1, _Flash)`, EnemyField 가 피해를 준 사람(덩이)에 짧게 켰다 끈다(길이는 눈으로, daily 에 적기). 덩이 하나에 여럿이 겹쳐 그려지니 덩이 단위로 켜도 됨. 휴대폰 효과 간소화(FxSettings)·설정 '깜빡임 끄기'(WP-57U `GameSettings`)면 번쩍임을 끈다.
   - 쓸 것: `Art/Shaders/ClusterInk.shader`(_Tint·_Dissolve·_EdgeWidth·_InkColor), `Presentation/Fx/ClusterRenderer.cs`(인스턴스 값 배열), `EnemyField.Damage`, 13장 색표
   - 메뉴: 없음

@@ -197,6 +197,8 @@ namespace BloodRain.Presentation.Fx
             }
 
             // 2) 그림 한 장마다 그 그림을 쓰는 덩이만 모아 그린다(그리기 호출 = 화면 안 종류 수 × ceil(사람/1023))
+            // 설정 '피격 번쩍임' 끔·효과 간소화면 적 번쩍임도 끈다(VX-01U)
+            bool flashOn = !FxSettings.Simplified && BloodRain.Presentation.Meta.SettingsScreen.Current.FlashOn;
             foreach (var tex in _textures)
             {
                 _batchTex = tex;
@@ -206,7 +208,7 @@ namespace BloodRain.Presentation.Fx
                 var lay = Layout(n, c.Seed);
                 Vector4 tint = c.Tint;
                 float hitAge = now - c.HitAt;
-                float flash = hitAge >= 0f && hitAge < FlashSeconds ? FlashStrength * (1f - hitAge / FlashSeconds) : 0f;
+                float flash = flashOn && hitAge >= 0f && hitAge < FlashSeconds ? FlashStrength * (1f - hitAge / FlashSeconds) : 0f;
                 float squash = hitAge >= 0f && hitAge < SquashSeconds ? 1f - hitAge / SquashSeconds : 0f;
                 for (int i = 0; i < upto; i++)
                 {
