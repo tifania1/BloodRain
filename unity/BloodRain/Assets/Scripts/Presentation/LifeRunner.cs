@@ -47,6 +47,10 @@ namespace BloodRain.Presentation
         Life _life;
         GameData _data;
 
+        /// <summary>생을 시작하며 대환단·깨어날 경지로 건너뛴 레벨 수. LevelUpScreen 이 처음에 그만큼 레벨업을 몰아 띄우고 0 으로 돌린다
+        /// (그 화면은 붙을 때의 레벨부터 세므로, 이게 없으면 건너뛴 레벨업이 안 뜬다 — 2026-11-26 WX-01U ② 에서 봄).</summary>
+        public int StartLevelUps { get; set; }
+
         /// <summary>이번 생. 처음 부를 때 만든다(다른 컴포넌트의 Start 순서와 상관없이 같은 것).</summary>
         public Life Life
         {
@@ -68,6 +72,7 @@ namespace BloodRain.Presentation
                     {
                         var body = RebirthHandoff.Body ?? Rebirth.Prologue(_data);
                         _life = new Life(soul, body, new System.Random());
+                        int startLevel = _life.Level;
                         // EL-02U 약방에서 고른 영약: 혈정을 쓰고 이번 생에 건다(서장 몸엔 없음)
                         if (!_life.IsPrologue && RebirthHandoff.Elixirs.Count > 0)
                         {
@@ -75,6 +80,14 @@ namespace BloodRain.Presentation
                             if (picked != null && picked.Count > 0) { _life.TakeElixirs(picked); SoulStore.Save(soul); }
                             RebirthHandoff.Elixirs.Clear();
                         }
+                        // WX-01U ② 침방에서 고른 깨어날 경지: 그 경지 문턱 레벨로. 건너뛴 레벨업은 LevelUpScreen 이 레벨 차이로 몰아 띄운다(대환단과 같은 길)
+                        if (!_life.IsPrologue && RebirthHandoff.WakeRealm != null)
+                        {
+                            try { _life.WakeAt(RebirthHandoff.WakeRealm); }
+                            catch (System.ArgumentException e) { Debug.LogWarning($"[깨어날 경지] {e.Message}"); }
+                        }
+                        RebirthHandoff.WakeRealm = null;
+                        StartLevelUps = _life.Level - startLevel;
                     }
                 }
                 return _life;

@@ -109,6 +109,8 @@ namespace BloodRain.Presentation.Meta
             RefreshPin();
             Refresh();
             BuildDirectRow();
+            BuildWakeRow();
+            _sub.text += PastLifeLine();
         }
 
         // ---- 바라는 문파(SV-02U, 기획서 21장 환혼 강화 '바라는 문파') ----
@@ -305,10 +307,90 @@ namespace BloodRain.Presentation.Meta
             Send(Draw.ChooseDirect(sectId));
         }
 
+        // ---- WX-01U ② 깨어날 경지(10장 '천하 확장: 전생의 공력', Core PastLifePower.WakeRealms·Life.WakeAt) ----
+        // 같은 구간을 30번 넘은 경지가 있으면 직접 고르기 줄 아래 한 줄: 삼류 + 그 경지들. 고른 것은 어느 몸을 고르든 새 생에 건다
+        // (LifeRunner 가 RebirthHandoff.WakeRealm 을 읽어 Life.WakeAt — 건너뛴 레벨업은 LevelUpScreen 이 레벨 차이로 몰아 띄운다).
+        RectTransform _wakeRow;
+        readonly List<(string id, Image img)> _wakeButtons = new List<(string, Image)>();
+        /// <summary>지금 고른 깨어날 경지(null 이면 삼류부터).</summary>
+        public string WakeRealm { get; private set; }
+        /// <summary>시험용: 깨어날 경지 줄의 단추 수(삼류 포함, 줄이 없으면 0).</summary>
+        public int WakeCount => _wakeRow != null ? _wakeButtons.Count : 0;
+        static readonly Color WakeOn = new Color(0.70f, 0.20f, 0.16f);
+        static readonly Color WakeOff = new Color(0.25f, 0.20f, 0.17f);
+
+        void BuildWakeRow()
+        {
+            if (_wakeRow != null) Destroy(_wakeRow.gameObject);
+            _wakeRow = null;
+            _wakeButtons.Clear();
+            WakeRealm = null;
+            if (_soul == null || Draw == null || Draw.IsFirst || _soul.Lives == 0) return;
+            var wl = _soul.PastLifePower().WakeRealms();
+            if (wl.Count == 0) return;
+            _wakeRow = Rect("깨어날 경지", _root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f));
+            Place(_wakeRow, new Vector2(0.5f, 0f), new Vector2(-330, 26), new Vector2(1240, 40));
+            var back = _wakeRow.gameObject.AddComponent<Image>();
+            back.color = new Color(Paper.r, Paper.g, Paper.b, 0.85f);
+            back.raycastTarget = false;
+            var h = _wakeRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.spacing = 6; h.childAlignment = TextAnchor.MiddleCenter;
+            h.childControlWidth = h.childControlHeight = false;
+            h.childForceExpandWidth = h.childForceExpandHeight = false;
+            var head = Text("머리", _wakeRow, $"<alpha=#AA>{Loc.T("ui.chimbang.wake")}<alpha=#FF>", 18, FontStyles.Italic);
+            head.rectTransform.sizeDelta = new Vector2(400, 34);
+            var realms = _data.Balance.Realms.OrderBy(r => r.Level).ToList();
+            var ids = new List<string> { null };
+            ids.AddRange(wl);
+            foreach (var id in ids)
+            {
+                var r = id == null ? realms[0] : realms.First(x => x.Id == id);
+                var b = MakeButton($"깨어날 {r.NameKo}", _wakeRow, WakeOff, out var lab, 18, Paper);
+                ((RectTransform)b.transform).sizeDelta = new Vector2(92, 34);
+                lab.text = Loc.Realm(r);
+                lab.enableAutoSizing = true; lab.fontSizeMin = 10; lab.fontSizeMax = 18;
+                string pick = id;
+                b.onClick.AddListener(() => PickWake(pick));
+                _wakeButtons.Add((id, b.GetComponent<Image>()));
+            }
+            PaintWake();
+        }
+
+        /// <summary>깨어날 경지를 고른다(null = 삼류). 고를 수 없는 경지면 false.</summary>
+        public bool PickWake(string realmId)
+        {
+            if (_wakeRow == null || _done) return false;
+            if (realmId != null && _wakeButtons.All(w => w.id != realmId)) return false;
+            WakeRealm = realmId;
+            PaintWake();
+            return true;
+        }
+
+        void PaintWake()
+        {
+            foreach (var (id, img) in _wakeButtons) img.color = id == WakeRealm ? WakeOn : WakeOff;
+        }
+
+        /// <summary>부제 뒤 '전생의 공력 이류 -8% 일류 -4%'(웹 innqi 와 같은 표기). 줄어든 구간이 없으면 빈 글.</summary>
+        string PastLifeLine()
+        {
+            if (_soul == null || _soul.Lives == 0) return "";
+            var pl = _soul.PastLifePower();
+            var realms = _data.Balance.Realms.OrderBy(r => r.Level).ToList();
+            var cuts = new List<string>();
+            for (int i = 1; i < realms.Count; i++)
+            {
+                float c = pl.CutForSegment(i);
+                if (c > 0) cuts.Add($"{Loc.Realm(realms[i])} −{Mathf.RoundToInt(c * 100)}%");
+            }
+            return cuts.Count == 0 ? "" : $"   <size=75%><alpha=#99>{Loc.F("ui.chimbang.past_life", string.Join("  ", cuts))}<alpha=#FF></size>";
+        }
+
         void Send(RebirthBody body)
         {
             RebirthHandoff.Body = body;
             RebirthHandoff.Soul = _soul;
+            RebirthHandoff.WakeRealm = WakeRealm;
             Debug.Log($"[침방] {body.Sect?.NameKo} 제자로 환생 · {body.Region.NameKo}(혈운 {body.Region.Density:0.0}) · 성질 {string.Join(",", body.Traits.Select(t => t.NameKo))}");
             Chosen?.Invoke(body);
             if (loadRunScene) SceneManager.LoadScene("Run");
@@ -622,6 +704,8 @@ namespace BloodRain.Presentation.Meta
         public static string Mode;
         /// <summary>약방에서 고른 영약 id(EL-02U, 2026-11-20). 새 생이 시작할 때 Apothecary.TryPrepare 로 혈정을 쓰고 지니고 나간다. 쓰면 비운다.</summary>
         public static readonly System.Collections.Generic.List<string> Elixirs = new System.Collections.Generic.List<string>();
+        /// <summary>침방에서 고른 깨어날 경지 id(WX-01U ②). null 이면 삼류부터. 새 생이 시작할 때 Life.WakeAt 으로 걸고 비운다.</summary>
+        public static string WakeRealm;
 
         /// <summary>생이 끝났다. 다음 Run 은 침방에서 고른 몸으로(남은 몸·생을 쓰지 않게).</summary>
         public static void ClearBody()

@@ -816,6 +816,8 @@
   "ui.chimbang.reroll": "重選",
   "ui.chimbang.reroll_left": "(剩 {0})",
   "ui.chimbang.direct": "直接選擇 · 無天賦與福緣",
+  "ui.chimbang.wake": "覺醒境界 · 跳過的升級在開局時一併選擇",
+  "ui.chimbang.past_life": "前世功力 {0}",
   "ui.gugyeol.broken": "口訣中斷 · 前{0}/{1}步與前世相同",
   "ui.gugyeol.done": "口訣已走完 · {0}步，此後另走新路",
   "ui.chimbang.female": "(女)",

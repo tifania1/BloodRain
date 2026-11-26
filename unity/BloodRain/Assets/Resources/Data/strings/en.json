@@ -816,6 +816,8 @@
   "ui.chimbang.reroll": "Reroll",
   "ui.chimbang.reroll_left": "({0} left)",
   "ui.chimbang.direct": "Choose directly · no traits or blessings",
+  "ui.chimbang.wake": "Wake at realm · skipped level-ups are picked at the start",
+  "ui.chimbang.past_life": "Past-life power {0}",
   "ui.gugyeol.broken": "The formula breaks · {0}/{1} steps followed the last life",
   "ui.gugyeol.done": "Formula followed to the end · {0} steps, a new path from here",
   "ui.chimbang.female": "(F)",

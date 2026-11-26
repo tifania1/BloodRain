@@ -90,6 +90,12 @@ namespace BloodRain.Presentation.Hud
             if (orbs == null) orbs = FindFirstObjectByType<OrbLayer>();
             if (weapons == null) weapons = FindFirstObjectByType<WeaponRunner>();
             _handledLevel = CurrentLevel();
+            // 대환단·깨어날 경지로 건너뛴 레벨업을 처음에 몰아 띄운다(WX-01U ②)
+            if (LifeRunner.Instance != null && LifeRunner.Instance.StartLevelUps > 0)
+            {
+                _pending += LifeRunner.Instance.StartLevelUps;
+                LifeRunner.Instance.StartLevelUps = 0;
+            }
             if (EventSystem.current == null) new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             if (Meta.RebirthHandoff.Soul != null) _restored = Meta.RebirthHandoff.Soul.RestoredManuals;
             Build();

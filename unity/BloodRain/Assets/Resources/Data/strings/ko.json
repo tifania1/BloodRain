@@ -257,6 +257,8 @@
   "ui.chimbang.reroll": "다시 고르기",
   "ui.chimbang.reroll_left": "(남은 {0})",
   "ui.chimbang.direct": "직접 고르기 · 성질·덕 없이",
+  "ui.chimbang.wake": "깨어날 경지 · 건너뛴 레벨업은 처음에 몰아서",
+  "ui.chimbang.past_life": "전생의 공력 {0}",
   "ui.gugyeol.broken": "구결이 끊겼다 · {0}/{1}걸음까지 지난 생 그대로",
   "ui.gugyeol.done": "구결을 다 따랐다 · {0}걸음, 여기서부터는 새 길",
   "ui.chimbang.female": "(여)",
