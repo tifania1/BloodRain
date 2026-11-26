@@ -1217,7 +1217,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
   - 끝: 숭산에 들어서면 범종·탑림, 청운진 우물, 개방 총타 술독, 남궁세가 시렁이 그 땅에만
   - 찍기: `docs/unity_shots/GM-01U/` 의 `<기믹>.png`
 
-- [ ] R-13U 세 지역 기믹(독안개·물·태극 바닥)과 수귀 · 먼저: 없음(R-10 2026-11-20 '표대로', 배치는 gimmicks.json layout·`GimmickLayout`)
+- [ ] R-13U 세 지역 기믹(독안개·물·태극 바닥)과 수귀 · 먼저: 없음(R-10 2026-11-20 '표대로', 배치는 gimmicks.json layout·`GimmickLayout`) (진행: 2026-11-27 00:55 PC — 셋은 RG-03U·04U·05U 로 끝남(독안개·물길 감속·수로채 ignoresWater·태극 바닥, `WaterLayer.cs:97`). 남은 것은 수귀 둘: ① 장강에선 `RegionSpawns.EnemyFor`·`WaveTable.PickEnemy` 가 수귀를 고유 적으로 뭍에서도 뽑고 Unity 에 `OnlyInWater` 를 보는 곳이 없음 ② `EnemyDef.Pull`(water_pull 끌어당김)을 쓰는 곳도 없음. ① 은 "물이 없는 자리에서 뽑히면 무엇으로 바꾸나/물길 안 어디에 솟나"가 Core 에 없어 클라우드가 `WaterGimmick` 쪽에 자리 함수를 먼저 만들어 주면 붙임)
   - 할 것: gimmicks.json 그대로 Core `Gimmicks` 판정을 지역에 놓는다. 물 지형 걸음에 `WaterGimmick.MoveSpeedMultiplier(…, ignoresWater: SectTrait.IgnoresWater)`(R-04U (4)), 수귀(`OnlyInWater`)는 물에서만 솟음(C-02b 남은 것). 놓는 자리·수는 R-10 이 정해진 뒤.
   - 쓸 것: Core `World/Gimmicks.cs`(PoisonFogGimmick·WaterGimmick …), gimmicks.json, cheonha.json regions
   - 메뉴: `BloodRain/Bootstrap/Run 씬에 지역 기믹 붙이기`
