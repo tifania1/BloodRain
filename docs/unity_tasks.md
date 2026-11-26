@@ -1179,7 +1179,7 @@ backlog '다음 단계' 절의 Unity 몫. 숭산에서 맞춘 화면(아래 0절
 
 ### F. 뒤로 미룬 것(조건이 풀리면)
 
-- [ ] GU-11h4U 모여드는 땅의 주인 눈으로 확인 · 먼저: 없음(화면 집중은 2026-11-24 풀림. 웹 합친 판에도 2026-11-25 같은 규칙이 들어가 `?life=shaolin` 에서 먼저 볼 수 있음), backlog GU-11h4(2026-11-20 Core·알림·싸움 걸기 끝 — `Life.NoteGathering` 이 `BossAwakening.Summon` 으로 걸고 PatternRunner 가 플레이어 곁에 세움)
+- [x] GU-11h4U 모여드는 땅의 주인 눈으로 확인 · 먼저: 없음 — 2026-11-27 04:57 PC: 소림 몸을 F2 로 현경(봉인석 0)까지 올리고 Life.Minutes 를 리플렉션으로 29.9분에 놓음(안 겪은 문파의 위기는 저절로 무너짐 — 무당산·숭산·화산·당가타). 30.0분에 붉은 '땅의 주인이 모여든다' 알림·로그(무당산), 그런데 시간을 건너뛴 탓에 15분에 깨어난 숭산 원각과 이미 싸우는 중이라 혈허진인은 줄에서 기다렸다가 원각을 쓰러뜨리자 곧 걸려 곁에 섬(`act2_lord.png`). 40분에 둘째(화산 낙매검선의 검혼)가 모여들어 줄에서 기다리다 혈허진인 뒤에 걸림(`act2_second.png`). 60분에 혈월이 지며 좌화 정산이 뜸(`moonset.png`). 콘솔 에러 0. 보스가 화면 밖에서 걸어 들어오는 연출은 안 넣음(지금 자리 그대로). **이 PC 혼 저장에 시험 생 정산(윤회의 기 +3,342, 봉인석 둘, 무당 해금)이 들어감**. 찍음 `docs/unity_shots/GU-11h4U/`(화면 집중은 2026-11-24 풀림. 웹 합친 판에도 2026-11-25 같은 규칙이 들어가 `?life=shaolin` 에서 먼저 볼 수 있음), backlog GU-11h4(2026-11-20 Core·알림·싸움 걸기 끝 — `Life.NoteGathering` 이 `BossAwakening.Summon` 으로 걸고 PatternRunner 가 플레이어 곁에 세움)
   - 할 것: 봉인석 0 혼으로 숭산 생을 F2 로 현경·30분까지 당겨(LifeRunner.TestClockScale) 붉은 '땅의 주인이 모여든다' 알림 뒤 무너진 문파 주인이 곁에 서서 싸움이 걸리는지, 쓰러뜨린 뒤 40분에 둘째가 오는지, 60분에 혈월이 지며 좌화 정산이 뜨는지. 보스가 화면 밖에서 걸어 들어오는 연출은 원하면 PatternRunner.BeginFight 의 자리(지금 오른쪽 6m)를 화면 밖으로
   - 쓸 것: Core `Life.GatheringLordsDue`·`FallenLordRegions`·`BossAwakening.Engage`, `Presentation/Combat/PatternRunner.cs`
   - 메뉴: 없음
