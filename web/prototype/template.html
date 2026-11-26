@@ -5676,7 +5676,7 @@ function regionGimmicksStep(dt) {
 // 켜지기 전에도 깎을 수 있다(기획서에 없음 — 미리 부수면 그 제단은 켜지지 않는다).
 const altarLitCount = (d, t) => t < d.firstLightSeconds ? 0 : Math.min(d.count, 1 + (d.lightEverySeconds > 0 ? Math.floor((t - d.firstLightSeconds) / d.lightEverySeconds) : d.count));
 function bloodAltarsStep() {
-  const d = GIMW.bloodAltars; if (!d) return;
+  const d = GIMW.bloodAltars; if (!d || G.rush) return;   // 보스 연전엔 땅의 기믹 적이 없다(WP-38U '잡몹은 없음'). 몸이 십만대산 곁에서 깨면 제단이 섰다(2026-11-26)
   const L = (DATA.gimmicks || {}).layout || {}, ring = L.altarRing ?? 12, a0 = L.altarOrderFromDegrees ?? 45, tier = tierNow();
   const reg = CH_REGS.find(r => r.gimmicks.includes(d.id)); if (!reg) return;
   // 경지가 바뀌면 지금 놓인 것을 거두고(기혈 비율은 남김) 다음에 그 땅에 서 있을 때 새 축척으로 다시 놓는다

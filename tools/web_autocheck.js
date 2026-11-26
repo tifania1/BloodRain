@@ -553,8 +553,10 @@ async function rushRun(browser, base) {
       if (!G.rush) bad.push('연전 판이 아님');
       if (G.realm.id !== BR.startRealm) bad.push(`시작 경지 ${G.realm.id}`);
       if (G.weapons[0].lv !== BR.startWeaponLevel) bad.push(`시작 무공 Lv${G.weapons[0].lv}`);
-      G.player.maxHp = G.player.hp = 1e9; G.auto = true;
-      for (let i = 0; i < 30 * 20; i++) { G.player.hp = G.player.maxHp; step(1 / 30); if (overlay) { overlay = null; G.pendingLevels = 0; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); } }
+      // 주인 곁 1m 에 세워 둔다(2026-11-26): 자동 조종은 주인을 피해 다녀 근접 무공(나한권 1.8m)이 20초 내내 한 번도 안 닿는 판이 있었다.
+      //   여기서 보려는 건 '연전 주인이 맞는다(무적이 아니다)'라서 자리는 고정. 기혈 9만을 깎는 속도는 결정 #69 몫
+      G.player.maxHp = G.player.hp = 1e9; G.auto = false;
+      for (let i = 0; i < 30 * 20; i++) { G.player.hp = G.player.maxHp; { const L = G.lordF; if (L) { G.player.x = L.x + 1; G.player.y = L.y; } } step(1 / 30); if (overlay) { overlay = null; G.pendingLevels = 0; ['levelup', 'brk', 'chest', 'find', 'evopick'].forEach(x => $(x).hidden = true); } }
       if (!G.lordF || !isFinite(G.lordF.hp) || !(G.lordF.hp < G.lordF.maxHp)) bad.push(`20초 싸워도 첫 주인 기혈이 그대로(${G.lordF && G.lordF.hp})`);
       G.auto = false;
       const order = rushOrder(), seen = [];
