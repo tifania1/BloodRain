@@ -36,7 +36,7 @@ namespace BloodRain.Core.Tests
             Assert.True(html.IndexOf("if (G.body && G.daily) {", StringComparison.Ordinal) < html.IndexOf("const st = lifeSettle(), m = recordLife(st)", StringComparison.Ordinal));
         }
 
-        [Fact] public void 보스_연전은_현경_Lv8_로_주인을_데이터_차례대로_잡몹_없이()
+        [Fact] public void 보스_연전은_현경까지_레벨업을_다_골라_주인을_데이터_차례대로_잡몹_없이()
         {
             var html = Proto;
             foreach (var used in new[]
@@ -44,7 +44,7 @@ namespace BloodRain.Core.Tests
                 $"(m.unlocks || []).includes('mode:{BossRush.ModeId}')",
                 "const rushOrder = () => CH_REGS.filter(r => r.boss && !r.final);",          // Core CheonhaDef.BossRegions
                 "REALMS.find(x => x.id === BR.startRealm)",
-                "Math.min(BR.startWeaponLevel, B.levels.weaponMax)",
+                "if (BR.pickLevelsToRealm) G.pendingLevels += R.level - lv0;",             // Core BossRush.StartLevelUps
                 "e.hp = e.maxHp = base * lordHpMult(BR.healthMinute);",                     // Core BossRush.Health
                 "G.pendingLevels += BR.levelUpsPerKill; G.player.hp = G.player.maxHp;",      // Core BossRush.Defeat
                 "if (G.spawnAcc >= 1 && !G.rush) {",

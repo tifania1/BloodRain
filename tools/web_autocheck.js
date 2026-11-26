@@ -538,7 +538,7 @@ async function dailyRun(browser, base) {
   rows.push({ what: label, res: r.bad.length ? '문제' : `통과(${r.sect})` });
   await p.ctx.close();
 }
-// 보스 연전(MO-02): 봉인 엔딩 뒤 열린 혼으로 현경·Lv8 시작, 주인 일곱을 차례로, 다 넘으면 가장 빠른 시간만 남고 혼은 그대로
+// 보스 연전(MO-02): 봉인 엔딩 뒤 열린 혼으로 현경 문턱까지 레벨업을 처음에 다 골라 시작(11-26 #69), 주인 일곱을 차례로, 다 넘으면 가장 빠른 시간만 남고 혼은 그대로
 async function rushRun(browser, base) {
   const label = '보스 연전';
   const p = await openPage(browser, base + '/?life=shaolin', label);
@@ -552,7 +552,7 @@ async function rushRun(browser, base) {
       toggleRush(); chooseLife(0); G.auto = false; running = false;
       if (!G.rush) bad.push('연전 판이 아님');
       if (G.realm.id !== BR.startRealm) bad.push(`시작 경지 ${G.realm.id}`);
-      if (G.weapons[0].lv !== BR.startWeaponLevel) bad.push(`시작 무공 Lv${G.weapons[0].lv}`);
+      { const R = REALMS.find(x => x.id === BR.startRealm); if (G.level !== R.level || G.pendingLevels < R.level - 1) bad.push(`시작 Lv${G.level}, 고를 레벨업 ${G.pendingLevels}(현경 문턱 ${R.level})`); }
       // 주인 곁 1m 에 세워 둔다(2026-11-26): 자동 조종은 주인을 피해 다녀 근접 무공(나한권 1.8m)이 20초 내내 한 번도 안 닿는 판이 있었다.
       //   여기서 보려는 건 '연전 주인이 맞는다(무적이 아니다)'라서 자리는 고정. 기혈 9만을 깎는 속도는 결정 #69 몫
       G.player.maxHp = G.player.hp = 1e9; G.auto = false;

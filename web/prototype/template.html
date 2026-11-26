@@ -4867,7 +4867,7 @@ function dailyRestore() {
   try { localStorage.setItem(SOUL_KEY, X.snap); } catch (e) { /* 막혀도 정산은 보인다 */ }
 }
 // 보스 연전(7장 '모드', Core Meta/BossRush, MO-02): 봉인 엔딩 뒤 열린다(mode:boss_rush). 단추를 누르고 후보 카드에서 몸을 고르면
-//   그 몸으로 현경·시작 무공 Lv8 에서 땅의 주인 일곱(봉마곡 빼고 데이터 차례 = Core BossRegions)을 연달아. 주인은 곁(화면 대각선 0.3, 모여드는 주인과 같은 자리)에 세우고
+//   그 몸으로 Lv1 에서 현경 문턱까지 레벨업을 처음에 다 고르고(2026-11-26 #69) 땅의 주인 일곱(봉마곡 빼고 데이터 차례 = Core BossRegions)을 연달아. 주인은 곁(화면 대각선 0.3, 모여드는 주인과 같은 자리)에 세우고
 //   기혈은 기준 체력 × healthCurve(healthMinute 분). 쓰러뜨리면 레벨업 levelUpsPerKill 번·기혈 가득. 땅의 깨어남·그림자·문파의 위기는 안 돈다.
 //   혼은 일일 도전처럼 시작 때로 되돌리고(Core Sandbox) 다 깬 시간(가장 빠른 것)만 혼 bossRushBest 에(Core Soul.RecordBossRush)
 const BR = DATA.bossRush || null;
@@ -4877,11 +4877,11 @@ let innRush = false;
 function toggleRush() { const m = innMeta(); if (overlay !== 'inn' || !rushOpen(m)) return; innRush = !innRush; renderInn(); }
 function rushSetup() {
   const R = REALMS.find(x => x.id === BR.startRealm) || REALMS[REALMS.length - 1];
-  G.realm = R; G.level = R.level; G.xp = 0; G.cues.realms.add(R.id);
-  for (const w of G.weapons) w.lv = Math.max(w.lv, Math.min(BR.startWeaponLevel, B.levels.weaponMax));
+  const lv0 = G.level; G.realm = R; G.level = R.level; G.xp = 0; G.cues.realms.add(R.id);
+  if (BR.pickLevelsToRealm) G.pendingLevels += R.level - lv0;   // Core BossRush.StartLevelUps: 현경 문턱까지 레벨업을 처음에 다 고른다(2026-11-26 사람, #69)
   const U = worldU(); G.player.x = G.cam.x = G.home.x / U; G.player.y = G.cam.y = G.home.y / U;   // 싸움 좌표 = 절대 / worldU
   recomputeStats(); G.player.hp = G.player.maxHp;
-  toast('보스 연전', `${R.nameKo} · 시작 무공 Lv${G.weapons[0].lv} · 땅의 주인 ${rushOrder().length}을 연달아`);
+  toast('보스 연전', `${R.nameKo} · 레벨업 ${G.pendingLevels}번을 먼저 고르고 · 땅의 주인 ${rushOrder().length}을 연달아`);
 }
 function rushTick(dt) {
   const X = G.rush; if (!X || X.done) return;

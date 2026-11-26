@@ -1,6 +1,7 @@
 #nullable enable
 // 보스 연전(기획서 7장 '모드', WP-38 — 2026-11-20 추천대로, decisions #39, cheonha.json bossRush). 봉인 엔딩 뒤 열린다(Meta/Modes).
-//   고른 몸으로 현경·시작 무공 Lv8 에서 시작해 땅의 주인 일곱을 데이터 차례(원각 → 혁련휘)로 연달아.
+//   고른 몸으로 Lv1 에서 현경 문턱 레벨까지 오르며 그 레벨업을 처음에 다 골라(2026-11-26 사람, decisions #69 — 그 전엔 시작 무공 하나 Lv8)
+//   땅의 주인 일곱을 데이터 차례(원각 → 혁련휘)로 연달아.
 //   하나 쓰러뜨릴 때마다 레벨업 세 번·기혈 가득, 기혈은 기준 체력 × healthCurve(20분) = 기준 체력 그대로.
 //   혼엔 보상을 안 남기고 다 깬 시간만(Soul.RecordBossRush — 가장 빠른 것). 판은 일일 도전처럼 혼 복사본(DailyChallenge.Sandbox)으로 돌린다.
 //   싸움 자체(패턴·장판)는 천하 한 생과 같은 BossAwakening·PatternRunner 를 쓴다. 이 클래스는 차례·시계·처치 보상만 센다.
@@ -21,6 +22,13 @@ namespace BloodRain.Core.Meta
 
         /// <summary>싸울 차례: 땅의 주인이 있는 지역(봉마곡 빼고) 데이터 차례.</summary>
         public static IReadOnlyList<RegionDef> Order(CheonhaDef c) => c.BossRegions.ToList();
+
+        /// <summary>시작 레벨: 시작 경지(현경)의 문턱 레벨.</summary>
+        public static int StartLevel(GameData data) => data.Balance.Realms.First(r => r.Id == data.Cheonha.BossRush.StartRealm).Level;
+
+        /// <summary>시작할 때 몰아 고를 레벨업 수: Lv1 → 시작 레벨(PickLevelsToRealm 이 꺼져 있으면 0 — 레벨만 오름).
+        /// 부르는 쪽은 Life 를 시작한 뒤 Xp 를 StartLevel 로 올리고(Life.WakeAt 과 같은 길) 이만큼 레벨업 고르기를 처음에 띄운다.</summary>
+        public static int StartLevelUps(GameData data) => data.Cheonha.BossRush.PickLevelsToRealm ? StartLevel(data) - 1 : 0;
 
         /// <summary>그 땅 주인의 보스 연전 기혈: 기준 체력 × healthCurve(healthMinute 분).</summary>
         public static float Health(GameData data, string region)

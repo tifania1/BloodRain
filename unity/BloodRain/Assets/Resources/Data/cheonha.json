@@ -210,7 +210,7 @@
     { "id": "boss_rush", "nameKo": "보스 연전",      "require": { "ending": "seal" } }
   ],
 
-  "bossRush": { "startRealm": "hyeongyeong", "startWeaponLevel": 8, "levelUpsPerKill": 3, "healthMinute": 20, "_note": "WP-38(2026-11-20 추천대로, decisions #39). 보스 연전: 고른 몸으로 현경·시작 무공 Lv8 에서 시작해 땅의 주인 일곱을 데이터 차례(regions 의 보스 땅 차례 = 원각 → 혁련휘)로. 하나 쓰러뜨릴 때마다 레벨업 levelUpsPerKill 번·기혈 가득. 기혈은 기준 체력 x bosses.healthCurve(healthMinute 분) = 20분 값 그대로. 혼엔 보상을 안 남기고 다 깬 시간(가장 빠른 것)만. Core Meta/BossRush" },
+  "bossRush": { "startRealm": "hyeongyeong", "pickLevelsToRealm": true, "levelUpsPerKill": 3, "healthMinute": 20, "_note": "WP-38(2026-11-20 추천대로, decisions #39). 보스 연전: 고른 몸으로 Lv1 에서 현경 문턱 레벨까지 레벨업을 처음에 다 골라(2026-11-26 사람, decisions #69 추천대로 — 그 전엔 시작 무공 하나 Lv8 이라 원각 기혈 9만이 거의 안 깎였다) 시작해 땅의 주인 일곱을 데이터 차례(regions 의 보스 땅 차례 = 원각 → 혁련휘)로. 하나 쓰러뜨릴 때마다 레벨업 levelUpsPerKill 번·기혈 가득. 기혈은 기준 체력 x bosses.healthCurve(healthMinute 분) = 20분 값 그대로. 혼엔 보상을 안 남기고 다 깬 시간(가장 빠른 것)만. Core Meta/BossRush" },
 
   "titles": [
     { "id": "sikgaek",       "nameKo": "식객",     "hanja": "食客",     "when": "food_one_run", "count": 20, "_note": "기획서 10장 해금 표. 칭호는 모으기 보상이라 능력치가 없다(20장). 열리면 혼 칭호 목록에 남는다(Core Soul.Titles)" },

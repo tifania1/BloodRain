@@ -17,11 +17,12 @@ namespace BloodRain.Core.Data
         public bool Hidden;
     }
 
-    /// <summary>보스 연전(7장 '모드', WP-38). 시작 경지·시작 무공 레벨·처치마다 레벨업 수·기혈을 잴 분.</summary>
+    /// <summary>보스 연전(7장 '모드', WP-38). 시작 경지·시작 레벨업을 처음에 다 고를지·처치마다 레벨업 수·기혈을 잴 분.</summary>
     public sealed class BossRushDef
     {
         public string StartRealm = "";
-        public int StartWeaponLevel;
+        /// <summary>true 면 Lv1 에서 시작 경지 문턱 레벨까지 오르며 그 레벨업을 처음에 몰아 고른다(2026-11-26 사람, decisions #69).</summary>
+        public bool PickLevelsToRealm;
         public int LevelUpsPerKill;
         public float HealthMinute;
     }

@@ -7,7 +7,7 @@ using static BloodRain.Core.Tests.TestData;
 
 namespace BloodRain.Core.Tests
 {
-    /// <summary>WP-38(2026-11-20 추천대로, decisions #39): 보스 연전 — 현경·Lv8 시작, 일곱을 데이터 차례로, 처치마다 레벨업 3번, 기혈은 20분 값, 혼엔 시간만.</summary>
+    /// <summary>WP-38(2026-11-20 추천대로, decisions #39): 보스 연전 — 현경 문턱까지 레벨업을 처음에 다 고름(11-26, #69), 일곱을 데이터 차례로, 처치마다 레벨업 3번, 기혈은 20분 값, 혼엔 시간만.</summary>
     public class BossRushTests
     {
         readonly GameData _d = Load();
@@ -17,13 +17,15 @@ namespace BloodRain.Core.Tests
         {
             Assert.Equal("hyeongyeong", C.BossRush.StartRealm);
             Assert.Contains(_d.Balance.Realms, r => r.Id == C.BossRush.StartRealm);
-            Assert.Equal(8, C.BossRush.StartWeaponLevel);
+            Assert.True(C.BossRush.PickLevelsToRealm);   // 2026-11-26 사람, decisions #69
+            Assert.Equal(90, BossRush.StartLevel(_d));
+            Assert.Equal(89, BossRush.StartLevelUps(_d));
             Assert.Equal(3, C.BossRush.LevelUpsPerKill);
             Assert.Equal(20f, C.BossRush.HealthMinute);
             Assert.Equal(new[] { "wongak", "dang_sohye", "ma_cheonpae", "hyeolheo", "huashan_sword_soul", "seol_muhyang", "hyeokryeon_hwi" },
                 BossRush.Order(C).Select(r => r.Boss));
             Assert.Contains(C.Modes, m => m.Id == BossRush.ModeId && m.Require.Ending == "seal");
-            Assert.Contains("보스 연전(정해짐 2026-11-20)", Gdd);
+            Assert.Contains("보스 연전(정해짐 2026-11-20, 시작은 2026-11-26 바뀜): 고른 몸으로 Lv1 에서 현경 문턱(Lv90)까지 오르며 그 레벨업 89번을", Gdd);
         }
 
         [Fact] public void 기혈은_기준_체력_그대로()
