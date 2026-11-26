@@ -125,6 +125,13 @@ namespace BloodRain.Presentation.Meta
             _settings = SettingsScreen.Show(font, _ => { _settings = null; Refresh(); });
         }
 
+        /// <summary>CX-01U 천하 연표(혼이 겪은 사건).</summary>
+        public void PressChronicle()
+        {
+            if (!IsOpen || SettingsScreen.AnyOpen || ChronicleView.IsOpen) return;
+            ChronicleView.Open(_soul, font);
+        }
+
         public void PressTitle()
         {
             if (!IsOpen) return;
@@ -201,6 +208,7 @@ namespace BloodRain.Presentation.Meta
                 if (_toastLeft <= 0f && _toast != null) _toast.text = "";
             }
             if (!IsOpen || SettingsScreen.AnyOpen || Time.frameCount == SettingsScreen.ClosedFrame) return;
+            if (ChronicleView.IsOpen || ChronicleView.ClosedFrame >= Time.frameCount - 1) return;
             var kb = Keyboard.current;
             if (kb == null) return;
             if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame) PressStart();
@@ -262,11 +270,16 @@ namespace BloodRain.Presentation.Meta
             g.constraint = GridLayoutGroup.Constraint.FixedColumnCount; g.constraintCount = 3;
 
             var settings = MakeButton(_root, "설정", new Color(0.25f, 0.20f, 0.17f), out var stl, 24, Paper);
-            Place((RectTransform)settings.transform, new Vector2(0.5f, 0.5f), new Vector2(-170, -380), new Vector2(300, 56));
+            Place((RectTransform)settings.transform, new Vector2(0.5f, 0.5f), new Vector2(-340, -380), new Vector2(300, 56));
             stl.text = Loc.T("ui.inn.settings");
             settings.onClick.AddListener(PressSettings);
+            // CX-01U 천하 연표
+            var chron = MakeButton(_root, "연표", new Color(0.25f, 0.20f, 0.17f), out var chl, 24, Paper);
+            Place((RectTransform)chron.transform, new Vector2(0.5f, 0.5f), new Vector2(0, -380), new Vector2(300, 56));
+            chl.text = Loc.T("ui.chronicle.open");
+            chron.onClick.AddListener(PressChronicle);
             var toTitle = MakeButton(_root, "타이틀로", new Color(0.25f, 0.20f, 0.17f), out var ttl, 24, Paper);
-            Place((RectTransform)toTitle.transform, new Vector2(0.5f, 0.5f), new Vector2(170, -380), new Vector2(300, 56));
+            Place((RectTransform)toTitle.transform, new Vector2(0.5f, 0.5f), new Vector2(340, -380), new Vector2(300, 56));
             ttl.text = Loc.T("ui.inn.to_title");
             toTitle.onClick.AddListener(PressTitle);
 

@@ -46,6 +46,8 @@ namespace BloodRain.Presentation.Hud
                 if (Time.timeScale != 0f) Time.timeScale = 0f;
                 // 설정 화면이 떠 있거나 같은 Esc 로 방금 닫혔으면 그 Esc 는 설정 몫
                 if (BloodRain.Presentation.Meta.SettingsScreen.AnyOpen || BloodRain.Presentation.Meta.SettingsScreen.ClosedFrame == Time.frameCount) return;
+                // 연표(CX-01U)도 같은 Esc 로 닫히니 그 프레임은 연표 몫
+                if (BloodRain.Presentation.Meta.ChronicleView.IsOpen || BloodRain.Presentation.Meta.ChronicleView.ClosedFrame >= Time.frameCount - 1) return;
                 if (PressedPause()) Close();
                 return;
             }
@@ -114,6 +116,13 @@ namespace BloodRain.Presentation.Hud
             });
         }
 
+        /// <summary>CX-01U 천하 연표. 혼이 겪은 사건 + 이번 생에 겪은 것.</summary>
+        public void OpenChronicle()
+        {
+            if (!IsOpen || BloodRain.Presentation.Meta.ChronicleView.IsOpen) return;
+            BloodRain.Presentation.Meta.ChronicleView.Open(BloodRain.Presentation.Meta.RebirthHandoff.Soul, font);
+        }
+
         void Zuohwa()
         {
             if (!IsOpen) return;
@@ -156,9 +165,10 @@ namespace BloodRain.Presentation.Hud
             FillDamage(right);
 
             // 단추 줄
-            Button(Loc.T("ui.pause.resume"), new Vector2(-300, 70), Gold, true, Close);
-            Button(Loc.T("ui.settings.title"), new Vector2(0, 70), Gold, true, OpenSettings); // WP-57U
-            Button(Loc.T("ui.settle.end.zuohwa"), new Vector2(300, 70), Blood, !life.IsPrologue, Zuohwa);
+            Button(Loc.T("ui.pause.resume"), new Vector2(-450, 70), Gold, true, Close);
+            Button(Loc.T("ui.settings.title"), new Vector2(-150, 70), Gold, true, OpenSettings); // WP-57U
+            Button(Loc.T("ui.chronicle.open"), new Vector2(150, 70), Gold, true, OpenChronicle); // CX-01U
+            Button(Loc.T("ui.settle.end.zuohwa"), new Vector2(450, 70), Blood, !life.IsPrologue, Zuohwa);
         }
 
         RectTransform Sheet(Vector2 pos, Vector2 size)
