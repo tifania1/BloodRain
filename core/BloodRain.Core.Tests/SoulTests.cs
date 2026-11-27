@@ -261,6 +261,26 @@ namespace BloodRain.Core.Tests
             Assert.True(Combat.Awakening.ChooseLong(Combat.AwakeningLength.Long, b.LongByDefault));
         }
 
+        [Fact] public void 깨어나_본_절기는_지난_생과_이번_생을_합쳐_조합표에_보인다()
+        {
+            var s = AfterPrologue();
+            string e0 = _d.Evolutions[0].Id, e1 = _d.Evolutions[1].Id;
+            var life = s.BeginLife(Body("shaolin"));
+            Assert.Empty(life.SeenEvolutions);
+            life.Awaken(e0);
+            Assert.Equal(new[] { e0 }, life.SeenEvolutions.ToArray()); // 생이 끝나기 전에도 바로
+            s.EndLife(life.Finish("fallen", 0));
+
+            var next = s.BeginLife(Body("gaebang"));
+            Assert.Contains(e0, next.SeenEvolutions);
+            next.Awaken(e1);
+            Assert.Equal(2, next.SeenEvolutions.Count);
+            Assert.Equal(1, s.AwakenedEvolutions.Count); // 혼에는 생이 끝날 때 남는다
+            var (rows, total) = LevelUpView.EvolutionTable(_d, new Loadout(_d, _d.Character("jin_sowoon")), next.SeenEvolutions);
+            Assert.Equal(2, rows.Count);
+            Assert.True(total >= 2);
+        }
+
         [Fact] public void 성질의_윤회의_기_배율이_한_생_정산에_들어간다()
         {
             var s = AfterPrologue();

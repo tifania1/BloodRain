@@ -911,6 +911,8 @@
   "ui.pause.resume": "继续",
   "ui.pause.save_quit": "保存并退出",
   "ui.pause.quit": "回客栈",
+  "ui.pause.evo_table": "绝技组合表 · 已发现 {0}/{1}",
+  "ui.pause.evo_empty": "尚未觉醒过绝技。武功 Lv8 与对应心法齐备时，便会在绝技槽中觉醒",
   "ui.title.start": "开始",
   "ui.title.continue": "继续游戏",
   "ui.title.intro": "重看开场动画",

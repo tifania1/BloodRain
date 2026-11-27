@@ -911,6 +911,8 @@
   "ui.pause.resume": "Resume",
   "ui.pause.save_quit": "Save & Quit",
   "ui.pause.quit": "Back to the Inn",
+  "ui.pause.evo_table": "Pinnacle Art Table · Found {0}/{1}",
+  "ui.pause.evo_empty": "No Pinnacle Art has awakened yet. A Lv8 art and its paired method awaken one in the slot.",
   "ui.title.start": "Start",
   "ui.title.continue": "Continue",
   "ui.title.intro": "Replay Intro",

@@ -1054,6 +1054,9 @@ namespace BloodRain.Core.Meta
         public IReadOnlyList<string> VisitedRegions => _visited;
         public IReadOnlyList<string> BossesKilled => _bosses;
         public IReadOnlyList<string> AwakenedEvolutions => _evolutions;
+        /// <summary>계정에서 한 번이라도 깨어나 본 절기(지난 생까지 혼에 남은 것 + 이번 생에 깨운 것). 일시정지 절기 조합표가
+        /// `LevelUpView.EvolutionTable(data, loadout, log.SeenEvolutions)` 로 쓴다 — 웹 seenAwaken 과 같은 뜻. 혼에는 생이 끝날 때 남는다.</summary>
+        public IReadOnlyCollection<string> SeenEvolutions => _evolutionsKnown;
         /// <summary>이번 회차에 그 지역 봉인석을 가졌나(지난 생까지 + 이번 생에 쓰러뜨린 것). 땅의 주인 컷(InnDialogue.LordMeet·LordKill)이 본다.</summary>
         public bool HasSealStone(string region) => _stonesKnown.Contains(region);
         public string HighestRealm => _highest.Id;

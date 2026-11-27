@@ -144,7 +144,7 @@ namespace BloodRain.Core.Build
         }
 
         /// <summary>조합표 줄(찾은 절기만, evolutions.json 차례). 재료 무공·심법이 데이터에 없는 절기는 뺀다. 두 번째 값은 전체 수.</summary>
-        public static (List<EvolutionRow> rows, int total) EvolutionTable(GameData data, Loadout loadout, ICollection<string> seenEvolutions)
+        public static (List<EvolutionRow> rows, int total) EvolutionTable(GameData data, Loadout loadout, IReadOnlyCollection<string> seenEvolutions)
         {
             var weapons = new HashSet<string>(data.Weapons.Select(w => w.Id));
             var passives = new HashSet<string>(data.Passives.Select(p => p.Id));
