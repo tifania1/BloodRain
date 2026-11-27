@@ -204,10 +204,102 @@ namespace BloodRain.Presentation.Hud
                 for (int i = 0; i < view.VesselsTotal; i++) sb.Append(i < view.VesselsUsed ? '◆' : '◇');
             }
             sb.Append("\n\n");
-            foreach (var s in view.Weapons) sb.Append(SlotLine(s, true)).Append('\n');
+            foreach (var s in view.Weapons) AppendSlot(sb, s, true, life);
             sb.Append('\n');
-            foreach (var s in view.Passives) sb.Append(SlotLine(s, false)).Append('\n');
+            foreach (var s in view.Passives) AppendSlot(sb, s, false, life);
             var t = Body(sheet, sb.ToString(), 24);
+            // UI-01U 무공·심법 줄을 누르면 그 아래에 짝·진전·연환을 펼친다(다시 누르면 접음)
+            t.raycastTarget = true;
+            var clicks = t.gameObject.AddComponent<SlotClicks>();
+            clicks.text = t;
+            clicks.owner = this;
+        }
+
+        // 펼친 줄(무공·심법 id). 화면을 닫아도 기억해 다음에 열 때 그대로
+        string _expanded;
+
+        /// <summary>시험용: 그 id 줄을 펼치거나 접는다(누른 것과 같음).</summary>
+        public void ToggleExpand(string id)
+        {
+            _expanded = _expanded == id ? null : id;
+            if (!IsOpen) return;
+            Destroy(_root.gameObject);
+            _root = null;
+            Build();
+        }
+
+        public string Expanded => _expanded;
+
+        void AppendSlot(StringBuilder sb, HudSlot s, bool weapon, Life life)
+        {
+            if (s.Id == null) { sb.Append("<alpha=#55>—<alpha=#FF>\n"); return; }
+            sb.Append("<link=\"").Append(s.Id).Append("\">").Append(SlotLine(s, weapon)).Append("</link>\n");
+            if (_expanded == s.Id) sb.Append(DetailLines(s.Id, weapon, life));
+        }
+
+        // 짝(절기)·진전(문파 몇/다음)·연환(상대 무공과 조건) — 레벨업 카드 배지·긴 설명과 같은 재료
+        string DetailLines(string id, bool weapon, Life life)
+        {
+            var data = DataBoot.Data;
+            if (data == null) return "";
+            var lo = life.Loadout;
+            var restored = BloodRain.Presentation.Meta.RebirthHandoff.Soul != null
+                ? BloodRain.Presentation.Meta.RebirthHandoff.Soul.RestoredManuals
+                : (IReadOnlyCollection<string>)new List<string>();
+            var syn = Synergy.Compute(data, lo, null, restored);
+            var sb = new StringBuilder();
+            const string head = "<size=72%><alpha=#BB>    ";
+            const string tail = "<alpha=#FF></size>\n";
+
+            foreach (var e in data.Evolutions)
+            {
+                if (weapon ? e.Weapon != id : e.Passive != id) continue;
+                string partner = weapon ? NameOf(e.Passive, false) : NameOf(e.Weapon, true);
+                string evo = Loc.T($"evolutions.{e.Id}.name", e.NameKo);
+                bool done = lo.Evolved.Contains(e.Weapon);
+                sb.Append(head).Append(Loc.F("ui.levelup.badge.pair", partner)).Append(" → ")
+                  .Append(done ? "<color=#BE9234>◆ " : "◇ ").Append(evo).Append(done ? "</color>" : "").Append(tail);
+            }
+
+            foreach (var school in data.Synergies.Schools)
+            {
+                if (!school.Members.Contains(id)) continue;
+                var st = syn.School(school.Id);
+                string name = Loc.T($"synergies.schools.{school.Id}.name", school.NameKo);
+                sb.Append(head).Append(name).Append(' ').Append(st.Count);
+                if (st.Next != null) sb.Append(" → ").Append(st.Next.Count);
+                if (st.Tier != null)
+                {
+                    int ti = school.Tiers.IndexOf(st.Tier);
+                    sb.Append(" · <color=#BE9234>").Append(Loc.T($"synergies.schools.{school.Id}.tiers.{ti}.desc", st.Tier.Desc)).Append("</color>");
+                }
+                sb.Append(tail);
+            }
+
+            if (weapon)
+                foreach (var l in data.Synergies.Links)
+                {
+                    if (!l.Has(id)) continue;
+                    if (l.IsSecret && !syn.LockedLinks.Contains(l) && !syn.HasLink(l.Id)) continue; // 모르는 비급 연환은 숨김
+                    string other = l.A == id ? l.B : l.A;
+                    string name = Loc.T($"synergies.links.{l.Id}.name", l.NameKo);
+                    string mark = syn.HasLink(l.Id) ? "<color=#BE9234>◆</color>" : syn.LockedLinks.Contains(l) ? "?" : "◇";
+                    sb.Append(head).Append(mark).Append(' ').Append(name).Append(" · ").Append(NameOf(other, true))
+                      .Append(" Lv").Append(l.MinLevel).Append(tail);
+                }
+            return sb.ToString();
+        }
+
+        sealed class SlotClicks : MonoBehaviour, IPointerClickHandler
+        {
+            public TextMeshProUGUI text;
+            public PauseScreen owner;
+            public void OnPointerClick(PointerEventData e)
+            {
+                int i = TMP_TextUtilities.FindIntersectingLink(text, e.position, null);
+                if (i < 0) return;
+                owner.ToggleExpand(text.textInfo.linkInfo[i].GetLinkID());
+            }
         }
 
         static string SlotLine(HudSlot s, bool weapon)
