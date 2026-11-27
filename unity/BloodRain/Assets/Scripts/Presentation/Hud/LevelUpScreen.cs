@@ -138,6 +138,12 @@ namespace BloodRain.Presentation.Hud
             }
             if (!_open) return;
             if (Time.timeScale != 0f && !zooming) Time.timeScale = 0f;
+            // UI-01U 길게 누르기(터치·마우스): 누른 채 HoldSeconds 가 지나면 긴 설명을 띄우고, 뗄 때 카드는 고르지 않는다
+            if (_holdIndex >= 0 && !_holdShown && Time.unscaledTime - _holdAt >= HoldSeconds)
+            {
+                // 마우스는 올릴 때 이미 떠 있으니 오래 눌러도 고르기를 막지 않는다
+                if (_tipIndex != _holdIndex) { ShowTip(_holdIndex); _holdShown = true; } else _holdIndex = -1;
+            }
 
             var kb = Keyboard.current;
             if (kb == null) return;
@@ -389,7 +395,93 @@ namespace BloodRain.Presentation.Hud
         /// <summary>시험용: 지금 빛나는 칸 수.</summary>
         public int LitCount { get; private set; }
         /// <summary>시험용: 그 카드에 커서를 둔 것처럼.</summary>
-        public void Hover(int index) => LightSlots(index >= 0 && index < _offers.Count ? _offers[index] : (Offer?)null);
+        public void Hover(int index) { LightSlots(index >= 0 && index < _offers.Count ? _offers[index] : (Offer?)null); if (index >= 0) ShowTip(index); else HideTip(); }
+
+        // ── UI-01U 긴 설명(12장 '긴 설명은 마우스를 올리거나 길게 누르면 띄웁니다') ─────────────
+        // 카드 세 줄에 다 못 쓴 것: 둘째 줄 전문, 절기 문턱이면 그 절기가 무엇인지, 닿는 진전 단계의 효과, 연환 전부(띠엔 하나만).
+        // 웹 offerCard 의 b.title(desc + 배지 긴 글)과 같은 재료. 카드 바로 위에 먹 바탕 상자로 띄운다.
+        const float HoldSeconds = 0.45f;
+        int _holdIndex = -1, _tipIndex = -1;
+        float _holdAt;
+        bool _holdShown;
+        RectTransform _tip;
+        TextMeshProUGUI _tipText;
+
+        /// <summary>시험용: 지금 떠 있는 긴 설명(없으면 빈 글).</summary>
+        public string TipText => _tip != null && _tip.gameObject.activeSelf ? _tipText.text : "";
+
+        static bool IsTouch(BaseEventData e) => e is ExtendedPointerEventData p && p.pointerType == UIPointerType.Touch;
+
+        void ShowTip(int index)
+        {
+            if (index < 0 || index >= _offers.Count || index >= _cardRow.childCount) { HideTip(); return; }
+            string body = TipBody(_offers[index]);
+            if (string.IsNullOrEmpty(body)) { HideTip(); return; }
+            if (_tip == null)
+            {
+                var bg = MakeImage(_root, "긴 설명", new Color(0.10f, 0.08f, 0.07f, 0.94f));
+                _tip = bg.rectTransform;
+                _tip.anchorMin = _tip.anchorMax = new Vector2(0.5f, 0.5f);
+                _tip.pivot = new Vector2(0.5f, 0f);
+                var edge = bg.gameObject.AddComponent<Outline>(); edge.effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.55f); edge.effectDistance = new Vector2(2, -2);
+                var v = bg.gameObject.AddComponent<VerticalLayoutGroup>();
+                v.padding = new RectOffset(18, 18, 12, 14);
+                v.childControlWidth = v.childControlHeight = true;
+                v.childForceExpandWidth = v.childForceExpandHeight = false;
+                var fit = bg.gameObject.AddComponent<ContentSizeFitter>();
+                fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                _tipText = MakeText(_tip, "글", 21, Paper, TextAlignmentOptions.TopLeft);
+                _tipText.textWrappingMode = TextWrappingModes.Normal;
+                _tipText.lineSpacing = 6;
+            }
+            _tip.sizeDelta = new Vector2(400, _tip.sizeDelta.y);
+            _tipText.text = body;
+            _tip.gameObject.SetActive(true);
+            _tip.SetAsLastSibling();
+            // 그 카드 위 가운데에 붙인다(카드 줄은 HorizontalLayoutGroup 이라 지금 자리를 월드 좌표로 읽는다)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_cardRow);
+            var card = (RectTransform)_cardRow.GetChild(index);
+            var corners = new Vector3[4];
+            card.GetWorldCorners(corners);
+            _tip.position = (corners[1] + corners[2]) * 0.5f;
+            _tip.anchoredPosition += new Vector2(0, 10);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_tip);
+            _tipIndex = index;
+        }
+
+        void HideTip()
+        {
+            if (_tip != null) _tip.gameObject.SetActive(false);
+            _tipIndex = -1;
+        }
+
+        string TipBody(Offer o)
+        {
+            var (_, _, _, note) = Describe(o);
+            var lines = new List<string> { note.Replace("\n", " · ") };
+            if (o.Kind == OfferKind.Fallback) return string.Join("\n", lines);
+            var c = LevelUpView.Card(_data, _loadout, o);
+            if (c?.Threshold != null)
+            {
+                string evo = Loc.T($"evolutions.{c.Threshold.Id}.name", c.Threshold.NameKo);
+                lines.Add(Loc.F("ui.levelup.badge.threshold", evo) + ": " + Loc.T($"evolutions.{c.Threshold.Id}.summary", c.Threshold.Summary));
+            }
+            var pv = BloodRain.Core.Build.Synergy.Preview(_data, _loadout, o, null, _restored);
+            foreach (var r in pv.Reached)
+            {
+                int ti = r.School.Tiers.IndexOf(r.Tier);
+                string school = Loc.T($"synergies.schools.{r.School.Id}.name", r.School.NameKo);
+                lines.Add(Loc.F("ui.levelup.tip.school", school, r.Tier.Count, Loc.T($"synergies.schools.{r.School.Id}.tiers.{ti}.desc", r.Tier.Desc)));
+            }
+            foreach (var h in pv.Links)
+            {
+                if (h.Locked) { lines.Add(Loc.T(h.Completes ? "ui.levelup.link.torn_complete" : "ui.levelup.link.torn")); continue; }
+                string linkName = Loc.T($"synergies.links.{h.Link.Id}.name", h.Link.NameKo);
+                string head = h.Completes ? Loc.F("ui.levelup.link.done", linkName) : Loc.F("ui.levelup.link.need", linkName, WeaponName(_data.Weapon(h.Partner)), h.Link.MinLevel);
+                lines.Add(head + ": " + Loc.T($"synergies.links.{h.Link.Id}.desc", h.Link.Desc));
+            }
+            return string.Join("\n", lines);
+        }
 
         // LU-01U 기연(연무장·도문심법·타고난 성질)이 넷째 카드 확률을 정한다(balance levelUp.luckForFourthChoice). 시험 씬엔 0.
         static float Luck()
@@ -527,6 +619,7 @@ namespace BloodRain.Presentation.Hud
         void Refresh()
         {
             _title.text = _banishMode ? Loc.T("ui.levelup.title_banish") : Loc.F("ui.levelup.title", _handledLevel - _pending);
+            HideTip(); _holdIndex = -1; _holdShown = false;
             for (int i = _cardRow.childCount - 1; i >= 0; i--) Destroy(_cardRow.GetChild(i).gameObject);
             for (int i = 0; i < _offers.Count; i++) MakeCard(i, _offers[i]);
             DrawDoneo();
@@ -561,14 +654,18 @@ namespace BloodRain.Presentation.Hud
             cols.normalColor = Color.white; cols.highlightedColor = new Color(PaperHot.r / Paper.r, PaperHot.g / Paper.g, PaperHot.b / Paper.b); cols.pressedColor = new Color(0.85f, 0.8f, 0.7f);
             btn.colors = cols;
             int i = index;
-            btn.onClick.AddListener(() => Pick(i));
-            // UI-01U 커서가 가면 이 카드가 켜는 옆 칸을 빛낸다
+            btn.onClick.AddListener(() => { if (_holdShown) { _holdShown = false; return; } Pick(i); });
+            // UI-01U 커서가 가면 이 카드가 켜는 옆 칸을 빛내고 긴 설명을 띄운다(12장 '긴 설명은 마우스를 올리거나 길게 누르면')
             var trig = card.gameObject.AddComponent<EventTrigger>();
             var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-            enter.callback.AddListener(_ => LightSlots(o));
+            enter.callback.AddListener(e => { LightSlots(o); if (!IsTouch(e)) ShowTip(i); });
             var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-            exit.callback.AddListener(_ => LightSlots(null));
-            trig.triggers.Add(enter); trig.triggers.Add(exit);
+            exit.callback.AddListener(_ => { LightSlots(null); HideTip(); _holdIndex = -1; });
+            var down = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+            down.callback.AddListener(_ => { _holdIndex = i; _holdAt = Time.unscaledTime; _holdShown = false; });
+            var up = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
+            up.callback.AddListener(e => { _holdIndex = -1; if (IsTouch(e)) HideTip(); });
+            trig.triggers.Add(enter); trig.triggers.Add(exit); trig.triggers.Add(down); trig.triggers.Add(up);
 
             // 책등은 그 무공·심법 문파의 상징색(2026-11-20 사람: 색만 보고도 같은 문파를 모을 수 있게). 문파 없으면 먹, 파기 중이면 핏빛
             Color? tint = o.Kind != OfferKind.Fallback ? SchoolTint.OfMember(o.Id) : null;

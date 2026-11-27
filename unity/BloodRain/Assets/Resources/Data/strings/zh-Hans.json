@@ -639,6 +639,7 @@
   "ui.teach.school": "集齐同一门派的武功与心法，可积累真传——留意卡牌上的门派印",
   "ui.levelup.badge.pair": "配对 {0}",
   "ui.levelup.badge.threshold": "绝技门槛 · {0}",
+  "ui.levelup.tip.school": "{0}真传 {1}：{2}",
   "ui.levelup.damage": "伤害 {0} → {1}",
   "ui.levelup.behavior.front_arc": "向面朝方向斩出半圆",
   "ui.levelup.behavior.melee_combo": "快速连击周围敌人并击退",

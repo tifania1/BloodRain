@@ -80,6 +80,7 @@
   "ui.teach.school": "같은 문파의 무공·심법을 모으면 진전이 쌓인다 — 카드의 인장을 보라",
   "ui.levelup.badge.pair": "짝 {0}",
   "ui.levelup.badge.threshold": "절기 문턱 · {0}",
+  "ui.levelup.tip.school": "진전 {0} {1}: {2}",
   "ui.levelup.damage": "피해 {0} → {1}",
   "ui.levelup.behavior.front_arc": "바라보는 방향으로 반원을 벤다",
   "ui.levelup.behavior.melee_combo": "주변을 빠르게 연타하고 밀쳐낸다",
