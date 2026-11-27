@@ -173,6 +173,7 @@ namespace BloodRain.Presentation.Hud
             _root.gameObject.SetActive(true);
             _openedAt = Time.unscaledTime;
             ShowTeach();
+            ShowStatHelp();
             Refresh();
             if (gug != null) TryGugyeol(gug);
         }
@@ -249,6 +250,53 @@ namespace BloodRain.Presentation.Hud
         void HideTeach()
         {
             if (_teach != null) _teach.gameObject.SetActive(false);
+        }
+
+        // ── UI-01U 능력치 첫 풀이(12장 '능력치 쉬운 말') ─────────────
+        // 심법 카드(새·올리기)의 능력치 이름이 처음 나오면 단추 아래 한 줄로 풀이를 띄운다(최대 둘, '이름 · 쉬운 말: 풀이').
+        // 본 이름은 PlayerPrefs 'statSeen'(쉼표로 이음)에 남아 다음 판부터는 안 뜬다 — 웹 statFirstHelp·store 'statSeen' 과 같은 셈.
+        const string StatSeenKey = "statSeen";
+        TextMeshProUGUI _statHelp;
+        HashSet<string> _statSeen;
+
+        /// <summary>시험용: 지금 떠 있는 능력치 첫 풀이(없으면 빈 글).</summary>
+        public string StatHelpText => _statHelp != null && _statHelp.gameObject.activeSelf ? _statHelp.text : "";
+
+        /// <summary>시험용: 본 능력치 이름을 비운다(다음에 열면 다시 풀이가 뜬다).</summary>
+        public void ResetStatSeen() { _statSeen = new HashSet<string>(); PlayerPrefs.DeleteKey(StatSeenKey); }
+
+        void ShowStatHelp()
+        {
+            if (_statHelp == null)
+            {
+                _statHelp = MakeText(_root, "능력치 풀이", 24, new Color(0.86f, 0.74f, 0.42f), TextAlignmentOptions.Center);
+                Place(_statHelp.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -428), new Vector2(1500, 40));
+                _statHelp.enableAutoSizing = true; _statHelp.fontSizeMin = 16; _statHelp.fontSizeMax = 24;
+            }
+            if (_statSeen == null)
+            {
+                _statSeen = new HashSet<string>();
+                foreach (var s in PlayerPrefs.GetString(StatSeenKey, "").Split(',')) if (s.Length > 0) _statSeen.Add(s);
+            }
+            var lines = new List<string>();
+            bool added = false;
+            foreach (var o in _offers)
+            {
+                if (o.Kind != OfferKind.NewPassive && o.Kind != OfferKind.UpgradePassive) continue;
+                foreach (var e in _data.Passive(o.Id).Effects)
+                {
+                    string help = Loc.T($"ui.stat_help.{e.Stat}");
+                    if (string.IsNullOrEmpty(help) || help.StartsWith("ui.") || _statSeen.Contains(e.Stat)) continue;
+                    _statSeen.Add(e.Stat); added = true;
+                    string easy = Loc.T($"ui.stat_easy.{e.Stat}");
+                    string label = !string.IsNullOrEmpty(easy) && !easy.StartsWith("ui.") ? $"{Loc.Stat(e.Stat)} · {easy}" : Loc.Stat(e.Stat);
+                    lines.Add($"{label}: {help}");
+                }
+            }
+            if (added) { PlayerPrefs.SetString(StatSeenKey, string.Join(",", _statSeen)); PlayerPrefs.Save(); }
+            if (lines.Count > 2) lines.RemoveRange(2, lines.Count - 2);
+            _statHelp.text = string.Join(" / ", lines);
+            _statHelp.gameObject.SetActive(lines.Count > 0);
         }
 
         // ── UI-01U 열린 직후 입력 막기 · 옆 칸(기획서 12장 '레벨업 카드 규칙') ─────────────
@@ -424,6 +472,7 @@ namespace BloodRain.Presentation.Hud
             _charges.Reroll();
             _offers = _loadout.RollLevelUp(_rng, Luck(), _unlocked);
             _banishMode = false;
+            ShowStatHelp();
             Refresh();
         }
 
