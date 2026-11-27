@@ -608,7 +608,7 @@ namespace BloodRain.Presentation.Combat
                 vis.transform.position = new Vector3(at.x, at.y, 0f);
             }
             var fx = Fx.SectFx.Instance;
-            if (fx != null && fx.Ready && !Fx.FxSettings.Simplified) { fx.RingW(at, bell.TouchRadius * 2.4f, Fx.FxRamp.Ink, 0.35f, 0.7f, false, true); fx.CrackW(at, bell.TouchRadius * 1.6f, Fx.FxRamp.Ink); }
+            if (fx != null && fx.Ready && !Fx.FxSettings.Simplified) fx.AsFoe(() => { fx.RingW(at, bell.TouchRadius * 2.4f, Fx.FxRamp.Ink, 0.35f, 0.7f, false, true); fx.CrackW(at, bell.TouchRadius * 1.6f, Fx.FxRamp.Ink); });   // 적 쪽이라 내 이펙트 투명도를 안 받음
             _bells.Add((bell, at, vis));
         }
 

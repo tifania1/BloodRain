@@ -67,11 +67,18 @@ namespace BloodRain.Presentation.Fx
         sealed class Fx
         {
             public float T, Life, Seed;
-            public bool Under, Gold;
+            public bool Under, Gold, Foe;
             public Action<Fx, float> Draw;
         }
         // Shape 가 0 이 아니면 그 모양 조각(11 꽃잎)이 Rot + T × Spin 으로 돌며 흩날린다
-        struct Drop { public Vector2 Pos, Vel; public float T, Life, Size, Rot, Spin; public FxRamp C; public bool Glow; public int Shape; }
+        struct Drop { public Vector2 Pos, Vel; public float T, Life, Size, Rot, Spin; public FxRamp C; public bool Glow, Foe; public int Shape; }
+
+        // UI-01U 설정 '내 이펙트 투명도'(WeaponRunner 와 같은 값). 내 무공이 낸 효과·튐·자국·탄에만 곱하고,
+        // 적이 낸 것(Foe — 적 탄·장판·돌진 줄·범종 낙하 고리)은 그대로 둔다. 적 탄은 맨 마지막에 그려 내 효과 위에 온다.
+        float _own = 1f;
+        bool _mineOn, _foe;
+        /// <summary>적·땅의 주인 쪽 코드가 이 안에서 부른 효과는 내 이펙트 투명도를 안 받는다.</summary>
+        public void AsFoe(Action a) { _foe = true; try { a(); } finally { _foe = false; } }
         // Shape 0 이면 예전 먹 터짐(모양 3). 아니면 그 모양·값·색·알파로(VF-19 처치 바닥 자국)
         struct Stain { public Vector2 Pos; public float T, Seed, Rot, Size, A; public int Shape; public Vector4 P; public FxRamp C; }
         struct Later { public float T; public Action F; }
@@ -183,6 +190,8 @@ namespace BloodRain.Presentation.Fx
             _linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
             _n = 0; _call = 0;
             _z = ZUnder;
+            _own = Mathf.Clamp01(BloodRain.Presentation.Meta.SettingsScreen.Current.EffectsAlpha);
+            _mineOn = false;
             // 큰 타격에 종이가 잠깐 어두워져 빛이 산다(HitFeel.Jolt). 바닥 위·캐릭터 밑에 화면을 덮는 먹 한 장
             float dim = HitFeel.DimAlpha;
             var cam = dim > .002f ? Camera.main : null;
@@ -191,22 +200,26 @@ namespace BloodRain.Presentation.Fx
                 float span = cam.orthographicSize * 2f * Mathf.Max(1f, cam.aspect) * 3f;
                 Quad(5, cam.transform.position, span, span, 0f, new Vector4(.98f, 0f, 0f, 0f), FxRamp.Ink, dim);
             }
+            _mineOn = true;   // 처치 자국은 내 무공이 남긴 것
             foreach (var s in _stains)
             {
                 float k = s.T / StainLife;
                 if (s.Shape == 0) Quad(3, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, new Vector4(3f, .35f, .8f, 0f), FxRamp.Ink, .26f * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
                 else Quad(s.Shape, s.Pos, s.Size * 2f, s.Size * 1.4f, s.Rot, s.P, s.C, s.A * (1f - k) * (1f - k), 1f, .12f + k * .5f, s.Seed);
             }
+            _mineOn = false;
             DrawGroundLive();   // 적이 깐 웅덩이·독안개·표식(바닥 겹, 2026-11-21)
-            foreach (var f in _fx) if (f.Under) { _gild = f.Gold; f.Draw(f, f.T / f.Life); }
+            foreach (var f in _fx) if (f.Under) { _gild = f.Gold; _mineOn = !f.Foe; f.Draw(f, f.T / f.Life); }
             _underEnd = _n;
             _z = ZOver;
-            foreach (var f in _fx) if (!f.Under) { _gild = f.Gold; f.Draw(f, f.T / f.Life); }
+            foreach (var f in _fx) if (!f.Under) { _gild = f.Gold; _mineOn = !f.Foe; f.Draw(f, f.T / f.Life); }
             _gild = false;
+            _mineOn = false;
             DrawLive();
             _gild = false;
             foreach (var d in _drops)
             {
+                _mineOn = !d.Foe;
                 float k = d.T / d.Life, sp = d.Vel.magnitude / Mathf.Max(Meter, 1e-6f);
                 if (d.Shape != 0)
                 {
@@ -221,6 +234,8 @@ namespace BloodRain.Presentation.Fx
                 if (d.Glow) Glow(5, d.Pos, d.Size * (1f + sp * .09f), d.Size * (1f - k * .5f), rot, p, d.C, al);
                 else Quad(5, d.Pos, d.Size * (1f + sp * .09f), d.Size * (1f - k * .5f), rot, p, d.C, al);
             }
+            _mineOn = false;
+            DrawEnemyShots();   // UI-01U 적 탄은 내 효과·튐 위(투명도를 낮추지 않아도 먼저 읽히게)
             if (_batching)
             {
                 Flush(0, _underEnd, ZUnder);
@@ -239,6 +254,7 @@ namespace BloodRain.Presentation.Fx
         {
             _z -= 0.0002f;   // 부른 순서대로 위에 쌓인다
             _quadCount++;
+            if (_mineOn) alpha *= _own;
             if (_gild) c = Gild(c);
             var m = Matrix4x4.TRS(new Vector3(pos.x, pos.y, _z), Quaternion.Euler(0f, 0f, rot * Mathf.Rad2Deg), new Vector3(w, h, 1f));
             if (_batching)
@@ -340,7 +356,7 @@ namespace BloodRain.Presentation.Fx
 
         void Add(float life, Action<Fx, float> draw, bool under = false)
         {
-            _fx.Add(new Fx { Life = life, Draw = draw, Under = under, Seed = Rnd(0f, 7f), Gold = Mastered });
+            _fx.Add(new Fx { Life = life, Draw = draw, Under = under, Seed = Rnd(0f, 7f), Gold = Mastered, Foe = _foe });
         }
 
         /// <summary>t 초 뒤(이펙트 시계)에 부른다. 부를 때의 대성 표시(Mastered)를 그대로 가져간다.</summary>
@@ -382,7 +398,7 @@ namespace BloodRain.Presentation.Fx
             for (int i = 0; i < n && _drops.Count < MaxDrops; i++)
             {
                 float a = dir + Rnd(-spread, spread), s = Rnd(speed * .35f, speed) * Meter;
-                _drops.Add(new Drop { Pos = at, Vel = Dir(a) * s, Life = Rnd(.22f, .45f), Size = size * Meter * Rnd(.6f, 1.3f), C = c, Glow = glow });
+                _drops.Add(new Drop { Foe = _foe, Pos = at, Vel = Dir(a) * s, Life = Rnd(.22f, .45f), Size = size * Meter * Rnd(.6f, 1.3f), C = c, Glow = glow });
             }
         }
 

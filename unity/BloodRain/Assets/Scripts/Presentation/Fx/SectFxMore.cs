@@ -147,6 +147,11 @@ namespace BloodRain.Presentation.Fx
         public void GroundBorn(GroundLook look, Vector2 at, float radius)
         {
             if (FxSettings.Simplified) return;
+            AsFoe(() => GroundBornFx(look, at, radius));
+        }
+
+        void GroundBornFx(GroundLook look, Vector2 at, float radius)
+        {
             float m = Mathf.Max(Meter, 1e-4f);
             // 튐은 초속이 drag 로 줄어 대략 초속 × 0.26 만큼 간다 → 반경 몇 배를 거꾸로 셈
             switch (look)
@@ -318,7 +323,7 @@ namespace BloodRain.Presentation.Fx
                     Quad(5, new Vector2(s.x + Mathf.Cos(aa) * .3f * s.z, s.y + Mathf.Sin(aa) * .1f * s.z), .13f * s.z, .13f * s.z, 0f, new Vector4(.3f, 0f, 0f, 0f), FxRamp.Ink, .8f);
                 }
             _stuns.Clear();
-            DrawEnemyShots();
+            _mineOn = true;   // 내 무공 탄(적 탄은 LateUpdate 끝에 DrawEnemyShots)
             foreach (var p in _live)
             {
                 _gild = p.Gold;   // GU-06U 대성 무공의 탄은 테두리가 금빛
@@ -536,7 +541,7 @@ namespace BloodRain.Presentation.Fx
             {
                 float a = Rnd(0f, 6.283f);
                 var pos = center() + new Vector2(Mathf.Cos(a) * R * .9f, Mathf.Sin(a) * R * .7f);
-                _drops.Add(new Drop { Pos = pos, Vel = new Vector2(Rnd(-.2f, .2f), Rnd(1.6f, 2.6f)) * m, Life = 1.1f, Size = .35f * m, C = FxRamp.MistG, Glow = false });
+                _drops.Add(new Drop { Foe = _foe, Pos = pos, Vel = new Vector2(Rnd(-.2f, .2f), Rnd(1.6f, 2.6f)) * m, Life = 1.1f, Size = .35f * m, C = FxRamp.MistG, Glow = false });
             }
         }
 
@@ -548,7 +553,7 @@ namespace BloodRain.Presentation.Fx
             for (int i = 0; i < n && _drops.Count < MaxDrops; i++)
             {
                 float a = dir + Rnd(-spread, spread), v = Rnd(speed * .3f, speed) * Meter;
-                _drops.Add(new Drop { Pos = at, Vel = Dir(a) * v, Life = Rnd(.6f, 1.1f), Size = size * Meter * Rnd(.7f, 1.3f), C = c, Shape = 11, Rot = Rnd(0f, 6.28f), Spin = Rnd(-6f, 6f) });
+                _drops.Add(new Drop { Foe = _foe, Pos = at, Vel = Dir(a) * v, Life = Rnd(.6f, 1.1f), Size = size * Meter * Rnd(.7f, 1.3f), C = c, Shape = 11, Rot = Rnd(0f, 6.28f), Spin = Rnd(-6f, 6f) });
             }
         }
 
