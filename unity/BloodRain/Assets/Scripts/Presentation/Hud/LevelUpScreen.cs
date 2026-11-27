@@ -22,7 +22,7 @@ namespace BloodRain.Presentation.Hud
     //   레벨·Loadout·Charges 는 Run 씬의 한 생(LifeRunner.Life)을 본다. 한 생이 없는 시험 씬이면 OrbLayer 의 시험용 RunXp.
     //   서장(진소운 제 몸)의 첫 레벨업은 Loadout.RollFirstLevelUp(chapters.json prologue firstLevelUpChoices) — 새 무공 한 장만,
     //   다시 고르기·파기는 숨긴다(C-06b, 기획서 5장 서장 표). 그 뒤는 보통 RollLevelUp.
-    //   키보드: 1~4 카드, R 다시 고르기, B 파기, S 정진.
+    //   키보드: 1~4 카드, 단축키는 조작 재설정(기본 R 다시 고르기·X 파기·Z 정진), ←→ 포커스 + Enter. 패드: 십자·왼 스틱 포커스, A 고르기, Y 다시 고르기.
     public sealed class LevelUpScreen : MonoBehaviour
     {
         public TMP_FontAsset font;
@@ -146,8 +146,18 @@ namespace BloodRain.Presentation.Hud
             }
 
             var kb = Keyboard.current;
-            if (kb == null) return;
+            var pad = Gamepad.current;
+            if (kb == null && pad == null) return;
             if (Guarded || _gugAuto) return;   // UI-01U 열린 직후 입력 막기
+            // UI-01U 패드·방향키 포커스: ←→(패드 십자·왼 스틱) 로 카드를 옮기고 Enter(패드 A)로 고른다. 포커스 카드도 옆 칸·긴 설명을 띄운다
+            bool left = (kb != null && kb.leftArrowKey.wasPressedThisFrame) || (pad != null && (pad.dpad.left.wasPressedThisFrame || pad.leftStick.left.wasPressedThisFrame));
+            bool right = (kb != null && kb.rightArrowKey.wasPressedThisFrame) || (pad != null && (pad.dpad.right.wasPressedThisFrame || pad.leftStick.right.wasPressedThisFrame));
+            bool confirm = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            if (left) { MoveFocus(-1); return; }
+            if (right) { MoveFocus(1); return; }
+            if (confirm && _focus >= 0) { Pick(_focus); return; }
+            if (pad != null && pad.buttonNorth.wasPressedThisFrame) { Reroll(); return; }
+            if (kb == null) return;
             if (kb.digit1Key.wasPressedThisFrame) Pick(0);
             else if (kb.digit2Key.wasPressedThisFrame) Pick(1);
             else if (kb.digit3Key.wasPressedThisFrame) Pick(2);
@@ -394,6 +404,44 @@ namespace BloodRain.Presentation.Hud
 
         /// <summary>시험용: 지금 빛나는 칸 수.</summary>
         public int LitCount { get; private set; }
+        // ── UI-01U 패드·방향키 포커스 ─────────────
+        // 처음엔 아무 카드도 안 잡혀 있고(마우스로 고르는 사람에게 금빛 줄이 거슬리지 않게), ←→ 를 처음 누르면 맨 왼쪽(←면 맨 오른쪽)부터.
+        // 마우스를 카드에 올리면 포커스도 그 카드로 옮겨, 키로 이어 옮길 수 있다. 다시 고르기·파기로 카드가 바뀌어도 자리 번호는 지킨다.
+        const string FocusMark = "focus";   // 포커스 줄 오브젝트 이름(Find 로 찾음)
+        int _focus = -1;
+        /// <summary>시험용: 지금 포커스가 있는 카드 번호(-1 은 없음).</summary>
+        public int Focus => _focus;
+
+        /// <summary>포커스를 옆 카드로(시험용으로도 부른다). 끝에서는 반대 끝으로 돈다.</summary>
+        public void MoveFocus(int dir)
+        {
+            if (!_open || _offers.Count == 0) return;
+            int n = _offers.Count;
+            int next = _focus < 0 ? (dir > 0 ? 0 : n - 1) : ((_focus + dir) % n + n) % n;
+            SetFocus(next);
+        }
+
+        void SetFocus(int index)
+        {
+            _focus = index;
+            PaintFocus();
+            Hover(index);
+        }
+
+        // 포커스 카드는 조금 크게, 밑에 금빛 줄
+        void PaintFocus()
+        {
+            if (_cardRow == null) return;
+            for (int i = 0; i < _cardRow.childCount; i++)
+            {
+                var card = (RectTransform)_cardRow.GetChild(i);
+                bool on = i == _focus;
+                card.localScale = on ? new Vector3(1.04f, 1.04f, 1f) : Vector3.one;
+                var mark = card.Find(FocusMark);
+                if (mark != null) mark.gameObject.SetActive(on);
+            }
+        }
+
         /// <summary>시험용: 그 카드에 커서를 둔 것처럼.</summary>
         public void Hover(int index) { LightSlots(index >= 0 && index < _offers.Count ? _offers[index] : (Offer?)null); if (index >= 0) ShowTip(index); else HideTip(); }
 
@@ -501,6 +549,8 @@ namespace BloodRain.Presentation.Hud
             // UI-01a 닫힌 뒤 무적(맞은 뒤 무적과 같은 0.5초, 기획서 12장 '화면 편의 규칙')
             if (vitals == null) vitals = FindFirstObjectByType<PlayerVitals>();
             if (vitals != null && _pending == 0) vitals.Grace();
+            // 몰아 고르기 중엔 포커스 자리를 다음 장으로 이어 가고(패드로 A 만 눌러 넘기기), 다 고르면 놓는다
+            if (_pending == 0) _focus = -1;
         }
 
         void Pick(int i)
@@ -619,12 +669,18 @@ namespace BloodRain.Presentation.Hud
         void Refresh()
         {
             _title.text = _banishMode ? Loc.T("ui.levelup.title_banish") : Loc.F("ui.levelup.title", _handledLevel - _pending);
+            // UI-01U '남은 N': 이 다음에도 몰아 고를 레벨업이 남았으면 제목 끝에 붙인다(대환단·깨어날 경지·한꺼번에 오른 레벨)
+            if (!_banishMode && _pending > 0) _title.text += "  <size=70%>" + Loc.F("ui.levelup.remaining", _pending) + "</size>";
             HideTip(); _holdIndex = -1; _holdShown = false;
-            for (int i = _cardRow.childCount - 1; i >= 0; i--) Destroy(_cardRow.GetChild(i).gameObject);
+            // Destroy 는 프레임 끝에 지우니 GetChild 차례가 어긋나지 않게 먼저 떼어 낸다(포커스가 새 카드를 찾도록)
+            for (int i = _cardRow.childCount - 1; i >= 0; i--) { var old = _cardRow.GetChild(i); old.SetParent(null, false); Destroy(old.gameObject); }
             for (int i = 0; i < _offers.Count; i++) MakeCard(i, _offers[i]);
             DrawDoneo();
             BuildSlotPanel();
             LightSlots(null);
+            if (_focus >= _offers.Count) _focus = _offers.Count - 1;
+            PaintFocus();
+            if (_focus >= 0) Hover(_focus);
 
             // {1} 은 조작 재설정한 단축키(WP-69U, 키를 잃었으면 빈 칸)
             _rerollLabel.text = Loc.F("ui.levelup.reroll", _charges.Rerolls, ControlInput.FirstLabel(BloodRain.Core.Meta.ControlAction.Reroll) ?? "");
@@ -658,7 +714,7 @@ namespace BloodRain.Presentation.Hud
             // UI-01U 커서가 가면 이 카드가 켜는 옆 칸을 빛내고 긴 설명을 띄운다(12장 '긴 설명은 마우스를 올리거나 길게 누르면')
             var trig = card.gameObject.AddComponent<EventTrigger>();
             var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-            enter.callback.AddListener(e => { LightSlots(o); if (!IsTouch(e)) ShowTip(i); });
+            enter.callback.AddListener(e => { LightSlots(o); if (!IsTouch(e)) { ShowTip(i); _focus = i; PaintFocus(); } });
             var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
             exit.callback.AddListener(_ => { LightSlots(null); HideTip(); _holdIndex = -1; });
             var down = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
@@ -711,6 +767,11 @@ namespace BloodRain.Presentation.Hud
             var key = MakeText(card.rectTransform, "키", 26, new Color(0.45f, 0.4f, 0.35f), TextAlignmentOptions.Center);
             Place(key.rectTransform, new Vector2(0.5f, 0f), new Vector2(8, 26), new Vector2(290, 36));
             key.text = (index + 1).ToString();
+            // UI-01U 패드·방향키 포커스 표시(PaintFocus 가 켜고 끔)
+            var focus = MakeImage(card.rectTransform, FocusMark, Gold);
+            Place(focus.rectTransform, new Vector2(0.5f, 0f), new Vector2(11, -14), new Vector2(240, 7));
+            focus.raycastTarget = false;
+            focus.gameObject.SetActive(false);
         }
 
         // ── GU-01U 돈오 카드: 카드 줄 아래 금빛 띠 한 장씩(연환 이름 · 돈오/대성 · 선택을 쓰지 않음). 누르면 TakeDoneo ──

@@ -563,6 +563,7 @@
   "gimmicks.bloodAltars.name": "Blood Altar",
   "gimmicks.redMoon.name": "Red Moon",
   "ui.levelup.title": "Insight Comes · Step {0}",
+  "ui.levelup.remaining": "{0} more to come",
   "ui.levelup.title_banish": "Choose a manual to discard",
   "ui.levelup.reroll": "Reroll ({0})  {1}",
   "ui.levelup.banish": "Discard ({0})  {1}",

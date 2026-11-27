@@ -4,6 +4,7 @@
     "_note": "UI 문구의 한국어 원문. 키는 ui. 로 시작한다. 데이터 문구(무공 이름 등)는 각 데이터 JSON 이 원문이라 여기 두지 않는다. {0} {1} 은 숫자·이름이 들어갈 자리. 규칙은 Core/Data/Strings.cs 맨 위."
   },
   "ui.levelup.title": "깨달음이 온다 · {0} 단계",
+  "ui.levelup.remaining": "남은 깨달음 {0}",
   "ui.levelup.title_banish": "뺄 비급을 고르라",
   "ui.levelup.reroll": "다시 고르기 ({0})  {1}",
   "ui.levelup.banish": "파기 ({0})  {1}",

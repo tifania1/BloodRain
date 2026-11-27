@@ -563,6 +563,7 @@
   "gimmicks.bloodAltars.name": "血祭坛",
   "gimmicks.redMoon.name": "红月",
   "ui.levelup.title": "顿悟到来 · 第{0}阶",
+  "ui.levelup.remaining": "尚余顿悟 {0}",
   "ui.levelup.title_banish": "选择要废弃的秘笈",
   "ui.levelup.reroll": "重选（{0}）  {1}",
   "ui.levelup.banish": "废弃（{0}）  {1}",
