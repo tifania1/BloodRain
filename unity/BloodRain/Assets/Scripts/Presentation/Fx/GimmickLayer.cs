@@ -61,6 +61,7 @@ namespace BloodRain.Presentation.Fx
                 Lay(life, p, view * 1.2f);
             }
             TickBells(Time.deltaTime, p);
+            TickPlums(Time.deltaTime, p);
             TickBamboo(life.Minutes * 60f);
             TickFog(life, p, Time.deltaTime);
         }
@@ -76,6 +77,7 @@ namespace BloodRain.Presentation.Fx
             var around = WorldCoords.FromUnity(p);
             var wantBells = new HashSet<long>();
             var wantPatches = new HashSet<long>();
+            var wantPlums = new HashSet<long>();
             _cell = Mathf.Max(1f, data.Gimmicks.PagodaForest.Spacing * k * 1.5f);
             foreach (var reg in regions.All)
             {
@@ -90,6 +92,16 @@ namespace BloodRain.Presentation.Fx
                         long key = Key(c) ^ 0x5A5A5A5AL;
                         wantPatches.Add(key);
                         if (!_patches.ContainsKey(key)) _patches[key] = MakeBamboo(c, k, key);
+                    }
+                }
+                if (reg.Gimmicks.Contains("plum_heaps"))
+                {
+                    // R4-13c 화산 매화 더미: 30m 격자(한가운데 포함)에 하나씩, 닿으면 최대 기혈 15% 회복하고 지고 90초 뒤 다시 핌
+                    foreach (var c in GimmickLayout.Near(regions, reg, lay.PlumSpacing * k, false, around, radius, life.SealStones))
+                    {
+                        long key = Key(c) ^ 0x3C3C3C3CL;
+                        wantPlums.Add(key);
+                        if (!_plums.ContainsKey(key)) _plums[key] = MakePlum(c, k);
                     }
                 }
                 if (!bell && !pagoda) continue;
@@ -129,7 +141,60 @@ namespace BloodRain.Presentation.Fx
             drop.Clear();
             foreach (var kv in _patches) if (!wantPatches.Contains(kv.Key)) drop.Add(kv.Key);
             foreach (var key in drop) { foreach (var g in _patches[key].Gos) if (g != null) Destroy(g); _patches.Remove(key); }
+            drop.Clear();
+            foreach (var kv in _plums) if (!wantPlums.Contains(kv.Key)) drop.Add(kv.Key);
+            foreach (var key in drop) { if (_plums[key].Go != null) Destroy(_plums[key].Go); _plums.Remove(key); }
             RebuildGrid();
+        }
+
+        // ---------------------------------------------------------------- 매화 더미(R4-13c, Core PlumHeapGimmick)
+
+        sealed class Plum { public PlumHeapGimmick G; public Vector2 At; public GameObject Go; public bool Art; }
+        readonly Dictionary<long, Plum> _plums = new Dictionary<long, Plum>();
+        static readonly Color PlumPink = new Color(0.91f, 0.65f, 0.71f, 1f);
+        public int PlumCount => _plums.Count;
+        public int PlumUses { get; private set; }
+
+        Plum MakePlum(System.Numerics.Vector2 c, float k)
+        {
+            var g = new PlumHeapGimmick(DataBoot.Data.Gimmicks.PlumHeaps, k);
+            Vector2 at = WorldCoords.ToUnity(c);
+            float r = DataBoot.Data.Gimmicks.PlumHeaps.TouchRadius * k;
+            var go = PropArt.Make(transform, "매화 더미", "prop_plum_petal_heap", at, r * 2.2f, 2);
+            bool art = go != null;
+            if (!art) go = Disc("매화 더미", at, r * 0.8f, PlumPink, 2);
+            return new Plum { G = g, At = at, Go = go, Art = art };
+        }
+
+        void TickPlums(float dt, Vector2 player)
+        {
+            if (_plums.Count == 0) return;
+            var vitals = runner.vitals;
+            foreach (var h in _plums.Values)
+            {
+                h.G.Tick(dt);
+                if (vitals != null && h.G.Blooming)
+                {
+                    float heal = h.G.TryUse(Vector2.Distance(player, h.At), vitals.MaxHealth);
+                    if (heal > 0f)
+                    {
+                        PlumUses++;
+                        vitals.Heal(heal); // healingMultiplier(문파 성질)는 Heal 이 곱한다
+                        var fx = SectFx.Instance;
+                        if (fx != null && fx.Ready) fx.RingW(h.At, DataBoot.Data.Gimmicks.PlumHeaps.TouchRadius * h.G.Scale * 2.6f, FxRamp.Flat(PlumPink), 0.6f, 0.7f, true);
+                    }
+                }
+                if (h.Go != null)
+                {
+                    // 진 뒤엔 옅게, 다시 필 때가 가까울수록 차오른다
+                    var sr = h.Go.GetComponent<SpriteRenderer>();
+                    if (sr == null) continue;
+                    float regrow = DataBoot.Data.Gimmicks.PlumHeaps.RegrowSeconds;
+                    float u = h.G.Blooming || regrow <= 0f ? 1f : 1f - h.G.RegrowRemaining / regrow;
+                    var baseC = h.Art ? Color.white : PlumPink;
+                    sr.color = new Color(baseC.r, baseC.g, baseC.b, h.G.Blooming ? 1f : Mathf.Lerp(0.15f, 0.45f, u));
+                }
+            }
         }
 
         static long Key(System.Numerics.Vector2 c) => ((long)Mathf.RoundToInt(c.X * 10f) << 32) ^ (uint)Mathf.RoundToInt(c.Y * 10f);
@@ -517,6 +582,8 @@ namespace BloodRain.Presentation.Fx
         {
             foreach (var b in _bells.Values) if (b.Go != null) Destroy(b.Go);
             foreach (var p in _patches.Values) foreach (var g in p.Gos) if (g != null) Destroy(g);
+            foreach (var h in _plums.Values) if (h.Go != null) Destroy(h.Go);
+            _plums.Clear();
             _bells.Clear(); _patches.Clear(); _grid.Clear(); StoneCount = 0;
             _fog = null;
         }
