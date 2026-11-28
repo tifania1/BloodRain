@@ -81,6 +81,7 @@ namespace BloodRain.Presentation.Fx
             var wantPatches = new HashSet<long>();
             var wantPlums = new HashSet<long>();
             var wantFires = new HashSet<long>();
+            var wantCliffs = new HashSet<long>();
             _cell = Mathf.Max(1f, data.Gimmicks.PagodaForest.Spacing * k * 1.5f);
             foreach (var reg in regions.All)
             {
@@ -97,10 +98,29 @@ namespace BloodRain.Presentation.Fx
                         if (!_patches.ContainsKey(key)) _patches[key] = MakeBamboo(c, k, key);
                     }
                 }
+                var cliffNear = new List<System.Numerics.Vector2>();
+                if (reg.Gimmicks.Contains("cliff_path"))
+                {
+                    // R4-13c 화산 잔도: 60m 반 칸 격자(다 밖이면 한가운데 하나) 벼랑 무더기를 널판 길 가로·세로가 지른다.
+                    //   걷는 몸은 경공 중에도 못 들어가고(blocksDash) 나는 적은 지나간다 — 막힘은 Resolve 가 돌탑과 같이 본다
+                    var cdef = data.Gimmicks.CliffPath;
+                    float cr = cdef.PatchRadius * k;
+                    cliffNear = GimmickLayout.Near(regions, reg, lay.CliffSpacing * k, true, around, radius + lay.CliffSpacing * k, life.SealStones);
+                    foreach (var c in GimmickLayout.Near(regions, reg, lay.CliffSpacing * k, true, around, radius + cr, life.SealStones))
+                    {
+                        long key = Key(c) ^ 0x1E1E1E1EL;
+                        wantCliffs.Add(key);
+                        if (!_cliffs.ContainsKey(key)) _cliffs[key] = MakeCliff(c, k);
+                    }
+                }
                 if (reg.Gimmicks.Contains("plum_heaps"))
                 {
                     // R4-13c 화산 매화 더미: 30m 격자(한가운데 포함)에 하나씩, 닿으면 최대 기혈 15% 회복하고 지고 90초 뒤 다시 핌
-                    foreach (var c in GimmickLayout.Near(regions, reg, lay.PlumSpacing * k, false, around, radius, life.SealStones))
+                    //   벼랑 무더기 안(가장자리 + 닿는 반경)은 웹 plumHeaps 처럼 뺀다
+                    var plumCells = GimmickLayout.Near(regions, reg, lay.PlumSpacing * k, false, around, radius, life.SealStones);
+                    if (cliffNear.Count > 0)
+                        plumCells = GimmickLayout.Without(plumCells, cliffNear, (data.Gimmicks.CliffPath.PatchRadius + data.Gimmicks.PlumHeaps.TouchRadius) * k);
+                    foreach (var c in plumCells)
                     {
                         long key = Key(c) ^ 0x3C3C3C3CL;
                         wantPlums.Add(key);
@@ -161,7 +181,111 @@ namespace BloodRain.Presentation.Fx
             drop.Clear();
             foreach (var kv in _fires) if (!wantFires.Contains(kv.Key)) drop.Add(kv.Key);
             foreach (var key in drop) { foreach (var g in _fires[key].Gos) if (g != null) Destroy(g); _fires.Remove(key); }
+            drop.Clear();
+            foreach (var kv in _cliffs) if (!wantCliffs.Contains(kv.Key)) drop.Add(kv.Key);
+            foreach (var key in drop) { foreach (var g in _cliffs[key].Gos) if (g != null) Destroy(g); _cliffs.Remove(key); }
             RebuildGrid();
+        }
+
+        // ---------------------------------------------------------------- 잔도(R4-13c, Core CliffPathGimmick)
+        // 그림은 웹 drawHuashan 처럼 코드로: 먹빛 벼랑 원(가장자리 옅게) 위에 종이빛 널판 길. 널판 길이/폭 비(patchRadius/pathWidth×2)는
+        // 축척과 상관없이 같아서 널판 무늬 한 장을 구워 늘린다.
+
+        sealed class Cliff { public Vector2 At; public float R, Half; public readonly List<GameObject> Gos = new List<GameObject>(); }
+        readonly Dictionary<long, Cliff> _cliffs = new Dictionary<long, Cliff>();
+        public int CliffCount => _cliffs.Count;
+        public int CliffPushes { get; private set; }
+        static Sprite _plank, _cliffDisc;
+
+        Cliff MakeCliff(System.Numerics.Vector2 c, float k)
+        {
+            var def = DataBoot.Data.Gimmicks.CliffPath;
+            var cl = new Cliff { At = WorldCoords.ToUnity(c), R = def.PatchRadius * k, Half = def.PathWidth * k * 0.5f };
+            if (_cliffDisc == null)
+            {
+                const int n = 128;
+                var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { name = "벼랑", wrapMode = TextureWrapMode.Clamp };
+                var px = new Color32[n * n];
+                var rng = new System.Random(77);
+                for (int y = 0; y < n; y++) for (int x = 0; x < n; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(n / 2f, n / 2f)) / (n / 2f);
+                    // 가운데 짙고(0.85) 0.85 까지 0.7, 끝에서 0 — 웹 radialGradient 와 같은 꼴, 먹 얼룩 약간
+                    float a = d < 0.2f ? 0.85f : d < 0.85f ? Mathf.Lerp(0.85f, 0.7f, (d - 0.2f) / 0.65f) : Mathf.Lerp(0.7f, 0f, (d - 0.85f) / 0.15f);
+                    if (d > 1f) a = 0f;
+                    float j = 0.92f + 0.08f * (float)rng.NextDouble();
+                    float g = d < 0.2f ? 0.115f : 0.17f;
+                    px[y * n + x] = new Color(g * j, g * 0.93f * j, g * 0.86f * j, a);
+                }
+                tex.SetPixels32(px); tex.Apply();
+                _cliffDisc = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), n);
+            }
+            if (_plank == null)
+            {
+                int ratio = Mathf.Max(2, Mathf.RoundToInt(def.PatchRadius / Mathf.Max(0.1f, def.PathWidth * 0.5f)));
+                int h = 32, w = h * ratio;
+                var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = "잔도 널판", wrapMode = TextureWrapMode.Clamp };
+                var px = new Color32[w * h];
+                var plank = new Color(0.79f, 0.71f, 0.56f, 1f); // #C9B58E
+                var line = new Color(0.10f, 0.10f, 0.10f, 1f);
+                int step = Mathf.Max(6, Mathf.RoundToInt(h * 0.8f));
+                var rng = new System.Random(31);
+                float shade = 1f;
+                for (int x = 0; x < w; x++)
+                {
+                    if (x % step == 0) shade = 0.9f + 0.1f * (float)rng.NextDouble();
+                    for (int y = 0; y < h; y++)
+                    {
+                        bool edge = y == 0 || y == h - 1 || x % step == 0;
+                        var col = edge ? Color.Lerp(plank, line, 0.6f) : plank * shade;
+                        col.a = 1f;
+                        px[y * w + x] = col;
+                    }
+                }
+                tex.SetPixels32(px); tex.Apply();
+                _plank = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), h);
+            }
+            var disc = new GameObject("잔도 벼랑");
+            disc.transform.SetParent(transform, false);
+            disc.transform.position = new Vector3(cl.At.x, cl.At.y, 0f);
+            var dsr = disc.AddComponent<SpriteRenderer>(); dsr.sprite = _cliffDisc; dsr.sortingOrder = 1;
+            disc.transform.localScale = Vector3.one * cl.R * 2f;
+            cl.Gos.Add(disc);
+            // 스프라이트 크기: 가로 ratio, 세로 1 → 2H 로 늘리면 가로가 2R 이 된다
+            for (int i = 0; i < Mathf.Min(2, def.Paths); i++)
+            {
+                var go = new GameObject(i == 0 ? "잔도 가로" : "잔도 세로");
+                go.transform.SetParent(transform, false);
+                go.transform.position = new Vector3(cl.At.x, cl.At.y, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 0f, i == 0 ? 0f : 90f);
+                var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _plank; sr.sortingOrder = 2;
+                float sx = cl.R * 2f / _plank.bounds.size.x;
+                go.transform.localScale = new Vector3(sx, cl.Half * 2f, 1f);
+                cl.Gos.Add(go);
+            }
+            return cl;
+        }
+
+        /// <summary>몸 한가운데가 벼랑이면 가장 가까운 잔도나 무더기 밖으로(웹 pushOutOfCliffs, 가장 짧게 옮김).</summary>
+        Vector2 PushOutOfCliffs(Vector2 pos, float r)
+        {
+            int paths = DataBoot.Data.Gimmicks.CliffPath.Paths;
+            foreach (var c in _cliffs.Values)
+            {
+                var d = pos - c.At;
+                float m = d.magnitude;
+                if (m > c.R) continue;
+                bool onH = paths >= 1 && Mathf.Abs(d.y) <= c.Half, onV = paths >= 2 && Mathf.Abs(d.x) <= c.Half;
+                if (onH || onV) continue;
+                float h = Mathf.Max(0f, c.Half - r * 0.5f);
+                if (m < 1e-6f) { d = new Vector2(1f, 0f); m = 1f; }
+                float best = c.R + 0.01f - m; var to = c.At + d / m * (c.R + 0.01f);
+                if (paths >= 1 && Mathf.Abs(d.y) - h < best) { best = Mathf.Abs(d.y) - h; to = new Vector2(pos.x, c.At.y + Mathf.Sign(d.y) * h); }
+                if (paths >= 2 && Mathf.Abs(d.x) - h < best) { best = Mathf.Abs(d.x) - h; to = new Vector2(c.At.x + Mathf.Sign(d.x) * h, pos.y); }
+                pos = to;
+                CliffPushes++;
+            }
+            return pos;
         }
 
         // ---------------------------------------------------------------- 모닥불(R4-13c, Core CampfireGimmick)
@@ -754,7 +878,9 @@ namespace BloodRain.Presentation.Fx
         public static Vector2 Resolve(Vector2 pos, float r)
         {
             var me = _instance;
-            if (me == null || me._grid.Count == 0) return pos;
+            if (me == null) return pos;
+            if (me._cliffs.Count > 0) pos = me.PushOutOfCliffs(pos, r); // R4-13c 잔도 벼랑(경공 중에도 막음 — blocksDash)
+            if (me._grid.Count == 0) return pos;
             int cx = Mathf.FloorToInt(pos.x / me._cell), cy = Mathf.FloorToInt(pos.y / me._cell);
             for (int pass = 0; pass < 2; pass++)
             for (int y = cy - 1; y <= cy + 1; y++)
@@ -777,7 +903,7 @@ namespace BloodRain.Presentation.Fx
         public static void PushAgents(EnemySim sim, System.Func<int, bool> flying)
         {
             var me = _instance;
-            if (me == null || me._grid.Count == 0 || sim == null) return;
+            if (me == null || (me._grid.Count == 0 && me._cliffs.Count == 0) || sim == null) return;
             for (int i = 0; i < sim.Count; i++)
             {
                 var a = sim.Get(i);
@@ -877,6 +1003,8 @@ namespace BloodRain.Presentation.Fx
             _plums.Clear();
             foreach (var f in _fires.Values) foreach (var g in f.Gos) if (g != null) Destroy(g);
             _fires.Clear();
+            foreach (var c in _cliffs.Values) foreach (var g in c.Gos) if (g != null) Destroy(g);
+            _cliffs.Clear();
             _bells.Clear(); _patches.Clear(); _grid.Clear(); StoneCount = 0;
             _fog = null;
         }
