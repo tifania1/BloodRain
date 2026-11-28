@@ -62,6 +62,7 @@ namespace BloodRain.Presentation.Fx
             }
             TickBells(Time.deltaTime, p);
             TickPlums(Time.deltaTime, p);
+            TickFires(life, Time.deltaTime, p);
             TickBamboo(life.Minutes * 60f);
             TickFog(life, p, Time.deltaTime);
         }
@@ -78,6 +79,7 @@ namespace BloodRain.Presentation.Fx
             var wantBells = new HashSet<long>();
             var wantPatches = new HashSet<long>();
             var wantPlums = new HashSet<long>();
+            var wantFires = new HashSet<long>();
             _cell = Mathf.Max(1f, data.Gimmicks.PagodaForest.Spacing * k * 1.5f);
             foreach (var reg in regions.All)
             {
@@ -102,6 +104,17 @@ namespace BloodRain.Presentation.Fx
                         long key = Key(c) ^ 0x3C3C3C3CL;
                         wantPlums.Add(key);
                         if (!_plums.ContainsKey(key)) _plums[key] = MakePlum(c, k);
+                    }
+                }
+                if (reg.Gimmicks.Contains("campfire"))
+                {
+                    // R4-13c 곤륜 모닥불: 28m 반 칸 격자(웹 campfires 와 같게 i+0.5), 곁에서 기혈이 차고 빙강시는 느려짐
+                    float fr = data.Gimmicks.Campfire.Radius * k;
+                    foreach (var c in GimmickLayout.Near(regions, reg, lay.CampfireSpacing * k, true, around, radius + fr, life.SealStones))
+                    {
+                        long key = Key(c) ^ 0x2D2D2D2DL;
+                        wantFires.Add(key);
+                        if (!_fires.ContainsKey(key)) _fires[key] = MakeFire(c, k);
                     }
                 }
                 if (!bell && !pagoda) continue;
@@ -144,7 +157,66 @@ namespace BloodRain.Presentation.Fx
             drop.Clear();
             foreach (var kv in _plums) if (!wantPlums.Contains(kv.Key)) drop.Add(kv.Key);
             foreach (var key in drop) { if (_plums[key].Go != null) Destroy(_plums[key].Go); _plums.Remove(key); }
+            drop.Clear();
+            foreach (var kv in _fires) if (!wantFires.Contains(kv.Key)) drop.Add(kv.Key);
+            foreach (var key in drop) { foreach (var g in _fires[key].Gos) if (g != null) Destroy(g); _fires.Remove(key); }
             RebuildGrid();
+        }
+
+        // ---------------------------------------------------------------- 모닥불(R4-13c, Core CampfireGimmick)
+
+        sealed class Fire { public Vector2 At; public readonly List<GameObject> Gos = new List<GameObject>(); }
+        readonly Dictionary<long, Fire> _fires = new Dictionary<long, Fire>();
+        public int FireCount => _fires.Count;
+        public float FireHealed { get; private set; }
+        public int FireSlowed { get; private set; }
+
+        Fire MakeFire(System.Numerics.Vector2 c, float k)
+        {
+            var f = new Fire { At = WorldCoords.ToUnity(c) };
+            float r = DataBoot.Data.Gimmicks.Campfire.Radius * k;
+            // 온기 반경을 옅은 주황 원으로(밟으면 차는 자리가 읽히게), 그 위에 불 원화
+            f.Gos.Add(Disc("모닥불 온기", f.At, r, new Color(1f, 0.62f, 0.25f, 0.13f), 1));
+            var go = PropArt.Make(transform, "모닥불", "prop_campfire_ring", f.At, r * 0.75f, 3)
+                  ?? Disc("모닥불", f.At, r * 0.22f, new Color(0.85f, 0.35f, 0.08f, 0.95f), 3);
+            f.Gos.Add(go);
+            return f;
+        }
+
+        void TickFires(BloodRain.Core.Run.Life life, float dt, Vector2 player)
+        {
+            if (_fires.Count == 0 || dt <= 0f) return;
+            var def = DataBoot.Data.Gimmicks.Campfire;
+            float k = life.Scale.Factor(life.Realm);
+            var vitals = runner.vitals;
+            foreach (var f in _fires.Values)
+            {
+                if (vitals == null) break;
+                // 회복 배율(문파 성질)은 vitals.Heal 이 곱하니 1 로 넘긴다
+                float h = CampfireGimmick.Heal(def, Vector2.Distance(player, f.At), vitals.MaxHealth, dt, k, 1f);
+                if (h > 0f && vitals.Health < vitals.MaxHealth) FireHealed += vitals.Heal(h);
+            }
+            // 빙강시 계열은 곁에서 걸음 0.5배 — 쇄겸술 둔화(Slow)와 같은 칸에 덮어 두면 곁을 떠난 뒤 저절로 풀린다
+            var en = runner.enemies;
+            var sim = en != null ? en.Sim : null;
+            if (sim == null || string.IsNullOrEmpty(def.SlowedFamily)) return;
+            float want = 1f - def.SlowedMoveSpeedMultiplier;
+            int n = 0;
+            for (int i = 0; i < sim.Count; i++)
+            {
+                var a = sim.Get(i);
+                if (a.Health <= 0f || a.Slow >= want) continue;
+                var ed = en.DefOf(a.Kind);
+                if (ed == null || ed.Family != def.SlowedFamily) continue;
+                var ap = new Vector2(a.Pos.x, a.Pos.y);
+                foreach (var f in _fires.Values)
+                {
+                    if (CampfireGimmick.EnemyMoveSpeed(def, ed.Family, Vector2.Distance(ap, f.At), k) >= 1f) continue;
+                    a.Slow = want; sim.Set(i, a); n++;
+                    break;
+                }
+            }
+            FireSlowed = n;
         }
 
         // ---------------------------------------------------------------- 매화 더미(R4-13c, Core PlumHeapGimmick)
@@ -584,6 +656,8 @@ namespace BloodRain.Presentation.Fx
             foreach (var p in _patches.Values) foreach (var g in p.Gos) if (g != null) Destroy(g);
             foreach (var h in _plums.Values) if (h.Go != null) Destroy(h.Go);
             _plums.Clear();
+            foreach (var f in _fires.Values) foreach (var g in f.Gos) if (g != null) Destroy(g);
+            _fires.Clear();
             _bells.Clear(); _patches.Clear(); _grid.Clear(); StoneCount = 0;
             _fog = null;
         }
