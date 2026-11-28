@@ -65,6 +65,7 @@ namespace BloodRain.Presentation.Fx
             TickFires(life, Time.deltaTime, p);
             TickBamboo(life.Minutes * 60f);
             TickFog(life, p, Time.deltaTime);
+            TickAltars(life, p, view);
         }
 
         void Lay(BloodRain.Core.Run.Life life, Vector2 p, float radius)
@@ -512,6 +513,224 @@ namespace BloodRain.Presentation.Fx
             go.transform.localScale = Vector3.one * r * 2f;
             return go;
         }
+
+        // ---------------------------------------------------------------- 혈제단(R4-13c, Core BloodAltarGimmick)
+        // 십만대산 한가운데 둘레 layout.altarRing m(× 축척) 고리의 네 귀퉁이에 넷, 켜지는 차례는 북동(altarOrderFromDegrees 45°)부터 시계 방향(웹 bloodAltarsStep).
+        // 제단은 적 목록에 '움직이지 않는 적'으로 넣어 무공이 그대로 깎게 한다(속도 0·닿는 피해 0·구슬 없음, 적 걸음 앞에서 제자리로 되돌림).
+        // 덩이 그림은 투명 한 장으로 가리고 제단 원화를 따로 세운다. 화면에서 멀어지면 거두고(깎인 비율은 남김) 가까워지면 다시 놓고,
+        // 경지가 바뀌면 새 축척으로 다시 놓는다. 켜지기 전에도 깎을 수 있고 미리 부순 제단은 안 켜진다(웹 WP-13b 와 같게).
+        // 켜진 제단 buffRadius 안 적: 피해(1+Buff) = enemyDamageMultiplier, 걸음은 Buff 와 Slow 를 함께 걸어 enemyMoveSpeedMultiplier 가 되게.
+
+        sealed class Altar { public bool Broken; public float Ratio = 1f; public int Id = -1; public bool Lit; public Vector2 At; public GameObject Go, Glow, Ring; }
+        readonly List<Altar> _altars = new List<Altar>();
+        BloodRain.Core.Run.Life _altarLife;
+        int _altarRealm = -1;
+        bool _altarHooked;
+        EnemyDef _altarDef;
+        static Texture2D _clearTex;
+        static readonly Color AltarRed = new Color(0.70f, 0.15f, 0.12f, 1f);
+        public int AltarPlaced { get { int n = 0; foreach (var a in _altars) if (a.Id >= 0) n++; return n; } }
+        public int AltarLit { get { int n = 0; foreach (var a in _altars) if (a.Lit) n++; return n; } }
+        public int AltarsBroken { get { int n = 0; foreach (var a in _altars) if (a.Broken) n++; return n; } }
+        public int AltarBuffed { get; private set; }
+        public int AltarChests { get; private set; }
+
+        void TickAltars(BloodRain.Core.Run.Life life, Vector2 player, float view)
+        {
+            var def = DataBoot.Data.Gimmicks.BloodAltars;
+            var en = runner.enemies;
+            if (def == null || def.Count <= 0 || en == null || en.Sim == null) return;
+            if (!_altarHooked) { en.Killed += OnAltarKilled; _altarHooked = true; }
+            if (_altarLife != life) { RemoveAltars(); foreach (var st in _altars) DestroyAltarArt(st); _altars.Clear(); _altarLife = life; _altarRealm = -1; }
+            if (_altarRealm != life.Realm) { RemoveAltars(); foreach (var st in _altars) DestroyAltarArt(st); _altarRealm = life.Realm; }
+
+            BloodRain.Core.Data.RegionDef reg = null;
+            foreach (var r in life.Regions.All) if (r.Gimmicks != null && r.Gimmicks.Contains(def.Id)) { reg = r; break; }
+            if (reg == null) return;
+            if (_altars.Count == 0) for (int i = 0; i < def.Count; i++) _altars.Add(new Altar());
+
+            float k = life.Scale.Factor(life.Realm);
+            var lay = DataBoot.Data.Gimmicks.Layout;
+            var o = life.Regions.Center(reg);
+            float ring = lay.AltarRing * k;
+            int lit = BloodAltarGimmick.LitCount(def, life.Minutes * 60f);
+            var sim = en.Sim;
+            for (int i = 0; i < _altars.Count; i++)
+            {
+                var st = _altars[i];
+                float ang = (lay.AltarOrderFromDegrees - 90f * i) * Mathf.Deg2Rad; // 북동 → 남동 → 남서 → 북서
+                st.At = WorldCoords.ToUnity(new System.Numerics.Vector2(o.X + Mathf.Cos(ang) * ring, o.Y - Mathf.Sin(ang) * ring));
+                float d = Vector2.Distance(player, st.At);
+                bool near = d <= view * 1.0f, far = d > view * 1.25f;
+                if (st.Go == null && d <= view * 1.3f) MakeAltarArt(st, k);
+                else if (st.Go != null && d > view * 1.4f) DestroyAltarArt(st);
+                if (!st.Broken)
+                {
+                    int idx = st.Id >= 0 ? IndexOf(sim, st.Id) : -1;
+                    if (st.Id >= 0 && idx < 0) st.Id = -1;                 // 수 줄이기로 풀에서 빠짐 — 깎인 비율 그대로 다시 놓는다
+                    if (st.Id < 0 && near) st.Id = SpawnAltar(st, def, k);
+                    else if (idx >= 0 && far)
+                    {
+                        var a = sim.Get(idx);
+                        st.Ratio = a.MaxHealth > 0f ? a.Health / a.MaxHealth : 1f;
+                        sim.RemoveAt(idx); st.Id = -1;
+                    }
+                }
+                bool wasLit = st.Lit;
+                st.Lit = i < lit && !st.Broken;
+                if (st.Lit && !wasLit) Debug.Log($"[GimmickLayer] 혈제단 {i} 켜짐 ({life.Minutes * 60f:0}초)");
+                if (st.Go != null) UpdateAltarArt(st, def, k);
+            }
+        }
+
+        static int IndexOf(EnemySim sim, int id)
+        {
+            var agents = sim.Agents;
+            for (int i = 0; i < sim.Count; i++) if (agents[i].Id == id) return i;
+            return -1;
+        }
+
+        int SpawnAltar(Altar st, BloodAltarGimmickDef def, float k)
+        {
+            var en = runner.enemies;
+            if (_altarDef == null)
+                _altarDef = new EnemyDef { Id = "blood_altar", NameKo = def.NameKo, Family = "altar", Health = def.Health, Speed = 0f, ContactDamage = 0f, Behavior = "chase" };
+            int id = en.SpawnAt(_altarDef, st.At);
+            int idx = IndexOf(en.Sim, id);
+            if (idx < 0) return -1;
+            var a = en.Sim.Get(idx);
+            a.Health = Mathf.Max(1f, a.MaxHealth * st.Ratio); // 기혈 1,500 은 적 기혈 식(SpawnHealth)을 거친 값
+            a.Speed = 0f; a.ContactDamage = 0f;
+            a.Radius = 0.9f * k;
+            a.Weight = 0f;
+            a.NoDrop = 1;
+            en.Sim.Set(idx, a);
+            if (_clearTex == null)
+            {
+                _clearTex = new Texture2D(1, 1, TextureFormat.RGBA32, false) { name = "혈제단 덩이 가림" };
+                _clearTex.SetPixel(0, 0, new Color(1f, 1f, 1f, 0f)); _clearTex.Apply();
+            }
+            en.SetViewArt(id, _clearTex);
+            return id;
+        }
+
+        void RemoveAltars()
+        {
+            var sim = runner != null && runner.enemies != null ? runner.enemies.Sim : null;
+            foreach (var st in _altars)
+            {
+                if (st.Id < 0) continue;
+                int idx = sim != null ? IndexOf(sim, st.Id) : -1;
+                if (idx >= 0)
+                {
+                    var a = sim.Get(idx);
+                    st.Ratio = a.MaxHealth > 0f ? a.Health / a.MaxHealth : 1f;
+                    sim.RemoveAt(idx);
+                }
+                st.Id = -1;
+            }
+        }
+
+        void OnAltarKilled(Vector2 at, EnemyAgent a)
+        {
+            foreach (var st in _altars)
+            {
+                if (st.Id != a.Id) continue;
+                st.Broken = true; st.Id = -1; st.Lit = false;
+                DestroyAltarArt(st);
+                if (_altarLife != null) MakeAltarArt(st, _altarLife.Scale.Factor(_altarLife.Realm));
+                var def = DataBoot.Data.Gimmicks.BloodAltars;
+                if (def.ChestOnBreak && ChestLayer.Instance != null) { ChestLayer.Instance.Place(st.At); AltarChests++; }
+                var fx = SectFx.Instance;
+                if (fx != null && fx.Ready && _altarLife != null) fx.RingW(st.At, 2.4f * _altarLife.Scale.Factor(_altarLife.Realm), FxRamp.Flat(new Color(0.35f, 0.1f, 0.1f, 1f)), 0.7f, 0.8f, true);
+                Debug.Log($"[GimmickLayer] 혈제단 무너짐 · 보갑");
+                return;
+            }
+        }
+
+        void MakeAltarArt(Altar st, float k)
+        {
+            var def = DataBoot.Data.Gimmicks.BloodAltars;
+            st.Ring = Disc("혈제단 기운", st.At, def.BuffRadius * k, new Color(AltarRed.r, AltarRed.g, AltarRed.b, 0f), 1);
+            st.Glow = Disc("혈제단 불", st.At + Vector2.up * 0.9f * k, 1.4f * k, new Color(AltarRed.r, AltarRed.g, AltarRed.b, 0f), 4);
+            st.Go = PropArt.Make(transform, "혈제단", st.Broken ? "prop_blood_altar_broken" : "prop_blood_altar", st.At + Vector2.up * 0.6f * k, 2.6f * k, 3)
+                 ?? Disc("혈제단", st.At, 0.9f * k, st.Broken ? new Color(0.35f, 0.32f, 0.3f, 0.9f) : new Color(0.23f, 0.2f, 0.19f, 1f), 3);
+        }
+
+        void DestroyAltarArt(Altar st)
+        {
+            if (st.Go != null) Destroy(st.Go);
+            if (st.Glow != null) Destroy(st.Glow);
+            if (st.Ring != null) Destroy(st.Ring);
+            st.Go = st.Glow = st.Ring = null;
+        }
+
+        void UpdateAltarArt(Altar st, BloodAltarGimmickDef def, float k)
+        {
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 3f);
+            var ring = st.Ring != null ? st.Ring.GetComponent<SpriteRenderer>() : null;
+            var glow = st.Glow != null ? st.Glow.GetComponent<SpriteRenderer>() : null;
+            if (ring != null) ring.color = new Color(AltarRed.r, AltarRed.g, AltarRed.b, st.Lit ? 0.07f + 0.04f * pulse : 0f);
+            if (glow != null) glow.color = new Color(AltarRed.r, AltarRed.g, AltarRed.b, st.Lit ? 0.35f + 0.25f * pulse : 0f);
+            var sr = st.Go.GetComponent<SpriteRenderer>();
+            if (sr == null || st.Broken) return;
+            // 깎일수록 옅어지고, 켜지기 전엔 잿빛
+            float hp = 1f;
+            var en = runner.enemies;
+            if (st.Id >= 0 && en != null && en.Sim != null) { int idx = IndexOf(en.Sim, st.Id); if (idx >= 0) { var a = en.Sim.Get(idx); hp = a.MaxHealth > 0f ? a.Health / a.MaxHealth : 1f; } }
+            else hp = st.Ratio;
+            Color c = st.Lit ? Color.white : new Color(0.72f, 0.7f, 0.68f, 1f);
+            sr.color = Color.Lerp(new Color(c.r, c.g, c.b, 0.55f), c, hp);
+        }
+
+        /// <summary>EnemyField 가 적 걸음 앞(ApplyAuras 뒤)에 부른다: 제단을 제자리로, 켜진 제단 둘레 적에 Buff·Slow.</summary>
+        public static void AltarStep(EnemySim sim) { if (_instance != null && sim != null) _instance.ApplyAltars(sim); }
+
+        void ApplyAltars(EnemySim sim)
+        {
+            AltarBuffed = 0;
+            if (_altars.Count == 0 || _altarLife == null) return;
+            var def = DataBoot.Data.Gimmicks.BloodAltars;
+            float k = _altarLife.Scale.Factor(_altarLife.Realm);
+            var agents = sim.Agents;
+            bool anyLit = false;
+            foreach (var st in _altars)
+            {
+                if (st.Lit) anyLit = true;
+                if (st.Id < 0) continue;
+                int idx = IndexOf(sim, st.Id);
+                if (idx < 0) continue;
+                var a = agents[idx];
+                a.Pos = new float2(st.At.x, st.At.y); a.Knock = float2.zero; a.Speed = 0f; a.Buff = 0f;
+                agents[idx] = a;
+            }
+            if (!anyLit) return;
+            float buff = def.EnemyDamageMultiplier - 1f;
+            float slow = def.EnemyDamageMultiplier > 0f ? Mathf.Clamp01(1f - def.EnemyMoveSpeedMultiplier / def.EnemyDamageMultiplier) : 0f;
+            float r2 = def.BuffRadius * k; r2 *= r2;
+            int n = 0;
+            for (int i = 0; i < sim.Count; i++)
+            {
+                var a = agents[i];
+                if (a.Health <= 0f || IsAltarId(a.Id)) continue;
+                foreach (var st in _altars)
+                {
+                    if (!st.Lit) continue;
+                    float dx = a.Pos.x - st.At.x, dy = a.Pos.y - st.At.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    if (a.Buff < buff) a.Buff = buff;
+                    if (a.Slow < slow) a.Slow = slow;
+                    agents[i] = a; n++;
+                    break;
+                }
+            }
+            AltarBuffed = n;
+        }
+
+        bool IsAltarId(int id) { foreach (var st in _altars) if (st.Id == id) return true; return false; }
+
+        /// <summary>시험: 혈제단 하나를 지금 켜진 것처럼(한 생 시계는 안 건드림) 보려면 i 번째 제단 앞으로 플레이어를 옮긴다.</summary>
+        public Vector2 AltarAt(int i) => i >= 0 && i < _altars.Count ? _altars[i].At : Vector2.zero;
 
         void RebuildGrid()
         {

@@ -944,6 +944,7 @@ namespace BloodRain.Presentation
             _watch.Restart();
             StepStatus(dt); // C-06c 중독·독 번짐 지속 피해. Step 의 접촉 목록 자리 번호가 흐트러지지 않게 그 앞에서
             ApplyAuras(dt);
+            Fx.GimmickLayer.AltarStep(_sim); // R4-13c 혈제단: 제자리로 되돌리고 켜진 제단 둘레 적 Buff(깃발 Buff 를 지운 뒤라 여기서)
             StepFollow(new float2(p.x, p.y));
             float cell = Mathf.Max(0.01f, RadiusOf(ws.Realm) * 2.2f);
             var chase = Fx.CloudSeaLayer.Decoy ?? p; // RG-05U 운해에 숨으면 숨은 자리를 쫓아 맴돎
