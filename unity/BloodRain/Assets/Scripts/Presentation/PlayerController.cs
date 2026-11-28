@@ -58,6 +58,9 @@ namespace BloodRain.Presentation
         public float TerrainMultiplier { get; set; } = 1f;
         /// <summary>R4-13b 날씨 걸음 배율(곤륜 눈보라 0.9). Fx.WeatherLayer 가 프레임마다 넣는다. 경공 미끄러짐에는 안 곱한다.</summary>
         public float WeatherMultiplier { get; set; } = 1f;
+        /// <summary>R4-13c 곤륜 빙판. 빙판 위면 Fx.IceLayer 가 iceFloor 를 넣고(밖이면 null), 걸음 속도가 Core IceFloorGimmick.Step 으로 천천히 바뀐다(멈출 때 미끄러짐).</summary>
+        [System.NonSerialized] public BloodRain.Core.Data.IceFloorGimmickDef Ice;
+        Vector2 _walkVel; // 지난 프레임 걸음 속도(Unity m/s, 혈우 장막 밀기·끌기 뺀 것)
         /// <summary>R-13U 수귀 끌기 등 바깥에서 이번 걸음에 더할 거리(Unity m). 걸을 때만 쓰고 쓴 뒤 0 으로. Fx.WaterLayer 가 넣는다.</summary>
         public Vector2 ExternalPull { get; set; }
         /// <summary>PM-01U 금강체 최대 덧붙임(넉백 면역). 지금 Run 씬엔 플레이어를 미는 것이 없어 표시만 둔다.
@@ -153,7 +156,14 @@ namespace BloodRain.Presentation
             {
                 float speed = _ws.Speed(_baseMove * _moveMultiplier * _slowMul * TerrainMultiplier * WeatherMultiplier);
                 var push = _ws.Scale.PushVelocity(pos, birth, _ws.Realm, speed);
-                step = (Vector2.ClampMagnitude(move, 1f) * speed + new Vector2(push.X, push.Y)) * dt;
+                var want = Vector2.ClampMagnitude(move, 1f) * speed;
+                if (Ice != null)
+                {
+                    var v = BloodRain.Core.World.IceFloorGimmick.Step(Ice, new System.Numerics.Vector2(_walkVel.x, _walkVel.y), new System.Numerics.Vector2(want.x, want.y), dt, true);
+                    want = new Vector2(v.X, v.Y);
+                }
+                _walkVel = want;
+                step = (want + new Vector2(push.X, push.Y)) * dt;
                 if (!bound) step += ExternalPull;
             }
             ExternalPull = Vector2.zero;

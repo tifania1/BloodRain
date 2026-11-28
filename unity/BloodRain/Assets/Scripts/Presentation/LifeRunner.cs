@@ -242,6 +242,7 @@ namespace BloodRain.Presentation
             if (GetComponent<Fx.WaterLayer>() == null) gameObject.AddComponent<Fx.WaterLayer>().runner = this; // RG-04U 장강 물길·떠내려오는 배
             if (GetComponent<Fx.TaijiLayer>() == null) gameObject.AddComponent<Fx.TaijiLayer>().runner = this; // RG-05U 무당산 태극 바닥
             if (GetComponent<Fx.CloudSeaLayer>() == null) gameObject.AddComponent<Fx.CloudSeaLayer>().runner = this; // RG-05U 무당산 운해
+            if (GetComponent<Fx.IceLayer>() == null) gameObject.AddComponent<Fx.IceLayer>().runner = this; // R4-13c 곤륜 빙판
             if (GetComponent<Fx.WeatherLayer>() == null) gameObject.AddComponent<Fx.WeatherLayer>().runner = this; // R4-13b 화산 낙석·곤륜 눈보라·십만대산 붉은 달
             WorldIntro.Begin(); // 천하 한 장에서 태어난 자리로 내려오며 시작
             if (settlement == null) settlement = FindFirstObjectByType<SettlementScreen>();
