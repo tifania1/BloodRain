@@ -949,7 +949,7 @@ namespace BloodRain.Presentation
             var chase = Fx.CloudSeaLayer.Decoy ?? p; // RG-05U 운해에 숨으면 숨은 자리를 쫓아 맴돎
             _sim.Step(dt, new float2(chase.x, chase.y), new float2(_heading.x, _heading.y), cell,
                       diag * st.RecycleBeyondDiagonal, diag * st.RecycleToDiagonal,
-                      1f, DataBoot.Data.Balance.EnemyStatus.KnockbackKeepPerSecond,
+                      Fx.WeatherLayer.EnemySpeed, DataBoot.Data.Balance.EnemyStatus.KnockbackKeepPerSecond, // R4-13b 눈보라·붉은 달 적 걸음
                       sectTrait.NearEnemySlowRadius(ws.RealmFactor), sectTrait.EnemySpeedMultiplier(0f), DataBoot.Data.Balance.EnemyStatus.SlowFadePerSecond); // R-04Ub 곤륜 설한기: 몸 가까운 적 느려짐
             Fx.GimmickLayer.PushAgents(_sim, k => k >= 0 && k < _kinds.Count && _kinds[k].Def.IgnoresTerrain); // GM-01U 탑림 돌탑은 걷는 적을 막음
             // 접촉 피해(C-03): 플레이어 원에 닿은 적, 같은 적은 contact.sameEnemyIntervalSeconds 마다 한 번
