@@ -17,7 +17,7 @@ namespace BloodRain.Presentation.Hud
     // 본문: 왼쪽 지닌 무공·심법 칸과 경지·그릇(HudSlots.Build, TopHud 와 같은 셈), 가운데 능력치(이름 + 쉬운 말),
     //       오른쪽 무공별 지금까지 피해·초당 피해(DamageReport.Lines — 정산 막대와 같은 WeaponRunner.Dealt 합).
     // 단추: 계속하기 · 설정(WP-57U SettingsScreen) · 좌화(LifeRunner.EndLife(Zuohwa), 서장 몸이면 잠금).
-    // 절기 조합표 탭은 UI-01U 몫이라 자리만. 무공 줄을 눌러 짝·진전·연환을 펼치는 것도 UI-01U 때.
+    // UI-01U: 왼쪽 무공·심법 줄을 누르면 짝·진전·연환을 펼치고, 오른쪽 판 머리줄을 누르면 절기 조합표(찾은 절기만)로 바뀐다.
     public sealed class PauseScreen : MonoBehaviour
     {
         public LifeRunner runner;
@@ -298,7 +298,9 @@ namespace BloodRain.Presentation.Hud
             {
                 int i = TMP_TextUtilities.FindIntersectingLink(text, e.position, null);
                 if (i < 0) return;
-                owner.ToggleExpand(text.textInfo.linkInfo[i].GetLinkID());
+                string id = text.textInfo.linkInfo[i].GetLinkID();
+                if (id == EvoLink) owner.ToggleEvoTable();
+                else owner.ToggleExpand(id);
             }
         }
 
@@ -365,9 +367,62 @@ namespace BloodRain.Presentation.Hud
                   .Append("\n<size=60%><color=#96181688>").Append(new string('■', Mathf.Clamp(Mathf.RoundToInt(l.Share * 30), 0, 30))).Append("</color></size>\n");
             }
             if (lines.Count > 0) sb.Append("\n<alpha=#88>Σ  ").Append(sum.ToString("N0"));
-            Body(sheet, sb.ToString(), 22);
-            // 절기 조합표 탭 자리(UI-01U)
+            // UI-01U 절기 조합표 탭: 맨 위 머리줄을 누르면 이 판이 조합표로 바뀌고 다시 누르면 무공별 피해로(웹 evoTableHtml 의 details)
+            var t = Body(sheet, EvoHeader() + (_evoOpen ? EvoTable() : sb.ToString()), 22);
+            t.raycastTarget = true;
+            var clicks = t.gameObject.AddComponent<SlotClicks>();
+            clicks.text = t;
+            clicks.owner = this;
         }
+
+        const string EvoLink = "__evo";
+        bool _evoOpen;
+
+        /// <summary>시험용: 오른쪽 판을 절기 조합표 ↔ 무공별 피해로(머리줄을 누른 것과 같음).</summary>
+        public void ToggleEvoTable()
+        {
+            _evoOpen = !_evoOpen;
+            if (!IsOpen) return;
+            Destroy(_root.gameObject);
+            _root = null;
+            Build();
+        }
+
+        public bool EvoTableOpen => _evoOpen;
+
+        (List<EvolutionRow> rows, int total) EvoRows()
+        {
+            var data = DataBoot.Data;
+            if (data == null || runner?.Life == null) return (new List<EvolutionRow>(), 0);
+            return LevelUpView.EvolutionTable(data, runner.Life.Loadout, runner.Life.Log.SeenEvolutions);
+        }
+
+        string EvoHeader()
+        {
+            var (rows, total) = EvoRows();
+            return "<link=\"" + EvoLink + "\"><color=#96181A>" + (_evoOpen ? "－ " : "＋ ") /* 글꼴 서브셋 범위(FF00~) 안 글자 */ + "</color><b>"
+                 + Loc.F("ui.pause.evo_table", rows.Count, total) + "</b></link>\n\n";
+        }
+
+        /// <summary>찾은 절기 줄: 이름 · 재료 무공 + 심법(가진 것은 굵게 Lv), 깨어난 것은 금빛 ◆, 이번 생에 못 맞추는 것은 흐리게.</summary>
+        public string EvoTable()
+        {
+            var (rows, _) = EvoRows();
+            if (rows.Count == 0) return "<alpha=#99>" + Loc.T("ui.pause.evo_empty");
+            var sb = new StringBuilder();
+            foreach (var r in rows)
+            {
+                var e = r.Evolution;
+                sb.Append(r.Dead ? "<alpha=#55>" : r.HasAny ? "<alpha=#FF>" : "<alpha=#99>");
+                if (r.Evolved) sb.Append("<color=#BE9234>◆</color> ");
+                sb.Append("<b>").Append(Loc.T($"evolutions.{e.Id}.name", e.NameKo)).Append("</b>\n<size=80%>    ")
+                  .Append(Ingredient(NameOf(e.Weapon, true), r.WeaponLevel)).Append(" + ")
+                  .Append(Ingredient(NameOf(e.Passive, false), r.PassiveLevel)).Append("</size>\n");
+            }
+            return sb.Append("<alpha=#FF>").ToString();
+        }
+
+        static string Ingredient(string name, int lv) => lv > 0 ? $"<b>{name} Lv{lv}</b>" : name;
 
         static string Ratio(float v) => "×" + v.ToString("0.00");
         static string Percent(float v) => (v * 100f).ToString("0") + "%";
